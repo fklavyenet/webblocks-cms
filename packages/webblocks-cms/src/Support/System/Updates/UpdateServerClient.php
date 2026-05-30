@@ -6,7 +6,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
@@ -250,42 +249,7 @@ class UpdateServerClient
 
   private function installedVersionForUpdateCheck(): string
   {
-    $storedVersion = $this->installedVersionStore->storedVersion();
-    $currentVersion = $this->installedVersionStore->currentVersion();
-
-    if (! $this->isSourceMaintainedCheckout()) {
-      return $storedVersion ?? $currentVersion;
-    }
-
-    if (! is_string($storedVersion) || $storedVersion === '') {
-      return $currentVersion;
-    }
-
-    return version_compare($currentVersion, $storedVersion, '>')
-      ? $currentVersion
-      : $storedVersion;
-  }
-
-  private function isSourceMaintainedCheckout(): bool
-  {
-    $targetPath = rtrim((string) config('webblocks-updates.installer.target_path', base_path()), DIRECTORY_SEPARATOR);
-    $composerPath = $targetPath.DIRECTORY_SEPARATOR.'composer.json';
-
-    if (! File::isFile($composerPath)) {
-      return false;
-    }
-
-    try {
-      $composer = json_decode((string) File::get($composerPath), true, 512, JSON_THROW_ON_ERROR);
-    } catch (\JsonException) {
-      return false;
-    }
-
-    $autoload = $composer['autoload']['psr-4'] ?? [];
-
-    return ($composer['name'] ?? null) === 'fklavyenet/webblocks-cms'
-      && ($autoload['WebBlocks\\Cms\\'] ?? null) === 'packages/webblocks-cms/src/'
-      && ($autoload['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) === 'packages/webblocks-cms/database/seeders/';
+    return $this->installedVersionStore->currentVersion();
   }
 
   private function normalizeReleasePayload(array $release): array

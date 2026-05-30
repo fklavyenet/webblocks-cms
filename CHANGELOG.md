@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Simplify the `System -> Updates` summary so the main status compares the running CMS code version with the latest published release and no longer exposes stored/effective/source checkout terminology in the visible summary.
+- Keep stored installed version as update-history persistence and a collapsed technical detail while ensuring stale stored values do not make Update Options actionable.
+
 ## 1.32.89
 
 - Redesign the `System -> Updates` screen into a guided operator flow with a friendly status hero, `Release Preview`, actionable-only `Update Options`, quieter `Update History`, and last-position collapsed `Technical Details` while preserving strict package update behavior.

@@ -16,11 +16,14 @@
         $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
         $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
             && (string) $installedVersion !== (string) $updateStatus['latest_version'];
-        $effectiveIsNewerThanStored = is_string($storedInstalledVersion)
-            && $storedInstalledVersion !== ''
-            && version_compare((string) $installedVersion, $storedInstalledVersion, '>');
-        $effectiveIsNewerThanPublished = is_string($updateStatus['latest_version'] ?? null)
+        $currentCodeIsNewerThanPublished = is_string($updateStatus['latest_version'] ?? null)
             && version_compare((string) $installedVersion, (string) $updateStatus['latest_version'], '>');
+        $currentUpdatedAt = ($release['published_at'] ?? null) && ! $showLatestVersion
+            ? \Carbon\Carbon::parse($release['published_at'])->format('Y-m-d H:i:s')
+            : 'N/A';
+        $latestPublishedAt = ($release['published_at'] ?? null)
+            ? \Carbon\Carbon::parse($release['published_at'])->format('Y-m-d H:i:s')
+            : 'N/A';
         $compatibilityBadgeClass = match ($compatibilityStatus) {
             'compatible' => 'wb-status-active',
             'incompatible' => 'wb-status-danger',
@@ -85,8 +88,8 @@
         $heroTitle = match ($state) {
             'update_available' => 'Update available',
             'incompatible' => 'Incompatible update available',
-            'up_to_date' => $effectiveIsNewerThanPublished
-                ? 'Local/source version is newer than the latest published release'
+            'up_to_date' => $currentCodeIsNewerThanPublished
+                ? 'Local/source version is newer'
                 : 'Up to date',
             'server_unreachable', 'server_error', 'invalid_configuration', 'invalid_response', 'client_disabled' => 'Update server unavailable / invalid response',
             default => $updateStatus['label'] ?? 'Update status',
@@ -94,7 +97,7 @@
         $heroMessage = match ($state) {
             'update_available' => 'A new WebBlocks CMS release is ready.',
             'incompatible' => 'A newer release is available, but this install is not compatible yet.',
-            'up_to_date' => $effectiveIsNewerThanPublished
+            'up_to_date' => $currentCodeIsNewerThanPublished
                 ? 'This codebase is ahead of the latest published package on the selected channel.'
                 : 'This install is already on the latest published release.',
             'server_unreachable', 'server_error', 'invalid_configuration', 'invalid_response', 'client_disabled' => 'The CMS could not complete a trusted update check. Review the server detail and technical diagnostics below.',
@@ -126,15 +129,6 @@
                     @endif
                 </div>
 
-                @if ($effectiveIsNewerThanStored)
-                    <div class="wb-alert wb-alert-info">
-                        <div>
-                            <div class="wb-alert-title">Source checkout notice</div>
-                            <div>System Updates applies published packages. It does not apply or persist local source edits while this page is rendering.</div>
-                        </div>
-                    </div>
-                @endif
-
                 @if ($updateStatus['error_message'])
                     <div class="wb-alert wb-alert-warning">
                         <div>
@@ -144,35 +138,22 @@
                     </div>
                 @endif
 
-                <div class="wb-grid wb-grid-2">
+                <div class="wb-stack wb-gap-3">
                     <div class="wb-stack wb-gap-1">
-                        <div class="wb-text-sm wb-text-muted">Effective installed version</div>
-                        <strong>{{ $installedVersion }}</strong>
+                        <strong>Current CMS Version</strong>
+                        <div class="wb-text-sm wb-text-muted">{{ $installedVersion }} · Updated at {{ $currentUpdatedAt }}</div>
                     </div>
-
-                    @if (is_string($storedInstalledVersion) && $storedInstalledVersion !== '' && (string) $storedInstalledVersion !== (string) $installedVersion)
-                        <div class="wb-stack wb-gap-1">
-                            <div class="wb-text-sm wb-text-muted">Stored installed version</div>
-                            <strong>{{ $storedInstalledVersion }}</strong>
-                        </div>
-                    @endif
 
                     @if ($showLatestVersion)
                         <div class="wb-stack wb-gap-1">
-                            <div class="wb-text-sm wb-text-muted">Latest version</div>
-                            <strong>{{ $updateStatus['latest_version'] }}</strong>
+                            <strong>Latest Published Version</strong>
+                            <div class="wb-text-sm wb-text-muted">{{ $updateStatus['latest_version'] }} · Published at {{ $latestPublishedAt }}</div>
                         </div>
                     @endif
 
-                    <div class="wb-stack wb-gap-1">
-                        <div class="wb-text-sm wb-text-muted">Channel</div>
-                        <strong>{{ $updateStatus['channel'] }}</strong>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <div class="wb-text-sm wb-text-muted">Published date</div>
-                        <strong>{{ ($release['published_at'] ?? null) ? \Carbon\Carbon::parse($release['published_at'])->format('Y-m-d H:i:s') : 'N/A' }}</strong>
-                    </div>
+                    @if (($updateStatus['channel'] ?? '') !== '')
+                        <div class="wb-text-sm wb-text-muted">Channel: {{ $updateStatus['channel'] }}</div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -499,6 +480,11 @@
                     <div class="wb-stack wb-gap-1">
                         <div class="wb-text-sm wb-text-muted">API version</div>
                         <strong>{{ $updateStatus['api_version'] ?? 'N/A' }}</strong>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <div class="wb-text-sm wb-text-muted">Stored installed version</div>
+                        <strong>{{ is_string($storedInstalledVersion) && $storedInstalledVersion !== '' ? $storedInstalledVersion : 'N/A' }}</strong>
                     </div>
 
                     <div class="wb-stack wb-gap-1">

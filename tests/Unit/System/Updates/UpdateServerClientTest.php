@@ -34,13 +34,13 @@ class UpdateServerClientTest extends TestCase
         'data' => [
           'product' => 'webblocks-cms',
           'channel' => 'stable',
-          'version' => '0.2.0',
+          'version' => '99.0.0',
           'published_at' => '2026-04-19T10:00:00Z',
           'release_notes' => 'Stability and admin improvements.',
-          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip',
           'checksum_sha256' => str_repeat('a', 64),
           'source_type' => 'github',
-          'source_reference' => 'v0.2.0',
+          'source_reference' => 'v99.0.0',
           'minimum_client_version' => '0.1.0',
         ],
       ]),
@@ -53,8 +53,9 @@ class UpdateServerClientTest extends TestCase
 
     $this->assertSame('update_available', $result->state);
     $this->assertTrue($result->updateAvailable);
-    $this->assertSame('0.2.0', $result->latestVersion);
-    $this->assertSame('https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $result->release['download_url']);
+    $this->assertSame(WebBlocks::version(), $result->installedVersion);
+    $this->assertSame('99.0.0', $result->latestVersion);
+    $this->assertSame('https://updates.example.test/downloads/webblocks-cms-99.0.0.zip', $result->release['download_url']);
   }
 
   #[Test]
@@ -66,14 +67,14 @@ class UpdateServerClientTest extends TestCase
         'data' => [
           'product' => 'webblocks-cms',
           'channel' => 'stable',
-          'version' => '0.2.0',
+          'version' => '99.0.0',
           'published_at' => '2026-04-19T10:00:00Z',
           'title' => 'Release details for operators',
           'summary' => 'Review these notes before updating.',
           'highlights' => ['Clear release summaries', 'Grouped visible changes'],
           'fixes' => "- Fix update note rendering\n- Keep technical values collapsed",
           'operator_notes' => ['Download the pre-update backup if needed.'],
-          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip',
           'checksum_sha256' => str_repeat('a', 64),
         ],
       ]),
@@ -103,7 +104,7 @@ class UpdateServerClientTest extends TestCase
         'data' => [
           'product' => 'webblocks-cms',
           'channel' => 'stable',
-          'version' => '0.2.0',
+          'version' => '99.0.0',
           'published_at' => '2026-04-19T10:00:00Z',
           'meta' => [
             'release_details' => [
@@ -112,7 +113,7 @@ class UpdateServerClientTest extends TestCase
               'highlights' => ['Nested highlights are visible.'],
             ],
           ],
-          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip',
           'checksum_sha256' => str_repeat('a', 64),
         ],
       ]),
@@ -137,28 +138,28 @@ class UpdateServerClientTest extends TestCase
         'data' => [
           'product' => 'webblocks-cms',
           'channel' => 'stable',
-          'version' => '0.2.0',
+          'version' => WebBlocks::version(),
           'published_at' => '2026-04-19T10:00:00Z',
           'release_notes' => null,
-          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-current.zip',
           'checksum_sha256' => null,
         ],
       ]),
     ]);
 
     config()->set('webblocks-updates.server_url', 'https://updates.example.test');
-    app(InstalledVersionStore::class)->persist('0.2.0');
+    app(InstalledVersionStore::class)->persist('0.1.0');
 
     $result = app(UpdateServerClient::class)->check();
 
     $this->assertSame('up_to_date', $result->state);
+    $this->assertFalse($result->updateAvailable);
+    $this->assertSame(WebBlocks::version(), $result->installedVersion);
   }
 
   #[Test]
-  public function source_maintained_checkout_uses_current_code_version_when_it_is_newer_than_stored_version(): void
+  public function old_stored_installed_version_does_not_force_update_available_when_current_code_is_current(): void
   {
-    $this->useSourceMaintainedTarget();
-
     Http::fake([
       '*' => Http::response([
         'status' => 'ok',
@@ -221,10 +222,10 @@ class UpdateServerClientTest extends TestCase
         'data' => [
           'product' => 'webblocks-cms',
           'channel' => 'stable',
-          'version' => '0.2.0',
+          'version' => '99.0.0',
           'published_at' => '2026-04-19T10:00:00Z',
-          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
-          'minimum_client_version' => '0.2.0',
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip',
+          'minimum_client_version' => '99.0.0',
         ],
       ]),
     ]);
@@ -238,7 +239,7 @@ class UpdateServerClientTest extends TestCase
   }
 
   #[Test]
-  public function legacy_0_1_8_install_sees_0_2_0_as_a_compatible_update_when_minimum_client_version_is_0_1_8(): void
+  public function newer_release_is_compatible_when_current_code_satisfies_minimum_client_version(): void
   {
     Http::fake([
       '*' => Http::response([
@@ -246,12 +247,12 @@ class UpdateServerClientTest extends TestCase
         'data' => [
           'product' => 'webblocks-cms',
           'channel' => 'stable',
-          'version' => '0.2.0',
+          'version' => '99.0.0',
           'published_at' => '2026-04-21T10:00:00Z',
           'release_notes' => 'Multisite and multilingual upgrade path.',
-          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip',
           'checksum_sha256' => str_repeat('b', 64),
-          'source_reference' => 'v0.2.0',
+          'source_reference' => 'v99.0.0',
           'minimum_client_version' => '0.1.8',
         ],
       ]),
@@ -268,28 +269,9 @@ class UpdateServerClientTest extends TestCase
     $this->assertSame('0.1.8', $result->release['requirements']['supported_from_version']);
   }
 
-  private function useSourceMaintainedTarget(): void
-  {
-    $targetPath = storage_path('app/testing-source-update-client');
-    File::ensureDirectoryExists($targetPath.'/packages/webblocks-cms');
-    File::ensureDirectoryExists($targetPath.'/database/migrations');
-    File::put($targetPath.'/composer.json', json_encode([
-      'name' => 'fklavyenet/webblocks-cms',
-      'autoload' => [
-        'psr-4' => [
-          'WebBlocks\\Cms\\' => 'packages/webblocks-cms/src/',
-          'WebBlocks\\Cms\\Database\\Seeders\\' => 'packages/webblocks-cms/database/seeders/',
-        ],
-      ],
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
-    config()->set('webblocks-updates.installer.target_path', $targetPath);
-  }
-
   protected function tearDown(): void
   {
     File::deleteDirectory(storage_path('app/testing-package-update-client'));
-    File::deleteDirectory(storage_path('app/testing-source-update-client'));
 
     parent::tearDown();
   }

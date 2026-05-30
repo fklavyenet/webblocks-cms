@@ -41,22 +41,29 @@ class SystemUpdatesTest extends TestCase
   {
     $user = User::factory()->superAdmin()->create();
     app(InstalledVersionStore::class)->persist('0.1.4');
-    $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, '0.1.4');
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, WebBlocks::version());
 
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
     $response->assertSee('System Updates');
-    $response->assertSee('Local/source version is newer than the latest published release');
-    $response->assertSee('Effective installed version');
+    $response->assertSee('Up to date');
+    $response->assertSee('Current CMS Version');
+    $response->assertSee(WebBlocks::version().' · Updated at 2026-04-19 10:00:00');
     $response->assertSee(WebBlocks::version());
-    $response->assertSee('<div class="wb-text-sm wb-text-muted">Latest version</div>', false);
+    $response->assertDontSee('Latest Published Version');
     $response->assertSee('Update Summary');
     $response->assertDontSee('<strong>Actions</strong>', false);
     $response->assertSee('Check again');
     $response->assertDontSee('Recent Backup');
     $response->assertSee('Technical Details');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
+
+    $summaryHtml = $this->cardHtml($response->getContent(), 'Update Summary');
+    $this->assertStringNotContainsString('Stored installed version', $summaryHtml);
+    $this->assertStringNotContainsString('Effective installed version', $summaryHtml);
+    $this->assertStringNotContainsString('Source checkout notice', $summaryHtml);
+    $this->assertStringNotContainsString('Published at', $summaryHtml);
   }
 
   #[Test]
@@ -91,7 +98,7 @@ class SystemUpdatesTest extends TestCase
     $followUp->assertSee('Update now');
     $followUp->assertDontSee('Download package');
     $followUp->assertSee('Check again');
-    $followUp->assertSee('Latest version');
+    $followUp->assertSee('Latest Published Version');
     $followUp->assertSee('A pre-update backup will be created automatically before installation.');
     $followUp->assertSee('Download the backup before installation starts');
     $followUp->assertDontSee('Automatic backup is not created before update in this version.');
@@ -101,21 +108,30 @@ class SystemUpdatesTest extends TestCase
   public function update_available_state_renders_status_hero_and_update_options(): void
   {
     $user = User::factory()->superAdmin()->create();
-    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0');
 
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
     $response->assertSee('Update Summary');
     $response->assertSee('A new WebBlocks CMS release is ready.');
+    $response->assertSee('Current CMS Version');
+    $response->assertSee('Latest Published Version');
+    $response->assertSee(WebBlocks::version().' · Updated at N/A');
+    $response->assertSee('99.0.0 · Published at 2026-04-19 10:00:00');
     $response->assertSee('Update now');
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();
+    $summaryHtml = $this->cardHtml($html, 'Update Summary');
     $summaryHeaderPosition = strpos($html, '<strong>Update Summary</strong>');
     $optionsHeaderPosition = strpos($html, '<strong>Update Options</strong>');
     $buttonPosition = strpos($html, 'data-default-label="Update now"');
 
+    $this->assertStringContainsString('Current CMS Version', $summaryHtml);
+    $this->assertStringContainsString('Latest Published Version', $summaryHtml);
+    $this->assertStringContainsString('Updated at', $summaryHtml);
+    $this->assertStringContainsString('Published at', $summaryHtml);
     $this->assertIsInt($summaryHeaderPosition);
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($buttonPosition);
@@ -127,7 +143,7 @@ class SystemUpdatesTest extends TestCase
   public function update_options_card_renders_update_action_after_backup_option_when_update_is_available(): void
   {
     $user = User::factory()->superAdmin()->create();
-    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0');
 
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
@@ -362,7 +378,9 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('Local/source version is newer than the latest published release');
+    $response->assertSee('Local/source version is newer');
+    $response->assertSee('Current CMS Version');
+    $response->assertSee('Latest Published Version');
     $response->assertSee('This codebase is ahead of the latest published package on the selected channel.');
     $response->assertDontSee('Update now');
     $response->assertDontSee('<strong>Update Options</strong>', false);
@@ -956,6 +974,19 @@ class SystemUpdatesTest extends TestCase
     $this->app->instance(UpdateServerClient::class, $client);
     $this->app->instance(PackageUpdateServerClient::class, $client);
     $this->app->forgetInstance(SystemUpdateInspector::class);
+  }
+
+  private function cardHtml(string $html, string $heading): string
+  {
+    $start = strpos($html, '<strong>'.$heading.'</strong>');
+
+    $this->assertIsInt($start, 'Expected to find card heading ['.$heading.'].');
+
+    $nextCard = strpos($html, '<div class="wb-card"', $start + strlen($heading));
+
+    return $nextCard === false
+      ? substr($html, $start)
+      : substr($html, $start, $nextCard - $start);
   }
 
   private function prepareSuccessfulUpdateScenario(): array

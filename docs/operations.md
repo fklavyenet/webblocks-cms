@@ -33,7 +33,7 @@ Site-scoped authorization still applies: super admins can see all sites, while s
 
 ## System Updates
 
-System Updates checks the installed CMS version against the configured update service.
+System Updates checks the running CMS code version against the configured update service.
 
 The update screen can report states such as:
 
@@ -47,9 +47,9 @@ The update screen can report states such as:
 
 The in-app update flow downloads the release package, applies protected-path rules, runs maintenance and migration commands, synchronizes the core database-backed block type catalog, and records the update run before persisting the installed version.
 
-Update availability is based on the latest published release version being newer than the effective installed CMS version. Historical failed update runs remain inspectable as history, but they do not make a current install actionable by themselves.
+Update availability is based on the latest published release version being newer than the running CMS code version. Historical failed update runs and stale stored installed-version values remain inspectable as history or technical details, but they do not make a current install actionable by themselves.
 
-The screen stacks a friendly update status hero, `Release Preview`, actionable-only `Update Options`, `Update History`, and collapsed `Technical Details`. The update options card is shown only when a compatible published package is strictly newer than the effective installed version. Source-maintained checkouts can show the effective code version separately from the stored installed version, but System Updates applies published packages and does not apply local source edits.
+The screen stacks a friendly update status hero, `Release Preview`, actionable-only `Update Options`, `Update History`, and collapsed `Technical Details`. The update options card is shown only when a compatible published package is strictly newer than the running CMS code version. Stored installed version remains an update-persistence value after successful installs and may appear in collapsed technical details, but it is not shown in the main update summary.
 
 The update client supports structured metadata from the update service, including title, summary, highlights, fixes, compatibility notes, migration notes, asset notes, operator notes, and technical notes. These values are rendered as escaped plain text in operator-oriented groups. Older releases that only provide `release_notes` still show those notes cleanly, and releases without notes show `No release notes were provided for this release.` Package URLs, checksums, response diagnostics, and other low-level update server values remain in the collapsed technical details area.
 

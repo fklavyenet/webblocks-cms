@@ -16,14 +16,14 @@ Updates in WebBlocks CMS are release-based and package-based.
 - Run updates from published releases only.
 - Keep install-specific files in preserved paths such as `.env`, `storage/`, and `project/`.
 - Treat development and release workflows separately.
-- In source-maintained maintenance checkouts, local source edits are already present in the working tree. System Updates should not be used to apply those local changes, and a source checkout whose code version is already equal to or newer than the latest published release is treated as current for update availability.
+- In source-maintained maintenance checkouts, local source edits are already present in the working tree. System Updates should not be used to apply those local changes, and the running CMS code version is compared with the latest published release for update availability.
 - Release packages contain reusable CMS core code only and must not ship install-specific `project/` content.
 - Update-time preserved paths do not change the release package boundary: `project/` stays local to the install and outside the published artifact.
 - Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.
 
 ## Release Details
 
-The System Updates screen shows human-readable release details before an admin starts an update. The status hero explains whether an update is available, the install is current, the local/source version is newer than the latest published package, the update is incompatible, or the update server response cannot be trusted. Source-maintained checkouts may show both the effective code version and the stored installed version; this display is read-only and does not mutate `system.installed_version`.
+The System Updates screen shows human-readable release details before an admin starts an update. The status hero explains whether an update is available, the running CMS code version is current, the local/source version is newer than the latest published package, the update is incompatible, or the update server response cannot be trusted. The visible summary compares the running CMS code version with the latest published release. Stored installed version remains an install-history/update-persistence value and can be inspected in technical details, but it is not used to make the main summary or Update Options actionable.
 
 The `Release Preview` card renders structured metadata from fields such as `title`, `summary`, `highlights`, `fixes`, `compatibility_notes`, `migration_notes`, `asset_notes`, `operator_notes`, and `technical_notes`. The CMS renders those fields as escaped plain text, with highlights first, fixes/changes compactly listed, compatibility/migration/asset notes in callouts, operator notes grouped as checklist-style items, and technical release notes visually quieter than operator notes.
 
