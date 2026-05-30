@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
@@ -493,7 +494,150 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee(WebBlocks::version().' → 99.0.0');
     $response->assertSee('failed');
     $response->assertSee('wb-icon wb-icon-eye', false);
+    $response->assertSee('wb-icon wb-icon-trash', false);
+    $response->assertSee('Delete update history entry');
+    $response->assertSee('This only removes the selected update run history record. It does not change the current CMS version', false);
+    $response->assertSee(route('admin.system.updates.runs.destroy', SystemUpdateRun::query()->firstOrFail()), false);
+    $response->assertDontSee('wb-icon-trash-2', false);
     $response->assertDontSee('<summary>Output</summary>', false);
+  }
+
+  #[Test]
+  public function update_history_delete_form_is_csrf_protected(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $run = SystemUpdateRun::query()->create([
+      'from_version' => '1.32.90',
+      'to_version' => WebBlocks::version(),
+      'status' => SystemUpdateRun::STATUS_SUCCESS,
+      'summary' => 'Updated successfully.',
+      'started_at' => now()->subMinute(),
+      'finished_at' => now(),
+      'duration_ms' => 1000,
+      'triggered_by_user_id' => $user->id,
+    ]);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $this->actingAs($user)
+      ->get(route('admin.system.updates.index'))
+      ->assertOk()
+      ->assertSee('<td class="wb-table-actions">', false)
+      ->assertSee('class="wb-action-group"', false)
+      ->assertSee('action="'.route('admin.system.updates.runs.destroy', $run).'"', false)
+      ->assertSee('name="_token"', false)
+      ->assertSee('name="_method" value="DELETE"', false);
+  }
+
+  #[Test]
+  public function super_admin_deleting_update_history_removes_only_selected_run_and_preserves_version_state(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('1.32.90');
+    SystemSetting::query()->create([
+      'key' => 'updates.latest_check',
+      'value' => '{"version":"'.WebBlocks::version().'"}',
+    ]);
+
+    $deleteRun = SystemUpdateRun::query()->create([
+      'from_version' => '1.32.89',
+      'to_version' => '1.32.90',
+      'status' => SystemUpdateRun::STATUS_SUCCESS,
+      'summary' => 'Updated to 1.32.90 successfully.',
+      'output' => '[status] Installed version persisted as 1.32.90.',
+      'started_at' => now()->subMinutes(2),
+      'finished_at' => now()->subMinute(),
+      'duration_ms' => 1000,
+      'triggered_by_user_id' => $user->id,
+    ]);
+    $keptRun = SystemUpdateRun::query()->create([
+      'from_version' => '1.32.88',
+      'to_version' => '1.32.89',
+      'status' => SystemUpdateRun::STATUS_FAILED,
+      'summary' => 'Earlier failure.',
+      'started_at' => now()->subMinutes(4),
+      'finished_at' => now()->subMinutes(3),
+      'duration_ms' => 1000,
+      'triggered_by_user_id' => $user->id,
+    ]);
+
+    Http::fake();
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.updates.runs.destroy', $deleteRun))
+      ->assertRedirect(route('admin.system.updates.index'))
+      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
+
+    $this->assertDatabaseMissing('system_update_runs', [
+      'id' => $deleteRun->id,
+    ]);
+    $this->assertDatabaseHas('system_update_runs', [
+      'id' => $keptRun->id,
+      'to_version' => '1.32.89',
+    ]);
+    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+    $this->assertDatabaseHas('system_settings', [
+      'key' => 'updates.latest_check',
+      'value' => '{"version":"'.WebBlocks::version().'"}',
+    ]);
+    Http::assertNothingSent();
+  }
+
+  #[Test]
+  public function non_super_admins_cannot_delete_update_history_entries(): void
+  {
+    $run = SystemUpdateRun::query()->create([
+      'from_version' => '1.32.90',
+      'to_version' => WebBlocks::version(),
+      'status' => SystemUpdateRun::STATUS_SUCCESS,
+      'summary' => 'Updated successfully.',
+      'started_at' => now()->subMinute(),
+      'finished_at' => now(),
+      'duration_ms' => 1000,
+    ]);
+
+    $this->delete(route('admin.system.updates.runs.destroy', $run))
+      ->assertRedirect(route('login'));
+
+    $this->actingAs(User::factory()->editor()->create())
+      ->delete(route('admin.system.updates.runs.destroy', $run))
+      ->assertForbidden();
+
+    $this->assertDatabaseHas('system_update_runs', [
+      'id' => $run->id,
+    ]);
+  }
+
+  #[Test]
+  public function in_progress_update_history_entries_cannot_be_deleted(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $run = SystemUpdateRun::query()->create([
+      'from_version' => WebBlocks::version(),
+      'to_version' => '99.0.0',
+      'status' => SystemUpdateRun::STATUS_RUNNING,
+      'summary' => 'Update still running.',
+      'started_at' => now()->subMinute(),
+      'duration_ms' => null,
+      'triggered_by_user_id' => $user->id,
+    ]);
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0');
+
+    $this->actingAs($user)
+      ->get(route('admin.system.updates.index'))
+      ->assertOk()
+      ->assertSee('Delete is unavailable while the update run is in progress')
+      ->assertDontSee('action="'.route('admin.system.updates.runs.destroy', $run).'"', false);
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.updates.runs.destroy', $run))
+      ->assertRedirect(route('admin.system.updates.index'))
+      ->assertSessionHasErrors(['system_update' => 'Update history entries that are still in progress cannot be deleted.']);
+
+    $this->assertDatabaseHas('system_update_runs', [
+      'id' => $run->id,
+      'status' => SystemUpdateRun::STATUS_RUNNING,
+    ]);
   }
 
   #[Test]

@@ -125,6 +125,21 @@ class SystemUpdateController extends Controller
       ->with('status', 'Pending update cancelled. The pre-update backup was kept.');
   }
 
+  public function destroyRun(SystemUpdateRun $run): RedirectResponse
+  {
+    if (in_array($run->status, [SystemUpdateRun::STATUS_PENDING, SystemUpdateRun::STATUS_RUNNING], true)) {
+      return redirect()
+        ->route('admin.system.updates.index')
+        ->withErrors(['system_update' => 'Update history entries that are still in progress cannot be deleted.']);
+    }
+
+    $run->delete();
+
+    return redirect()
+      ->route('admin.system.updates.index')
+      ->with('status', 'Update history entry deleted. The installed CMS version was not changed.');
+  }
+
   private function latestUpdateRun(): ?SystemUpdateRun
   {
     if (! Schema::hasTable('system_update_runs')) {

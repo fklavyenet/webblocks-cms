@@ -442,6 +442,8 @@ Cache clears, update run recording, and installed version persistence</div>
               <tbody>
                 @foreach ($runs as $run)
                   @php($detailsModalId = 'updateRunDetailsModal-'.$run->id)
+                  @php($deleteModalId = 'updateRunDeleteModal-'.$run->id)
+                  @php($runIsInProgress = in_array($run->status, [\WebBlocks\Cms\Models\SystemUpdateRun::STATUS_PENDING, \WebBlocks\Cms\Models\SystemUpdateRun::STATUS_RUNNING], true))
                   <tr>
                     <td>{{ $run->from_version && $run->to_version ? $run->from_version.' → '.$run->to_version : ($run->to_version ?: 'N/A') }}</td>
                     <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $run->statusLabel() }}</span></td>
@@ -462,6 +464,30 @@ Cache clears, update run recording, and installed version persistence</div>
                         >
                           <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                         </button>
+                        @if ($runIsInProgress)
+                          <button
+                            class="wb-btn wb-btn-danger"
+                            type="button"
+                            disabled
+                            aria-label="Delete is unavailable for update runs still in progress"
+                            title="Delete is unavailable while the update run is in progress"
+                          >
+                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                          </button>
+                        @else
+                          <button
+                            class="wb-btn wb-btn-danger"
+                            type="button"
+                            data-wb-toggle="modal"
+                            data-wb-target="#{{ $deleteModalId }}"
+                            aria-controls="{{ $deleteModalId }}"
+                            aria-expanded="false"
+                            aria-label="Delete update history entry for {{ $run->from_version ?: 'unknown' }} to {{ $run->to_version ?: 'unknown' }}"
+                            title="Delete history entry"
+                          >
+                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                          </button>
+                        @endif
                       </div>
                     </td>
                   </tr>
@@ -516,6 +542,59 @@ Cache clears, update run recording, and installed version persistence</div>
 
                 <div class="wb-modal-footer">
                   <button class="wb-btn wb-btn-secondary" type="button" data-wb-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          @endforeach
+
+          @foreach ($runs as $run)
+            @continue(in_array($run->status, [\WebBlocks\Cms\Models\SystemUpdateRun::STATUS_PENDING, \WebBlocks\Cms\Models\SystemUpdateRun::STATUS_RUNNING], true))
+            @php($deleteModalId = 'updateRunDeleteModal-'.$run->id)
+            @php($deleteModalTitleId = $deleteModalId.'Title')
+            <div class="wb-modal" id="{{ $deleteModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $deleteModalTitleId }}">
+              <div class="wb-modal-dialog">
+                <div class="wb-modal-header">
+                  <div>
+                    <h3 class="wb-modal-title" id="{{ $deleteModalTitleId }}">Delete update history entry</h3>
+                    <p class="wb-card-description">Confirm history housekeeping for this update run.</p>
+                  </div>
+                  <button
+                    class="wb-modal-close"
+                    type="button"
+                    data-wb-dismiss="modal"
+                    aria-label="Close delete confirmation"
+                    title="Close"
+                  >&times;</button>
+                </div>
+
+                <div class="wb-modal-body wb-stack wb-stack-4">
+                  <div class="wb-alert wb-alert-warning">
+                    This only removes the selected update run history record. It does not change the current CMS version, installed version state, latest published metadata, release artifacts, backups, package files, update availability, migrations, or domain/content data.
+                  </div>
+
+                  <dl class="wb-list wb-list-flush">
+                    <div class="wb-list-item">
+                      <dt class="wb-list-item-title">Version</dt>
+                      <dd class="wb-list-item-sub">{{ $run->from_version ?: 'N/A' }} → {{ $run->to_version ?: 'N/A' }}</dd>
+                    </div>
+                    <div class="wb-list-item">
+                      <dt class="wb-list-item-title">Status</dt>
+                      <dd class="wb-list-item-sub"><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $run->statusLabel() }}</span></dd>
+                    </div>
+                    <div class="wb-list-item">
+                      <dt class="wb-list-item-title">Started at</dt>
+                      <dd class="wb-list-item-sub">{{ optional($run->started_at)->format('Y-m-d H:i:s') ?? 'Not available' }}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div class="wb-modal-footer">
+                  <button class="wb-btn wb-btn-secondary" type="button" data-wb-dismiss="modal">Cancel</button>
+                  <form method="POST" action="{{ route('admin.system.updates.runs.destroy', $run) }}">
+                    @csrf
+                    @method('DELETE')
+                    <button class="wb-btn wb-btn-danger" type="submit">Delete</button>
+                  </form>
                 </div>
               </div>
             </div>

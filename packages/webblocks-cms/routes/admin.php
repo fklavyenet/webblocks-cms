@@ -206,6 +206,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
       Route::post('system/updates/continue', [SystemUpdateController::class, 'continue'])->name('system.updates.continue');
       Route::post('system/updates/cancel', [SystemUpdateController::class, 'cancel'])->name('system.updates.cancel');
+      Route::delete('system/updates/runs/{run}', [SystemUpdateController::class, 'destroyRun'])->whereNumber('run')->name('system.updates.runs.destroy');
       Route::get('system/icons', [IconCatalogController::class, 'index'])->name('system.icons.index');
       Route::put('system/icons/{iconCatalogItem}', [IconCatalogController::class, 'update'])->name('system.icons.update');
     });

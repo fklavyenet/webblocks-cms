@@ -19,6 +19,8 @@ class SystemUpdateRun extends Model
 
   public const STATUS_PENDING = 'pending';
 
+  public const STATUS_RUNNING = 'running';
+
   public const STATUS_CANCELLED = 'cancelled';
 
   protected $fillable = [
@@ -55,6 +57,7 @@ class SystemUpdateRun extends Model
       self::STATUS_SUCCESS => 'wb-status-active',
       self::STATUS_SUCCESS_WITH_WARNINGS => 'wb-status-pending',
       self::STATUS_PENDING => 'wb-status-pending',
+      self::STATUS_RUNNING => 'wb-status-pending',
       default => 'wb-status-danger',
     };
   }
