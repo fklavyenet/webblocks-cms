@@ -32,6 +32,7 @@ class SystemUpdateController extends Controller
 
     return view('webblocks-cms::admin.system.updates', [
       'report' => $report,
+      'updateRuns' => $this->updateRuns(),
       'latestUpdateRun' => $mainLatestUpdateRun,
       'historicalUpdateRuns' => $latestUpdateRun && $mainLatestUpdateRun === null
         ? collect([$latestUpdateRun])
@@ -131,6 +132,20 @@ class SystemUpdateController extends Controller
     }
 
     return SystemUpdateRun::query()->with('triggeredBy')->latest()->first();
+  }
+
+  private function updateRuns()
+  {
+    if (! Schema::hasTable('system_update_runs')) {
+      return collect();
+    }
+
+    return SystemUpdateRun::query()
+      ->with('triggeredBy')
+      ->latest('started_at')
+      ->latest('id')
+      ->limit(8)
+      ->get();
   }
 
   private function mainLatestUpdateRun(?SystemUpdateRun $run, array $report): ?SystemUpdateRun

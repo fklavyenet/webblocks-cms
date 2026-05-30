@@ -2,7 +2,7 @@
 
 ## 1.32.91
 
-- Align `System -> Updates` around Update Summary, Install Update, Diagnostics, and compact Update History while moving release notes and package safety into accordions.
+- Align `System -> Updates` with the current QuizTem interaction standard: WebBlocks UI card headers/actions, release notes and package safety accordions, compact diagnostics disclosure, disabled unavailable install action, and modal-based history details.
 - Stop running broad catalog seeding and `block-types:sync-core` during normal System Update applies; package updates now stay focused on release package apply, required update migrations, cache clears, run recording, and installed-version persistence.
 - Add `webblocks:catalog-repair` with dry-run and scoped repair options for block types, slot types, page layouts, and icons while preserving custom catalog rows.
 

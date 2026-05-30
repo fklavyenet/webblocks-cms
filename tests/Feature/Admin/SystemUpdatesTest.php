@@ -58,6 +58,33 @@ class SystemUpdatesTest extends TestCase
     $response->assertDontSee('Recent Backup');
     $response->assertSee('Diagnostics');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
+    $response->assertSee('data-webblocks-updates-layout="single-column"', false);
+    $response->assertSee('data-webblocks-updates-card="summary"', false);
+    $response->assertSee('data-webblocks-updates-card="install"', false);
+    $response->assertSee('data-webblocks-updates-card="diagnostics"', false);
+    $response->assertSee('data-webblocks-updates-card="history"', false);
+    $response->assertSee('data-webblocks-updates-accordion="release-notes"', false);
+    $response->assertSee('data-webblocks-updates-accordion="package-safety"', false);
+    $response->assertSee('data-webblocks-updates-accordion="diagnostics"', false);
+    $response->assertSee('class="wb-accordion" data-wb-accordion', false);
+    $response->assertSee('class="wb-accordion-trigger"', false);
+    $response->assertSee('class="wb-icon wb-icon-chevron-down wb-accordion-icon"', false);
+    $response->assertSee('Diagnostics passed. Details stay collapsed until attention is needed.');
+    $response->assertSee('Diagnostics passed');
+    $response->assertSeeInOrder([
+      'data-webblocks-updates-card="summary"',
+      'Update Summary',
+      'Check again',
+      'data-webblocks-updates-card="install"',
+      'Install Update',
+      'data-webblocks-updates-card="diagnostics"',
+      'Diagnostics',
+      'data-webblocks-updates-card="history"',
+      'Update History',
+    ], false);
+    $response->assertDontSee('<details', false);
+    $response->assertDontSee('<summary', false);
+    $this->assertFalse(File::isDirectory(base_path('.github')));
 
     $summaryHtml = $this->cardHtml($response->getContent(), 'Update Summary');
     $this->assertStringNotContainsString('Stored installed version', $summaryHtml);
@@ -95,7 +122,7 @@ class SystemUpdatesTest extends TestCase
 
     $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $followUp->assertSee('Update available');
-    $followUp->assertSee('Update now');
+    $followUp->assertSee('Install update');
     $followUp->assertDontSee('Download package');
     $followUp->assertSee('Check again');
     $followUp->assertSee('Latest Published Version');
@@ -114,24 +141,24 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('Update Summary');
-    $response->assertSee('A new WebBlocks CMS release is ready.');
+    $response->assertSee('A newer published release is available from the configured update server.');
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
     $response->assertSee(WebBlocks::version());
     $response->assertSee('99.0.0');
-    $response->assertSee('Update now');
+    $response->assertSee('Install update');
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();
     $summaryHtml = $this->cardHtml($html, 'Update Summary');
-    $summaryHeaderPosition = strpos($html, '<strong>Update Summary</strong>');
-    $optionsHeaderPosition = strpos($html, '<strong>Install Update</strong>');
-    $buttonPosition = strpos($html, 'data-default-label="Update now"');
+    $summaryHeaderPosition = strpos($html, '<h2 class="wb-card-title">Update Summary</h2>');
+    $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Install Update</h2>');
+    $buttonPosition = strpos($html, 'data-default-label="Install update"');
 
     $this->assertStringContainsString('Current CMS Version', $summaryHtml);
     $this->assertStringContainsString('Latest Published Version', $summaryHtml);
-    $this->assertStringNotContainsString('Updated at', $summaryHtml);
-    $this->assertStringNotContainsString('Published at', $summaryHtml);
+    $this->assertStringContainsString('Update Date', $summaryHtml);
+    $this->assertStringContainsString('Published Date', $summaryHtml);
     $this->assertIsInt($summaryHeaderPosition);
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($buttonPosition);
@@ -148,26 +175,27 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Install Update</strong>', false);
-    $response->assertSee('Package safety');
+    $response->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $response->assertSee('Package safety details');
+    $response->assertSee('data-webblocks-updates-accordion="package-safety"', false);
     $response->assertSee('Download the backup before installation starts');
     $response->assertSee('A pre-update backup will be created automatically before installation.');
-    $response->assertSee('Update now');
+    $response->assertSee('Install update');
 
     $html = $response->getContent();
-    $optionsHeaderPosition = strpos($html, '<strong>Install Update</strong>');
+    $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Install Update</h2>');
     $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $optionsHeaderPosition);
     $backupHelpPosition = strpos($html, 'A pre-update backup will be created automatically before installation.', $optionsHeaderPosition);
-    $buttonPosition = strpos($html, 'data-default-label="Update now"', $backupHelpPosition);
-    $diagnosticsPosition = strpos($html, '<strong>Diagnostics</strong>');
+    $buttonPosition = strpos($html, 'data-default-label="Install update"', $optionsHeaderPosition);
+    $diagnosticsPosition = strpos($html, '<span class="wb-card-title">Diagnostics</span>');
 
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($checkboxPosition);
     $this->assertIsInt($backupHelpPosition);
     $this->assertIsInt($buttonPosition);
     $this->assertIsInt($diagnosticsPosition);
-    $this->assertLessThan($buttonPosition, $checkboxPosition);
-    $this->assertLessThan($buttonPosition, $backupHelpPosition);
+    $this->assertLessThan($checkboxPosition, $buttonPosition);
+    $this->assertLessThan($checkboxPosition, $backupHelpPosition);
     $this->assertLessThan($diagnosticsPosition, $optionsHeaderPosition);
     $this->assertLessThan($buttonPosition, $optionsHeaderPosition);
   }
@@ -231,7 +259,8 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertDontSee('<strong>Release Preview</strong>', false);
-    $response->assertSee('<strong>Release notes</strong>', false);
+    $response->assertSee('data-webblocks-updates-accordion="release-notes"', false);
+    $response->assertSee('<span>Release notes</span>', false);
     $response->assertDontSee('What&#039;s included', false);
     $response->assertSee('Operator-friendly release details');
     $response->assertSee('This release improves update review before installation.');
@@ -250,6 +279,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Technical notes');
     $response->assertSee('Artifact checksum remains verified before install.');
     $response->assertSee('Diagnostics');
+    $response->assertDontSee('<summary><strong>Release notes</strong></summary>', false);
   }
 
   #[Test]
@@ -350,7 +380,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Update server unavailable');
     $response->assertSee('Server detail');
     $response->assertSee('Diagnostics');
-    $response->assertSee('Update now');
+    $response->assertSee('Install update');
     $response->assertDontSee('<strong>Actions</strong>', false);
   }
 
@@ -363,11 +393,13 @@ class SystemUpdatesTest extends TestCase
 
     $upToDateResponse = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $upToDateResponse->assertOk();
-    $upToDateResponse->assertSee('This install is already on the latest published release.');
+    $upToDateResponse->assertSee('This install already matches the latest published release for the selected channel.');
     $upToDateResponse->assertSee('Up to date');
-    $upToDateResponse->assertSee('Update now');
-    $upToDateResponse->assertSee('<strong>Install Update</strong>', false);
-    $upToDateResponse->assertSee('No installable update right now');
+    $upToDateResponse->assertSee('Install update');
+    $upToDateResponse->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $upToDateResponse->assertSee('Install update is currently unavailable.');
+    $upToDateResponse->assertSee('No newer release is ready for this install.');
+    $upToDateResponse->assertDontSee('name="download_pre_update_backup"', false);
   }
 
   #[Test]
@@ -384,9 +416,9 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
     $response->assertSee('This codebase is ahead of the latest published package on the selected channel.');
-    $response->assertSee('Update now');
-    $response->assertSee('<strong>Install Update</strong>', false);
-    $response->assertSee('No installable update right now');
+    $response->assertSee('Install update');
+    $response->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $response->assertSee('Install update is currently unavailable.');
   }
 
   #[Test]
@@ -405,9 +437,9 @@ class SystemUpdatesTest extends TestCase
     $incompatibleResponse->assertOk();
     $incompatibleResponse->assertSee('Incompatible update available');
     $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
-    $incompatibleResponse->assertSee('Update now');
-    $incompatibleResponse->assertSee('<strong>Install Update</strong>', false);
-    $incompatibleResponse->assertSee('No installable update right now');
+    $incompatibleResponse->assertSee('Install update');
+    $incompatibleResponse->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $incompatibleResponse->assertSee('Install update is currently unavailable.');
   }
 
   #[Test]
@@ -430,10 +462,10 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('This install is already on the latest published release.');
+    $response->assertSee('This install already matches the latest published release for the selected channel.');
     $response->assertDontSee('Update available');
-    $response->assertSee('<strong>Update History</strong>', false);
-    $response->assertSee('1.32.80 to '.WebBlocks::version());
+    $response->assertSee('<h2 class="wb-card-title">Update History</h2>', false);
+    $response->assertSee('1.32.80 → '.WebBlocks::version());
     $response->assertSee('failed');
   }
 
@@ -457,9 +489,11 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Update History</strong>', false);
-    $response->assertSee(WebBlocks::version().' to 99.0.0');
+    $response->assertSee('<h2 class="wb-card-title">Update History</h2>', false);
+    $response->assertSee(WebBlocks::version().' → 99.0.0');
     $response->assertSee('failed');
+    $response->assertSee('wb-icon wb-icon-eye', false);
+    $response->assertDontSee('<summary>Output</summary>', false);
   }
 
   #[Test]
@@ -539,6 +573,7 @@ class SystemUpdatesTest extends TestCase
     ]);
     $this->assertStringNotContainsString('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', (string) $run->output);
     $this->assertStringNotContainsString('php artisan block-types:sync-core --force', (string) $run->output);
+    $this->assertStringNotContainsString('php artisan webblocks:catalog-repair', (string) $run->output);
 
     $backup = SystemBackup::query()->latest()->first();
     $this->assertNotNull($backup);
@@ -668,6 +703,7 @@ class SystemUpdatesTest extends TestCase
     $this->assertNotContains('php artisan migrate --force', $runner->commands);
     $this->assertNotContains('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands);
     $this->assertNotContains('php artisan block-types:sync-core --force', $runner->commands);
+    $this->assertNotContains('php artisan webblocks:catalog-repair --all', $runner->commands);
     $this->assertContains('php artisan cache:clear', $runner->commands);
     $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
   }
@@ -696,6 +732,7 @@ class SystemUpdatesTest extends TestCase
 
     $this->assertNotContains('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands);
     $this->assertNotContains('php artisan block-types:sync-core --force', $runner->commands);
+    $this->assertNotContains('php artisan webblocks:catalog-repair --all', $runner->commands);
   }
 
   #[Test]
@@ -747,7 +784,7 @@ class SystemUpdatesTest extends TestCase
     $formPosition = strpos($html, 'action="'.route('admin.system.updates.store').'"');
     $csrfPosition = strpos($html, 'name="_token"', $formPosition);
     $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $formPosition);
-    $buttonPosition = strpos($html, 'data-default-label="Update now"', $formPosition);
+    $buttonPosition = strpos($html, 'form="webblocks-update-install-form"');
     $formEndPosition = strpos($html, '</form>', $formPosition);
 
     $this->assertIsInt($formPosition);
@@ -757,7 +794,8 @@ class SystemUpdatesTest extends TestCase
     $this->assertIsInt($formEndPosition);
     $this->assertLessThan($formEndPosition, $csrfPosition);
     $this->assertLessThan($formEndPosition, $checkboxPosition);
-    $this->assertLessThan($formEndPosition, $buttonPosition);
+    $this->assertLessThan($formPosition, $buttonPosition);
+    $this->assertStringContainsString('form="webblocks-update-install-form"', $html);
   }
 
   #[Test]
@@ -977,11 +1015,11 @@ class SystemUpdatesTest extends TestCase
 
   private function cardHtml(string $html, string $heading): string
   {
-    $start = strpos($html, '<strong>'.$heading.'</strong>');
+    $start = strpos($html, '<h2 class="wb-card-title">'.$heading.'</h2>');
 
     $this->assertIsInt($start, 'Expected to find card heading ['.$heading.'].');
 
-    $nextCard = strpos($html, '<div class="wb-card"', $start + strlen($heading));
+    $nextCard = strpos($html, '<section class="wb-card"', $start + strlen($heading));
 
     return $nextCard === false
       ? substr($html, $start)
