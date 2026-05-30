@@ -641,6 +641,119 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
+  public function update_history_is_paginated_with_default_page_size_and_newest_records_first(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->createUpdateHistoryRuns(12, $user);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('data-webblocks-update-history-per-page', false);
+    $response->assertSee('Per page');
+    $response->assertSee('<option value="10" selected', false);
+    $response->assertSee('1-10/12');
+    $response->assertSee('9.0.12');
+    $response->assertSee('9.0.03');
+    $response->assertDontSee('9.0.02');
+    $response->assertDontSee('9.0.01');
+    $response->assertSee('data-admin-pagination', false);
+    $response->assertSee('class="wb-pagination wb-pagination-compact"', false);
+    $response->assertSee('aria-label="Update History pagination"', false);
+    $response->assertSee('history_page=2', false);
+  }
+
+  #[Test]
+  public function update_history_accepts_allowed_per_page_values(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->createUpdateHistoryRuns(60, $user);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    foreach ([5, 10, 15, 25, 50] as $perPage) {
+      $this->actingAs($user)
+        ->get(route('admin.system.updates.index', ['history_per_page' => $perPage]))
+        ->assertOk()
+        ->assertSee('<option value="'.$perPage.'" selected', false)
+        ->assertSee('1-'.$perPage.'/60');
+    }
+  }
+
+  #[Test]
+  public function invalid_update_history_per_page_falls_back_to_default(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->createUpdateHistoryRuns(12, $user);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $this->actingAs($user)
+      ->get(route('admin.system.updates.index', ['history_per_page' => 999]))
+      ->assertOk()
+      ->assertSee('<option value="10" selected', false)
+      ->assertSee('1-10/12')
+      ->assertDontSee('<option value="999"', false);
+  }
+
+  #[Test]
+  public function update_history_pagination_preserves_per_page_and_second_page_shows_older_rows_with_actions(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $runs = $this->createUpdateHistoryRuns(12, $user);
+    $pageTwoRun = $runs[7];
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index', [
+      'history_per_page' => 5,
+      'history_page' => 2,
+    ]));
+
+    $response->assertOk();
+    $response->assertSee('6-10/12');
+    $response->assertSee('history_per_page=5', false);
+    $response->assertSee('history_page=1', false);
+    $response->assertSee('history_page=3', false);
+    $response->assertSee('9.0.07');
+    $response->assertSee('9.0.03');
+    $response->assertDontSee('9.0.12');
+    $response->assertDontSee('9.0.02');
+    $response->assertSee('updateRunDetailsModal-'.$pageTwoRun->id, false);
+    $response->assertSee('updateRunDeleteModal-'.$pageTwoRun->id, false);
+    $response->assertSee('wb-icon wb-icon-eye', false);
+    $response->assertSee('wb-icon wb-icon-trash', false);
+    $response->assertSee('action="'.route('admin.system.updates.runs.destroy', $pageTwoRun).'"', false);
+  }
+
+  #[Test]
+  public function deleting_update_history_row_from_paginated_page_removes_only_that_row_and_preserves_version_state(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('1.32.90');
+    $runs = $this->createUpdateHistoryRuns(12, $user);
+    $deleteRun = $runs[7];
+    $keptRun = $runs[6];
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.updates.runs.destroy', [
+        'run' => $deleteRun,
+        'history_page' => 2,
+        'history_per_page' => 5,
+      ]))
+      ->assertRedirect(route('admin.system.updates.index'))
+      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
+
+    $this->assertDatabaseMissing('system_update_runs', [
+      'id' => $deleteRun->id,
+    ]);
+    $this->assertDatabaseHas('system_update_runs', [
+      'id' => $keptRun->id,
+      'to_version' => '9.0.06',
+    ]);
+    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+  }
+
+  #[Test]
   public function successful_update_flow_persists_version_records_run_and_updates_sidebar(): void
   {
     $user = User::factory()->superAdmin()->create();
@@ -1094,6 +1207,27 @@ class SystemUpdatesTest extends TestCase
     $response->assertSessionHas('status', 'Pending update cancelled. The pre-update backup was kept.');
     $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
     $this->assertSame(SystemUpdateRun::STATUS_CANCELLED, SystemUpdateRun::query()->latest()->firstOrFail()->status);
+  }
+
+  private function createUpdateHistoryRuns(int $count, User $user): array
+  {
+    $baseStartedAt = CarbonImmutable::parse('2026-05-30 12:00:00');
+    $runs = [];
+
+    for ($index = 1; $index <= $count; $index++) {
+      $runs[$index] = SystemUpdateRun::query()->create([
+        'from_version' => sprintf('8.0.%02d', $index),
+        'to_version' => sprintf('9.0.%02d', $index),
+        'status' => SystemUpdateRun::STATUS_SUCCESS,
+        'summary' => 'History run '.$index,
+        'started_at' => $baseStartedAt->addMinutes($index),
+        'finished_at' => $baseStartedAt->addMinutes($index)->addMinute(),
+        'duration_ms' => 1000,
+        'triggered_by_user_id' => $user->id,
+      ]);
+    }
+
+    return $runs;
   }
 
   private function mockClientResult(

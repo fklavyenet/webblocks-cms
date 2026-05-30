@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -22,17 +23,24 @@ class SystemUpdateController extends Controller
     private readonly SystemUpdater $systemUpdater,
   ) {}
 
-  public function index(): View
+  private const HISTORY_PER_PAGE_OPTIONS = [5, 10, 15, 25, 50];
+
+  private const DEFAULT_HISTORY_PER_PAGE = 10;
+
+  public function index(Request $request): View
   {
     $report = $this->systemUpdateInspector->report();
     $checkedAt = session('system_updates_checked_at');
     $pendingUpdate = $this->pendingUpdate();
     $latestUpdateRun = $this->latestUpdateRun();
     $mainLatestUpdateRun = $this->mainLatestUpdateRun($latestUpdateRun, $report);
+    $historyPerPage = $this->historyPerPage($request);
 
     return view('webblocks-cms::admin.system.updates', [
       'report' => $report,
-      'updateRuns' => $this->updateRuns(),
+      'updateRuns' => $this->updateRuns($historyPerPage),
+      'historyPerPage' => $historyPerPage,
+      'historyPerPageOptions' => self::HISTORY_PER_PAGE_OPTIONS,
       'latestUpdateRun' => $mainLatestUpdateRun,
       'historicalUpdateRuns' => $latestUpdateRun && $mainLatestUpdateRun === null
         ? collect([$latestUpdateRun])
@@ -149,18 +157,30 @@ class SystemUpdateController extends Controller
     return SystemUpdateRun::query()->with('triggeredBy')->latest()->first();
   }
 
-  private function updateRuns()
+  private function updateRuns(int $perPage)
   {
     if (! Schema::hasTable('system_update_runs')) {
-      return collect();
+      return new LengthAwarePaginator([], 0, $perPage, 1, [
+        'pageName' => 'history_page',
+        'path' => request()->url(),
+      ]);
     }
 
     return SystemUpdateRun::query()
       ->with('triggeredBy')
       ->latest('started_at')
       ->latest('id')
-      ->limit(8)
-      ->get();
+      ->paginate($perPage, ['*'], 'history_page')
+      ->withQueryString();
+  }
+
+  private function historyPerPage(Request $request): int
+  {
+    $perPage = (int) $request->query('history_per_page', self::DEFAULT_HISTORY_PER_PAGE);
+
+    return in_array($perPage, self::HISTORY_PER_PAGE_OPTIONS, true)
+      ? $perPage
+      : self::DEFAULT_HISTORY_PER_PAGE;
   }
 
   private function mainLatestUpdateRun(?SystemUpdateRun $run, array $report): ?SystemUpdateRun

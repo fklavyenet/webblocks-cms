@@ -10,8 +10,9 @@
     $storedInstalledVersion = $report['stored_installed_version'] ?? null;
     $pendingUpdate = $pendingUpdate ?? null;
     $pendingBackup = $pendingBackup ?? null;
-    $runs = collect($updateRuns ?? []);
-    $latestUpdateRun = $runs->first();
+    $runs = $updateRuns ?? collect();
+    $historyRows = method_exists($runs, 'getCollection') ? $runs->getCollection() : collect($runs);
+    $latestUpdateRun = $latestUpdateRun ?? $historyRows->first();
     $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
     $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
     $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
@@ -411,9 +412,24 @@ Cache clears, update run recording, and installed version persistence</div>
           <h2 class="wb-card-title">Update History</h2>
           <p class="wb-card-description">Recent WebBlocks CMS package update run records.</p>
         </div>
-        @if ($latestUpdateRun)
-          <span class="wb-status-pill {{ $latestUpdateRun->statusBadgeClass() }}">{{ $latestUpdateRun->statusLabel() }}</span>
-        @endif
+        <div class="wb-action-group">
+          @if ($latestUpdateRun)
+            <span class="wb-status-pill {{ $latestUpdateRun->statusBadgeClass() }}">{{ $latestUpdateRun->statusLabel() }}</span>
+          @endif
+          <form method="GET" action="{{ route('admin.system.updates.index') }}" class="wb-action-group" data-webblocks-update-history-per-page>
+            @foreach (request()->except(['history_page', 'history_per_page']) as $name => $value)
+              @if (is_scalar($value) && $value !== null && $value !== '')
+                <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+              @endif
+            @endforeach
+            <label for="webblocks-update-history-per-page" class="wb-text-sm wb-text-muted">Per page</label>
+            <select id="webblocks-update-history-per-page" name="history_per_page" class="wb-select" onchange="this.form.submit()">
+              @foreach ($historyPerPageOptions as $perPageOption)
+                <option value="{{ $perPageOption }}" @selected((int) $historyPerPage === (int) $perPageOption)>{{ $perPageOption }}</option>
+              @endforeach
+            </select>
+          </form>
+        </div>
       </div>
 
       <div class="wb-card-body wb-stack wb-stack-4">
@@ -601,6 +617,10 @@ Cache clears, update run recording, and installed version persistence</div>
           @endforeach
         @endif
       </div>
+
+      @if ($runs->isNotEmpty())
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $runs, 'ariaLabel' => 'Update History pagination', 'compact' => true])
+      @endif
     </section>
   </div>
 @endsection

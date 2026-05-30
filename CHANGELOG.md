@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.32.93
+## 1.32.94
 
+- Paginate the CMS System Updates history table with a compact `Per page` selector, dedicated `history_page` / `history_per_page` query parameters, and preserved details/delete modal actions on paginated rows.
 - Add CMS System Updates history deletion with WebBlocks UI trash icon actions, confirmation modals, CSRF-protected DELETE forms, and history-only deletion safeguards.
 - Align `System -> Updates` with the current QuizTem interaction standard: WebBlocks UI card headers/actions, release notes and package safety accordions, compact diagnostics disclosure, disabled unavailable install action, and modal-based history details.
 - Stop running broad catalog seeding and `block-types:sync-core` during normal System Update applies; package updates now stay focused on release package apply, required update migrations, cache clears, run recording, and installed-version persistence.
