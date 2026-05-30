@@ -62,3 +62,13 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: add manual plugin ZIP upload/install with archive validation, storage-owned install paths, disabled-by-default installed plugins, explicit enablement, and no marketplace, remote store, arbitrary Composer install, or automatic third-party download.
 - Done: polish `System -> Plugins` into a concise management UI with lifecycle actions and safe manual-upload uninstall that preserves plugin-owned tables.
 - Later: database-backed plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, automatic external production CDN deployment, and generic update-server publishing.
+
+### Phase 6 - Ecosystem Plugin Catalog Direction
+
+- Planned: keep plugin contracts reusable across WebBlocks CMS, QuizTem, Herne Panel, WebBlocks Publisher, and future WebBlocks products instead of designing them only for CMS.
+- Planned: define shared plugin identity, package/manifest, compatibility, lifecycle, release metadata, checksum/signature, and catalog metadata conventions.
+- Planned: use `plugins.webblocksui.com` as the proposed future Plugin Catalog and later Plugin Store surface without implying that the service exists or is live today.
+- Planned: start with a read-only Plugin Catalog for discovery, metadata, compatibility, documentation, release information, checksums, and manual download links.
+- Planned: later add controlled Plugin Store install/update integration from trusted catalog metadata, while preserving disabled-by-default installs, compatibility-first behavior, explicit setup/migration actions, and inert disabled/incompatible plugins.
+- Deferred: Marketplace behavior such as paid plugins, licensing, accounts, reviews, approval workflows, and commercial publisher operations.
+- Deferred: automatic remote install, automatic update apply, arbitrary Composer install, production deployment automation, and live site verification.

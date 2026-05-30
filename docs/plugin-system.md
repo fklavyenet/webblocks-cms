@@ -207,6 +207,16 @@ Phase 5 does not add marketplace behavior or arbitrary remote installation. Safe
 
 No runtime feature downloads remote code, installs arbitrary Composer packages, publishes marketplace catalogs, or writes production CDN/update-server artifacts.
 
+## Ecosystem Catalog Direction
+
+The CMS plugin system is the first implementation host for a broader WebBlocks plugin ecosystem direction. Future plugin contracts should be reusable by WebBlocks CMS, QuizTem, Herne Panel, WebBlocks Publisher, and later WebBlocks products where each host exposes its own product-specific extension points.
+
+The proposed future catalog/store surface is `plugins.webblocksui.com`. The near-term target is a Plugin Catalog for discovery, metadata, compatibility, documentation, release information, checksums, and manual download links. Later Plugin Store behavior may add controlled install/update integration from trusted catalog metadata. Marketplace behavior, including accounts, licensing, paid plugins, reviews, and approval workflows, is deferred.
+
+This direction does not change the current CMS runtime. Manual ZIP upload/install remains the supported CMS plugin installation method, installed plugins remain disabled by default, setup/migrations stay explicit, and remote catalog metadata must not automatically install, enable, migrate, or update plugins.
+
+See [WebBlocks Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md) for the product-level direction and phase plan.
+
 ## Minimal Plugin Example
 
 A minimal plugin package should expose a provider and a definition similar to:

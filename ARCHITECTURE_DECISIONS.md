@@ -64,3 +64,23 @@ Consequences:
 - Disabled or incompatible plugins contribute no active runtime behavior, including dashboard widgets, system cards, block hooks, public assets, menus, permissions, routes, commands, settings routes, or health reporter execution.
 - `System -> Plugins` reports configured enabled state separately from active compatibility. A plugin can be configured enabled yet remain inactive when its required CMS version constraint is not satisfied.
 - WebBlocks UI Manager is not registered, routed, migrated, menu-visible, command-registered, or health-visible in normal CMS installs. It becomes available only when an operator manually uploads its plugin ZIP and explicitly enables it. Existing tables created by v1.32.67 are not dropped automatically.
+
+## WebBlocks Plugin Ecosystem Catalog Direction
+
+- WebBlocks plugin contracts should be designed for reuse across WebBlocks products, not only WebBlocks CMS.
+- WebBlocks CMS remains the first implementation host.
+- Shared plugin identity, manifest, compatibility, lifecycle, release metadata, and catalog metadata conventions should support future hosts such as QuizTem, Herne Panel, WebBlocks Publisher, and later WebBlocks products.
+- `plugins.webblocksui.com` is the proposed future Plugin Catalog and later Plugin Store domain.
+- The near-term target is a Plugin Catalog for discovery, metadata, compatibility, documentation, release information, artifact checksums, and manual download links.
+- Plugin Store behavior for controlled install/update integration is later work and must preserve disabled-by-default installs, compatibility-first behavior, explicit setup/migration actions, and inert disabled/incompatible plugins.
+- Commercial Marketplace behavior is deferred.
+
+Reason:
+
+- Product-specific extension points may differ by host product, but plugin identity, package ownership, compatibility metadata, lifecycle safety, release metadata, and catalog discovery should be consistent across the WebBlocks ecosystem.
+- A shared contract makes it possible to build catalog and store capabilities without tying every future plugin decision to CMS-specific assumptions.
+
+Consequences:
+
+- CMS manual ZIP upload/install remains the current supported installation method.
+- This decision does not approve automatic remote plugin install, automatic update apply, arbitrary Composer install, paid licensing, marketplace accounts, third-party approval workflows, production deployment automation, or live site verification.
