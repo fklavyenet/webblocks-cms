@@ -29,7 +29,19 @@ The `Release Preview` card renders structured metadata from fields such as `titl
 
 The legacy `release_notes` string remains supported for older release payloads. If no release notes are present, the screen says `No release notes were provided for this release.` The updater does not infer changes from version numbers. Artifact URLs, checksums, diagnostics, and low-level response details remain in the collapsed technical details area.
 
-The GitHub tag release workflow publishes the structured release detail fields in top-level and nested detail payload shapes alongside the legacy `release_notes` value so the update service can serve rich notes to compatible System Updates screens while older clients continue to receive plain notes. Compatible clients read structured details from top-level fields, `details`, `release_details`, and update-server `meta.release_details` or `meta.details` payloads.
+Release metadata is prepared locally with `composer release:prepare` and published directly to the update server with `composer release:publish-update`. The native publisher sends structured release detail fields in top-level and nested detail payload shapes alongside the legacy `release_notes` value so the update service can serve rich notes to compatible System Updates screens while older clients continue to receive plain notes. Compatible clients read structured details from top-level fields, `details`, `release_details`, and update-server `meta.release_details` or `meta.details` payloads.
+
+GitHub Actions no longer creates release packages or publishes update metadata, and `.github` workflows are intentionally absent from the CMS repository. Maintainers may still push git commits and tags for source history, but System Updates consume only update-server metadata and package artifacts. The package artifact URL used by installed CMS clients comes from `updates.webblocksui.com` metadata after native publishing, not from a GitHub release asset.
+
+Maintainer commands:
+
+```bash
+composer release:prepare
+composer release:publish-update -- --dry-run
+composer release:publish-update
+```
+
+The publisher reads `WEBBLOCKS_UPDATE_PUBLISHER_URL`, `WEBBLOCKS_UPDATE_PUBLISHER_TOKEN`, `WEBBLOCKS_UPDATE_PUBLISHER_PRODUCT`, and `WEBBLOCKS_UPDATE_PUBLISHER_CHANNEL`, with `WEBBLOCKS_PUBLISH_URL` and `WEBBLOCKS_PUBLISH_TOKEN` kept as safe compatibility aliases. Defaults are `https://updates.webblocksui.com`, no token, `webblocks-cms`, and `stable`. Dry-run validates inputs without uploading. A real publish without a token reports a controlled non-published state, exits unsuccessfully, and must not be treated as a release publication.
 
 ## Update Apply Flow
 

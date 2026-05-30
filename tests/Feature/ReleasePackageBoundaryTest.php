@@ -25,16 +25,23 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
-  public function publish_release_workflow_builds_archives_from_git_archive_with_worktree_attributes(): void
+  public function github_release_workflows_are_intentionally_absent(): void
   {
-    $workflow = (string) file_get_contents(base_path('.github/workflows/publish-release.yml'));
+    $this->assertDirectoryDoesNotExist(base_path('.github'));
+    $this->assertSame([], glob(base_path('.github/workflows/*')) ?: []);
+  }
 
-    $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD "$package_root" | tar -xf - -C "$staging_dir"', $workflow);
-    $this->assertStringContainsString('cd "$package_dir"', $workflow);
-    $this->assertStringContainsString('zip -qr "$GITHUB_WORKSPACE/$archive_path" .', $workflow);
-    $this->assertStringContainsString('MINIMUM_CLIENT_VERSION: 1.32.18', $workflow);
-    $this->assertStringNotContainsString('git ls-files --cached --others --exclude-standard', $workflow);
-    $this->assertStringNotContainsString('git archive --format=zip --worktree-attributes --output "$archive_path" HEAD', $workflow);
+  #[Test]
+  public function native_release_prepare_builds_archives_from_package_root_with_worktree_attributes(): void
+  {
+    $script = (string) file_get_contents(base_path('scripts/release/prepare.sh'));
+
+    $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD "${PACKAGE_ROOT}"', $script);
+    $this->assertStringContainsString('cd "${PACKAGE_DIR}"', $script);
+    $this->assertStringContainsString('zip -qr "${ARCHIVE_PATH}" .', $script);
+    $this->assertStringContainsString('"minimum_client_version" => getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18"', $script);
+    $this->assertStringNotContainsString('gh release', $script);
+    $this->assertStringNotContainsString('github.com', $script);
   }
 
   #[Test]
@@ -94,12 +101,12 @@ class ReleasePackageBoundaryTest extends TestCase
   {
     $repositorySourceRoot = $this->buildRepositorySourceSnapshot();
     $installedPackageRoot = $this->buildInstalledPackageSnapshot();
-    $vendorPackageRoot = $this->buildWorkflowReleaseZipVendorPackageSnapshot();
+    $vendorPackageRoot = $this->buildNativeReleaseZipVendorPackageSnapshot();
 
     foreach ([
       'repository source checkout' => $repositorySourceRoot,
       'installed package artifact' => $installedPackageRoot,
-      'workflow release ZIP package root' => $vendorPackageRoot,
+      'native release ZIP package root' => $vendorPackageRoot,
     ] as $label => $root) {
       $this->assertBuildChainFilesAbsent($root, $label);
     }
@@ -109,7 +116,6 @@ class ReleasePackageBoundaryTest extends TestCase
   public function runtime_and_release_boundaries_do_not_reference_vite_or_node_build_steps(): void
   {
     $this->assertForbiddenBuildChainReferencesAbsent(base_path(), [
-      '.github',
       'app',
       'bootstrap',
       'config',
@@ -149,9 +155,9 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
-  public function workflow_release_zip_installs_bulk_listing_admin_javascript_at_composer_vendor_package_root(): void
+  public function native_release_zip_installs_bulk_listing_admin_javascript_at_composer_vendor_package_root(): void
   {
-    $vendorPackageRoot = $this->buildWorkflowReleaseZipVendorPackageSnapshot();
+    $vendorPackageRoot = $this->buildNativeReleaseZipVendorPackageSnapshot();
 
     $this->assertFileExists($vendorPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
     $this->assertFileExists($vendorPackageRoot.'/resources/views/layouts/admin.blade.php');
@@ -162,6 +168,20 @@ class ReleasePackageBoundaryTest extends TestCase
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/logo-64.png');
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/favicon-32x32.png');
     $this->assertFileDoesNotExist($vendorPackageRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
+
+    foreach ([
+      '.github',
+      '.git',
+      '.DS_Store',
+      '__MACOSX',
+      'project',
+      'storage',
+      'vendor',
+      'node_modules',
+      'public/build',
+    ] as $forbiddenPath) {
+      $this->assertFileDoesNotExist($vendorPackageRoot.'/'.$forbiddenPath);
+    }
   }
 
   #[Test]
@@ -283,7 +303,7 @@ class ReleasePackageBoundaryTest extends TestCase
     return $stagingDirectory;
   }
 
-  private function buildWorkflowReleaseZipVendorPackageSnapshot(): string
+  private function buildNativeReleaseZipVendorPackageSnapshot(): string
   {
     $stagingDirectory = $this->makeTemporaryDirectory('release-workflow-zip');
     $archivePath = $stagingDirectory.'/webblocks-cms-test.zip';

@@ -64,6 +64,12 @@
         "native:smoke": [
             "@php artisan webblocks:smoke-native-local"
         ],
+        "release:prepare": [
+            "scripts/release/prepare.sh"
+        ],
+        "release:publish-update": [
+            "scripts/release/publish-update.sh"
+        ],
         "format": [
             "vendor/bin/pint"
         ],

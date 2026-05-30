@@ -18,6 +18,7 @@ use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
+use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
 use WebBlocks\Cms\Console\SiteCloneCommand;
@@ -716,6 +717,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const PACKAGE_CONSOLE_COMMANDS = [
     PackageStatusCommand::class,
+    PublishUpdateCommand::class,
     ContactMailDiagnoseCommand::class,
     DoctorNativeLocalCommand::class,
     SmokeNativeLocalCommand::class,

@@ -16,6 +16,14 @@ return [
     'retry_times' => 0,
     'retry_sleep_milliseconds' => 150,
     'pending_cache_ttl_seconds' => 3600,
+    'publisher' => [
+        'url' => env('WEBBLOCKS_UPDATE_PUBLISHER_URL', env('WEBBLOCKS_PUBLISH_URL', env('WEBBLOCKS_UPDATES_SERVER_URL', 'https://updates.webblocksui.com'))),
+        'token' => env('WEBBLOCKS_UPDATE_PUBLISHER_TOKEN', env('WEBBLOCKS_PUBLISH_TOKEN')),
+        'product' => env('WEBBLOCKS_UPDATE_PUBLISHER_PRODUCT', WebBlocks::HANDLE),
+        'channel' => env('WEBBLOCKS_UPDATE_PUBLISHER_CHANNEL', env('WEBBLOCKS_UPDATES_CHANNEL', 'stable')),
+        'timeout_seconds' => env('WEBBLOCKS_UPDATE_PUBLISHER_TIMEOUT_SECONDS', 120),
+        'connect_timeout_seconds' => env('WEBBLOCKS_UPDATE_PUBLISHER_CONNECT_TIMEOUT_SECONDS', 5),
+    ],
     'installer' => [
         'target_path' => base_path(),
         'workspace_root' => 'app/system-updates',

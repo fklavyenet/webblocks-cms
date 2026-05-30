@@ -403,7 +403,9 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 
 ## Build Artifacts
 
-- The repository keeps `dist/` referenced as release-output space in the GitHub release workflow, while application layouts and docs also reference the WebBlocks UI package `dist` bundles loaded from CDN or published package paths.
+- CMS release artifacts are prepared locally with `composer release:prepare` and published to the update server with `composer release:publish-update`; use `composer release:publish-update -- --dry-run` to validate the retained artifact, checksum, metadata, endpoint, and token configuration without uploading.
+- Update publishing uses the WebBlocks Publisher API directly with product `webblocks-cms` and channel `stable` by default. GitHub Actions no longer owns release package creation or update-server publishing, and `.github` workflows are intentionally absent.
+- Git commits and tags may still be pushed for source history, but installed CMS working copies remain update consumers and must not push to upstream. System Updates consume artifact URLs from update-server metadata, not GitHub release assets.
 - The local repo `dist/` path is ignored by git and is not part of normal application source.
 
 ## License

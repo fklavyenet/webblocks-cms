@@ -111,12 +111,13 @@ Recommended sequence:
 3. update `README.md` for any meaningful behavior, setup, route, usage, admin, command, or release-note change
 4. update `CHANGELOG.md`
 5. update `App\Support\WebBlocks::VERSION`
-6. create and push the real git tag
-7. allow GitHub Actions to generate release notes, build the release package, and publish the release after the tag is pushed
-8. verify the published release is visible to the update infrastructure when update-server publishing is configured and available
-9. only after the release is real, synchronize the dev environment installed version if needed
+6. run `composer release:prepare` to generate the package ZIP, SHA-256 checksum, and update-server payload locally
+7. create and push the real git commit/tag as source history
+8. run `composer release:publish-update -- --dry-run`
+9. run `composer release:publish-update` to publish the artifact and metadata to the configured update server
+10. only after the release is real, synchronize the dev environment installed version if needed
 
-GitHub Actions owns release note generation and release package creation. There are no local release helper scripts.
+Release package creation and update publishing are native/local maintainer steps. GitHub Actions does not own release notes, package creation, update-server publishing, or any fallback publishing path, and `.github` workflows are intentionally absent. Git tags may still be pushed for source history, but update publishing does not depend on GitHub releases, GitHub asset URLs, the GitHub API, or the `gh` CLI.
 
 ## Coding Standards
 
@@ -231,6 +232,8 @@ Before creating a release tag, confirm:
 - release notes are prepared
 - `App\Support\WebBlocks::VERSION` is updated for the release
 - the release tag matches `App\Support\WebBlocks::VERSION`
+- `composer release:prepare` generated the release artifact and publisher payload
+- `composer release:publish-update -- --dry-run` validates artifact, checksum, metadata, endpoint, and token configuration
 - update metadata is compatible with the intended minimum client version
 - no local or runtime files are included in the release
 - `project/` is treated as an install-local preserved path and is not overwritten by updater package application
@@ -240,7 +243,7 @@ Before creating a release tag, confirm:
 After release tagging and publication, confirm:
 
 - the tag is pushed
-- the GitHub release workflow completed successfully
-- WebBlocks Publisher received the release metadata
+- `composer release:publish-update` published the package to the WebBlocks Publisher API
+- the update server latest metadata reports the published product, channel, version, checksum, and artifact URL
 - an installed test site detects the new release in the CMS update screen
 - the development environment `system.installed_version` is synchronized to the release version only after the release is real

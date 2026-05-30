@@ -65,6 +65,18 @@ That command safely upserts core CMS block types, leaves install-specific custom
 
 Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
 
+CMS release/update publishing is a native/local maintainer workflow:
+
+```bash
+composer release:prepare
+composer release:publish-update -- --dry-run
+composer release:publish-update
+```
+
+`release:prepare` builds the package-rooted ZIP, checksum, and publisher payload locally. `release:publish-update` posts the package and metadata directly to the configured WebBlocks Publisher API, then verifies latest update-server metadata for `webblocks-cms` on the selected channel. Git commits and tags are source-history steps only. GitHub Actions, GitHub releases, GitHub asset URLs, the GitHub API, and the `gh` CLI are not part of CMS update publishing, and `.github` workflows are intentionally absent.
+
+Installed CMS working copies are update consumers. They may fetch source history when needed, but must not push upstream or publish CMS updates from an installation checkout.
+
 ## Contact Mail Diagnostics
 
 Contact Form submissions are saved before notification delivery. SMTP failures are recorded on the saved Contact Message as email notification state and do not change the editorial status or spam classification.
