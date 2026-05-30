@@ -564,7 +564,10 @@ class SystemUpdatesTest extends TestCase
 
     $this->actingAs($user)
       ->delete(route('admin.system.updates.runs.destroy', $deleteRun))
-      ->assertRedirect(route('admin.system.updates.index'))
+      ->assertRedirect(route('admin.system.updates.index', [
+        'history_page' => 1,
+        'history_per_page' => 10,
+      ]))
       ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
 
     $this->assertDatabaseMissing('system_update_runs', [
@@ -631,7 +634,10 @@ class SystemUpdatesTest extends TestCase
 
     $this->actingAs($user)
       ->delete(route('admin.system.updates.runs.destroy', $run))
-      ->assertRedirect(route('admin.system.updates.index'))
+      ->assertRedirect(route('admin.system.updates.index', [
+        'history_page' => 1,
+        'history_per_page' => 10,
+      ]))
       ->assertSessionHasErrors(['system_update' => 'Update history entries that are still in progress cannot be deleted.']);
 
     $this->assertDatabaseHas('system_update_runs', [
@@ -722,6 +728,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('wb-icon wb-icon-eye', false);
     $response->assertSee('wb-icon wb-icon-trash', false);
     $response->assertSee('action="'.route('admin.system.updates.runs.destroy', $pageTwoRun).'"', false);
+    $response->assertSee('name="history_page" value="2"', false);
+    $response->assertSee('name="history_per_page" value="5"', false);
   }
 
   #[Test]
@@ -739,7 +747,10 @@ class SystemUpdatesTest extends TestCase
         'history_page' => 2,
         'history_per_page' => 5,
       ]))
-      ->assertRedirect(route('admin.system.updates.index'))
+      ->assertRedirect(route('admin.system.updates.index', [
+        'history_page' => 2,
+        'history_per_page' => 5,
+      ]))
       ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
 
     $this->assertDatabaseMissing('system_update_runs', [
@@ -748,6 +759,134 @@ class SystemUpdatesTest extends TestCase
     $this->assertDatabaseHas('system_update_runs', [
       'id' => $keptRun->id,
       'to_version' => '9.0.06',
+    ]);
+    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+  }
+
+  #[Test]
+  public function deleting_update_history_row_on_page_two_returns_to_page_two_when_records_remain(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('1.32.90');
+    $runs = $this->createUpdateHistoryRuns(25, $user);
+    $deleteRun = $runs[15];
+    $keptRun = $runs[14];
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
+        'history_page' => 2,
+        'history_per_page' => 10,
+      ])
+      ->assertRedirect(route('admin.system.updates.index', [
+        'history_page' => 2,
+        'history_per_page' => 10,
+      ]))
+      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
+
+    $this->assertDatabaseMissing('system_update_runs', [
+      'id' => $deleteRun->id,
+    ]);
+    $this->assertDatabaseHas('system_update_runs', [
+      'id' => $keptRun->id,
+      'to_version' => '9.0.14',
+    ]);
+    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+  }
+
+  #[Test]
+  public function deleting_only_row_on_last_update_history_page_redirects_to_previous_valid_page(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('1.32.90');
+    $runs = $this->createUpdateHistoryRuns(11, $user);
+    $deleteRun = $runs[1];
+    $keptRun = $runs[2];
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
+        'history_page' => 2,
+        'history_per_page' => 10,
+      ])
+      ->assertRedirect(route('admin.system.updates.index', [
+        'history_page' => 1,
+        'history_per_page' => 10,
+      ]))
+      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
+
+    $this->assertDatabaseMissing('system_update_runs', [
+      'id' => $deleteRun->id,
+    ]);
+    $this->assertDatabaseHas('system_update_runs', [
+      'id' => $keptRun->id,
+      'to_version' => '9.0.02',
+    ]);
+    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+  }
+
+  #[Test]
+  public function deleting_only_remaining_update_history_row_redirects_to_page_one_and_shows_empty_state(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('1.32.90');
+    $runs = $this->createUpdateHistoryRuns(1, $user);
+    $deleteRun = $runs[1];
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
+        'history_page' => 1,
+        'history_per_page' => 10,
+      ])
+      ->assertRedirect(route('admin.system.updates.index', [
+        'history_page' => 1,
+        'history_per_page' => 10,
+      ]))
+      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
+
+    $this->assertDatabaseMissing('system_update_runs', [
+      'id' => $deleteRun->id,
+    ]);
+    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+
+    $this->actingAs($user)
+      ->get(route('admin.system.updates.index', [
+        'history_page' => 1,
+        'history_per_page' => 10,
+      ]))
+      ->assertOk()
+      ->assertSee('No update runs have been recorded yet.');
+  }
+
+  #[Test]
+  public function deleting_update_history_normalizes_invalid_pagination_state(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('1.32.90');
+    $runs = $this->createUpdateHistoryRuns(12, $user);
+    $deleteRun = $runs[12];
+    $keptRun = $runs[11];
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
+        'history_page' => -7,
+        'history_per_page' => 999,
+      ])
+      ->assertRedirect(route('admin.system.updates.index', [
+        'history_page' => 1,
+        'history_per_page' => 10,
+      ]))
+      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
+
+    $this->assertDatabaseMissing('system_update_runs', [
+      'id' => $deleteRun->id,
+    ]);
+    $this->assertDatabaseHas('system_update_runs', [
+      'id' => $keptRun->id,
+      'to_version' => '9.0.11',
     ]);
     $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
     $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());

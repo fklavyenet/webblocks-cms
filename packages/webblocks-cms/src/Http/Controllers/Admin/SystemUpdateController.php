@@ -133,18 +133,30 @@ class SystemUpdateController extends Controller
       ->with('status', 'Pending update cancelled. The pre-update backup was kept.');
   }
 
-  public function destroyRun(SystemUpdateRun $run): RedirectResponse
+  public function destroyRun(Request $request, SystemUpdateRun $run): RedirectResponse
   {
+    $historyPerPage = $this->historyPerPage($request);
+    $requestedHistoryPage = $this->historyPage($request);
+
     if (in_array($run->status, [SystemUpdateRun::STATUS_PENDING, SystemUpdateRun::STATUS_RUNNING], true)) {
       return redirect()
-        ->route('admin.system.updates.index')
+        ->route('admin.system.updates.index', [
+          'history_page' => $requestedHistoryPage,
+          'history_per_page' => $historyPerPage,
+        ])
         ->withErrors(['system_update' => 'Update history entries that are still in progress cannot be deleted.']);
     }
 
     $run->delete();
+    $remainingCount = SystemUpdateRun::query()->count();
+    $lastPage = max(1, (int) ceil($remainingCount / $historyPerPage));
+    $targetPage = min($requestedHistoryPage, $lastPage);
 
     return redirect()
-      ->route('admin.system.updates.index')
+      ->route('admin.system.updates.index', [
+        'history_page' => $targetPage,
+        'history_per_page' => $historyPerPage,
+      ])
       ->with('status', 'Update history entry deleted. The installed CMS version was not changed.');
   }
 
@@ -176,11 +188,16 @@ class SystemUpdateController extends Controller
 
   private function historyPerPage(Request $request): int
   {
-    $perPage = (int) $request->query('history_per_page', self::DEFAULT_HISTORY_PER_PAGE);
+    $perPage = (int) $request->input('history_per_page', self::DEFAULT_HISTORY_PER_PAGE);
 
     return in_array($perPage, self::HISTORY_PER_PAGE_OPTIONS, true)
       ? $perPage
       : self::DEFAULT_HISTORY_PER_PAGE;
+  }
+
+  private function historyPage(Request $request): int
+  {
+    return max(1, (int) $request->input('history_page', 1));
   }
 
   private function mainLatestUpdateRun(?SystemUpdateRun $run, array $report): ?SystemUpdateRun

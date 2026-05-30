@@ -13,6 +13,7 @@
     $runs = $updateRuns ?? collect();
     $historyRows = method_exists($runs, 'getCollection') ? $runs->getCollection() : collect($runs);
     $latestUpdateRun = $latestUpdateRun ?? $historyRows->first();
+    $historyPage = method_exists($runs, 'currentPage') ? $runs->currentPage() : max(1, (int) request('history_page', 1));
     $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
     $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
     $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
@@ -609,6 +610,8 @@ Cache clears, update run recording, and installed version persistence</div>
                   <form method="POST" action="{{ route('admin.system.updates.runs.destroy', $run) }}">
                     @csrf
                     @method('DELETE')
+                    <input type="hidden" name="history_page" value="{{ $historyPage }}">
+                    <input type="hidden" name="history_per_page" value="{{ $historyPerPage }}">
                     <button class="wb-btn wb-btn-danger" type="submit">Delete</button>
                   </form>
                 </div>
