@@ -23,7 +23,9 @@ Updates in WebBlocks CMS are release-based and package-based.
 
 ## Release Details
 
-The System Updates screen shows human-readable release details before an admin starts an update. The update service may provide structured metadata fields such as `title`, `summary`, `highlights`, `fixes`, `compatibility_notes`, `migration_notes`, `asset_notes`, `operator_notes`, and `technical_notes`. The CMS renders those fields as escaped plain text with a concise summary and grouped bullets.
+The System Updates screen shows human-readable release details before an admin starts an update. The status hero explains whether an update is available, the install is current, the local/source version is newer than the latest published package, the update is incompatible, or the update server response cannot be trusted. Source-maintained checkouts may show both the effective code version and the stored installed version; this display is read-only and does not mutate `system.installed_version`.
+
+The `Release Preview` card renders structured metadata from fields such as `title`, `summary`, `highlights`, `fixes`, `compatibility_notes`, `migration_notes`, `asset_notes`, `operator_notes`, and `technical_notes`. The CMS renders those fields as escaped plain text, with highlights first, fixes/changes compactly listed, compatibility/migration/asset notes in callouts, operator notes grouped as checklist-style items, and technical release notes visually quieter than operator notes.
 
 The legacy `release_notes` string remains supported for older release payloads. If no release notes are present, the screen says `No release notes were provided for this release.` The updater does not infer changes from version numbers. Artifact URLs, checksums, diagnostics, and low-level response details remain in the collapsed technical details area.
 

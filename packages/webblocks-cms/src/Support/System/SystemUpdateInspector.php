@@ -52,6 +52,7 @@ class SystemUpdateInspector
     return [
       'checked_at' => $version['checked_at'] ?? now(),
       'installed_version' => $installedVersion,
+      'stored_installed_version' => $this->installedVersionStore->storedVersion(),
       'version' => $version,
       'diagnostics' => $diagnostics,
       'auto_update' => $autoUpdate,

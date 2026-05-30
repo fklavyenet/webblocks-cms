@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.89
+
+- Redesign the `System -> Updates` screen into a guided operator flow with a friendly status hero, `Release Preview`, actionable-only `Update Options`, quieter `Update History`, and last-position collapsed `Technical Details` while preserving strict package update behavior.
+- Clarify source-maintained checkout status on System Updates so effective local code versions can be shown without mutating `system.installed_version` during page rendering.
+
 ## 1.32.88
 
 - Fix System Updates availability detection for source-maintained checkouts so already-present local code versions do not show a stale actionable update, and move resolved failed update runs into collapsed history instead of the main latest-run warning.

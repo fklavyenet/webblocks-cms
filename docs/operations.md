@@ -38,7 +38,8 @@ System Updates checks the installed CMS version against the configured update se
 The update screen can report states such as:
 
 - update available
-- already up to date
+- up to date
+- local/source version newer than the latest published release
 - incompatible update available
 - no releases found
 - update server unavailable
@@ -48,7 +49,9 @@ The in-app update flow downloads the release package, applies protected-path rul
 
 Update availability is based on the latest published release version being newer than the effective installed CMS version. Historical failed update runs remain inspectable as history, but they do not make a current install actionable by themselves.
 
-When an update is available, the screen stacks the update status summary, update options, and a `Release Details` card. The update client supports structured metadata from the update service, including title, summary, highlights, fixes, compatibility notes, migration notes, asset notes, operator notes, and technical notes. These values are rendered as escaped plain text in grouped bullets. Older releases that only provide `release_notes` still show those notes cleanly, and releases without notes show `No release notes were provided for this release.` Package URLs, checksums, response diagnostics, and other low-level update server values remain in the collapsed technical details area.
+The screen stacks a friendly update status hero, `Release Preview`, actionable-only `Update Options`, `Update History`, and collapsed `Technical Details`. The update options card is shown only when a compatible published package is strictly newer than the effective installed version. Source-maintained checkouts can show the effective code version separately from the stored installed version, but System Updates applies published packages and does not apply local source edits.
+
+The update client supports structured metadata from the update service, including title, summary, highlights, fixes, compatibility notes, migration notes, asset notes, operator notes, and technical notes. These values are rendered as escaped plain text in operator-oriented groups. Older releases that only provide `release_notes` still show those notes cleanly, and releases without notes show `No release notes were provided for this release.` Package URLs, checksums, response diagnostics, and other low-level update server values remain in the collapsed technical details area.
 
 Core catalog synchronization now happens automatically during System Updates after migrations complete. Existing installs therefore refresh shipped block type definitions such as `Header`, `Rich Text`, `TOC`, and `Quote`, along with shipped slot types and page layout slot mappings, without requiring a separate manual seed step.
 

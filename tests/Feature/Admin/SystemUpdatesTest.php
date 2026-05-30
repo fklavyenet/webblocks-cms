@@ -47,15 +47,15 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('System Updates');
-    $response->assertSee('Already up to date');
-    $response->assertSee('Installed version');
+    $response->assertSee('Local/source version is newer than the latest published release');
+    $response->assertSee('Effective installed version');
     $response->assertSee(WebBlocks::version());
     $response->assertSee('<div class="wb-text-sm wb-text-muted">Latest version</div>', false);
     $response->assertSee('Update Summary');
     $response->assertDontSee('<strong>Actions</strong>', false);
     $response->assertSee('Check again');
     $response->assertDontSee('Recent Backup');
-    $response->assertSee('Technical details');
+    $response->assertSee('Technical Details');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
   }
 
@@ -70,7 +70,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('Update checks disabled');
+    $response->assertSee('Update server unavailable / invalid response');
     $response->assertSee(WebBlocks::version());
     $response->assertSee('The CMS update client is disabled in configuration.');
   }
@@ -92,12 +92,13 @@ class SystemUpdatesTest extends TestCase
     $followUp->assertDontSee('Download package');
     $followUp->assertSee('Check again');
     $followUp->assertSee('Latest version');
-    $followUp->assertSee('A pre-update backup is always created automatically. Enable this option to also download the backup before installation starts.');
+    $followUp->assertSee('A pre-update backup will be created automatically before installation.');
+    $followUp->assertSee('Download the backup before installation starts');
     $followUp->assertDontSee('Automatic backup is not created before update in this version.');
   }
 
   #[Test]
-  public function update_summary_no_longer_contains_the_update_now_button(): void
+  public function update_available_state_renders_status_hero_and_update_options(): void
   {
     $user = User::factory()->superAdmin()->create();
     $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
@@ -106,6 +107,7 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('Update Summary');
+    $response->assertSee('A new WebBlocks CMS release is ready.');
     $response->assertSee('Update now');
     $response->assertDontSee('<strong>Actions</strong>', false);
 
@@ -131,25 +133,27 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('<strong>Update Options</strong>', false);
-    $response->assertSee('Download backup before update');
-    $response->assertSee('A pre-update backup is always created automatically. Enable this option to also download the backup before installation starts.');
+    $response->assertSee('Backup protection');
+    $response->assertSee('Download the backup before installation starts');
+    $response->assertSee('A pre-update backup will be created automatically before installation.');
     $response->assertSee('Update now');
 
     $html = $response->getContent();
     $optionsHeaderPosition = strpos($html, '<strong>Update Options</strong>');
     $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $optionsHeaderPosition);
-    $backupHelpPosition = strpos($html, 'A pre-update backup is always created automatically.', $checkboxPosition);
+    $backupHelpPosition = strpos($html, 'A pre-update backup will be created automatically before installation.', $optionsHeaderPosition);
     $buttonPosition = strpos($html, 'data-default-label="Update now"', $backupHelpPosition);
-    $releaseDetailsPosition = strpos($html, '<strong>Release Details</strong>');
+    $releasePreviewPosition = strpos($html, '<strong>Release Preview</strong>');
 
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($checkboxPosition);
     $this->assertIsInt($backupHelpPosition);
     $this->assertIsInt($buttonPosition);
-    $this->assertIsInt($releaseDetailsPosition);
+    $this->assertIsInt($releasePreviewPosition);
     $this->assertLessThan($buttonPosition, $checkboxPosition);
     $this->assertLessThan($buttonPosition, $backupHelpPosition);
-    $this->assertLessThan($releaseDetailsPosition, $buttonPosition);
+    $this->assertLessThan($optionsHeaderPosition, $releasePreviewPosition);
+    $this->assertLessThan($buttonPosition, $optionsHeaderPosition);
   }
 
   #[Test]
@@ -176,9 +180,29 @@ class SystemUpdatesTest extends TestCase
               'items' => ['Keeps low-level package details collapsed'],
             ],
             [
+              'key' => 'compatibility_notes',
+              'label' => 'Compatibility notes',
+              'items' => ['Requires a package-native WebBlocks CMS install.'],
+            ],
+            [
+              'key' => 'migration_notes',
+              'label' => 'Migration notes',
+              'items' => ['Runs package update migrations after extraction.'],
+            ],
+            [
+              'key' => 'asset_notes',
+              'label' => 'Asset notes',
+              'items' => ['Refreshes shipped CMS static assets.'],
+            ],
+            [
               'key' => 'operator_notes',
               'label' => 'Operator notes',
               'items' => ['Read the details before running Update now'],
+            ],
+            [
+              'key' => 'technical_notes',
+              'label' => 'Technical notes',
+              'items' => ['Artifact checksum remains verified before install.'],
             ],
           ],
           'fallback_notes' => [],
@@ -190,17 +214,25 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Release Details</strong>', false);
+    $response->assertSee('<strong>Release Preview</strong>', false);
     $response->assertDontSee('What&#039;s included', false);
     $response->assertSee('Operator-friendly release details');
     $response->assertSee('This release improves update review before installation.');
     $response->assertSee('Highlights');
     $response->assertSee('Richer System Updates summaries');
-    $response->assertSee('Fixes');
+    $response->assertSee('Fixes and changes');
     $response->assertSee('Keeps low-level package details collapsed');
+    $response->assertSee('Compatibility notes');
+    $response->assertSee('Requires a package-native WebBlocks CMS install.');
+    $response->assertSee('Migration notes');
+    $response->assertSee('Runs package update migrations after extraction.');
+    $response->assertSee('Asset notes');
+    $response->assertSee('Refreshes shipped CMS static assets.');
     $response->assertSee('Operator notes');
     $response->assertSee('Read the details before running Update now');
-    $response->assertSee('Technical details');
+    $response->assertSee('Technical release notes');
+    $response->assertSee('Artifact checksum remains verified before install.');
+    $response->assertSee('Technical Details');
   }
 
   #[Test]
@@ -221,7 +253,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Release Details</strong>', false);
+    $response->assertSee('<strong>Release Preview</strong>', false);
     $response->assertSee('Release v1.32.83 no build-chain boundary');
     $response->assertSee('Release notes');
     $response->assertSee('No Vite, npm, or Tailwind assumptions return.');
@@ -300,7 +332,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertSee('Update server unavailable');
     $response->assertSee('Server detail');
-    $response->assertSee('Technical details');
+    $response->assertSee('Technical Details');
     $response->assertDontSee('Update now');
     $response->assertDontSee('<strong>Actions</strong>', false);
   }
@@ -314,8 +346,8 @@ class SystemUpdatesTest extends TestCase
 
     $upToDateResponse = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $upToDateResponse->assertOk();
-    $upToDateResponse->assertSee('Already up to date');
     $upToDateResponse->assertSee('This install is already on the latest published release.');
+    $upToDateResponse->assertSee('Up to date');
     $upToDateResponse->assertDontSee('Update now');
     $upToDateResponse->assertDontSee('<strong>Update Options</strong>', false);
   }
@@ -330,7 +362,8 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('This install is newer than the latest published release for the selected channel.');
+    $response->assertSee('Local/source version is newer than the latest published release');
+    $response->assertSee('This codebase is ahead of the latest published package on the selected channel.');
     $response->assertDontSee('Update now');
     $response->assertDontSee('<strong>Update Options</strong>', false);
   }
@@ -375,9 +408,10 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('Already up to date');
+    $response->assertSee('This install is already on the latest published release.');
     $response->assertDontSee('Update available');
-    $response->assertDontSee('<strong>Latest Update Run</strong>', false);
+    $response->assertDontSee('<strong>Current or latest run</strong>', false);
+    $response->assertSee('<strong>Update History</strong>', false);
     $response->assertSee('<strong>Historical update runs</strong>', false);
     $response->assertSee('Historical failed update');
   }
@@ -402,7 +436,8 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Latest Update Run</strong>', false);
+    $response->assertSee('<strong>Update History</strong>', false);
+    $response->assertSee('<strong>Current or latest run</strong>', false);
     $response->assertSee('Current target failed update');
     $response->assertDontSee('<strong>Historical update runs</strong>', false);
   }
@@ -676,8 +711,8 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('Download backup before update');
-    $response->assertSee('A pre-update backup is always created automatically. Enable this option to also download the backup before installation starts.');
+    $response->assertSee('Download the backup before installation starts');
+    $response->assertSee('A pre-update backup will be created automatically before installation.');
     $response->assertDontSee('Automatic backup is not created before update in this version.');
   }
 

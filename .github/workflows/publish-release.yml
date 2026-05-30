@@ -98,23 +98,23 @@ jobs:
           printf '%s\n' "$notes" > release-notes.md
 
           {
-            printf 'System Updates source/dev status presentation fix\n'
+            printf 'System Updates operator experience refresh\n'
           } > release-title.txt
 
           {
-            printf 'This release prevents source-maintained checkouts from showing stale actionable updates when the local code version is already current, and keeps resolved failed update runs as history instead of primary warnings.\n'
+            printf 'This release redesigns the System Updates screen into a friendlier operator flow while preserving strict package-based update behavior.\n'
           } > release-summary.txt
 
           {
-            printf 'Update availability now depends on the latest published version being strictly newer than the effective installed CMS version.\n'
-            printf 'Source-maintained development checkouts use the newer local code version for update-status presentation without mutating the stored installed version.\n'
-            printf 'Stale failed update runs remain inspectable in collapsed historical details instead of driving the main System Updates status.\n'
+            printf 'Adds a full-width status hero that explains update available, up-to-date, local/source newer, incompatible, and unavailable update states in operator-facing language.\n'
+            printf 'Renames release notes to Release Preview and organizes structured metadata by highlights, fixes, compatibility, migration, asset, operator, and quieter technical notes.\n'
+            printf 'Moves update runs into an Update History card so stale failed runs remain inspectable without looking like the current problem.\n'
           } > release-highlights.txt
 
           {
-            printf 'Fixes cases where an old failed update run could make an already-current source checkout look like an actionable update was still available.\n'
-            printf 'Keeps Update Options hidden unless there is a current actionable update target.\n'
-            printf 'Preserves currently relevant failed, pending, or running update-run visibility for the active target.\n'
+            printf 'Keeps Update Options hidden unless a compatible published package is strictly newer than the effective installed version.\n'
+            printf 'Clarifies backup protection copy while preserving the automatic pre-update backup and optional download-before-install flow.\n'
+            printf 'Keeps low-level package URLs, checksums, response diagnostics, and server details in collapsed Technical Details at the bottom of the page.\n'
           } > release-fixes.txt
 
           {
@@ -133,14 +133,14 @@ jobs:
 
           {
             printf 'For local source-maintained development checkouts, apply source changes through the normal development workflow rather than in-app System Updates.\n'
-            printf 'When the checkout code version is already equal to or newer than the latest published release, System Updates now reports the install as current and does not show Update now.\n'
-            printf 'Resolved failed runs can still be reviewed from collapsed historical update-run details.\n'
+            printf 'Review Release Preview before running Update now, especially compatibility, migration, and operator notes.\n'
+            printf 'Download the pre-update backup first when you want a local copy before installation starts.\n'
           } > release-operator-notes.txt
 
           {
             printf 'The GitHub tag workflow publishes structured fields in top-level, details, and release_details form shapes for publisher compatibility.\n'
             printf 'Update status uses version comparison instead of update-run history as the source of current availability.\n'
-            printf 'Source-maintained checkout detection reuses the maintenance repository Composer autoload signal for WebBlocks CMS package source authority.\n'
+            printf 'System Update page rendering exposes stored installed version context without writing system.installed_version.\n'
             printf 'Checksums, artifact URLs, raw responses, diagnostics, and low-level update server values remain in collapsed technical details.\n'
           } > release-technical-notes.txt
 
