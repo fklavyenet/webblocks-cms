@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteContactMessagesRequest;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageBulkDeleter;
+use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class ContactMessageController extends Controller
@@ -18,6 +19,7 @@ class ContactMessageController extends Controller
   public function __construct(
     private readonly AdminAuthorization $authorization,
     private readonly ContactMessageBulkDeleter $contactMessageBulkDeleter,
+    private readonly ContactMessageIndexState $contactMessageIndexState,
   ) {}
 
   public function index(Request $request): View
@@ -73,6 +75,7 @@ class ContactMessageController extends Controller
       ],
       'totalCount' => $totalCount,
       'filteredCount' => (clone $filteredQuery)->count(),
+      'currentReturnUrl' => $this->contactMessageIndexState->returnUrl($request),
     ]);
   }
 
@@ -109,13 +112,15 @@ class ContactMessageController extends Controller
       ->with('status', 'Message status updated.');
   }
 
-  public function destroy(ContactMessage $contactMessage): RedirectResponse
+  public function destroy(Request $request, ContactMessage $contactMessage): RedirectResponse
   {
-    $this->authorization->abortUnlessSiteAccess(request()->user(), $contactMessage);
+    $this->authorization->abortUnlessSiteAccess($request->user(), $contactMessage);
+    $returnUrl = $this->contactMessageIndexState->safeReturnUrlFromRequest($request);
+
     $contactMessage->delete();
 
     return redirect()
-      ->route('admin.contact-messages.index')
+      ->to($returnUrl ?: route('admin.contact-messages.index'))
       ->with('status', 'Message deleted.');
   }
 

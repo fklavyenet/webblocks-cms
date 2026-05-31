@@ -646,7 +646,7 @@ class ContactFormModuleTest extends TestCase
     $message = ContactMessage::query()->latest('id')->firstOrFail();
 
     $this->assertSame('spam', $message->status);
-    $this->assertGreaterThanOrEqual(60, $message->spam_score);
+    $this->assertSame(100, $message->spam_score);
     $this->assertContains('Commercial outreach language', $message->spamReasonLabels());
     $this->assertNotEmpty(array_intersect(['Multiple links', 'High link density'], $message->spamReasonLabels()));
     $this->assertTrue($message->notification_enabled);
@@ -816,7 +816,24 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('<th>Actions</th>', false);
     $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
-    $response->assertSee('wb-icon-menu', false);
+    $response->assertSee('title="View message"', false);
+    $response->assertSee('aria-label="View message"', false);
+    $response->assertSee('title="Delete message"', false);
+    $response->assertSee('data-wb-target="#delete-contact-message-modal-'.$matching->id.'"', false);
+    $response->assertSee(route('admin.contact-messages.destroy', $matching), false);
+    $response->assertSee('name="return_url" value="'.e(route('admin.contact-messages.index', [
+      'search' => 'launch',
+      'status' => 'new',
+      'notification' => 'sent',
+    ])).'"', false);
+    $response->assertDontSee('View message detail', false);
+    $response->assertDontSee('View message details', false);
+    $response->assertDontSee('contact-message-actions-'.$matching->id, false);
+    $response->assertDontSee('More message actions', false);
+    $response->assertDontSee('Mark as read', false);
+    $response->assertDontSee('Mark as new', false);
+    $response->assertDontSee('Mark spam', false);
+    $response->assertDontSee('Mark replied', false);
     $response->assertDontSee('<th class="wb-text-end">Actions</th>', false);
     $response->assertDontSee('<td class="wb-text-end">', false);
     $response->assertDontSee('<th>Source</th>', false);
@@ -849,6 +866,65 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('value="'.$message->id.'"', false);
     $response->assertSee('data-wb-admin-bulk-modal-count', false);
     $response->assertDontSee('confirm(', false);
+  }
+
+  #[Test]
+  public function admin_messages_list_delete_uses_row_modal_and_safe_route(): void
+  {
+    $user = User::factory()->create();
+    [$page, $block] = $this->createContactFormPage();
+    $message = ContactMessage::create([
+      'block_id' => $block->id,
+      'page_id' => $page->id,
+      'name' => '',
+      'email' => 'fallback@example.com',
+      'subject' => 'Delete from row',
+      'message' => 'Delete through row modal.',
+      'status' => 'new',
+      'notification_enabled' => true,
+      'notification_sent_at' => now(),
+    ]);
+
+    foreach (range(1, 15) as $index) {
+      ContactMessage::create([
+        'block_id' => $block->id,
+        'page_id' => $page->id,
+        'name' => 'Later Sender '.$index,
+        'email' => 'fallback-'.$index.'@example.com',
+        'subject' => 'Delete from row later '.$index,
+        'message' => 'Fill the first page so the selected row stays on page two.',
+        'status' => 'new',
+        'notification_enabled' => true,
+        'notification_sent_at' => now(),
+      ]);
+    }
+
+    $returnUrl = route('admin.contact-messages.index', [
+      'search' => 'fallback',
+      'status' => 'new',
+      'notification' => 'sent',
+      'page' => 2,
+    ]);
+
+    $response = $this->actingAs($user)->get($returnUrl);
+
+    $response->assertOk();
+    $response->assertSee('data-wb-target="#delete-contact-message-modal-'.$message->id.'"', false);
+    $response->assertSee('aria-haspopup="dialog"', false);
+    $response->assertSee('Delete Contact Message');
+    $response->assertSee('fallback@example.com');
+    $response->assertSee(route('admin.contact-messages.destroy', $message), false);
+    $response->assertSee('name="return_url" value="'.e($returnUrl).'"', false);
+    $response->assertDontSee('confirm(', false);
+
+    $this->actingAs($user)
+      ->delete(route('admin.contact-messages.destroy', $message), [
+        'return_url' => $returnUrl,
+      ])
+      ->assertRedirect($returnUrl)
+      ->assertSessionHas('status', 'Message deleted.');
+
+    $this->assertDatabaseMissing('contact_messages', ['id' => $message->id]);
   }
 
   #[Test]

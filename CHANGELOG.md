@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## 1.32.95
 
+- Polish Contact Messages list row actions so rows expose only View message and modal-confirmed Delete controls, preserving separate editorial and notification status columns plus bulk deletion.
+- Document that scored Contact Form spam remains stored for admin review while honeypot hits may be discarded before storage, leaving configurable spam auto-discard thresholds for future production-data-driven tuning.
 - Preserve System Updates history pagination state after deleting a run, including per-page selection and fallback to the previous valid page when the deleted row emptied the last page.
 - Paginate the CMS System Updates history table with a compact `Per page` selector, dedicated `history_page` / `history_per_page` query parameters, and preserved details/delete modal actions on paginated rows.
 - Add CMS System Updates history deletion with WebBlocks UI trash icon actions, confirmation modals, CSRF-protected DELETE forms, and history-only deletion safeguards.

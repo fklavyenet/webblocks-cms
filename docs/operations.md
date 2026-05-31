@@ -81,7 +81,7 @@ Installed CMS working copies are update consumers. They may fetch source history
 
 ## Contact Mail Diagnostics
 
-Contact Form submissions are saved before notification delivery. SMTP failures are recorded on the saved Contact Message as email notification state and do not change the editorial status or spam classification.
+Contact Form submissions are saved before notification delivery. SMTP failures are recorded on the saved Contact Message as email notification state and do not change the editorial status or spam classification. Scored spam is intentionally stored/quarantined for admin review; only honeypot or too-fast submissions may be discarded before storage with the generic success redirect. A future configurable threshold such as `CONTACT_SPAM_AUTO_DISCARD_SCORE` can be considered after enough production data exists to tune it safely.
 
 Use the secret-free mail diagnostic command when a Contact Message shows notification failure:
 

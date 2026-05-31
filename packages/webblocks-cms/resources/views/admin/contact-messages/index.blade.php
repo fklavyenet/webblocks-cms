@@ -130,45 +130,13 @@
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" title="View message detail" aria-label="View message detail">
+                                            <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" title="View message" aria-label="View message">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
 
-                                            <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="{{ $message->status === 'new' ? 'read' : 'new' }}">
-                                                <button type="submit" class="wb-action-btn wb-action-btn-edit" title="{{ $message->status === 'new' ? 'Mark as read' : 'Mark as new' }}" aria-label="{{ $message->status === 'new' ? 'Mark as read' : 'Mark as new' }}">
-                                                    <i class="wb-icon {{ $message->status === 'new' ? 'wb-icon-mail-opened' : 'wb-icon-mail' }}" aria-hidden="true"></i>
-                                                </button>
-                                            </form>
-
-                                            <div class="wb-dropdown wb-dropdown-end">
-                                                <button class="wb-action-btn" type="button" data-wb-toggle="dropdown" data-wb-target="#contact-message-actions-{{ $message->id }}" aria-expanded="false" title="More message actions" aria-label="More message actions">
-                                                    <i class="wb-icon wb-icon-menu" aria-hidden="true"></i>
-                                                </button>
-
-                                                <div class="wb-dropdown-menu" id="contact-message-actions-{{ $message->id }}">
-                                                    <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input type="hidden" name="status" value="archived">
-                                                        <button type="submit" class="wb-dropdown-item">Archive</button>
-                                                    </form>
-                                                    <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input type="hidden" name="status" value="spam">
-                                                        <button type="submit" class="wb-dropdown-item">Mark spam</button>
-                                                    </form>
-                                                    <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input type="hidden" name="status" value="replied">
-                                                        <button type="submit" class="wb-dropdown-item">Mark replied</button>
-                                                    </form>
-                                                </div>
-                                            </div>
+                                            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-contact-message-modal-{{ $message->id }}" title="Delete message" aria-label="Delete message" aria-haspopup="dialog">
+                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -182,6 +150,27 @@
         </div>
 
         @push('overlays')
+            @foreach ($messages as $message)
+                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                    'id' => 'delete-contact-message-modal-'.$message->id,
+                    'title' => 'Delete Contact Message',
+                    'description' => 'This deletes the saved contact submission.',
+                    'action' => route('admin.contact-messages.destroy', $message),
+                    'method' => 'DELETE',
+                    'submitLabel' => 'Delete message',
+                ])
+                    <div class="wb-card wb-card-muted">
+                        <div class="wb-card-body wb-stack wb-gap-2">
+                            <div><strong>{{ $message->detailTitleName() }}</strong></div>
+                            <div class="wb-text-sm wb-text-muted">From {{ $message->name ?: '-' }} &lt;{{ $message->email ?: '-' }}&gt;</div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="return_url" value="{{ $currentReturnUrl }}">
+                    <p class="wb-text-sm wb-text-muted">This cannot be undone from the admin UI.</p>
+                @endcomponent
+            @endforeach
+
             @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                 'id' => 'bulk-delete-contact-messages-modal',
                 'title' => 'Delete Selected Contact Messages',
