@@ -7,10 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
-## Unreleased
+## 1.32.97
 
-- Add a read-only `System -> Plugins -> Browse Plugin Catalog` admin screen that requests public WebBlocks CMS-compatible plugins from the configured catalog service, shows compatibility and latest compatible release metadata, and keeps install/update/enable/migration behavior manual and separate.
-- Add Plugin Catalog configuration with `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL`, defaulting to `https://plugins.webblocksui.com`, plus timeout settings for controlled unavailable-catalog UI.
+- Add the read-only Plugin Catalog Browser at `/webadmin/plugins/catalog`, reachable from the `System -> Plugins` Browse Plugin Catalog action, for display-only WebBlocks CMS-compatible catalog metadata.
+- Add Plugin Catalog API configuration through `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL`, `WEBBLOCKS_PLUGIN_CATALOG_TIMEOUT_SECONDS`, and `WEBBLOCKS_PLUGIN_CATALOG_CONNECT_TIMEOUT_SECONDS`, with unavailable-catalog UI kept controlled.
+- Keep catalog browsing display-only with no remote install, enable, migrations, providers, routes, commands, updates, or executable registration from remote plugin data.
 
 ## 1.32.96
 
