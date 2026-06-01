@@ -25,6 +25,8 @@
         'incompatible', 'unsupported' => 'wb-status-danger',
         default => 'wb-status-pending',
     };
+    $downloadUrl = $plugin?->firstDownloadUrl();
+    $checksum = $release?->checksumSha256;
 @endphp
 
 @section('content')
@@ -110,6 +112,20 @@
                             <strong>Release Status</strong>
                             <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
                         </div>
+                        <div>
+                            <strong>Local State</strong>
+                            <div>{{ $installedState['installed'] ? 'Installed' : 'Not installed' }}</div>
+                        </div>
+                        @if ($installedState['installed'])
+                            <div>
+                                <strong>Local Version</strong>
+                                <div>{!! $value($installedState['version']) !!}</div>
+                            </div>
+                            <div>
+                                <strong>Local Lifecycle</strong>
+                                <div>{{ $installedState['enabled'] ? 'Enabled' : 'Disabled' }}</div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -117,27 +133,67 @@
 
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Manual Install Guidance</strong>
+                <strong>Manual ZIP Install</strong>
             </div>
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-alert wb-alert-info">
-                    Catalog data is informational only. Plugin installation still happens through the existing manual ZIP upload flow.
+                    Catalog data is informational only. This page does not install, update, enable, migrate, register, or execute plugin code.
                 </div>
+                <ol>
+                    <li>Review compatibility and release metadata.</li>
+                    <li>Download the ZIP from the catalog.</li>
+                    <li>Compare the SHA-256 checksum when provided.</li>
+                    <li>Upload the ZIP through the existing CMS manual plugin upload/install screen.</li>
+                    <li>Review CMS ZIP validation results.</li>
+                    <li>Enable and run setup only after explicit admin review.</li>
+                </ol>
                 <p>Downloaded plugins remain subject to CMS ZIP validation, compatibility checks, disabled-by-default lifecycle review, and explicit enable/setup steps after upload.</p>
-                @if ($release?->checksumSha256)
-                    <div><strong>SHA-256:</strong> <code>{{ $release->checksumSha256 }}</code></div>
+
+                <div class="wb-grid wb-grid-2">
+                    <div>
+                        <strong>Download URL</strong>
+                        @if ($downloadUrl)
+                            <div><code class="wb-text-break">{{ $downloadUrl }}</code></div>
+                        @else
+                            <div>{!! $notProvided !!}</div>
+                        @endif
+                    </div>
+                    <div>
+                        <strong>SHA-256</strong>
+                        @if ($checksum)
+                            <div><code class="wb-text-break">{{ $checksum }}</code></div>
+                        @else
+                            <div>{!! $notProvided !!}</div>
+                        @endif
+                    </div>
+                </div>
+
+                @if ($downloadUrl || $checksum)
+                    <div class="wb-text-sm wb-text-muted" data-wb-copy-feedback aria-live="polite"></div>
                 @endif
             </div>
             <div class="wb-card-footer wb-cluster wb-cluster-2 wb-flex-wrap">
-                <a href="{{ route('admin.system.plugins.index') }}" class="wb-btn wb-btn-secondary">
-                    <i class="wb-icon wb-icon-upload" aria-hidden="true"></i>
-                    Manual ZIP Upload
-                </a>
-                @if ($plugin->firstDownloadUrl())
-                    <a href="{{ $plugin->firstDownloadUrl() }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">
-                        <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
-                        Download Externally
+                @if ($manualUploadUrl)
+                    <a href="{{ $manualUploadUrl }}" class="wb-btn wb-btn-secondary">
+                        <i class="wb-icon wb-icon-upload" aria-hidden="true"></i>
+                        Upload plugin ZIP
                     </a>
+                @endif
+                @if ($downloadUrl)
+                    <a href="{{ $downloadUrl }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">
+                        <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
+                        Open/download ZIP
+                    </a>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-copy-value="{{ $downloadUrl }}" data-wb-copy-label="Download URL">
+                        <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
+                        Copy download URL
+                    </button>
+                @endif
+                @if ($checksum)
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-copy-value="{{ $checksum }}" data-wb-copy-label="Checksum">
+                        <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
+                        Copy checksum
+                    </button>
                 @endif
             </div>
         </div>
@@ -177,7 +233,7 @@
                     <div class="wb-grid wb-grid-2">
                         <div>
                             <strong>Download URL</strong>
-                            <div>{!! $urlValue($plugin->firstDownloadUrl(), 'Open download') !!}</div>
+                            <div>{!! $urlValue($downloadUrl, 'Open download') !!}</div>
                         </div>
                         <div>
                             <strong>Filename</strong>
@@ -189,7 +245,7 @@
                         </div>
                         <div>
                             <strong>SHA-256</strong>
-                            <div>{!! $value($release?->checksumSha256) !!}</div>
+                            <div>{!! $value($checksum) !!}</div>
                         </div>
                     </div>
                 </div>
@@ -243,5 +299,10 @@
                 </div>
             </div>
         </details>
+
+        @php($copyScriptPath = public_path('cms/js/admin/plugin-catalog-copy.js'))
+        @if (file_exists($copyScriptPath))
+            <script src="{{ asset('cms/js/admin/plugin-catalog-copy.js') }}?v={{ filemtime($copyScriptPath) }}" defer></script>
+        @endif
     @endif
 @endsection

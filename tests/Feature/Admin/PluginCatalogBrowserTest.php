@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 
 class PluginCatalogBrowserTest extends TestCase
@@ -182,9 +183,21 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertSeeText('42 KB');
     $response->assertSeeText(str_repeat('a', 64));
     $response->assertSeeText('Catalog data is informational only.');
-    $response->assertSeeText('Manual ZIP Upload');
+    $response->assertSeeText('Manual ZIP Install');
+    $response->assertSeeText('Review compatibility and release metadata.');
+    $response->assertSeeText('Compare the SHA-256 checksum when provided.');
+    $response->assertSeeText('Review CMS ZIP validation results.');
+    $response->assertSeeText('Enable and run setup only after explicit admin review.');
+    $response->assertSeeText('Upload plugin ZIP');
+    $response->assertSeeText('Open/download ZIP');
+    $response->assertSeeText('Copy download URL');
+    $response->assertSeeText('Copy checksum');
+    $response->assertSeeText('Not installed');
     $response->assertSee('href="'.route('admin.system.plugins.index').'"', false);
     $response->assertSee('href="https://plugins.example.test/downloads/analytics-tools.zip"', false);
+    $response->assertSee('data-wb-copy-value="https://plugins.example.test/downloads/analytics-tools.zip"', false);
+    $response->assertSee('data-wb-copy-value="'.str_repeat('a', 64).'"', false);
+    $response->assertSee('cms/js/admin/plugin-catalog-copy.js', false);
     $response->assertSeeText('analytics-tools.view');
     $response->assertSeeText('/webadmin/plugins/analytics-tools');
     $response->assertSeeText('create_analytics_tools_tables');
@@ -267,6 +280,49 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertOk();
     $response->assertSeeText('Minimal Plugin');
     $response->assertSeeText('Not provided');
+    $response->assertDontSeeText('Open/download ZIP');
+    $response->assertDontSeeText('Copy download URL');
+    $response->assertDontSeeText('Copy checksum');
+    $response->assertDontSee('data-wb-copy-value=', false);
+  }
+
+  #[Test]
+  public function catalog_detail_installed_state_comes_from_local_registry_not_remote_claims(): void
+  {
+    $registry = new PluginRegistry(['local-tools' => true]);
+    $registry->register(
+      PluginDefinition::make('local-tools')
+        ->label('Local Tools')
+        ->version('3.2.1')
+    );
+    $this->app->instance(PluginRegistry::class, $registry);
+
+    Http::fake([
+      'https://plugins.example.test/api/plugins/local-tools?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'local-tools',
+            'label' => 'Local Tools',
+            'enabled' => false,
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/local-tools/latest?*' => Http::response([
+        'data' => ['release' => ['version' => '9.9.9']],
+      ]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'local-tools'));
+
+    $response->assertOk();
+    $response->assertSeeText('Local State');
+    $response->assertSeeText('Installed');
+    $response->assertSeeText('Local Version');
+    $response->assertSeeText('3.2.1');
+    $response->assertSeeText('Local Lifecycle');
+    $response->assertSeeText('Enabled');
   }
 
   #[Test]
@@ -427,6 +483,7 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertDontSee('javascript:alert(1)', false);
     $response->assertDontSee('data:text/html,unsafe', false);
     $response->assertDontSee('ftp://plugins.example.test/unsafe.zip', false);
+    $response->assertDontSee('data-wb-copy-value="ftp://plugins.example.test/unsafe.zip"', false);
     $response->assertSee('href="https://plugins.example.test/plugins/safe-plugin/docs"', false);
     $response->assertSee('href="https://plugins.example.test/plugins/safe-plugin"', false);
   }
@@ -502,6 +559,11 @@ class PluginCatalogBrowserTest extends TestCase
     $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.remote_runtime.tools.index'));
     $this->assertArrayNotHasKey('remote-runtime', $registry->permissions());
     $this->assertFalse(collect($registry->menuItems())->contains(fn (array $menuItem): bool => $menuItem['plugin']->handle() === 'remote-runtime'));
+
+    $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'remote-runtime'));
+    $response->assertOk();
+    $response->assertSeeText('Not installed');
+    $response->assertDontSeeText('Installed version');
   }
 
   #[Test]
