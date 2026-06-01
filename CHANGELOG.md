@@ -7,7 +7,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
-## Unreleased
+## 1.32.99
 
 - Polish Plugin Catalog Browser diagnostics so admin UI hides catalog server URLs and raw CMS version debug text, shows a friendly unavailable state, falls back internally to the built-in public catalog URL when config is missing or blank, and sends the canonical WebBlocks CMS product version to catalog API requests.
 
