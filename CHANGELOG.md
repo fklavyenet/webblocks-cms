@@ -7,10 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
-## Unreleased
+## 1.32.98
 
-- Add read-only Plugin Catalog detail pages at `/webadmin/plugins/catalog/{handle}` with compatibility, latest compatible release, artifact/checksum, documentation/support links, safe declared metadata, and manual ZIP install guidance while keeping install/update/enable/migration behavior outside remote catalog control.
-- Polish Plugin Catalog detail manual ZIP guidance with operator steps, safe copy helpers for download URL and SHA-256 checksum, and local installed/enabled state labels sourced only from the CMS plugin registry.
+- Add read-only Plugin Catalog detail pages at `/webadmin/plugins/catalog/{handle}` with catalog index plugin labels and View details actions linking into plugin metadata, compatibility, latest compatible release, release notes/highlights, documentation/support/catalog links, artifact URL, SHA-256 checksum, artifact filename, and artifact size.
+- Polish Plugin Catalog detail Manual ZIP Install guidance with operator steps, safe Copy download URL and Copy checksum helper actions, and local installed/enabled state labels sourced only from the CMS `PluginRegistry`.
+- Keep catalog detail data display-only with no remote install, enable, migration, route/provider/command/permission registration, update apply, or remote behavior execution.
 
 ## 1.32.97
 
