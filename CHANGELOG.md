@@ -7,7 +7,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
-## Unreleased
+## 1.32.100
 
 - Add a safe Plugin Catalog install bridge from catalog detail pages: compatible releases with controlled download URL, filename, and SHA-256 metadata can be downloaded server-side, checksum-verified, and installed through the existing disabled-by-default plugin ZIP installer.
 - Show catalog artifact status, release status, filename, size, download URL, and SHA-256 metadata on plugin details, with a clear unavailable state when no downloadable artifact exists.
