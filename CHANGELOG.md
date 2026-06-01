@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## 1.32.100
 
+- Fix Plugin Catalog artifact parsing for current WebBlocks Plugins API responses so nested `latest_release.artifact` filename, size, checksum, download URL, validation status, and scan status render correctly and drive catalog install availability.
 - Add a safe Plugin Catalog install bridge from catalog detail pages: compatible releases with controlled download URL, filename, and SHA-256 metadata can be downloaded server-side, checksum-verified, and installed through the existing disabled-by-default plugin ZIP installer.
 - Show catalog artifact status, release status, filename, size, download URL, and SHA-256 metadata on plugin details, with a clear unavailable state when no downloadable artifact exists.
 - Keep catalog links separate from install actions and align the Catalog Plugins listing action cell with the standard WebBlocks UI table action group.

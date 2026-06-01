@@ -223,6 +223,60 @@ class PluginCatalogBrowserTest extends TestCase
   }
 
   #[Test]
+  public function catalog_detail_maps_current_latest_release_artifact_payload(): void
+  {
+    Http::fake([
+      'https://plugins.example.test/api/plugins/webblocks-redirect-manager?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'webblocks-redirect-manager',
+            'label' => 'WebBlocks Redirect Manager',
+            'summary' => 'Manage redirect rules for WebBlocks CMS.',
+            'compatibility' => [
+              'status' => 'compatible',
+              'requires_cms' => '^1.32',
+            ],
+          ],
+          'latest_release' => [
+            'version' => '0.1.0',
+            'required_cms_version' => '^1.32',
+            'channel' => 'stable',
+            'status' => 'published',
+            'artifact' => [
+              'file_name' => 'webblocks-redirect-manager-0.1.0.zip',
+              'size_bytes' => 8383,
+              'checksum_sha256' => 'f0c395d2e53b801fa89f024d4778d820ba7d8c36ed37609a3758ca6b780b8e64',
+              'validation_status' => 'passed',
+              'scan_status' => 'not_scanned',
+              'download_url' => 'https://plugins.example.test/plugins/webblocks-redirect-manager/releases/1/artifact/download',
+            ],
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/webblocks-redirect-manager/latest?*' => Http::response(['data' => []]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'webblocks-redirect-manager'));
+
+    $response->assertOk();
+    $response->assertSeeText('WebBlocks Redirect Manager');
+    $response->assertSeeText('published');
+    $response->assertSeeText('webblocks-redirect-manager-0.1.0.zip');
+    $response->assertSeeText('8383');
+    $response->assertSeeText('f0c395d2e53b801fa89f024d4778d820ba7d8c36ed37609a3758ca6b780b8e64');
+    $response->assertSeeText('passed');
+    $response->assertSeeText('not_scanned');
+    $response->assertSeeText('Artifact Status / Validation Status');
+    $response->assertSeeText('Scan Status');
+    $response->assertSee('href="https://plugins.example.test/plugins/webblocks-redirect-manager/releases/1/artifact/download"', false);
+    $response->assertSee('data-wb-copy-value="https://plugins.example.test/plugins/webblocks-redirect-manager/releases/1/artifact/download"', false);
+    $response->assertSee('data-wb-copy-value="f0c395d2e53b801fa89f024d4778d820ba7d8c36ed37609a3758ca6b780b8e64"', false);
+    $response->assertSee('action="'.route('admin.plugins.catalog.install', 'webblocks-redirect-manager').'"', false);
+  }
+
+  #[Test]
   public function non_authorized_users_cannot_open_catalog_plugin_detail_page(): void
   {
     Http::fake();
@@ -304,6 +358,75 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertDontSeeText('Copy download URL');
     $response->assertDontSeeText('Copy checksum');
     $response->assertDontSee('data-wb-copy-value=', false);
+  }
+
+  #[Test]
+  public function catalog_detail_keeps_install_unavailable_when_artifact_metadata_is_missing(): void
+  {
+    Http::fake([
+      'https://plugins.example.test/api/plugins/no-artifact-plugin?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'no-artifact-plugin',
+            'label' => 'No Artifact Plugin',
+            'compatibility' => ['status' => 'compatible'],
+          ],
+          'latest_release' => [
+            'version' => '1.0.0',
+            'status' => 'published',
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/no-artifact-plugin/latest?*' => Http::response(['data' => []]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'no-artifact-plugin'));
+
+    $response->assertOk();
+    $response->assertSeeText('No downloadable artifact is available for this release.');
+    $response->assertSeeText('Install from Catalog');
+    $response->assertSee('disabled', false);
+    $response->assertDontSee('action="'.route('admin.plugins.catalog.install', 'no-artifact-plugin').'"', false);
+  }
+
+  #[Test]
+  public function catalog_detail_keeps_install_unavailable_when_latest_release_is_not_published(): void
+  {
+    Http::fake([
+      'https://plugins.example.test/api/plugins/draft-plugin?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'draft-plugin',
+            'label' => 'Draft Plugin',
+            'compatibility' => ['status' => 'compatible'],
+          ],
+          'latest_release' => [
+            'version' => '1.0.0',
+            'status' => 'draft',
+            'artifact' => [
+              'file_name' => 'draft-plugin-1.0.0.zip',
+              'size_bytes' => 2048,
+              'checksum_sha256' => str_repeat('b', 64),
+              'download_url' => 'https://plugins.example.test/downloads/draft-plugin.zip',
+              'validation_status' => 'passed',
+            ],
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/draft-plugin/latest?*' => Http::response(['data' => []]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'draft-plugin'));
+
+    $response->assertOk();
+    $response->assertSeeText('draft');
+    $response->assertSeeText('draft-plugin-1.0.0.zip');
+    $response->assertSee('disabled', false);
+    $response->assertDontSee('action="'.route('admin.plugins.catalog.install', 'draft-plugin').'"', false);
   }
 
   #[Test]
@@ -731,6 +854,7 @@ class PluginCatalogBrowserTest extends TestCase
           'data' => [
             'release' => [
               'version' => '1.0.0',
+              'status' => 'published',
               'download_url' => 'https://plugins.example.test/downloads/sample-tools.zip',
               'checksum_sha256' => hash('sha256', $this->pluginZipBody()),
               'artifact_filename' => 'sample-tools-1.0.0.zip',
@@ -896,9 +1020,14 @@ class PluginCatalogBrowserTest extends TestCase
             'version' => '1.0.0',
             'channel' => 'stable',
             'status' => 'published',
-            'download_url' => 'https://plugins.example.test/downloads/sample-tools.zip',
-            'checksum_sha256' => $checksum,
-            'artifact_filename' => 'sample-tools-1.0.0.zip',
+            'artifact' => [
+              'download_url' => 'https://plugins.example.test/downloads/sample-tools.zip',
+              'checksum_sha256' => $checksum,
+              'file_name' => 'sample-tools-1.0.0.zip',
+              'size_bytes' => strlen($zip),
+              'validation_status' => 'passed',
+              'scan_status' => 'not_scanned',
+            ],
           ],
         ],
       ]),

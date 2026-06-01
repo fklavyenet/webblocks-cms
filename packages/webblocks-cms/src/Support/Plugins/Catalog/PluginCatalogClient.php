@@ -117,7 +117,7 @@ class PluginCatalogClient
       return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'Plugin Catalog is not available right now. Please try again later.');
     }
 
-    $pluginPayload = Arr::get($payload, 'data.plugin', Arr::get($payload, 'data', Arr::get($payload, 'plugin')));
+    $pluginPayload = $this->pluginPayloadFromDetail($payload);
 
     if (! is_array($pluginPayload)) {
       return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The Plugin Catalog detail returned no plugin metadata.');
@@ -166,6 +166,27 @@ class PluginCatalogClient
     return $plugins;
   }
 
+  /**
+   * @param  array<string, mixed>  $payload
+   * @return array<string, mixed>|null
+   */
+  private function pluginPayloadFromDetail(array $payload): ?array
+  {
+    $pluginPayload = Arr::get($payload, 'data.plugin', Arr::get($payload, 'data', Arr::get($payload, 'plugin')));
+
+    if (! is_array($pluginPayload)) {
+      return null;
+    }
+
+    $latestRelease = Arr::get($payload, 'data.latest_release', Arr::get($payload, 'latest_release'));
+
+    if (is_array($latestRelease) && ! array_key_exists('latest_release', $pluginPayload)) {
+      $pluginPayload['latest_release'] = $latestRelease;
+    }
+
+    return $pluginPayload;
+  }
+
   private function latestCompatibleRelease(string $baseUrl, string $handle, string $cmsVersion): ?CatalogRelease
   {
     try {
@@ -201,7 +222,7 @@ class PluginCatalogClient
     $payload = $response->json();
     $release = is_array($payload) ? Arr::get($payload, 'data.release', Arr::get($payload, 'data', Arr::get($payload, 'release'))) : null;
 
-    return is_array($release) ? CatalogRelease::fromArray($release) : null;
+    return is_array($release) && $release !== [] ? CatalogRelease::fromArray($release) : null;
   }
 
   private function baseUrl(): string

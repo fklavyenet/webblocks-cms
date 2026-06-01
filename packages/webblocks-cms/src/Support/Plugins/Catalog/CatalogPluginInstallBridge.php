@@ -31,12 +31,16 @@ class CatalogPluginInstallBridge
       throw new RuntimeException('No compatible catalog release is available for this plugin.');
     }
 
-    $downloadUrl = $plugin->firstDownloadUrl();
+    $downloadUrl = $release->downloadUrl;
     $checksum = $release->checksumSha256;
     $filename = $release->artifactFilename;
 
     if ($downloadUrl === null || $checksum === null || $filename === null) {
       throw new RuntimeException('This catalog release is missing downloadable artifact metadata.');
+    }
+
+    if ($release->status !== 'published') {
+      throw new RuntimeException('No published catalog release is available for this plugin.');
     }
 
     $tempPath = null;

@@ -28,7 +28,7 @@
     $downloadUrl = $plugin?->firstDownloadUrl();
     $checksum = $release?->checksumSha256;
     $canInstallFromCatalog = $plugin?->hasInstallableArtifact() ?? false;
-    $hasArtifactMetadata = $downloadUrl || $checksum || $release?->artifactFilename || $release?->artifactSize || $release?->artifactStatus;
+    $hasArtifactMetadata = $downloadUrl || $checksum || $release?->artifactFilename || $release?->artifactSize || $release?->artifactStatus || $release?->scanStatus;
 @endphp
 
 @section('content')
@@ -182,8 +182,12 @@
                         <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
                     </div>
                     <div>
-                        <strong>Artifact Status</strong>
+                        <strong>Artifact Status / Validation Status</strong>
                         <div>{!! $value($release?->artifactStatus) !!}</div>
+                    </div>
+                    <div>
+                        <strong>Scan Status</strong>
+                        <div>{!! $value($release?->scanStatus) !!}</div>
                     </div>
                 </div>
 
@@ -297,8 +301,12 @@
                                 <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
                             </div>
                             <div>
-                                <strong>Artifact Status</strong>
+                                <strong>Artifact Status / Validation Status</strong>
                                 <div>{!! $value($release?->artifactStatus) !!}</div>
+                            </div>
+                            <div>
+                                <strong>Scan Status</strong>
+                                <div>{!! $value($release?->scanStatus) !!}</div>
                             </div>
                         </div>
                     @endif

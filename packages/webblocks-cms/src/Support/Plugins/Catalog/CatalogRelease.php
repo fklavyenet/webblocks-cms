@@ -24,6 +24,7 @@ class CatalogRelease
     public readonly ?string $artifactFilename,
     public readonly ?string $artifactSize,
     public readonly ?string $artifactStatus,
+    public readonly ?string $scanStatus,
   ) {}
 
   /**
@@ -31,6 +32,9 @@ class CatalogRelease
    */
   public static function fromArray(array $payload): self
   {
+    $artifact = Arr::get($payload, 'artifact');
+    $artifact = is_array($artifact) ? $artifact : [];
+
     return new self(
       version: self::stringOrNull(Arr::get($payload, 'version')),
       requiredCmsVersion: self::stringOrNull(Arr::get($payload, 'required_cms_version', Arr::get($payload, 'requires_cms'))),
@@ -41,11 +45,12 @@ class CatalogRelease
       highlights: self::stringList(Arr::get($payload, 'highlights')),
       documentationUrl: self::safeUrl(Arr::get($payload, 'documentation_url', Arr::get($payload, 'urls.documentation'))),
       detailsUrl: self::safeUrl(Arr::get($payload, 'details_url', Arr::get($payload, 'urls.details'))),
-      downloadUrl: self::safeUrl(Arr::get($payload, 'download_url', Arr::get($payload, 'artifact_url', Arr::get($payload, 'urls.download')))),
-      checksumSha256: self::stringOrNull(Arr::get($payload, 'checksum_sha256', Arr::get($payload, 'sha256'))),
-      artifactFilename: self::stringOrNull(Arr::get($payload, 'artifact_filename', Arr::get($payload, 'filename'))),
-      artifactSize: self::sizeOrNull(Arr::get($payload, 'artifact_size', Arr::get($payload, 'size'))),
-      artifactStatus: self::stringOrNull(Arr::get($payload, 'artifact_status', Arr::get($payload, 'artifact.status'))),
+      downloadUrl: self::safeUrl(Arr::get($artifact, 'download_url', Arr::get($payload, 'download_url', Arr::get($payload, 'artifact_url', Arr::get($payload, 'urls.download'))))),
+      checksumSha256: self::stringOrNull(Arr::get($artifact, 'checksum_sha256', Arr::get($payload, 'checksum_sha256', Arr::get($payload, 'sha256')))),
+      artifactFilename: self::stringOrNull(Arr::get($artifact, 'file_name', Arr::get($payload, 'artifact_filename', Arr::get($payload, 'filename')))),
+      artifactSize: self::sizeOrNull(Arr::get($artifact, 'size_bytes', Arr::get($payload, 'artifact_size', Arr::get($payload, 'size')))),
+      artifactStatus: self::stringOrNull(Arr::get($artifact, 'validation_status', Arr::get($payload, 'artifact_status', Arr::get($payload, 'artifact.status')))),
+      scanStatus: self::stringOrNull(Arr::get($artifact, 'scan_status', Arr::get($payload, 'scan_status', Arr::get($payload, 'artifact.scan_status')))),
     );
   }
 

@@ -138,7 +138,8 @@ class CatalogPlugin
   {
     return $this->isCompatible()
       && $this->latestCompatibleRelease !== null
-      && $this->firstDownloadUrl() !== null
+      && $this->latestCompatibleRelease->status === 'published'
+      && $this->latestCompatibleRelease->downloadUrl !== null
       && $this->latestCompatibleRelease->checksumSha256 !== null
       && $this->latestCompatibleRelease->artifactFilename !== null;
   }
