@@ -7,6 +7,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## Unreleased
+
+- Add a safe Plugin Catalog install bridge from catalog detail pages: compatible releases with controlled download URL, filename, and SHA-256 metadata can be downloaded server-side, checksum-verified, and installed through the existing disabled-by-default plugin ZIP installer.
+- Show catalog artifact status, release status, filename, size, download URL, and SHA-256 metadata on plugin details, with a clear unavailable state when no downloadable artifact exists.
+- Keep catalog links separate from install actions and align the Catalog Plugins listing action cell with the standard WebBlocks UI table action group.
+
 ## 1.32.99
 
 - Polish Plugin Catalog Browser diagnostics so admin UI hides catalog server URLs and raw CMS version debug text, shows a friendly unavailable state, falls back internally to the built-in public catalog URL when config is missing or blank, and sends the canonical WebBlocks CMS product version to catalog API requests.

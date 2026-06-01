@@ -128,6 +128,21 @@ class CatalogPlugin
     return $this->downloadUrl ?? $this->latestCompatibleRelease?->downloadUrl;
   }
 
+  public function isCompatible(): bool
+  {
+    return in_array($this->compatibilityStatus, ['compatible', 'supported'], true)
+      || ($this->compatibilityStatus === null && $this->latestCompatibleRelease !== null);
+  }
+
+  public function hasInstallableArtifact(): bool
+  {
+    return $this->isCompatible()
+      && $this->latestCompatibleRelease !== null
+      && $this->firstDownloadUrl() !== null
+      && $this->latestCompatibleRelease->checksumSha256 !== null
+      && $this->latestCompatibleRelease->artifactFilename !== null;
+  }
+
   private static function stringOrNull(mixed $value): ?string
   {
     return is_string($value) && trim($value) !== '' ? trim($value) : null;

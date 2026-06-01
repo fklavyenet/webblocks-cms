@@ -34,7 +34,7 @@
                                 <th>Latest Compatible Release</th>
                                 <th>Compatibility</th>
                                 <th>Channel / Status</th>
-                                <th>Links</th>
+                                <th>Actions / Links</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -94,9 +94,6 @@
                                                 <a href="{{ $plugin->firstDownloadUrl() }}" class="wb-action-btn" title="Open download" aria-label="Open download" target="_blank" rel="noopener noreferrer">
                                                     <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                 </a>
-                                            @endif
-                                            @if (! $plugin->firstDetailsUrl() && ! $plugin->firstDocumentationUrl() && ! $plugin->firstDownloadUrl())
-                                                <span class="wb-text-sm wb-text-muted">No links</span>
                                             @endif
                                         </div>
                                     </td>

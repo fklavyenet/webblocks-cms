@@ -27,6 +27,8 @@
     };
     $downloadUrl = $plugin?->firstDownloadUrl();
     $checksum = $release?->checksumSha256;
+    $canInstallFromCatalog = $plugin?->hasInstallableArtifact() ?? false;
+    $hasArtifactMetadata = $downloadUrl || $checksum || $release?->artifactFilename || $release?->artifactSize || $release?->artifactStatus;
 @endphp
 
 @section('content')
@@ -129,21 +131,26 @@
 
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Manual ZIP Install</strong>
+                <strong>Catalog ZIP Install</strong>
             </div>
             <div class="wb-card-body wb-stack wb-gap-3">
+                @if ($errors->has('catalog_install'))
+                    <div class="wb-alert wb-alert-danger">
+                        {{ $errors->first('catalog_install') }}
+                    </div>
+                @endif
                 <div class="wb-alert wb-alert-info">
-                    Catalog data is informational only. This page does not install, update, enable, migrate, register, or execute plugin code.
+                    Catalog installs download the public ZIP on the server, verify the catalog SHA-256 checksum, and use the same CMS plugin ZIP validation path as manual uploads. Installed catalog plugins remain disabled until explicitly enabled.
                 </div>
                 <ol>
                     <li>Review compatibility and release metadata.</li>
-                    <li>Download the ZIP from the catalog.</li>
-                    <li>Compare the SHA-256 checksum when provided.</li>
-                    <li>Upload the ZIP through the existing CMS manual plugin upload/install screen.</li>
+                    <li>Download the controlled public ZIP URL or install through the catalog bridge when all artifact metadata is available.</li>
+                    <li>CMS verifies the SHA-256 checksum before installing.</li>
                     <li>Review CMS ZIP validation results.</li>
-                    <li>Enable and run setup only after explicit admin review.</li>
+                    <li>Keep the plugin disabled until admin review is complete.</li>
+                    <li>Enable and run setup only as separate explicit admin actions.</li>
                 </ol>
-                <p>Downloaded plugins remain subject to CMS ZIP validation, compatibility checks, disabled-by-default lifecycle review, and explicit enable/setup steps after upload.</p>
+                <p>The manual ZIP upload flow remains available for catalog artifacts downloaded outside CMS and for plugin packages that are not installable from catalog metadata.</p>
 
                 <div class="wb-grid wb-grid-2">
                     <div>
@@ -162,13 +169,49 @@
                             <div>{!! $notProvided !!}</div>
                         @endif
                     </div>
+                    <div>
+                        <strong>Filename</strong>
+                        <div>{!! $value($release?->artifactFilename) !!}</div>
+                    </div>
+                    <div>
+                        <strong>Size</strong>
+                        <div>{!! $value($release?->artifactSize) !!}</div>
+                    </div>
+                    <div>
+                        <strong>Release Status</strong>
+                        <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
+                    </div>
+                    <div>
+                        <strong>Artifact Status</strong>
+                        <div>{!! $value($release?->artifactStatus) !!}</div>
+                    </div>
                 </div>
+
+                @if (! $hasArtifactMetadata)
+                    <div class="wb-alert wb-alert-warning">
+                        No downloadable artifact is available for this release.
+                    </div>
+                @endif
 
                 @if ($downloadUrl || $checksum)
                     <div class="wb-text-sm wb-text-muted" data-wb-copy-feedback aria-live="polite"></div>
                 @endif
             </div>
             <div class="wb-card-footer wb-cluster wb-cluster-2 wb-flex-wrap">
+                @if ($canInstallFromCatalog)
+                    <form method="POST" action="{{ route('admin.plugins.catalog.install', $plugin->handle) }}">
+                        @csrf
+                        <button type="submit" class="wb-btn wb-btn-primary">
+                            <i class="wb-icon wb-icon-package-plus" aria-hidden="true"></i>
+                            Install from Catalog
+                        </button>
+                    </form>
+                @else
+                    <button type="button" class="wb-btn wb-btn-primary" disabled>
+                        <i class="wb-icon wb-icon-package-plus" aria-hidden="true"></i>
+                        Install from Catalog
+                    </button>
+                @endif
                 @if ($manualUploadUrl)
                     <a href="{{ $manualUploadUrl }}" class="wb-btn wb-btn-secondary">
                         <i class="wb-icon wb-icon-upload" aria-hidden="true"></i>
@@ -178,7 +221,7 @@
                 @if ($downloadUrl)
                     <a href="{{ $downloadUrl }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">
                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
-                        Open/download ZIP
+                        Download ZIP
                     </a>
                     <button type="button" class="wb-btn wb-btn-secondary" data-wb-copy-value="{{ $downloadUrl }}" data-wb-copy-label="Download URL">
                         <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
@@ -226,24 +269,39 @@
                     <strong>Artifact</strong>
                 </div>
                 <div class="wb-card-body">
-                    <div class="wb-grid wb-grid-2">
-                        <div>
-                            <strong>Download URL</strong>
-                            <div>{!! $urlValue($downloadUrl, 'Open download') !!}</div>
+                    @if (! $hasArtifactMetadata)
+                        <div class="wb-empty">
+                            <div class="wb-empty-title">No downloadable artifact is available for this release.</div>
+                            <div class="wb-empty-text">Use the catalog links for project information or install a plugin ZIP manually when one is provided by the plugin maintainer.</div>
                         </div>
-                        <div>
-                            <strong>Filename</strong>
-                            <div>{!! $value($release?->artifactFilename) !!}</div>
+                    @else
+                        <div class="wb-grid wb-grid-2">
+                            <div>
+                                <strong>Download URL</strong>
+                                <div>{!! $urlValue($downloadUrl, 'Download ZIP') !!}</div>
+                            </div>
+                            <div>
+                                <strong>Filename</strong>
+                                <div>{!! $value($release?->artifactFilename) !!}</div>
+                            </div>
+                            <div>
+                                <strong>Size</strong>
+                                <div>{!! $value($release?->artifactSize) !!}</div>
+                            </div>
+                            <div>
+                                <strong>SHA-256</strong>
+                                <div>{!! $value($checksum) !!}</div>
+                            </div>
+                            <div>
+                                <strong>Release Status</strong>
+                                <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
+                            </div>
+                            <div>
+                                <strong>Artifact Status</strong>
+                                <div>{!! $value($release?->artifactStatus) !!}</div>
+                            </div>
                         </div>
-                        <div>
-                            <strong>Size</strong>
-                            <div>{!! $value($release?->artifactSize) !!}</div>
-                        </div>
-                        <div>
-                            <strong>SHA-256</strong>
-                            <div>{!! $value($checksum) !!}</div>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>

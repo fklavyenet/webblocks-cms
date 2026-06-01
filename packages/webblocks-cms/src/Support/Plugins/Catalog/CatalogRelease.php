@@ -23,6 +23,7 @@ class CatalogRelease
     public readonly ?string $checksumSha256,
     public readonly ?string $artifactFilename,
     public readonly ?string $artifactSize,
+    public readonly ?string $artifactStatus,
   ) {}
 
   /**
@@ -43,7 +44,8 @@ class CatalogRelease
       downloadUrl: self::safeUrl(Arr::get($payload, 'download_url', Arr::get($payload, 'artifact_url', Arr::get($payload, 'urls.download')))),
       checksumSha256: self::stringOrNull(Arr::get($payload, 'checksum_sha256', Arr::get($payload, 'sha256'))),
       artifactFilename: self::stringOrNull(Arr::get($payload, 'artifact_filename', Arr::get($payload, 'filename'))),
-      artifactSize: self::stringOrNull(Arr::get($payload, 'artifact_size', Arr::get($payload, 'size'))),
+      artifactSize: self::sizeOrNull(Arr::get($payload, 'artifact_size', Arr::get($payload, 'size'))),
+      artifactStatus: self::stringOrNull(Arr::get($payload, 'artifact_status', Arr::get($payload, 'artifact.status'))),
     );
   }
 
@@ -55,6 +57,15 @@ class CatalogRelease
   private static function stringOrNull(mixed $value): ?string
   {
     return is_string($value) && trim($value) !== '' ? trim($value) : null;
+  }
+
+  private static function sizeOrNull(mixed $value): ?string
+  {
+    if (is_int($value) || is_float($value)) {
+      return (string) $value;
+    }
+
+    return self::stringOrNull($value);
   }
 
   private static function safeUrl(mixed $value): ?string

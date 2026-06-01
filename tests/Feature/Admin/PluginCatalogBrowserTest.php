@@ -12,6 +12,7 @@ use Tests\TestCase;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\WebBlocks;
+use ZipArchive;
 
 class PluginCatalogBrowserTest extends TestCase
 {
@@ -23,6 +24,7 @@ class PluginCatalogBrowserTest extends TestCase
 
     config()->set('app.version', 'dev');
     config()->set('webblocks-plugins.catalog.base_url', 'https://plugins.example.test');
+    config()->set('webblocks-plugins.install.root', storage_path('framework/testing/catalog-plugin-installs/'.str()->uuid()));
   }
 
   #[Test]
@@ -163,6 +165,7 @@ class PluginCatalogBrowserTest extends TestCase
             'checksum_sha256' => str_repeat('a', 64),
             'artifact_filename' => 'analytics-tools-2.4.0.zip',
             'artifact_size' => '42 KB',
+            'artifact_status' => 'ready',
           ],
         ],
       ]),
@@ -190,15 +193,16 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertSeeText('CSV export');
     $response->assertSeeText('analytics-tools-2.4.0.zip');
     $response->assertSeeText('42 KB');
+    $response->assertSeeText('ready');
     $response->assertSeeText(str_repeat('a', 64));
-    $response->assertSeeText('Catalog data is informational only.');
-    $response->assertSeeText('Manual ZIP Install');
+    $response->assertSeeText('Catalog ZIP Install');
+    $response->assertSeeText('Catalog installs download the public ZIP on the server');
     $response->assertSeeText('Review compatibility and release metadata.');
-    $response->assertSeeText('Compare the SHA-256 checksum when provided.');
     $response->assertSeeText('Review CMS ZIP validation results.');
-    $response->assertSeeText('Enable and run setup only after explicit admin review.');
+    $response->assertSeeText('Enable and run setup only as separate explicit admin actions.');
+    $response->assertSeeText('Install from Catalog');
     $response->assertSeeText('Upload plugin ZIP');
-    $response->assertSeeText('Open/download ZIP');
+    $response->assertSeeText('Download ZIP');
     $response->assertSeeText('Copy download URL');
     $response->assertSeeText('Copy checksum');
     $response->assertSeeText('Not installed');
@@ -293,7 +297,10 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertOk();
     $response->assertSeeText('Minimal Plugin');
     $response->assertSeeText('Not provided');
-    $response->assertDontSeeText('Open/download ZIP');
+    $response->assertSeeText('No downloadable artifact is available for this release.');
+    $response->assertSeeText('Install from Catalog');
+    $response->assertSee('disabled', false);
+    $response->assertDontSeeText('Download ZIP');
     $response->assertDontSeeText('Copy download URL');
     $response->assertDontSeeText('Copy checksum');
     $response->assertDontSee('data-wb-copy-value=', false);
@@ -648,6 +655,285 @@ class PluginCatalogBrowserTest extends TestCase
     $this->assertSame('webadmin/system/plugins/{plugin}/disable', Route::getRoutes()->getByName('admin.system.plugins.disable')?->uri());
     $this->assertSame('webadmin/system/plugins/{plugin}/uninstall', Route::getRoutes()->getByName('admin.system.plugins.uninstall')?->uri());
     $this->assertSame('webadmin/system/plugins/{plugin}', Route::getRoutes()->getByName('admin.system.plugins.show')?->uri());
+    $this->assertSame('webadmin/plugins/catalog/{handle}/install', Route::getRoutes()->getByName('admin.plugins.catalog.install')?->uri());
     $this->assertSame('POST', implode('|', Route::getRoutes()->getByName('admin.system.plugins.upload')?->methods() ?? []));
+  }
+
+  #[Test]
+  public function catalog_install_downloads_checksum_verifies_and_installs_disabled(): void
+  {
+    $zip = $this->pluginZipBody();
+
+    Http::fake($this->installFakeResponses([
+      'zip' => $zip,
+      'checksum' => hash('sha256', $zip),
+    ]));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.plugins.catalog.install', 'sample-tools'));
+
+    $response->assertRedirect(route('admin.system.plugins.index'));
+    $response->assertSessionHas('status', 'Plugin sample-tools 1.0.0 was installed disabled from the Plugin Catalog. Review it before enabling.');
+    $this->assertFileExists(config('webblocks-plugins.install.root').'/sample-tools/1.0.0/webblocks-plugin.json');
+    $this->assertFileDoesNotExist(config('webblocks-plugins.install.root').'/sample-tools/enabled.json');
+  }
+
+  #[Test]
+  public function catalog_install_checksum_mismatch_blocks_install(): void
+  {
+    $zip = $this->pluginZipBody();
+
+    Http::fake($this->installFakeResponses([
+      'zip' => $zip,
+      'checksum' => str_repeat('0', 64),
+    ]));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->from(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->actingAs($user)
+      ->post(route('admin.plugins.catalog.install', 'sample-tools'));
+
+    $response->assertRedirect(route('admin.plugins.catalog.show', 'sample-tools'));
+    $response->assertSessionHasErrors(['catalog_install' => 'The downloaded catalog artifact failed SHA-256 verification.']);
+    $this->assertFileDoesNotExist(config('webblocks-plugins.install.root').'/sample-tools/1.0.0/webblocks-plugin.json');
+  }
+
+  #[Test]
+  public function catalog_install_invalid_zip_shows_controlled_error(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    Http::fake($this->installFakeResponses([
+      'zip' => 'not a zip',
+      'checksum' => hash('sha256', 'not a zip'),
+    ]));
+
+    $this->from(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->actingAs($user)
+      ->post(route('admin.plugins.catalog.install', 'sample-tools'))
+      ->assertRedirect(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->assertSessionHasErrors(['catalog_install' => 'The catalog artifact is not a valid plugin ZIP archive.']);
+
+  }
+
+  #[Test]
+  public function catalog_install_download_failure_shows_controlled_error(): void
+  {
+    Http::fake(function ($request) {
+      if (str_starts_with($request->url(), 'https://plugins.example.test/downloads/sample-tools.zip')) {
+        throw new ConnectionException('download failed');
+      }
+
+      if (str_starts_with($request->url(), 'https://plugins.example.test/api/plugins/sample-tools/latest?')) {
+        return Http::response([
+          'data' => [
+            'release' => [
+              'version' => '1.0.0',
+              'download_url' => 'https://plugins.example.test/downloads/sample-tools.zip',
+              'checksum_sha256' => hash('sha256', $this->pluginZipBody()),
+              'artifact_filename' => 'sample-tools-1.0.0.zip',
+            ],
+          ],
+        ]);
+      }
+
+      return Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'sample-tools',
+            'label' => 'Sample Tools',
+            'compatibility' => ['status' => 'compatible'],
+          ],
+        ],
+      ]);
+    });
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->from(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->actingAs($user)
+      ->post(route('admin.plugins.catalog.install', 'sample-tools'))
+      ->assertRedirect(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->assertSessionHasErrors(['catalog_install' => 'The catalog artifact could not be downloaded. Try again later.']);
+  }
+
+  #[Test]
+  public function catalog_install_requires_compatible_release_before_downloading(): void
+  {
+    Http::fake([
+      'https://plugins.example.test/api/plugins/sample-tools?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'sample-tools',
+            'label' => 'Sample Tools',
+            'compatibility' => ['status' => 'incompatible'],
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/sample-tools/latest?*' => Http::response([
+        'data' => [
+          'release' => [
+            'version' => '1.0.0',
+            'download_url' => 'https://plugins.example.test/downloads/sample-tools.zip',
+            'checksum_sha256' => str_repeat('a', 64),
+            'artifact_filename' => 'sample-tools-1.0.0.zip',
+          ],
+        ],
+      ]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->from(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->actingAs($user)
+      ->post(route('admin.plugins.catalog.install', 'sample-tools'))
+      ->assertRedirect(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->assertSessionHasErrors(['catalog_install' => 'This catalog plugin is not compatible with this CMS installation.']);
+
+    Http::assertNotSent(fn ($request): bool => $request->url() === 'https://plugins.example.test/downloads/sample-tools.zip');
+  }
+
+  #[Test]
+  public function catalog_install_requires_complete_artifact_metadata(): void
+  {
+    Http::fake([
+      'https://plugins.example.test/api/plugins/sample-tools?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'sample-tools',
+            'label' => 'Sample Tools',
+            'compatibility' => ['status' => 'compatible'],
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/sample-tools/latest?*' => Http::response([
+        'data' => [
+          'release' => [
+            'version' => '1.0.0',
+            'download_url' => 'https://plugins.example.test/downloads/sample-tools.zip',
+          ],
+        ],
+      ]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->from(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->actingAs($user)
+      ->post(route('admin.plugins.catalog.install', 'sample-tools'))
+      ->assertRedirect(route('admin.plugins.catalog.show', 'sample-tools'))
+      ->assertSessionHasErrors(['catalog_install' => 'This catalog release is missing downloadable artifact metadata.']);
+  }
+
+  #[Test]
+  public function catalog_install_does_not_enable_plugin_or_run_setup(): void
+  {
+    $zip = $this->pluginZipBody([
+      'migrations' => ['database/migrations'],
+    ]);
+
+    Http::fake($this->installFakeResponses([
+      'zip' => $zip,
+      'checksum' => hash('sha256', $zip),
+    ]));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)->post(route('admin.plugins.catalog.install', 'sample-tools'));
+
+    $this->assertFileExists(config('webblocks-plugins.install.root').'/sample-tools/1.0.0/webblocks-plugin.json');
+    $this->assertFileDoesNotExist(config('webblocks-plugins.install.root').'/sample-tools/enabled.json');
+  }
+
+  #[Test]
+  public function catalog_listing_uses_table_action_group_without_wrapping_no_links_text(): void
+  {
+    Http::fake([
+      'https://plugins.example.test/api/plugins?*' => Http::response([
+        'data' => [
+          ['handle' => 'bare-plugin', 'label' => 'Bare Plugin'],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/bare-plugin/latest?*' => Http::response(['data' => []]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.plugins.catalog.index'));
+
+    $response->assertOk();
+    $response->assertSeeText('Actions / Links');
+    $response->assertSee('<td class="wb-table-actions">', false);
+    $response->assertSee('<div class="wb-action-group"', false);
+    $response->assertDontSeeText('No links');
+  }
+
+  /**
+   * @param  array<string, mixed>  $options
+   * @return array<string, mixed>
+   */
+  private function installFakeResponses(array $options): array
+  {
+    $zip = (string) ($options['zip'] ?? $this->pluginZipBody());
+    $checksum = (string) ($options['checksum'] ?? hash('sha256', $zip));
+    $status = (int) ($options['status'] ?? 200);
+
+    return [
+      'https://plugins.example.test/api/plugins/sample-tools?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'sample-tools',
+            'label' => 'Sample Tools',
+            'compatibility' => ['status' => 'compatible'],
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/sample-tools/latest?*' => Http::response([
+        'data' => [
+          'release' => [
+            'version' => '1.0.0',
+            'channel' => 'stable',
+            'status' => 'published',
+            'download_url' => 'https://plugins.example.test/downloads/sample-tools.zip',
+            'checksum_sha256' => $checksum,
+            'artifact_filename' => 'sample-tools-1.0.0.zip',
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/downloads/sample-tools.zip*' => Http::response($zip, $status, [
+        'Content-Length' => (string) strlen($zip),
+        'Content-Type' => 'application/zip',
+      ]),
+    ];
+  }
+
+  /**
+   * @param  array<string, mixed>  $override
+   */
+  private function pluginZipBody(array $override = []): string
+  {
+    $path = storage_path('framework/testing/catalog-plugin-'.str()->uuid().'.zip');
+    $zip = new ZipArchive;
+    $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $zip->addFromString('webblocks-plugin.json', json_encode(array_merge([
+      'handle' => 'sample-tools',
+      'label' => 'Sample Tools',
+      'version' => '1.0.0',
+      'provider' => 'Vendor\\SampleTools\\SampleToolsPlugin',
+      'required_cms_version' => '^1.32',
+      'permissions' => [],
+      'commands' => [],
+      'routes' => [],
+      'settings' => [],
+      'migrations' => [],
+      'assets' => [],
+      'health' => null,
+    ], $override), JSON_PRETTY_PRINT));
+    $zip->addFromString('src/SampleToolsPlugin.php', '<?php');
+    $zip->close();
+
+    return (string) file_get_contents($path);
   }
 }
