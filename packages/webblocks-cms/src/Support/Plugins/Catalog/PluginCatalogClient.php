@@ -7,17 +7,16 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class PluginCatalogClient
 {
+  private const DEFAULT_BASE_URL = 'https://plugins.webblocksui.com';
+
   public function browse(): PluginCatalogResult
   {
-    $baseUrl = rtrim((string) config('webblocks-plugins.catalog.base_url', ''), '/');
-    $cmsVersion = (string) config('app.version', 'dev');
-
-    if ($baseUrl === '') {
-      return new PluginCatalogResult(false, [], $baseUrl, $cmsVersion, 'Configure a Plugin Catalog base URL before browsing.');
-    }
+    $baseUrl = $this->baseUrl();
+    $cmsVersion = $this->cmsVersion();
 
     $request = Http::acceptJson()
       ->timeout((int) config('webblocks-plugins.catalog.timeout_seconds', 5))
@@ -39,10 +38,11 @@ class PluginCatalogClient
       Log::warning('Plugin Catalog unavailable.', [
         'base_url' => $baseUrl,
         'host_product' => 'webblocks-cms',
+        'cms_version' => $cmsVersion,
         'error' => $exception->getMessage(),
       ]);
 
-      return new PluginCatalogResult(false, [], $baseUrl, $cmsVersion, 'The Plugin Catalog could not be reached within the configured timeout.');
+      return new PluginCatalogResult(false, [], $baseUrl, $cmsVersion, 'Plugin Catalog is not available right now. Please try again later.');
     }
 
     $payload = $response->json();
@@ -51,10 +51,11 @@ class PluginCatalogClient
       Log::warning('Plugin Catalog returned an invalid response.', [
         'base_url' => $baseUrl,
         'host_product' => 'webblocks-cms',
+        'cms_version' => $cmsVersion,
         'status' => $response->status(),
       ]);
 
-      return new PluginCatalogResult(false, [], $baseUrl, $cmsVersion, 'The Plugin Catalog is unavailable or returned an unexpected response.');
+      return new PluginCatalogResult(false, [], $baseUrl, $cmsVersion, 'Plugin Catalog is not available right now. Please try again later.');
     }
 
     $plugins = $this->pluginsFromPayload($payload, $baseUrl, $cmsVersion);
@@ -64,13 +65,9 @@ class PluginCatalogClient
 
   public function show(string $handle): PluginCatalogDetailResult
   {
-    $baseUrl = rtrim((string) config('webblocks-plugins.catalog.base_url', ''), '/');
-    $cmsVersion = (string) config('app.version', 'dev');
+    $baseUrl = $this->baseUrl();
+    $cmsVersion = $this->cmsVersion();
     $handle = trim($handle);
-
-    if ($baseUrl === '') {
-      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'Configure a Plugin Catalog base URL before browsing.');
-    }
 
     if ($handle === '') {
       return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'Select a catalog plugin before opening details.');
@@ -95,10 +92,11 @@ class PluginCatalogClient
         'base_url' => $baseUrl,
         'host_product' => 'webblocks-cms',
         'handle' => $handle,
+        'cms_version' => $cmsVersion,
         'error' => $exception->getMessage(),
       ]);
 
-      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The Plugin Catalog detail could not be reached within the configured timeout.');
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'Plugin Catalog is not available right now. Please try again later.');
     }
 
     $payload = $response->json();
@@ -112,10 +110,11 @@ class PluginCatalogClient
         'base_url' => $baseUrl,
         'host_product' => 'webblocks-cms',
         'handle' => $handle,
+        'cms_version' => $cmsVersion,
         'status' => $response->status(),
       ]);
 
-      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The Plugin Catalog detail is unavailable or returned an unexpected response.');
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'Plugin Catalog is not available right now. Please try again later.');
     }
 
     $pluginPayload = Arr::get($payload, 'data.plugin', Arr::get($payload, 'data', Arr::get($payload, 'plugin')));
@@ -188,6 +187,7 @@ class PluginCatalogClient
         'base_url' => $baseUrl,
         'host_product' => 'webblocks-cms',
         'handle' => $handle,
+        'cms_version' => $cmsVersion,
         'error' => $exception->getMessage(),
       ]);
 
@@ -202,5 +202,18 @@ class PluginCatalogClient
     $release = is_array($payload) ? Arr::get($payload, 'data.release', Arr::get($payload, 'data', Arr::get($payload, 'release'))) : null;
 
     return is_array($release) ? CatalogRelease::fromArray($release) : null;
+  }
+
+  private function baseUrl(): string
+  {
+    $configured = config('webblocks-plugins.catalog.base_url');
+    $baseUrl = is_string($configured) ? trim($configured) : '';
+
+    return rtrim($baseUrl !== '' ? $baseUrl : self::DEFAULT_BASE_URL, '/');
+  }
+
+  private function cmsVersion(): string
+  {
+    return WebBlocks::version();
   }
 }

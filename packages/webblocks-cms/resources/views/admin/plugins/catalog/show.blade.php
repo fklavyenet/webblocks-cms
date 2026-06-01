@@ -34,7 +34,7 @@
         'title' => $plugin?->label ?? 'Plugin Catalog Detail',
         'description' => 'Review public catalog metadata for a WebBlocks CMS-compatible plugin.',
         'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary">Back to Catalog</a>',
-        'context' => '<span class="wb-text-sm wb-text-muted">Catalog: '.e($catalog->baseUrl).' - CMS: '.e($catalog->cmsVersion).'</span>',
+        'context' => '<span class="wb-text-sm wb-text-muted">Compatibility is checked against this CMS installation.</span>',
     ])
 
     @if (! $catalog->available || $plugin === null)
@@ -96,10 +96,6 @@
                         <span class="wb-status {{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
                     </div>
                     <div class="wb-grid wb-grid-2">
-                        <div>
-                            <strong>Running CMS</strong>
-                            <div>{{ $catalog->cmsVersion }}</div>
-                        </div>
                         <div>
                             <strong>Required CMS</strong>
                             <div>{!! $value($plugin->displayRequiredCmsVersion()) !!}</div>

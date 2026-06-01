@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class PluginCatalogBrowserTest extends TestCase
 {
@@ -20,7 +21,7 @@ class PluginCatalogBrowserTest extends TestCase
   {
     parent::setUp();
 
-    config()->set('app.version', '1.33.0');
+    config()->set('app.version', 'dev');
     config()->set('webblocks-plugins.catalog.base_url', 'https://plugins.example.test');
   }
 
@@ -43,7 +44,12 @@ class PluginCatalogBrowserTest extends TestCase
 
     $catalog->assertOk();
     $catalog->assertSeeText('Plugin Catalog');
+    $catalog->assertSeeText('Compatibility is checked against this CMS installation.');
     $catalog->assertSeeText('No catalog plugins found.');
+    $catalog->assertDontSeeText('Catalog:');
+    $catalog->assertDontSeeText('CMS:');
+    $catalog->assertDontSeeText('plugins.example.test');
+    $catalog->assertDontSeeText('CMS: dev');
   }
 
   #[Test]
@@ -108,6 +114,8 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertSeeText('Requires ^1.33');
     $response->assertSeeText('stable');
     $response->assertSeeText('published');
+    $response->assertDontSeeText('Catalog:');
+    $response->assertDontSeeText('CMS:');
     $response->assertSee('href="https://plugins.example.test/plugins/analytics-tools"', false);
     $response->assertSee('href="https://plugins.example.test/downloads/analytics-tools.zip"', false);
   }
@@ -166,6 +174,7 @@ class PluginCatalogBrowserTest extends TestCase
 
     $response->assertOk();
     $response->assertSeeText('Analytics Tools');
+    $response->assertSeeText('Compatibility is checked against this CMS installation.');
     $response->assertSeeText('analytics-tools');
     $response->assertSeeText('Calm reporting widgets for editors.');
     $response->assertSeeText('Adds read-only analytics dashboards for WebBlocks CMS operators.');
@@ -203,6 +212,10 @@ class PluginCatalogBrowserTest extends TestCase
     $response->assertSeeText('create_analytics_tools_tables');
     $response->assertSeeText('Vendor\\AnalyticsTools\\ServiceProvider');
     $response->assertSeeText('analytics-tools:sync');
+    $response->assertDontSeeText('Catalog:');
+    $response->assertDontSeeText('CMS:');
+    $response->assertDontSeeText('Running CMS');
+    $response->assertDontSeeText('CMS: dev');
   }
 
   #[Test]
@@ -242,8 +255,8 @@ class PluginCatalogBrowserTest extends TestCase
 
       return str_starts_with($request->url(), 'https://plugins.example.test/api/plugins/block-pack?')
         && ($query['host_product'] ?? null) === 'webblocks-cms'
-        && ($query['version'] ?? null) === '1.33.0'
-        && ($query['cms_version'] ?? null) === '1.33.0';
+        && ($query['version'] ?? null) === WebBlocks::version()
+        && ($query['cms_version'] ?? null) === WebBlocks::version();
     });
 
     Http::assertSent(function ($request): bool {
@@ -251,8 +264,8 @@ class PluginCatalogBrowserTest extends TestCase
 
       return str_starts_with($request->url(), 'https://plugins.example.test/api/plugins/block-pack/latest?')
         && ($query['host_product'] ?? null) === 'webblocks-cms'
-        && ($query['version'] ?? null) === '1.33.0'
-        && ($query['cms_version'] ?? null) === '1.33.0';
+        && ($query['version'] ?? null) === WebBlocks::version()
+        && ($query['cms_version'] ?? null) === WebBlocks::version();
     });
   }
 
@@ -335,8 +348,10 @@ class PluginCatalogBrowserTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'offline-plugin'));
 
     $response->assertOk();
-    $response->assertSeeText('The Plugin Catalog detail could not be reached within the configured timeout.');
+    $response->assertSeeText('Plugin Catalog is not available right now. Please try again later.');
     $response->assertSeeText('Catalog plugin unavailable.');
+    $response->assertDontSeeText('plugins.example.test');
+    $response->assertDontSeeText('CMS: dev');
   }
 
   #[Test]
@@ -378,8 +393,8 @@ class PluginCatalogBrowserTest extends TestCase
 
       return str_starts_with($request->url(), 'https://plugins.example.test/api/plugins?')
         && ($query['host_product'] ?? null) === 'webblocks-cms'
-        && ($query['version'] ?? null) === '1.33.0'
-        && ($query['cms_version'] ?? null) === '1.33.0'
+        && ($query['version'] ?? null) === WebBlocks::version()
+        && ($query['cms_version'] ?? null) === WebBlocks::version()
         && ($query['listed'] ?? null) === '1'
         && ($query['visibility'] ?? null) === 'public';
     });
@@ -389,7 +404,62 @@ class PluginCatalogBrowserTest extends TestCase
 
       return str_starts_with($request->url(), 'https://plugins.example.test/api/plugins/block-pack/latest?')
         && ($query['host_product'] ?? null) === 'webblocks-cms'
-        && ($query['version'] ?? null) === '1.33.0';
+        && ($query['version'] ?? null) === WebBlocks::version()
+        && ($query['cms_version'] ?? null) === WebBlocks::version();
+    });
+  }
+
+  #[Test]
+  public function catalog_uses_default_public_base_url_when_config_key_is_missing(): void
+  {
+    config()->set('webblocks-plugins', ['enabled' => []]);
+
+    Http::fake([
+      'https://plugins.webblocksui.com/api/plugins?*' => Http::response(['data' => []]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)->get(route('admin.plugins.catalog.index'))->assertOk();
+
+    Http::assertSent(function ($request): bool {
+      return str_starts_with($request->url(), 'https://plugins.webblocksui.com/api/plugins?');
+    });
+  }
+
+  #[Test]
+  public function catalog_uses_default_public_base_url_when_config_is_empty(): void
+  {
+    config()->set('webblocks-plugins.catalog.base_url', '   ');
+
+    Http::fake([
+      'https://plugins.webblocksui.com/api/plugins?*' => Http::response(['data' => []]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)->get(route('admin.plugins.catalog.index'))->assertOk();
+
+    Http::assertSent(function ($request): bool {
+      return str_starts_with($request->url(), 'https://plugins.webblocksui.com/api/plugins?');
+    });
+  }
+
+  #[Test]
+  public function explicit_catalog_base_url_override_wins_internally(): void
+  {
+    config()->set('webblocks-plugins.catalog.base_url', ' https://custom-plugins.example.test/ ');
+
+    Http::fake([
+      'https://custom-plugins.example.test/api/plugins?*' => Http::response(['data' => []]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)->get(route('admin.plugins.catalog.index'))->assertOk();
+
+    Http::assertSent(function ($request): bool {
+      return str_starts_with($request->url(), 'https://custom-plugins.example.test/api/plugins?');
     });
   }
 
@@ -403,8 +473,10 @@ class PluginCatalogBrowserTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.plugins.catalog.index'));
 
     $response->assertOk();
-    $response->assertSeeText('The Plugin Catalog could not be reached within the configured timeout.');
+    $response->assertSeeText('Plugin Catalog is not available right now. Please try again later.');
     $response->assertSeeText('No catalog plugins found.');
+    $response->assertDontSeeText('plugins.example.test');
+    $response->assertDontSeeText('CMS: dev');
   }
 
   #[Test]

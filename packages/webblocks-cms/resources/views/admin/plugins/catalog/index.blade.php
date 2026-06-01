@@ -5,7 +5,7 @@
         'title' => 'Plugin Catalog',
         'description' => 'Browse public WebBlocks CMS-compatible plugins from the read-only Plugin Catalog.',
         'actions' => '<a href="'.e(route('admin.system.plugins.index')).'" class="wb-btn wb-btn-secondary">Back to Plugins</a>',
-        'context' => '<span class="wb-text-sm wb-text-muted">Catalog: '.e($catalog->baseUrl).' - CMS: '.e($catalog->cmsVersion).'</span>',
+        'context' => '<span class="wb-text-sm wb-text-muted">Compatibility is checked against this CMS installation.</span>',
     ])
 
     @if (! $catalog->available)
