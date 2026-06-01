@@ -81,7 +81,7 @@ For product positioning, MVP scope, candidate implementation models, public webs
 
 1. Phase 1: Documentation and metadata contract.
 2. Phase 2: Catalog server/data model planning for `plugins.webblocksui.com`.
-3. Phase 3: CMS admin `Browse Plugin Catalog` read-only UI.
+3. Phase 3: CMS admin `Browse Plugin Catalog` read-only UI. Implemented as `/webadmin/plugins/catalog`, using `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL` / `webblocks-plugins.catalog.base_url` and defaulting to `https://plugins.webblocksui.com`.
 4. Phase 4: Manual ZIP download/install flow linked from catalog metadata.
 5. Phase 5: Controlled `Install from Catalog` flow, still disabled-by-default after install.
 6. Phase 6: Plugin update checks and update availability.
@@ -89,6 +89,8 @@ For product positioning, MVP scope, candidate implementation models, public webs
 8. Phase 8: Marketplace/licensing/commercial features.
 
 Each phase must preserve disabled-by-default installation, compatibility-first behavior, and explicit setup or migration actions. Remote metadata may help users discover and assess plugins, but it must not silently enable plugins, run migrations, apply updates, or bypass host-product compatibility rules.
+
+The CMS catalog browser is discovery-only: it lists public WebBlocks CMS-compatible catalog plugins and latest compatible release metadata, but it does not install ZIPs, install Composer packages, apply updates, enable plugins, run migrations, register routes, register commands, register providers, register permissions, or activate plugin state from remote data.
 
 ## Security And Safety Rules
 

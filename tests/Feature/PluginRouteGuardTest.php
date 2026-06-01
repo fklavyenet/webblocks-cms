@@ -18,8 +18,10 @@ class PluginRouteGuardTest extends TestCase
   {
     $this->assertNotNull(Route::getRoutes()->getByName('admin.dashboard'));
     $this->assertNotNull(Route::getRoutes()->getByName('admin.system.plugins.index'));
+    $this->assertNotNull(Route::getRoutes()->getByName('admin.plugins.catalog.index'));
     $this->assertSame('webadmin', Route::getRoutes()->getByName('admin.dashboard')?->uri());
     $this->assertSame('webadmin/system/plugins', Route::getRoutes()->getByName('admin.system.plugins.index')?->uri());
+    $this->assertSame('webadmin/plugins/catalog', Route::getRoutes()->getByName('admin.plugins.catalog.index')?->uri());
 
     $adminRoutes = collect(Route::getRoutes()->getRoutes())
       ->filter(fn ($route): bool => $route->uri() === 'admin' || str_starts_with($route->uri(), 'admin/'))

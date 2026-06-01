@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## Unreleased
+
+- Add a read-only `System -> Plugins -> Browse Plugin Catalog` admin screen that requests public WebBlocks CMS-compatible plugins from the configured catalog service, shows compatibility and latest compatible release metadata, and keeps install/update/enable/migration behavior manual and separate.
+- Add Plugin Catalog configuration with `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL`, defaulting to `https://plugins.webblocksui.com`, plus timeout settings for controlled unavailable-catalog UI.
+
 ## 1.32.96
 
 - Polish Contact Messages list row actions so rows expose only View message and modal-confirmed Delete controls, preserving separate editorial and notification status columns plus bulk deletion.

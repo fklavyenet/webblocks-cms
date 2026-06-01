@@ -4,6 +4,7 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Plugins',
         'description' => 'Manage manually installed WebBlocks CMS plugins and review the plugin host status.',
+        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-search" aria-hidden="true"></i> Browse Plugin Catalog</a>',
     ])
 
     @if ($canInstallPlugins)

@@ -21,6 +21,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageRevisionController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSiteMoveController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
+use WebBlocks\Cms\Http\Controllers\Admin\PluginCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotRevisionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteController;
@@ -192,6 +193,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       Route::delete('system/backups/{backup}/restores/{restore}', [SystemBackupController::class, 'destroyRestore'])->name('system.backups.restores.destroy');
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+      Route::get('plugins/catalog', [PluginCatalogController::class, 'index'])->name('plugins.catalog.index');
       Route::get('system/plugins', [SystemPluginController::class, 'index'])->name('system.plugins.index');
       Route::post('system/plugins/upload', [SystemPluginController::class, 'upload'])->name('system.plugins.upload');
       Route::post('system/plugins/{plugin}/enable', [SystemPluginController::class, 'enable'])->name('system.plugins.enable');
