@@ -62,6 +62,78 @@ class PluginCatalogClient
     return new PluginCatalogResult(true, $plugins, $baseUrl, $cmsVersion);
   }
 
+  public function show(string $handle): PluginCatalogDetailResult
+  {
+    $baseUrl = rtrim((string) config('webblocks-plugins.catalog.base_url', ''), '/');
+    $cmsVersion = (string) config('app.version', 'dev');
+    $handle = trim($handle);
+
+    if ($baseUrl === '') {
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'Configure a Plugin Catalog base URL before browsing.');
+    }
+
+    if ($handle === '') {
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'Select a catalog plugin before opening details.');
+    }
+
+    $request = Http::acceptJson()
+      ->timeout((int) config('webblocks-plugins.catalog.timeout_seconds', 5))
+      ->connectTimeout((int) config('webblocks-plugins.catalog.connect_timeout_seconds', 3))
+      ->withHeaders([
+        'User-Agent' => 'WebBlocks-CMS-Plugin-Catalog/'.$cmsVersion,
+      ]);
+
+    try {
+      $response = $request->get($baseUrl.'/api/plugins/'.rawurlencode($handle), [
+        'host_product' => 'webblocks-cms',
+        'version' => $cmsVersion,
+        'cms_version' => $cmsVersion,
+        'include' => 'latest_compatible_release',
+      ]);
+    } catch (ConnectionException $exception) {
+      Log::warning('Plugin Catalog detail unavailable.', [
+        'base_url' => $baseUrl,
+        'host_product' => 'webblocks-cms',
+        'handle' => $handle,
+        'error' => $exception->getMessage(),
+      ]);
+
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The Plugin Catalog detail could not be reached within the configured timeout.');
+    }
+
+    $payload = $response->json();
+
+    if ($response->status() === 404) {
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The requested catalog plugin was not found.');
+    }
+
+    if (! $response->successful() || ! is_array($payload)) {
+      Log::warning('Plugin Catalog detail returned an invalid response.', [
+        'base_url' => $baseUrl,
+        'host_product' => 'webblocks-cms',
+        'handle' => $handle,
+        'status' => $response->status(),
+      ]);
+
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The Plugin Catalog detail is unavailable or returned an unexpected response.');
+    }
+
+    $pluginPayload = Arr::get($payload, 'data.plugin', Arr::get($payload, 'data', Arr::get($payload, 'plugin')));
+
+    if (! is_array($pluginPayload)) {
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The Plugin Catalog detail returned no plugin metadata.');
+    }
+
+    $latestRelease = $this->latestCompatibleRelease($baseUrl, $handle, $cmsVersion);
+    $plugin = CatalogPlugin::fromArray($pluginPayload, $latestRelease);
+
+    if ($plugin === null) {
+      return new PluginCatalogDetailResult(false, null, $baseUrl, $cmsVersion, 'The Plugin Catalog detail returned incomplete plugin metadata.');
+    }
+
+    return new PluginCatalogDetailResult(true, $plugin, $baseUrl, $cmsVersion);
+  }
+
   /**
    * @param  array<string, mixed>  $payload
    * @return array<int, CatalogPlugin>
@@ -104,7 +176,7 @@ class PluginCatalogClient
         ->withHeaders([
           'User-Agent' => 'WebBlocks-CMS-Plugin-Catalog/'.$cmsVersion,
         ])
-        ->get($baseUrl.'/api/plugins/'.$handle.'/latest', [
+        ->get($baseUrl.'/api/plugins/'.rawurlencode($handle).'/latest', [
           'host_product' => 'webblocks-cms',
           'version' => $cmsVersion,
           'cms_version' => $cmsVersion,

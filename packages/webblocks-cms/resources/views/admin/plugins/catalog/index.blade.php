@@ -49,7 +49,7 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <strong>{{ $plugin->label }}</strong>
+                                        <a href="{{ route('admin.plugins.catalog.show', $plugin->handle) }}"><strong>{{ $plugin->label }}</strong></a>
                                         <div class="wb-text-sm wb-text-muted"><code>{{ $plugin->handle }}</code></div>
                                         @if ($plugin->summary)
                                             <div class="wb-text-sm">{{ $plugin->summary }}</div>
@@ -77,6 +77,9 @@
                                     </td>
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group" aria-label="Catalog links for {{ $plugin->label }}">
+                                            <a href="{{ route('admin.plugins.catalog.show', $plugin->handle) }}" class="wb-action-btn" title="View details" aria-label="View details">
+                                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                            </a>
                                             @if ($plugin->firstDetailsUrl())
                                                 <a href="{{ $plugin->firstDetailsUrl() }}" class="wb-action-btn" title="Open details" aria-label="Open details" target="_blank" rel="noopener noreferrer">
                                                     <i class="wb-icon wb-icon-external-link" aria-hidden="true"></i>

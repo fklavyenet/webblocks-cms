@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## Unreleased
+
+- Add read-only Plugin Catalog detail pages at `/webadmin/plugins/catalog/{handle}` with compatibility, latest compatible release, artifact/checksum, documentation/support links, safe declared metadata, and manual ZIP install guidance while keeping install/update/enable/migration behavior outside remote catalog control.
+
 ## 1.32.97
 
 - Add the read-only Plugin Catalog Browser at `/webadmin/plugins/catalog`, reachable from the `System -> Plugins` Browse Plugin Catalog action, for display-only WebBlocks CMS-compatible catalog metadata.

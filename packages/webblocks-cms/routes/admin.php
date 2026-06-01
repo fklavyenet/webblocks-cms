@@ -194,6 +194,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
       Route::get('plugins/catalog', [PluginCatalogController::class, 'index'])->name('plugins.catalog.index');
+      Route::get('plugins/catalog/{handle}', [PluginCatalogController::class, 'show'])->name('plugins.catalog.show');
       Route::get('system/plugins', [SystemPluginController::class, 'index'])->name('system.plugins.index');
       Route::post('system/plugins/upload', [SystemPluginController::class, 'upload'])->name('system.plugins.upload');
       Route::post('system/plugins/{plugin}/enable', [SystemPluginController::class, 'enable'])->name('system.plugins.enable');

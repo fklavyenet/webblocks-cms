@@ -26,4 +26,18 @@ class PluginCatalogController extends Controller
       'catalog' => $result,
     ]);
   }
+
+  public function show(string $handle): View
+  {
+    $result = $this->catalog->show($handle);
+    $title = $result->plugin?->label ?? 'Plugin Catalog Detail';
+
+    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.plugins.catalog.show', [
+      'title' => $title,
+      'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
+      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle($title),
+      'catalog' => $result,
+      'handle' => $handle,
+    ]);
+  }
 }
