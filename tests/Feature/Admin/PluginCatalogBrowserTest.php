@@ -228,18 +228,9 @@ class PluginCatalogBrowserTest extends TestCase
     Http::fake([
       'https://plugins.example.test/api/plugins/webblocks-redirect-manager?*' => Http::response([
         'data' => [
-          'plugin' => [
-            'handle' => 'webblocks-redirect-manager',
-            'label' => 'WebBlocks Redirect Manager',
-            'summary' => 'Manage redirect rules for WebBlocks CMS.',
-            'compatibility' => [
-              'status' => 'compatible',
-              'requires_cms' => '^1.32',
-            ],
-          ],
+          'handle' => 'webblocks-redirect-manager',
           'latest_release' => [
             'version' => '0.1.0',
-            'required_cms_version' => '^1.32',
             'channel' => 'stable',
             'status' => 'published',
             'artifact' => [
@@ -249,6 +240,16 @@ class PluginCatalogBrowserTest extends TestCase
               'validation_status' => 'passed',
               'scan_status' => 'not_scanned',
               'download_url' => 'https://plugins.example.test/plugins/webblocks-redirect-manager/releases/1/artifact/download',
+            ],
+            'compatibility' => [
+              [
+                'product' => [
+                  'key' => 'webblocks-cms',
+                  'name' => 'WebBlocks CMS',
+                ],
+                'version_constraint' => '^1.32',
+                'is_supported' => true,
+              ],
             ],
           ],
         ],
@@ -261,7 +262,7 @@ class PluginCatalogBrowserTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'webblocks-redirect-manager'));
 
     $response->assertOk();
-    $response->assertSeeText('WebBlocks Redirect Manager');
+    $response->assertSeeText('webblocks-redirect-manager');
     $response->assertSeeText('published');
     $response->assertSeeText('webblocks-redirect-manager-0.1.0.zip');
     $response->assertSeeText('8383');
