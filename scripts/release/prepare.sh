@@ -46,8 +46,8 @@ printf '%s\n' "${CHECKSUM}" > "${ARCHIVE_PATH}.sha256"
 
 "${PHP_BIN}" -r '
 $payload = [
-  "product" => "webblocks-cms",
-  "channel" => getenv("WEBBLOCKS_UPDATE_PUBLISHER_CHANNEL") ?: getenv("WEBBLOCKS_UPDATES_CHANNEL") ?: "stable",
+  "product" => getenv("WEBBLOCKS_PUBLISHER_PRODUCT") ?: "webblocks-cms",
+  "channel" => getenv("WEBBLOCKS_PUBLISHER_CHANNEL") ?: "stable",
   "version" => $argv[1],
   "minimum_client_version" => getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18",
   "source_reference" => "v".$argv[1],

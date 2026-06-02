@@ -316,21 +316,7 @@ final class UpdatePublisher
 
   private function publisherToken(): string
   {
-    $token = trim((string) config('webblocks-updates.publisher.token', ''));
-
-    if ($token !== '') {
-      return $token;
-    }
-
-    foreach ([$_ENV['WEBBLOCKS_PUBLISH_TOKEN'] ?? null, $_SERVER['WEBBLOCKS_PUBLISH_TOKEN'] ?? null, getenv('WEBBLOCKS_PUBLISH_TOKEN')] as $fallback) {
-      $fallback = trim((string) $fallback);
-
-      if ($fallback !== '') {
-        return $fallback;
-      }
-    }
-
-    return '';
+    return trim((string) config('webblocks-updates.publisher.token', ''));
   }
 
   private function publishEndpoint(string $publisherUrl): string

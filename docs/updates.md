@@ -41,7 +41,7 @@ composer release:publish-update -- --dry-run
 composer release:publish-update
 ```
 
-The publisher reads `WEBBLOCKS_UPDATE_PUBLISHER_URL`, `WEBBLOCKS_UPDATE_PUBLISHER_TOKEN`, `WEBBLOCKS_UPDATE_PUBLISHER_PRODUCT`, and `WEBBLOCKS_UPDATE_PUBLISHER_CHANNEL`, with `WEBBLOCKS_PUBLISH_URL` and `WEBBLOCKS_PUBLISH_TOKEN` kept as safe compatibility aliases. Defaults are `https://updates.webblocksui.com`, no token, `webblocks-cms`, and `stable`. Dry-run validates inputs without uploading. A real publish without a token reports a controlled non-published state, exits unsuccessfully, and must not be treated as a release publication.
+The publisher reads only `WEBBLOCKS_PUBLISHER_URL`, `WEBBLOCKS_PUBLISHER_TOKEN`, `WEBBLOCKS_PUBLISHER_PRODUCT`, and `WEBBLOCKS_PUBLISHER_CHANNEL`. Defaults are `https://updates.webblocksui.com/api/updates/publish`, no token, `webblocks-cms`, and `stable`. Legacy publisher aliases are intentionally unsupported. Dry-run validates inputs without uploading. A real publish without a token reports a controlled non-published state, exits unsuccessfully, and must not be treated as a release publication.
 
 ## Update Apply Flow
 

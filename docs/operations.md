@@ -75,7 +75,7 @@ composer release:publish-update -- --dry-run
 composer release:publish-update
 ```
 
-`release:prepare` builds the package-rooted ZIP, checksum, and publisher payload locally. `release:publish-update` posts the package and metadata directly to the configured WebBlocks Publisher API, then verifies latest update-server metadata for `webblocks-cms` on the selected channel. Git commits and tags are source-history steps only. GitHub Actions, GitHub releases, GitHub asset URLs, the GitHub API, and the `gh` CLI are not part of CMS update publishing, and `.github` workflows are intentionally absent.
+`release:prepare` builds the package-rooted ZIP, checksum, and publisher payload locally. `release:publish-update` posts the package and metadata directly to `WEBBLOCKS_PUBLISHER_URL`, which defaults to `https://updates.webblocksui.com/api/updates/publish`, then verifies latest update-server metadata for `webblocks-cms` on the selected channel. Publishing reads only `WEBBLOCKS_PUBLISHER_URL`, `WEBBLOCKS_PUBLISHER_TOKEN`, `WEBBLOCKS_PUBLISHER_PRODUCT`, and `WEBBLOCKS_PUBLISHER_CHANNEL`; legacy publisher aliases are intentionally unsupported. Git commits and tags are source-history steps only. GitHub Actions, GitHub releases, GitHub asset URLs, the GitHub API, and the `gh` CLI are not part of CMS update publishing, and `.github` workflows are intentionally absent.
 
 Installed CMS working copies are update consumers. They may fetch source history when needed, but must not push upstream or publish CMS updates from an installation checkout.
 

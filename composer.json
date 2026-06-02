@@ -80,6 +80,9 @@
         "format:changed": [
             "bash scripts/format-changed.sh"
         ],
+        "format:touched": [
+            "@format:changed"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test --exclude-group=legacy"

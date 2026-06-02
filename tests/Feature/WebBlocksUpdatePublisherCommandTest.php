@@ -32,7 +32,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com');
+    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
 
     $this->artisan('webblocks:publish-update', [
       '--artifact' => $artifact,
@@ -52,7 +52,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com');
+    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
 
     Http::fake([
       'https://updates.webblocksui.com/api/updates/publish' => Http::response([
@@ -104,14 +104,11 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       && $request['channel'] === 'stable');
   }
 
-  public function test_publish_accepts_full_endpoint_url_and_webblocks_env_token_without_leaking_it(): void
+  public function test_publish_accepts_canonical_configured_token_without_leaking_it(): void
   {
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
 
-    putenv('WEBBLOCKS_PUBLISH_TOKEN=webblocks-env-token');
-    $_ENV['WEBBLOCKS_PUBLISH_TOKEN'] = 'webblocks-env-token';
-    $_SERVER['WEBBLOCKS_PUBLISH_TOKEN'] = 'webblocks-env-token';
-    config()->set('webblocks-updates.publisher.token', null);
+    config()->set('webblocks-updates.publisher.token', 'webblocks-env-token');
     config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
 
     Http::fake([
@@ -139,9 +136,38 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
       && $request->url() === 'https://updates.webblocksui.com/api/updates/publish'
       && $request->hasHeader('Authorization', 'Bearer webblocks-env-token'));
+  }
 
+  public function test_publish_does_not_accept_legacy_token_environment_aliases(): void
+  {
+    [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
+
+    putenv('WEBBLOCKS_PUBLISH_TOKEN=legacy-webblocks-env-token');
+    putenv('WEBBLOCKS_UPDATE_PUBLISHER_TOKEN=legacy-update-env-token');
+    $_ENV['WEBBLOCKS_PUBLISH_TOKEN'] = 'legacy-webblocks-env-token';
+    $_ENV['WEBBLOCKS_UPDATE_PUBLISHER_TOKEN'] = 'legacy-update-env-token';
+    $_SERVER['WEBBLOCKS_PUBLISH_TOKEN'] = 'legacy-webblocks-env-token';
+    $_SERVER['WEBBLOCKS_UPDATE_PUBLISHER_TOKEN'] = 'legacy-update-env-token';
+    config()->set('webblocks-updates.publisher.token', null);
+    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
+
+    $this->artisan('webblocks:publish-update', [
+      '--artifact' => $artifact,
+      '--payload' => $payload,
+    ])
+      ->expectsOutputToContain('Token configured')
+      ->expectsOutputToContain('Update publisher token is not configured. Artifact was generated but not published.')
+      ->assertFailed();
+
+    Http::assertNothingSent();
     putenv('WEBBLOCKS_PUBLISH_TOKEN');
-    unset($_ENV['WEBBLOCKS_PUBLISH_TOKEN'], $_SERVER['WEBBLOCKS_PUBLISH_TOKEN']);
+    putenv('WEBBLOCKS_UPDATE_PUBLISHER_TOKEN');
+    unset(
+      $_ENV['WEBBLOCKS_PUBLISH_TOKEN'],
+      $_ENV['WEBBLOCKS_UPDATE_PUBLISHER_TOKEN'],
+      $_SERVER['WEBBLOCKS_PUBLISH_TOKEN'],
+      $_SERVER['WEBBLOCKS_UPDATE_PUBLISHER_TOKEN'],
+    );
   }
 
   public function test_publish_reports_unauthorized_response_without_leaking_token(): void
