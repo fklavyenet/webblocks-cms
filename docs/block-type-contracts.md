@@ -72,8 +72,8 @@ Published core block types currently documented here: `42`.
 Phase 1 adds a safe developer audit command:
 
 ```bash
-ddev artisan block-types:contracts-audit
-ddev artisan block-types:contracts-audit --json
+php artisan block-types:contracts-audit
+php artisan block-types:contracts-audit --json
 ```
 
 The command is read-only.

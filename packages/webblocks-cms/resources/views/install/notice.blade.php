@@ -14,7 +14,7 @@
 
                 <div class="wb-card wb-card-muted">
                     <div class="wb-card-body">
-                        <pre><code>ddev artisan webblocks:install</code></pre>
+                        <pre><code>php artisan webblocks:install</code></pre>
                     </div>
                 </div>
 

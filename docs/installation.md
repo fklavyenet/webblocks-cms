@@ -2,9 +2,9 @@
 
 ## Overview
 
-WebBlocks CMS supports a package-consumer install flow for fresh Laravel applications, a browser-based install wizard for fresh maintenance-repo installs, a manual Laravel CLI install path, and an optional DDEV local setup flow.
+WebBlocks CMS supports a package-consumer install flow for fresh Laravel applications, a browser-based install wizard for fresh maintenance-repo installs, and a manual Laravel CLI install path.
 
-For a fresh install, start by getting the WebBlocks CMS source code onto your machine. Run Composer, create `.env`, use Artisan, start DDEV, and open the browser install wizard only after the source code exists locally.
+For a fresh install, start by getting the WebBlocks CMS source code onto your machine. Run Composer, create `.env`, use Artisan, and open the browser install wizard only after the source code exists locally.
 
 An install is considered complete when the application has a working CMS baseline:
 
@@ -44,7 +44,7 @@ Use this flow when WebBlocks CMS is installed into a fresh Laravel application t
 
 ```bash
 composer require fklavyenet/webblocks-cms
-ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" --password="secret-password"
+php artisan webblocks:install --name="Admin User" --email="admin@example.com" --password="secret-password"
 ```
 
 Supported options:
@@ -129,39 +129,34 @@ Notes:
 - runtime directories under `storage/framework`, `storage/logs`, and `bootstrap/cache` are created automatically on first run
 - Backup / Restore stores archives on the `backups` filesystem disk, defaulting to `storage/app/backups`. The PHP runtime user should own that directory or share a deployment group with read/write access; avoid broad `777` modes.
 
-## Optional DDEV Local Install
+## Native Local Install
 
-### Fresh Laravel + DDEV Package Flow
-
-For a fresh Laravel project running in DDEV:
+For a fresh Laravel project running with locally installed PHP and Composer:
 
 ```bash
-ddev start
 composer require fklavyenet/webblocks-cms
-ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" --password="secret-password"
+php artisan webblocks:install --name="Admin User" --email="admin@example.com" --password="secret-password"
 ```
 
 Then open:
 
-- public site: `https://<your-project>.ddev.site/`
-- admin login: `https://<your-project>.ddev.site/webadmin/login`
-- admin: `https://<your-project>.ddev.site/webadmin`
+- public site: `/`
+- admin login: `/webadmin/login`
+- admin: `/webadmin`
 
 After the source code is present locally:
 
 ```bash
-ddev config --project-type=laravel --docroot=public --project-name=<your-project-name>
-ddev start
-ddev composer install
+composer install
 cp .env.example .env
-ddev artisan key:generate
+php artisan key:generate
 ```
 
 Notes:
 
-- `ddev config --project-type=laravel --docroot=public --project-name=<your-project-name>` is required on a fresh clone to create `.ddev/config.yaml`
-- without `.ddev/config.yaml`, `ddev start` fails with a `no project found` error
-- local contact form email notifications should use DDEV Mailpit; the usual local SMTP values are `MAIL_MAILER=smtp`, `MAIL_HOST=127.0.0.1`, and `MAIL_PORT=1025`
+- trusted local development should use `.test` domains and HTTPS, with `https://webblocks-cms.test` as the canonical CMS development URL
+- `php artisan serve` remains useful for quick CLI-only checks, but trusted browser workflows should use the native Nginx/PHP-FPM setup documented in `docs/native-local-development.md`
+- local contact form email notifications should use a local SMTP catcher or trusted SMTP test account; the usual local SMTP values depend on the installed tool
 - Contact Form notification recipients resolve in this order: block-level `recipient_email`, current site's default contact recipient, `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as the last safe fallback
 - contact submissions are stored independently from notification delivery, so a public `Message sent` response confirms storage success even if admin later shows notification `Failed`
 - Contact Form blocks render the package-standard hidden `wb-public-contact-honeypot` wrapper with a `website` field, `tabindex="-1"`, and `autocomplete="off"`; when that field is filled, the server returns the same generic success redirect and does not store a Contact Message or attempt notification
@@ -170,9 +165,9 @@ Notes:
 
 Then open:
 
-- public site: `https://<your-project>.ddev.site`
-- admin: `https://<your-project>.ddev.site/webadmin`
-- installer on a fresh install: `https://<your-project>.ddev.site/install`
+- public site: `https://webblocks-cms.test`
+- admin: `https://webblocks-cms.test/webadmin`
+- installer on a fresh install: `https://webblocks-cms.test/install`
 
 Complete the fresh install in the browser wizard after those setup steps are done.
 

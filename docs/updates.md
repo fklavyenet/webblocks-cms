@@ -7,7 +7,7 @@ Updates in WebBlocks CMS are release-based and package-based.
 - The installed version reflects the last real release applied to the install.
 - Ordinary source development does not change the installed version.
 - The in-app updater applies published release packages, not local working-tree changes.
-- Fresh Composer consumers should install first with `composer require fklavyenet/webblocks-cms` and `ddev artisan webblocks:install` before using the normal release-based update flow.
+- Fresh Composer consumers should install first with `composer require fklavyenet/webblocks-cms` and `php artisan webblocks:install` before using the normal release-based update flow.
 - Current package-native installs consume package-rooted release ZIPs directly.
 - Historically, pre-package-native installs such as `1.31.53` could not directly consume package-rooted release ZIPs and required the old-shape `1.32.33` root-managed bridge first. That bridge path is now retired from routine release validation because there are no remaining old root-managed installs to support in normal gates.
 
@@ -84,8 +84,8 @@ The completed historical path was `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package
 Catalog repair and synchronization are explicit maintenance actions, separate from System Updates. Use:
 
 ```bash
-ddev artisan webblocks:catalog-repair --dry-run --all
-ddev artisan webblocks:catalog-repair --all
+php artisan webblocks:catalog-repair --dry-run --all
+php artisan webblocks:catalog-repair --all
 ```
 
 The command supports scoped maintenance with `--block-types`, `--slot-types`, `--page-layouts`, and `--icons`. Run with `--dry-run` first to report rows that would be created, updated, left unchanged, or skipped. The command is idempotent, preserves install-specific/custom catalog rows, and does not delete custom rows.
@@ -93,7 +93,7 @@ The command supports scoped maintenance with `--block-types`, `--slot-types`, `-
 The lower-level block type sync remains available for compatibility:
 
 ```bash
-ddev artisan block-types:sync-core
+php artisan block-types:sync-core
 ```
 
 The block type repair path keeps the database-backed `block_types` catalog aligned with the shipped core CMS catalog on existing installs:

@@ -77,10 +77,7 @@ class DatabaseRestoreRunner
     $config = $connection->getConfig();
 
     try {
-      match ($strategy) {
-        'ddev' => $this->runDdevMysqlRestore($connection->getDriverName(), $sqlPath, $config),
-        default => $this->runDirectMysqlRestore($connection->getDriverName(), $sqlPath, $config),
-      };
+      $this->runDirectMysqlRestore($connection->getDriverName(), $sqlPath, $config);
     } catch (RuntimeException $exception) {
       throw new RuntimeException($this->maskSensitiveValues($exception->getMessage(), $config).' Connection: '.$this->describeMysqlConnection($config), previous: $exception);
     }
@@ -139,63 +136,11 @@ class DatabaseRestoreRunner
     }
   }
 
-  private function runDdevMysqlRestore(string $driver, string $sqlPath, array $config): void
-  {
-    $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
-
-    try {
-      $command = $this->buildDdevMysqlRestoreCommand($driver, $config);
-      $process = $this->makeRestoreProcess($command);
-      $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
-
-      $handle = fopen($restoreInputFile, 'rb');
-
-      if ($handle === false) {
-        throw new RuntimeException('Backup SQL file could not be opened for restore.');
-      }
-
-      try {
-        $process->setInput($handle);
-        $process->run();
-      } finally {
-        fclose($handle);
-      }
-
-      if (! $process->isSuccessful()) {
-        throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database restore command failed.');
-      }
-    } finally {
-      File::delete($restoreInputFile);
-    }
-  }
-
   private function buildDirectMysqlRestoreCommand(string $driver, string $defaultsFile, array $config): array
   {
     $command = [
       $this->findMysqlClientBinary($driver),
       '--defaults-extra-file='.$defaultsFile,
-      '--binary-mode',
-      (string) $config['database'],
-    ];
-
-    if (! empty($config['unix_socket'])) {
-      $command[] = '--socket='.$config['unix_socket'];
-    } else {
-      $command[] = '--host='.(string) $config['host'];
-      $command[] = '--port='.(string) $config['port'];
-    }
-
-    return $command;
-  }
-
-  private function buildDdevMysqlRestoreCommand(string $driver, array $config): array
-  {
-    $command = [
-      $this->findDdevBinary(),
-      'exec',
-      '--raw',
-      '--',
-      $driver === 'mariadb' ? 'mariadb' : 'mysql',
       '--binary-mode',
       (string) $config['database'],
     ];
@@ -276,23 +221,8 @@ class DatabaseRestoreRunner
     return $binary;
   }
 
-  private function findDdevBinary(): string
-  {
-    $binary = (new ExecutableFinder)->find('ddev');
-
-    if ($binary === null) {
-      throw new RuntimeException('Database restore requires the ddev command for ddev execution mode, but it is not available.');
-    }
-
-    return $binary;
-  }
-
   private function describeMysqlRestoreCommand(string $strategy, string $driver): string
   {
-    if ($strategy === 'ddev') {
-      return 'ddev exec '.($driver === 'mariadb' ? 'mariadb' : 'mysql');
-    }
-
     return basename($this->findMysqlClientBinary($driver));
   }
 

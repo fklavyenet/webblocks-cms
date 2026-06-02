@@ -1431,7 +1431,7 @@ class PageBuilderExperienceTest extends TestCase
       'sort_order' => 0,
       'title' => 'Install command',
       'subtitle' => 'composer.json',
-      'content' => 'ddev composer install',
+      'content' => 'composer install',
       'settings' => json_encode(['language' => 'bash'], JSON_THROW_ON_ERROR),
       'status' => 'published',
       'is_system' => false,
@@ -1451,7 +1451,7 @@ class PageBuilderExperienceTest extends TestCase
     $response->assertSee('name="subtitle"', false);
     $response->assertSee('name="content"', false);
     $response->assertSee('name="language"', false);
-    $response->assertSee('ddev composer install');
+    $response->assertSee('composer install');
     $response->assertSee('value="bash"', false);
     $response->assertSee('href="'.e(route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'edit' => $codeBlock->id, 'return_url' => $pageReturnUrl])).'" class="wb-action-btn wb-action-btn-edit"', false);
   }

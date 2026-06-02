@@ -28,7 +28,7 @@ class SearchRebuildCommand extends Command
   public function handle(): int
   {
     if (! $this->schema->tableExists()) {
-      $this->error('Public search index table is missing. Run `ddev artisan migrate` first.');
+      $this->error('Public search index table is missing. Run `php artisan migrate` first.');
 
       return self::FAILURE;
     }

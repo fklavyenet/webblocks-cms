@@ -186,7 +186,7 @@ Current non-Search Support audit boundary:
 
 - no additional non-Search Support helper was moved in this audit step because none of the reviewed candidates met the current low-risk package-owned criteria
 - `MediaKindResolver` is small and deterministic, but it currently depends on `App\Models\Media` constants and is referenced from a controller path, so it is not yet independent enough for this phase
-- `DatabaseExecutionStrategyResolver` remains root-owned for now because it directly affects database dump or restore execution strategy, DDEV detection, environment inspection, and backup or restore runtime safety
+- `DatabaseExecutionStrategyResolver` remains root-owned for now because it directly affects database dump or restore execution strategy, environment inspection, and backup or restore runtime safety
 - `SiteHandle` remains root-owned for now because it is used by models, requests, and site transfer or clone flows, so moving it now would cross routing, portability, and persistence-adjacent boundaries too early
 - `SiteDomainNormalizer` remains root-owned for now because it is still used by models, requests, route resolution, and migrations, confirming the earlier risk assessment
 
@@ -235,7 +235,7 @@ Support source migration map:
 Phase 2 source checkpoint note:
 
 - the initial low-risk helper and value-object moves completed successfully through `v1.31.60`
-- `fklavye.ddev` was updated successfully after `v1.31.60`, confirming the checkpoint remains compatible with the current local package-wired development environment
+- the local package-wired development environment was updated successfully after `v1.31.60`, confirming the checkpoint remains compatible with the maintained local workflow
 - opportunistic low-risk PHP source moves are now intentionally paused
 - do not continue moving runtime-heavy classes without a dedicated focused phase plan and dependency audit
 
@@ -244,7 +244,7 @@ Current blockers for higher-risk groups:
 - direct `App\Models\...` or Eloquent query coupling across Search, Pages, Blocks, Sites, Navigation, Locales, Icons, Visitors, and System
 - request, route, controller, or view coupling in Admin, Pages, PublicRendering, Formatting, and some BlockTypes helpers
 - schema, migration-shape, or table-existence checks in Search, SharedSlots, Revisions, Visitors, Install, and System
-- config, env, HTTP, mail, filesystem, process, backup, update, and DDEV runtime coupling in Contact, Icons, Install, System, and Updates
+- config, env, HTTP, mail, filesystem, process, backup, update, and local runtime coupling in Contact, Icons, Install, System, and Updates
 - serialized archive or transfer payload coupling in Sites\\ExportImport, SitePromotion, Page import, and legacy asset compatibility helpers
 
 ### Phase 3: Move Package Resources
@@ -691,7 +691,7 @@ The v1.32.15 package boundary sweep adds a static release-gate audit for package
 - it fails on root-only admin references such as `view('admin.*')`, `View::make('admin.*')`, `response()->view('admin.*')`, `@include('admin.*')`, `@includeIf('admin.*')`, `@extends('layouts.admin')`, `<x-admin.*`, `<x-auth-password-field`, `component('admin.*')`, and direct `admin.blocks.types.*` root block admin references
 - the only accepted exceptions are exact file-and-pattern allowlist entries where package runtime already checks the `webblocks-cms::...` name first and uses the root name only as an explicit compatibility fallback for existing install-specific overrides
 
-The initial low-risk helper and value-object source checkpoint is now considered successful and complete for this phase. `fklavye.ddev` also updated successfully after `v1.31.60`, confirming that the current package wiring works in the maintained development environment.
+The initial low-risk helper and value-object source checkpoint is now considered successful and complete for this phase. The local development environment also updated successfully after `v1.31.60`, confirming that the current package wiring works in the maintained development environment.
 
 Further opportunistic low-risk PHP source moves are now paused. Future runtime-heavy source moves require a dedicated focused phase plan and dependency audit instead of more small opportunistic migrations.
 

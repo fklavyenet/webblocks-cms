@@ -75,7 +75,7 @@ class SearchRebuildCommandTest extends TestCase
     Schema::dropIfExists('public_search_index');
 
     $this->artisan('search:rebuild')
-      ->expectsOutputToContain('Public search index table is missing. Run `ddev artisan migrate` first.')
+      ->expectsOutputToContain('Public search index table is missing. Run `php artisan migrate` first.')
       ->assertExitCode(1);
   }
 

@@ -5,9 +5,9 @@
 - Follow Laravel conventions unless this file says otherwise.
 - Use two spaces for indentation.
 - PHP files in this repository use 2-space indentation.
-- Use DDEV commands by default.
-- Use `ddev artisan`, not `php artisan`.
-- DDEV remains supported, but native local mode is documented as a gradual transition path. Native local development targets trusted HTTPS only, and local domains must use `.test` rather than `.local`.
+- Use native local commands by default.
+- Use `php artisan` for Artisan commands.
+- Native local development targets trusted HTTPS only, and local domains must use `.test` rather than `.local`.
 - Do not include manual verification/check steps inside implementation commands.
 - After meaningful feature or behavior changes, update `README.md`, `CHANGELOG.md`, and relevant docs.
 - Keep implementation prompts and project commands in English.
@@ -70,11 +70,11 @@
 - Add or update focused tests for meaningful behavior changes.
 - Run focused tests first when validating.
 - Use the risk-based composer scripts in `docs/testing-strategy.md` for routine release validation.
-- Prefer `ddev composer test:release-fast` for small package-native hotfixes.
-- Use `ddev composer test:package`, `ddev composer test:update`, `ddev composer test:install`, `ddev composer test:artifacts`, or `ddev composer test:admin-smoke` when the changed surface matches that risk area.
-- Avoid running the full suite for every small hotfix; run `ddev composer test:full` when risk justifies it or before major releases.
-- Use `ddev artisan test --filter=...` for focused tests.
-- Use `ddev composer test:full` or `ddev artisan test` for the full suite.
+- Prefer `composer test:release-fast` for small package-native hotfixes.
+- Use `composer test:package`, `composer test:update`, `composer test:install`, `composer test:artifacts`, or `composer test:admin-smoke` when the changed surface matches that risk area.
+- Avoid running the full suite for every small hotfix; run `composer test:full` when risk justifies it or before major releases.
+- Use `php artisan test --filter=...` for focused tests.
+- Use `composer test:full` or `php artisan test` for the full suite.
 - Do not leave test-created public files, pages, blocks, or database artifacts behind unless they are intentionally part of the test fixture and cleaned up.
 
 ## Docs / Release Notes

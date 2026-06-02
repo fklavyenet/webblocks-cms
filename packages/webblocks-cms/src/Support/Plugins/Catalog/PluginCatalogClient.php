@@ -220,9 +220,30 @@ class PluginCatalogClient
     }
 
     $payload = $response->json();
-    $release = is_array($payload) ? Arr::get($payload, 'data.release', Arr::get($payload, 'data', Arr::get($payload, 'release'))) : null;
+    $release = is_array($payload) ? $this->releasePayloadFromLatest($payload) : null;
 
     return is_array($release) && $release !== [] ? CatalogRelease::fromArray($release) : null;
+  }
+
+  /**
+   * @param  array<string, mixed>  $payload
+   * @return array<string, mixed>|null
+   */
+  private function releasePayloadFromLatest(array $payload): ?array
+  {
+    $release = Arr::get($payload, 'data.release', Arr::get($payload, 'data', Arr::get($payload, 'release')));
+
+    if (! is_array($release)) {
+      return null;
+    }
+
+    $artifact = Arr::get($payload, 'data.artifact', Arr::get($payload, 'artifact'));
+
+    if (is_array($artifact) && ! array_key_exists('artifact', $release)) {
+      $release['artifact'] = $artifact;
+    }
+
+    return $release;
   }
 
   private function baseUrl(): string

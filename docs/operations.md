@@ -58,9 +58,9 @@ Core catalog synchronization is no longer part of the normal System Update apply
 For manual maintenance or recovery on an existing install, admins and developers can also run:
 
 ```bash
-ddev artisan webblocks:catalog-repair --dry-run --all
-ddev artisan webblocks:catalog-repair --all
-ddev artisan block-types:sync-core
+php artisan webblocks:catalog-repair --dry-run --all
+php artisan webblocks:catalog-repair --all
+php artisan block-types:sync-core
 ```
 
 `webblocks:catalog-repair` supports `--block-types`, `--slot-types`, `--page-layouts`, `--icons`, and `--all`. It reports created, updated, unchanged, and skipped rows, preserves install-specific custom catalog rows, and can be run repeatedly. `block-types:sync-core` remains as a lower-level compatibility command for the block type catalog.
@@ -86,9 +86,9 @@ Contact Form submissions are saved before notification delivery. SMTP failures a
 Use the secret-free mail diagnostic command when a Contact Message shows notification failure:
 
 ```bash
-ddev artisan contact:mail-diagnose
-ddev artisan contact:mail-diagnose --block=137
-ddev artisan contact:mail-diagnose --send-test=operator@example.com
+php artisan contact:mail-diagnose
+php artisan contact:mail-diagnose --block=137
+php artisan contact:mail-diagnose --send-test=operator@example.com
 ```
 
 The command reports the resolved mailer, host, port, scheme/encryption fields, username, from address, `CONTACT_RECIPIENT_EMAIL`, config-cache state, and optional Contact Form block/site recipient fallbacks. It never prints `MAIL_PASSWORD` or token values. The optional send test reports only success or a sanitized failure detail, so operators can distinguish stale config, host/port/encryption mismatch, username/from mismatch, and invalid mailbox credentials without leaking secrets into terminal logs.
@@ -110,7 +110,7 @@ If an install briefly ran v1.32.67 and created `webblocks_ui_manager_*` tables, 
 When manually installed, enabled, and set up, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. CMS `super_admin` users can open enabled plugin routes through the plugin-owned permissions declared in the manifest; non-super-admin roles require explicit plugin permission grants. If `webblocks_ui_manager_releases`, `webblocks_ui_manager_artifacts`, or `webblocks_ui_manager_publish_runs` is missing, the Releases screen shows setup-required guidance and links back to plugin setup instead of querying missing tables. Prepare a release with local WebBlocks UI dist files:
 
 ```bash
-ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js
+php artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js
 ```
 
 The command records release metadata, computes SHA-256 checksums, and prepares manifest metadata for the first-party static convention `public/cdn/webblocks-ui/{version}/...`. The expected dist files are configured by `webblocks-plugins.webblocks_ui_manager.expected_dist_files` and default to `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js`.
@@ -118,13 +118,13 @@ The command records release metadata, computes SHA-256 checksums, and prepares m
 Validate the publish plan without writing files:
 
 ```bash
-ddev artisan webblocks-ui-manager:publish-release v2.7.9 --dry-run
+php artisan webblocks-ui-manager:publish-release v2.7.9 --dry-run
 ```
 
 Apply the local publish after dry-run validation passes:
 
 ```bash
-ddev artisan webblocks-ui-manager:publish-release v2.7.9
+php artisan webblocks-ui-manager:publish-release v2.7.9
 ```
 
 The publish workflow validates source paths, version-to-target path matching, expected dist files, stored checksums, manifest consistency, and idempotency before writing. Existing files with matching checksums are skipped. Existing files with different checksums block the publish. The target is local/project-owned by default through `WEBBLOCKS_UI_MANAGER_CDN_BASE_PATH=cdn/webblocks-ui`; `WEBBLOCKS_UI_MANAGER_CDN_BASE_URL` is optional display/URL metadata. The workflow does not deploy to an external production server, publish update-server metadata, or change CMS core WebBlocks UI asset URLs.
@@ -228,7 +228,7 @@ It also does not require the derived public search index as portable content:
 
 - `public_search_index` is runtime-derived data
 - export/import payloads do not need search rows to recreate the site
-- use `ddev artisan search:rebuild` after import when you need fresh search rows immediately
+- use `php artisan search:rebuild` after import when you need fresh search rows immediately
 
 ## Single Page JSON Import
 
@@ -311,7 +311,7 @@ Install-specific migration and website import workflows belong in `project/`, no
 Search V1 adds an install-level operational screen and command for the derived public search index.
 
 - admin screen: `Admin -> Maintenance -> Search Rebuild`
-- rebuild command: `ddev artisan search:rebuild`
+- rebuild command: `php artisan search:rebuild`
 
 The Search Rebuild screen reviews derived public search index coverage for published pages by site and locale, and can safely rebuild the index when derived rows need to be refreshed.
 

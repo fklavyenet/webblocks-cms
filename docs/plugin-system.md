@@ -213,7 +213,7 @@ The CMS plugin system is the first implementation host for a broader WebBlocks p
 
 The proposed catalog/store surface is `plugins.webblocksui.com`. The near-term target is a Plugin Catalog for discovery, metadata, compatibility, documentation, release information, checksums, controlled ZIP download links, and a conservative install bridge from trusted catalog artifact metadata. Marketplace behavior, including accounts, licensing, paid plugins, reviews, and approval workflows, is deferred.
 
-`System -> Plugins` includes a `Browse Plugin Catalog` action at `/webadmin/plugins/catalog` (`admin.plugins.catalog.index`). The catalog list requests public listed plugins for `host_product=webblocks-cms` from `GET /api/plugins` and asks for the latest compatible release through `GET /api/plugins/{handle}/latest` when a handle is available. Catalog plugin labels and the View details action open `/webadmin/plugins/catalog/{handle}` (`admin.plugins.catalog.show`), which requests `GET /api/plugins/{handle}` plus the latest compatible release endpoint to show plugin metadata, compatibility, release notes, documentation/support links, artifact download URL, SHA-256 checksum, artifact filename, artifact size, release status, artifact validation status, artifact scan status, channel, version, and safe declared capability metadata when returned by the API. Current WebBlocks Plugins API detail responses may return plugin data directly under `data`, release data under `data.latest_release`, and artifact metadata under `data.latest_release.artifact`; CMS normalizes that shape before rendering details, checking install availability, or processing the server-side catalog install action. Supported artifact fields include `file_name`, `size_bytes`, `checksum_sha256`, `download_url`, `validation_status`, and `scan_status`; older flat release field names remain accepted for compatibility. The canonical WebBlocks CMS product version is sent as `version` and `cms_version` for compatibility matching. The built-in public catalog URL defaults to `https://plugins.webblocksui.com`; operators do not need `.env` changes for default discovery, and can override the internal request target with `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL` (`webblocks-plugins.catalog.base_url`). Timeout settings are available through `WEBBLOCKS_PLUGIN_CATALOG_TIMEOUT_SECONDS` and `WEBBLOCKS_PLUGIN_CATALOG_CONNECT_TIMEOUT_SECONDS`. Normal catalog UI does not expose the configured base URL or request version; unavailable states use friendly operator copy while safe diagnostics remain in logs.
+`System -> Plugins` includes a `Browse Plugin Catalog` action at `/webadmin/plugins/catalog` (`admin.plugins.catalog.index`). The catalog list requests public listed plugins for `host_product=webblocks-cms` from `GET /api/plugins` and asks for the latest compatible release through `GET /api/plugins/{handle}/latest` when a handle is available. Catalog plugin labels and the View details action open `/webadmin/plugins/catalog/{handle}` (`admin.plugins.catalog.show`), which requests `GET /api/plugins/{handle}` plus the latest compatible release endpoint to show plugin metadata, compatibility, release notes, documentation/support links, artifact download URL, SHA-256 checksum, artifact filename, artifact size, release status, artifact validation status, artifact scan status, channel, version, and safe declared capability metadata when returned by the API. Current WebBlocks Plugins API detail responses may return plugin data directly under `data`, release data under `data.latest_release`, and artifact metadata under `data.latest_release.artifact`; latest-compatible API responses may also return release metadata under `data.release` with artifact metadata under sibling `data.artifact`. CMS normalizes those shapes before rendering details, checking install availability, or processing the server-side catalog install action. Supported artifact fields include `file_name`, `size_bytes`, `checksum_sha256`, `download_url`, `validation_status`, and `scan_status`; older flat release field names remain accepted for compatibility. The canonical WebBlocks CMS product version is sent as `version` and `cms_version` for compatibility matching. The built-in public catalog URL defaults to `https://plugins.webblocksui.com`; operators do not need `.env` changes for default discovery, and can override the internal request target with `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL` (`webblocks-plugins.catalog.base_url`). Timeout settings are available through `WEBBLOCKS_PLUGIN_CATALOG_TIMEOUT_SECONDS` and `WEBBLOCKS_PLUGIN_CATALOG_CONNECT_TIMEOUT_SECONDS`. Normal catalog UI does not expose the configured base URL or request version; unavailable states use friendly operator copy while safe diagnostics remain in logs.
 
 Catalog detail keeps Website, Documentation, Support, and Catalog Detail links separate from install actions. The page shows a clear unavailable artifact state when a compatible release does not include downloadable artifact metadata. The `Download ZIP` action opens only the controlled absolute public `download_url` returned by the catalog and must not expose raw storage paths.
 
@@ -612,19 +612,19 @@ CDN rules for the pilot:
 Prepare release metadata and checksums:
 
 ```bash
-ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js
+php artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js
 ```
 
 Dry-run the publish:
 
 ```bash
-ddev artisan webblocks-ui-manager:publish-release v2.7.9 --dry-run
+php artisan webblocks-ui-manager:publish-release v2.7.9 --dry-run
 ```
 
 Apply the local publish:
 
 ```bash
-ddev artisan webblocks-ui-manager:publish-release v2.7.9
+php artisan webblocks-ui-manager:publish-release v2.7.9
 ```
 
 The admin release detail screen exposes the same dry-run and publish actions when the plugin is enabled, compatible, and the user has `webblocks-ui-manager.publish`. The real publish action uses a confirmation modal. Dry-run is non-destructive.

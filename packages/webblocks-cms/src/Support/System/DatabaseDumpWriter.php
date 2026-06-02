@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Symfony\Component\Process\ExecutableFinder;
-use Symfony\Component\Process\Process;
 
 class DatabaseDumpWriter
 {
@@ -101,10 +100,7 @@ class DatabaseDumpWriter
   {
     $config = $connection->getConfig();
     $strategy = $this->resolveMysqlDumpStrategy();
-    match ($strategy) {
-      'ddev' => $this->runDdevMysqlDump($connection->getDriverName(), $destinationPath, $config),
-      default => $this->runDirectMysqlDump($destinationPath, $config),
-    };
+    $this->runDirectMysqlDump($destinationPath, $config);
 
     $output[] = 'Using '.$this->describeMysqlDumpCommand($strategy, $connection->getDriverName()).' for database dump.';
     $output[] = 'MySQL-compatible SQL dump written to '.basename($destinationPath).'.';
@@ -165,74 +161,6 @@ class DatabaseDumpWriter
     return $command;
   }
 
-  private function runDdevMysqlDump(string $driver, string $destinationPath, array $config): void
-  {
-    $command = $this->buildDdevMysqlDumpCommand($driver, $config);
-    $process = $this->makeDumpProcess($command);
-    $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
-
-    $directory = dirname($destinationPath);
-    File::ensureDirectoryExists($directory);
-
-    $handle = fopen($destinationPath, 'wb');
-
-    if ($handle === false) {
-      throw new RuntimeException('Database dump destination could not be opened for writing.');
-    }
-
-    try {
-      $process->run(function (string $type, string $buffer) use ($handle): void {
-        if ($type !== Process::OUT) {
-          return;
-        }
-
-        fwrite($handle, $buffer);
-      });
-    } finally {
-      fclose($handle);
-    }
-
-    if (! $process->isSuccessful()) {
-      File::delete($destinationPath);
-
-      throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
-    }
-
-    if (! is_file($destinationPath) || filesize($destinationPath) === 0) {
-      File::delete($destinationPath);
-
-      throw new RuntimeException('Database dump command completed without writing an SQL file.');
-    }
-
-    $this->assertValidDumpFile($destinationPath);
-  }
-
-  private function buildDdevMysqlDumpCommand(string $driver, array $config): array
-  {
-    $command = [
-      $this->findDdevBinary(),
-      'exec',
-      '--raw',
-      '--',
-      $driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump',
-      '--single-transaction',
-      '--quick',
-      '--skip-comments',
-      '--skip-dump-date',
-      '--no-tablespaces',
-      (string) $config['database'],
-    ];
-
-    if (! empty($config['unix_socket'])) {
-      $command[] = '--socket='.$config['unix_socket'];
-    } else {
-      $command[] = '--host='.(string) $config['host'];
-      $command[] = '--port='.(string) $config['port'];
-    }
-
-    return $command;
-  }
-
   private function createMysqlDefaultsFile(string $destinationPath, array $config): string
   {
     $defaultsFile = $destinationPath.'.cnf';
@@ -263,23 +191,8 @@ class DatabaseDumpWriter
     return $binary;
   }
 
-  private function findDdevBinary(): string
-  {
-    $binary = (new ExecutableFinder)->find('ddev');
-
-    if ($binary === null) {
-      throw new RuntimeException('Database backup requires the ddev command for ddev execution mode, but it is not available.');
-    }
-
-    return $binary;
-  }
-
   private function describeMysqlDumpCommand(string $strategy, string $driver): string
   {
-    if ($strategy === 'ddev') {
-      return 'ddev exec '.($driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump');
-    }
-
     return basename($this->findMysqlDumpBinary());
   }
 

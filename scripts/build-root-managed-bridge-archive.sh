@@ -107,7 +107,6 @@ done
 rm -rf \
   "$staging_dir/.git" \
   "$staging_dir/.github" \
-  "$staging_dir/.ddev" \
   "$staging_dir/dist" \
   "$staging_dir/storage" \
   "$staging_dir/vendor" \

@@ -50,7 +50,7 @@ class DestructiveDatabaseCommandGuard
 
   public function blockMessage(): string
   {
-    return 'Destructive database command blocked by WebBlocks CMS safety guard. Local CMS databases may contain active content. Create a safety dump first with: ddev export-db --file=before-destructive-db-command.sql.gz';
+    return 'Destructive database command blocked by WebBlocks CMS safety guard. Local CMS databases may contain active content. Create a safety dump first through Admin -> System -> Backups or with a local mysqldump/mariadb-dump command.';
   }
 
   public function normalizeCommand(?string $command): string

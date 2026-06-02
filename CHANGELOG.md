@@ -7,6 +7,13 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.105
+
+- Fix Plugin Catalog install availability for current latest-compatible API responses that return release metadata under `data.release` and artifact metadata under sibling `data.artifact`.
+- Switch active local-development, install, testing, and operations guidance from DDEV commands to native `composer` and `php artisan` commands.
+- Remove the old container backup/restore execution mode so MySQL/MariaDB backups and restores use local CLI binaries in `auto` or `direct` mode.
+- Keep `.env.example` on the canonical `WEBBLOCKS_PUBLISHER_*` publishing keys without the older update-server aliases.
+
 ## 1.32.104
 
 - Fix System Updates false-success handling by verifying the applied WebBlocks CMS code version against the target release before recording a successful run or showing a success flash.

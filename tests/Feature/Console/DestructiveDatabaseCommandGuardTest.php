@@ -55,7 +55,7 @@ class DestructiveDatabaseCommandGuardTest extends TestCase
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('Destructive database command blocked by WebBlocks CMS safety guard.');
-    $this->expectExceptionMessage('ddev export-db --file=before-destructive-db-command.sql.gz');
+    $this->expectExceptionMessage('Admin -> System -> Backups');
 
     $guard->ensureAllowed('migrate:fresh', 'local', false);
   }

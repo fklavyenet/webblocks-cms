@@ -278,6 +278,53 @@ class PluginCatalogBrowserTest extends TestCase
   }
 
   #[Test]
+  public function catalog_detail_maps_latest_endpoint_sibling_artifact_payload(): void
+  {
+    Http::fake([
+      'https://plugins.example.test/api/plugins/webblocks-redirect-manager?*' => Http::response([
+        'data' => [
+          'plugin' => [
+            'handle' => 'webblocks-redirect-manager',
+            'label' => 'WebBlocks Redirect Manager',
+            'compatibility' => ['status' => 'compatible'],
+          ],
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/webblocks-redirect-manager/latest?*' => Http::response([
+        'data' => [
+          'release' => [
+            'version' => '0.1.1',
+            'channel' => 'stable',
+            'status' => 'published',
+          ],
+          'artifact' => [
+            'file_name' => 'webblocks-redirect-manager-0.1.1.zip',
+            'size_bytes' => 12000,
+            'checksum_sha256' => str_repeat('c', 64),
+            'validation_status' => 'passed',
+            'scan_status' => 'not_scanned',
+            'download_url' => 'https://plugins.example.test/plugins/webblocks-redirect-manager/releases/2/artifact/download',
+          ],
+        ],
+      ]),
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.plugins.catalog.show', 'webblocks-redirect-manager'));
+
+    $response->assertOk();
+    $response->assertSeeText('0.1.1');
+    $response->assertSeeText('webblocks-redirect-manager-0.1.1.zip');
+    $response->assertSeeText('12000');
+    $response->assertSeeText(str_repeat('c', 64));
+    $response->assertSeeText('passed');
+    $response->assertSeeText('not_scanned');
+    $response->assertSee('href="https://plugins.example.test/plugins/webblocks-redirect-manager/releases/2/artifact/download"', false);
+    $response->assertSee('action="'.route('admin.plugins.catalog.install', 'webblocks-redirect-manager').'"', false);
+  }
+
+  #[Test]
   public function non_authorized_users_cannot_open_catalog_plugin_detail_page(): void
   {
     Http::fake();

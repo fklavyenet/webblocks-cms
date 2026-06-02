@@ -87,15 +87,15 @@ The screen shows:
 Use the non-destructive rebuild command when you need to recreate derived search rows:
 
 ```bash
-ddev artisan search:rebuild
-ddev artisan search:rebuild --site=default
-ddev artisan search:rebuild --locale=tr
-ddev artisan search:rebuild --page=123
+php artisan search:rebuild
+php artisan search:rebuild --site=default
+php artisan search:rebuild --locale=tr
+php artisan search:rebuild --page=123
 ```
 
 The command rebuilds only the requested search scope and does not modify CMS content.
 
-If the search table is missing on the current install, run `ddev artisan migrate` first so the derived index can be created.
+If the search table is missing on the current install, run `php artisan migrate` first so the derived index can be created.
 
 ## Portability Boundary
 

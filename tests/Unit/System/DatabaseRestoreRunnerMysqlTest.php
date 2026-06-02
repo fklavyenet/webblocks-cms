@@ -61,15 +61,11 @@ class DatabaseRestoreRunnerMysqlTest extends TestCase
   }
 
   #[Test]
-  public function auto_restore_strategy_uses_direct_for_native_test_url_even_when_ddev_files_exist(): void
+  public function auto_restore_strategy_uses_direct_for_native_local(): void
   {
     config()->set('app.env', 'local');
     config()->set('app.url', 'https://webblocks-cms.test');
     config()->set('cms.backup.execution', 'auto');
-
-    putenv('IS_DDEV_PROJECT');
-    unset($_ENV['IS_DDEV_PROJECT'], $_SERVER['IS_DDEV_PROJECT']);
-    File::ensureDirectoryExists(base_path('.ddev'));
 
     $runner = app(DatabaseRestoreRunner::class);
 
@@ -77,7 +73,7 @@ class DatabaseRestoreRunnerMysqlTest extends TestCase
   }
 
   #[Test]
-  public function direct_restore_command_uses_configured_database_port_without_calling_ddev(): void
+  public function direct_restore_command_uses_configured_database_port(): void
   {
     config()->set('cms.backup.execution', 'direct');
     config()->set('database.default', 'mysql');
@@ -118,7 +114,6 @@ class DatabaseRestoreRunnerMysqlTest extends TestCase
       $this->assertContains('--host=127.0.0.1', $runner->command);
       $this->assertContains('--port=3307', $runner->command);
       $this->assertContains('webblocks_cms_native', $runner->command);
-      $this->assertNotContains('ddev', $runner->command);
     } finally {
       File::delete($sqlPath);
     }

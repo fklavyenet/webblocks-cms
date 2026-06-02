@@ -93,7 +93,7 @@ class BlockIndexTest extends TestCase
       'slot_type_id' => $mainSlot->id,
       'sort_order' => 0,
       'title' => 'Install command',
-      'content' => 'ddev composer install',
+      'content' => 'composer install',
       'status' => 'published',
       'is_system' => false,
     ]);

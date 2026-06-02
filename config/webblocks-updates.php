@@ -36,7 +36,6 @@ return [
         'excluded_paths' => [
             '.git',
             '.github',
-            '.ddev',
             'project',
             'storage',
             'bootstrap/cache',
