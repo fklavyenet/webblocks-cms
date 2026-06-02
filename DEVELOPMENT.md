@@ -61,7 +61,7 @@ During local development:
 
 The updater flow must remain release-based and package-based.
 
-System Updates apply published packages and required update migrations only. Broad catalog synchronization is explicit maintenance; use `ddev artisan webblocks:catalog-repair --dry-run --all` before applying `ddev artisan webblocks:catalog-repair --all` when an install needs shipped block type, slot type, page layout, or icon catalog repair.
+System Updates apply published packages and required update migrations only. Broad catalog synchronization is explicit maintenance; use `php artisan webblocks:catalog-repair --dry-run --all` before applying `php artisan webblocks:catalog-repair --all` when an install needs shipped block type, slot type, page layout, or icon catalog repair.
 
 ## Core Vs Project Layer
 
@@ -133,14 +133,14 @@ Formatting sources of truth:
 
 Standard development commands:
 
-- `ddev composer format` applies Pint fixes
-- `ddev composer format:test` checks Pint formatting without modifying files and runs the PHP indentation guard
-- `ddev artisan test --filter=...`
-- `ddev artisan test`
+- `composer format` applies Pint fixes
+- `composer format:test` checks Pint formatting without modifying files and runs the PHP indentation guard
+- `php artisan test --filter=...`
+- `php artisan test`
 
-Prefer DDEV-first commands in examples and routine workflows, and keep formatting or standards changes focused instead of mass-reformatting unrelated files.
+Prefer native `composer` and `php artisan` commands in examples and routine workflows, and keep formatting or standards changes focused instead of mass-reformatting unrelated files.
 
-When AI or automation writes PHP files, verify the actual file contents for 2-space indentation instead of assuming Pint alone proves indentation compliance. The repository-wide formatting baseline is `ddev composer format:test`, which runs Pint for non-indentation style and the custom indentation guard across maintained PHP and Blade roots. Pint's indentation-specific fixers are disabled so `scripts/check-php-indentation.php` remains authoritative for the 2-space PHP indentation rule.
+When AI or automation writes PHP files, verify the actual file contents for 2-space indentation instead of assuming Pint alone proves indentation compliance. The repository-wide formatting baseline is `composer format:test`, which runs Pint for non-indentation style and the custom indentation guard across maintained PHP and Blade roots. Pint's indentation-specific fixers are disabled so `scripts/check-php-indentation.php` remains authoritative for the 2-space PHP indentation rule.
 
 ## Risk-Based Validation
 
@@ -161,10 +161,10 @@ Before merge:
 Before tagging a release:
 
 - start with the risk-based composer scripts documented in `docs/testing-strategy.md`
-- use `ddev composer test:release-fast` as the default gate for small package-native hotfixes
-- use `ddev composer test:package`, `ddev composer test:update`, `ddev composer test:install`, `ddev composer test:artifacts`, or `ddev composer test:admin-smoke` when the changed surface matches that risk area
-- do not include the retired root-managed bridge path in normal package-native release validation; run `ddev composer test:legacy-bridge` only for deliberate archival bridge audits or pre-package-native recovery investigation
-- run `ddev composer test:full` before major releases, broad content/admin changes, schema-wide changes, or whenever focused failures indicate broader risk
+- use `composer test:release-fast` as the default gate for small package-native hotfixes
+- use `composer test:package`, `composer test:update`, `composer test:install`, `composer test:artifacts`, or `composer test:admin-smoke` when the changed surface matches that risk area
+- do not include the retired root-managed bridge path in normal package-native release validation; run `composer test:legacy-bridge` only for deliberate archival bridge audits or pre-package-native recovery investigation
+- run `composer test:full` before major releases, broad content/admin changes, schema-wide changes, or whenever focused failures indicate broader risk
 - if a broad run fails, rerun the specific failing test once to distinguish a real regression from a flaky or unrelated failure, then report the result clearly before proceeding
 
 Documentation-only changes:
@@ -176,16 +176,16 @@ Documentation-only changes:
 Example commands:
 
 ```bash
-ddev composer test:release-fast
-ddev composer test:package
-ddev composer test:update
-ddev composer test:install
-ddev composer test:artifacts
-ddev composer test:admin-smoke
-ddev artisan test --filter=PageBuilderExperienceTest --stop-on-failure
-ddev artisan test --filter=SharedSlotAdminManagementTest --stop-on-failure
-ddev artisan test --filter=PageIndex --stop-on-failure
-ddev composer test:full
+composer test:release-fast
+composer test:package
+composer test:update
+composer test:install
+composer test:artifacts
+composer test:admin-smoke
+php artisan test --filter=PageBuilderExperienceTest --stop-on-failure
+php artisan test --filter=SharedSlotAdminManagementTest --stop-on-failure
+php artisan test --filter=PageIndex --stop-on-failure
+composer test:full
 ```
 
 Before creating a release:

@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.106
+
+- Remove remaining active DDEV command hints from development docs, WebBlocks UI Manager plugin guidance, and backup/search test fixtures so native `composer` and `php artisan` examples stay consistent.
+
 ## 1.32.105
 
 - Fix Plugin Catalog install availability for current latest-compatible API responses that return release metadata under `data.release` and artifact metadata under sibling `data.artifact`.

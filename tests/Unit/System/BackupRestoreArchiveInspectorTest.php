@@ -134,7 +134,7 @@ class BackupRestoreArchiveInspectorTest extends TestCase
   {
     $archivePath = $this->makeArchive([
       'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-      'database/database.sql' => "ddev exec --raw -- mysqldump --single-transaction demo\nCREATE TABLE `pages` (`id` int);\n",
+      'database/database.sql' => "mysqldump --single-transaction demo\nCREATE TABLE `pages` (`id` int);\n",
     ]);
 
     $this->expectException(RuntimeException::class);
@@ -148,7 +148,7 @@ class BackupRestoreArchiveInspectorTest extends TestCase
   {
     $archivePath = $this->makeArchive([
       'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-      'database/database.sql' => "You executed `ddev exec --raw -- mysqldump --single-transaction demo`\nCREATE TABLE `pages` (`id` int);\n",
+      'database/database.sql' => "You executed `mysqldump --single-transaction demo`\nCREATE TABLE `pages` (`id` int);\n",
     ]);
 
     $this->expectException(RuntimeException::class);

@@ -50,7 +50,7 @@ class SiteCloneServiceTest extends TestCase
       SiteCloneOptions::fromArray([
         'target_name' => 'UI Docs',
         'target_handle' => 'ui-docs',
-        'target_domain' => 'ui.docs.webblocksui.com.ddev.site',
+        'target_domain' => 'ui.docs.webblocksui.com.test',
         'with_navigation' => true,
         'with_media' => true,
         'with_translations' => true,
@@ -61,7 +61,7 @@ class SiteCloneServiceTest extends TestCase
 
     $this->assertNotNull($targetSite);
     $this->assertSame('ui-docs', $targetSite->handle);
-    $this->assertSame('ui.docs.webblocksui.com.ddev.site', $targetSite->domain);
+    $this->assertSame('ui.docs.webblocksui.com.test', $targetSite->domain);
     $this->assertNotSame($sourceSite->id, $targetSite->id);
     $this->assertSame(2, $result->count('pages_cloned'));
     $this->assertSame(1, $result->count('site_variables_cloned'));

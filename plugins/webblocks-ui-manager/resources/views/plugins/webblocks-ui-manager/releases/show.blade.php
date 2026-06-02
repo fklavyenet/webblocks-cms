@@ -45,8 +45,8 @@
                     </div>
                 @endcan
                 <div class="wb-text-sm wb-text-muted">Command:</div>
-                <code style="white-space: normal; word-break: break-word; display: block;">ddev artisan webblocks-ui-manager:publish-release {{ $release->version }} --dry-run</code>
-                <code style="white-space: normal; word-break: break-word; display: block;">ddev artisan webblocks-ui-manager:publish-release {{ $release->version }}</code>
+                <code style="white-space: normal; word-break: break-word; display: block;">php artisan webblocks-ui-manager:publish-release {{ $release->version }} --dry-run</code>
+                <code style="white-space: normal; word-break: break-word; display: block;">php artisan webblocks-ui-manager:publish-release {{ $release->version }}</code>
             </div>
         </div>
     </div>
@@ -99,7 +99,7 @@
         <div class="wb-card-header"><strong>Safe Preparation Command</strong></div>
         <div class="wb-card-body wb-stack wb-gap-2">
             <div class="wb-text-sm wb-text-muted">This records local artifact checksums and manifest metadata before publish.</div>
-                <code style="white-space: normal; word-break: break-word; display: block;">ddev artisan webblocks-ui-manager:prepare-release {{ $release->version }} --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-ui.js</code>
+                <code style="white-space: normal; word-break: break-word; display: block;">php artisan webblocks-ui-manager:prepare-release {{ $release->version }} --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-ui.js</code>
         </div>
     </div>
 

@@ -135,7 +135,7 @@ class SqlDumpContentValidator
       return true;
     }
 
-    if (preg_match('/^\s*(?:[$>]\s*)?(?:ddev\s+exec|mysqldump|mariadb-dump)\b/i', $line) === 1) {
+    if (preg_match('/^\s*(?:[$>]\s*)?(?:mysqldump|mariadb-dump)\b/i', $line) === 1) {
       return true;
     }
 

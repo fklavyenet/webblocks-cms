@@ -1866,7 +1866,7 @@ class SystemBackupsTest extends TestCase
           'uploads' => false,
         ],
       ]), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-      'database/database.sql' => "You executed `ddev exec --raw -- mysqldump --single-transaction demo`\n",
+      'database/database.sql' => "You executed `mysqldump --single-transaction demo`\n",
     ]);
 
     $response = $this->actingAs($user)->post(route('admin.system.backups.restore', $backup), [

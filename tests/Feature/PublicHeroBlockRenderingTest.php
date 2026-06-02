@@ -419,7 +419,7 @@ class PublicHeroBlockRenderingTest extends TestCase
     $response->assertOk();
     $response->assertSee('Campaign hero');
     $response->assertSee('Explore');
-    $response->assertDontSee('.ddev.site');
+    $response->assertDontSee('.local-container.site');
   }
 
   #[Test]
