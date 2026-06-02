@@ -36,7 +36,7 @@ final class PublishUpdateCommand extends Command
     $this->info('WebBlocks CMS update publisher');
     $this->table(
       ['Field', 'Value'],
-      [
+      array_merge([
         ['Product', $result->product],
         ['Channel', $result->channel],
         ['Version', $result->version],
@@ -46,7 +46,7 @@ final class PublishUpdateCommand extends Command
         ['Token configured', $result->tokenConfigured ? 'yes' : 'no'],
         ['Published', $result->published ? 'yes' : 'no'],
         ['Latest verified', $result->verified ? 'yes' : 'no'],
-      ]
+      ], $this->publisherConfigurationRows($result->configuredKeys))
     );
 
     if ($result->status === 'skipped') {
@@ -65,5 +65,13 @@ final class PublishUpdateCommand extends Command
     $this->info($result->message);
 
     return self::SUCCESS;
+  }
+
+  private function publisherConfigurationRows(array $configuredKeys): array
+  {
+    return collect($configuredKeys)
+      ->map(fn (bool $configured, string $key): array => [$key.' configured', $configured ? 'yes' : 'no'])
+      ->values()
+      ->all();
   }
 }

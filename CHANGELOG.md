@@ -11,6 +11,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Fix System Updates false-success handling by verifying the applied WebBlocks CMS code version against the target release before recording a successful run or showing a success flash.
 - Clear the full Laravel optimization cache during System Update maintenance and keep equal current/latest release states non-actionable even when stale update metadata says an update is available.
+- Fix native update publishing so cached-config runs detect canonical `WEBBLOCKS_PUBLISHER_*` values from the project `.env` and report key configured status without exposing the Publisher token.
 
 ## 1.32.103
 

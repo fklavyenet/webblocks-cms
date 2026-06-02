@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System\Updates\Publishing;
 
+use Dotenv\Dotenv;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
@@ -12,6 +13,13 @@ use Symfony\Component\Finder\Finder;
 
 final class UpdatePublisher
 {
+  private const PUBLISHER_ENV_KEYS = [
+    'url' => 'WEBBLOCKS_PUBLISHER_URL',
+    'token' => 'WEBBLOCKS_PUBLISHER_TOKEN',
+    'product' => 'WEBBLOCKS_PUBLISHER_PRODUCT',
+    'channel' => 'WEBBLOCKS_PUBLISHER_CHANNEL',
+  ];
+
   private const DETAIL_FIELDS = [
     'title',
     'summary',
@@ -24,22 +32,26 @@ final class UpdatePublisher
     'technical_notes',
   ];
 
+  private ?array $projectEnvironment = null;
+
   public function publish(array $options = []): UpdatePublishResult
   {
     $payloadPath = $this->resolvePayloadPath($options);
     $payload = $this->readPayload($payloadPath);
     $artifactPath = $this->resolveArtifactPath($options, $payload);
     $checksum = $this->verifyChecksum($artifactPath, $payload);
+    $configuration = $this->publisherConfiguration();
     $product = $this->stringOption($options, 'product')
-      ?? (string) config('webblocks-updates.publisher.product', 'webblocks-cms');
+      ?? $configuration['product'];
     $channel = $this->stringOption($options, 'channel')
       ?? $this->payloadString($payload, 'channel')
-      ?? (string) config('webblocks-updates.publisher.channel', 'stable');
+      ?? $configuration['channel'];
     $version = $this->stringOption($options, 'version')
       ?? $this->payloadString($payload, 'version')
       ?? throw new RuntimeException('Publisher payload is missing a release version.');
-    $token = $this->publisherToken();
-    $publisherUrl = $this->publisherUrl();
+    $token = $configuration['token'];
+    $publisherUrl = $configuration['url'];
+    $configuredKeys = $this->configuredKeyStatuses($configuration);
 
     if (($options['dry_run'] ?? false) === true) {
       return new UpdatePublishResult(
@@ -54,6 +66,7 @@ final class UpdatePublisher
         tokenConfigured: $token !== '',
         published: false,
         verified: false,
+        configuredKeys: $configuredKeys,
       );
     }
 
@@ -70,6 +83,7 @@ final class UpdatePublisher
         tokenConfigured: false,
         published: false,
         verified: false,
+        configuredKeys: $configuredKeys,
       );
     }
 
@@ -90,6 +104,7 @@ final class UpdatePublisher
       verified: true,
       publishResponse: $publishResponse,
       latestResponse: $latestResponse,
+      configuredKeys: $configuredKeys,
     );
   }
 
@@ -305,7 +320,7 @@ final class UpdatePublisher
 
   private function publisherUrl(): string
   {
-    $url = rtrim((string) config('webblocks-updates.publisher.url', ''), '/');
+    $url = rtrim($this->publisherConfiguration()['url'], '/');
 
     if ($url === '') {
       throw new RuntimeException('Update publisher URL is not configured.');
@@ -316,7 +331,91 @@ final class UpdatePublisher
 
   private function publisherToken(): string
   {
-    return trim((string) config('webblocks-updates.publisher.token', ''));
+    return $this->publisherConfiguration()['token'];
+  }
+
+  private function publisherConfiguration(): array
+  {
+    $url = rtrim($this->publisherConfigValue('url', 'https://updates.webblocksui.com/api/updates/publish'), '/');
+
+    if ($url === '') {
+      throw new RuntimeException('Update publisher URL is not configured.');
+    }
+
+    return [
+      'url' => $url,
+      'token' => $this->publisherConfigValue('token'),
+      'product' => $this->publisherConfigValue('product', 'webblocks-cms'),
+      'channel' => $this->publisherConfigValue('channel', 'stable'),
+    ];
+  }
+
+  private function publisherConfigValue(string $key, ?string $default = null): string
+  {
+    $envValue = $this->cachedConfigProjectEnvValue(self::PUBLISHER_ENV_KEYS[$key]);
+
+    if ($envValue !== null) {
+      return $envValue;
+    }
+
+    $configValue = config('webblocks-updates.publisher.'.$key);
+
+    if (is_scalar($configValue) && trim((string) $configValue) !== '') {
+      return trim((string) $configValue);
+    }
+
+    return $default ?? '';
+  }
+
+  private function cachedConfigProjectEnvValue(string $key): ?string
+  {
+    if (! app()->configurationIsCached()) {
+      return null;
+    }
+
+    $value = $this->projectEnvironment()[$key] ?? null;
+
+    return is_string($value) && trim($value) !== '' ? trim($value) : null;
+  }
+
+  private function projectEnvironment(): array
+  {
+    if ($this->projectEnvironment !== null) {
+      return $this->projectEnvironment;
+    }
+
+    $path = $this->projectEnvironmentPath();
+
+    if (! is_file($path)) {
+      return $this->projectEnvironment = [];
+    }
+
+    $environment = Dotenv::parse(file_get_contents($path) ?: '');
+
+    return $this->projectEnvironment = array_intersect_key($environment, array_flip(self::PUBLISHER_ENV_KEYS));
+  }
+
+  private function projectEnvironmentPath(): string
+  {
+    if (app()->bound('webblocks.publisher.env_path')) {
+      $path = app('webblocks.publisher.env_path');
+
+      if (is_string($path) && $path !== '') {
+        return $path;
+      }
+    }
+
+    return base_path('.env');
+  }
+
+  private function configuredKeyStatuses(array $configuration): array
+  {
+    return [
+      self::PUBLISHER_ENV_KEYS['url'] => $configuration['url'] !== '',
+      self::PUBLISHER_ENV_KEYS['token'] => $configuration['token'] !== '',
+      self::PUBLISHER_ENV_KEYS['product'] => $configuration['product'] !== '',
+      self::PUBLISHER_ENV_KEYS['channel'] => $configuration['channel'] !== '',
+    ];
   }
 
   private function publishEndpoint(string $publisherUrl): string

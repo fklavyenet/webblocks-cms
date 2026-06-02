@@ -18,5 +18,6 @@ final readonly class UpdatePublishResult
     public bool $verified,
     public ?array $publishResponse = null,
     public ?array $latestResponse = null,
+    public array $configuredKeys = [],
   ) {}
 }
