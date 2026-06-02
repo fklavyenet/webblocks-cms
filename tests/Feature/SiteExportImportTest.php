@@ -742,7 +742,7 @@ class SiteExportImportTest extends TestCase
     $aboutPage->update(['settings' => ['public_shell' => 'docs']]);
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
-    $archivePath = Storage::disk('site-exports')->path($siteExport->archive_path);
+    $archivePath = Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path);
     $archive = new ZipArchive;
     $archive->open($archivePath);
     $pages = json_decode((string) $archive->getFromName('data/pages.json'), true);
@@ -777,9 +777,13 @@ class SiteExportImportTest extends TestCase
     Storage::fake('public');
     [$site, , $sourceSharedSlot] = $this->seedCloneableSite(withFile: true);
     $siteExport = app(SiteExportManager::class)->export($site, true);
+    $archivePath = Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path);
+    $firstUploadPath = $archivePath.'.first-upload.zip';
+    $secondUploadPath = $archivePath.'.second-upload.zip';
+    $this->assertTrue(copy($archivePath, $firstUploadPath));
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile($firstUploadPath, $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -791,9 +795,10 @@ class SiteExportImportTest extends TestCase
     $sharedSlot = SharedSlot::query()->where('site_id', $importedSite->id)->where('handle', $sourceSharedSlot->handle)->firstOrFail();
 
     $sharedSlot->update(['name' => 'Before Reimport', 'is_active' => false]);
+    $this->assertTrue(copy($archivePath, $secondUploadPath));
 
     $secondImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile($secondUploadPath, $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $secondImport = app(SiteImportManager::class)->import($secondImport, SiteImportOptions::fromArray([

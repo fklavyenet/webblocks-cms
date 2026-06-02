@@ -119,7 +119,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.check'));
 
     $response->assertRedirect(route('admin.system.updates.index'));
-    $response->assertSessionHas('status', 'Update 0.2.0 is available.');
+    $response->assertSessionHas('status', 'Update 99.0.0 is available.');
 
     $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $followUp->assertSee('Update available');
@@ -401,6 +401,25 @@ class SystemUpdatesTest extends TestCase
     $upToDateResponse->assertSee('Install update is currently unavailable.');
     $upToDateResponse->assertSee('No newer release is ready for this install.');
     $upToDateResponse->assertDontSee('name="download_pre_update_backup"', false);
+  }
+
+  #[Test]
+  public function update_summary_does_not_show_actionable_update_when_current_version_equals_latest_version(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, WebBlocks::version());
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('Up to date');
+    $response->assertSee('This install already matches the latest published release for the selected channel.');
+    $response->assertDontSee('Latest Published Version');
+    $response->assertSee('Install update is currently unavailable.');
+    $response->assertSee('No newer release is ready for this install.');
+    $response->assertDontSee('data-default-label="Install update"', false);
+    $response->assertDontSee('name="download_pre_update_backup"', false);
   }
 
   #[Test]
@@ -899,7 +918,7 @@ class SystemUpdatesTest extends TestCase
     app(InstalledVersionStore::class)->persist('0.1.0');
     Storage::fake('backups');
 
-    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.2.0');
 
     config()->set('webblocks-updates.installer.target_path', $targetRoot);
     $this->bindFakeCommandRunner();
@@ -961,6 +980,7 @@ class SystemUpdatesTest extends TestCase
     $this->assertStringContainsString('Migration strategy: package-native update migrations.', (string) $run->output);
     $this->assertStringContainsString('No package update migrations found; host application migrations were skipped.', (string) $run->output);
     $this->assertStringContainsString('Disabled git push for origin while keeping fetch updates enabled.', (string) $run->output);
+    $this->assertStringContainsString('Post-update version verified as 0.2.0 from canonical WebBlocks version source.', (string) $run->output);
     $this->assertStringNotContainsString('php artisan migrate --force', (string) $run->output);
     $this->assertCommandOrder([
       'php artisan config:clear',
@@ -988,7 +1008,7 @@ class SystemUpdatesTest extends TestCase
     app(InstalledVersionStore::class)->persist('1.32.76');
     Storage::fake('backups');
 
-    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('1.32.77');
     File::deleteDirectory($targetRoot.'/vendor/fklavyenet/webblocks-cms');
     File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/Updates');
     File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System');
@@ -1038,7 +1058,7 @@ class SystemUpdatesTest extends TestCase
     app(InstalledVersionStore::class)->persist('0.1.0');
     Storage::fake('backups');
 
-    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.2.0');
 
     config()->set('webblocks-updates.installer.target_path', $targetRoot);
     $runner = $this->bindFakeCommandRunner([
@@ -1065,13 +1085,106 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
+  public function update_apply_records_success_only_after_post_apply_code_version_matches_target(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.2.0');
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $this->bindFakeCommandRunner();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.updates.store'))
+      ->assertRedirect(route('admin.system.updates.index'))
+      ->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+
+    $this->assertSame(SystemUpdateRun::STATUS_SUCCESS, $run->status);
+    $this->assertSame('0.2.0', app(InstalledVersionStore::class)->storedVersion());
+    $this->assertStringContainsString('Post-update version verified as 0.2.0 from canonical WebBlocks version source.', (string) $run->output);
+  }
+
+  #[Test]
+  public function failed_post_apply_version_verification_does_not_record_success(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.1.9');
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $runner = $this->bindFakeCommandRunner();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.system.updates.index'))
+      ->post(route('admin.system.updates.store'));
+
+    $response->assertRedirect(route('admin.system.updates.index'));
+    $response->assertSessionHasErrors(['system_update' => 'The update package was applied, but the installed CMS version still does not match the target release. The run was not marked successful; restore the pre-update backup or review filesystem and cache state before retrying.']);
+    $response->assertSessionMissing('status');
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+
+    $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
+    $this->assertSame('The update package was applied, but the installed CMS version still does not match the target release. The run was not marked successful; restore the pre-update backup or review filesystem and cache state before retrying.', $run->summary);
+    $this->assertStringContainsString('Update failed: Expected WebBlocks CMS 0.2.0 after update, but packages/webblocks-cms/src/Support/WebBlocks.php reports 0.1.9.', (string) $run->output);
+    $this->assertStringNotContainsString('Installed version persisted as 0.2.0', (string) $run->output);
+    $this->assertNull(app(InstalledVersionStore::class)->storedVersion());
+    $this->assertContains('php artisan up', $runner->commands);
+  }
+
+  #[Test]
+  public function success_flash_cannot_appear_when_current_code_version_did_not_advance(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario(WebBlocks::version());
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $this->bindFakeCommandRunner();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip', $checksum);
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.system.updates.index'))
+      ->post(route('admin.system.updates.store'));
+
+    $response->assertRedirect(route('admin.system.updates.index'));
+    $response->assertSessionHasErrors(['system_update']);
+    $response->assertSessionMissing('status');
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+
+    $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
+    $this->assertStringNotContainsString('Updated to 99.0.0 successfully.', (string) $run->summary);
+    $this->assertStringNotContainsString('Installed version persisted as 99.0.0', (string) $run->output);
+  }
+
+  #[Test]
   public function package_native_update_skips_pending_host_users_migration_and_continues_post_update_steps(): void
   {
     $user = User::factory()->superAdmin()->create();
     app(InstalledVersionStore::class)->persist('1.32.20');
     Storage::fake('backups');
 
-    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('1.32.21');
     File::put($targetRoot.'/composer.json', json_encode(['name' => 'fklavyenet/webblocks-cms'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     File::put($targetRoot.'/database/migrations/0001_01_01_000000_create_users_table.php', "<?php\n\nthrow new RuntimeException('host users migration should not run');\n");
 
@@ -1111,7 +1224,7 @@ class SystemUpdatesTest extends TestCase
     app(InstalledVersionStore::class)->persist('0.1.0');
     Storage::fake('backups');
 
-    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.2.0');
 
     config()->set('webblocks-updates.installer.target_path', $targetRoot);
     $runner = $this->bindFakeCommandRunner();
@@ -1285,7 +1398,7 @@ class SystemUpdatesTest extends TestCase
     app(InstalledVersionStore::class)->persist('0.1.0');
     Storage::fake('backups');
 
-    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.2.0');
 
     config()->set('webblocks-updates.installer.target_path', $targetRoot);
     $this->bindFakeCommandRunner();
@@ -1374,7 +1487,7 @@ class SystemUpdatesTest extends TestCase
     string $label,
     string $message,
     bool $serverReachable = true,
-    ?string $latestVersion = '0.2.0',
+    ?string $latestVersion = '99.0.0',
     ?array $compatibility = null,
     ?string $errorCode = null,
     ?string $errorMessage = null,
@@ -1443,7 +1556,7 @@ class SystemUpdatesTest extends TestCase
       : substr($html, $start, $nextCard - $start);
   }
 
-  private function prepareSuccessfulUpdateScenario(): array
+  private function prepareSuccessfulUpdateScenario(string $packageVersion = '0.2.0'): array
   {
     $targetRoot = $this->makeTemporaryDirectory('target-root');
     File::ensureDirectoryExists($targetRoot.'/bootstrap/cache');
@@ -1490,12 +1603,12 @@ class SystemUpdatesTest extends TestCase
     $this->runProcess(['git', 'remote', 'add', 'origin', 'git@github.com:fklavyenet/webblocks-cms.git'], $targetRoot);
 
     $archiveDirectory = $this->makeTemporaryDirectory('release-archive');
-    $archivePath = $archiveDirectory.'/webblocks-cms-0.2.0.zip';
+    $archivePath = $archiveDirectory.'/webblocks-cms-'.$packageVersion.'.zip';
     $archive = new ZipArchive;
     $this->assertTrue($archive->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true);
     $archive->addFromString('composer.json', json_encode([
       'name' => 'fklavyenet/webblocks-cms',
-      'version' => '0.2.0',
+      'version' => $packageVersion,
       'autoload' => [
         'psr-4' => [
           'WebBlocks\\Cms\\' => 'src/',
@@ -1503,6 +1616,7 @@ class SystemUpdatesTest extends TestCase
         ],
       ],
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    $archive->addFromString('src/Support/WebBlocks.php', "<?php\n\nnamespace WebBlocks\\Cms\\Support;\n\nfinal class WebBlocks\n{\n  public const VERSION = '".$packageVersion."';\n}\n");
     $archive->addFromString('src/Support/System/Updates/UpdateException.php', "new package update exception\n");
     $archive->addFromString('src/Support/System/Updates/SystemUpdater.php', "package system updater\n");
     $archive->addFromString('src/Support/System/SystemSettings.php', "<?php\n\nif (\$screenTitle === 'Admin Dashboard') {\n  return 'Dashboard';\n}\n\nreturn \$screenTitle.' - '.\$productName;\n");

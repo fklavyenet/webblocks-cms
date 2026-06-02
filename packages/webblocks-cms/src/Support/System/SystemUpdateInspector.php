@@ -34,6 +34,21 @@ class SystemUpdateInspector
   {
     $installedVersion = $this->installedVersionStore->currentVersion();
     $version['installed_version'] = $installedVersion;
+    $latestVersion = $version['latest_version'] ?? null;
+
+    if (is_string($latestVersion) && $latestVersion !== '' && version_compare($latestVersion, $installedVersion, '<=')) {
+      $currentCodeIsNewerThanPublished = version_compare($installedVersion, $latestVersion, '>');
+
+      $version['state'] = 'up_to_date';
+      $version['label'] = $currentCodeIsNewerThanPublished
+        ? 'Local/source version is newer'
+        : 'Already up to date';
+      $version['message'] = $currentCodeIsNewerThanPublished
+        ? 'This install is newer than the latest published release for the selected channel.'
+        : 'This install is already on the latest published release.';
+      $version['badge_class'] = 'wb-status-active';
+      $version['update_available'] = false;
+    }
 
     $diagnostics = [
       $this->databaseDiagnostic(),

@@ -151,6 +151,7 @@ class UpdateInstaller
       ['view:clear'],
       ['cache:clear'],
       ['route:clear'],
+      ['optimize:clear'],
     ] as $artisanCommand) {
       $this->commandRunner->run(
         $this->commandRunner->artisanCommand($artisanCommand),
@@ -160,6 +161,45 @@ class UpdateInstaller
     }
 
     $this->installationGitRemoteGuard->protectCurrentInstall($this->targetPath(), $output);
+  }
+
+  public function verifyAppliedVersion(string $expectedVersion, array &$output): void
+  {
+    $targetPath = $this->targetPath();
+    $versions = [];
+
+    foreach ($this->packageRuntimePaths($targetPath) as $packageRuntimePath) {
+      $versionPath = $packageRuntimePath.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'Support'.DIRECTORY_SEPARATOR.'WebBlocks.php';
+      $relativePath = $this->relativePath($targetPath, $versionPath);
+      $version = $this->versionFromWebBlocksFile($versionPath);
+
+      if ($version === null) {
+        throw new UpdateException(
+          'The update package was applied, but the installed CMS version could not be verified. The run was not marked successful.',
+          'Could not read WebBlocks CMS version from '.$relativePath.'.',
+        );
+      }
+
+      $versions[$relativePath] = $version;
+    }
+
+    if ($versions === []) {
+      throw new UpdateException(
+        'The update package was applied, but the installed CMS version could not be verified. The run was not marked successful.',
+        'No active WebBlocks CMS runtime path was found under the configured update target.',
+      );
+    }
+
+    foreach ($versions as $relativePath => $version) {
+      if ($version !== $expectedVersion) {
+        throw new UpdateException(
+          'The update package was applied, but the installed CMS version still does not match the target release. The run was not marked successful; restore the pre-update backup or review filesystem and cache state before retrying.',
+          'Expected WebBlocks CMS '.$expectedVersion.' after update, but '.$relativePath.' reports '.$version.'.',
+        );
+      }
+    }
+
+    $output[] = 'Post-update version verified as '.$expectedVersion.' from canonical WebBlocks version source.';
   }
 
   public function leaveMaintenance(array &$output): void
@@ -301,6 +341,56 @@ class UpdateInstaller
         throw new UpdateException('The downloaded update package contains invalid paths.', 'Refusing to apply package file outside '.self::PACKAGE_RUNTIME_PATH.': '.$relativePath);
       }
     }
+  }
+
+  private function versionFromWebBlocksFile(string $path): ?string
+  {
+    if (! File::isFile($path)) {
+      return null;
+    }
+
+    $tokens = token_get_all((string) File::get($path));
+    $tokenCount = count($tokens);
+
+    for ($index = 0; $index < $tokenCount; $index++) {
+      $token = $tokens[$index];
+
+      if (! is_array($token) || $token[0] !== T_CONST) {
+        continue;
+      }
+
+      for ($nameIndex = $index + 1; $nameIndex < $tokenCount; $nameIndex++) {
+        $nameToken = $tokens[$nameIndex];
+
+        if (is_array($nameToken) && $nameToken[0] === T_WHITESPACE) {
+          continue;
+        }
+
+        if (! is_array($nameToken) || $nameToken[0] !== T_STRING || $nameToken[1] !== 'VERSION') {
+          break;
+        }
+
+        for ($valueIndex = $nameIndex + 1; $valueIndex < $tokenCount; $valueIndex++) {
+          $valueToken = $tokens[$valueIndex];
+
+          if (is_array($valueToken) && $valueToken[0] === T_WHITESPACE) {
+            continue;
+          }
+
+          if ($valueToken === '=') {
+            continue;
+          }
+
+          if (is_array($valueToken) && $valueToken[0] === T_CONSTANT_ENCAPSED_STRING) {
+            return trim($valueToken[1], '\'"');
+          }
+
+          break;
+        }
+      }
+    }
+
+    return null;
   }
 
   private function relativePath(string $targetPath, string $path): string

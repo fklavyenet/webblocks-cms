@@ -20,6 +20,7 @@ Updates in WebBlocks CMS are release-based and package-based.
 - Release packages contain reusable CMS core code only and must not ship install-specific `project/` content.
 - Update-time preserved paths do not change the release package boundary: `project/` stays local to the install and outside the published artifact.
 - Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.
+- A System Update is recorded as successful only after the applied package runtime reports the target version from the canonical `WebBlocks\Cms\Support\WebBlocks` version source. If the applied code still reports an older or unexpected version, the run is recorded as failed and operators should restore the pre-update backup or inspect filesystem/cache state before retrying.
 
 ## Release Details
 

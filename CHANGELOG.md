@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.104
+
+- Fix System Updates false-success handling by verifying the applied WebBlocks CMS code version against the target release before recording a successful run or showing a success flash.
+- Clear the full Laravel optimization cache during System Update maintenance and keep equal current/latest release states non-actionable even when stale update metadata says an update is available.
+
 ## 1.32.103
 
 - Standardize CMS release publishing on the shared WebBlocks Publisher environment keys: `WEBBLOCKS_PUBLISHER_URL`, `WEBBLOCKS_PUBLISHER_TOKEN`, `WEBBLOCKS_PUBLISHER_PRODUCT`, and `WEBBLOCKS_PUBLISHER_CHANNEL`, with the direct publish endpoint, `webblocks-cms`, and `stable` as defaults.

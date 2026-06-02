@@ -45,7 +45,7 @@ The update screen can report states such as:
 - update server unavailable
 - invalid or unsupported response
 
-The in-app update flow downloads the release package, applies protected-path rules, runs required update migrations, clears caches, records the update run, and persists the installed version.
+The in-app update flow downloads the release package, applies protected-path rules, runs required update migrations, clears caches, verifies the applied WebBlocks CMS code version against the target release, records the update run, and persists the installed version.
 
 Update availability is based on the latest published release version being newer than the running CMS code version. Historical failed update runs and stale stored installed-version values remain inspectable as history or technical details, but they do not make a current install actionable by themselves.
 
@@ -53,7 +53,7 @@ The screen stacks `Update Summary`, `Install Update`, `Diagnostics`, and `Update
 
 The update client supports structured metadata from the update service, including title, summary, highlights, fixes, compatibility notes, migration notes, asset notes, operator notes, and technical notes. These values are rendered as escaped plain text in operator-oriented groups inside the release notes accordion. Older releases that only provide `release_notes` still show those notes cleanly, and releases without notes show `No release notes were provided for this release.` Package URLs, checksums, response diagnostics, and other low-level update server values remain in diagnostics/technical details.
 
-Core catalog synchronization is no longer part of the normal System Update apply chain. Release packages apply code, assets, required update migrations, cache clears, run history, and installed-version persistence; broad catalog repair is an explicit maintenance workflow.
+Core catalog synchronization is no longer part of the normal System Update apply chain. Release packages apply code, assets, required update migrations, cache clears, post-apply version verification, run history, and installed-version persistence; broad catalog repair is an explicit maintenance workflow.
 
 For manual maintenance or recovery on an existing install, admins and developers can also run:
 

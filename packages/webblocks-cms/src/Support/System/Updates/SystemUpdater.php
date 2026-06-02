@@ -226,6 +226,7 @@ class SystemUpdater
       $this->updateInstaller->applyPackage($packageRoot, $output);
       $this->updateInstaller->installDependencies($output);
       $this->updateInstaller->runPostInstallCommands($output);
+      $this->updateInstaller->verifyAppliedVersion($toVersion, $output);
       $this->updateInstaller->leaveMaintenance($output);
       $maintenanceEnabled = false;
 
