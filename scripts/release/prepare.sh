@@ -5,6 +5,7 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PHP_BIN="${PHP_BIN:-php}"
 VERSION="$("${PHP_BIN}" -r '$source = file_get_contents($argv[1]); if (! preg_match("/VERSION = '\''([^'\'']+)'\''/", $source, $matches)) { fwrite(STDERR, "Unable to read WebBlocks CMS version.\n"); exit(1); } echo $matches[1];' "${ROOT_DIR}/packages/webblocks-cms/src/Support/WebBlocks.php")"
+HEAD_VERSION="$(git -C "${ROOT_DIR}" show HEAD:packages/webblocks-cms/src/Support/WebBlocks.php | "${PHP_BIN}" -r '$source = stream_get_contents(STDIN); if (! preg_match("/VERSION = '\''([^'\'']+)'\''/", $source, $matches)) { fwrite(STDERR, "Unable to read committed WebBlocks CMS version.\n"); exit(1); } echo $matches[1];')"
 RELEASE_ROOT="${WEBBLOCKS_CMS_RELEASE_ARTIFACT_DIR:-${ROOT_DIR}/storage/app/webblocks-cms-release/${VERSION}}"
 ARCHIVE_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}.zip"
 PAYLOAD_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}-update-server-payload.json"
@@ -21,6 +22,18 @@ mkdir -p "${RELEASE_ROOT}"
 rm -f "${ARCHIVE_PATH}" "${ARCHIVE_PATH}.sha256" "${PAYLOAD_PATH}"
 
 cd "${ROOT_DIR}"
+
+if [ "${VERSION}" != "${HEAD_VERSION}" ]; then
+  printf '[webblocks-release-prepare] Working tree version %s does not match committed HEAD version %s.\n' "${VERSION}" "${HEAD_VERSION}" >&2
+  printf '[webblocks-release-prepare] Commit package version changes before preparing a release artifact.\n' >&2
+  exit 1
+fi
+
+if ! git diff --quiet -- "${PACKAGE_ROOT}"; then
+  printf '[webblocks-release-prepare] Package source has uncommitted changes under %s.\n' "${PACKAGE_ROOT}" >&2
+  printf '[webblocks-release-prepare] Commit package changes before preparing a release artifact.\n' >&2
+  exit 1
+fi
 
 git archive --format=tar --worktree-attributes HEAD "${PACKAGE_ROOT}" | tar -xf - -C "${STAGING_DIR}"
 
