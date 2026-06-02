@@ -54,8 +54,14 @@ class InstalledPluginDefinitionFactory
         continue;
       }
 
-      $permissions[] = PluginPermission::make((string) $permission['name'])
-        ->label((string) ($permission['label'] ?? $permission['name']))
+      $name = $this->permissionName($permission);
+
+      if ($name === null) {
+        continue;
+      }
+
+      $permissions[] = PluginPermission::make($name)
+        ->label((string) ($permission['label'] ?? $name))
         ->description($permission['description'] ?? null);
     }
 
@@ -88,7 +94,33 @@ class InstalledPluginDefinitionFactory
    */
   private function migrationPaths(array $manifest): array
   {
-    return array_values(array_filter($manifest['migrations'] ?? [], fn (mixed $path): bool => is_string($path) && trim($path) !== ''));
+    $migrations = $manifest['migrations'] ?? [];
+
+    if (is_string($migrations)) {
+      $migrations = [$migrations];
+    }
+
+    if (! is_array($migrations)) {
+      return [];
+    }
+
+    return array_values(array_filter($migrations, fn (mixed $path): bool => is_string($path) && trim($path) !== ''));
+  }
+
+  /**
+   * @param  array<string, mixed>  $permission
+   */
+  private function permissionName(array $permission): ?string
+  {
+    $name = $permission['name'] ?? $permission['key'] ?? null;
+
+    if (! is_string($name)) {
+      return null;
+    }
+
+    $name = trim($name);
+
+    return $name !== '' ? $name : null;
   }
 
   private function loadPluginSource(string $path, string $provider): void
