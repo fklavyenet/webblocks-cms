@@ -233,14 +233,14 @@ Future publisher/operator endpoints are separate and deferred:
 
 ## CMS / Host Product Integration Direction
 
-WebBlocks CMS and other host products may later consume the Plugin Catalog to:
+WebBlocks CMS and other host products may consume the Plugin Catalog to:
 
 - browse the catalog from host admin
 - show plugin compatibility before download/install
 - link to manual ZIP download
 - compare installed plugin versions with catalog releases
 - show security/deprecation warnings for installed plugins
-- later support controlled install/update flows only after separate architecture approval
+- support controlled install/update flows only when host products re-check trusted artifact metadata, verify checksums, validate packages, and require explicit operator actions
 
 Catalog browsing must not require installed plugin management to be online. Installed plugin management must work without catalog availability. Host products should cache catalog metadata defensively, and remote metadata must not be trusted as executable behavior.
 

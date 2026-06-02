@@ -157,6 +157,33 @@ class InstalledPluginRepository
     }
   }
 
+  public function replaceVersion(string $handle, string $oldVersion, string $newVersion): void
+  {
+    $this->assertValidCoordinates($handle, $oldVersion);
+    $this->assertValidCoordinates($handle, $newVersion);
+
+    $root = $this->canonicalRootPath();
+    $pluginPath = $this->rootPath().DIRECTORY_SEPARATOR.$handle;
+    $oldVersionPath = $pluginPath.DIRECTORY_SEPARATOR.$oldVersion;
+    $newVersionPath = $pluginPath.DIRECTORY_SEPARATOR.$newVersion;
+    $enabledVersion = $this->enabledVersion($handle);
+
+    $this->assertPathInsideRoot($newVersionPath, $root);
+    $this->assertPathInsideRoot($oldVersionPath, $root);
+
+    if ($enabledVersion === $oldVersion) {
+      $this->enable($handle, $newVersion);
+    }
+
+    if ($oldVersion !== $newVersion && file_exists($oldVersionPath)) {
+      if (! is_dir($oldVersionPath) || is_link($oldVersionPath)) {
+        throw new RuntimeException('Plugin install path is not a removable plugin directory.');
+      }
+
+      File::deleteDirectory($oldVersionPath);
+    }
+  }
+
   private function assertValidCoordinates(string $handle, string $version): void
   {
     if (! PluginDefinition::isValidHandle($handle)) {

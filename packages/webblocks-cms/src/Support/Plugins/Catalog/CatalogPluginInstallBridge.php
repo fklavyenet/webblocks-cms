@@ -21,6 +21,28 @@ class CatalogPluginInstallBridge
    */
   public function install(CatalogPlugin $plugin): array
   {
+    return $this->installFromCatalog($plugin);
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  public function update(CatalogPlugin $plugin, string $installedVersion): array
+  {
+    $releaseVersion = $plugin->latestCompatibleRelease?->version;
+
+    if ($releaseVersion === null || version_compare($releaseVersion, $installedVersion, '<=')) {
+      throw new RuntimeException('No newer compatible catalog release is available for this plugin.');
+    }
+
+    return $this->installFromCatalog($plugin, $installedVersion);
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function installFromCatalog(CatalogPlugin $plugin, ?string $installedVersion = null): array
+  {
     $release = $plugin->latestCompatibleRelease;
 
     if (! $plugin->isCompatible()) {
@@ -49,7 +71,9 @@ class CatalogPluginInstallBridge
       $tempPath = $this->download($downloadUrl, $filename);
       $this->verifyChecksum($tempPath, $checksum);
 
-      return $this->installer->install($tempPath);
+      return $installedVersion === null
+        ? $this->installer->install($tempPath)
+        : $this->installer->update($tempPath, $plugin->handle, $installedVersion);
     } finally {
       if ($tempPath !== null && is_file($tempPath)) {
         File::delete($tempPath);

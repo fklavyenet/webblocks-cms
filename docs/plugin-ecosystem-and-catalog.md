@@ -84,19 +84,19 @@ For product positioning, MVP scope, candidate implementation models, public webs
 3. Phase 3: CMS admin `Browse Plugin Catalog` read-only UI. Implemented as `/webadmin/plugins/catalog`, using `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL` / `webblocks-plugins.catalog.base_url` and defaulting to `https://plugins.webblocksui.com`.
 4. Phase 4: Manual ZIP download/install flow linked from catalog metadata.
 5. Phase 5: Controlled `Install from Catalog` flow, still disabled-by-default after install.
-6. Phase 6: Plugin update checks and update availability.
-7. Phase 7: Controlled plugin update apply flow.
+6. Phase 6: Plugin update checks and update availability. Implemented for CMS `System -> Plugins -> Registered Plugins` when installed plugin handles have newer compatible catalog releases with complete artifact metadata.
+7. Phase 7: Controlled plugin update apply flow. Implemented as a super-admin POST action that reuses catalog checksum verification and plugin ZIP validation while preserving lifecycle state and leaving migrations explicit.
 8. Phase 8: Marketplace/licensing/commercial features.
 
-Each phase must preserve disabled-by-default installation, compatibility-first behavior, and explicit setup or migration actions. Remote metadata may help users discover and assess plugins, but it must not silently enable plugins, run migrations, apply updates, or bypass host-product compatibility rules.
+Each phase must preserve disabled-by-default installation, compatibility-first behavior, and explicit setup or migration actions. Remote metadata may help users discover, assess, install, or explicitly update plugins, but it must not silently enable plugins, run migrations, apply updates, or bypass host-product compatibility rules.
 
-The CMS catalog browser is discovery-only: it lists public WebBlocks CMS-compatible catalog plugins and latest compatible release metadata, but it does not install ZIPs, install Composer packages, apply updates, enable plugins, run migrations, register routes, register commands, register providers, register permissions, or activate plugin state from remote data.
+The CMS catalog browser lists public WebBlocks CMS-compatible catalog plugins and latest compatible release metadata. The CMS now has explicit super-admin catalog install/update actions for trusted ZIP artifacts with complete checksum metadata, but catalog browsing itself does not install Composer packages, enable plugins, run migrations, register routes, register commands, register providers, register permissions, or activate plugin state from remote data.
 
 ## Security And Safety Rules
 
 Catalog/store unavailable states must not break installed plugin management. Installed plugin listing, enable/disable controls, setup guidance, health status, and uninstall behavior should continue to work from local state.
 
-Remote catalog data must not automatically enable plugins. Remote catalog data must not automatically run migrations. Remote catalog data must not automatically apply updates. Automatic arbitrary Composer install is out of scope unless a future architecture decision explicitly approves it.
+Remote catalog data must not automatically enable plugins. Remote catalog data must not automatically run migrations. Remote catalog data must not automatically apply updates. Catalog-backed updates require an explicit super-admin POST action and trusted artifact metadata. Automatic arbitrary Composer install is out of scope unless a future architecture decision explicitly approves it.
 
 ZIP artifacts must be verified before installation. Verification should block path traversal, hidden metadata files, root escape, public executable surprises, route collisions, permission collisions, table-prefix collisions, host-product boundary collisions, symlink escapes, forbidden install targets, malformed manifests, incompatible host products, and checksum or future signature mismatches.
 

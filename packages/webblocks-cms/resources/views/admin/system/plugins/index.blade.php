@@ -75,7 +75,12 @@
                                         <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}"><strong>{{ $plugin['label'] }}</strong></a>
                                         <div class="wb-text-sm wb-text-muted"><code>{{ $plugin['handle'] }}</code></div>
                                     </td>
-                                    <td>{{ $plugin['version'] ?? 'Not declared' }}</td>
+                                    <td>
+                                        {{ $plugin['version'] ?? 'Not declared' }}
+                                        @if ($plugin['catalog_update'])
+                                            <div class="wb-text-sm wb-text-muted">Update available: {{ $plugin['catalog_update']['version'] }}</div>
+                                        @endif
+                                    </td>
                                     <td>{{ $plugin['source'] }}</td>
                                     <td>
                                         <span class="wb-status {{ $statusClass }}">
@@ -98,6 +103,15 @@
                                             <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}" class="wb-action-btn" title="View details" aria-label="View details">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
+
+                                            @if ($plugin['can_update_from_catalog'])
+                                                <form method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}">
+                                                    @csrf
+                                                    <button type="submit" class="wb-action-btn" title="Update from Catalog" aria-label="Update from Catalog">
+                                                        <i class="wb-icon wb-icon-refresh-cw" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
 
                                             @if ($plugin['can_enable'])
                                                 <form method="POST" action="{{ route('admin.system.plugins.enable', $plugin['handle']) }}">

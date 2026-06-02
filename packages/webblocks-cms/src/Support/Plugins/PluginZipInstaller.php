@@ -19,6 +19,22 @@ class PluginZipInstaller
    */
   public function install(string $zipPath): array
   {
+    return $this->installPackage($zipPath);
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  public function update(string $zipPath, string $expectedHandle, string $currentVersion): array
+  {
+    return $this->installPackage($zipPath, $expectedHandle, $currentVersion);
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function installPackage(string $zipPath, ?string $expectedHandle = null, ?string $currentVersion = null): array
+  {
     $zip = new ZipArchive;
 
     if ($zip->open($zipPath) !== true) {
@@ -34,7 +50,15 @@ class PluginZipInstaller
       $handle = (string) $manifest['handle'];
       $version = (string) $manifest['version'];
 
-      if ($this->plugins->hasHandle($handle)) {
+      if ($expectedHandle !== null && $handle !== $expectedHandle) {
+        throw new RuntimeException('The catalog artifact does not match the installed plugin handle.');
+      }
+
+      if ($currentVersion !== null && version_compare($version, $currentVersion, '<=')) {
+        throw new RuntimeException('The catalog artifact is not newer than the installed plugin version.');
+      }
+
+      if ($expectedHandle === null && $this->plugins->hasHandle($handle)) {
         throw new RuntimeException('A plugin with this handle is already installed.');
       }
 
@@ -45,6 +69,10 @@ class PluginZipInstaller
       }
 
       $this->extract($zip, $entries, $stripPrefix, $target);
+
+      if ($expectedHandle !== null && $currentVersion !== null) {
+        $this->plugins->replaceVersion($handle, $currentVersion, $version);
+      }
 
       return [
         'handle' => $handle,

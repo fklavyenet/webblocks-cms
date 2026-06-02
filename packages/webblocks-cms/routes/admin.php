@@ -198,6 +198,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       Route::post('plugins/catalog/{handle}/install', [PluginCatalogController::class, 'install'])->name('plugins.catalog.install');
       Route::get('system/plugins', [SystemPluginController::class, 'index'])->name('system.plugins.index');
       Route::post('system/plugins/upload', [SystemPluginController::class, 'upload'])->name('system.plugins.upload');
+      Route::post('system/plugins/{plugin}/update-from-catalog', [SystemPluginController::class, 'updateFromCatalog'])->name('system.plugins.update-from-catalog');
       Route::post('system/plugins/{plugin}/enable', [SystemPluginController::class, 'enable'])->name('system.plugins.enable');
       Route::post('system/plugins/{plugin}/setup', [SystemPluginController::class, 'setup'])->name('system.plugins.setup');
       Route::post('system/plugins/{plugin}/disable', [SystemPluginController::class, 'disable'])->name('system.plugins.disable');

@@ -8,6 +8,10 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use RuntimeException;
+use Throwable;
+use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
+use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
+use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
@@ -28,6 +32,8 @@ class SystemPluginController extends Controller
     private readonly PluginZipInstaller $installer,
     private readonly InstalledPluginRepository $installedPlugins,
     private readonly PluginMigrationRunner $migrationRunner,
+    private readonly PluginCatalogClient $catalog,
+    private readonly CatalogPluginInstallBridge $catalogInstallBridge,
   ) {}
 
   public function index(): View
@@ -36,7 +42,7 @@ class SystemPluginController extends Controller
       'title' => 'Plugins',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
-      'plugins' => $this->pluginSummaries(),
+      'plugins' => $this->pluginSummaries($this->catalogUpdatesByHandle()),
       'canInstallPlugins' => (bool) request()->user()?->isSuperAdmin(),
     ]);
   }
@@ -190,13 +196,48 @@ class SystemPluginController extends Controller
       ->with('status', 'Plugin uninstalled. Plugin-owned database tables were preserved.');
   }
 
+  public function updateFromCatalog(string $plugin): RedirectResponse
+  {
+    abort_unless(request()->user()?->isSuperAdmin(), 403);
+
+    $definition = $this->plugins->get($plugin);
+
+    abort_if($definition === null || $definition->installPathValue() === null, 404);
+
+    $installedVersion = $definition->versionText();
+
+    abort_if($installedVersion === null, 422);
+
+    $result = $this->catalog->show($plugin);
+
+    if (! $result->available || $result->plugin === null) {
+      return back()->withErrors(['plugin' => 'No catalog update is available right now.']);
+    }
+
+    if (! $this->catalogPluginIsUpdateFor($result->plugin, $installedVersion)) {
+      return back()->withErrors(['plugin' => 'No compatible catalog update is available for this plugin.']);
+    }
+
+    try {
+      $installed = $this->catalogInstallBridge->update($result->plugin, $installedVersion);
+    } catch (RuntimeException $exception) {
+      return back()->withErrors(['plugin' => $this->controlledCatalogUpdateError($exception)]);
+    }
+
+    app()->forgetInstance(PluginRegistry::class);
+
+    return redirect()
+      ->route('admin.system.plugins.index')
+      ->with('status', $definition->labelText().' updated to '.$installed['version'].' from Plugin Catalog.');
+  }
+
   /**
    * @return array<int, array<string, mixed>>
    */
-  private function pluginSummaries(): array
+  private function pluginSummaries(array $catalogUpdatesByHandle = []): array
   {
     return array_map(
-      fn (array $plugin): array => $this->decorateSummary($plugin),
+      fn (array $plugin): array => $this->decorateSummary($plugin, $catalogUpdatesByHandle),
       $this->plugins->summaries()
     );
   }
@@ -218,7 +259,7 @@ class SystemPluginController extends Controller
    * @param  array<string, mixed>  $summary
    * @return array<string, mixed>
    */
-  private function decorateSummary(array $summary): array
+  private function decorateSummary(array $summary, array $catalogUpdatesByHandle = []): array
   {
     $definition = $this->plugins->get((string) $summary['handle']);
 
@@ -237,6 +278,7 @@ class SystemPluginController extends Controller
     $enabled = (bool) $summary['enabled'];
     $lifecycleStatus = (string) $summary['lifecycle_status'];
     $health = $this->health->healthArrayFor($definition);
+    $catalogUpdate = $catalogUpdatesByHandle[$definition->handle()] ?? null;
 
     if (! $enabled && $compatible && $filesAvailable) {
       $health = [
@@ -268,7 +310,67 @@ class SystemPluginController extends Controller
       'settings' => $settings?->toArray(),
       'settings_route' => $settingsRoute,
       'settings_url' => $settingsRoute !== null ? $this->settingsUrl($definition, $settingsRoute) : null,
+      'catalog_update' => $catalogUpdate,
+      'can_update_from_catalog' => $catalogUpdate !== null,
     ]);
+  }
+
+  /**
+   * @return array<string, array{version: string}>
+   */
+  private function catalogUpdatesByHandle(): array
+  {
+    if (! request()->user()?->isSuperAdmin()) {
+      return [];
+    }
+
+    try {
+      $catalog = $this->catalog->browse();
+    } catch (Throwable) {
+      return [];
+    }
+
+    if (! $catalog->available) {
+      return [];
+    }
+
+    $installedVersions = collect($this->plugins->summaries())
+      ->mapWithKeys(fn (array $plugin): array => [
+        (string) $plugin['handle'] => is_string($plugin['version'] ?? null) ? $plugin['version'] : null,
+      ]);
+    $updates = [];
+
+    foreach ($catalog->plugins as $plugin) {
+      $installedVersion = $installedVersions->get($plugin->handle);
+
+      if (! is_string($installedVersion) || ! $this->catalogPluginIsUpdateFor($plugin, $installedVersion)) {
+        continue;
+      }
+
+      $updates[$plugin->handle] = [
+        'version' => $plugin->latestCompatibleRelease->version,
+      ];
+    }
+
+    return $updates;
+  }
+
+  private function catalogPluginIsUpdateFor(CatalogPlugin $plugin, string $installedVersion): bool
+  {
+    $release = $plugin->latestCompatibleRelease;
+
+    return $plugin->hasInstallableArtifact()
+      && $release?->version !== null
+      && version_compare($release->version, $installedVersion, '>');
+  }
+
+  private function controlledCatalogUpdateError(RuntimeException $exception): string
+  {
+    $message = $exception->getMessage();
+
+    return $message !== ''
+      ? $message
+      : 'The catalog plugin update could not be installed. Review the catalog metadata and try again.';
   }
 
   private function settingsUrl(PluginDefinition $definition, string $settingsRoute): string

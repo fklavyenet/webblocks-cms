@@ -821,6 +821,7 @@ class PluginCatalogBrowserTest extends TestCase
   {
     $this->assertSame('webadmin/system/plugins', Route::getRoutes()->getByName('admin.system.plugins.index')?->uri());
     $this->assertSame('webadmin/system/plugins/upload', Route::getRoutes()->getByName('admin.system.plugins.upload')?->uri());
+    $this->assertSame('webadmin/system/plugins/{plugin}/update-from-catalog', Route::getRoutes()->getByName('admin.system.plugins.update-from-catalog')?->uri());
     $this->assertSame('webadmin/system/plugins/{plugin}/enable', Route::getRoutes()->getByName('admin.system.plugins.enable')?->uri());
     $this->assertSame('webadmin/system/plugins/{plugin}/setup', Route::getRoutes()->getByName('admin.system.plugins.setup')?->uri());
     $this->assertSame('webadmin/system/plugins/{plugin}/disable', Route::getRoutes()->getByName('admin.system.plugins.disable')?->uri());

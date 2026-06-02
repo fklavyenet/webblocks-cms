@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.110
+
+- Add Registered Plugins catalog update availability for installed plugins when the Plugin Catalog has a newer compatible published release with complete ZIP artifact metadata.
+- Add a CSRF-protected `Update from Catalog` action that reuses the catalog checksum and plugin ZIP validation path, preserves enabled or disabled lifecycle state, preserves plugin-owned tables, and leaves plugin migrations as an explicit setup action.
+
 ## 1.32.109
 
 - Fix installed plugin registry loading for catalog-installed manifests that declare permission identifiers as `key` and migration paths as a single string.
@@ -49,45 +54,6 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Fix Plugin Catalog artifact parsing for current WebBlocks Plugins API responses so nested `latest_release.artifact` filename, size, checksum, download URL, validation status, and scan status render correctly and drive catalog install availability.
 
-## 1.32.100
-
-- Add a safe Plugin Catalog install bridge from catalog detail pages: compatible releases with controlled download URL, filename, and SHA-256 metadata can be downloaded server-side, checksum-verified, and installed through the existing disabled-by-default plugin ZIP installer.
-- Show catalog artifact status, release status, filename, size, download URL, and SHA-256 metadata on plugin details, with a clear unavailable state when no downloadable artifact exists.
-- Keep catalog links separate from install actions and align the Catalog Plugins listing action cell with the standard WebBlocks UI table action group.
-
-## 1.32.99
-
-- Polish Plugin Catalog Browser diagnostics so admin UI hides catalog server URLs and raw CMS version debug text, shows a friendly unavailable state, falls back internally to the built-in public catalog URL when config is missing or blank, and sends the canonical WebBlocks CMS product version to catalog API requests.
-
-## 1.32.98
-
-- Add read-only Plugin Catalog detail pages at `/webadmin/plugins/catalog/{handle}` with catalog index plugin labels and View details actions linking into plugin metadata, compatibility, latest compatible release, release notes/highlights, documentation/support/catalog links, artifact URL, SHA-256 checksum, artifact filename, and artifact size.
-- Polish Plugin Catalog detail Manual ZIP Install guidance with operator steps, safe Copy download URL and Copy checksum helper actions, and local installed/enabled state labels sourced only from the CMS `PluginRegistry`.
-- Keep catalog detail data display-only with no remote install, enable, migration, route/provider/command/permission registration, update apply, or remote behavior execution.
-
-## 1.32.97
-
-- Add the read-only Plugin Catalog Browser at `/webadmin/plugins/catalog`, reachable from the `System -> Plugins` Browse Plugin Catalog action, for display-only WebBlocks CMS-compatible catalog metadata.
-- Add Plugin Catalog API configuration through `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL`, `WEBBLOCKS_PLUGIN_CATALOG_TIMEOUT_SECONDS`, and `WEBBLOCKS_PLUGIN_CATALOG_CONNECT_TIMEOUT_SECONDS`, with unavailable-catalog UI kept controlled.
-- Keep catalog browsing display-only with no remote install, enable, migrations, providers, routes, commands, updates, or executable registration from remote plugin data.
-
-## 1.32.96
-
-- Polish Contact Messages list row actions so rows expose only View message and modal-confirmed Delete controls, preserving separate editorial and notification status columns plus bulk deletion.
-- Update the Contact Messages View action accessible and title text to `View message`.
-- Use the standard confirmed destructive action pattern for Contact Messages row deletion.
-- Confirm and document that scored Contact Form spam remains stored/quarantined for admin review and is not auto-deleted by score, while honeypot hits may be discarded before storage.
-
-## 1.32.95
-
-- Preserve System Updates history pagination state after deleting a run, including per-page selection and fallback to the previous valid page when the deleted row emptied the last page.
-- Paginate the CMS System Updates history table with a compact `Per page` selector, dedicated `history_page` / `history_per_page` query parameters, and preserved details/delete modal actions on paginated rows.
-- Add CMS System Updates history deletion with WebBlocks UI trash icon actions, confirmation modals, CSRF-protected DELETE forms, and history-only deletion safeguards.
-- Align `System -> Updates` with the current QuizTem interaction standard: WebBlocks UI card headers/actions, release notes and package safety accordions, compact diagnostics disclosure, disabled unavailable install action, and modal-based history details.
-- Stop running broad catalog seeding and `block-types:sync-core` during normal System Update applies; package updates now stay focused on release package apply, required update migrations, cache clears, run recording, and installed-version persistence.
-- Add `webblocks:catalog-repair` with dry-run and scoped repair options for block types, slot types, page layouts, and icons while preserving custom catalog rows.
-
-## 1.32.90
 
 - Add native/local CMS update publishing with `composer release:prepare`, `composer release:publish-update -- --dry-run`, and `composer release:publish-update`, backed by `webblocks:publish-update` and direct WebBlocks Publisher API uploads for `webblocks-cms` on the `stable` channel.
 - Remove GitHub-based release publishing and delete `.github` workflows; release artifacts, checksums, metadata validation, and update-server verification now happen locally without GitHub release asset URL assumptions.

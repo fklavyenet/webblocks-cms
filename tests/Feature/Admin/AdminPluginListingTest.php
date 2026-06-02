@@ -4,18 +4,23 @@ namespace Tests\Feature\Admin;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
+use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
 use ZipArchive;
 
 class AdminPluginListingTest extends TestCase
@@ -27,6 +32,10 @@ class AdminPluginListingTest extends TestCase
     parent::setUp();
 
     config()->set('webblocks-plugins.install.root', storage_path('framework/testing/plugins/'.str()->uuid()));
+    config()->set('webblocks-plugins.catalog.base_url', 'https://plugins.example.test');
+    Http::fake([
+      'https://plugins.example.test/api/plugins?*' => Http::response(['data' => []]),
+    ]);
     $this->app->forgetInstance(PluginRegistry::class);
     $this->app->forgetInstance(PluginHealthMonitor::class);
   }
@@ -675,6 +684,146 @@ class AdminPluginListingTest extends TestCase
   }
 
   #[Test]
+  public function registered_plugins_show_catalog_update_availability_for_newer_compatible_releases(): void
+  {
+    $this->installSampleToolsPlugin('1.0.0');
+    $this->fakeCatalogHttp($this->catalogUpdateFakeResponses('1.2.0'));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.system.plugins.index'));
+
+    $response->assertOk();
+    $response->assertSeeText('Sample Tools');
+    $response->assertSeeText('1.0.0');
+    $response->assertSeeText('Update available: 1.2.0');
+    $response->assertSee('action="'.route('admin.system.plugins.update-from-catalog', 'sample-tools').'"', false);
+    $response->assertSee('title="Update from Catalog"', false);
+    $response->assertSee('class="wb-action-group"', false);
+  }
+
+  #[Test]
+  public function registered_plugins_hide_catalog_update_action_when_current_incompatible_or_incomplete(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    foreach ([
+      'current' => $this->catalogUpdateFakeResponses('1.0.0'),
+      'incompatible' => $this->catalogUpdateFakeResponses('1.2.0', compatible: false),
+      'incomplete' => $this->catalogUpdateFakeResponses('1.2.0', completeArtifact: false),
+    ] as $responses) {
+      $this->installSampleToolsPlugin('1.0.0');
+      $this->fakeCatalogHttp($responses);
+      $this->app->forgetInstance(PluginRegistry::class);
+
+      $response = $this->actingAs($user)->get(route('admin.system.plugins.index'));
+
+      $response->assertOk();
+      $response->assertDontSeeText('Update available: 1.2.0');
+      $response->assertDontSee('action="'.route('admin.system.plugins.update-from-catalog', 'sample-tools').'"', false);
+
+      $this->app->make(InstalledPluginRepository::class)->uninstall('sample-tools', '1.0.0');
+      $this->app->forgetInstance(PluginRegistry::class);
+    }
+  }
+
+  #[Test]
+  public function catalog_unavailable_does_not_break_registered_plugins_list(): void
+  {
+    $this->installSampleToolsPlugin('1.0.0');
+    $this->fakeCatalogHttp(fn () => throw new ConnectionException('timeout'));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.system.plugins.index'));
+
+    $response->assertOk();
+    $response->assertSeeText('Sample Tools');
+    $response->assertDontSeeText('Update available');
+    $response->assertDontSee('Update from Catalog', false);
+  }
+
+  #[Test]
+  public function post_update_from_catalog_verifies_and_replaces_plugin_package_preserving_lifecycle_and_tables(): void
+  {
+    $this->installSampleToolsPlugin('1.0.0', [
+      'migrations' => ['database/migrations'],
+    ]);
+
+    app(InstalledPluginRepository::class)->enable('sample-tools', '1.0.0');
+    Schema::create('sample_tools_records', function ($table): void {
+      $table->id();
+    });
+
+    $zip = $this->sampleToolsZipBody('1.2.0', [
+      'migrations' => ['database/migrations'],
+    ], [
+      'database/migrations/2026_01_01_000000_create_sample_tools_auto_migrations_table.php' => <<<'PHP'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+  public function up(): void
+  {
+    Schema::create('sample_tools_auto_migrations', function (Blueprint $table): void {
+      $table->id();
+    });
+  }
+
+  public function down(): void
+  {
+    Schema::dropIfExists('sample_tools_auto_migrations');
+  }
+};
+PHP,
+    ]);
+
+    $this->fakeCatalogHttp($this->catalogUpdateFakeResponses('1.2.0', zip: $zip));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.system.plugins.update-from-catalog', 'sample-tools'));
+
+    $response->assertRedirect(route('admin.system.plugins.index'));
+    $response->assertSessionHas('status', 'Sample Tools updated to 1.2.0 from Plugin Catalog.');
+    $this->assertFileDoesNotExist(config('webblocks-plugins.install.root').'/sample-tools/1.0.0/webblocks-plugin.json');
+    $this->assertFileExists(config('webblocks-plugins.install.root').'/sample-tools/1.2.0/webblocks-plugin.json');
+    $this->assertSame('1.2.0', app(InstalledPluginRepository::class)->enabledVersion('sample-tools'));
+    $this->assertTrue(Schema::hasTable('sample_tools_records'));
+    $this->assertFalse(Schema::hasTable('sample_tools_auto_migrations'));
+
+    $this->app->forgetInstance(PluginRegistry::class);
+
+    $this->actingAs($user)
+      ->get(route('admin.system.plugins.index'))
+      ->assertOk()
+      ->assertSeeText('1.2.0');
+  }
+
+  #[Test]
+  public function post_update_from_catalog_blocks_checksum_mismatch(): void
+  {
+    $this->installSampleToolsPlugin('1.0.0');
+    $zip = $this->sampleToolsZipBody('1.2.0');
+
+    $this->fakeCatalogHttp($this->catalogUpdateFakeResponses('1.2.0', zip: $zip, checksum: str_repeat('0', 64)));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->from(route('admin.system.plugins.index'))
+      ->actingAs($user)
+      ->post(route('admin.system.plugins.update-from-catalog', 'sample-tools'))
+      ->assertRedirect(route('admin.system.plugins.index'))
+      ->assertSessionHasErrors(['plugin' => 'The downloaded catalog artifact failed SHA-256 verification.']);
+
+    $this->assertFileExists(config('webblocks-plugins.install.root').'/sample-tools/1.0.0/webblocks-plugin.json');
+    $this->assertFileDoesNotExist(config('webblocks-plugins.install.root').'/sample-tools/1.2.0/webblocks-plugin.json');
+  }
+
+  #[Test]
   public function disabled_manual_plugin_can_be_uninstalled_without_dropping_plugin_tables(): void
   {
     $user = User::factory()->superAdmin()->create();
@@ -776,6 +925,121 @@ class AdminPluginListingTest extends TestCase
     $editorResponse = $this->followingRedirects()->actingAs($editor)->get(route('admin.pages.index'));
     $editorResponse->assertOk();
     $editorResponse->assertDontSee('href="'.route('admin.system.plugins.index').'"', false);
+  }
+
+  /**
+   * @param  array<string, mixed>  $manifestOverride
+   */
+  private function installSampleToolsPlugin(string $version, array $manifestOverride = []): void
+  {
+    app(PluginZipInstaller::class)->install($this->sampleToolsZipPath($version, $manifestOverride));
+    $this->app->forgetInstance(PluginRegistry::class);
+  }
+
+  /**
+   * @param  array<string, mixed>  $manifestOverride
+   * @param  array<string, string>  $entries
+   */
+  private function sampleToolsZipBody(string $version, array $manifestOverride = [], array $entries = []): string
+  {
+    return (string) file_get_contents($this->sampleToolsZipPath($version, $manifestOverride, $entries));
+  }
+
+  /**
+   * @param  array<string, mixed>  $manifestOverride
+   * @param  array<string, string>  $entries
+   */
+  private function sampleToolsZipPath(string $version, array $manifestOverride = [], array $entries = []): string
+  {
+    $path = storage_path('framework/testing/sample-tools-'.str()->uuid().'.zip');
+    $zip = new ZipArchive;
+    $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $zip->addFromString('webblocks-plugin.json', json_encode(array_merge([
+      'handle' => 'sample-tools',
+      'label' => 'Sample Tools',
+      'version' => $version,
+      'provider' => 'Vendor\\SampleTools\\SampleToolsPlugin',
+      'required_cms_version' => '^1.32',
+      'permissions' => [],
+      'commands' => [],
+      'routes' => [],
+      'settings' => [],
+      'migrations' => [],
+      'assets' => [],
+      'health' => null,
+    ], $manifestOverride), JSON_PRETTY_PRINT));
+    $zip->addFromString('src/SampleToolsPlugin.php', '<?php');
+
+    foreach ($entries as $name => $contents) {
+      $zip->addFromString($name, $contents);
+    }
+
+    $zip->close();
+
+    return $path;
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function catalogUpdateFakeResponses(
+    string $version,
+    bool $compatible = true,
+    bool $completeArtifact = true,
+    ?string $zip = null,
+    ?string $checksum = null,
+  ): array {
+    $zip ??= $this->sampleToolsZipBody($version);
+    $checksum ??= hash('sha256', $zip);
+    $artifact = [
+      'download_url' => 'https://plugins.example.test/downloads/sample-tools-'.$version.'.zip',
+      'checksum_sha256' => $checksum,
+      'file_name' => 'sample-tools-'.$version.'.zip',
+      'size_bytes' => strlen($zip),
+      'validation_status' => 'passed',
+    ];
+
+    if (! $completeArtifact) {
+      unset($artifact['checksum_sha256']);
+    }
+
+    $plugin = [
+      'handle' => 'sample-tools',
+      'label' => 'Sample Tools',
+      'compatibility' => ['status' => $compatible ? 'compatible' : 'incompatible'],
+    ];
+    $release = [
+      'version' => $version,
+      'channel' => 'stable',
+      'status' => 'published',
+      'artifact' => $artifact,
+    ];
+
+    return [
+      'https://plugins.example.test/api/plugins?*' => Http::response([
+        'data' => [$plugin],
+      ]),
+      'https://plugins.example.test/api/plugins/sample-tools?*' => Http::response([
+        'data' => [
+          'plugin' => $plugin,
+        ],
+      ]),
+      'https://plugins.example.test/api/plugins/sample-tools/latest?*' => Http::response([
+        'data' => [
+          'release' => $release,
+        ],
+      ]),
+      'https://plugins.example.test/downloads/sample-tools-'.$version.'.zip*' => Http::response($zip, 200, [
+        'Content-Length' => (string) strlen($zip),
+        'Content-Type' => 'application/zip',
+      ]),
+    ];
+  }
+
+  private function fakeCatalogHttp(array|callable $responses): void
+  {
+    Http::swap(new Factory);
+    Http::fake($responses);
   }
 
   private function webBlocksUiManagerZip(): UploadedFile
