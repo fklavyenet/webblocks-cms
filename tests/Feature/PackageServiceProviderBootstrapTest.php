@@ -259,7 +259,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.columns'));
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.gallery'));
     $this->assertTrue(view()->exists('admin.partials.page-header'));
-    $this->assertTrue(view()->exists('layouts.admin'));
+    $this->assertFalse(view()->exists('layouts.admin'));
     $this->assertTrue(view()->exists('admin.partials.flash'));
     $this->assertTrue(view()->exists('admin.partials.listing-filters'));
     $this->assertTrue(view()->exists('admin.partials.page-actions'));

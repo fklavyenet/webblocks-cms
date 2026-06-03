@@ -53,8 +53,8 @@ class AdminDashboardRouteTest extends TestCase
     $this->assertTrue(view()->exists('webblocks-cms::admin.slot-types.index'));
     $this->assertTrue(view()->exists('webblocks-cms::admin.system.search'));
     $this->assertTrue(view()->exists('webblocks-cms::admin.system.settings'));
+    $this->assertFalse(view()->exists('layouts.admin'));
     $this->assertStringContainsString('webblocks-cms::admin.dashboard', file_get_contents(resource_path('views/admin/dashboard.blade.php')));
-    $this->assertStringContainsString('webblocks-cms::layouts.admin', file_get_contents(resource_path('views/layouts/admin.blade.php')));
     $this->assertStringContainsString('webblocks-cms::admin.contact-messages.index', file_get_contents(resource_path('views/admin/contact-messages/index.blade.php')));
     $this->assertStringContainsString('webblocks-cms::admin.reports.visitors.index', file_get_contents(resource_path('views/admin/reports/visitors/index.blade.php')));
     $this->assertStringContainsString('webblocks-cms::admin.slot-types.index', file_get_contents(resource_path('views/admin/slot-types/index.blade.php')));

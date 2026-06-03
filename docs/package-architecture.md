@@ -669,7 +669,7 @@ The admin shell and asset boundary audit is now complete:
 
 - `docs/package-transition-admin-shell-assets-audit.md` classifies the remaining admin shell, shared admin partials, admin components, admin CSS/JS, and brand assets after the latest package runtime moves
 - the audit originally confirmed package-owned admin views still depended on root `layouts.admin`, root selected `admin.partials.*`, root `x-admin.form-actions`, and active root `public/cms` admin assets
-- the admin layout move is now complete: package-owned admin views extend `webblocks-cms::layouts.admin`, while root `resources/views/layouts/admin.blade.php` remains a compatibility wrapper
+- the admin layout move is now complete: package-owned admin views extend `webblocks-cms::layouts.admin`, and the root `resources/views/layouts/admin.blade.php` compatibility wrapper has been removed so package-consumer namespace mistakes fail locally
 - package `public/cms/` now also carries admin CSS and JS source files that match the active root admin asset set, while root `public/cms/...` paths remain the live runtime compatibility layer
 - the audit explicitly does not recommend migrations, updater, backup/restore, export/import, promotion, auth/User, installer, root config, or runtime asset authority as the next immediate batch
 
@@ -679,7 +679,7 @@ The selected shared admin partial/component batches are now package-owned:
 - package-owned now: `webblocks-cms::components.admin.form-actions`, consumed from package views through `<x-webblocks-cms::admin.form-actions>`
 - package-owned now: `webblocks-cms::layouts.admin`, consumed from package-owned admin views through `@extends('webblocks-cms::layouts.admin', ...)`
 - root `resources/views/admin/partials/{page-header,flash,listing-filters,page-actions,pagination,audit-actor}.blade.php` remain as compatibility wrappers
-- root `resources/views/layouts/admin.blade.php` remains as the compatibility wrapper for the historical `layouts.admin` path
+- root `resources/views/layouts/admin.blade.php` no longer exists; plugin and package admin views must not use the historical `layouts.admin` path
 - root `resources/views/components/admin/form-actions.blade.php` remains as the compatibility wrapper for existing `<x-admin.form-actions>` usage
 - package-owned admin views now prefer the package namespace for the admin layout and those selected shared partials/components
 - `webblocks:package-status` now reports the selected shared admin partial/component boundary plus the admin runtime view inventory that now includes the package-owned admin layout and root wrapper

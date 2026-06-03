@@ -152,7 +152,7 @@ class PackageStatusCommand extends Command
       WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.fallback',
       WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.missing-renderer',
     ])).' (Block::publicRenderView() now prefers package block partials first; root pages.partials.blocks.* remains available for install-specific or custom fallback)');
-    $this->line('Root view compatibility state: mixed (admin layout, icon, public layout, public page shell, public search, slot entry views, and core public block renderers now render through the package namespace, while many admin wrappers and install-specific root block fallbacks remain root-accessible).');
+    $this->line('Root view compatibility state: mixed (the admin layout alias has been removed; icon, public layout, public page shell, public search, slot entry views, and core public block renderers now render through the package namespace, while many admin wrappers and install-specific root block fallbacks remain root-accessible).');
     $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
     $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
     $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -129,6 +130,42 @@ class PackageFreshInstallMigrationTest extends TestCase
         $this->assertArrayHasKey('why', $allowedPattern, sprintf('Allowlist why missing for [%s] in %s', $pattern, $relativePath));
         $this->assertNotSame('', trim($allowedPattern['reason']), sprintf('Allowlist reason must be non-empty for [%s] in %s', $pattern, $relativePath));
         $this->assertNotSame('', trim($allowedPattern['why']), sprintf('Allowlist why must be non-empty for [%s] in %s', $pattern, $relativePath));
+      }
+    }
+  }
+
+  /**
+     * @param  array<int, string>  $paths
+     * @param  array<int, string>  $patterns
+     */
+  private function assertFilesDoNotContain(array $paths, array $patterns): void
+  {
+    $this->addToAssertionCount(1);
+
+    foreach ($paths as $path) {
+      $absolutePath = base_path($path);
+
+      if (is_file($absolutePath)) {
+        $files = [new \SplFileInfo($absolutePath)];
+      } elseif (is_dir($absolutePath)) {
+        $files = iterator_to_array(new \RecursiveIteratorIterator(
+          new \RecursiveDirectoryIterator($absolutePath, \FilesystemIterator::SKIP_DOTS)
+        ));
+      } else {
+        continue;
+      }
+
+      foreach ($files as $file) {
+        if (! $file instanceof \SplFileInfo || ! $file->isFile()) {
+          continue;
+        }
+
+        $contents = (string) file_get_contents($file->getPathname());
+        $relativePath = str_replace(base_path().'/', '', $file->getPathname());
+
+        foreach ($patterns as $pattern) {
+          $this->assertStringNotContainsString($pattern, $contents, $relativePath);
+        }
       }
     }
   }
@@ -293,6 +330,71 @@ class PackageFreshInstallMigrationTest extends TestCase
       'php',
       $this->packageBoundaryAuditPatterns()['blade-root-view']
     );
+  }
+
+  #[Test]
+  public function package_owned_admin_views_extend_the_package_admin_layout_namespace(): void
+  {
+    foreach ($this->packageFiles(base_path('packages/webblocks-cms/resources/views/admin'), 'php') as $view) {
+      $contents = (string) file_get_contents($view);
+
+      if (! str_contains($contents, '@extends(')) {
+        continue;
+      }
+
+      $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", $contents, $view);
+      $this->assertStringNotContainsString("@extends('layouts.admin'", $contents, $view);
+    }
+  }
+
+  #[Test]
+  public function plugin_facing_views_fixtures_and_docs_do_not_suggest_the_root_admin_layout_alias(): void
+  {
+    $this->assertFilesDoNotContain([
+      'plugins',
+      'tests/Fixtures',
+      'packages/webblocks-cms/stubs',
+      'packages/webblocks-cms/resources/views/README.md',
+      'docs/plugin-system.md',
+      'docs/plugin-ecosystem-and-catalog.md',
+      'docs/operations.md',
+      'README.md',
+    ], [
+      "@extends('layouts.admin')",
+      '@extends("layouts.admin")',
+    ]);
+  }
+
+  #[Test]
+  public function plugin_admin_view_renders_without_a_root_admin_layout_alias(): void
+  {
+    $pluginViews = storage_path('framework/testing/plugin-admin-layout-views');
+    $viewFile = $pluginViews.'/redirects/index.blade.php';
+
+    File::deleteDirectory($pluginViews);
+    File::ensureDirectoryExists(dirname($viewFile));
+    File::put($viewFile, <<<'BLADE'
+@extends('webblocks-cms::layouts.admin', ['title' => 'Redirects', 'heading' => 'Redirects'])
+
+@section('content')
+    <div class="wb-card">
+        <div class="wb-card-body">Redirect manager plugin admin screen</div>
+    </div>
+@endsection
+BLADE);
+
+    app('view')->addNamespace('webblocks-test-plugin', $pluginViews);
+
+    try {
+      $this->assertFalse(view()->exists('layouts.admin'));
+
+      $html = view('webblocks-test-plugin::redirects.index')->render();
+
+      $this->assertStringContainsString('<title>Redirects - WebBlocks CMS</title>', $html);
+      $this->assertStringContainsString('Redirect manager plugin admin screen', $html);
+    } finally {
+      File::deleteDirectory($pluginViews);
+    }
   }
 
   #[Test]

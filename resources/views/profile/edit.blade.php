@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Profile', 'heading' => 'Profile'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Profile', 'heading' => 'Profile'])
 
 @section('content')
     @include('admin.partials.page-header', [

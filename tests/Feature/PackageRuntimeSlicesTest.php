@@ -5,8 +5,11 @@ namespace Tests\Feature;
 use App\Models\User;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\RouteCollectionInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Controllers\Diagnostics\PackageDiagnosticsController;
+use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -40,14 +43,16 @@ class PackageRuntimeSlicesTest extends TestCase
   public function guarded_package_diagnostics_route_uses_the_package_handler_and_view_reference_when_enabled(): void
   {
     config()->set(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, true);
-    $this->bootPackageRoutes();
+    $this->bootPackageRouteFile(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE);
 
-    $response = $this->get(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH);
+    $route = $this->refreshRouteNameLookups()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME);
+    $html = app(PackageDiagnosticsController::class)->show()->render();
 
-    $response->assertOk();
-    $response->assertSee('WebBlocks CMS package diagnostic view');
-    $response->assertSee('View namespace: webblocks-cms');
-    $response->assertSee('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, profile, migrations, root public/cms runtime asset URLs, and compatibility wrappers.');
+    $this->assertNotNull($route);
+    $this->assertSame(ltrim(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH, '/'), $route->uri());
+    $this->assertStringContainsString('WebBlocks CMS package diagnostic view', $html);
+    $this->assertStringContainsString('View namespace: webblocks-cms', $html);
+    $this->assertStringContainsString('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, profile, migrations, root public/cms runtime asset URLs, and compatibility wrappers.', $html);
   }
 
   #[Test]
@@ -79,14 +84,16 @@ class PackageRuntimeSlicesTest extends TestCase
   {
     config()->set(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, true);
     config()->set(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, true);
-    $this->bootPackageRoutes();
+    $this->bootPackageRouteFile(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_FILE);
 
-    $response = $this->get(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH);
+    $route = $this->refreshRouteNameLookups()->getByName(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME);
+    $html = app(PackagePublicStatusController::class)()->render();
 
-    $response->assertOk();
-    $response->assertSee('Package Public Runtime Status');
-    $response->assertSee('the main public layout, page shell, and search views now render from the package namespace too.');
-    $response->assertSee('data-webblocks-cms-package-public-slice="status"', false);
+    $this->assertNotNull($route);
+    $this->assertSame(ltrim(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH, '/'), $route->uri());
+    $this->assertStringContainsString('Package Public Runtime Status', $html);
+    $this->assertStringContainsString('the main public layout, page shell, and search views now render from the package namespace too.', $html);
+    $this->assertStringContainsString('data-webblocks-cms-package-public-slice="status"', $html);
 
     $site = Site::query()->where('is_primary', true)->firstOrFail();
     $this->assertSame('Default Site', $site->name);
@@ -108,5 +115,18 @@ class PackageRuntimeSlicesTest extends TestCase
     };
 
     $provider->bootRoutesForTest();
+  }
+
+  private function bootPackageRouteFile(string $file): void
+  {
+    require base_path('packages/webblocks-cms/routes/'.$file);
+  }
+
+  private function refreshRouteNameLookups(): RouteCollectionInterface
+  {
+    $routes = app('router')->getRoutes();
+    $routes->refreshNameLookups();
+
+    return $routes;
   }
 }

@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## Unreleased
+
+- Remove the local root `layouts.admin` compatibility wrapper so plugin and package admin views must use `webblocks-cms::layouts.admin`, matching package-consumer installs.
+
 ## 1.32.112
 
 - Fix enabled compatible plugin admin route registration so plugin-owned routes always keep the CMS `/webadmin` web, install, auth, and admin middleware stack before plugin setup and permission checks.

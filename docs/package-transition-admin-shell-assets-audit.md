@@ -34,7 +34,7 @@ Package transition consolidation is complete for all safely movable CMS-owned so
 - Package-owned admin views now use package-owned selected shared partials for page headers, flash messages, listing filters, pagination, page actions, audit actor output, and form actions.
 - Package-owned admin views now also cover the remaining safe live operational/admin-system follow-up for `Slot Types` and `System Settings`.
 - Root files for those selected shared admin partials/components remain thin compatibility wrappers.
-- Root `resources/views/layouts/admin.blade.php` now remains only as a thin compatibility wrapper that renders `webblocks-cms::layouts.admin`.
+- Root `resources/views/layouts/admin.blade.php` has been removed so local maintenance no longer masks package-consumer admin layout namespace mistakes.
 - The package-owned admin layout still directly loads active root `public/cms/css/admin.css`, many root `public/cms/js/admin/*` files, `public/cms/js/admin-sortable-list.js`, and root brand images under `public/cms/brand`.
 - The package now also carries package-owned source copies of the admin CSS and JS files under `packages/webblocks-cms/public/cms/**`, while root `public/cms/**` remains the active runtime compatibility path.
 - `webblocks:package-status` now reports selected shared admin partial/component package authority, the broader admin runtime view inventory, and package public asset readiness that now includes admin CSS and JS source files. Runtime asset authority still has not moved.
@@ -58,7 +58,7 @@ Starter split outcome: **not ready yet, because admin runtime still depends on r
 
 | Area | Classification | Current active authority | Package counterpart | Root role | Dependencies and blockers | Recommended next action |
 | --- | --- | --- | --- | --- | --- | --- |
-| `resources/views/layouts/admin.blade.php` | `compatibility_wrapper` | Package | `packages/webblocks-cms/resources/views/layouts/admin.blade.php` | Root wrapper preserves the historical `layouts.admin` path | The package-owned layout still loads root admin CSS/JS, root brand logo, WebBlocks UI URLs, auth/profile routes, sidebar route list, user menu, and overlay root | Keep root wrapper; do not move admin asset or brand authority yet |
+| `resources/views/layouts/admin.blade.php` | `removed_wrapper` | Package | `packages/webblocks-cms/resources/views/layouts/admin.blade.php` | No root layout alias remains | The package-owned layout still loads root admin CSS/JS, root brand logo, WebBlocks UI URLs, auth/profile routes, sidebar route list, user menu, and overlay root | Keep package/admin/plugin views on `webblocks-cms::layouts.admin`; do not recreate a root alias |
 | `resources/views/layouts/app.blade.php` | `defer_until_starter_or_auth_boundary` | Root | none | Root app layout | Used by app/auth-adjacent surfaces; depends on root app config and WebBlocks UI asset helpers | Keep root-owned until starter/app shell boundary is redesigned |
 | `resources/views/layouts/guest.blade.php` | `defer_until_starter_or_auth_boundary` | Root | none | Root guest/auth shell | Loads root guest CSS and contains inline password toggle behavior | Keep root-owned with auth/install guest flows |
 | `resources/views/layouts/navigation.blade.php` | `defer_until_starter_or_auth_boundary` | Root | none | Root Breeze-style navigation shell | Uses `Auth::user()`, profile/logout routes, root components, Alpine-style attributes | Keep root-owned with auth/profile/User boundary |
@@ -167,9 +167,9 @@ No. The admin shell can eventually move without moving auth, profile, install, g
 
 However, the current admin shell links to profile/logout routes and uses the current authenticated user. A package admin shell would need to treat those as root-owned integration points rather than pulling auth/profile/User ownership into the package.
 
-### What Route/View/Controller Slices Would Be Affected If Admin Shell Moves?
+### What Route/View/Controller Slices Use The Package Admin Shell?
 
-Every admin screen that extends `layouts.admin` would be affected.
+Every admin screen that extends `webblocks-cms::layouts.admin` uses the package admin shell. The historical root `layouts.admin` alias is intentionally unavailable.
 
 Package-owned slices affected:
 
@@ -205,9 +205,9 @@ Root-owned slices also affected through the shared layout:
 
 The shell move would therefore need smoke coverage across representative package-owned and root-owned admin screens, even if their controllers do not move.
 
-### What Tests Are Needed Before Moving The Admin Shell?
+### What Tests Guard The Admin Shell Boundary?
 
-Before moving the admin shell, add or extend focused tests for:
+Current focused tests should continue to cover:
 
 - admin dashboard route rendering through the expected package/root shell boundary
 - representative package-owned admin screens rendering with the shell, including Pages, Media, Sites, Locales, Dashboard, Contact Messages, Visitor Reports, and System Search
@@ -215,7 +215,7 @@ Before moving the admin shell, add or extend focused tests for:
 - route names and middleware on package-owned admin routes still resolving unchanged
 - sidebar navigation visibility and `access-system` gating
 - profile/logout links remaining root-owned and valid
-- root `layouts.admin` compatibility wrapper existence after the move
+- absence of the root `layouts.admin` compatibility wrapper
 - package namespaced admin layout view existence
 - moved shared partial wrappers resolving both root include names and package namespaced names
 - admin asset URLs and cache-busting behavior

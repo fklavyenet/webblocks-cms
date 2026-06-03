@@ -768,14 +768,14 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'package-owned admin controllers, requests, support, and views for safely movable CMS runtime slices',
     'package-owned public layout, page/search shells, and shipped public block renderers',
     'package-owned CMS model foundation except the install-owned User model',
-    'package-owned shared admin partials and admin layout with root Blade wrappers preserved',
+    'package-owned shared admin partials and admin layout, with no root admin layout alias preserved',
     'package-owned seeder, stub, and movable public asset source files',
   ];
 
   public const ROOT_COMPATIBILITY_WRAPPER_DOMAINS = [
     'minimal host-owned app shell files for auth, install, profile, User, providers, and project-layer boundaries',
     'small operational transition app files that still serve source-maintained install or legacy asset workflows',
-    'root Blade wrappers for moved admin/public views, layouts, and shared admin partials',
+    'root Blade wrappers for moved admin/public views and shared admin partials, excluding the removed admin layout alias',
     'root seeder wrappers for moved package seeders',
     'root public/cms runtime copies that keep active asset URLs stable',
   ];

@@ -78,7 +78,7 @@ class AppServiceProvider extends ServiceProvider
       $view->with('resolvedPublicSite', $resolvedPublicSite);
     });
 
-    View::composer('layouts.admin', function ($view): void {
+    View::composer('webblocks-cms::layouts.admin', function ($view): void {
       $systemSettings = app(SystemSettings::class);
 
       $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->displayVersion());
