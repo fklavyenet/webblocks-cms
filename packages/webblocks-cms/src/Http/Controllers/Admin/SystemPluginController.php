@@ -18,6 +18,7 @@ use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -34,6 +35,7 @@ class SystemPluginController extends Controller
     private readonly PluginMigrationRunner $migrationRunner,
     private readonly PluginCatalogClient $catalog,
     private readonly CatalogPluginInstallBridge $catalogInstallBridge,
+    private readonly PluginRuntimeRefresher $runtimeRefresher,
   ) {}
 
   public function index(): View
@@ -77,7 +79,7 @@ class SystemPluginController extends Controller
         ->withInput();
     }
 
-    app()->forgetInstance(PluginRegistry::class);
+    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.index')
@@ -105,7 +107,7 @@ class SystemPluginController extends Controller
     abort_if($version === null, 422);
 
     $this->installedPlugins->enable($plugin, $version);
-    app()->forgetInstance(PluginRegistry::class);
+    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
@@ -121,7 +123,7 @@ class SystemPluginController extends Controller
     abort_if($definition === null || $definition->installPathValue() === null, 404);
 
     $this->installedPlugins->disable($plugin);
-    app()->forgetInstance(PluginRegistry::class);
+    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
@@ -160,7 +162,7 @@ class SystemPluginController extends Controller
       return back()->withErrors(['plugin' => $exception->getMessage()]);
     }
 
-    app()->forgetInstance(PluginRegistry::class);
+    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
@@ -189,7 +191,7 @@ class SystemPluginController extends Controller
       return back()->withErrors(['plugin' => $exception->getMessage()]);
     }
 
-    app()->forgetInstance(PluginRegistry::class);
+    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.index')
@@ -224,7 +226,7 @@ class SystemPluginController extends Controller
       return back()->withErrors(['plugin' => $this->controlledCatalogUpdateError($exception)]);
     }
 
-    app()->forgetInstance(PluginRegistry::class);
+    $this->runtimeRefresher->refresh(clearOptimizedCaches: true, registerRoutes: true);
 
     return redirect()
       ->route('admin.system.plugins.index')

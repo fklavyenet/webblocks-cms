@@ -104,12 +104,8 @@
                 ];
             }
 
-            foreach (app(\WebBlocks\Cms\Support\Plugins\PluginRegistry::class)->menuItems() as $pluginMenuItem) {
+            foreach (app(\WebBlocks\Cms\Support\Plugins\PluginRegistry::class)->menuItems($user) as $pluginMenuItem) {
                 $item = $pluginMenuItem['item'];
-
-                if ($item->permissionName() !== null && ! $user?->can($item->permissionName())) {
-                    continue;
-                }
 
                 if ($item->routeName() === null || ! Route::has($item->routeName())) {
                     continue;

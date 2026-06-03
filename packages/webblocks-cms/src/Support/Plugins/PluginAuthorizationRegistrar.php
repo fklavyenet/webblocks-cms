@@ -10,6 +10,7 @@ class PluginAuthorizationRegistrar
 
   public function __construct(
     private readonly PluginPermissionRegistry $permissions,
+    private readonly PluginAccessResolver $access,
   ) {}
 
   public function register(): void
@@ -20,7 +21,7 @@ class PluginAuthorizationRegistrar
           return null;
         }
 
-        return $this->userIsSuperAdmin($user) ? true : null;
+        return $this->access->canAccessPluginPermission($user, $ability) ? true : null;
       });
 
       $this->registeredBeforeHook = true;
@@ -31,7 +32,7 @@ class PluginAuthorizationRegistrar
         continue;
       }
 
-      Gate::define($permission, fn ($user): bool => $this->userIsSuperAdmin($user));
+      Gate::define($permission, fn ($user): bool => $this->access->canAccessPluginPermission($user, $permission));
     }
   }
 
@@ -54,12 +55,5 @@ class PluginAuthorizationRegistrar
   private function isActivePluginPermission(string $ability): bool
   {
     return in_array($ability, $this->activePermissionNames(), true);
-  }
-
-  private function userIsSuperAdmin(mixed $user): bool
-  {
-    return is_object($user)
-      && method_exists($user, 'isSuperAdmin')
-      && $user->isSuperAdmin();
   }
 }

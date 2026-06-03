@@ -5,12 +5,14 @@ namespace WebBlocks\Cms\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 
 class AuthorizePluginPermission
 {
   public function __construct(
     private readonly PluginAuthorizationRegistrar $authorization,
+    private readonly PluginAccessResolver $access,
   ) {}
 
   public function handle(Request $request, Closure $next, string $permission): Response
@@ -21,7 +23,7 @@ class AuthorizePluginPermission
       return redirect()->guest(route('login'));
     }
 
-    abort_unless($request->user()?->can($permission), 403);
+    abort_unless($this->access->canAccessPluginPermission($request->user(), $permission), 403);
 
     return $next($request);
   }

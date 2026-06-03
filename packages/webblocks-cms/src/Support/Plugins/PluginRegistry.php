@@ -124,12 +124,16 @@ class PluginRegistry
   /**
    * @return array<int, array{plugin: PluginDefinition, item: PluginMenuItem}>
    */
-  public function menuItems(): array
+  public function menuItems(?Authenticatable $user = null): array
   {
     $items = [];
 
     foreach ($this->enabled() as $plugin) {
       foreach ($plugin->menuItems() as $item) {
+        if (! $this->userCanView($user, $item->permissionName())) {
+          continue;
+        }
+
         $items[] = [
           'plugin' => clone $plugin,
           'item' => clone $item,
@@ -350,11 +354,11 @@ class PluginRegistry
 
   private function userCanView(?Authenticatable $user, ?string $permission): bool
   {
-    if ($permission === null) {
+    if ($permission === null || $user === null) {
       return true;
     }
 
-    return (bool) $user?->can($permission);
+    return app(PluginAccessResolver::class)->canAccessPluginPermission($user, $permission, $this);
   }
 
   private function lifecycleStatus(bool $configuredEnabled, bool $compatible): string

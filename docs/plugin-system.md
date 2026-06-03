@@ -107,6 +107,10 @@ Each plugin should declare metadata through a manifest or definition object:
 
 Plugins are registry-first. They connect to CMS through explicit contracts rather than random includes, root view overrides, or install-specific route files.
 
+Catalog-updated installed plugins are reloaded through CMS core runtime refresh after the replacement package is written. The refresh clears plugin registry, permission, extension, health, and optimized Laravel runtime cache state, then rebuilds active plugin routes for the current runtime so the installed version, active manifest version, active provider metadata, and route/controller source path stay aligned. If a provider class from an older installed package version is already loaded in the same PHP process, CMS treats that provider as stale and falls back to the updated manifest metadata instead of reusing old route paths.
+
+Plugin authorization is resolved centrally by CMS core. Active plugin-owned permissions declared by the enabled plugin allow CMS `super_admin` users, and the same resolver is used for plugin menu visibility, dashboard/system contributions, and `plugin.permission:*` route middleware. Unauthorized users do not see matching plugin menu entries; direct URL access remains a controlled 403. Setup-required handling remains after authorization, and plugin migrations are still explicit.
+
 Current registry API shape:
 
 ```php

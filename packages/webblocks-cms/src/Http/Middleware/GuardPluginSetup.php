@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -19,7 +20,7 @@ class GuardPluginSetup
   {
     try {
       return $next($request);
-    } catch (QueryException $exception) {
+    } catch (Throwable $exception) {
       if (! $this->isMissingTableException($exception)) {
         throw $exception;
       }
@@ -34,12 +35,13 @@ class GuardPluginSetup
     }
   }
 
-  private function isMissingTableException(QueryException $exception): bool
+  private function isMissingTableException(Throwable $exception): bool
   {
-    $sqlState = (string) ($exception->errorInfo[0] ?? '');
+    $sqlState = $exception instanceof QueryException ? (string) ($exception->errorInfo[0] ?? '') : '';
+    $message = strtolower($exception->getMessage());
 
-    return str_contains($exception->getMessage(), 'Base table or view not found')
-      || str_contains($exception->getMessage(), 'no such table')
+    return str_contains($message, 'base table or view not found')
+      || str_contains($message, 'no such table')
       || str_contains($sqlState, '42S02');
   }
 }

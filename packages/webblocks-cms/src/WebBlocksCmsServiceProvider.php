@@ -43,6 +43,7 @@ use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
@@ -52,6 +53,7 @@ use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -841,6 +843,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(InstalledPluginRepository::class, fn (): InstalledPluginRepository => new InstalledPluginRepository);
     $this->app->singleton(InstalledPluginDefinitionFactory::class, fn (): InstalledPluginDefinitionFactory => new InstalledPluginDefinitionFactory);
     $this->app->singleton(PluginMigrationRunner::class, fn (): PluginMigrationRunner => new PluginMigrationRunner);
+    $this->app->singleton(PluginAccessResolver::class, fn (): PluginAccessResolver => new PluginAccessResolver);
+    $this->app->singleton(PluginRuntimeRefresher::class, fn (): PluginRuntimeRefresher => new PluginRuntimeRefresher);
 
     $this->app->singleton(PluginRegistry::class, function (): PluginRegistry {
       $enabled = config('webblocks-plugins.enabled', []);
@@ -863,7 +867,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ));
 
     $this->app->singleton(PluginAuthorizationRegistrar::class, fn ($app): PluginAuthorizationRegistrar => new PluginAuthorizationRegistrar(
-      $app->make(PluginPermissionRegistry::class)
+      $app->make(PluginPermissionRegistry::class),
+      $app->make(PluginAccessResolver::class)
     ));
 
     $this->app->singleton(PluginAdminExtensionRegistry::class, fn ($app): PluginAdminExtensionRegistry => new PluginAdminExtensionRegistry(
@@ -1052,8 +1057,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   protected function bootAuthorization(): void
   {
     Gate::define('access-admin', fn ($user) => is_object($user) && method_exists($user, 'canAccessAdmin') && $user->canAccessAdmin());
-    Gate::define('manage-users', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
-    Gate::define('access-system', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+    Gate::define('manage-users', fn ($user) => app(PluginAccessResolver::class)->isSuperAdmin($user));
+    Gate::define('access-system', fn ($user) => app(PluginAccessResolver::class)->canAccessSystem($user));
 
     app(PluginAuthorizationRegistrar::class)->register();
   }

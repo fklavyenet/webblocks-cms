@@ -19,7 +19,7 @@ class InstalledPluginDefinitionFactory
       $this->loadPluginSource($path, $provider);
     }
 
-    if ($enabled && class_exists($provider) && method_exists($provider, 'definition')) {
+    if ($enabled && class_exists($provider) && method_exists($provider, 'definition') && $this->providerUsableForPath($provider, $path)) {
       $definition = $provider::definition();
 
       return $definition
@@ -66,6 +66,7 @@ class InstalledPluginDefinitionFactory
     }
 
     $definition->permissions($permissions);
+    $definition->menu($this->menuItems($manifest));
     $definition->migrations($this->migrationPaths($manifest));
 
     if ($enabled) {
@@ -123,6 +124,58 @@ class InstalledPluginDefinitionFactory
     return $name !== '' ? $name : null;
   }
 
+  /**
+   * @param  array<string, mixed>  $manifest
+   * @return array<int, PluginMenuItem>
+   */
+  private function menuItems(array $manifest): array
+  {
+    $items = $manifest['menu_items'] ?? $manifest['menu'] ?? [];
+
+    if (! is_array($items)) {
+      return [];
+    }
+
+    $menuItems = [];
+
+    foreach ($items as $item) {
+      if (! is_array($item)) {
+        continue;
+      }
+
+      $key = $item['key'] ?? null;
+      $route = $item['route'] ?? null;
+
+      if (! is_string($key) || ! is_string($route)) {
+        continue;
+      }
+
+      $menuItem = PluginMenuItem::make($key)
+        ->route($route)
+        ->label((string) ($item['label'] ?? $key));
+
+      if (is_string($item['permission'] ?? null)) {
+        $menuItem->permission((string) $item['permission']);
+      }
+
+      if (is_string($item['icon'] ?? null)) {
+        $menuItem->icon((string) $item['icon']);
+      }
+
+      if (is_string($item['group'] ?? null)) {
+        $menuItem->group((string) $item['group']);
+      }
+
+      if (is_numeric($item['sort'] ?? null)) {
+        $menuItem->sort((int) $item['sort']);
+      }
+
+      $menuItems[] = $menuItem;
+    }
+
+    return $menuItems;
+  }
+
   private function loadPluginSource(string $path, string $provider): void
   {
     $views = $path.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'views';
@@ -137,11 +190,17 @@ class InstalledPluginDefinitionFactory
       return;
     }
 
-    if ($provider !== '' && class_exists($provider)) {
+    if ($provider !== '' && class_exists($provider) && $this->providerUsableForPath($provider, $path)) {
       return;
     }
 
     foreach (File::allFiles($source) as $file) {
+      $declaredClass = $this->fileDeclaredClass($file->getPathname());
+
+      if ($declaredClass !== null && class_exists($declaredClass)) {
+        continue;
+      }
+
       if ($file->getExtension() === 'php') {
         require_once $file->getPathname();
       }
@@ -190,5 +249,50 @@ class InstalledPluginDefinitionFactory
     return str_starts_with($path, $pluginRoot)
       || str_contains($path, DIRECTORY_SEPARATOR.'webblocks'.DIRECTORY_SEPARATOR.'plugins'.DIRECTORY_SEPARATOR)
       || str_contains($path, DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'testing'.DIRECTORY_SEPARATOR.'plugins'.DIRECTORY_SEPARATOR);
+  }
+
+  private function providerUsableForPath(string $provider, string $path): bool
+  {
+    if ($provider === '' || ! class_exists($provider)) {
+      return false;
+    }
+
+    $file = (new \ReflectionClass($provider))->getFileName();
+
+    if (! is_string($file)) {
+      return false;
+    }
+
+    $base = rtrim(realpath($path) ?: $path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+    $loaded = realpath($file) ?: $file;
+
+    if (str_starts_with($loaded, $base)) {
+      return true;
+    }
+
+    $pluginRoot = rtrim(app(InstalledPluginRepository::class)->rootPath(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+
+    return ! str_starts_with($loaded, $pluginRoot);
+  }
+
+  private function fileDeclaredClass(string $file): ?string
+  {
+    $contents = is_file($file) ? file_get_contents($file) : false;
+
+    if (! is_string($contents)) {
+      return null;
+    }
+
+    $namespace = preg_match('/\bnamespace\s+([^;]+);/', $contents, $namespaceMatches) === 1
+      ? trim($namespaceMatches[1])
+      : '';
+
+    if (preg_match('/\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b/', $contents, $classMatches) !== 1) {
+      return null;
+    }
+
+    return $namespace !== ''
+      ? $namespace.'\\'.$classMatches[1]
+      : $classMatches[1];
   }
 }

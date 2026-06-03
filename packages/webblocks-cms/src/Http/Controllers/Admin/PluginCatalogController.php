@@ -10,6 +10,7 @@ use RuntimeException;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -20,6 +21,7 @@ class PluginCatalogController extends Controller
     private readonly CatalogPluginInstallBridge $installBridge,
     private readonly PluginRegistry $plugins,
     private readonly SystemSettings $systemSettings,
+    private readonly PluginRuntimeRefresher $runtimeRefresher,
   ) {}
 
   public function index(): View
@@ -68,7 +70,7 @@ class PluginCatalogController extends Controller
       return back()->withErrors(['catalog_install' => $this->controlledError($exception)]);
     }
 
-    app()->forgetInstance(PluginRegistry::class);
+    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.index')

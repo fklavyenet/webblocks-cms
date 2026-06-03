@@ -15,8 +15,11 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
+use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
+use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
@@ -804,6 +807,77 @@ PHP,
   }
 
   #[Test]
+  public function catalog_update_refreshes_active_manifest_runtime_path_and_controller_source(): void
+  {
+    app(PluginZipInstaller::class)->install($this->redirectManagerZipPath('0.1.8', includeController: false));
+    app(InstalledPluginRepository::class)->enable('webblocks-redirect-manager', '0.1.8');
+    $this->app->forgetInstance(PluginRegistry::class);
+
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $oldDefinition = app(PluginRegistry::class)->get('webblocks-redirect-manager');
+
+    $this->assertSame('0.1.8', $oldDefinition?->versionText());
+    $this->assertStringEndsWith('/webblocks-redirect-manager/0.1.8', (string) $oldDefinition?->installPathValue());
+
+    $zip = (string) file_get_contents($this->redirectManagerZipPath('0.1.9'));
+    $this->fakeCatalogHttp($this->catalogUpdateFakeResponses(
+      '0.1.9',
+      zip: $zip,
+      handle: 'webblocks-redirect-manager',
+      label: 'WebBlocks Redirect Manager',
+    ));
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.update-from-catalog', 'webblocks-redirect-manager'))
+      ->assertRedirect(route('admin.system.plugins.index'))
+      ->assertSessionHas('status', 'WebBlocks Redirect Manager updated to 0.1.9 from Plugin Catalog.');
+
+    $registry = app(PluginRegistry::class);
+    $definition = $registry->get('webblocks-redirect-manager');
+    $route = Route::getRoutes()->getByName('webblocks.plugins.webblocks_redirect_manager.redirects.index');
+    $controller = new \ReflectionClass('Vendor\\RedirectManager\\Http\\Controllers\\RedirectController');
+
+    $this->assertSame('0.1.9', $definition?->versionText());
+    $this->assertSame('0.1.9', app(InstalledPluginRepository::class)->enabledVersion('webblocks-redirect-manager'));
+    $this->assertStringEndsWith('/webblocks-redirect-manager/0.1.9', (string) $definition?->installPathValue());
+    $this->assertSame('webadmin/plugins/webblocks-redirect-manager/redirects', $route?->uri());
+    $this->assertSame('Vendor\\RedirectManager\\Http\\Controllers\\RedirectController@index', $route?->getActionName());
+    $this->assertStringContainsString('/webblocks-redirect-manager/0.1.9/src/Http/Controllers/RedirectController.php', $controller->getFileName());
+    $this->assertFileDoesNotExist(config('webblocks-plugins.install.root').'/webblocks-redirect-manager/0.1.8/webblocks-plugin.json');
+    $this->assertFalse(Schema::hasTable('webblocks_redirect_manager_redirects'));
+  }
+
+  #[Test]
+  public function plugin_menu_visibility_and_route_authorization_share_central_resolver(): void
+  {
+    $registry = new PluginRegistry(['webblocks-redirect-manager' => true]);
+    $registry->register(
+      PluginDefinition::make('webblocks-redirect-manager')
+        ->label('WebBlocks Redirect Manager')
+        ->permissions([
+          PluginPermission::make('webblocks-redirect-manager.view'),
+        ])
+        ->menu([
+          PluginMenuItem::make('redirects')
+            ->label('Redirects')
+            ->route('webblocks.plugins.webblocks_redirect_manager.redirects.index')
+            ->permission('webblocks-redirect-manager.view'),
+        ])
+    );
+
+    $superAdmin = User::factory()->superAdmin()->create();
+    $siteAdmin = User::factory()->siteAdmin()->create();
+    $resolver = app(PluginAccessResolver::class);
+
+    $this->assertTrue($resolver->canAccessPluginPermission($superAdmin, 'webblocks-redirect-manager.view', $registry));
+    $this->assertFalse($resolver->canAccessPluginPermission($siteAdmin, 'webblocks-redirect-manager.view', $registry));
+    $this->assertCount(1, $registry->menuItems($superAdmin));
+    $this->assertSame([], $registry->menuItems($siteAdmin));
+  }
+
+  #[Test]
   public function post_update_from_catalog_blocks_checksum_mismatch(): void
   {
     $this->installSampleToolsPlugin('1.0.0');
@@ -979,6 +1053,101 @@ PHP,
     return $path;
   }
 
+  private function redirectManagerZipPath(string $version, bool $includeController = true): string
+  {
+    $path = storage_path('framework/testing/webblocks-redirect-manager-'.$version.'-'.str()->uuid().'.zip');
+    $zip = new ZipArchive;
+    $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $zip->addFromString('webblocks-plugin.json', json_encode([
+      'handle' => 'webblocks-redirect-manager',
+      'label' => 'WebBlocks Redirect Manager',
+      'version' => $version,
+      'provider' => 'Vendor\\RedirectManager\\RedirectManagerPlugin',
+      'required_cms_version' => '^1.32',
+      'permissions' => [
+        ['key' => 'webblocks-redirect-manager.view', 'label' => 'View redirects'],
+        ['key' => 'webblocks-redirect-manager.manage', 'label' => 'Manage redirects'],
+      ],
+      'routes' => ['admin' => 'routes/admin.php'],
+      'menu_items' => [
+        [
+          'key' => 'redirects',
+          'label' => 'Redirects',
+          'route' => 'webblocks.plugins.webblocks_redirect_manager.redirects.index',
+          'permission' => 'webblocks-redirect-manager.view',
+          'group' => 'System',
+          'sort' => 20,
+        ],
+      ],
+      'migrations' => ['database/migrations'],
+    ], JSON_PRETTY_PRINT));
+    $zip->addFromString('src/RedirectManagerPlugin.php', <<<'PHP'
+<?php
+
+namespace Vendor\RedirectManager;
+
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
+use WebBlocks\Cms\Support\Plugins\PluginPermission;
+
+class RedirectManagerPlugin
+{
+  public static function definition(): PluginDefinition
+  {
+    return PluginDefinition::make('webblocks-redirect-manager')
+      ->label('WebBlocks Redirect Manager')
+      ->version('0.1.8')
+      ->provider(self::class)
+      ->permissions([
+        PluginPermission::make('webblocks-redirect-manager.view')->label('View redirects'),
+        PluginPermission::make('webblocks-redirect-manager.manage')->label('Manage redirects'),
+      ])
+      ->menu([
+        PluginMenuItem::make('redirects')
+          ->label('Redirects')
+          ->route('webblocks.plugins.webblocks_redirect_manager.redirects.index')
+          ->permission('webblocks-redirect-manager.view'),
+      ])
+      ->adminRoutes(__DIR__.'/../routes/admin.php');
+  }
+}
+PHP);
+    $zip->addFromString('routes/admin.php', <<<'PHP'
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Vendor\RedirectManager\Http\Controllers\RedirectController;
+
+Route::get('/redirects', [RedirectController::class, 'index'])
+  ->middleware('plugin.permission:webblocks-redirect-manager.view')
+  ->name('redirects.index');
+PHP);
+
+    if ($includeController) {
+      $zip->addFromString('src/Http/Controllers/RedirectController.php', <<<'PHP'
+<?php
+
+namespace Vendor\RedirectManager\Http\Controllers;
+
+use Illuminate\Support\Facades\DB;
+
+class RedirectController
+{
+  public function index(): string
+  {
+    DB::table('webblocks_redirect_manager_redirects')->count();
+
+    return 'Redirect Manager redirects';
+  }
+}
+PHP);
+    }
+
+    $zip->close();
+
+    return $path;
+  }
+
   /**
    * @return array<string, mixed>
    */
@@ -988,13 +1157,15 @@ PHP,
     bool $completeArtifact = true,
     ?string $zip = null,
     ?string $checksum = null,
+    string $handle = 'sample-tools',
+    string $label = 'Sample Tools',
   ): array {
     $zip ??= $this->sampleToolsZipBody($version);
     $checksum ??= hash('sha256', $zip);
     $artifact = [
-      'download_url' => 'https://plugins.example.test/downloads/sample-tools-'.$version.'.zip',
+      'download_url' => 'https://plugins.example.test/downloads/'.$handle.'-'.$version.'.zip',
       'checksum_sha256' => $checksum,
-      'file_name' => 'sample-tools-'.$version.'.zip',
+      'file_name' => $handle.'-'.$version.'.zip',
       'size_bytes' => strlen($zip),
       'validation_status' => 'passed',
     ];
@@ -1004,8 +1175,8 @@ PHP,
     }
 
     $plugin = [
-      'handle' => 'sample-tools',
-      'label' => 'Sample Tools',
+      'handle' => $handle,
+      'label' => $label,
       'compatibility' => ['status' => $compatible ? 'compatible' : 'incompatible'],
     ];
     $release = [
@@ -1019,17 +1190,17 @@ PHP,
       'https://plugins.example.test/api/plugins?*' => Http::response([
         'data' => [$plugin],
       ]),
-      'https://plugins.example.test/api/plugins/sample-tools?*' => Http::response([
+      'https://plugins.example.test/api/plugins/'.$handle.'?*' => Http::response([
         'data' => [
           'plugin' => $plugin,
         ],
       ]),
-      'https://plugins.example.test/api/plugins/sample-tools/latest?*' => Http::response([
+      'https://plugins.example.test/api/plugins/'.$handle.'/latest?*' => Http::response([
         'data' => [
           'release' => $release,
         ],
       ]),
-      'https://plugins.example.test/downloads/sample-tools-'.$version.'.zip*' => Http::response($zip, 200, [
+      'https://plugins.example.test/downloads/'.$handle.'-'.$version.'.zip*' => Http::response($zip, 200, [
         'Content-Length' => (string) strlen($zip),
         'Content-Type' => 'application/zip',
       ]),
