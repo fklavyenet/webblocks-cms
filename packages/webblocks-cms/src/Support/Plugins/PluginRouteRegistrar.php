@@ -9,6 +9,16 @@ use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
 
 class PluginRouteRegistrar
 {
+  /**
+   * @var array<int, string>
+   */
+  private const ADMIN_MIDDLEWARE = [
+    'web',
+    'install.required',
+    'auth',
+    'admin.access',
+  ];
+
   private PluginAuthorizationRegistrar $authorization;
 
   public function __construct(
@@ -55,7 +65,7 @@ class PluginRouteRegistrar
   {
     $this->authorization->register();
 
-    Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
+    Route::middleware(self::ADMIN_MIDDLEWARE)
       ->middleware(GuardPluginSetup::class.':'.$plugin->handle())
       ->prefix(ltrim($plugin->adminRoutePrefix(), '/'))
       ->name($plugin->routeNamePrefix().'.')
@@ -66,6 +76,8 @@ class PluginRouteRegistrar
           $this->registerRouteDefinition($plugin, $routes);
         }
       });
+
+    $this->normalizePluginAdminRouteMiddleware($plugin);
   }
 
   private function registerPluginAdminBridgeRoutes(PluginDefinition $plugin): void
@@ -148,10 +160,7 @@ class PluginRouteRegistrar
   private function pluginBridgeMiddleware(PluginDefinition $plugin, string $permission): array
   {
     return [
-      'web',
-      'install.required',
-      'auth',
-      'admin.access',
+      ...self::ADMIN_MIDDLEWARE,
       GuardPluginSetup::class.':'.$plugin->handle(),
       'plugin.permission:'.$permission,
     ];
@@ -165,7 +174,7 @@ class PluginRouteRegistrar
 
     Route::any('webadmin/plugins/{plugin}/{pluginPath?}', PluginRouteFallbackController::class)
       ->where('pluginPath', '.*')
-      ->middleware(['web', 'install.required', 'auth', 'admin.access'])
+      ->middleware(self::ADMIN_MIDDLEWARE)
       ->name('webblocks.plugins.fallback');
   }
 
@@ -205,5 +214,64 @@ class PluginRouteRegistrar
     }
 
     require $routes;
+  }
+
+  private function normalizePluginAdminRouteMiddleware(PluginDefinition $plugin): void
+  {
+    $uriPrefix = trim($plugin->adminRoutePrefix(), '/');
+    $namePrefix = $plugin->routeNamePrefix().'.';
+    $setupGuard = GuardPluginSetup::class.':'.$plugin->handle();
+
+    foreach (Route::getRoutes()->getRoutes() as $route) {
+      $routeName = $route->getName();
+
+      if (! is_string($routeName)
+        || ! str_starts_with($routeName, $namePrefix)
+        || ! $this->routeUriBelongsToPlugin($route->uri(), $uriPrefix)) {
+        continue;
+      }
+
+      $action = $route->getAction();
+      $existing = $this->routeMiddleware($action['middleware'] ?? []);
+      $pluginSpecific = array_values(array_filter(
+        $existing,
+        fn (string $middleware): bool => ! $this->isPluginAdminStackMiddleware($middleware, $plugin->handle())
+      ));
+
+      $action['middleware'] = array_values(array_unique([
+        ...self::ADMIN_MIDDLEWARE,
+        $setupGuard,
+        ...$pluginSpecific,
+      ]));
+
+      $route->setAction($action);
+    }
+  }
+
+  /**
+   * @return array<int, string>
+   */
+  private function routeMiddleware(mixed $middleware): array
+  {
+    if (is_string($middleware)) {
+      return [$middleware];
+    }
+
+    if (! is_array($middleware)) {
+      return [];
+    }
+
+    return array_values(array_filter($middleware, fn (mixed $item): bool => is_string($item) && $item !== ''));
+  }
+
+  private function isPluginAdminStackMiddleware(string $middleware, string $plugin): bool
+  {
+    return in_array($middleware, self::ADMIN_MIDDLEWARE, true)
+      || $middleware === GuardPluginSetup::class.':'.$plugin;
+  }
+
+  private function routeUriBelongsToPlugin(string $uri, string $uriPrefix): bool
+  {
+    return $uri === $uriPrefix || str_starts_with($uri, $uriPrefix.'/');
   }
 }

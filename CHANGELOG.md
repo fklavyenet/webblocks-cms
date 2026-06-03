@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.112
+
+- Fix enabled compatible plugin admin route registration so plugin-owned routes always keep the CMS `/webadmin` web, install, auth, and admin middleware stack before plugin setup and permission checks.
+- Keep plugin setup-required screens controlled after CMS authentication while preserving plugin-owned permission decisions for super admins and unauthorized users.
+
 ## 1.32.111
 
 - Fix catalog-updated plugin runtime refresh so enabled plugins cannot keep using stale installed package metadata, provider route paths, or registry permission/menu state after `Update from Catalog`.

@@ -76,6 +76,8 @@ Enabled plugins with pending setup must not crash admin routes. If plugin-owned 
 
 Plugin admin routes should use declared handle-prefixed permissions. CMS `super_admin` users are explicitly allowed for active enabled-plugin permissions, including permissions loaded from manually installed plugin manifests. Non-super-admin roles remain denied unless a future CMS permission assignment model grants the specific plugin-owned permission. Settings routes use `{plugin-handle}.manage` when the plugin declares it, otherwise they fall back to system access.
 
+Enabled compatible plugin admin routes always run inside the CMS admin route stack: `web`, install-required, host `auth`, CMS admin access, plugin setup guard, and then plugin-owned permission middleware when the plugin route declares it. Plugin setup guards are additive and must not replace CMS authentication or admin authorization; plugin controllers can rely on the authenticated CMS user being present after the auth/admin middleware has passed.
+
 ## Plugin Contract And Manifest
 
 Every plugin must have a handle:

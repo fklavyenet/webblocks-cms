@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -13,6 +16,8 @@ use WebBlocks\Cms\Support\Plugins\PluginSettingsDefinition;
 
 class PluginRouteGuardTest extends TestCase
 {
+  use RefreshDatabase;
+
   #[Test]
   public function plugin_system_preserves_admin_and_static_asset_route_boundaries(): void
   {
@@ -87,9 +92,24 @@ class PluginRouteGuardTest extends TestCase
 
     $this->assertNotNull($enabledRoute);
     $this->assertSame('webadmin/plugins/webblocks-ui-manager/releases', $enabledRoute?->uri());
+    $this->assertSame([
+      'web',
+      'install.required',
+      'auth',
+      'admin.access',
+      GuardPluginSetup::class.':webblocks-ui-manager',
+      'plugin.permission:webblocks-ui-manager.view',
+    ], $enabledRoute?->gatherMiddleware());
     $this->assertNotNull($settingsRoute);
     $this->assertSame('webadmin/plugins/webblocks-ui-manager/settings', $settingsRoute?->uri());
-    $this->assertContains('plugin.permission:webblocks-ui-manager.manage', $settingsRoute?->gatherMiddleware() ?? []);
+    $this->assertSame([
+      'web',
+      'install.required',
+      'auth',
+      'admin.access',
+      GuardPluginSetup::class.':webblocks-ui-manager',
+      'plugin.permission:webblocks-ui-manager.manage',
+    ], $settingsRoute?->gatherMiddleware());
     $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.tools.index'));
     $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.settings.edit'));
 
@@ -101,5 +121,54 @@ class PluginRouteGuardTest extends TestCase
 
     $this->assertContains('webadmin/plugins/webblocks-ui-manager/releases', $pluginRoutes);
     $this->assertNotContains('webadmin/plugins/disabled-plugin/tools', $pluginRoutes);
+  }
+
+  #[Test]
+  public function plugin_admin_route_files_cannot_replace_the_cms_admin_middleware_stack(): void
+  {
+    $registry = new PluginRegistry([
+      'webblocks-redirect-manager' => true,
+    ]);
+
+    $registry->register(
+      PluginDefinition::make('webblocks-redirect-manager')
+        ->label('WebBlocks Redirect Manager')
+        ->permissions([
+          PluginPermission::make('webblocks-redirect-manager.view'),
+        ])
+        ->adminRoutes(function (): void {
+          Route::get('/redirects', fn () => 'redirect manager user:'.request()->user()?->id)
+            ->middleware(GuardPluginSetup::class.':webblocks-redirect-manager')
+            ->middleware('plugin.permission:webblocks-redirect-manager.view')
+            ->name('redirects.index');
+        })
+    );
+    $this->app->instance(PluginRegistry::class, $registry);
+
+    (new PluginRouteRegistrar($registry))->registerEnabledAdminRoutes();
+    Route::getRoutes()->refreshNameLookups();
+
+    $route = Route::getRoutes()->getByName('webblocks.plugins.webblocks_redirect_manager.redirects.index');
+
+    $this->assertNotNull($route);
+    $this->assertSame('webadmin/plugins/webblocks-redirect-manager/redirects', $route?->uri());
+    $this->assertSame([
+      'web',
+      'install.required',
+      'auth',
+      'admin.access',
+      GuardPluginSetup::class.':webblocks-redirect-manager',
+      'plugin.permission:webblocks-redirect-manager.view',
+    ], $route?->gatherMiddleware());
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->get('/webadmin/plugins/webblocks-redirect-manager/redirects')
+      ->assertRedirect(route('login'));
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-redirect-manager/redirects')
+      ->assertOk()
+      ->assertSeeText('redirect manager user:'.$user->id);
   }
 }

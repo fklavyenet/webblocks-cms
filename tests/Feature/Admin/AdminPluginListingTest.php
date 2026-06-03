@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
@@ -844,6 +845,14 @@ PHP,
     $this->assertStringEndsWith('/webblocks-redirect-manager/0.1.9', (string) $definition?->installPathValue());
     $this->assertSame('webadmin/plugins/webblocks-redirect-manager/redirects', $route?->uri());
     $this->assertSame('Vendor\\RedirectManager\\Http\\Controllers\\RedirectController@index', $route?->getActionName());
+    $this->assertSame([
+      'web',
+      'install.required',
+      'auth',
+      'admin.access',
+      GuardPluginSetup::class.':webblocks-redirect-manager',
+      'plugin.permission:webblocks-redirect-manager.view',
+    ], $route?->gatherMiddleware());
     $this->assertStringContainsString('/webblocks-redirect-manager/0.1.9/src/Http/Controllers/RedirectController.php', $controller->getFileName());
     $this->assertFileDoesNotExist(config('webblocks-plugins.install.root').'/webblocks-redirect-manager/0.1.8/webblocks-plugin.json');
     $this->assertFalse(Schema::hasTable('webblocks_redirect_manager_redirects'));
