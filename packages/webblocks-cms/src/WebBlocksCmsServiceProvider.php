@@ -33,6 +33,8 @@ use WebBlocks\Cms\Console\SmokeNativeLocalCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
+use WebBlocks\Cms\Console\SystemUpdatePruneRunsCommand;
+use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
@@ -741,6 +743,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     SyncCoreBlockTypesCommand::class,
     CatalogRepairCommand::class,
     SystemBackupRestoreCommand::class,
+    SystemUpdateRunsCommand::class,
+    SystemUpdatePruneRunsCommand::class,
   ];
 
   public const CONFIG_PUBLISH_TAG = 'webblocks-cms-config';

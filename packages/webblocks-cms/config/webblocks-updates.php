@@ -16,6 +16,9 @@ return [
     'retry_times' => 0,
     'retry_sleep_milliseconds' => 150,
     'pending_cache_ttl_seconds' => 3600,
+    'runs' => [
+        'keep' => env('WEBBLOCKS_UPDATES_RUNS_KEEP', 5),
+    ],
     'publisher' => [
         'url' => env('WEBBLOCKS_PUBLISHER_URL', 'https://updates.webblocksui.com/api/updates/publish'),
         'token' => env('WEBBLOCKS_PUBLISHER_TOKEN'),

@@ -23,6 +23,7 @@ class SystemUpdater
     private readonly UpdatePackageExtractor $packageExtractor,
     private readonly UpdateInstaller $updateInstaller,
     private readonly SystemBackupManager $systemBackupManager,
+    private readonly SystemUpdateRunRetention $runRetention,
   ) {}
 
   public function run(User $user): UpdateResult
@@ -147,6 +148,8 @@ class SystemUpdater
       'finished_at' => CarbonImmutable::now(),
       'duration_ms' => $run->started_at ? $run->started_at->diffInMilliseconds(CarbonImmutable::now()) : null,
     ])->save();
+
+    $this->runRetention->prune();
   }
 
   private function runPreparedUpdate(User $user, array $prepared, bool $expectPreparedState = false): UpdateResult
@@ -249,6 +252,8 @@ class SystemUpdater
         'warning_count' => $warningCount,
       ]);
 
+      $this->runRetention->prune();
+
       return new UpdateResult(
         fromVersion: $fromVersion,
         toVersion: $toVersion,
@@ -294,6 +299,8 @@ class SystemUpdater
           $durationMs,
         );
       }
+
+      $this->runRetention->prune();
 
       Log::error('System update failed.', [
         'from_version' => $fromVersion,
@@ -400,6 +407,8 @@ class SystemUpdater
       'duration_ms' => 0,
       'triggered_by_user_id' => $user->getKey(),
     ]);
+
+    $this->runRetention->prune();
   }
 
   private function sanitizeFailureDetail(string $message): string

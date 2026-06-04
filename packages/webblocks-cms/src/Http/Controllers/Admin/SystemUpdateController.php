@@ -4,16 +4,19 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdateSupportReport;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
 
 class SystemUpdateController extends Controller
@@ -21,11 +24,9 @@ class SystemUpdateController extends Controller
   public function __construct(
     private readonly SystemUpdateInspector $systemUpdateInspector,
     private readonly SystemUpdater $systemUpdater,
+    private readonly SystemUpdateRunRetention $runRetention,
+    private readonly SystemUpdateSupportReport $supportReport,
   ) {}
-
-  private const HISTORY_PER_PAGE_OPTIONS = [5, 10, 15, 25, 50];
-
-  private const DEFAULT_HISTORY_PER_PAGE = 10;
 
   public function index(Request $request): View
   {
@@ -34,14 +35,11 @@ class SystemUpdateController extends Controller
     $pendingUpdate = $this->pendingUpdate();
     $latestUpdateRun = $this->latestUpdateRun();
     $mainLatestUpdateRun = $this->mainLatestUpdateRun($latestUpdateRun, $report);
-    $historyPerPage = $this->historyPerPage($request);
 
     return view('webblocks-cms::admin.system.updates', [
       'report' => $report,
-      'updateRuns' => $this->updateRuns($historyPerPage),
-      'historyPerPage' => $historyPerPage,
-      'historyPerPageOptions' => self::HISTORY_PER_PAGE_OPTIONS,
       'latestUpdateRun' => $mainLatestUpdateRun,
+      'retainedUpdateRuns' => $this->runRetention->retainedRuns(),
       'historicalUpdateRuns' => $latestUpdateRun && $mainLatestUpdateRun === null
         ? collect([$latestUpdateRun])
         : collect(),
@@ -56,6 +54,7 @@ class SystemUpdateController extends Controller
   public function check(): RedirectResponse
   {
     $report = $this->systemUpdateInspector->refreshReport();
+    $this->runRetention->prune();
 
     return redirect()
       ->route('admin.system.updates.index')
@@ -79,6 +78,7 @@ class SystemUpdateController extends Controller
       }
 
       $result = $this->systemUpdater->run($request->user());
+      $this->runRetention->prune();
 
       return redirect()
         ->route('admin.system.updates.index')
@@ -105,6 +105,7 @@ class SystemUpdateController extends Controller
     try {
       $result = $this->systemUpdater->continuePreparedUpdate($request->user(), $pending);
       $this->clearPendingUpdate();
+      $this->runRetention->prune();
 
       return redirect()
         ->route('admin.system.updates.index')
@@ -126,6 +127,7 @@ class SystemUpdateController extends Controller
     if (is_array($pending)) {
       $this->systemUpdater->cancelPreparedUpdate($request->user(), $pending);
       $this->clearPendingUpdate();
+      $this->runRetention->prune();
     }
 
     return redirect()
@@ -133,31 +135,15 @@ class SystemUpdateController extends Controller
       ->with('status', 'Pending update cancelled. The pre-update backup was kept.');
   }
 
-  public function destroyRun(Request $request, SystemUpdateRun $run): RedirectResponse
+  public function supportReport(): Response
   {
-    $historyPerPage = $this->historyPerPage($request);
-    $requestedHistoryPage = $this->historyPage($request);
+    $payload = json_encode($this->supportReport->build(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    $filename = 'webblocks-update-support-report-'.Str::slug(now()->format('Y-m-d H-i-s')).'.json';
 
-    if (in_array($run->status, [SystemUpdateRun::STATUS_PENDING, SystemUpdateRun::STATUS_RUNNING], true)) {
-      return redirect()
-        ->route('admin.system.updates.index', [
-          'history_page' => $requestedHistoryPage,
-          'history_per_page' => $historyPerPage,
-        ])
-        ->withErrors(['system_update' => 'Update history entries that are still in progress cannot be deleted.']);
-    }
-
-    $run->delete();
-    $remainingCount = SystemUpdateRun::query()->count();
-    $lastPage = max(1, (int) ceil($remainingCount / $historyPerPage));
-    $targetPage = min($requestedHistoryPage, $lastPage);
-
-    return redirect()
-      ->route('admin.system.updates.index', [
-        'history_page' => $targetPage,
-        'history_per_page' => $historyPerPage,
-      ])
-      ->with('status', 'Update history entry deleted. The installed CMS version was not changed.');
+    return response($payload ?: '{}', 200, [
+      'Content-Type' => 'application/json',
+      'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+    ]);
   }
 
   private function latestUpdateRun(): ?SystemUpdateRun
@@ -167,37 +153,6 @@ class SystemUpdateController extends Controller
     }
 
     return SystemUpdateRun::query()->with('triggeredBy')->latest()->first();
-  }
-
-  private function updateRuns(int $perPage)
-  {
-    if (! Schema::hasTable('system_update_runs')) {
-      return new LengthAwarePaginator([], 0, $perPage, 1, [
-        'pageName' => 'history_page',
-        'path' => request()->url(),
-      ]);
-    }
-
-    return SystemUpdateRun::query()
-      ->with('triggeredBy')
-      ->latest('started_at')
-      ->latest('id')
-      ->paginate($perPage, ['*'], 'history_page')
-      ->withQueryString();
-  }
-
-  private function historyPerPage(Request $request): int
-  {
-    $perPage = (int) $request->input('history_per_page', self::DEFAULT_HISTORY_PER_PAGE);
-
-    return in_array($perPage, self::HISTORY_PER_PAGE_OPTIONS, true)
-      ? $perPage
-      : self::DEFAULT_HISTORY_PER_PAGE;
-  }
-
-  private function historyPage(Request $request): int
-  {
-    return max(1, (int) $request->input('history_page', 1));
   }
 
   private function mainLatestUpdateRun(?SystemUpdateRun $run, array $report): ?SystemUpdateRun

@@ -32,6 +32,8 @@ use WebBlocks\Cms\Console\SmokeNativeLocalCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand as PackageSyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
+use WebBlocks\Cms\Console\SystemUpdatePruneRunsCommand;
+use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
 use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder as PackageCoreCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\IconCatalogSeeder as PackageIconCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\LayoutTypeSeeder as PackageLayoutTypeSeeder;
@@ -306,6 +308,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
       SyncCoreBlockTypesCommand::class,
       CatalogRepairCommand::class,
       SystemBackupRestoreCommand::class,
+      SystemUpdateRunsCommand::class,
+      SystemUpdatePruneRunsCommand::class,
     ], WebBlocksCmsServiceProvider::PACKAGE_CONSOLE_COMMANDS);
     $this->assertSame('composer require fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND);
     $this->assertSame('composer update fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND);

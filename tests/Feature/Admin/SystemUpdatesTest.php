@@ -15,7 +15,6 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\SystemBackup;
-use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
@@ -53,45 +52,42 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee(WebBlocks::version());
     $response->assertSee(WebBlocks::version());
     $response->assertDontSee('Latest Published Version');
-    $response->assertSee('Update Summary');
+    $response->assertSee('Update Details');
     $response->assertDontSee('<strong>Actions</strong>', false);
     $response->assertSee('Check again');
     $response->assertDontSee('Recent Backup');
-    $response->assertSee('Diagnostics');
+    $response->assertSee('Update Readiness');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
-    $response->assertSee('data-webblocks-updates-layout="single-column"', false);
-    $response->assertSee('data-webblocks-updates-card="summary"', false);
+    $response->assertSee('data-webblocks-updates-layout="two-card"', false);
     $response->assertSee('data-webblocks-updates-card="install"', false);
-    $response->assertSee('data-webblocks-updates-card="diagnostics"', false);
-    $response->assertSee('data-webblocks-updates-card="history"', false);
-    $response->assertSee('data-webblocks-updates-accordion="release-notes"', false);
-    $response->assertSee('data-webblocks-updates-accordion="package-safety"', false);
-    $response->assertSee('data-webblocks-updates-accordion="diagnostics"', false);
+    $response->assertSee('data-webblocks-updates-card="details"', false);
+    $response->assertSee('data-webblocks-updates-accordion="details"', false);
+    $response->assertDontSee('data-webblocks-updates-card="summary"', false);
+    $response->assertDontSee('data-webblocks-updates-card="diagnostics"', false);
+    $response->assertDontSee('data-webblocks-updates-card="history"', false);
+    $response->assertDontSee('data-webblocks-updates-accordion="package-safety"', false);
     $response->assertSee('class="wb-accordion" data-wb-accordion', false);
     $response->assertSee('class="wb-accordion-trigger"', false);
     $response->assertSee('class="wb-icon wb-icon-chevron-down wb-accordion-icon"', false);
-    $response->assertSee('Diagnostics passed. Details stay collapsed until attention is needed.');
-    $response->assertSee('Diagnostics passed');
+    $response->assertSee('Download support report');
     $response->assertSeeInOrder([
-      'data-webblocks-updates-card="summary"',
-      'Update Summary',
-      'Check again',
       'data-webblocks-updates-card="install"',
       'Install Update',
-      'data-webblocks-updates-card="diagnostics"',
-      'Diagnostics',
-      'data-webblocks-updates-card="history"',
-      'Update History',
+      'data-webblocks-updates-card="details"',
+      'Update Details',
+      'Release Notes',
+      'Update Readiness',
+      'Last Update Run',
     ], false);
     $response->assertDontSee('<details', false);
     $response->assertDontSee('<summary', false);
     $this->assertFalse(File::isDirectory(base_path('.github')));
 
-    $summaryHtml = $this->cardHtml($response->getContent(), 'Update Summary');
-    $this->assertStringNotContainsString('Stored installed version', $summaryHtml);
-    $this->assertStringNotContainsString('Effective installed version', $summaryHtml);
-    $this->assertStringNotContainsString('Source checkout notice', $summaryHtml);
-    $this->assertStringNotContainsString('Published at', $summaryHtml);
+    $installHtml = $this->cardHtml($response->getContent(), 'Install Update');
+    $this->assertStringNotContainsString('Stored installed version', $installHtml);
+    $this->assertStringNotContainsString('Effective installed version', $installHtml);
+    $this->assertStringNotContainsString('Source checkout notice', $installHtml);
+    $this->assertStringNotContainsString('Published at', $installHtml);
   }
 
   #[Test]
@@ -141,7 +137,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('Update Summary');
+    $response->assertSee('Install Update');
     $response->assertSee('A newer published release is available from the configured update server.');
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
@@ -151,19 +147,15 @@ class SystemUpdatesTest extends TestCase
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();
-    $summaryHtml = $this->cardHtml($html, 'Update Summary');
-    $summaryHeaderPosition = strpos($html, '<h2 class="wb-card-title">Update Summary</h2>');
+    $installHtml = $this->cardHtml($html, 'Install Update');
     $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Install Update</h2>');
     $buttonPosition = strpos($html, 'data-default-label="Install update"');
 
-    $this->assertStringContainsString('Current CMS Version', $summaryHtml);
-    $this->assertStringContainsString('Latest Published Version', $summaryHtml);
-    $this->assertStringContainsString('Update Date', $summaryHtml);
-    $this->assertStringContainsString('Published Date', $summaryHtml);
-    $this->assertIsInt($summaryHeaderPosition);
+    $this->assertStringContainsString('Current CMS Version', $installHtml);
+    $this->assertStringContainsString('Latest Published Version', $installHtml);
+    $this->assertStringContainsString('Published Date', $installHtml);
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($buttonPosition);
-    $this->assertGreaterThan($summaryHeaderPosition, $optionsHeaderPosition);
     $this->assertGreaterThan($optionsHeaderPosition, $buttonPosition);
   }
 
@@ -177,7 +169,7 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
-    $response->assertSee('Package safety details');
+    $response->assertSee('Package Safety Details');
     $response->assertSee('data-webblocks-updates-accordion="package-safety"', false);
     $response->assertSee('Download the backup before installation starts');
     $response->assertSee('A pre-update backup will be created automatically before installation.');
@@ -188,17 +180,17 @@ class SystemUpdatesTest extends TestCase
     $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $optionsHeaderPosition);
     $backupHelpPosition = strpos($html, 'A pre-update backup will be created automatically before installation.', $optionsHeaderPosition);
     $buttonPosition = strpos($html, 'data-default-label="Install update"', $optionsHeaderPosition);
-    $diagnosticsPosition = strpos($html, '<span class="wb-card-title">Diagnostics</span>');
+    $detailsPosition = strpos($html, '<h2 class="wb-card-title">Update Details</h2>');
 
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($checkboxPosition);
     $this->assertIsInt($backupHelpPosition);
     $this->assertIsInt($buttonPosition);
-    $this->assertIsInt($diagnosticsPosition);
+    $this->assertIsInt($detailsPosition);
     $this->assertLessThan($checkboxPosition, $buttonPosition);
     $this->assertLessThan($checkboxPosition, $backupHelpPosition);
-    $this->assertLessThan($diagnosticsPosition, $optionsHeaderPosition);
-    $this->assertLessThan($buttonPosition, $optionsHeaderPosition);
+    $this->assertGreaterThan($optionsHeaderPosition, $detailsPosition);
+    $this->assertGreaterThan($optionsHeaderPosition, $buttonPosition);
   }
 
   #[Test]
@@ -260,8 +252,8 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertDontSee('<strong>Release Preview</strong>', false);
-    $response->assertSee('data-webblocks-updates-accordion="release-notes"', false);
-    $response->assertSee('<span>Release notes</span>', false);
+    $response->assertSee('data-webblocks-updates-accordion="details"', false);
+    $response->assertSee('<span>Release Notes</span>', false);
     $response->assertDontSee('What&#039;s included', false);
     $response->assertSee('Operator-friendly release details');
     $response->assertSee('This release improves update review before installation.');
@@ -279,7 +271,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Read the details before running Update now');
     $response->assertSee('Technical notes');
     $response->assertSee('Artifact checksum remains verified before install.');
-    $response->assertSee('Diagnostics');
+    $response->assertSee('Update Readiness');
     $response->assertDontSee('<summary><strong>Release notes</strong></summary>', false);
   }
 
@@ -303,7 +295,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertDontSee('<strong>Release Preview</strong>', false);
     $response->assertSee('Release v1.32.83 no build-chain boundary');
-    $response->assertSee('Release notes');
+    $response->assertSee('Release Notes');
     $response->assertSee('No Vite, npm, or Tailwind assumptions return.');
   }
 
@@ -380,8 +372,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertSee('Update server unavailable');
     $response->assertSee('Server detail');
-    $response->assertSee('Diagnostics');
-    $response->assertSee('Install update');
+    $response->assertSee('Update Readiness');
+    $response->assertSee('Install Update');
     $response->assertDontSee('<strong>Actions</strong>', false);
   }
 
@@ -394,11 +386,10 @@ class SystemUpdatesTest extends TestCase
 
     $upToDateResponse = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $upToDateResponse->assertOk();
-    $upToDateResponse->assertSee('This install already matches the latest published release for the selected channel.');
+    $upToDateResponse->assertSee('This install already matches the latest published release.');
     $upToDateResponse->assertSee('Up to date');
-    $upToDateResponse->assertSee('Install update');
+    $upToDateResponse->assertSee('Install Update');
     $upToDateResponse->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
-    $upToDateResponse->assertSee('Install update is currently unavailable.');
     $upToDateResponse->assertSee('No newer release is ready for this install.');
     $upToDateResponse->assertDontSee('name="download_pre_update_backup"', false);
   }
@@ -414,9 +405,8 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('Up to date');
-    $response->assertSee('This install already matches the latest published release for the selected channel.');
+    $response->assertSee('This install already matches the latest published release.');
     $response->assertDontSee('Latest Published Version');
-    $response->assertSee('Install update is currently unavailable.');
     $response->assertSee('No newer release is ready for this install.');
     $response->assertDontSee('data-default-label="Install update"', false);
     $response->assertDontSee('name="download_pre_update_backup"', false);
@@ -436,9 +426,9 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
     $response->assertSee('This codebase is ahead of the latest published package on the selected channel.');
-    $response->assertSee('Install update');
+    $response->assertSee('Install Update');
     $response->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
-    $response->assertSee('Install update is currently unavailable.');
+    $response->assertSee('No newer release is ready for this install.');
   }
 
   #[Test]
@@ -457,9 +447,9 @@ class SystemUpdatesTest extends TestCase
     $incompatibleResponse->assertOk();
     $incompatibleResponse->assertSee('Incompatible update available');
     $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
-    $incompatibleResponse->assertSee('Install update');
+    $incompatibleResponse->assertSee('Install Update');
     $incompatibleResponse->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
-    $incompatibleResponse->assertSee('Install update is currently unavailable.');
+    $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
   }
 
   #[Test]
@@ -472,8 +462,8 @@ class SystemUpdatesTest extends TestCase
       'status' => SystemUpdateRun::STATUS_FAILED,
       'summary' => 'Historical failed update',
       'output' => 'Old failure output',
-      'started_at' => now()->subDays(2),
-      'finished_at' => now()->subDays(2)->addMinute(),
+      'started_at' => CarbonImmutable::parse('2026-05-30 13:00:00'),
+      'finished_at' => CarbonImmutable::parse('2026-05-30 13:01:00'),
       'duration_ms' => 1000,
       'triggered_by_user_id' => $user->id,
     ]);
@@ -482,11 +472,11 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('This install already matches the latest published release for the selected channel.');
+    $response->assertSee('This install already matches the latest published release.');
     $response->assertDontSee('Update available');
-    $response->assertSee('<h2 class="wb-card-title">Update History</h2>', false);
-    $response->assertSee('1.32.80 → '.WebBlocks::version());
-    $response->assertSee('failed');
+    $response->assertSee('No update runs have been recorded yet.');
+    $response->assertDontSee('<h2 class="wb-card-title">Update History</h2>', false);
+    $response->assertDontSee('1.32.80 → '.WebBlocks::version());
   }
 
   #[Test]
@@ -509,23 +499,20 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<h2 class="wb-card-title">Update History</h2>', false);
+    $response->assertSee('<h2 class="wb-card-title">Update Details</h2>', false);
     $response->assertSee(WebBlocks::version().' → 99.0.0');
     $response->assertSee('failed');
-    $response->assertSee('wb-icon wb-icon-eye', false);
-    $response->assertSee('wb-icon wb-icon-trash', false);
-    $response->assertSee('Delete update history entry');
-    $response->assertSee('This only removes the selected update run history record. It does not change the current CMS version', false);
-    $response->assertSee(route('admin.system.updates.runs.destroy', SystemUpdateRun::query()->firstOrFail()), false);
-    $response->assertDontSee('wb-icon-trash-2', false);
+    $response->assertSee('View run details');
+    $response->assertDontSee('wb-icon wb-icon-trash', false);
+    $response->assertDontSee('Delete update history entry');
     $response->assertDontSee('<summary>Output</summary>', false);
   }
 
   #[Test]
-  public function update_history_delete_form_is_csrf_protected(): void
+  public function update_history_table_and_delete_actions_are_not_rendered_on_main_screen(): void
   {
     $user = User::factory()->superAdmin()->create();
-    $run = SystemUpdateRun::query()->create([
+    SystemUpdateRun::query()->create([
       'from_version' => '1.32.90',
       'to_version' => WebBlocks::version(),
       'status' => SystemUpdateRun::STATUS_SUCCESS,
@@ -540,375 +527,73 @@ class SystemUpdatesTest extends TestCase
     $this->actingAs($user)
       ->get(route('admin.system.updates.index'))
       ->assertOk()
-      ->assertSee('<td class="wb-table-actions">', false)
-      ->assertSee('class="wb-action-group"', false)
-      ->assertSee('action="'.route('admin.system.updates.runs.destroy', $run).'"', false)
-      ->assertSee('name="_token"', false)
-      ->assertSee('name="_method" value="DELETE"', false);
+      ->assertSee('data-webblocks-updates-card="install"', false)
+      ->assertSee('data-webblocks-updates-card="details"', false)
+      ->assertSee('Last Update Run')
+      ->assertSee('View run details')
+      ->assertDontSee('<h2 class="wb-card-title">Update History</h2>', false)
+      ->assertDontSee('<td class="wb-table-actions">', false)
+      ->assertDontSee('Delete update history entry')
+      ->assertDontSee('wb-icon-trash', false);
   }
 
   #[Test]
-  public function super_admin_deleting_update_history_removes_only_selected_run_and_preserves_version_state(): void
+  public function support_report_download_sanitizes_sensitive_update_run_details(): void
   {
     $user = User::factory()->superAdmin()->create();
-    app(InstalledVersionStore::class)->persist('1.32.90');
-    SystemSetting::query()->create([
-      'key' => 'updates.latest_check',
-      'value' => '{"version":"'.WebBlocks::version().'"}',
-    ]);
-
-    $deleteRun = SystemUpdateRun::query()->create([
-      'from_version' => '1.32.89',
-      'to_version' => '1.32.90',
-      'status' => SystemUpdateRun::STATUS_SUCCESS,
-      'summary' => 'Updated to 1.32.90 successfully.',
-      'output' => '[status] Installed version persisted as 1.32.90.',
-      'started_at' => now()->subMinutes(2),
-      'finished_at' => now()->subMinute(),
-      'duration_ms' => 1000,
-      'triggered_by_user_id' => $user->id,
-    ]);
-    $keptRun = SystemUpdateRun::query()->create([
-      'from_version' => '1.32.88',
-      'to_version' => '1.32.89',
+    SystemUpdateRun::query()->create([
+      'from_version' => '1.32.90',
+      'to_version' => WebBlocks::version(),
       'status' => SystemUpdateRun::STATUS_FAILED,
-      'summary' => 'Earlier failure.',
-      'started_at' => now()->subMinutes(4),
-      'finished_at' => now()->subMinutes(3),
-      'duration_ms' => 1000,
-      'triggered_by_user_id' => $user->id,
-    ]);
-
-    Http::fake();
-
-    $this->actingAs($user)
-      ->delete(route('admin.system.updates.runs.destroy', $deleteRun))
-      ->assertRedirect(route('admin.system.updates.index', [
-        'history_page' => 1,
-        'history_per_page' => 10,
-      ]))
-      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
-
-    $this->assertDatabaseMissing('system_update_runs', [
-      'id' => $deleteRun->id,
-    ]);
-    $this->assertDatabaseHas('system_update_runs', [
-      'id' => $keptRun->id,
-      'to_version' => '1.32.89',
-    ]);
-    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
-    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
-    $this->assertDatabaseHas('system_settings', [
-      'key' => 'updates.latest_check',
-      'value' => '{"version":"'.WebBlocks::version().'"}',
-    ]);
-    Http::assertNothingSent();
-  }
-
-  #[Test]
-  public function non_super_admins_cannot_delete_update_history_entries(): void
-  {
-    $run = SystemUpdateRun::query()->create([
-      'from_version' => '1.32.90',
-      'to_version' => WebBlocks::version(),
-      'status' => SystemUpdateRun::STATUS_SUCCESS,
-      'summary' => 'Updated successfully.',
+      'summary' => 'Failed with token=super-secret',
+      'output' => 'Path '.base_path().' token=super-secret'.PHP_EOL.'Stack trace:'.PHP_EOL.'#0 /private/path/File.php(12): boom',
       'started_at' => now()->subMinute(),
       'finished_at' => now(),
       'duration_ms' => 1000,
-    ]);
-
-    $this->delete(route('admin.system.updates.runs.destroy', $run))
-      ->assertRedirect(route('login'));
-
-    $this->actingAs(User::factory()->editor()->create())
-      ->delete(route('admin.system.updates.runs.destroy', $run))
-      ->assertForbidden();
-
-    $this->assertDatabaseHas('system_update_runs', [
-      'id' => $run->id,
-    ]);
-  }
-
-  #[Test]
-  public function in_progress_update_history_entries_cannot_be_deleted(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    $run = SystemUpdateRun::query()->create([
-      'from_version' => WebBlocks::version(),
-      'to_version' => '99.0.0',
-      'status' => SystemUpdateRun::STATUS_RUNNING,
-      'summary' => 'Update still running.',
-      'started_at' => now()->subMinute(),
-      'duration_ms' => null,
       'triggered_by_user_id' => $user->id,
     ]);
-    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0');
-
-    $this->actingAs($user)
-      ->get(route('admin.system.updates.index'))
-      ->assertOk()
-      ->assertSee('Delete is unavailable while the update run is in progress')
-      ->assertDontSee('action="'.route('admin.system.updates.runs.destroy', $run).'"', false);
-
-    $this->actingAs($user)
-      ->delete(route('admin.system.updates.runs.destroy', $run))
-      ->assertRedirect(route('admin.system.updates.index', [
-        'history_page' => 1,
-        'history_per_page' => 10,
-      ]))
-      ->assertSessionHasErrors(['system_update' => 'Update history entries that are still in progress cannot be deleted.']);
-
-    $this->assertDatabaseHas('system_update_runs', [
-      'id' => $run->id,
-      'status' => SystemUpdateRun::STATUS_RUNNING,
-    ]);
-  }
-
-  #[Test]
-  public function update_history_is_paginated_with_default_page_size_and_newest_records_first(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    $this->createUpdateHistoryRuns(12, $user);
     $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
 
-    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+    $response = $this->actingAs($user)->get(route('admin.system.updates.support-report'));
 
     $response->assertOk();
-    $response->assertSee('data-webblocks-update-history-per-page', false);
-    $response->assertSee('Per page');
-    $response->assertSee('<option value="10" selected', false);
-    $response->assertSee('1-10/12');
-    $response->assertSee('9.0.12');
-    $response->assertSee('9.0.03');
-    $response->assertDontSee('9.0.02');
-    $response->assertDontSee('9.0.01');
-    $response->assertSee('data-admin-pagination', false);
-    $response->assertSee('class="wb-pagination wb-pagination-compact"', false);
-    $response->assertSee('aria-label="Update History pagination"', false);
-    $response->assertSee('history_page=2', false);
+    $response->assertHeader('content-type', 'application/json');
+    $response->assertHeader('content-disposition');
+    $response->assertSee('"current_version"', false);
+    $response->assertSee('"last_run"', false);
+    $response->assertSee('token=[redacted]', false);
+    $response->assertSee('[base_path]', false);
+    $response->assertDontSee('super-secret', false);
+    $response->assertDontSee(base_path(), false);
+    $response->assertDontSee('Stack trace:', false);
+    $response->assertDontSee('#0 /private/path/File.php', false);
   }
 
   #[Test]
-  public function update_history_accepts_allowed_per_page_values(): void
+  public function update_run_prune_keeps_latest_runs_and_unresolved_latest_failure(): void
   {
-    $user = User::factory()->superAdmin()->create();
-    $this->createUpdateHistoryRuns(60, $user);
-    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+    config()->set('webblocks-updates.runs.keep', 5);
 
-    foreach ([5, 10, 15, 25, 50] as $perPage) {
-      $this->actingAs($user)
-        ->get(route('admin.system.updates.index', ['history_per_page' => $perPage]))
-        ->assertOk()
-        ->assertSee('<option value="'.$perPage.'" selected', false)
-        ->assertSee('1-'.$perPage.'/60');
-    }
-  }
-
-  #[Test]
-  public function invalid_update_history_per_page_falls_back_to_default(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    $this->createUpdateHistoryRuns(12, $user);
-    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
-
-    $this->actingAs($user)
-      ->get(route('admin.system.updates.index', ['history_per_page' => 999]))
-      ->assertOk()
-      ->assertSee('<option value="10" selected', false)
-      ->assertSee('1-10/12')
-      ->assertDontSee('<option value="999"', false);
-  }
-
-  #[Test]
-  public function update_history_pagination_preserves_per_page_and_second_page_shows_older_rows_with_actions(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    $runs = $this->createUpdateHistoryRuns(12, $user);
-    $pageTwoRun = $runs[7];
-    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
-
-    $response = $this->actingAs($user)->get(route('admin.system.updates.index', [
-      'history_per_page' => 5,
-      'history_page' => 2,
-    ]));
-
-    $response->assertOk();
-    $response->assertSee('6-10/12');
-    $response->assertSee('history_per_page=5', false);
-    $response->assertSee('history_page=1', false);
-    $response->assertSee('history_page=3', false);
-    $response->assertSee('9.0.07');
-    $response->assertSee('9.0.03');
-    $response->assertDontSee('9.0.12');
-    $response->assertDontSee('9.0.02');
-    $response->assertSee('updateRunDetailsModal-'.$pageTwoRun->id, false);
-    $response->assertSee('updateRunDeleteModal-'.$pageTwoRun->id, false);
-    $response->assertSee('wb-icon wb-icon-eye', false);
-    $response->assertSee('wb-icon wb-icon-trash', false);
-    $response->assertSee('action="'.route('admin.system.updates.runs.destroy', $pageTwoRun).'"', false);
-    $response->assertSee('name="history_page" value="2"', false);
-    $response->assertSee('name="history_per_page" value="5"', false);
-  }
-
-  #[Test]
-  public function deleting_update_history_row_from_paginated_page_removes_only_that_row_and_preserves_version_state(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    app(InstalledVersionStore::class)->persist('1.32.90');
-    $runs = $this->createUpdateHistoryRuns(12, $user);
-    $deleteRun = $runs[7];
-    $keptRun = $runs[6];
-
-    $this->actingAs($user)
-      ->delete(route('admin.system.updates.runs.destroy', [
-        'run' => $deleteRun,
-        'history_page' => 2,
-        'history_per_page' => 5,
-      ]))
-      ->assertRedirect(route('admin.system.updates.index', [
-        'history_page' => 2,
-        'history_per_page' => 5,
-      ]))
-      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
-
-    $this->assertDatabaseMissing('system_update_runs', [
-      'id' => $deleteRun->id,
+    $runs = $this->createUpdateHistoryRuns(7, User::factory()->superAdmin()->create());
+    $failedRun = SystemUpdateRun::query()->create([
+      'from_version' => '9.0.00',
+      'to_version' => '9.0.01',
+      'status' => SystemUpdateRun::STATUS_FAILED,
+      'summary' => 'Unresolved failure.',
+      'started_at' => now()->subDays(2),
+      'finished_at' => now()->subDays(2)->addMinute(),
+      'duration_ms' => 1000,
     ]);
-    $this->assertDatabaseHas('system_update_runs', [
-      'id' => $keptRun->id,
-      'to_version' => '9.0.06',
-    ]);
-    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
-    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
-  }
 
-  #[Test]
-  public function deleting_update_history_row_on_page_two_returns_to_page_two_when_records_remain(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    app(InstalledVersionStore::class)->persist('1.32.90');
-    $runs = $this->createUpdateHistoryRuns(25, $user);
-    $deleteRun = $runs[15];
-    $keptRun = $runs[14];
+    $this->artisan('webblocks:updates:prune-runs')
+      ->assertExitCode(0);
 
-    $this->actingAs($user)
-      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
-        'history_page' => 2,
-        'history_per_page' => 10,
-      ])
-      ->assertRedirect(route('admin.system.updates.index', [
-        'history_page' => 2,
-        'history_per_page' => 10,
-      ]))
-      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
+    $this->assertDatabaseHas('system_update_runs', ['id' => $failedRun->id]);
+    $this->assertDatabaseMissing('system_update_runs', ['id' => $runs[1]->id]);
+    $this->assertDatabaseMissing('system_update_runs', ['id' => $runs[2]->id]);
+    $this->assertDatabaseMissing('system_update_runs', ['id' => $runs[3]->id]);
 
-    $this->assertDatabaseMissing('system_update_runs', [
-      'id' => $deleteRun->id,
-    ]);
-    $this->assertDatabaseHas('system_update_runs', [
-      'id' => $keptRun->id,
-      'to_version' => '9.0.14',
-    ]);
-    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
-    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
-  }
-
-  #[Test]
-  public function deleting_only_row_on_last_update_history_page_redirects_to_previous_valid_page(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    app(InstalledVersionStore::class)->persist('1.32.90');
-    $runs = $this->createUpdateHistoryRuns(11, $user);
-    $deleteRun = $runs[1];
-    $keptRun = $runs[2];
-
-    $this->actingAs($user)
-      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
-        'history_page' => 2,
-        'history_per_page' => 10,
-      ])
-      ->assertRedirect(route('admin.system.updates.index', [
-        'history_page' => 1,
-        'history_per_page' => 10,
-      ]))
-      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
-
-    $this->assertDatabaseMissing('system_update_runs', [
-      'id' => $deleteRun->id,
-    ]);
-    $this->assertDatabaseHas('system_update_runs', [
-      'id' => $keptRun->id,
-      'to_version' => '9.0.02',
-    ]);
-    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
-    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
-  }
-
-  #[Test]
-  public function deleting_only_remaining_update_history_row_redirects_to_page_one_and_shows_empty_state(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    app(InstalledVersionStore::class)->persist('1.32.90');
-    $runs = $this->createUpdateHistoryRuns(1, $user);
-    $deleteRun = $runs[1];
-    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
-
-    $this->actingAs($user)
-      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
-        'history_page' => 1,
-        'history_per_page' => 10,
-      ])
-      ->assertRedirect(route('admin.system.updates.index', [
-        'history_page' => 1,
-        'history_per_page' => 10,
-      ]))
-      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
-
-    $this->assertDatabaseMissing('system_update_runs', [
-      'id' => $deleteRun->id,
-    ]);
-    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
-    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
-
-    $this->actingAs($user)
-      ->get(route('admin.system.updates.index', [
-        'history_page' => 1,
-        'history_per_page' => 10,
-      ]))
-      ->assertOk()
-      ->assertSee('No update runs have been recorded yet.');
-  }
-
-  #[Test]
-  public function deleting_update_history_normalizes_invalid_pagination_state(): void
-  {
-    $user = User::factory()->superAdmin()->create();
-    app(InstalledVersionStore::class)->persist('1.32.90');
-    $runs = $this->createUpdateHistoryRuns(12, $user);
-    $deleteRun = $runs[12];
-    $keptRun = $runs[11];
-
-    $this->actingAs($user)
-      ->delete(route('admin.system.updates.runs.destroy', $deleteRun), [
-        'history_page' => -7,
-        'history_per_page' => 999,
-      ])
-      ->assertRedirect(route('admin.system.updates.index', [
-        'history_page' => 1,
-        'history_per_page' => 10,
-      ]))
-      ->assertSessionHas('status', 'Update history entry deleted. The installed CMS version was not changed.');
-
-    $this->assertDatabaseMissing('system_update_runs', [
-      'id' => $deleteRun->id,
-    ]);
-    $this->assertDatabaseHas('system_update_runs', [
-      'id' => $keptRun->id,
-      'to_version' => '9.0.11',
-    ]);
-    $this->assertSame('1.32.90', app(InstalledVersionStore::class)->storedVersion());
-    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+    $this->assertSame(5, SystemUpdateRun::query()->count());
   }
 
   #[Test]
