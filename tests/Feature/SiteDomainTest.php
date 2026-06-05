@@ -494,7 +494,7 @@ class SiteDomainTest extends TestCase
   }
 
   #[Test]
-  public function token_authenticated_internal_api_listing_works_and_unauthenticated_calls_fail(): void
+  public function internal_api_listing_accepts_token_and_rejects_missing_token(): void
   {
     $this->seedPublicSiteWithDomain('primary.example.test');
 

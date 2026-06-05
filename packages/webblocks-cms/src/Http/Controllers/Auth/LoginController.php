@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Auth;
 
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -22,6 +23,16 @@ class LoginController extends Controller
       'email' => ['required', 'email'],
       'password' => ['required', 'string'],
     ]);
+
+    $user = User::query()
+      ->where('email', str((string) $credentials['email'])->lower()->toString())
+      ->first();
+
+    if ($user instanceof User && ! $user->is_active) {
+      throw ValidationException::withMessages([
+        'email' => 'This account is inactive. Please contact an administrator.',
+      ]);
+    }
 
     if (! Auth::attempt($credentials, $request->boolean('remember'))) {
       throw ValidationException::withMessages([
