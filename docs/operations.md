@@ -342,6 +342,7 @@ It keeps:
 - default locale
 - timezone
 - admin listing rows per page for paginated admin listing screens
+- CMS Mail mode and custom mail settings for CMS-owned notifications
 - cookie or privacy banner settings
 - product version information
 - environment information
@@ -352,10 +353,14 @@ It does not control:
 - public site branding
 - public site SEO defaults
 - public favicon, public search scope, or page translation SEO
+- host/root auth mail or site contact form routing
+- `.env` file contents or environment variables
 
 Project Identity helps distinguish one CMS install from another in the admin topbar and browser title. Those public-facing values still live on each Site or page translation instead.
 
 `Admin listing rows per page` defaults to `15`, accepts custom numeric values such as `10` or `12`, and changes only the default row count used by paginated admin listing screens. It does not affect public pagination.
+
+CMS Mail defaults to Laravel environment mail configuration. When the mode is changed to CMS custom settings, CMS-owned password reset emails and future CMS-owned system notifications use the database-backed CMS mail settings through a scoped CMS mailer. Custom CMS mail settings do not overwrite `.env`; disabling custom CMS mail returns CMS mail to the existing Laravel `MAIL_*` configuration. Stored mail secrets are never shown in plain text, blank secret updates keep the existing stored value, and diagnostics report sensitive fields only as configured or not configured. The current diagnostics panel is read-only; a super-admin test email action is planned as a follow-up.
 
 ## Site Clone
 

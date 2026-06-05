@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use WebBlocks\Cms\Notifications\Auth\CmsResetPassword;
+use WebBlocks\Cms\Support\Mail\CmsMailConfigurationException;
 
 class PasswordResetLinkController extends Controller
 {
@@ -35,7 +36,12 @@ class PasswordResetLinkController extends Controller
         ->withErrors(['email' => __(Password::INVALID_USER)]);
     }
 
-    $user->notify(new CmsResetPassword($broker->createToken($user), $request->email));
+    try {
+      $user->notify(new CmsResetPassword($broker->createToken($user), $request->email));
+    } catch (CmsMailConfigurationException $exception) {
+      return back()->withInput($request->only('email'))
+        ->withErrors(['email' => $exception->getMessage()]);
+    }
 
     return back()->with('status', __(Password::RESET_LINK_SENT));
   }

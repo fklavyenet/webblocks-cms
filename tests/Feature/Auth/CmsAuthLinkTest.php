@@ -6,7 +6,10 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Notifications\Auth\CmsResetPassword;
+use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class CmsAuthLinkTest extends TestCase
 {
@@ -62,5 +65,26 @@ class CmsAuthLinkTest extends TestCase
       return str_contains((string) $mail->actionUrl, '/webadmin/reset-password/')
         && str_contains((string) $mail->actionUrl, 'email=editor%40example.com');
     });
+  }
+
+  public function test_cms_password_reset_notification_uses_custom_cms_mailer_when_enabled(): void
+  {
+    $user = User::factory()->create(['email' => 'editor@example.com']);
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MODE], ['value' => SystemSettings::CMS_MAIL_MODE_CUSTOM]);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MAILER], ['value' => 'smtp']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_HOST], ['value' => 'smtp.example.test']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PORT], ['value' => '587']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_USERNAME], ['value' => 'mailer@example.test']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PASSWORD], ['value' => 'stored-secret']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_FROM_ADDRESS], ['value' => 'cms@example.test']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_FROM_NAME], ['value' => 'WebBlocks CMS']);
+
+    $mail = (new CmsResetPassword('test-token', $user->email))->toMail($user);
+
+    $this->assertSame(CmsMailSettingsResolver::MAILER_NAME, $mail->mailer);
+    $this->assertSame(['cms@example.test', 'WebBlocks CMS'], $mail->from);
+    $this->assertSame('smtp.example.test', config('mail.mailers.'.CmsMailSettingsResolver::MAILER_NAME.'.host'));
+    $this->assertSame('stored-secret', config('mail.mailers.'.CmsMailSettingsResolver::MAILER_NAME.'.password'));
   }
 }

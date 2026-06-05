@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class SystemSettingsRequest extends FormRequest
@@ -23,11 +24,25 @@ class SystemSettingsRequest extends FormRequest
       'timezone' => trim((string) $this->input('timezone')),
       'admin_listing_per_page' => trim((string) $this->input('admin_listing_per_page')),
       'visitor_consent_banner_enabled' => $this->boolean('visitor_consent_banner_enabled'),
+      'cms_mail_mode' => trim((string) $this->input('cms_mail_mode', SystemSettings::CMS_MAIL_MODE_ENV)),
+      'cms_mail_mailer' => trim((string) $this->input('cms_mail_mailer', 'smtp')),
+      'cms_mail_host' => trim((string) $this->input('cms_mail_host')),
+      'cms_mail_port' => trim((string) $this->input('cms_mail_port')),
+      'cms_mail_encryption' => trim((string) $this->input('cms_mail_encryption')),
+      'cms_mail_username' => trim((string) $this->input('cms_mail_username')),
+      'cms_mail_password' => (string) $this->input('cms_mail_password'),
+      'cms_mail_clear_password' => $this->boolean('cms_mail_clear_password'),
+      'cms_mail_from_address' => trim((string) $this->input('cms_mail_from_address')),
+      'cms_mail_from_name' => trim((string) $this->input('cms_mail_from_name')),
+      'cms_mail_reply_to_address' => trim((string) $this->input('cms_mail_reply_to_address')),
+      'cms_mail_timeout' => trim((string) $this->input('cms_mail_timeout')),
     ]);
   }
 
   public function rules(): array
   {
+    $customSmtpRequired = Rule::requiredIf(fn (): bool => $this->input('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_CUSTOM && $this->input('cms_mail_mailer') === 'smtp');
+
     return [
       'project_name' => ['nullable', 'string', 'max:255'],
       'project_tagline' => ['nullable', 'string', 'max:255'],
@@ -44,18 +59,48 @@ class SystemSettingsRequest extends FormRequest
         'max:'.SystemSettings::ADMIN_LISTING_PER_PAGE_MAX,
       ],
       'visitor_consent_banner_enabled' => ['required', 'boolean'],
+      'cms_mail_mode' => ['required', Rule::in([SystemSettings::CMS_MAIL_MODE_ENV, SystemSettings::CMS_MAIL_MODE_CUSTOM])],
+      'cms_mail_mailer' => ['required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, Rule::in(CmsMailSettingsResolver::SUPPORTED_MAILERS)],
+      'cms_mail_host' => ['nullable', $customSmtpRequired, 'string', 'max:255'],
+      'cms_mail_port' => ['nullable', $customSmtpRequired, 'integer', 'min:1', 'max:65535'],
+      'cms_mail_encryption' => ['nullable', Rule::in(['', 'tls', 'ssl'])],
+      'cms_mail_username' => ['nullable', 'string', 'max:255'],
+      'cms_mail_password' => ['nullable', 'string', 'max:1024'],
+      'cms_mail_clear_password' => ['required', 'boolean'],
+      'cms_mail_from_address' => ['nullable', 'required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, 'email', 'max:255'],
+      'cms_mail_from_name' => ['nullable', 'string', 'max:255'],
+      'cms_mail_reply_to_address' => ['nullable', 'email', 'max:255'],
+      'cms_mail_timeout' => ['nullable', 'integer', 'min:1', 'max:300'],
     ];
   }
 
   public function settingsPayload(): array
   {
-    return [
+    $payload = [
       SystemSettings::PROJECT_NAME => $this->validated('project_name'),
       SystemSettings::PROJECT_TAGLINE => $this->validated('project_tagline'),
       SystemSettings::DEFAULT_LOCALE => $this->validated('default_locale'),
       SystemSettings::TIMEZONE => $this->validated('timezone'),
       SystemSettings::ADMIN_LISTING_PER_PAGE => $this->validated('admin_listing_per_page'),
       SystemSettings::VISITOR_CONSENT_BANNER_ENABLED => $this->validated('visitor_consent_banner_enabled'),
+      SystemSettings::CMS_MAIL_MODE => $this->validated('cms_mail_mode'),
+      SystemSettings::CMS_MAIL_MAILER => $this->validated('cms_mail_mailer'),
+      SystemSettings::CMS_MAIL_HOST => $this->validated('cms_mail_host'),
+      SystemSettings::CMS_MAIL_PORT => $this->validated('cms_mail_port'),
+      SystemSettings::CMS_MAIL_ENCRYPTION => $this->validated('cms_mail_encryption'),
+      SystemSettings::CMS_MAIL_USERNAME => $this->validated('cms_mail_username'),
+      SystemSettings::CMS_MAIL_FROM_ADDRESS => $this->validated('cms_mail_from_address'),
+      SystemSettings::CMS_MAIL_FROM_NAME => $this->validated('cms_mail_from_name'),
+      SystemSettings::CMS_MAIL_REPLY_TO_ADDRESS => $this->validated('cms_mail_reply_to_address'),
+      SystemSettings::CMS_MAIL_TIMEOUT => $this->validated('cms_mail_timeout'),
     ];
+
+    if ($this->validated('cms_mail_clear_password')) {
+      $payload[SystemSettings::CMS_MAIL_PASSWORD] = null;
+    } elseif (trim((string) $this->validated('cms_mail_password')) !== '') {
+      $payload[SystemSettings::CMS_MAIL_PASSWORD] = $this->validated('cms_mail_password');
+    }
+
+    return $payload;
   }
 }

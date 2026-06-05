@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Notifications\Auth;
 
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Notifications\Messages\MailMessage;
+use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 
 class CmsResetPassword extends ResetPassword
 {
@@ -17,5 +19,10 @@ class CmsResetPassword extends ResetPassword
       'token' => $this->token,
       'email' => $this->email,
     ]);
+  }
+
+  public function toMail($notifiable): MailMessage
+  {
+    return app(CmsMailSettingsResolver::class)->applyToMailMessage(parent::toMail($notifiable));
   }
 }

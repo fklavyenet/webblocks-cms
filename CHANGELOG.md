@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.118
+
+- Add CMS Mail settings to `System -> Settings` so CMS-owned password reset mail can use database-backed custom mail settings without writing to `.env`.
+- Reorganize System Settings into General, Project Identity, Mail, Privacy, and Runtime Information sections with secret-safe mail diagnostics.
+- Keep CMS custom mail scoped to CMS-owned notifications while host/root app mail continues to use Laravel environment mail configuration.
+
 ## 1.32.117
 
 - Separate Auth test coverage so CMS-owned `/webadmin` auth behavior is tested apart from host/root auth compatibility routes.

@@ -34,6 +34,32 @@ class SystemSettings
 
   public const VISITOR_CONSENT_BANNER_ENABLED = 'system.visitor_consent_banner_enabled';
 
+  public const CMS_MAIL_MODE = 'system.cms_mail_mode';
+
+  public const CMS_MAIL_MAILER = 'system.cms_mail_mailer';
+
+  public const CMS_MAIL_HOST = 'system.cms_mail_host';
+
+  public const CMS_MAIL_PORT = 'system.cms_mail_port';
+
+  public const CMS_MAIL_ENCRYPTION = 'system.cms_mail_encryption';
+
+  public const CMS_MAIL_USERNAME = 'system.cms_mail_username';
+
+  public const CMS_MAIL_PASSWORD = 'system.cms_mail_password';
+
+  public const CMS_MAIL_FROM_ADDRESS = 'system.cms_mail_from_address';
+
+  public const CMS_MAIL_FROM_NAME = 'system.cms_mail_from_name';
+
+  public const CMS_MAIL_REPLY_TO_ADDRESS = 'system.cms_mail_reply_to_address';
+
+  public const CMS_MAIL_TIMEOUT = 'system.cms_mail_timeout';
+
+  public const CMS_MAIL_MODE_ENV = 'env';
+
+  public const CMS_MAIL_MODE_CUSTOM = 'custom';
+
   private const READABLE_KEYS = [
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
@@ -43,6 +69,17 @@ class SystemSettings
     self::TIMEZONE,
     self::ADMIN_LISTING_PER_PAGE,
     self::VISITOR_CONSENT_BANNER_ENABLED,
+    self::CMS_MAIL_MODE,
+    self::CMS_MAIL_MAILER,
+    self::CMS_MAIL_HOST,
+    self::CMS_MAIL_PORT,
+    self::CMS_MAIL_ENCRYPTION,
+    self::CMS_MAIL_USERNAME,
+    self::CMS_MAIL_PASSWORD,
+    self::CMS_MAIL_FROM_ADDRESS,
+    self::CMS_MAIL_FROM_NAME,
+    self::CMS_MAIL_REPLY_TO_ADDRESS,
+    self::CMS_MAIL_TIMEOUT,
   ];
 
   public const MANAGED_KEYS = [
@@ -52,6 +89,17 @@ class SystemSettings
     self::TIMEZONE,
     self::ADMIN_LISTING_PER_PAGE,
     self::VISITOR_CONSENT_BANNER_ENABLED,
+    self::CMS_MAIL_MODE,
+    self::CMS_MAIL_MAILER,
+    self::CMS_MAIL_HOST,
+    self::CMS_MAIL_PORT,
+    self::CMS_MAIL_ENCRYPTION,
+    self::CMS_MAIL_USERNAME,
+    self::CMS_MAIL_PASSWORD,
+    self::CMS_MAIL_FROM_ADDRESS,
+    self::CMS_MAIL_FROM_NAME,
+    self::CMS_MAIL_REPLY_TO_ADDRESS,
+    self::CMS_MAIL_TIMEOUT,
   ];
 
   public function all(): array
@@ -200,6 +248,35 @@ class SystemSettings
     }
 
     return filter_var($stored, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
+  }
+
+  public function cmsMailMode(): string
+  {
+    $mode = trim((string) $this->get(self::CMS_MAIL_MODE, self::CMS_MAIL_MODE_ENV));
+
+    return $mode === self::CMS_MAIL_MODE_CUSTOM ? self::CMS_MAIL_MODE_CUSTOM : self::CMS_MAIL_MODE_ENV;
+  }
+
+  public function cmsMailSettings(): array
+  {
+    return [
+      'mode' => $this->cmsMailMode(),
+      'mailer' => $this->trimmed($this->get(self::CMS_MAIL_MAILER)) ?? 'smtp',
+      'host' => $this->trimmed($this->get(self::CMS_MAIL_HOST)),
+      'port' => $this->trimmed($this->get(self::CMS_MAIL_PORT)),
+      'encryption' => $this->trimmed($this->get(self::CMS_MAIL_ENCRYPTION)),
+      'username' => $this->trimmed($this->get(self::CMS_MAIL_USERNAME)),
+      'password' => (string) ($this->get(self::CMS_MAIL_PASSWORD) ?? ''),
+      'from_address' => $this->trimmed($this->get(self::CMS_MAIL_FROM_ADDRESS)),
+      'from_name' => $this->trimmed($this->get(self::CMS_MAIL_FROM_NAME)),
+      'reply_to_address' => $this->trimmed($this->get(self::CMS_MAIL_REPLY_TO_ADDRESS)),
+      'timeout' => $this->trimmed($this->get(self::CMS_MAIL_TIMEOUT)),
+    ];
+  }
+
+  public function cmsMailPasswordConfigured(): bool
+  {
+    return $this->trimmed($this->get(self::CMS_MAIL_PASSWORD)) !== null;
   }
 
   public function save(array $values): void

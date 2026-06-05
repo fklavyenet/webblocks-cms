@@ -37,7 +37,11 @@ class SystemSettingsTest extends TestCase
     $response->assertSee('Default locale');
     $response->assertSee('Timezone');
     $response->assertSee('Admin listing rows per page');
-    $response->assertSee('Cookie settings');
+    $response->assertSee('Mail');
+    $response->assertSee('Use environment mail config');
+    $response->assertSee('Diagnostics');
+    $response->assertSee('Password configured: no');
+    $response->assertSee('Privacy');
     $response->assertSee('Show the public privacy settings banner when visitor reports are enabled.');
     $response->assertSee('Visitors who decline still contribute privacy-safe anonymous page view counts.');
     $response->assertSee('Application version');
@@ -63,7 +67,7 @@ class SystemSettingsTest extends TestCase
     $this->assertSame(1, $this->queryElements($xpath, './/button[normalize-space()="Save Changes"]', $form)->length);
     $this->assertSame(1, $this->queryElements($xpath, './/a[normalize-space()="Cancel"]', $form)->length);
 
-    foreach (['default_locale', 'timezone', 'admin_listing_per_page', 'project_name', 'project_tagline'] as $fieldName) {
+    foreach (['default_locale', 'timezone', 'admin_listing_per_page', 'project_name', 'project_tagline', 'cms_mail_mode', 'cms_mail_mailer', 'cms_mail_from_address'] as $fieldName) {
       $this->assertSame(1, $this->queryElements($xpath, './/*[@name="'.$fieldName.'"]', $form)->length);
     }
 
@@ -77,9 +81,10 @@ class SystemSettingsTest extends TestCase
     $this->assertSame(0, $this->queryElements($xpath, './/*[@name="version" or @name="environment"]', $form)->length);
 
     $response->assertSee('>General<', false);
-    $response->assertSee('>Cookie settings<', false);
-    $response->assertSee('>Project<', false);
-    $response->assertSee('>Information<', false);
+    $response->assertSee('>Mail<', false);
+    $response->assertSee('>Privacy<', false);
+    $response->assertSee('>Project Identity<', false);
+    $response->assertSee('>Runtime Information<', false);
     $response->assertSee((string) WebBlocks::VERSION);
     $response->assertSee(app()->environment());
   }
@@ -138,6 +143,134 @@ class SystemSettingsTest extends TestCase
     $this->assertSame('UTC', SystemSetting::query()->where('key', SystemSettings::TIMEZONE)->value('value'));
     $this->assertSame('10', SystemSetting::query()->where('key', SystemSettings::ADMIN_LISTING_PER_PAGE)->value('value'));
     $this->assertSame('0', SystemSetting::query()->where('key', SystemSettings::VISITOR_CONSENT_BANNER_ENABLED)->value('value'));
+  }
+
+  #[Test]
+  public function saving_environment_mail_mode_does_not_require_smtp_fields(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+
+    $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
+      'project_name' => 'Project Atlas',
+      'project_tagline' => '',
+      'default_locale' => $locale->code,
+      'timezone' => 'UTC',
+      'admin_listing_per_page' => '15',
+      'visitor_consent_banner_enabled' => '1',
+      'cms_mail_mode' => 'env',
+      'cms_mail_mailer' => 'smtp',
+      'cms_mail_clear_password' => '0',
+    ]);
+
+    $response->assertRedirect(route('admin.system.settings.edit'));
+    $response->assertSessionHasNoErrors();
+
+    $this->assertSame(SystemSettings::CMS_MAIL_MODE_ENV, SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_MODE)->value('value'));
+    $this->assertNull(SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_HOST)->value('value'));
+  }
+
+  #[Test]
+  public function custom_smtp_mail_mode_validates_required_mail_fields(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+
+    $response = $this->actingAs($user)->from(route('admin.system.settings.edit'))->put(route('admin.system.settings.update'), [
+      'project_name' => 'Project Atlas',
+      'project_tagline' => '',
+      'default_locale' => $locale->code,
+      'timezone' => 'UTC',
+      'admin_listing_per_page' => '15',
+      'visitor_consent_banner_enabled' => '1',
+      'cms_mail_mode' => 'custom',
+      'cms_mail_mailer' => 'smtp',
+      'cms_mail_clear_password' => '0',
+    ]);
+
+    $response->assertRedirect(route('admin.system.settings.edit'));
+    $response->assertSessionHasErrors(['cms_mail_host', 'cms_mail_port', 'cms_mail_from_address']);
+  }
+
+  #[Test]
+  public function cms_mail_secret_is_preserved_when_password_field_is_blank(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PASSWORD], ['value' => 'stored-secret']);
+
+    $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
+      'project_name' => 'Project Atlas',
+      'project_tagline' => '',
+      'default_locale' => $locale->code,
+      'timezone' => 'UTC',
+      'admin_listing_per_page' => '15',
+      'visitor_consent_banner_enabled' => '1',
+      'cms_mail_mode' => 'custom',
+      'cms_mail_mailer' => 'smtp',
+      'cms_mail_host' => 'smtp.example.test',
+      'cms_mail_port' => '587',
+      'cms_mail_encryption' => 'tls',
+      'cms_mail_username' => 'mailer@example.test',
+      'cms_mail_password' => '',
+      'cms_mail_clear_password' => '0',
+      'cms_mail_from_address' => 'cms@example.test',
+      'cms_mail_from_name' => 'WebBlocks CMS',
+    ]);
+
+    $response->assertRedirect(route('admin.system.settings.edit'));
+    $this->assertSame('stored-secret', SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_PASSWORD)->value('value'));
+  }
+
+  #[Test]
+  public function stored_cms_mail_secret_can_be_cleared(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PASSWORD], ['value' => 'stored-secret']);
+
+    $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
+      'project_name' => 'Project Atlas',
+      'project_tagline' => '',
+      'default_locale' => $locale->code,
+      'timezone' => 'UTC',
+      'admin_listing_per_page' => '15',
+      'visitor_consent_banner_enabled' => '1',
+      'cms_mail_mode' => 'custom',
+      'cms_mail_mailer' => 'smtp',
+      'cms_mail_host' => 'smtp.example.test',
+      'cms_mail_port' => '587',
+      'cms_mail_encryption' => 'tls',
+      'cms_mail_username' => 'mailer@example.test',
+      'cms_mail_password' => '',
+      'cms_mail_clear_password' => '1',
+      'cms_mail_from_address' => 'cms@example.test',
+      'cms_mail_from_name' => 'WebBlocks CMS',
+    ]);
+
+    $response->assertRedirect(route('admin.system.settings.edit'));
+    $this->assertNull(SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_PASSWORD)->value('value'));
+  }
+
+  #[Test]
+  public function mail_diagnostics_never_expose_the_stored_secret(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MODE], ['value' => SystemSettings::CMS_MAIL_MODE_CUSTOM]);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MAILER], ['value' => 'smtp']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_HOST], ['value' => 'smtp.example.test']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PORT], ['value' => '587']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PASSWORD], ['value' => 'stored-secret']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_FROM_ADDRESS], ['value' => 'cms@example.test']);
+
+    $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
+
+    $response->assertOk();
+    $response->assertSee('Password configured: yes');
+    $response->assertDontSee('stored-secret');
   }
 
   #[Test]
