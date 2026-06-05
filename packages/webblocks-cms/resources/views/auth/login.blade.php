@@ -83,8 +83,8 @@
                                 <span>Remember this device</span>
                             </label>
 
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="wb-action-link">Forgot password</a>
+                            @if (Route::has('webblocks.auth.password.request'))
+                                <a href="{{ route('webblocks.auth.password.request') }}" class="wb-action-link">Forgot password</a>
                             @endif
                         </div>
 
@@ -92,9 +92,9 @@
                     </form>
                 </div>
 
-                @if (Route::has('register'))
+                @if (Route::has('webblocks.auth.register'))
                     <div class="wb-auth-footer">
-                        <p>Need an account? <a href="{{ route('register') }}">Create one</a>.</p>
+                        <p>Need an account? <a href="{{ route('webblocks.auth.register') }}">Create one</a>.</p>
                     </div>
                 @endif
             </div>

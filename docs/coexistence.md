@@ -65,10 +65,13 @@ Common coexistence routing should be designed around clear ownership:
 - `/admin` -> host product admin, when the host product owns one
 - `/webadmin` -> WebBlocks CMS admin, recommended for coexistence installs
 - `/webadmin/login` -> package-owned CMS login, when package CMS auth routes are active
+- `/webadmin/forgot-password` and `/webadmin/reset-password/{token}` -> package-owned CMS password reset screens, when package CMS auth routes are active
 - `/cms/...` -> WebBlocks CMS static assets
 - public site routes -> CMS public rendering, when CMS owns public content for the request
 
 Standalone CMS installs use `/webadmin` for CMS-owned admin routes, with future configurable prefix settings still a target direction.
+
+Package-owned CMS auth views must use CMS-prefixed auth routes for CMS-owned screens. If CMS registration is not provided by the package auth route set, CMS login should omit the Register link instead of pointing to a host-owned root `/register` route.
 
 ## Current Implementation Vs Target Direction
 

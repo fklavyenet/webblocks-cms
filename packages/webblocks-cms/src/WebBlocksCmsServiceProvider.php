@@ -118,6 +118,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const PACKAGE_VIEW_FILES = [
     'admin/runtime-status.blade.php',
+    'auth/forgot-password.blade.php',
+    'auth/login.blade.php',
+    'auth/reset-password.blade.php',
     'admin/partials/audit-actor.blade.php',
     'admin/partials/flash.blade.php',
     'admin/partials/listing-filters.blade.php',

@@ -77,9 +77,10 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertSee('name="password"', false);
     $response->assertSee('name="remember"', false);
     $response->assertSee('Forgot password');
-    $response->assertSee('href="'.route('password.request').'"', false);
-    $response->assertSee('Need an account?');
-    $response->assertSee('href="'.route('register').'"', false);
+    $response->assertSee('href="'.route('webblocks.auth.password.request').'"', false);
+    $response->assertDontSee('href="'.route('password.request').'"', false);
+    $response->assertDontSee('Need an account?');
+    $response->assertDontSee('href="'.route('register').'"', false);
     $response->assertSee('data-password-toggle', false);
     $this->assertFileExists(public_path('cms/css/guest.css'));
     $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
@@ -134,6 +135,8 @@ class PackageConsumerInstallAuthTest extends TestCase
 
     $this->assertStringContainsString('/webadmin/login', $routeFile);
     $this->assertStringContainsString('/webadmin/logout', $routeFile);
+    $this->assertStringContainsString('/webadmin/forgot-password', $routeFile);
+    $this->assertStringContainsString('/webadmin/reset-password/{token}', $routeFile);
     $this->assertStringNotContainsString('/cms/login', $routeFile);
     $this->assertStringNotContainsString('/cms/logout', $routeFile);
     $this->assertStringNotContainsString('/admin/login', $routeFile);
