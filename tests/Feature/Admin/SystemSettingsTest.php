@@ -51,7 +51,7 @@ class SystemSettingsTest extends TestCase
   }
 
   #[Test]
-  public function system_settings_page_uses_one_editable_form_with_one_action_row_and_read_only_information(): void
+  public function system_settings_page_uses_separate_cards_forms_and_read_only_runtime_information(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -61,24 +61,25 @@ class SystemSettingsTest extends TestCase
 
     $document = $this->htmlDocument($response->getContent());
     $xpath = new DOMXPath($document);
-    $form = $this->settingsForm($xpath);
+    $this->assertSame(4, $xpath->query('//form[contains(@action, "/webadmin/system/settings")]')->length);
+    $this->assertSame(4, $xpath->query('//button[normalize-space()="Save Changes"]')->length);
 
-    $this->assertSame(1, $xpath->query('//form[contains(@action, "/webadmin/system/settings")]')->length);
-    $this->assertSame(1, $this->queryElements($xpath, './/button[normalize-space()="Save Changes"]', $form)->length);
-    $this->assertSame(1, $this->queryElements($xpath, './/a[normalize-space()="Cancel"]', $form)->length);
-
-    foreach (['default_locale', 'timezone', 'admin_listing_per_page', 'project_name', 'project_tagline', 'cms_mail_mode', 'cms_mail_mailer', 'cms_mail_from_address'] as $fieldName) {
-      $this->assertSame(1, $this->queryElements($xpath, './/*[@name="'.$fieldName.'"]', $form)->length);
+    foreach (['General', 'Project Identity', 'Mail', 'Privacy', 'Runtime Information'] as $cardTitle) {
+      $this->settingsCard($xpath, $cardTitle);
     }
 
-    $this->assertSame(2, $this->queryElements($xpath, './/*[@name="visitor_consent_banner_enabled"]', $form)->length);
+    $runtimeCard = $this->settingsCard($xpath, 'Runtime Information');
+    $this->assertSame(0, $this->queryElements($xpath, './/form', $runtimeCard)->length);
+    $this->assertSame(0, $this->queryElements($xpath, './/button[normalize-space()="Save Changes"]', $runtimeCard)->length);
+    $this->assertSame(0, $this->queryElements($xpath, './/*[@name="version" or @name="environment"]', $runtimeCard)->length);
 
-    foreach (['project_name', 'project_tagline', 'default_locale', 'timezone', 'admin_listing_per_page'] as $fieldName) {
-      $this->assertSame(0, $this->queryElements($xpath, './/input[@type="hidden" and @name="'.$fieldName.'"]', $form)->length);
+    $mailCard = $this->settingsCard($xpath, 'Mail');
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_mode"]', $mailCard)->length);
+    $this->assertSame(0, $this->queryElements($xpath, './/*[@name="cms_mail_host" or @name="cms_mail_password" or @name="cms_mail_from_address"]', $mailCard)->length);
+
+    foreach (['general', 'project', 'mail', 'privacy'] as $section) {
+      $this->assertSame(1, $xpath->query('//input[@type="hidden" and @name="section" and @value="'.$section.'"]')->length);
     }
-
-    $this->assertSame(1, $this->queryElements($xpath, './/input[@type="hidden" and @name="visitor_consent_banner_enabled" and @value="0"]', $form)->length);
-    $this->assertSame(0, $this->queryElements($xpath, './/*[@name="version" or @name="environment"]', $form)->length);
 
     $response->assertSee('>General<', false);
     $response->assertSee('>Mail<', false);
@@ -90,99 +91,153 @@ class SystemSettingsTest extends TestCase
   }
 
   #[Test]
-  public function admin_can_save_minimal_system_settings(): void
+  public function mail_custom_fields_render_only_when_custom_mode_is_selected(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MODE], ['value' => SystemSettings::CMS_MAIL_MODE_CUSTOM]);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MAILER], ['value' => 'smtp']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_HOST], ['value' => 'smtp.example.test']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PORT], ['value' => '587']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_FROM_ADDRESS], ['value' => 'cms@example.test']);
+
+    $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
+
+    $response->assertOk();
+
+    $document = $this->htmlDocument($response->getContent());
+    $xpath = new DOMXPath($document);
+    $mailCard = $this->settingsCard($xpath, 'Mail');
+
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_host"]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_password"]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_from_address"]', $mailCard)->length);
+  }
+
+  #[Test]
+  public function general_save_updates_only_general_settings(): void
   {
     $user = User::factory()->superAdmin()->create();
     $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
 
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::PROJECT_NAME], ['value' => 'Existing Project']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::VISITOR_CONSENT_BANNER_ENABLED], ['value' => '0']);
+
     $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
-      'project_name' => 'WebBlocks UI Docs',
-      'project_tagline' => 'Install-specific admin context',
+      'section' => 'general',
       'default_locale' => $locale->code,
       'timezone' => 'Europe/Istanbul',
       'admin_listing_per_page' => '12',
-      'visitor_consent_banner_enabled' => '1',
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));
 
-    $this->assertSame('WebBlocks UI Docs', SystemSetting::query()->where('key', 'system.project_name')->value('value'));
-    $this->assertSame('Install-specific admin context', SystemSetting::query()->where('key', 'system.project_tagline')->value('value'));
     $this->assertSame($locale->code, SystemSetting::query()->where('key', 'system.default_locale')->value('value'));
     $this->assertSame('Europe/Istanbul', SystemSetting::query()->where('key', 'system.timezone')->value('value'));
     $this->assertSame('12', SystemSetting::query()->where('key', SystemSettings::ADMIN_LISTING_PER_PAGE)->value('value'));
-    $this->assertSame('1', SystemSetting::query()->where('key', 'system.visitor_consent_banner_enabled')->value('value'));
+    $this->assertSame('Existing Project', SystemSetting::query()->where('key', SystemSettings::PROJECT_NAME)->value('value'));
+    $this->assertSame('0', SystemSetting::query()->where('key', SystemSettings::VISITOR_CONSENT_BANNER_ENABLED)->value('value'));
 
     $followUp = $this->actingAs($user)->get(route('admin.system.settings.edit'));
     $followUp->assertSee('Europe/Istanbul');
-    $followUp->assertSee('WebBlocks UI Docs');
-    $followUp->assertSee('Install-specific admin context');
     $followUp->assertSee('value="12"', false);
   }
 
   #[Test]
-  public function admin_can_save_all_settings_together_with_cookie_banner_disabled(): void
+  public function project_identity_save_updates_only_project_identity_settings(): void
   {
     $user = User::factory()->superAdmin()->create();
     $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::DEFAULT_LOCALE], ['value' => $locale->code]);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::VISITOR_CONSENT_BANNER_ENABLED], ['value' => '1']);
 
     $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
+      'section' => 'project',
       'project_name' => 'Project Atlas',
-      'project_tagline' => 'Unified settings card',
-      'default_locale' => $locale->code,
-      'timezone' => 'UTC',
-      'admin_listing_per_page' => '10',
-      'visitor_consent_banner_enabled' => '0',
+      'project_tagline' => 'Focused settings cards',
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));
 
     $this->assertSame('Project Atlas', SystemSetting::query()->where('key', SystemSettings::PROJECT_NAME)->value('value'));
-    $this->assertSame('Unified settings card', SystemSetting::query()->where('key', SystemSettings::PROJECT_TAGLINE)->value('value'));
+    $this->assertSame('Focused settings cards', SystemSetting::query()->where('key', SystemSettings::PROJECT_TAGLINE)->value('value'));
     $this->assertSame($locale->code, SystemSetting::query()->where('key', SystemSettings::DEFAULT_LOCALE)->value('value'));
-    $this->assertSame('UTC', SystemSetting::query()->where('key', SystemSettings::TIMEZONE)->value('value'));
-    $this->assertSame('10', SystemSetting::query()->where('key', SystemSettings::ADMIN_LISTING_PER_PAGE)->value('value'));
+    $this->assertSame('1', SystemSetting::query()->where('key', SystemSettings::VISITOR_CONSENT_BANNER_ENABLED)->value('value'));
+  }
+
+  #[Test]
+  public function privacy_save_updates_only_privacy_settings(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::PROJECT_NAME], ['value' => 'Existing Project']);
+
+    $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
+      'section' => 'privacy',
+      'visitor_consent_banner_enabled' => '0',
+    ]);
+
+    $response->assertRedirect(route('admin.system.settings.edit'));
+
     $this->assertSame('0', SystemSetting::query()->where('key', SystemSettings::VISITOR_CONSENT_BANNER_ENABLED)->value('value'));
+    $this->assertSame('Existing Project', SystemSetting::query()->where('key', SystemSettings::PROJECT_NAME)->value('value'));
   }
 
   #[Test]
   public function saving_environment_mail_mode_does_not_require_smtp_fields(): void
   {
     $user = User::factory()->superAdmin()->create();
-    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::PROJECT_NAME], ['value' => 'Existing Project']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_HOST], ['value' => 'smtp.example.test']);
 
     $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
-      'project_name' => 'Project Atlas',
-      'project_tagline' => '',
-      'default_locale' => $locale->code,
-      'timezone' => 'UTC',
-      'admin_listing_per_page' => '15',
-      'visitor_consent_banner_enabled' => '1',
+      'section' => 'mail',
       'cms_mail_mode' => 'env',
-      'cms_mail_mailer' => 'smtp',
-      'cms_mail_clear_password' => '0',
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));
     $response->assertSessionHasNoErrors();
 
     $this->assertSame(SystemSettings::CMS_MAIL_MODE_ENV, SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_MODE)->value('value'));
-    $this->assertNull(SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_HOST)->value('value'));
+    $this->assertSame('smtp.example.test', SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_HOST)->value('value'));
+    $this->assertSame('Existing Project', SystemSetting::query()->where('key', SystemSettings::PROJECT_NAME)->value('value'));
+  }
+
+  #[Test]
+  public function mail_save_updates_only_mail_settings(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::PROJECT_NAME], ['value' => 'Existing Project']);
+
+    $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
+      'section' => 'mail',
+      'cms_mail_mode' => 'custom',
+      'cms_mail_mailer' => 'smtp',
+      'cms_mail_host' => 'smtp.example.test',
+      'cms_mail_port' => '587',
+      'cms_mail_encryption' => 'tls',
+      'cms_mail_username' => 'mailer@example.test',
+      'cms_mail_password' => 'stored-secret',
+      'cms_mail_clear_password' => '0',
+      'cms_mail_from_address' => 'cms@example.test',
+      'cms_mail_from_name' => 'WebBlocks CMS',
+      'cms_mail_reply_to_address' => 'reply@example.test',
+      'cms_mail_timeout' => '20',
+    ]);
+
+    $response->assertRedirect(route('admin.system.settings.edit'));
+    $this->assertSame(SystemSettings::CMS_MAIL_MODE_CUSTOM, SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_MODE)->value('value'));
+    $this->assertSame('smtp.example.test', SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_HOST)->value('value'));
+    $this->assertSame('stored-secret', SystemSetting::query()->where('key', SystemSettings::CMS_MAIL_PASSWORD)->value('value'));
+    $this->assertSame('Existing Project', SystemSetting::query()->where('key', SystemSettings::PROJECT_NAME)->value('value'));
   }
 
   #[Test]
   public function custom_smtp_mail_mode_validates_required_mail_fields(): void
   {
     $user = User::factory()->superAdmin()->create();
-    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
 
     $response = $this->actingAs($user)->from(route('admin.system.settings.edit'))->put(route('admin.system.settings.update'), [
-      'project_name' => 'Project Atlas',
-      'project_tagline' => '',
-      'default_locale' => $locale->code,
-      'timezone' => 'UTC',
-      'admin_listing_per_page' => '15',
-      'visitor_consent_banner_enabled' => '1',
+      'section' => 'mail',
       'cms_mail_mode' => 'custom',
       'cms_mail_mailer' => 'smtp',
       'cms_mail_clear_password' => '0',
@@ -196,17 +251,11 @@ class SystemSettingsTest extends TestCase
   public function cms_mail_secret_is_preserved_when_password_field_is_blank(): void
   {
     $user = User::factory()->superAdmin()->create();
-    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
 
     SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PASSWORD], ['value' => 'stored-secret']);
 
     $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
-      'project_name' => 'Project Atlas',
-      'project_tagline' => '',
-      'default_locale' => $locale->code,
-      'timezone' => 'UTC',
-      'admin_listing_per_page' => '15',
-      'visitor_consent_banner_enabled' => '1',
+      'section' => 'mail',
       'cms_mail_mode' => 'custom',
       'cms_mail_mailer' => 'smtp',
       'cms_mail_host' => 'smtp.example.test',
@@ -227,17 +276,11 @@ class SystemSettingsTest extends TestCase
   public function stored_cms_mail_secret_can_be_cleared(): void
   {
     $user = User::factory()->superAdmin()->create();
-    $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
 
     SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PASSWORD], ['value' => 'stored-secret']);
 
     $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
-      'project_name' => 'Project Atlas',
-      'project_tagline' => '',
-      'default_locale' => $locale->code,
-      'timezone' => 'UTC',
-      'admin_listing_per_page' => '15',
-      'visitor_consent_banner_enabled' => '1',
+      'section' => 'mail',
       'cms_mail_mode' => 'custom',
       'cms_mail_mailer' => 'smtp',
       'cms_mail_host' => 'smtp.example.test',
@@ -284,6 +327,7 @@ class SystemSettingsTest extends TestCase
     ]);
 
     $response = $this->actingAs($user)->from(route('admin.system.settings.edit'))->put(route('admin.system.settings.update'), [
+      'section' => 'general',
       'project_name' => str_repeat('a', 256),
       'project_tagline' => str_repeat('b', 256),
       'default_locale' => $disabledLocale->code,
@@ -292,7 +336,7 @@ class SystemSettingsTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));
-    $response->assertSessionHasErrors(['project_name', 'project_tagline', 'default_locale', 'timezone']);
+    $response->assertSessionHasErrors(['default_locale', 'timezone']);
   }
 
   #[Test]
@@ -302,12 +346,10 @@ class SystemSettingsTest extends TestCase
     $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
 
     $response = $this->actingAs($user)->from(route('admin.system.settings.edit'))->put(route('admin.system.settings.update'), [
-      'project_name' => 'WebBlocks UI Docs',
-      'project_tagline' => 'Install-specific admin context',
+      'section' => 'general',
       'default_locale' => $locale->code,
       'timezone' => 'UTC',
       'admin_listing_per_page' => '101',
-      'visitor_consent_banner_enabled' => '1',
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));
@@ -401,7 +443,7 @@ class SystemSettingsTest extends TestCase
 
     $document = $this->htmlDocument($response->getContent());
     $xpath = new DOMXPath($document);
-    $settingsCard = $this->settingsCard($xpath);
+    $settingsCard = $this->settingsCard($xpath, 'General');
 
     $footers = $this->queryElements($xpath, './/div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")]', $settingsCard);
     $this->assertSame(1, $footers->length);
@@ -427,9 +469,9 @@ class SystemSettingsTest extends TestCase
     return $document;
   }
 
-  private function settingsCard(DOMXPath $xpath): DOMElement
+  private function settingsCard(DOMXPath $xpath, string $title): DOMElement
   {
-    $settingsCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-header ")]/strong[normalize-space()="Settings"]]')->item(0);
+    $settingsCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-header ")]/strong[normalize-space()="'.$title.'"]]')->item(0);
 
     $this->assertInstanceOf(DOMElement::class, $settingsCard);
 
@@ -438,7 +480,7 @@ class SystemSettingsTest extends TestCase
 
   private function settingsForm(DOMXPath $xpath): DOMElement
   {
-    $form = $this->queryElements($xpath, './/form[contains(@action, "/webadmin/system/settings")]', $this->settingsCard($xpath))->item(0);
+    $form = $this->queryElements($xpath, './/form[contains(@action, "/webadmin/system/settings")]', $this->settingsCard($xpath, 'General'))->item(0);
 
     $this->assertInstanceOf(DOMElement::class, $form);
 

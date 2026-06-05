@@ -334,7 +334,7 @@ Search rebuild is non-destructive:
 
 ## System Settings
 
-System Settings is the compact install-level configuration screen.
+System Settings is the compact install-level configuration screen. Editable groups are split into separate focused cards with their own save actions; Runtime Information is read-only.
 
 It keeps:
 
@@ -360,7 +360,7 @@ Project Identity helps distinguish one CMS install from another in the admin top
 
 `Admin listing rows per page` defaults to `15`, accepts custom numeric values such as `10` or `12`, and changes only the default row count used by paginated admin listing screens. It does not affect public pagination.
 
-CMS Mail defaults to Laravel environment mail configuration. When the mode is changed to CMS custom settings, CMS-owned password reset emails and future CMS-owned system notifications use the database-backed CMS mail settings through a scoped CMS mailer. Custom CMS mail settings do not overwrite `.env`; disabling custom CMS mail returns CMS mail to the existing Laravel `MAIL_*` configuration. Stored mail secrets are never shown in plain text, blank secret updates keep the existing stored value, and diagnostics report sensitive fields only as configured or not configured. The current diagnostics panel is read-only; a super-admin test email action is planned as a follow-up.
+CMS Mail defaults to Laravel environment mail configuration. When the mode is changed to CMS custom settings, CMS-owned password reset emails and future CMS-owned system notifications use the database-backed CMS mail settings through a scoped CMS mailer. Custom mail fields are shown only when CMS custom mail mode is selected. Custom CMS mail settings do not overwrite `.env`; disabling custom CMS mail returns CMS mail to the existing Laravel `MAIL_*` configuration. Stored mail secrets are never shown in plain text, blank secret updates keep the existing stored value, and diagnostics report sensitive fields only as configured or not configured. The current diagnostics panel is read-only; a super-admin test email action is planned as a follow-up.
 
 ## Site Clone
 

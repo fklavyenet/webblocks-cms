@@ -18,6 +18,7 @@ class SystemSettingsRequest extends FormRequest
   protected function prepareForValidation(): void
   {
     $this->merge([
+      'section' => trim((string) $this->input('section')),
       'project_name' => trim((string) $this->input('project_name')),
       'project_tagline' => trim((string) $this->input('project_tagline')),
       'default_locale' => Locale::normalizeCode($this->input('default_locale')),
@@ -43,46 +44,80 @@ class SystemSettingsRequest extends FormRequest
   {
     $customSmtpRequired = Rule::requiredIf(fn (): bool => $this->input('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_CUSTOM && $this->input('cms_mail_mailer') === 'smtp');
 
-    return [
-      'project_name' => ['nullable', 'string', 'max:255'],
-      'project_tagline' => ['nullable', 'string', 'max:255'],
-      'default_locale' => [
-        'required',
-        'string',
-        Rule::exists(Locale::class, 'code')->where(fn ($query) => $query->where('is_enabled', true)),
-      ],
-      'timezone' => ['required', 'string', Rule::in(array_keys(app(SystemSettings::class)->timezoneOptions()))],
-      'admin_listing_per_page' => [
-        'required',
-        'integer',
-        'min:'.SystemSettings::ADMIN_LISTING_PER_PAGE_MIN,
-        'max:'.SystemSettings::ADMIN_LISTING_PER_PAGE_MAX,
-      ],
-      'visitor_consent_banner_enabled' => ['required', 'boolean'],
-      'cms_mail_mode' => ['required', Rule::in([SystemSettings::CMS_MAIL_MODE_ENV, SystemSettings::CMS_MAIL_MODE_CUSTOM])],
-      'cms_mail_mailer' => ['required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, Rule::in(CmsMailSettingsResolver::SUPPORTED_MAILERS)],
-      'cms_mail_host' => ['nullable', $customSmtpRequired, 'string', 'max:255'],
-      'cms_mail_port' => ['nullable', $customSmtpRequired, 'integer', 'min:1', 'max:65535'],
-      'cms_mail_encryption' => ['nullable', Rule::in(['', 'tls', 'ssl'])],
-      'cms_mail_username' => ['nullable', 'string', 'max:255'],
-      'cms_mail_password' => ['nullable', 'string', 'max:1024'],
-      'cms_mail_clear_password' => ['required', 'boolean'],
-      'cms_mail_from_address' => ['nullable', 'required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, 'email', 'max:255'],
-      'cms_mail_from_name' => ['nullable', 'string', 'max:255'],
-      'cms_mail_reply_to_address' => ['nullable', 'email', 'max:255'],
-      'cms_mail_timeout' => ['nullable', 'integer', 'min:1', 'max:300'],
+    $sectionRules = [
+      'section' => ['required', Rule::in(['general', 'project', 'mail', 'privacy'])],
     ];
+
+    return match ($this->input('section')) {
+      'general' => $sectionRules + [
+        'default_locale' => [
+          'required',
+          'string',
+          Rule::exists(Locale::class, 'code')->where(fn ($query) => $query->where('is_enabled', true)),
+        ],
+        'timezone' => ['required', 'string', Rule::in(array_keys(app(SystemSettings::class)->timezoneOptions()))],
+        'admin_listing_per_page' => [
+          'required',
+          'integer',
+          'min:'.SystemSettings::ADMIN_LISTING_PER_PAGE_MIN,
+          'max:'.SystemSettings::ADMIN_LISTING_PER_PAGE_MAX,
+        ],
+      ],
+      'project' => $sectionRules + [
+        'project_name' => ['nullable', 'string', 'max:255'],
+        'project_tagline' => ['nullable', 'string', 'max:255'],
+      ],
+      'mail' => $sectionRules + [
+        'cms_mail_mode' => ['required', Rule::in([SystemSettings::CMS_MAIL_MODE_ENV, SystemSettings::CMS_MAIL_MODE_CUSTOM])],
+        'cms_mail_mailer' => ['required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, Rule::in(CmsMailSettingsResolver::SUPPORTED_MAILERS)],
+        'cms_mail_host' => ['nullable', $customSmtpRequired, 'string', 'max:255'],
+        'cms_mail_port' => ['nullable', $customSmtpRequired, 'integer', 'min:1', 'max:65535'],
+        'cms_mail_encryption' => ['nullable', Rule::in(['', 'tls', 'ssl'])],
+        'cms_mail_username' => ['nullable', 'string', 'max:255'],
+        'cms_mail_password' => ['nullable', 'string', 'max:1024'],
+        'cms_mail_clear_password' => ['required', 'boolean'],
+        'cms_mail_from_address' => ['nullable', 'required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, 'email', 'max:255'],
+        'cms_mail_from_name' => ['nullable', 'string', 'max:255'],
+        'cms_mail_reply_to_address' => ['nullable', 'email', 'max:255'],
+        'cms_mail_timeout' => ['nullable', 'integer', 'min:1', 'max:300'],
+      ],
+      'privacy' => $sectionRules + [
+        'visitor_consent_banner_enabled' => ['required', 'boolean'],
+      ],
+      default => $sectionRules,
+    };
   }
 
   public function settingsPayload(): array
   {
+    if ($this->validated('section') === 'general') {
+      return [
+        SystemSettings::DEFAULT_LOCALE => $this->validated('default_locale'),
+        SystemSettings::TIMEZONE => $this->validated('timezone'),
+        SystemSettings::ADMIN_LISTING_PER_PAGE => $this->validated('admin_listing_per_page'),
+      ];
+    }
+
+    if ($this->validated('section') === 'project') {
+      return [
+        SystemSettings::PROJECT_NAME => $this->validated('project_name'),
+        SystemSettings::PROJECT_TAGLINE => $this->validated('project_tagline'),
+      ];
+    }
+
+    if ($this->validated('section') === 'privacy') {
+      return [
+        SystemSettings::VISITOR_CONSENT_BANNER_ENABLED => $this->validated('visitor_consent_banner_enabled'),
+      ];
+    }
+
+    if ($this->validated('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_ENV) {
+      return [
+        SystemSettings::CMS_MAIL_MODE => SystemSettings::CMS_MAIL_MODE_ENV,
+      ];
+    }
+
     $payload = [
-      SystemSettings::PROJECT_NAME => $this->validated('project_name'),
-      SystemSettings::PROJECT_TAGLINE => $this->validated('project_tagline'),
-      SystemSettings::DEFAULT_LOCALE => $this->validated('default_locale'),
-      SystemSettings::TIMEZONE => $this->validated('timezone'),
-      SystemSettings::ADMIN_LISTING_PER_PAGE => $this->validated('admin_listing_per_page'),
-      SystemSettings::VISITOR_CONSENT_BANNER_ENABLED => $this->validated('visitor_consent_banner_enabled'),
       SystemSettings::CMS_MAIL_MODE => $this->validated('cms_mail_mode'),
       SystemSettings::CMS_MAIL_MAILER => $this->validated('cms_mail_mailer'),
       SystemSettings::CMS_MAIL_HOST => $this->validated('cms_mail_host'),

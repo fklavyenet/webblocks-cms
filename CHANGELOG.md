@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.119
+
+- Refine `System -> Settings` into separate focused cards with section-specific Save Changes actions for General, Project Identity, Mail, and Privacy.
+- Keep Runtime Information as a read-only card with no save action.
+- Hide CMS custom mail fields while environment mail mode is active, leaving diagnostics visible and secret-safe in both modes.
+
 ## 1.32.118
 
 - Add CMS Mail settings to `System -> Settings` so CMS-owned password reset mail can use database-backed custom mail settings without writing to `.env`.
