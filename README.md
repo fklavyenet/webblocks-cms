@@ -62,7 +62,7 @@ php artisan webblocks:install --name="Admin User" --email="admin@example.com" --
 - removes the untouched fresh Laravel welcome route from `routes/web.php` when it is safe, with a timestamped backup first, so CMS public routes can serve `/`
 - safely patches `App\Models\User` with a package auth trait and creates a backup first
 - runs the package fresh-install CMS schema for clean consumers
-- creates required Laravel support tables for database-backed session and cache drivers when they are configured, without running the host application's normal migrations
+- creates required Laravel support tables for CMS password reset tokens and database-backed session/cache drivers when they are configured, without running the host application's normal migrations
 - prepares the `site-transfers` filesystem disk storage used by Export / Import packages
 - prepares the `backups` filesystem disk storage used by Backup / Restore
 - installs package CMS assets into `public/cms`

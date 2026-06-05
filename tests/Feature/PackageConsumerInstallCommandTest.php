@@ -401,6 +401,7 @@ PHP;
     ])->assertExitCode(0);
 
     $this->assertTrue(Schema::hasTable('users'));
+    $this->assertTrue(Schema::hasTable('password_reset_tokens'));
     $this->assertTrue(Schema::hasTable('sessions'));
     $this->assertTrue(Schema::hasTable('cache'));
     $this->assertTrue(Schema::hasTable('cache_locks'));
@@ -441,6 +442,7 @@ PHP;
     ])->assertExitCode(0);
 
     $this->assertTrue(Schema::hasTable('sessions'));
+    $this->assertTrue(Schema::hasTable('password_reset_tokens'));
     $this->assertTrue(Schema::hasTable('cache'));
     $this->assertTrue(Schema::hasTable('cache_locks'));
     $this->assertSame(1, User::query()->where('role', 'super_admin')->count());

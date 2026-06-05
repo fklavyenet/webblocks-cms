@@ -9,8 +9,22 @@ class LaravelSupportTableInstaller
 {
   public function ensureRequiredTables(): void
   {
+    $this->ensurePasswordResetTokensTable();
     $this->ensureSessionTable();
     $this->ensureCacheTables();
+  }
+
+  private function ensurePasswordResetTokensTable(): void
+  {
+    if (Schema::hasTable('password_reset_tokens')) {
+      return;
+    }
+
+    Schema::create('password_reset_tokens', function (Blueprint $table): void {
+      $table->string('email')->primary();
+      $table->string('token');
+      $table->timestamp('created_at')->nullable();
+    });
   }
 
   private function ensureSessionTable(): void

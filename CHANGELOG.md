@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.125
+
+- Ensure package installs and System Updates create Laravel's `password_reset_tokens` table without running host application migrations.
+- Fix existing installs where CMS test email succeeds but `/webadmin/forgot-password` cannot create a password reset token because the host starter migration stayed pending.
+
 ## 1.32.124
 
 - Fix CMS-owned password reset mail so host/root password reset notification callbacks cannot override the `/webadmin/reset-password/{token}` reset link or mail rendering.
@@ -59,10 +64,3 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Fix CMS-owned auth screens so password reset links and forms use `/webadmin` auth routes instead of stale root Laravel auth URLs.
 - Hide the Register link from the package-owned CMS login screen when no CMS-owned registration route is enabled.
-
-## 1.32.115
-
-- Remove the local root `layouts.admin` compatibility wrapper so plugin and package admin views must use `webblocks-cms::layouts.admin`, matching package-consumer installs.
-- Pin CMS WebBlocks UI consumption and the default icon manifest source to the newest published `v2.7.12` release.
-- Clean the CMS product brand folder down to the canonical logo, mark, favicon, touch icon, and app icon set, with matching root and package assets.
-- Regenerate CMS product PNG brand assets so the actual logo mark is visible instead of flat-color output.

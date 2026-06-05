@@ -66,7 +66,7 @@ What `webblocks:install` does:
 - fails clearly if `User.php` is not a recognizable `App\Models\User extends Authenticatable` class
 - runs the package fresh-install migration path for clean consumer installs
 - skips rerunning that fresh schema when CMS tables already exist
-- creates database-backed Laravel support tables only when the active host configuration requires them, currently covering `sessions`, `cache`, and `cache_locks`
+- creates Laravel support tables without running host application migrations, currently covering CMS password reset tokens plus `sessions`, `cache`, and `cache_locks` when those database-backed drivers are configured
 - does not run the host application's normal Laravel migration set as part of package install, so it avoids conflicts with the already-created CMS-compatible `users` table
 - prepares the `backups` filesystem disk root used by Backup / Restore
 - installs package-owned CMS assets into `public/cms`
