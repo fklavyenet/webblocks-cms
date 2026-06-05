@@ -273,6 +273,38 @@ class UserManagementTest extends TestCase
   }
 
   #[Test]
+  public function users_create_password_fields_use_webblocks_ui_password_toggle_pattern(): void
+  {
+    $admin = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($admin)->get(route('admin.users.create'));
+
+    $response->assertOk();
+    $response->assertSee('data-wb-target="#password"', false);
+    $response->assertSee('data-wb-target="#password_confirmation"', false);
+    $response->assertSee('wb-input-group', false);
+    $response->assertSee('wb-input-addon-btn', false);
+    $response->assertSee('wb-icon-eye', false);
+    $this->assertSame(2, substr_count($response->getContent(), 'data-wb-password-toggle'));
+  }
+
+  #[Test]
+  public function users_edit_password_fields_use_webblocks_ui_password_toggle_pattern(): void
+  {
+    $admin = User::factory()->superAdmin()->create();
+    $managedUser = User::factory()->editor()->create();
+
+    $response = $this->actingAs($admin)->get(route('admin.users.edit', $managedUser));
+
+    $response->assertOk();
+    $response->assertSee('New Password');
+    $response->assertSee('Confirm New Password');
+    $response->assertSee('data-wb-target="#password"', false);
+    $response->assertSee('data-wb-target="#password_confirmation"', false);
+    $this->assertSame(2, substr_count($response->getContent(), 'data-wb-password-toggle'));
+  }
+
+  #[Test]
   public function super_admin_can_edit_user_role_and_site_assignments(): void
   {
     $admin = User::factory()->superAdmin()->create();

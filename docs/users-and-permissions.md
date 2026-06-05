@@ -8,6 +8,10 @@ These users are for managing the CMS itself. They are not public membership acco
 
 Because users affect the whole install, the `Users` screen lives under the admin `System` navigation.
 
+Each signed-in CMS admin user manages their own account details from `/webadmin/profile`. The Profile page is separate from Users management and only exposes the current user's name, email, current-password-confirmed password change form, and Save Changes actions.
+
+Password fields on Profile and Users screens use the shipped WebBlocks UI Password Toggle pattern (`data-wb-password-toggle` with `data-wb-target`) from the pinned WebBlocks UI runtime. CMS core does not add custom password-toggle CSS or JavaScript.
+
 ## Roles
 
 ### `super_admin`
@@ -25,6 +29,8 @@ This role can access:
 - all site content across the install
 
 Only `super_admin` users can open `/webadmin/users` and manage other CMS accounts.
+
+Users management remains install-level administration. It can manage roles, assigned sites, active or inactive state, delete protection, and admin-set password resets without requiring the target user's current password. Those system-management fields are not available from the Profile page.
 
 ### `site_admin`
 

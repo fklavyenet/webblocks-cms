@@ -52,7 +52,7 @@ class PackageRuntimeSlicesTest extends TestCase
     $this->assertSame(ltrim(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH, '/'), $route->uri());
     $this->assertStringContainsString('WebBlocks CMS package diagnostic view', $html);
     $this->assertStringContainsString('View namespace: webblocks-cms', $html);
-    $this->assertStringContainsString('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, profile, migrations, root public/cms runtime asset URLs, and compatibility wrappers.', $html);
+    $this->assertStringContainsString('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, migrations, root public/cms runtime asset URLs, and compatibility wrappers.', $html);
   }
 
   #[Test]

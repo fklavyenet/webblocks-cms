@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as PackageContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController as PackageDashboardController;
+use WebBlocks\Cms\Http\Controllers\Admin\ProfileController as PackageProfileController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController as PackageSlotTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController as PackageSystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController as PackageSystemSettingsController;
@@ -33,8 +34,9 @@ class AdminDashboardRouteTest extends TestCase
     $this->assertRouteUsesPackageController('admin.slot-types.index', PackageSlotTypeController::class);
     $this->assertRouteUsesPackageController('admin.system.search.index', PackageSystemSearchController::class);
     $this->assertRouteUsesPackageController('admin.system.settings.edit', PackageSystemSettingsController::class);
+    $this->assertRouteUsesPackageController('admin.profile.edit', PackageProfileController::class);
 
-    foreach (['admin.dashboard', 'admin.contact-messages.index', 'admin.reports.visitors.index', 'admin.slot-types.index', 'admin.system.search.index', 'admin.system.settings.edit'] as $routeName) {
+    foreach (['admin.dashboard', 'admin.contact-messages.index', 'admin.reports.visitors.index', 'admin.slot-types.index', 'admin.system.search.index', 'admin.system.settings.edit', 'admin.profile.edit'] as $routeName) {
       $middleware = app('router')->getRoutes()->getByName($routeName)?->gatherMiddleware() ?? [];
 
       $this->assertContains('web', $middleware);
@@ -53,6 +55,7 @@ class AdminDashboardRouteTest extends TestCase
     $this->assertTrue(view()->exists('webblocks-cms::admin.slot-types.index'));
     $this->assertTrue(view()->exists('webblocks-cms::admin.system.search'));
     $this->assertTrue(view()->exists('webblocks-cms::admin.system.settings'));
+    $this->assertTrue(view()->exists('webblocks-cms::admin.profile.edit'));
     $this->assertFalse(view()->exists('layouts.admin'));
     $this->assertStringContainsString('webblocks-cms::admin.dashboard', file_get_contents(resource_path('views/admin/dashboard.blade.php')));
     $this->assertStringContainsString('webblocks-cms::admin.contact-messages.index', file_get_contents(resource_path('views/admin/contact-messages/index.blade.php')));

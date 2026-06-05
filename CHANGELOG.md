@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.126
+
+- Add a dedicated CMS Profile page for current-user account details and password changes.
+- Keep Users management as install-level user administration for roles, site assignments, active state, and admin password resets.
+- Add password visibility toggles to Profile and Users password fields using the existing WebBlocks UI Password Toggle pattern.
+
 ## 1.32.125
 
 - Ensure package installs and System Updates create Laravel's `password_reset_tokens` table without running host application migrations.

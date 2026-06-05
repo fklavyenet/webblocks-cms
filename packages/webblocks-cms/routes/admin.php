@@ -22,6 +22,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageSiteMoveController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginCatalogController;
+use WebBlocks\Cms\Http\Controllers\Admin\ProfileController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotRevisionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteController;
@@ -79,6 +80,9 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
 
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::match(['put', 'patch'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
     Route::post('/pages/import-json', [PageImportController::class, 'store'])->name('pages.import.store');
     Route::delete('/pages/bulk', [PageController::class, 'bulkDestroy'])->name('pages.bulk-destroy');

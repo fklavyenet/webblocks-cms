@@ -31,15 +31,27 @@
 
                             <div class="wb-stack-2 wb-field">
                                 <label for="password">{{ $managedUser->exists ? 'New Password' : 'Password' }}</label>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    class="wb-input @if ($errors->has('password')) wb-border-danger @endif"
-                                    type="password"
-                                    autocomplete="new-password"
-                                    placeholder="{{ $managedUser->exists ? 'Leave blank to keep current password' : 'Password' }}"
-                                    @required(! $managedUser->exists)
-                                >
+                                <div class="wb-input-group">
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        class="wb-input @if ($errors->has('password')) wb-border-danger @endif"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        placeholder="{{ $managedUser->exists ? 'Leave blank to keep current password' : 'Password' }}"
+                                        @required(! $managedUser->exists)
+                                    >
+                                    <button
+                                        class="wb-btn wb-btn-secondary wb-input-addon-btn wb-btn-icon"
+                                        type="button"
+                                        data-wb-password-toggle
+                                        data-wb-target="#password"
+                                        aria-label="Show password"
+                                        aria-pressed="false"
+                                    >
+                                        <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
 
                                 @error('password')
                                     <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
@@ -52,15 +64,27 @@
 
                             <div class="wb-stack-2 wb-field">
                                 <label for="password_confirmation">{{ $managedUser->exists ? 'Confirm New Password' : 'Confirm Password' }}</label>
-                                <input
-                                    id="password_confirmation"
-                                    name="password_confirmation"
-                                    class="wb-input @if ($errors->has('password_confirmation')) wb-border-danger @endif"
-                                    type="password"
-                                    autocomplete="new-password"
-                                    placeholder="{{ $managedUser->exists ? 'Confirm new password' : 'Confirm password' }}"
-                                    @required(! $managedUser->exists)
-                                >
+                                <div class="wb-input-group">
+                                    <input
+                                        id="password_confirmation"
+                                        name="password_confirmation"
+                                        class="wb-input @if ($errors->has('password_confirmation')) wb-border-danger @endif"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        placeholder="{{ $managedUser->exists ? 'Confirm new password' : 'Confirm password' }}"
+                                        @required(! $managedUser->exists)
+                                    >
+                                    <button
+                                        class="wb-btn wb-btn-secondary wb-input-addon-btn wb-btn-icon"
+                                        type="button"
+                                        data-wb-password-toggle
+                                        data-wb-target="#password_confirmation"
+                                        aria-label="Show password"
+                                        aria-pressed="false"
+                                    >
+                                        <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
 
                                 @error('password_confirmation')
                                     <div class="wb-text-sm wb-text-danger">{{ $message }}</div>

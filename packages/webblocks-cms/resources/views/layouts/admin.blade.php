@@ -257,8 +257,8 @@
                             </button>
 
                             <div class="wb-dropdown-menu" id="admin-user-menu">
-                                @if (Route::has('profile.edit'))
-                                    <a href="{{ route('profile.edit') }}" class="wb-dropdown-item">Profile</a>
+                                @if (Route::has('admin.profile.edit'))
+                                    <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item">Profile</a>
                                     <hr class="wb-dropdown-divider">
                                 @endif
                                 <form method="POST" action="{{ route('logout') }}">

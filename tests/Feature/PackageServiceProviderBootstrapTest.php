@@ -390,7 +390,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertStringContainsString('WebBlocks CMS package diagnostic view', $rendered);
     $this->assertStringContainsString('View namespace: webblocks-cms', $rendered);
     $this->assertStringContainsString('Package base path:', $rendered);
-    $this->assertStringContainsString('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, profile, migrations, root public/cms runtime asset URLs, and compatibility wrappers.', $rendered);
+    $this->assertStringContainsString('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, migrations, root public/cms runtime asset URLs, and compatibility wrappers.', $rendered);
     $this->assertSame(resource_path('views/welcome.blade.php'), $welcomeViewPath);
   }
 
