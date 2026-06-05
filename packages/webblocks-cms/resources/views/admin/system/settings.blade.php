@@ -218,17 +218,29 @@
                             <strong id="settings-mail-diagnostics-heading">Diagnostics</strong>
                         </div>
 
-                        <div class="wb-grid wb-grid-3 wb-gap-3">
-                            @foreach ($mailDiagnosticItems as $item)
-                                <div class="wb-stack wb-gap-1" data-wb-mail-diagnostic-item>
-                                    <span class="wb-text-sm wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</span>
-                                    @if (($item['mailto'] ?? false) && $item['value'] !== 'Not configured')
-                                        <a href="mailto:{{ $item['value'] }}" data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">{{ $item['value'] }}</a>
-                                    @else
-                                        <strong data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">{{ $item['value'] }}</strong>
-                                    @endif
-                                </div>
-                            @endforeach
+                        <div class="wb-table-wrap" data-wb-mail-diagnostics-table>
+                            <table class="wb-table wb-table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Setting</th>
+                                        <th scope="col">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($mailDiagnosticItems as $item)
+                                        <tr data-wb-mail-diagnostic-item>
+                                            <th scope="row" class="wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</th>
+                                            <td data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">
+                                                @if (($item['mailto'] ?? false) && $item['value'] !== 'Not configured')
+                                                    <a href="mailto:{{ $item['value'] }}">{{ $item['value'] }}</a>
+                                                @else
+                                                    {{ $item['value'] }}
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
 
                         <div class="wb-text-sm wb-text-muted">Secret values are never displayed. They are reported only as configured or not configured.</div>

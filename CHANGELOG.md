@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.121
+
+- Change Mail Diagnostics in `System -> Settings` from a grid panel to a compact read-only table for cleaner scanning.
+- Keep mail diagnostic secrets hidden by continuing to show sensitive fields only as configured or not configured.
+
 ## 1.32.120
 
 - Refine Mail Diagnostics in `System -> Settings` into a compact read-only key/value grid so mail status is easier to scan.

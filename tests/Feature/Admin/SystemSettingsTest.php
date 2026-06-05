@@ -77,9 +77,13 @@ class SystemSettingsTest extends TestCase
     $mailCard = $this->settingsCard($xpath, 'Mail');
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_mode"]', $mailCard)->length);
     $this->assertSame(0, $this->queryElements($xpath, './/*[@name="cms_mail_host" or @name="cms_mail_password" or @name="cms_mail_from_address"]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostics]//table[contains(concat(" ", normalize-space(@class), " "), " wb-table ")]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostics]//th[normalize-space()="Setting"]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostics]//th[normalize-space()="Value"]', $mailCard)->length);
     $this->assertSame(12, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostic-item]', $mailCard)->length);
-    $this->assertSame(12, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostic-label]', $mailCard)->length);
-    $this->assertSame(12, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostic-value]', $mailCard)->length);
+    $this->assertSame(12, $this->queryElements($xpath, './/tr[@data-wb-mail-diagnostic-item]/th[@data-wb-mail-diagnostic-label]', $mailCard)->length);
+    $this->assertSame(12, $this->queryElements($xpath, './/tr[@data-wb-mail-diagnostic-item]/td[@data-wb-mail-diagnostic-value]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/tr[@data-wb-mail-diagnostic-item][th[normalize-space()="Password configured"] and td[normalize-space()="no"]]', $mailCard)->length);
     $this->assertSame(0, $this->queryElements($xpath, './/div[contains(concat(" ", normalize-space(@class), " "), " wb-settings-row ")][.//*[@data-wb-mail-diagnostics]]', $mailCard)->length);
 
     foreach (['general', 'project', 'mail', 'privacy'] as $section) {
@@ -117,7 +121,7 @@ class SystemSettingsTest extends TestCase
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_host"]', $mailCard)->length);
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_password"]', $mailCard)->length);
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_from_address"]', $mailCard)->length);
-    $this->assertSame(1, $this->queryElements($xpath, './/a[@href="mailto:cms@example.test" and @data-wb-mail-diagnostic-value]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/tr[@data-wb-mail-diagnostic-item][th[normalize-space()="From address"]]//a[@href="mailto:cms@example.test" and normalize-space()="cms@example.test"]', $mailCard)->length);
   }
 
   #[Test]
