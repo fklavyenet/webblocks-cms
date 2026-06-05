@@ -98,12 +98,12 @@
         </div>
 
         <div class="wb-card">
+            <div class="wb-card-header"><strong>Mail</strong></div>
+
             <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="section" value="mail">
-
-                <div class="wb-card-header"><strong>Mail</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-4">
                     <div class="wb-text-sm wb-text-muted">
@@ -195,63 +195,88 @@
                             </div>
                         </div>
                     @endif
-
-                    @php
-                        $mailDiagnosticItems = [
-                            ['label' => 'Mode', 'value' => $mailDiagnostics['active_mode']],
-                            ['label' => 'Mailer', 'value' => $mailDiagnostics['mailer']],
-                            ['label' => 'Host', 'value' => $mailDiagnostics['host'] ?: 'Not configured'],
-                            ['label' => 'Port', 'value' => $mailDiagnostics['port'] ?: 'Not configured'],
-                            ['label' => 'Encryption', 'value' => $mailDiagnostics['encryption'] ?: 'None'],
-                            ['label' => 'Username configured', 'value' => $mailDiagnostics['username_configured'] ? 'yes' : 'no'],
-                            ['label' => 'Password configured', 'value' => $mailDiagnostics['password_configured'] ? 'yes' : 'no'],
-                            ['label' => 'From address', 'value' => $mailDiagnostics['from_address'] ?: 'Not configured', 'mailto' => filled($mailDiagnostics['from_address'])],
-                            ['label' => 'From name', 'value' => $mailDiagnostics['from_name'] ?: 'Not configured'],
-                            ['label' => 'Config cached', 'value' => $mailDiagnostics['config_cached'] ? 'yes' : 'no'],
-                            ['label' => 'Environment', 'value' => $mailDiagnostics['environment']],
-                            ['label' => 'Status', 'value' => $mailDiagnostics['status']],
-                        ];
-                    @endphp
-
-                    <section class="wb-stack wb-gap-3" aria-labelledby="settings-mail-diagnostics-heading" data-wb-mail-diagnostics>
-                        <div>
-                            <strong id="settings-mail-diagnostics-heading">Diagnostics</strong>
-                        </div>
-
-                        <div class="wb-table-wrap" data-wb-mail-diagnostics-table>
-                            <table class="wb-table wb-table-striped">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Setting</th>
-                                        <th scope="col">Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($mailDiagnosticItems as $item)
-                                        <tr data-wb-mail-diagnostic-item>
-                                            <th scope="row" class="wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</th>
-                                            <td data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">
-                                                @if (($item['mailto'] ?? false) && $item['value'] !== 'Not configured')
-                                                    <a href="mailto:{{ $item['value'] }}">{{ $item['value'] }}</a>
-                                                @else
-                                                    {{ $item['value'] }}
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="wb-text-sm wb-text-muted">Secret values are never displayed. They are reported only as configured or not configured.</div>
-                        <div class="wb-text-sm wb-text-muted">Test email sending is planned as a follow-up action for this diagnostics panel.</div>
-                    </section>
                 </div>
 
                 <div class="wb-card-footer">
                     <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
                 </div>
             </form>
+
+            @php
+                $mailDiagnosticItems = [
+                    ['label' => 'Mode', 'value' => $mailDiagnostics['active_mode']],
+                    ['label' => 'Mailer', 'value' => $mailDiagnostics['mailer']],
+                    ['label' => 'Host', 'value' => $mailDiagnostics['host'] ?: 'Not configured'],
+                    ['label' => 'Port', 'value' => $mailDiagnostics['port'] ?: 'Not configured'],
+                    ['label' => 'Encryption', 'value' => $mailDiagnostics['encryption'] ?: 'None'],
+                    ['label' => 'Username configured', 'value' => $mailDiagnostics['username_configured'] ? 'yes' : 'no'],
+                    ['label' => 'Password configured', 'value' => $mailDiagnostics['password_configured'] ? 'yes' : 'no'],
+                    ['label' => 'From address', 'value' => $mailDiagnostics['from_address'] ?: 'Not configured', 'mailto' => filled($mailDiagnostics['from_address'])],
+                    ['label' => 'From name', 'value' => $mailDiagnostics['from_name'] ?: 'Not configured'],
+                    ['label' => 'Config cached', 'value' => $mailDiagnostics['config_cached'] ? 'yes' : 'no'],
+                    ['label' => 'Environment', 'value' => $mailDiagnostics['environment']],
+                    ['label' => 'Status', 'value' => $mailDiagnostics['status']],
+                ];
+            @endphp
+
+            <div class="wb-card-body wb-stack wb-gap-4">
+                <section class="wb-stack wb-gap-3" aria-labelledby="settings-mail-diagnostics-heading" data-wb-mail-diagnostics>
+                    <div>
+                        <strong id="settings-mail-diagnostics-heading">Diagnostics</strong>
+                    </div>
+
+                    <div class="wb-table-wrap" data-wb-mail-diagnostics-table>
+                        <table class="wb-table wb-table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Setting</th>
+                                    <th scope="col">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($mailDiagnosticItems as $item)
+                                    <tr data-wb-mail-diagnostic-item>
+                                        <th scope="row" class="wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</th>
+                                        <td data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">
+                                            @if (($item['mailto'] ?? false) && $item['value'] !== 'Not configured')
+                                                <a href="mailto:{{ $item['value'] }}">{{ $item['value'] }}</a>
+                                            @else
+                                                {{ $item['value'] }}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="wb-text-sm wb-text-muted">Secret values are never displayed. They are reported only as configured or not configured.</div>
+                </section>
+
+                <section class="wb-stack wb-gap-3" aria-labelledby="settings-mail-test-heading" data-wb-mail-test>
+                    <div>
+                        <strong id="settings-mail-test-heading">Send test email</strong>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.system.settings.mail.test') }}" class="wb-stack wb-gap-3">
+                        @csrf
+
+                        <div class="wb-grid wb-grid-2 wb-gap-4">
+                            <div class="wb-stack-2 wb-field">
+                                <label for="settings_mail_test_recipient_email">Recipient email</label>
+                                <input id="settings_mail_test_recipient_email" name="recipient_email" type="email" class="wb-input" maxlength="255" required value="{{ old('recipient_email') }}" @error('recipient_email') aria-invalid="true" aria-describedby="settings_mail_test_recipient_email_error" @enderror>
+                                @error('recipient_email')
+                                    <div id="settings_mail_test_recipient_email_error" class="wb-field-error">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="wb-cluster wb-cluster-2">
+                            <button type="submit" class="wb-button wb-button-secondary">Send Test Email</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
         </div>
 
         <div class="wb-card">

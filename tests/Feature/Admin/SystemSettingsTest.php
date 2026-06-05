@@ -8,11 +8,16 @@ use DOMElement;
 use DOMNodeList;
 use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Mail\CmsMailConfigurationException;
+use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -62,7 +67,7 @@ class SystemSettingsTest extends TestCase
 
     $document = $this->htmlDocument($response->getContent());
     $xpath = new DOMXPath($document);
-    $this->assertSame(4, $xpath->query('//form[contains(@action, "/webadmin/system/settings")]')->length);
+    $this->assertSame(5, $xpath->query('//form[contains(@action, "/webadmin/system/settings")]')->length);
     $this->assertSame(4, $xpath->query('//button[normalize-space()="Save Changes"]')->length);
 
     foreach (['General', 'Project Identity', 'Mail', 'Privacy', 'Runtime Information'] as $cardTitle) {
@@ -85,6 +90,9 @@ class SystemSettingsTest extends TestCase
     $this->assertSame(12, $this->queryElements($xpath, './/tr[@data-wb-mail-diagnostic-item]/td[@data-wb-mail-diagnostic-value]', $mailCard)->length);
     $this->assertSame(1, $this->queryElements($xpath, './/tr[@data-wb-mail-diagnostic-item][th[normalize-space()="Password configured"] and td[normalize-space()="no"]]', $mailCard)->length);
     $this->assertSame(0, $this->queryElements($xpath, './/div[contains(concat(" ", normalize-space(@class), " "), " wb-settings-row ")][.//*[@data-wb-mail-diagnostics]]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/form[@action="'.route('admin.system.settings.mail.test').'"]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@data-wb-mail-test]//*[@name="recipient_email"]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/*[@data-wb-mail-test]//button[normalize-space()="Send Test Email"]', $mailCard)->length);
 
     foreach (['general', 'project', 'mail', 'privacy'] as $section) {
       $this->assertSame(1, $xpath->query('//input[@type="hidden" and @name="section" and @value="'.$section.'"]')->length);
@@ -350,6 +358,152 @@ class SystemSettingsTest extends TestCase
   }
 
   #[Test]
+  public function non_authorized_users_cannot_send_cms_mail_test_email(): void
+  {
+    $user = User::factory()->siteAdmin()->create();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.settings.mail.test'), ['recipient_email' => 'ops@example.test'])
+      ->assertForbidden();
+  }
+
+  #[Test]
+  public function sending_cms_mail_test_validates_only_the_recipient_email(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.system.settings.edit'))
+      ->post(route('admin.system.settings.mail.test'), ['recipient_email' => 'not-an-email']);
+
+    $response->assertRedirect(route('admin.system.settings.edit'));
+    $response->assertSessionHasErrors(['recipient_email']);
+    $response->assertSessionDoesntHaveErrors(['cms_mail_host', 'cms_mail_port', 'cms_mail_from_address']);
+  }
+
+  #[Test]
+  public function sending_cms_mail_test_uses_environment_mailer_and_safe_body(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    config()->set('mail.default', 'array');
+    config()->set('app.url', 'https://webblocks-cms.test');
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::PROJECT_NAME], ['value' => 'Project Atlas']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PASSWORD], ['value' => 'stored-secret']);
+
+    $mailer = Mockery::mock();
+    $mailer->shouldReceive('send')
+      ->once()
+      ->withArgs(function (mixed $view, array $data): bool {
+        $body = implode("\n", $data['introLines'] ?? []);
+
+        return str_contains($body, 'This is a test email from WebBlocks CMS.')
+          && str_contains($body, 'CMS project: Project Atlas')
+          && str_contains($body, 'Active mail mode: Environment config')
+          && str_contains($body, 'App URL: https://webblocks-cms.test')
+          && str_contains($body, 'Secrets are never included in this test email.')
+          && ! str_contains($body, 'stored-secret')
+          && ! str_contains($body, 'reset-token')
+          && ! str_contains($body, 'password=');
+      });
+
+    Mail::shouldReceive('mailer')->once()->with('array')->andReturn($mailer);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.settings.mail.test'), ['recipient_email' => 'ops@example.test'])
+      ->assertRedirect(route('admin.system.settings.edit'))
+      ->assertSessionHas('status', 'Test email sent to ops@example.test.');
+  }
+
+  #[Test]
+  public function sending_cms_mail_test_uses_scoped_custom_cms_mailer(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->configureCustomCmsMail();
+
+    $mailer = Mockery::mock();
+    $mailer->shouldReceive('send')->once();
+
+    Mail::shouldReceive('purge')->once()->with(CmsMailSettingsResolver::MAILER_NAME);
+    Mail::shouldReceive('mailer')->once()->with(CmsMailSettingsResolver::MAILER_NAME)->andReturn($mailer);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.settings.mail.test'), ['recipient_email' => 'ops@example.test'])
+      ->assertRedirect(route('admin.system.settings.edit'))
+      ->assertSessionHas('status', 'Test email sent to ops@example.test.');
+
+    $this->assertSame('smtp', config('mail.mailers.'.CmsMailSettingsResolver::MAILER_NAME.'.transport'));
+    $this->assertSame(587, config('mail.mailers.'.CmsMailSettingsResolver::MAILER_NAME.'.port'));
+  }
+
+  #[Test]
+  public function cms_mail_test_failures_show_safe_error_and_log_sanitized_context(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->configureCustomCmsMail();
+
+    $mailer = Mockery::mock();
+    $mailer->shouldReceive('send')
+      ->once()
+      ->andThrow(new \RuntimeException('SMTP failed password=stored-secret token=reset-token ops@example.test'));
+
+    Mail::shouldReceive('purge')->once()->with(CmsMailSettingsResolver::MAILER_NAME);
+    Mail::shouldReceive('mailer')->once()->with(CmsMailSettingsResolver::MAILER_NAME)->andReturn($mailer);
+    Log::spy();
+
+    $this->actingAs($user)
+      ->from(route('admin.system.settings.edit'))
+      ->post(route('admin.system.settings.mail.test'), ['recipient_email' => 'ops@example.test'])
+      ->assertRedirect(route('admin.system.settings.edit'))
+      ->assertSessionHasErrors([
+        'recipient_email' => 'The test email could not be sent. Please check CMS Mail settings.',
+      ]);
+
+    Log::shouldHaveReceived('warning')
+      ->once()
+      ->withArgs(fn (string $message, array $context = []): bool => $message === 'CMS test email could not be sent.'
+        && ($context['cms_mail_mode'] ?? null) === SystemSettings::CMS_MAIL_MODE_CUSTOM
+        && ($context['mailer'] ?? null) === CmsMailSettingsResolver::MAILER_NAME
+        && ($context['transport'] ?? null) === 'smtp'
+        && ($context['host'] ?? null) === 'smtp.example.test'
+        && ($context['port'] ?? null) === 587
+        && ($context['encryption'] ?? null) === 'tls'
+        && ($context['username_configured'] ?? null) === true
+        && ($context['password_configured'] ?? null) === true
+        && ($context['from_address'] ?? null) === 'cms@example.test'
+        && ($context['recipient_domain'] ?? null) === 'example.test'
+        && ($context['exception_class'] ?? null) === \RuntimeException::class
+        && str_contains((string) ($context['sanitized_message'] ?? ''), 'password=[redacted]')
+        && str_contains((string) ($context['sanitized_message'] ?? ''), '[redacted-email]')
+        && ! str_contains(json_encode($context), 'stored-secret')
+        && ! str_contains(json_encode($context), 'reset-token')
+        && ! str_contains(json_encode($context), 'ops@example.test'));
+  }
+
+  #[Test]
+  public function incomplete_custom_cms_mail_test_fails_with_controlled_configuration_error(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->configureCustomCmsMail([
+      SystemSettings::CMS_MAIL_PASSWORD => null,
+    ]);
+    Log::spy();
+
+    $this->actingAs($user)
+      ->from(route('admin.system.settings.edit'))
+      ->post(route('admin.system.settings.mail.test'), ['recipient_email' => 'ops@example.test'])
+      ->assertRedirect(route('admin.system.settings.edit'))
+      ->assertSessionHasErrors([
+        'recipient_email' => 'The test email could not be sent. Please check CMS Mail settings.',
+      ]);
+
+    Log::shouldHaveReceived('warning')
+      ->once()
+      ->withArgs(fn (string $message, array $context = []): bool => $message === 'CMS test email could not be sent.'
+        && ($context['password_configured'] ?? null) === false
+        && ($context['exception_class'] ?? null) === CmsMailConfigurationException::class);
+  }
+
+  #[Test]
   public function settings_require_valid_enabled_locale_and_timezone(): void
   {
     $user = User::factory()->superAdmin()->create();
@@ -523,5 +677,27 @@ class SystemSettingsTest extends TestCase
   private function queryElements(DOMXPath $xpath, string $expression, ?DOMElement $context = null): DOMNodeList
   {
     return $xpath->query($expression, $context);
+  }
+
+  /**
+   * @param  array<string, mixed>  $overrides
+   */
+  private function configureCustomCmsMail(array $overrides = []): void
+  {
+    $settings = [
+      SystemSettings::CMS_MAIL_MODE => SystemSettings::CMS_MAIL_MODE_CUSTOM,
+      SystemSettings::CMS_MAIL_MAILER => 'smtp',
+      SystemSettings::CMS_MAIL_HOST => 'smtp.example.test',
+      SystemSettings::CMS_MAIL_PORT => '587',
+      SystemSettings::CMS_MAIL_ENCRYPTION => 'tls',
+      SystemSettings::CMS_MAIL_USERNAME => 'mailer@example.test',
+      SystemSettings::CMS_MAIL_PASSWORD => 'stored-secret',
+      SystemSettings::CMS_MAIL_FROM_ADDRESS => 'cms@example.test',
+      SystemSettings::CMS_MAIL_FROM_NAME => 'WebBlocks CMS',
+    ];
+
+    foreach ($overrides + $settings as $key => $value) {
+      SystemSetting::query()->updateOrCreate(['key' => $key], ['value' => $value]);
+    }
   }
 }

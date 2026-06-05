@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.123
+
+- Add a secret-safe `Send Test Email` action to `System -> Settings -> Mail` diagnostics for testing the active CMS mail configuration.
+- Send CMS test emails through the same CMS mail resolver path used by CMS-owned password reset mail, without writing to `.env` or changing host/root auth or contact form mail.
+- Keep test-send failures controlled for admins while logging sanitized mail context without SMTP secrets, reset tokens, or raw credentials.
+
 ## 1.32.122
 
 - Handle CMS password reset mail send failures as controlled CMS mail errors instead of raw 500 responses.
@@ -59,8 +65,3 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Update CMS WebBlocks UI consumption to `v2.7.11` and adopt the refreshed auth brand helper classes on the package-owned login shell.
 - Add CMS product brand variants for normal, dark, on-accent/inverse, and high-contrast favicon usage under `/cms/brand`, keeping product shell branding separate from site-level public favicons.
-
-## 1.32.113
-
-- Simplify System Updates into the two-card `Install Update` and `Update Details` flow, moving release notes, update readiness, and last-run details into accordions.
-- Replace the main-screen Update History table and row deletion with automatic retained-run pruning, safe last-run detail modals, CLI run inspection/pruning commands, and a downloadable support report.

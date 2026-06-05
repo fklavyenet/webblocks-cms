@@ -2,6 +2,11 @@
 
 This file contains older 1.32.x release notes moved from CHANGELOG.md. Release headings and notes are preserved as written.
 
+## 1.32.113
+
+- Simplify System Updates into the two-card `Install Update` and `Update Details` flow, moving release notes, update readiness, and last-run details into accordions.
+- Replace the main-screen Update History table and row deletion with automatic retained-run pruning, safe last-run detail modals, CLI run inspection/pruning commands, and a downloadable support report.
+
 ## 1.32.112
 
 - Fix enabled compatible plugin admin route registration so plugin-owned routes always keep the CMS `/webadmin` web, install, auth, and admin middleware stack before plugin setup and permission checks.

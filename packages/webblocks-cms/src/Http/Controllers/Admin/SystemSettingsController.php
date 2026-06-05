@@ -5,8 +5,11 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use Throwable;
+use WebBlocks\Cms\Http\Requests\Admin\CmsMailTestEmailRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
+use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -60,5 +63,21 @@ class SystemSettingsController extends Controller
     return redirect()
       ->route('admin.system.settings.edit')
       ->with('status', 'Settings updated successfully.');
+  }
+
+  public function sendMailTest(CmsMailTestEmailRequest $request, CmsTestEmailSender $sender): RedirectResponse
+  {
+    try {
+      $sender->send($request->recipientEmail());
+    } catch (Throwable) {
+      return redirect()
+        ->route('admin.system.settings.edit')
+        ->withInput($request->only('recipient_email'))
+        ->withErrors(['recipient_email' => 'The test email could not be sent. Please check CMS Mail settings.']);
+    }
+
+    return redirect()
+      ->route('admin.system.settings.edit')
+      ->with('status', 'Test email sent to '.$request->recipientEmail().'.');
   }
 }

@@ -193,6 +193,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       Route::delete('system/backups/{backup}/restores/{restore}', [SystemBackupController::class, 'destroyRestore'])->name('system.backups.restores.destroy');
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+      Route::post('system/settings/mail/test', [SystemSettingsController::class, 'sendMailTest'])->name('system.settings.mail.test');
       Route::get('plugins/catalog', [PluginCatalogController::class, 'index'])->name('plugins.catalog.index');
       Route::get('plugins/catalog/{handle}', [PluginCatalogController::class, 'show'])->name('plugins.catalog.show');
       Route::post('plugins/catalog/{handle}/install', [PluginCatalogController::class, 'install'])->name('plugins.catalog.install');
