@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.124
+
+- Fix CMS-owned password reset mail so host/root password reset notification callbacks cannot override the `/webadmin/reset-password/{token}` reset link or mail rendering.
+- Keep CMS forgot-password responses account-safe for missing or inactive users while avoiding reset tokens and notifications for inactive accounts.
+- Add password-reset-specific sanitized logging for reset route, URL host/path, user activity state, notifiable class, mailer context, and exception details without tokens, SMTP secrets, or raw recipient emails.
+
 ## 1.32.123
 
 - Add a secret-safe `Send Test Email` action to `System -> Settings -> Mail` diagnostics for testing the active CMS mail configuration.
@@ -60,8 +66,3 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Pin CMS WebBlocks UI consumption and the default icon manifest source to the newest published `v2.7.12` release.
 - Clean the CMS product brand folder down to the canonical logo, mark, favicon, touch icon, and app icon set, with matching root and package assets.
 - Regenerate CMS product PNG brand assets so the actual logo mark is visible instead of flat-color output.
-
-## 1.32.114
-
-- Update CMS WebBlocks UI consumption to `v2.7.11` and adopt the refreshed auth brand helper classes on the package-owned login shell.
-- Add CMS product brand variants for normal, dark, on-accent/inverse, and high-contrast favicon usage under `/cms/brand`, keeping product shell branding separate from site-level public favicons.

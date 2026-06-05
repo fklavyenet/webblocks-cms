@@ -2,6 +2,11 @@
 
 This file contains older 1.32.x release notes moved from CHANGELOG.md. Release headings and notes are preserved as written.
 
+## 1.32.114
+
+- Update CMS WebBlocks UI consumption to `v2.7.11` and adopt the refreshed auth brand helper classes on the package-owned login shell.
+- Add CMS product brand variants for normal, dark, on-accent/inverse, and high-contrast favicon usage under `/cms/brand`, keeping product shell branding separate from site-level public favicons.
+
 ## 1.32.113
 
 - Simplify System Updates into the two-card `Install Update` and `Update Details` flow, moving release notes, update readiness, and last-run details into accordions.

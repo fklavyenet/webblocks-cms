@@ -8,6 +8,8 @@ use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 
 class CmsResetPassword extends ResetPassword
 {
+  public const RESET_ROUTE_NAME = 'webblocks.auth.password.reset';
+
   public function __construct(string $token, private readonly string $email)
   {
     parent::__construct($token);
@@ -15,7 +17,7 @@ class CmsResetPassword extends ResetPassword
 
   protected function resetUrl($notifiable): string
   {
-    return route('webblocks.auth.password.reset', [
+    return route(self::RESET_ROUTE_NAME, [
       'token' => $this->token,
       'email' => $this->email,
     ]);
@@ -23,6 +25,7 @@ class CmsResetPassword extends ResetPassword
 
   public function toMail($notifiable): MailMessage
   {
-    return app(CmsMailSettingsResolver::class)->applyToMailMessage(parent::toMail($notifiable));
+    return app(CmsMailSettingsResolver::class)
+      ->applyToMailMessage($this->buildMailMessage($this->resetUrl($notifiable)));
   }
 }

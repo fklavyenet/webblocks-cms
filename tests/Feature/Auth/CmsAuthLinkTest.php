@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword as LaravelResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -11,6 +12,7 @@ use Mockery;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Notifications\Auth\CmsResetPassword;
+use WebBlocks\Cms\Notifications\System\CmsTestEmail;
 use WebBlocks\Cms\Support\Mail\CmsMailConfigurationException;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -18,6 +20,14 @@ use WebBlocks\Cms\Support\System\SystemSettings;
 class CmsAuthLinkTest extends TestCase
 {
   use RefreshDatabase;
+
+  protected function tearDown(): void
+  {
+    LaravelResetPassword::createUrlUsing(null);
+    LaravelResetPassword::toMailUsing(null);
+
+    parent::tearDown();
+  }
 
   public function test_cms_login_screen_uses_prefixed_password_link_and_hides_root_registration(): void
   {
@@ -67,11 +77,65 @@ class CmsAuthLinkTest extends TestCase
       $mail = $notification->toMail($user);
 
       return str_contains((string) $mail->actionUrl, '/webadmin/reset-password/')
+        && ! str_contains((string) $mail->actionUrl, '/reset-password/test-token')
         && str_contains((string) $mail->actionUrl, 'email=editor%40example.com');
     });
   }
 
-  public function test_cms_password_reset_notification_uses_custom_cms_mailer_when_enabled(): void
+  public function test_cms_password_reset_notification_ignores_host_reset_mail_callback_and_uses_cms_route(): void
+  {
+    Notification::fake();
+    LaravelResetPassword::toMailUsing(function (): void {
+      throw new \RuntimeException('Host reset mail callback used password=stored-secret token=reset-token editor@example.com.');
+    });
+
+    $user = User::factory()->create(['email' => 'editor@example.com']);
+
+    $this->post('/webadmin/forgot-password', ['email' => $user->email])
+      ->assertSessionHas('status')
+      ->assertSessionDoesntHaveErrors();
+
+    Notification::assertSentTo($user, CmsResetPassword::class, function (CmsResetPassword $notification) use ($user): bool {
+      $mail = $notification->toMail($user);
+
+      return str_contains((string) $mail->actionUrl, '/webadmin/reset-password/')
+        && str_contains((string) $mail->actionUrl, 'email=editor%40example.com');
+    });
+  }
+
+  public function test_cms_forgot_password_active_user_sends_with_array_mailer_without_controlled_mail_error(): void
+  {
+    config(['mail.default' => 'array']);
+    $user = User::factory()->create(['email' => 'editor@example.com']);
+
+    $this->from('/webadmin/forgot-password')
+      ->post('/webadmin/forgot-password', ['email' => $user->email])
+      ->assertRedirect('/webadmin/forgot-password')
+      ->assertSessionHas('status')
+      ->assertSessionDoesntHaveErrors();
+  }
+
+  public function test_cms_forgot_password_does_not_leak_missing_or_inactive_accounts(): void
+  {
+    Notification::fake();
+    $inactiveUser = User::factory()->inactive()->create(['email' => 'inactive@example.com']);
+
+    $this->from('/webadmin/forgot-password')
+      ->post('/webadmin/forgot-password', ['email' => 'missing@example.com'])
+      ->assertRedirect('/webadmin/forgot-password')
+      ->assertSessionHas('status')
+      ->assertSessionDoesntHaveErrors();
+
+    $this->from('/webadmin/forgot-password')
+      ->post('/webadmin/forgot-password', ['email' => $inactiveUser->email])
+      ->assertRedirect('/webadmin/forgot-password')
+      ->assertSessionHas('status')
+      ->assertSessionDoesntHaveErrors();
+
+    Notification::assertNothingSent();
+  }
+
+  public function test_cms_password_reset_notification_uses_same_custom_mailer_path_as_test_email_when_enabled(): void
   {
     $user = User::factory()->create(['email' => 'editor@example.com']);
 
@@ -86,9 +150,12 @@ class CmsAuthLinkTest extends TestCase
     SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_FROM_NAME], ['value' => 'WebBlocks CMS']);
 
     $mail = (new CmsResetPassword('test-token', $user->email))->toMail($user);
+    $testMail = (new CmsTestEmail(['Recipient' => '[redacted]']))->toMail($user);
 
     $this->assertSame(CmsMailSettingsResolver::MAILER_NAME, $mail->mailer);
+    $this->assertSame(CmsMailSettingsResolver::MAILER_NAME, $testMail->mailer);
     $this->assertSame(['cms@example.test', 'WebBlocks CMS'], $mail->from);
+    $this->assertSame(['cms@example.test', 'WebBlocks CMS'], $testMail->from);
     $this->assertSame('smtp.example.test', config('mail.mailers.'.CmsMailSettingsResolver::MAILER_NAME.'.host'));
     $this->assertSame(587, config('mail.mailers.'.CmsMailSettingsResolver::MAILER_NAME.'.port'));
     $this->assertNull(config('mail.mailers.'.CmsMailSettingsResolver::MAILER_NAME.'.encryption'));
@@ -121,14 +188,13 @@ class CmsAuthLinkTest extends TestCase
     Log::shouldHaveReceived('warning')
       ->once()
       ->withArgs(fn (string $message, array $context = []): bool => $message === 'CMS password reset email could not be sent.'
-        && ($context['cms_mail_mode'] ?? null) === SystemSettings::CMS_MAIL_MODE_CUSTOM
-        && ($context['mailer'] ?? null) === CmsMailSettingsResolver::MAILER_NAME
-        && ($context['host'] ?? null) === 'smtp.example.test'
-        && ($context['port'] ?? null) === 587
-        && ($context['encryption'] ?? null) === 'tls'
         && ($context['username_configured'] ?? null) === true
         && ($context['password_configured'] ?? null) === true
-        && ($context['from_address'] ?? null) === 'cms@example.test'
+        && ($context['reset_route_name'] ?? null) === CmsResetPassword::RESET_ROUTE_NAME
+        && str_contains((string) ($context['reset_url_path'] ?? ''), '/webadmin/reset-password/')
+        && ($context['user_found'] ?? null) === true
+        && ($context['user_active'] ?? null) === true
+        && ($context['notifiable_class'] ?? null) === User::class
         && ($context['exception_class'] ?? null) === \RuntimeException::class
         && str_contains((string) ($context['sanitized_message'] ?? ''), 'password=[redacted]')
         && str_contains((string) ($context['sanitized_message'] ?? ''), '[redacted-email]')
@@ -156,6 +222,8 @@ class CmsAuthLinkTest extends TestCase
       ->once()
       ->withArgs(fn (string $message, array $context = []): bool => $message === 'CMS password reset email could not be sent.'
         && ($context['password_configured'] ?? null) === false
+        && ($context['reset_route_name'] ?? null) === CmsResetPassword::RESET_ROUTE_NAME
+        && str_contains((string) ($context['reset_url_path'] ?? ''), '/webadmin/reset-password/')
         && ($context['exception_class'] ?? null) === CmsMailConfigurationException::class
         && ! str_contains(json_encode($context), 'stored-secret'));
   }
