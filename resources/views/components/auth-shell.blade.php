@@ -9,11 +9,11 @@
 ])
 
 <div class="wb-auth-shell wb-auth-split">
-    <div class="wb-auth-panel">
+    <div class="wb-auth-panel wb-bg-primary">
         @if ($panelTitle)
-            <h1 class="wb-auth-panel-title">
+            <h1 class="wb-auth-panel-title wb-auth-brand">
                 @if ($showPanelLogo)
-                    <img src="{{ asset('cms/brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" width="32" height="32">
+                    <img src="{{ asset('cms/brand/logo-mark-on-accent.svg') }}" alt="{{ config('app.name') }} logo" width="32" height="32" class="wb-auth-brand-mark wb-auth-brand-mark-on-accent">
                 @endif
                 <span>{{ $panelTitle }}</span>
             </h1>
@@ -27,9 +27,12 @@
     <div class="wb-auth-form-area">
         <div class="wb-auth-card">
             <div class="wb-auth-header">
-                <h1 class="wb-auth-header-title">
+                <h1 class="wb-auth-header-title wb-auth-brand">
                     @if ($showHeaderLogo)
-                        <img src="{{ asset('cms/brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" width="32" height="32">
+                        <picture>
+                            <source srcset="{{ asset('cms/brand/logo-mark-dark.svg') }}" media="(prefers-color-scheme: dark)">
+                            <img src="{{ asset('cms/brand/logo-mark.svg') }}" alt="{{ config('app.name') }} logo" width="32" height="32" class="wb-auth-brand-mark wb-auth-brand-mark-sm">
+                        </picture>
                     @endif
                     <span>{{ $heading }}</span>
                 </h1>

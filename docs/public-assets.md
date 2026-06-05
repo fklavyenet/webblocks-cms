@@ -53,7 +53,7 @@ The canonical override convention requires a site handle segment. Handle-less si
 
 CMS-owned guest and email support styles now live under `public/cms/css/guest.css` and `public/cms/css/email.css`.
 
-CMS-owned product brand assets such as the admin sidebar logo and default CMS favicons ship from package `public/cms/brand/` and are installed, published, or synced into install-root `public/cms/brand/`. These are product identity assets for the CMS shell, not site-specific Media Library branding and not `public/site/...` overrides.
+CMS-owned product brand assets such as the admin sidebar logo and default CMS favicons ship from package `public/cms/brand/` and are installed, published, or synced into install-root `public/cms/brand/`. These are product identity assets for the CMS shell, not site-specific Media Library branding and not `public/site/...` overrides. The product brand set includes normal, dark-surface, on-accent/inverse, and high-contrast favicon/browser-tab variants so CMS auth, admin, guest, and install/product shells can select contrast-safe assets directly instead of relying on page CSS filters.
 
 ## Page Assets
 
@@ -105,7 +105,7 @@ The internal/operator WebBlocks UI Manager plugin uses a separate CDN artifact c
 - Site-level override CSS belongs under `public/site/{site_handle}/css/site.css`
 - The public page shell owns the single shared `#wb-overlay-root.wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers and the public search modal
 - Public partials and trusted HTML content must contribute overlay children to that canonical root instead of rendering competing roots such as `#wb-public-overlay-root`, `#public-overlay-root`, or `#overlay-root`
-- The shared public dialog layer must not be rendered with `hidden`; WebBlocks UI `v2.7.9` reuses that layer for modal, gallery viewer, and toast targets and only toggles visibility on the active backdrop/modal or toast state, not on a reused layer wrapper
+- The shared public dialog layer must not be rendered with `hidden`; WebBlocks UI `v2.7.11` reuses that layer for modal, gallery viewer, and toast targets and only toggles visibility on the active backdrop/modal or toast state, not on a reused layer wrapper
 - CMS core only ships public JS when WebBlocks UI does not already cover the behavior; `public-search-modal.js` remains CMS-owned, while Header Actions mode, preset, accent, and dropdown behavior now rely on shipped WebBlocks UI `data-wb-*` behavior without an extra CMS runtime
 
 ## Site Branding Assets
@@ -123,6 +123,6 @@ Public favicon and social sharing artwork are now selected from the shared Media
 
 WebBlocks UI assets remain loaded from CDN in the CMS public layout.
 
-CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.9` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the canonical jsDelivr tag URL format with the standard dist artifacts `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js` while minification hardening is deferred. Browser-facing CSS and JavaScript must not use `raw.githubusercontent.com` fallbacks because Chrome can block those responses through ORB or MIME handling.
+CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.11` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the canonical jsDelivr tag URL format with the standard dist artifacts `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js` while minification hardening is deferred. Browser-facing CSS and JavaScript must not use `raw.githubusercontent.com` fallbacks because Chrome can block those responses through ORB or MIME handling.
 
 Those CDN assets are part of the UI project and must not be edited or compiled inside the CMS repository. When installed on an operator site, WebBlocks UI Manager records release, artifact, manifest, checksum, and publish-run metadata as plugin-owned behavior and can publish validated files into a configured local/project-owned static CDN target. CMS core still consumes the existing pinned CDN URLs until a separate explicit migration changes that behavior.

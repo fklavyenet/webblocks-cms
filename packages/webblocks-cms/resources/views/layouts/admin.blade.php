@@ -142,7 +142,7 @@
 
             <aside class="wb-sidebar" id="admin-sidebar">
                 <a href="{{ route('admin.dashboard') }}" class="wb-sidebar-brand">
-                    <img src="{{ asset('cms/brand/logo-64.png') }}" alt="{{ WebBlocks::name() }} logo" class="wb-sidebar-brand-logo">
+                    <img src="{{ asset('cms/brand/logo-mark.svg') }}" alt="{{ WebBlocks::name() }} logo" class="wb-sidebar-brand-logo">
                     <span class="wb-sidebar-brand-copy">
                         <span>{{ WebBlocks::name() }}</span>
                         <span class="wb-sidebar-brand-note">{{ WebBlocks::slogan() }}</span>

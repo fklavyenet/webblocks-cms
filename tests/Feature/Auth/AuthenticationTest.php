@@ -13,7 +13,7 @@ class AuthenticationTest extends TestCase
 
   public function test_login_screen_can_be_rendered(): void
   {
-    $response = $this->get('/login');
+    $response = $this->get('/webadmin/login');
 
     $response->assertStatus(200);
     $response->assertSee(WebBlocks::uiCssUrl(), false);
@@ -23,7 +23,7 @@ class AuthenticationTest extends TestCase
     $response->assertSee('webblocks-icons.css', false);
     $response->assertSee('webblocks-ui.js', false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.9', false);
+    $response->assertSee('webblocks-ui@v2.7.11', false);
     $response->assertDontSee('raw.githubusercontent.com/fklavyenet/webblocks-ui', false);
     $response->assertDontSee('@b43f92b', false);
     $response->assertDontSee('webblocks-ui.min.css', false);

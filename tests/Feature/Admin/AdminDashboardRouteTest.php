@@ -279,7 +279,7 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function admin_layout_uses_pinned_webblocks_ui_v279_standard_dist_assets_and_not_master_or_minified_urls(): void
+  public function admin_layout_uses_pinned_webblocks_ui_v2711_standard_dist_assets_and_not_master_or_minified_urls(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -293,7 +293,7 @@ class AdminDashboardRouteTest extends TestCase
     $response->assertSee('webblocks-icons.css', false);
     $response->assertSee('webblocks-ui.js', false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.9', false);
+    $response->assertSee('webblocks-ui@v2.7.11', false);
     $response->assertDontSee('raw.githubusercontent.com/fklavyenet/webblocks-ui', false);
     $response->assertDontSee('@b43f92b', false);
     $response->assertDontSee('webblocks-ui.min.css', false);
@@ -329,13 +329,13 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function top_level_dashboard_redirect_uses_canonical_webadmin_path(): void
+  public function top_level_dashboard_path_is_not_claimed_by_cms(): void
   {
     $user = User::factory()->editor()->create();
 
     $response = $this->actingAs($user)->get('/dashboard');
 
-    $response->assertRedirect(route('admin.dashboard', absolute: false));
+    $response->assertNotFound();
   }
 
   private function assertRouteUsesPackageController(string $routeName, string $controllerClass): void

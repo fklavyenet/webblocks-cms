@@ -4,33 +4,17 @@
  |--------------------------------------------------------------------------
  */
 
-.wb-auth-shell.wb-auth-split {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-}
-
-.wb-auth-shell.wb-auth-split .wb-auth-panel {
-    max-width: 50vw;
-}
-
-.wb-auth-shell .wb-auth-panel.wb-bg-primary,
-.wb-auth-shell .wb-auth-panel.wb-bg-success,
-.wb-auth-shell .wb-auth-panel.wb-bg-danger,
-.wb-auth-shell .wb-auth-panel.wb-bg-warning,
-.wb-auth-shell .wb-auth-panel.wb-bg-info {
-    color: #fff;
-}
-
-.wb-auth-shell .wb-auth-panel.wb-bg-primary .wb-auth-panel-title,
-.wb-auth-shell .wb-auth-panel.wb-bg-primary .wb-auth-panel-text,
-.wb-auth-shell .wb-auth-panel.wb-bg-success .wb-auth-panel-title,
-.wb-auth-shell .wb-auth-panel.wb-bg-success .wb-auth-panel-text,
-.wb-auth-shell .wb-auth-panel.wb-bg-danger .wb-auth-panel-title,
-.wb-auth-shell .wb-auth-panel.wb-bg-danger .wb-auth-panel-text,
-.wb-auth-shell .wb-auth-panel.wb-bg-warning .wb-auth-panel-title,
-.wb-auth-shell .wb-auth-panel.wb-bg-warning .wb-auth-panel-text,
-.wb-auth-shell .wb-auth-panel.wb-bg-info .wb-auth-panel-title,
-.wb-auth-shell .wb-auth-panel.wb-bg-info .wb-auth-panel-text {
-    color: inherit;
+:root {
+    --wb-cms-brand-primary: #118AB2;
+    --wb-cms-brand-primary-hover: #0B6482;
+    --wb-cms-brand-soft: #D9F0F7;
+    --wb-primary: var(--wb-cms-brand-primary);
+    --wb-primary-hover: var(--wb-cms-brand-primary-hover);
+    --wb-accent: var(--wb-cms-brand-primary);
+    --wb-accent-hover: var(--wb-cms-brand-primary-hover);
+    --wb-accent-soft: var(--wb-cms-brand-soft);
+    --wb-accent-text: var(--wb-cms-brand-primary-hover);
+    --wb-accent-contrast: #fff;
 }
 
 .wb-password-field {
@@ -39,14 +23,4 @@
 
 .wb-password-field-toggle {
     min-width: 2.75rem;
-}
-
-@media (max-width: 900px) {
-    .wb-auth-shell.wb-auth-split {
-        grid-template-columns: 1fr;
-    }
-
-    .wb-auth-shell.wb-auth-split .wb-auth-panel {
-        max-width: none;
-    }
 }

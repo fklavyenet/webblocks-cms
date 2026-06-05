@@ -9,9 +9,9 @@
     @endphp
 
     <div class="wb-auth-shell wb-auth-split">
-        <div class="wb-auth-panel">
-            <h1 class="wb-auth-panel-title">
-                <img src="{{ asset('cms/brand/logo-64.png') }}" alt="{{ WebBlocks::name() }} logo" width="32" height="32">
+        <div class="wb-auth-panel wb-bg-primary">
+            <h1 class="wb-auth-panel-title wb-auth-brand">
+                <img src="{{ asset('cms/brand/logo-mark-on-accent.svg') }}" alt="{{ WebBlocks::name() }} logo" width="32" height="32" class="wb-auth-brand-mark wb-auth-brand-mark-on-accent">
                 <span>{{ WebBlocks::name() }}</span>
             </h1>
 
@@ -21,8 +21,11 @@
         <div class="wb-auth-form-area">
             <div class="wb-auth-card">
                 <div class="wb-auth-header">
-                    <h1 class="wb-auth-header-title">
-                        <img src="{{ asset('cms/brand/logo-64.png') }}" alt="{{ WebBlocks::name() }} logo" width="32" height="32">
+                    <h1 class="wb-auth-header-title wb-auth-brand">
+                        <picture>
+                            <source srcset="{{ asset('cms/brand/logo-mark-dark.svg') }}" media="(prefers-color-scheme: dark)">
+                            <img src="{{ asset('cms/brand/logo-mark.svg') }}" alt="{{ WebBlocks::name() }} logo" width="32" height="32" class="wb-auth-brand-mark wb-auth-brand-mark-sm">
+                        </picture>
                         <span>Welcome back</span>
                     </h1>
                     <p class="wb-auth-header-subtitle">Sign in to {{ WebBlocks::name() }} to access your content workspace.</p>

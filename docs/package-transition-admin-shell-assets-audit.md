@@ -93,7 +93,7 @@ The layout remains more than a view wrapper. The package-owned admin layout curr
 - the WebBlocks UI CSS/JS includes
 - active root `public/cms/css/admin.css`
 - active root admin JS includes for core admin behavior, media, page builder, slot sources, gallery, rich text, page assets, and sortable lists
-- root brand logo loading from `public/cms/brand/logo-64.png`
+- root brand logo loading from `public/cms/brand/logo-mark.svg`
 - the shared `#wb-overlay-root` used by modal flows across package-owned and root-owned screens
 
 This move is intentionally limited to Blade authority. Root runtime asset URLs, brand files, and auth/profile integration points remain unchanged and still load from the root app.
@@ -149,13 +149,17 @@ These files now also exist as package-owned source files under `packages/webbloc
 Active root brand assets should remain root authority for now:
 
 - `public/cms/brand/apple-touch-icon.png`
+- `public/cms/brand/favicon.svg`
 - `public/cms/brand/favicon-16x16.png`
 - `public/cms/brand/favicon-32x32.png`
 - `public/cms/brand/icon-192x192.png`
 - `public/cms/brand/icon-512x512.png`
+- `public/cms/brand/logo.svg`
 - `public/cms/brand/logo-180.png`
 - `public/cms/brand/logo-32.png`
 - `public/cms/brand/logo-64.png`
+- `public/cms/brand/logo-mark.svg`
+- `public/cms/brand/logo-monochrome.svg`
 - `public/cms/brand/og-image.png`
 - `public/cms/brand/fklavye-site.css`
 

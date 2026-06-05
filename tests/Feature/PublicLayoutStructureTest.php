@@ -261,7 +261,7 @@ class PublicLayoutStructureTest extends TestCase
   }
 
   #[Test]
-  public function public_layout_uses_pinned_webblocks_ui_v279_standard_dist_assets_and_not_master_or_minified_urls(): void
+  public function public_layout_uses_pinned_webblocks_ui_v2711_standard_dist_assets_and_not_master_or_minified_urls(): void
   {
     $this->buildHomepageWithHeaderSidebarAndFooter();
 
@@ -272,7 +272,7 @@ class PublicLayoutStructureTest extends TestCase
     $response->assertSee(WebBlocks::iconsCssUrl(), false);
     $response->assertSee(WebBlocks::uiJsUrl(), false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.9', false);
+    $response->assertSee('webblocks-ui@v2.7.11', false);
     $response->assertSee('webblocks-ui.css', false);
     $response->assertSee('webblocks-icons.css', false);
     $response->assertSee('webblocks-ui.js', false);

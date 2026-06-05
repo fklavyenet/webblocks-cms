@@ -6,9 +6,9 @@ Phase 1 defines the intended public rendering contract between CMS layouts, slot
 
 Verified against the actual shipped assets used by CMS:
 
-- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-ui.css`
-- Icons CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-icons.css`
-- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-ui.js`
+- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.11/packages/webblocks/dist/webblocks-ui.css`
+- Icons CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.11/packages/webblocks/dist/webblocks-icons.css`
+- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.11/packages/webblocks/dist/webblocks-ui.js`
 
 Confirmed primitives and patterns:
 
@@ -120,7 +120,7 @@ Public pages now use explicit layout composition modes:
 - `#wb-overlay-root` is the single shared mount point for public overlays such as the gallery viewer, public search modal, and cookie preference modal.
 - Public layouts own that wrapper; blocks, partials, and trusted HTML may contribute overlay children but must not render competing overlay root containers.
 - Trusted imported HTML that uses shipped WebBlocks UI trigger hooks must preserve the trigger-to-target contract. If a trigger inside imported main content points at a modal, drawer, popover, or gallery viewer outside `<main>`, the extractor must hoist that referenced target into the shared `#wb-overlay-root` instead of dropping it.
-- When CMS pre-renders a shared dialog layer under `#wb-overlay-root`, that layer must stay unhidden so WebBlocks UI `v2.7.9` can portal trusted modal and gallery targets into it without leaving them inside a hidden ancestor.
+- When CMS pre-renders a shared dialog layer under `#wb-overlay-root`, that layer must stay unhidden so WebBlocks UI `v2.7.11` can portal trusted modal and gallery targets into it without leaving them inside a hidden ancestor.
 
 ## Card
 

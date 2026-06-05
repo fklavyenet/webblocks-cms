@@ -50,16 +50,19 @@ class PackageConsumerInstallAuthTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('class="wb-auth-shell wb-auth-split"', false);
-    $response->assertSee('class="wb-auth-panel"', false);
+    $response->assertSee('class="wb-auth-panel wb-bg-primary"', false);
     $response->assertSee('class="wb-auth-card"', false);
-    $response->assertSee('cms/brand/logo-64.png', false);
+    $response->assertSee('cms/brand/logo-mark.svg', false);
+    $response->assertSee('cms/brand/logo-mark-dark.svg', false);
+    $response->assertSee('cms/brand/logo-mark-on-accent.svg', false);
+    $response->assertSee('wb-auth-brand-mark-on-accent', false);
     $response->assertSee(WebBlocks::name());
     $response->assertSee(WebBlocks::slogan());
     $response->assertSee(WebBlocks::uiCssUrl(), false);
     $response->assertSee(WebBlocks::iconsCssUrl(), false);
     $response->assertSee(WebBlocks::uiJsUrl(), false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.9', false);
+    $response->assertSee('webblocks-ui@v2.7.11', false);
     $response->assertSee('webblocks-ui.css', false);
     $response->assertSee('webblocks-icons.css', false);
     $response->assertSee('webblocks-ui.js', false);
@@ -79,9 +82,15 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertSee('href="'.route('register').'"', false);
     $response->assertSee('data-password-toggle', false);
     $this->assertFileExists(public_path('cms/css/guest.css'));
-    $this->assertFileExists(public_path('cms/brand/logo-64.png'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark-dark.svg'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark-on-accent.svg'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark-inverse.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/guest.css'));
-    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-64.png'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark.svg'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-dark.svg'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-on-accent.svg'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-inverse.svg'));
   }
 
   #[Test]
@@ -92,7 +101,10 @@ class PackageConsumerInstallAuthTest extends TestCase
 
     $this->assertStringContainsString('webblocks-cms::layouts.guest', $loginView);
     $this->assertStringContainsString('webblocks-cms::partials.head-meta', $guestLayout);
-    $this->assertStringContainsString('asset(\'cms/brand/logo-64.png\')', $loginView);
+    $this->assertStringContainsString('asset(\'cms/brand/logo-mark.svg\')', $loginView);
+    $this->assertStringContainsString('asset(\'cms/brand/logo-mark-dark.svg\')', $loginView);
+    $this->assertStringContainsString('asset(\'cms/brand/logo-mark-on-accent.svg\')', $loginView);
+    $this->assertStringContainsString('wb-auth-brand-mark-on-accent', $loginView);
     $this->assertStringContainsString('asset(\'cms/css/guest.css\')', $guestLayout);
     $this->assertStringContainsString('WebBlocks::uiCssUrl()', $guestLayout);
     $this->assertStringContainsString('WebBlocks::iconsCssUrl()', $guestLayout);
@@ -354,7 +366,8 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->actingAs($user)->get(route('admin.system.updates.index'))
       ->assertOk()
       ->assertSee('System Updates')
-      ->assertSee('Update Summary')
+      ->assertSee('Install Update')
+      ->assertSee('Update Details')
       ->assertDontSee('<strong>Actions</strong>', false);
   }
 

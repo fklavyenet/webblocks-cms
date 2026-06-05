@@ -81,7 +81,7 @@ class PackageStatusCommandTest extends TestCase
       ->expectsOutputToContain('Package public path present: yes')
       ->expectsOutputToContain('Package public asset boundary status: pilot files present')
       ->expectsOutputToContain('Package public assets status: package files present (cms/brand/apple-touch-icon.png')
-      ->expectsOutputToContain('Package public asset files present: yes (apple-touch-icon, favicon-16x16, favicon-32x32, icon-192x192, icon-512x512, logo-180, logo-32, logo-64, og-image')
+      ->expectsOutputToContain('Package public asset files present: yes (apple-touch-icon, favicon, favicon-16x16, favicon-32x32, icon-192x192, icon-512x512, logo, logo-180, logo-32, logo-64, logo-mark-dark, logo-mark-inverse, logo-mark-on-accent, logo-mark, logo-monochrome, og-image')
       ->expectsOutputToContain('Package public asset publish readiness: yes (tag webblocks-cms-assets publishes package assets to public/cms)')
       ->expectsOutputToContain('Root compatibility public assets present: yes')
       ->expectsOutputToContain('Active public runtime asset URLs remain root compatibility paths: yes (package public layout still references root public/cms assets for active runtime compatibility)')
