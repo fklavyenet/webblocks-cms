@@ -19,6 +19,9 @@ class ProfileTest extends TestCase
       ->get('/webadmin/profile');
 
     $response->assertOk();
+    $response->assertSee('<div class="wb-card-header">', false);
+    $response->assertSee('<h2 class="wb-card-title">Profile Information</h2>', false);
+    $response->assertSee('<h2 class="wb-card-title">Change Password</h2>', false);
     $response->assertSee('Profile Information');
     $response->assertSee('Change Password');
   }

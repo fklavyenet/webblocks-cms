@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.127
+
+- Fix the Profile page cards to use standard WebBlocks UI card header, body, and footer structure.
+- Keep Profile password visibility toggles on the existing WebBlocks UI Password Toggle pattern without adding custom CSS or JavaScript.
+
 ## 1.32.126
 
 - Add a dedicated CMS Profile page for current-user account details and password changes.

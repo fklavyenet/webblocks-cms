@@ -42,8 +42,13 @@ class ProfileManagementTest extends TestCase
     $response->assertSee('Manage your account details and password.');
     $response->assertSee('Profile Information');
     $response->assertSee('Change Password');
+    $response->assertSee('<div class="wb-card-header">', false);
+    $response->assertSee('<h2 class="wb-card-title">Profile Information</h2>', false);
+    $response->assertSee('<h2 class="wb-card-title">Change Password</h2>', false);
     $response->assertSee('action="'.route('admin.profile.update').'"', false);
     $response->assertSee('action="'.route('admin.profile.password.update').'"', false);
+    $this->assertSame(2, substr_count($response->getContent(), 'class="wb-card-header"'));
+    $this->assertSame(2, substr_count($response->getContent(), 'class="wb-card-footer"'));
   }
 
   #[Test]
