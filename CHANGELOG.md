@@ -9,7 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.115
+
 - Remove the local root `layouts.admin` compatibility wrapper so plugin and package admin views must use `webblocks-cms::layouts.admin`, matching package-consumer installs.
+- Pin CMS WebBlocks UI consumption and the default icon manifest source to the newest published `v2.7.12` release.
+- Clean the CMS product brand folder down to the canonical logo, mark, favicon, touch icon, and app icon set, with matching root and package assets.
+- Regenerate CMS product PNG brand assets so the actual logo mark is visible instead of flat-color output.
 
 ## 1.32.114
 

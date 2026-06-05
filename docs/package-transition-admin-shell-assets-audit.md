@@ -155,15 +155,12 @@ Active root brand assets should remain root authority for now:
 - `public/cms/brand/icon-192x192.png`
 - `public/cms/brand/icon-512x512.png`
 - `public/cms/brand/logo.svg`
-- `public/cms/brand/logo-180.png`
-- `public/cms/brand/logo-32.png`
-- `public/cms/brand/logo-64.png`
+- `public/cms/brand/logo-mark-dark.svg`
+- `public/cms/brand/logo-mark-inverse.svg`
+- `public/cms/brand/logo-mark-on-accent.svg`
 - `public/cms/brand/logo-mark.svg`
-- `public/cms/brand/logo-monochrome.svg`
-- `public/cms/brand/og-image.png`
-- `public/cms/brand/fklavye-site.css`
 
-The package can later ship default WebBlocks CMS brand assets, but active install-level branding should remain overrideable. `fklavye-site.css` looks especially install or brand-site specific and should not become package runtime authority without review.
+The package now ships the same compact CMS product brand set as root `public/cms/brand`. Older generated `logo-32.png`, `logo-64.png`, `logo-180.png`, `logo-monochrome.svg`, and unused `og-image.png` files are not part of the canonical package-safe set.
 
 ### Would Moving The Admin Shell Require Moving Auth/Profile/Install Layouts?
 

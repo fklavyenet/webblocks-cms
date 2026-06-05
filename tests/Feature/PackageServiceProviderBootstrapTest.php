@@ -117,7 +117,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/LayoutTypeSeeder.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/SlotTypeSeeder.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/README.md'));
-    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-64.png'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/favicon-32x32.png'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/public.css'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/public/public-search-modal.js'));
@@ -545,14 +545,14 @@ class PackageServiceProviderBootstrapTest extends TestCase
         'group' => WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG,
       ],
     ], $provider->publishCalls);
-    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-64.png'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/favicon-32x32.png'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/admin.css'));
     $this->assertFileDoesNotExist(base_path('packages/webblocks-cms/public/cms/index.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin/core.js'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin-sortable-list.js'));
-    $this->assertFileExists(public_path('cms/brand/logo-64.png'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
     $this->assertFileExists(public_path('cms/brand/favicon-32x32.png'));
     $this->assertFileExists(public_path('cms/css/admin.css'));
     $this->assertFileExists(public_path('cms/js/admin/core.js'));

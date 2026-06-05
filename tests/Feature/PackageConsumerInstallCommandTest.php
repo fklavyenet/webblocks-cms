@@ -311,7 +311,7 @@ PHP;
     $this->assertDatabaseHas('block_types', ['slug' => 'card-grid', 'status' => 'draft']);
     $this->assertDatabaseHas('block_types', ['slug' => 'navigation-auto', 'status' => 'published']);
     $this->assertTrue(Page::query()->exists());
-    $this->assertFileExists(public_path('cms/brand/logo-64.png'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
     $this->assertFileExists(public_path('cms/brand/favicon-32x32.png'));
     $this->assertFileExists(public_path('cms/css/admin.css'));
     $this->assertFileExists(public_path('cms/js/admin/core.js'));

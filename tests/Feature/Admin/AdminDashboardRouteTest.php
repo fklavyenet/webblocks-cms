@@ -244,7 +244,7 @@ class AdminDashboardRouteTest extends TestCase
     $this->assertNotSame($assetPrefix, $adminPrefix);
     $this->assertFileExists(public_path('cms/css/admin.css'));
     $this->assertFileExists(public_path('cms/js/admin/core.js'));
-    $this->assertFileExists(public_path('cms/brand/logo-64.png'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
     $this->assertFileDoesNotExist(public_path('cms/index.php'));
     $this->assertFileDoesNotExist(base_path('packages/webblocks-cms/public/cms/index.php'));
   }
@@ -279,7 +279,7 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function admin_layout_uses_pinned_webblocks_ui_v2711_standard_dist_assets_and_not_master_or_minified_urls(): void
+  public function admin_layout_uses_pinned_webblocks_ui_v2712_standard_dist_assets_and_not_master_or_minified_urls(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -293,7 +293,7 @@ class AdminDashboardRouteTest extends TestCase
     $response->assertSee('webblocks-icons.css', false);
     $response->assertSee('webblocks-ui.js', false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.11', false);
+    $response->assertSee('webblocks-ui@v2.7.12', false);
     $response->assertDontSee('raw.githubusercontent.com/fklavyenet/webblocks-ui', false);
     $response->assertDontSee('@b43f92b', false);
     $response->assertDontSee('webblocks-ui.min.css', false);
