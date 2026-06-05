@@ -209,7 +209,7 @@
                             ['label' => 'From name', 'value' => $mailDiagnostics['from_name'] ?: 'Not configured'],
                             ['label' => 'Config cached', 'value' => $mailDiagnostics['config_cached'] ? 'yes' : 'no'],
                             ['label' => 'Environment', 'value' => $mailDiagnostics['environment']],
-                            ['label' => 'Status', 'value' => $mailDiagnostics['ready'] ? 'Ready' : 'Incomplete custom settings'],
+                            ['label' => 'Status', 'value' => $mailDiagnostics['status']],
                         ];
                     @endphp
 

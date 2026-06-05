@@ -329,6 +329,27 @@ class SystemSettingsTest extends TestCase
   }
 
   #[Test]
+  public function mail_diagnostics_reports_incomplete_custom_mail_without_exposing_secret(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MODE], ['value' => SystemSettings::CMS_MAIL_MODE_CUSTOM]);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_MAILER], ['value' => 'smtp']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_HOST], ['value' => 'smtp.example.test']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_PORT], ['value' => '587']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_USERNAME], ['value' => 'mailer@example.test']);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::CMS_MAIL_FROM_ADDRESS], ['value' => 'cms@example.test']);
+
+    $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
+
+    $response->assertOk();
+    $response->assertSee('Incomplete or invalid custom settings');
+    $response->assertSee('Password configured');
+    $response->assertSee('no');
+    $response->assertDontSee('stored-secret');
+  }
+
+  #[Test]
   public function settings_require_valid_enabled_locale_and_timezone(): void
   {
     $user = User::factory()->superAdmin()->create();

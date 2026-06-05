@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.122
+
+- Handle CMS password reset mail send failures as controlled CMS mail errors instead of raw 500 responses.
+- Tighten CMS custom mail diagnostics/readiness and normalize custom SMTP encryption and port values before sending.
+- Keep Mail Diagnostics in a compact read-only table while continuing to hide secrets.
+
 ## 1.32.121
 
 - Change Mail Diagnostics in `System -> Settings` from a grid panel to a compact read-only table for cleaner scanning.
@@ -58,26 +64,3 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Simplify System Updates into the two-card `Install Update` and `Update Details` flow, moving release notes, update readiness, and last-run details into accordions.
 - Replace the main-screen Update History table and row deletion with automatic retained-run pruning, safe last-run detail modals, CLI run inspection/pruning commands, and a downloadable support report.
-
-## 1.32.112
-
-- Fix enabled compatible plugin admin route registration so plugin-owned routes always keep the CMS `/webadmin` web, install, auth, and admin middleware stack before plugin setup and permission checks.
-- Keep plugin setup-required screens controlled after CMS authentication while preserving plugin-owned permission decisions for super admins and unauthorized users.
-
-## 1.32.111
-
-- Fix catalog-updated plugin runtime refresh so enabled plugins cannot keep using stale installed package metadata, provider route paths, or registry permission/menu state after `Update from Catalog`.
-- Centralize plugin permission resolution so CMS super admins can access active plugin-owned routes consistently while unauthorized users lose matching menu visibility and keep controlled 403 responses.
-
-## 1.32.110
-
-- Add Registered Plugins catalog update availability for installed plugins when the Plugin Catalog has a newer compatible published release with complete ZIP artifact metadata.
-- Add a CSRF-protected `Update from Catalog` action that reuses the catalog checksum and plugin ZIP validation path, preserves enabled or disabled lifecycle state, preserves plugin-owned tables, and leaves plugin migrations as an explicit setup action.
-
-## 1.32.109
-
-- Fix installed plugin registry loading for catalog-installed manifests that declare permission identifiers as `key` and migration paths as a single string.
-
-## 1.32.108
-
-- Fix native MySQL/MariaDB pre-update backups by restoring the Symfony Process import required by direct local dump execution.
