@@ -40,7 +40,8 @@ class SystemSettingsTest extends TestCase
     $response->assertSee('Mail');
     $response->assertSee('Use environment mail config');
     $response->assertSee('Diagnostics');
-    $response->assertSee('Password configured: no');
+    $response->assertSee('Password configured');
+    $response->assertSee('no');
     $response->assertSee('Privacy');
     $response->assertSee('Show the public privacy settings banner when visitor reports are enabled.');
     $response->assertSee('Visitors who decline still contribute privacy-safe anonymous page view counts.');
@@ -76,6 +77,10 @@ class SystemSettingsTest extends TestCase
     $mailCard = $this->settingsCard($xpath, 'Mail');
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_mode"]', $mailCard)->length);
     $this->assertSame(0, $this->queryElements($xpath, './/*[@name="cms_mail_host" or @name="cms_mail_password" or @name="cms_mail_from_address"]', $mailCard)->length);
+    $this->assertSame(12, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostic-item]', $mailCard)->length);
+    $this->assertSame(12, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostic-label]', $mailCard)->length);
+    $this->assertSame(12, $this->queryElements($xpath, './/*[@data-wb-mail-diagnostic-value]', $mailCard)->length);
+    $this->assertSame(0, $this->queryElements($xpath, './/div[contains(concat(" ", normalize-space(@class), " "), " wb-settings-row ")][.//*[@data-wb-mail-diagnostics]]', $mailCard)->length);
 
     foreach (['general', 'project', 'mail', 'privacy'] as $section) {
       $this->assertSame(1, $xpath->query('//input[@type="hidden" and @name="section" and @value="'.$section.'"]')->length);
@@ -112,6 +117,7 @@ class SystemSettingsTest extends TestCase
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_host"]', $mailCard)->length);
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_password"]', $mailCard)->length);
     $this->assertSame(1, $this->queryElements($xpath, './/*[@name="cms_mail_from_address"]', $mailCard)->length);
+    $this->assertSame(1, $this->queryElements($xpath, './/a[@href="mailto:cms@example.test" and @data-wb-mail-diagnostic-value]', $mailCard)->length);
   }
 
   #[Test]
@@ -312,7 +318,9 @@ class SystemSettingsTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
 
     $response->assertOk();
-    $response->assertSee('Password configured: yes');
+    $response->assertSee('Password configured');
+    $response->assertSee('yes');
+    $response->assertSee('Secret values are never displayed.');
     $response->assertDontSee('stored-secret');
   }
 

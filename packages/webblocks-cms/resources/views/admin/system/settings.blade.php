@@ -196,28 +196,44 @@
                         </div>
                     @endif
 
-                    <div class="wb-settings-row">
-                        <div class="wb-settings-row-label">
-                            <strong>Diagnostics</strong>
-                            <span>Secret values are reported only as configured or not configured.</span>
-                        </div>
-                        <div class="wb-settings-row-control">
-                            <span>Mode: {{ $mailDiagnostics['active_mode'] }}</span>
-                            <span>Mailer: {{ $mailDiagnostics['mailer'] }}</span>
-                            <span>Host: {{ $mailDiagnostics['host'] ?: 'Not configured' }}</span>
-                            <span>Port: {{ $mailDiagnostics['port'] ?: 'Not configured' }}</span>
-                            <span>Encryption: {{ $mailDiagnostics['encryption'] ?: 'None' }}</span>
-                            <span>Username configured: {{ $mailDiagnostics['username_configured'] ? 'yes' : 'no' }}</span>
-                            <span>Password configured: {{ $mailDiagnostics['password_configured'] ? 'yes' : 'no' }}</span>
-                            <span>From address: {{ $mailDiagnostics['from_address'] ?: 'Not configured' }}</span>
-                            <span>From name: {{ $mailDiagnostics['from_name'] ?: 'Not configured' }}</span>
-                            <span>Config cached: {{ $mailDiagnostics['config_cached'] ? 'yes' : 'no' }}</span>
-                            <span>Environment: {{ $mailDiagnostics['environment'] }}</span>
-                            <span>Status: {{ $mailDiagnostics['ready'] ? 'Ready' : 'Incomplete custom settings' }}</span>
-                        </div>
-                    </div>
+                    @php
+                        $mailDiagnosticItems = [
+                            ['label' => 'Mode', 'value' => $mailDiagnostics['active_mode']],
+                            ['label' => 'Mailer', 'value' => $mailDiagnostics['mailer']],
+                            ['label' => 'Host', 'value' => $mailDiagnostics['host'] ?: 'Not configured'],
+                            ['label' => 'Port', 'value' => $mailDiagnostics['port'] ?: 'Not configured'],
+                            ['label' => 'Encryption', 'value' => $mailDiagnostics['encryption'] ?: 'None'],
+                            ['label' => 'Username configured', 'value' => $mailDiagnostics['username_configured'] ? 'yes' : 'no'],
+                            ['label' => 'Password configured', 'value' => $mailDiagnostics['password_configured'] ? 'yes' : 'no'],
+                            ['label' => 'From address', 'value' => $mailDiagnostics['from_address'] ?: 'Not configured', 'mailto' => filled($mailDiagnostics['from_address'])],
+                            ['label' => 'From name', 'value' => $mailDiagnostics['from_name'] ?: 'Not configured'],
+                            ['label' => 'Config cached', 'value' => $mailDiagnostics['config_cached'] ? 'yes' : 'no'],
+                            ['label' => 'Environment', 'value' => $mailDiagnostics['environment']],
+                            ['label' => 'Status', 'value' => $mailDiagnostics['ready'] ? 'Ready' : 'Incomplete custom settings'],
+                        ];
+                    @endphp
 
-                    <div class="wb-text-sm wb-text-muted">Test email sending is planned as a follow-up action for this diagnostics panel.</div>
+                    <section class="wb-stack wb-gap-3" aria-labelledby="settings-mail-diagnostics-heading" data-wb-mail-diagnostics>
+                        <div>
+                            <strong id="settings-mail-diagnostics-heading">Diagnostics</strong>
+                        </div>
+
+                        <div class="wb-grid wb-grid-3 wb-gap-3">
+                            @foreach ($mailDiagnosticItems as $item)
+                                <div class="wb-stack wb-gap-1" data-wb-mail-diagnostic-item>
+                                    <span class="wb-text-sm wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</span>
+                                    @if (($item['mailto'] ?? false) && $item['value'] !== 'Not configured')
+                                        <a href="mailto:{{ $item['value'] }}" data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">{{ $item['value'] }}</a>
+                                    @else
+                                        <strong data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">{{ $item['value'] }}</strong>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="wb-text-sm wb-text-muted">Secret values are never displayed. They are reported only as configured or not configured.</div>
+                        <div class="wb-text-sm wb-text-muted">Test email sending is planned as a follow-up action for this diagnostics panel.</div>
+                    </section>
                 </div>
 
                 <div class="wb-card-footer">
