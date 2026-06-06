@@ -273,6 +273,18 @@ class AdminDashboardRouteTest extends TestCase
     $response->assertOk();
     $response->assertSee('cms/js/admin/core.js', false);
     $response->assertSee('cms/css/admin.css', false);
+    $response->assertDontSee('cms/js/admin/password-fields.js', false);
+    $response->assertDontSee('cms/js/admin/asset-picker.js', false);
+    $response->assertDontSee('cms/js/admin/media-copy.js', false);
+    $response->assertDontSee('cms/js/admin-sortable-list.js', false);
+    $response->assertDontSee('cms/js/admin/inline-block-builder.js', false);
+    $response->assertDontSee('cms/js/admin/builder-items.js', false);
+    $response->assertDontSee('cms/js/admin/page-builder-modals.js', false);
+    $response->assertDontSee('cms/js/admin/slot-block-delete-modal.js', false);
+    $response->assertDontSee('cms/js/admin/page-slot-source-modals.js', false);
+    $response->assertDontSee('cms/js/admin/page-assets.js', false);
+    $response->assertDontSee('cms/js/admin/gallery-items.js', false);
+    $response->assertDontSee('cms/js/admin/rich-text-editor.js', false);
     $response->assertDontSee('function resetAdminTransientUiState()', false);
     $response->assertDontSee("document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');", false);
     $response->assertDontSee("window.addEventListener('pageshow'", false);

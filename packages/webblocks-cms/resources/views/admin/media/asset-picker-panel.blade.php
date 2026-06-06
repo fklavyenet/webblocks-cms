@@ -83,6 +83,12 @@
   };
 @endphp
 
+@once
+  @push('admin-scripts')
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/asset-picker.js'])
+  @endpush
+@endonce
+
 <div
   class="wb-stack wb-gap-2"
   id="{{ $pickerOverlayOwnerId }}"

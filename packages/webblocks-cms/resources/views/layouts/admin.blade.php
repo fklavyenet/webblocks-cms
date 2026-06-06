@@ -9,17 +9,6 @@
         $adminCssPath = public_path('cms/css/admin.css');
         $adminJsAssets = [
             'core' => public_path('cms/js/admin/core.js'),
-            'password-fields' => public_path('cms/js/admin/password-fields.js'),
-            'asset-picker' => public_path('cms/js/admin/asset-picker.js'),
-            'media-copy' => public_path('cms/js/admin/media-copy.js'),
-            'admin-sortable-list' => public_path('cms/js/admin-sortable-list.js'),
-            'inline-block-builder' => public_path('cms/js/admin/inline-block-builder.js'),
-            'builder-items' => public_path('cms/js/admin/builder-items.js'),
-            'page-builder-modals' => public_path('cms/js/admin/page-builder-modals.js'),
-            'page-slot-source-modals' => public_path('cms/js/admin/page-slot-source-modals.js'),
-            'page-assets' => public_path('cms/js/admin/page-assets.js'),
-            'gallery-items' => public_path('cms/js/admin/gallery-items.js'),
-            'rich-text-editor' => public_path('cms/js/admin/rich-text-editor.js'),
         ];
     @endphp
 
@@ -286,42 +275,7 @@
         @if (is_file($adminJsAssets['core']))
             <script src="{{ asset('cms/js/admin/core.js') }}?v={{ filemtime($adminJsAssets['core']) }}" defer></script>
         @endif
-        @if (is_file($adminJsAssets['password-fields']))
-            <script src="{{ asset('cms/js/admin/password-fields.js') }}?v={{ filemtime($adminJsAssets['password-fields']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['asset-picker']))
-            <script src="{{ asset('cms/js/admin/asset-picker.js') }}?v={{ filemtime($adminJsAssets['asset-picker']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['media-copy']))
-            <script src="{{ asset('cms/js/admin/media-copy.js') }}?v={{ filemtime($adminJsAssets['media-copy']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['admin-sortable-list']))
-            <script src="{{ asset('cms/js/admin-sortable-list.js') }}?v={{ filemtime($adminJsAssets['admin-sortable-list']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['inline-block-builder']))
-            <script src="{{ asset('cms/js/admin/inline-block-builder.js') }}?v={{ filemtime($adminJsAssets['inline-block-builder']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['builder-items']))
-            <script src="{{ asset('cms/js/admin/builder-items.js') }}?v={{ filemtime($adminJsAssets['builder-items']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['page-builder-modals']))
-            <script src="{{ asset('cms/js/admin/page-builder-modals.js') }}?v={{ filemtime($adminJsAssets['page-builder-modals']) }}" defer></script>
-        @endif
-        @if (is_file(public_path('cms/js/admin/slot-block-delete-modal.js')))
-            <script src="{{ asset('cms/js/admin/slot-block-delete-modal.js') }}?v={{ filemtime(public_path('cms/js/admin/slot-block-delete-modal.js')) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['page-slot-source-modals']))
-            <script src="{{ asset('cms/js/admin/page-slot-source-modals.js') }}?v={{ filemtime($adminJsAssets['page-slot-source-modals']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['page-assets']))
-            <script src="{{ asset('cms/js/admin/page-assets.js') }}?v={{ filemtime($adminJsAssets['page-assets']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['gallery-items']))
-            <script src="{{ asset('cms/js/admin/gallery-items.js') }}?v={{ filemtime($adminJsAssets['gallery-items']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['rich-text-editor']))
-            <script src="{{ asset('cms/js/admin/rich-text-editor.js') }}?v={{ filemtime($adminJsAssets['rich-text-editor']) }}" defer></script>
-        @endif
+        @stack('admin-scripts')
         @stack('scripts')
     </body>
 </html>

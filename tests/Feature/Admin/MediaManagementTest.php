@@ -474,7 +474,7 @@ class MediaManagementTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('cms/js/admin/core.js', false);
-    $response->assertSee('cms/js/admin/asset-picker.js', false);
+    $response->assertDontSee('cms/js/admin/asset-picker.js', false);
     $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
     $this->assertNotFalse($assetPickerJs);
     $this->assertStringContainsString("fetch('/webadmin/media'", $assetPickerJs);
@@ -1860,6 +1860,7 @@ class MediaManagementTest extends TestCase
     $fileDetailsResponse->assertSee('Created:');
     $fileDetailsResponse->assertSee('Updated:');
     $fileDetailsResponse->assertSee('aria-label="Copy public URL"', false);
+    $fileDetailsResponse->assertSee('cms/js/admin/media-copy.js', false);
     $fileDetailsResponse->assertSee('wb-btn-icon', false);
     $fileDetailsResponse->assertSee('wb-btn-ghost', false);
     $fileDetailsResponse->assertSee('<div class="wb-cluster wb-gap-2 wb-flex-wrap">', false);

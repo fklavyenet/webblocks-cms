@@ -250,3 +250,8 @@
     ])
   @endif
 @endpush
+
+@push('admin-scripts')
+  @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/page-assets.js'])
+  @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/page-slot-source-modals.js'])
+@endpush

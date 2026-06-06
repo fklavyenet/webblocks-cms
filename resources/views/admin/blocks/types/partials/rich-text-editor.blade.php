@@ -6,6 +6,12 @@
     $surfaceId = $inputId.'__surface';
 @endphp
 
+@once
+    @push('admin-scripts')
+        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/rich-text-editor.js'])
+    @endpush
+@endonce
+
 <div class="wb-stack wb-gap-3">
     @if ($translationNotice)
         <div class="wb-alert wb-alert-info">

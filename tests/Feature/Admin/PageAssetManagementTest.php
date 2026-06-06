@@ -40,6 +40,7 @@ class PageAssetManagementTest extends TestCase
     $response->assertSee('Assets');
     $response->assertSee('Layout Slots');
     $response->assertSee('Page Assets');
+    $response->assertSee('cms/js/admin/page-assets.js', false);
     $response->assertSee('Add CSS asset');
     $response->assertSee('Add JS asset');
     $response->assertSee('<th>Type</th>', false);

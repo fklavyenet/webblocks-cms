@@ -1,7 +1,6 @@
 @php
     $slotTitle = 'Edit Shared Slot Blocks: '.$sharedSlot->name;
     $sharedSlotsIndexUrl = route('admin.shared-slots.index', ['site' => $sharedSlot->site_id]);
-    $slotBlockTreeScriptPath = public_path('cms/js/admin/slot-block-tree.js');
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
@@ -163,8 +162,11 @@
     ])
 @endpush
 
-@push('scripts')
-    @if (is_file($slotBlockTreeScriptPath))
-        <script src="{{ asset('cms/js/admin/slot-block-tree.js') }}?v={{ filemtime($slotBlockTreeScriptPath) }}" defer></script>
-    @endif
+@push('admin-scripts')
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin-sortable-list.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/inline-block-builder.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/builder-items.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/page-builder-modals.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/slot-block-delete-modal.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/slot-block-tree.js'])
 @endpush

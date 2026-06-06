@@ -20,6 +20,12 @@
         ->groupBy(fn ($blockType) => $blockType->category ?: 'content');
 @endphp
 
+@once
+    @push('admin-scripts')
+        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/inline-block-builder.js'])
+    @endpush
+@endonce
+
 <div class="wb-card wb-card-accent" data-wb-inline-builder>
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
         <strong>Blocks</strong>

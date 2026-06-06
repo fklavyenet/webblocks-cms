@@ -142,7 +142,7 @@ Product-owned but blocked by explicit asset strategy:
 - `public/cms/js/admin/slot-block-tree.js`
 - `public/cms/js/admin-sortable-list.js`
 
-These files now also exist as package-owned source files under `packages/webblocks-cms/public/cms/...`, but active runtime URLs are still root `public/cms/...` paths. Replacing runtime authority still requires a clear rule for package source files, root compatibility files, publish tags, update syncing, cache busting, and downstream override behavior.
+These files now also exist as package-owned source files under `packages/webblocks-cms/public/cms/...`, but active runtime URLs are still root `public/cms/...` paths. The package admin layout loads only pinned WebBlocks UI JavaScript and shared `core.js` globally; all feature-specific admin JavaScript is pushed through the `admin-scripts` stack by the views or partials that render the corresponding UI. Replacing runtime authority still requires a clear rule for package source files, root compatibility files, publish tags, update syncing, cache busting, and downstream override behavior.
 
 ### Which Brand Assets Should Remain Install-Owned Or Become Package Defaults?
 

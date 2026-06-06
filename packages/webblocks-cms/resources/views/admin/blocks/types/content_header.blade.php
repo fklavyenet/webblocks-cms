@@ -2,6 +2,12 @@
     $metaItems = old('meta_items', $block->metaItems()->all());
 @endphp
 
+@once
+    @push('admin-scripts')
+        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/builder-items.js'])
+    @endpush
+@endonce
+
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">

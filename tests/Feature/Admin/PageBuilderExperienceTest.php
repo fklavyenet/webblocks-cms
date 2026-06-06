@@ -6292,6 +6292,11 @@ class PageBuilderExperienceTest extends TestCase
     $response->assertSee('class="wb-block-hierarchy"', false);
     $response->assertSee('cms/css/admin.css', false);
     $response->assertDontSee('site/css/admin.css', false);
+    $response->assertSee('cms/js/admin-sortable-list.js', false);
+    $response->assertSee('cms/js/admin/inline-block-builder.js', false);
+    $response->assertSee('cms/js/admin/builder-items.js', false);
+    $response->assertSee('cms/js/admin/page-builder-modals.js', false);
+    $response->assertSee('cms/js/admin/slot-block-delete-modal.js', false);
     $response->assertSee('cms/js/admin/slot-block-tree.js', false);
     $response->assertDontSee('cms/js/admin/slot-blocks.js', false);
     $response->assertDontSee('— Cluster', false);

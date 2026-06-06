@@ -42,6 +42,20 @@
             ->values();
 @endphp
 
+@once
+    @push('admin-scripts')
+        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/builder-items.js'])
+    @endpush
+@endonce
+
+@if ($enableAdminSortable)
+    @once
+        @push('admin-scripts')
+            @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin-sortable-list.js'])
+        @endpush
+    @endonce
+@endif
+
 @if ($itemBlockType)
     <div class="wb-card wb-card-muted" data-wb-builder-items-editor="{{ $editorKey }}">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">

@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.132
+
+- Keep the base admin layout JavaScript minimal by loading only pinned WebBlocks UI and shared CMS admin core globally, with picker, builder, rich-text, gallery, media-copy, page-assets, and password-toggle behavior loaded from page-scoped static admin assets.
+
 ## 1.32.131
 
 - Document and guard the final CMS brand standard for inline SVG auth/sidebar marks, token-controlled colors, required brand files, and obsolete asset removal.
