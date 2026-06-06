@@ -58,6 +58,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 
 - [Development Workflow](../DEVELOPMENT.md)
 - [Native Local Development](native-local-development.md)
+- [CMS Brand Standard](brand-standard.md)
 - [Plugin System](plugin-system.md) - implemented runtime foundations, including manual ZIP upload/install, package conventions, compatibility checks, inert disabled/incompatible behavior, and WebBlocks UI Manager as a separate operator plugin artifact
 - [Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md) - ecosystem-wide plugin identity, manifest, catalog/store, and future `plugins.webblocksui.com` direction
 - [Plugin Catalog Product Architecture](plugin-catalog-product-architecture.md) - product positioning, MVP scope, domain model, and implementation options for the proposed `plugins.webblocksui.com` Plugin Catalog
@@ -66,6 +67,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 
 - [Core Concepts](core-concepts.md#project-boundary)
 - [Coexistence](coexistence.md)
+- [CMS Brand Standard](brand-standard.md)
 - [Updates](updates.md)
 - [Plugin System](plugin-system.md)
 - [Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md)

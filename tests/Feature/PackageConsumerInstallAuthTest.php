@@ -59,6 +59,7 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertDontSee('cms/brand/logo-mark.svg', false);
     $response->assertDontSee('cms/brand/logo-mark-dark.svg', false);
     $response->assertDontSee('cms/brand/logo-mark-on-accent.svg', false);
+    $response->assertDontSee('cms/brand/logo-mark-mask.svg', false);
     $response->assertDontSee('wb-auth-brand-mark-mask', false);
     $response->assertSee('wb-auth-brand-mark-on-accent', false);
     $response->assertSee('wb-auth-brand-mark-on-surface', false);
@@ -66,7 +67,7 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertDontSee('wb-auth-brand-mark-light', false);
     $response->assertDontSee('wb-auth-brand-mark-dark', false);
     $response->assertDontSee('<img', false);
-    $response->assertDontSee('<picture>', false);
+    $this->assertDoesNotMatchRegularExpression('/<(?:picture|source)\b/i', $response->getContent());
     $response->assertDontSee('prefers-color-scheme', false);
     $response->assertSee(WebBlocks::name());
     $response->assertSee(WebBlocks::slogan());
@@ -124,6 +125,7 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark.svg\')', $authViews);
     $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark-dark.svg\')', $authViews);
     $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark-on-accent.svg\')', $authViews);
+    $this->assertStringNotContainsString('logo-mark-mask.svg', $authViews);
     $this->assertStringNotContainsString('wb-auth-brand-mark-mask', $authViews);
     $this->assertStringContainsString('wb-auth-brand-mark-on-accent', $authViews);
     $this->assertStringContainsString('wb-auth-brand-mark-on-surface', $authViews);
@@ -131,7 +133,7 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringNotContainsString('wb-auth-brand-mark-light', $authViews);
     $this->assertStringNotContainsString('wb-auth-brand-mark-dark', $authViews);
     $this->assertStringNotContainsString('<img', $authViews);
-    $this->assertStringNotContainsString('<picture>', $authViews);
+    $this->assertDoesNotMatchRegularExpression('/<(?:picture|source)\b/i', $authViews);
     $this->assertStringNotContainsString('prefers-color-scheme', $authViews);
     $this->assertStringContainsString('viewBox="0 0 128 128"', $brandMarkComponent);
     $this->assertStringContainsString('stroke="currentColor"', $brandMarkComponent);
@@ -142,6 +144,7 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringNotContainsString('<script', $brandMarkComponent);
     $this->assertStringNotContainsString('foreignObject', $brandMarkComponent);
     $this->assertStringNotContainsString('style=', $brandMarkComponent);
+    $this->assertDoesNotMatchRegularExpression('/<svg\b[^>]*\s(?:width|height)=/i', $brandMarkComponent);
     $this->assertStringContainsString('asset(\'cms/css/guest.css\')', $guestLayout);
     $this->assertStringContainsString('WebBlocks::uiCssUrl()', $guestLayout);
     $this->assertStringContainsString('WebBlocks::iconsCssUrl()', $guestLayout);

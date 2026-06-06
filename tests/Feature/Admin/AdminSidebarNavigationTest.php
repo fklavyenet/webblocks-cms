@@ -122,10 +122,15 @@ class AdminSidebarNavigationTest extends TestCase
     $response->assertSee('<a href="'.route('admin.dashboard').'" class="wb-sidebar-brand" aria-label="WebBlocks CMS">', false);
     $response->assertSee('<svg', false);
     $response->assertSee('class="wb-sidebar-brand-logo wb-sidebar-brand-logo-inline"', false);
+    $response->assertSee('class="wb-sidebar-brand-copy"', false);
+    $response->assertSee('class="wb-sidebar-brand-note"', false);
     $response->assertSee('viewBox="0 0 128 128"', false);
     $response->assertSee('stroke="currentColor"', false);
     $response->assertDontSee('<img src="'.asset('cms/brand/logo-mark.svg'), false);
     $response->assertDontSee('wb-sidebar-brand-logo" src=', false);
+    $response->assertDontSee('logo-mark-mask.svg', false);
+    $response->assertDontSee('wb-auth-brand-mark-mask', false);
+    $this->assertDoesNotMatchRegularExpression('/<(?:picture|source)\b/i', $content);
     $response->assertSee('>WebBlocks CMS<', false);
     $response->assertSee('>A modern block-based CMS<', false);
     $this->assertSame($adminCss, $packageAdminCss);

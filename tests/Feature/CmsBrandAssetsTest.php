@@ -24,6 +24,15 @@ class CmsBrandAssetsTest extends TestCase
     'favicon-32x32.png' => [32, 32],
   ];
 
+  private const OBSOLETE_BRAND_FILES = [
+    'app-icon.svg',
+    'icon-192x192.png',
+    'icon-512x512.png',
+    'logo-mark-inverse.svg',
+    'logo-mark-mask.svg',
+    'logo.svg',
+  ];
+
   #[Test]
   public function cms_brand_assets_stay_canonical_and_package_aligned(): void
   {
@@ -39,6 +48,16 @@ class CmsBrandAssetsTest extends TestCase
         hash_file('sha256', $packageBrandPath.'/'.$file),
         $file.' differs between root and package CMS brand assets.',
       );
+    }
+  }
+
+  #[Test]
+  public function obsolete_cms_brand_assets_stay_absent_from_root_and_package_paths(): void
+  {
+    foreach ([public_path('cms/brand'), base_path('packages/webblocks-cms/public/cms/brand')] as $brandPath) {
+      foreach (self::OBSOLETE_BRAND_FILES as $file) {
+        $this->assertFileDoesNotExist($brandPath.'/'.$file);
+      }
     }
   }
 
