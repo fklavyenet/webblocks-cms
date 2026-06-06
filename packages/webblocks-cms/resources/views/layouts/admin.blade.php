@@ -141,8 +141,8 @@
             <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
 
             <aside class="wb-sidebar" id="admin-sidebar">
-                <a href="{{ route('admin.dashboard') }}" class="wb-sidebar-brand">
-                    <img src="{{ asset('cms/brand/logo-mark.svg') }}" alt="{{ WebBlocks::name() }} logo" class="wb-sidebar-brand-logo">
+                <a href="{{ route('admin.dashboard') }}" class="wb-sidebar-brand" aria-label="{{ WebBlocks::name() }}">
+                    <x-webblocks-cms::brand-mark surface="sidebar" class="wb-sidebar-brand-logo wb-sidebar-brand-logo-inline" decorative="true" />
                     <span class="wb-sidebar-brand-copy">
                         <span>{{ WebBlocks::name() }}</span>
                         <span class="wb-sidebar-brand-note">{{ WebBlocks::slogan() }}</span>

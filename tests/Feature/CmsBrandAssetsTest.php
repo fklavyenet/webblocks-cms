@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -15,8 +16,6 @@ class CmsBrandAssetsTest extends TestCase
     'icon-192x192.png',
     'icon-512x512.png',
     'logo-mark-dark.svg',
-    'logo-mark-inverse.svg',
-    'logo-mark-mask.svg',
     'logo-mark-on-accent.svg',
     'logo-mark.svg',
     'logo.svg',
@@ -59,6 +58,38 @@ class CmsBrandAssetsTest extends TestCase
       $this->assertSame($expectedHeight, $height, $file.' height mismatch.');
       $this->assertGreaterThan(1, $this->uniquePngColorCount($path), $file.' must contain visible mark pixels, not a flat fill.');
     }
+  }
+
+  #[Test]
+  public function cms_favicon_svg_is_self_contained_and_safe(): void
+  {
+    $svg = (string) file_get_contents(public_path('cms/brand/favicon.svg'));
+
+    $this->assertStringContainsString('viewBox="0 0 128 128"', $svg);
+    $this->assertStringContainsString('fill="#118AB2"', $svg);
+    $this->assertStringContainsString('stroke="#FFFFFF"', $svg);
+    $this->assertStringNotContainsString('<script', $svg);
+    $this->assertStringNotContainsString('foreignObject', $svg);
+    $this->assertStringNotContainsString('currentColor', $svg);
+    $this->assertStringNotContainsString('var(--', $svg);
+    $this->assertDoesNotMatchRegularExpression('/\son[a-z]+\s*=/i', $svg);
+    $this->assertDoesNotMatchRegularExpression('/\s(?:href|xlink:href)\s*=/i', $svg);
+    $this->assertDoesNotMatchRegularExpression('/<style\b/i', $svg);
+  }
+
+  #[Test]
+  public function cms_product_shell_head_uses_canonical_favicon_assets(): void
+  {
+    $head = View::make('webblocks-cms::partials.head-meta', [
+      'title' => 'CMS Shell',
+      'brandName' => 'WebBlocks CMS',
+      'siteName' => 'WebBlocks CMS',
+    ])->render();
+
+    $this->assertStringContainsString('cms/brand/favicon.svg', $head);
+    $this->assertStringContainsString('cms/brand/favicon-16x16.png', $head);
+    $this->assertStringContainsString('cms/brand/favicon-32x32.png', $head);
+    $this->assertStringContainsString('cms/brand/apple-touch-icon.png', $head);
   }
 
   /**

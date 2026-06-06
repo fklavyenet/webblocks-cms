@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Site;
@@ -108,17 +109,33 @@ class AdminSidebarNavigationTest extends TestCase
   public function sidebar_brand_and_footer_stay_fixed_when_project_identity_changes(): void
   {
     $user = User::factory()->superAdmin()->create();
+    $adminCss = File::get(public_path('cms/css/admin.css'));
+    $packageAdminCss = File::get(base_path('packages/webblocks-cms/public/cms/css/admin.css'));
 
     SystemSetting::query()->updateOrCreate(['key' => 'system.project_name'], ['value' => 'Project Alpha']);
     SystemSetting::query()->updateOrCreate(['key' => 'system.project_tagline'], ['value' => 'Admin context only']);
 
     $response = $this->actingAs($user)->get(route('admin.dashboard'));
+    $content = $response->getContent();
 
     $response->assertOk();
+    $response->assertSee('<a href="'.route('admin.dashboard').'" class="wb-sidebar-brand" aria-label="WebBlocks CMS">', false);
+    $response->assertSee('<svg', false);
+    $response->assertSee('class="wb-sidebar-brand-logo wb-sidebar-brand-logo-inline"', false);
+    $response->assertSee('viewBox="0 0 128 128"', false);
+    $response->assertSee('stroke="currentColor"', false);
+    $response->assertDontSee('<img src="'.asset('cms/brand/logo-mark.svg'), false);
+    $response->assertDontSee('wb-sidebar-brand-logo" src=', false);
     $response->assertSee('>WebBlocks CMS<', false);
     $response->assertSee('>A modern block-based CMS<', false);
-    $response->assertSee('cms/brand/logo-mark.svg', false);
+    $this->assertSame($adminCss, $packageAdminCss);
+    $this->assertStringContainsString('svg.wb-sidebar-brand-logo {', $adminCss);
+    $this->assertStringContainsString('inline-size: 3rem;', $adminCss);
+    $this->assertStringContainsString('block-size: 3rem;', $adminCss);
+    $this->assertStringContainsString('color: var(--wb-accent);', $adminCss);
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark.svg'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
+    $this->assertAdminSidebarBrandSvgHasNoDimensions($content);
     $response->assertSee('<div class="wb-text-sm wb-text-muted wb-text-center">WebBlocks CMS v'.WebBlocks::VERSION.'</div>', false);
     $response->assertSee('WebBlocks CMS v'.WebBlocks::VERSION);
   }
@@ -214,6 +231,15 @@ class AdminSidebarNavigationTest extends TestCase
     $editorResponse = $this->followingRedirects()->actingAs($editor)->get(route('admin.pages.index'));
     $editorResponse->assertOk();
     $editorResponse->assertDontSee('href="'.route('admin.blocks.index').'"', false);
+  }
+
+  private function assertAdminSidebarBrandSvgHasNoDimensions(string $html): void
+  {
+    preg_match('/<svg\b[^>]*class="[^"]*wb-sidebar-brand-logo[^"]*"[^>]*>/i', $html, $match);
+
+    $this->assertNotEmpty($match);
+    $this->assertStringNotContainsString(' width=', $match[0]);
+    $this->assertStringNotContainsString(' height=', $match[0]);
   }
 
   #[Test]

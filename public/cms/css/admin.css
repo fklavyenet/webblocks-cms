@@ -41,6 +41,14 @@
     pointer-events: auto;
 }
 
+svg.wb-sidebar-brand-logo {
+    block-size: 3rem;
+    color: var(--wb-accent);
+    display: block;
+    flex: 0 0 auto;
+    inline-size: 3rem;
+}
+
 .wb-sidebar-link-label {
     width: 100%;
 }

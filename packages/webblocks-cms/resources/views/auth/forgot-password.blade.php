@@ -11,7 +11,7 @@
     <div class="wb-auth-shell wb-auth-split">
         <div class="wb-auth-panel wb-bg-primary">
             <h1 class="wb-auth-panel-title wb-auth-brand">
-                <span class="wb-auth-brand-mark wb-auth-brand-mark-mask wb-auth-brand-mark-on-accent" role="img" aria-label="{{ WebBlocks::name() }} logo"></span>
+                <x-webblocks-cms::brand-mark class="wb-auth-brand-mark wb-auth-brand-mark-on-accent" decorative="true" />
                 <span>{{ WebBlocks::name() }}</span>
             </h1>
 
@@ -22,10 +22,7 @@
             <div class="wb-auth-card">
                 <div class="wb-auth-header">
                     <h1 class="wb-auth-header-title wb-auth-brand">
-                        <span class="wb-auth-brand-logo" role="img" aria-label="{{ WebBlocks::name() }} logo">
-                            <img src="{{ asset('cms/brand/logo-mark.svg') }}" alt="" aria-hidden="true" class="wb-auth-brand-mark wb-auth-brand-mark-light wb-auth-brand-mark-sm">
-                            <img src="{{ asset('cms/brand/logo-mark-dark.svg') }}" alt="" aria-hidden="true" class="wb-auth-brand-mark wb-auth-brand-mark-dark wb-auth-brand-mark-sm">
-                        </span>
+                        <x-webblocks-cms::brand-mark class="wb-auth-brand-mark wb-auth-brand-mark-sm wb-auth-brand-mark-on-surface" decorative="true" />
                         <span>Reset password</span>
                     </h1>
                     <p class="wb-auth-header-subtitle">Enter your email address and we will send you a password reset link.</p>

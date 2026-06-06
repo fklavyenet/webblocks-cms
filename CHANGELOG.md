@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Standardize CMS auth and admin sidebar brand marks on a reusable inline SVG component that inherits mode/accent-aware colors, remove obsolete pilot brand image variants, and keep favicons on the accepted non-squircle CMS behavior.
+
 ## 1.32.128
 
 - Make CMS auth logos app-mode aware by switching normal and dark brand marks with `html[data-mode]` CSS instead of `picture` media-only markup.

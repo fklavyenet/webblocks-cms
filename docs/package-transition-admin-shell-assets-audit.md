@@ -156,7 +156,6 @@ Active root brand assets should remain root authority for now:
 - `public/cms/brand/icon-512x512.png`
 - `public/cms/brand/logo.svg`
 - `public/cms/brand/logo-mark-dark.svg`
-- `public/cms/brand/logo-mark-inverse.svg`
 - `public/cms/brand/logo-mark-on-accent.svg`
 - `public/cms/brand/logo-mark.svg`
 

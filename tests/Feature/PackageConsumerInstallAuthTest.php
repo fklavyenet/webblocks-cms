@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
+use Illuminate\View\ComponentAttributeBag;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteExportController as PackageSiteExportController;
@@ -52,14 +53,19 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertSee('class="wb-auth-shell wb-auth-split"', false);
     $response->assertSee('class="wb-auth-panel wb-bg-primary"', false);
     $response->assertSee('class="wb-auth-card"', false);
-    $response->assertSee('cms/brand/logo-mark.svg', false);
-    $response->assertSee('cms/brand/logo-mark-dark.svg', false);
+    $response->assertSee('<svg', false);
+    $response->assertSee('viewBox="0 0 128 128"', false);
+    $response->assertSee('stroke="currentColor"', false);
+    $response->assertDontSee('cms/brand/logo-mark.svg', false);
+    $response->assertDontSee('cms/brand/logo-mark-dark.svg', false);
     $response->assertDontSee('cms/brand/logo-mark-on-accent.svg', false);
-    $response->assertSee('wb-auth-brand-mark-mask', false);
+    $response->assertDontSee('wb-auth-brand-mark-mask', false);
     $response->assertSee('wb-auth-brand-mark-on-accent', false);
-    $response->assertSee('wb-auth-brand-logo', false);
-    $response->assertSee('wb-auth-brand-mark-light', false);
-    $response->assertSee('wb-auth-brand-mark-dark', false);
+    $response->assertSee('wb-auth-brand-mark-on-surface', false);
+    $response->assertDontSee('wb-auth-brand-logo', false);
+    $response->assertDontSee('wb-auth-brand-mark-light', false);
+    $response->assertDontSee('wb-auth-brand-mark-dark', false);
+    $response->assertDontSee('<img', false);
     $response->assertDontSee('<picture>', false);
     $response->assertDontSee('prefers-color-scheme', false);
     $response->assertSee(WebBlocks::name());
@@ -91,37 +97,51 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertFileExists(public_path('cms/css/guest.css'));
     $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
     $this->assertFileExists(public_path('cms/brand/logo-mark-dark.svg'));
-    $this->assertFileExists(public_path('cms/brand/logo-mark-mask.svg'));
     $this->assertFileExists(public_path('cms/brand/logo-mark-on-accent.svg'));
-    $this->assertFileExists(public_path('cms/brand/logo-mark-inverse.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/guest.css'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-dark.svg'));
-    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-mask.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-on-accent.svg'));
-    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-inverse.svg'));
 
-    $this->assertAuthBrandImagesHaveNoDimensions($response->getContent());
+    $this->assertAuthBrandSvgsHaveNoDimensions($response->getContent());
   }
 
   #[Test]
   public function package_owned_cms_login_shell_uses_package_safe_views_and_assets(): void
   {
     $loginView = File::get(base_path('packages/webblocks-cms/resources/views/auth/login.blade.php'));
+    $forgotPasswordView = File::get(base_path('packages/webblocks-cms/resources/views/auth/forgot-password.blade.php'));
+    $resetPasswordView = File::get(base_path('packages/webblocks-cms/resources/views/auth/reset-password.blade.php'));
     $guestLayout = File::get(base_path('packages/webblocks-cms/resources/views/layouts/guest.blade.php'));
+    $brandMarkComponent = File::get(base_path('packages/webblocks-cms/resources/views/components/brand-mark.blade.php'));
+    $guestCss = File::get(public_path('cms/css/guest.css'));
+    $packageGuestCss = File::get(base_path('packages/webblocks-cms/public/cms/css/guest.css'));
+    $authViews = $loginView."\n".$forgotPasswordView."\n".$resetPasswordView;
 
     $this->assertStringContainsString('webblocks-cms::layouts.guest', $loginView);
     $this->assertStringContainsString('webblocks-cms::partials.head-meta', $guestLayout);
-    $this->assertStringContainsString('asset(\'cms/brand/logo-mark.svg\')', $loginView);
-    $this->assertStringContainsString('asset(\'cms/brand/logo-mark-dark.svg\')', $loginView);
-    $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark-on-accent.svg\')', $loginView);
-    $this->assertStringContainsString('wb-auth-brand-mark-mask', $loginView);
-    $this->assertStringContainsString('wb-auth-brand-mark-on-accent', $loginView);
-    $this->assertStringContainsString('wb-auth-brand-logo', $loginView);
-    $this->assertStringContainsString('wb-auth-brand-mark-light', $loginView);
-    $this->assertStringContainsString('wb-auth-brand-mark-dark', $loginView);
-    $this->assertStringNotContainsString('<picture>', $loginView);
-    $this->assertStringNotContainsString('prefers-color-scheme', $loginView);
+    $this->assertStringContainsString('<x-webblocks-cms::brand-mark', $authViews);
+    $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark.svg\')', $authViews);
+    $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark-dark.svg\')', $authViews);
+    $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark-on-accent.svg\')', $authViews);
+    $this->assertStringNotContainsString('wb-auth-brand-mark-mask', $authViews);
+    $this->assertStringContainsString('wb-auth-brand-mark-on-accent', $authViews);
+    $this->assertStringContainsString('wb-auth-brand-mark-on-surface', $authViews);
+    $this->assertStringNotContainsString('wb-auth-brand-logo', $authViews);
+    $this->assertStringNotContainsString('wb-auth-brand-mark-light', $authViews);
+    $this->assertStringNotContainsString('wb-auth-brand-mark-dark', $authViews);
+    $this->assertStringNotContainsString('<img', $authViews);
+    $this->assertStringNotContainsString('<picture>', $authViews);
+    $this->assertStringNotContainsString('prefers-color-scheme', $authViews);
+    $this->assertStringContainsString('viewBox="0 0 128 128"', $brandMarkComponent);
+    $this->assertStringContainsString('stroke="currentColor"', $brandMarkComponent);
+    $componentMarkup = View::make('webblocks-cms::components.brand-mark', [
+      'attributes' => new ComponentAttributeBag(['class' => 'wb-auth-brand-mark']),
+    ])->render();
+    $this->assertAuthBrandSvgsHaveNoDimensions($componentMarkup, 1);
+    $this->assertStringNotContainsString('<script', $brandMarkComponent);
+    $this->assertStringNotContainsString('foreignObject', $brandMarkComponent);
+    $this->assertStringNotContainsString('style=', $brandMarkComponent);
     $this->assertStringContainsString('asset(\'cms/css/guest.css\')', $guestLayout);
     $this->assertStringContainsString('WebBlocks::uiCssUrl()', $guestLayout);
     $this->assertStringContainsString('WebBlocks::iconsCssUrl()', $guestLayout);
@@ -131,6 +151,24 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringNotContainsString("@extends('layouts.guest'", $loginView);
     $this->assertStringNotContainsString('@extends("layouts.guest"', $loginView);
     $this->assertStringNotContainsString('@include(\'partials.head-meta\'', $guestLayout);
+    $this->assertSame($guestCss, $packageGuestCss);
+    $this->assertStringContainsString('.wb-auth-brand {', $guestCss);
+    $this->assertStringContainsString('display: inline-flex;', $guestCss);
+    $this->assertStringContainsString('align-items: center;', $guestCss);
+    $this->assertStringContainsString('gap: var(--wb-space-3, 0.75rem);', $guestCss);
+    $this->assertStringContainsString('svg.wb-auth-brand-mark {', $guestCss);
+    $this->assertStringContainsString('inline-size: 3rem;', $guestCss);
+    $this->assertStringContainsString('block-size: 3rem;', $guestCss);
+    $this->assertStringContainsString('inline-size: 100%;', $guestCss);
+    $this->assertStringContainsString('block-size: 100%;', $guestCss);
+    $this->assertStringContainsString('svg.wb-auth-brand-mark-sm {', $guestCss);
+    $this->assertStringContainsString('inline-size: 2rem;', $guestCss);
+    $this->assertStringContainsString('block-size: 2rem;', $guestCss);
+    $this->assertStringContainsString('color: var(--wb-accent-on);', $guestCss);
+    $this->assertStringContainsString('color: var(--wb-accent);', $guestCss);
+    $this->assertStringNotContainsString('mask-image:', $guestCss);
+    $this->assertStringNotContainsString('-webkit-mask-image:', $guestCss);
+    $this->assertStringNotContainsString('prefers-color-scheme', $guestCss);
   }
 
   #[Test]
@@ -487,15 +525,15 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringContainsString('name="blocks[0][content]"', $rendered);
   }
 
-  private function assertAuthBrandImagesHaveNoDimensions(string $html): void
+  private function assertAuthBrandSvgsHaveNoDimensions(string $html, int $expectedCount = 2): void
   {
-    preg_match_all('/<img\b[^>]*class="[^"]*wb-auth-brand-mark[^"]*"[^>]*>/i', $html, $matches);
+    preg_match_all('/<svg\b[^>]*class="[^"]*wb-auth-brand-mark[^"]*"[^>]*>/i', $html, $matches);
 
-    $this->assertCount(2, $matches[0]);
+    $this->assertCount($expectedCount, $matches[0]);
 
-    foreach ($matches[0] as $image) {
-      $this->assertStringNotContainsString(' width=', $image);
-      $this->assertStringNotContainsString(' height=', $image);
+    foreach ($matches[0] as $svg) {
+      $this->assertStringNotContainsString(' width=', $svg);
+      $this->assertStringNotContainsString(' height=', $svg);
     }
   }
 }

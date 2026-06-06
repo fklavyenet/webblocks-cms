@@ -149,7 +149,6 @@ class ReleasePackageBoundaryTest extends TestCase
     $installedPackageRoot = $this->buildInstalledPackageSnapshot();
 
     $this->assertFileExists($installedPackageRoot.'/public/cms/brand/logo-mark.svg');
-    $this->assertFileExists($installedPackageRoot.'/public/cms/brand/logo-mark-mask.svg');
     $this->assertFileExists($installedPackageRoot.'/public/cms/brand/favicon-32x32.png');
     $this->assertFileExists($installedPackageRoot.'/public/cms/brand/apple-touch-icon.png');
     $this->assertFileDoesNotExist($installedPackageRoot.'/public/site');
@@ -167,7 +166,6 @@ class ReleasePackageBoundaryTest extends TestCase
     $this->assertStringContainsString("'Admin Dashboard'", (string) file_get_contents($vendorPackageRoot.'/src/Support/System/SystemSettings.php'));
     $this->assertFileDoesNotExist($vendorPackageRoot.'/public/cms/index.php');
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/logo-mark.svg');
-    $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/logo-mark-mask.svg');
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/favicon-32x32.png');
     $this->assertFileDoesNotExist($vendorPackageRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
 
@@ -196,9 +194,7 @@ class ReleasePackageBoundaryTest extends TestCase
     $this->assertFileDoesNotExist($sourceCheckoutRoot.'/public/cms/index.php');
     $this->assertFileDoesNotExist($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/index.php');
     $this->assertFileExists($sourceCheckoutRoot.'/public/cms/brand/logo-mark.svg');
-    $this->assertFileExists($sourceCheckoutRoot.'/public/cms/brand/logo-mark-mask.svg');
     $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/brand/logo-mark.svg');
-    $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/brand/logo-mark-mask.svg');
   }
 
   #[Test]
