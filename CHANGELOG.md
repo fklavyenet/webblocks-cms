@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.128
+
+- Make CMS auth logos app-mode aware by switching normal and dark brand marks with `html[data-mode]` CSS instead of `picture` media-only markup.
+- Render the auth accent-panel mark through a CSS mask so it inherits the active accent contrast color without changing the existing logo assets.
+
 ## 1.32.127
 
 - Fix the Profile page cards to use standard WebBlocks UI card header, body, and footer structure.

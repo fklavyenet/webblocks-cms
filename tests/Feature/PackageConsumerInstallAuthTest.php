@@ -54,8 +54,14 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertSee('class="wb-auth-card"', false);
     $response->assertSee('cms/brand/logo-mark.svg', false);
     $response->assertSee('cms/brand/logo-mark-dark.svg', false);
-    $response->assertSee('cms/brand/logo-mark-on-accent.svg', false);
+    $response->assertDontSee('cms/brand/logo-mark-on-accent.svg', false);
+    $response->assertSee('wb-auth-brand-mark-mask', false);
     $response->assertSee('wb-auth-brand-mark-on-accent', false);
+    $response->assertSee('wb-auth-brand-logo', false);
+    $response->assertSee('wb-auth-brand-mark-light', false);
+    $response->assertSee('wb-auth-brand-mark-dark', false);
+    $response->assertDontSee('<picture>', false);
+    $response->assertDontSee('prefers-color-scheme', false);
     $response->assertSee(WebBlocks::name());
     $response->assertSee(WebBlocks::slogan());
     $response->assertSee(WebBlocks::uiCssUrl(), false);
@@ -85,13 +91,17 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertFileExists(public_path('cms/css/guest.css'));
     $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
     $this->assertFileExists(public_path('cms/brand/logo-mark-dark.svg'));
+    $this->assertFileExists(public_path('cms/brand/logo-mark-mask.svg'));
     $this->assertFileExists(public_path('cms/brand/logo-mark-on-accent.svg'));
     $this->assertFileExists(public_path('cms/brand/logo-mark-inverse.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/guest.css'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-dark.svg'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-mask.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-on-accent.svg'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-mark-inverse.svg'));
+
+    $this->assertAuthBrandImagesHaveNoDimensions($response->getContent());
   }
 
   #[Test]
@@ -104,8 +114,14 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringContainsString('webblocks-cms::partials.head-meta', $guestLayout);
     $this->assertStringContainsString('asset(\'cms/brand/logo-mark.svg\')', $loginView);
     $this->assertStringContainsString('asset(\'cms/brand/logo-mark-dark.svg\')', $loginView);
-    $this->assertStringContainsString('asset(\'cms/brand/logo-mark-on-accent.svg\')', $loginView);
+    $this->assertStringNotContainsString('asset(\'cms/brand/logo-mark-on-accent.svg\')', $loginView);
+    $this->assertStringContainsString('wb-auth-brand-mark-mask', $loginView);
     $this->assertStringContainsString('wb-auth-brand-mark-on-accent', $loginView);
+    $this->assertStringContainsString('wb-auth-brand-logo', $loginView);
+    $this->assertStringContainsString('wb-auth-brand-mark-light', $loginView);
+    $this->assertStringContainsString('wb-auth-brand-mark-dark', $loginView);
+    $this->assertStringNotContainsString('<picture>', $loginView);
+    $this->assertStringNotContainsString('prefers-color-scheme', $loginView);
     $this->assertStringContainsString('asset(\'cms/css/guest.css\')', $guestLayout);
     $this->assertStringContainsString('WebBlocks::uiCssUrl()', $guestLayout);
     $this->assertStringContainsString('WebBlocks::iconsCssUrl()', $guestLayout);
@@ -469,5 +485,17 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringContainsString('The safe fallback form is being used.', $rendered);
     $this->assertStringContainsString('name="blocks[0][title]"', $rendered);
     $this->assertStringContainsString('name="blocks[0][content]"', $rendered);
+  }
+
+  private function assertAuthBrandImagesHaveNoDimensions(string $html): void
+  {
+    preg_match_all('/<img\b[^>]*class="[^"]*wb-auth-brand-mark[^"]*"[^>]*>/i', $html, $matches);
+
+    $this->assertCount(2, $matches[0]);
+
+    foreach ($matches[0] as $image) {
+      $this->assertStringNotContainsString(' width=', $image);
+      $this->assertStringNotContainsString(' height=', $image);
+    }
   }
 }

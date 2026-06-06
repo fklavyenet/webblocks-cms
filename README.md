@@ -80,7 +80,7 @@ After install, open:
 - admin: `/webadmin`
 - public home: `/`
 
-The package-owned `/webadmin/login` screen renders the WebBlocks UI guest auth shell from package views, loads the pinned WebBlocks UI CSS/JS and `/cms/css/guest.css`, and uses CMS product brand assets from `/cms/brand`. The CMS brand set includes normal, dark-surface, on-accent/inverse, and dedicated high-contrast favicon/browser-tab variants (`logo-mark.svg`, `logo-mark-dark.svg`, `logo-mark-on-accent.svg`, `logo-mark-inverse.svg`, `favicon.svg`, and PNG fallbacks) so auth cards, accent split panels, dark mode, and browser chrome do not depend on CSS filters for contrast.
+The package-owned `/webadmin/login` screen renders the WebBlocks UI guest auth shell from package views, loads the pinned WebBlocks UI CSS/JS and `/cms/css/guest.css`, and uses CMS product brand assets from `/cms/brand`. The CMS brand set includes normal, dark-surface, on-accent/inverse, mask, and dedicated high-contrast favicon/browser-tab variants (`logo-mark.svg`, `logo-mark-dark.svg`, `logo-mark-on-accent.svg`, `logo-mark-inverse.svg`, `logo-mark-mask.svg`, `favicon.svg`, and PNG fallbacks) so auth cards, accent split panels, dark mode, and browser chrome do not depend on CSS filters for contrast. Auth card logo switching follows the CMS `html[data-mode]` color mode, and the accent-panel logo uses the mask asset so it can inherit the active accent contrast color.
 
 WebBlocks CMS has no frontend build step. Do not run or add Vite, Tailwind, npm, Node, `@vite`, `public/build`, or hot-file workflows for CMS-owned assets. Product assets are tracked directly in root `public/cms` and package `packages/webblocks-cms/public/cms`, while WebBlocks UI continues to be consumed from pinned published assets.
 

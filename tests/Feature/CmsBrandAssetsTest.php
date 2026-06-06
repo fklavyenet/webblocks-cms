@@ -16,6 +16,7 @@ class CmsBrandAssetsTest extends TestCase
     'icon-512x512.png',
     'logo-mark-dark.svg',
     'logo-mark-inverse.svg',
+    'logo-mark-mask.svg',
     'logo-mark-on-accent.svg',
     'logo-mark.svg',
     'logo.svg',

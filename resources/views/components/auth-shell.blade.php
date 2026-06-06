@@ -13,7 +13,7 @@
         @if ($panelTitle)
             <h1 class="wb-auth-panel-title wb-auth-brand">
                 @if ($showPanelLogo)
-                    <img src="{{ asset('cms/brand/logo-mark-on-accent.svg') }}" alt="{{ config('app.name') }} logo" width="32" height="32" class="wb-auth-brand-mark wb-auth-brand-mark-on-accent">
+                    <span class="wb-auth-brand-mark wb-auth-brand-mark-mask wb-auth-brand-mark-on-accent" role="img" aria-label="{{ config('app.name') }} logo"></span>
                 @endif
                 <span>{{ $panelTitle }}</span>
             </h1>
@@ -29,10 +29,10 @@
             <div class="wb-auth-header">
                 <h1 class="wb-auth-header-title wb-auth-brand">
                     @if ($showHeaderLogo)
-                        <picture>
-                            <source srcset="{{ asset('cms/brand/logo-mark-dark.svg') }}" media="(prefers-color-scheme: dark)">
-                            <img src="{{ asset('cms/brand/logo-mark.svg') }}" alt="{{ config('app.name') }} logo" width="32" height="32" class="wb-auth-brand-mark wb-auth-brand-mark-sm">
-                        </picture>
+                        <span class="wb-auth-brand-logo" role="img" aria-label="{{ config('app.name') }} logo">
+                            <img src="{{ asset('cms/brand/logo-mark.svg') }}" alt="" aria-hidden="true" class="wb-auth-brand-mark wb-auth-brand-mark-light wb-auth-brand-mark-sm">
+                            <img src="{{ asset('cms/brand/logo-mark-dark.svg') }}" alt="" aria-hidden="true" class="wb-auth-brand-mark wb-auth-brand-mark-dark wb-auth-brand-mark-sm">
+                        </span>
                     @endif
                     <span>{{ $heading }}</span>
                 </h1>

@@ -14,7 +14,56 @@
     --wb-accent-hover: var(--wb-cms-brand-primary-hover);
     --wb-accent-soft: var(--wb-cms-brand-soft);
     --wb-accent-text: var(--wb-cms-brand-primary-hover);
+    --wb-accent-on: #fff;
     --wb-accent-contrast: #fff;
+}
+
+.wb-auth-brand-logo {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+}
+
+.wb-auth-brand-logo .wb-auth-brand-mark {
+    grid-area: 1 / 1;
+}
+
+.wb-auth-brand-mark-dark {
+    display: none;
+}
+
+.wb-auth-brand-mark-mask {
+    background-color: currentColor;
+    display: inline-block;
+    flex: 0 0 auto;
+    mask: url("/cms/brand/logo-mark-mask.svg") center / contain no-repeat;
+    -webkit-mask: url("/cms/brand/logo-mark-mask.svg") center / contain no-repeat;
+}
+
+.wb-auth-brand-mark-on-accent {
+    color: var(--wb-accent-on);
+}
+
+html[data-mode="dark"] .wb-auth-brand-mark-light,
+html[data-mode="auto"] .wb-auth-brand-mark-dark {
+    display: none;
+}
+
+html[data-mode="dark"] .wb-auth-brand-mark-dark,
+html[data-mode="auto"] .wb-auth-brand-mark-light {
+    display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-mode="auto"] .wb-auth-brand-mark-light,
+    html:not([data-mode]) .wb-auth-brand-mark-light {
+        display: none;
+    }
+
+    html[data-mode="auto"] .wb-auth-brand-mark-dark,
+    html:not([data-mode]) .wb-auth-brand-mark-dark {
+        display: block;
+    }
 }
 
 .wb-password-field {
