@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Remove obsolete unused CMS brand image files after auth and sidebar moved to the reusable inline SVG product mark.
 - Standardize CMS auth and admin sidebar brand marks on a reusable inline SVG component that inherits mode/accent-aware colors, remove obsolete pilot brand image variants, and keep favicons on the accepted non-squircle CMS behavior.
 
 ## 1.32.128

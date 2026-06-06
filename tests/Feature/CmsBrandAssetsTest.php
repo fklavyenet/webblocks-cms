@@ -13,20 +13,15 @@ class CmsBrandAssetsTest extends TestCase
     'favicon-16x16.png',
     'favicon-32x32.png',
     'favicon.svg',
-    'icon-192x192.png',
-    'icon-512x512.png',
     'logo-mark-dark.svg',
     'logo-mark-on-accent.svg',
     'logo-mark.svg',
-    'logo.svg',
   ];
 
   private const PNG_DIMENSIONS = [
     'apple-touch-icon.png' => [180, 180],
     'favicon-16x16.png' => [16, 16],
     'favicon-32x32.png' => [32, 32],
-    'icon-192x192.png' => [192, 192],
-    'icon-512x512.png' => [512, 512],
   ];
 
   #[Test]
