@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.135
+
+- Add a transition verification release after moving CMS update publishing and installed update consumption to `publisher.webblocksui.com`.
+- No functional runtime changes beyond release/version metadata.
+
 ## 1.32.134
 
 - Move installed CMS update checks to `publisher.webblocksui.com` so publishing and update consumption use the same canonical Publisher service.
