@@ -672,6 +672,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
 
     $this->assertFileExists($packageConfigPath);
     $this->assertSame('https://updates.webblocksui.com', config('webblocks-updates.server_url'));
+    $this->assertSame('https://publisher.webblocksui.com/api/updates/publish', config('webblocks-updates.publisher.url'));
     $this->assertSame('stable', config('webblocks-updates.channel'));
     $this->assertSame('1', config('webblocks-updates.api_version'));
     $this->assertSame(WebBlocks::HANDLE, config('webblocks-updates.product'));

@@ -20,7 +20,7 @@ return [
         'keep' => env('WEBBLOCKS_UPDATES_RUNS_KEEP', 5),
     ],
     'publisher' => [
-        'url' => env('WEBBLOCKS_PUBLISHER_URL', 'https://updates.webblocksui.com/api/updates/publish'),
+        'url' => env('WEBBLOCKS_PUBLISHER_URL', 'https://publisher.webblocksui.com/api/updates/publish'),
         'token' => env('WEBBLOCKS_PUBLISHER_TOKEN'),
         'product' => env('WEBBLOCKS_PUBLISHER_PRODUCT', WebBlocks::HANDLE),
         'channel' => env('WEBBLOCKS_PUBLISHER_CHANNEL', 'stable'),

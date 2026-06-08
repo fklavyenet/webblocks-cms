@@ -336,7 +336,7 @@ final class UpdatePublisher
 
   private function publisherConfiguration(): array
   {
-    $url = rtrim($this->publisherConfigValue('url', 'https://updates.webblocksui.com/api/updates/publish'), '/');
+    $url = rtrim($this->publisherConfigValue('url', 'https://publisher.webblocksui.com/api/updates/publish'), '/');
 
     if ($url === '') {
       throw new RuntimeException('Update publisher URL is not configured.');

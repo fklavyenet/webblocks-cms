@@ -10,6 +10,10 @@ use WebBlocks\Cms\Support\System\Updates\Publishing\UpdatePublisher;
 
 final class WebBlocksUpdatePublisherCommandTest extends TestCase
 {
+  private const PUBLISHER_BASE_URL = 'https://publisher.webblocksui.com';
+
+  private const PUBLISHER_URL = self::PUBLISHER_BASE_URL.'/api/updates/publish';
+
   public function test_publish_command_reports_missing_token_without_network_publish(): void
   {
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
@@ -33,7 +37,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
+    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     $this->artisan('webblocks:publish-update', [
       '--artifact' => $artifact,
@@ -54,10 +58,10 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
+    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
-      'https://updates.webblocksui.com/api/updates/publish' => Http::response([
+      self::PUBLISHER_URL => Http::response([
         'data' => [
           'product' => 'webblocks-cms',
           'version' => '1.32.90',
@@ -66,7 +70,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
           'artifact_url' => 'https://updates.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
         ],
       ]),
-      'https://updates.webblocksui.com/api/updates/latest*' => Http::response([
+      self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response([
         'data' => [
           'product' => 'webblocks-cms',
           'version' => '1.32.90',
@@ -85,7 +89,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       ->assertSuccessful();
 
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
-      && $request->url() === 'https://updates.webblocksui.com/api/updates/publish'
+      && $request->url() === self::PUBLISHER_URL
       && $request->hasHeader('Authorization', 'Bearer secret-test-token')
       && $request->hasFile('package', null, basename($artifact))
       && str_contains($request->body(), 'name="product"')
@@ -101,7 +105,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       && ! str_contains($request->body(), 'github.com'));
 
     Http::assertSent(fn ($request): bool => $request->method() === 'GET'
-      && str_starts_with($request->url(), 'https://updates.webblocksui.com/api/updates/latest')
+      && str_starts_with($request->url(), self::PUBLISHER_BASE_URL.'/api/updates/latest')
       && $request['product'] === 'webblocks-cms'
       && $request['channel'] === 'stable');
   }
@@ -110,7 +114,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
   {
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
     $envPath = $this->publisherEnvironmentFile([
-      'WEBBLOCKS_PUBLISHER_URL' => 'https://updates.webblocksui.com/api/updates/publish',
+      'WEBBLOCKS_PUBLISHER_URL' => self::PUBLISHER_URL,
       'WEBBLOCKS_PUBLISHER_TOKEN' => 'webblocks-env-token',
       'WEBBLOCKS_PUBLISHER_PRODUCT' => 'webblocks-cms',
       'WEBBLOCKS_PUBLISHER_CHANNEL' => 'stable',
@@ -122,8 +126,8 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     config()->set('webblocks-updates.publisher.url', 'https://stale.example.invalid/api/updates/publish');
 
     Http::fake([
-      'https://updates.webblocksui.com/api/updates/publish' => Http::response(['data' => ['version' => '1.32.90']]),
-      'https://updates.webblocksui.com/api/updates/latest*' => Http::response([
+      self::PUBLISHER_URL => Http::response(['data' => ['version' => '1.32.90']]),
+      self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response([
         'data' => [
           'product' => 'webblocks-cms',
           'version' => '1.32.90',
@@ -147,7 +151,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       ->assertSuccessful();
 
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
-      && $request->url() === 'https://updates.webblocksui.com/api/updates/publish'
+      && $request->url() === self::PUBLISHER_URL
       && $request->hasHeader('Authorization', 'Bearer webblocks-env-token'));
   }
 
@@ -156,11 +160,11 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'webblocks-env-token');
-    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
+    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
-      'https://updates.webblocksui.com/api/updates/publish' => Http::response(['data' => ['version' => '1.32.90']]),
-      'https://updates.webblocksui.com/api/updates/latest*' => Http::response([
+      self::PUBLISHER_URL => Http::response(['data' => ['version' => '1.32.90']]),
+      self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response([
         'data' => [
           'product' => 'webblocks-cms',
           'version' => '1.32.90',
@@ -182,7 +186,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       ->assertSuccessful();
 
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
-      && $request->url() === 'https://updates.webblocksui.com/api/updates/publish'
+      && $request->url() === self::PUBLISHER_URL
       && $request->hasHeader('Authorization', 'Bearer webblocks-env-token'));
   }
 
@@ -197,7 +201,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     $_SERVER['WEBBLOCKS_PUBLISH_TOKEN'] = 'legacy-webblocks-env-token';
     $_SERVER['WEBBLOCKS_UPDATE_PUBLISHER_TOKEN'] = 'legacy-update-env-token';
     config()->set('webblocks-updates.publisher.token', null);
-    config()->set('webblocks-updates.publisher.url', 'https://updates.webblocksui.com/api/updates/publish');
+    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     $this->artisan('webblocks:publish-update', [
       '--artifact' => $artifact,
@@ -224,9 +228,10 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
+    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
-      'https://updates.webblocksui.com/api/updates/publish' => Http::response([
+      self::PUBLISHER_URL => Http::response([
         'service' => 'WebBlocks Publisher',
         'status' => 'error',
         'message' => 'Unauthorized publish request. Bearer secret-test-token was rejected.',
@@ -258,10 +263,11 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
+    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
-      'https://updates.webblocksui.com/api/updates/publish' => Http::response(['data' => ['version' => '1.32.90']]),
-      'https://updates.webblocksui.com/api/updates/latest*' => Http::response(['data' => ['version' => '1.32.89']]),
+      self::PUBLISHER_URL => Http::response(['data' => ['version' => '1.32.90']]),
+      self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response(['data' => ['version' => '1.32.89']]),
     ]);
 
     $this->artisan('webblocks:publish-update', [
