@@ -67,7 +67,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
           'version' => '1.32.90',
           'channel' => 'stable',
           'checksum_sha256' => $checksum,
-          'artifact_url' => 'https://updates.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
+          'artifact_url' => 'https://publisher.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
         ],
       ]),
       self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response([
@@ -76,7 +76,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
           'version' => '1.32.90',
           'channel' => 'stable',
           'checksum_sha256' => $checksum,
-          'artifact_url' => 'https://updates.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
+          'artifact_url' => 'https://publisher.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
         ],
       ]),
     ]);
@@ -133,7 +133,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
           'version' => '1.32.90',
           'channel' => 'stable',
           'checksum_sha256' => $checksum,
-          'artifact_url' => 'https://updates.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
+          'artifact_url' => 'https://publisher.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
         ],
       ]),
     ]);
@@ -170,7 +170,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
           'version' => '1.32.90',
           'channel' => 'stable',
           'checksum_sha256' => $checksum,
-          'artifact_url' => 'https://updates.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
+          'artifact_url' => 'https://publisher.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
         ],
       ]),
     ]);

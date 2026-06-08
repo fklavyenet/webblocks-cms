@@ -4,7 +4,7 @@ use WebBlocks\Cms\Support\WebBlocks;
 
 return [
     'enabled' => env('WEBBLOCKS_UPDATES_ENABLED', true),
-    'server_url' => env('WEBBLOCKS_UPDATES_SERVER_URL', 'https://updates.webblocksui.com'),
+    'server_url' => env('WEBBLOCKS_UPDATES_SERVER_URL', 'https://publisher.webblocksui.com'),
     'channel' => env('WEBBLOCKS_UPDATES_CHANNEL', 'stable'),
     'api_version' => '1',
     'product' => WebBlocks::HANDLE,
