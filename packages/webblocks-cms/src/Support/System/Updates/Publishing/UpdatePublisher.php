@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Symfony\Component\Finder\Finder;
+use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 
 final class UpdatePublisher
 {
@@ -256,7 +257,7 @@ final class UpdatePublisher
       $response = Http::acceptJson()
         ->timeout((int) config('webblocks-updates.timeout_seconds', 5))
         ->connectTimeout((int) config('webblocks-updates.connect_timeout_seconds', 3))
-        ->get($publisherUrl.'/api/updates/latest', [
+        ->get($publisherUrl.ReleaseDefaults::LATEST_PATH, [
           'product' => $product,
           'channel' => $channel,
         ])
@@ -336,7 +337,7 @@ final class UpdatePublisher
 
   private function publisherConfiguration(): array
   {
-    $url = rtrim($this->publisherConfigValue('url', 'https://publisher.webblocksui.com/api/updates/publish'), '/');
+    $url = rtrim($this->publisherConfigValue('url', ReleaseDefaults::publishUrl()), '/');
 
     if ($url === '') {
       throw new RuntimeException('Update publisher URL is not configured.');
@@ -345,8 +346,8 @@ final class UpdatePublisher
     return [
       'url' => $url,
       'token' => $this->publisherConfigValue('token'),
-      'product' => $this->publisherConfigValue('product', 'webblocks-cms'),
-      'channel' => $this->publisherConfigValue('channel', 'stable'),
+      'product' => $this->publisherConfigValue('product', ReleaseDefaults::PRODUCT_KEY),
+      'channel' => $this->publisherConfigValue('channel', ReleaseDefaults::CHANNEL),
     ];
   }
 
@@ -420,15 +421,15 @@ final class UpdatePublisher
 
   private function publishEndpoint(string $publisherUrl): string
   {
-    return str_ends_with($publisherUrl, '/api/updates/publish')
+    return str_ends_with($publisherUrl, ReleaseDefaults::PUBLISH_PATH)
       ? $publisherUrl
-      : $publisherUrl.'/api/updates/publish';
+      : $publisherUrl.ReleaseDefaults::PUBLISH_PATH;
   }
 
   private function apiBaseUrl(string $publisherUrl): string
   {
-    return str_ends_with($publisherUrl, '/api/updates/publish')
-      ? substr($publisherUrl, 0, -strlen('/api/updates/publish'))
+    return str_ends_with($publisherUrl, ReleaseDefaults::PUBLISH_PATH)
+      ? substr($publisherUrl, 0, -strlen(ReleaseDefaults::PUBLISH_PATH))
       : $publisherUrl;
   }
 

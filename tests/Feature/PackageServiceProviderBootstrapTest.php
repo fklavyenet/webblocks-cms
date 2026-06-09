@@ -88,6 +88,7 @@ use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager as PackageShared
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema as PackageSharedSlotSchema;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager as PackageSharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
+use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -671,11 +672,12 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $packageConfigPath = base_path('packages/webblocks-cms/config/webblocks-updates.php');
 
     $this->assertFileExists($packageConfigPath);
-    $this->assertSame('https://publisher.webblocksui.com', config('webblocks-updates.server_url'));
-    $this->assertSame('https://publisher.webblocksui.com/api/updates/publish', config('webblocks-updates.publisher.url'));
-    $this->assertSame('stable', config('webblocks-updates.channel'));
+    $this->assertSame(ReleaseDefaults::SERVER_URL, config('webblocks-updates.server_url'));
+    $this->assertSame(ReleaseDefaults::LATEST_PATH, config('webblocks-updates.latest_path'));
+    $this->assertSame(ReleaseDefaults::publishUrl(), config('webblocks-updates.publisher.url'));
+    $this->assertSame(ReleaseDefaults::CHANNEL, config('webblocks-updates.channel'));
     $this->assertSame('1', config('webblocks-updates.api_version'));
-    $this->assertSame(WebBlocks::HANDLE, config('webblocks-updates.product'));
+    $this->assertSame(ReleaseDefaults::PRODUCT_KEY, config('webblocks-updates.product'));
     $this->assertSame(WebBlocks::VERSION, config('webblocks-updates.current_version'));
   }
 

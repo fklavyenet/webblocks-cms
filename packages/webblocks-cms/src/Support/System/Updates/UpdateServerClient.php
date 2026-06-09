@@ -8,6 +8,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 
 class UpdateServerClient
 {
@@ -28,8 +29,9 @@ class UpdateServerClient
   public function check(): UpdateCheckResult
   {
     $serverUrl = rtrim((string) config('webblocks-updates.server_url', ''), '/');
-    $product = (string) config('webblocks-updates.product', 'webblocks-cms');
-    $channel = (string) config('webblocks-updates.channel', 'stable');
+    $latestPath = $this->apiPath((string) config('webblocks-updates.latest_path', ReleaseDefaults::LATEST_PATH));
+    $product = (string) config('webblocks-updates.product', ReleaseDefaults::PRODUCT_KEY);
+    $channel = (string) config('webblocks-updates.channel', ReleaseDefaults::CHANNEL);
     $installedVersion = $this->installedVersionForUpdateCheck();
 
     if (! config('webblocks-updates.enabled', true)) {
@@ -91,7 +93,7 @@ class UpdateServerClient
     }
 
     try {
-      $response = $request->get($serverUrl.'/api/updates/latest', [
+      $response = $request->get($serverUrl.$latestPath, [
         'product' => $product,
         'channel' => $channel,
         'installed_version' => $installedVersion,
@@ -188,6 +190,17 @@ class UpdateServerClient
     }
 
     return $this->fromSuccessfulPayload($payload, $serverUrl, $product, $channel, $installedVersion);
+  }
+
+  private function apiPath(string $path): string
+  {
+    $path = trim($path);
+
+    if ($path === '') {
+      return ReleaseDefaults::LATEST_PATH;
+    }
+
+    return str_starts_with($path, '/') ? $path : '/'.$path;
   }
 
   private function fromSuccessfulPayload(array $payload, string $serverUrl, string $product, string $channel, string $installedVersion): UpdateCheckResult

@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.136
+
+- Move CMS update and publisher identity defaults into package product code so installed sites no longer need normal update server, product, or channel environment keys.
+- Keep legacy update and publisher URL/product/channel environment keys supported as explicit overrides, while maintainer publishing normally only requires `WEBBLOCKS_PUBLISHER_TOKEN`.
+
 ## 1.32.135
 
 - Add a transition verification release after moving CMS update publishing and installed update consumption to `publisher.webblocksui.com`.

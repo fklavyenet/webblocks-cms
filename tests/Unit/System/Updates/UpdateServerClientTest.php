@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class UpdateServerClientTest extends TestCase
@@ -23,6 +24,38 @@ class UpdateServerClientTest extends TestCase
     $targetPath = storage_path('app/testing-package-update-client');
     File::ensureDirectoryExists($targetPath);
     config()->set('webblocks-updates.installer.target_path', $targetPath);
+  }
+
+  #[Test]
+  public function update_check_uses_release_defaults_when_no_update_env_override_exists(): void
+  {
+    Http::fake([
+      ReleaseDefaults::latestUrl().'*' => Http::response([
+        'status' => 'ok',
+        'data' => [
+          'product' => ReleaseDefaults::PRODUCT_KEY,
+          'channel' => ReleaseDefaults::CHANNEL,
+          'version' => WebBlocks::version(),
+          'published_at' => '2026-06-09T10:00:00Z',
+          'artifact_url' => ReleaseDefaults::SERVER_URL.'/downloads/webblocks-cms-current.zip',
+          'checksum_sha256' => str_repeat('a', 64),
+        ],
+      ]),
+    ]);
+
+    app(InstalledVersionStore::class)->persist('0.1.0');
+
+    $result = app(UpdateServerClient::class)->check();
+
+    $this->assertSame('up_to_date', $result->state);
+    $this->assertSame(ReleaseDefaults::SERVER_URL, $result->serverUrl);
+    $this->assertSame(ReleaseDefaults::PRODUCT_KEY, $result->product);
+    $this->assertSame(ReleaseDefaults::CHANNEL, $result->channel);
+
+    Http::assertSent(fn ($request): bool => $request->method() === 'GET'
+      && str_starts_with($request->url(), ReleaseDefaults::latestUrl())
+      && $request['product'] === ReleaseDefaults::PRODUCT_KEY
+      && $request['channel'] === ReleaseDefaults::CHANNEL);
   }
 
   #[Test]
@@ -56,6 +89,65 @@ class UpdateServerClientTest extends TestCase
     $this->assertSame(WebBlocks::version(), $result->installedVersion);
     $this->assertSame('99.0.0', $result->latestVersion);
     $this->assertSame('https://updates.example.test/downloads/webblocks-cms-99.0.0.zip', $result->release['download_url']);
+  }
+
+  #[Test]
+  public function legacy_update_server_url_override_still_controls_update_checks(): void
+  {
+    Http::fake([
+      'https://updates-override.example.test/api/updates/latest*' => Http::response([
+        'status' => 'ok',
+        'data' => [
+          'product' => ReleaseDefaults::PRODUCT_KEY,
+          'channel' => 'beta',
+          'version' => WebBlocks::version(),
+          'published_at' => '2026-06-09T10:00:00Z',
+          'artifact_url' => 'https://updates-override.example.test/downloads/webblocks-cms-current.zip',
+          'checksum_sha256' => str_repeat('a', 64),
+        ],
+      ]),
+    ]);
+
+    config()->set('webblocks-updates.server_url', 'https://updates-override.example.test');
+    config()->set('webblocks-updates.channel', 'beta');
+    app(InstalledVersionStore::class)->persist('0.1.0');
+
+    $result = app(UpdateServerClient::class)->check();
+
+    $this->assertSame('up_to_date', $result->state);
+    $this->assertSame('https://updates-override.example.test', $result->serverUrl);
+    $this->assertSame('beta', $result->channel);
+
+    Http::assertSent(fn ($request): bool => $request->method() === 'GET'
+      && str_starts_with($request->url(), 'https://updates-override.example.test/api/updates/latest')
+      && $request['product'] === ReleaseDefaults::PRODUCT_KEY
+      && $request['channel'] === 'beta');
+  }
+
+  #[Test]
+  public function release_default_latest_path_is_package_owned(): void
+  {
+    config()->set('webblocks-updates.latest_path', 'api/updates/latest');
+
+    Http::fake([
+      ReleaseDefaults::latestUrl().'*' => Http::response([
+        'status' => 'ok',
+        'data' => [
+          'product' => ReleaseDefaults::PRODUCT_KEY,
+          'channel' => ReleaseDefaults::CHANNEL,
+          'version' => WebBlocks::version(),
+          'published_at' => '2026-06-09T10:00:00Z',
+          'artifact_url' => ReleaseDefaults::SERVER_URL.'/downloads/webblocks-cms-current.zip',
+          'checksum_sha256' => str_repeat('a', 64),
+        ],
+      ]),
+    ]);
+
+    app(InstalledVersionStore::class)->persist('0.1.0');
+
+    $this->assertSame('up_to_date', app(UpdateServerClient::class)->check()->state);
+
+    Http::assertSent(fn ($request): bool => str_starts_with($request->url(), ReleaseDefaults::latestUrl()));
   }
 
   #[Test]

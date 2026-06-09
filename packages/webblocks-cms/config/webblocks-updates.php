@@ -1,13 +1,15 @@
 <?php
 
+use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 use WebBlocks\Cms\Support\WebBlocks;
 
 return [
     'enabled' => env('WEBBLOCKS_UPDATES_ENABLED', true),
-    'server_url' => env('WEBBLOCKS_UPDATES_SERVER_URL', 'https://publisher.webblocksui.com'),
-    'channel' => env('WEBBLOCKS_UPDATES_CHANNEL', 'stable'),
+    'server_url' => env('WEBBLOCKS_UPDATES_SERVER_URL', ReleaseDefaults::SERVER_URL),
+    'latest_path' => ReleaseDefaults::LATEST_PATH,
+    'channel' => env('WEBBLOCKS_UPDATES_CHANNEL', ReleaseDefaults::CHANNEL),
     'api_version' => '1',
-    'product' => WebBlocks::HANDLE,
+    'product' => ReleaseDefaults::PRODUCT_KEY,
     'current_version' => WebBlocks::VERSION,
     'site_url' => env('APP_URL', 'http://localhost'),
     'instance_id' => null,
@@ -20,10 +22,10 @@ return [
         'keep' => env('WEBBLOCKS_UPDATES_RUNS_KEEP', 5),
     ],
     'publisher' => [
-        'url' => env('WEBBLOCKS_PUBLISHER_URL', 'https://publisher.webblocksui.com/api/updates/publish'),
+        'url' => env('WEBBLOCKS_PUBLISHER_URL', ReleaseDefaults::publishUrl()),
         'token' => env('WEBBLOCKS_PUBLISHER_TOKEN'),
-        'product' => env('WEBBLOCKS_PUBLISHER_PRODUCT', WebBlocks::HANDLE),
-        'channel' => env('WEBBLOCKS_PUBLISHER_CHANNEL', 'stable'),
+        'product' => env('WEBBLOCKS_PUBLISHER_PRODUCT', ReleaseDefaults::PRODUCT_KEY),
+        'channel' => env('WEBBLOCKS_PUBLISHER_CHANNEL', ReleaseDefaults::CHANNEL),
         'timeout_seconds' => 120,
         'connect_timeout_seconds' => 5,
     ],

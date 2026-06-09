@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\System\Updates\Publishing\UpdatePublisher;
+use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 
 final class WebBlocksUpdatePublisherCommandTest extends TestCase
 {
@@ -108,6 +109,57 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       && str_starts_with($request->url(), self::PUBLISHER_BASE_URL.'/api/updates/latest')
       && $request['product'] === 'webblocks-cms'
       && $request['channel'] === 'stable');
+  }
+
+  public function test_publish_defaults_use_release_defaults_when_url_product_and_channel_are_absent(): void
+  {
+    [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
+
+    config()->set('webblocks-updates.publisher.token', 'secret-test-token');
+    config()->set('webblocks-updates.publisher.url', null);
+    config()->set('webblocks-updates.publisher.product', null);
+    config()->set('webblocks-updates.publisher.channel', null);
+
+    Http::fake([
+      ReleaseDefaults::publishUrl() => Http::response([
+        'data' => [
+          'product' => ReleaseDefaults::PRODUCT_KEY,
+          'version' => '1.32.90',
+          'channel' => ReleaseDefaults::CHANNEL,
+          'checksum_sha256' => $checksum,
+          'artifact_url' => ReleaseDefaults::SERVER_URL.'/downloads/webblocks-cms-1.32.90.zip',
+        ],
+      ]),
+      ReleaseDefaults::latestUrl().'*' => Http::response([
+        'data' => [
+          'product' => ReleaseDefaults::PRODUCT_KEY,
+          'version' => '1.32.90',
+          'channel' => ReleaseDefaults::CHANNEL,
+          'checksum_sha256' => $checksum,
+          'artifact_url' => ReleaseDefaults::SERVER_URL.'/downloads/webblocks-cms-1.32.90.zip',
+        ],
+      ]),
+    ]);
+
+    $this->artisan('webblocks:publish-update', [
+      '--artifact' => $artifact,
+      '--payload' => $payload,
+    ])
+      ->expectsOutputToContain('WEBBLOCKS_PUBLISHER_TOKEN configured')
+      ->expectsOutputToContain('Update publisher accepted the artifact')
+      ->doesntExpectOutputToContain('secret-test-token')
+      ->assertSuccessful();
+
+    Http::assertSent(fn ($request): bool => $request->method() === 'POST'
+      && $request->url() === ReleaseDefaults::publishUrl()
+      && $request->hasHeader('Authorization', 'Bearer secret-test-token')
+      && str_contains($request->body(), ReleaseDefaults::PRODUCT_KEY)
+      && str_contains($request->body(), ReleaseDefaults::CHANNEL));
+
+    Http::assertSent(fn ($request): bool => $request->method() === 'GET'
+      && str_starts_with($request->url(), ReleaseDefaults::latestUrl())
+      && $request['product'] === ReleaseDefaults::PRODUCT_KEY
+      && $request['channel'] === ReleaseDefaults::CHANNEL);
   }
 
   public function test_publish_detects_canonical_project_env_token_when_config_is_cached(): void
@@ -298,6 +350,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
   {
     $publishCommand = file_get_contents(base_path('packages/webblocks-cms/src/Console/PublishUpdateCommand.php'));
     $publisher = file_get_contents(base_path('packages/webblocks-cms/src/Support/System/Updates/Publishing/UpdatePublisher.php'));
+    $releaseDefaults = file_get_contents(base_path('packages/webblocks-cms/src/Support/Updates/ReleaseDefaults.php'));
     $prepareScript = file_get_contents(base_path('scripts/release/prepare.sh'));
     $publishScript = file_get_contents(base_path('scripts/release/publish-update.sh'));
     $composer = file_get_contents(base_path('composer.json'));
@@ -328,8 +381,10 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     $this->assertStringContainsString('webblocks:publish-update', $publishScript);
     $this->assertStringContainsString('release:publish-update', $composer);
     $this->assertStringContainsString('scripts/release/publish-update.sh', $composer);
-    $this->assertStringContainsString('/api/updates/publish', $publisher);
-    $this->assertStringContainsString('/api/updates/latest', $publisher);
+    $this->assertStringContainsString('ReleaseDefaults::PUBLISH_PATH', $publisher);
+    $this->assertStringContainsString('ReleaseDefaults::LATEST_PATH', $publisher);
+    $this->assertStringContainsString('/api/updates/publish', $releaseDefaults);
+    $this->assertStringContainsString('/api/updates/latest', $releaseDefaults);
   }
 
   private function preparedPublisherFiles(string $version, ?string $checksum = null): array
