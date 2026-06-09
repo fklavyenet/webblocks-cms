@@ -236,7 +236,7 @@ Before creating a release tag, confirm:
 - the release tag matches `App\Support\WebBlocks::VERSION`
 - `composer release:prepare` generated the release artifact and publisher payload
 - `composer release:publish-update -- --dry-run` validates artifact, checksum, metadata, endpoint, and token configuration
-- release publishing uses only `WEBBLOCKS_PUBLISHER_URL`, `WEBBLOCKS_PUBLISHER_TOKEN`, `WEBBLOCKS_PUBLISHER_PRODUCT`, and `WEBBLOCKS_PUBLISHER_CHANNEL`
+- release publishing uses package-owned release identity defaults and only `WEBBLOCKS_PUBLISHER_TOKEN` as the normal publish environment secret
 - update metadata is compatible with the intended minimum client version
 - no local or runtime files are included in the release
 - `project/` is treated as an install-local preserved path and is not overwritten by updater package application

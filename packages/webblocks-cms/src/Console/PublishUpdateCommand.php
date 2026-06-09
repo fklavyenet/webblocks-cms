@@ -10,7 +10,6 @@ final class PublishUpdateCommand extends Command
 {
   protected $signature = 'webblocks:publish-update
     {--release-version= : Release version to publish, for example 1.32.90}
-    {--channel= : Update channel, defaults to publisher payload or stable}
     {--artifact= : Path to the prepared WebBlocks CMS package zip}
     {--payload= : Path to the update-server publisher payload JSON}
     {--dry-run : Validate artifact, checksum, metadata, endpoint, and token configuration without publishing}';
@@ -22,7 +21,6 @@ final class PublishUpdateCommand extends Command
     try {
       $result = $publisher->publish([
         'version' => $this->option('release-version'),
-        'channel' => $this->option('channel'),
         'artifact' => $this->option('artifact'),
         'payload' => $this->option('payload'),
         'dry_run' => (bool) $this->option('dry-run'),

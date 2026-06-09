@@ -38,7 +38,6 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     $this->artisan('webblocks:publish-update', [
       '--artifact' => $artifact,
@@ -59,7 +58,6 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
       self::PUBLISHER_URL => Http::response([
@@ -111,14 +109,14 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       && $request['channel'] === 'stable');
   }
 
-  public function test_publish_defaults_use_release_defaults_when_url_product_and_channel_are_absent(): void
+  public function test_publish_uses_release_defaults_for_endpoint_product_and_channel(): void
   {
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', null);
-    config()->set('webblocks-updates.publisher.product', null);
-    config()->set('webblocks-updates.publisher.channel', null);
+    config()->set('webblocks-updates.publisher.url', 'https://stale.example.invalid/api/updates/publish');
+    config()->set('webblocks-updates.publisher.product', 'stale-product');
+    config()->set('webblocks-updates.publisher.channel', 'stale-channel');
 
     Http::fake([
       ReleaseDefaults::publishUrl() => Http::response([
@@ -166,26 +164,25 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
   {
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
     $envPath = $this->publisherEnvironmentFile([
-      'WEBBLOCKS_PUBLISHER_URL' => self::PUBLISHER_URL,
       'WEBBLOCKS_PUBLISHER_TOKEN' => 'webblocks-env-token',
-      'WEBBLOCKS_PUBLISHER_PRODUCT' => 'webblocks-cms',
-      'WEBBLOCKS_PUBLISHER_CHANNEL' => 'stable',
     ]);
 
     app()->instance('config_loaded_from_cache', true);
     app()->instance('webblocks.publisher.env_path', $envPath);
     config()->set('webblocks-updates.publisher.token', null);
     config()->set('webblocks-updates.publisher.url', 'https://stale.example.invalid/api/updates/publish');
+    config()->set('webblocks-updates.publisher.product', 'stale-product');
+    config()->set('webblocks-updates.publisher.channel', 'stale-channel');
 
     Http::fake([
-      self::PUBLISHER_URL => Http::response(['data' => ['version' => '1.32.90']]),
-      self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response([
+      ReleaseDefaults::publishUrl() => Http::response(['data' => ['version' => '1.32.90']]),
+      ReleaseDefaults::latestUrl().'*' => Http::response([
         'data' => [
-          'product' => 'webblocks-cms',
+          'product' => ReleaseDefaults::PRODUCT_KEY,
           'version' => '1.32.90',
-          'channel' => 'stable',
+          'channel' => ReleaseDefaults::CHANNEL,
           'checksum_sha256' => $checksum,
-          'artifact_url' => 'https://publisher.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
+          'artifact_url' => ReleaseDefaults::SERVER_URL.'/downloads/webblocks-cms-1.32.90.zip',
         ],
       ]),
     ]);
@@ -194,17 +191,16 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       '--artifact' => $artifact,
       '--payload' => $payload,
     ])
-      ->expectsOutputToContain('WEBBLOCKS_PUBLISHER_URL configured')
       ->expectsOutputToContain('WEBBLOCKS_PUBLISHER_TOKEN configured')
-      ->expectsOutputToContain('WEBBLOCKS_PUBLISHER_PRODUCT configured')
-      ->expectsOutputToContain('WEBBLOCKS_PUBLISHER_CHANNEL configured')
       ->expectsOutputToContain('Update publisher accepted the artifact')
       ->doesntExpectOutputToContain('webblocks-env-token')
       ->assertSuccessful();
 
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
-      && $request->url() === self::PUBLISHER_URL
-      && $request->hasHeader('Authorization', 'Bearer webblocks-env-token'));
+      && $request->url() === ReleaseDefaults::publishUrl()
+      && $request->hasHeader('Authorization', 'Bearer webblocks-env-token')
+      && str_contains($request->body(), ReleaseDefaults::PRODUCT_KEY)
+      && str_contains($request->body(), ReleaseDefaults::CHANNEL));
   }
 
   public function test_publish_accepts_canonical_configured_token_without_leaking_it(): void
@@ -212,17 +208,16 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload, $checksum] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'webblocks-env-token');
-    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
-      self::PUBLISHER_URL => Http::response(['data' => ['version' => '1.32.90']]),
-      self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response([
+      ReleaseDefaults::publishUrl() => Http::response(['data' => ['version' => '1.32.90']]),
+      ReleaseDefaults::latestUrl().'*' => Http::response([
         'data' => [
-          'product' => 'webblocks-cms',
+          'product' => ReleaseDefaults::PRODUCT_KEY,
           'version' => '1.32.90',
-          'channel' => 'stable',
+          'channel' => ReleaseDefaults::CHANNEL,
           'checksum_sha256' => $checksum,
-          'artifact_url' => 'https://publisher.webblocksui.com/downloads/webblocks-cms-1.32.90.zip',
+          'artifact_url' => ReleaseDefaults::SERVER_URL.'/downloads/webblocks-cms-1.32.90.zip',
         ],
       ]),
     ]);
@@ -238,7 +233,7 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
       ->assertSuccessful();
 
     Http::assertSent(fn ($request): bool => $request->method() === 'POST'
-      && $request->url() === self::PUBLISHER_URL
+      && $request->url() === ReleaseDefaults::publishUrl()
       && $request->hasHeader('Authorization', 'Bearer webblocks-env-token'));
   }
 
@@ -253,7 +248,6 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     $_SERVER['WEBBLOCKS_PUBLISH_TOKEN'] = 'legacy-webblocks-env-token';
     $_SERVER['WEBBLOCKS_UPDATE_PUBLISHER_TOKEN'] = 'legacy-update-env-token';
     config()->set('webblocks-updates.publisher.token', null);
-    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     $this->artisan('webblocks:publish-update', [
       '--artifact' => $artifact,
@@ -280,10 +274,9 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
-      self::PUBLISHER_URL => Http::response([
+      ReleaseDefaults::publishUrl() => Http::response([
         'service' => 'WebBlocks Publisher',
         'status' => 'error',
         'message' => 'Unauthorized publish request. Bearer secret-test-token was rejected.',
@@ -315,11 +308,10 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     [$artifact, $payload] = $this->preparedPublisherFiles('1.32.90');
 
     config()->set('webblocks-updates.publisher.token', 'secret-test-token');
-    config()->set('webblocks-updates.publisher.url', self::PUBLISHER_URL);
 
     Http::fake([
-      self::PUBLISHER_URL => Http::response(['data' => ['version' => '1.32.90']]),
-      self::PUBLISHER_BASE_URL.'/api/updates/latest*' => Http::response(['data' => ['version' => '1.32.89']]),
+      ReleaseDefaults::publishUrl() => Http::response(['data' => ['version' => '1.32.90']]),
+      ReleaseDefaults::latestUrl().'*' => Http::response(['data' => ['version' => '1.32.89']]),
     ]);
 
     $this->artisan('webblocks:publish-update', [
@@ -387,6 +379,24 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     $this->assertStringContainsString('/api/updates/latest', $releaseDefaults);
   }
 
+  public function test_current_environment_example_and_operational_docs_do_not_advertise_removed_identity_keys(): void
+  {
+    $currentOperationalText = implode("\n", array_map(
+      fn (string $path): string => file_get_contents(base_path($path)) ?: '',
+      [
+        '.env.example',
+        'README.md',
+        'DEVELOPMENT.md',
+        'docs/updates.md',
+        'docs/operations.md',
+      ],
+    ));
+
+    foreach ($this->removedPublisherAndUpdateIdentityKeys() as $removedKey) {
+      $this->assertStringNotContainsString($removedKey, $currentOperationalText);
+    }
+  }
+
   private function preparedPublisherFiles(string $version, ?string $checksum = null): array
   {
     $directory = storage_path('app/webblocks-release-tests/'.uniqid('publisher-', true));
@@ -436,5 +446,20 @@ final class WebBlocksUpdatePublisherCommandTest extends TestCase
     file_put_contents($path, implode("\n", $lines)."\n");
 
     return $path;
+  }
+
+  private function removedPublisherAndUpdateIdentityKeys(): array
+  {
+    $updates = 'WEBBLOCKS_'.'UPDATES_';
+    $publisher = 'WEBBLOCKS_'.'PUBLISHER_';
+
+    return [
+      $updates.'SERVER_URL',
+      $updates.'PRODUCT',
+      $updates.'CHANNEL',
+      $publisher.'URL',
+      $publisher.'PRODUCT',
+      $publisher.'CHANNEL',
+    ];
   }
 }

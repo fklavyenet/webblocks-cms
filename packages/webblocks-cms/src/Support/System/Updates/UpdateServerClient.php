@@ -28,10 +28,10 @@ class UpdateServerClient
 
   public function check(): UpdateCheckResult
   {
-    $serverUrl = rtrim((string) config('webblocks-updates.server_url', ''), '/');
-    $latestPath = $this->apiPath((string) config('webblocks-updates.latest_path', ReleaseDefaults::LATEST_PATH));
-    $product = (string) config('webblocks-updates.product', ReleaseDefaults::PRODUCT_KEY);
-    $channel = (string) config('webblocks-updates.channel', ReleaseDefaults::CHANNEL);
+    $serverUrl = ReleaseDefaults::SERVER_URL;
+    $latestPath = ReleaseDefaults::LATEST_PATH;
+    $product = ReleaseDefaults::PRODUCT_KEY;
+    $channel = ReleaseDefaults::CHANNEL;
     $installedVersion = $this->installedVersionForUpdateCheck();
 
     if (! config('webblocks-updates.enabled', true)) {
@@ -190,17 +190,6 @@ class UpdateServerClient
     }
 
     return $this->fromSuccessfulPayload($payload, $serverUrl, $product, $channel, $installedVersion);
-  }
-
-  private function apiPath(string $path): string
-  {
-    $path = trim($path);
-
-    if ($path === '') {
-      return ReleaseDefaults::LATEST_PATH;
-    }
-
-    return str_starts_with($path, '/') ? $path : '/'.$path;
   }
 
   private function fromSuccessfulPayload(array $payload, string $serverUrl, string $product, string $channel, string $installedVersion): UpdateCheckResult

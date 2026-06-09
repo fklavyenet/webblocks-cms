@@ -9,10 +9,16 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.137
+
+- Remove old Publisher/update server, product, and channel environment overrides from CMS update checks and maintainer publishing.
+- Make package-owned `ReleaseDefaults` the only source for the release server, product key, channel, and update/publish API paths.
+- Keep `WEBBLOCKS_PUBLISHER_TOKEN` as the only normal publish environment secret.
+
 ## 1.32.136
 
 - Move CMS update and publisher identity defaults into package product code so installed sites no longer need normal update server, product, or channel environment keys.
-- Keep legacy update and publisher URL/product/channel environment keys supported as explicit overrides, while maintainer publishing normally only requires `WEBBLOCKS_PUBLISHER_TOKEN`.
+- Keep legacy update and publisher identity overrides available for the transition release, while maintainer publishing normally only requires `WEBBLOCKS_PUBLISHER_TOKEN`.
 
 ## 1.32.135
 
@@ -27,7 +33,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 ## 1.32.133
 
 - Standardize CMS release publishing on `publisher.webblocksui.com` as the canonical Publisher endpoint.
-- Keep `WEBBLOCKS_PUBLISHER_URL`, `WEBBLOCKS_PUBLISHER_TOKEN`, `WEBBLOCKS_PUBLISHER_PRODUCT`, and `WEBBLOCKS_PUBLISHER_CHANNEL` as the only supported publish environment keys.
+- Keep the canonical Publisher environment key set as the only supported publish configuration during the transition.
 
 ## 1.32.132
 

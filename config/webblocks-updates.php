@@ -5,9 +5,9 @@ use WebBlocks\Cms\Support\WebBlocks;
 
 return [
     'enabled' => env('WEBBLOCKS_UPDATES_ENABLED', true),
-    'server_url' => env('WEBBLOCKS_UPDATES_SERVER_URL', ReleaseDefaults::SERVER_URL),
+    'server_url' => ReleaseDefaults::SERVER_URL,
     'latest_path' => ReleaseDefaults::LATEST_PATH,
-    'channel' => env('WEBBLOCKS_UPDATES_CHANNEL', ReleaseDefaults::CHANNEL),
+    'channel' => ReleaseDefaults::CHANNEL,
     'api_version' => '1',
     'product' => ReleaseDefaults::PRODUCT_KEY,
     'current_version' => WebBlocks::VERSION,
@@ -22,10 +22,10 @@ return [
         'keep' => env('WEBBLOCKS_UPDATES_RUNS_KEEP', 5),
     ],
     'publisher' => [
-        'url' => env('WEBBLOCKS_PUBLISHER_URL', ReleaseDefaults::publishUrl()),
+        'url' => ReleaseDefaults::publishUrl(),
         'token' => env('WEBBLOCKS_PUBLISHER_TOKEN'),
-        'product' => env('WEBBLOCKS_PUBLISHER_PRODUCT', ReleaseDefaults::PRODUCT_KEY),
-        'channel' => env('WEBBLOCKS_PUBLISHER_CHANNEL', ReleaseDefaults::CHANNEL),
+        'product' => ReleaseDefaults::PRODUCT_KEY,
+        'channel' => ReleaseDefaults::CHANNEL,
         'timeout_seconds' => 120,
         'connect_timeout_seconds' => 5,
     ],

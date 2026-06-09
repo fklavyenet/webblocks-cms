@@ -15,10 +15,7 @@ use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 final class UpdatePublisher
 {
   private const PUBLISHER_ENV_KEYS = [
-    'url' => 'WEBBLOCKS_PUBLISHER_URL',
     'token' => 'WEBBLOCKS_PUBLISHER_TOKEN',
-    'product' => 'WEBBLOCKS_PUBLISHER_PRODUCT',
-    'channel' => 'WEBBLOCKS_PUBLISHER_CHANNEL',
   ];
 
   private const DETAIL_FIELDS = [
@@ -42,11 +39,8 @@ final class UpdatePublisher
     $artifactPath = $this->resolveArtifactPath($options, $payload);
     $checksum = $this->verifyChecksum($artifactPath, $payload);
     $configuration = $this->publisherConfiguration();
-    $product = $this->stringOption($options, 'product')
-      ?? $configuration['product'];
-    $channel = $this->stringOption($options, 'channel')
-      ?? $this->payloadString($payload, 'channel')
-      ?? $configuration['channel'];
+    $product = ReleaseDefaults::PRODUCT_KEY;
+    $channel = ReleaseDefaults::CHANNEL;
     $version = $this->stringOption($options, 'version')
       ?? $this->payloadString($payload, 'version')
       ?? throw new RuntimeException('Publisher payload is missing a release version.');
@@ -321,7 +315,7 @@ final class UpdatePublisher
 
   private function publisherUrl(): string
   {
-    $url = rtrim($this->publisherConfiguration()['url'], '/');
+    $url = rtrim(ReleaseDefaults::publishUrl(), '/');
 
     if ($url === '') {
       throw new RuntimeException('Update publisher URL is not configured.');
@@ -337,7 +331,7 @@ final class UpdatePublisher
 
   private function publisherConfiguration(): array
   {
-    $url = rtrim($this->publisherConfigValue('url', ReleaseDefaults::publishUrl()), '/');
+    $url = rtrim(ReleaseDefaults::publishUrl(), '/');
 
     if ($url === '') {
       throw new RuntimeException('Update publisher URL is not configured.');
@@ -346,8 +340,8 @@ final class UpdatePublisher
     return [
       'url' => $url,
       'token' => $this->publisherConfigValue('token'),
-      'product' => $this->publisherConfigValue('product', ReleaseDefaults::PRODUCT_KEY),
-      'channel' => $this->publisherConfigValue('channel', ReleaseDefaults::CHANNEL),
+      'product' => ReleaseDefaults::PRODUCT_KEY,
+      'channel' => ReleaseDefaults::CHANNEL,
     ];
   }
 
@@ -412,10 +406,7 @@ final class UpdatePublisher
   private function configuredKeyStatuses(array $configuration): array
   {
     return [
-      self::PUBLISHER_ENV_KEYS['url'] => $configuration['url'] !== '',
       self::PUBLISHER_ENV_KEYS['token'] => $configuration['token'] !== '',
-      self::PUBLISHER_ENV_KEYS['product'] => $configuration['product'] !== '',
-      self::PUBLISHER_ENV_KEYS['channel'] => $configuration['channel'] !== '',
     ];
   }
 
