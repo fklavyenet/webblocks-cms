@@ -2,6 +2,8 @@
 
 namespace Tests\Unit;
 
+use Illuminate\Support\Facades\File;
+use ReflectionClass;
 use RuntimeException;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\System\DatabaseDumpWriter;
@@ -38,5 +40,35 @@ class DatabaseDumpWriterTest extends TestCase
     $this->expectExceptionMessage('Invalid cms.backup.execution value [invalid]. Supported values: auto, direct.');
 
     $writer->resolveMysqlDumpStrategy();
+  }
+
+  public function test_mysql_defaults_file_quotes_option_sensitive_credentials(): void
+  {
+    $writer = app(DatabaseDumpWriter::class);
+    $destinationPath = storage_path('framework/testing/mysql-defaults-'.str()->uuid().'.sql');
+    File::ensureDirectoryExists(dirname($destinationPath));
+
+    $reflection = new ReflectionClass($writer);
+    $method = $reflection->getMethod('createMysqlDefaultsFile');
+    $method->setAccessible(true);
+
+    $defaultsFile = $method->invoke($writer, $destinationPath, [
+      'username' => 'backup#user;name',
+      'password' => 'pa#ss;word"quote\\slash',
+    ]);
+
+    try {
+      $this->assertSame(
+        implode(PHP_EOL, [
+          '[client]',
+          'user="backup#user;name"',
+          'password="pa#ss;word\"quote\\\\slash"',
+          '',
+        ]),
+        File::get($defaultsFile)
+      );
+    } finally {
+      File::delete($defaultsFile);
+    }
   }
 }

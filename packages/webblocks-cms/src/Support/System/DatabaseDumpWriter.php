@@ -167,17 +167,26 @@ class DatabaseDumpWriter
     $defaultsFile = $destinationPath.'.cnf';
     $lines = [
       '[client]',
-      'user='.(string) ($config['username'] ?? ''),
+      'user='.$this->mysqlDefaultsFileValue((string) ($config['username'] ?? '')),
     ];
 
     if (($config['password'] ?? null) !== null && $config['password'] !== '') {
-      $lines[] = 'password='.(string) $config['password'];
+      $lines[] = 'password='.$this->mysqlDefaultsFileValue((string) $config['password']);
     }
 
     File::put($defaultsFile, implode(PHP_EOL, $lines).PHP_EOL, true);
     @chmod($defaultsFile, 0600);
 
     return $defaultsFile;
+  }
+
+  private function mysqlDefaultsFileValue(string $value): string
+  {
+    return '"'.str_replace(
+      ['\\', '"', "\n", "\r"],
+      ['\\\\', '\\"', '\\n', '\\r'],
+      $value
+    ).'"';
   }
 
   private function findMysqlDumpBinary(): string
