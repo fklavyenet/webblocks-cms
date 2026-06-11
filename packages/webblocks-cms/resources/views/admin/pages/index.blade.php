@@ -14,6 +14,7 @@
         'page' => $pages->currentPage() > 1 ? $pages->currentPage() : null,
     ], fn ($value) => $value !== null && $value !== '');
     $importPageUrl = route('admin.pages.index', array_filter(array_merge($detailsBaseQuery, ['modal' => 'page-import']), fn ($value) => $value !== null && $value !== ''));
+    $pageConverterUrl = route('admin.pages.converter.index', array_filter(['site_id' => $activeSite?->id], fn ($value) => $value !== null && $value !== ''));
     $closeImportUrl = route('admin.pages.index', $detailsBaseQuery);
 @endphp
 
@@ -103,6 +104,7 @@
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">Page Converter</a>
                     <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Import Page</a>
                 </div>
             </div>
@@ -127,6 +129,7 @@
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">Page Converter</a>
                     <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Import Page</a>
                 </div>
             </div>

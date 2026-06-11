@@ -8,6 +8,10 @@ The feature should help migrate static sites, hand-written HTML pages, documenta
 
 The goal is not to create a site-specific importer for `webblocksui.com`. The converter should be a generic CMS capability that can be used for any site managed by a WebBlocks CMS install.
 
+## Current Implementation Status
+
+The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form, validates pasted or uploaded `.html` / `.htm` input, and returns a controlled placeholder review state without creating pages. The structured HTML-to-block conversion engine and draft creation flow remain future phases.
+
 ## Core Principle
 
 The converter must prefer structured CMS blocks over a single Safe HTML block.

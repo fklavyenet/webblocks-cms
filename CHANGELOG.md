@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add the Page Converter admin foundation with scoped target selection, HTML input validation, and a no-write placeholder analysis state.
 - Add the Page Converter roadmap to the project documentation for future implementation planning.
 
 ## 1.32.140

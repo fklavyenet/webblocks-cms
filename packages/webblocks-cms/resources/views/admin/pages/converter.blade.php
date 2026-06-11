@@ -1,0 +1,164 @@
+@extends('webblocks-cms::layouts.admin', ['title' => 'Page Converter', 'heading' => 'Page Converter'])
+
+@section('content')
+    @include('webblocks-cms::admin.partials.page-header', [
+        'title' => 'Page Converter',
+        'description' => 'Convert pasted or uploaded static HTML into a draft CMS page made from structured blocks.',
+        'actions' => '<a href="'.route('admin.pages.index').'" class="wb-btn wb-btn-secondary">Back to Pages</a>',
+    ])
+
+    @include('webblocks-cms::admin.partials.flash')
+
+    @if ($conversionPlan)
+        <div class="wb-card">
+            <div class="wb-card-header">
+                <strong>Review Placeholder</strong>
+            </div>
+            <div class="wb-card-body wb-stack wb-gap-4">
+                <div class="wb-alert wb-alert-info">
+                    {{ $conversionPlan->message }}
+                </div>
+
+                <div class="wb-table-wrap">
+                    <table class="wb-table">
+                        <tbody>
+                            <tr>
+                                <th>Target title</th>
+                                <td>{{ $conversionPlan->input->pageTitle }}</td>
+                            </tr>
+                            <tr>
+                                <th>Target path</th>
+                                <td>{{ $conversionPlan->input->pagePath }}</td>
+                            </tr>
+                            <tr>
+                                <th>Page layout</th>
+                                <td>{{ $conversionPlan->input->pageLayout }}</td>
+                            </tr>
+                            <tr>
+                                <th>Conversion profile</th>
+                                <td>{{ $conversionPlan->profileLabel() }}</td>
+                            </tr>
+                            <tr>
+                                <th>Source</th>
+                                <td>{{ $conversionPlan->input->sourceName }} ({{ number_format($conversionPlan->sourceBytes) }} bytes)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <div class="wb-card">
+        <div class="wb-card-header">
+            <strong>Source and Target</strong>
+        </div>
+
+        <form method="POST" action="{{ route('admin.pages.converter.analyze') }}" enctype="multipart/form-data" class="wb-stack wb-gap-0">
+            @csrf
+
+            <div class="wb-card-body wb-stack wb-gap-4">
+                <div class="wb-alert wb-alert-info">
+                    This first Page Converter step analyzes input only. It does not create, publish, overwrite, crawl, fetch remote URLs, or batch import pages.
+                </div>
+
+                @if ($sites->isEmpty())
+                    <div class="wb-empty">
+                        <div class="wb-empty-title">No accessible sites</div>
+                        <div class="wb-empty-text">Page Converter becomes available after your account has access to at least one site.</div>
+                    </div>
+                @else
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-field">
+                            <label class="wb-label" for="page_converter_site_id">Target site</label>
+                            <select class="wb-select" id="page_converter_site_id" name="site_id" required>
+                                @foreach ($sites as $site)
+                                    <option value="{{ $site->id }}" @selected((int) old('site_id', $selectedSite?->id) === $site->id)>{{ $site->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('site_id')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="wb-field">
+                            <label class="wb-label" for="page_converter_locale_id">Target locale</label>
+                            <select class="wb-select" id="page_converter_locale_id" name="locale_id" required>
+                                @foreach ($locales as $locale)
+                                    <option value="{{ $locale->id }}" @selected((int) old('locale_id', $locales->firstWhere('is_default', true)?->id ?? $locales->first()?->id) === $locale->id)>{{ $locale->name }} ({{ $locale->code }})</option>
+                                @endforeach
+                            </select>
+                            @error('locale_id')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-field">
+                            <label class="wb-label" for="page_converter_page_layout">Page layout</label>
+                            <select class="wb-select" id="page_converter_page_layout" name="page_layout" required>
+                                @foreach ($pageLayoutOptions as $option)
+                                    <option value="{{ $option['value'] }}" @selected(old('page_layout', 'default') === $option['value'])>{{ $option['label'] }}</option>
+                                @endforeach
+                            </select>
+                            @error('page_layout')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="wb-field">
+                            <label class="wb-label" for="page_converter_conversion_profile">Conversion profile</label>
+                            <select class="wb-select" id="page_converter_conversion_profile" name="conversion_profile" required>
+                                @foreach ($profiles as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('conversion_profile', 'conservative') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('conversion_profile')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-field">
+                            <label class="wb-label" for="page_converter_page_title">Page title</label>
+                            <input class="wb-input" id="page_converter_page_title" type="text" name="page_title" value="{{ old('page_title') }}" required>
+                            @error('page_title')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="wb-field">
+                            <label class="wb-label" for="page_converter_page_path">Page path or slug</label>
+                            <input class="wb-input" id="page_converter_page_path" type="text" name="page_path" value="{{ old('page_path') }}" placeholder="docs/imported-page" required>
+                            @error('page_path')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="wb-field">
+                        <label class="wb-label" for="page_converter_source_html">Source HTML</label>
+                        <textarea class="wb-textarea" id="page_converter_source_html" name="source_html" rows="14" placeholder="<main>...</main>">{{ old('source_html') }}</textarea>
+                        @error('source_html')
+                            <div class="wb-field-error">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="wb-field">
+                        <label class="wb-label" for="page_converter_source_file">Optional HTML file</label>
+                        <input class="wb-input" id="page_converter_source_file" type="file" name="source_file" accept=".html,.htm,text/html">
+                        @error('source_file')
+                            <div class="wb-field-error">{{ $message }}</div>
+                        @enderror
+                    </div>
+                @endif
+            </div>
+
+            <div class="wb-card-footer">
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.index')" submit-label="Analyze HTML" />
+            </div>
+        </form>
+    </div>
+@endsection

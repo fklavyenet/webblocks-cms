@@ -13,6 +13,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\NavigationItemController;
 use WebBlocks\Cms\Http\Controllers\Admin\PackageAdminStatusController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageConverterController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageDuplicateController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageImportController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageLayoutController;
@@ -83,6 +84,8 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::match(['put', 'patch'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::get('/pages/converter', [PageConverterController::class, 'index'])->name('pages.converter.index');
+    Route::post('/pages/converter/analyze', [PageConverterController::class, 'analyze'])->name('pages.converter.analyze');
     Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
     Route::post('/pages/import-json', [PageImportController::class, 'store'])->name('pages.import.store');
     Route::delete('/pages/bulk', [PageController::class, 'bulkDestroy'])->name('pages.bulk-destroy');
