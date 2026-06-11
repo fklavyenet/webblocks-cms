@@ -11,8 +11,13 @@
 
     @if ($conversionPlan)
         <div class="wb-card">
-            <div class="wb-card-header">
-                <strong>Review Placeholder</strong>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Analysis Preview</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $conversionPlan->suggestionCount() }} suggested blocks</span>
+                    <span class="wb-status-pill {{ $conversionPlan->fallbackCount() > 0 ? 'wb-status-pending' : 'wb-status-active' }}">{{ $conversionPlan->fallbackCount() }} fallbacks</span>
+                    <span class="wb-status-pill {{ $conversionPlan->warningCount() > 0 ? 'wb-status-pending' : 'wb-status-active' }}">{{ $conversionPlan->warningCount() }} warnings</span>
+                </div>
             </div>
             <div class="wb-card-body wb-stack wb-gap-4">
                 <div class="wb-alert wb-alert-info">
@@ -42,9 +47,64 @@
                                 <th>Source</th>
                                 <td>{{ $conversionPlan->input->sourceName }} ({{ number_format($conversionPlan->sourceBytes) }} bytes)</td>
                             </tr>
+                            <tr>
+                                <th>Extracted content root</th>
+                                <td>{{ $conversionPlan->contentRootSummary }}</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
+
+                @if ($conversionPlan->suggestions === [])
+                    <div class="wb-empty">
+                        <div class="wb-empty-title">No content fragments detected</div>
+                        <div class="wb-empty-text">Paste or upload HTML with visible page content and analyze again.</div>
+                    </div>
+                @else
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-striped wb-table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Suggested block</th>
+                                    <th>Preview</th>
+                                    <th>Confidence</th>
+                                    <th>Source fragment</th>
+                                    <th>Warnings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($conversionPlan->suggestions as $suggestion)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>
+                                            <div class="wb-stack wb-gap-1">
+                                                <strong>{{ $suggestion->label }}</strong>
+                                                <span class="wb-text-sm wb-text-muted">{{ $suggestion->blockSlug }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ $suggestion->previewText ?: '-' }}</td>
+                                        <td>
+                                            <span class="wb-status-pill {{ $suggestion->confidence >= 85 ? 'wb-status-active' : ($suggestion->confidence >= 65 ? 'wb-status-pending' : 'wb-status-info') }}">{{ $suggestion->confidence }}%</span>
+                                        </td>
+                                        <td><code>{{ $suggestion->sourceSummary }}</code></td>
+                                        <td>
+                                            @if ($suggestion->warnings === [])
+                                                <span class="wb-text-muted">-</span>
+                                            @else
+                                                <div class="wb-stack wb-gap-1">
+                                                    @foreach ($suggestion->warnings as $warning)
+                                                        <span class="wb-status-pill wb-status-pending">{{ $warning }}</span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
         </div>
     @endif

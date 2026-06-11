@@ -139,8 +139,9 @@ class PageConverterTest extends TestCase
     ]));
 
     $response->assertOk();
-    $response->assertSeeText('Review Placeholder');
+    $response->assertSeeText('Analysis Preview');
     $response->assertSeeText('source.htm');
+    $response->assertSeeText('Header');
   }
 
   #[Test]
@@ -162,7 +163,7 @@ class PageConverterTest extends TestCase
   }
 
   #[Test]
-  public function analyze_returns_placeholder_review_state_and_does_not_create_page(): void
+  public function analyze_returns_preview_state_and_does_not_create_page(): void
   {
     $this->seedFoundation();
 
@@ -174,10 +175,123 @@ class PageConverterTest extends TestCase
     ]));
 
     $response->assertOk();
-    $response->assertSeeText('Review Placeholder');
-    $response->assertSeeText('The structured HTML-to-block conversion engine will be implemented next');
+    $response->assertSeeText('Analysis Preview');
+    $response->assertSeeText('Analysis preview only');
     $response->assertSeeText('Generic Docs Page');
+    $response->assertSeeText('header');
+    $response->assertSeeText('plain_text');
     $this->assertSame($initialPageCount, Page::query()->count());
+  }
+
+  #[Test]
+  public function analyzer_prefers_main_content_over_body_content(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<body><h1>Outside Body Title</h1><main><h1>Main Title</h1><p>Main copy.</p></main></body>',
+    ]));
+
+    $response->assertOk();
+    $response->assertSeeText('<main>');
+    $response->assertSeeText('Main Title');
+    $response->assertDontSeeText('Outside Body Title');
+  }
+
+  #[Test]
+  public function analyzer_strips_script_style_and_unsafe_attributes_from_previews(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><p onclick="alert(1)">Safe copy <a href="javascript:alert(1)">link</a>.</p><script>alert("bad")</script><style>.x{color:red}</style></main>',
+    ]));
+
+    $response->assertOk();
+    $response->assertSeeText('Safe copy link.');
+    $response->assertDontSeeText('alert("bad")');
+    $response->assertDontSeeText('color:red');
+    $response->assertDontSee('onclick', false);
+    $response->assertDontSee('javascript:alert', false);
+  }
+
+  #[Test]
+  public function analyzer_maps_core_html_elements_to_structured_block_suggestions(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><h2>Heading</h2><p>Plain copy.</p><pre><code>php artisan test</code></pre><table><tr><td>Cell</td></tr></table><blockquote>Quote copy</blockquote><ul><li>One</li><li>Two</li></ul></main>',
+    ]));
+
+    $response->assertOk();
+    $response->assertSeeText('header');
+    $response->assertSeeText('plain_text');
+    $response->assertSeeText('code');
+    $response->assertSeeText('table');
+    $response->assertSeeText('quote');
+    $response->assertSeeText('list');
+  }
+
+  #[Test]
+  public function analyzer_maps_webblocks_ui_classes_to_structured_block_suggestions(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'conversion_profile' => 'webblocks_ui',
+      'source_html' => '<main><header class="wb-content-header"><h1>Intro</h1></header><section class="wb-section">Section</section><article class="wb-card">Card</article><a class="wb-btn" href="/start">Start</a><div class="wb-alert">Notice</div></main>',
+    ]));
+
+    $response->assertOk();
+    $response->assertSeeText('content_header');
+    $response->assertSeeText('section');
+    $response->assertSeeText('card');
+    $response->assertSeeText('button_link');
+    $response->assertSeeText('callout');
+  }
+
+  #[Test]
+  public function unknown_complex_fragment_becomes_html_fallback_with_warning(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><div data-widget="pricing"><span>Custom widget</span><canvas></canvas></div></main>',
+    ]));
+
+    $response->assertOk();
+    $response->assertSeeText('HTML Fallback');
+    $response->assertSeeText('html');
+    $response->assertSeeText('No high-confidence structured block mapping exists for this fragment yet.');
+  }
+
+  #[Test]
+  public function image_and_gallery_suggestions_report_media_needed_warnings_without_importing_media(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><figure><img src="https://example.test/photo.jpg" alt="Remote"></figure><div class="wb-gallery"><img src="/one.jpg"><img src="/two.jpg"></div></main>',
+    ]));
+
+    $response->assertOk();
+    $response->assertSeeText('image');
+    $response->assertSeeText('gallery');
+    $response->assertSeeText('Media import is not implemented in this phase.');
+    $this->assertDatabaseCount('media', 0);
   }
 
   #[Test]

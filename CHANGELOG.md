@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add Page Converter analysis previews that extract content from submitted HTML and suggest structured blocks with confidence scores and warnings without creating pages.
 - Add the Page Converter admin foundation with scoped target selection, HTML input validation, and a no-write placeholder analysis state.
 - Add the Page Converter roadmap to the project documentation for future implementation planning.
 
