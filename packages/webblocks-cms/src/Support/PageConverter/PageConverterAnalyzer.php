@@ -36,6 +36,27 @@ class PageConverterAnalyzer
         continue;
       }
 
+      if ($this->isWebBlocksGrid($segment)) {
+        $cards = $this->suggestionMapper->directCardChildren($segment);
+
+        if ($cards !== []) {
+          foreach ($cards as $card) {
+            array_push($suggestions, ...$this->suggestionMapper->mapCardWithRegions($card, count($suggestions)));
+          }
+
+          $index++;
+
+          continue;
+        }
+      }
+
+      if ($this->isWebBlocksCard($segment)) {
+        array_push($suggestions, ...$this->suggestionMapper->mapCardWithRegions($segment, count($suggestions)));
+        $index++;
+
+        continue;
+      }
+
       $suggestions[] = $this->suggestionMapper->map($segment, count($suggestions));
       $index++;
     }
@@ -48,5 +69,23 @@ class PageConverterAnalyzer
       contentRootSummary: $this->contentExtractor->summary($contentRoot),
       suggestions: $suggestions,
     );
+  }
+
+  private function isWebBlocksGrid(\DOMElement $element): bool
+  {
+    return in_array('wb-grid', $this->classes($element), true);
+  }
+
+  private function isWebBlocksCard(\DOMElement $element): bool
+  {
+    return in_array('wb-card', $this->classes($element), true);
+  }
+
+  /**
+   * @return array<int, string>
+   */
+  private function classes(\DOMElement $element): array
+  {
+    return array_values(array_filter(preg_split('/\s+/', trim($element->getAttribute('class'))) ?: []));
   }
 }

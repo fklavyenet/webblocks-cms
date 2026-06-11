@@ -8,6 +8,79 @@ use DOMXPath;
 class PageBlockSuggestionMapper
 {
   /**
+   * @return array<int, DOMElement>
+   */
+  public function directCardChildren(DOMElement $element): array
+  {
+    $cards = [];
+
+    foreach ((new DOMXPath($element->ownerDocument))->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-card ")]', $element) ?: [] as $card) {
+      if ($card instanceof DOMElement) {
+        $cards[] = $card;
+      }
+    }
+
+    return $cards;
+  }
+
+  /**
+   * @return array<int, PageBlockSuggestion>
+   */
+  public function mapCardWithRegions(DOMElement $card, int $startIndex): array
+  {
+    $regions = $this->directCardRegions($card);
+
+    if ($regions === []) {
+      return [$this->map($card, $startIndex)];
+    }
+
+    $suggestions = [];
+    $cardKey = 'block_'.($startIndex + 1);
+    $suggestions[] = $this->suggestion('card', 'Card', $card, 94);
+
+    foreach ($regions as $region) {
+      $regionSlug = $this->cardRegionSlug($region);
+
+      if ($regionSlug === null) {
+        continue;
+      }
+
+      $regionKey = 'block_'.($startIndex + count($suggestions) + 1);
+      $suggestions[] = $this->suggestion(
+        $regionSlug,
+        str($regionSlug)->replace('_', ' ')->title()->toString(),
+        $region,
+        94,
+        [],
+        $cardKey,
+      );
+
+      foreach ($this->directMeaningfulChildren($region) as $child) {
+        if ($this->cardRegionSlug($child) !== null) {
+          continue;
+        }
+
+        $childSuggestion = $this->map($child, $startIndex + count($suggestions));
+        $suggestions[] = new PageBlockSuggestion(
+          blockSlug: $childSuggestion->blockSlug,
+          label: $childSuggestion->label,
+          previewText: $childSuggestion->previewText,
+          confidence: $childSuggestion->confidence,
+          sourceSummary: $childSuggestion->sourceSummary,
+          sourceHtml: $childSuggestion->sourceHtml,
+          translatedFields: $childSuggestion->translatedFields,
+          sharedFields: $childSuggestion->sharedFields,
+          parentKey: $regionKey,
+          warnings: $childSuggestion->warnings,
+          fallbackFlags: $childSuggestion->fallbackFlags,
+        );
+      }
+    }
+
+    return $suggestions;
+  }
+
+  /**
    * @param  array<int, DOMElement>  $details
    * @return array<int, PageBlockSuggestion>
    */
@@ -82,15 +155,15 @@ class PageBlockSuggestionMapper
       return $this->suggestion('content_header', 'Content Header', $element, 96);
     }
 
-    if (in_array('wb-section', $classes, true)) {
-      return $this->suggestion('section', 'Section', $element, 93);
-    }
-
     if (in_array('wb-promo', $classes, true)) {
       $hasH1 = $this->containsTag($element, 'h1');
       $slug = $index <= 1 || $hasH1 ? 'hero' : 'cta';
 
       return $this->suggestion($slug, $slug === 'hero' ? 'Hero' : 'CTA', $element, $hasH1 ? 92 : 86);
+    }
+
+    if (in_array('wb-section', $classes, true)) {
+      return $this->suggestion('section', 'Section', $element, 93);
     }
 
     if (in_array('wb-card', $classes, true)) {
@@ -153,7 +226,7 @@ class PageBlockSuggestionMapper
     return $this->suggestion('html', 'HTML Fallback', $element, 45, ['No high-confidence structured block mapping exists for this fragment yet.']);
   }
 
-  private function suggestion(string $blockSlug, string $label, DOMElement $element, int $confidence, array $warnings = []): PageBlockSuggestion
+  private function suggestion(string $blockSlug, string $label, DOMElement $element, int $confidence, array $warnings = [], ?string $parentKey = null): PageBlockSuggestion
   {
     return new PageBlockSuggestion(
       blockSlug: $blockSlug,
@@ -164,6 +237,7 @@ class PageBlockSuggestionMapper
       sourceHtml: $this->sourceHtml($element),
       translatedFields: $this->translatedFields($blockSlug, $element),
       sharedFields: $this->sharedFields($blockSlug, $element),
+      parentKey: $parentKey,
       warnings: $warnings,
       fallbackFlags: $blockSlug === 'html' ? ['html_fallback'] : [],
     );
@@ -197,6 +271,74 @@ class PageBlockSuggestionMapper
   }
 
   /**
+   * @return array<int, DOMElement>
+   */
+  private function directCardRegions(DOMElement $card): array
+  {
+    $regions = [];
+
+    foreach ($this->directMeaningfulChildren($card) as $child) {
+      if ($this->cardRegionSlug($child) !== null) {
+        $regions[] = $child;
+      }
+    }
+
+    return $regions;
+  }
+
+  /**
+   * @return array<int, DOMElement>
+   */
+  private function directMeaningfulChildren(DOMElement $element): array
+  {
+    $children = [];
+
+    foreach ($element->childNodes as $child) {
+      if (! $child instanceof DOMElement) {
+        continue;
+      }
+
+      if (trim($child->textContent) === '' && ! in_array(strtolower($child->tagName), ['figure', 'img', 'table'], true) && ! $this->hasElementChildren($child)) {
+        continue;
+      }
+
+      $children[] = $child;
+    }
+
+    return $children;
+  }
+
+  private function cardRegionSlug(DOMElement $element): ?string
+  {
+    $classes = $this->classes($element);
+
+    if (in_array('wb-card-header', $classes, true)) {
+      return 'card_header';
+    }
+
+    if (in_array('wb-card-body', $classes, true)) {
+      return 'card_body';
+    }
+
+    if (in_array('wb-card-footer', $classes, true)) {
+      return 'card_footer';
+    }
+
+    return null;
+  }
+
+  private function hasElementChildren(DOMElement $element): bool
+  {
+    foreach ($element->childNodes as $child) {
+      if ($child instanceof DOMElement) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * @return array<string, mixed>
    */
   private function translatedFields(string $blockSlug, DOMElement $element): array
@@ -204,10 +346,29 @@ class PageBlockSuggestionMapper
     $text = $this->previewText($element);
 
     return match ($blockSlug) {
-      'header', 'content_header', 'hero' => [
-        'title' => $text,
+      'header' => [
+        'title' => $this->headingText($element) ?: $text,
+      ],
+      'content_header' => [
+        'title' => $this->headingText($element) ?: $text,
+        'subtitle' => $this->bodyText($element),
+      ],
+      'hero' => [
+        'eyebrow' => $this->eyebrowText($element),
+        'title' => $this->headingText($element) ?: $text,
+        'body' => $this->bodyText($element),
+        'primary_cta_label' => $this->primaryButtonLabel($element),
+      ],
+      'cta' => [
+        'eyebrow' => $this->eyebrowText($element),
+        'heading' => $this->headingText($element) ?: $text,
+        'body' => $this->bodyText($element),
+        'primary_cta_label' => $this->primaryButtonLabel($element),
       ],
       'button_link' => [
+        'label' => $text,
+      ],
+      'button' => [
         'label' => $text,
       ],
       'image' => [
@@ -238,15 +399,19 @@ class PageBlockSuggestionMapper
   private function sharedFields(string $blockSlug, DOMElement $element): array
   {
     return match ($blockSlug) {
-      'button_link' => [
+      'button_link', 'button' => [
         'url' => $element->getAttribute('href') ?: null,
         'target' => $element->getAttribute('target') ?: '_self',
+        'variant' => $this->buttonVariant($element),
       ],
       'image' => [
         'source' => $this->firstImageAttribute($element, 'src'),
       ],
       'gallery' => [
         'sources' => $this->imageSources($element),
+      ],
+      'hero', 'cta' => [
+        'primary_cta_url' => $this->primaryButtonUrl($element),
       ],
       default => [],
     };
@@ -281,6 +446,82 @@ class PageBlockSuggestionMapper
     }
 
     return null;
+  }
+
+  private function headingText(DOMElement $element): ?string
+  {
+    foreach ((new DOMXPath($element->ownerDocument))->query('.//h1|.//h2|.//h3|.//h4|.//h5|.//h6', $element) ?: [] as $heading) {
+      if ($heading instanceof DOMElement) {
+        return $this->previewText($heading) ?: null;
+      }
+    }
+
+    return null;
+  }
+
+  private function eyebrowText(DOMElement $element): ?string
+  {
+    foreach ((new DOMXPath($element->ownerDocument))->query('.//*[contains(concat(" ", normalize-space(@class), " "), " wb-eyebrow ")]', $element) ?: [] as $eyebrow) {
+      if ($eyebrow instanceof DOMElement) {
+        return $this->previewText($eyebrow) ?: null;
+      }
+    }
+
+    return null;
+  }
+
+  private function bodyText(DOMElement $element): ?string
+  {
+    foreach ((new DOMXPath($element->ownerDocument))->query('.//p[not(contains(concat(" ", normalize-space(@class), " "), " wb-eyebrow "))]', $element) ?: [] as $paragraph) {
+      if ($paragraph instanceof DOMElement) {
+        return $this->previewText($paragraph) ?: null;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * @return array<int, DOMElement>
+   */
+  private function directButtonLinks(DOMElement $element): array
+  {
+    $buttons = [];
+
+    foreach ((new DOMXPath($element->ownerDocument))->query('./a[contains(concat(" ", normalize-space(@class), " "), " wb-btn ")]', $element) ?: [] as $button) {
+      if ($button instanceof DOMElement) {
+        $buttons[] = $button;
+      }
+    }
+
+    return $buttons;
+  }
+
+  private function primaryButtonLabel(DOMElement $element): ?string
+  {
+    $button = $this->directButtonLinks($element)[0] ?? null;
+
+    return $button instanceof DOMElement ? ($this->previewText($button) ?: null) : null;
+  }
+
+  private function primaryButtonUrl(DOMElement $element): ?string
+  {
+    $button = $this->directButtonLinks($element)[0] ?? null;
+
+    return $button instanceof DOMElement ? ($button->getAttribute('href') ?: null) : null;
+  }
+
+  private function buttonVariant(DOMElement $element): ?string
+  {
+    $classes = $this->classes($element);
+
+    return match (true) {
+      in_array('wb-btn-secondary', $classes, true) => 'secondary',
+      in_array('wb-btn-ghost', $classes, true) => 'ghost',
+      in_array('wb-btn-link', $classes, true) => 'link',
+      in_array('wb-btn-primary', $classes, true) => 'primary',
+      default => null,
+    };
   }
 
   /**

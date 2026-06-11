@@ -59,6 +59,15 @@ class PageConverterTest extends TestCase
     ], $overrides);
   }
 
+  private function fixtureHtml(string $fixture): string
+  {
+    $contents = file_get_contents(base_path('tests/Fixtures/PageConverter/'.$fixture));
+
+    $this->assertNotFalse($contents);
+
+    return $contents;
+  }
+
   private function signedPlanFromResponse($response): array
   {
     $content = $response->getContent();
@@ -1138,6 +1147,118 @@ class PageConverterTest extends TestCase
     $response->assertSeeText('gallery');
     $response->assertSeeText('Media import is not implemented in this phase.');
     $this->assertDatabaseCount('media', 0);
+  }
+
+  #[Test]
+  public function webblocks_ui_fixture_pilot_creates_structured_draft_without_importing_media_or_side_effects(): void
+  {
+    $this->seedFoundation();
+    $this->publishBlockType('accordion', 'Accordion', true);
+    $this->publishBlockType('faq', 'FAQ');
+
+    $user = User::factory()->superAdmin()->create();
+    $initialMediaCount = Media::query()->count();
+    $initialNavigationCount = NavigationItem::query()->count();
+    $initialSharedSlotCount = SharedSlot::query()->count();
+    $initialPublishedPageCount = Page::query()->where('status', Page::STATUS_PUBLISHED)->count();
+
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'page_title' => 'WebBlocks UI Docs Pilot',
+      'page_path' => 'webblocks-ui-docs-pilot',
+      'conversion_profile' => 'webblocks_ui',
+      'source_html' => $this->fixtureHtml('webblocks-ui-docs-pilot.html'),
+    ]));
+
+    $analysis->assertOk();
+    $analysis->assertSeeText('Analysis Preview');
+    $analysis->assertSeeText('Media import is not implemented in this phase.');
+    $analysis->assertSee('name="plan_payload"', false);
+    $analysis->assertSee('name="plan_signature"', false);
+
+    $signedPlan = $this->signedPlanFromResponse($analysis);
+    $this->assertTrue(app(PageConversionPlanSigner::class)->verify($signedPlan['payload'], $signedPlan['signature']));
+
+    $plan = $signedPlan['plan'];
+    $slugs = array_column($plan['blocks'], 'block_slug');
+
+    $this->assertSame(0, $plan['summary']['fallback_count']);
+    $this->assertGreaterThanOrEqual(18, $plan['summary']['suggestion_count']);
+    $this->assertContains('content_header', $slugs);
+    $this->assertContains('hero', $slugs);
+    $this->assertContains('card', $slugs);
+    $this->assertContains('card_header', $slugs);
+    $this->assertContains('card_body', $slugs);
+    $this->assertContains('card_footer', $slugs);
+    $this->assertContains('button_link', $slugs);
+    $this->assertContains('code', $slugs);
+    $this->assertContains('table', $slugs);
+    $this->assertContains('accordion', $slugs);
+    $this->assertContains('accordion_item', $slugs);
+    $this->assertContains('image', $slugs);
+    $this->assertNotContains('gallery', $slugs);
+    $this->assertNotSame(['html'], array_values(array_unique($slugs)));
+    $this->assertSame('Build with WebBlocks UI', $plan['blocks'][0]['translated_fields']['title']);
+
+    $firstCardIndex = array_search('card', $slugs, true);
+    $this->assertIsInt($firstCardIndex);
+    $this->assertSame([
+      'card',
+      'card_header',
+      'header',
+      'card_body',
+      'plain_text',
+      'card_footer',
+      'button_link',
+    ], array_slice($slugs, $firstCardIndex, 7));
+
+    $imageSuggestion = collect($plan['blocks'])->firstWhere('block_slug', 'image');
+    $this->assertIsArray($imageSuggestion);
+    $this->assertSame(['Image media was detected. Media import is not implemented in this phase.'], $imageSuggestion['warnings']);
+
+    $create = $this->actingAs($user)
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+
+    $create->assertSessionHasNoErrors();
+    $page = Page::query()
+      ->whereHas('translations', fn ($query) => $query->where('slug', 'webblocks-ui-docs-pilot'))
+      ->firstOrFail();
+    $createdSlugs = Block::query()
+      ->where('page_id', $page->id)
+      ->orderBy('id')
+      ->pluck('type')
+      ->all();
+
+    $this->assertSame(Page::STATUS_DRAFT, $page->status);
+    $this->assertNull($page->published_at);
+    $this->assertSame([
+      'content_header',
+      'hero',
+      'card',
+      'card_header',
+      'header',
+      'card_body',
+      'plain_text',
+      'card_footer',
+      'button_link',
+      'card',
+      'card_header',
+      'header',
+      'card_body',
+      'plain_text',
+      'card_footer',
+      'button_link',
+      'code',
+      'table',
+      'accordion',
+      'faq',
+      'faq',
+    ], $createdSlugs);
+    $this->assertNotContains('image', $createdSlugs);
+    $this->assertNotContains('gallery', $createdSlugs);
+    $this->assertSame($initialMediaCount, Media::query()->count());
+    $this->assertSame($initialNavigationCount, NavigationItem::query()->count());
+    $this->assertSame($initialSharedSlotCount, SharedSlot::query()->count());
+    $this->assertSame($initialPublishedPageCount, Page::query()->where('status', Page::STATUS_PUBLISHED)->count());
   }
 
   #[Test]

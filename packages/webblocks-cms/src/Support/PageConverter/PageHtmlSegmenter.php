@@ -23,6 +23,12 @@ class PageHtmlSegmenter
         continue;
       }
 
+      if ($this->shouldUnwrapContentWrapper($child)) {
+        array_push($segments, ...$this->segments($child));
+
+        continue;
+      }
+
       $segments[] = $child;
     }
 
@@ -54,5 +60,18 @@ class PageHtmlSegmenter
     }
 
     return false;
+  }
+
+  private function shouldUnwrapContentWrapper(DOMElement $element): bool
+  {
+    $classes = array_values(array_filter(preg_split('/\s+/', trim($element->getAttribute('class'))) ?: []));
+
+    return (bool) array_intersect($classes, [
+      'wb-content-body',
+      'wb-docs-content',
+      'wb-prose',
+      'docs-content',
+      'content-body',
+    ]);
   }
 }

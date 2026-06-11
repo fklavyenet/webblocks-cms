@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>WebBlocks UI Docs Pilot</title>
+</head>
+<body>
+  <div class="wb-topbar">
+    <button class="wb-btn" type="button">Toggle theme</button>
+  </div>
+
+  <main class="wb-content-shell">
+    <header class="wb-content-header">
+      <p class="wb-eyebrow">Documentation</p>
+      <h1>Build with WebBlocks UI</h1>
+      <p>Composable primitives for CMS pages, docs, and operational screens.</p>
+    </header>
+
+    <div class="wb-content-body">
+      <section class="wb-section wb-promo wb-promo-accent">
+        <p class="wb-eyebrow">Pilot</p>
+        <h2>Convert static examples into structured blocks</h2>
+        <p>Start with clean source HTML, then review the signed Page Converter plan.</p>
+        <a class="wb-btn wb-btn-primary" href="/docs/page-converter">Open guide</a>
+      </section>
+
+      <div class="wb-grid wb-grid-3 wb-gap-6">
+        <article class="wb-card">
+          <div class="wb-card-header">
+            <h3>Cards keep regions explicit</h3>
+          </div>
+          <div class="wb-card-body">
+            <p>Headers, body copy, and actions should remain editable after conversion.</p>
+          </div>
+          <div class="wb-card-footer">
+            <a class="wb-btn wb-btn-secondary" href="/docs/cards">Read cards</a>
+          </div>
+        </article>
+
+        <article class="wb-card">
+          <div class="wb-card-header">
+            <h3>Code remains inspectable</h3>
+          </div>
+          <div class="wb-card-body">
+            <p>Examples can sit near code samples without forcing one large HTML block.</p>
+          </div>
+          <div class="wb-card-footer">
+            <a class="wb-btn wb-btn-secondary" href="/docs/code">Read code</a>
+          </div>
+        </article>
+      </div>
+
+      <pre><code>php artisan webblocks:publish-update</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Pattern</th>
+            <th>CMS block</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Content header</td>
+            <td>Content Header</td>
+          </tr>
+          <tr>
+            <td>Details list</td>
+            <td>Accordion</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <details>
+        <summary>Can the converter publish this page?</summary>
+        <p>No. Page Converter creates a draft for editorial review.</p>
+      </details>
+      <details>
+        <summary>Will images be imported?</summary>
+        <p>No. Media-backed fragments are reported and skipped in this phase.</p>
+      </details>
+
+      <figure class="wb-media">
+        <img src="https://assets.example.test/webblocks-ui/preview.png" alt="Remote UI preview">
+        <figcaption>Remote media is intentionally warning-only in the pilot.</figcaption>
+      </figure>
+    </div>
+  </main>
+</body>
+</html>
