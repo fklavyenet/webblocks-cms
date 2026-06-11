@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add the Page Converter roadmap to the project documentation for future implementation planning.
+
 ## 1.32.140
 
 - Align Export / Import row action cells with the standard compact WebBlocks UI admin table action pattern.
