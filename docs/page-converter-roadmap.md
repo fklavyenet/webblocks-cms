@@ -10,7 +10,7 @@ The goal is not to create a site-specific importer for `webblocksui.com`. The co
 
 ## Current Implementation Status
 
-The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input. The analyzer normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. The review screen serializes those suggestions into a signed conversion plan payload, then `Create draft page` can create one new draft page with supported main-slot blocks. Draft creation supports `header`, `plain_text`, `rich-text`, `code`, `table`, `quote`, explicit `html` fallback, `button_link`, `list` as Rich Text, `callout` as Alert, `section`, `content_header`, `hero`, `cta`, and explicit `card` shells with signed `card_header` / `card_body` / `card_footer` children. Card suggestions without explicit usable region children are skipped rather than flattened into unsafe HTML. Media-backed suggestions such as `image` and `gallery` are still skipped and reported without importing media. `accordion` remains skipped until its item/child storage contract is made safe for automated draft creation.
+The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input. The analyzer normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. The review screen serializes those suggestions into a signed conversion plan payload, then `Create draft page` can create one new draft page with supported main-slot blocks. Draft creation supports `header`, `plain_text`, `rich-text`, `code`, `table`, `quote`, explicit `html` fallback, `button_link`, `list` as Rich Text, `callout` as Alert, `section`, `content_header`, `hero`, `cta`, and explicit `card` shells with signed `card_header` / `card_body` / `card_footer` children. Adjacent `<details>` groups now become one signed `accordion` suggestion with explicit `accordion_item` children, and draft creation writes those items to the existing `faq` child-row contract when both `accordion` and `faq` block types are published. Card suggestions without explicit usable region children and accordion suggestions without a usable item contract are skipped rather than flattened into unsafe HTML. Media-backed suggestions such as `image` and `gallery` are still skipped and reported without importing media.
 
 ## Core Principle
 
@@ -564,7 +564,7 @@ Improve mappings for:
 
 - deeper card region children
 - columns
-- accordions
+- richer accordion item rendering beyond the current plain text `faq` child contract
 - tables
 - lists
 - callouts

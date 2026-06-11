@@ -149,7 +149,17 @@ class PageConversionPlanValidator
           return;
         }
       }
+
+      if ($slug === 'accordion_item' && ! $this->validAccordionItemPayload($block)) {
+        $errors['plan_payload'] = 'The submitted conversion plan has invalid accordion item data.';
+
+        return;
+      }
     }
+
+    $blocksByKey = collect($blocks)
+      ->filter(fn ($block): bool => is_array($block))
+      ->keyBy(fn (array $block): string => (string) ($block['key'] ?? ''));
 
     foreach (array_values($blocks) as $block) {
       $parentKey = $block['parent_key'] ?? null;
@@ -158,6 +168,16 @@ class PageConversionPlanValidator
         $errors['plan_payload'] = 'The submitted conversion plan references a missing parent block.';
 
         return;
+      }
+
+      if (($block['block_slug'] ?? $block['block_type'] ?? null) === 'accordion_item') {
+        $parent = $blocksByKey->get((string) $parentKey);
+
+        if (! is_array($parent) || (string) ($parent['block_slug'] ?? $parent['block_type'] ?? '') !== 'accordion') {
+          $errors['plan_payload'] = 'The submitted conversion plan has invalid accordion item parent data.';
+
+          return;
+        }
       }
     }
   }
@@ -178,10 +198,15 @@ class PageConversionPlanValidator
 
   private function blockSlugIsUsable(string $slug): bool
   {
+    if (in_array($slug, ['accordion', 'accordion_item'], true)) {
+      return true;
+    }
+
     if (in_array($slug, PageConversionDraftCreator::supportedBlockSlugs(), true)) {
       $createdSlug = match ($slug) {
         'list' => 'rich-text',
         'callout' => 'alert',
+        'accordion_item' => 'faq',
         default => $slug,
       };
 
@@ -198,5 +223,18 @@ class PageConversionPlanValidator
     }
 
     return false;
+  }
+
+  private function validAccordionItemPayload(array $block): bool
+  {
+    if (($block['parent_key'] ?? null) === null || trim((string) $block['parent_key']) === '') {
+      return false;
+    }
+
+    $translated = is_array($block['translated_fields'] ?? null) ? $block['translated_fields'] : [];
+    $title = trim((string) ($translated['title'] ?? $translated['label'] ?? ''));
+    $content = trim((string) ($translated['content'] ?? $translated['body'] ?? ''));
+
+    return $title !== '' && $content !== '';
   }
 }

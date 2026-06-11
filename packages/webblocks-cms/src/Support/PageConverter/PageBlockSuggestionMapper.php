@@ -7,6 +7,72 @@ use DOMXPath;
 
 class PageBlockSuggestionMapper
 {
+  /**
+   * @param  array<int, DOMElement>  $details
+   * @return array<int, PageBlockSuggestion>
+   */
+  public function mapDetailsGroup(array $details, string $parentKey): array
+  {
+    $details = array_values(array_filter($details, fn (DOMElement $element): bool => strtolower($element->tagName) === 'details'));
+
+    if ($details === []) {
+      return [];
+    }
+
+    $warnings = [];
+
+    if (collect($details)->contains(fn (DOMElement $element): bool => $this->containsTag($element, 'img'))) {
+      $warnings[] = 'Accordion details contain image media. Media import is not implemented in this phase.';
+    }
+
+    $suggestions = [
+      new PageBlockSuggestion(
+        blockSlug: 'accordion',
+        label: 'Accordion',
+        previewText: $this->detailsGroupPreviewText($details),
+        confidence: 90,
+        sourceSummary: count($details) === 1 ? '<details>' : '<details> group',
+        sourceHtml: $this->detailsGroupSourceHtml($details),
+        translatedFields: [
+          'title' => null,
+          'content' => null,
+        ],
+        sharedFields: [
+          'item_count' => count($details),
+        ],
+        warnings: $warnings,
+      ),
+    ];
+
+    foreach ($details as $detail) {
+      $summary = $this->detailsSummaryText($detail);
+      $bodyText = $this->detailsBodyText($detail);
+      $itemWarnings = [];
+
+      if ($this->containsTag($detail, 'img')) {
+        $itemWarnings[] = 'Accordion item contains image media. Media import is not implemented in this phase.';
+      }
+
+      $suggestions[] = new PageBlockSuggestion(
+        blockSlug: 'accordion_item',
+        label: 'Accordion Item',
+        previewText: trim($summary.' '.$bodyText),
+        confidence: $summary !== '' && $bodyText !== '' ? 90 : 72,
+        sourceSummary: '<details>',
+        sourceHtml: $this->sourceHtml($detail),
+        translatedFields: [
+          'title' => $summary,
+          'content' => $bodyText,
+        ],
+        sharedFields: [],
+        parentKey: $parentKey,
+        warnings: $itemWarnings,
+      );
+    }
+
+    return $suggestions;
+  }
+
   public function map(DOMElement $element, int $index): PageBlockSuggestion
   {
     $tag = strtolower($element->tagName);
@@ -231,6 +297,59 @@ class PageBlockSuggestionMapper
     }
 
     return array_values(array_unique($sources));
+  }
+
+  /**
+   * @param  array<int, DOMElement>  $details
+   */
+  private function detailsGroupPreviewText(array $details): string
+  {
+    return str(collect($details)
+      ->map(fn (DOMElement $detail): string => $this->detailsSummaryText($detail))
+      ->filter()
+      ->implode(' | '))
+      ->limit(180)
+      ->toString();
+  }
+
+  /**
+   * @param  array<int, DOMElement>  $details
+   */
+  private function detailsGroupSourceHtml(array $details): string
+  {
+    return trim(collect($details)
+      ->map(fn (DOMElement $detail): string => $this->sourceHtml($detail))
+      ->implode("\n"));
+  }
+
+  private function detailsSummaryText(DOMElement $element): string
+  {
+    foreach ((new DOMXPath($element->ownerDocument))->query('./summary', $element) ?: [] as $summary) {
+      if ($summary instanceof DOMElement) {
+        return $this->previewText($summary);
+      }
+    }
+
+    return '';
+  }
+
+  private function detailsBodyText(DOMElement $element): string
+  {
+    $parts = [];
+
+    foreach ($element->childNodes as $child) {
+      if ($child instanceof DOMElement && strtolower($child->tagName) === 'summary') {
+        continue;
+      }
+
+      $text = preg_replace('/\s+/', ' ', trim($child->textContent)) ?: '';
+
+      if ($text !== '') {
+        $parts[] = $text;
+      }
+    }
+
+    return trim(implode("\n\n", $parts));
   }
 
   /**

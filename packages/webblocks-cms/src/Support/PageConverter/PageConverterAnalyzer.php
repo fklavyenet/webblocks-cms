@@ -17,9 +17,27 @@ class PageConverterAnalyzer
     $contentRoot = $this->contentExtractor->extract($document);
     $segments = $this->segmenter->segments($contentRoot);
     $suggestions = [];
+    $index = 0;
 
-    foreach ($segments as $index => $segment) {
-      $suggestions[] = $this->suggestionMapper->map($segment, $index);
+    while ($index < count($segments)) {
+      $segment = $segments[$index];
+
+      if (strtolower($segment->tagName) === 'details') {
+        $details = [];
+
+        while (isset($segments[$index]) && strtolower($segments[$index]->tagName) === 'details') {
+          $details[] = $segments[$index];
+          $index++;
+        }
+
+        $parentKey = 'block_'.(count($suggestions) + 1);
+        array_push($suggestions, ...$this->suggestionMapper->mapDetailsGroup($details, $parentKey));
+
+        continue;
+      }
+
+      $suggestions[] = $this->suggestionMapper->map($segment, count($suggestions));
+      $index++;
     }
 
     return new PageConverterPlan(

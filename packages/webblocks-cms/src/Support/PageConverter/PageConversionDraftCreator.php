@@ -44,12 +44,13 @@ class PageConversionDraftCreator
     'card_body',
     'card_footer',
     'button',
+    'accordion',
+    'accordion_item',
   ];
 
   private const SKIPPED_BLOCK_SLUGS = [
     'image',
     'gallery',
-    'accordion',
   ];
 
   private const CHILD_ONLY_BLOCK_SLUGS = [
@@ -57,6 +58,7 @@ class PageConversionDraftCreator
     'card_body',
     'card_footer',
     'button',
+    'accordion_item',
   ];
 
   public function __construct(
@@ -146,6 +148,13 @@ class PageConversionDraftCreator
         if ($converterSlug === 'card' && ! $this->hasCreatableCardChildren($blockKey, $childrenByParentKey)) {
           $skippedSuggestionCount++;
           $warnings[] = 'Skipped Page Converter suggestion [card] because no explicit usable card child region was present.';
+
+          continue;
+        }
+
+        if ($converterSlug === 'accordion' && ! $this->hasCreatableAccordionChildren($blockKey, $childrenByParentKey)) {
+          $skippedSuggestionCount++;
+          $warnings[] = 'Skipped Page Converter suggestion [accordion] because no explicit usable accordion item children were present.';
 
           continue;
         }
@@ -379,6 +388,14 @@ class PageConversionDraftCreator
         'subtitle' => ($shared['target'] ?? '_self') === '_blank' ? '_blank' : '_self',
         'variant' => $this->allowedValue($shared['variant'] ?? null, ['primary', 'secondary', 'ghost', 'link']) ?? 'primary',
       ]),
+      'accordion' => array_merge($data, [
+        'title' => $this->firstString($translated, ['title', 'heading']),
+        'content' => $this->firstString($translated, ['content', 'intro', 'subtitle']),
+      ]),
+      'accordion_item' => array_merge($data, [
+        'title' => $this->firstString($translated, ['title', 'label']) ?? $sourceText,
+        'content' => $this->firstString($translated, ['content', 'body']),
+      ]),
       default => null,
     };
   }
@@ -393,6 +410,7 @@ class PageConversionDraftCreator
     return match ($converterSlug) {
       'list' => 'rich-text',
       'callout' => 'alert',
+      'accordion_item' => 'faq',
       default => $converterSlug,
     };
   }
@@ -530,6 +548,30 @@ class PageConversionDraftCreator
       }
 
       if ($this->publishedBlockType($this->createdBlockSlug($childSlug))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @param  array<string, array<int, array<string, mixed>>>  $childrenByParentKey
+   */
+  private function hasCreatableAccordionChildren(string $blockKey, array $childrenByParentKey): bool
+  {
+    if (! $this->publishedBlockType('faq')) {
+      return false;
+    }
+
+    foreach ($childrenByParentKey[$blockKey] ?? [] as $child) {
+      if ($this->blockSlug($child) !== 'accordion_item') {
+        continue;
+      }
+
+      $translated = is_array($child['translated_fields'] ?? null) ? $child['translated_fields'] : [];
+
+      if ($this->firstString($translated, ['title', 'label']) !== null && $this->firstString($translated, ['content', 'body']) !== null) {
         return true;
       }
     }

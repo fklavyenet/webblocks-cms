@@ -141,6 +141,23 @@ class PageConverterTest extends TestCase
     ];
   }
 
+  private function publishBlockType(string $slug, string $name, bool $isContainer = false): BlockType
+  {
+    return BlockType::query()->updateOrCreate(
+      ['slug' => $slug],
+      [
+        'name' => $name,
+        'category' => 'content',
+        'description' => $name,
+        'source_type' => 'static',
+        'is_system' => false,
+        'is_container' => $isContainer,
+        'sort_order' => 50,
+        'status' => 'published',
+      ],
+    );
+  }
+
   #[Test]
   public function authorized_admin_users_can_open_page_converter(): void
   {
@@ -659,15 +676,79 @@ class PageConverterTest extends TestCase
   }
 
   #[Test]
-  public function accordion_suggestion_remains_skipped_with_clear_warning(): void
+  public function accordion_plan_creates_parent_and_faq_items_when_contract_is_available(): void
   {
     $this->seedFoundation();
+    $this->publishBlockType('accordion', 'Accordion', true);
+    $this->publishBlockType('faq', 'FAQ');
 
     $user = User::factory()->superAdmin()->create();
     $plan = $this->conversionPlan([
       [
+        'key' => 'accordion',
         'block_slug' => 'accordion',
         'translated_fields' => ['title' => 'Questions'],
+      ],
+      [
+        'key' => 'item_1',
+        'parent_key' => 'accordion',
+        'block_slug' => 'accordion_item',
+        'translated_fields' => [
+          'title' => 'How does publishing work?',
+          'content' => 'Editors draft and admins publish.',
+        ],
+      ],
+      [
+        'key' => 'item_2',
+        'parent_key' => 'accordion',
+        'block_slug' => 'accordion_item',
+        'translated_fields' => [
+          'title' => 'Can I localize content?',
+          'content' => 'Yes, translated block text is supported.',
+        ],
+      ],
+    ], [
+      'page_title' => 'Accordion Draft',
+      'page_path' => 'accordion-draft',
+    ]);
+
+    $result = app(PageConversionDraftCreator::class)->create($plan, $user);
+    $accordion = $result->page->blocks()->where('type', 'accordion')->firstOrFail();
+    $items = $result->page->blocks()->where('parent_id', $accordion->id)->orderBy('sort_order')->get();
+
+    $this->assertSame(3, $result->createdBlockCount);
+    $this->assertSame(0, $result->skippedSuggestionCount);
+    $this->assertSame(Page::STATUS_DRAFT, $result->page->status);
+    $this->assertSame('Questions', $accordion->title);
+    $this->assertSame(['faq', 'faq'], $items->pluck('type')->all());
+    $this->assertSame([0, 1], $items->pluck('sort_order')->all());
+    $this->assertSame('How does publishing work?', $items[0]->title);
+    $this->assertSame('Editors draft and admins publish.', $items[0]->content);
+    $this->assertSame('Can I localize content?', $items[1]->title);
+    $this->assertSame('Yes, translated block text is supported.', $items[1]->content);
+  }
+
+  #[Test]
+  public function accordion_is_skipped_without_broken_parent_when_required_item_type_is_unavailable(): void
+  {
+    $this->seedFoundation();
+    $this->publishBlockType('accordion', 'Accordion', true);
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'key' => 'accordion',
+        'block_slug' => 'accordion',
+        'translated_fields' => ['title' => 'Questions'],
+      ],
+      [
+        'key' => 'item_1',
+        'parent_key' => 'accordion',
+        'block_slug' => 'accordion_item',
+        'translated_fields' => [
+          'title' => 'Missing type?',
+          'content' => 'This should not create a broken parent.',
+        ],
       ],
     ], [
       'page_title' => 'Skipped Accordion',
@@ -677,9 +758,46 @@ class PageConverterTest extends TestCase
     $result = app(PageConversionDraftCreator::class)->create($plan, $user);
 
     $this->assertSame(0, $result->createdBlockCount);
-    $this->assertSame(1, $result->skippedSuggestionCount);
-    $this->assertTrue(collect($result->warnings)->contains(fn (string $warning) => str_contains($warning, 'unsupported Page Converter suggestion [accordion]')));
+    $this->assertSame(2, $result->skippedSuggestionCount);
+    $this->assertTrue(collect($result->warnings)->contains(fn (string $warning) => str_contains($warning, 'no explicit usable accordion item children')));
     $this->assertSame(0, $result->page->blocks()->count());
+  }
+
+  #[Test]
+  public function tampered_accordion_item_data_is_rejected_without_creating_page(): void
+  {
+    $this->seedFoundation();
+    $this->publishBlockType('accordion', 'Accordion', true);
+    $this->publishBlockType('faq', 'FAQ');
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'key' => 'accordion',
+        'block_slug' => 'accordion',
+      ],
+      [
+        'key' => 'item_1',
+        'parent_key' => 'accordion',
+        'block_slug' => 'accordion_item',
+        'translated_fields' => [
+          'title' => 'Question without answer',
+          'content' => '',
+        ],
+      ],
+    ], [
+      'page_title' => 'Tampered Accordion',
+      'page_path' => 'tampered-accordion',
+    ]);
+    $initialPageCount = Page::query()->count();
+
+    $this->actingAs($user)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFields($plan))
+      ->assertRedirect(route('admin.pages.converter.index'))
+      ->assertSessionHasErrors('plan_payload');
+
+    $this->assertSame($initialPageCount, Page::query()->count());
   }
 
   #[Test]
@@ -921,6 +1039,70 @@ class PageConverterTest extends TestCase
     $response->assertSeeText('card');
     $response->assertSeeText('button_link');
     $response->assertSeeText('callout');
+  }
+
+  #[Test]
+  public function adjacent_details_elements_produce_one_accordion_plan_with_multiple_items(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><details><summary>First question?</summary><p>First answer.</p></details><details><summary>Second question?</summary><p>Second answer.</p></details></main>',
+    ]));
+    $signedPlan = $this->signedPlanFromResponse($response);
+    $blocks = $signedPlan['plan']['blocks'];
+
+    $response->assertOk();
+    $this->assertSame(['accordion', 'accordion_item', 'accordion_item'], array_column($blocks, 'block_slug'));
+    $this->assertSame('block_1', $blocks[1]['parent_key']);
+    $this->assertSame('block_1', $blocks[2]['parent_key']);
+    $this->assertSame('First question?', $blocks[1]['translated_fields']['title']);
+    $this->assertSame('First answer.', $blocks[1]['translated_fields']['content']);
+    $this->assertSame('Second question?', $blocks[2]['translated_fields']['title']);
+    $this->assertSame('Second answer.', $blocks[2]['translated_fields']['content']);
+  }
+
+  #[Test]
+  public function single_details_element_produces_one_accordion_plan_with_one_item(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><details><summary>Only question?</summary><div>Only answer.</div></details></main>',
+    ]));
+    $blocks = $this->signedPlanFromResponse($response)['plan']['blocks'];
+
+    $response->assertOk();
+    $this->assertSame(['accordion', 'accordion_item'], array_column($blocks, 'block_slug'));
+    $this->assertSame('block_1', $blocks[1]['parent_key']);
+    $this->assertSame('Only question?', $blocks[1]['translated_fields']['title']);
+    $this->assertSame('Only answer.', $blocks[1]['translated_fields']['content']);
+  }
+
+  #[Test]
+  public function details_body_is_sanitized_and_media_is_reported_without_importing_media(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><details><summary onclick="bad()">Media question?</summary><p onmouseover="bad()">Safe answer.</p><script>alert("bad")</script><img src="https://example.test/photo.jpg" alt="Remote"></details></main>',
+    ]));
+    $blocks = $this->signedPlanFromResponse($response)['plan']['blocks'];
+
+    $response->assertOk();
+    $response->assertSeeText('Accordion details contain image media. Media import is not implemented in this phase.');
+    $this->assertSame('Media question?', $blocks[1]['translated_fields']['title']);
+    $this->assertSame('Safe answer.', $blocks[1]['translated_fields']['content']);
+    $this->assertStringNotContainsString('alert("bad")', $blocks[1]['source_fragment']['html']);
+    $this->assertStringNotContainsString('onclick', $blocks[1]['source_fragment']['html']);
+    $this->assertStringNotContainsString('onmouseover', $blocks[1]['source_fragment']['html']);
+    $this->assertDatabaseCount('media', 0);
   }
 
   #[Test]

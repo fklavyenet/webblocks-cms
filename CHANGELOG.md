@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add conservative Page Converter accordion analysis for adjacent `<details>` groups and draft creation through the existing Accordion plus FAQ child-row contract when available.
 - Support safe structured Page Converter draft blocks for sections, content headers, heroes, CTAs, and explicit card region children while continuing to skip media-backed suggestions.
 - Create draft pages from signed Page Converter plans with supported main-slot blocks while skipping unsupported media-backed and richer structured suggestions without publishing.
 - Add signed Page Converter conversion plan payloads and a review action foundation.
