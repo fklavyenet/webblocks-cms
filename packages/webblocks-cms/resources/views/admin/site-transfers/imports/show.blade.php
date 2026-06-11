@@ -63,27 +63,6 @@
             </div>
         </div>
 
-        <div class="wb-card">
-            <div class="wb-card-header"><strong>Package Counts</strong></div>
-
-            <div class="wb-card-body">
-                <div class="wb-grid wb-grid-3">
-                    @forelse ($counts as $label => $value)
-                        <div class="wb-card wb-card-muted">
-                            <div class="wb-card-body wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">{{ str($label)->replace('_', ' ')->title() }}</div>
-                                <strong>{{ $value }}</strong>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No count summary recorded</div>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
         @if ($siteImport->isValidated())
             <div class="wb-card wb-card-accent">
                 <div class="wb-card-header"><strong>Create New Site From Package</strong></div>
@@ -113,14 +92,45 @@
 
                         <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                             <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                                <a href="{{ route('admin.site-transfers.exports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
                                 <button type="submit" class="wb-btn wb-btn-primary">Run Import</button>
+                                <a href="{{ route('admin.site-transfers.exports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         @endif
+
+        <section class="wb-card">
+            <div class="wb-card-header"><strong>Package Counts</strong></div>
+
+            <div class="wb-card-body">
+                @if (count($counts) > 0)
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Area</th>
+                                    <th style="text-align: right;">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($counts as $label => $value)
+                                    <tr>
+                                        <td>{{ str($label)->replace('_', ' ')->title() }}</td>
+                                        <td style="text-align: right;">{{ $value }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="wb-empty wb-empty-sm">
+                        <div class="wb-empty-title">No count summary recorded</div>
+                    </div>
+                @endif
+            </div>
+        </section>
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>Output Log</strong></div>

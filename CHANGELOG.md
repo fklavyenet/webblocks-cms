@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.138
+
+- Move the Site Transfer import review form above package counts and show package counts in a compact admin table so validated packages can be acted on sooner.
+
 ## 1.32.137
 
 - Remove old Publisher/update server, product, and channel environment overrides from CMS update checks and maintainer publishing.

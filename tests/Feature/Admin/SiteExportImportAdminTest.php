@@ -519,6 +519,41 @@ class SiteExportImportAdminTest extends TestCase
   }
 
   #[Test]
+  public function import_review_places_create_form_before_compact_package_counts_table(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $siteImport = SiteImport::query()->create([
+      'user_id' => $user->id,
+      'status' => SiteImport::STATUS_VALIDATED,
+      'source_archive_name' => 'source-site.zip',
+      'archive_disk' => SiteTransferDisk::DISK,
+      'archive_path' => 'source-site.zip',
+      'manifest_json' => [
+        'product' => 'webblocks-cms',
+        'format_version' => 1,
+        'source_site_name' => 'Source Site',
+        'source_site_handle' => 'source-site',
+        'source_site_domain' => 'source-site.test',
+        'locales' => ['en'],
+        'includes_media' => true,
+      ],
+      'summary_json' => [
+        'pages' => 3,
+        'blocks' => 8,
+        'media_assets' => 0,
+      ],
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.site-transfers.imports.show', $siteImport));
+
+    $response->assertOk();
+    $response->assertSeeInOrder(['Manifest Preview', 'Create New Site From Package', 'Package Counts', 'Output Log']);
+    $response->assertSee('<table class="wb-table wb-table-sm">', false);
+    $response->assertSeeInOrder(['Area', 'Count', 'Pages', '3', 'Blocks', '8', 'Media Assets', '0']);
+    $response->assertSeeInOrder(['<button type="submit" class="wb-btn wb-btn-primary">Run Import</button>', '<a href="'.route('admin.site-transfers.exports.index').'" class="wb-btn wb-btn-secondary">Cancel</a>'], false);
+  }
+
+  #[Test]
   public function import_upload_reports_controlled_error_when_site_transfer_storage_is_not_writable(): void
   {
     $rootCollision = storage_path('framework/testing/site-transfer-root-collision-'.Str::uuid());
