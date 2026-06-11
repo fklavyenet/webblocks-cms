@@ -9,9 +9,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSerializer;
+use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSigner;
 
 class PageConverterTest extends TestCase
 {
@@ -44,6 +47,33 @@ class PageConverterTest extends TestCase
       'conversion_profile' => 'conservative',
       'source_html' => '<main><h1>Converted Static Page</h1><p>Hello.</p></main>',
     ], $overrides);
+  }
+
+  private function signedPlanFromResponse($response): array
+  {
+    $content = $response->getContent();
+
+    preg_match('/name="plan_payload" value="([^"]+)"/', $content, $payloadMatch);
+    preg_match('/name="plan_signature" value="([^"]+)"/', $content, $signatureMatch);
+
+    $payload = html_entity_decode($payloadMatch[1] ?? '', ENT_QUOTES, 'UTF-8');
+    $signature = html_entity_decode($signatureMatch[1] ?? '', ENT_QUOTES, 'UTF-8');
+
+    return [
+      'payload' => $payload,
+      'signature' => $signature,
+      'plan' => app(PageConversionPlanSerializer::class)->deserialize($payload),
+    ];
+  }
+
+  private function signedPlanFieldsFromResponse($response): array
+  {
+    $signedPlan = $this->signedPlanFromResponse($response);
+
+    return [
+      'plan_payload' => $signedPlan['payload'],
+      'plan_signature' => $signedPlan['signature'],
+    ];
   }
 
   #[Test]
@@ -181,6 +211,172 @@ class PageConverterTest extends TestCase
     $response->assertSeeText('header');
     $response->assertSeeText('plain_text');
     $this->assertSame($initialPageCount, Page::query()->count());
+  }
+
+  #[Test]
+  public function analysis_produces_signed_conversion_plan_payload(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'source_html' => '<main><h1>Signed Plan</h1><p>Review copy.</p></main>',
+    ]));
+
+    $response->assertOk();
+    $response->assertSee('name="plan_payload"', false);
+    $response->assertSee('name="plan_signature"', false);
+
+    $signedPlan = $this->signedPlanFromResponse($response);
+
+    $this->assertTrue(app(PageConversionPlanSigner::class)->verify($signedPlan['payload'], $signedPlan['signature']));
+    $this->assertSame($this->defaultSite()->id, $signedPlan['plan']['target']['site_id']);
+    $this->assertSame($this->defaultLocale()->id, $signedPlan['plan']['target']['locale_id']);
+    $this->assertSame('default', $signedPlan['plan']['target']['page_layout']);
+    $this->assertSame('Converted Static Page', $signedPlan['plan']['target']['page_title']);
+    $this->assertSame('converted-static-page', $signedPlan['plan']['target']['page_path']);
+    $this->assertSame('conservative', $signedPlan['plan']['target']['conversion_profile']);
+    $this->assertSame(2, $signedPlan['plan']['summary']['suggestion_count']);
+    $this->assertSame('block_1', $signedPlan['plan']['blocks'][0]['key']);
+    $this->assertSame(1, $signedPlan['plan']['blocks'][0]['order']);
+    $this->assertSame('header', $signedPlan['plan']['blocks'][0]['block_slug']);
+    $this->assertSame('Signed Plan', $signedPlan['plan']['blocks'][0]['translated_fields']['title']);
+    $this->assertArrayHasKey('shared_fields', $signedPlan['plan']['blocks'][0]);
+    $this->assertArrayHasKey('source_fragment', $signedPlan['plan']['blocks'][0]);
+  }
+
+  #[Test]
+  public function review_ui_includes_signed_plan_payload_and_future_create_action_area(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+
+    $response->assertOk();
+    $response->assertSee('name="plan_payload"', false);
+    $response->assertSee('name="plan_signature"', false);
+    $response->assertSeeText('Signed plan blocks');
+    $response->assertSeeText('Create draft page');
+    $response->assertSeeText('Draft creation will be implemented in the next step.');
+    $response->assertSeeText('No page has been created yet');
+  }
+
+  #[Test]
+  public function plan_signature_validation_accepts_original_payload(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+
+    $response = $this->actingAs($user)
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+
+    $response->assertRedirect(route('admin.pages.converter.index', ['site_id' => $this->defaultSite()->id]));
+    $response->assertSessionHas('status', 'Draft creation will be implemented in the next step. No page has been created yet.');
+  }
+
+  #[Test]
+  public function plan_signature_validation_rejects_tampered_payload(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+    $fields = $this->signedPlanFieldsFromResponse($analysis);
+    $fields['plan_payload'] = substr($fields['plan_payload'], 0, -1).($fields['plan_payload'][-1] === 'A' ? 'B' : 'A');
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.create-draft'), $fields);
+
+    $response->assertRedirect(route('admin.pages.converter.index'));
+    $response->assertSessionHasErrors('plan_payload');
+  }
+
+  #[Test]
+  public function inaccessible_site_in_submitted_plan_is_rejected(): void
+  {
+    $this->seedFoundation();
+
+    $site = $this->defaultSite();
+    $otherSite = Site::query()->create([
+      'name' => 'Other Site',
+      'handle' => 'other-site',
+      'domain' => 'other.example.test',
+      'is_primary' => false,
+    ]);
+    $otherSite->locales()->syncWithoutDetaching([$this->defaultLocale()->id => ['is_enabled' => true]]);
+    $editor = User::factory()->editor()->create();
+    $editor->sites()->sync([$site->id]);
+    $analysis = $this->actingAs($editor)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+    $editor->sites()->sync([$otherSite->id]);
+
+    $response = $this->actingAs($editor)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+
+    $response->assertRedirect(route('admin.pages.converter.index'));
+    $response->assertSessionHasErrors('plan_payload');
+  }
+
+  #[Test]
+  public function invalid_locale_layout_or_path_in_submitted_plan_is_rejected(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+    $signedPlan = $this->signedPlanFromResponse($analysis);
+
+    foreach (['locale', 'layout', 'path'] as $case) {
+      $plan = $signedPlan['plan'];
+
+      if ($case === 'locale') {
+        $plan['target']['locale_id'] = 999999;
+      }
+
+      if ($case === 'layout') {
+        $plan['target']['page_layout'] = 'missing-layout';
+      }
+
+      if ($case === 'path') {
+        $plan['target']['page_path'] = '../unsafe';
+      }
+
+      $payload = base64_encode(json_encode($plan, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+
+      $response = $this->actingAs($user)
+        ->from(route('admin.pages.converter.index'))
+        ->post(route('admin.pages.converter.create-draft'), [
+          'plan_payload' => $payload,
+          'plan_signature' => app(PageConversionPlanSigner::class)->sign($payload),
+        ]);
+
+      $response->assertRedirect(route('admin.pages.converter.index'), $case);
+      $response->assertSessionHasErrors('plan_payload', null, 'default');
+    }
+  }
+
+  #[Test]
+  public function create_draft_action_does_not_create_pages_or_blocks_yet(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+    $initialPageCount = Page::query()->count();
+    $initialBlockCount = Block::query()->count();
+
+    $response = $this->actingAs($user)
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+
+    $response->assertRedirect();
+    $this->assertSame($initialPageCount, Page::query()->count());
+    $this->assertSame($initialBlockCount, Block::query()->count());
   }
 
   #[Test]

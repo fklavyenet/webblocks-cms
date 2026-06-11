@@ -95,7 +95,11 @@ class PageBlockSuggestionMapper
       previewText: $this->previewText($element),
       confidence: $confidence,
       sourceSummary: $this->sourceSummary($element),
+      sourceHtml: $this->sourceHtml($element),
+      translatedFields: $this->translatedFields($blockSlug, $element),
+      sharedFields: $this->sharedFields($blockSlug, $element),
       warnings: $warnings,
+      fallbackFlags: $blockSlug === 'html' ? ['html_fallback'] : [],
     );
   }
 
@@ -119,6 +123,114 @@ class PageBlockSuggestionMapper
     }
 
     return $summary.'>';
+  }
+
+  private function sourceHtml(DOMElement $element): string
+  {
+    return trim((string) $element->ownerDocument->saveHTML($element));
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function translatedFields(string $blockSlug, DOMElement $element): array
+  {
+    $text = $this->previewText($element);
+
+    return match ($blockSlug) {
+      'header', 'content_header', 'hero' => [
+        'title' => $text,
+      ],
+      'button_link' => [
+        'label' => $text,
+      ],
+      'image' => [
+        'alt' => $this->imageAlt($element),
+        'caption' => $this->figureCaption($element),
+      ],
+      'gallery' => [
+        'caption' => $text,
+      ],
+      'code' => [
+        'code' => $text,
+      ],
+      'table' => [
+        'table_html' => $this->sourceHtml($element),
+      ],
+      'html' => [
+        'html' => $this->sourceHtml($element),
+      ],
+      default => [
+        'content' => $text,
+      ],
+    };
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function sharedFields(string $blockSlug, DOMElement $element): array
+  {
+    return match ($blockSlug) {
+      'button_link' => [
+        'url' => $element->getAttribute('href') ?: null,
+        'target' => $element->getAttribute('target') ?: '_self',
+      ],
+      'image' => [
+        'source' => $this->firstImageAttribute($element, 'src'),
+      ],
+      'gallery' => [
+        'sources' => $this->imageSources($element),
+      ],
+      default => [],
+    };
+  }
+
+  private function imageAlt(DOMElement $element): ?string
+  {
+    return $this->firstImageAttribute($element, 'alt') ?: null;
+  }
+
+  private function figureCaption(DOMElement $element): ?string
+  {
+    foreach ((new DOMXPath($element->ownerDocument))->query('.//figcaption', $element) ?: [] as $caption) {
+      if ($caption instanceof DOMElement) {
+        return $this->previewText($caption) ?: null;
+      }
+    }
+
+    return null;
+  }
+
+  private function firstImageAttribute(DOMElement $element, string $attribute): ?string
+  {
+    if (strtolower($element->tagName) === 'img') {
+      return $element->getAttribute($attribute) ?: null;
+    }
+
+    foreach ((new DOMXPath($element->ownerDocument))->query('.//img', $element) ?: [] as $image) {
+      if ($image instanceof DOMElement) {
+        return $image->getAttribute($attribute) ?: null;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * @return array<int, string>
+   */
+  private function imageSources(DOMElement $element): array
+  {
+    $sources = [];
+
+    foreach ((new DOMXPath($element->ownerDocument))->query('.//img', $element) ?: [] as $image) {
+      if ($image instanceof DOMElement && $image->getAttribute('src') !== '') {
+        $sources[] = $image->getAttribute('src');
+      }
+    }
+
+    return array_values(array_unique($sources));
   }
 
   /**

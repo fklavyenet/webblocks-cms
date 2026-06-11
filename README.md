@@ -39,7 +39,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Pages index filters and sort state persist across Edit Page, slot editor, translation editor, and save flows so editors can return to the same filtered list context without rebuilding it manually
 - the `Block Types` modal in the slot editor now keeps all block lists in `Name A-Z` order, limits filtering to search plus tab state, shows a header count badge for the current picker result set, only shows `Reset` after active search or tab changes, and keeps the search card visible while long result sets scroll inside the modal
 - Pages listing card headers now include `Import Page`, a first-class admin modal workflow for creating one new draft page from a documented single-page JSON payload without using project-specific commands
-- Pages now include a Page Converter admin foundation for scoped static HTML analysis; this first step validates pasted or uploaded `.html` / `.htm` input and shows a preview-only structured block suggestion plan with confidence scores and warnings before draft creation is implemented
+- Pages now include a Page Converter admin foundation for scoped static HTML analysis; this first step validates pasted or uploaded `.html` / `.htm` input, shows a preview-only structured block suggestion plan with confidence scores and warnings, and prepares a signed no-write review payload before draft creation is implemented
 
 ## Architecture Note
 

@@ -10,7 +10,7 @@ The goal is not to create a site-specific importer for `webblocksui.com`. The co
 
 ## Current Implementation Status
 
-The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input. The analyzer now normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. Draft page creation remains a future phase.
+The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input. The analyzer now normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. The review screen serializes those suggestions into a signed conversion plan payload and revalidates submitted plans through a no-write `Create draft page` action. Draft page creation remains a future phase.
 
 ## Core Principle
 

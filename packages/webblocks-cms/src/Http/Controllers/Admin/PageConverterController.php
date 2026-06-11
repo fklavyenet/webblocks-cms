@@ -2,12 +2,17 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use WebBlocks\Cms\Http\Requests\Admin\PageConversionReviewRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PageConverterAnalyzeRequest;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSerializer;
+use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSigner;
 use WebBlocks\Cms\Support\PageConverter\PageConverterAnalyzer;
+use WebBlocks\Cms\Support\PageConverter\PageConverterPlan;
 use WebBlocks\Cms\Support\PageConverter\PageConverterProfile;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -18,6 +23,8 @@ class PageConverterController extends Controller
     private readonly AdminAuthorization $authorization,
     private readonly PageLayoutManager $pageLayouts,
     private readonly PageConverterAnalyzer $analyzer,
+    private readonly PageConversionPlanSerializer $planSerializer,
+    private readonly PageConversionPlanSigner $planSigner,
   ) {}
 
   public function index(Request $request): View
@@ -30,7 +37,14 @@ class PageConverterController extends Controller
     return $this->view($request, $this->analyzer->analyze($request->toInput()));
   }
 
-  private function view(Request $request, mixed $conversionPlan = null): View
+  public function createDraft(PageConversionReviewRequest $request): RedirectResponse
+  {
+    return redirect()
+      ->route('admin.pages.converter.index', ['site_id' => data_get($request->conversionPlanPayload(), 'target.site_id')])
+      ->with('status', 'Draft creation will be implemented in the next step. No page has been created yet.');
+  }
+
+  private function view(Request $request, ?PageConverterPlan $conversionPlan = null): View
   {
     $sites = $this->authorization
       ->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())
@@ -40,6 +54,7 @@ class PageConverterController extends Controller
     $selectedSiteId = (int) old('site_id', $request->input('site_id', $sites->first()?->id));
     $selectedSite = $sites->firstWhere('id', $selectedSiteId) ?? $sites->first();
     $locales = $selectedSite?->enabledLocales ?? collect();
+    $planPayload = $conversionPlan ? $this->planSerializer->serialize($conversionPlan) : null;
 
     return view('webblocks-cms::admin.pages.converter', [
       'sites' => $sites,
@@ -48,6 +63,8 @@ class PageConverterController extends Controller
       'pageLayoutOptions' => $this->pageLayouts->pageSelectionOptions((string) old('page_layout', 'default')),
       'profiles' => PageConverterProfile::options(),
       'conversionPlan' => $conversionPlan,
+      'planPayload' => $planPayload,
+      'planSignature' => $planPayload ? $this->planSigner->sign($planPayload) : null,
     ]);
   }
 }

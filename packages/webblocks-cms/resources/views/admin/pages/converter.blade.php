@@ -24,6 +24,10 @@
                     {{ $conversionPlan->message }}
                 </div>
 
+                <div class="wb-alert wb-alert-info">
+                    A signed conversion plan has been prepared for review. No page has been created yet, and draft creation will be implemented next.
+                </div>
+
                 <div class="wb-table-wrap">
                     <table class="wb-table">
                         <tbody>
@@ -105,6 +109,47 @@
                         </table>
                     </div>
                 @endif
+
+                <div class="wb-stack wb-gap-3">
+                    <h3>Create draft page</h3>
+                    <form method="POST" action="{{ route('admin.pages.converter.create-draft') }}" class="wb-stack wb-gap-0">
+                        @csrf
+                        <input type="hidden" name="plan_payload" value="{{ $planPayload }}">
+                        <input type="hidden" name="plan_signature" value="{{ $planSignature }}">
+
+                        <div class="wb-stack wb-gap-3">
+                            <div class="wb-table-wrap">
+                                <table class="wb-table">
+                                    <tbody>
+                                        <tr>
+                                            <th>Signed plan blocks</th>
+                                            <td>{{ $conversionPlan->suggestionCount() }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Signed plan fallbacks</th>
+                                            <td>{{ $conversionPlan->fallbackCount() }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Signed plan warnings</th>
+                                            <td>{{ $conversionPlan->warningCount() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="wb-alert wb-alert-info">
+                                Draft creation will be implemented in the next step.
+                            </div>
+                            @error('plan_payload')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                            <span class="wb-text-sm wb-text-muted">Submitting this review action will not create pages, slots, blocks, translations, media, revisions, or published content yet.</span>
+                            <button type="submit" class="wb-btn wb-btn-primary">Create draft page</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     @endif
