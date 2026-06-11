@@ -4,7 +4,9 @@ namespace WebBlocks\Cms\Support\PageConverter;
 
 use App\Models\User;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -67,6 +69,8 @@ class PageConversionPlanValidator
 
     if (! $this->validPath($pagePath)) {
       $errors['plan_payload'] = 'The submitted conversion plan has an invalid page path.';
+    } elseif ($site && $localeId > 0 && $this->pathExists($siteId, $localeId, $pagePath)) {
+      $errors['plan_payload'] = 'A page already exists at the selected path for this site and locale.';
     }
 
     if (! in_array($conversionProfile, PageConverterProfile::values(), true)) {
@@ -132,6 +136,12 @@ class PageConversionPlanValidator
         return;
       }
 
+      if (! $this->blockSlugIsUsable($slug)) {
+        $errors['plan_payload'] = 'The submitted conversion plan references an unavailable block type ['.$slug.'].';
+
+        return;
+      }
+
       foreach (['translated_fields', 'shared_fields', 'warnings', 'fallback_flags', 'source_fragment'] as $field) {
         if (! array_key_exists($field, $block) || ! is_array($block[$field])) {
           $errors['plan_payload'] = 'The submitted conversion plan has incomplete block suggestion data.';
@@ -150,5 +160,43 @@ class PageConversionPlanValidator
         return;
       }
     }
+  }
+
+  private function pathExists(int $siteId, int $localeId, string $path): bool
+  {
+    $slug = trim($path, '/');
+    $publicPath = PageTranslation::pathFromSlug($slug);
+
+    return PageTranslation::query()
+      ->where('site_id', $siteId)
+      ->where('locale_id', $localeId)
+      ->where(fn ($query) => $query
+        ->where('slug', $slug)
+        ->orWhere('path', $publicPath))
+      ->exists();
+  }
+
+  private function blockSlugIsUsable(string $slug): bool
+  {
+    if (in_array($slug, PageConversionDraftCreator::supportedBlockSlugs(), true)) {
+      $createdSlug = match ($slug) {
+        'list' => 'rich-text',
+        'callout' => 'alert',
+        default => $slug,
+      };
+
+      return BlockType::query()
+        ->where('slug', $createdSlug)
+        ->where('status', 'published')
+        ->exists();
+    }
+
+    if (in_array($slug, PageConversionDraftCreator::skippedBlockSlugs(), true)) {
+      $blockType = BlockType::query()->where('slug', $slug)->first();
+
+      return ! $blockType || $blockType->status === 'published';
+    }
+
+    return false;
   }
 }

@@ -9,6 +9,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\PageConversionReviewRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PageConverterAnalyzeRequest;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\PageConverter\PageConversionDraftCreator;
 use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSerializer;
 use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSigner;
 use WebBlocks\Cms\Support\PageConverter\PageConverterAnalyzer;
@@ -25,6 +26,7 @@ class PageConverterController extends Controller
     private readonly PageConverterAnalyzer $analyzer,
     private readonly PageConversionPlanSerializer $planSerializer,
     private readonly PageConversionPlanSigner $planSigner,
+    private readonly PageConversionDraftCreator $draftCreator,
   ) {}
 
   public function index(Request $request): View
@@ -39,9 +41,15 @@ class PageConverterController extends Controller
 
   public function createDraft(PageConversionReviewRequest $request): RedirectResponse
   {
+    $result = $this->draftCreator->create($request->conversionPlanPayload(), $request->user());
+
     return redirect()
-      ->route('admin.pages.converter.index', ['site_id' => data_get($request->conversionPlanPayload(), 'target.site_id')])
-      ->with('status', 'Draft creation will be implemented in the next step. No page has been created yet.');
+      ->route('admin.pages.edit', $result->page)
+      ->with('status', $result->message())
+      ->with('status_action', [
+        'label' => 'Edit draft page',
+        'url' => route('admin.pages.edit', $result->page),
+      ]);
   }
 
   private function view(Request $request, ?PageConverterPlan $conversionPlan = null): View

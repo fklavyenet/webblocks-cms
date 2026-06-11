@@ -3,15 +3,20 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;
+use Database\Seeders\SlotTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
-use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSerializer;
 use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSigner;
@@ -23,6 +28,8 @@ class PageConverterTest extends TestCase
   private function seedFoundation(): void
   {
     $this->seed(FoundationSiteLocaleSeeder::class);
+    $this->seed(SlotTypeSeeder::class);
+    $this->seed(BlockTypeSeeder::class);
     $this->seed(PageLayoutSeeder::class);
   }
 
@@ -73,6 +80,16 @@ class PageConverterTest extends TestCase
     return [
       'plan_payload' => $signedPlan['payload'],
       'plan_signature' => $signedPlan['signature'],
+    ];
+  }
+
+  private function signedPlanFields(array $plan): array
+  {
+    $payload = base64_encode(json_encode($plan, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+
+    return [
+      'plan_payload' => $payload,
+      'plan_signature' => app(PageConversionPlanSigner::class)->sign($payload),
     ];
   }
 
@@ -260,23 +277,37 @@ class PageConverterTest extends TestCase
     $response->assertSee('name="plan_signature"', false);
     $response->assertSeeText('Signed plan blocks');
     $response->assertSeeText('Create draft page');
-    $response->assertSeeText('Draft creation will be implemented in the next step.');
+    $response->assertSeeText('The page will be created as draft.');
     $response->assertSeeText('No page has been created yet');
   }
 
   #[Test]
-  public function plan_signature_validation_accepts_original_payload(): void
+  public function valid_signed_plan_creates_one_draft_page(): void
   {
     $this->seedFoundation();
 
     $user = User::factory()->superAdmin()->create();
+    $initialPageCount = Page::query()->count();
     $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
 
     $response = $this->actingAs($user)
       ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
 
-    $response->assertRedirect(route('admin.pages.converter.index', ['site_id' => $this->defaultSite()->id]));
-    $response->assertSessionHas('status', 'Draft creation will be implemented in the next step. No page has been created yet.');
+    $response->assertSessionHasNoErrors();
+    $page = Page::query()->with(['translations', 'slots.slotType', 'blocks.textTranslations'])->latest('id')->firstOrFail();
+
+    $response->assertRedirect(route('admin.pages.edit', $page));
+    $response->assertSessionHas('status');
+    $this->assertSame($initialPageCount + 1, Page::query()->count());
+    $this->assertSame(Page::STATUS_DRAFT, $page->status);
+    $this->assertNull($page->published_at);
+    $this->assertSame($this->defaultSite()->id, $page->site_id);
+    $this->assertSame('default', $page->publicShellPreset());
+    $this->assertTrue($page->translations->contains(fn ($translation) => $translation->locale_id === $this->defaultLocale()->id));
+    $this->assertSame('Converted Static Page', $page->translationForLocale($this->defaultLocale())?->name);
+    $this->assertSame('converted-static-page', $page->translationForLocale($this->defaultLocale())?->slug);
+    $this->assertTrue($page->slots->contains(fn (PageSlot $slot) => $slot->slotType?->slug === 'main'));
+    $this->assertSame(['header', 'plain_text'], $page->blocks->pluck('type')->all());
   }
 
   #[Test]
@@ -288,6 +319,7 @@ class PageConverterTest extends TestCase
     $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
     $fields = $this->signedPlanFieldsFromResponse($analysis);
     $fields['plan_payload'] = substr($fields['plan_payload'], 0, -1).($fields['plan_payload'][-1] === 'A' ? 'B' : 'A');
+    $initialPageCount = Page::query()->count();
 
     $response = $this->actingAs($user)
       ->from(route('admin.pages.converter.index'))
@@ -295,6 +327,7 @@ class PageConverterTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.converter.index'));
     $response->assertSessionHasErrors('plan_payload');
+    $this->assertSame($initialPageCount, Page::query()->count());
   }
 
   #[Test]
@@ -314,6 +347,7 @@ class PageConverterTest extends TestCase
     $editor->sites()->sync([$site->id]);
     $analysis = $this->actingAs($editor)->post(route('admin.pages.converter.analyze'), $this->validPayload());
     $editor->sites()->sync([$otherSite->id]);
+    $initialPageCount = Page::query()->count();
 
     $response = $this->actingAs($editor)
       ->from(route('admin.pages.converter.index'))
@@ -321,6 +355,7 @@ class PageConverterTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.converter.index'));
     $response->assertSessionHasErrors('plan_payload');
+    $this->assertSame($initialPageCount, Page::query()->count());
   }
 
   #[Test]
@@ -362,21 +397,158 @@ class PageConverterTest extends TestCase
   }
 
   #[Test]
-  public function create_draft_action_does_not_create_pages_or_blocks_yet(): void
+  public function supported_suggestions_create_blocks_in_order_with_translated_fields(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'page_title' => 'Structured Draft',
+      'page_path' => 'structured-draft',
+      'source_html' => '<main><h2>Heading</h2><p>Plain copy.</p><p>Rich <strong>copy</strong>.</p><pre><code>php artisan test</code></pre><blockquote>Quote copy</blockquote></main>',
+    ]));
+
+    $this->actingAs($user)
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+
+    $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'structured-draft'))->firstOrFail();
+    $blocks = $page->blocks()->with('textTranslations')->orderBy('sort_order')->get();
+
+    $this->assertSame(['header', 'plain_text', 'rich-text', 'code', 'quote'], $blocks->pluck('type')->all());
+    $this->assertSame('Heading', $blocks[0]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->title);
+    $this->assertSame('Plain copy.', $blocks[1]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->content);
+    $this->assertStringContainsString('Rich', (string) $blocks[2]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->content);
+    $this->assertSame('php artisan test', $blocks[3]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->content);
+    $this->assertSame('Quote copy', $blocks[4]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->content);
+  }
+
+  #[Test]
+  public function html_fallback_creates_explicit_html_block_only_when_present_in_signed_plan(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plainAnalysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'page_title' => 'No HTML Fallback',
+      'page_path' => 'no-html-fallback',
+      'source_html' => '<main><p>Plain copy.</p></main>',
+    ]));
+
+    $this->actingAs($user)->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($plainAnalysis));
+
+    $this->assertFalse(Page::query()
+      ->whereHas('translations', fn ($query) => $query->where('slug', 'no-html-fallback'))
+      ->firstOrFail()
+      ->blocks()
+      ->where('type', 'html')
+      ->exists());
+
+    $fallbackAnalysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'page_title' => 'With HTML Fallback',
+      'page_path' => 'with-html-fallback',
+      'source_html' => '<main><div data-widget="pricing"><span>Custom widget</span><canvas></canvas></div></main>',
+    ]));
+
+    $this->actingAs($user)->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($fallbackAnalysis));
+
+    $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'with-html-fallback'))->firstOrFail();
+    $htmlBlock = $page->blocks()->with('textTranslations')->where('type', 'html')->firstOrFail();
+
+    $this->assertStringContainsString('Custom widget', (string) $htmlBlock->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->content);
+  }
+
+  #[Test]
+  public function unsupported_media_gallery_and_container_suggestions_are_skipped_and_reported(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'page_title' => 'Skipped Suggestions',
+      'page_path' => 'skipped-suggestions',
+      'conversion_profile' => 'webblocks_ui',
+      'source_html' => '<main><section class="wb-section">Section</section><figure><img src="https://example.test/photo.jpg" alt="Remote"></figure><div class="wb-gallery"><img src="/one.jpg"><img src="/two.jpg"></div></main>',
+    ]));
+
+    $response = $this->actingAs($user)
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+
+    $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'skipped-suggestions'))->firstOrFail();
+
+    $response->assertSessionHas('status', fn (string $status): bool => str_contains($status, '0 block(s) created')
+      && str_contains($status, '3 suggestion(s) skipped'));
+    $this->assertSame(0, $page->blocks()->count());
+    $this->assertDatabaseCount('media', 0);
+  }
+
+  #[Test]
+  public function duplicate_target_path_is_rejected_and_creates_no_page(): void
+  {
+    $this->seedFoundation();
+
+    Page::query()->create([
+      'site_id' => $this->defaultSite()->id,
+      'title' => 'Existing',
+      'slug' => 'converted-static-page',
+      'status' => Page::STATUS_DRAFT,
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+    $initialPageCount = Page::query()->count();
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+
+    $response->assertRedirect(route('admin.pages.converter.index'));
+    $response->assertSessionHasErrors('plan_payload');
+    $this->assertSame($initialPageCount, Page::query()->count());
+  }
+
+  #[Test]
+  public function inactive_or_invalid_block_type_in_submitted_plan_is_rejected_and_creates_no_page(): void
   {
     $this->seedFoundation();
 
     $user = User::factory()->superAdmin()->create();
     $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+    $signedPlan = $this->signedPlanFromResponse($analysis);
+    $signedPlan['plan']['blocks'][0]['block_slug'] = 'text';
+    $signedPlan['plan']['blocks'][0]['block_type'] = 'text';
     $initialPageCount = Page::query()->count();
-    $initialBlockCount = Block::query()->count();
 
     $response = $this->actingAs($user)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFields($signedPlan['plan']));
+
+    $response->assertRedirect(route('admin.pages.converter.index'));
+    $response->assertSessionHasErrors('plan_payload');
+    $this->assertSame($initialPageCount, Page::query()->count());
+  }
+
+  #[Test]
+  public function draft_creation_does_not_create_media_navigation_shared_slots_or_published_pages(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'page_title' => 'Side Effect Check',
+      'page_path' => 'side-effect-check',
+    ]));
+    $initialMediaCount = Media::query()->count();
+    $initialNavigationCount = NavigationItem::query()->count();
+    $initialSharedSlotCount = SharedSlot::query()->count();
+    $initialPublishedPageCount = Page::query()->where('status', Page::STATUS_PUBLISHED)->count();
+
+    $this->actingAs($user)
       ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
 
-    $response->assertRedirect();
-    $this->assertSame($initialPageCount, Page::query()->count());
-    $this->assertSame($initialBlockCount, Block::query()->count());
+    $this->assertSame($initialMediaCount, Media::query()->count());
+    $this->assertSame($initialNavigationCount, NavigationItem::query()->count());
+    $this->assertSame($initialSharedSlotCount, SharedSlot::query()->count());
+    $this->assertSame($initialPublishedPageCount, Page::query()->where('status', Page::STATUS_PUBLISHED)->count());
   }
 
   #[Test]

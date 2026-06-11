@@ -25,7 +25,7 @@
                 </div>
 
                 <div class="wb-alert wb-alert-info">
-                    A signed conversion plan has been prepared for review. No page has been created yet, and draft creation will be implemented next.
+                    A signed conversion plan has been prepared for review. No page has been created yet. The create action will create a new draft page only; unsupported media, gallery, container, and nested suggestions may be skipped.
                 </div>
 
                 <div class="wb-table-wrap">
@@ -137,7 +137,7 @@
                                 </table>
                             </div>
                             <div class="wb-alert wb-alert-info">
-                                Draft creation will be implemented in the next step.
+                                The page will be created as draft. Existing pages will not be overwritten.
                             </div>
                             @error('plan_payload')
                                 <div class="wb-field-error">{{ $message }}</div>
@@ -145,7 +145,7 @@
                         </div>
 
                         <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                            <span class="wb-text-sm wb-text-muted">Submitting this review action will not create pages, slots, blocks, translations, media, revisions, or published content yet.</span>
+                            <span class="wb-text-sm wb-text-muted">Submitting this review action creates one draft page with supported main-slot blocks only. It does not import media, create navigation items, create shared slots, fetch remote resources, or publish content.</span>
                             <button type="submit" class="wb-btn wb-btn-primary">Create draft page</button>
                         </div>
                     </form>
