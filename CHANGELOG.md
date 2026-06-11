@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.140
+
+- Align Export / Import row action cells with the standard compact WebBlocks UI admin table action pattern.
+
 ## 1.32.139
 
 - Fix MySQL/MariaDB backup dumps so option-file-sensitive database passwords remain intact when the pre-update backup runs `mysqldump`.

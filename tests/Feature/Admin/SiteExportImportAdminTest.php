@@ -636,6 +636,21 @@ class SiteExportImportAdminTest extends TestCase
     $response->assertSee(route('admin.site-transfers.exports.destroy', $siteExport), false);
     $response->assertSee(route('admin.site-transfers.imports.show', $siteImport), false);
     $response->assertSee(route('admin.site-transfers.imports.destroy', $siteImport), false);
+
+    $content = $response->getContent();
+    $this->assertStringContainsString('<th>Actions</th>', $content);
+    $this->assertSame(2, substr_count($content, '<td class="wb-table-actions">'));
+    $this->assertSame(2, substr_count($content, '<div class="wb-action-group">'));
+    $this->assertStringContainsString('<td class="wb-table-actions">
+                                            <div class="wb-action-group">
+                                                <a href="'.route('admin.site-transfers.exports.show', $siteExport).'" class="wb-action-btn wb-action-btn-view"', $content);
+    $this->assertStringContainsString('<a href="'.route('admin.site-transfers.exports.download', $siteExport).'" class="wb-action-btn wb-action-btn-edit"', $content);
+    $this->assertStringContainsString('data-wb-target="#delete-site-export-'.$siteExport->id.'-modal"', $content);
+    $this->assertStringContainsString('<td class="wb-table-actions">
+                                            <div class="wb-action-group">
+                                                <a href="'.route('admin.site-transfers.imports.show', $siteImport).'" class="wb-action-btn wb-action-btn-view"', $content);
+    $this->assertStringContainsString('data-wb-target="#delete-site-import-'.$siteImport->id.'-modal"', $content);
+    $this->assertStringNotContainsString('wb-row-end', $content);
   }
 
   #[Test]

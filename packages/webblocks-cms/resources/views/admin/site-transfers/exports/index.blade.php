@@ -71,8 +71,8 @@
                                         <td>{{ $siteExport->includes_media ? 'Yes' : 'No' }}</td>
                                         <td>{{ $siteExport->humanArchiveSize() }}</td>
                                         <td><span class="wb-status-pill {{ $siteExport->statusBadgeClass() }}">{{ $siteExport->statusLabel() }}</span></td>
-                                        <td>
-                                            <div class="wb-cluster wb-cluster-2 wb-row-end">
+                                        <td class="wb-table-actions">
+                                            <div class="wb-action-group">
                                                 <a href="{{ route('admin.site-transfers.exports.show', $siteExport) }}" class="wb-action-btn wb-action-btn-view" title="Export details" aria-label="Export details">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
@@ -218,8 +218,8 @@
                                         </td>
                                         <td>{{ $siteImport->source_archive_name ?? '-' }}</td>
                                         <td><span class="wb-status-pill {{ $siteImport->statusBadgeClass() }}">{{ $siteImport->statusLabel() }}</span></td>
-                                        <td>
-                                            <div class="wb-cluster wb-cluster-2 wb-row-end">
+                                        <td class="wb-table-actions">
+                                            <div class="wb-action-group">
                                                 <a href="{{ route('admin.site-transfers.imports.show', $siteImport) }}" class="wb-action-btn wb-action-btn-view" title="Import details" aria-label="Import details">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
