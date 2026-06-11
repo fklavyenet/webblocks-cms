@@ -179,6 +179,27 @@ class PageConversionPlanValidator
           return;
         }
       }
+
+      if (in_array((string) ($block['block_slug'] ?? $block['block_type'] ?? ''), ['card_header', 'card_body', 'card_footer'], true)) {
+        $parent = $blocksByKey->get((string) $parentKey);
+
+        if (! is_array($parent) || (string) ($parent['block_slug'] ?? $parent['block_type'] ?? '') !== 'card') {
+          $errors['plan_payload'] = 'The submitted conversion plan has invalid card region parent data.';
+
+          return;
+        }
+      }
+
+      if (($block['block_slug'] ?? $block['block_type'] ?? null) === 'button') {
+        $parent = $blocksByKey->get((string) $parentKey);
+        $parentSlug = is_array($parent) ? (string) ($parent['block_slug'] ?? $parent['block_type'] ?? '') : '';
+
+        if (! in_array($parentSlug, ['hero', 'cta'], true)) {
+          $errors['plan_payload'] = 'The submitted conversion plan has invalid button parent data.';
+
+          return;
+        }
+      }
     }
   }
 

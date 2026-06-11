@@ -10,7 +10,7 @@ The goal is not to create a site-specific importer for `webblocksui.com`. The co
 
 ## Current Implementation Status
 
-The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input. The analyzer normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. The review screen serializes those suggestions into a signed conversion plan payload, then `Create draft page` can create one new draft page with supported main-slot blocks. Draft creation supports `header`, `plain_text`, `rich-text`, `code`, `table`, `quote`, explicit `html` fallback, `button_link`, `list` as Rich Text, `callout` as Alert, `section`, `content_header`, `hero`, `cta`, and explicit `card` shells with signed `card_header` / `card_body` / `card_footer` children. Adjacent `<details>` groups now become one signed `accordion` suggestion with explicit `accordion_item` children, and draft creation writes those items to the existing `faq` child-row contract when both `accordion` and `faq` block types are published. Card suggestions without explicit usable region children and accordion suggestions without a usable item contract are skipped rather than flattened into unsafe HTML. Media-backed suggestions such as `image` and `gallery` are still skipped and reported without importing media.
+The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input, including target path conflicts. The analyzer normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. The review screen serializes those suggestions into a signed conversion plan payload, then `Create draft page` revalidates the signed target details and can create one new draft page with supported main-slot blocks. Draft creation supports `header`, `plain_text`, `rich-text`, `code`, `table`, `quote`, explicit `html` fallback, `button_link`, `list` as Rich Text, `callout` as Alert, `section`, `content_header`, `hero`, `cta`, and explicit `card` shells with signed `card_header` / `card_body` / `card_footer` children. Adjacent `<details>` groups now become one signed `accordion` suggestion with explicit `accordion_item` children, and draft creation writes those items to the existing `faq` child-row contract when both `accordion` and `faq` block types are published. Card suggestions without explicit usable region children and accordion suggestions without a usable item contract are skipped rather than flattened into unsafe HTML. Media-backed suggestions such as `image` and `gallery` are still skipped and reported without importing media.
 
 A compact WebBlocks UI-flavored fixture pilot now covers a realistic static docs/marketing fragment with `<main>`, content header/body wrappers, promo, card grid, buttons, code, table, adjacent details, and remote image media. The fixture guards that analysis produces many structured suggestions instead of one Safe HTML fallback, creates a signed plan and draft page, preserves explicit card regions and footer button links where the current block contract can represent them, and keeps media-backed fragments warning-only/skipped without importing files, publishing pages, creating navigation, touching shared slots, fetching remote URLs, or overwriting content.
 
@@ -213,10 +213,9 @@ Prioritizes:
 
 - Hero
 - Section
-- Columns
-- Column Item
+- Columns and Column Item where a later structured mapping can represent the source safely
 - Card
-- Button
+- Button Link
 - CTA
 - Image
 - Gallery
@@ -282,7 +281,7 @@ Prioritizes:
 | `table` | `table` |
 | `blockquote` | `quote` |
 | `figure > img` | `image` placeholder plus media warning if media import is not available |
-| repeated cards or repeated cells | `columns` + `column_item` |
+| repeated cards or repeated cells | explicit `card` regions where present; `columns` + `column_item` remains a later structured mapping |
 | `details > summary` groups | `accordion` where possible |
 | unknown but safe editorial markup | `html` fallback |
 
@@ -297,13 +296,13 @@ Prioritizes:
 | `.wb-card-header` | `card_header` |
 | `.wb-card-body` | `card_body` |
 | `.wb-card-footer` | `card_footer` |
-| `.wb-grid`, `.wb-grid-2`, `.wb-grid-3`, `.wb-grid-4` | `columns` |
-| `.wb-btn` anchor/button | `button` |
+| `.wb-grid`, `.wb-grid-2`, `.wb-grid-3`, `.wb-grid-4` | direct `.wb-card` children become explicit `card` plans; generic columns remain later |
+| `.wb-btn` anchor/button | `button_link` when represented safely, including inside card footers |
 | `.wb-alert`, `.wb-callout` | `callout` |
 | `.wb-gallery` | `gallery` |
 | `.wb-rich-text` | `rich-text` |
-| `.wb-link-list` | `navigation-auto`, `toc`, or structured list depending on context |
-| `.wb-stat` repeated cards | `columns` with stats-style items where supported |
+| `.wb-link-list` | future `toc` or structured list depending on context |
+| `.wb-stat` repeated cards | future `columns` with stats-style items where supported |
 
 ## Safe HTML Fallback Policy
 
@@ -496,7 +495,7 @@ Focused feature tests should cover:
 - `pre > code` maps to code suggestion
 - `table` maps to table suggestion
 - `.wb-card` maps to card suggestion
-- `.wb-grid` repeated items map to columns/column_item suggestions
+- `.wb-grid` card items map to explicit card region suggestions
 - unknown fragments are reported as fallback, not silently discarded
 - target path conflict blocks draft creation
 - draft page is created only after explicit submit

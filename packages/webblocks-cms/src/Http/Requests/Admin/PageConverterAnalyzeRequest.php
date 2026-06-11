@@ -7,6 +7,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\PageConverter\PageConverterAnalyzeInput;
 use WebBlocks\Cms\Support\PageConverter\PageConverterProfile;
@@ -87,6 +88,10 @@ class PageConverterAnalyzeRequest extends FormRequest
       if ($localeId > 0 && ! $site->hasEnabledLocale($localeId)) {
         $validator->errors()->add('locale_id', 'Choose an enabled locale for the selected site.');
       }
+
+      if ($localeId > 0 && $this->pathExists($site->id, $localeId, $path)) {
+        $validator->errors()->add('page_path', 'A page already exists at the selected path for this site and locale.');
+      }
     }];
   }
 
@@ -115,5 +120,19 @@ class PageConverterAnalyzeRequest extends FormRequest
       sourceType: $sourceType,
       sourceName: $sourceName,
     );
+  }
+
+  private function pathExists(int $siteId, int $localeId, string $path): bool
+  {
+    $slug = trim($path, '/');
+    $publicPath = PageTranslation::pathFromSlug($slug);
+
+    return PageTranslation::query()
+      ->where('site_id', $siteId)
+      ->where('locale_id', $localeId)
+      ->where(fn ($query) => $query
+        ->where('slug', $slug)
+        ->orWhere('path', $publicPath))
+      ->exists();
   }
 }

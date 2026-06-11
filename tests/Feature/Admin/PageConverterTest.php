@@ -917,15 +917,44 @@ class PageConverterTest extends TestCase
     ]);
 
     $user = User::factory()->superAdmin()->create();
-    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload());
+    $plan = $this->conversionPlan([], [
+      'page_title' => 'Duplicate Path',
+      'page_path' => 'converted-static-page',
+    ]);
     $initialPageCount = Page::query()->count();
 
     $response = $this->actingAs($user)
       ->from(route('admin.pages.converter.index'))
-      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFieldsFromResponse($analysis));
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFields($plan));
 
     $response->assertRedirect(route('admin.pages.converter.index'));
     $response->assertSessionHasErrors('plan_payload');
+    $this->assertSame($initialPageCount, Page::query()->count());
+  }
+
+  #[Test]
+  public function duplicate_target_path_is_rejected_before_analysis(): void
+  {
+    $this->seedFoundation();
+
+    Page::query()->create([
+      'site_id' => $this->defaultSite()->id,
+      'title' => 'Existing',
+      'slug' => 'already-used',
+      'status' => Page::STATUS_DRAFT,
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+    $initialPageCount = Page::query()->count();
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.analyze'), $this->validPayload([
+        'page_path' => 'already-used',
+      ]));
+
+    $response->assertRedirect(route('admin.pages.converter.index'));
+    $response->assertSessionHasErrors('page_path');
     $this->assertSame($initialPageCount, Page::query()->count());
   }
 
@@ -948,6 +977,40 @@ class PageConverterTest extends TestCase
     $response->assertRedirect(route('admin.pages.converter.index'));
     $response->assertSessionHasErrors('plan_payload');
     $this->assertSame($initialPageCount, Page::query()->count());
+  }
+
+  #[Test]
+  public function invalid_card_region_parent_data_is_rejected_without_creating_page(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'key' => 'header',
+        'block_slug' => 'header',
+        'translated_fields' => ['title' => 'Not a card'],
+      ],
+      [
+        'key' => 'card_body',
+        'parent_key' => 'header',
+        'block_slug' => 'card_body',
+      ],
+    ], [
+      'page_title' => 'Invalid Card Region Parent',
+      'page_path' => 'invalid-card-region-parent',
+    ]);
+    $initialPageCount = Page::query()->count();
+    $initialBlockCount = Block::query()->count();
+
+    $this->actingAs($user)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFields($plan))
+      ->assertRedirect(route('admin.pages.converter.index'))
+      ->assertSessionHasErrors('plan_payload');
+
+    $this->assertSame($initialPageCount, Page::query()->count());
+    $this->assertSame($initialBlockCount, Block::query()->count());
   }
 
   #[Test]

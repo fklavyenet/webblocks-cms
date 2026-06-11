@@ -25,7 +25,7 @@
                 </div>
 
                 <div class="wb-alert wb-alert-info">
-                    A signed conversion plan has been prepared for review. No page has been created yet. The create action will create a new draft page only; unsupported media, gallery, container, and nested suggestions may be skipped.
+                    A signed conversion plan has been prepared for review. No page has been created yet. The create action will create a new draft page only; unsupported media-backed suggestions are skipped, and nested content is created only when the current block contract can represent it safely.
                 </div>
 
                 <div class="wb-table-wrap">

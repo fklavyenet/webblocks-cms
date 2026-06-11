@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Harden Page Converter MVP validation for early path conflicts and malformed nested plan parents, with clearer review copy and mapping docs.
 - Add WebBlocks UI-flavored Page Converter fixture pilot coverage with safer docs wrapper extraction and explicit card-region/button-link planning.
 - Add conservative Page Converter accordion analysis for adjacent `<details>` groups and draft creation through the existing Accordion plus FAQ child-row contract when available.
 - Support safe structured Page Converter draft blocks for sections, content headers, heroes, CTAs, and explicit card region children while continuing to skip media-backed suggestions.
