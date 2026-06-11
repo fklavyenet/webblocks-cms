@@ -9,7 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
-- Create draft pages from signed Page Converter plans with supported main-slot blocks while skipping unsupported media/container suggestions without publishing.
+- Support safe structured Page Converter draft blocks for sections, content headers, heroes, CTAs, and explicit card region children while continuing to skip media-backed suggestions.
+- Create draft pages from signed Page Converter plans with supported main-slot blocks while skipping unsupported media-backed and richer structured suggestions without publishing.
 - Add signed Page Converter conversion plan payloads and a review action foundation.
 - Add Page Converter analysis previews that extract content from submitted HTML and suggest structured blocks with confidence scores and warnings without creating pages.
 - Add the Page Converter admin foundation with scoped target selection, HTML input validation, and a no-write placeholder analysis state.

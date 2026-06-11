@@ -11,6 +11,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\NavigationItem;
@@ -18,6 +20,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\PageConverter\PageConversionDraftCreator;
 use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSerializer;
 use WebBlocks\Cms\Support\PageConverter\PageConversionPlanSigner;
 
@@ -90,6 +93,51 @@ class PageConverterTest extends TestCase
     return [
       'plan_payload' => $payload,
       'plan_signature' => app(PageConversionPlanSigner::class)->sign($payload),
+    ];
+  }
+
+  private function conversionPlan(array $blocks, array $target = []): array
+  {
+    return [
+      'version' => PageConversionPlanSerializer::VERSION,
+      'target' => array_merge([
+        'site_id' => $this->defaultSite()->id,
+        'locale_id' => $this->defaultLocale()->id,
+        'page_layout' => 'default',
+        'page_title' => 'Converted Structured Page',
+        'page_path' => 'converted-structured-page',
+        'conversion_profile' => 'conservative',
+      ], $target),
+      'source' => [
+        'type' => 'pasted',
+        'name' => 'Pasted HTML',
+        'bytes' => 0,
+        'content_root_summary' => '<main>',
+      ],
+      'summary' => [
+        'suggestion_count' => count($blocks),
+        'fallback_count' => 0,
+        'warning_count' => 0,
+      ],
+      'blocks' => array_map(fn (array $block, int $index): array => array_merge([
+        'key' => 'block_'.($index + 1),
+        'order' => $index + 1,
+        'parent_key' => null,
+        'block_type' => $block['block_slug'] ?? $block['block_type'] ?? '',
+        'label' => str($block['block_slug'] ?? $block['block_type'] ?? 'Block')->replace(['-', '_'], ' ')->title()->toString(),
+        'translated_fields' => [],
+        'shared_fields' => [],
+        'confidence' => 90,
+        'warnings' => [],
+        'fallback_flags' => [],
+        'source_fragment' => [
+          'summary' => 'Test fragment',
+          'preview_text' => '',
+          'html' => '',
+        ],
+      ], $block, [
+        'block_type' => $block['block_slug'] ?? $block['block_type'] ?? '',
+      ]), $blocks, array_keys($blocks)),
     ];
   }
 
@@ -423,6 +471,254 @@ class PageConverterTest extends TestCase
   }
 
   #[Test]
+  public function structured_content_header_and_hero_suggestions_create_translated_draft_blocks(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'block_slug' => 'content_header',
+        'translated_fields' => [
+          'title' => 'Documentation hub',
+          'subtitle' => 'Find the implementation notes.',
+          'meta' => ['Updated weekly', 'Owner: Docs'],
+        ],
+        'shared_fields' => ['alignment' => 'center'],
+        'source_fragment' => ['summary' => 'Header', 'preview_text' => 'Documentation hub', 'html' => '<header>Documentation hub</header>'],
+      ],
+      [
+        'block_slug' => 'hero',
+        'translated_fields' => [
+          'eyebrow' => 'Launch',
+          'title' => 'Structured hero',
+          'body' => 'Created from a signed plan.',
+        ],
+        'shared_fields' => [
+          'variant' => 'accent',
+          'layout' => 'centered',
+          'title_tag' => 'h2',
+        ],
+        'source_fragment' => ['summary' => 'Hero', 'preview_text' => 'Structured hero', 'html' => '<section>Structured hero</section>'],
+      ],
+    ], [
+      'page_title' => 'Structured Marketing',
+      'page_path' => 'structured-marketing',
+    ]);
+
+    $this->actingAs($user)
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFields($plan))
+      ->assertSessionHasNoErrors();
+
+    $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'structured-marketing'))->firstOrFail();
+    $blocks = $page->blocks()->with('textTranslations')->orderBy('sort_order')->get();
+
+    $this->assertSame(Page::STATUS_DRAFT, $page->status);
+    $this->assertSame(['content_header', 'hero'], $blocks->pluck('type')->all());
+    $this->assertSame('Documentation hub', $blocks[0]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->title);
+    $this->assertSame('Find the implementation notes.', $blocks[0]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->subtitle);
+    $this->assertSame('["Updated weekly","Owner: Docs"]', $blocks[0]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->meta);
+    $this->assertSame('Launch', $blocks[1]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->subtitle);
+    $this->assertSame('Structured hero', $blocks[1]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->title);
+    $this->assertSame('Created from a signed plan.', $blocks[1]->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->content);
+    $this->assertSame('accent', $blocks[1]->variant);
+    $this->assertSame(Page::STATUS_DRAFT, $blocks[1]->status);
+  }
+
+  #[Test]
+  public function section_shell_is_created_with_warning_when_plan_has_no_explicit_children(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'block_slug' => 'section',
+        'translated_fields' => ['title' => 'Feature area'],
+        'shared_fields' => ['spacing' => 'lg'],
+      ],
+    ], [
+      'page_title' => 'Section Shell',
+      'page_path' => 'section-shell',
+    ]);
+
+    $result = app(PageConversionDraftCreator::class)->create($plan, $user);
+    $section = $result->page->blocks()->where('type', 'section')->firstOrFail();
+
+    $this->assertSame(1, $result->createdBlockCount);
+    $this->assertSame(0, $result->skippedSuggestionCount);
+    $this->assertTrue(collect($result->warnings)->contains(fn (string $warning) => str_contains($warning, 'section shell without child blocks')));
+    $this->assertSame('Feature area', $section->layoutAdminName());
+    $this->assertSame('draft', $result->page->status);
+  }
+
+  #[Test]
+  public function card_with_explicit_region_children_creates_nested_blocks_in_order(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'key' => 'card',
+        'block_slug' => 'card',
+        'translated_fields' => ['title' => 'Composable card'],
+      ],
+      [
+        'key' => 'card_header',
+        'parent_key' => 'card',
+        'block_slug' => 'card_header',
+        'translated_fields' => ['title' => 'Card heading region'],
+      ],
+      [
+        'key' => 'card_body',
+        'parent_key' => 'card',
+        'block_slug' => 'card_body',
+        'translated_fields' => ['title' => 'Card body region'],
+      ],
+    ], [
+      'page_title' => 'Nested Card',
+      'page_path' => 'nested-card',
+    ]);
+
+    $this->actingAs($user)
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFields($plan))
+      ->assertSessionHasNoErrors();
+
+    $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'nested-card'))->firstOrFail();
+    $card = $page->blocks()->where('type', 'card')->firstOrFail();
+    $children = $page->blocks()->where('parent_id', $card->id)->orderBy('sort_order')->get();
+
+    $this->assertSame(['card_header', 'card_body'], $children->pluck('type')->all());
+    $this->assertSame([0, 1], $children->pluck('sort_order')->all());
+    $this->assertSame('Composable card', $card->setting('layout_name'));
+  }
+
+  #[Test]
+  public function card_without_explicit_region_children_is_skipped_with_warning(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'block_slug' => 'card',
+        'translated_fields' => [
+          'title' => 'Summary card',
+          'content' => 'This should not be flattened into unsafe HTML.',
+        ],
+      ],
+    ], [
+      'page_title' => 'Skipped Card',
+      'page_path' => 'skipped-card',
+    ]);
+
+    $result = app(PageConversionDraftCreator::class)->create($plan, $user);
+
+    $this->assertSame(0, $result->createdBlockCount);
+    $this->assertSame(1, $result->skippedSuggestionCount);
+    $this->assertTrue(collect($result->warnings)->contains(fn (string $warning) => str_contains($warning, 'no explicit usable card child region')));
+    $this->assertSame(0, $result->page->blocks()->count());
+  }
+
+  #[Test]
+  public function cta_suggestion_creates_translated_block_without_importing_actions_as_settings(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'block_slug' => 'cta',
+        'translated_fields' => [
+          'eyebrow' => 'Ready',
+          'heading' => 'Start now',
+          'body' => 'Use the draft builder to finish this page.',
+          'primary_cta_label' => 'Get started',
+        ],
+        'shared_fields' => [
+          'variant' => 'soft',
+          'primary_cta_url' => '/start',
+        ],
+      ],
+    ], [
+      'page_title' => 'CTA Draft',
+      'page_path' => 'cta-draft',
+    ]);
+
+    $result = app(PageConversionDraftCreator::class)->create($plan, $user);
+    $cta = $result->page->blocks()->with('textTranslations')->where('type', 'cta')->firstOrFail();
+
+    $this->assertSame(1, $result->createdBlockCount);
+    $this->assertSame('soft', $cta->variant);
+    $this->assertNull($cta->settings);
+    $this->assertSame('Ready', $cta->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->subtitle);
+    $this->assertSame('Start now', $cta->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->title);
+    $this->assertSame('Use the draft builder to finish this page.', $cta->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->content);
+    $this->assertTrue(collect($result->warnings)->contains(fn (string $warning) => str_contains($warning, 'without CTA child buttons')));
+  }
+
+  #[Test]
+  public function accordion_suggestion_remains_skipped_with_clear_warning(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'block_slug' => 'accordion',
+        'translated_fields' => ['title' => 'Questions'],
+      ],
+    ], [
+      'page_title' => 'Skipped Accordion',
+      'page_path' => 'skipped-accordion',
+    ]);
+
+    $result = app(PageConversionDraftCreator::class)->create($plan, $user);
+
+    $this->assertSame(0, $result->createdBlockCount);
+    $this->assertSame(1, $result->skippedSuggestionCount);
+    $this->assertTrue(collect($result->warnings)->contains(fn (string $warning) => str_contains($warning, 'unsupported Page Converter suggestion [accordion]')));
+    $this->assertSame(0, $result->page->blocks()->count());
+  }
+
+  #[Test]
+  public function inactive_child_block_type_rejects_plan_without_partial_creation(): void
+  {
+    $this->seedFoundation();
+
+    BlockType::query()->where('slug', 'card_body')->update(['status' => 'draft']);
+
+    $user = User::factory()->superAdmin()->create();
+    $plan = $this->conversionPlan([
+      [
+        'key' => 'card',
+        'block_slug' => 'card',
+        'translated_fields' => ['title' => 'Composable card'],
+      ],
+      [
+        'key' => 'card_body',
+        'parent_key' => 'card',
+        'block_slug' => 'card_body',
+      ],
+    ], [
+      'page_title' => 'Inactive Child',
+      'page_path' => 'inactive-child',
+    ]);
+    $initialPageCount = Page::query()->count();
+    $initialBlockCount = Block::query()->count();
+
+    $this->actingAs($user)
+      ->from(route('admin.pages.converter.index'))
+      ->post(route('admin.pages.converter.create-draft'), $this->signedPlanFields($plan))
+      ->assertRedirect(route('admin.pages.converter.index'))
+      ->assertSessionHasErrors('plan_payload');
+
+    $this->assertSame($initialPageCount, Page::query()->count());
+    $this->assertSame($initialBlockCount, Block::query()->count());
+  }
+
+  #[Test]
   public function html_fallback_creates_explicit_html_block_only_when_present_in_signed_plan(): void
   {
     $this->seedFoundation();
@@ -458,7 +754,7 @@ class PageConverterTest extends TestCase
   }
 
   #[Test]
-  public function unsupported_media_gallery_and_container_suggestions_are_skipped_and_reported(): void
+  public function unsupported_media_gallery_suggestions_are_skipped_while_safe_section_is_created(): void
   {
     $this->seedFoundation();
 
@@ -475,9 +771,9 @@ class PageConverterTest extends TestCase
 
     $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'skipped-suggestions'))->firstOrFail();
 
-    $response->assertSessionHas('status', fn (string $status): bool => str_contains($status, '0 block(s) created')
-      && str_contains($status, '3 suggestion(s) skipped'));
-    $this->assertSame(0, $page->blocks()->count());
+    $response->assertSessionHas('status', fn (string $status): bool => str_contains($status, '1 block(s) created')
+      && str_contains($status, '2 suggestion(s) skipped'));
+    $this->assertSame(['section'], $page->blocks()->pluck('type')->all());
     $this->assertDatabaseCount('media', 0);
   }
 

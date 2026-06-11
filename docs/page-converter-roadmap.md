@@ -10,7 +10,7 @@ The goal is not to create a site-specific importer for `webblocksui.com`. The co
 
 ## Current Implementation Status
 
-The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input. The analyzer normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. The review screen serializes those suggestions into a signed conversion plan payload, then `Create draft page` can create one new draft page with supported main-slot blocks. The first draft creation MVP supports `header`, `plain_text`, `rich-text`, `code`, `table`, `quote`, explicit `html` fallback, `button_link`, `list` as Rich Text, and `callout` as Alert. Media-backed, container/nested, and richer layout suggestions such as `image`, `gallery`, `card`, `section`, `content_header`, `hero`, `cta`, and `accordion` are currently skipped and reported.
+The first runtime foundation is in place: `Admin -> Pages -> Page Converter` renders the scoped target/source form and validates pasted or uploaded `.html` / `.htm` input. The analyzer normalizes submitted HTML, extracts the most likely content area, and shows ordered structured-block suggestions with confidence scores and warnings. The review screen serializes those suggestions into a signed conversion plan payload, then `Create draft page` can create one new draft page with supported main-slot blocks. Draft creation supports `header`, `plain_text`, `rich-text`, `code`, `table`, `quote`, explicit `html` fallback, `button_link`, `list` as Rich Text, `callout` as Alert, `section`, `content_header`, `hero`, `cta`, and explicit `card` shells with signed `card_header` / `card_body` / `card_footer` children. Card suggestions without explicit usable region children are skipped rather than flattened into unsafe HTML. Media-backed suggestions such as `image` and `gallery` are still skipped and reported without importing media. `accordion` remains skipped until its item/child storage contract is made safe for automated draft creation.
 
 ## Core Principle
 
@@ -562,13 +562,13 @@ Add `.html` / `.htm` upload support.
 
 Improve mappings for:
 
-- card children
+- deeper card region children
 - columns
 - accordions
 - tables
 - lists
 - callouts
-- hero/cta
+- hero/cta managed button children
 
 ### Phase 5: Media-Aware Conversion
 

@@ -35,17 +35,28 @@ class PageConversionDraftCreator
     'alert',
     'list',
     'callout',
+    'section',
+    'content_header',
+    'hero',
+    'cta',
+    'card',
+    'card_header',
+    'card_body',
+    'card_footer',
+    'button',
   ];
 
   private const SKIPPED_BLOCK_SLUGS = [
     'image',
     'gallery',
-    'card',
-    'section',
-    'content_header',
-    'hero',
-    'cta',
     'accordion',
+  ];
+
+  private const CHILD_ONLY_BLOCK_SLUGS = [
+    'card_header',
+    'card_body',
+    'card_footer',
+    'button',
   ];
 
   public function __construct(
@@ -90,10 +101,17 @@ class PageConversionDraftCreator
       $createdBlockCount = 0;
       $skippedSuggestionCount = 0;
       $warnings = [];
+      $createdByKey = [];
+      $siblingSortOrders = ['root' => 0];
+      $blocks = $this->orderedBlocks($plan);
+      $childrenByParentKey = $this->childrenByParentKey($blocks);
 
-      foreach ($this->orderedBlocks($plan) as $block) {
+      foreach ($blocks as $block) {
         $warnings = array_merge($warnings, $this->stringList($block['warnings'] ?? []));
         $converterSlug = $this->blockSlug($block);
+        $blockKey = (string) ($block['key'] ?? '');
+        $parentKey = isset($block['parent_key']) ? trim((string) $block['parent_key']) : '';
+        $parentBlock = $parentKey !== '' ? ($createdByKey[$parentKey] ?? null) : null;
 
         if (! in_array($converterSlug, self::SUPPORTED_BLOCK_SLUGS, true)) {
           $skippedSuggestionCount++;
@@ -102,7 +120,47 @@ class PageConversionDraftCreator
           continue;
         }
 
-        $payload = $this->blockPayload($block, $page, $mainSlot, $createdBlockCount);
+        if ($parentKey === '' && in_array($converterSlug, self::CHILD_ONLY_BLOCK_SLUGS, true)) {
+          $skippedSuggestionCount++;
+          $warnings[] = 'Skipped child-only Page Converter suggestion ['.$converterSlug.'] because it had no created parent.';
+
+          continue;
+        }
+
+        if ($parentKey !== '') {
+          if (! $parentBlock) {
+            $skippedSuggestionCount++;
+            $warnings[] = 'Skipped Page Converter suggestion ['.$converterSlug.'] because its parent suggestion was not created.';
+
+            continue;
+          }
+
+          if (! $this->parentAcceptsChild($parentBlock, $converterSlug)) {
+            $skippedSuggestionCount++;
+            $warnings[] = 'Skipped Page Converter suggestion ['.$converterSlug.'] because parent ['.$parentBlock->typeSlug().'] cannot accept it.';
+
+            continue;
+          }
+        }
+
+        if ($converterSlug === 'card' && ! $this->hasCreatableCardChildren($blockKey, $childrenByParentKey)) {
+          $skippedSuggestionCount++;
+          $warnings[] = 'Skipped Page Converter suggestion [card] because no explicit usable card child region was present.';
+
+          continue;
+        }
+
+        if ($converterSlug === 'section' && ! isset($childrenByParentKey[$blockKey])) {
+          $warnings[] = 'Created Page Converter section shell without child blocks because the signed plan did not include explicit section children.';
+        }
+
+        if (in_array($converterSlug, ['hero', 'cta'], true) && $this->hasActionLikeFields($block) && ! isset($childrenByParentKey[$blockKey])) {
+          $warnings[] = 'Created Page Converter suggestion ['.$converterSlug.'] without CTA child buttons because the signed plan did not include explicit button children.';
+        }
+
+        $siblingKey = $parentBlock ? 'parent:'.$parentBlock->id : 'root';
+        $sortOrder = $siblingSortOrders[$siblingKey] ?? 0;
+        $payload = $this->blockPayload($block, $page, $mainSlot, $sortOrder, $parentBlock);
 
         if ($payload === null) {
           $skippedSuggestionCount++;
@@ -111,7 +169,10 @@ class PageConversionDraftCreator
           continue;
         }
 
-        $this->blockPayloadWriter->save(new Block, $page, $payload, $locale->code);
+        $createdBlock = $this->blockPayloadWriter->save(new Block, $page, $payload, $locale->code);
+        $createdBlock->setRelation('blockType', $createdBlock->blockType()->first());
+        $createdByKey[$blockKey] = $createdBlock;
+        $siblingSortOrders[$siblingKey] = $sortOrder + 1;
         $createdBlockCount++;
       }
 
@@ -188,7 +249,7 @@ class PageConversionDraftCreator
       ->all();
   }
 
-  private function blockPayload(array $block, Page $page, PageSlot $slot, int $createdBlockCount): ?array
+  private function blockPayload(array $block, Page $page, PageSlot $slot, int $sortOrder, ?Block $parent = null): ?array
   {
     $converterSlug = $this->blockSlug($block);
     $blockTypeSlug = $this->createdBlockSlug($converterSlug);
@@ -208,13 +269,13 @@ class PageConversionDraftCreator
     $sourceText = trim((string) ($sourceFragment['preview_text'] ?? ''));
     $data = [
       'page_id' => $page->id,
-      'parent_id' => null,
+      'parent_id' => $parent?->id,
       'type' => $blockType->slug,
       'block_type_id' => $blockType->id,
       'source_type' => $blockType->source_type ?: 'static',
       'slot' => 'main',
       'slot_type_id' => $slot->slot_type_id,
-      'sort_order' => $createdBlockCount,
+      'sort_order' => $sortOrder,
       'title' => null,
       'subtitle' => null,
       'content' => null,
@@ -272,6 +333,52 @@ class PageConversionDraftCreator
         'content' => $this->stringField($translated, 'content') ?? $sourceText,
         'variant' => 'info',
       ]),
+      'section' => array_merge($data, [
+        'settings' => $this->settingsJson([
+          'layout_name' => $this->layoutName($block, 'Converted section'),
+          'spacing' => $this->allowedValue($shared['spacing'] ?? null, ['sm', 'md', 'lg', 'xl']),
+        ]),
+      ]),
+      'content_header' => array_merge($data, [
+        'title' => $this->firstString($translated, ['title', 'headline', 'heading']) ?? $sourceText,
+        'subtitle' => $this->firstString($translated, ['subtitle', 'intro_text', 'intro', 'body', 'content']),
+        'meta' => $this->metaItemsJson($translated['meta'] ?? $shared['meta_items'] ?? $shared['meta'] ?? null),
+        'settings' => $this->settingsJson([
+          'alignment' => $this->allowedValue($shared['alignment'] ?? null, ['left', 'center']),
+        ]),
+      ]),
+      'hero' => array_merge($data, [
+        'title' => $this->firstString($translated, ['title', 'headline', 'heading']) ?? $sourceText,
+        'subtitle' => $this->firstString($translated, ['eyebrow', 'label']),
+        'content' => $this->firstString($translated, ['body', 'content', 'intro', 'subtitle']),
+        'variant' => $this->allowedValue($shared['variant'] ?? null, ['default', 'muted', 'accent', 'soft']) ?? 'default',
+        'settings' => $this->settingsJson([
+          'layout' => $this->allowedValue($shared['layout'] ?? null, ['left', 'centered']),
+          'title_tag' => $this->allowedValue($shared['title_tag'] ?? null, ['h1', 'h2', 'h3']),
+        ]),
+      ]),
+      'cta' => array_merge($data, [
+        'title' => $this->firstString($translated, ['title', 'headline', 'heading']) ?? $sourceText,
+        'subtitle' => $this->firstString($translated, ['eyebrow', 'label']),
+        'content' => $this->firstString($translated, ['body', 'content', 'intro', 'subtitle']),
+        'variant' => $this->allowedValue($shared['variant'] ?? null, ['default', 'muted', 'accent', 'soft']) ?? 'default',
+      ]),
+      'card' => array_merge($data, [
+        'settings' => $this->settingsJson([
+          'layout_name' => $this->layoutName($block, 'Converted card'),
+        ]),
+      ]),
+      'card_header', 'card_body', 'card_footer' => array_merge($data, [
+        'settings' => $this->settingsJson([
+          'layout_name' => $this->layoutName($block, str($converterSlug)->replace('_', ' ')->title()->toString()),
+        ]),
+      ]),
+      'button' => array_merge($data, [
+        'title' => $this->firstString($translated, ['label', 'title']) ?? $sourceText ?: 'Open link',
+        'url' => $this->safeUrl($shared['url'] ?? null),
+        'subtitle' => ($shared['target'] ?? '_self') === '_blank' ? '_blank' : '_self',
+        'variant' => $this->allowedValue($shared['variant'] ?? null, ['primary', 'secondary', 'ghost', 'link']) ?? 'primary',
+      ]),
       default => null,
     };
   }
@@ -300,6 +407,48 @@ class PageConversionDraftCreator
     $value = trim((string) ($fields[$key] ?? ''));
 
     return $value !== '' ? $value : null;
+  }
+
+  private function firstString(array $fields, array $keys): ?string
+  {
+    foreach ($keys as $key) {
+      $value = $this->stringField($fields, $key);
+
+      if ($value !== null) {
+        return $value;
+      }
+    }
+
+    return null;
+  }
+
+  private function allowedValue(mixed $value, array $allowed): ?string
+  {
+    $value = trim((string) $value);
+
+    return in_array($value, $allowed, true) ? $value : null;
+  }
+
+  private function layoutName(array $block, string $fallback): string
+  {
+    $translated = is_array($block['translated_fields'] ?? null) ? $block['translated_fields'] : [];
+    $shared = is_array($block['shared_fields'] ?? null) ? $block['shared_fields'] : [];
+
+    return $this->firstString($shared, ['layout_name', 'name', 'label'])
+      ?? $this->firstString($translated, ['title', 'headline', 'heading', 'label'])
+      ?? $fallback;
+  }
+
+  private function metaItemsJson(mixed $value): ?string
+  {
+    $items = is_array($value) ? $value : [$value];
+    $items = collect($items)
+      ->map(fn ($item): string => trim((string) $item))
+      ->filter()
+      ->values()
+      ->all();
+
+    return $items === [] ? null : json_encode($items, JSON_UNESCAPED_SLASHES);
   }
 
   private function settingsJson(array $settings): ?string
@@ -347,6 +496,67 @@ class PageConversionDraftCreator
     }
 
     return $rows === [] ? null : implode("\n", $rows);
+  }
+
+  /**
+   * @param  array<int, array<string, mixed>>  $blocks
+   * @return array<string, array<int, array<string, mixed>>>
+   */
+  private function childrenByParentKey(array $blocks): array
+  {
+    $children = [];
+
+    foreach ($blocks as $block) {
+      $parentKey = isset($block['parent_key']) ? trim((string) $block['parent_key']) : '';
+
+      if ($parentKey !== '') {
+        $children[$parentKey][] = $block;
+      }
+    }
+
+    return $children;
+  }
+
+  /**
+   * @param  array<string, array<int, array<string, mixed>>>  $childrenByParentKey
+   */
+  private function hasCreatableCardChildren(string $blockKey, array $childrenByParentKey): bool
+  {
+    foreach ($childrenByParentKey[$blockKey] ?? [] as $child) {
+      $childSlug = $this->blockSlug($child);
+
+      if (! in_array($childSlug, ['card_header', 'card_body', 'card_footer'], true)) {
+        continue;
+      }
+
+      if ($this->publishedBlockType($this->createdBlockSlug($childSlug))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private function parentAcceptsChild(Block $parent, string $converterSlug): bool
+  {
+    return $parent->canAcceptChildType($this->createdBlockSlug($converterSlug));
+  }
+
+  private function hasActionLikeFields(array $block): bool
+  {
+    $translated = is_array($block['translated_fields'] ?? null) ? $block['translated_fields'] : [];
+    $shared = is_array($block['shared_fields'] ?? null) ? $block['shared_fields'] : [];
+
+    return $this->firstString($translated, ['primary_cta_label', 'secondary_cta_label', 'action_label', 'button_label']) !== null
+      || $this->firstString($shared, ['primary_cta_url', 'secondary_cta_url', 'action_url', 'url']) !== null;
+  }
+
+  private function publishedBlockType(string $slug): ?BlockType
+  {
+    return BlockType::query()
+      ->where('slug', $slug)
+      ->where('status', 'published')
+      ->first();
   }
 
   /**
