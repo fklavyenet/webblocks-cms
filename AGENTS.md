@@ -60,16 +60,18 @@
 
 WebBlocks CMS uses WebBlocks UI for admin, auth, dashboard, settings, and related control panel UI. Before making admin/auth/dashboard UI changes, read the WebBlocks UI sources and AI usage contract from:
 
-`/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui`
+`<WEBBLOCKS_UI_REPO_PATH>`
+
+Set `<WEBBLOCKS_UI_REPO_PATH>` to the local checkout path of the WebBlocks UI repository. Do not commit machine-specific absolute paths to public repositories.
 
 Required reading:
 
-- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/ai/DOWNSTREAM_USAGE_RULES.md`
-- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/ai/REVIEW_CHECKLIST.md`
-- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/ai/FORBIDDEN_PATTERNS.md`
-- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/PATTERNS.md`
-- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/PRIMITIVES.md`
-- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/INTEGRATION.md`
+- `<WEBBLOCKS_UI_REPO_PATH>/ai/DOWNSTREAM_USAGE_RULES.md`
+- `<WEBBLOCKS_UI_REPO_PATH>/ai/REVIEW_CHECKLIST.md`
+- `<WEBBLOCKS_UI_REPO_PATH>/ai/FORBIDDEN_PATTERNS.md`
+- `<WEBBLOCKS_UI_REPO_PATH>/PATTERNS.md`
+- `<WEBBLOCKS_UI_REPO_PATH>/PRIMITIVES.md`
+- `<WEBBLOCKS_UI_REPO_PATH>/INTEGRATION.md`
 
 Use WebBlocks UI pattern-first:
 
