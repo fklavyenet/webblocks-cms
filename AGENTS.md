@@ -56,6 +56,40 @@
 - Avoid large inline Blade scripts.
 - Named CMS admin JavaScript belongs under `public/cms/js/admin/`.
 
+## WebBlocks UI Usage
+
+WebBlocks CMS uses WebBlocks UI for admin, auth, dashboard, settings, and related control panel UI. Before making admin/auth/dashboard UI changes, read the WebBlocks UI sources and AI usage contract from:
+
+`/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui`
+
+Required reading:
+
+- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/ai/DOWNSTREAM_USAGE_RULES.md`
+- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/ai/REVIEW_CHECKLIST.md`
+- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/ai/FORBIDDEN_PATTERNS.md`
+- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/PATTERNS.md`
+- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/PRIMITIVES.md`
+- `/Users/osm/Sites/projects/project-web_blocks/project-webblocks-ui/webblocks-ui/INTEGRATION.md`
+
+Use WebBlocks UI pattern-first:
+
+- Start from shipped WebBlocks UI patterns before creating local wrappers.
+- Preserve WebBlocks UI dashboard/admin contracts on admin and control panel screens.
+- Use `wb-dashboard-shell` for admin/dashboard screens.
+- Use `wb-auth-shell` for auth screens.
+- Use `wb-settings-shell` for settings screens.
+- Use `wb-card` as the only generic framed surface.
+- Do not invent generic framed surfaces, wrappers, or nouns besides `wb-card`.
+- Admin lists must follow the canonical table/action contract: `wb-page-header`, filters before the list card, `section.wb-card`, `.wb-card-body`, `.wb-table-wrap`, explicit `Actions` header, `td.wb-table-actions`, `.wb-action-group`, and pagination in `.wb-card-footer`.
+- Use `wb-modal` for destructive confirmation flows instead of browser `confirm()`.
+- Use the shared overlay root `#wb-overlay-root` for overlays.
+- Use `wb-toast` for transient success/info feedback.
+- Use inline `wb-alert` for validation, blocking, and user-correctable errors.
+- Add custom CSS or JS only as a last resort after shipped WebBlocks UI composition is proven insufficient.
+- Do not add Tailwind, Vite, React, Vue, Livewire, or Inertia UI layers for WebBlocks UI surfaces.
+
+When reviewing UI changes, verify shells, surfaces, tables, forms, overlays, feedback, branding, custom CSS/JS, and tests against the WebBlocks UI checklist.
+
 ## Public Rendering
 
 - Public block renderers should prefer shipped `wb-*` classes.
