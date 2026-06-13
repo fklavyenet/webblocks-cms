@@ -22,6 +22,10 @@ Updates in WebBlocks CMS are release-based and package-based.
 - Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.
 - A System Update is recorded as successful only after the applied package runtime reports the target version from the canonical `WebBlocks\Cms\Support\WebBlocks` version source. If the applied code still reports an older or unexpected version, the run is recorded as failed and operators should restore the pre-update backup or inspect filesystem/cache state before retrying.
 
+## Advisor-First Release Guidance
+
+Before changing CMS release, update, publish, Publisher, artifact, or migration compatibility behavior, ask WebBlocks Advisor and include the answer as an implementation note in the report. If Advisor does not have the right answer, update the relevant knowledge source or chunk first instead of inventing a one-off workflow.
+
 ## Release Details
 
 The System Updates screen shows human-readable release details before an admin starts an update. The main flow has two cards: `Install Update` and `Update Details`. `Install Update` explains whether an update is available, the running CMS code version is current, the local/source version is newer than the latest published package, the update is incompatible, or the update server response cannot be trusted. The visible summary compares the running CMS code version with the latest published release. Stored installed version remains an install-history/update-persistence value and can be inspected in `Update Readiness`, but it is not used to make the Install Update action actionable.
