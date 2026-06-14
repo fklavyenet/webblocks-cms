@@ -357,7 +357,7 @@ Root-owned view areas still tie directly to root app boundaries.
 - auth and profile views depend on root auth stack and root `User`
 - the package-owned admin layout still references root asset paths, brand assets, auth/profile routes, and app layout components
 - package-owned source copies now exist for admin CSS/JS, but active admin CSS/JS remain paired with root runtime asset and branding boundaries
-- the dedicated admin shell/assets audit now documents the remaining boundary in `docs/package-transition-admin-shell-assets-audit.md`
+- the dedicated admin shell/assets audit now documents the remaining boundary in `ai/audits/package-transition-admin-shell-assets-audit.md`
 
 #### Recommended next action
 

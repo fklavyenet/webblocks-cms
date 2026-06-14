@@ -17,6 +17,7 @@ class ReleasePackageBoundaryTest extends TestCase
     $attributes = (string) file_get_contents(base_path('.gitattributes'));
 
     $this->assertStringContainsString('/project export-ignore', $attributes);
+    $this->assertStringContainsString('/ai/** export-ignore', $attributes);
     $this->assertStringNotContainsString('/.local-container export-ignore', $attributes);
     $this->assertStringNotContainsString('/public/cms export-ignore', $attributes);
     $this->assertStringNotContainsString('/public/cms/** export-ignore', $attributes);

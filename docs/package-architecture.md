@@ -503,8 +503,6 @@ The transition should prioritize low-risk incremental movement over a single rew
 
 ## Current Status
 
-See also: `docs/package-transition-root-ownership-audit.md` for the current root-versus-package ownership classification across `app/`, `routes/`, `resources/views/`, `database/`, `public/cms/`, and `config/` after the latest package-authority work.
-
 Package transition consolidation is complete for all safely movable CMS-owned source in this repository.
 
 - Package-owned authority now covers the safely movable CMS route, view, model, seeder, shared-partial, admin-layout, and supporting runtime source domains.
@@ -665,13 +663,11 @@ The remaining safe live operational-route follow-up is now also complete:
 - root `App\Http\Controllers\Admin\SlotTypeController`, `App\Http\Controllers\Admin\SystemSettingsController`, `App\Http\Requests\Admin\SystemSettingsRequest`, and the matching root Blade files remain as compatibility wrappers
 - this follow-up intentionally still does not move System Update implementation, backup or restore, installer, auth/profile/User ownership, migrations, root config ownership, or root `public/cms` runtime asset authority
 
-The admin shell and asset boundary audit is now complete:
+The admin shell and asset boundary status is:
 
-- `docs/package-transition-admin-shell-assets-audit.md` classifies the remaining admin shell, shared admin partials, admin components, admin CSS/JS, and brand assets after the latest package runtime moves
-- the audit originally confirmed package-owned admin views still depended on root `layouts.admin`, root selected `admin.partials.*`, root `x-admin.form-actions`, and active root `public/cms` admin assets
-- the admin layout move is now complete: package-owned admin views extend `webblocks-cms::layouts.admin`, and the root `resources/views/layouts/admin.blade.php` compatibility wrapper has been removed so package-consumer namespace mistakes fail locally
-- package `public/cms/` now also carries admin CSS and JS source files that match the active root admin asset set, while root `public/cms/...` paths remain the live runtime compatibility layer
-- the audit explicitly does not recommend migrations, updater, backup/restore, export/import, promotion, auth/User, installer, root config, or runtime asset authority as the next immediate batch
+- package-owned admin views extend `webblocks-cms::layouts.admin`, and the root `resources/views/layouts/admin.blade.php` compatibility wrapper has been removed so package-consumer namespace mistakes fail locally
+- package `public/cms/` also carries admin CSS and JS source files that match the active root admin asset set, while root `public/cms/...` paths remain the live runtime compatibility layer
+- migrations, updater, backup/restore, export/import, promotion, auth/User, installer, root config, and runtime asset authority remain outside the immediate package admin-shell boundary
 
 The selected shared admin partial/component batches are now package-owned:
 

@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
+- Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
+
 ## 1.32.141
 
 - Release the Page Converter MVP under Pages with paste/upload HTML analysis, signed conversion plan review, and verified draft-only page creation.
