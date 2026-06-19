@@ -12,6 +12,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 
+## 1.32.142
+
+- Harden package `webblocks:install` for existing Laravel hosts by detecting partial CMS schemas before fresh migrations and reporting CMS tables, row counts, migration rows, and known foreign key conflicts.
+- Add explicit `webblocks:install --repair-partial` recovery for empty partial CMS tables, while refusing automatic repair for any non-empty CMS table.
+- Guard the package fresh-install schema creation and avoid the historical `system_update_runs_triggered_by_user_id_foreign` MySQL constraint-name collision.
+
 ## 1.32.141
 
 - Release the Page Converter MVP under Pages with paste/upload HTML analysis, signed conversion plan review, and verified draft-only page creation.

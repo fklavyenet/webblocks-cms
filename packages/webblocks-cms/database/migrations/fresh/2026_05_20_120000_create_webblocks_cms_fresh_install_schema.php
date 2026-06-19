@@ -79,7 +79,7 @@ return new class extends Migration
   private function createUsersTableColumns(): void
   {
     if (! Schema::hasTable('users')) {
-      Schema::create('users', function (Blueprint $table): void {
+      $this->createTableIfMissing('users', function (Blueprint $table): void {
         $table->id();
         $table->string('name');
         $table->string('email')->unique();
@@ -115,9 +115,18 @@ return new class extends Migration
     });
   }
 
+  private function createTableIfMissing(string $tableName, callable $callback): void
+  {
+    if (Schema::hasTable($tableName)) {
+      return;
+    }
+
+    Schema::create($tableName, $callback);
+  }
+
   private function createCatalogTables(): void
   {
-    Schema::create('page_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('page_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -128,7 +137,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('layout_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('layout_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -140,7 +149,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('slot_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('slot_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -152,7 +161,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('block_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('block_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -166,7 +175,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('system_settings', function (Blueprint $table): void {
+    $this->createTableIfMissing('system_settings', function (Blueprint $table): void {
       $table->id();
       $table->string('key')->unique();
       $table->longText('value')->nullable();
@@ -176,7 +185,7 @@ return new class extends Migration
 
   private function createCoreSiteTables(): void
   {
-    Schema::create('sites', function (Blueprint $table): void {
+    $this->createTableIfMissing('sites', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('handle')->unique();
@@ -193,7 +202,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('locales', function (Blueprint $table): void {
+    $this->createTableIfMissing('locales', function (Blueprint $table): void {
       $table->id();
       $table->string('code')->unique();
       $table->string('name');
@@ -202,7 +211,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('site_locales', function (Blueprint $table): void {
+    $this->createTableIfMissing('site_locales', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
@@ -211,7 +220,7 @@ return new class extends Migration
       $table->unique(['site_id', 'locale_id']);
     });
 
-    Schema::create('site_user', function (Blueprint $table): void {
+    $this->createTableIfMissing('site_user', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
@@ -219,7 +228,7 @@ return new class extends Migration
       $table->unique(['user_id', 'site_id']);
     });
 
-    Schema::create('site_domains', function (Blueprint $table): void {
+    $this->createTableIfMissing('site_domains', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->string('domain');
@@ -230,7 +239,7 @@ return new class extends Migration
       $table->unique(['site_id', 'domain']);
     });
 
-    Schema::create('site_variables', function (Blueprint $table): void {
+    $this->createTableIfMissing('site_variables', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->string('key');
@@ -247,7 +256,7 @@ return new class extends Migration
 
   private function createLayoutAndPageTables(): void
   {
-    Schema::create('layouts', function (Blueprint $table): void {
+    $this->createTableIfMissing('layouts', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -255,7 +264,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('page_layouts', function (Blueprint $table): void {
+    $this->createTableIfMissing('page_layouts', function (Blueprint $table): void {
       $table->id();
       $table->string('handle')->unique();
       $table->string('name');
@@ -270,7 +279,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('page_layout_slots', function (Blueprint $table): void {
+    $this->createTableIfMissing('page_layout_slots', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('page_layout_id')->constrained('page_layouts')->cascadeOnDelete();
       $table->foreignId('slot_type_id')->constrained('slot_types')->cascadeOnDelete();
@@ -292,7 +301,7 @@ return new class extends Migration
       $table->unique(['page_layout_id', 'slot_name']);
     });
 
-    Schema::create('pages', function (Blueprint $table): void {
+    $this->createTableIfMissing('pages', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->string('title')->nullable();
@@ -314,7 +323,7 @@ return new class extends Migration
       $table->unique(['id', 'site_id'], 'pages_id_site_id_unique');
     });
 
-    Schema::create('page_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('page_translations', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
@@ -340,7 +349,7 @@ return new class extends Migration
         ->cascadeOnDelete();
     });
 
-    Schema::create('page_assets', function (Blueprint $table): void {
+    $this->createTableIfMissing('page_assets', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
       $table->string('type');
@@ -354,7 +363,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('page_revisions', function (Blueprint $table): void {
+    $this->createTableIfMissing('page_revisions', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
@@ -369,7 +378,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('shared_slots', function (Blueprint $table): void {
+    $this->createTableIfMissing('shared_slots', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->string('name');
@@ -383,7 +392,7 @@ return new class extends Migration
       $table->unique(['site_id', 'handle']);
     });
 
-    Schema::create('page_slots', function (Blueprint $table): void {
+    $this->createTableIfMissing('page_slots', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
       $table->foreignId('slot_type_id')->constrained('slot_types')->cascadeOnDelete();
@@ -398,7 +407,7 @@ return new class extends Migration
 
   private function createMediaTables(): void
   {
-    Schema::create('media_folders', function (Blueprint $table): void {
+    $this->createTableIfMissing('media_folders', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('parent_id')->nullable()->constrained('media_folders')->nullOnDelete();
       $table->string('name');
@@ -406,7 +415,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('media', function (Blueprint $table): void {
+    $this->createTableIfMissing('media', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('folder_id')->nullable()->constrained('media_folders')->nullOnDelete();
       $table->string('disk')->default('public');
@@ -432,7 +441,7 @@ return new class extends Migration
 
   private function createBlockAndNavigationTables(): void
   {
-    Schema::create('blocks', function (Blueprint $table): void {
+    $this->createTableIfMissing('blocks', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
       $table->foreignId('parent_id')->nullable()->constrained('blocks')->nullOnDelete();
@@ -455,7 +464,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('block_media', function (Blueprint $table): void {
+    $this->createTableIfMissing('block_media', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
       $table->foreignId('media_id')->constrained('media')->cascadeOnDelete();
@@ -465,7 +474,7 @@ return new class extends Migration
       $table->index(['block_id', 'role', 'position']);
     });
 
-    Schema::create('shared_slot_blocks', function (Blueprint $table): void {
+    $this->createTableIfMissing('shared_slot_blocks', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
       $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
@@ -474,7 +483,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('shared_slot_revisions', function (Blueprint $table): void {
+    $this->createTableIfMissing('shared_slot_revisions', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
@@ -494,7 +503,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('block_text_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('block_text_translations', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
       $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
@@ -507,7 +516,7 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    Schema::create('block_button_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('block_button_translations', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
       $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
@@ -516,7 +525,7 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    Schema::create('block_image_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('block_image_translations', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
       $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
@@ -526,7 +535,7 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    Schema::create('block_contact_form_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('block_contact_form_translations', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
       $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
@@ -538,7 +547,7 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    Schema::create('block_gallery_item_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('block_gallery_item_translations', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('block_media_id')->constrained('block_media')->cascadeOnDelete();
       $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
@@ -550,7 +559,7 @@ return new class extends Migration
       $table->unique(['block_media_id', 'locale_id']);
     });
 
-    Schema::create('navigation_items', function (Blueprint $table): void {
+    $this->createTableIfMissing('navigation_items', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
       $table->string('menu_key')->default('primary');
@@ -570,7 +579,7 @@ return new class extends Migration
 
   private function createOperationalTables(): void
   {
-    Schema::create('public_search_index', function (Blueprint $table): void {
+    $this->createTableIfMissing('public_search_index', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
@@ -583,7 +592,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('site_exports', function (Blueprint $table): void {
+    $this->createTableIfMissing('site_exports', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
@@ -600,7 +609,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('site_imports', function (Blueprint $table): void {
+    $this->createTableIfMissing('site_imports', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('status')->default('running');
@@ -617,7 +626,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('contact_messages', function (Blueprint $table): void {
+    $this->createTableIfMissing('contact_messages', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('block_id')->nullable()->constrained('blocks')->nullOnDelete();
       $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
@@ -639,7 +648,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('visitor_events', function (Blueprint $table): void {
+    $this->createTableIfMissing('visitor_events', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
       $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
@@ -662,7 +671,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('icon_catalog_items', function (Blueprint $table): void {
+    $this->createTableIfMissing('icon_catalog_items', function (Blueprint $table): void {
       $table->id();
       $table->string('source')->default('webblocks-ui');
       $table->string('slug');
@@ -678,7 +687,7 @@ return new class extends Migration
       $table->unique(['source', 'slug']);
     });
 
-    Schema::create('system_update_runs', function (Blueprint $table): void {
+    $this->createTableIfMissing('system_update_runs', function (Blueprint $table): void {
       $table->id();
       $table->string('from_version')->nullable();
       $table->string('to_version')->nullable();
@@ -689,11 +698,15 @@ return new class extends Migration
       $table->timestamp('started_at')->nullable();
       $table->timestamp('finished_at')->nullable();
       $table->unsignedInteger('duration_ms')->nullable();
-      $table->foreignId('triggered_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+      $table->foreignId('triggered_by_user_id')->nullable();
+      $table->foreign('triggered_by_user_id', 'wb_update_runs_triggered_by_fk')
+        ->references('id')
+        ->on('users')
+        ->nullOnDelete();
       $table->timestamps();
     });
 
-    Schema::create('system_backups', function (Blueprint $table): void {
+    $this->createTableIfMissing('system_backups', function (Blueprint $table): void {
       $table->id();
       $table->string('type')->default('manual');
       $table->string('status')->default('running');
@@ -714,7 +727,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('system_backup_restores', function (Blueprint $table): void {
+    $this->createTableIfMissing('system_backup_restores', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('source_backup_id')->nullable()->constrained('system_backups')->nullOnDelete();
       $table->string('source_archive_disk')->nullable();

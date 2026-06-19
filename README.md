@@ -64,6 +64,8 @@ php artisan webblocks:install --name="Admin User" --email="admin@example.com" --
 - removes the untouched fresh Laravel welcome route from `routes/web.php` when it is safe, with a timestamped backup first, so CMS public routes can serve `/`
 - safely patches `App\Models\User` with a package auth trait and creates a backup first
 - runs the package fresh-install CMS schema for clean consumers
+- detects partial CMS table state before fresh migrations, reports table row counts, related migration rows, and known foreign key conflicts, and stops safely unless explicit repair is requested
+- can repair empty partial installs with `--repair-partial` by renaming empty CMS tables before continuing; non-empty tables are never dropped or renamed automatically
 - creates required Laravel support tables for CMS password reset tokens and database-backed session/cache drivers when they are configured, without running the host application's normal migrations
 - prepares the `site-transfers` filesystem disk storage used by Export / Import packages
 - prepares the `backups` filesystem disk storage used by Backup / Restore
@@ -74,6 +76,8 @@ php artisan webblocks:install --name="Admin User" --email="admin@example.com" --
 - creates the first active `super_admin` when one does not already exist
 
 For the current `v1.32.x` consumer boundary, `App\Models\User` remains host-owned and is patched in place with the CMS access trait during install.
+
+If a prior failed install left empty CMS tables such as `page_types`, `layout_types`, `slot_types`, `block_types`, `system_settings`, or `system_update_runs`, run `php artisan webblocks:install` once without repair to review the diagnostic. If every listed CMS table has `0` rows, rerun with `--repair-partial` to rename those empty tables and continue the install. If any listed table has rows, inspect it manually; the installer will not alter non-empty tables.
 
 After install, open:
 

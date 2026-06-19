@@ -101,7 +101,7 @@
         ],
         "test:install": [
             "@php artisan config:clear --ansi",
-            "@php artisan test tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageConsumerInstallAuthTest.php tests/Feature/PackageFreshInstallMigrationTest.php --exclude-group=legacy --stop-on-failure"
+            "@php artisan test tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageConsumerPartialInstallRepairTest.php tests/Feature/PackageConsumerInstallAuthTest.php tests/Feature/PackageFreshInstallMigrationTest.php --exclude-group=legacy --stop-on-failure"
         ],
         "test:legacy-bridge": [
             "@php artisan config:clear --ansi",

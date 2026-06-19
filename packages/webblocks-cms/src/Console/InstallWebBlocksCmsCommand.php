@@ -23,6 +23,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
 use WebBlocks\Cms\Support\Install\LaravelWelcomeRouteCleaner;
+use WebBlocks\Cms\Support\Install\PartialInstallState;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
@@ -44,6 +45,7 @@ class InstallWebBlocksCmsCommand extends Command
     {--password= : First super admin password}
     {--site-name= : Default site name}
     {--site-handle= : Default site handle}
+    {--repair-partial : Rename empty partial CMS tables before running fresh-install migrations}
     {--force : Overwrite package-owned assets}';
 
   protected $description = 'Install WebBlocks CMS into the current Laravel application';
@@ -55,6 +57,7 @@ class InstallWebBlocksCmsCommand extends Command
     private readonly InstalledVersionStore $installedVersionStore,
     private readonly LaravelSupportTableInstaller $laravelSupportTableInstaller,
     private readonly LaravelWelcomeRouteCleaner $laravelWelcomeRouteCleaner,
+    private readonly PartialInstallState $partialInstallState,
   ) {
     parent::__construct();
   }
@@ -81,7 +84,7 @@ class InstallWebBlocksCmsCommand extends Command
     $this->installedVersionStore->persist(WebBlocks::version());
     $this->installState->markInstalled();
 
-    $this->components->info('WebBlocks CMS is ready. Open /cms to sign in.');
+    $this->components->info('WebBlocks CMS is ready. Open /webadmin to sign in.');
 
     return self::SUCCESS;
   }
@@ -130,6 +133,8 @@ class InstallWebBlocksCmsCommand extends Command
 
   private function runPackageMigrations(): void
   {
+    $this->handlePartialInstallState();
+
     if ($this->cmsSchemaAlreadyExists()) {
       $this->components->info('CMS schema already exists. Skipping fresh-install migrations.');
 
@@ -149,6 +154,57 @@ class InstallWebBlocksCmsCommand extends Command
     ]);
 
     $this->output->write(Artisan::output());
+  }
+
+  private function handlePartialInstallState(): void
+  {
+    if (! $this->partialInstallState->hasPartialSchema()) {
+      return;
+    }
+
+    $this->writePartialInstallReport();
+
+    if (! $this->option('repair-partial')) {
+      throw new \RuntimeException('Partial WebBlocks CMS schema detected. Re-run with --repair-partial to rename empty CMS tables, or inspect the listed non-empty tables manually.');
+    }
+
+    $renamed = $this->partialInstallState->repairEmptyPartialSchema();
+
+    foreach ($renamed as $from => $to) {
+      $this->line('Renamed empty partial CMS table '.$from.' to '.$to.'.');
+    }
+  }
+
+  private function writePartialInstallReport(): void
+  {
+    $report = $this->partialInstallState->report();
+
+    $this->components->warn('Partial WebBlocks CMS schema detected before fresh-install migrations.');
+
+    if ($report['tables'] !== []) {
+      $this->table(['CMS table', 'Rows'], array_map(
+        fn (array $table): array => [$table['table'], (string) $table['rows']],
+        $report['tables'],
+      ));
+    }
+
+    $this->line('CMS migration rows: '.count($report['migration_rows']));
+
+    foreach ($report['migration_rows'] as $migration) {
+      $this->line(' - '.$migration);
+    }
+
+    if ($report['foreign_keys'] === []) {
+      $this->line('Known conflicting foreign keys: none detected.');
+
+      return;
+    }
+
+    $this->line('Known conflicting foreign keys:');
+
+    foreach ($report['foreign_keys'] as $foreignKey) {
+      $this->line(' - '.$foreignKey['table'].'.'.$foreignKey['constraint']);
+    }
   }
 
   private function ensureLaravelSupportTables(): void

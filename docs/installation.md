@@ -54,6 +54,7 @@ Supported options:
 - `--password=` first super admin password
 - `--site-name=` default site name
 - `--site-handle=` default site handle
+- `--repair-partial` rename empty partial CMS tables before fresh-install migrations
 - `--force` overwrite package-owned CMS assets or published config files when needed
 
 What `webblocks:install` does:
@@ -65,6 +66,9 @@ What `webblocks:install` does:
 - skips patching when the trait is already present
 - fails clearly if `User.php` is not a recognizable `App\Models\User extends Authenticatable` class
 - runs the package fresh-install migration path for clean consumer installs
+- detects partial CMS schemas before running fresh-install migrations and reports existing CMS tables, row counts, related migration rows, and known foreign key conflicts
+- repairs empty partial CMS schemas only when `--repair-partial` is provided, by renaming empty CMS tables with a timestamped `_before_cms_install_...` suffix before continuing
+- refuses automatic repair when any partial CMS table contains rows
 - skips rerunning that fresh schema when CMS tables already exist
 - creates Laravel support tables without running host application migrations, currently covering CMS password reset tokens plus `sessions`, `cache`, and `cache_locks` when those database-backed drivers are configured
 - does not run the host application's normal Laravel migration set as part of package install, so it avoids conflicts with the already-created CMS-compatible `users` table
@@ -78,6 +82,16 @@ What `webblocks:install` does:
 Package auth is Laravel-native and does not require Breeze, Jetstream, Laravel UI, or Fortify. After install, sign in at `/webadmin/login` when CMS owns auth routes, or use the host `/login` when the host app owns authentication, then open `/webadmin`.
 
 For the current `v1.32.x` package-consumer boundary, the host application's `App\Models\User` remains the auth model and install-time patch target.
+
+### Partial Install Recovery
+
+If `webblocks:install` stops after a failed or interrupted prior run, rerun it without repair first and read the partial-install diagnostic. Empty CMS tables can be moved aside explicitly:
+
+```bash
+php artisan webblocks:install --repair-partial --name="Admin User" --email="admin@example.com" --password="secret-password"
+```
+
+The repair mode only renames empty CMS-owned candidate tables. It does not drop tables, does not alter non-empty tables automatically, and does not assume CMS owns the host application.
 
 ## Browser Install Wizard
 

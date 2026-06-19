@@ -381,6 +381,7 @@ Why these slices stay partially guarded
 - When migration ownership begins, prefer package loading for CMS-owned migration files and explicit publish guidance only where install-local customization is truly needed.
 - Do not mix migration-boundary work with unrelated runtime refactors.
 - Root `database/migrations/` remains the compatibility and authority layer for source-maintained installs. The source-maintained update path requires the maintenance-repository root Composer autoload signal for `WebBlocks\\Cms\\ => packages/webblocks-cms/src/`; a consumer install having a `packages/webblocks-cms` directory is not enough. Package consumer updates must use explicit package-owned update migrations and must not implicitly run host Laravel application migrations.
+- Package consumer fresh installs use the package-owned `database/migrations/fresh` schema through `webblocks:install`. The installer preflights partial CMS tables before that schema runs, stops with diagnostics by default, and only renames empty partial tables when the operator provides `--repair-partial`.
 - `PageLayoutSeeder` and `BlockTypeSeeder` remain root-owned for now because they still cross page-layout catalog, block-type sync, and broader Pages or Blocks runtime boundaries. `DatabaseSeeder` also remains root-owned as the active install entrypoint and installed-version writer.
 
 ### Package Route Ownership Strategy

@@ -16,6 +16,8 @@ In coexistence installs, CMS is an optional website and content layer. It should
 
 CMS should remain package-first and avoid collisions with host application routes, config keys, view namespaces, table ownership, and other application-level boundaries.
 
+Package install must be resumable in shared hosts. Before running fresh CMS migrations, `webblocks:install` detects partial CMS table state and reports existing CMS tables, row counts, matching migration rows, and known foreign key conflicts. Empty partial CMS tables may be renamed only through the explicit `--repair-partial` installer flag. Non-empty tables require manual review and must not be dropped, renamed, or treated as CMS-owned automatically.
+
 ## Admin Prefix Direction
 
 The CMS admin prefix should be configurable.
