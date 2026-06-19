@@ -710,7 +710,7 @@ class SiteExportImportAdminTest extends TestCase
   {
     $response = $this->get(route('admin.site-transfers.exports.index'));
 
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('webblocks.auth.login'));
   }
 
   private function inspectExportedSitePackage(User $user, Site $site): SiteImport

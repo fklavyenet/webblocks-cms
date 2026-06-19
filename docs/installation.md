@@ -79,7 +79,7 @@ What `webblocks:install` does:
 - records the installed version and install completion marker in `system_settings`
 - creates the first active `super_admin` only when one does not already exist
 
-Package auth is Laravel-native and does not require Breeze, Jetstream, Laravel UI, or Fortify. After install, sign in at `/webadmin/login` when CMS owns auth routes, or use the host `/login` when the host app owns authentication, then open `/webadmin`.
+Package auth is Laravel-native and does not require Breeze, Jetstream, Laravel UI, or Fortify. After install, sign in at `/webadmin/login` when CMS package auth routes are active. CMS-owned auth views and admin guest redirects use package route names such as `webblocks.auth.login` and `webblocks.auth.logout`, so a host product can keep its own global `login` route, for example `/quiztem/login`, without stealing CMS form actions or `/webadmin` redirects.
 
 For the current `v1.32.x` package-consumer boundary, the host application's `App\Models\User` remains the auth model and install-time patch target.
 

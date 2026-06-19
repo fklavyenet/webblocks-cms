@@ -684,7 +684,7 @@ class ContactFormModuleTest extends TestCase
   public function admin_messages_list_requires_authentication(): void
   {
     $this->get(route('admin.contact-messages.index'))
-      ->assertRedirect(route('login'));
+      ->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]
@@ -956,7 +956,7 @@ class ContactFormModuleTest extends TestCase
   {
     $this->delete(route('admin.contact-messages.bulk-destroy'), [
       'contact_message_ids' => [1],
-    ])->assertRedirect(route('login'));
+    ])->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]

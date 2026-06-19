@@ -208,7 +208,7 @@ class PageEditorialWorkflowTest extends TestCase
       'page_ids' => [$page->id],
     ]);
 
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('webblocks.auth.login'));
     $this->assertDatabaseHas('pages', ['id' => $page->id]);
   }
 

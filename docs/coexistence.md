@@ -34,7 +34,7 @@ The final solution avoids the route/filesystem collision entirely instead of rel
 
 Within a shared Laravel host, login and registration are host application responsibilities. The shared `users` table is the identity and login layer.
 
-CMS should not require a separate mandatory CMS login system in co-installed apps. When a guest user requests the CMS admin area in a host-owned auth app, the request should use the host login flow, usually `/login`, while preserving the intended CMS URL for the redirect after login. In package-owned standalone auth, the CMS login route is `/webadmin/login`.
+CMS should not require duplicate user identity in co-installed apps. When package-owned CMS auth routes are active, CMS admin guest redirects and CMS auth screens must use the CMS-owned `/webadmin/login` route name `webblocks.auth.login` instead of the global `login` route name, because the host product may own `login` for paths such as `/quiztem/login`. Hosts that intentionally replace CMS auth may still own their own login flow, but package CMS views and middleware must stay on package-owned route names.
 
 ## CMS-Owned Authorization
 
@@ -73,7 +73,7 @@ Common coexistence routing should be designed around clear ownership:
 
 Standalone CMS installs use `/webadmin` for CMS-owned admin routes, with future configurable prefix settings still a target direction.
 
-Package-owned CMS auth views must use CMS-prefixed auth routes for CMS-owned screens. If CMS registration is not provided by the package auth route set, CMS login should omit the Register link instead of pointing to a host-owned root `/register` route.
+Package-owned CMS auth views must use CMS-prefixed auth routes for CMS-owned screens: `webblocks.auth.login`, `webblocks.auth.logout`, and the existing `webblocks.auth.password.*` names. If CMS registration is not provided by the package auth route set, CMS login should omit the Register link instead of pointing to a host-owned root `/register` route.
 
 ## Current Implementation Vs Target Direction
 

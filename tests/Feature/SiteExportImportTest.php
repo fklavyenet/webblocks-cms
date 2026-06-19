@@ -1064,7 +1064,7 @@ class SiteExportImportTest extends TestCase
 
     $this->delete(route('admin.site-transfers.exports.bulk-destroy'), [
       'site_export_ids' => [$siteExport->id],
-    ])->assertRedirect(route('login'));
+    ])->assertRedirect(route('webblocks.auth.login'));
 
     $this->actingAs($editor)->delete(route('admin.site-transfers.exports.bulk-destroy'), [
       'site_export_ids' => [$siteExport->id],
@@ -1153,7 +1153,7 @@ class SiteExportImportTest extends TestCase
 
     $this->delete(route('admin.site-transfers.imports.bulk-destroy'), [
       'site_import_ids' => [$siteImport->id],
-    ])->assertRedirect(route('login'));
+    ])->assertRedirect(route('webblocks.auth.login'));
 
     $this->actingAs($editor)->delete(route('admin.site-transfers.imports.bulk-destroy'), [
       'site_import_ids' => [$siteImport->id],

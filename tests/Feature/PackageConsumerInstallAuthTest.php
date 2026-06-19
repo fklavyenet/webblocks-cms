@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\View\ComponentAttributeBag;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,7 +48,7 @@ class PackageConsumerInstallAuthTest extends TestCase
   #[Test]
   public function package_owned_cms_login_route_and_view_exist_after_install(): void
   {
-    $response = $this->get(route('login'));
+    $response = $this->get(route('webblocks.auth.login'));
 
     $response->assertOk();
     $response->assertSee('class="wb-auth-shell wb-auth-split"', false);
@@ -85,7 +86,7 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertDontSee('webblocks-icons.min.css', false);
     $response->assertDontSee('webblocks-ui.min.js', false);
     $response->assertSee('cms/css/guest.css', false);
-    $response->assertSee('action="'.route('login').'"', false);
+    $response->assertSee('action="'.route('webblocks.auth.login').'"', false);
     $response->assertSee('name="email"', false);
     $response->assertSee('name="password"', false);
     $response->assertSee('name="remember"', false);
@@ -178,15 +179,42 @@ class PackageConsumerInstallAuthTest extends TestCase
   public function cms_dashboard_redirects_guests_to_the_login_page(): void
   {
     $this->assertSame('/webadmin', route('admin.dashboard', absolute: false));
-    $this->assertSame('/webadmin/login', route('login', absolute: false));
+    $this->assertSame('/webadmin/login', route('webblocks.auth.login', absolute: false));
 
     $response = $this->get(route('admin.dashboard'));
 
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]
-  public function package_owned_auth_routes_use_cms_namespace_when_the_host_has_no_login(): void
+  public function cms_auth_uses_package_owned_route_names_when_a_host_owns_login(): void
+  {
+    $quizTemLoginRoute = Route::get('/quiztem/login', fn () => response('QuizTem login screen'))->name('login');
+    Route::post('/quiztem/login', fn () => response('QuizTem login submit', 418))->name('quiztem.login.store');
+    $this->forceNamedRouteLookup('login', $quizTemLoginRoute);
+
+    $this->assertSame('/quiztem/login', route('login', absolute: false));
+    $this->assertSame('/webadmin/login', route('webblocks.auth.login', absolute: false));
+
+    $this->get('/webadmin')->assertRedirect(route('webblocks.auth.login'));
+
+    $this->get(route('webblocks.auth.login'))
+      ->assertOk()
+      ->assertSee('action="'.route('webblocks.auth.login').'"', false)
+      ->assertDontSee('action="'.route('login').'"', false);
+
+    $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+
+    $this->post(route('webblocks.auth.login'), [
+      'email' => $user->email,
+      'password' => 'secret-password',
+    ])->assertRedirect(route('admin.dashboard'));
+
+    $this->assertAuthenticatedAs($user);
+  }
+
+  #[Test]
+  public function package_owned_auth_routes_use_cms_namespace(): void
   {
     $routeFile = (string) file_get_contents(base_path('packages/webblocks-cms/routes/auth.php'));
 
@@ -194,6 +222,10 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->assertStringContainsString('/webadmin/logout', $routeFile);
     $this->assertStringContainsString('/webadmin/forgot-password', $routeFile);
     $this->assertStringContainsString('/webadmin/reset-password/{token}', $routeFile);
+    $this->assertStringContainsString("name('webblocks.auth.login')", $routeFile);
+    $this->assertStringContainsString("name('webblocks.auth.logout')", $routeFile);
+    $this->assertStringNotContainsString("name('login')", $routeFile);
+    $this->assertStringNotContainsString("name('logout')", $routeFile);
     $this->assertStringNotContainsString('/cms/login', $routeFile);
     $this->assertStringNotContainsString('/cms/logout', $routeFile);
     $this->assertStringNotContainsString('/admin/login', $routeFile);
@@ -230,7 +262,7 @@ class PackageConsumerInstallAuthTest extends TestCase
   {
     $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
 
-    $loginResponse = $this->post(route('login'), [
+    $loginResponse = $this->post(route('webblocks.auth.login'), [
       'email' => $user->email,
       'password' => 'secret-password',
     ]);
@@ -538,5 +570,17 @@ class PackageConsumerInstallAuthTest extends TestCase
       $this->assertStringNotContainsString(' width=', $svg);
       $this->assertStringNotContainsString(' height=', $svg);
     }
+  }
+
+  private function forceNamedRouteLookup(string $name, \Illuminate\Routing\Route $route): void
+  {
+    $routes = Route::getRoutes();
+    $property = new \ReflectionProperty($routes, 'nameList');
+    $property->setAccessible(true);
+
+    $nameList = $property->getValue($routes);
+    $nameList[$name] = $route;
+
+    $property->setValue($routes, $nameList);
   }
 }

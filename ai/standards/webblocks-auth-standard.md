@@ -2,11 +2,13 @@
 
 This standard documents the current package-owned CMS auth UI and session behavior for future CMS work. It is internal AI guidance, not public product documentation.
 
-Implementation note: The WebBlocks Advisor gate was checked for this documentation cleanup on 2026-06-14. This checkout does not expose an Advisor/knowledge Artisan command, so this standard is based on current package auth views, auth controllers, CMS mail support, and README standards.
+Implementation note: The WebBlocks Advisor gate was checked for this documentation cleanup on 2026-06-14 and for the coexistence auth route naming fix on 2026-06-19. This checkout does not expose an Advisor/knowledge Artisan command, so this standard is based on current package auth views, auth controllers, CMS mail support, coexistence route behavior, and README standards.
 
 ## Routes And Ownership
 
 - CMS auth uses the package-owned `/webadmin/login`, forgot-password, and reset-password surfaces.
+- CMS package auth routes must use CMS-owned route names. Use `webblocks.auth.login`, `webblocks.auth.login.store`, `webblocks.auth.logout`, `webblocks.auth.password.request`, `webblocks.auth.password.email`, `webblocks.auth.password.reset`, and `webblocks.auth.password.store`.
+- CMS package views, controllers, middleware, and admin chrome must not depend on global `route('login')` or `route('logout')`, because a co-installed host product may own those names.
 - The host `/login` model must be preserved. Do not introduce a separate mandatory duplicate CMS login system.
 - CMS auth must not create duplicate users for the same email.
 - The `App\Models\User` model remains app-owned. CMS access is authorized through CMS membership/role/access behavior on that user.
@@ -24,7 +26,7 @@ Implementation note: The WebBlocks Advisor gate was checked for this documentati
 ## Login Form
 
 - The login title is a compact welcoming heading, currently `Welcome back`.
-- The form posts to `route('login')` with CSRF protection.
+- The form posts to `route('webblocks.auth.login')` with CSRF protection.
 - Email uses `type="email"`, `autocomplete="username"`, `required`, `autofocus`, and `class="wb-input"`.
 - Password uses `type="password"`, `autocomplete="current-password"`, `required`, and `class="wb-input"`.
 - Password visibility toggle uses the existing `data-password-field`, `data-password-input`, and `data-password-toggle` hook pattern.
@@ -47,7 +49,7 @@ Implementation note: The WebBlocks Advisor gate was checked for this documentati
 - Login uses Laravel's `web` guard via `Auth::attempt($credentials, remember)`.
 - Successful login regenerates the session and updates `last_login_at`.
 - Successful login redirects to the intended URL or the admin dashboard.
-- Logout uses a POST form, calls `Auth::guard('web')->logout()`, invalidates the session, regenerates the CSRF token, and redirects to `route('login')`.
+- Logout uses a POST form to `route('webblocks.auth.logout')`, calls `Auth::guard('web')->logout()`, invalidates the session, regenerates the CSRF token, and redirects to `route('webblocks.auth.login')`.
 - Password reset links use the CMS reset notification path with route name `webblocks.auth.password.reset`.
 - Reset tokens are created through Laravel's password broker and must not be logged.
 - Successful password reset hashes the new password, rotates `remember_token`, dispatches the password reset event, and redirects to login with status.

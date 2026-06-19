@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Controllers\Auth\LoginController as CmsLoginController;
 use WebBlocks\Cms\Http\Controllers\Auth\NewPasswordController as CmsNewPasswordController;
 use WebBlocks\Cms\Http\Controllers\Auth\PasswordResetLinkController as CmsPasswordResetLinkController;
 
@@ -32,9 +33,13 @@ class HostAuthCompatibilityTest extends TestCase
 
   public function test_cms_package_auth_routes_use_webadmin_namespace_and_do_not_add_register(): void
   {
+    $this->assertRouteUses('webblocks.auth.login', CmsLoginController::class.'@create');
+    $this->assertRouteUses('webblocks.auth.logout', CmsLoginController::class.'@destroy');
     $this->assertRouteUses('webblocks.auth.password.request', CmsPasswordResetLinkController::class.'@create');
     $this->assertRouteUses('webblocks.auth.password.reset', CmsNewPasswordController::class.'@create');
 
+    $this->assertSame('webadmin/login', Route::getRoutes()->getByName('webblocks.auth.login')?->uri());
+    $this->assertSame('webadmin/logout', Route::getRoutes()->getByName('webblocks.auth.logout')?->uri());
     $this->assertSame('webadmin/forgot-password', Route::getRoutes()->getByName('webblocks.auth.password.request')?->uri());
     $this->assertSame('webadmin/reset-password/{token}', Route::getRoutes()->getByName('webblocks.auth.password.reset')?->uri());
 

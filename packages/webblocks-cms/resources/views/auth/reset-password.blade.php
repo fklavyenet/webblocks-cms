@@ -69,7 +69,7 @@
                 </div>
 
                 <div class="wb-auth-footer">
-                    <p>Need to use a different account? <a href="{{ route('login') }}">Back to sign in</a>.</p>
+                    <p>Need to use a different account? <a href="{{ route('webblocks.auth.login') }}">Back to sign in</a>.</p>
                 </div>
             </div>
         </div>

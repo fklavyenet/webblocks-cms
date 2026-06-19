@@ -48,7 +48,7 @@ class CmsAuthLinkTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('action="'.route('webblocks.auth.password.email').'"', false);
-    $response->assertSee('href="'.route('login').'"', false);
+    $response->assertSee('href="'.route('webblocks.auth.login').'"', false);
     $response->assertDontSee('action="http://localhost/forgot-password"', false);
     $response->assertDontSee('href="http://localhost/login"', false);
   }
@@ -59,7 +59,7 @@ class CmsAuthLinkTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('action="'.route('webblocks.auth.password.store').'"', false);
-    $response->assertSee('href="'.route('login').'"', false);
+    $response->assertSee('href="'.route('webblocks.auth.login').'"', false);
     $response->assertDontSee('action="http://localhost/reset-password"', false);
     $response->assertDontSee('href="http://localhost/login"', false);
   }

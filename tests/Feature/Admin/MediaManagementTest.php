@@ -1613,7 +1613,7 @@ class MediaManagementTest extends TestCase
   {
     $this->delete(route('admin.media.bulk-destroy'), [
       'media_ids' => [1],
-    ])->assertRedirect(route('login'));
+    ])->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]

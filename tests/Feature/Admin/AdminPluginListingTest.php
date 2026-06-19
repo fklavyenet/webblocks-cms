@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
+use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
@@ -558,10 +559,10 @@ class AdminPluginListingTest extends TestCase
     auth()->logout();
 
     $this->get('/webadmin/plugins/webblocks-ui-manager/releases')
-      ->assertRedirect(route('login'));
+      ->assertRedirect(route('webblocks.auth.login'));
 
     $this->get('/webadmin/plugins/webblocks-ui-manager/settings')
-      ->assertRedirect(route('login'));
+      ->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]
@@ -848,7 +849,7 @@ PHP,
     $this->assertSame([
       'web',
       'install.required',
-      'auth',
+      UseCmsAuthenticationRedirect::class,
       'admin.access',
       GuardPluginSetup::class.':webblocks-redirect-manager',
       'plugin.permission:webblocks-redirect-manager.view',

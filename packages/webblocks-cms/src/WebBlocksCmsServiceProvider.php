@@ -40,6 +40,7 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
+use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
@@ -944,7 +945,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function packageAuthRoutesShouldLoad(): bool
   {
-    return app('router')->getRoutes()->getByName('login') === null;
+    return app('router')->getRoutes()->getByName('webblocks.auth.login') === null;
   }
 
   protected function packageInstallRoutesShouldLoad(): bool
@@ -1055,6 +1056,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     Route::aliasMiddleware('internal-api.token', RequireInternalApiToken::class);
     Route::aliasMiddleware('install.complete', RedirectIfInstalled::class);
     Route::aliasMiddleware('install.required', RedirectIfNotInstalled::class);
+    Route::aliasMiddleware('webblocks.auth.redirect', UseCmsAuthenticationRedirect::class);
     Route::aliasMiddleware('plugin.permission', AuthorizePluginPermission::class);
   }
 

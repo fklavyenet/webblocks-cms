@@ -168,11 +168,11 @@ class ProfileManagementTest extends TestCase
   #[Test]
   public function guests_are_redirected_through_the_existing_cms_auth_flow(): void
   {
-    $this->get(route('admin.profile.edit'))->assertRedirect(route('login'));
+    $this->get(route('admin.profile.edit'))->assertRedirect(route('webblocks.auth.login'));
     $this->put(route('admin.profile.update'), [
       'name' => 'Guest',
       'email' => 'guest@example.com',
-    ])->assertRedirect(route('login'));
+    ])->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]

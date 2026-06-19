@@ -761,7 +761,7 @@ class SystemBackupsTest extends TestCase
 
     $response = $this->get(route('admin.system.backups.download', $backup));
 
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]
@@ -1088,7 +1088,7 @@ class SystemBackupsTest extends TestCase
       'backup_ids' => [1],
     ]);
 
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]

@@ -20,7 +20,7 @@ class AuthorizePluginPermission
     $this->authorization->register();
 
     if (! $request->user()) {
-      return redirect()->guest(route('login'));
+      return redirect()->guest(route('webblocks.auth.login'));
     }
 
     abort_unless($this->access->canAccessPluginPermission($request->user(), $permission), 403);

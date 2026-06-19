@@ -41,7 +41,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('login') }}" class="wb-stack-4">
+                    <form method="POST" action="{{ route('webblocks.auth.login') }}" class="wb-stack-4">
                         @csrf
 
                         <div class="wb-field">

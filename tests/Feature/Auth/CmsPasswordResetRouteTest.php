@@ -59,7 +59,7 @@ class CmsPasswordResetRouteTest extends TestCase
 
       $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('webblocks.auth.login'));
 
       return true;
     });

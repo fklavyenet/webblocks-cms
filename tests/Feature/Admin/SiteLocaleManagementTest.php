@@ -13,6 +13,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\LocaleController as PackageLocaleContro
 use WebBlocks\Cms\Http\Controllers\Admin\SiteController as PackageSiteController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteDomainController as PackageSiteDomainController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController as PackageSiteVariableController;
+use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
@@ -43,7 +44,7 @@ class SiteLocaleManagementTest extends TestCase
 
       $this->assertContains('web', $middleware);
       $this->assertContains('install.required', $middleware);
-      $this->assertContains('auth', $middleware);
+      $this->assertContains(UseCmsAuthenticationRedirect::class, $middleware);
       $this->assertContains('admin.access', $middleware);
     }
 

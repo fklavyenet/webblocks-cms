@@ -57,7 +57,7 @@
                 </div>
 
                 <div class="wb-auth-footer">
-                    <p>Remembered your password? <a href="{{ route('login') }}">Back to sign in</a>.</p>
+                    <p>Remembered your password? <a href="{{ route('webblocks.auth.login') }}">Back to sign in</a>.</p>
                 </div>
             </div>
         </div>

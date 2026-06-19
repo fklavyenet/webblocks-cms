@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginRouteFallbackController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginSettingsController;
 use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
+use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 
 class PluginRouteRegistrar
 {
@@ -15,7 +16,7 @@ class PluginRouteRegistrar
   private const ADMIN_MIDDLEWARE = [
     'web',
     'install.required',
-    'auth',
+    UseCmsAuthenticationRedirect::class,
     'admin.access',
   ];
 

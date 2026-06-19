@@ -13,7 +13,7 @@ class RequireAdminAccess
     $user = $request->user();
 
     if (! $user) {
-      return redirect()->guest(route('login'));
+      return redirect()->guest(route('webblocks.auth.login'));
     }
 
     if (! method_exists($user, 'canAccessAdmin') || ! $user->canAccessAdmin()) {

@@ -14,6 +14,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController as PackageSlotTypeCo
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController as PackageSystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController as PackageSystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController as PackageVisitorReportController;
+use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\VisitorEvent;
@@ -41,7 +42,7 @@ class AdminDashboardRouteTest extends TestCase
 
       $this->assertContains('web', $middleware);
       $this->assertContains('install.required', $middleware);
-      $this->assertContains('auth', $middleware);
+      $this->assertContains(UseCmsAuthenticationRedirect::class, $middleware);
       $this->assertContains('admin.access', $middleware);
     }
 
@@ -228,7 +229,7 @@ class AdminDashboardRouteTest extends TestCase
   {
     $response = $this->get('/webadmin');
 
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]

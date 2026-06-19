@@ -12,6 +12,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 
+## 1.32.143
+
+- Fix CMS auth coexistence by moving package login/logout usage to CMS-owned `webblocks.auth.*` route names so host-owned `login` routes no longer steal `/webadmin` redirects or form posts.
+- Add a regression for a competing QuizTem-style `/quiztem/login` route while preserving CMS `/webadmin/login`, password reset, and logout paths.
+
 ## 1.32.142
 
 - Harden package `webblocks:install` for existing Laravel hosts by detecting partial CMS schemas before fresh migrations and reporting CMS tables, row counts, migration rows, and known foreign key conflicts.

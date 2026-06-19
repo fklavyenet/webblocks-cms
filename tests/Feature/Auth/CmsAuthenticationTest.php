@@ -80,6 +80,6 @@ class CmsAuthenticationTest extends TestCase
     $response = $this->actingAs($user)->post('/webadmin/logout');
 
     $this->assertGuest();
-    $response->assertRedirect(route('login'));
+    $response->assertRedirect(route('webblocks.auth.login'));
   }
 }

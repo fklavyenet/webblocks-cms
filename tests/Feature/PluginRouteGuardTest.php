@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
+use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -95,7 +96,7 @@ class PluginRouteGuardTest extends TestCase
     $this->assertSame([
       'web',
       'install.required',
-      'auth',
+      UseCmsAuthenticationRedirect::class,
       'admin.access',
       GuardPluginSetup::class.':webblocks-ui-manager',
       'plugin.permission:webblocks-ui-manager.view',
@@ -105,7 +106,7 @@ class PluginRouteGuardTest extends TestCase
     $this->assertSame([
       'web',
       'install.required',
-      'auth',
+      UseCmsAuthenticationRedirect::class,
       'admin.access',
       GuardPluginSetup::class.':webblocks-ui-manager',
       'plugin.permission:webblocks-ui-manager.manage',
@@ -155,7 +156,7 @@ class PluginRouteGuardTest extends TestCase
     $this->assertSame([
       'web',
       'install.required',
-      'auth',
+      UseCmsAuthenticationRedirect::class,
       'admin.access',
       GuardPluginSetup::class.':webblocks-redirect-manager',
       'plugin.permission:webblocks-redirect-manager.view',
@@ -164,7 +165,7 @@ class PluginRouteGuardTest extends TestCase
     $user = User::factory()->superAdmin()->create();
 
     $this->get('/webadmin/plugins/webblocks-redirect-manager/redirects')
-      ->assertRedirect(route('login'));
+      ->assertRedirect(route('webblocks.auth.login'));
 
     $this->actingAs($user)
       ->get('/webadmin/plugins/webblocks-redirect-manager/redirects')

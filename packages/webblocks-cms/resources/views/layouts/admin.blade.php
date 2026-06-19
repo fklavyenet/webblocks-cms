@@ -29,7 +29,7 @@
         @endif
         @stack('styles')
     </head>
-        <body data-wb-admin-login-url="{{ route('login') }}">
+        <body data-wb-admin-login-url="{{ route('webblocks.auth.login') }}">
         @php
             $user = auth()->user();
             $userInitials = collect(preg_split('/\s+/', trim($user?->name ?? 'User')))
@@ -250,7 +250,7 @@
                                     <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item">Profile</a>
                                     <hr class="wb-dropdown-divider">
                                 @endif
-                                <form method="POST" action="{{ route('logout') }}">
+                                <form method="POST" action="{{ route('webblocks.auth.logout') }}">
                                     @csrf
                                     <button type="submit" class="wb-dropdown-item wb-dropdown-item-danger">Logout</button>
                                 </form>
