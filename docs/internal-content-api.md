@@ -2,9 +2,9 @@
 
 ## Purpose
 
-The Internal Content API is a planned secure CMS API for trusted AI and operator tools. It will let those tools create and manage CMS content through structured JSON without logging into, scraping, or automating the browser admin UI.
+The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts and create draft-first content through structured JSON without logging into, scraping, or automating the browser admin UI.
 
-The API is intended for admin-equivalent content operations such as creating draft pages, ensuring slots, adding structured blocks, updating translated copy, and validating larger page plans before writing anything.
+Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. It is intentionally non-destructive.
 
 ## Product Positioning
 
@@ -77,29 +77,26 @@ The API has two complementary modes.
 
 Resource endpoints mirror individual admin-equivalent operations:
 
-- create, list, read, and update draft pages
-- list or ensure page slots
-- add, update, move, and delete blocks
-- add child blocks
+- list and read pages
+- list and read blocks
 - list sites, locales, layouts, and block types
+- later create or update draft page resources directly
+- later list or ensure page slots
+- later add, update, move, and delete blocks through resource endpoints
+- later add child blocks through resource endpoints
 - later manage navigation and shared slots
 
-Example resource endpoints:
+Phase 1 resource endpoints:
 
 ```text
 GET /webadmin/api/sites
 GET /webadmin/api/locales
 GET /webadmin/api/page-layouts
 GET /webadmin/api/block-types
-POST /webadmin/api/pages
+GET /webadmin/api/pages
 GET /webadmin/api/pages/{page}
-PATCH /webadmin/api/pages/{page}
-GET /webadmin/api/pages/{page}/slots
-POST /webadmin/api/pages/{page}/slots/{slot}/blocks
-POST /webadmin/api/blocks/{block}/children
-PATCH /webadmin/api/blocks/{block}
-POST /webadmin/api/blocks/{block}/move
-DELETE /webadmin/api/blocks/{block}
+GET /webadmin/api/blocks
+GET /webadmin/api/blocks/{block}
 ```
 
 ### Content Validate / Apply API
@@ -111,13 +108,13 @@ POST /webadmin/api/content/validate
 POST /webadmin/api/content/apply
 ```
 
-`validate` checks a complete content plan and writes nothing. `apply` validates the plan again and then applies it transactionally. This is useful for AI-generated pages, templates, starter pages, and migration helpers where the CMS should avoid half-created content.
+`validate` checks a complete content plan and writes nothing. `apply` validates the plan again and then creates the draft page transactionally. This is useful for AI-generated pages, templates, starter pages, and migration helpers where the CMS should avoid half-created content.
 
 The request body may still contain a `plan` field or another structured content plan payload. The URL should remain `/content/validate` and `/content/apply`.
 
 Both modes are needed:
 
-- the Resource API mirrors human admin actions for precise edits
+- the Resource API exposes the existing CMS content model and contracts to internal tools
 - the Content Validate / Apply API avoids partial writes during larger page builds
 
 ## Phase 1 Scope
@@ -131,18 +128,13 @@ Both modes are needed:
 
 ### Page Endpoints
 
-- `POST /webadmin/api/pages`
+- `GET /webadmin/api/pages`
 - `GET /webadmin/api/pages/{page}`
-- `PATCH /webadmin/api/pages/{page}` only for draft-safe metadata if included
 
-### Slot And Block Endpoints
+### Block Endpoints
 
-- `GET /webadmin/api/pages/{page}/slots`
-- `POST /webadmin/api/pages/{page}/slots/{slot}/blocks`
-- `POST /webadmin/api/blocks/{block}/children`
-- `PATCH /webadmin/api/blocks/{block}`
-- `POST /webadmin/api/blocks/{block}/move`
-- `DELETE /webadmin/api/blocks/{block}` only for draft-safe content if included
+- `GET /webadmin/api/blocks`
+- `GET /webadmin/api/blocks/{block}`
 
 ### Content Validate / Apply Endpoints
 
@@ -154,76 +146,41 @@ Both modes are needed:
 - draft-only
 - no publish
 - no overwrite of existing published content
+- no overwrite of existing pages or blocks
 - no remote fetch
 - no media download or import
 - no site creation yet
 - no navigation or shared slot creation yet unless a later phase adds it
 - no destructive page deletion
+- no destructive block deletion
+- no resource update, move, or delete endpoints yet
 - no browser session requirement
 - no public unauthenticated access
 
 ## Resource API Examples
 
-### Create Page
+### List Pages
 
-```json
-{
-  "site": "example-site",
-  "locale": "en",
-  "layout": "default",
-  "title": "Product Overview",
-  "path": "/product-overview",
-  "status": "draft"
-}
+```text
+GET /webadmin/api/pages
 ```
 
-### Add Block To Main Slot
+### Read Page Details
 
-```json
-{
-  "type": "hero",
-  "locale": "en",
-  "translations": {
-    "title": "Build pages with structured blocks",
-    "subtitle": "A calmer workflow for content teams",
-    "content": "Create reusable page sections without writing raw markup."
-  },
-  "settings": {
-    "variant": "promo"
-  }
-}
+```text
+GET /webadmin/api/pages/{page}
 ```
 
-### Add Child Block
+### List Blocks
 
-```json
-{
-  "type": "button_link",
-  "locale": "en",
-  "translations": {
-    "title": "Explore the guide"
-  },
-  "settings": {
-    "url": "/guide",
-    "target": "_self",
-    "variant": "primary"
-  }
-}
+```text
+GET /webadmin/api/blocks
 ```
 
-### Update Block Translations And Settings
+### Read Block Details
 
-```json
-{
-  "locale": "en",
-  "translations": {
-    "title": "Launch a draft homepage",
-    "content": "Validate the full page plan before applying it."
-  },
-  "settings": {
-    "alignment": "center"
-  }
-}
+```text
+GET /webadmin/api/blocks/{block}
 ```
 
 ## Content Validate / Apply Example
@@ -343,6 +300,7 @@ Example English marketing homepage draft:
 - harmless unknown settings may warn or be ignored consistently
 - apply validates again before writing
 - apply is transactional
+- Phase 1 rejects publish, site creation, navigation mutation, shared slot mutation, media import, remote fetch, overwrite, replace, and delete operations
 
 ## Response Shape
 
@@ -360,6 +318,7 @@ Responses should be predictable JSON:
       "edit_url": "/webadmin/pages/123/edit"
     }
   },
+  "normalized_plan": {},
   "warnings": [],
   "errors": []
 }
@@ -372,6 +331,7 @@ Validation errors should include a path and message:
   "ok": false,
   "writes": [],
   "data": null,
+  "normalized_plan": {},
   "warnings": [
     {
       "path": "plan.slots.main.1.settings.theme",
@@ -400,6 +360,7 @@ Include `edit_url` where useful for created or updated CMS resources.
 
 ### Phase 3
 
+- resource endpoints for draft-safe direct page/block edits where needed
 - controlled draft updates or draft content replacement
 - page assets
 - media by existing media ID only
@@ -427,3 +388,4 @@ Include `edit_url` where useful for created or updated CMS resources.
 - no destructive delete in Phase 1
 - no host `/admin` route assumption
 - no `/cms` route prefix use
+- no QuizTem-specific runtime code; QuizTem homepage generation is a later consumer use case for this generic CMS API

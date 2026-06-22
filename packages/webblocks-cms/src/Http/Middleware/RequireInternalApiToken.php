@@ -13,13 +13,13 @@ class RequireInternalApiToken
     $configuredToken = trim((string) env('WEBBLOCKS_CMS_INTERNAL_API_TOKEN', ''));
 
     if ($configuredToken === '') {
-      return $this->unauthorized('Internal API is disabled.');
+      return $this->error('internal_api_disabled', 'Internal API is disabled.', 503);
     }
 
     $providedToken = $this->resolveToken($request);
 
     if ($providedToken === '' || ! hash_equals($configuredToken, $providedToken)) {
-      return $this->unauthorized('Invalid internal API token.');
+      return $this->error('invalid_internal_api_token', 'Invalid internal API token.', 401);
     }
 
     return $next($request);
@@ -42,8 +42,18 @@ class RequireInternalApiToken
     return trim((string) $request->header('X-WebBlocks-Internal-Api-Token', ''));
   }
 
-  private function unauthorized(string $message): JsonResponse
+  private function error(string $code, string $message, int $status): JsonResponse
   {
-    return response()->json(['message' => $message], 401);
+    return response()->json([
+      'ok' => false,
+      'code' => $code,
+      'message' => $message,
+      'errors' => [
+        [
+          'path' => 'Authorization',
+          'message' => $message,
+        ],
+      ],
+    ], $status);
   }
 }

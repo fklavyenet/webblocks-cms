@@ -40,6 +40,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - the `Block Types` modal in the slot editor now keeps all block lists in `Name A-Z` order, limits filtering to search plus tab state, shows a header count badge for the current picker result set, only shows `Reset` after active search or tab changes, and keeps the search card visible while long result sets scroll inside the modal
 - Pages listing card headers now include `Import Page`, a first-class admin modal workflow for creating one new draft page from a documented single-page JSON payload without using project-specific commands
 - Pages now include a Page Converter admin foundation for scoped static HTML analysis; it validates pasted or uploaded `.html` / `.htm` input, shows a structured block suggestion plan with confidence scores and warnings, signs the reviewed plan, and can create a new draft page with supported main-slot and safe structured blocks while skipping unsupported media-backed suggestions. Detected `<section>` fragments are kept as Section container blocks, with headings, paragraphs, links, card regions, promo content, and details groups represented as child blocks where the current block contracts support them
+- token-protected Internal Content API under `/webadmin/api` for trusted operator tools to inspect sites, locales, page layouts, block contracts, pages, and blocks, then validate or apply draft-only structured content plans through `/webadmin/api/content/validate` and `/webadmin/api/content/apply`
 
 ## Architecture Note
 
@@ -93,7 +94,7 @@ WebBlocks CMS has no frontend build step. Do not run or add Vite, Tailwind, npm,
 
 The canonical CMS admin prefix is `/webadmin`. CMS static assets remain under `public/cms`, so normal `/cms/css`, `/cms/js`, and `/cms/brand` asset URLs continue to be served as static files without colliding with the Laravel admin route tree. CMS admin prefixes must never reuse a physical public asset directory segment: `/cms` is reserved for static CMS assets only and must not be reintroduced as an admin route, alias, or redirect.
 
-The planned Internal Content API for trusted AI/operator tools is documented in [docs/internal-content-api.md](docs/internal-content-api.md). It is a forward-looking route contract only; no runtime `/webadmin/api` endpoints are implied by that document yet.
+The Internal Content API for trusted AI/operator tools is documented in [docs/internal-content-api.md](docs/internal-content-api.md). It is disabled unless `WEBBLOCKS_CMS_INTERNAL_API_TOKEN` is configured, uses Bearer token authentication, returns JSON-only responses, and remains draft-first and non-destructive in Phase 1.
 
 This split is deliberate. Nginx `try_files` can resolve `/cms/` as the physical `public/cms/` directory before Laravel sees a route. The final v1.32.56 behavior avoids that collision with `/webadmin` instead of relying on a `public/cms/index.php` front-controller handoff. That handoff file must stay absent from both root `public/cms/` and package `packages/webblocks-cms/public/cms/` assets.
 

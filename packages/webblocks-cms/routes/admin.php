@@ -40,8 +40,26 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
+
+Route::middleware(['web', 'install.required', 'internal-api.token'])
+  ->prefix('webadmin/api')
+  ->name('internal-content-api.')
+  ->group(function () {
+    Route::get('/sites', [InternalContentResourceController::class, 'sites'])->name('sites.index');
+    Route::get('/locales', [InternalContentResourceController::class, 'locales'])->name('locales.index');
+    Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
+    Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
+    Route::get('/pages', [InternalContentResourceController::class, 'pages'])->name('pages.index');
+    Route::get('/pages/{page}', [InternalContentResourceController::class, 'page'])->name('pages.show');
+    Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
+    Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');
+    Route::post('/content/validate', [InternalContentPlanController::class, 'validatePlan'])->name('content.validate');
+    Route::post('/content/apply', [InternalContentPlanController::class, 'apply'])->name('content.apply');
+  });
 
 Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access'])
   ->prefix('webadmin')

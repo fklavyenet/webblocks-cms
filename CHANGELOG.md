@@ -10,7 +10,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 ## Unreleased
 
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
-- Document the planned Internal Content API route contract for future token-protected AI/operator CMS content operations.
+- Document the Internal Content API route contract for token-protected AI/operator CMS content operations.
+- Add the Phase 1 Internal Content API under `/webadmin/api` with token-protected JSON discovery endpoints and draft-only content plan validate/apply operations.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 

@@ -6,20 +6,20 @@ This roadmap captures planned architecture and implementation direction. It does
 
 ### Phase 0 - Documentation And Route Contract
 
-- Document `/webadmin/api` as the canonical internal/operator CMS API prefix.
-- Document resource-style endpoints directly under `/webadmin/api/...`, such as `/webadmin/api/pages` and `/webadmin/api/blocks`.
-- Document plan-based content operations at `/webadmin/api/content/validate` and `/webadmin/api/content/apply`.
-- Keep this phase documentation-only with no runtime API implementation.
+- Done: document `/webadmin/api` as the canonical internal/operator CMS API prefix.
+- Done: document resource-style endpoints directly under `/webadmin/api/...`, such as `/webadmin/api/pages` and `/webadmin/api/blocks`.
+- Done: document plan-based content operations at `/webadmin/api/content/validate` and `/webadmin/api/content/apply`.
+- Done: keep the initial route contract generic and CMS-owned, without QuizTem-specific runtime code.
 
 ### Phase 1 - Draft-Safe Internal Content API
 
-- Planned: add the Bearer token guard backed by `WEBBLOCKS_CMS_INTERNAL_API_TOKEN`.
-- Planned: keep the API disabled when the token is missing and return controlled JSON responses.
-- Planned: add discovery endpoints for sites, locales, page layouts, and block types.
-- Planned: add draft page resource APIs for creating, reading, and draft-safe metadata updates.
-- Planned: add draft-safe slot and block APIs for listing slots, adding blocks, adding child blocks, updating blocks, moving blocks, and draft-safe block deletion if included.
-- Planned: add `POST /webadmin/api/content/validate` and `POST /webadmin/api/content/apply` for complete content plans.
-- Excluded: publish, destructive page deletion, remote fetch, media download/import, site creation, public unauthenticated access, browser session requirements, and overwrite of existing published content.
+- Done: add the Bearer token guard backed by `WEBBLOCKS_CMS_INTERNAL_API_TOKEN`.
+- Done: keep the API disabled when the token is missing and return controlled JSON responses.
+- Done: add discovery endpoints for sites, locales, page layouts, and block types.
+- Done: add read-only resource endpoints for pages and blocks directly under `/webadmin/api`.
+- Done: add `POST /webadmin/api/content/validate` and `POST /webadmin/api/content/apply` for complete draft page content plans.
+- Done: create draft pages, page translations, layout slots, and page-owned block trees through the existing relational content model and block translation/settings writers.
+- Excluded: publish, destructive page deletion, resource update/delete/move endpoints, remote fetch, media download/import, site creation, public unauthenticated access, browser session requirements, and overwrite of existing pages or blocks.
 
 ### Phase 2 - Navigation And Shared Slots
 
@@ -29,6 +29,7 @@ This roadmap captures planned architecture and implementation direction. It does
 
 ### Phase 3 - Draft Update/Replace And Existing-Media References
 
+- Planned: add direct draft-safe resource mutation endpoints where they remain useful after validate/apply stabilizes.
 - Planned: add controlled draft update or draft content replacement flows.
 - Planned: support page assets after separate safety design.
 - Planned: allow media references by existing media ID only, without remote media import.
