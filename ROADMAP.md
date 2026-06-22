@@ -2,6 +2,47 @@
 
 This roadmap captures planned architecture and implementation direction. It does not imply that every listed feature exists in the current runtime.
 
+## Internal Content API / AI-Friendly CMS Operations
+
+### Phase 0 - Documentation And Route Contract
+
+- Document `/webadmin/api` as the canonical internal/operator CMS API prefix.
+- Document resource-style endpoints directly under `/webadmin/api/...`, such as `/webadmin/api/pages` and `/webadmin/api/blocks`.
+- Document plan-based content operations at `/webadmin/api/content/validate` and `/webadmin/api/content/apply`.
+- Keep this phase documentation-only with no runtime API implementation.
+
+### Phase 1 - Draft-Safe Internal Content API
+
+- Planned: add the Bearer token guard backed by `WEBBLOCKS_CMS_INTERNAL_API_TOKEN`.
+- Planned: keep the API disabled when the token is missing and return controlled JSON responses.
+- Planned: add discovery endpoints for sites, locales, page layouts, and block types.
+- Planned: add draft page resource APIs for creating, reading, and draft-safe metadata updates.
+- Planned: add draft-safe slot and block APIs for listing slots, adding blocks, adding child blocks, updating blocks, moving blocks, and draft-safe block deletion if included.
+- Planned: add `POST /webadmin/api/content/validate` and `POST /webadmin/api/content/apply` for complete content plans.
+- Excluded: publish, destructive page deletion, remote fetch, media download/import, site creation, public unauthenticated access, browser session requirements, and overwrite of existing published content.
+
+### Phase 2 - Navigation And Shared Slots
+
+- Planned: add navigation menu and item APIs after the Phase 1 content surface is stable.
+- Planned: add shared slot APIs and explicit assignment of shared slots to page slots.
+- Planned: support header/navbar construction through structured content operations.
+
+### Phase 3 - Draft Update/Replace And Existing-Media References
+
+- Planned: add controlled draft update or draft content replacement flows.
+- Planned: support page assets after separate safety design.
+- Planned: allow media references by existing media ID only, without remote media import.
+
+### Phase 4 - Explicit Workflow Operations
+
+- Planned: add explicit, permissioned workflow transitions.
+- Deferred: optional publish support until a separate design records authorization, review, audit, and safety behavior.
+
+### Later - Public Delivery API
+
+- Possible: add a public headless delivery API if ever needed.
+- Keep any public delivery API separate from this internal/operator API.
+
 ## CMS Plugin System
 
 ### Phase 0 - Documentation And Rules

@@ -93,6 +93,8 @@ WebBlocks CMS has no frontend build step. Do not run or add Vite, Tailwind, npm,
 
 The canonical CMS admin prefix is `/webadmin`. CMS static assets remain under `public/cms`, so normal `/cms/css`, `/cms/js`, and `/cms/brand` asset URLs continue to be served as static files without colliding with the Laravel admin route tree. CMS admin prefixes must never reuse a physical public asset directory segment: `/cms` is reserved for static CMS assets only and must not be reintroduced as an admin route, alias, or redirect.
 
+The planned Internal Content API for trusted AI/operator tools is documented in [docs/internal-content-api.md](docs/internal-content-api.md). It is a forward-looking route contract only; no runtime `/webadmin/api` endpoints are implied by that document yet.
+
 This split is deliberate. Nginx `try_files` can resolve `/cms/` as the physical `public/cms/` directory before Laravel sees a route. The final v1.32.56 behavior avoids that collision with `/webadmin` instead of relying on a `public/cms/index.php` front-controller handoff. That handoff file must stay absent from both root `public/cms/` and package `packages/webblocks-cms/public/cms/` assets.
 
 For a fresh install, first get the source code locally:
