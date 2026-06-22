@@ -12,6 +12,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 
+## 1.32.144
+
+- Fix Page Converter section output so detected `<section>` fragments create Section container blocks with meaningful child blocks instead of empty wrappers.
+
 ## 1.32.143
 
 - Fix CMS auth coexistence by moving package login/logout usage to CMS-owned `webblocks.auth.*` route names so host-owned `login` routes no longer steal `/webadmin` redirects or form posts.

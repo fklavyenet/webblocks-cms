@@ -57,6 +57,13 @@ class PageConverterAnalyzer
         continue;
       }
 
+      if (strtolower($segment->tagName) === 'section') {
+        array_push($suggestions, ...$this->suggestionMapper->mapSectionWithChildren($segment, count($suggestions)));
+        $index++;
+
+        continue;
+      }
+
       $suggestions[] = $this->suggestionMapper->map($segment, count($suggestions));
       $index++;
     }

@@ -26,17 +26,17 @@ class PageBlockSuggestionMapper
   /**
    * @return array<int, PageBlockSuggestion>
    */
-  public function mapCardWithRegions(DOMElement $card, int $startIndex): array
+  public function mapCardWithRegions(DOMElement $card, int $startIndex, ?string $parentKey = null): array
   {
     $regions = $this->directCardRegions($card);
 
     if ($regions === []) {
-      return [$this->map($card, $startIndex)];
+      return [$this->withParent($this->map($card, $startIndex), $parentKey)];
     }
 
     $suggestions = [];
     $cardKey = 'block_'.($startIndex + 1);
-    $suggestions[] = $this->suggestion('card', 'Card', $card, 94);
+    $suggestions[] = $this->suggestion('card', 'Card', $card, 94, [], $parentKey);
 
     foreach ($regions as $region) {
       $regionSlug = $this->cardRegionSlug($region);
@@ -84,7 +84,7 @@ class PageBlockSuggestionMapper
    * @param  array<int, DOMElement>  $details
    * @return array<int, PageBlockSuggestion>
    */
-  public function mapDetailsGroup(array $details, string $parentKey): array
+  public function mapDetailsGroup(array $details, string $parentKey, ?string $accordionParentKey = null): array
   {
     $details = array_values(array_filter($details, fn (DOMElement $element): bool => strtolower($element->tagName) === 'details'));
 
@@ -113,6 +113,7 @@ class PageBlockSuggestionMapper
         sharedFields: [
           'item_count' => count($details),
         ],
+        parentKey: $accordionParentKey,
         warnings: $warnings,
       ),
     ];
@@ -141,6 +142,85 @@ class PageBlockSuggestionMapper
         parentKey: $parentKey,
         warnings: $itemWarnings,
       );
+    }
+
+    return $suggestions;
+  }
+
+  /**
+   * @return array<int, PageBlockSuggestion>
+   */
+  public function mapSectionWithChildren(DOMElement $section, int $startIndex, ?string $parentKey = null): array
+  {
+    $sectionKey = 'block_'.($startIndex + 1);
+    $suggestions = [
+      $this->suggestion('section', 'Section', $section, 93, [], $parentKey),
+    ];
+
+    if ($this->isPromoLike($section)) {
+      $promoSlug = $startIndex <= 1 || $this->containsTag($section, 'h1') ? 'hero' : 'cta';
+      $suggestions[] = $this->suggestion($promoSlug, $promoSlug === 'hero' ? 'Hero' : 'CTA', $section, 90, [], $sectionKey);
+
+      return $suggestions;
+    }
+
+    $children = $this->directMeaningfulChildren($section);
+
+    if ($children === [] && $this->previewText($section) !== '') {
+      $suggestions[] = $this->textSuggestion($section, $sectionKey);
+
+      return $suggestions;
+    }
+
+    $index = 0;
+
+    while ($index < count($children)) {
+      $child = $children[$index];
+
+      if (strtolower($child->tagName) === 'details') {
+        $details = [];
+
+        while (isset($children[$index]) && strtolower($children[$index]->tagName) === 'details') {
+          $details[] = $children[$index];
+          $index++;
+        }
+
+        $accordionKey = 'block_'.($startIndex + count($suggestions) + 1);
+        array_push($suggestions, ...$this->mapDetailsGroup($details, $accordionKey, $sectionKey));
+
+        continue;
+      }
+
+      if ($this->isWebBlocksGrid($child)) {
+        $cards = $this->directCardChildren($child);
+
+        if ($cards !== []) {
+          foreach ($cards as $card) {
+            array_push($suggestions, ...$this->mapCardWithRegions($card, $startIndex + count($suggestions), $sectionKey));
+          }
+
+          $index++;
+
+          continue;
+        }
+      }
+
+      if ($this->isWebBlocksCard($child)) {
+        array_push($suggestions, ...$this->mapCardWithRegions($child, $startIndex + count($suggestions), $sectionKey));
+        $index++;
+
+        continue;
+      }
+
+      if (strtolower($child->tagName) === 'section') {
+        array_push($suggestions, ...$this->mapSectionWithChildren($child, $startIndex + count($suggestions), $sectionKey));
+        $index++;
+
+        continue;
+      }
+
+      $suggestions[] = $this->withParent($this->map($child, $startIndex + count($suggestions)), $sectionKey);
+      $index++;
     }
 
     return $suggestions;
@@ -178,8 +258,8 @@ class PageBlockSuggestionMapper
       return $this->suggestion('gallery', 'Gallery', $element, 88, ['Media references were detected. Media import is not implemented in this phase.']);
     }
 
-    if ($tag === 'a' && in_array('wb-btn', $classes, true)) {
-      return $this->suggestion('button_link', 'Button Link', $element, 94);
+    if ($tag === 'a' && $element->getAttribute('href') !== '') {
+      return $this->suggestion('button_link', 'Button Link', $element, in_array('wb-btn', $classes, true) ? 94 : 82);
     }
 
     if (preg_match('/^h[1-6]$/', $tag) === 1) {
@@ -306,6 +386,46 @@ class PageBlockSuggestionMapper
     }
 
     return $children;
+  }
+
+  private function withParent(PageBlockSuggestion $suggestion, ?string $parentKey): PageBlockSuggestion
+  {
+    if ($parentKey === null) {
+      return $suggestion;
+    }
+
+    return new PageBlockSuggestion(
+      blockSlug: $suggestion->blockSlug,
+      label: $suggestion->label,
+      previewText: $suggestion->previewText,
+      confidence: $suggestion->confidence,
+      sourceSummary: $suggestion->sourceSummary,
+      sourceHtml: $suggestion->sourceHtml,
+      translatedFields: $suggestion->translatedFields,
+      sharedFields: $suggestion->sharedFields,
+      parentKey: $parentKey,
+      warnings: $suggestion->warnings,
+      fallbackFlags: $suggestion->fallbackFlags,
+    );
+  }
+
+  private function textSuggestion(DOMElement $element, string $parentKey): PageBlockSuggestion
+  {
+    $text = $this->previewText($element);
+
+    return new PageBlockSuggestion(
+      blockSlug: 'plain_text',
+      label: 'Plain Text',
+      previewText: $text,
+      confidence: 88,
+      sourceSummary: '<'.strtolower($element->tagName).' text>',
+      sourceHtml: '',
+      translatedFields: [
+        'content' => $text,
+      ],
+      sharedFields: [],
+      parentKey: $parentKey,
+    );
   }
 
   private function cardRegionSlug(DOMElement $element): ?string
@@ -495,6 +615,21 @@ class PageBlockSuggestionMapper
     }
 
     return $buttons;
+  }
+
+  private function isPromoLike(DOMElement $element): bool
+  {
+    return in_array('wb-promo', $this->classes($element), true);
+  }
+
+  private function isWebBlocksGrid(DOMElement $element): bool
+  {
+    return in_array('wb-grid', $this->classes($element), true);
+  }
+
+  private function isWebBlocksCard(DOMElement $element): bool
+  {
+    return in_array('wb-card', $this->classes($element), true);
   }
 
   private function primaryButtonLabel(DOMElement $element): ?string

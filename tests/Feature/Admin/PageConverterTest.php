@@ -898,9 +898,9 @@ class PageConverterTest extends TestCase
 
     $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'skipped-suggestions'))->firstOrFail();
 
-    $response->assertSessionHas('status', fn (string $status): bool => str_contains($status, '1 block(s) created')
+    $response->assertSessionHas('status', fn (string $status): bool => str_contains($status, '2 block(s) created')
       && str_contains($status, '2 suggestion(s) skipped'));
-    $this->assertSame(['section'], $page->blocks()->pluck('type')->all());
+    $this->assertSame(['section', 'plain_text'], $page->blocks()->pluck('type')->all());
     $this->assertDatabaseCount('media', 0);
   }
 
@@ -1156,6 +1156,89 @@ class PageConverterTest extends TestCase
   }
 
   #[Test]
+  public function landing_page_sections_create_container_blocks_with_meaningful_children(): void
+  {
+    $this->seedFoundation();
+    $this->publishBlockType('accordion', 'Accordion', true);
+    $this->publishBlockType('faq', 'FAQ');
+
+    $user = User::factory()->superAdmin()->create();
+    $html = <<<'HTML'
+<main>
+  <section>
+    <h1>Build quiz funnels faster</h1>
+    <p>Launch a focused landing page without rebuilding every content block by hand.</p>
+    <a class="wb-btn wb-btn-primary" href="/demo">Book a demo</a>
+  </section>
+  <section>
+    <h2>Conversion features</h2>
+    <p>Each feature stays editable after import.</p>
+    <div class="wb-grid">
+      <article class="wb-card">
+        <div class="wb-card-header"><h3>Fast setup</h3></div>
+        <div class="wb-card-body"><p>Turn static sections into structured CMS blocks.</p></div>
+        <div class="wb-card-footer"><a class="wb-btn" href="/start">Start now</a></div>
+      </article>
+      <article class="wb-card">
+        <div class="wb-card-header"><h3>Editor safe</h3></div>
+        <div class="wb-card-body"><p>Keep wrapper sections separate from child content.</p></div>
+        <div class="wb-card-footer"><a class="wb-btn wb-btn-secondary" href="/learn">Learn more</a></div>
+      </article>
+    </div>
+  </section>
+  <section>
+    <h2>Questions</h2>
+    <p>Common launch answers.</p>
+    <details><summary>Can the draft be reviewed?</summary><p>Yes, converted pages remain draft-only.</p></details>
+    <details><summary>Are sections editable?</summary><p>Yes, section content becomes child blocks.</p></details>
+  </section>
+</main>
+HTML;
+
+    $analysis = $this->actingAs($user)->post(route('admin.pages.converter.analyze'), $this->validPayload([
+      'page_title' => 'Landing Section Children',
+      'page_path' => 'landing-section-children',
+      'conversion_profile' => 'webblocks_ui',
+      'source_html' => $html,
+    ]));
+    $signedPlan = $this->signedPlanFromResponse($analysis);
+    $blocks = $signedPlan['plan']['blocks'];
+    $sectionKeys = collect($blocks)
+      ->where('block_slug', 'section')
+      ->pluck('key')
+      ->all();
+
+    $analysis->assertOk();
+    $this->assertSame(0, $signedPlan['plan']['summary']['fallback_count']);
+    $this->assertSame(0, $signedPlan['plan']['summary']['warning_count']);
+    $this->assertCount(3, $sectionKeys);
+
+    foreach ($sectionKeys as $sectionKey) {
+      $this->assertTrue(collect($blocks)->contains(
+        fn (array $block): bool => ($block['parent_key'] ?? null) === $sectionKey
+      ));
+    }
+
+    $result = app(PageConversionDraftCreator::class)->create($signedPlan['plan'], $user);
+    $sections = $result->page->blocks()->with('children')->where('type', 'section')->orderBy('sort_order')->get();
+
+    $this->assertSame(Page::STATUS_DRAFT, $result->page->status);
+    $this->assertNull($result->page->published_at);
+    $this->assertSame(0, $result->skippedSuggestionCount);
+    $this->assertSame([], $result->warnings);
+    $this->assertCount(3, $sections);
+
+    foreach ($sections as $section) {
+      $this->assertGreaterThan(0, $section->children->count());
+    }
+
+    $this->assertSame(['header', 'plain_text', 'button_link'], $sections[0]->children->pluck('type')->all());
+    $this->assertTrue($sections[1]->children->pluck('type')->contains('card'));
+    $this->assertTrue($sections[2]->children->pluck('type')->contains('accordion'));
+    $this->assertSame(0, $result->page->blocks()->where('type', 'section')->doesntHave('children')->count());
+  }
+
+  #[Test]
   public function details_body_is_sanitized_and_media_is_reported_without_importing_media(): void
   {
     $this->seedFoundation();
@@ -1295,6 +1378,7 @@ class PageConverterTest extends TestCase
     $this->assertNull($page->published_at);
     $this->assertSame([
       'content_header',
+      'section',
       'hero',
       'card',
       'card_header',
