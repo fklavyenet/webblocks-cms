@@ -299,6 +299,7 @@ php artisan site-promotion:apply storage/app/site-promotions/example.zip --targe
 - [Package Architecture Transition](docs/package-architecture.md)
 - [Block Type Contracts](docs/block-type-contracts.md)
 - [Renderer Contracts](docs/block-ui-renderer-contract.md)
+- [Public Block Render Markup](docs/public-block-render-markup.md)
 - [Development Workflow](DEVELOPMENT.md)
 
 ## Project Layer

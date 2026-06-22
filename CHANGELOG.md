@@ -11,6 +11,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
+- Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
 ## 1.32.144
 

@@ -25,6 +25,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Page Layouts](page-layouts.md)
 - [Block Type Contracts](block-type-contracts.md)
 - [Renderer Contracts](block-ui-renderer-contract.md)
+- [Public Block Render Markup](public-block-render-markup.md)
 - [Page Converter Roadmap](page-converter-roadmap.md)
 
 ## Multisite & Localization
@@ -54,6 +55,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Public Assets](public-assets.md)
 - [Search](search.md)
 - [Renderer Contracts](block-ui-renderer-contract.md)
+- [Public Block Render Markup](public-block-render-markup.md)
 
 ## Development
 
