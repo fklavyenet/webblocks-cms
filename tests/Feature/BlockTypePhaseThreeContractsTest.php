@@ -265,6 +265,8 @@ class BlockTypePhaseThreeContractsTest extends TestCase
     $this->assertSame([], $quote->knownGaps);
     $this->assertSame('clear', $toc->currentContractStatus);
     $this->assertSame([], $toc->knownGaps);
+    $this->assertSame(['content'], $html->translatableFields);
+    $this->assertSame([], $html->sharedSettingsFields);
     $this->assertSame('mostly clear', $html->currentContractStatus);
     $this->assertSame(['Trusted markup can also affect shared overlay or body-end output beyond the visible root.'], $html->knownGaps);
     $this->assertSame('clear', $navbar->currentContractStatus);

@@ -1668,6 +1668,9 @@ class PageBuilderExperienceTest extends TestCase
     $this->assertDatabaseHas('blocks', [
       'page_id' => $page->id,
       'type' => 'html',
+      'content' => null,
+    ]);
+    $this->assertTextTranslation(Block::query()->where('page_id', $page->id)->where('type', 'html')->firstOrFail(), $this->defaultLocale()->id, [
       'content' => '<div class="wb-card"><div class="wb-card-body"><i class="wb-icon wb-icon-home" aria-hidden="true"></i><strong>Home</strong></div></div>',
     ]);
   }

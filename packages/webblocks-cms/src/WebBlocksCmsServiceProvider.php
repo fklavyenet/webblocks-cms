@@ -810,6 +810,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootViews();
     $this->bootMigrations();
     $this->bootPublishing();
+
+    app(PluginRouteRegistrar::class)->protectCorePublicRoutesFromPluginCatchAlls();
   }
 
   protected function bootRateLimiters(): void

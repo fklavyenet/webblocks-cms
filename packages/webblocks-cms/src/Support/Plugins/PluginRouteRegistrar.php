@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PluginRouteFallbackController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginSettingsController;
 use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
+use WebBlocks\Cms\Models\Locale;
 
 class PluginRouteRegistrar
 {
@@ -41,6 +42,7 @@ class PluginRouteRegistrar
       }
     }
 
+    $this->protectCorePublicRoutesFromPluginCatchAlls();
     $this->registerPluginFallbackRoute();
 
     Route::getRoutes()->refreshNameLookups();
@@ -177,6 +179,34 @@ class PluginRouteRegistrar
       ->where('pluginPath', '.*')
       ->middleware(self::ADMIN_MIDDLEWARE)
       ->name('webblocks.plugins.fallback');
+  }
+
+  public function protectCorePublicRoutesFromPluginCatchAlls(): void
+  {
+    $redirectManagerRoute = Route::getRoutes()->getByName('webblocks.redirect-manager.public');
+
+    if ($redirectManagerRoute === null || $redirectManagerRoute->uri() !== '{webblocksRedirectManagerPath}') {
+      return;
+    }
+
+    $reservedPrefixes = [
+      'webadmin',
+      'cms',
+      'storage',
+      'assets',
+      'static',
+      'build',
+      'vendor',
+      'webblocks-ui',
+      'p',
+      'search',
+      Locale::routePattern(),
+    ];
+
+    $redirectManagerRoute->where(
+      'webblocksRedirectManagerPath',
+      '^(?!(?:'.implode('|', $reservedPrefixes).')(?:/|$)).+',
+    );
   }
 
   private function registerDefaultSettingsRoute(PluginDefinition $plugin): void

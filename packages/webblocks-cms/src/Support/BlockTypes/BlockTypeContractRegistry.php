@@ -766,9 +766,9 @@ class BlockTypeContractRegistry
       ],
       'html' => [
         'admin_form_fields' => ['Trusted HTML content'],
-        'translatable_fields' => [],
-        'shared_settings_fields' => ['canonical content'],
-        'storage_fields' => ['Trusted HTML content is currently stored canonically on the block row.'],
+        'translatable_fields' => ['content'],
+        'shared_settings_fields' => [],
+        'storage_fields' => ['Trusted HTML content is stored in block_text_translations.content per locale.'],
         'media_relationship_fields' => ['Trusted HTML can push shared overlay and body-end fragments through public registries at render time.'],
         'child_container_behavior' => ['Not a container. Historical child rows may still exist, but new child placement is not supported and the public renderer ignores child trees.'],
         'renderer_root_contract' => 'Owns a wrapper `<div>` around trusted markup and can also emit out-of-band overlay or body-end content.',
