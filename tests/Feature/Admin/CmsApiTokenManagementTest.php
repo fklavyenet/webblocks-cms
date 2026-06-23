@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\User;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\CmsApiToken;
@@ -43,6 +44,20 @@ class CmsApiTokenManagementTest extends TestCase
     $this->actingAs($user)
       ->post(route('admin.system.api-tokens.store'), ['name' => 'Local AI'])
       ->assertForbidden();
+  }
+
+  #[Test]
+  public function schema_missing_state_shows_controlled_setup_guidance(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    Schema::dropIfExists('cms_api_tokens');
+
+    $response = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
+
+    $response->assertOk();
+    $response->assertSee('API token storage is not ready.');
+    $response->assertSee('Run System Update again');
+    $response->assertSee('disabled', false);
   }
 
   #[Test]

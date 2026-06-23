@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.147
+
+- Ensure package-native System Updates create the CMS API token table for existing installs and show controlled setup guidance instead of a 500 when that schema is missing.
+
 ## 1.32.146
 
 - Add super-admin CMS API token management under `System -> API Tokens` with database-hashed tokens, one-time token display, revocation, and database-backed `/webadmin/api` bearer authentication.

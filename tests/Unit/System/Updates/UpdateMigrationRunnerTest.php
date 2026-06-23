@@ -80,6 +80,14 @@ class UpdateMigrationRunnerTest extends TestCase
   }
 
   #[Test]
+  public function package_update_migration_path_contains_cms_api_token_schema_repair(): void
+  {
+    $migrationPath = base_path('packages/webblocks-cms/database/migrations/updates');
+
+    $this->assertFileExists($migrationPath.'/2026_06_23_121000_ensure_cms_api_tokens_table.php');
+  }
+
+  #[Test]
   public function source_maintained_strategy_keeps_root_migration_authority(): void
   {
     $targetRoot = $this->makeTargetRoot('fklavyenet/webblocks-cms');

@@ -9,6 +9,15 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @if (! $schemaReady)
+        <div class="wb-alert wb-alert-warning">
+            <div class="wb-stack wb-gap-2">
+                <strong>API token storage is not ready.</strong>
+                <div>Run System Update again to apply the required CMS API token schema, then return to this page.</div>
+            </div>
+        </div>
+    @endif
+
     @if ($createdToken)
         <div class="wb-alert wb-alert-success">
             <div class="wb-stack wb-gap-3">
@@ -49,7 +58,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
             </div>
 
             <div class="wb-card-footer">
-                <button type="submit" class="wb-btn wb-btn-primary">Create Token</button>
+                <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $schemaReady)>Create Token</button>
             </div>
         </form>
     </div>
