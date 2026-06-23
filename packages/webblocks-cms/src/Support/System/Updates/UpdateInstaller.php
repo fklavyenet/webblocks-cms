@@ -150,6 +150,8 @@ class UpdateInstaller
       return;
     }
 
+    $this->normalizeComposerPackageMetadata($targetPath, $output);
+
     $this->commandRunner->run([
       'composer',
       'dump-autoload',
@@ -158,6 +160,7 @@ class UpdateInstaller
     ], $targetPath, $output);
 
     $this->normalizeComposerAutoloadMetadata($targetPath, $output);
+    $this->assertComposerAutoloadReady($targetPath);
   }
 
   public function runPostInstallCommands(array &$output): void
@@ -338,6 +341,97 @@ class UpdateInstaller
 
     if ($patchedFiles !== []) {
       $output[] = 'Normalized Composer autoload metadata for WebBlocks CMS flat package paths: '.implode(', ', $patchedFiles).'.';
+    }
+  }
+
+  private function normalizeComposerPackageMetadata(string $targetPath, array &$output): void
+  {
+    $installedJsonPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'composer'.DIRECTORY_SEPARATOR.'installed.json';
+
+    if (! File::isFile($installedJsonPath)) {
+      return;
+    }
+
+    try {
+      $installed = json_decode((string) File::get($installedJsonPath), true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException) {
+      return;
+    }
+
+    $packages = &$installed;
+
+    if (isset($installed['packages']) && is_array($installed['packages'])) {
+      $packages = &$installed['packages'];
+    }
+
+    if (! is_array($packages)) {
+      return;
+    }
+
+    $patched = false;
+
+    foreach ($packages as &$package) {
+      if (! is_array($package) || ($package['name'] ?? null) !== 'fklavyenet/webblocks-cms') {
+        continue;
+      }
+
+      $package['autoload']['psr-4'] = [
+        'WebBlocks\\Cms\\' => 'src/',
+        'WebBlocks\\Cms\\Database\\Seeders\\' => 'database/seeders/',
+      ];
+      $package['extra']['laravel']['providers'] = [
+        'WebBlocks\\Cms\\WebBlocksCmsServiceProvider',
+      ];
+      unset($package['autoload']['psr-4']['WebBlocks\\Cms\\Plugins\\WebBlocksUiManager\\']);
+
+      $patched = true;
+    }
+
+    unset($package);
+
+    if (! $patched) {
+      return;
+    }
+
+    File::put($installedJsonPath, json_encode($installed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
+
+    $output[] = 'Normalized Composer installed package metadata for WebBlocks CMS flat package paths.';
+  }
+
+  private function assertComposerAutoloadReady(string $targetPath): void
+  {
+    $composerVendorPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'composer';
+    $autoloadPsr4Path = $composerVendorPath.DIRECTORY_SEPARATOR.'autoload_psr4.php';
+    $autoloadStaticPath = $composerVendorPath.DIRECTORY_SEPARATOR.'autoload_static.php';
+
+    foreach ([$autoloadPsr4Path, $autoloadStaticPath] as $autoloadPath) {
+      if (! File::isFile($autoloadPath)) {
+        continue;
+      }
+
+      $contents = (string) File::get($autoloadPath);
+
+      if (str_contains($contents, 'fklavyenet/webblocks-cms/packages/webblocks-cms/src')) {
+        throw new UpdateException(
+          'The update package was applied, but Composer autoload metadata still points at an old WebBlocks CMS package path. The run was not marked successful.',
+          'Stale WebBlocks CMS autoload path remains in '.$this->relativePath($targetPath, $autoloadPath).'.',
+        );
+      }
+    }
+
+    foreach ([
+      'src'.DIRECTORY_SEPARATOR.'WebBlocksCmsServiceProvider.php',
+      'src'.DIRECTORY_SEPARATOR.'Support'.DIRECTORY_SEPARATOR.'WebBlocks.php',
+      'src'.DIRECTORY_SEPARATOR.'Support'.DIRECTORY_SEPARATOR.'System'.DIRECTORY_SEPARATOR.'Updates'.DIRECTORY_SEPARATOR.'UpdateInstaller.php',
+    ] as $relativePackageFile) {
+      $path = $this->canonicalComposerPackageRuntimePath($targetPath).DIRECTORY_SEPARATOR.$relativePackageFile;
+
+      if (! File::isFile($path)) {
+        throw new UpdateException(
+          'The update package was applied, but required WebBlocks CMS package files could not be verified. The run was not marked successful.',
+          'Missing required package file '.$this->relativePath($targetPath, $path).'.',
+        );
+      }
     }
   }
 
