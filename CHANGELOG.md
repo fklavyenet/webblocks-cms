@@ -11,13 +11,17 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
 - Document the Internal Content API route contract for token-protected AI/operator CMS content operations.
-- Add the Phase 1 Internal Content API under `/webadmin/api` with token-protected JSON discovery endpoints and draft-only content plan validate/apply operations.
-- Add Phase 2A Internal Content API foundations for safe navigation menu items, Shared Slots, Shared Slot blocks, and compatible page slot Shared Slot assignment.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.145
+
+- Add Phase 2A Internal Content API foundations for safe navigation menu items, Shared Slots, Shared Slot blocks, and compatible page slot Shared Slot assignment.
+- Extend Internal Content API content plans with optional `navigation_menus`, `shared_slots`, and `page_slot_shared_slots` sections while preserving draft-first, non-destructive apply behavior.
+
 ## 1.32.144
 
+- Add the Phase 1 Internal Content API under `/webadmin/api` with token-protected JSON discovery endpoints and draft-only content plan validate/apply operations.
 - Fix Page Converter section output so detected `<section>` fragments create Section container blocks with meaningful child blocks instead of empty wrappers.
 
 ## 1.32.143
