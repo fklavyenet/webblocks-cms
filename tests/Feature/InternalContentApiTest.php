@@ -102,6 +102,91 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function content_contract_requires_a_valid_bearer_token(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $this->getJson('/webadmin/api/content-contract')
+      ->assertUnauthorized()
+      ->assertJsonPath('ok', false)
+      ->assertJsonPath('code', 'invalid_internal_api_token');
+
+    $this->withHeader('Authorization', 'Bearer wrong-token')
+      ->getJson('/webadmin/api/content-contract')
+      ->assertUnauthorized()
+      ->assertJsonPath('ok', false)
+      ->assertJsonPath('code', 'invalid_internal_api_token');
+  }
+
+  #[Test]
+  public function content_contract_returns_safe_ai_page_building_contract_metadata(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $response = $this->withInternalToken()
+      ->getJson('/webadmin/api/content-contract');
+
+    $response
+      ->assertOk()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('api.prefix', '/webadmin/api')
+      ->assertJsonPath('api.content_validate', '/webadmin/api/content/validate')
+      ->assertJsonPath('api.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonPath('api.preview_url_template', '/webadmin/pages/{page}/preview')
+      ->assertJsonPath('safety.draft_only', true)
+      ->assertJsonPath('safety.apply_requires_explicit_user_approval', true)
+      ->assertJsonPath('safety.publishes', false)
+      ->assertJsonPath('safety.overwrites_existing_content', false)
+      ->assertJsonPath('safety.remote_fetch', false)
+      ->assertJsonPath('safety.media_import', false)
+      ->assertJsonPath('discovery.sites', '/webadmin/api/sites')
+      ->assertJsonPath('discovery.locales', '/webadmin/api/locales')
+      ->assertJsonPath('discovery.page_layouts', '/webadmin/api/page-layouts')
+      ->assertJsonPath('discovery.block_types', '/webadmin/api/block-types')
+      ->assertJsonPath('discovery.navigation_menus', '/webadmin/api/navigation-menus')
+      ->assertJsonPath('discovery.shared_slots', '/webadmin/api/shared-slots')
+      ->assertJsonStructure([
+        'api',
+        'safety',
+        'discovery',
+        'recommended_patterns' => ['marketing_homepage', 'avoid'],
+        'block_contracts' => [
+          '*' => [
+            'handle',
+            'slug',
+            'label',
+            'category',
+            'status',
+            'is_active',
+            'is_container',
+            'supports_children',
+            'allowed_child_handles',
+            'translatable_fields',
+            'shared_settings_fields',
+            'renderer_root_contract',
+          ],
+        ],
+      ]);
+
+    $handles = collect($response->json('block_contracts'))->pluck('handle');
+
+    foreach (['section', 'container', 'hero', 'cta', 'card', 'card_body', 'plain_text', 'rich-text', 'button_link'] as $handle) {
+      $this->assertContains($handle, $handles, "Expected content contract to include [{$handle}].");
+    }
+
+    $encoded = json_encode($response->json(), JSON_UNESCAPED_SLASHES);
+
+    $this->assertIsString($encoded);
+    $this->assertStringNotContainsString(base_path(), $encoded);
+    $this->assertStringNotContainsString(storage_path(), $encoded);
+    $this->assertStringNotContainsString(public_path(), $encoded);
+    $this->assertStringNotContainsString('secret-token', $encoded);
+    $this->assertStringNotContainsString('token_hash', $encoded);
+    $this->assertStringNotContainsString('token_preview', $encoded);
+    $this->assertStringNotContainsString('WEBBLOCKS_CMS_API_TOKEN', $encoded);
+  }
+
+  #[Test]
   public function validate_returns_normalized_plan_without_writing_content(): void
   {
     $this->createInternalApiToken('secret-token');

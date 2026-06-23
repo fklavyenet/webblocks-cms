@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.149
+
+- Add an AI Page Building Guide and token-protected `/webadmin/api/content-contract` discovery endpoint for safe generic draft page creation by trusted AI/operator tools.
+
 ## 1.32.148
 
 - Add authenticated Edit Page preview at `/webadmin/pages/{page}/preview` for draft, in-review, and published pages, with noindex protection, a preview banner, site-scoped admin authorization, no visitor-report logging, and public routes still limited to published content.

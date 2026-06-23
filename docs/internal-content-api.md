@@ -105,6 +105,7 @@ GET /webadmin/api/sites
 GET /webadmin/api/locales
 GET /webadmin/api/page-layouts
 GET /webadmin/api/block-types
+GET /webadmin/api/content-contract
 GET /webadmin/api/pages
 GET /webadmin/api/pages/{page}
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
@@ -138,6 +139,14 @@ Both modes are needed:
 - the Resource API exposes the existing CMS content model and contracts to internal tools
 - the Content Validate / Apply API avoids partial writes during larger page builds
 
+### Content Contract Endpoint
+
+`GET /webadmin/api/content-contract` is a read-only discovery endpoint for trusted AI/operator tools. It returns the API prefix, validate/apply URLs, admin preview URL template, safety flags, discovery URLs, recommended page-building patterns, and sanitized block contract metadata.
+
+The endpoint is generic CMS product behavior. It must not return install-specific secrets, token values, raw Blade contents, absolute filesystem paths, private server paths, or site-specific instructions. Block contract rows may include handle/slug, label, category, status, container and child support, translatable fields, shared settings fields, and public renderer root behavior.
+
+AI tools should call this endpoint or `GET /webadmin/api/block-types` before building a plan and must use only handles that are present in the current install.
+
 ## Phase 1 Scope
 
 ### Discovery Endpoints
@@ -146,6 +155,7 @@ Both modes are needed:
 - `GET /webadmin/api/locales`
 - `GET /webadmin/api/page-layouts`
 - `GET /webadmin/api/block-types`
+- `GET /webadmin/api/content-contract`
 
 ### Page Endpoints
 

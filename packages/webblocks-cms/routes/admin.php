@@ -56,6 +56,7 @@ Route::middleware(['web', 'install.required', 'internal-api.token'])
     Route::get('/locales', [InternalContentResourceController::class, 'locales'])->name('locales.index');
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
+    Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/pages', [InternalContentResourceController::class, 'pages'])->name('pages.index');
     Route::get('/pages/{page}', [InternalContentResourceController::class, 'page'])->name('pages.show');
     Route::post('/pages/{page}/slots/{slot}/shared-slot', [InternalSharedSlotController::class, 'assignToPageSlot'])->name('pages.slots.shared-slot');

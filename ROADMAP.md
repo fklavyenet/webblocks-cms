@@ -9,6 +9,7 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: document `/webadmin/api` as the canonical internal/operator CMS API prefix.
 - Done: document resource-style endpoints directly under `/webadmin/api/...`, such as `/webadmin/api/pages` and `/webadmin/api/blocks`.
 - Done: document plan-based content operations at `/webadmin/api/content/validate` and `/webadmin/api/content/apply`.
+- Done: document the AI Page Building Guide for safe read-only discovery, validate-before-apply workflow, exact block handle discovery, and authenticated draft preview URLs.
 - Done: keep the initial route contract generic and CMS-owned, without QuizTem-specific runtime code.
 
 ### Phase 1 - Draft-Safe Internal Content API

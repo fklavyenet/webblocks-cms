@@ -27,7 +27,14 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Renderer Contracts](block-ui-renderer-contract.md)
 - [Public Block Render Markup](public-block-render-markup.md)
 - [Internal Content API](internal-content-api.md)
+- [AI Page Building Guide](ai-page-building-guide.md)
 - [Page Converter Roadmap](page-converter-roadmap.md)
+
+## Page Builder / AI-Friendly CMS Operations
+
+- [Internal Content API](internal-content-api.md)
+- [AI Page Building Guide](ai-page-building-guide.md)
+- [Block Type Contracts](block-type-contracts.md)
 
 ## Multisite & Localization
 

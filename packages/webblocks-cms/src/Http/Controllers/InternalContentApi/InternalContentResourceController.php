@@ -70,6 +70,55 @@ class InternalContentResourceController extends Controller
     return $this->ok(['block_types' => $blockTypes]);
   }
 
+  public function contentContract(): JsonResponse
+  {
+    $blockContracts = BlockType::query()
+      ->where('status', 'published')
+      ->orderBy('sort_order')
+      ->orderBy('name')
+      ->get()
+      ->map(fn (BlockType $blockType) => $this->safeBlockContract($blockType))
+      ->values();
+
+    return $this->ok([
+      'api' => [
+        'prefix' => '/webadmin/api',
+        'content_validate' => '/webadmin/api/content/validate',
+        'content_apply' => '/webadmin/api/content/apply',
+        'preview_url_template' => '/webadmin/pages/{page}/preview',
+      ],
+      'safety' => [
+        'draft_only' => true,
+        'apply_requires_explicit_user_approval' => true,
+        'publishes' => false,
+        'overwrites_existing_content' => false,
+        'remote_fetch' => false,
+        'media_import' => false,
+      ],
+      'discovery' => [
+        'sites' => '/webadmin/api/sites',
+        'locales' => '/webadmin/api/locales',
+        'page_layouts' => '/webadmin/api/page-layouts',
+        'block_types' => '/webadmin/api/block-types',
+        'navigation_menus' => '/webadmin/api/navigation-menus',
+        'shared_slots' => '/webadmin/api/shared-slots',
+      ],
+      'recommended_patterns' => [
+        'marketing_homepage' => [
+          'section -> container -> hero',
+          'section -> container -> grid -> card -> card_body',
+          'section -> container -> cta',
+        ],
+        'avoid' => [
+          'single rich-text blob for a full page',
+          'trusted html fallback when structured blocks can represent the content',
+          'full-width hero/cta without a container unless intentionally edge-to-edge',
+        ],
+      ],
+      'block_contracts' => $blockContracts,
+    ]);
+  }
+
   public function pages(Request $request): JsonResponse
   {
     $pages = Page::query()
@@ -150,5 +199,33 @@ class InternalContentResourceController extends Controller
       'warnings' => [],
       'errors' => [],
     ]);
+  }
+
+  private function safeBlockContract(BlockType $blockType): array
+  {
+    $blockTypePayload = $this->presenter->blockType($blockType);
+    $contract = $blockTypePayload['contract'] ?? [];
+
+    return [
+      'handle' => $blockType->slug,
+      'slug' => $blockType->slug,
+      'label' => $blockType->name,
+      'category' => $blockType->category,
+      'status' => $blockType->status,
+      'is_active' => $blockType->status === 'published',
+      'source_type' => $blockType->source_type,
+      'is_system' => (bool) $blockType->is_system,
+      'is_container' => (bool) $blockType->is_container,
+      'supports_children' => (bool) ($contract['supports_children'] ?? false),
+      'allowed_child_handles' => $contract['allowed_child_type_slugs'] ?? null,
+      'translatable_fields' => $contract['translatable_fields'] ?? [],
+      'translation_family' => $contract['translation_family'] ?? null,
+      'translation_family_fields' => $contract['translation_family_fields'] ?? [],
+      'shared_settings_fields' => $contract['shared_settings_fields'] ?? [],
+      'renderer_root_contract' => $contract['renderer_root_contract'] ?? null,
+      'owns_public_root' => (bool) ($contract['owns_public_root_helper'] ?? false),
+      'documented_contract' => (bool) ($contract['documented'] ?? false),
+      'contract_status' => $contract['current_contract_status'] ?? null,
+    ];
   }
 }

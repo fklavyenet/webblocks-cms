@@ -99,6 +99,8 @@ CMS browser admin resource routes follow the `/webadmin/{resource}` convention. 
 
 The Internal Content API for trusted AI/operator tools is documented in [docs/internal-content-api.md](docs/internal-content-api.md). CMS API tokens are created by a super admin from `System -> API Tokens`, stored in the CMS database as hashes, shown in plain text only once, and used as Bearer tokens by local AI/operator tools that may keep `WEBBLOCKS_CMS_API_TOKEN` in their own local `.env`. The API returns JSON-only responses and remains draft-first and non-destructive. Current endpoints include safe creation foundations for navigation menu items, Shared Slots, Shared Slot block trees, and explicit compatible Shared Slot assignment to page slots.
 
+For safe AI-assisted page creation, see the [AI Page Building Guide](docs/ai-page-building-guide.md). It documents read-only discovery, the `/webadmin/api/content-contract` endpoint, handle verification, validate-before-apply behavior, explicit approval before writes, and authenticated draft preview URLs.
+
 This split is deliberate. Nginx `try_files` can resolve `/cms/` as the physical `public/cms/` directory before Laravel sees a route. The final v1.32.56 behavior avoids that collision with `/webadmin` instead of relying on a `public/cms/index.php` front-controller handoff. That handoff file must stay absent from both root `public/cms/` and package `packages/webblocks-cms/public/cms/` assets.
 
 For a fresh install, first get the source code locally:
