@@ -41,6 +41,7 @@
 - Keep WebBlocks CMS free of Vite, Laravel Vite plugin, Tailwind, npm, Node build-chain, package lock, `public/build`, and hot-file runtime requirements. CMS-owned assets ship as static files under `public/cms`, and WebBlocks UI is consumed from pinned published assets.
 - Do not assume the `/admin` path belongs to CMS.
 - In coexistence designs, `/webadmin` is the canonical CMS admin prefix and `/cms` remains static assets only.
+- Browser admin resource routes must stay under `/webadmin` using collection `/webadmin/{resource}`, create `/webadmin/{resource}/create`, edit `/webadmin/{resource}/{id}/edit`, member action `/webadmin/{resource}/{id}/{action}`, and collection action `/webadmin/{resource}/{action}`. Page preview is `/webadmin/pages/{page}/preview`; do not add preview routes under `/admin`, `/cms`, `/webadmin/api`, `/webadmin/pages/preview/{page}`, or `/webadmin/preview/pages/{page}`.
 - Preserve the host `/login` model; do not introduce a separate mandatory CMS login system.
 - Treat CMS authorization as CMS membership/role authorization.
 - Do not automatically equate host product admin status with CMS admin status.

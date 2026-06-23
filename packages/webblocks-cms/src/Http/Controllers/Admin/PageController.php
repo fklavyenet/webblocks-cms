@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,9 @@ use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
+use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PageController extends Controller
 {
@@ -318,6 +321,36 @@ class PageController extends Controller
     ]);
   }
 
+  public function preview(Page $page, PublicPagePresenter $presenter): Response
+  {
+    $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+
+    abort_if($page->isSharedSlotSourcePage(), 404);
+
+    $page->load([
+      'site',
+      'translations.locale',
+      'slots.slotType',
+      'slots.sharedSlot',
+      'pageAssets',
+      'blocks' => fn ($query) => $query
+        ->with($this->previewBlockRelations())
+        ->orderBy('sort_order')
+        ->orderBy('id'),
+    ]);
+
+    if ($defaultTranslation = $page->defaultTranslation()) {
+      $page->setRelation('currentTranslation', $defaultTranslation);
+    }
+
+    return response()
+      ->view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', [
+        ...$presenter->present($page, preview: true),
+        'previewMode' => true,
+      ])
+      ->header('X-Robots-Tag', 'noindex, nofollow');
+  }
+
   public function update(PageRequest $request, Page $page): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
@@ -386,6 +419,24 @@ class PageController extends Controller
       'requestedType' => in_array($requestedType, ['css', 'js'], true) ? $requestedType : '',
       'selectedAsset' => $selectedAsset,
       'closeUrl' => $closeUrl,
+    ];
+  }
+
+  private function previewBlockRelations(): array
+  {
+    return [
+      'blockType',
+      'slotType',
+      'asset',
+      'blockAssets.asset',
+      'textTranslations',
+      'buttonTranslations',
+      'imageTranslations',
+      'contactFormTranslations',
+      'children' => fn ($query) => $query
+        ->with($this->previewBlockRelations())
+        ->orderBy('sort_order')
+        ->orderBy('id'),
     ];
   }
 

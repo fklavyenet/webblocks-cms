@@ -20,11 +20,11 @@ class PublicPagePresenter
     private readonly PageRouteResolver $pageRouteResolver,
   ) {}
 
-  public function present(Page $page): array
+  public function present(Page $page, bool $preview = false): array
   {
     $topLevelBlocks = $page->blocks
       ->whereNull('parent_id')
-      ->where('status', 'published')
+      ->when(! $preview, fn (Collection $blocks) => $blocks->where('status', 'published'))
       ->sortBy(fn (Block $block) => sprintf('%010d-%010d', (int) $block->sort_order, (int) $block->id))
       ->values();
 
@@ -34,7 +34,7 @@ class PublicPagePresenter
 
     $slots = $page->slots
       ->sortBy(fn (PageSlot $slot) => sprintf('%010d-%010d', (int) $slot->sort_order, (int) $slot->id))
-      ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks))
+      ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks, $preview))
       ->values();
 
     $slots = $this->orderSlotsForLayout($page, $slots);
@@ -100,11 +100,11 @@ class PublicPagePresenter
     return $this->siteLabel($page?->site);
   }
 
-  private function presentSlot(PageSlot $slot, Collection $topLevelBlocks): array
+  private function presentSlot(PageSlot $slot, Collection $topLevelBlocks, bool $preview): array
   {
     $page = $slot->page ?? $slot->page()->firstOrFail();
     $slug = $slot->slotType?->slug ?? 'main';
-    $blocks = $this->applyRenderContext($this->resolveSlotBlocks($slot, $topLevelBlocks), $page, $slug);
+    $blocks = $this->applyRenderContext($this->resolveSlotBlocks($slot, $topLevelBlocks), $page, $slug, $preview);
     $wrapper = $this->slotWrapperResolver->resolve($page, $slot);
 
     if ($promotedNavbar = $this->promotedHeaderNavbar($slug, $blocks, $wrapper)) {
@@ -188,19 +188,20 @@ class PublicPagePresenter
     return collect();
   }
 
-  private function applyRenderContext(Collection $blocks, Page $page, string $slotSlug): Collection
+  private function applyRenderContext(Collection $blocks, Page $page, string $slotSlug, bool $preview = false): Collection
   {
     return $blocks
-      ->map(function (Block $block) use ($page, $slotSlug) {
+      ->map(function (Block $block) use ($page, $slotSlug, $preview) {
         $block->setRelation('renderPage', $page);
         $block->setAttribute('render_locale_code', $page->currentTranslation?->locale?->code);
         $block->setAttribute('render_slot_slug', $slotSlug);
+        $block->setAttribute('render_preview', $preview);
 
         if ($block->relationLoaded('children')) {
           $children = $block->getRelation('children');
 
           if ($children instanceof Collection) {
-            $block->setRelation('children', $this->applyRenderContext($children, $page, $slotSlug));
+            $block->setRelation('children', $this->applyRenderContext($children, $page, $slotSlug, $preview));
           }
         }
 

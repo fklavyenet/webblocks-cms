@@ -66,6 +66,9 @@
             'ogUrl' => $publicMeta['og_url'] ?? null,
             'ogSiteName' => $publicMeta['og_site_name'] ?? null,
         ])
+        @if ($previewMode ?? false)
+            <meta name="robots" content="noindex, nofollow">
+        @endif
 
         {{-- Public CSS assets --}}
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
@@ -102,6 +105,12 @@
         @endforeach
     </head>
     <body class="{{ $publicBodyClass ?? 'wb-public-body' }}">
+        @if ($previewMode ?? false)
+            <div class="wb-alert wb-alert-warning wb-m-0" role="status">
+                <strong>Preview mode</strong> — this page is not public unless it is published.
+            </div>
+        @endif
+
         @if (! isset($page))
             @yield('content')
         @else

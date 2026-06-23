@@ -14,6 +14,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.148
+
+- Add authenticated Edit Page preview at `/webadmin/pages/{page}/preview` for draft, in-review, and published pages, with noindex protection, a preview banner, site-scoped admin authorization, no visitor-report logging, and public routes still limited to published content.
+- Document the CMS admin resource/action URL standard so browser admin member actions stay under `/webadmin/{resource}/{id}/{action}` and JSON APIs stay under `/webadmin/api`.
+
 ## 1.32.147
 
 - Ensure package-native System Updates create the CMS API token table for existing installs and show controlled setup guidance instead of a 500 when that schema is missing.

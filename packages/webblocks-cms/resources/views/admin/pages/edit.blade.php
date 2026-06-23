@@ -7,6 +7,7 @@
     default => 'settings',
   });
   $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
+  $pagePreviewUrl = route('admin.pages.preview', $page);
   $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
   $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
   $pageRevisionsUrl = $canViewRevisions ? route('admin.pages.revisions.index', $page) : null;
@@ -18,6 +19,7 @@
     $pageDuplicateUrl ? '<a href="'.$pageDuplicateUrl.'" class="wb-btn wb-btn-secondary">Duplicate page</a>' : null,
     $pageMoveUrl ? '<a href="'.$pageMoveUrl.'" class="wb-btn wb-btn-secondary">Move to another site</a>' : null,
     $pageRevisionsUrl ? '<a href="'.$pageRevisionsUrl.'" class="wb-btn wb-btn-secondary">Revision History</a>' : null,
+    '<a href="'.$pagePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i> <span>Preview</span></a>',
     $pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : null,
   ])->filter()->implode('');
 @endphp

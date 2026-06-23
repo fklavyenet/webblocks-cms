@@ -63,6 +63,20 @@ The updater flow must remain release-based and package-based.
 
 System Updates apply published packages and required update migrations only. Broad catalog synchronization is explicit maintenance; use `php artisan webblocks:catalog-repair --dry-run --all` before applying `php artisan webblocks:catalog-repair --all` when an install needs shipped block type, slot type, page layout, or icon catalog repair.
 
+## Admin Resource URL Standard
+
+CMS browser admin routes live under `/webadmin`. Do not add CMS admin routes under `/admin`, because host products may own that prefix. Do not add CMS admin routes under `/cms`, because that prefix is reserved for static CMS assets. Do not put browser admin pages under `/webadmin/api`; that namespace is JSON-only for trusted API clients.
+
+Use these shapes:
+
+- resource collection: `/webadmin/{resource}`
+- create: `/webadmin/{resource}/create`
+- edit: `/webadmin/{resource}/{id}/edit`
+- member action: `/webadmin/{resource}/{id}/{action}`
+- collection action: `/webadmin/{resource}/{action}`
+
+For page preview, the canonical route is `GET /webadmin/pages/{page}/preview`. Do not use `/webadmin/pages/preview/{page}`, `/webadmin/preview/pages/{page}`, `/admin/...`, `/cms/...`, or `/webadmin/api/...`.
+
 ## Package-Native Schema Changes
 
 Runtime-required schema changes must support both install paths:

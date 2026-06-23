@@ -31,6 +31,30 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 - Login must preserve the intended URL so users can return to the originally requested CMS admin page.
 - Being authenticated does not imply CMS authorization.
 
+## CMS Admin Resource URLs
+
+- CMS admin routes live under `/webadmin`.
+- `/admin` may belong to the host application and must not be used for CMS admin URLs.
+- `/cms` is reserved for static CMS assets and must not be used for CMS admin URLs.
+- `/webadmin/api` is reserved for token-protected JSON APIs, not browser admin pages.
+- Admin resource collection routes use `/webadmin/{resource}`.
+- Admin create routes use `/webadmin/{resource}/create`.
+- Admin edit routes use `/webadmin/{resource}/{id}/edit`.
+- Admin member action routes use `/webadmin/{resource}/{id}/{action}`.
+- Admin collection action routes use `/webadmin/{resource}/{action}`.
+- Page preview is an authenticated member action at `/webadmin/pages/{page}/preview`.
+
+Reason:
+
+- Co-installed host products may already own `/admin`, while `/cms` is a physical public asset namespace.
+- Browser admin actions and JSON APIs have different auth, response, and operational contracts.
+
+Consequences:
+
+- New browser admin actions must follow the member or collection action shape under `/webadmin`.
+- Do not introduce alternate page preview routes such as `/webadmin/pages/preview/{page}`, `/webadmin/preview/pages/{page}`, `/admin/...`, `/cms/...`, or `/webadmin/api/...`.
+- Admin preview routes must use CMS admin authentication and authorization, must not mutate content, and must not weaken public routing.
+
 ## CMS Authorization
 
 - CMS access is controlled by the product-owned CMS membership and role system.

@@ -107,8 +107,9 @@ Representative tests:
 - `tests/Feature/Admin/AdminDashboardRouteTest.php`
 - `tests/Feature/Admin/AdminSidebarNavigationTest.php`
 - `tests/Feature/Admin/SharedAdminPartialPackageViewTest.php`
+- `tests/Feature/Admin/PagePreviewTest.php`
 
-Run with `composer test:admin-smoke` for layout, sidebar, shared admin partial, and package admin route bootstrap changes. Add specific admin feature tests when the changed area is deeper than route/layout smoke.
+Run with `composer test:admin-smoke` for layout, sidebar, shared admin partial, package admin route bootstrap changes, and admin preview route/link smoke coverage. Add specific admin feature tests when the changed area is deeper than route/layout smoke.
 
 ## Public-Rendering / Content
 
@@ -122,8 +123,9 @@ Representative tests:
 - `tests/Feature/BlockTypePhaseThreeContractsTest.php`
 - `tests/Feature/Integrity/BlockTranslationIntegrityTest.php`
 - `tests/Feature/Admin/PageBuilderExperienceTest.php`
+- `tests/Feature/Admin/PagePreviewTest.php`
 
-Run focused classes or method filters for block rendering, public shell, media, rich text, shared slots, translation integrity, or page builder changes. These are important but often too broad for package/update-only hotfixes.
+Run focused classes or method filters for block rendering, public shell, media, rich text, shared slots, translation integrity, admin preview rendering, or page builder changes. Preview work must prove that authenticated admin preview can render draft/in-review/published pages without changing public route behavior, visitor reporting, publishing state, or search/indexing assumptions.
 
 ## Retired Legacy / Root-Managed Bridge
 

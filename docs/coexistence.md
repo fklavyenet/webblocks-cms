@@ -30,6 +30,20 @@ CMS admin prefixes must never reuse a physical public asset directory segment. I
 
 The final solution avoids the route/filesystem collision entirely instead of relying on a `public/cms/index.php` handoff or front-controller bridge. `public/cms/index.php` must stay absent from both root public assets and package public assets.
 
+## Admin Resource And Action URLs
+
+CMS browser admin routes use `/webadmin`, while `/webadmin/api` is reserved for token-protected JSON APIs. Resource URLs should be predictable:
+
+- collection: `/webadmin/{resource}`
+- create: `/webadmin/{resource}/create`
+- edit: `/webadmin/{resource}/{id}/edit`
+- member action: `/webadmin/{resource}/{id}/{action}`
+- collection action: `/webadmin/{resource}/{action}`
+
+Page preview is a member action: `GET /webadmin/pages/{page}/preview`. Do not add CMS page preview routes under `/admin`, `/cms`, `/webadmin/api`, `/webadmin/pages/preview/{page}`, or `/webadmin/preview/pages/{page}`.
+
+Authenticated admin previews must keep public routing separate. They may render draft or in-review page-owned content for authorized CMS users, but the public page route must continue to expose only published pages and published public content.
+
 ## Host-Owned Login
 
 Within a shared Laravel host, login and registration are host application responsibilities. The shared `users` table is the identity and login layer.
