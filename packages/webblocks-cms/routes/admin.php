@@ -42,6 +42,8 @@ use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
@@ -55,6 +57,15 @@ Route::middleware(['web', 'install.required', 'internal-api.token'])
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
     Route::get('/pages', [InternalContentResourceController::class, 'pages'])->name('pages.index');
     Route::get('/pages/{page}', [InternalContentResourceController::class, 'page'])->name('pages.show');
+    Route::post('/pages/{page}/slots/{slot}/shared-slot', [InternalSharedSlotController::class, 'assignToPageSlot'])->name('pages.slots.shared-slot');
+    Route::get('/navigation-menus', [InternalNavigationController::class, 'index'])->name('navigation-menus.index');
+    Route::post('/navigation-menus', [InternalNavigationController::class, 'store'])->name('navigation-menus.store');
+    Route::get('/navigation-menus/{navigationMenu}', [InternalNavigationController::class, 'show'])->name('navigation-menus.show');
+    Route::post('/navigation-menus/{navigationMenu}/items', [InternalNavigationController::class, 'storeItem'])->name('navigation-menus.items.store');
+    Route::get('/shared-slots', [InternalSharedSlotController::class, 'index'])->name('shared-slots.index');
+    Route::post('/shared-slots', [InternalSharedSlotController::class, 'store'])->name('shared-slots.store');
+    Route::get('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'show'])->name('shared-slots.show');
+    Route::post('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'storeBlock'])->name('shared-slots.blocks.store');
     Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
     Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');
     Route::post('/content/validate', [InternalContentPlanController::class, 'validatePlan'])->name('content.validate');

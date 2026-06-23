@@ -4,7 +4,7 @@
 
 The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts and create draft-first content through structured JSON without logging into, scraping, or automating the browser admin UI.
 
-Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. It is intentionally non-destructive.
+Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. Phase 2A adds safe foundations for navigation menus, Shared Slots, and explicit page slot Shared Slot assignment. The API remains intentionally non-destructive.
 
 ## Product Positioning
 
@@ -95,8 +95,17 @@ GET /webadmin/api/page-layouts
 GET /webadmin/api/block-types
 GET /webadmin/api/pages
 GET /webadmin/api/pages/{page}
+POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
 GET /webadmin/api/blocks
 GET /webadmin/api/blocks/{block}
+GET /webadmin/api/navigation-menus
+GET /webadmin/api/navigation-menus/{navigationMenu}
+POST /webadmin/api/navigation-menus
+POST /webadmin/api/navigation-menus/{navigationMenu}/items
+GET /webadmin/api/shared-slots
+GET /webadmin/api/shared-slots/{sharedSlot}
+POST /webadmin/api/shared-slots
+POST /webadmin/api/shared-slots/{sharedSlot}/blocks
 ```
 
 ### Content Validate / Apply API
@@ -108,7 +117,7 @@ POST /webadmin/api/content/validate
 POST /webadmin/api/content/apply
 ```
 
-`validate` checks a complete content plan and writes nothing. `apply` validates the plan again and then creates the draft page transactionally. This is useful for AI-generated pages, templates, starter pages, and migration helpers where the CMS should avoid half-created content.
+`validate` checks a complete content plan and writes nothing. `apply` validates the plan again and then creates the requested draft page, navigation items, Shared Slots, Shared Slot block trees, and page slot Shared Slot assignments transactionally. This is useful for AI-generated pages, templates, starter pages, shared headers/footers, and migration helpers where the CMS should avoid half-created content.
 
 The request body may still contain a `plan` field or another structured content plan payload. The URL should remain `/content/validate` and `/content/apply`.
 
@@ -130,11 +139,40 @@ Both modes are needed:
 
 - `GET /webadmin/api/pages`
 - `GET /webadmin/api/pages/{page}`
+- `POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot`
 
 ### Block Endpoints
 
 - `GET /webadmin/api/blocks`
 - `GET /webadmin/api/blocks/{block}`
+
+### Navigation Endpoints
+
+- `GET /webadmin/api/navigation-menus`
+- `GET /webadmin/api/navigation-menus/{navigationMenu}`
+- `POST /webadmin/api/navigation-menus`
+- `POST /webadmin/api/navigation-menus/{navigationMenu}/items`
+
+Navigation menus use the existing CMS `navigation_items.menu_key` model. Phase 2A supports the shipped CMS menu handles such as `primary`, `footer`, `mobile`, `legal`, and `docs`; it does not add a separate menu table. Creating a navigation menu is treated as creating a safe site-scoped menu group with optional initial items. It refuses to overwrite a site/menu that already has items.
+
+Navigation item URLs may be internal paths such as `/`, `/about`, and `/contact`, or safe `http`/`https` URLs. The API rejects `javascript:`, `data:`, protocol-relative URLs, traversal, malformed URLs, unsupported targets, and empty labels. Navigation endpoints do not create pages, publish pages, crawl sites, or fetch remote URLs.
+
+### Shared Slot Endpoints
+
+- `GET /webadmin/api/shared-slots`
+- `GET /webadmin/api/shared-slots/{sharedSlot}`
+- `POST /webadmin/api/shared-slots`
+- `POST /webadmin/api/shared-slots/{sharedSlot}/blocks`
+
+Shared Slot creation is site-scoped and refuses duplicate handles for the same site. Shared Slot blocks reuse the same block payload writer used by page-owned blocks, so locale-owned copy stays in translation rows and shared settings remain on the block record/settings path. Media import and media assignment remain outside this phase.
+
+### Page Slot Assignment
+
+```text
+POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
+```
+
+The endpoint assigns an existing compatible same-site active Shared Slot to an existing page slot. It does not create missing pages or slots. It does not publish the page. It refuses cross-site, inactive, and incompatible Shared Slots. It also refuses to switch a slot that still has page-owned blocks, because Phase 2A does not delete or replace those blocks automatically.
 
 ### Content Validate / Apply Endpoints
 
@@ -300,7 +338,8 @@ Example English marketing homepage draft:
 - harmless unknown settings may warn or be ignored consistently
 - apply validates again before writing
 - apply is transactional
-- Phase 1 rejects publish, site creation, navigation mutation, shared slot mutation, media import, remote fetch, overwrite, replace, and delete operations
+- Phase 2A still rejects publish, site creation, media import, remote fetch, overwrite, replace, and delete operations
+- navigation and Shared Slot creation are create-only unless a later phase adds explicit draft-safe mutation contracts
 
 ## Response Shape
 
@@ -349,14 +388,66 @@ Validation errors should include a path and message:
 
 Include `edit_url` where useful for created or updated CMS resources.
 
+## Phase 2A Plan Sections
+
+Content plans may include `navigation_menus`, `shared_slots`, and `page_slot_shared_slots` alongside the existing page/slot plan. `validate` writes nothing. `apply` writes all valid sections in one transaction and rolls the full plan back when any later section fails.
+
+```json
+{
+  "plan": {
+    "site": "default",
+    "locale": "en",
+    "layout": "default",
+    "page": {
+      "title": "Homepage Draft",
+      "path": "/",
+      "status": "draft"
+    },
+    "slots": {
+      "main": []
+    },
+    "navigation_menus": [
+      {
+        "handle": "primary",
+        "label": "Primary Navigation",
+        "items": [
+          {
+            "label": "Home",
+            "url": "/",
+            "target": "_self",
+            "sort_order": 10
+          }
+        ]
+      }
+    ],
+    "shared_slots": [
+      {
+        "handle": "site-header",
+        "label": "Site Header",
+        "slot": "header",
+        "blocks": []
+      }
+    ],
+    "page_slot_shared_slots": [
+      {
+        "page": "created",
+        "slot": "header",
+        "shared_slot": "site-header"
+      }
+    ]
+  }
+}
+```
+
+`page_slot_shared_slots[].page` may refer to the page created by the same plan by using `created`, or to an existing page ID. `shared_slot` may refer to a Shared Slot created earlier in the same plan or an existing same-site Shared Slot handle.
+
 ## Future Phases
 
-### Phase 2
+### Phase 2B
 
-- navigation menus and items
-- shared slots
-- assign shared slot to page slot
-- header/navbar construction
+- optional draft-safe update/move endpoints for navigation and Shared Slot blocks
+- explicit safe clearing/replacement contracts where needed
+- deeper header/navbar construction helpers only if they stay generic CMS behavior
 
 ### Phase 3
 

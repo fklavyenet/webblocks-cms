@@ -21,11 +21,19 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: create draft pages, page translations, layout slots, and page-owned block trees through the existing relational content model and block translation/settings writers.
 - Excluded: publish, destructive page deletion, resource update/delete/move endpoints, remote fetch, media download/import, site creation, public unauthenticated access, browser session requirements, and overwrite of existing pages or blocks.
 
-### Phase 2 - Navigation And Shared Slots
+### Phase 2A - Navigation And Shared Slot Foundations
 
-- Planned: add navigation menu and item APIs after the Phase 1 content surface is stable.
-- Planned: add shared slot APIs and explicit assignment of shared slots to page slots.
-- Planned: support header/navbar construction through structured content operations.
+- Done: add safe navigation menu/item API foundations under `/webadmin/api/navigation-menus`.
+- Done: add safe Shared Slot API foundations under `/webadmin/api/shared-slots`.
+- Done: add explicit compatible same-site Shared Slot assignment for existing page slots.
+- Done: extend content validate/apply with optional `navigation_menus`, `shared_slots`, and `page_slot_shared_slots` plan sections.
+- Excluded: publish, overwrite, destructive delete/replace, remote fetch, media import, site creation, automatic page creation from navigation, and broad AI site-builder behavior.
+
+### Phase 2B - Draft-Safe Navigation/Shared Slot Mutation
+
+- Planned: add optional draft-safe update and move endpoints only where the model shape is clear.
+- Planned: add explicit safe clear/replace flows if needed after a separate safety design.
+- Planned: support header/navbar construction through structured content operations while keeping it generic CMS behavior.
 
 ### Phase 3 - Draft Update/Replace And Existing-Media References
 

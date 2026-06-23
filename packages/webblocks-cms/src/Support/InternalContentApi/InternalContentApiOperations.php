@@ -1,0 +1,482 @@
+<?php
+
+namespace WebBlocks\Cms\Support\InternalContentApi;
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
+
+class InternalContentApiOperations
+{
+  private const FORBIDDEN_KEYS = [
+    'publish',
+    'published',
+    'published_at',
+    'site_create',
+    'create_site',
+    'media_import',
+    'media_download',
+    'remote_fetch',
+    'fetch_url',
+    'crawl',
+    'crawler',
+    'delete',
+    'destroy',
+    'replace',
+    'overwrite',
+  ];
+
+  public function __construct(
+    private readonly BlockPayloadWriter $blockPayloadWriter,
+    private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
+  ) {}
+
+  public function resolveSite(mixed $value, string $path, array &$errors): ?Site
+  {
+    $site = Site::query()
+      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
+      ->first();
+
+    if (! $site) {
+      $errors[] = $this->error($path, 'Site handle or ID must resolve.');
+    }
+
+    return $site;
+  }
+
+  public function resolveLocale(mixed $value, ?Site $site, string $path, array &$errors): ?Locale
+  {
+    $locale = Locale::query()
+      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('code', Locale::normalizeCode((string) $value)))
+      ->first();
+
+    if (! $locale) {
+      $errors[] = $this->error($path, 'Locale must exist.');
+
+      return null;
+    }
+
+    if (! $site || ! $site->locales()->whereKey($locale->id)->wherePivot('is_enabled', true)->exists()) {
+      $errors[] = $this->error($path, 'Locale must be enabled for the target site.');
+    }
+
+    return $locale;
+  }
+
+  public function normalizeNavigationMenu(array $payload, ?Site $fallbackSite, string $path, array &$errors): ?array
+  {
+    $this->rejectForbiddenKeys($payload, $path, $errors);
+
+    $site = $this->resolveSite($payload['site'] ?? $payload['site_id'] ?? $fallbackSite?->handle, $path.'.site', $errors);
+    $handle = Str::slug(trim((string) ($payload['handle'] ?? $payload['menu_key'] ?? '')));
+    $label = trim((string) ($payload['label'] ?? NavigationItem::menuOptions()[$handle] ?? Str::headline($handle)));
+
+    if (! in_array($handle, NavigationItem::menuKeys(), true)) {
+      $errors[] = $this->error($path.'.handle', 'Navigation menu handle must be one of the supported CMS menu handles.');
+    }
+
+    if ($label === '') {
+      $errors[] = $this->error($path.'.label', 'Navigation menu label is required.');
+    }
+
+    $items = $payload['items'] ?? [];
+    if (! is_array($items)) {
+      $errors[] = $this->error($path.'.items', 'Navigation menu items must be an array.');
+      $items = [];
+    }
+
+    $normalizedItems = [];
+    foreach (array_values($items) as $index => $item) {
+      $normalized = $this->normalizeNavigationItem($item, $site, $handle, $path.'.items.'.$index, $errors);
+
+      if ($normalized !== null) {
+        $normalizedItems[] = $normalized;
+      }
+    }
+
+    return $site && $handle !== '' ? [
+      'site' => ['id' => $site->id, 'handle' => $site->handle],
+      'handle' => $handle,
+      'label' => $label,
+      'items' => $normalizedItems,
+    ] : null;
+  }
+
+  public function normalizeNavigationItem(mixed $payload, ?Site $site, ?string $menuHandle, string $path, array &$errors): ?array
+  {
+    if (! is_array($payload)) {
+      $errors[] = $this->error($path, 'Navigation item must be an object.');
+
+      return null;
+    }
+
+    $this->rejectForbiddenKeys($payload, $path, $errors);
+
+    $label = trim((string) ($payload['label'] ?? $payload['title'] ?? ''));
+    $target = trim((string) ($payload['target'] ?? '_self'));
+    $sortOrder = (int) ($payload['sort_order'] ?? $payload['position'] ?? 0);
+    $url = trim((string) ($payload['url'] ?? ''));
+
+    if ($label === '') {
+      $errors[] = $this->error($path.'.label', 'Navigation item label is required.');
+    }
+
+    if (! in_array($target, ['_self', '_blank'], true)) {
+      $errors[] = $this->error($path.'.target', 'Navigation item target must be _self or _blank.');
+    }
+
+    if ($sortOrder < 0) {
+      $errors[] = $this->error($path.'.sort_order', 'Navigation item sort order must be zero or greater.');
+    }
+
+    if (! $this->isSafeNavigationUrl($url)) {
+      $errors[] = $this->error($path.'.url', 'Navigation item URL must be a safe internal path or http(s) URL.');
+    }
+
+    return [
+      'site_id' => $site?->id,
+      'menu_key' => $menuHandle ?: NavigationItem::MENU_PRIMARY,
+      'title' => $label,
+      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'url' => $url,
+      'target' => $target,
+      'position' => $sortOrder > 0 ? $sortOrder : 1,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+      'is_system' => false,
+    ];
+  }
+
+  public function createNavigationMenu(array $normalized): array
+  {
+    if (NavigationItem::query()->where('site_id', $normalized['site']['id'])->where('menu_key', $normalized['handle'])->exists()) {
+      throw new \InvalidArgumentException('Navigation menu already has items and will not be overwritten.');
+    }
+
+    $items = [];
+    foreach ($normalized['items'] as $index => $item) {
+      $item['position'] = $item['position'] ?: ($index + 1);
+      $items[] = NavigationItem::query()->create($item);
+    }
+
+    return [
+      'menu' => $normalized,
+      'items' => $items,
+    ];
+  }
+
+  public function addNavigationItem(NavigationItem|string $menu, array $payload, ?Site $site, string $path, array &$errors): ?NavigationItem
+  {
+    $handle = $menu instanceof NavigationItem ? $menu->menu_key : Str::slug((string) $menu);
+    $normalized = $this->normalizeNavigationItem($payload, $site, $handle, $path, $errors);
+
+    if ($errors !== [] || $normalized === null) {
+      return null;
+    }
+
+    if (! $normalized['position']) {
+      $normalized['position'] = ((int) NavigationItem::query()
+        ->where('site_id', $normalized['site_id'])
+        ->where('menu_key', $normalized['menu_key'])
+        ->max('position')) + 1;
+    }
+
+    return NavigationItem::query()->create($normalized);
+  }
+
+  public function normalizeSharedSlot(array $payload, ?Site $fallbackSite, string $path, array &$errors, array &$warnings): ?array
+  {
+    $this->rejectForbiddenKeys($payload, $path, $errors);
+
+    $site = $this->resolveSite($payload['site'] ?? $payload['site_id'] ?? $fallbackSite?->handle, $path.'.site', $errors);
+    $handle = Str::slug(trim((string) ($payload['handle'] ?? '')));
+    $label = trim((string) ($payload['label'] ?? $payload['name'] ?? ''));
+    $slot = Str::slug(trim((string) ($payload['slot'] ?? $payload['slot_name'] ?? '')));
+    $publicShell = trim((string) ($payload['layout'] ?? $payload['public_shell'] ?? ''));
+
+    if ($handle === '') {
+      $errors[] = $this->error($path.'.handle', 'Shared Slot handle is required.');
+    }
+
+    if ($label === '') {
+      $errors[] = $this->error($path.'.label', 'Shared Slot label is required.');
+    }
+
+    if ($slot === '') {
+      $errors[] = $this->error($path.'.slot', 'Shared Slot slot name is required.');
+    } elseif (! SlotType::query()->where('slug', $slot)->where('status', 'published')->exists()) {
+      $errors[] = $this->error($path.'.slot', 'Shared Slot slot name must resolve to a published slot type.');
+    }
+
+    if ($site && $handle !== '' && SharedSlot::query()->where('site_id', $site->id)->where('handle', $handle)->exists()) {
+      $errors[] = $this->error($path.'.handle', 'A Shared Slot with this handle already exists for the selected site.');
+    }
+
+    $blocks = $payload['blocks'] ?? [];
+    if (! is_array($blocks)) {
+      $errors[] = $this->error($path.'.blocks', 'Shared Slot blocks must be an array.');
+      $blocks = [];
+    }
+
+    $normalizedBlocks = [];
+    foreach (array_values($blocks) as $index => $block) {
+      $normalizedBlock = $this->normalizeBlock($block, $path.'.blocks.'.$index, null, $errors, $warnings);
+
+      if ($normalizedBlock !== null) {
+        $normalizedBlocks[] = $normalizedBlock;
+      }
+    }
+
+    return $site && $handle !== '' ? [
+      'site' => ['id' => $site->id, 'handle' => $site->handle],
+      'handle' => $handle,
+      'label' => $label,
+      'slot' => $slot,
+      'public_shell' => $publicShell !== '' ? Page::normalizePublicShellHandle($publicShell) : null,
+      'blocks' => $normalizedBlocks,
+    ] : null;
+  }
+
+  public function createSharedSlot(array $normalized, string $localeCode): SharedSlot
+  {
+    return DB::transaction(function () use ($normalized, $localeCode): SharedSlot {
+      $sharedSlot = SharedSlot::query()->create([
+        'site_id' => $normalized['site']['id'],
+        'name' => $normalized['label'],
+        'handle' => $normalized['handle'],
+        'slot_name' => $normalized['slot'],
+        'public_shell' => $normalized['public_shell'],
+        'is_active' => true,
+      ]);
+
+      foreach (array_values($normalized['blocks']) as $index => $blockPayload) {
+        $this->createSharedSlotBlock($sharedSlot, $blockPayload, $localeCode, null, $index);
+      }
+
+      $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+
+      return $sharedSlot->fresh(['site', 'slotBlocks.block.blockType', 'slotBlocks.block.slotType']);
+    });
+  }
+
+  public function createSharedSlotBlock(SharedSlot $sharedSlot, array $payload, string $localeCode, ?Block $parent, int $sortOrder): Block
+  {
+    $page = $this->sharedSlotSourcePages->ensureFor($sharedSlot);
+    $slotType = $this->sharedSlotSourcePages->editorSlotTypeFor($sharedSlot);
+    $blockType = BlockType::query()->where('slug', $payload['type'])->where('status', 'published')->firstOrFail();
+    $translations = $payload['translations'];
+    $settings = $payload['settings'] === [] ? null : json_encode($payload['settings'], JSON_UNESCAPED_SLASHES);
+
+    $block = $this->blockPayloadWriter->save(new Block, $page, [
+      'page_id' => $page->id,
+      'parent_id' => $parent?->id,
+      'block_type_id' => $blockType->id,
+      'type' => $blockType->slug,
+      'source_type' => $blockType->source_type ?: 'static',
+      'slot_type_id' => $slotType->id,
+      'slot' => $slotType->slug,
+      'sort_order' => $sortOrder,
+      'status' => 'draft',
+      'is_system' => (bool) $blockType->is_system,
+      'settings' => $settings,
+      'variant' => $payload['variant'] ?? ($payload['settings']['variant'] ?? null),
+      'url' => $payload['settings']['url'] ?? null,
+      'title' => $translations['title'] ?? null,
+      'subtitle' => $translations['subtitle'] ?? null,
+      'content' => $translations['content'] ?? null,
+      'meta' => $translations['meta'] ?? null,
+    ], $localeCode);
+
+    foreach (array_values($payload['children']) as $index => $childPayload) {
+      $this->createSharedSlotBlock($sharedSlot, $childPayload, $localeCode, $block, $index);
+    }
+
+    $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+
+    return $block;
+  }
+
+  public function normalizeBlock(mixed $block, string $path, ?BlockType $parentType, array &$errors, array &$warnings): ?array
+  {
+    if (! is_array($block)) {
+      $errors[] = $this->error($path, 'Block must be an object.');
+
+      return null;
+    }
+
+    $this->rejectForbiddenKeys($block, $path, $errors);
+
+    $typeSlug = trim((string) ($block['type'] ?? $block['block_type'] ?? ''));
+    $blockType = BlockType::query()->where('slug', $typeSlug)->where('status', 'published')->first();
+
+    if (! $blockType) {
+      $errors[] = $this->error($path.'.type', 'Block type must be published and usable.');
+
+      return null;
+    }
+
+    if ($parentType && ! $this->parentAcceptsChild($parentType, $blockType)) {
+      $errors[] = $this->error($path.'.type', 'Child block type is not allowed by the parent block contract.');
+    }
+
+    $settings = $block['settings'] ?? [];
+    if (! is_array($settings)) {
+      $errors[] = $this->error($path.'.settings', 'Block settings must be an object.');
+      $settings = [];
+    }
+
+    foreach (['media_id', 'asset_id', 'gallery_media_ids', 'gallery_items', 'remote_url', 'source_url'] as $mediaKey) {
+      if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {
+        $errors[] = $this->error($path.'.'.$mediaKey, 'Media import, media assignment, and remote fetch are outside this Internal Content API phase.');
+      }
+    }
+
+    $translations = $block['translations'] ?? [];
+    if (! is_array($translations)) {
+      $errors[] = $this->error($path.'.translations', 'Translations must be an object.');
+      $translations = [];
+    }
+
+    foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta'] as $field) {
+      if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {
+        $translations[$field] = $block[$field];
+      }
+    }
+
+    $children = $block['children'] ?? [];
+    if (! is_array($children)) {
+      $errors[] = $this->error($path.'.children', 'Children must be an array.');
+      $children = [];
+    }
+
+    if ($children !== [] && ! (new Block(['type' => $blockType->slug]))->setRelation('blockType', $blockType)->canAcceptChildren()) {
+      $errors[] = $this->error($path.'.children', 'This block type does not accept children.');
+    }
+
+    $normalizedChildren = [];
+    foreach (array_values($children) as $index => $child) {
+      $normalizedChild = $this->normalizeBlock($child, $path.'.children.'.$index, $blockType, $errors, $warnings);
+
+      if ($normalizedChild !== null) {
+        $normalizedChildren[] = $normalizedChild;
+      }
+    }
+
+    return [
+      'type' => $blockType->slug,
+      'translations' => $translations,
+      'settings' => $settings,
+      'children' => $normalizedChildren,
+    ];
+  }
+
+  public function assignSharedSlot(Page $page, string $slotName, SharedSlot $sharedSlot, string $path, array &$errors): ?PageSlot
+  {
+    if ((int) $sharedSlot->site_id !== (int) $page->site_id) {
+      $errors[] = $this->error($path.'.shared_slot', 'Shared Slot must belong to the same site as the page.');
+
+      return null;
+    }
+
+    $slot = $page->slots()->with('slotType')->get()->first(fn (PageSlot $slot) => $slot->slotSlug() === $slotName);
+
+    if (! $slot) {
+      $errors[] = $this->error($path.'.slot', 'Page slot must exist before assigning a Shared Slot.');
+
+      return null;
+    }
+
+    if ($page->blocks()->where('slot_type_id', $slot->slot_type_id)->whereNull('parent_id')->exists()) {
+      $errors[] = $this->error($path.'.slot', 'Page slot contains page-owned blocks and must be cleared manually before Shared Slot assignment.');
+
+      return null;
+    }
+
+    $issues = $sharedSlot->compatibilityIssuesFor($page, $slot->slotSlug());
+
+    foreach ($issues as $issue) {
+      $errors[] = $this->error($path.'.shared_slot', match ($issue) {
+        'inactive' => 'Inactive Shared Slots cannot be assigned to page slots.',
+        'public_shell' => 'Shared Slot Page Layout must match the page Page Layout.',
+        'slot_name' => 'Shared Slot slot name must match the page slot name.',
+        default => 'Shared Slot is not compatible with the selected page slot.',
+      });
+    }
+
+    if ($errors !== []) {
+      return null;
+    }
+
+    $slot->update([
+      'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+      'shared_slot_id' => $sharedSlot->id,
+    ]);
+
+    return $slot->fresh(['slotType', 'sharedSlot']);
+  }
+
+  public function rejectForbiddenKeys(array $data, string $path, array &$errors): void
+  {
+    foreach ($data as $key => $value) {
+      $keyString = strtolower((string) $key);
+
+      if (in_array($keyString, self::FORBIDDEN_KEYS, true)) {
+        $errors[] = $this->error($path.'.'.$key, 'This operation is outside the supported Internal Content API phase.');
+      }
+
+      if (is_array($value)) {
+        $this->rejectForbiddenKeys($value, $path.'.'.$key, $errors);
+      }
+    }
+  }
+
+  public function error(string $path, string $message): array
+  {
+    return [
+      'path' => $path,
+      'message' => $message,
+    ];
+  }
+
+  private function parentAcceptsChild(BlockType $parentType, BlockType $childType): bool
+  {
+    $parent = new Block(['type' => $parentType->slug]);
+    $parent->setRelation('blockType', $parentType);
+    $allowed = $parent->allowedChildTypeSlugs();
+
+    if ($allowed === null) {
+      return $parent->canAcceptChildren();
+    }
+
+    return in_array($childType->slug, $allowed, true);
+  }
+
+  private function isSafeNavigationUrl(string $url): bool
+  {
+    if ($url === '') {
+      return false;
+    }
+
+    $lower = strtolower($url);
+
+    if (str_contains($lower, "\0") || str_contains($lower, '..') || preg_match('/^\s*(javascript|data|vbscript):/i', $url)) {
+      return false;
+    }
+
+    if (str_starts_with($url, '/')) {
+      return ! str_starts_with($url, '//');
+    }
+
+    return (bool) filter_var($url, FILTER_VALIDATE_URL)
+      && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
+  }
+}

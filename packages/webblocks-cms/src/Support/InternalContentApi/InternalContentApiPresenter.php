@@ -6,11 +6,12 @@ use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 
 class InternalContentApiPresenter
@@ -131,9 +132,61 @@ class InternalContentApiPresenter
       'slot' => $slot->slotType?->slug,
       'name' => $slot->slotType?->name,
       'source_type' => $slot->runtimeSourceType(),
+      'shared_slot_id' => $slot->shared_slot_id,
       'sort_order' => (int) $slot->sort_order,
       'uses_page_owned_blocks' => $slot->usesPageOwnedBlocks(),
     ];
+  }
+
+  public function navigationMenu(Site $site, string $handle, Collection $items): array
+  {
+    return [
+      'site_id' => $site->id,
+      'site' => $this->site($site),
+      'handle' => $handle,
+      'label' => NavigationItem::menuOptions()[$handle] ?? str($handle)->headline()->toString(),
+      'items' => $this->navigationTree($items),
+    ];
+  }
+
+  public function navigationItem(NavigationItem $item): array
+  {
+    return [
+      'id' => $item->id,
+      'site_id' => $item->site_id,
+      'menu_key' => $item->menu_key,
+      'parent_id' => $item->parent_id,
+      'label' => $item->resolvedLabel(),
+      'link_type' => $item->link_type,
+      'url' => $item->url,
+      'target' => $item->target ?: '_self',
+      'sort_order' => (int) $item->position,
+      'visibility' => $item->visibility,
+    ];
+  }
+
+  public function sharedSlot(SharedSlot $sharedSlot, bool $includeBlocks = false): array
+  {
+    $payload = [
+      'id' => $sharedSlot->id,
+      'site_id' => $sharedSlot->site_id,
+      'site' => $sharedSlot->relationLoaded('site') && $sharedSlot->site ? $this->site($sharedSlot->site) : null,
+      'handle' => $sharedSlot->handle,
+      'label' => $sharedSlot->name,
+      'slot' => $sharedSlot->slot_name,
+      'public_shell' => $sharedSlot->public_shell,
+      'is_active' => (bool) $sharedSlot->is_active,
+    ];
+
+    if ($includeBlocks) {
+      $blocks = $sharedSlot->relationLoaded('slotBlocks')
+        ? $sharedSlot->slotBlocks->pluck('block')->filter()
+        : collect();
+
+      $payload['blocks'] = $this->blockTree($blocks);
+    }
+
+    return $payload;
   }
 
   public function block(Block $block, bool $includeChildren = true): array
@@ -176,6 +229,26 @@ class InternalContentApiPresenter
         ->map(function (Block $block) use ($build): array {
           $payload = $this->block($block, false);
           $payload['children'] = $build((int) $block->id);
+
+          return $payload;
+        })
+        ->values()
+        ->all();
+    };
+
+    return $build(0);
+  }
+
+  private function navigationTree(Collection $items): array
+  {
+    $byParent = $items->groupBy(fn (NavigationItem $item) => $item->parent_id ?: 0);
+
+    $build = function (int $parentId) use (&$build, $byParent): array {
+      return $byParent->get($parentId, collect())
+        ->sortBy([['position', 'asc'], ['id', 'asc']])
+        ->map(function (NavigationItem $item) use ($build): array {
+          $payload = $this->navigationItem($item);
+          $payload['children'] = $build((int) $item->id);
 
           return $payload;
         })
