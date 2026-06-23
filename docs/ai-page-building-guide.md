@@ -2,6 +2,12 @@
 
 This guide defines the safe workflow for trusted AI/operator tools that build WebBlocks CMS pages through the Internal Content API. It is generic CMS product guidance. Do not add site-specific import, sync, or scraping behavior to CMS core.
 
+In installed package-native sites, this guide ships inside the Composer package at:
+
+```text
+vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md
+```
+
 ## Purpose
 
 Trusted AI/operator tools can inspect a CMS install, build a structured draft content plan, validate it, and create a separate draft page after explicit user approval. The workflow is draft-first and API-first. It does not publish content, overwrite published pages, delete content, fetch remote websites, or import media.

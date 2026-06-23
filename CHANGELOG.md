@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.150
+
+- Ensure installed package docs ship the AI Page Building Guide under `vendor/fklavyenet/webblocks-cms/docs` for downstream AI/operator tools.
+
 ## 1.32.149
 
 - Add an AI Page Building Guide and token-protected `/webadmin/api/content-contract` discovery endpoint for safe generic draft page creation by trusted AI/operator tools.

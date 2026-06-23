@@ -38,6 +38,9 @@ class ReleasePackageBoundaryTest extends TestCase
     $script = (string) file_get_contents(base_path('scripts/release/prepare.sh'));
 
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD "${PACKAGE_ROOT}"', $script);
+    $this->assertStringContainsString('DOCS_SOURCE_ROOT="docs"', $script);
+    $this->assertStringContainsString('mkdir -p "${PACKAGE_DIR}/docs"', $script);
+    $this->assertStringContainsString('cp "${doc_file}" "${PACKAGE_DIR}/docs/$(basename "${doc_file}")"', $script);
     $this->assertStringContainsString('cd "${PACKAGE_DIR}"', $script);
     $this->assertStringContainsString('zip -qr "${ARCHIVE_PATH}" .', $script);
     $this->assertStringContainsString('"minimum_client_version" => getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18"', $script);
@@ -186,6 +189,36 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
+  public function native_release_zip_installs_distributed_docs_at_composer_vendor_package_root(): void
+  {
+    $vendorPackageRoot = $this->buildWorkingTreeNativeReleaseZipVendorPackageSnapshot();
+
+    foreach ([
+      'ai-page-building-guide.md',
+      'internal-content-api.md',
+      'index.md',
+      'public-block-render-markup.md',
+      'block-type-contracts.md',
+    ] as $docFile) {
+      $rootDoc = base_path('docs/'.$docFile);
+      $packageDoc = $vendorPackageRoot.'/docs/'.$docFile;
+
+      $this->assertFileExists($packageDoc);
+      $this->assertSame((string) file_get_contents($rootDoc), (string) file_get_contents($packageDoc));
+    }
+
+    $guide = (string) file_get_contents($vendorPackageRoot.'/docs/ai-page-building-guide.md');
+
+    $this->assertStringContainsString('GET /webadmin/api/content-contract', $guide);
+    $this->assertStringContainsString('POST /webadmin/api/content/validate', $guide);
+    $this->assertStringContainsString('POST /webadmin/api/content/apply', $guide);
+    $this->assertStringContainsString('vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md', $guide);
+    $this->assertStringNotContainsString('WEBBLOCKS_CMS_API_TOKEN=secret', $guide);
+    $this->assertStringNotContainsString('/Users/', $guide);
+    $this->assertStringNotContainsString(base_path(), $guide);
+  }
+
+  #[Test]
   public function composer_source_dist_checkout_includes_bulk_listing_admin_javascript_in_root_and_package_paths(): void
   {
     $sourceCheckoutRoot = $this->buildRepositorySourceSnapshot();
@@ -325,6 +358,44 @@ class ReleasePackageBoundaryTest extends TestCase
     $extract->mustRun();
 
     $packageDirectory = $stagingDirectory.'/'.$packageRoot;
+    $zip = new Process(['zip', '-qr', $archivePath, '.'], $packageDirectory);
+    $zip->mustRun();
+
+    $vendorPackageRoot = $stagingDirectory.'/vendor/fklavyenet/webblocks-cms';
+    File::ensureDirectoryExists($vendorPackageRoot);
+
+    $unzip = new Process(['unzip', '-q', $archivePath, '-d', $vendorPackageRoot], base_path());
+    $unzip->mustRun();
+
+    return $vendorPackageRoot;
+  }
+
+  private function buildWorkingTreeNativeReleaseZipVendorPackageSnapshot(): string
+  {
+    $stagingDirectory = $this->makeTemporaryDirectory('release-working-tree-docs-zip');
+    $archivePath = $stagingDirectory.'/webblocks-cms-test.zip';
+    $packageDirectory = $stagingDirectory.'/package';
+
+    File::ensureDirectoryExists($packageDirectory);
+
+    foreach (File::allFiles(base_path('packages/webblocks-cms')) as $file) {
+      $relativePath = ltrim(str_replace(base_path('packages/webblocks-cms'), '', $file->getPathname()), DIRECTORY_SEPARATOR);
+      $targetPath = $packageDirectory.DIRECTORY_SEPARATOR.$relativePath;
+
+      File::ensureDirectoryExists(dirname($targetPath));
+      File::copy($file->getPathname(), $targetPath);
+    }
+
+    File::ensureDirectoryExists($packageDirectory.'/docs');
+
+    foreach (File::files(base_path('docs')) as $file) {
+      if ($file->getExtension() !== 'md') {
+        continue;
+      }
+
+      File::copy($file->getPathname(), $packageDirectory.'/docs/'.$file->getFilename());
+    }
+
     $zip = new Process(['zip', '-qr', $archivePath, '.'], $packageDirectory);
     $zip->mustRun();
 

@@ -11,6 +11,7 @@ ARCHIVE_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}.zip"
 PAYLOAD_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}-update-server-payload.json"
 STAGING_DIR="$(mktemp -d)"
 PACKAGE_ROOT="packages/webblocks-cms"
+DOCS_SOURCE_ROOT="docs"
 
 cleanup() {
   rm -rf "${STAGING_DIR}"
@@ -35,6 +36,12 @@ if ! git diff --quiet -- "${PACKAGE_ROOT}"; then
   exit 1
 fi
 
+if ! git diff --quiet -- "${DOCS_SOURCE_ROOT}"; then
+  printf '[webblocks-release-prepare] Documentation source has uncommitted changes under %s.\n' "${DOCS_SOURCE_ROOT}" >&2
+  printf '[webblocks-release-prepare] Commit docs changes before preparing a release artifact.\n' >&2
+  exit 1
+fi
+
 git archive --format=tar --worktree-attributes HEAD "${PACKAGE_ROOT}" | tar -xf - -C "${STAGING_DIR}"
 
 PACKAGE_DIR="${STAGING_DIR}/${PACKAGE_ROOT}"
@@ -42,6 +49,15 @@ PACKAGE_DIR="${STAGING_DIR}/${PACKAGE_ROOT}"
 if [ ! -f "${PACKAGE_DIR}/composer.json" ]; then
   printf '[webblocks-release-prepare] Package composer.json not found at %s.\n' "${PACKAGE_DIR}" >&2
   exit 1
+fi
+
+mkdir -p "${PACKAGE_DIR}/docs"
+git archive --format=tar --worktree-attributes HEAD "${DOCS_SOURCE_ROOT}" | tar -xf - -C "${STAGING_DIR}"
+
+if [ -d "${STAGING_DIR}/${DOCS_SOURCE_ROOT}" ]; then
+  find "${STAGING_DIR}/${DOCS_SOURCE_ROOT}" -maxdepth 1 -type f -name '*.md' -print0 | while IFS= read -r -d '' doc_file; do
+    cp "${doc_file}" "${PACKAGE_DIR}/docs/$(basename "${doc_file}")"
+  done
 fi
 
 (

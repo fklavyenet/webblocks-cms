@@ -25,6 +25,7 @@ class AiPageBuildingGuideDocsTest extends TestCase
     $this->assertStringContainsString('POST /webadmin/api/content/validate', $guide);
     $this->assertStringContainsString('POST /webadmin/api/content/apply', $guide);
     $this->assertStringContainsString('/webadmin/pages/{page}/preview', $guide);
+    $this->assertStringContainsString('vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md', $guide);
     $this->assertStringContainsString('[AI Page Building Guide](ai-page-building-guide.md)', $docsIndex);
     $this->assertStringContainsString('[AI Page Building Guide](docs/ai-page-building-guide.md)', $readme);
     $this->assertStringContainsString('/webadmin/api/content-contract', $changelog);

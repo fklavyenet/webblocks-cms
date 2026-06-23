@@ -147,6 +147,8 @@ The endpoint is generic CMS product behavior. It must not return install-specifi
 
 AI tools should call this endpoint or `GET /webadmin/api/block-types` before building a plan and must use only handles that are present in the current install.
 
+The human-readable AI Page Building Guide ships in package-native installs at `vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md`.
+
 ## Phase 1 Scope
 
 ### Discovery Endpoints
