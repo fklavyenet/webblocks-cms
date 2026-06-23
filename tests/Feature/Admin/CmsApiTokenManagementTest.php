@@ -1,0 +1,163 @@
+<?php
+
+namespace Tests\Feature\Admin;
+
+use App\Models\User;
+use Database\Seeders\FoundationSiteLocaleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+
+class CmsApiTokenManagementTest extends TestCase
+{
+  use RefreshDatabase;
+
+  #[Test]
+  public function super_admin_can_view_token_management_ui(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $token = $this->createToken('secret-token', ['name' => 'Local AI - Test MacBook']);
+
+    $response = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
+
+    $response->assertOk();
+    $response->assertSee('CMS API Tokens');
+    $response->assertSee('Create Token');
+    $response->assertSee('Local AI - Test MacBook');
+    $response->assertSee($token->token_preview);
+    $response->assertSee('<td class="wb-table-actions">', false);
+    $response->assertSee('<div class="wb-action-group">', false);
+    $response->assertSee('class="wb-modal wb-modal-lg"', false);
+    $response->assertDontSee('confirm(');
+  }
+
+  #[Test]
+  public function non_super_admin_cannot_manage_tokens(): void
+  {
+    $user = User::factory()->siteAdmin()->create();
+
+    $this->actingAs($user)->get(route('admin.system.api-tokens.index'))->assertForbidden();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.api-tokens.store'), ['name' => 'Local AI'])
+      ->assertForbidden();
+  }
+
+  #[Test]
+  public function token_creation_stores_only_hash_and_shows_plain_token_once(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->followingRedirects()
+      ->actingAs($user)
+      ->post(route('admin.system.api-tokens.store'), ['name' => 'Local AI - Osman MacBook']);
+
+    $response->assertOk();
+    $response->assertSee('Copy this token now');
+    $response->assertSee('WEBBLOCKS_CMS_API_TOKEN=wbcms_', false);
+
+    preg_match('/WEBBLOCKS_CMS_API_TOKEN=(wbcms_[A-Za-z0-9]+)/', $response->getContent(), $matches);
+    $plainToken = $matches[1] ?? '';
+
+    $this->assertStringStartsWith('wbcms_', $plainToken);
+    $this->assertSame(70, strlen($plainToken));
+
+    $record = CmsApiToken::query()->firstOrFail();
+
+    $this->assertSame('Local AI - Osman MacBook', $record->name);
+    $this->assertSame(hash('sha256', $plainToken), $record->token_hash);
+    $this->assertNotSame($plainToken, $record->token_hash);
+    $this->assertDatabaseMissing('cms_api_tokens', ['token_hash' => $plainToken]);
+
+    $followUp = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
+
+    $followUp->assertOk();
+    $followUp->assertSee($record->token_preview);
+    $followUp->assertDontSee($plainToken);
+  }
+
+  #[Test]
+  public function token_list_never_exposes_the_full_token(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $plainToken = 'wbcms_'.str_repeat('a', 64);
+    $token = $this->createToken($plainToken, ['name' => 'Local AI']);
+
+    $response = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
+
+    $response->assertOk();
+    $response->assertSee($token->token_preview);
+    $response->assertDontSee($plainToken);
+  }
+
+  #[Test]
+  public function valid_token_updates_last_used_at_and_invalid_missing_or_revoked_tokens_return_json_401(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $plainToken = 'secret-token';
+    $token = $this->createToken($plainToken);
+
+    $this->getJson('/webadmin/api/sites')
+      ->assertUnauthorized()
+      ->assertJsonPath('code', 'invalid_internal_api_token');
+
+    $this->withHeader('Authorization', 'Bearer wrong-token')
+      ->getJson('/webadmin/api/sites')
+      ->assertUnauthorized()
+      ->assertJsonPath('code', 'invalid_internal_api_token');
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api/sites')
+      ->assertOk()
+      ->assertJsonPath('ok', true);
+
+    $this->assertNotNull($token->fresh()->last_used_at);
+
+    $token->forceFill(['revoked_at' => now()])->save();
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api/sites')
+      ->assertUnauthorized()
+      ->assertJsonPath('code', 'invalid_internal_api_token');
+  }
+
+  #[Test]
+  public function revoke_action_disables_api_access_and_keeps_audit_record_visible(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $user = User::factory()->superAdmin()->create();
+    $plainToken = 'secret-token';
+    $token = $this->createToken($plainToken, ['name' => 'Local AI']);
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api/sites')
+      ->assertOk();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.api-tokens.revoke', $token))
+      ->assertRedirect(route('admin.system.api-tokens.index'));
+
+    $this->assertNotNull($token->fresh()->revoked_at);
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api/sites')
+      ->assertUnauthorized();
+
+    $this->actingAs($user)
+      ->get(route('admin.system.api-tokens.index'))
+      ->assertOk()
+      ->assertSee('Local AI')
+      ->assertSee('Revoked');
+  }
+
+  private function createToken(string $plainToken, array $attributes = []): CmsApiToken
+  {
+    return CmsApiToken::query()->create($attributes + [
+      'name' => 'Test token',
+      'token_hash' => app(CmsApiTokenIssuer::class)->hash($plainToken),
+      'token_preview' => app(CmsApiTokenIssuer::class)->preview($plainToken),
+    ]);
+  }
+}

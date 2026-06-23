@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.146
+
+- Add super-admin CMS API token management under `System -> API Tokens` with database-hashed tokens, one-time token display, revocation, and database-backed `/webadmin/api` bearer authentication.
+
 ## 1.32.145
 
 - Add Phase 2A Internal Content API foundations for safe navigation menu items, Shared Slots, Shared Slot blocks, and compatible page slot Shared Slot assignment.

@@ -9,11 +9,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 
 class SiteDomainTest extends TestCase
 {
@@ -494,34 +496,9 @@ class SiteDomainTest extends TestCase
   }
 
   #[Test]
-  public function internal_api_listing_accepts_token_and_rejects_missing_token(): void
-  {
-    $this->seedPublicSiteWithDomain('primary.example.test');
-
-    config()->set('cms.multisite.unknown_host_fallback', false);
-    putenv('WEBBLOCKS_CMS_INTERNAL_API_TOKEN=secret-token');
-    $_ENV['WEBBLOCKS_CMS_INTERNAL_API_TOKEN'] = 'secret-token';
-    $_SERVER['WEBBLOCKS_CMS_INTERNAL_API_TOKEN'] = 'secret-token';
-
-    $this->getJson('/admin-api/sites')->assertStatus(401);
-
-    $this->withHeader('Authorization', 'Bearer secret-token')
-      ->getJson('/admin-api/sites')
-      ->assertOk()
-      ->assertJsonPath('sites.0.primary_domain', 'primary.example.test');
-
-    $this->withHeader('X-WebBlocks-Internal-Token', 'secret-token')
-      ->getJson('/admin-api/sites')
-      ->assertOk()
-      ->assertJsonPath('sites.0.primary_domain', 'primary.example.test');
-  }
-
-  #[Test]
   public function internal_api_domain_attach_validates_conflicts_and_delete_removes_only_requested_domain(): void
   {
-    putenv('WEBBLOCKS_CMS_INTERNAL_API_TOKEN=secret-token');
-    $_ENV['WEBBLOCKS_CMS_INTERNAL_API_TOKEN'] = 'secret-token';
-    $_SERVER['WEBBLOCKS_CMS_INTERNAL_API_TOKEN'] = 'secret-token';
+    $this->createInternalApiToken('secret-token');
 
     [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
     $otherSite = Site::query()->create([
@@ -591,5 +568,14 @@ class SiteDomainTest extends TestCase
     ]);
 
     return [$site, $page, $locale, $slotType, $headerType];
+  }
+
+  private function createInternalApiToken(string $token): void
+  {
+    CmsApiToken::query()->create([
+      'name' => 'Test token',
+      'token_hash' => app(CmsApiTokenIssuer::class)->hash($token),
+      'token_preview' => app(CmsApiTokenIssuer::class)->preview($token),
+    ]);
   }
 }

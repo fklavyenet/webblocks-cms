@@ -76,6 +76,7 @@
                             ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
                             ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
                             ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
+                            ['label' => 'API Tokens', 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*']],
                             ['label' => 'Plugins', 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*']],
                             ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => ['admin.reports.visitors.*']],
                         ],

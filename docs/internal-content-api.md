@@ -45,7 +45,7 @@ Route choices to avoid:
 - `/admin`, because CMS must not assume the host product's `/admin` path is CMS-owned
 - `/cms`, because `/cms` remains reserved for static CMS assets only
 
-## Authentication And Disabled State
+## Authentication
 
 The API uses Bearer token authentication:
 
@@ -53,21 +53,33 @@ The API uses Bearer token authentication:
 Authorization: Bearer <token>
 ```
 
-The token is configured with:
+CMS API tokens are created by a CMS super admin from `System -> API Tokens`. The CMS stores only a SHA-256 hash plus a safe preview in the `cms_api_tokens` database table. The plain token is shown once immediately after creation and is never shown again.
 
-```text
-WEBBLOCKS_CMS_INTERNAL_API_TOKEN
+Local AI and operator tools may store the generated token in their own local `.env`:
+
+```dotenv
+WEBBLOCKS_CMS_URL=https://example.com
+WEBBLOCKS_CMS_API_TOKEN=...
 ```
 
-If `WEBBLOCKS_CMS_INTERNAL_API_TOKEN` is missing, the API is disabled. Disabled endpoints should return a controlled JSON response instead of falling through to raw framework errors or browser-oriented admin output.
+The CMS runtime does not require `WEBBLOCKS_CMS_INTERNAL_API_TOKEN`.
 
 Authentication rules:
 
-- missing or wrong tokens return JSON `401`
-- disabled API state returns a controlled JSON response
+- missing, wrong, or revoked tokens return JSON `401`
+- revoked tokens stop working immediately
 - tokens must never be printed in logs, diagnostics, support reports, tests, or documentation examples
 - token comparison must use a constant-time comparison
+- successful API requests update the token's `last_used_at` and `last_used_ip`
 - responses are JSON-only
+
+Example request:
+
+```http
+GET /webadmin/api/sites
+Authorization: Bearer <token>
+Accept: application/json
+```
 
 ## API Model
 

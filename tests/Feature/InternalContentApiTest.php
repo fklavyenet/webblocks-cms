@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
@@ -18,6 +19,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 
 class InternalContentApiTest extends TestCase
@@ -32,29 +34,21 @@ class InternalContentApiTest extends TestCase
     $this->seed(SlotTypeSeeder::class);
     $this->seed(BlockTypeSeeder::class);
     $this->seed(PageLayoutSeeder::class);
-    $this->setInternalApiToken(null);
-  }
-
-  protected function tearDown(): void
-  {
-    $this->setInternalApiToken(null);
-
-    parent::tearDown();
   }
 
   #[Test]
-  public function api_is_disabled_when_internal_content_api_token_is_missing(): void
+  public function missing_database_backed_bearer_token_is_rejected_with_json(): void
   {
     $this->getJson('/webadmin/api/sites')
-      ->assertStatus(503)
+      ->assertUnauthorized()
       ->assertJsonPath('ok', false)
-      ->assertJsonPath('code', 'internal_api_disabled');
+      ->assertJsonPath('code', 'invalid_internal_api_token');
   }
 
   #[Test]
   public function missing_or_invalid_bearer_token_is_rejected_with_json(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $this->getJson('/webadmin/api/sites')
       ->assertUnauthorized()
@@ -71,7 +65,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function valid_token_can_access_resource_endpoints_directly_under_webadmin_api(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $this->withInternalToken()
       ->getJson('/webadmin/api/sites')
@@ -110,7 +104,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function validate_returns_normalized_plan_without_writing_content(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $response = $this->withInternalToken()
       ->postJson('/webadmin/api/content/validate', $this->validPlanPayload());
@@ -128,7 +122,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function apply_creates_a_draft_page_with_page_slots_and_translation_backed_blocks(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $response = $this->withInternalToken()
       ->postJson('/webadmin/api/content/apply', $this->validPlanPayload());
@@ -158,7 +152,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function resource_endpoints_return_created_page_and_block_details(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $create = $this->withInternalToken()
       ->postJson('/webadmin/api/content/apply', $this->validPlanPayload());
@@ -190,7 +184,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function apply_rejects_publish_status_and_phase_one_exclusions_without_writing(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
     $payload = $this->validPlanPayload([
       'plan' => [
         'page' => [
@@ -226,7 +220,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function apply_rejects_existing_page_path_to_prevent_overwrite(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
     $site = $this->defaultSite();
     $locale = $this->defaultLocale();
     $page = Page::query()->create([
@@ -254,7 +248,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function root_path_normalizes_to_existing_home_slug_model(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $this->withInternalToken()
       ->postJson('/webadmin/api/content/validate', $this->validPlanPayload([
@@ -271,13 +265,13 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
-  public function new_phase_two_endpoints_keep_disabled_and_token_json_guards(): void
+  public function new_phase_two_endpoints_keep_database_token_json_guards(): void
   {
     $this->getJson('/webadmin/api/navigation-menus')
-      ->assertStatus(503)
-      ->assertJsonPath('code', 'internal_api_disabled');
+      ->assertUnauthorized()
+      ->assertJsonPath('code', 'invalid_internal_api_token');
 
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $this->getJson('/webadmin/api/shared-slots')
       ->assertUnauthorized()
@@ -287,7 +281,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function valid_token_can_list_and_create_site_scoped_navigation_menu_items(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $this->withInternalToken()
       ->getJson('/webadmin/api/navigation-menus?site=default')
@@ -317,7 +311,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function duplicate_navigation_menu_and_unsafe_navigation_urls_are_rejected(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     NavigationItem::query()->create([
       'site_id' => $this->defaultSite()->id,
@@ -354,7 +348,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function valid_token_can_create_shared_slot_and_add_translation_backed_blocks(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $response = $this->withInternalToken()
       ->postJson('/webadmin/api/shared-slots', [
@@ -388,7 +382,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function duplicate_shared_slot_handle_does_not_overwrite_existing_content(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     SharedSlot::query()->create([
       'site_id' => $this->defaultSite()->id,
@@ -416,7 +410,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function shared_slot_assignment_rejects_cross_site_and_page_owned_blocks_without_deleting(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
     $site = $this->defaultSite();
     $otherSite = Site::query()->create([
       'name' => 'Other Site',
@@ -482,7 +476,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function valid_token_can_assign_compatible_shared_slot_to_empty_page_slot(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
     $site = $this->defaultSite();
     $page = Page::query()->create([
       'site_id' => $site->id,
@@ -515,7 +509,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function content_plan_validates_navigation_and_shared_slots_without_writing(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $this->withInternalToken()
       ->postJson('/webadmin/api/content/validate', $this->phaseTwoPlanPayload())
@@ -530,7 +524,7 @@ class InternalContentApiTest extends TestCase
   #[Test]
   public function content_apply_transactionally_creates_navigation_and_shared_slots_and_rolls_back_on_late_failure(): void
   {
-    $this->setInternalApiToken('secret-token');
+    $this->createInternalApiToken('secret-token');
 
     $this->withInternalToken()
       ->postJson('/webadmin/api/content/apply', $this->phaseTwoPlanPayload())
@@ -679,19 +673,13 @@ class InternalContentApiTest extends TestCase
     return Locale::query()->where('is_default', true)->firstOrFail();
   }
 
-  private function setInternalApiToken(?string $token): void
+  private function createInternalApiToken(string $token): void
   {
-    $value = $token ?? '';
-    putenv($token === null ? 'WEBBLOCKS_CMS_INTERNAL_API_TOKEN' : 'WEBBLOCKS_CMS_INTERNAL_API_TOKEN='.$value);
-
-    if ($token === null) {
-      unset($_ENV['WEBBLOCKS_CMS_INTERNAL_API_TOKEN'], $_SERVER['WEBBLOCKS_CMS_INTERNAL_API_TOKEN']);
-
-      return;
-    }
-
-    $_ENV['WEBBLOCKS_CMS_INTERNAL_API_TOKEN'] = $value;
-    $_SERVER['WEBBLOCKS_CMS_INTERNAL_API_TOKEN'] = $value;
+    CmsApiToken::query()->create([
+      'name' => 'Test token',
+      'token_hash' => app(CmsApiTokenIssuer::class)->hash($token),
+      'token_preview' => app(CmsApiTokenIssuer::class)->preview($token),
+    ]);
   }
 
   private function withInternalToken(): self

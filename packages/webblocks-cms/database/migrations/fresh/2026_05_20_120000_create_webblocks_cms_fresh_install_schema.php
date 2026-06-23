@@ -26,6 +26,7 @@ return new class extends Migration
       'block_button_translations',
       'block_text_translations',
       'system_backup_restores',
+      'cms_api_tokens',
       'system_backups',
       'system_update_runs',
       'public_search_index',
@@ -704,6 +705,20 @@ return new class extends Migration
         ->on('users')
         ->nullOnDelete();
       $table->timestamps();
+    });
+
+    $this->createTableIfMissing('cms_api_tokens', function (Blueprint $table): void {
+      $table->id();
+      $table->string('name');
+      $table->string('token_hash', 128)->unique();
+      $table->string('token_preview', 32);
+      $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+      $table->timestamp('last_used_at')->nullable();
+      $table->string('last_used_ip', 45)->nullable();
+      $table->timestamp('revoked_at')->nullable();
+      $table->timestamps();
+
+      $table->index(['revoked_at', 'created_at']);
     });
 
     $this->createTableIfMissing('system_backups', function (Blueprint $table): void {
