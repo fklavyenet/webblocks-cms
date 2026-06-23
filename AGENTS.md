@@ -46,6 +46,8 @@
 - Do not automatically equate host product admin status with CMS admin status.
 - Do not design installer, register, or invite flows that create duplicate users for the same email.
 - Keep current implementation and target direction separate when documenting coexistence changes.
+- Runtime-required CMS schema changes must support both fresh/package consumer installs and existing package-native System Updates. Fresh schema alone is not enough; add a package update migration under `packages/webblocks-cms/database/migrations/updates` or make the update fail safely before runtime code can raw-500.
+- Package-native System Updates must not require ordinary users to SSH and run manual migrations after a successful update. Successful updates should align code, required schema, cache clears, and post-apply version/schema readiness.
 
 ## Admin UI
 
@@ -110,6 +112,7 @@ When reviewing UI changes, verify shells, surfaces, tables, forms, overlays, fee
 ## Tests
 
 - Add or update focused tests for meaningful behavior changes.
+- For new tables or columns used by admin/API/runtime code, add a package update migration regression test similar to `CmsApiTokensUpdateMigrationTest`, and document whether graceful missing-schema behavior is needed or added.
 - Run focused tests first when validating.
 - Use the risk-based composer scripts in `docs/testing-strategy.md` for routine release validation.
 - Prefer `composer test:release-fast` for small package-native hotfixes.

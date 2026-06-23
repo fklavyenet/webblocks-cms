@@ -65,6 +65,25 @@ Consequences:
 - `System -> Plugins` reports configured enabled state separately from active compatibility. A plugin can be configured enabled yet remain inactive when its required CMS version constraint is not satisfied.
 - WebBlocks UI Manager is not registered, routed, migrated, menu-visible, command-registered, or health-visible in normal CMS installs. It becomes available only when an operator manually uploads its plugin ZIP and explicitly enables it. Existing tables created by v1.32.67 are not dropped automatically.
 
+## Package-Native Schema Updates
+
+- Runtime-required WebBlocks CMS schema changes must be available to both fresh package installs and existing package-native installs updated through System Updates.
+- Fresh schema migrations alone are not sufficient for runtime-required tables or columns.
+- Existing package-native installs receive required CMS schema through package update migrations under `packages/webblocks-cms/database/migrations/updates`.
+- System Updates must not be considered successful if new code can become active while required schema is missing.
+- Admin, API, and runtime surfaces should fail gracefully with controlled setup/update guidance when required schema is missing.
+
+Reason:
+
+- Package-native installs intentionally skip host/root Laravel migrations during System Updates to avoid colliding with host application migrations.
+- The 1.32.146 API token release showed that code can become active while schema is absent when a runtime table is added only to the normal migration path.
+
+Consequences:
+
+- Schema-changing releases must update the fresh install schema path and add package update migrations when existing installs need the same table or column.
+- Release validation must include package update migration regression coverage for new runtime-required schema.
+- Final release reports for schema changes must state whether the fresh schema path, package update migration, update migration test, and graceful missing-schema behavior were handled.
+
 ## WebBlocks Plugin Ecosystem Catalog Direction
 
 - WebBlocks plugin contracts should be designed for reuse across WebBlocks products, not only WebBlocks CMS.

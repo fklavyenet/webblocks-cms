@@ -63,6 +63,17 @@ The updater flow must remain release-based and package-based.
 
 System Updates apply published packages and required update migrations only. Broad catalog synchronization is explicit maintenance; use `php artisan webblocks:catalog-repair --dry-run --all` before applying `php artisan webblocks:catalog-repair --all` when an install needs shipped block type, slot type, page layout, or icon catalog repair.
 
+## Package-Native Schema Changes
+
+Runtime-required schema changes must support both install paths:
+
+1. Fresh/package consumer installs through the normal or fresh schema migration path.
+2. Existing package-native installs through a package update migration under `packages/webblocks-cms/database/migrations/updates`.
+
+Fresh schema alone is not enough. If new code expects a table or column, the same release must include a package update migration for existing installs, or the update must fail safely before the new code path can raw-500. Ordinary System Updates must not require users to SSH into an install and run manual migrations after the update.
+
+Admin, API, and runtime surfaces that depend on newly added schema should show controlled setup/update guidance when that schema is missing. Release validation for package-native schema additions must include a regression test similar to `CmsApiTokensUpdateMigrationTest`, plus the relevant admin/API/runtime tests for the changed surface.
+
 ## Core Vs Project Layer
 
 WebBlocks CMS core and the Project Layer have different responsibilities.

@@ -70,11 +70,14 @@ Representative tests:
 
 Run with `composer test:update` for updater client parsing, package archive extraction, package-native migration execution, backup preflight, installed-version persistence, and package update migration changes.
 
+When adding a table or column used by admin, API, public rendering, commands, middleware, or any runtime code path, add or update a package update migration regression test. Use focused tests similar to `tests/Feature/CmsApiTokensUpdateMigrationTest.php` for package-native schema additions, and run that exact test class plus `composer test:update`. Fresh install schema coverage alone is not enough because package-native System Updates do not run host/root migrations.
+
 ## Migration / Backup / Restore-Critical
 
 Representative tests:
 
 - `tests/Feature/PageTranslationParentKeyUpdateMigrationTest.php`
+- package update migration tests such as `tests/Feature/CmsApiTokensUpdateMigrationTest.php`
 - `tests/Feature/Admin/SystemBackupsTest.php`
 - `tests/Feature/System/SystemBackupRestoreManagerTest.php`
 - `tests/Feature/Console/SystemBackupRestoreCommandTest.php`
@@ -83,6 +86,8 @@ Representative tests:
 - `tests/Unit/System/DatabaseRestoreRunnerSqliteTest.php`
 
 Run the exact migration test class for a migration-only hotfix, then `composer test:update` if the migration runs through System Updates. Add backup and restore classes for archive format, database dump, restore, or pre-update backup changes.
+
+For schema that new runtime code immediately expects, validation must prove both sides of the install matrix: fresh/package consumer install schema and existing package-native update migration. Also add focused admin/API/runtime coverage when missing schema should produce controlled setup/update guidance instead of a raw database exception.
 
 ## Release-Artifact-Boundary
 
