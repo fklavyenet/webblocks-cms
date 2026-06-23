@@ -645,6 +645,18 @@ class SystemUpdatesTest extends TestCase
     $this->assertFileExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md');
     $this->assertFileExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/docs/internal-content-api.md');
     $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php');
+    $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/artisan');
+    $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/app');
+    $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/bootstrap');
+    $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages');
+    $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/plugins');
+    $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/tests');
+    $this->assertStringContainsString('fklavyenet/webblocks-cms/src', (string) File::get($targetRoot.'/vendor/composer/autoload_psr4.php'));
+    $this->assertStringContainsString('fklavyenet/webblocks-cms/database/seeders', (string) File::get($targetRoot.'/vendor/composer/autoload_psr4.php'));
+    $this->assertStringContainsString('fklavyenet/webblocks-cms/src', (string) File::get($targetRoot.'/vendor/composer/autoload_static.php'));
+    $this->assertStringContainsString('fklavyenet/webblocks-cms/database/seeders', (string) File::get($targetRoot.'/vendor/composer/autoload_static.php'));
+    $this->assertStringNotContainsString('packages/webblocks-cms', (string) File::get($targetRoot.'/vendor/composer/autoload_psr4.php'));
+    $this->assertStringNotContainsString('packages/webblocks-cms', (string) File::get($targetRoot.'/vendor/composer/autoload_static.php'));
     $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
 
     $run = SystemUpdateRun::query()->latest()->first();
@@ -655,11 +667,14 @@ class SystemUpdatesTest extends TestCase
     $this->assertStringContainsString('Using PHP binary: php', (string) $run->output);
     $this->assertStringContainsString('Package checksum verified', (string) $run->output);
     $this->assertStringContainsString('Replaced vendor/fklavyenet/webblocks-cms with package artifact contents.', (string) $run->output);
+    $this->assertStringContainsString('Normalized repo-shaped vendor package root to the flat canonical Composer package root.', (string) $run->output);
     $this->assertStringNotContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
     $this->assertStringNotContainsString('Replaced vendor/fklavyenet/webblocks-cms/packages/webblocks-cms with package artifact contents.', (string) $run->output);
     $this->assertStringContainsString('Synced package public/cms assets into public/cms runtime compatibility path.', (string) $run->output);
     $this->assertStringContainsString('Removed retired public/cms/index.php front-controller handoff.', (string) $run->output);
-    $this->assertStringContainsString('composer install', (string) $run->output);
+    $this->assertStringContainsString('composer dump-autoload --no-interaction --optimize', (string) $run->output);
+    $this->assertStringNotContainsString('composer install', (string) $run->output);
+    $this->assertStringContainsString('Normalized Composer autoload metadata for WebBlocks CMS flat package paths:', (string) $run->output);
     $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
     $this->assertStringContainsString('Migration strategy: package-native update migrations.', (string) $run->output);
     $this->assertStringContainsString('No package update migrations found; host application migrations were skipped.', (string) $run->output);
@@ -1254,8 +1269,12 @@ class SystemUpdatesTest extends TestCase
     File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/src/Legacy');
     File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/public/cms');
     File::ensureDirectoryExists($targetRoot.'/vendor/composer');
+    File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/app');
+    File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/bootstrap');
     File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin');
     File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates');
+    File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/plugins');
+    File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/tests');
     File::put($targetRoot.'/artisan', "root-artisan\n");
     File::put($targetRoot.'/bootstrap/app.php', "root-bootstrap\n");
     File::put($targetRoot.'/composer.json', json_encode(['name' => 'test/install-shell'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -1272,7 +1291,12 @@ class SystemUpdatesTest extends TestCase
     File::put($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php', "old package update exception\n");
     File::put($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php', "stale file\n");
     File::put($targetRoot.'/packages/webblocks-cms/public/cms/admin.css', "old-package-css\n");
-    File::put($targetRoot.'/vendor/composer/autoload_psr4.php', "<?php\n\nreturn [\n    'WebBlocks\\\\Cms\\\\' => [__DIR__.'/../fklavyenet/webblocks-cms/packages/webblocks-cms/src'],\n];\n");
+    File::put($targetRoot.'/vendor/composer/autoload_psr4.php', "<?php\n\nreturn [\n    'WebBlocks\\\\Cms\\\\' => [__DIR__.'/../fklavyenet/webblocks-cms/packages/webblocks-cms/src'],\n    'WebBlocks\\\\Cms\\\\Database\\\\Seeders\\\\' => [__DIR__.'/../fklavyenet/webblocks-cms/packages/webblocks-cms/database/seeders'],\n];\n");
+    File::put($targetRoot.'/vendor/composer/autoload_static.php', "<?php\n\nclass ComposerStaticInitWebBlocksTest\n{\n  public static \$prefixDirsPsr4 = [\n    'WebBlocks\\\\\\\\Cms\\\\\\\\' => [__DIR__ . '/..' . '/fklavyenet/webblocks-cms/packages/webblocks-cms/src'],\n    'WebBlocks\\\\\\\\Cms\\\\\\\\Database\\\\\\\\Seeders\\\\\\\\' => [__DIR__ . '/..' . '/fklavyenet/webblocks-cms/packages/webblocks-cms/database/seeders'],\n  ];\n}\n");
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/artisan', "vendor repo artisan\n");
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/app/Legacy.php', "<?php\n");
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/bootstrap/app.php', "<?php\n");
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/tests/LegacyTest.php', "<?php\n");
     File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/composer.json', json_encode([
       'name' => 'fklavyenet/webblocks-cms',
       'autoload' => [

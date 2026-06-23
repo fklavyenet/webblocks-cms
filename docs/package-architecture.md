@@ -27,6 +27,8 @@ This means:
 
 System Update must align with this Composer package layout. In installed package-native consumers, the updater applies package-rooted release artifacts to `vendor/fklavyenet/webblocks-cms`; it must not keep `packages/webblocks-cms` as a second active, updated runtime copy. A `packages/webblocks-cms` tree belongs to source-maintained development checkouts or legacy transition leftovers only.
 
+When a legacy Composer vendor install is repo-shaped, System Update normalizes `vendor/fklavyenet/webblocks-cms` to the flat package root. After normalization, `src/`, `docs/`, `routes/`, `resources/`, `database/`, `public/`, `config/`, and `stubs/` live directly under `vendor/fklavyenet/webblocks-cms`; repo-root leftovers such as `artisan`, `app/`, `bootstrap/`, `packages/`, `plugins/`, and `tests/` are removed from the package root replacement.
+
 `project/` may remain temporarily as a compatibility layer during the transition, but it should not remain the long-term required customization model for install-specific behavior.
 
 The expected starter-project direction is a separate Laravel starter such as `fklavyenet/webblocks-cms-starter`, where the user-owned project root composes the CMS package instead of embedding all CMS core files directly.

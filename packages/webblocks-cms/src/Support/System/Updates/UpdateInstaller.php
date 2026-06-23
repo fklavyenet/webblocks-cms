@@ -55,6 +55,7 @@ class UpdateInstaller
   {
     $stagingPath = $packageRuntimePath.'.wb-update-new';
     $backupPath = $packageRuntimePath.'.wb-update-old';
+    $normalizesRepoShapedVendorRoot = $this->isRepoShapedVendorPackageRoot($targetPath, $packageRuntimePath);
 
     $this->assertSafePackageRuntimePath($targetPath, $packageRuntimePath);
 
@@ -96,6 +97,10 @@ class UpdateInstaller
     File::deleteDirectory($backupPath);
 
     $output[] = 'Replaced '.$this->relativePath($targetPath, $packageRuntimePath).' with package artifact contents.';
+
+    if ($normalizesRepoShapedVendorRoot) {
+      $output[] = 'Normalized repo-shaped vendor package root to the flat canonical Composer package root.';
+    }
   }
 
   private function syncRootRuntimeAssets(string $targetPath, string $packageRoot, array &$output): void
@@ -131,13 +136,28 @@ class UpdateInstaller
 
   public function installDependencies(array &$output): void
   {
+    $targetPath = $this->targetPath();
+
+    if ($this->isSourceMaintainedTarget($targetPath)) {
+      $this->commandRunner->run([
+        'composer',
+        'install',
+        '--no-interaction',
+        '--prefer-dist',
+        '--optimize-autoloader',
+      ], $targetPath, $output);
+
+      return;
+    }
+
     $this->commandRunner->run([
       'composer',
-      'install',
+      'dump-autoload',
       '--no-interaction',
-      '--prefer-dist',
-      '--optimize-autoloader',
-    ], $this->targetPath(), $output);
+      '--optimize',
+    ], $targetPath, $output);
+
+    $this->normalizeComposerAutoloadMetadata($targetPath, $output);
   }
 
   public function runPostInstallCommands(array &$output): void
@@ -262,6 +282,63 @@ class UpdateInstaller
     }
 
     return File::isDirectory($this->rootPackageRuntimePath($targetPath));
+  }
+
+  private function isRepoShapedVendorPackageRoot(string $targetPath, string $packageRuntimePath): bool
+  {
+    if ($this->canonicalComposerPackageRuntimePath($targetPath) !== $packageRuntimePath) {
+      return false;
+    }
+
+    foreach ([
+      'artisan',
+      'app',
+      'bootstrap',
+      'packages/webblocks-cms',
+      'plugins',
+      'tests',
+    ] as $repoOnlyPath) {
+      if (File::exists($packageRuntimePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $repoOnlyPath))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private function normalizeComposerAutoloadMetadata(string $targetPath, array &$output): void
+  {
+    $composerVendorPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'composer';
+    $patchedFiles = [];
+
+    foreach ([
+      $composerVendorPath.DIRECTORY_SEPARATOR.'autoload_psr4.php',
+      $composerVendorPath.DIRECTORY_SEPARATOR.'autoload_static.php',
+    ] as $autoloadPath) {
+      if (! File::isFile($autoloadPath)) {
+        continue;
+      }
+
+      $contents = (string) File::get($autoloadPath);
+      $patched = str_replace([
+        'fklavyenet/webblocks-cms/packages/webblocks-cms/database/seeders',
+        'fklavyenet/webblocks-cms/packages/webblocks-cms/src',
+      ], [
+        'fklavyenet/webblocks-cms/database/seeders',
+        'fklavyenet/webblocks-cms/src',
+      ], $contents);
+
+      if ($patched === $contents) {
+        continue;
+      }
+
+      File::put($autoloadPath, $patched);
+      $patchedFiles[] = $this->relativePath($targetPath, $autoloadPath);
+    }
+
+    if ($patchedFiles !== []) {
+      $output[] = 'Normalized Composer autoload metadata for WebBlocks CMS flat package paths: '.implode(', ', $patchedFiles).'.';
+    }
   }
 
   private function assertSafePackageRuntimePath(string $targetPath, string $packageRuntimePath): void

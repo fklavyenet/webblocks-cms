@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.152
+
+- Normalize old repo-shaped Composer vendor installs to the flat canonical package root during System Update, including WebBlocks CMS autoload metadata.
+
 ## 1.32.151
 
 - Apply package-native System Updates to the canonical Composer package root at `vendor/fklavyenet/webblocks-cms` instead of maintaining `packages/webblocks-cms` as a second updated runtime copy.

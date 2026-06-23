@@ -124,6 +124,7 @@ Consequences:
 
 - Package-native System Updates apply package-rooted artifacts to `vendor/fklavyenet/webblocks-cms`.
 - Package-native update migrations run from `vendor/fklavyenet/webblocks-cms/database/migrations/updates` after the package root is replaced.
+- Repo-shaped legacy vendor installs are normalized to the flat package root during System Update, and WebBlocks CMS Composer autoload metadata is refreshed away from nested `packages/webblocks-cms` paths.
 - Legacy `packages/webblocks-cms` leftovers must not be deleted automatically until a future explicit cleanup tool can prove they are inactive and safe to remove.
 
 ## WebBlocks Plugin Ecosystem Catalog Direction
