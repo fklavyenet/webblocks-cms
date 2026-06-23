@@ -9,6 +9,7 @@ Updates in WebBlocks CMS are release-based and package-based.
 - The in-app updater applies published release packages, not local working-tree changes.
 - Fresh Composer consumers should install first with `composer require fklavyenet/webblocks-cms` and `php artisan webblocks:install` before using the normal release-based update flow.
 - Current package-native installs consume package-rooted release ZIPs directly.
+- Package-native System Updates apply the package artifact to the canonical Composer package root, `vendor/fklavyenet/webblocks-cms`, so Composer update and System Update produce the same installed package layout.
 - Historically, pre-package-native installs such as `1.31.53` could not directly consume package-rooted release ZIPs and required the old-shape `1.32.33` root-managed bridge first. That bridge path is now retired from routine release validation because there are no remaining old root-managed installs to support in normal gates.
 
 ## Operational Expectations
@@ -67,14 +68,14 @@ The cache clear steps include Laravel config, view, application cache, and route
 
 For source-maintained maintenance checkouts, migration handling keeps the historical root `database/migrations` authority and runs `artisan migrate --force`. This path is selected only when the root Composer manifest has the maintenance-repository WebBlocks CMS autoload authority, including `WebBlocks\\Cms\\ => packages/webblocks-cms/src/`.
 
-For package-native fresh Composer consumers installed with `webblocks:install`, System Update does not run the host Laravel application's root `database/migrations` directory. This remains true even though the transition updater installs package files into `packages/webblocks-cms`. Package directory presence alone is not a source-checkout signal. This prevents pending Laravel starter migrations such as `0001_01_01_000000_create_users_table.php` from colliding with CMS tables created by the package fresh-install schema. Package consumer updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when that directory contains PHP migration files; otherwise the updater records that host migrations were skipped and continues with cache clears and installed-version persistence. Package update migrations are also the place for safe existing-install schema repairs, such as adding missing parent keys required by full database backup/restore portability.
+For package-native fresh Composer consumers installed with `webblocks:install`, System Update does not run the host Laravel application's root `database/migrations` directory. Package directory presence alone is not a source-checkout signal. This prevents pending Laravel starter migrations such as `0001_01_01_000000_create_users_table.php` from colliding with CMS tables created by the package fresh-install schema. Package consumer updates apply the release artifact to `vendor/fklavyenet/webblocks-cms` and only run dedicated package-owned update migrations from `vendor/fklavyenet/webblocks-cms/database/migrations/updates` when that directory contains PHP migration files; otherwise the updater records that host migrations were skipped and continues with cache clears and installed-version persistence. Package update migrations are also the place for safe existing-install schema repairs, such as adding missing parent keys required by full database backup/restore portability.
 
 ## Package-Native Schema Update Rule
 
 Any WebBlocks CMS schema change that is required by runtime code must support both install paths:
 
 1. Fresh/package consumer installs: update the normal or fresh schema migration path.
-2. Existing package-native installs updated through System Updates: add a package update migration under `packages/webblocks-cms/database/migrations/updates`.
+2. Existing package-native installs updated through System Updates: add a package update migration under package `database/migrations/updates`; installed consumers run it from `vendor/fklavyenet/webblocks-cms/database/migrations/updates`.
 
 Fresh schema alone is not enough. If new runtime code expects a table or column, the release must include an update migration for existing installs or the update must fail safely before the new code path can raw-500. Package-native System Updates must not require ordinary users to SSH into a site and run manual migrations after a successful update.
 
@@ -87,7 +88,7 @@ Schema-change release reports must explicitly answer:
 - update migration regression test added: yes/no
 - graceful missing-schema behavior needed/added: yes/no
 
-During the package transition, some Composer consumers load `WebBlocks\Cms\` from `vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src` while the in-app updater also maintains an install-root `packages/webblocks-cms` copy. System Update now replaces both safe CMS package runtime roots when that Composer autoload shape is detected, so a successful package-native update cannot leave stale active vendor controllers behind while only refreshing the root transition copy.
+During the package transition, some installs may still have a stale install-root `packages/webblocks-cms` copy or an old nested vendor transition copy. These paths are legacy transition artifacts, not the active package-native source of truth. Package-native System Update now replaces the canonical Composer package root at `vendor/fklavyenet/webblocks-cms` and verifies the target version from that package root. It does not keep `packages/webblocks-cms` as a second updated runtime copy.
 
 Modern updates preserve the `/webadmin` admin and `/cms` asset split introduced by the v1.32.56 migration. `/cms` is a static asset namespace only, not an admin prefix, because Nginx `try_files` can resolve `/cms/` as the physical `public/cms/` directory before Laravel sees a route. Updates must not restore CMS-owned `/cms` admin aliases, `/cms` redirects, `/admin` routes, or a `public/cms/index.php` handoff in either the install root or package public assets.
 

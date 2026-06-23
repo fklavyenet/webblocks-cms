@@ -159,7 +159,7 @@ class PackageStatusCommand extends Command
     $this->line('Package migration loading guard enabled: '.$this->yesNo($this->packageMigrationLoadingEnabled()).' ('.$packageMigrationLoadingConfig.')');
     $this->line('Package migrations loaded in active runtime: no');
     $this->line('Legacy root migration compatibility state: yes (root database/migrations remains authoritative for source-maintained installs).');
-    $this->line('Package update migration readiness: package consumer System Updates use packages/webblocks-cms/database/migrations/updates when PHP migrations are present and skip host application migrations otherwise.');
+    $this->line('Package update migration readiness: package consumer System Updates use vendor/fklavyenet/webblocks-cms/database/migrations/updates when PHP migrations are present and skip host application migrations otherwise.');
     $this->line('Detected System Update migration strategy: '.$updateMigrationStrategy['strategy'].' ('.$updateMigrationStrategy['reason'].')');
     $this->line('Package database/seeders path present: '.$this->yesNo(is_dir($packageRoot.'/database/seeders')));
     $this->line('Package seeder boundary status: '.$this->resourceBoundaryStatus($seederFiles));

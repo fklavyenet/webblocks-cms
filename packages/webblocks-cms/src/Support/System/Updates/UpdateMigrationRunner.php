@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\File;
 
 class UpdateMigrationRunner
 {
-  private const PACKAGE_UPDATE_MIGRATIONS_PATH = 'packages/webblocks-cms/database/migrations/updates';
+  private const PACKAGE_UPDATE_MIGRATIONS_PATH = 'vendor/fklavyenet/webblocks-cms/database/migrations/updates';
 
   public function __construct(
     private readonly UpdateCommandRunner $commandRunner,

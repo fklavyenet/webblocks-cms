@@ -35,7 +35,7 @@ return [
         'download_timeout_seconds' => 120,
         'command_timeout_seconds' => 600,
         'migration_strategy' => env('WEBBLOCKS_UPDATES_MIGRATION_STRATEGY', 'auto'),
-        'package_update_migrations_path' => 'packages/webblocks-cms/database/migrations/updates',
+        'package_update_migrations_path' => 'vendor/fklavyenet/webblocks-cms/database/migrations/updates',
         'lock_name' => 'system-updates:run',
         'lock_ttl_seconds' => 900,
         'excluded_paths' => [

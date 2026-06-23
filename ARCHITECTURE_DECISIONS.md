@@ -93,7 +93,7 @@ Consequences:
 
 - Runtime-required WebBlocks CMS schema changes must be available to both fresh package installs and existing package-native installs updated through System Updates.
 - Fresh schema migrations alone are not sufficient for runtime-required tables or columns.
-- Existing package-native installs receive required CMS schema through package update migrations under `packages/webblocks-cms/database/migrations/updates`.
+- Existing package-native installs receive required CMS schema through package update migrations shipped under package `database/migrations/updates` and run from `vendor/fklavyenet/webblocks-cms/database/migrations/updates`.
 - System Updates must not be considered successful if new code can become active while required schema is missing.
 - Admin, API, and runtime surfaces should fail gracefully with controlled setup/update guidance when required schema is missing.
 
@@ -107,6 +107,24 @@ Consequences:
 - Schema-changing releases must update the fresh install schema path and add package update migrations when existing installs need the same table or column.
 - Release validation must include package update migration regression coverage for new runtime-required schema.
 - Final release reports for schema changes must state whether the fresh schema path, package update migration, update migration test, and graceful missing-schema behavior were handled.
+
+## Single Canonical Installed CMS Package Root
+
+- Package-native installed CMS source of truth is `vendor/fklavyenet/webblocks-cms`.
+- Composer update and CMS System Update must produce the same installed package root layout for WebBlocks CMS package files.
+- System Update must not maintain `packages/webblocks-cms` as a second active, updated runtime copy in package-native consumers.
+- `packages/webblocks-cms` is reserved for source-maintained development checkouts and may exist in old installs only as a legacy transition leftover.
+
+Reason:
+
+- Two updated runtime trees make version reporting, File Manager inspection, AI guide paths, and operator diagnosis ambiguous.
+- Composer-managed consumers should see the same package root whether they update through Composer or the CMS System Update screen.
+
+Consequences:
+
+- Package-native System Updates apply package-rooted artifacts to `vendor/fklavyenet/webblocks-cms`.
+- Package-native update migrations run from `vendor/fklavyenet/webblocks-cms/database/migrations/updates` after the package root is replaced.
+- Legacy `packages/webblocks-cms` leftovers must not be deleted automatically until a future explicit cleanup tool can prove they are inactive and safe to remove.
 
 ## WebBlocks Plugin Ecosystem Catalog Direction
 

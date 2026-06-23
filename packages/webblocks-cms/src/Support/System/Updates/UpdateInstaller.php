@@ -9,8 +9,6 @@ class UpdateInstaller
 {
   private const PACKAGE_RUNTIME_PATH = 'packages/webblocks-cms';
 
-  private const COMPOSER_AUTOLOAD_PATH = 'vendor/composer/autoload_psr4.php';
-
   private const COMPOSER_VENDOR_PACKAGE_PATH = 'vendor/fklavyenet/webblocks-cms';
 
   public function __construct(
@@ -218,15 +216,11 @@ class UpdateInstaller
 
   private function packageRuntimePaths(string $targetPath): array
   {
-    $paths = [$this->rootPackageRuntimePath($targetPath)];
-
-    foreach ($this->composerPackageRuntimePaths($targetPath) as $composerRuntimePath) {
-      if (! in_array($composerRuntimePath, $paths, true)) {
-        $paths[] = $composerRuntimePath;
-      }
+    if ($this->isSourceMaintainedTarget($targetPath)) {
+      return [$this->rootPackageRuntimePath($targetPath)];
     }
 
-    return $paths;
+    return [$this->canonicalComposerPackageRuntimePath($targetPath)];
   }
 
   private function rootPackageRuntimePath(string $targetPath): string
@@ -234,57 +228,40 @@ class UpdateInstaller
     return rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::PACKAGE_RUNTIME_PATH);
   }
 
-  private function composerPackageRuntimePaths(string $targetPath): array
+  private function canonicalComposerPackageRuntimePath(string $targetPath): string
   {
-    $autoloadPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::COMPOSER_AUTOLOAD_PATH);
-
-    if (! File::isFile($autoloadPath)) {
-      return [];
-    }
-
-    $autoload = require $autoloadPath;
-    $namespacePaths = $autoload['WebBlocks\\Cms\\'] ?? [];
-
-    if (is_string($namespacePaths)) {
-      $namespacePaths = [$namespacePaths];
-    }
-
-    if (! is_array($namespacePaths)) {
-      return [];
-    }
-
-    $paths = [];
-
-    foreach ($namespacePaths as $namespacePath) {
-      if (! is_string($namespacePath) || trim($namespacePath) === '') {
-        continue;
-      }
-
-      $runtimePath = $this->runtimePathFromNamespacePath($namespacePath);
-
-      if ($runtimePath === null || ! File::isDirectory($runtimePath)) {
-        continue;
-      }
-
-      $runtimePath = realpath($runtimePath) ?: $runtimePath;
-
-      if ($this->isSafeComposerRuntimePath($targetPath, $runtimePath)) {
-        $paths[] = $runtimePath;
-      }
-    }
-
-    return array_values(array_unique($paths));
+    return rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::COMPOSER_VENDOR_PACKAGE_PATH);
   }
 
-  private function runtimePathFromNamespacePath(string $namespacePath): ?string
+  private function isSourceMaintainedTarget(string $targetPath): bool
   {
-    $normalizedPath = rtrim(str_replace('\\', '/', $namespacePath), '/');
+    $composerPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'composer.json';
 
-    if (! str_ends_with($normalizedPath, '/src')) {
-      return null;
+    if (! File::isFile($composerPath)) {
+      return false;
     }
 
-    return str_replace('/', DIRECTORY_SEPARATOR, substr($normalizedPath, 0, -4));
+    try {
+      $composer = json_decode((string) File::get($composerPath), true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException) {
+      return false;
+    }
+
+    $autoload = $composer['autoload']['psr-4'] ?? [];
+
+    if (($composer['name'] ?? null) !== 'fklavyenet/webblocks-cms') {
+      return false;
+    }
+
+    if (($autoload['WebBlocks\\Cms\\'] ?? null) !== 'packages/webblocks-cms/src/') {
+      return false;
+    }
+
+    if (($autoload['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) !== 'packages/webblocks-cms/database/seeders/') {
+      return false;
+    }
+
+    return File::isDirectory($this->rootPackageRuntimePath($targetPath));
   }
 
   private function assertSafePackageRuntimePath(string $targetPath, string $packageRuntimePath): void
@@ -292,8 +269,13 @@ class UpdateInstaller
     $normalizedTargetPath = rtrim(str_replace('\\', '/', $targetPath), '/');
     $normalizedPackageRuntimePath = rtrim(str_replace('\\', '/', $packageRuntimePath), '/');
     $rootRuntimePath = $normalizedTargetPath.'/'.self::PACKAGE_RUNTIME_PATH;
+    $vendorRuntimePath = $normalizedTargetPath.'/'.self::COMPOSER_VENDOR_PACKAGE_PATH;
 
     if ($normalizedPackageRuntimePath === $rootRuntimePath) {
+      return;
+    }
+
+    if ($normalizedPackageRuntimePath === $vendorRuntimePath) {
       return;
     }
 

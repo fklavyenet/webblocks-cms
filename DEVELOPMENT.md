@@ -82,7 +82,7 @@ For page preview, the canonical route is `GET /webadmin/pages/{page}/preview`. D
 Runtime-required schema changes must support both install paths:
 
 1. Fresh/package consumer installs through the normal or fresh schema migration path.
-2. Existing package-native installs through a package update migration under `packages/webblocks-cms/database/migrations/updates`.
+2. Existing package-native installs through a package update migration shipped under package `database/migrations/updates` and applied from `vendor/fklavyenet/webblocks-cms/database/migrations/updates`.
 
 Fresh schema alone is not enough. If new code expects a table or column, the same release must include a package update migration for existing installs, or the update must fail safely before the new code path can raw-500. Ordinary System Updates must not require users to SSH into an install and run manual migrations after the update.
 

@@ -71,7 +71,7 @@ class PackageStatusCommandTest extends TestCase
       ->expectsOutputToContain('Package migration loading guard enabled: no (webblocks-cms.boundaries.load_migrations)')
       ->expectsOutputToContain('Package migrations loaded in active runtime: no')
       ->expectsOutputToContain('Legacy root migration compatibility state: yes (root database/migrations remains authoritative for source-maintained installs).')
-      ->expectsOutputToContain('Package update migration readiness: package consumer System Updates use packages/webblocks-cms/database/migrations/updates when PHP migrations are present and skip host application migrations otherwise.')
+      ->expectsOutputToContain('Package update migration readiness: package consumer System Updates use vendor/fklavyenet/webblocks-cms/database/migrations/updates when PHP migrations are present and skip host application migrations otherwise.')
       ->expectsOutputToContain('Detected System Update migration strategy: source (root composer.json owns WebBlocks\\Cms\\ autoloading from packages/webblocks-cms/src/)')
       ->expectsOutputToContain('Package database/seeders path present: yes')
       ->expectsOutputToContain('Package seeder boundary status: pilot files present')

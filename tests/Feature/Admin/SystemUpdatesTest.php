@@ -629,24 +629,22 @@ class SystemUpdatesTest extends TestCase
     $this->assertSame('runtime-config-override', trim((string) File::get($targetRoot.'/config/app.php')));
     $this->assertSame('runtime-root-migration', trim((string) File::get($targetRoot.'/database/migrations/2026_01_01_000000_runtime.php')));
     $this->assertSame('site-override', trim((string) File::get($targetRoot.'/public/site/default/site.css')));
-    $this->assertFileExists($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php');
-    $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
-    $this->assertFalse(File::exists($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php'));
-    $this->assertSame('package-css', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/admin.css')));
-    $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/brand/logo-mark.svg')));
-    $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
-    $this->assertStringContainsString('adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', (string) File::get($targetRoot.'/packages/webblocks-cms/resources/views/layouts/admin.blade.php'));
-    $this->assertStringContainsString("'Admin Dashboard'", (string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/SystemSettings.php'));
+    $this->assertSame('old package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+    $this->assertSame('stale file', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php')));
+    $this->assertSame('old-package-css', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/admin.css')));
     $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/public/cms/js/admin/listing-bulk-actions.js')));
     $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/public/cms/brand/logo-mark.svg')));
     $this->assertFalse(File::exists($targetRoot.'/public/cms/index.php'));
-    $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
-    $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
-    $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/brand/logo-mark.svg')));
-    $this->assertStringContainsString('adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/resources/views/layouts/admin.blade.php'));
-    $this->assertStringContainsString("'Admin Dashboard'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/SystemSettings.php'));
-    $this->assertStringContainsString('webblocks-cms::admin.site-transfers.exports.index', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
-    $this->assertStringNotContainsString("view('admin/site-transfers/exports/index'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
+    $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+    $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
+    $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/public/cms/brand/logo-mark.svg')));
+    $this->assertStringContainsString('adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/resources/views/layouts/admin.blade.php'));
+    $this->assertStringContainsString("'Admin Dashboard'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/SystemSettings.php'));
+    $this->assertStringContainsString('webblocks-cms::admin.site-transfers.exports.index', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
+    $this->assertStringNotContainsString("view('admin/site-transfers/exports/index'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
+    $this->assertFileExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md');
+    $this->assertFileExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/docs/internal-content-api.md');
+    $this->assertFileDoesNotExist($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php');
     $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
 
     $run = SystemUpdateRun::query()->latest()->first();
@@ -656,8 +654,9 @@ class SystemUpdatesTest extends TestCase
     $this->assertSame('0.2.0', $run->to_version);
     $this->assertStringContainsString('Using PHP binary: php', (string) $run->output);
     $this->assertStringContainsString('Package checksum verified', (string) $run->output);
-    $this->assertStringContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
-    $this->assertStringContainsString('Replaced vendor/fklavyenet/webblocks-cms/packages/webblocks-cms with package artifact contents.', (string) $run->output);
+    $this->assertStringContainsString('Replaced vendor/fklavyenet/webblocks-cms with package artifact contents.', (string) $run->output);
+    $this->assertStringNotContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
+    $this->assertStringNotContainsString('Replaced vendor/fklavyenet/webblocks-cms/packages/webblocks-cms with package artifact contents.', (string) $run->output);
     $this->assertStringContainsString('Synced package public/cms assets into public/cms runtime compatibility path.', (string) $run->output);
     $this->assertStringContainsString('Removed retired public/cms/index.php front-controller handoff.', (string) $run->output);
     $this->assertStringContainsString('composer install', (string) $run->output);
@@ -825,7 +824,7 @@ class SystemUpdatesTest extends TestCase
 
     $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
     $this->assertSame('The update package was applied, but the installed CMS version still does not match the target release. The run was not marked successful; restore the pre-update backup or review filesystem and cache state before retrying.', $run->summary);
-    $this->assertStringContainsString('Update failed: Expected WebBlocks CMS 0.2.0 after update, but packages/webblocks-cms/src/Support/WebBlocks.php reports 0.1.9.', (string) $run->output);
+    $this->assertStringContainsString('Update failed: Expected WebBlocks CMS 0.2.0 after update, but vendor/fklavyenet/webblocks-cms/src/Support/WebBlocks.php reports 0.1.9.', (string) $run->output);
     $this->assertStringNotContainsString('Installed version persisted as 0.2.0', (string) $run->output);
     $this->assertNull(app(InstalledVersionStore::class)->storedVersion());
     $this->assertContains('php artisan up', $runner->commands);
@@ -1312,6 +1311,8 @@ class SystemUpdatesTest extends TestCase
     $archive->addFromString('resources/views/layouts/admin.blade.php', "{{ app(SystemSettings::class)->adminBrowserTitle(\$adminBrowserTitle ?? \$title ?? null) }}\n");
     $archive->addFromString('resources/views/admin/dashboard.blade.php', "@extends('webblocks-cms::layouts.admin', ['title' => 'Admin Dashboard', 'heading' => 'Dashboard'])\n");
     $archive->addFromString('database/seeders/CoreCatalogSeeder.php', "<?php\n");
+    $archive->addFromString('docs/ai-page-building-guide.md', "canonical AI guide\n");
+    $archive->addFromString('docs/internal-content-api.md', "internal content api docs\n");
     $archive->addFromString('routes/admin.php', "<?php\n");
     $archive->addFromString('public/cms/admin.css', "package-css\n");
     $archive->addFromString('public/cms/brand/logo-mark.svg', "brand-logo\n");

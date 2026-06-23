@@ -14,6 +14,7 @@ The target architecture is a Composer-managed Laravel package:
 
 - Package name: `fklavyenet/webblocks-cms`
 - Installed path: `vendor/fklavyenet/webblocks-cms`
+- Canonical installed package source of truth: `vendor/fklavyenet/webblocks-cms`
 
 In the target model, CMS core code is installed and updated as a normal Composer package instead of being copied into the user-owned Laravel project root.
 
@@ -23,6 +24,8 @@ This means:
 - Laravel package resources stay in package-level `config/`, `database/`, `resources/`, `routes/`, `public/`, and `stubs/`
 - `src/` is not where every package file should go
 - the user-owned Laravel root should own `app/`, `config/`, `database/`, `public/site/`, `resources/`, `routes/`, `storage/`, and `composer.json`
+
+System Update must align with this Composer package layout. In installed package-native consumers, the updater applies package-rooted release artifacts to `vendor/fklavyenet/webblocks-cms`; it must not keep `packages/webblocks-cms` as a second active, updated runtime copy. A `packages/webblocks-cms` tree belongs to source-maintained development checkouts or legacy transition leftovers only.
 
 `project/` may remain temporarily as a compatibility layer during the transition, but it should not remain the long-term required customization model for install-specific behavior.
 
@@ -730,7 +733,7 @@ Requests, commands, assets, migrations, and update-flow blockers:
 - root migrations remain authoritative for source-maintained checkouts with maintenance-repository root Composer autoload authority; package-native fresh consumers installed with `webblocks:install` must not run host Laravel application migrations during System Update
 - WebBlocks UI Manager no longer ships inside the CMS package runtime. Its source lives under `plugins/webblocks-ui-manager` for maintenance builds, and operators install it manually as a plugin ZIP when they need WebBlocks UI release/CDN workflows.
 - Phase 5 plugin package readiness keeps plugin-owned classes, views, routes, commands, config, settings namespaces, and database prefixes attributable to plugin handles; disabled or incompatible plugins remain inert and do not become CMS core responsibilities
-- package consumer System Updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when present, and otherwise skip migration execution without marking arbitrary host migrations as run
+- package consumer System Updates only run dedicated package-owned update migrations from `vendor/fklavyenet/webblocks-cms/database/migrations/updates` when present, and otherwise skip migration execution without marking arbitrary host migrations as run
 - System Update remains a separate phase because its blockers are environment mutation, filesystem writes, Composer execution, backups, migrations, installed-version persistence, and root operational state, not route or controller ownership
 
 ### Consolidation outcome

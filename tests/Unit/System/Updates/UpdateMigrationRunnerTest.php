@@ -60,7 +60,7 @@ class UpdateMigrationRunnerTest extends TestCase
   public function package_strategy_runs_only_dedicated_package_update_migrations_when_present(): void
   {
     $targetRoot = $this->makeTargetRoot('consumer/app');
-    $migrationPath = $targetRoot.'/packages/webblocks-cms/database/migrations/updates';
+    $migrationPath = $targetRoot.'/vendor/fklavyenet/webblocks-cms/database/migrations/updates';
     File::ensureDirectoryExists($migrationPath);
     File::put($migrationPath.'/2026_05_21_120000_package_update.php', "<?php\n");
     File::ensureDirectoryExists($targetRoot.'/database/migrations');
