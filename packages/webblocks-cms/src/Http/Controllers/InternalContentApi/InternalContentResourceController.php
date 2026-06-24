@@ -268,7 +268,7 @@ class InternalContentResourceController extends Controller
     $blockTypePayload = $this->presenter->blockType($blockType);
     $contract = $blockTypePayload['contract'] ?? [];
 
-    return [
+    $payload = [
       'handle' => $blockType->slug,
       'slug' => $blockType->slug,
       'label' => $blockType->name,
@@ -289,5 +289,42 @@ class InternalContentResourceController extends Controller
       'documented_contract' => (bool) ($contract['documented'] ?? false),
       'contract_status' => $contract['current_contract_status'] ?? null,
     ];
+
+    if ($blockType->slug === 'contact_form') {
+      $payload['settings_schema'] = [
+        'recipient_email' => 'nullable email string; overrides the site and environment recipient fallback chain when present',
+        'send_email_notification' => 'boolean; default true',
+        'store_submissions' => 'boolean; always true in the native CMS contract',
+      ];
+      $payload['public_submit_endpoint'] = [
+        'method' => 'POST',
+        'path' => '/contact-messages',
+        'route_name' => 'contact-messages.store',
+        'csrf' => 'required for browser submissions',
+      ];
+      $payload['validation_rules'] = [
+        'block_id' => 'required integer existing block id',
+        'page_id' => 'nullable integer existing page id',
+        'name' => 'required string max 255',
+        'email' => 'required RFC email max 255',
+        'subject' => 'nullable string max 255',
+        'message' => 'required string',
+        'website' => 'nullable honeypot string',
+        'submitted_at' => 'required integer timestamp',
+      ];
+      $payload['spam_behavior'] = [
+        'honeypot_field' => 'website',
+        'honeypot_response' => 'generic success redirect without storing or notifying',
+        'classification' => 'stored submissions may be classified as spam from conservative commercial/link/repeat-IP signals',
+      ];
+      $payload['storage_behavior'] = 'Legitimate submissions are stored in contact_messages before email notification is attempted; notification status fields do not change the editorial message status.';
+      $payload['notification_behavior'] = [
+        'recipient_order' => ['block recipient_email', 'site contact_recipient_email', 'CONTACT_RECIPIENT_EMAIL', 'MAIL_FROM_ADDRESS'],
+        'failure_detail' => 'safe redacted delivery error stored on the message',
+      ];
+      $payload['admin_review_behavior'] = 'Stored messages appear under /webadmin/contact-messages with editorial status, spam score/reasons, notification status, and safe failure detail.';
+    }
+
+    return $payload;
   }
 }

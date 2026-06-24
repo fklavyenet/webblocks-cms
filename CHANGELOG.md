@@ -15,6 +15,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 - Document the target-site agnostic Markdown documentation to source-linked CMS page publication model for future AI/operator workflows.
 
+## 1.32.161
+
+- Complete native Contact Form discovery for AI/operator tools by documenting `contact_form` in block contracts, exposing its safe submit/spam/storage/notification contract through `/webadmin/api/content-contract`, and updating the contact-page API example to use the native block instead of `mailto:` or Trusted HTML workarounds.
+- Align fresh install Contact Message notification defaults with the package migration path.
+
 ## 1.32.160
 
 - Add `replace_existing_draft_page` Internal Content API plans for draft-only page-owned slot replacement with path or updated-at safety guards, transaction-scoped block replacement, and page revision audit snapshots.

@@ -140,10 +140,19 @@ sticky-navbar -> container(flow:none) -> cluster -> navbar-brand + cluster -> na
 
 For most public pages, place wide promo blocks such as `hero` and `cta` inside `section -> container`. Direct full-width `hero` or `cta` blocks under `main` should be intentional edge-to-edge design choices, not the default.
 
+Contact page:
+
+```text
+section -> hero + contact_form
+```
+
+Use the native `contact_form` block for contact pages after discovery confirms the handle is available. Its visible copy is translated with `title`, `content`, `submit_label`, and `success_message`; shared settings are `recipient_email`, `send_email_notification`, and `store_submissions`. The renderer emits the native CSRF-protected public form, hidden `website` honeypot, and `/contact-messages` submit endpoint.
+
 ## Bad Structures
 
 - Do not put a full page into one `rich-text` block.
 - Do not put a full page into one trusted `html` block when structured blocks can represent it.
+- Do not build contact forms with Trusted HTML, raw form markup, or `mailto:` links when `contact_form` is available.
 - Do not guess handles.
 - Do not overwrite published content.
 - Do not mutate an existing live page when a new separate draft page is safer.

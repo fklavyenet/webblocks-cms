@@ -238,16 +238,22 @@ class InternalApiDiscoveryController extends Controller
                     'subtitle' => 'Tell us how we can help.',
                   ],
                   'settings' => [
-                    'primary_label' => 'Email support',
-                    'primary_url' => 'mailto:support@example.test',
                     'secondary_label' => 'View services',
                     'secondary_url' => '/services',
                   ],
                 ],
                 [
-                  'type' => 'plain_text',
+                  'type' => 'contact_form',
                   'translations' => [
-                    'content' => 'Use this draft page as a starting point for contact information, office details, and service questions.',
+                    'title' => 'Send us a message',
+                    'content' => 'Use this native CMS form for questions, requests, and follow-up.',
+                    'submit_label' => 'Send message',
+                    'success_message' => 'Thanks for your message. We will get back to you soon.',
+                  ],
+                  'settings' => [
+                    'recipient_email' => null,
+                    'send_email_notification' => true,
+                    'store_submissions' => true,
                   ],
                 ],
               ],

@@ -442,6 +442,7 @@ Public pages now use explicit layout composition modes:
 - Translatable fields: `heading`, `intro_text`, `submit_label`, `success_message`
 - Shared fields: `recipient_email`, `send_email_notification`, `store_submissions`
 - Intended behavior: public submission stores the message first, then attempts synchronous email notification to the resolved recipient; admin views should show compact notification state and safe failure detail when delivery fails.
+- Public submit endpoint: native browser form `POST /contact-messages` with CSRF, hidden `website` honeypot, required `name`, `email`, and `message` validation, optional `subject`, and generic success behavior for honeypot hits.
 - Notes: block recipient override wins first, then the current public site's `contact_recipient_email`, then `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as a last safe local fallback when no explicit contact recipient is configured.
 
 ### `video`
@@ -549,7 +550,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `recipient_email`, `send_email_notification`, `store_submissions`
 - Intended WebBlocks UI output: form fields use WebBlocks UI form primitives; submit action uses `wb-btn`; transient success feedback renders once as a WebBlocks UI toast under the shared public `#wb-overlay-root`, while validation errors and user-correctable failures stay inline near the form with `wb-alert`.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: preserve structured form fields, keep operational settings out of editorial copy, keep site-level default recipients on the site record instead of arbitrary block JSON, and avoid making editors paste raw form markup.
+- Notes for later renderer/admin improvements: preserve structured form fields, keep operational settings out of editorial copy, keep site-level default recipients on the site record instead of arbitrary block JSON, and avoid making editors paste raw form markup or use `mailto:` as a submission substitute.
 
 ## Public-Only Or Weak Blocks
 

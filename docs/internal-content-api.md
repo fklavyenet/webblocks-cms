@@ -221,6 +221,8 @@ The endpoint is generic CMS product behavior. It must not return install-specifi
 
 AI tools should call this endpoint or `GET /webadmin/api/block-types` before building a plan and must use only handles that are present in the current install.
 
+The `contact_form` contract includes additional safe form metadata: settings schema, translated fields, the public `POST /contact-messages` submit endpoint, required CSRF browser behavior, server validation rules, the hidden `website` honeypot, generic honeypot success behavior, spam classification/quarantine notes, storage-before-notification behavior, recipient fallback order, safe notification failure recording, and `/webadmin/contact-messages` review behavior. Contact-page tools should use that native block rather than Trusted HTML, raw form markup, or `mailto:` forms.
+
 The human-readable AI Page Building Guide ships in package-native installs at `vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md`.
 
 ## Phase 1 Scope

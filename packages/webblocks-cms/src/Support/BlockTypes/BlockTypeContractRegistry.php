@@ -622,6 +622,21 @@ class BlockTypeContractRegistry
         'current_contract_status' => 'clear',
         'known_gaps' => [],
       ],
+      'contact_form' => [
+        'admin_form_fields' => ['Heading', 'Intro text', 'Submit label', 'Success message', 'Recipient email', 'Send email notification', 'Store submissions'],
+        'translatable_fields' => ['title', 'content', 'submit_label', 'success_message'],
+        'shared_settings_fields' => ['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions'],
+        'storage_fields' => [
+          'Translated visible copy lives in block_contact_form_translations rows.',
+          'Shared recipient and notification settings stay in block settings.',
+          'Public submissions are stored as contact_messages rows before notification delivery is attempted.',
+        ],
+        'media_relationship_fields' => ['Not applicable.'],
+        'child_container_behavior' => ['Not a container in the current contract.'],
+        'renderer_root_contract' => 'Owns its public `section.wb-card` root and emits a native CSRF-protected browser form that posts to `/contact-messages`.',
+        'current_contract_status' => 'clear',
+        'known_gaps' => [],
+      ],
       'breadcrumb' => [
         'admin_form_fields' => ['Home label', 'Current page item'],
         'translatable_fields' => [],

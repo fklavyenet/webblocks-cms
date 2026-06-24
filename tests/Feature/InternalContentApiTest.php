@@ -117,7 +117,10 @@ class InternalContentApiTest extends TestCase
       ->assertOk()
       ->assertJsonPath('example.handle', 'contact-page')
       ->assertJsonPath('example.payload.plan.page.status', 'draft')
-      ->assertJsonPath('example.payload.plan.slots.main.0.type', 'section');
+      ->assertJsonPath('example.payload.plan.slots.main.0.type', 'section')
+      ->assertJsonPath('example.payload.plan.slots.main.0.children.1.type', 'contact_form')
+      ->assertJsonPath('example.payload.plan.slots.main.0.children.1.settings.send_email_notification', true)
+      ->assertJsonPath('example.payload.plan.slots.main.0.children.1.settings.store_submissions', true);
 
     foreach ([$openApi, $guide, $example] as $response) {
       $encoded = json_encode($response->json(), JSON_UNESCAPED_SLASHES);
@@ -125,6 +128,8 @@ class InternalContentApiTest extends TestCase
       $this->assertStringNotContainsString(base_path(), $encoded);
       $this->assertStringNotContainsString('secret-token', $encoded);
       $this->assertStringNotContainsString('token_hash', $encoded);
+      $this->assertStringNotContainsString('mailto:', $encoded);
+      $this->assertStringNotContainsString('trusted_html', $encoded);
       $this->assertStringNotContainsString('.env', $encoded);
     }
   }
@@ -266,9 +271,20 @@ class InternalContentApiTest extends TestCase
 
     $handles = collect($response->json('block_contracts'))->pluck('handle');
 
-    foreach (['section', 'container', 'hero', 'cta', 'card', 'card_body', 'plain_text', 'rich-text', 'button_link'] as $handle) {
+    foreach (['section', 'container', 'hero', 'cta', 'card', 'card_body', 'plain_text', 'rich-text', 'button_link', 'contact_form'] as $handle) {
       $this->assertContains($handle, $handles, "Expected content contract to include [{$handle}].");
     }
+
+    $contactFormContract = collect($response->json('block_contracts'))
+      ->firstWhere('handle', 'contact_form');
+
+    $this->assertIsArray($contactFormContract);
+    $this->assertSame(['title', 'content', 'submit_label', 'success_message'], $contactFormContract['translatable_fields']);
+    $this->assertSame(['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions'], $contactFormContract['shared_settings_fields']);
+    $this->assertSame('/contact-messages', $contactFormContract['public_submit_endpoint']['path']);
+    $this->assertSame('required for browser submissions', $contactFormContract['public_submit_endpoint']['csrf']);
+    $this->assertSame('website', $contactFormContract['spam_behavior']['honeypot_field']);
+    $this->assertSame(['block recipient_email', 'site contact_recipient_email', 'CONTACT_RECIPIENT_EMAIL', 'MAIL_FROM_ADDRESS'], $contactFormContract['notification_behavior']['recipient_order']);
 
     $encoded = json_encode($response->json(), JSON_UNESCAPED_SLASHES);
 

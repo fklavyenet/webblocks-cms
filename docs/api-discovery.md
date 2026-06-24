@@ -62,6 +62,8 @@ GET /webadmin/api/shared-slots
 
 The content validate/apply links support both `create_draft_page` and `replace_existing_draft_page` plan modes. Use `GET /webadmin/api/content-contract` for the current mode list and safety rules.
 
+`GET /webadmin/api/examples/contact-page` demonstrates a native `contact_form` block. It intentionally avoids Trusted HTML, raw form markup, and `mailto:` fallbacks so tools can create safe draft contact pages through the same structured block contract operators use in the admin.
+
 Protected links require:
 
 ```http

@@ -1880,6 +1880,15 @@ The block does not own the slot-level root. The shared variant controls the aler
         <p>Intro copy.</p>
       </div>
       <form method="POST" action="/contact-messages" class="wb-stack wb-gap-3">
+        <input type="hidden" name="_token" value="csrf-token">
+        <input type="hidden" name="block_id" value="1">
+        <input type="hidden" name="page_id" value="10">
+        <input type="hidden" name="source_url" value="/contact">
+        <input type="hidden" name="submitted_at" value="1770000000">
+        <div class="wb-public-contact-honeypot" aria-hidden="true">
+          <label for="contact-website-1">Website</label>
+          <input id="contact-website-1" type="text" name="website" tabindex="-1" autocomplete="off">
+        </div>
         <div class="wb-grid wb-grid-2">
           <div class="wb-stack wb-gap-1">
             <label class="wb-label">Name</label>
@@ -1912,6 +1921,8 @@ The block does not own the slot-level root. The shared variant controls the aler
 | site contact recipient | configured | Form posts to `contact-messages.store` with hidden site/page context. |
 | validation errors | present | Renders `wb-alert wb-alert-danger` and field-level feedback. |
 | settings submit/success labels | legacy translated settings | Moved out by translation resolver/writer; visible output follows current translated block fields. |
+
+The public form is native Blade output, not Trusted HTML content. Browser submissions require CSRF, include the hidden `website` honeypot, validate required fields server-side, store legitimate messages first, and then attempt email notification using the documented recipient fallback order.
 
 ### Use for / Avoid for
 
