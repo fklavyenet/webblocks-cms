@@ -117,7 +117,7 @@ Recommended additional docs:
 | CSRF-free Bearer API write behavior | AI operations | Implemented | No browser admin path | No public behavior | Bearer writes do not depend on browser CSRF | Trusted token contract for operator tools | [docs/internal-content-api.md](internal-content-api.md) | covered |
 | Preview URL reporting | AI operations | Implemented | Edit Page preview | Operators can review draft previews | Apply responses can report preview context | Preview remains authenticated and draft-safe | [docs/ai-page-building-guide.md](ai-page-building-guide.md), [docs/editorial-workflow.md](editorial-workflow.md) | covered |
 | Draft-first AI page building workflow | AI operations | Implemented | Pages and preview screens | AI-created pages are drafts until approved | Discovery, validate, apply workflow | Requires live discovery and exact contracts | [docs/ai-page-building-guide.md](ai-page-building-guide.md) | needs `docs/ai-page-building-overview.md` |
-| Markdown docs-to-CMS sync documented direction | Documentation | Documented direction | No runtime admin path | Future source-linked docs pages can publish Markdown-derived content | Would use discovery, validate, and approved apply workflows | Markdown source remains authoritative | [docs/markdown-docs-to-cms-sync.md](markdown-docs-to-cms-sync.md) | covered |
+| Markdown docs-to-CMS sync runbook | Documentation | Documented direction | No runtime admin path | Future source-linked docs pages can publish Markdown-derived content | Would use discovery, validate, and approved draft-safe apply workflows | Markdown source remains authoritative and changed `docs/` files drive AI/operator planning | [docs/markdown-docs-to-cms-sync.md](markdown-docs-to-cms-sync.md) | covered |
 
 ## Operations
 

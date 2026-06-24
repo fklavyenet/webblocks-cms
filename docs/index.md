@@ -41,7 +41,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [API Discovery](api-discovery.md)
 - [AI Page Building Guide](ai-page-building-guide.md)
 - [Block Type Contracts](block-type-contracts.md)
-- [Markdown Docs To CMS Sync](markdown-docs-to-cms-sync.md)
+- [Markdown Docs To CMS Sync](markdown-docs-to-cms-sync.md) - operator runbook for syncing changed `docs/` Markdown files into source-linked CMS documentation pages
 - [Feature Inventory](feature-inventory.md)
 
 ## Multisite & Localization

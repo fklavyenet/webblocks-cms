@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Expand the Markdown Docs to CMS Sync documentation into an operational runbook for changed `docs/` Markdown files, including source matching, batch behavior, stop conditions, report formats, and safe draft apply rules.
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
 - Document the Internal Content API route contract for token-protected AI/operator CMS content operations.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
