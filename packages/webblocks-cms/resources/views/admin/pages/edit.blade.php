@@ -13,6 +13,9 @@
   $pageRevisionsUrl = $canViewRevisions ? route('admin.pages.revisions.index', $page) : null;
   $pageDuplicateUrl = $canDuplicatePage ? route('admin.pages.duplicate.create', ['page' => $page, 'return_url' => $pageReturnUrl]) : null;
   $pageMoveUrl = $canMoveToAnotherSite ? route('admin.pages.move-site.create', ['page' => $page, 'return_url' => $pageReturnUrl]) : null;
+  $pageOwnedBlockPublishingSummary = $pageOwnedBlockPublishingSummary ?? ['total' => 0, 'by_slot' => [], 'shared_slots_excluded' => [], 'shared_slots_excluded_total' => 0];
+  $hasUnpublishedPageOwnedBlocks = ($pageOwnedBlockPublishingSummary['total'] ?? 0) > 0;
+  $hasExcludedSharedSlotBlocks = ($pageOwnedBlockPublishingSummary['shared_slots_excluded_total'] ?? 0) > 0;
   $siteName = $page->site?->name ?? 'Site';
   $domainName = $page->site?->canonicalDomain() ?: 'Not set';
   $headerActions = collect([
@@ -98,12 +101,16 @@
                         <span class="wb-text-sm wb-text-muted">Actions</span>
                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                           @foreach ($workflowActions as $workflowAction)
-                            <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
-                              @csrf
-                              <input type="hidden" name="action" value="{{ $workflowAction['value'] }}">
-                              <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                              <button type="submit" class="{{ $workflowAction['class'] }}">{{ $workflowAction['label'] }}</button>
-                            </form>
+                            @if ($workflowAction['value'] === \WebBlocks\Cms\Support\Pages\PageWorkflowManager::ACTION_PUBLISH && $hasUnpublishedPageOwnedBlocks)
+                              <button type="button" class="{{ $workflowAction['class'] }}" data-wb-toggle="modal" data-wb-target="#publish-page-modal" aria-haspopup="dialog">{{ $workflowAction['label'] }}</button>
+                            @else
+                              <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
+                                @csrf
+                                <input type="hidden" name="action" value="{{ $workflowAction['value'] }}">
+                                <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+                                <button type="submit" class="{{ $workflowAction['class'] }}">{{ $workflowAction['label'] }}</button>
+                              </form>
+                            @endif
                           @endforeach
                         </div>
                       </div>
@@ -112,6 +119,29 @@
                 </div>
               </div>
             </div>
+
+            @if ($hasUnpublishedPageOwnedBlocks)
+              <div class="wb-card wb-card-muted">
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                  <strong>Unpublished page content</strong>
+                  @if ($canPublishPageOwnedBlocks)
+                    <form method="POST" action="{{ route('admin.pages.publish-page-owned-blocks', $page) }}">
+                      @csrf
+                      <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+                      <button type="submit" class="wb-btn wb-btn-secondary">Publish page-owned blocks</button>
+                    </form>
+                  @endif
+                </div>
+                <div class="wb-card-body wb-stack wb-gap-3">
+                  <p class="wb-text-sm wb-text-muted">{{ $pageOwnedBlockPublishingSummary['total'] }} page-owned {{ \Illuminate\Support\Str::plural('block', $pageOwnedBlockPublishingSummary['total']) }} are still draft or in review.</p>
+                  @if ($hasExcludedSharedSlotBlocks)
+                    <div class="wb-alert wb-alert-info">
+                      Shared Slot content is not included. Review and publish Shared Slots separately.
+                    </div>
+                  @endif
+                </div>
+              </div>
+            @endif
           </div>
 
           <div class="wb-tabs-panel {{ $settingsTab === 'settings' ? 'is-active' : '' }}" id="page-management-settings-panel">
@@ -174,6 +204,90 @@
     'canCreateSharedSlots' => $canCreateSharedSlots,
     'pageReturnUrl' => $pageReturnUrl,
   ])
+
+  @if ($hasUnpublishedPageOwnedBlocks)
+    <div class="wb-modal wb-modal-lg" id="publish-page-modal" role="dialog" aria-modal="true" aria-labelledby="publish-page-modal-title" aria-describedby="publish-page-modal-description" hidden>
+      <div class="wb-modal-dialog">
+        <div class="wb-modal-header">
+          <div>
+            <h2 class="wb-modal-title" id="publish-page-modal-title">Publish page</h2>
+            <p class="wb-text-sm wb-text-muted" id="publish-page-modal-description">Choose whether page-owned blocks should publish with this page.</p>
+          </div>
+          <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close publish page modal">
+            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+          </button>
+        </div>
+        <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
+          @csrf
+          <input type="hidden" name="action" value="{{ \WebBlocks\Cms\Support\Pages\PageWorkflowManager::ACTION_PUBLISH }}">
+          <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+          <div class="wb-modal-body wb-stack wb-gap-4">
+            <div class="wb-alert wb-alert-info">
+              Publishing the page alone keeps existing draft and in-review blocks unpublished unless you choose the option below.
+            </div>
+
+            <div class="wb-table-wrap">
+              <table class="wb-table wb-table-striped">
+                <thead>
+                  <tr>
+                    <th>Page-owned slot</th>
+                    <th>Draft</th>
+                    <th>In Review</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach ($pageOwnedBlockPublishingSummary['by_slot'] as $slotSummary)
+                    <tr>
+                      <td>{{ $slotSummary['label'] }}</td>
+                      <td>{{ $slotSummary['status_counts']['draft'] ?? 0 }}</td>
+                      <td>{{ $slotSummary['status_counts']['in_review'] ?? 0 }}</td>
+                      <td>{{ $slotSummary['total'] }}</td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+
+            @if ($hasExcludedSharedSlotBlocks)
+              <div class="wb-alert wb-alert-warning">
+                Shared Slot content is not included. Review and publish Shared Slots separately.
+              </div>
+              <div class="wb-table-wrap">
+                <table class="wb-table wb-table-striped">
+                  <thead>
+                    <tr>
+                      <th>Shared Slot-backed slot</th>
+                      <th>Shared Slot</th>
+                      <th>Unpublished</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach ($pageOwnedBlockPublishingSummary['shared_slots_excluded'] as $slotSummary)
+                      <tr>
+                        <td>{{ $slotSummary['label'] }}</td>
+                        <td>{{ $slotSummary['shared_slot_label'] ?? 'Shared Slot' }}</td>
+                        <td>{{ $slotSummary['total'] }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+            @endif
+
+            <label class="wb-cluster wb-cluster-2" for="include_page_owned_blocks">
+              <input id="include_page_owned_blocks" type="checkbox" name="include_page_owned_blocks" value="1">
+              <span>Also publish all unpublished page-owned blocks</span>
+            </label>
+          </div>
+          <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Cancel</button>
+            <button type="submit" class="wb-btn wb-btn-primary">Publish</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  @endif
 
   <div class="wb-card wb-card-muted">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">

@@ -88,6 +88,8 @@ class InternalContentResourceController extends Controller
         'prefix' => '/webadmin/api',
         'content_validate' => '/webadmin/api/content/validate',
         'content_apply' => '/webadmin/api/content/apply',
+        'page_publish' => '/webadmin/api/pages/{page}/publish',
+        'page_owned_blocks_publish' => '/webadmin/api/pages/{page}/publish-page-owned-blocks',
         'preview_url_template' => '/webadmin/pages/{page}/preview',
         'modes' => [
           'create_draft_page',
@@ -98,6 +100,7 @@ class InternalContentResourceController extends Controller
         'draft_only' => true,
         'apply_requires_explicit_user_approval' => true,
         'publishes' => false,
+        'page_publish_default_includes_blocks' => false,
         'overwrites_existing_content' => false,
         'draft_slot_replacement' => true,
         'remote_fetch' => false,
@@ -135,6 +138,15 @@ class InternalContentResourceController extends Controller
           ],
         ],
       ],
+      'publishing' => [
+        'publish_page_url_template' => '/webadmin/api/pages/{page}/publish',
+        'publish_page_owned_blocks_url_template' => '/webadmin/api/pages/{page}/publish-page-owned-blocks',
+        'requires_capability' => 'content.publish',
+        'default_include_page_owned_blocks' => false,
+        'include_page_owned_blocks_field' => 'include_page_owned_blocks',
+        'shared_slot_cascade' => 'unsupported',
+        'shared_slot_content' => 'excluded and must be reviewed separately',
+      ],
       'discovery' => [
         'sites' => '/webadmin/api/sites',
         'locales' => '/webadmin/api/locales',
@@ -142,6 +154,8 @@ class InternalContentResourceController extends Controller
         'block_types' => '/webadmin/api/block-types',
         'navigation_menus' => '/webadmin/api/navigation-menus',
         'shared_slots' => '/webadmin/api/shared-slots',
+        'page_publish' => '/webadmin/api/pages/{page}/publish',
+        'page_owned_blocks_publish' => '/webadmin/api/pages/{page}/publish-page-owned-blocks',
       ],
       'recommended_patterns' => [
         'marketing_homepage' => [

@@ -38,7 +38,7 @@ With a valid CMS API Bearer token, discovery returns:
 - `authenticated: true`
 - token capability names, without token value, token preview, or token hash
 - recommended next steps
-- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, navigation, and Shared Slots
+- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, page publish, page-owned block publish, navigation, and Shared Slots
 
 The authenticated response is the canonical bootstrap contract for AI/operator tools. Tools should follow returned links instead of assuming local filesystem access to the CMS repository or package docs.
 
@@ -56,11 +56,15 @@ POST /webadmin/api/content/validate
 POST /webadmin/api/content/apply
 GET /webadmin/api/pages
 GET /webadmin/api/pages/{page}
+POST /webadmin/api/pages/{page}/publish
+POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 GET /webadmin/api/navigation-menus
 GET /webadmin/api/shared-slots
 ```
 
 The content validate/apply links support both `create_draft_page` and `replace_existing_draft_page` plan modes. Use `GET /webadmin/api/content-contract` for the current mode list and safety rules.
+
+Publish links require `content.publish`. `POST /webadmin/api/pages/{page}/publish` defaults to page-only publishing with `include_page_owned_blocks: false`; it does not publish draft blocks unless the request explicitly sets `include_page_owned_blocks: true`. Shared Slot cascade publishing is unsupported and returns JSON validation feedback. `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes eligible page-owned draft or in-review blocks without changing the page workflow status.
 
 `GET /webadmin/api/examples/contact-page` demonstrates a native `contact_form` block. It intentionally avoids Trusted HTML, raw form markup, and `mailto:` fallbacks so tools can create safe draft contact pages through the same structured block contract operators use in the admin.
 
@@ -90,6 +94,8 @@ Destructive or publish capabilities are separate advanced options and are not se
 - `pages.delete`
 
 Destructive operations must require an explicit matching capability and should not be granted to normal page-building tokens.
+
+Normal page-building tools should not assume publishing is available. If `content.publish` is absent, tools should stop before calling publish endpoints and report that a trusted operator token with publish capability is required.
 
 ## JSON-Only Errors
 

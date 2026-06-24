@@ -265,6 +265,14 @@ Current scope now includes foundation, public rendering, site-scoped admin manag
 - Restoring a Shared Slot revision restores the Shared Slot in place. The Shared Slot id stays stable, existing `page_slots.shared_slot_id` references remain intact, and the restored content immediately affects every page that references that Shared Slot.
 - Shared Slot revisions do not treat page revisions as authoritative for Shared Slot content, and page revisions do not pretend to capture Shared Slot block trees.
 
+## Page And Block Publishing
+
+Page workflow publishing and block publishing are separate by default. Publishing a page record makes the page routable when its locale/path rules match, but it does not silently publish draft or in-review blocks inside that page. This lets editors and reviewers publish the page shell while holding selected blocks for later review.
+
+When a user explicitly chooses to include page-owned blocks, WebBlocks CMS publishes only blocks owned by the page's non-shared page slots. Nested child blocks under those page-owned slots are included. Shared Slot-backed slots are excluded; their reusable block trees must be reviewed and published through Shared Slot-specific workflows.
+
+The Internal Content API follows the same rule. `POST /webadmin/api/pages/{page}/publish` defaults to `include_page_owned_blocks: false`, requires `content.publish`, and excludes Shared Slots. AI/operator tools must opt into `include_page_owned_blocks: true` only with explicit user approval.
+
 ## Site Promotion Boundary
 
 - Site Promotion works on site-owned content, not on the whole install.

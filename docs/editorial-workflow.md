@@ -79,6 +79,12 @@ Only pages with status `published` are public.
 
 This applies across normal public routes, multisite routing, and localized routes.
 
+Page workflow status and block status are separate. The normal Edit Page -> Overview `Publish` action publishes the page record only. It does not silently publish draft or in-review blocks inside the page. If a page has unpublished page-owned blocks, the publish action opens a modal with an unchecked `Also publish all unpublished page-owned blocks` option. Leaving it unchecked preserves the page-only behavior; checking it publishes eligible page-owned blocks in the same workflow action.
+
+The Overview tab also shows an `Unpublished page content` helper when page-owned blocks are still draft or in review. `Publish page-owned blocks` publishes only those page-owned blocks and does not change the page workflow status.
+
+Shared Slot content is excluded from these page-owned block publishing workflows. Shared Slot-backed header, footer, or other slots must be reviewed and published separately; WebBlocks CMS does not cascade page publishing into Shared Slot block trees.
+
 ## Workflow And Page Editing
 
 Workflow state also affects who can keep editing page content.

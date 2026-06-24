@@ -16,7 +16,7 @@ vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md
 
 ## Purpose
 
-Trusted AI/operator tools can inspect a CMS install, build a structured draft content plan, validate it, create a separate draft page, or replace specific page-owned slots on an existing draft page after explicit user approval. The workflow is draft-first and API-first. It does not publish content, overwrite published pages, clear Shared Slot-backed slots, fetch remote websites, or import media.
+Trusted AI/operator tools can inspect a CMS install, build a structured draft content plan, validate it, create a separate draft page, replace specific page-owned slots on an existing draft page after explicit user approval, or call explicit publish endpoints when the token has `content.publish`. The normal page-building workflow is draft-first and API-first. Content apply does not publish content, overwrite published pages, clear Shared Slot-backed slots, fetch remote websites, or import media.
 
 ## Token Setup
 
@@ -99,13 +99,14 @@ Do not substitute nearby spellings such as `plain-text`, `rich_text`, `button`, 
 7. Only after approval, call `POST /webadmin/api/content/apply`.
 8. Read the created draft page id from the apply response.
 9. Produce the admin preview URL with `/webadmin/pages/{page}/preview`.
-10. Leave publishing to a human workflow. The Internal Content API does not automatically publish.
+10. Leave publishing to a human workflow unless the user explicitly approved an API publish operation and the token has `content.publish`.
 
 ## Safety Rules
 
 - Draft-first.
 - Apply only after explicit user approval.
-- Do not publish.
+- Do not publish through content apply.
+- Do not assume page publish makes all blocks public; use `include_page_owned_blocks: true` only after explicit approval.
 - Do not delete pages through content apply.
 - Do not overwrite existing pages or blocks except with the explicit `replace_existing_draft_page` mode.
 - Do not call apply if the target path already exists unless the user explicitly approves a conflict-handling plan supported by the API.
@@ -346,6 +347,29 @@ POST /webadmin/api/content/apply
 ```
 
 The CMS removes old page-owned blocks only from the named slots and writes the new block tree in one transaction. Shared Slot-backed slots are rejected by this mode, so header/footer assignments remain untouched unless a separate supported API operation changes them.
+
+## Explicit Publish
+
+Publishing is not part of validate/apply. Trusted operator tools with `content.publish` may call:
+
+```text
+POST /webadmin/api/pages/{page}/publish
+POST /webadmin/api/pages/{page}/publish-page-owned-blocks
+```
+
+`POST /webadmin/api/pages/{page}/publish` defaults to:
+
+```json
+{
+  "include_page_owned_blocks": false
+}
+```
+
+With the default, the endpoint publishes only the page record. It does not publish draft or in-review blocks. Set `include_page_owned_blocks: true` only when the user explicitly wants all unpublished page-owned blocks for that page to publish too. The cascade includes nested child blocks under page-owned slots and excludes Shared Slot-backed slots.
+
+`POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes page-owned draft or in-review blocks without changing the page workflow status.
+
+Never request Shared Slot cascade publishing from page publish endpoints. Shared Slot content is not included and must be reviewed and published separately.
 
 ## Real Site Revisions
 

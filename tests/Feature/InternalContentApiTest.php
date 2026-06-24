@@ -25,6 +25,7 @@ use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
@@ -942,6 +943,87 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function api_publish_defaults_to_page_only_and_requires_publish_capability(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_READ]);
+    [$page, $draftBlock] = $this->createDraftPageWithPublishableBlocks();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/pages/'.$page->id.'/publish')
+      ->assertForbidden()
+      ->assertJsonPath('code', 'missing_internal_api_capability');
+
+    $this->createInternalApiToken('publish-token', [CmsApiTokenCapabilities::CONTENT_PUBLISH]);
+
+    $this->withHeader('Authorization', 'Bearer publish-token')
+      ->postJson('/webadmin/api/pages/'.$page->id.'/publish')
+      ->assertOk()
+      ->assertJsonPath('page.status', Page::STATUS_PUBLISHED)
+      ->assertJsonPath('included_page_owned_blocks', false)
+      ->assertJsonPath('page_owned_blocks_published_count', 0);
+
+    $this->assertSame('draft', $draftBlock->fresh()->status);
+  }
+
+  #[Test]
+  public function api_publish_can_explicitly_include_page_owned_blocks_without_shared_slot_cascade(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_PUBLISH]);
+    [$page, $draftBlock, $reviewBlock, $sharedBlock] = $this->createDraftPageWithPublishableBlocks(includeSharedSlot: true);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/pages/'.$page->id.'/publish', [
+        'include_page_owned_blocks' => true,
+      ])
+      ->assertOk()
+      ->assertJsonPath('page.status', Page::STATUS_PUBLISHED)
+      ->assertJsonPath('included_page_owned_blocks', true)
+      ->assertJsonPath('page_owned_blocks_published_count', 2)
+      ->assertJsonPath('shared_slots_excluded.0.shared_slot_label', 'Site Header')
+      ->assertJsonPath('revision_id', PageRevision::query()->latest('id')->value('id'));
+
+    $this->assertSame('published', $draftBlock->fresh()->status);
+    $this->assertSame('published', $reviewBlock->fresh()->status);
+    $this->assertSame('draft', $sharedBlock->fresh()->status);
+  }
+
+  #[Test]
+  public function api_rejects_shared_slot_cascade_publish_attempts(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_PUBLISH]);
+    [$page, $draftBlock] = $this->createDraftPageWithPublishableBlocks();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/pages/'.$page->id.'/publish', [
+        'include_page_owned_blocks' => true,
+        'publish_shared_slots' => true,
+      ])
+      ->assertStatus(422)
+      ->assertJsonFragment(['Shared Slot cascade publishing is not supported by this endpoint. Review and publish Shared Slots separately.']);
+
+    $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+    $this->assertSame('draft', $draftBlock->fresh()->status);
+  }
+
+  #[Test]
+  public function api_can_publish_page_owned_blocks_without_changing_page_status(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_PUBLISH]);
+    [$page, $draftBlock, $reviewBlock] = $this->createDraftPageWithPublishableBlocks();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/pages/'.$page->id.'/publish-page-owned-blocks')
+      ->assertOk()
+      ->assertJsonPath('changed_page_status', false)
+      ->assertJsonPath('page.status', Page::STATUS_DRAFT)
+      ->assertJsonPath('page_owned_blocks_published_count', 2);
+
+    $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+    $this->assertSame('published', $draftBlock->fresh()->status);
+    $this->assertSame('published', $reviewBlock->fresh()->status);
+  }
+
+  #[Test]
   public function shared_slot_assignment_rejects_cross_site_and_page_owned_blocks_without_deleting(): void
   {
     $this->createInternalApiToken('secret-token');
@@ -1276,6 +1358,85 @@ class InternalContentApiTest extends TestCase
       ]);
 
     return [$page->fresh(['translations.locale', 'slots.slotType']), $mainBlock, $sharedSlot];
+  }
+
+  private function createDraftPageWithPublishableBlocks(bool $includeSharedSlot = false): array
+  {
+    $site = $this->defaultSite();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+
+    app(PageLayoutSlotSyncer::class)->seedInitialSlots($page, 'default');
+
+    $draftBlock = Block::query()->create([
+      'page_id' => $page->id,
+      'block_type_id' => $this->blockTypeId('section'),
+      'type' => 'section',
+      'source_type' => 'static',
+      'slot_type_id' => $this->slotTypeId('main'),
+      'slot' => 'main',
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+
+    $reviewBlock = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $draftBlock->id,
+      'block_type_id' => $this->blockTypeId('plain_text'),
+      'type' => 'plain_text',
+      'source_type' => 'static',
+      'slot_type_id' => $this->slotTypeId('main'),
+      'slot' => 'main',
+      'status' => 'in_review',
+      'sort_order' => 0,
+    ]);
+
+    $sharedBlock = null;
+
+    if ($includeSharedSlot) {
+      $sharedSlot = SharedSlot::query()->create([
+        'site_id' => $site->id,
+        'name' => 'Site Header',
+        'handle' => 'site-header',
+        'slot_name' => 'header',
+        'is_active' => true,
+      ]);
+      $sharedSourcePage = Page::query()->create([
+        'site_id' => $site->id,
+        'page_type' => Page::TYPE_SHARED_SLOT_SOURCE,
+        'status' => Page::STATUS_DRAFT,
+      ]);
+      $sharedBlock = Block::query()->create([
+        'page_id' => $sharedSourcePage->id,
+        'block_type_id' => $this->blockTypeId('plain_text'),
+        'type' => 'plain_text',
+        'source_type' => 'static',
+        'slot_type_id' => $this->slotTypeId('header'),
+        'slot' => 'header',
+        'status' => 'draft',
+        'sort_order' => 0,
+      ]);
+
+      SharedSlotBlock::query()->create([
+        'shared_slot_id' => $sharedSlot->id,
+        'block_id' => $sharedBlock->id,
+        'sort_order' => 0,
+      ]);
+
+      PageSlot::query()
+        ->where('page_id', $page->id)
+        ->where('slot_type_id', $this->slotTypeId('header'))
+        ->firstOrFail()
+        ->update([
+          'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+          'shared_slot_id' => $sharedSlot->id,
+        ]);
+    }
+
+    return [$page->fresh(['slots.slotType']), $draftBlock, $reviewBlock, $sharedBlock];
   }
 
   private function blockTypeId(string $slug): int

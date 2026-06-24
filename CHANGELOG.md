@@ -16,6 +16,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Document the target-site agnostic Markdown documentation to source-linked CMS page publication model for future AI/operator workflows.
 - Add a feature inventory documentation page that maps CMS features to admin/public/API surfaces and documentation gaps.
 
+## 1.32.162
+
+- Add optional page-owned block publishing on Edit Page -> Overview while keeping normal page publish page-only by default.
+- Add `content.publish` API endpoints for page publish and page-owned block publish operations, with Shared Slot content excluded and reported separately.
+- Document that page publishing and block publishing are separate unless `include_page_owned_blocks` is explicitly selected.
+
 ## 1.32.161
 
 - Complete native Contact Form discovery for AI/operator tools by documenting `contact_form` in block contracts, exposing its safe submit/spam/storage/notification contract through `/webadmin/api/content-contract`, and updating the contact-page API example to use the native block instead of `mailto:` or Trusted HTML workarounds.

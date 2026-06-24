@@ -37,6 +37,7 @@ use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
+use WebBlocks\Cms\Support\Pages\PageOwnedBlockPublisher;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
@@ -57,6 +58,7 @@ class PageController extends Controller
     private readonly PageLayoutManager $pageLayouts,
     private readonly PageLayoutSlotComparison $pageLayoutSlotComparison,
     private readonly PageLayoutSlotSyncer $pageLayoutSlotSyncer,
+    private readonly PageOwnedBlockPublisher $pageOwnedBlockPublisher,
     private readonly PageWorkflowManager $workflowManager,
     private readonly AdminAuthorization $authorization,
     private readonly PageDeleter $pageDeleter,
@@ -292,6 +294,7 @@ class PageController extends Controller
         $slot->id => $this->slotBlockPreviewFor($page, $slot),
       ]);
     $layoutSlotComparison = $this->pageLayoutSlotComparison->compare($page);
+    $pageOwnedBlockPublishingSummary = $this->pageOwnedBlockPublisher->summary($page);
 
     return view('webblocks-cms::admin.pages.edit', [
       'page' => $page,
@@ -312,6 +315,8 @@ class PageController extends Controller
       'canDuplicatePage' => $canDuplicatePage,
       'canMoveToAnotherSite' => $canMoveToAnotherSite,
       'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
+      'pageOwnedBlockPublishingSummary' => $pageOwnedBlockPublishingSummary,
+      'canPublishPageOwnedBlocks' => request()->user()->isSuperAdmin() || request()->user()->isSiteAdmin(),
       'canCreateSharedSlots' => ! request()->user()->isEditor(),
       'canManagePageAssets' => request()->user()->isSuperAdmin(),
       'pageAssetsTab' => $this->pageAssetsTabState($page),
@@ -552,18 +557,33 @@ class PageController extends Controller
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
 
     $action = $request->string('action')->toString();
+    $includePageOwnedBlocks = $action === PageWorkflowManager::ACTION_PUBLISH
+      && $request->boolean('include_page_owned_blocks');
     $fromStatus = $page->status;
-    $message = DB::transaction(function () use ($page, $request, $action, $fromStatus): string {
+    $message = DB::transaction(function () use ($page, $request, $action, $fromStatus, $includePageOwnedBlocks): string {
       $message = $this->workflowManager->apply($page, $request->user(), $action);
       $updatedPage = $page->fresh();
+      $blockPublishResult = null;
+
+      if ($includePageOwnedBlocks) {
+        $blockPublishResult = $this->pageOwnedBlockPublisher->publish($updatedPage, $request->user(), captureRevision: false);
+        $updatedPage = $page->fresh();
+      }
 
       $this->revisionManager->capture(
         $updatedPage,
         $request->user(),
         'Workflow updated',
-        'Page workflow changed from '.$fromStatus.' to '.$updatedPage->status.'.',
+        'Page workflow changed from '.$fromStatus.' to '.$updatedPage->status.'.'
+          .($blockPublishResult && $blockPublishResult['published_count'] > 0
+            ? ' '.$blockPublishResult['published_count'].' page-owned blocks were also published.'
+            : ''),
         event: 'workflow_changed',
       );
+
+      if ($blockPublishResult && $blockPublishResult['published_count'] > 0) {
+        return $message.' '.$blockPublishResult['published_count'].' page-owned blocks were also published.';
+      }
 
       return $message;
     });
@@ -584,6 +604,24 @@ class PageController extends Controller
     }
 
     return $redirect;
+  }
+
+  public function publishPageOwnedBlocks(Request $request, Page $page): RedirectResponse
+  {
+    $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+    abort_unless($request->user()->isSuperAdmin() || $request->user()->isSiteAdmin(), 403);
+
+    $result = $this->pageOwnedBlockPublisher->publish($page, $request->user());
+
+    return redirect()
+      ->route('admin.pages.edit', array_filter([
+        'page' => $page,
+        'tab' => 'overview',
+        'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
+      ], fn (mixed $value) => $value !== null && $value !== ''))
+      ->with('status', $result['published_count'] > 0
+        ? $result['published_count'].' page-owned blocks published.'
+        : 'No unpublished page-owned blocks were available to publish.');
   }
 
   public function reorderSlotBlocks(Request $request, Page $page, PageSlot $slot): JsonResponse

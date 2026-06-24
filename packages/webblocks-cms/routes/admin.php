@@ -45,6 +45,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryContro
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
@@ -80,6 +81,8 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/pages', [InternalContentResourceController::class, 'pages'])->name('pages.index');
     Route::get('/pages/{page}', [InternalContentResourceController::class, 'page'])->name('pages.show');
+    Route::post('/pages/{page}/publish', [InternalPagePublishController::class, 'publish'])->middleware('internal-api.capability:content.publish')->name('pages.publish');
+    Route::post('/pages/{page}/publish-page-owned-blocks', [InternalPagePublishController::class, 'publishPageOwnedBlocks'])->middleware('internal-api.capability:content.publish')->name('pages.publish-page-owned-blocks');
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
     Route::post('/pages/{page}/slots/{slot}/shared-slot', [InternalSharedSlotController::class, 'assignToPageSlot'])->middleware('internal-api.capability:shared-slots.write')->name('pages.slots.shared-slot');
     Route::get('/navigation-menus', [InternalNavigationController::class, 'index'])->name('navigation-menus.index');
@@ -143,6 +146,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::post('/pages/converter/create-draft', [PageConverterController::class, 'createDraft'])->name('pages.converter.create-draft');
     Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
     Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
+    Route::post('/pages/{page}/publish-page-owned-blocks', [PageController::class, 'publishPageOwnedBlocks'])->name('pages.publish-page-owned-blocks');
     Route::post('/pages/import-json', [PageImportController::class, 'store'])->name('pages.import.store');
     Route::delete('/pages/bulk', [PageController::class, 'bulkDestroy'])->name('pages.bulk-destroy');
     Route::post('/pages/{page}/assets/{type}', [PageAssetController::class, 'store'])->name('pages.assets.store');

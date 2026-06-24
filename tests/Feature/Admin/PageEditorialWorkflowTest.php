@@ -12,6 +12,8 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemSetting;
@@ -71,6 +73,83 @@ class PageEditorialWorkflowTest extends TestCase
       'slug' => $slug,
       'status' => $status,
     ]);
+  }
+
+  private function pageWithUnpublishedBlocks(Site $site, bool $includeSharedSlot = false): array
+  {
+    $main = $this->slotType();
+    $header = $this->slotType('header', 'Header', 1);
+    $blockType = $this->sectionBlockType();
+    $page = $this->pageFor($site, Page::STATUS_DRAFT, 'publish-blocks');
+
+    PageSlot::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+      'sort_order' => 0,
+    ]);
+
+    $draftBlock = Block::query()->create([
+      'page_id' => $page->id,
+      'block_type_id' => $blockType->id,
+      'type' => 'section',
+      'source_type' => 'static',
+      'slot' => $main->slug,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'status' => 'draft',
+    ]);
+
+    $reviewBlock = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $draftBlock->id,
+      'block_type_id' => $blockType->id,
+      'type' => 'section',
+      'source_type' => 'static',
+      'slot' => $main->slug,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'status' => 'in_review',
+    ]);
+
+    $sharedBlock = null;
+
+    if ($includeSharedSlot) {
+      $sharedSlot = SharedSlot::query()->create([
+        'site_id' => $site->id,
+        'name' => 'Site Header',
+        'handle' => 'site-header',
+        'slot_name' => 'header',
+        'is_active' => true,
+      ]);
+      $sharedSourcePage = $this->pageFor($site, Page::STATUS_DRAFT, 'shared-source');
+      $sharedBlock = Block::query()->create([
+        'page_id' => $sharedSourcePage->id,
+        'block_type_id' => $blockType->id,
+        'type' => 'section',
+        'source_type' => 'static',
+        'slot' => $header->slug,
+        'slot_type_id' => $header->id,
+        'sort_order' => 0,
+        'status' => 'draft',
+      ]);
+
+      SharedSlotBlock::query()->create([
+        'shared_slot_id' => $sharedSlot->id,
+        'block_id' => $sharedBlock->id,
+        'sort_order' => 0,
+      ]);
+
+      PageSlot::query()->create([
+        'page_id' => $page->id,
+        'slot_type_id' => $header->id,
+        'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+        'shared_slot_id' => $sharedSlot->id,
+        'sort_order' => 1,
+      ]);
+    }
+
+    return [$page, $draftBlock, $reviewBlock, $sharedBlock];
   }
 
   #[Test]
@@ -210,6 +289,73 @@ class PageEditorialWorkflowTest extends TestCase
 
     $response->assertRedirect(route('webblocks.auth.login'));
     $this->assertDatabaseHas('pages', ['id' => $page->id]);
+  }
+
+  #[Test]
+  public function normal_page_publish_does_not_publish_draft_blocks_by_default(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    [$page, $draftBlock] = $this->pageWithUnpublishedBlocks($site);
+
+    $response = $this->actingAs($user)->post(route('admin.pages.workflow', $page), [
+      'action' => 'publish',
+    ]);
+
+    $response->assertRedirect(route('admin.pages.edit', ['page' => $page]));
+    $response->assertSessionHas('status', 'Page published.');
+    $this->assertSame(Page::STATUS_PUBLISHED, $page->fresh()->status);
+    $this->assertSame('draft', $draftBlock->fresh()->status);
+  }
+
+  #[Test]
+  public function edit_overview_shows_page_owned_block_publish_summary_and_modal(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    [$page] = $this->pageWithUnpublishedBlocks($site, includeSharedSlot: true);
+
+    $response = $this->actingAs($user)->get(route('admin.pages.edit', ['page' => $page, 'tab' => 'overview']));
+
+    $response->assertOk();
+    $response->assertSee('Unpublished page content');
+    $response->assertSee('2 page-owned blocks are still draft or in review.');
+    $response->assertSee('Publish page-owned blocks');
+    $response->assertSee('id="publish-page-modal"', false);
+    $response->assertSee('Also publish all unpublished page-owned blocks');
+    $response->assertSee('Shared Slot content is not included. Review and publish Shared Slots separately.');
+    $response->assertSee('Site Header');
+  }
+
+  #[Test]
+  public function page_owned_block_publish_action_publishes_nested_draft_and_review_blocks_without_shared_slots(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    [$page, $draftBlock, $reviewBlock, $sharedBlock] = $this->pageWithUnpublishedBlocks($site, includeSharedSlot: true);
+
+    $response = $this->actingAs($user)->post(route('admin.pages.publish-page-owned-blocks', $page));
+
+    $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'overview']));
+    $response->assertSessionHas('status', '2 page-owned blocks published.');
+    $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+    $this->assertSame('published', $draftBlock->fresh()->status);
+    $this->assertSame('published', $reviewBlock->fresh()->status);
+    $this->assertSame('draft', $sharedBlock->fresh()->status);
+  }
+
+  #[Test]
+  public function editor_cannot_publish_page_owned_blocks(): void
+  {
+    $site = $this->defaultSite();
+    $editor = $this->editorFor($site);
+    [$page, $draftBlock] = $this->pageWithUnpublishedBlocks($site);
+
+    $this->actingAs($editor)
+      ->post(route('admin.pages.publish-page-owned-blocks', $page))
+      ->assertForbidden();
+
+    $this->assertSame('draft', $draftBlock->fresh()->status);
   }
 
   #[Test]

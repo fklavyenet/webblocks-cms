@@ -2,9 +2,9 @@
 
 ## Purpose
 
-The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts, create draft-first content, and replace specific page-owned slots on existing draft pages through structured JSON without logging into, scraping, or automating the browser admin UI.
+The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts, create draft-first content, replace specific page-owned slots on existing draft pages, and run explicit publish operations through structured JSON without logging into, scraping, or automating the browser admin UI.
 
-Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. Phase 2A adds safe foundations for navigation menus, Shared Slots, and explicit page slot Shared Slot assignment. Phase 2B adds controlled draft-only replacement for page-owned slot content on existing pages. The API remains intentionally narrow: no publish, no remote fetch, no broad page delete through content apply, and no replacement of Shared Slot-backed slots.
+Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. Phase 2A adds safe foundations for navigation menus, Shared Slots, and explicit page slot Shared Slot assignment. Phase 2B adds controlled draft-only replacement for page-owned slot content on existing pages. Publish endpoints are explicit and require `content.publish`; content apply remains draft-first and does not publish. The API remains intentionally narrow: no remote fetch, no broad page delete through content apply, no replacement of Shared Slot-backed slots, and no Shared Slot cascade publishing.
 
 ## Product Positioning
 
@@ -132,6 +132,8 @@ GET /webadmin/api/block-types
 GET /webadmin/api/content-contract
 GET /webadmin/api/pages
 GET /webadmin/api/pages/{page}
+POST /webadmin/api/pages/{page}/publish
+POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
 GET /webadmin/api/blocks
 GET /webadmin/api/blocks/{block}
@@ -213,6 +215,37 @@ Rules:
 - page revisions are captured before and after apply
 - no publish, media fetch/import, broad delete, or Shared Slot assignment clearing happens
 
+### Explicit Publish Endpoints
+
+Publishing is separate from content apply and requires a token with `content.publish`.
+
+```text
+POST /webadmin/api/pages/{page}/publish
+POST /webadmin/api/pages/{page}/publish-page-owned-blocks
+```
+
+`POST /webadmin/api/pages/{page}/publish` publishes the page record. Its default payload is page-only:
+
+```json
+{
+  "include_page_owned_blocks": false
+}
+```
+
+Rules:
+
+- omitted `include_page_owned_blocks` behaves as `false`
+- `include_page_owned_blocks: false` publishes only the page record and leaves draft or in-review blocks unchanged
+- `include_page_owned_blocks: true` publishes draft and in-review blocks owned by the page's non-shared page slots, including nested child blocks
+- already published blocks remain unchanged
+- Shared Slot-backed slots are excluded and reported in the response
+- unsupported Shared Slot cascade fields such as `publish_shared_slots`, `include_shared_slot_blocks`, or `shared_slot_cascade` return JSON `422`
+- the response includes page id/status/path metadata, whether page-owned blocks were included, the count published, excluded Shared Slot summaries, and the page revision id
+
+`POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes only unpublished page-owned blocks and does not change the page workflow status. It uses the same `content.publish` capability and the same Shared Slot exclusion rule.
+
+AI/operator tools must not assume page publish makes all block content public. Use `include_page_owned_blocks: true` only when the user explicitly approved publishing all unpublished page-owned blocks for that page. Shared Slot content must be reviewed and published separately.
+
 ### Content Contract Endpoint
 
 `GET /webadmin/api/content-contract` is a read-only discovery endpoint for trusted AI/operator tools. It returns the API prefix, validate/apply URLs, admin preview URL template, safety flags, discovery URLs, recommended page-building patterns, and sanitized block contract metadata.
@@ -288,7 +321,7 @@ The endpoint assigns an existing compatible same-site active Shared Slot to an e
 ### Phase 1 Safety
 
 - draft-only
-- no publish
+- no publish through content apply
 - no overwrite of existing published content
 - no broad overwrite of existing pages or blocks outside `mode: replace_existing_draft_page`
 - no remote fetch
@@ -466,7 +499,7 @@ Example English marketing homepage draft:
 - harmless unknown settings may warn or be ignored consistently
 - apply validates again before writing
 - apply is transactional
-- Phase 2A still rejects publish, site creation, media import, remote fetch, overwrite, replace, and delete operations
+- Content apply still rejects publish, site creation, media import, remote fetch, unsupported overwrite, unsupported replace, and delete operations
 - navigation and Shared Slot creation are create-only unless a later phase adds explicit draft-safe mutation contracts
 
 ## Response Shape
@@ -586,8 +619,7 @@ Content plans may include `navigation_menus`, `shared_slots`, and `page_slot_sha
 
 ### Phase 4
 
-- explicit workflow transitions
-- optional publish only after separate design, still explicit and permissioned
+- additional explicit workflow transitions beyond publish when they have separate design and permissions
 
 ## AI Usage Guidance
 
