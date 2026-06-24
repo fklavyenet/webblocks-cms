@@ -13,6 +13,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Document the Internal Content API route contract for token-protected AI/operator CMS content operations.
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
+- Document the target-site agnostic Markdown documentation to source-linked CMS page publication model for future AI/operator workflows.
 
 ## 1.32.160
 

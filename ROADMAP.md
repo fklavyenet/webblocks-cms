@@ -54,6 +54,15 @@ This roadmap captures planned architecture and implementation direction. It does
 - Possible: add a public headless delivery API if ever needed.
 - Keep any public delivery API separate from this internal/operator API.
 
+## Markdown Docs To CMS Sync
+
+This is a planned AI/operator workflow direction for source-linked documentation pages. It does not imply that a runtime feature exists today.
+
+- Phase 0: documentation and source mapping model.
+- Phase 1: selected-doc AI/operator dry-run planning workflow.
+- Phase 2: draft-safe CMS apply using Internal Content API.
+- Phase 3: docs navigation planning and publish workflow.
+
 ## CMS Plugin System
 
 ### Phase 0 - Documentation And Rules

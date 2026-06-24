@@ -42,6 +42,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Pages now include a Page Converter admin foundation for scoped static HTML analysis; it validates pasted or uploaded `.html` / `.htm` input, shows a structured block suggestion plan with confidence scores and warnings, signs the reviewed plan, and can create a new draft page with supported main-slot and safe structured blocks while skipping unsupported media-backed suggestions. Detected `<section>` fragments are kept as Section container blocks, with headings, paragraphs, links, card regions, promo content, and details groups represented as child blocks where the current block contracts support them
 - Authenticated CMS admins can preview draft, in-review, and published pages from Edit Page through `GET /webadmin/pages/{page}/preview`. Preview uses the public rendering stack with a visible preview banner and `noindex, nofollow` controls, while public URLs still render only published pages.
 - database-token-protected Internal Content API under `/webadmin/api` for trusted operator tools to inspect sites, locales, page layouts, block contracts, pages, blocks, navigation menus, and Shared Slots, then validate or apply draft-only structured content plans through `/webadmin/api/content/validate` and `/webadmin/api/content/apply`
+- documented architecture direction for planning Markdown-sourced documentation publication as source-linked CMS pages through an AI/operator workflow, without treating it as a current runtime feature
 
 ## Architecture Note
 
@@ -310,6 +311,7 @@ php artisan site-promotion:apply storage/app/site-promotions/example.zip --targe
 - [Block Type Contracts](docs/block-type-contracts.md)
 - [Renderer Contracts](docs/block-ui-renderer-contract.md)
 - [Public Block Render Markup](docs/public-block-render-markup.md)
+- [Markdown Docs To CMS Sync](docs/markdown-docs-to-cms-sync.md)
 - [Development Workflow](DEVELOPMENT.md)
 
 ## Project Layer

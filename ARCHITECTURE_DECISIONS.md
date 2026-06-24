@@ -89,6 +89,25 @@ Consequences:
 - `System -> Plugins` reports configured enabled state separately from active compatibility. A plugin can be configured enabled yet remain inactive when its required CMS version constraint is not satisfied.
 - WebBlocks UI Manager is not registered, routed, migrated, menu-visible, command-registered, or health-visible in normal CMS installs. It becomes available only when an operator manually uploads its plugin ZIP and explicitly enables it. Existing tables created by v1.32.67 are not dropped automatically.
 
+## Markdown-Sourced Documentation Publishing
+
+- Technical documentation source lives in Git Markdown files.
+- WebBlocks CMS may publish those docs as source-linked CMS documentation pages through an AI/operator workflow.
+- Source-linked documentation pages should be regenerated from the Markdown source rather than edited manually in CMS.
+- Mapping must use stable source identifiers and hashes, not content comparison.
+- The model must remain target-site agnostic.
+
+Reason:
+
+- Product documentation should stay reviewable with code and release documentation, while WebBlocks CMS can provide the published documentation experience.
+- A target-site agnostic source-linking model allows the same Markdown source to be planned for any target documentation site without binding the architecture to one installation.
+
+Consequences:
+
+- Source-linked documentation pages are managed derivatives, not the source of truth.
+- The safe update strategy is to regenerate managed page-owned slots from the linked Markdown source when the source hash changes.
+- Publishing remains a separate human or approved workflow decision.
+
 ## Package-Native Schema Updates
 
 - Runtime-required WebBlocks CMS schema changes must be available to both fresh package installs and existing package-native installs updated through System Updates.
