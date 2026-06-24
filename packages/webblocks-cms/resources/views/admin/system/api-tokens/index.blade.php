@@ -38,7 +38,60 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                 </div>
             </div>
         </div>
+
+        <section class="wb-card">
+            <div class="wb-card-header">
+                <strong>How to use this token</strong>
+            </div>
+            <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-grid wb-grid-2 wb-gap-3">
+                    <div class="wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted">API Base URL</span>
+                        <code>{{ $apiBaseUrl }}</code>
+                    </div>
+                    <div class="wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted">Start here</span>
+                        <code>GET /webadmin/api</code>
+                    </div>
+                </div>
+                <div class="wb-stack wb-gap-2">
+                    <label class="wb-label" for="cms_api_token_headers">Headers</label>
+                    <textarea id="cms_api_token_headers" class="wb-textarea" rows="4" readonly>Authorization: Bearer &lt;token&gt;
+Accept: application/json
+Content-Type: application/json</textarea>
+                </div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api" target="_blank" rel="noopener">Discovery</a>
+                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api/openapi.json" target="_blank" rel="noopener">OpenAPI</a>
+                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api/ai-guide" target="_blank" rel="noopener">AI Guide</a>
+                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api/examples/contact-page" target="_blank" rel="noopener">Contact Example</a>
+                </div>
+                <div class="wb-stack wb-gap-2">
+                    <label class="wb-label" for="cms_api_setup_prompt">AI setup prompt</label>
+                    <textarea id="cms_api_setup_prompt" class="wb-textarea" rows="3" readonly>Use this WebBlocks CMS API base URL and token. First call the API discovery endpoint. Follow the returned OpenAPI, content contract, examples, and recommended next steps. Do not use browser automation or admin UI clicks.</textarea>
+                </div>
+            </div>
+        </section>
     @endif
+
+    <section class="wb-card">
+        <div class="wb-card-header">
+            <strong>API Discovery Quick Start</strong>
+        </div>
+        <div class="wb-card-body wb-stack wb-gap-3">
+            <div class="wb-grid wb-grid-2 wb-gap-3">
+                <div class="wb-stack wb-gap-1">
+                    <span class="wb-text-sm wb-text-muted">API Base URL</span>
+                    <code>/webadmin/api</code>
+                </div>
+                <div class="wb-stack wb-gap-1">
+                    <span class="wb-text-sm wb-text-muted">First request</span>
+                    <code>GET /webadmin/api</code>
+                </div>
+            </div>
+            <div class="wb-text-sm wb-text-muted">Use Bearer auth with JSON headers. Discovery links point AI/operator tools to OpenAPI, the AI guide, content contract, examples, validate, and apply endpoints without exposing token values.</div>
+        </div>
+    </section>
 
     <div class="wb-card">
         <div class="wb-card-header">
@@ -109,6 +162,9 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                                             <span>{{ $token->lastUsedAtLabel() }}</span>
                                             @if ($token->last_used_ip)
                                                 <span class="wb-text-sm wb-text-muted">{{ $token->last_used_ip }}</span>
+                                            @endif
+                                            @if ($token->last_used_user_agent)
+                                                <span class="wb-text-sm wb-text-muted">{{ Str::limit($token->last_used_user_agent, 80) }}</span>
                                             @endif
                                         </div>
                                     </td>

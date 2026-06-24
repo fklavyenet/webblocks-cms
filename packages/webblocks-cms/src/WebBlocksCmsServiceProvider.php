@@ -39,6 +39,7 @@ use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
+use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
@@ -820,6 +821,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))
         ->by($request->ip().'|'.((string) $request->input('block_id')));
     });
+
+    RateLimiter::for('internal-content-api', function (Request $request) {
+      return Limit::perMinute(120)->by($request->ip().'|'.((string) $request->bearerToken()));
+    });
   }
 
   protected function bootCommands(): void
@@ -1055,6 +1060,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
 
     Route::aliasMiddleware('admin.access', RequireAdminAccess::class);
+    Route::aliasMiddleware('internal-api.capability', RequireInternalApiCapability::class);
     Route::aliasMiddleware('internal-api.token', RequireInternalApiToken::class);
     Route::aliasMiddleware('install.complete', RedirectIfInstalled::class);
     Route::aliasMiddleware('install.required', RedirectIfNotInstalled::class);

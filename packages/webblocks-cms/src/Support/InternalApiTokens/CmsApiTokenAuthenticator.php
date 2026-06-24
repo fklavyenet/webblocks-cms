@@ -32,6 +32,7 @@ class CmsApiTokenAuthenticator
     $token->forceFill([
       'last_used_at' => now(),
       'last_used_ip' => $request->ip(),
+      'last_used_user_agent' => mb_substr((string) $request->userAgent(), 0, 255),
     ])->save();
 
     return $token;

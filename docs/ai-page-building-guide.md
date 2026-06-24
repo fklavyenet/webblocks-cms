@@ -2,7 +2,13 @@
 
 This guide defines the safe workflow for trusted AI/operator tools that build WebBlocks CMS pages through the Internal Content API. It is generic CMS product guidance. Do not add site-specific import, sync, or scraping behavior to CMS core.
 
-In installed package-native sites, this guide ships inside the Composer package at:
+External AI/operator tools do not need local filesystem access to the CMS repository or installed package docs. Start with the live API discovery endpoint:
+
+```text
+GET /webadmin/api
+```
+
+In installed package-native sites, this guide also ships inside the Composer package at:
 
 ```text
 vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md
@@ -20,27 +26,32 @@ Create API tokens from the CMS admin panel:
 System -> API Tokens
 ```
 
-The plain token is shown once immediately after creation. Store it in the local operator environment and never paste a real token into prompts, documentation, logs, screenshots, tickets, or release reports.
-
-Example local `.env` values:
-
-```dotenv
-WEBBLOCKS_CMS_URL=https://example.com
-WEBBLOCKS_CMS_API_TOKEN=...
-```
+The plain token is shown once immediately after creation. Store it in a trusted operator secret store and never paste a real token into prompts, documentation, logs, screenshots, tickets, or release reports.
 
 API requests use:
 
 ```http
-Authorization: Bearer ...
+Authorization: Bearer <token>
 Accept: application/json
+Content-Type: application/json
 ```
 
 ## First Discovery Calls
 
-Start with read-only discovery. These endpoints are token-protected and live under `/webadmin/api`:
+Start with API discovery. The first call is:
 
 ```text
+GET /webadmin/api
+```
+
+Without a valid token, this endpoint returns only minimal public-safe bootstrap JSON. With a valid Bearer token, it returns links to the OpenAPI schema, AI guide, content contract, examples, validate/apply endpoints, pages, navigation, and Shared Slots.
+
+Then follow the returned links. Common token-protected endpoints live under `/webadmin/api`:
+
+```text
+GET /webadmin/api/openapi.json
+GET /webadmin/api/ai-guide
+GET /webadmin/api/examples/contact-page
 GET /webadmin/api/sites
 GET /webadmin/api/locales
 GET /webadmin/api/page-layouts
@@ -78,14 +89,15 @@ Do not substitute nearby spellings such as `plain-text`, `rich_text`, `button`, 
 ## Safe Workflow
 
 1. Run read-only discovery.
-2. Build a content plan using only discovered handles and the current site/layout/locale.
-3. Validate with `POST /webadmin/api/content/validate`.
-4. Read validation errors and adjust the plan.
-5. Ask the user for explicit approval to apply the exact final plan.
-6. Only after approval, call `POST /webadmin/api/content/apply`.
-7. Read the created draft page id from the apply response.
-8. Produce the admin preview URL with `/webadmin/pages/{page}/preview`.
-9. Leave publishing to a human workflow. The Internal Content API does not automatically publish.
+2. Read OpenAPI, the content contract, and examples from the live API links.
+3. Build a content plan using only discovered handles and the current site/layout/locale.
+4. Validate with `POST /webadmin/api/content/validate`.
+5. Read validation errors and adjust the plan.
+6. Ask the user for explicit approval to apply the exact final plan.
+7. Only after approval, call `POST /webadmin/api/content/apply`.
+8. Read the created draft page id from the apply response.
+9. Produce the admin preview URL with `/webadmin/pages/{page}/preview`.
+10. Leave publishing to a human workflow. The Internal Content API does not automatically publish.
 
 ## Safety Rules
 
@@ -96,11 +108,12 @@ Do not substitute nearby spellings such as `plain-text`, `rich_text`, `button`, 
 - Do not overwrite existing pages or blocks.
 - Do not call apply if the target path already exists unless the user explicitly approves a conflict-handling plan supported by the API.
 - Do not fetch remote pages.
-- Do not scrape with browser automation when API discovery is available.
+- Do not use browser automation or admin UI clicks when API discovery is available.
 - Do not download or import media.
 - Do not create API tokens from automation unless the user explicitly asks for token administration.
 - Do not print, log, or report token values.
 - Report only status codes and safe summarized response data.
+- Treat `401`, `403`, and `422` JSON responses as API feedback and follow their discovery/documentation links.
 
 ## Good Structures
 

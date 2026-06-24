@@ -18,6 +18,7 @@ class CmsApiTokenIssuer
       'name' => $name,
       'token_hash' => $this->hash($plainToken),
       'token_preview' => $this->preview($plainToken),
+      'capabilities' => CmsApiTokenCapabilities::DEFAULT,
       'created_by_user_id' => $creator?->id,
     ]);
 

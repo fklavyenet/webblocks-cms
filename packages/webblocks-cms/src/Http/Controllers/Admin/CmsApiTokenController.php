@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -42,6 +43,8 @@ class CmsApiTokenController extends Controller
       'tokens' => $tokens,
       'totalCount' => $totalCount,
       'currentCmsUrl' => url('/'),
+      'apiBaseUrl' => url('/webadmin/api'),
+      'defaultCapabilities' => CmsApiTokenCapabilities::DEFAULT,
       'createdToken' => session('created_cms_api_token'),
       'createdTokenName' => session('created_cms_api_token_name'),
       'schemaReady' => $schemaReady,
@@ -82,7 +85,7 @@ class CmsApiTokenController extends Controller
       return false;
     }
 
-    foreach (['id', 'name', 'token_hash', 'token_preview', 'created_by_user_id', 'last_used_at', 'last_used_ip', 'revoked_at', 'created_at', 'updated_at'] as $column) {
+    foreach (['id', 'name', 'token_hash', 'token_preview', 'capabilities', 'created_by_user_id', 'last_used_at', 'last_used_ip', 'last_used_user_agent', 'revoked_at', 'created_at', 'updated_at'] as $column) {
       if (! Schema::hasColumn('cms_api_tokens', $column)) {
         return false;
       }

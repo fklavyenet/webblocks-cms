@@ -26,6 +26,8 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertOk();
     $response->assertSee('CMS API Tokens');
     $response->assertSee('Create Token');
+    $response->assertSee('API Discovery Quick Start');
+    $response->assertSee('GET /webadmin/api');
     $response->assertSee('Local AI - Test MacBook');
     $response->assertSee($token->token_preview);
     $response->assertSee('<td class="wb-table-actions">', false);
@@ -72,6 +74,11 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertOk();
     $response->assertSee('Copy this token now');
     $response->assertSee('WEBBLOCKS_CMS_API_TOKEN=wbcms_', false);
+    $response->assertSee('How to use this token');
+    $response->assertSee('GET /webadmin/api');
+    $response->assertSee('OpenAPI');
+    $response->assertSee('AI Guide');
+    $response->assertSee('Use this WebBlocks CMS API base URL and token.');
 
     preg_match('/WEBBLOCKS_CMS_API_TOKEN=(wbcms_[A-Za-z0-9]+)/', $response->getContent(), $matches);
     $plainToken = $matches[1] ?? '';
@@ -129,6 +136,7 @@ class CmsApiTokenManagementTest extends TestCase
       ->assertJsonPath('ok', true);
 
     $this->assertNotNull($token->fresh()->last_used_at);
+    $this->assertNotNull($token->fresh()->last_used_user_agent);
 
     $token->forceFill(['revoked_at' => now()])->save();
 

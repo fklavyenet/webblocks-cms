@@ -19,6 +19,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 
@@ -34,6 +35,87 @@ class InternalContentApiTest extends TestCase
     $this->seed(SlotTypeSeeder::class);
     $this->seed(BlockTypeSeeder::class);
     $this->seed(PageLayoutSeeder::class);
+  }
+
+  #[Test]
+  public function api_discovery_returns_public_safe_minimal_json_without_token(): void
+  {
+    $response = $this->getJson('/webadmin/api');
+
+    $response
+      ->assertOk()
+      ->assertJsonPath('product', 'WebBlocks CMS')
+      ->assertJsonPath('authenticated', false)
+      ->assertJsonPath('_links.self', '/webadmin/api')
+      ->assertJsonMissingPath('_links.content_apply')
+      ->assertJsonMissingPath('token.capabilities');
+
+    $encoded = json_encode($response->json(), JSON_UNESCAPED_SLASHES);
+
+    $this->assertIsString($encoded);
+    $this->assertStringNotContainsString(base_path(), $encoded);
+    $this->assertStringNotContainsString('secret-token', $encoded);
+    $this->assertStringNotContainsString('token_hash', $encoded);
+  }
+
+  #[Test]
+  public function api_discovery_returns_authenticated_links_capabilities_and_steps(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api')
+      ->assertOk()
+      ->assertJsonPath('product', 'WebBlocks CMS')
+      ->assertJsonPath('authenticated', true)
+      ->assertJsonPath('_links.openapi', '/webadmin/api/openapi.json')
+      ->assertJsonPath('_links.ai_guide', '/webadmin/api/ai-guide')
+      ->assertJsonPath('_links.content_contract', '/webadmin/api/content-contract')
+      ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
+      ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonFragment(['content.apply'])
+      ->assertJsonMissingPath('token.token_hash')
+      ->assertJsonMissingPath('token.token_preview');
+  }
+
+  #[Test]
+  public function openapi_ai_guide_and_examples_are_token_protected_and_secret_safe(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $openApi = $this->withInternalToken()
+      ->getJson('/webadmin/api/openapi.json')
+      ->assertOk()
+      ->assertJsonPath('openapi', '3.1.0')
+      ->assertJsonPath('components.securitySchemes.BearerToken.scheme', 'bearer')
+      ->assertJsonPath('paths./content/validate.post.summary', 'Validate content plan');
+
+    $guide = $this->withInternalToken()
+      ->getJson('/webadmin/api/ai-guide')
+      ->assertOk()
+      ->assertJsonPath('format', 'markdown');
+
+    $guideContent = $guide->json('content');
+
+    $this->assertStringContainsString('GET /webadmin/api', (string) $guideContent);
+    $this->assertStringContainsString('Authorization: Bearer <token>', (string) $guideContent);
+    $this->assertStringContainsString('Do not use browser automation', (string) $guideContent);
+
+    $example = $this->withInternalToken()
+      ->getJson('/webadmin/api/examples/contact-page')
+      ->assertOk()
+      ->assertJsonPath('example.handle', 'contact-page')
+      ->assertJsonPath('example.payload.plan.page.status', 'draft')
+      ->assertJsonPath('example.payload.plan.slots.main.0.type', 'section');
+
+    foreach ([$openApi, $guide, $example] as $response) {
+      $encoded = json_encode($response->json(), JSON_UNESCAPED_SLASHES);
+      $this->assertIsString($encoded);
+      $this->assertStringNotContainsString(base_path(), $encoded);
+      $this->assertStringNotContainsString('secret-token', $encoded);
+      $this->assertStringNotContainsString('token_hash', $encoded);
+      $this->assertStringNotContainsString('.env', $encoded);
+    }
   }
 
   #[Test]
@@ -202,6 +284,97 @@ class InternalContentApiTest extends TestCase
 
     $this->assertDatabaseCount('pages', 0);
     $this->assertDatabaseCount('blocks', 0);
+  }
+
+  #[Test]
+  public function content_write_endpoints_return_json_for_missing_invalid_and_empty_payloads(): void
+  {
+    $this->post('/webadmin/api/content/validate', [], ['Accept' => 'text/html'])
+      ->assertUnauthorized()
+      ->assertHeader('content-type', 'application/json')
+      ->assertJsonPath('code', 'invalid_internal_api_token')
+      ->assertJsonPath('api_discovery_url', '/webadmin/api');
+
+    $this->withHeader('Authorization', 'Bearer wrong-token')
+      ->post('/webadmin/api/content/apply', [], ['Accept' => 'text/html'])
+      ->assertUnauthorized()
+      ->assertHeader('content-type', 'application/json')
+      ->assertJsonPath('code', 'invalid_internal_api_token');
+
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', [])
+      ->assertStatus(422)
+      ->assertJsonPath('ok', false)
+      ->assertJsonPath('api_discovery_url', '/webadmin/api')
+      ->assertJsonPath('openapi_url', '/webadmin/api/openapi.json');
+  }
+
+  #[Test]
+  public function missing_write_capability_returns_json_403_without_csrf_or_redirect(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_READ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->validPlanPayload())
+      ->assertForbidden()
+      ->assertHeader('content-type', 'application/json')
+      ->assertJsonPath('code', 'missing_internal_api_capability')
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::CONTENT_APPLY)
+      ->assertJsonPath('api_discovery_url', '/webadmin/api');
+  }
+
+  #[Test]
+  public function page_delete_requires_explicit_destructive_capability(): void
+  {
+    $site = $this->defaultSite();
+    $locale = $this->defaultLocale();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    PageTranslation::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'locale_id' => $locale->id,
+      'name' => 'Delete Guard',
+      'slug' => 'delete-guard',
+      'path' => '/delete-guard',
+    ]);
+
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->deleteJson('/webadmin/api/pages/'.$page->id)
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::PAGES_DELETE);
+
+    $this->assertDatabaseHas('pages', ['id' => $page->id]);
+
+    CmsApiToken::query()->delete();
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::PAGES_DELETE]);
+
+    $this->withInternalToken()
+      ->deleteJson('/webadmin/api/pages/'.$page->id)
+      ->assertOk()
+      ->assertJsonPath('deleted.type', 'page')
+      ->assertJsonPath('deleted.id', $page->id);
+
+    $this->assertDatabaseMissing('pages', ['id' => $page->id]);
+  }
+
+  #[Test]
+  public function openapi_page_delete_path_matches_runtime_route_and_capability_guard(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/openapi.json')
+      ->assertOk()
+      ->assertJsonPath('paths./pages/{page}.delete.summary', 'Delete page')
+      ->assertJsonPath('paths./pages/{page}.delete.x-required-capability', CmsApiTokenCapabilities::PAGES_DELETE);
   }
 
   #[Test]
@@ -758,12 +931,13 @@ class InternalContentApiTest extends TestCase
     return Locale::query()->where('is_default', true)->firstOrFail();
   }
 
-  private function createInternalApiToken(string $token): void
+  private function createInternalApiToken(string $token, ?array $capabilities = null): void
   {
     CmsApiToken::query()->create([
       'name' => 'Test token',
       'token_hash' => app(CmsApiTokenIssuer::class)->hash($token),
       'token_preview' => app(CmsApiTokenIssuer::class)->preview($token),
+      'capabilities' => $capabilities,
     ]);
   }
 

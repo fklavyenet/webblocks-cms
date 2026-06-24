@@ -13,9 +13,11 @@ class CmsApiToken extends Model
     'name',
     'token_hash',
     'token_preview',
+    'capabilities',
     'created_by_user_id',
     'last_used_at',
     'last_used_ip',
+    'last_used_user_agent',
     'revoked_at',
   ];
 
@@ -23,6 +25,7 @@ class CmsApiToken extends Model
   {
     return [
       'last_used_at' => 'datetime',
+      'capabilities' => 'array',
       'revoked_at' => 'datetime',
     ];
   }

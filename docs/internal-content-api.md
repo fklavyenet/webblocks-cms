@@ -30,6 +30,14 @@ The canonical prefix is:
 
 This keeps the API inside the CMS admin boundary while using a concise, familiar API segment. Resource-style endpoints should live directly under this prefix, such as `/webadmin/api/pages` and `/webadmin/api/blocks`.
 
+API discovery starts at:
+
+```text
+GET /webadmin/api
+```
+
+Unauthenticated callers receive only public-safe bootstrap JSON. Authenticated callers receive links to OpenAPI, the AI guide, content contract, examples, content validate/apply, pages, navigation, and Shared Slots. External AI/operator tools should start from this live discovery response instead of reading the CMS repository or local package docs.
+
 Plan-based content operations use:
 
 ```text
@@ -55,12 +63,7 @@ Authorization: Bearer <token>
 
 CMS API tokens are created by a CMS super admin from `System -> API Tokens`. The CMS stores only a SHA-256 hash plus a safe preview in the `cms_api_tokens` database table. The plain token is shown once immediately after creation and is never shown again.
 
-Local AI and operator tools may store the generated token in their own local `.env`:
-
-```dotenv
-WEBBLOCKS_CMS_URL=https://example.com
-WEBBLOCKS_CMS_API_TOKEN=...
-```
+Local AI and operator tools should store the generated token in a trusted operator secret store.
 
 The CMS runtime does not require `WEBBLOCKS_CMS_INTERNAL_API_TOKEN`.
 
@@ -71,6 +74,7 @@ Authentication rules:
 - tokens must never be printed in logs, diagnostics, support reports, tests, or documentation examples
 - token comparison must use a constant-time comparison
 - successful API requests update the token's `last_used_at` and `last_used_ip`
+- successful API requests also store a truncated user-agent for operator audit context
 - responses are JSON-only
 
 Example request:
@@ -79,7 +83,25 @@ Example request:
 GET /webadmin/api/sites
 Authorization: Bearer <token>
 Accept: application/json
+Content-Type: application/json
 ```
+
+## Capabilities
+
+Discovery exposes token capabilities without returning the token value, token hash, or token preview. Standard page-building tokens receive these capabilities:
+
+- `content.read`
+- `content.validate`
+- `content.apply`
+- `navigation.write`
+- `shared-slots.write`
+
+Destructive and publish capabilities are separate:
+
+- `content.publish`
+- `pages.delete`
+
+Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities.
 
 ## API Model
 
@@ -153,6 +175,12 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 
 ### Discovery Endpoints
 
+- `GET /webadmin/api`
+- `GET /webadmin/api/openapi.json`
+- `GET /webadmin/api/ai-guide`
+- `GET /webadmin/api/examples`
+- `GET /webadmin/api/examples/contact-page`
+- `GET /webadmin/api/examples/landing-page`
 - `GET /webadmin/api/sites`
 - `GET /webadmin/api/locales`
 - `GET /webadmin/api/page-layouts`
@@ -216,8 +244,31 @@ The endpoint assigns an existing compatible same-site active Shared Slot to an e
 - no destructive page deletion
 - no destructive block deletion
 - no resource update, move, or delete endpoints yet
-- no browser session requirement
-- no public unauthenticated access
+- no browser session, form, or CSRF requirement for Bearer-token JSON writes
+- public unauthenticated access is limited to the minimal `GET /webadmin/api` bootstrap response
+
+## JSON Error Shape
+
+API errors are JSON-only. They must not redirect to login, render CSRF pages, or expose stack traces. Common fields:
+
+```json
+{
+  "ok": false,
+  "code": "invalid_internal_api_token",
+  "message": "Invalid internal API token.",
+  "api_discovery_url": "/webadmin/api",
+  "openapi_url": "/webadmin/api/openapi.json",
+  "documentation_url": "/webadmin/api/ai-guide",
+  "example_url": "/webadmin/api/examples/contact-page",
+  "errors": []
+}
+```
+
+Expected statuses:
+
+- `401` for missing, invalid, or revoked tokens
+- `403` for missing capabilities
+- `422` for validation errors
 
 ## Resource API Examples
 

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
@@ -12,11 +13,13 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\Pages\PageDeleter;
 
 class InternalContentResourceController extends Controller
 {
   public function __construct(
     private readonly InternalContentApiPresenter $presenter,
+    private readonly PageDeleter $pageDeleter,
   ) {}
 
   public function sites(): JsonResponse
@@ -155,6 +158,28 @@ class InternalContentResourceController extends Controller
     ]);
 
     return $this->ok(['page' => $this->presenter->page($page, true)]);
+  }
+
+  public function deletePage(Page $page): JsonResponse
+  {
+    $pageId = $page->id;
+
+    $this->pageDeleter->delete($page);
+
+    Log::info('Internal Content API page deleted.', [
+      'page_id' => $pageId,
+      'type' => 'page',
+    ]);
+
+    return response()->json([
+      'ok' => true,
+      'deleted' => [
+        'type' => 'page',
+        'id' => $pageId,
+      ],
+      'warnings' => [],
+      'errors' => [],
+    ]);
   }
 
   public function blocks(Request $request): JsonResponse

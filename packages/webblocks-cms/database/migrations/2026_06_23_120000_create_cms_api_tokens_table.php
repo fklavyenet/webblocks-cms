@@ -13,9 +13,11 @@ return new class extends Migration
       $table->string('name');
       $table->string('token_hash', 128)->unique();
       $table->string('token_preview', 32);
+      $table->json('capabilities')->nullable();
       $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->timestamp('last_used_at')->nullable();
       $table->string('last_used_ip', 45)->nullable();
+      $table->string('last_used_user_agent', 255)->nullable();
       $table->timestamp('revoked_at')->nullable();
       $table->timestamps();
 

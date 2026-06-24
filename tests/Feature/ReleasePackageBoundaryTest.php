@@ -195,6 +195,7 @@ class ReleasePackageBoundaryTest extends TestCase
 
     foreach ([
       'ai-page-building-guide.md',
+      'api-discovery.md',
       'internal-content-api.md',
       'index.md',
       'public-block-render-markup.md',
@@ -210,12 +211,19 @@ class ReleasePackageBoundaryTest extends TestCase
     $guide = (string) file_get_contents($vendorPackageRoot.'/docs/ai-page-building-guide.md');
 
     $this->assertStringContainsString('GET /webadmin/api/content-contract', $guide);
+    $this->assertStringContainsString('GET /webadmin/api', $guide);
     $this->assertStringContainsString('POST /webadmin/api/content/validate', $guide);
     $this->assertStringContainsString('POST /webadmin/api/content/apply', $guide);
     $this->assertStringContainsString('vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md', $guide);
     $this->assertStringNotContainsString('WEBBLOCKS_CMS_API_TOKEN=secret', $guide);
     $this->assertStringNotContainsString('/Users/', $guide);
     $this->assertStringNotContainsString(base_path(), $guide);
+
+    $apiDiscovery = (string) file_get_contents($vendorPackageRoot.'/docs/api-discovery.md');
+
+    $this->assertStringContainsString('GET /webadmin/api/openapi.json', $apiDiscovery);
+    $this->assertStringNotContainsString('/Users/', $apiDiscovery);
+    $this->assertStringNotContainsString(base_path(), $apiDiscovery);
   }
 
   #[Test]

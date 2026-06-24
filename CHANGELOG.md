@@ -14,6 +14,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.154
+
+- Add discovery-first CMS Content API bootstrap, OpenAPI, AI guide, and examples endpoints for external AI/operator tools using Bearer tokens.
+- Harden content validate/apply as JSON-only Bearer API writes with capability checks, CSRF-free API behavior, guidance links, and safe token audit metadata.
+- Add API Tokens screen usage guidance and document the discovery-first workflow.
+
 ## 1.32.153
 
 - Fix package-native System Update recovery for old repo-shaped Composer vendor installs by normalizing Composer installed package metadata before autoload regeneration and failing safely if stale nested WebBlocks CMS paths remain.

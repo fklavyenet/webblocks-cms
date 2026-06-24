@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
@@ -41,6 +42,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
@@ -48,10 +50,23 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotControll
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
-Route::middleware(['web', 'install.required', 'internal-api.token'])
+Route::middleware(['web', 'install.required', 'throttle:internal-content-api'])
   ->prefix('webadmin/api')
   ->name('internal-content-api.')
   ->group(function () {
+    Route::get('/', [InternalApiDiscoveryController::class, 'index'])->name('discovery');
+  });
+
+Route::middleware(['web', 'install.required', 'throttle:internal-content-api', 'internal-api.token'])
+  ->withoutMiddleware([ValidateCsrfToken::class])
+  ->prefix('webadmin/api')
+  ->name('internal-content-api.')
+  ->group(function () {
+    Route::get('/openapi.json', [InternalApiDiscoveryController::class, 'openapi'])->name('openapi');
+    Route::get('/ai-guide', [InternalApiDiscoveryController::class, 'aiGuide'])->name('ai-guide');
+    Route::get('/examples', [InternalApiDiscoveryController::class, 'examples'])->name('examples.index');
+    Route::get('/examples/contact-page', [InternalApiDiscoveryController::class, 'contactPageExample'])->name('examples.contact-page');
+    Route::get('/examples/landing-page', [InternalApiDiscoveryController::class, 'landingPageExample'])->name('examples.landing-page');
     Route::get('/sites', [InternalContentResourceController::class, 'sites'])->name('sites.index');
     Route::get('/locales', [InternalContentResourceController::class, 'locales'])->name('locales.index');
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
@@ -59,19 +74,20 @@ Route::middleware(['web', 'install.required', 'internal-api.token'])
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/pages', [InternalContentResourceController::class, 'pages'])->name('pages.index');
     Route::get('/pages/{page}', [InternalContentResourceController::class, 'page'])->name('pages.show');
-    Route::post('/pages/{page}/slots/{slot}/shared-slot', [InternalSharedSlotController::class, 'assignToPageSlot'])->name('pages.slots.shared-slot');
+    Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
+    Route::post('/pages/{page}/slots/{slot}/shared-slot', [InternalSharedSlotController::class, 'assignToPageSlot'])->middleware('internal-api.capability:shared-slots.write')->name('pages.slots.shared-slot');
     Route::get('/navigation-menus', [InternalNavigationController::class, 'index'])->name('navigation-menus.index');
-    Route::post('/navigation-menus', [InternalNavigationController::class, 'store'])->name('navigation-menus.store');
+    Route::post('/navigation-menus', [InternalNavigationController::class, 'store'])->middleware('internal-api.capability:navigation.write')->name('navigation-menus.store');
     Route::get('/navigation-menus/{navigationMenu}', [InternalNavigationController::class, 'show'])->name('navigation-menus.show');
-    Route::post('/navigation-menus/{navigationMenu}/items', [InternalNavigationController::class, 'storeItem'])->name('navigation-menus.items.store');
+    Route::post('/navigation-menus/{navigationMenu}/items', [InternalNavigationController::class, 'storeItem'])->middleware('internal-api.capability:navigation.write')->name('navigation-menus.items.store');
     Route::get('/shared-slots', [InternalSharedSlotController::class, 'index'])->name('shared-slots.index');
-    Route::post('/shared-slots', [InternalSharedSlotController::class, 'store'])->name('shared-slots.store');
+    Route::post('/shared-slots', [InternalSharedSlotController::class, 'store'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.store');
     Route::get('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'show'])->name('shared-slots.show');
-    Route::post('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'storeBlock'])->name('shared-slots.blocks.store');
+    Route::post('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'storeBlock'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.blocks.store');
     Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
     Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');
-    Route::post('/content/validate', [InternalContentPlanController::class, 'validatePlan'])->name('content.validate');
-    Route::post('/content/apply', [InternalContentPlanController::class, 'apply'])->name('content.apply');
+    Route::post('/content/validate', [InternalContentPlanController::class, 'validatePlan'])->middleware('internal-api.capability:content.validate')->name('content.validate');
+    Route::post('/content/apply', [InternalContentPlanController::class, 'apply'])->middleware('internal-api.capability:content.apply')->name('content.apply');
   });
 
 Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access'])
