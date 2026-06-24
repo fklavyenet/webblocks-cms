@@ -100,6 +100,8 @@ CMS browser admin resource routes follow the `/webadmin/{resource}` convention. 
 
 The Internal Content API for trusted AI/operator tools is documented in [docs/internal-content-api.md](docs/internal-content-api.md). CMS API tokens are created by a super admin from `System -> API Tokens`, stored in the CMS database as hashes, shown in plain text only once, and used as Bearer tokens by AI/operator tools. Super admins choose token capabilities during creation and can later edit token names and capabilities without exposing or rotating the token secret. Normal page-building capabilities are selected by default, while publish and page-delete capabilities are separate advanced opt-ins for trusted operator tools. Super admins can revoke tokens to disable access while keeping the audit row, or delete active and revoked tokens to permanently remove the token record. The API returns JSON-only responses and remains draft-first and non-destructive. Current endpoints include safe creation foundations for navigation menu items, Shared Slots, Shared Slot block trees, explicit compatible Shared Slot assignment to page slots, and `replace_existing_draft_page` content plans for replacing named page-owned slots on existing draft pages with `expected_path` or `expected_updated_at` safety guards.
 
+The [Feature Inventory](docs/feature-inventory.md) is a documentation and navigation aid that maps CMS features to admin, public, and API surfaces while tracking documentation gaps. It is not a runtime contract.
+
 ### AI/API Discovery
 
 External AI/operator tools can start from only the CMS API base URL and a CMS API token. First call `GET /webadmin/api`; with a valid Bearer token, the response links to OpenAPI, the AI guide, content contract, examples, validate/apply, pages, navigation, and Shared Slots. See [API Discovery](docs/api-discovery.md), [Internal Content API](docs/internal-content-api.md), and the [AI Page Building Guide](docs/ai-page-building-guide.md).
@@ -295,6 +297,7 @@ php artisan site-promotion:apply storage/app/site-promotions/example.zip --targe
 - The indentation guard now scans the maintained source, package, route, view, script, and test roots. Pint's indentation-specific fixers are disabled so the project-specific 2-space PHP indentation rule remains authoritative.
 - [Installation](docs/installation.md)
 - [Getting Started](docs/getting-started.md)
+- [Feature Inventory](docs/feature-inventory.md)
 - [Core Concepts](docs/core-concepts.md)
 - [Users And Permissions](docs/users-and-permissions.md)
 - [Editorial Workflow](docs/editorial-workflow.md)

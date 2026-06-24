@@ -5,6 +5,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Introduction
 
 - [Core Concepts](core-concepts.md)
+- [Feature Inventory](feature-inventory.md)
 
 ## Installation
 
@@ -18,6 +19,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Core Concepts
 
 - [Core Concepts](core-concepts.md)
+- [Feature Inventory](feature-inventory.md)
 
 ## Page Builder (Layouts / Slots / Blocks)
 
@@ -38,6 +40,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [AI Page Building Guide](ai-page-building-guide.md)
 - [Block Type Contracts](block-type-contracts.md)
 - [Markdown Docs To CMS Sync](markdown-docs-to-cms-sync.md)
+- [Feature Inventory](feature-inventory.md)
 
 ## Multisite & Localization
 

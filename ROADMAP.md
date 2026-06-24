@@ -63,6 +63,13 @@ This is a planned AI/operator workflow direction for source-linked documentation
 - Phase 2: draft-safe CMS apply using Internal Content API.
 - Phase 3: docs navigation planning and publish workflow.
 
+## Documentation / Product Site Readiness
+
+This is documentation planning only. It does not define a new runtime phase.
+
+- Use the Feature Inventory as a source page for deciding which user-facing docs and future technical product-site pages are missing.
+- Keep technical Markdown documentation separate from marketing content, while allowing the same source docs to inform future source-linked CMS documentation pages.
+
 ## CMS Plugin System
 
 ### Phase 0 - Documentation And Rules

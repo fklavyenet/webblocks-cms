@@ -14,6 +14,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 - Document the target-site agnostic Markdown documentation to source-linked CMS page publication model for future AI/operator workflows.
+- Add a feature inventory documentation page that maps CMS features to admin/public/API surfaces and documentation gaps.
 
 ## 1.32.161
 
