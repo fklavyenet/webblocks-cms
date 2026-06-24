@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.157
+
+- Add an Edit action for CMS API tokens so super admins can update token names and capabilities without exposing or rotating token secrets.
+
 ## 1.32.156
 
 - Add capability selection to CMS API token creation, keep normal page-building permissions selected by default, and leave publish/delete permissions opt-in for trusted operator tools.

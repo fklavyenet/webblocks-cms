@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ## Capabilities
 
-Super admins choose token capabilities when creating a token from `System -> API Tokens`. Discovery exposes the saved capabilities without returning the token value, token hash, or token preview. Standard page-building tokens default to these capabilities:
+Super admins choose token capabilities when creating a token from `System -> API Tokens`, and can later edit a token's name and capabilities without exposing or rotating the token secret. Discovery exposes the saved capabilities without returning the token value, token hash, or token preview. Standard page-building tokens default to these capabilities:
 
 - `content.read`
 - `content.validate`

@@ -46,6 +46,12 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee($token->token_preview);
     $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
+    $response->assertSee('title="Edit token"', false);
+    $response->assertSee('aria-label="Edit token"', false);
+    $response->assertSee('data-wb-target="#edit-cms-api-token-'.$token->id.'"', false);
+    $response->assertSee('wb-icon wb-icon-pencil', false);
+    $response->assertSee('Edit API Token');
+    $response->assertSee('value="Local AI - Test MacBook"', false);
     $response->assertSee('title="Delete token"', false);
     $response->assertSee('aria-label="Delete token"', false);
     $response->assertSee('data-wb-target="#delete-cms-api-token-'.$token->id.'"', false);
@@ -76,6 +82,13 @@ class CmsApiTokenManagementTest extends TestCase
 
     $this->actingAs($user)
       ->post(route('admin.system.api-tokens.store'), ['name' => 'Local AI'])
+      ->assertForbidden();
+
+    $this->actingAs($user)
+      ->put(route('admin.system.api-tokens.update', $token), [
+        'name' => 'Blocked Update',
+        'capabilities' => [CmsApiTokenCapabilities::CONTENT_READ],
+      ])
       ->assertForbidden();
 
     $this->actingAs($user)
@@ -203,6 +216,124 @@ class CmsApiTokenManagementTest extends TestCase
       ->assertJsonPath('token.destructive_capabilities', [CmsApiTokenCapabilities::CONTENT_PUBLISH])
       ->assertJsonMissingPath('token.token_hash')
       ->assertJsonMissingPath('token.token_preview');
+  }
+
+  #[Test]
+  public function active_token_name_and_capabilities_can_be_edited_without_rotating_token_or_preview(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $plainToken = 'secret-token';
+    $token = $this->createToken($plainToken, [
+      'name' => 'Old Builder',
+      'capabilities' => [
+        CmsApiTokenCapabilities::CONTENT_READ,
+        CmsApiTokenCapabilities::CONTENT_VALIDATE,
+        CmsApiTokenCapabilities::CONTENT_APPLY,
+      ],
+    ]);
+    $originalHash = $token->token_hash;
+    $originalPreview = $token->token_preview;
+    $updatedCapabilities = [
+      CmsApiTokenCapabilities::CONTENT_READ,
+      CmsApiTokenCapabilities::CONTENT_PUBLISH,
+    ];
+
+    $this->actingAs($user)
+      ->put(route('admin.system.api-tokens.update', $token), [
+        'name' => 'Publisher Operator',
+        'capabilities' => $updatedCapabilities,
+      ])
+      ->assertRedirect(route('admin.system.api-tokens.index'));
+
+    $token->refresh();
+
+    $this->assertSame('Publisher Operator', $token->name);
+    $this->assertSame($updatedCapabilities, $token->capabilities);
+    $this->assertNull($token->revoked_at);
+    $this->assertSame($originalHash, $token->token_hash);
+    $this->assertSame($originalPreview, $token->token_preview);
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api')
+      ->assertOk()
+      ->assertJsonPath('token.capabilities', $updatedCapabilities)
+      ->assertJsonPath('token.destructive_capabilities', [CmsApiTokenCapabilities::CONTENT_PUBLISH])
+      ->assertJsonMissingPath('token.token_hash')
+      ->assertJsonMissingPath('token.token_preview');
+  }
+
+  #[Test]
+  public function revoked_token_can_be_edited_without_becoming_active(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $revokedAt = now()->subMinute();
+    $token = $this->createToken('secret-token', [
+      'name' => 'Revoked Builder',
+      'capabilities' => [CmsApiTokenCapabilities::CONTENT_READ],
+      'revoked_at' => $revokedAt,
+    ]);
+    $originalHash = $token->token_hash;
+    $originalPreview = $token->token_preview;
+    $updatedCapabilities = [
+      CmsApiTokenCapabilities::CONTENT_READ,
+      CmsApiTokenCapabilities::CONTENT_VALIDATE,
+    ];
+
+    $this->actingAs($user)
+      ->put(route('admin.system.api-tokens.update', $token), [
+        'name' => 'Revoked Builder Updated',
+        'capabilities' => $updatedCapabilities,
+      ])
+      ->assertRedirect(route('admin.system.api-tokens.index'));
+
+    $token->refresh();
+
+    $this->assertSame('Revoked Builder Updated', $token->name);
+    $this->assertSame($updatedCapabilities, $token->capabilities);
+    $this->assertTrue($token->isRevoked());
+    $this->assertSame($revokedAt->timestamp, $token->revoked_at?->timestamp);
+    $this->assertSame($originalHash, $token->token_hash);
+    $this->assertSame($originalPreview, $token->token_preview);
+  }
+
+  #[Test]
+  public function token_edit_rejects_unknown_or_empty_capabilities_without_changing_secret_fields(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $token = $this->createToken('secret-token', [
+      'name' => 'Editable Token',
+      'capabilities' => [CmsApiTokenCapabilities::CONTENT_READ],
+    ]);
+    $originalHash = $token->token_hash;
+    $originalPreview = $token->token_preview;
+
+    $this->actingAs($user)
+      ->from(route('admin.system.api-tokens.index'))
+      ->put(route('admin.system.api-tokens.update', $token), [
+        'name' => 'Bad Capability',
+        'capabilities' => [
+          CmsApiTokenCapabilities::CONTENT_READ,
+          'unknown.capability',
+        ],
+      ])
+      ->assertRedirect(route('admin.system.api-tokens.index'))
+      ->assertSessionHasErrors('capabilities.1');
+
+    $this->actingAs($user)
+      ->from(route('admin.system.api-tokens.index'))
+      ->put(route('admin.system.api-tokens.update', $token), [
+        'name' => 'No Capability',
+        'capabilities' => [],
+      ])
+      ->assertRedirect(route('admin.system.api-tokens.index'))
+      ->assertSessionHasErrors('capabilities');
+
+    $token->refresh();
+
+    $this->assertSame('Editable Token', $token->name);
+    $this->assertSame([CmsApiTokenCapabilities::CONTENT_READ], $token->capabilities);
+    $this->assertSame($originalHash, $token->token_hash);
+    $this->assertSame($originalPreview, $token->token_preview);
   }
 
   #[Test]

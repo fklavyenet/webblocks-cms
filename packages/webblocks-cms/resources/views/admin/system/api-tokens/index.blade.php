@@ -111,56 +111,11 @@ Content-Type: application/json</textarea>
                     @enderror
                 </div>
 
-                <div class="wb-field">
-                    <div class="wb-stack wb-gap-3">
-                        <div class="wb-stack wb-gap-1">
-                            <div class="wb-label">Capabilities</div>
-                            <div class="wb-text-sm wb-text-muted">Choose what this token is allowed to do.</div>
-                        </div>
-
-                        <div class="wb-stack wb-gap-2">
-                            @foreach ($defaultCapabilities as $capability)
-                                <label class="wb-check" for="api_token_capability_{{ Str::slug($capability) }}">
-                                    <input
-                                        id="api_token_capability_{{ Str::slug($capability) }}"
-                                        name="capabilities[]"
-                                        type="checkbox"
-                                        value="{{ $capability }}"
-                                        @checked(in_array($capability, $selectedCapabilities, true))
-                                    >
-                                    <span>{{ $capability }} <span class="wb-text-muted">- {{ $capabilityLabels[$capability] ?? $capability }}</span></span>
-                                </label>
-                            @endforeach
-                        </div>
-
-                        <div class="wb-stack wb-gap-2">
-                            <div class="wb-stack wb-gap-1">
-                                <strong>Advanced capabilities</strong>
-                                <div class="wb-text-sm wb-text-muted">Grant only to trusted operator tools.</div>
-                            </div>
-
-                            @foreach ($advancedCapabilities as $capability)
-                                <label class="wb-check" for="api_token_capability_{{ Str::slug($capability) }}">
-                                    <input
-                                        id="api_token_capability_{{ Str::slug($capability) }}"
-                                        name="capabilities[]"
-                                        type="checkbox"
-                                        value="{{ $capability }}"
-                                        @checked(in_array($capability, $selectedCapabilities, true))
-                                    >
-                                    <span>{{ $capability }} <span class="wb-text-muted">- {{ $capabilityLabels[$capability] ?? $capability }}</span></span>
-                                </label>
-                            @endforeach
-                        </div>
-
-                        @error('capabilities')
-                            <div class="wb-field-error">{{ $message }}</div>
-                        @enderror
-                        @error('capabilities.*')
-                            <div class="wb-field-error">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
+                @include('webblocks-cms::admin.system.api-tokens.partials.capability-checkboxes', [
+                    'fieldPrefix' => 'api_token_capability',
+                    'selectedCapabilities' => $selectedCapabilities,
+                    'showErrors' => true,
+                ])
             </div>
 
             <div class="wb-card-footer">
@@ -226,6 +181,17 @@ Content-Type: application/json</textarea>
                                         <div class="wb-action-group">
                                             <button
                                                 type="button"
+                                                class="wb-action-btn wb-action-btn-edit"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#edit-cms-api-token-{{ $token->id }}"
+                                                title="Edit token"
+                                                aria-label="Edit token"
+                                                aria-haspopup="dialog"
+                                            >
+                                                <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
+                                            </button>
+                                            <button
+                                                type="button"
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#revoke-cms-api-token-{{ $token->id }}"
@@ -262,6 +228,46 @@ Content-Type: application/json</textarea>
 
 @push('overlays')
     @foreach ($tokens as $token)
+        <div class="wb-modal wb-modal-lg" id="edit-cms-api-token-{{ $token->id }}" role="dialog" aria-modal="true" aria-labelledby="edit-cms-api-token-{{ $token->id }}-title">
+            <div class="wb-modal-dialog">
+                <div class="wb-modal-header">
+                    <div>
+                        <h2 class="wb-modal-title" id="edit-cms-api-token-{{ $token->id }}-title">Edit API Token</h2>
+                        <p class="wb-text-sm wb-text-muted">Update this token's name and capabilities. The token value and audit metadata are not shown or changed.</p>
+                    </div>
+
+                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close Edit API Token">
+                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ route('admin.system.api-tokens.update', $token) }}">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="wb-modal-body wb-stack wb-gap-4">
+                        <div class="wb-field">
+                            <label class="wb-label" for="edit_cms_api_token_name_{{ $token->id }}">Name</label>
+                            <input id="edit_cms_api_token_name_{{ $token->id }}" name="name" type="text" class="wb-input" value="{{ $token->name }}" required maxlength="120">
+                        </div>
+
+                        @include('webblocks-cms::admin.system.api-tokens.partials.capability-checkboxes', [
+                            'fieldPrefix' => 'edit_cms_api_token_'.$token->id.'_capability',
+                            'selectedCapabilities' => $capabilitiesPresenter->capabilitiesFor($token),
+                            'showErrors' => false,
+                        ])
+                    </div>
+
+                    <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                        <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
+                            <button type="submit" class="wb-btn wb-btn-primary">Save Changes</button>
+                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
             'id' => 'revoke-cms-api-token-'.$token->id,
             'title' => 'Revoke API Token',

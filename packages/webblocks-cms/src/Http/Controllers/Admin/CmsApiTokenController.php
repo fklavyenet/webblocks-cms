@@ -82,6 +82,18 @@ class CmsApiTokenController extends Controller
       ->with('status', 'CMS API token revoked.');
   }
 
+  public function update(CmsApiTokenRequest $request, CmsApiToken $token): RedirectResponse
+  {
+    $token->forceFill([
+      'name' => $request->tokenName(),
+      'capabilities' => $request->tokenCapabilities(),
+    ])->save();
+
+    return redirect()
+      ->route('admin.system.api-tokens.index')
+      ->with('status', 'CMS API token updated.');
+  }
+
   public function destroy(CmsApiToken $token): RedirectResponse
   {
     $token->delete();
