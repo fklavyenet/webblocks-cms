@@ -73,20 +73,18 @@ The inventory helps new users and AI/operator workflows understand which CMS cap
 
 ## Forms And Messages
 
-Contact Form and Contact Messages are first-class WebBlocks CMS features. The missing piece is a dedicated user-friendly documentation page for setup, submissions, spam handling, email fallback, and troubleshooting.
-
-Recommended new page: `docs/contact-forms-and-messages.md`.
+Contact Form and Contact Messages are first-class WebBlocks CMS features. The user-facing setup, submission, spam handling, email fallback, and troubleshooting guide now lives in [docs/contact-forms-and-messages.md](contact-forms-and-messages.md).
 
 | Feature | Area | Status | Admin path | Public behavior | API support | Source / implementation notes | Existing docs | Documentation gap / next docs page |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Contact Form block | Forms | Implemented | Page Builder block picker | Renders a public form and stores submissions | Creatable through content plans when `contact_form` is discovered | First-class block with recipient fallback support | [docs/block-type-contracts.md](block-type-contracts.md), [docs/public-block-render-markup.md](public-block-render-markup.md), [README.md](../README.md) | needs `docs/contact-forms-and-messages.md` |
-| Contact Messages admin screen | Forms | Implemented | `/webadmin/contact-messages` | No public listing; admins review submissions | Not a public delivery API | Admin table includes delivery and spam status | [README.md](../README.md) | needs `docs/contact-forms-and-messages.md` |
-| Contact form submission storage | Forms | Implemented | Contact Messages | Stores real public submissions for review | Not API-oriented | Submissions are stored before email notification attempts | [README.md](../README.md) | needs `docs/contact-forms-and-messages.md` |
-| Honeypot spam discard | Forms | Implemented | Contact Form settings and submission handling | Honeypot hits receive normal success redirect and are discarded | Not API-oriented | Package-standard `website` honeypot | [README.md](../README.md) | needs `docs/contact-forms-and-messages.md` |
-| Spam scoring / quarantine | Forms | Implemented | Contact Messages | Suspicious submissions can be quarantined for admin review | Not API-oriented | Conservative spam signals for links, commercial patterns, and repeat IPs | [README.md](../README.md) | needs troubleshooting guide |
-| Email notification fallback chain | Forms | Implemented | Contact Form block, Edit Site -> Contact, environment mail | Attempts recipient resolution from block, site, and safe mail fallback | Not API-oriented | Delivery attempts happen after durable storage | [README.md](../README.md) | needs `docs/contact-forms-and-messages.md` |
-| Contact mail diagnose command | Operations | Implemented | Operator-side diagnostic | No public behavior | Not API-oriented | Secret-safe mail configuration diagnostics | [README.md](../README.md) | needs troubleshooting guide |
-| Delivery status / failure details | Forms | Implemented | Contact Messages | No public failure disclosure | Not API-oriented | Saved messages include admin-visible notification status | [README.md](../README.md) | needs `docs/contact-forms-and-messages.md` |
+| Contact Form block | Forms | Implemented | Page Builder block picker | Renders a public form and stores submissions | Creatable through content plans when `contact_form` is discovered | First-class block with recipient fallback support | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md), [docs/block-type-contracts.md](block-type-contracts.md), [docs/public-block-render-markup.md](public-block-render-markup.md) | covered |
+| Contact Messages admin screen | Forms | Implemented | `/webadmin/contact-messages` | No public listing; admins review submissions | Not a public delivery API | Admin table includes delivery and spam status | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md), [README.md](../README.md) | covered |
+| Contact form submission storage | Forms | Implemented | Contact Messages | Stores real public submissions for review | Not API-oriented | Submissions are stored before email notification attempts | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md) | covered |
+| Honeypot spam discard | Forms | Implemented | Contact Form settings and submission handling | Honeypot hits receive normal success redirect and are discarded | Not API-oriented | Package-standard `website` honeypot | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md) | covered |
+| Spam scoring / quarantine | Forms | Implemented | Contact Messages | Suspicious submissions can be quarantined for admin review | Not API-oriented | Conservative spam signals for links, commercial patterns, and repeat IPs | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md) | covered |
+| Email notification fallback chain | Forms | Implemented | Contact Form block, Edit Site -> Contact, environment mail | Attempts recipient resolution from block, site, and safe mail fallback | Not API-oriented | Delivery attempts happen after durable storage | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md) | covered |
+| Contact mail diagnose command | Operations | Implemented | Operator-side diagnostic | No public behavior | Not API-oriented | Secret-safe mail configuration diagnostics | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md), [README.md](../README.md) | covered |
+| Delivery status / failure details | Forms | Implemented | Contact Messages | No public failure disclosure | Not API-oriented | Saved messages include admin-visible notification status | [docs/contact-forms-and-messages.md](contact-forms-and-messages.md) | covered |
 
 ## Internal Content API And AI Operations
 
@@ -95,7 +93,7 @@ The Internal Content API is for trusted AI/operator tools. It is not a public de
 Recommended additional docs:
 
 - `docs/ai-page-building-overview.md`
-- `docs/contact-forms-and-messages.md`
+- [docs/contact-forms-and-messages.md](contact-forms-and-messages.md) now exists.
 - [docs/markdown-docs-to-cms-sync.md](markdown-docs-to-cms-sync.md) already exists.
 
 | Feature | Area | Status | Admin path | Public behavior | API support | Source / implementation notes | Existing docs | Documentation gap / next docs page |
@@ -169,12 +167,11 @@ Current docs are technically rich, but feature discoverability is incomplete. Th
 
 Priority documentation pages:
 
-1. Contact Forms And Messages
-2. AI Page Building Overview
-3. Page Builder Overview
-4. Feature Inventory
-5. Forms / Messages troubleshooting
-6. Plugin lifecycle guide
-7. System Updates operator guide
+1. AI Page Building Overview
+2. Page Builder Overview
+3. Feature Inventory
+4. Forms / Messages troubleshooting
+5. Plugin lifecycle guide
+6. System Updates operator guide
 
 webblocksui.com marketing content should remain separate from technical documentation. Marketing pages can summarize product value, while Markdown documentation should remain the source for technical and operator guidance.

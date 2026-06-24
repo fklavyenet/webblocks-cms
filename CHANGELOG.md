@@ -15,6 +15,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 - Document the target-site agnostic Markdown documentation to source-linked CMS page publication model for future AI/operator workflows.
 - Add a feature inventory documentation page that maps CMS features to admin/public/API surfaces and documentation gaps.
+- Add user-facing Contact Forms and Contact Messages documentation covering native form blocks, submissions, spam handling, notifications, diagnostics, and AI/operator usage.
 
 ## 1.32.162
 

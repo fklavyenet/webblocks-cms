@@ -15,6 +15,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Getting Started
 
 - [Getting Started](getting-started.md)
+- [Contact Forms And Messages](contact-forms-and-messages.md)
 
 ## Core Concepts
 
@@ -25,6 +26,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 
 - [Core Concepts](core-concepts.md#page-builder)
 - [Page Layouts](page-layouts.md)
+- [Contact Forms And Messages](contact-forms-and-messages.md)
 - [Block Type Contracts](block-type-contracts.md)
 - [Renderer Contracts](block-ui-renderer-contract.md)
 - [Public Block Render Markup](public-block-render-markup.md)
@@ -68,6 +70,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 
 - [Public Assets](public-assets.md)
 - [Search](search.md)
+- [Contact Forms And Messages](contact-forms-and-messages.md)
 - [Renderer Contracts](block-ui-renderer-contract.md)
 - [Public Block Render Markup](public-block-render-markup.md)
 
