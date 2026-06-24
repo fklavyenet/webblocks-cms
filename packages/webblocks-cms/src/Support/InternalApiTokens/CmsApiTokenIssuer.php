@@ -10,7 +10,7 @@ class CmsApiTokenIssuer
 {
   public const TOKEN_PREFIX = 'wbcms_';
 
-  public function issue(string $name, ?User $creator = null): IssuedCmsApiToken
+  public function issue(string $name, ?User $creator = null, array $capabilities = CmsApiTokenCapabilities::DEFAULT): IssuedCmsApiToken
   {
     $plainToken = self::TOKEN_PREFIX.Str::random(64);
 
@@ -18,7 +18,7 @@ class CmsApiTokenIssuer
       'name' => $name,
       'token_hash' => $this->hash($plainToken),
       'token_preview' => $this->preview($plainToken),
-      'capabilities' => CmsApiTokenCapabilities::DEFAULT,
+      'capabilities' => array_values($capabilities),
       'created_by_user_id' => $creator?->id,
     ]);
 

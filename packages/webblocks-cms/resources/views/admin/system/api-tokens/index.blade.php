@@ -98,15 +98,68 @@ Content-Type: application/json</textarea>
             <strong>Create Token</strong>
         </div>
 
+        @php($selectedCapabilities = old('capabilities', $defaultCapabilities))
+
         <form method="POST" action="{{ route('admin.system.api-tokens.store') }}">
             @csrf
             <div class="wb-card-body wb-stack wb-gap-4">
                 <div class="wb-field">
                     <label class="wb-label" for="api_token_name">Name</label>
-                    <input id="api_token_name" name="name" type="text" class="wb-input" value="{{ old('name') }}" placeholder="Local AI - Osman MacBook" required maxlength="120">
+                    <input id="api_token_name" name="name" type="text" class="wb-input" value="{{ old('name') }}" placeholder="Example: Local AI, Homepage Builder, Operator Tool" required maxlength="120">
                     @error('name')
                         <div class="wb-field-error">{{ $message }}</div>
                     @enderror
+                </div>
+
+                <div class="wb-field">
+                    <div class="wb-stack wb-gap-3">
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-label">Capabilities</div>
+                            <div class="wb-text-sm wb-text-muted">Choose what this token is allowed to do.</div>
+                        </div>
+
+                        <div class="wb-stack wb-gap-2">
+                            @foreach ($defaultCapabilities as $capability)
+                                <label class="wb-check" for="api_token_capability_{{ Str::slug($capability) }}">
+                                    <input
+                                        id="api_token_capability_{{ Str::slug($capability) }}"
+                                        name="capabilities[]"
+                                        type="checkbox"
+                                        value="{{ $capability }}"
+                                        @checked(in_array($capability, $selectedCapabilities, true))
+                                    >
+                                    <span>{{ $capability }} <span class="wb-text-muted">- {{ $capabilityLabels[$capability] ?? $capability }}</span></span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        <div class="wb-stack wb-gap-2">
+                            <div class="wb-stack wb-gap-1">
+                                <strong>Advanced capabilities</strong>
+                                <div class="wb-text-sm wb-text-muted">Grant only to trusted operator tools.</div>
+                            </div>
+
+                            @foreach ($advancedCapabilities as $capability)
+                                <label class="wb-check" for="api_token_capability_{{ Str::slug($capability) }}">
+                                    <input
+                                        id="api_token_capability_{{ Str::slug($capability) }}"
+                                        name="capabilities[]"
+                                        type="checkbox"
+                                        value="{{ $capability }}"
+                                        @checked(in_array($capability, $selectedCapabilities, true))
+                                    >
+                                    <span>{{ $capability }} <span class="wb-text-muted">- {{ $capabilityLabels[$capability] ?? $capability }}</span></span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        @error('capabilities')
+                            <div class="wb-field-error">{{ $message }}</div>
+                        @enderror
+                        @error('capabilities.*')
+                            <div class="wb-field-error">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
             </div>
 
@@ -149,6 +202,7 @@ Content-Type: application/json</textarea>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
                                             <strong>{{ $token->name }}</strong>
+                                            <span class="wb-text-sm wb-text-muted">{{ $capabilitiesPresenter->summary($token) }}</span>
                                             @if ($token->creator)
                                                 <span class="wb-text-sm wb-text-muted">Created by {{ $token->creator->name }}</span>
                                             @endif

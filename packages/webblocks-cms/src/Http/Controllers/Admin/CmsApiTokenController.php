@@ -45,6 +45,9 @@ class CmsApiTokenController extends Controller
       'currentCmsUrl' => url('/'),
       'apiBaseUrl' => url('/webadmin/api'),
       'defaultCapabilities' => CmsApiTokenCapabilities::DEFAULT,
+      'advancedCapabilities' => CmsApiTokenCapabilities::DESTRUCTIVE,
+      'capabilityLabels' => CmsApiTokenCapabilities::LABELS,
+      'capabilitiesPresenter' => app(CmsApiTokenCapabilities::class),
       'createdToken' => session('created_cms_api_token'),
       'createdTokenName' => session('created_cms_api_token_name'),
       'schemaReady' => $schemaReady,
@@ -59,7 +62,7 @@ class CmsApiTokenController extends Controller
         ->withErrors(['name' => 'CMS API token storage is not ready. Run System Update again or contact your CMS operator.']);
     }
 
-    $issuedToken = $this->issuer->issue($request->tokenName(), $request->user());
+    $issuedToken = $this->issuer->issue($request->tokenName(), $request->user(), $request->tokenCapabilities());
 
     return redirect()
       ->route('admin.system.api-tokens.index')

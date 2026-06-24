@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 
 class CmsApiTokenManagementTest extends TestCase
@@ -28,7 +29,20 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('Create Token');
     $response->assertSee('API Discovery Quick Start');
     $response->assertSee('GET /webadmin/api');
+    $response->assertSee('placeholder="Example: Local AI, Homepage Builder, Operator Tool"', false);
+    $response->assertDontSee('Local AI - Osman MacBook');
+    $response->assertSee('Choose what this token is allowed to do.');
+    $response->assertSee('Advanced capabilities');
+    $response->assertSee('Grant only to trusted operator tools.');
+    $response->assertSee('content.read');
+    $response->assertSee('content.validate');
+    $response->assertSee('content.apply');
+    $response->assertSee('navigation.write');
+    $response->assertSee('shared-slots.write');
+    $response->assertSee('content.publish');
+    $response->assertSee('pages.delete');
     $response->assertSee('Local AI - Test MacBook');
+    $response->assertSee('content.read, content.validate, content.apply +2');
     $response->assertSee($token->token_preview);
     $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
@@ -39,6 +53,17 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('class="wb-modal wb-modal-lg"', false);
     $response->assertDontSee('confirm(');
     $response->assertDontSee($token->token_hash);
+
+    $content = $response->getContent();
+
+    $this->assertStringContainsString('id="api_token_name" name="name" type="text" class="wb-input" value="" placeholder="Example: Local AI, Homepage Builder, Operator Tool"', $content);
+    $this->assertMatchesRegularExpression('/value="content\.read"[^>]*checked/s', $content);
+    $this->assertMatchesRegularExpression('/value="content\.validate"[^>]*checked/s', $content);
+    $this->assertMatchesRegularExpression('/value="content\.apply"[^>]*checked/s', $content);
+    $this->assertMatchesRegularExpression('/value="navigation\.write"[^>]*checked/s', $content);
+    $this->assertMatchesRegularExpression('/value="shared-slots\.write"[^>]*checked/s', $content);
+    $this->assertDoesNotMatchRegularExpression('/value="content\.publish"[^>]*checked/s', $content);
+    $this->assertDoesNotMatchRegularExpression('/value="pages\.delete"[^>]*checked/s', $content);
   }
 
   #[Test]
@@ -76,10 +101,18 @@ class CmsApiTokenManagementTest extends TestCase
   public function token_creation_stores_only_hash_and_shows_plain_token_once(): void
   {
     $user = User::factory()->superAdmin()->create();
+    $capabilities = [
+      CmsApiTokenCapabilities::CONTENT_READ,
+      CmsApiTokenCapabilities::CONTENT_VALIDATE,
+      CmsApiTokenCapabilities::CONTENT_APPLY,
+    ];
 
     $response = $this->followingRedirects()
       ->actingAs($user)
-      ->post(route('admin.system.api-tokens.store'), ['name' => 'Local AI - Osman MacBook']);
+      ->post(route('admin.system.api-tokens.store'), [
+        'name' => 'Homepage Builder',
+        'capabilities' => $capabilities,
+      ]);
 
     $response->assertOk();
     $response->assertSee('Copy this token now');
@@ -98,7 +131,8 @@ class CmsApiTokenManagementTest extends TestCase
 
     $record = CmsApiToken::query()->firstOrFail();
 
-    $this->assertSame('Local AI - Osman MacBook', $record->name);
+    $this->assertSame('Homepage Builder', $record->name);
+    $this->assertSame($capabilities, $record->capabilities);
     $this->assertSame(hash('sha256', $plainToken), $record->token_hash);
     $this->assertNotSame($plainToken, $record->token_hash);
     $this->assertDatabaseMissing('cms_api_tokens', ['token_hash' => $plainToken]);
@@ -107,7 +141,68 @@ class CmsApiTokenManagementTest extends TestCase
 
     $followUp->assertOk();
     $followUp->assertSee($record->token_preview);
+    $followUp->assertSee('content.read, content.validate, content.apply');
     $followUp->assertDontSee($plainToken);
+  }
+
+  #[Test]
+  public function token_creation_rejects_unknown_or_empty_capabilities(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)
+      ->from(route('admin.system.api-tokens.index'))
+      ->post(route('admin.system.api-tokens.store'), [
+        'name' => 'Operator Tool',
+        'capabilities' => [
+          CmsApiTokenCapabilities::CONTENT_READ,
+          'unknown.capability',
+        ],
+      ])
+      ->assertRedirect(route('admin.system.api-tokens.index'))
+      ->assertSessionHasErrors('capabilities.1');
+
+    $this->actingAs($user)
+      ->from(route('admin.system.api-tokens.index'))
+      ->post(route('admin.system.api-tokens.store'), [
+        'name' => 'Operator Tool',
+        'capabilities' => [],
+      ])
+      ->assertRedirect(route('admin.system.api-tokens.index'))
+      ->assertSessionHasErrors('capabilities');
+
+    $this->assertDatabaseCount('cms_api_tokens', 0);
+  }
+
+  #[Test]
+  public function created_token_discovery_reports_saved_capabilities(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $capabilities = [
+      CmsApiTokenCapabilities::CONTENT_READ,
+      CmsApiTokenCapabilities::CONTENT_VALIDATE,
+      CmsApiTokenCapabilities::CONTENT_PUBLISH,
+    ];
+
+    $response = $this->actingAs($user)
+      ->post(route('admin.system.api-tokens.store'), [
+        'name' => 'Publisher Tool',
+        'capabilities' => $capabilities,
+      ]);
+
+    $plainToken = (string) $response->getSession()->get('created_cms_api_token');
+
+    $this->assertStringStartsWith('wbcms_', $plainToken);
+    $this->assertSame($capabilities, CmsApiToken::query()->firstOrFail()->capabilities);
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api')
+      ->assertOk()
+      ->assertJsonPath('authenticated', true)
+      ->assertJsonPath('token.capabilities', $capabilities)
+      ->assertJsonPath('token.destructive_capabilities', [CmsApiTokenCapabilities::CONTENT_PUBLISH])
+      ->assertJsonMissingPath('token.token_hash')
+      ->assertJsonMissingPath('token.token_preview');
   }
 
   #[Test]

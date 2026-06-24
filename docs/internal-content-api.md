@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ## Capabilities
 
-Discovery exposes token capabilities without returning the token value, token hash, or token preview. Standard page-building tokens receive these capabilities:
+Super admins choose token capabilities when creating a token from `System -> API Tokens`. Discovery exposes the saved capabilities without returning the token value, token hash, or token preview. Standard page-building tokens default to these capabilities:
 
 - `content.read`
 - `content.validate`
@@ -98,7 +98,7 @@ Discovery exposes token capabilities without returning the token value, token ha
 - `navigation.write`
 - `shared-slots.write`
 
-Destructive and publish capabilities are separate:
+Destructive and publish capabilities are separate advanced options and are not selected by default:
 
 - `content.publish`
 - `pages.delete`

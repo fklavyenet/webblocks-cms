@@ -28,6 +28,8 @@ System -> API Tokens
 
 The plain token is shown once immediately after creation. Store it in a trusted operator secret store and never paste a real token into prompts, documentation, logs, screenshots, tickets, or release reports.
 
+For normal page-building tools, keep the default page-building capabilities selected. Grant advanced publish or page-delete capabilities only to trusted operator tools that explicitly need them.
+
 API requests use:
 
 ```http

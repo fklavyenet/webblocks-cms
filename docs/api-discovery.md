@@ -69,7 +69,7 @@ Content-Type: application/json
 
 ## Capabilities
 
-CMS API tokens expose capabilities in discovery so tools can understand allowed actions before attempting writes.
+CMS API tokens expose the capabilities selected at token creation in discovery so tools can understand allowed actions before attempting writes.
 
 Standard page-building capabilities:
 
@@ -79,7 +79,7 @@ Standard page-building capabilities:
 - `navigation.write`
 - `shared-slots.write`
 
-Destructive or publish capabilities are separate:
+Destructive or publish capabilities are separate advanced options and are not selected by default:
 
 - `content.publish`
 - `pages.delete`
