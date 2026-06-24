@@ -16,7 +16,7 @@ vendor/fklavyenet/webblocks-cms/docs/ai-page-building-guide.md
 
 ## Purpose
 
-Trusted AI/operator tools can inspect a CMS install, build a structured draft content plan, validate it, and create a separate draft page after explicit user approval. The workflow is draft-first and API-first. It does not publish content, overwrite published pages, delete content, fetch remote websites, or import media.
+Trusted AI/operator tools can inspect a CMS install, build a structured draft content plan, validate it, create a separate draft page, or replace specific page-owned slots on an existing draft page after explicit user approval. The workflow is draft-first and API-first. It does not publish content, overwrite published pages, clear Shared Slot-backed slots, fetch remote websites, or import media.
 
 ## Token Setup
 
@@ -106,9 +106,11 @@ Do not substitute nearby spellings such as `plain-text`, `rich_text`, `button`, 
 - Draft-first.
 - Apply only after explicit user approval.
 - Do not publish.
-- Do not delete content.
-- Do not overwrite existing pages or blocks.
+- Do not delete pages through content apply.
+- Do not overwrite existing pages or blocks except with the explicit `replace_existing_draft_page` mode.
 - Do not call apply if the target path already exists unless the user explicitly approves a conflict-handling plan supported by the API.
+- For existing draft replacement, include `expected_path` or `expected_updated_at` and replace only page-owned slots.
+- Do not try to replace Shared Slot-backed slots; leave shared header/footer assignments intact.
 - Do not fetch remote pages.
 - Do not use browser automation or admin UI clicks when API discovery is available.
 - Do not download or import media.
@@ -291,11 +293,56 @@ Then preview:
 /webadmin/pages/{page}/preview
 ```
 
+The preview URL is a browser/admin route. It requires an authenticated admin browser session and is not accessible with a CMS API Bearer token. If browser smoke testing lands on a login page, report that the admin browser session is missing; do not treat it as a JSON API token failure.
+
+## Existing Draft Slot Replacement
+
+Use this mode only when the user explicitly wants to update an existing draft page instead of creating a new draft. Validate first, then apply only after approval:
+
+```json
+{
+  "plan": {
+    "mode": "replace_existing_draft_page",
+    "site": "default",
+    "locale": "en",
+    "page": {
+      "id": 9,
+      "expected_path": "/p/contact",
+      "status": "draft"
+    },
+    "replace_slots": {
+      "main": [
+        {
+          "type": "plain_text",
+          "translations": {
+            "content": "Updated draft page copy."
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Validate:
+
+```text
+POST /webadmin/api/content/validate
+```
+
+Apply:
+
+```text
+POST /webadmin/api/content/apply
+```
+
+The CMS removes old page-owned blocks only from the named slots and writes the new block tree in one transaction. Shared Slot-backed slots are rejected by this mode, so header/footer assignments remain untouched unless a separate supported API operation changes them.
+
 ## Real Site Revisions
 
-For real sites, first inspect the current pages and existing drafts. If a draft already exists, preview it before proposing new work. When there is no draft update endpoint, create a new separate draft page instead of overwriting the existing draft or live published homepage.
+For real sites, first inspect the current pages and existing drafts. If a draft already exists, preview it before proposing new work. Use `replace_existing_draft_page` only for explicit draft-safe page-owned slot replacement. Otherwise, create a new separate draft page instead of overwriting the existing draft or live published homepage.
 
-For QuizTem-style homepage revisions, use the existing draft as reference material only unless the user explicitly approves a supported update flow. The safe default is:
+For QuizTem-style homepage revisions, use the existing draft as reference material only unless the user explicitly approves a supported update flow. The safe default for new work is:
 
 1. Preview the existing draft.
 2. Build a better structured plan with discovered block handles.

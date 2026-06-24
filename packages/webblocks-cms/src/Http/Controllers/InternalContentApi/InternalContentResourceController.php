@@ -89,14 +89,51 @@ class InternalContentResourceController extends Controller
         'content_validate' => '/webadmin/api/content/validate',
         'content_apply' => '/webadmin/api/content/apply',
         'preview_url_template' => '/webadmin/pages/{page}/preview',
+        'modes' => [
+          'create_draft_page',
+          'replace_existing_draft_page',
+        ],
       ],
       'safety' => [
         'draft_only' => true,
         'apply_requires_explicit_user_approval' => true,
         'publishes' => false,
         'overwrites_existing_content' => false,
+        'draft_slot_replacement' => true,
         'remote_fetch' => false,
         'media_import' => false,
+      ],
+      'draft_slot_replacement' => [
+        'mode' => 'replace_existing_draft_page',
+        'validate_url' => '/webadmin/api/content/validate',
+        'apply_url' => '/webadmin/api/content/apply',
+        'requires_capability' => 'content.apply',
+        'requires_page_status' => Page::STATUS_DRAFT,
+        'requires_safety_guard' => 'expected_path or expected_updated_at',
+        'shared_slot_backed_slots' => 'rejected',
+        'publishes' => false,
+        'example' => [
+          'plan' => [
+            'mode' => 'replace_existing_draft_page',
+            'site' => 'default',
+            'locale' => 'en',
+            'page' => [
+              'id' => 123,
+              'expected_path' => '/contact',
+              'status' => 'draft',
+            ],
+            'replace_slots' => [
+              'main' => [
+                [
+                  'type' => 'plain_text',
+                  'translations' => [
+                    'content' => 'Replacement draft content.',
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
       ],
       'discovery' => [
         'sites' => '/webadmin/api/sites',

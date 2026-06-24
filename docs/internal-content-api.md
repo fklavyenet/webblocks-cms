@@ -2,9 +2,9 @@
 
 ## Purpose
 
-The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts and create draft-first content through structured JSON without logging into, scraping, or automating the browser admin UI.
+The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts, create draft-first content, and replace specific page-owned slots on existing draft pages through structured JSON without logging into, scraping, or automating the browser admin UI.
 
-Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. Phase 2A adds safe foundations for navigation menus, Shared Slots, and explicit page slot Shared Slot assignment. The API remains intentionally non-destructive.
+Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. Phase 2A adds safe foundations for navigation menus, Shared Slots, and explicit page slot Shared Slot assignment. Phase 2B adds controlled draft-only replacement for page-owned slot content on existing pages. The API remains intentionally narrow: no publish, no remote fetch, no broad page delete through content apply, and no replacement of Shared Slot-backed slots.
 
 ## Product Positioning
 
@@ -36,7 +36,7 @@ API discovery starts at:
 GET /webadmin/api
 ```
 
-Unauthenticated callers receive only public-safe bootstrap JSON. Authenticated callers receive links to OpenAPI, the AI guide, content contract, examples, content validate/apply, pages, navigation, and Shared Slots. External AI/operator tools should start from this live discovery response instead of reading the CMS repository or local package docs.
+Unauthenticated callers receive only public-safe bootstrap JSON. Authenticated callers receive safe product version metadata plus links to OpenAPI, the AI guide, content contract, examples, content validate/apply, pages, navigation, and Shared Slots. External AI/operator tools should start from this live discovery response instead of reading the CMS repository or local package docs.
 
 Plan-based content operations use:
 
@@ -154,7 +154,7 @@ POST /webadmin/api/content/validate
 POST /webadmin/api/content/apply
 ```
 
-`validate` checks a complete content plan and writes nothing. `apply` validates the plan again and then creates the requested draft page, navigation items, Shared Slots, Shared Slot block trees, and page slot Shared Slot assignments transactionally. This is useful for AI-generated pages, templates, starter pages, shared headers/footers, and migration helpers where the CMS should avoid half-created content.
+`validate` checks a complete content plan and writes nothing. `apply` validates the plan again and then creates the requested draft page, navigation items, Shared Slots, Shared Slot block trees, and page slot Shared Slot assignments transactionally. It can also replace named page-owned slots on an existing draft page when the plan uses `mode: replace_existing_draft_page` and includes an optimistic safety guard. This is useful for AI-generated pages, templates, starter pages, shared headers/footers, and migration helpers where the CMS should avoid half-created content.
 
 The request body may still contain a `plan` field or another structured content plan payload. The URL should remain `/content/validate` and `/content/apply`.
 
@@ -162,6 +162,56 @@ Both modes are needed:
 
 - the Resource API exposes the existing CMS content model and contracts to internal tools
 - the Content Validate / Apply API avoids partial writes during larger page builds
+
+### Existing Draft Page Slot Replacement
+
+Existing draft page replacement stays inside the validate/apply contract:
+
+```text
+POST /webadmin/api/content/validate
+POST /webadmin/api/content/apply
+```
+
+Use `mode: replace_existing_draft_page` to replace one or more page-owned slots on an existing draft page. The operation requires `content.validate` for validate and `content.apply` for apply. It does not require `pages.delete`, because it is not a general page delete operation.
+
+Example:
+
+```json
+{
+  "plan": {
+    "mode": "replace_existing_draft_page",
+    "site": "default",
+    "locale": "en",
+    "page": {
+      "id": 9,
+      "expected_path": "/p/contact",
+      "status": "draft"
+    },
+    "replace_slots": {
+      "main": [
+        {
+          "type": "plain_text",
+          "translations": {
+            "content": "Updated draft contact content."
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Rules:
+
+- target page must be in `draft` status
+- `expected_path` or `expected_updated_at` is required
+- the target page must belong to the requested site and locale must be enabled for that site
+- each slot must exist on the page and use page-owned blocks
+- Shared Slot-backed slots are rejected instead of being cleared
+- only blocks in the named `replace_slots` are removed
+- old blocks are removed and new blocks are written in one transaction
+- page revisions are captured before and after apply
+- no publish, media fetch/import, broad delete, or Shared Slot assignment clearing happens
 
 ### Content Contract Endpoint
 
@@ -238,13 +288,12 @@ The endpoint assigns an existing compatible same-site active Shared Slot to an e
 - draft-only
 - no publish
 - no overwrite of existing published content
-- no overwrite of existing pages or blocks
+- no broad overwrite of existing pages or blocks outside `mode: replace_existing_draft_page`
 - no remote fetch
 - no media download or import
 - no site creation yet
-- no navigation or shared slot creation yet unless a later phase adds it
-- no destructive page deletion
-- no destructive block deletion
+- no destructive page deletion through content apply
+- no destructive block deletion outside transaction-scoped draft slot replacement
 - no resource update, move, or delete endpoints yet
 - no browser session, form, or CSRF requirement for Bearer-token JSON writes
 - public unauthenticated access is limited to the minimal `GET /webadmin/api` bootstrap response

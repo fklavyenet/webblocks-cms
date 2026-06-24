@@ -21,13 +21,16 @@ use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class InternalContentApiTest extends TestCase
 {
@@ -74,6 +77,8 @@ class InternalContentApiTest extends TestCase
       ->assertOk()
       ->assertJsonPath('product', 'WebBlocks CMS')
       ->assertJsonPath('authenticated', true)
+      ->assertJsonPath('cms_version', WebBlocks::version())
+      ->assertJsonPath('product_version', WebBlocks::version())
       ->assertJsonPath('_links.openapi', '/webadmin/api/openapi.json')
       ->assertJsonPath('_links.ai_guide', '/webadmin/api/ai-guide')
       ->assertJsonPath('_links.content_contract', '/webadmin/api/content-contract')
@@ -220,11 +225,14 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('api.prefix', '/webadmin/api')
       ->assertJsonPath('api.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('api.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonPath('api.modes.1', 'replace_existing_draft_page')
       ->assertJsonPath('api.preview_url_template', '/webadmin/pages/{page}/preview')
       ->assertJsonPath('safety.draft_only', true)
       ->assertJsonPath('safety.apply_requires_explicit_user_approval', true)
       ->assertJsonPath('safety.publishes', false)
       ->assertJsonPath('safety.overwrites_existing_content', false)
+      ->assertJsonPath('safety.draft_slot_replacement', true)
+      ->assertJsonPath('draft_slot_replacement.shared_slot_backed_slots', 'rejected')
       ->assertJsonPath('safety.remote_fetch', false)
       ->assertJsonPath('safety.media_import', false)
       ->assertJsonPath('discovery.sites', '/webadmin/api/sites')
@@ -545,6 +553,118 @@ class InternalContentApiTest extends TestCase
     $this->assertNotNull($plainText);
     $this->assertNull($plainText->getRawOriginal('content'));
     $this->assertSame('Structured draft content.', $plainText->textTranslations->first()->content);
+  }
+
+  #[Test]
+  public function validate_existing_draft_page_replacement_previews_without_writing(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page, $mainBlock] = $this->createDraftPageWithMainAndSharedChrome();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->replacementPlanPayload($page))
+      ->assertOk()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('normalized_plan.mode', 'replace_existing_draft_page')
+      ->assertJsonPath('normalized_plan.replace_page.id', $page->id)
+      ->assertJsonPath('normalized_plan.replace_slots.main.0.type', 'plain_text');
+
+    $this->assertDatabaseHas('blocks', ['id' => $mainBlock->id, 'content' => 'Old main copy']);
+    $this->assertDatabaseMissing('blocks', ['content' => 'New main copy']);
+    $this->assertSame(1, Block::query()->where('page_id', $page->id)->where('slot', 'main')->count());
+    $this->assertSame(0, PageRevision::query()->count());
+  }
+
+  #[Test]
+  public function apply_existing_draft_page_replacement_replaces_only_page_owned_target_slot(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page, $mainBlock, $sharedSlot] = $this->createDraftPageWithMainAndSharedChrome();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->replacementPlanPayload($page))
+      ->assertCreated()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('normalized_plan.mode', 'replace_existing_draft_page')
+      ->assertJsonPath('data.page.id', $page->id)
+      ->assertJsonPath('data.page.blocks.0.type', 'plain_text');
+
+    $this->assertDatabaseMissing('blocks', ['id' => $mainBlock->id]);
+    $this->assertDatabaseHas('blocks', [
+      'page_id' => $page->id,
+      'slot' => 'main',
+      'content' => null,
+    ]);
+    $this->assertDatabaseHas('block_text_translations', ['content' => 'New main copy']);
+    $this->assertDatabaseHas('page_slots', [
+      'page_id' => $page->id,
+      'slot_type_id' => $this->slotTypeId('header'),
+      'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+      'shared_slot_id' => $sharedSlot->id,
+    ]);
+    $this->assertSame(2, PageRevision::query()->where('page_id', $page->id)->count());
+  }
+
+  #[Test]
+  public function existing_draft_page_replacement_requires_matching_safety_guard(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page] = $this->createDraftPageWithMainAndSharedChrome();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->replacementPlanPayload($page, [
+        'plan' => [
+          'page' => [
+            'expected_path' => '/wrong',
+          ],
+        ],
+      ]))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Expected path does not match the existing page translation.']);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->replacementPlanPayload($page, [
+        'plan' => [
+          'page' => [
+            'expected_path' => null,
+            'expected_updated_at' => now()->subDay()->toIso8601String(),
+          ],
+        ],
+      ]))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Expected updated_at does not match the existing page.']);
+  }
+
+  #[Test]
+  public function existing_page_replacement_rejects_published_pages_and_shared_slot_backed_slots(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page] = $this->createDraftPageWithMainAndSharedChrome();
+
+    $page->update(['status' => Page::STATUS_PUBLISHED]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->replacementPlanPayload($page))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Existing page replacement is draft-only. Published pages are not supported.']);
+
+    $page->update(['status' => Page::STATUS_DRAFT]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->replacementPlanPayload($page, [
+        'plan' => [
+          'replace_slots' => [
+            'header' => [
+              [
+                'type' => 'plain_text',
+                'translations' => ['content' => 'Do not touch shared header'],
+              ],
+            ],
+          ],
+        ],
+      ]))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Shared-slot-backed slots cannot be replaced by this operation.']);
   }
 
   #[Test]
@@ -1059,6 +1179,97 @@ class InternalContentApiTest extends TestCase
     ];
 
     return array_replace_recursive($base, $overrides);
+  }
+
+  private function replacementPlanPayload(Page $page, array $overrides = []): array
+  {
+    $base = [
+      'plan' => [
+        'mode' => 'replace_existing_draft_page',
+        'site' => $this->defaultSite()->handle,
+        'locale' => $this->defaultLocale()->code,
+        'page' => [
+          'id' => $page->id,
+          'expected_path' => '/p/existing-contact',
+          'status' => 'draft',
+        ],
+        'replace_slots' => [
+          'main' => [
+            [
+              'type' => 'plain_text',
+              'translations' => [
+                'content' => 'New main copy',
+              ],
+            ],
+          ],
+        ],
+      ],
+    ];
+
+    return array_replace_recursive($base, $overrides);
+  }
+
+  private function createDraftPageWithMainAndSharedChrome(): array
+  {
+    $site = $this->defaultSite();
+    $locale = $this->defaultLocale();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+
+    PageTranslation::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'locale_id' => $locale->id,
+      'name' => 'Existing Contact',
+      'slug' => 'existing-contact',
+      'path' => '/p/existing-contact',
+    ]);
+
+    app(PageLayoutSlotSyncer::class)->seedInitialSlots($page, 'default');
+
+    $mainBlock = Block::query()->create([
+      'page_id' => $page->id,
+      'block_type_id' => $this->blockTypeId('plain_text'),
+      'type' => 'plain_text',
+      'source_type' => 'static',
+      'slot_type_id' => $this->slotTypeId('main'),
+      'slot' => 'main',
+      'status' => 'draft',
+      'sort_order' => 0,
+      'content' => 'Old main copy',
+    ]);
+
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $site->id,
+      'name' => 'Site Header',
+      'handle' => 'site-header',
+      'slot_name' => 'header',
+      'is_active' => true,
+    ]);
+
+    PageSlot::query()
+      ->where('page_id', $page->id)
+      ->where('slot_type_id', $this->slotTypeId('header'))
+      ->firstOrFail()
+      ->update([
+        'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+        'shared_slot_id' => $sharedSlot->id,
+      ]);
+
+    return [$page->fresh(['translations.locale', 'slots.slotType']), $mainBlock, $sharedSlot];
+  }
+
+  private function blockTypeId(string $slug): int
+  {
+    return (int) BlockType::query()->where('slug', $slug)->value('id');
+  }
+
+  private function slotTypeId(string $slug): int
+  {
+    return (int) SlotType::query()->where('slug', $slug)->value('id');
   }
 
   private function defaultSite(): Site

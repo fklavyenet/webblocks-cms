@@ -35,6 +35,8 @@ class InternalApiDiscoveryController extends Controller
 
     return response()->json([
       'product' => WebBlocks::NAME,
+      'cms_version' => WebBlocks::version(),
+      'product_version' => WebBlocks::version(),
       'api_version' => '1',
       'authenticated' => true,
       'token' => $this->capabilities->publicDescription($token),
@@ -199,8 +201,8 @@ class InternalApiDiscoveryController extends Controller
         'get' => ['summary' => 'Read page', 'parameters' => [['name' => 'page', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]], 'responses' => ['200' => ['description' => 'Page JSON', 'content' => $json]]],
         'delete' => ['summary' => 'Delete page', 'x-required-capability' => 'pages.delete', 'responses' => ['200' => ['description' => 'Deleted page JSON', 'content' => $json], '403' => ['description' => 'Requires pages.delete capability', 'content' => $json]]],
       ],
-      '/content/validate' => ['post' => ['summary' => 'Validate content plan', 'responses' => ['200' => ['description' => 'Valid plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
-      '/content/apply' => ['post' => ['summary' => 'Apply content plan', 'responses' => ['201' => ['description' => 'Applied plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/content/validate' => ['post' => ['summary' => 'Validate content plan', 'x-supported-modes' => ['create_draft_page', 'replace_existing_draft_page'], 'responses' => ['200' => ['description' => 'Valid plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/content/apply' => ['post' => ['summary' => 'Apply content plan', 'x-supported-modes' => ['create_draft_page', 'replace_existing_draft_page'], 'responses' => ['201' => ['description' => 'Applied plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/navigation-menus' => ['get' => ['summary' => 'List navigation menus', 'responses' => ['200' => ['description' => 'Navigation JSON', 'content' => $json]]], 'post' => ['summary' => 'Create navigation menu items', 'responses' => ['201' => ['description' => 'Created navigation JSON', 'content' => $json]]]],
       '/navigation-menus/{navigationMenu}' => ['get' => ['summary' => 'Read navigation menu', 'responses' => ['200' => ['description' => 'Navigation JSON', 'content' => $json]]]],
       '/navigation-menus/{navigationMenu}/items' => ['post' => ['summary' => 'Create navigation item', 'responses' => ['201' => ['description' => 'Created navigation item JSON', 'content' => $json]]]],

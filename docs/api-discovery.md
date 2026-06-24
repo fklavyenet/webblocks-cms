@@ -33,6 +33,7 @@ It must not return endpoint inventory, site data, content contracts, token previ
 With a valid CMS API Bearer token, discovery returns:
 
 - `product: WebBlocks CMS`
+- `cms_version` and `product_version`
 - `api_version`
 - `authenticated: true`
 - token capability names, without token value, token preview, or token hash
@@ -58,6 +59,8 @@ GET /webadmin/api/pages/{page}
 GET /webadmin/api/navigation-menus
 GET /webadmin/api/shared-slots
 ```
+
+The content validate/apply links support both `create_draft_page` and `replace_existing_draft_page` plan modes. Use `GET /webadmin/api/content-contract` for the current mode list and safety rules.
 
 Protected links require:
 
@@ -104,3 +107,5 @@ Expected status behavior:
 ## Security
 
 Discovery, OpenAPI, AI guide, examples, and content contract responses must not expose real token values, token hashes, `.env` values, local filesystem paths, server paths, stack traces, raw exceptions, database internals, user lists, or private operator details.
+
+Preview URLs such as `/webadmin/pages/{page}/preview` are browser/admin routes. They require an authenticated admin browser session and are not opened with CMS API Bearer tokens. A login redirect from that URL means the browser session is missing; it is not an Internal Content API authentication failure.

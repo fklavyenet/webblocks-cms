@@ -14,6 +14,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.160
+
+- Add `replace_existing_draft_page` Internal Content API plans for draft-only page-owned slot replacement with path or updated-at safety guards, transaction-scoped block replacement, and page revision audit snapshots.
+- Include safe CMS/product version metadata in authenticated API discovery.
+
 ## 1.32.159
 
 - Extend the Internal Content API CSRF bypass to the package CSRF middleware exception list so all `/webadmin/api` Bearer-token write routes honor the JSON-only contract in package consumers.

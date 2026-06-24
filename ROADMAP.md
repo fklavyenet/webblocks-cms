@@ -33,13 +33,14 @@ This roadmap captures planned architecture and implementation direction. It does
 ### Phase 2B - Draft-Safe Navigation/Shared Slot Mutation
 
 - Planned: add optional draft-safe update and move endpoints only where the model shape is clear.
-- Planned: add explicit safe clear/replace flows if needed after a separate safety design.
+- Done: add `replace_existing_draft_page` validate/apply mode for transaction-scoped replacement of page-owned slots on existing draft pages with optimistic safety guards.
+- Planned: add explicit safe clear/replace flows for additional resources only after separate safety designs.
 - Planned: support header/navbar construction through structured content operations while keeping it generic CMS behavior.
 
 ### Phase 3 - Draft Update/Replace And Existing-Media References
 
 - Planned: add direct draft-safe resource mutation endpoints where they remain useful after validate/apply stabilizes.
-- Planned: add controlled draft update or draft content replacement flows.
+- Done: add controlled draft page-owned slot replacement through content validate/apply.
 - Planned: support page assets after separate safety design.
 - Planned: allow media references by existing media ID only, without remote media import.
 
