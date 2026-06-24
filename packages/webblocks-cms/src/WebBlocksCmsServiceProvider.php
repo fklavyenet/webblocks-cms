@@ -807,6 +807,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootAuthorization();
     $this->bootRateLimiters();
     $this->bootCommands();
+    $this->bootInternalApiCsrfExclusions();
     $this->bootRoutes();
     $this->bootViews();
     $this->bootMigrations();
@@ -839,6 +840,33 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     if ($this->installCommandShouldLoad()) {
       $this->commands([InstallWebBlocksCmsCommand::class]);
     }
+  }
+
+  protected function bootInternalApiCsrfExclusions(): void
+  {
+    $paths = [
+      'webadmin/api',
+      'webadmin/api/*',
+    ];
+
+    foreach ($this->internalApiCsrfMiddlewareClasses() as $middleware) {
+      if (class_exists($middleware) && method_exists($middleware, 'except')) {
+        $middleware::except($paths);
+      }
+    }
+  }
+
+  /**
+   * @return array<int, class-string|string>
+   */
+  protected function internalApiCsrfMiddlewareClasses(): array
+  {
+    return [
+      'App\\Http\\Middleware\\VerifyCsrfToken',
+      'Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery',
+      'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
+      'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
+    ];
   }
 
   protected function registerConfig(): void

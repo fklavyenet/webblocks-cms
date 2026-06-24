@@ -51,6 +51,7 @@ use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
 $internalApiCsrfMiddleware = [
   'App\\Http\\Middleware\\VerifyCsrfToken',
+  'Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery',
   'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
   'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
 ];

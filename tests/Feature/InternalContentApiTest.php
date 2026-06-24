@@ -6,9 +6,14 @@ use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;
 use Database\Seeders\SlotTypeSeeder;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionClass;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -342,15 +347,96 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function phase_two_write_endpoints_return_validation_json_without_csrf(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $site = $this->defaultSite();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    app(PageLayoutSlotSyncer::class)->seedInitialSlots($page, 'default');
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $site->id,
+      'name' => 'Site Header',
+      'handle' => 'site-header',
+      'slot_name' => 'header',
+      'is_active' => true,
+    ]);
+
+    foreach ([
+      '/webadmin/api/navigation-menus',
+      '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items',
+      '/webadmin/api/shared-slots',
+      '/webadmin/api/shared-slots/'.$sharedSlot->id.'/blocks',
+      '/webadmin/api/pages/'.$page->id.'/slots/header/shared-slot',
+    ] as $uri) {
+      $this->withInternalToken()
+        ->postJson($uri, [])
+        ->assertStatus(422)
+        ->assertHeader('content-type', 'application/json')
+        ->assertJsonPath('ok', false);
+    }
+  }
+
+  #[Test]
+  public function phase_two_write_endpoints_return_capability_403_without_csrf(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_READ]);
+    $site = $this->defaultSite();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    app(PageLayoutSlotSyncer::class)->seedInitialSlots($page, 'default');
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $site->id,
+      'name' => 'Site Header',
+      'handle' => 'site-header',
+      'slot_name' => 'header',
+      'is_active' => true,
+    ]);
+
+    foreach ([
+      '/webadmin/api/navigation-menus' => CmsApiTokenCapabilities::NAVIGATION_WRITE,
+      '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items' => CmsApiTokenCapabilities::NAVIGATION_WRITE,
+      '/webadmin/api/shared-slots' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+      '/webadmin/api/shared-slots/'.$sharedSlot->id.'/blocks' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+      '/webadmin/api/pages/'.$page->id.'/slots/header/shared-slot' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+    ] as $uri => $capability) {
+      $this->withInternalToken()
+        ->postJson($uri, [])
+        ->assertForbidden()
+        ->assertHeader('content-type', 'application/json')
+        ->assertJsonPath('code', 'missing_internal_api_capability')
+        ->assertJsonPath('required_capability', $capability)
+        ->assertJsonPath('api_discovery_url', '/webadmin/api');
+    }
+  }
+
+  #[Test]
   public function internal_content_api_write_routes_exclude_csrf_without_weakening_admin_forms(): void
   {
     $expectedCsrfMiddleware = [
       'App\\Http\\Middleware\\VerifyCsrfToken',
+      'Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery',
       'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
       'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
     ];
 
-    foreach (['internal-content-api.content.validate', 'internal-content-api.content.apply'] as $routeName) {
+    $writeRouteNames = [
+      'internal-content-api.content.validate',
+      'internal-content-api.content.apply',
+      'internal-content-api.navigation-menus.store',
+      'internal-content-api.navigation-menus.items.store',
+      'internal-content-api.shared-slots.store',
+      'internal-content-api.shared-slots.blocks.store',
+      'internal-content-api.pages.slots.shared-slot',
+    ];
+
+    foreach ($writeRouteNames as $routeName) {
       $route = Route::getRoutes()->getByName($routeName);
 
       $this->assertNotNull($route, 'Missing route: '.$routeName);
@@ -366,6 +452,16 @@ class InternalContentApiTest extends TestCase
 
     foreach ($expectedCsrfMiddleware as $middleware) {
       $this->assertNotContains($middleware, $adminRoute->excludedMiddleware(), 'Admin forms should keep CSRF middleware: '.$middleware);
+    }
+
+    foreach ([PreventRequestForgery::class, ValidateCsrfToken::class, VerifyCsrfToken::class] as $middleware) {
+      if (! class_exists($middleware)) {
+        continue;
+      }
+
+      $this->assertTrue($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/api/content/validate'));
+      $this->assertTrue($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/api/navigation-menus'));
+      $this->assertFalse($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/system/api-tokens'));
     }
   }
 
@@ -988,5 +1084,23 @@ class InternalContentApiTest extends TestCase
   private function withInternalToken(): self
   {
     return $this->withHeader('Authorization', 'Bearer secret-token');
+  }
+
+  /**
+   * @param  class-string  $middleware
+   */
+  private function csrfMiddlewareExcludesPath(string $middleware, string $path): bool
+  {
+    $instance = new $middleware($this->app, $this->app->make('encrypter'));
+    $request = Request::create($path, 'POST', server: [
+      'HTTP_ACCEPT' => 'application/json',
+      'CONTENT_TYPE' => 'application/json',
+    ]);
+
+    $reflection = new ReflectionClass($instance);
+    $method = $reflection->getMethod('inExceptArray');
+    $method->setAccessible(true);
+
+    return (bool) $method->invoke($instance, $request);
   }
 }
