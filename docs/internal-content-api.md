@@ -63,6 +63,8 @@ Authorization: Bearer <token>
 
 CMS API tokens are created by a CMS super admin from `System -> API Tokens`. The CMS stores only a SHA-256 hash plus a safe preview in the `cms_api_tokens` database table. The plain token is shown once immediately after creation and is never shown again.
 
+Super admins can revoke a token to immediately disable API access while keeping the audit row visible, or delete a token to permanently remove the token record from the list. Deleting an active token also immediately disables API access because the authenticator can no longer find a matching stored hash.
+
 Local AI and operator tools should store the generated token in a trusted operator secret store.
 
 The CMS runtime does not require `WEBBLOCKS_CMS_INTERNAL_API_TOKEN`.

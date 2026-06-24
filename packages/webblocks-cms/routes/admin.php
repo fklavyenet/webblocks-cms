@@ -254,6 +254,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/api-tokens', [CmsApiTokenController::class, 'index'])->name('system.api-tokens.index');
       Route::post('system/api-tokens', [CmsApiTokenController::class, 'store'])->name('system.api-tokens.store');
       Route::post('system/api-tokens/{token}/revoke', [CmsApiTokenController::class, 'revoke'])->name('system.api-tokens.revoke');
+      Route::delete('system/api-tokens/{token}', [CmsApiTokenController::class, 'destroy'])->name('system.api-tokens.destroy');
       Route::get('plugins/catalog', [PluginCatalogController::class, 'index'])->name('plugins.catalog.index');
       Route::get('plugins/catalog/{handle}', [PluginCatalogController::class, 'show'])->name('plugins.catalog.show');
       Route::post('plugins/catalog/{handle}/install', [PluginCatalogController::class, 'install'])->name('plugins.catalog.install');

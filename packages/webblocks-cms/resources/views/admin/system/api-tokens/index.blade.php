@@ -181,6 +181,17 @@ Content-Type: application/json</textarea>
                                             >
                                                 <i class="wb-icon wb-icon-ban" aria-hidden="true"></i>
                                             </button>
+                                            <button
+                                                type="button"
+                                                class="wb-action-btn wb-action-btn-delete"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#delete-cms-api-token-{{ $token->id }}"
+                                                title="Delete token"
+                                                aria-label="Delete token"
+                                                aria-haspopup="dialog"
+                                            >
+                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -206,6 +217,25 @@ Content-Type: application/json</textarea>
             'submitLabel' => 'Revoke Token',
         ])
             <p>Revoke <strong>{{ $token->name }}</strong>? The audit record will remain visible.</p>
+        @endcomponent
+
+        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+            'id' => 'delete-cms-api-token-'.$token->id,
+            'title' => 'Delete API Token',
+            'description' => $token->isRevoked()
+                ? 'Deleting this revoked token permanently removes its audit row from the token list.'
+                : 'Deleting this active token immediately removes API access for the connected tool and permanently removes the token row.',
+            'action' => route('admin.system.api-tokens.destroy', $token),
+            'method' => 'DELETE',
+            'submitLabel' => 'Delete Token',
+        ])
+            <p>Delete <strong>{{ $token->name }}</strong>? This cannot be undone.</p>
+
+            @if (! $token->isRevoked())
+                <div class="wb-alert wb-alert-warning">
+                    This token is active. Any tool currently using it will lose API access immediately.
+                </div>
+            @endif
         @endcomponent
     @endforeach
 @endpush

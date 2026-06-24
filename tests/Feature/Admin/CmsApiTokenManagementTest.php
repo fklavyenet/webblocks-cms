@@ -32,19 +32,29 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee($token->token_preview);
     $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
+    $response->assertSee('title="Delete token"', false);
+    $response->assertSee('aria-label="Delete token"', false);
+    $response->assertSee('data-wb-target="#delete-cms-api-token-'.$token->id.'"', false);
+    $response->assertSee('wb-icon wb-icon-trash', false);
     $response->assertSee('class="wb-modal wb-modal-lg"', false);
     $response->assertDontSee('confirm(');
+    $response->assertDontSee($token->token_hash);
   }
 
   #[Test]
   public function non_super_admin_cannot_manage_tokens(): void
   {
     $user = User::factory()->siteAdmin()->create();
+    $token = $this->createToken('secret-token');
 
     $this->actingAs($user)->get(route('admin.system.api-tokens.index'))->assertForbidden();
 
     $this->actingAs($user)
       ->post(route('admin.system.api-tokens.store'), ['name' => 'Local AI'])
+      ->assertForbidden();
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.api-tokens.destroy', $token))
       ->assertForbidden();
   }
 
@@ -173,6 +183,55 @@ class CmsApiTokenManagementTest extends TestCase
       ->assertOk()
       ->assertSee('Local AI')
       ->assertSee('Revoked');
+  }
+
+  #[Test]
+  public function delete_action_removes_active_token_and_disables_api_access(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $user = User::factory()->superAdmin()->create();
+    $plainToken = 'secret-token';
+    $token = $this->createToken($plainToken, ['name' => 'Token To Delete']);
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api/sites')
+      ->assertOk();
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.api-tokens.destroy', $token))
+      ->assertRedirect(route('admin.system.api-tokens.index'));
+
+    $this->assertDatabaseMissing('cms_api_tokens', ['id' => $token->id]);
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->getJson('/webadmin/api/sites')
+      ->assertUnauthorized();
+
+    $this->actingAs($user)
+      ->get(route('admin.system.api-tokens.index'))
+      ->assertOk()
+      ->assertDontSee('Token To Delete');
+  }
+
+  #[Test]
+  public function delete_action_removes_revoked_token_from_the_list(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $token = $this->createToken('secret-token', [
+      'name' => 'Revoked Local AI',
+      'revoked_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.api-tokens.destroy', $token))
+      ->assertRedirect(route('admin.system.api-tokens.index'));
+
+    $this->assertDatabaseMissing('cms_api_tokens', ['id' => $token->id]);
+
+    $this->actingAs($user)
+      ->get(route('admin.system.api-tokens.index'))
+      ->assertOk()
+      ->assertDontSee('Revoked Local AI');
   }
 
   private function createToken(string $plainToken, array $attributes = []): CmsApiToken

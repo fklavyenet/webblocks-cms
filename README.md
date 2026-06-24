@@ -97,7 +97,7 @@ The canonical CMS admin prefix is `/webadmin`. CMS static assets remain under `p
 
 CMS browser admin resource routes follow the `/webadmin/{resource}` convention. Member actions live after the resource id, for example page preview is `GET /webadmin/pages/{page}/preview`. Browser admin actions should not be placed under `/webadmin/api`, which is reserved for JSON-only operator endpoints.
 
-The Internal Content API for trusted AI/operator tools is documented in [docs/internal-content-api.md](docs/internal-content-api.md). CMS API tokens are created by a super admin from `System -> API Tokens`, stored in the CMS database as hashes, shown in plain text only once, and used as Bearer tokens by AI/operator tools. The API returns JSON-only responses and remains draft-first and non-destructive. Current endpoints include safe creation foundations for navigation menu items, Shared Slots, Shared Slot block trees, and explicit compatible Shared Slot assignment to page slots.
+The Internal Content API for trusted AI/operator tools is documented in [docs/internal-content-api.md](docs/internal-content-api.md). CMS API tokens are created by a super admin from `System -> API Tokens`, stored in the CMS database as hashes, shown in plain text only once, and used as Bearer tokens by AI/operator tools. Super admins can revoke tokens to disable access while keeping the audit row, or delete active and revoked tokens to permanently remove the token record. The API returns JSON-only responses and remains draft-first and non-destructive. Current endpoints include safe creation foundations for navigation menu items, Shared Slots, Shared Slot block trees, and explicit compatible Shared Slot assignment to page slots.
 
 ### AI/API Discovery
 

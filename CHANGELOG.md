@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.155
+
+- Add a separate destructive Delete action for CMS API tokens so super admins can permanently remove active or revoked token records while keeping Revoke as an audit-preserving disable action.
+
 ## 1.32.154
 
 - Add discovery-first CMS Content API bootstrap, OpenAPI, AI guide, and examples endpoints for external AI/operator tools using Bearer tokens.

@@ -79,6 +79,15 @@ class CmsApiTokenController extends Controller
       ->with('status', 'CMS API token revoked.');
   }
 
+  public function destroy(CmsApiToken $token): RedirectResponse
+  {
+    $token->delete();
+
+    return redirect()
+      ->route('admin.system.api-tokens.index')
+      ->with('status', 'CMS API token deleted.');
+  }
+
   private function apiTokenSchemaReady(): bool
   {
     if (! Schema::hasTable('cms_api_tokens')) {
