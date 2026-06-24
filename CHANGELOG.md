@@ -14,6 +14,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Exclude internal AI audit/worklog paths from release exports while keeping public documentation focused on user and developer guidance.
 - Document public block renderer markup and WebBlocks UI class output for shipped core block renderers.
 
+## 1.32.158
+
+- Fix CMS Content API write routes so `POST /webadmin/api/content/validate` and `POST /webadmin/api/content/apply` honor the JSON-only Bearer token contract without CSRF 419 responses.
+
 ## 1.32.157
 
 - Add an Edit action for CMS API tokens so super admins can update token names and capabilities without exposing or rotating token secrets.

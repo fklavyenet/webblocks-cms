@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
@@ -50,6 +49,12 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotControll
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
+$internalApiCsrfMiddleware = [
+  'App\\Http\\Middleware\\VerifyCsrfToken',
+  'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
+  'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
+];
+
 Route::middleware(['web', 'install.required', 'throttle:internal-content-api'])
   ->prefix('webadmin/api')
   ->name('internal-content-api.')
@@ -58,7 +63,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api'])
   });
 
 Route::middleware(['web', 'install.required', 'throttle:internal-content-api', 'internal-api.token'])
-  ->withoutMiddleware([ValidateCsrfToken::class])
+  ->withoutMiddleware($internalApiCsrfMiddleware)
   ->prefix('webadmin/api')
   ->name('internal-content-api.')
   ->group(function () {

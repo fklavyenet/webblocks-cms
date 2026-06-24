@@ -7,6 +7,7 @@ use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;
 use Database\Seeders\SlotTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
@@ -309,6 +310,13 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('ok', false)
       ->assertJsonPath('api_discovery_url', '/webadmin/api')
       ->assertJsonPath('openapi_url', '/webadmin/api/openapi.json');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [])
+      ->assertStatus(422)
+      ->assertJsonPath('ok', false)
+      ->assertJsonPath('api_discovery_url', '/webadmin/api')
+      ->assertJsonPath('openapi_url', '/webadmin/api/openapi.json');
   }
 
   #[Test]
@@ -317,12 +325,48 @@ class InternalContentApiTest extends TestCase
     $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_READ]);
 
     $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->validPlanPayload())
+      ->assertForbidden()
+      ->assertHeader('content-type', 'application/json')
+      ->assertJsonPath('code', 'missing_internal_api_capability')
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::CONTENT_VALIDATE)
+      ->assertJsonPath('api_discovery_url', '/webadmin/api');
+
+    $this->withInternalToken()
       ->postJson('/webadmin/api/content/apply', $this->validPlanPayload())
       ->assertForbidden()
       ->assertHeader('content-type', 'application/json')
       ->assertJsonPath('code', 'missing_internal_api_capability')
       ->assertJsonPath('required_capability', CmsApiTokenCapabilities::CONTENT_APPLY)
       ->assertJsonPath('api_discovery_url', '/webadmin/api');
+  }
+
+  #[Test]
+  public function internal_content_api_write_routes_exclude_csrf_without_weakening_admin_forms(): void
+  {
+    $expectedCsrfMiddleware = [
+      'App\\Http\\Middleware\\VerifyCsrfToken',
+      'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
+      'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
+    ];
+
+    foreach (['internal-content-api.content.validate', 'internal-content-api.content.apply'] as $routeName) {
+      $route = Route::getRoutes()->getByName($routeName);
+
+      $this->assertNotNull($route, 'Missing route: '.$routeName);
+
+      foreach ($expectedCsrfMiddleware as $middleware) {
+        $this->assertContains($middleware, $route->excludedMiddleware(), $routeName.' should exclude '.$middleware);
+      }
+    }
+
+    $adminRoute = Route::getRoutes()->getByName('admin.system.api-tokens.store');
+
+    $this->assertNotNull($adminRoute);
+
+    foreach ($expectedCsrfMiddleware as $middleware) {
+      $this->assertNotContains($middleware, $adminRoute->excludedMiddleware(), 'Admin forms should keep CSRF middleware: '.$middleware);
+    }
   }
 
   #[Test]
