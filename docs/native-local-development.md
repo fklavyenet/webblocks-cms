@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/native-local-development
+cms_title: Native Local Development
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/native-local-development.md
+---
+
 # Native Local Development
 
 This document describes the supported local development path for WebBlocks CMS using locally installed PHP, Composer, Nginx, MySQL or MariaDB, and Redis. Container-based local tooling is no longer part of the project workflow.

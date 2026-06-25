@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/block-type-contracts
+cms_title: Block Type Contracts
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/block-type-contracts.md
+---
+
 # Block Type Contracts
 
 ## Purpose And Scope

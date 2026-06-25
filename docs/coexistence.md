@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/coexistence
+cms_title: Coexistence
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/coexistence.md
+---
+
 # Coexistence
 
 ## Purpose

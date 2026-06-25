@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/package-architecture
+cms_title: Package Architecture Transition
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/package-architecture.md
+---
+
 # Package Architecture Transition
 
 ## Why The Current Root-Managed Model Is Problematic

@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/plugin-system
+cms_title: WebBlocks CMS Plugin System
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/plugin-system.md
+---
+
 # WebBlocks CMS Plugin System
 
 This document records the architecture for the WebBlocks CMS plugin system. CMS core is a generic plugin host with registry-backed plugin definitions, manual super-admin ZIP upload/install, storage-owned install paths, disabled-by-default installed plugins, explicit enable/disable management, manual-upload uninstall, compatibility checks, enabled-only routes and commands, settings/detail scaffolding, health/status reporting, typed admin extension slots, plugin-owned block declarations, public asset hooks, package convention guards, a checksum-verified Plugin Catalog install bridge for compatible public catalog artifacts, and a controlled catalog-backed update action for installed plugins with newer compatible releases. WebBlocks UI Manager is no longer bundled into CMS core runtime; it is an internal/operator plugin artifact installed manually only on operator installs such as webblocksui.com. There is no public marketplace, full remote plugin store, arbitrary Composer package installer, automatic external plugin download/update, automatic external production WebBlocks UI CDN deployment, or generic update-server publishing.

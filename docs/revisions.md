@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/revisions
+cms_title: Revisions
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/revisions.md
+---
+
 # Revisions
 
 ## Overview

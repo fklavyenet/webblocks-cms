@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/plugin-catalog-product-architecture
+cms_title: Plugin Catalog Product Architecture
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/plugin-catalog-product-architecture.md
+---
+
 # Plugin Catalog Product Architecture
 
 This document records product architecture and MVP planning for the proposed `plugins.webblocksui.com` surface before implementation starts. It is documentation-only. It does not add runtime code, routes, migrations, controllers, API clients, database tables, UI screens, deployment scripts, background jobs, release tags, or version bumps.

@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/updates
+cms_title: Updates
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/updates.md
+---
+
 # Updates
 
 Updates in WebBlocks CMS are release-based and package-based.

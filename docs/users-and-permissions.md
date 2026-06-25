@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/users-and-permissions
+cms_title: Users And Permissions
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/users-and-permissions.md
+---
+
 # Users And Permissions
 
 ## Install-Level Users

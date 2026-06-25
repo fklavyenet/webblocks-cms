@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/block-ui-renderer-contract
+cms_title: Block UI Renderer Contract
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/block-ui-renderer-contract.md
+---
+
 # Block UI Renderer Contract
 
 Phase 1 defines the intended public rendering contract between CMS layouts, slots, and block types and the shipped WebBlocks UI primitives already loaded by the public layout. This phase is documentation-only. It does not rewrite renderers yet.

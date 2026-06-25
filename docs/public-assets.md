@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/public-assets
+cms_title: Public Assets
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/public-assets.md
+---
+
 # Public Assets
 
 ## CMS Core Public Assets

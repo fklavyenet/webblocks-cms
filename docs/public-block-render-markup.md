@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/public-block-render-markup
+cms_title: Public Block Render Markup
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/public-block-render-markup.md
+---
+
 # Public Block Render Markup
 
 This file answers the practical page-building question: "When I add this CMS block, which public HTML and WebBlocks UI classes are rendered?" Use it when composing pages manually, reviewing Page Converter output, or asking an AI assistant to build a CMS page from structured blocks.

@@ -72,6 +72,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Contact Forms And Messages](contact-forms-and-messages.md)
 - [Search](search.md)
 - [Updates](updates.md)
+- [Package Architecture](package-architecture.md)
 
 ## Changelog Archives
 
@@ -90,6 +91,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 
 - [Development Workflow](../DEVELOPMENT.md)
 - [Native Local Development](native-local-development.md)
+- [Testing Strategy](testing-strategy.md)
 - [CMS Brand Standard](brand-standard.md)
 - [Plugin System](plugin-system.md) - implemented runtime foundations, including manual ZIP upload/install, package conventions, compatibility checks, inert disabled/incompatible behavior, and WebBlocks UI Manager as a separate operator plugin artifact
 - [Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md) - ecosystem-wide plugin identity, manifest, catalog/store, and future `plugins.webblocksui.com` direction

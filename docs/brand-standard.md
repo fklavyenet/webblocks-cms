@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/brand-standard
+cms_title: CMS Brand Standard
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/brand-standard.md
+---
+
 # CMS Brand Standard
 
 This is the final WebBlocks CMS product brand standard for CMS-owned auth, admin, package, and root runtime assets. It exists to keep future work from reintroducing older image-switching, mask, or squircle app-icon experiments.

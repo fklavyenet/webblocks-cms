@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/plugin-ecosystem-and-catalog
+cms_title: WebBlocks Plugin Ecosystem And Catalog
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/plugin-ecosystem-and-catalog.md
+---
+
 # WebBlocks Plugin Ecosystem And Catalog
 
 This document records the next-stage WebBlocks plugin ecosystem direction before implementation starts. It is architecture documentation only. It does not add runtime code, routes, migrations, controllers, API clients, database tables, admin screens, deployment automation, release tags, or version bumps.

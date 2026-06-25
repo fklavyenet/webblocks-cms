@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/page-layouts
+cms_title: Page Layouts
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/page-layouts.md
+---
+
 # Page Layouts
 
 Page Layouts are install-level definitions that manage the outer public shell choice and managed slot wrappers for pages.

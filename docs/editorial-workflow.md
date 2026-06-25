@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/editorial-workflow
+cms_title: Editorial Workflow
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/editorial-workflow.md
+---
+
 # Editorial Workflow
 
 ## Workflow Statuses

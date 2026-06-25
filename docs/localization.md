@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/localization
+cms_title: Localization
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/localization.md
+---
+
 # Localization
 
 WebBlocks CMS stores localized content in translation tables for pages and blocks.

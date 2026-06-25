@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/search
+cms_title: Search
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/search.md
+---
+
 # Search
 
 ## Overview

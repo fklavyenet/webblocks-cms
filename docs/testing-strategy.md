@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/testing-strategy
+cms_title: Testing Strategy
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/testing-strategy.md
+---
+
 # Testing Strategy
 
 WebBlocks CMS release validation should be risk-based. The full suite remains available, but routine hotfixes should start with the smallest focused script that protects the changed surface.

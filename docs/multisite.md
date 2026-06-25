@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/multisite
+cms_title: Multisite
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/multisite.md
+---
+
 # Multisite
 
 WebBlocks CMS supports multiple sites within one install.

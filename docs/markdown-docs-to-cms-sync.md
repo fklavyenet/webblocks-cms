@@ -84,7 +84,7 @@ Metadata rules:
 - the source hash is a SHA-256 hash of the Markdown source content used to detect changes.
 - missing `cms_sync` metadata means the file is skipped by normal update mode and can be reported for adoption planning.
 
-Initial adoption can be done as a docs-only metadata seeding step before any live CMS discovery or apply attempt. That step should add safe generic front matter to selected public documentation Markdown files so later plans can identify source ids, paths, locales, layouts, and titles without guessing.
+Initial adoption can be done as a docs-only metadata seeding step before any live CMS discovery or apply attempt. That step should add safe generic front matter to selected public documentation Markdown files so later plans can identify source ids, paths, locales, layouts, and titles without guessing. A full `docs/` adoption pass should still exclude archived release changelogs under `docs/releases/` unless a trusted operator explicitly approves those archive pages.
 
 ## CMS Source Metadata
 

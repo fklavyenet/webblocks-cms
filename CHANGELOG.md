@@ -10,6 +10,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 ## Unreleased
 
 - Seed docs-only Docs to CMS source metadata front matter for the initial public documentation batch.
+- Expand docs-only Docs to CMS source metadata coverage across remaining public product documentation under `docs/`.
 
 ## 1.32.165
 
