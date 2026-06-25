@@ -91,10 +91,7 @@
                                 <th>Email</th>
                                 <th>Subject</th>
                                 <th>Editorial status</th>
-                                <th>
-                                    <span title="Sent means the CMS handed the message to the configured mail transport. It does not guarantee inbox delivery. Skipped means notification was not attempted, usually because mail or recipient settings are missing or disabled.">Email notification</span>
-                                    <div class="wb-text-sm wb-text-muted">Sent means handed to mail transport; skipped means no send was attempted.</div>
-                                </th>
+                                <th>Email notification</th>
                                 <th>Received</th>
                                 <th>Actions</th>
                             </tr>
@@ -126,12 +123,17 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span>
-                                        @if ($message->notificationDetail())
-                                            <div class="wb-text-sm wb-text-muted">{{ \Illuminate\Support\Str::limit($message->notificationDetail(), 80) }}</div>
-                                        @endif
+                                        <div class="wb-action-group">
+                                            <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span>
+                                            @if ($message->resolvedNotificationStatus() === 'failed')
+                                                @php($notificationTooltip = \Illuminate\Support\Str::limit($message->notificationDetail() ?: 'Open the message to review notification details.', 120))
+                                                <button type="button" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $notificationTooltip }}" data-wb-tooltip-placement="top" aria-label="Notification failure summary">
+                                                    <i class="wb-icon wb-icon-circle-help" aria-hidden="true"></i>
+                                                </button>
+                                            @endif
+                                        </div>
                                         @if ($message->hasLegacyNotificationState())
-                                            <div class="wb-text-sm wb-text-muted">Historical status inferred from older notification fields.</div>
+                                            <span class="wb-sr-only">Historical status inferred from older notification fields.</span>
                                         @endif
                                     </td>
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>

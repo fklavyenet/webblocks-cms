@@ -943,6 +943,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('data-admin-listing-filters-actions', false);
     $response->assertSee('Search');
     $response->assertSee('Email notification');
+    $response->assertSee('<th>Email notification</th>', false);
     $response->assertSee('id="contact_messages_search"', false);
     $response->assertSee('id="contact_messages_status"', false);
     $response->assertSee('id="contact_messages_notification"', false);
@@ -972,6 +973,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertDontSee('<th class="wb-text-end">Actions</th>', false);
     $response->assertDontSee('<td class="wb-text-end">', false);
     $response->assertDontSee('<th>Source</th>', false);
+    $response->assertDontSee('Sent means handed to mail transport; skipped means no send was attempted.', false);
   }
 
   #[Test]
@@ -1404,7 +1406,7 @@ class ContactFormModuleTest extends TestCase
   }
 
   #[Test]
-  public function admin_views_show_compact_notification_failure_reason_and_full_failure_detail(): void
+  public function admin_views_keep_notification_list_compact_and_detail_page_explicit(): void
   {
     $user = User::factory()->create();
     [$page, $block] = $this->createContactFormPage();
@@ -1445,8 +1447,12 @@ class ContactFormModuleTest extends TestCase
       ->assertOk()
       ->assertSee('Failed', false)
       ->assertSee('Not configured', false)
-      ->assertSee('SMTP unavailable', false)
-      ->assertSee('Sent means handed to mail transport; skipped means no send was attempted.', false)
+      ->assertSee('data-wb-tooltip="SMTP unavailable"', false)
+      ->assertSee('aria-label="Notification failure summary"', false)
+      ->assertSee('wb-icon-circle-help', false)
+      ->assertDontSee('<div class="wb-text-sm wb-text-muted">SMTP unavailable</div>', false)
+      ->assertDontSee('>Historical status inferred from older notification fields.</', false)
+      ->assertDontSee('Sent means handed to mail transport; skipped means no send was attempted.', false)
       ->assertSee('Editorial status')
       ->assertSee('Email notification')
       ->assertSee('Spam score 75');

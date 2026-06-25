@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.165
+
+- Keep Contact Messages notification status cells compact by removing list-level explanatory text and showing failed notification summaries only through a WebBlocks UI tooltip help icon.
+
 ## 1.32.164
 
 - Fix Contact Message email notification status so `Sent` is recorded only after a real configured mail transport accepts the send call; disabled notifications, missing recipients, incomplete SMTP, and `log`/`array`/`null` mailers now show skipped or not configured instead of sent.
