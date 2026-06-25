@@ -66,8 +66,23 @@
             <div class="wb-card-body wb-stack wb-gap-2">
                 <div><strong>Status:</strong> <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></div>
                 <div><strong>Recipient:</strong> {{ $message->notification_recipient ?? '-' }}</div>
-                <div><strong>Sent at:</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                <div><strong>Failure detail:</strong> {{ $message->notification_error ?? '-' }}</div>
+                <div><strong>Recipient source:</strong> {{ $message->notificationSourceLabel() }}</div>
+                <div><strong>Attempted/sent at:</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
+                <div><strong>Failure or skipped reason:</strong> {{ $message->notificationDetail() ?? '-' }}</div>
+                @if ($message->hasLegacyNotificationState())
+                    <div class="wb-alert wb-alert-info">This message was saved before explicit notification status metadata was available. Its status is inferred from older notification fields.</div>
+                @endif
+                <div class="wb-text-sm wb-text-muted">Sent means the CMS handed the message to the configured mail transport. It does not guarantee inbox delivery. Skipped means notification was not attempted, usually because mail or recipient settings are missing or disabled.</div>
+                <div class="wb-divider"></div>
+                <div class="wb-stack wb-gap-2">
+                    <strong>Setup guidance</strong>
+                    <ul class="wb-text-sm wb-text-muted">
+                        <li>Configure <code>MAIL_*</code> in <code>.env</code>, then run <code>php artisan optimize:clear</code>.</li>
+                        <li>Configure Site -&gt; Edit -&gt; Contact recipient when available.</li>
+                        <li>Optionally set <code>CONTACT_RECIPIENT_EMAIL</code> for the CMS fallback recipient.</li>
+                        <li>Run <code>php artisan contact:mail-diagnose</code>, <code>php artisan contact:mail-diagnose --block={{ $message->block_id ?? 'ID' }}</code>, or <code>php artisan contact:mail-diagnose --send-test=you@example.com</code>.</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

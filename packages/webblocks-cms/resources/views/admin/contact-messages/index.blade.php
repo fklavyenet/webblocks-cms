@@ -39,9 +39,10 @@
                         'placeholder' => 'All notifications',
                         'options' => [
                             'sent' => 'Sent',
-                            'pending' => 'Pending',
                             'failed' => 'Failed',
-                            'disabled' => 'Disabled',
+                            'skipped' => 'Skipped',
+                            'not_configured' => 'Not configured',
+                            'pending' => 'Pending',
                         ],
                     ],
                 ],
@@ -90,7 +91,10 @@
                                 <th>Email</th>
                                 <th>Subject</th>
                                 <th>Editorial status</th>
-                                <th>Email notification</th>
+                                <th>
+                                    <span title="Sent means the CMS handed the message to the configured mail transport. It does not guarantee inbox delivery. Skipped means notification was not attempted, usually because mail or recipient settings are missing or disabled.">Email notification</span>
+                                    <div class="wb-text-sm wb-text-muted">Sent means handed to mail transport; skipped means no send was attempted.</div>
+                                </th>
                                 <th>Received</th>
                                 <th>Actions</th>
                             </tr>
@@ -123,8 +127,11 @@
                                     </td>
                                     <td>
                                         <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span>
-                                        @if ($message->notification_error)
-                                            <div class="wb-text-sm wb-text-muted">{{ \Illuminate\Support\Str::limit($message->notification_error, 80) }}</div>
+                                        @if ($message->notificationDetail())
+                                            <div class="wb-text-sm wb-text-muted">{{ \Illuminate\Support\Str::limit($message->notificationDetail(), 80) }}</div>
+                                        @endif
+                                        @if ($message->hasLegacyNotificationState())
+                                            <div class="wb-text-sm wb-text-muted">Historical status inferred from older notification fields.</div>
                                         @endif
                                     </td>
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>

@@ -32,7 +32,7 @@ class ContactMessageController extends Controller
       $status = '';
     }
 
-    if (! in_array($notification, ['sent', 'pending', 'failed', 'disabled'], true)) {
+    if (! in_array($notification, ['sent', 'pending', 'failed', 'skipped', 'not_configured'], true)) {
       $notification = '';
     }
 
@@ -52,10 +52,38 @@ class ContactMessageController extends Controller
       ->when($status !== '', fn ($query) => $query->where('status', $status))
       ->when($notification !== '', function ($query) use ($notification) {
         match ($notification) {
-          'sent' => $query->where('notification_enabled', true)->whereNotNull('notification_sent_at'),
-          'pending' => $query->where('notification_enabled', true)->whereNull('notification_sent_at')->whereNull('notification_error'),
-          'failed' => $query->whereNotNull('notification_error'),
-          'disabled' => $query->where('notification_enabled', false),
+          'sent' => $query->where(function ($inner): void {
+            $inner->where('notification_status', 'sent')
+              ->orWhere(function ($legacy): void {
+                $legacy->whereNull('notification_status')
+                  ->where('notification_enabled', true)
+                  ->whereNotNull('notification_sent_at');
+              });
+          }),
+          'pending' => $query->where(function ($inner): void {
+            $inner->where('notification_status', 'pending')
+              ->orWhere(function ($legacy): void {
+                $legacy->whereNull('notification_status')
+                  ->where('notification_enabled', true)
+                  ->whereNull('notification_sent_at')
+                  ->whereNull('notification_error');
+              });
+          }),
+          'failed' => $query->where(function ($inner): void {
+            $inner->where('notification_status', 'failed')
+              ->orWhere(function ($legacy): void {
+                $legacy->whereNull('notification_status')
+                  ->whereNotNull('notification_error');
+              });
+          }),
+          'skipped' => $query->where(function ($inner): void {
+            $inner->where('notification_status', 'skipped')
+              ->orWhere(function ($legacy): void {
+                $legacy->whereNull('notification_status')
+                  ->where('notification_enabled', false);
+              });
+          }),
+          'not_configured' => $query->where('notification_status', 'not_configured'),
           default => null,
         };
       });

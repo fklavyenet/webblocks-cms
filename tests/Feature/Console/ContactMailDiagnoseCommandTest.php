@@ -34,6 +34,7 @@ class ContactMailDiagnoseCommandTest extends TestCase
       ->expectsOutputToContain('MAIL_USERNAME: support@example.test')
       ->expectsOutputToContain('MAIL_FROM_ADDRESS: support@example.test')
       ->expectsOutputToContain('CONTACT_RECIPIENT_EMAIL: contact@example.test')
+      ->expectsOutputToContain('MAIL_TRANSPORT_STATUS: real outbound transport configured')
       ->expectsOutputToContain('SMTP send test: skipped')
       ->doesntExpectOutputToContain('super-secret-password')
       ->assertExitCode(0);

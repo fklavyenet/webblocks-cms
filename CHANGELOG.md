@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.164
+
+- Fix Contact Message email notification status so `Sent` is recorded only after a real configured mail transport accepts the send call; disabled notifications, missing recipients, incomplete SMTP, and `log`/`array`/`null` mailers now show skipped or not configured instead of sent.
+- Add Contact Message notification source/reason metadata, admin list/detail guidance, and package update migration coverage for existing installs.
 - Add installation and setup guidance for Contact Form mail delivery, recipient fallback order, storage-vs-notification behavior, smoke testing, and secret-safe diagnostics.
 - Expand the Markdown Docs to CMS Sync documentation into an operational runbook for changed `docs/` Markdown files, including source matching, batch behavior, stop conditions, report formats, and safe draft apply rules.
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.

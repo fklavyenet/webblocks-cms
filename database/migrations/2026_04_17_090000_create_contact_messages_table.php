@@ -25,8 +25,11 @@ return new class extends Migration
       $table->json('spam_reasons')->nullable();
       $table->boolean('notification_enabled')->default(true);
       $table->string('notification_recipient')->nullable();
+      $table->string('notification_recipient_source')->nullable();
+      $table->string('notification_status')->nullable();
       $table->timestamp('notification_sent_at')->nullable();
       $table->text('notification_error')->nullable();
+      $table->text('notification_reason')->nullable();
       $table->timestamps();
 
       $table->index(['status', 'created_at']);

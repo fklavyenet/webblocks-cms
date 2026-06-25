@@ -102,6 +102,16 @@ The admin screen lets CMS users review submissions at a user-guide level:
 - whether notification was skipped, sent, failed, or is pending
 - safe failure details when notification delivery fails
 
+Email notification status is about notification behavior only:
+
+- `Sent` means the CMS handed the message to the configured mail transport without an exception. It does not guarantee inbox delivery.
+- `Failed` means a real notification send was attempted and Laravel reported an exception. The saved detail is sanitized and must not include passwords, tokens, raw `.env`, or stack traces.
+- `Skipped` means notification was not attempted, usually because the block disabled notification.
+- `Not configured` means notification was not attempted because no recipient was available, the mailer is `log`, `array`, or `null`, or SMTP settings are incomplete enough that outbound delivery is not possible.
+- `Pending` is reserved for records that have not yet had a notification attempt or resolution.
+
+Older saved messages may have notification state inferred from the legacy sent/error fields. The CMS does not rewrite those historical records automatically.
+
 Contact Messages also follows the shared admin listing behavior for selected bulk deletion where available. Treat deletion as an admin cleanup action, not as part of normal public form handling.
 
 ## Spam Handling
@@ -154,6 +164,8 @@ CONTACT_RECIPIENT_EMAIL=contact@example.com
 
 `MAIL_*` controls Laravel mail transport. `MAIL_FROM_ADDRESS` is the safe fallback sender/from address and the final safe recipient fallback. `CONTACT_RECIPIENT_EMAIL` is optional and is used only after the block and site recipients are empty. Prefer the site-level Contact recipient from `Site -> Edit -> Contact` for normal site routing.
 
+Use a real outbound mailer such as SMTP for production notification. `MAIL_MAILER=log`, `MAIL_MAILER=array`, and `MAIL_MAILER=null` are useful for development or tests, but Contact Messages shows those as not configured rather than sent because no real outbound notification was attempted.
+
 After editing `.env` mail settings on a production or package install, clear cached configuration when config caching may be active:
 
 ```bash
@@ -182,7 +194,7 @@ Use a controlled SMTP send check only when the target test address is intentiona
 php artisan contact:mail-diagnose --send-test=address@example.com
 ```
 
-Diagnostics must not print passwords, tokens, mail secrets, or raw sensitive configuration. Failed notifications can be inspected from Contact Messages delivery and failure details.
+Diagnostics must not print passwords, tokens, mail secrets, or raw sensitive configuration. Failed, skipped, and not-configured notification details can be inspected from Contact Messages. Treat Contact Messages as the source of truth for stored submissions and their notification status.
 
 ## Publish Readiness Checklist
 

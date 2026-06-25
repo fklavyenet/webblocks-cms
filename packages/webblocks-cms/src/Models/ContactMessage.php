@@ -27,8 +27,11 @@ class ContactMessage extends Model
     'spam_reasons',
     'notification_enabled',
     'notification_recipient',
+    'notification_recipient_source',
+    'notification_status',
     'notification_sent_at',
     'notification_error',
+    'notification_reason',
   ];
 
   protected function casts(): array
@@ -70,36 +73,66 @@ class ContactMessage extends Model
 
   public function notificationLabel(): string
   {
-    if (! $this->notification_enabled) {
-      return 'Skipped';
-    }
-
-    if ($this->notification_sent_at) {
-      return 'Sent';
-    }
-
-    if (filled($this->notification_error)) {
-      return 'Failed';
-    }
-
-    return 'Pending';
+    return match ($this->resolvedNotificationStatus()) {
+      'sent' => 'Sent',
+      'failed' => 'Failed',
+      'skipped' => 'Skipped',
+      'not_configured' => 'Not configured',
+      default => 'Pending',
+    };
   }
 
   public function notificationClass(): string
   {
+    return match ($this->resolvedNotificationStatus()) {
+      'sent' => 'wb-status-active',
+      'failed' => 'wb-status-danger',
+      'skipped', 'not_configured' => 'wb-status-pending',
+      default => 'wb-status-info',
+    };
+  }
+
+  public function resolvedNotificationStatus(): string
+  {
+    if (in_array($this->notification_status, ['sent', 'failed', 'skipped', 'not_configured', 'pending'], true)) {
+      return $this->notification_status;
+    }
+
     if (! $this->notification_enabled) {
-      return 'wb-status-pending';
+      return 'skipped';
     }
 
     if ($this->notification_sent_at) {
-      return 'wb-status-active';
+      return 'sent';
     }
 
     if (filled($this->notification_error)) {
-      return 'wb-status-danger';
+      return 'failed';
     }
 
-    return 'wb-status-info';
+    return 'pending';
+  }
+
+  public function notificationDetail(): ?string
+  {
+    return $this->notification_error ?: $this->notification_reason;
+  }
+
+  public function notificationSourceLabel(): string
+  {
+    return match ($this->notification_recipient_source) {
+      'block' => 'Block recipient',
+      'site' => 'Site contact recipient',
+      'CONTACT_RECIPIENT_EMAIL' => 'CONTACT_RECIPIENT_EMAIL',
+      'MAIL_FROM_ADDRESS' => 'MAIL_FROM_ADDRESS fallback',
+      'contact_form' => 'Contact Form recipient',
+      default => '-',
+    };
+  }
+
+  public function hasLegacyNotificationState(): bool
+  {
+    return ! in_array($this->notification_status, ['sent', 'failed', 'skipped', 'not_configured', 'pending'], true);
   }
 
   public function spamReasonLabels(): array

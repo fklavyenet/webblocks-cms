@@ -66,34 +66,41 @@ class ContactMessageController extends Controller
       'spam_score' => $spamSignal['score'],
       'spam_reasons' => $spamSignal['reasons'] !== [] ? $spamSignal['reasons'] : null,
       'notification_enabled' => $notificationEnabled,
-      'notification_recipient' => $notificationRecipient !== '' ? $notificationRecipient : null,
+      'notification_recipient' => $notificationRecipient['email'],
+      'notification_recipient_source' => $notificationRecipient['source'],
+      'notification_status' => 'pending',
     ]);
 
-    if ($notificationEnabled) {
-      $result = $this->notifier->send($contactMessage);
+    $result = $this->notifier->send($contactMessage);
 
-      $contactMessage->update([
-        'notification_recipient' => $result->recipient,
-        'notification_sent_at' => $result->sent ? now() : null,
-        'notification_error' => $result->error,
-      ]);
-    }
+    $contactMessage->update([
+      'notification_recipient' => $result->recipient,
+      'notification_recipient_source' => $result->recipientSource,
+      'notification_status' => $result->status,
+      'notification_sent_at' => $result->sent ? now() : null,
+      'notification_error' => $result->error,
+      'notification_reason' => $result->reason,
+    ]);
 
     return redirect($sourceUrl)
       ->with('contact_form_success_block_id', $block->id)
       ->with('contact_form_success_message', $successMessage);
   }
 
-  private function notificationRecipient(Block $block, ?Site $site): ?string
+  private function notificationRecipient(Block $block, ?Site $site): array
   {
     $blockRecipient = trim((string) $block->setting('recipient_email'));
 
     if ($blockRecipient !== '') {
-      return $blockRecipient;
+      return ['email' => $blockRecipient, 'source' => 'block'];
     }
 
     $siteRecipient = trim((string) $site?->contact_recipient_email);
 
-    return $siteRecipient !== '' ? $siteRecipient : null;
+    if ($siteRecipient !== '') {
+      return ['email' => $siteRecipient, 'source' => 'site'];
+    }
+
+    return ['email' => null, 'source' => null];
   }
 }

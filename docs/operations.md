@@ -85,7 +85,7 @@ Installed CMS working copies are update consumers. They may fetch source history
 
 ## Contact Mail Diagnostics
 
-Contact Form submissions are saved before notification delivery. SMTP failures are recorded on the saved Contact Message as email notification state and do not change the editorial status or spam classification. Scored spam is intentionally stored/quarantined for admin review; only filled generated check-field or too-fast submissions may be discarded before storage with the generic success redirect. A future configurable threshold such as `CONTACT_SPAM_AUTO_DISCARD_SCORE` can be considered after enough production data exists to tune it safely.
+Contact Form submissions are saved before notification delivery. Email notification status reflects notification behavior only and does not change the editorial status or spam classification. `Sent` means Laravel accepted the send through a configured real mail transport without an exception; it does not guarantee inbox delivery. `Failed` means a real send was attempted and threw a sanitized failure. `Skipped` or `Not configured` means no real send was attempted because notification was disabled, no recipient resolved, the mailer is `log`, `array`, or `null`, or SMTP config is incomplete. Scored spam is intentionally stored/quarantined for admin review; only filled generated check-field or too-fast submissions may be discarded before storage with the generic success redirect. A future configurable threshold such as `CONTACT_SPAM_AUTO_DISCARD_SCORE` can be considered after enough production data exists to tune it safely.
 
 Contact Form notification recipients resolve in this order:
 
@@ -124,6 +124,8 @@ php artisan contact:mail-diagnose --send-test=operator@example.com
 ```
 
 The command reports the resolved mailer, host, port, scheme/encryption fields, username, from address, `CONTACT_RECIPIENT_EMAIL`, config-cache state, and optional Contact Form block/site recipient fallbacks. It never prints `MAIL_PASSWORD` or token values. The optional send test reports only success or a sanitized failure detail, so operators can distinguish stale config, host/port/encryption mismatch, username/from mismatch, and invalid mailbox credentials without leaking secrets into terminal logs.
+
+Use Contact Messages as the source of truth for stored submissions and notification state. Development mailers such as `log`, `array`, and `null` should not be treated as delivered email in operations reports.
 
 Operational smoke test:
 

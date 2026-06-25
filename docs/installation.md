@@ -172,7 +172,8 @@ Notes:
 - `php artisan serve` remains useful for quick CLI-only checks, but trusted browser workflows should use the native Nginx/PHP-FPM setup documented in `docs/native-local-development.md`
 - local contact form email notifications should use a local SMTP catcher or trusted SMTP test account; the usual local SMTP values depend on the installed tool
 - Contact Form notification recipients resolve in this order: block-level `recipient_email`, current site's default contact recipient, `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as the last safe fallback
-- contact submissions are stored independently from notification delivery, so a public `Message sent` response confirms storage success even if admin later shows notification `Failed`
+- contact submissions are stored independently from notification delivery, so a public `Message sent` response confirms storage success even if admin later shows notification `Failed`, `Skipped`, or `Not configured`
+- `MAIL_MAILER=log`, `MAIL_MAILER=array`, and `MAIL_MAILER=null` are not real outbound delivery and are shown as not configured for Contact Message notification
 - Contact Form blocks render a CMS-owned hidden `.wb-form-check` wrapper with `inert`, `aria-hidden="true"`, a renderer-generated `form_check_{token}` field, `tabindex="-1"`, and `autocomplete="off"`; when that generated check field is filled, the server returns the same generic success redirect and does not store a Contact Message or attempt notification
 - submissions that pass the generated check field can still be classified as `spam` by conservative stored signals such as commercial outreach language, link density, repeated same-IP submissions, or a free-mail sales pitch with a generic subject; this status is durable admin classification and is separate from email notification state
 - when notification delivery fails, admins can inspect the saved message under `Admin -> Contact Messages` to see the compact failure state in the list and the stored failure detail on the message detail screen
@@ -251,6 +252,8 @@ Contact Form notifications resolve recipients in this order:
 4. safe `MAIL_FROM_ADDRESS` fallback
 
 Accepted real Contact Form submissions are stored before email notification is attempted. Notification failure does not mean the public form submission failed. Admins should check `/webadmin/contact-messages` for stored messages, notification status, and safe failure details. Public visitors should only see normal success or validation feedback, not mail diagnostics.
+
+`Sent` means the CMS handed the notification to the configured mail transport without an exception; it does not guarantee inbox delivery. `Skipped` or `Not configured` means no real notification send was attempted.
 
 Use the native `contact_form` block for contact pages. Do not replace it with Trusted HTML, raw `<form>` markup, or `mailto:` fallbacks. The CMS renderer generates the hidden anti-spam check field automatically; do not create it manually. The old `website` honeypot field is no longer the public contract.
 

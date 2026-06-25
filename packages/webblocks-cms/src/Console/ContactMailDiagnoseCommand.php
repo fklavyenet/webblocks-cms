@@ -23,6 +23,7 @@ class ContactMailDiagnoseCommand extends Command
       $this->line($label.': '.$this->displayValue($value));
     }
 
+    $this->line('MAIL_TRANSPORT_STATUS: '.$this->mailTransportStatus());
     $this->line('Config cached: '.($this->laravel->configurationIsCached() ? 'yes' : 'no'));
 
     $blockId = $this->option('block');
@@ -89,6 +90,26 @@ class ContactMailDiagnoseCommand extends Command
     $this->line('Block recipient_email: '.$this->displayValue($block->setting('recipient_email')));
     $this->line('Block send_email_notification: '.($block->setting('send_email_notification', true) ? 'true' : 'false'));
     $this->line('Site contact_recipient_email: '.$this->displayValue($block->page?->site?->contact_recipient_email));
+  }
+
+  private function mailTransportStatus(): string
+  {
+    $mailer = strtolower(trim((string) config('mail.default')));
+
+    if ($mailer === '' || in_array($mailer, ['array', 'log', 'null'], true)) {
+      return 'not configured for real outbound delivery';
+    }
+
+    if ($mailer === 'smtp') {
+      $host = trim((string) config('mail.mailers.smtp.host'));
+      $port = trim((string) config('mail.mailers.smtp.port'));
+
+      if ($host === '' || $port === '') {
+        return 'smtp incomplete';
+      }
+    }
+
+    return 'real outbound transport configured';
   }
 
   private function displayValue(mixed $value): string

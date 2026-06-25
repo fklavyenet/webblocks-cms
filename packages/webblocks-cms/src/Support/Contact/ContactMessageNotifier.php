@@ -12,42 +12,73 @@ class ContactMessageNotifier
   public function send(ContactMessage $contactMessage): ContactMessageNotificationResult
   {
     if (! $contactMessage->notification_enabled) {
-      return ContactMessageNotificationResult::skipped();
+      return ContactMessageNotificationResult::skipped('Email notification is disabled for this Contact Form.');
     }
 
-    $recipient = $this->resolveRecipient($contactMessage->notification_recipient);
+    [$recipient, $recipientSource] = $this->resolveRecipient(
+      $contactMessage->notification_recipient,
+      $contactMessage->notification_recipient_source,
+    );
 
     if ($recipient === null) {
-      return ContactMessageNotificationResult::failed(null, 'No contact recipient email is configured.');
+      return ContactMessageNotificationResult::notConfigured('No contact recipient email is configured.');
+    }
+
+    $mailerReason = $this->notConfiguredReasonForMailer();
+
+    if ($mailerReason !== null) {
+      return ContactMessageNotificationResult::notConfigured($mailerReason, $recipient, $recipientSource);
     }
 
     try {
       Mail::to($recipient)->send(new ContactMessageNotification($contactMessage));
 
-      return ContactMessageNotificationResult::sent($recipient);
+      return ContactMessageNotificationResult::sent($recipient, $recipientSource);
     } catch (Throwable $throwable) {
-      return ContactMessageNotificationResult::failed($recipient, $this->normalizeFailureMessage($throwable));
+      return ContactMessageNotificationResult::failed($recipient, $this->normalizeFailureMessage($throwable), $recipientSource);
     }
   }
 
-  private function resolveRecipient(?string $storedRecipient): ?string
+  private function resolveRecipient(?string $storedRecipient, ?string $storedSource): array
   {
     $candidate = trim((string) $storedRecipient);
 
     if ($candidate !== '' && filter_var($candidate, FILTER_VALIDATE_EMAIL)) {
-      return $candidate;
+      return [$candidate, $storedSource ?: 'contact_form'];
     }
 
     $fallback = trim((string) config('contact.recipient_email'));
 
     if ($fallback !== '' && filter_var($fallback, FILTER_VALIDATE_EMAIL)) {
-      return $fallback;
+      return [$fallback, 'CONTACT_RECIPIENT_EMAIL'];
     }
 
     $fromAddress = trim((string) config('mail.from.address'));
 
     if ($fromAddress !== '' && filter_var($fromAddress, FILTER_VALIDATE_EMAIL)) {
-      return $fromAddress;
+      return [$fromAddress, 'MAIL_FROM_ADDRESS'];
+    }
+
+    return [null, null];
+  }
+
+  private function notConfiguredReasonForMailer(): ?string
+  {
+    $mailer = strtolower(trim((string) config('mail.default')));
+
+    if ($mailer === '' || in_array($mailer, ['array', 'log', 'null'], true)) {
+      return 'Mail delivery is not configured for a real outbound transport.';
+    }
+
+    if ($mailer !== 'smtp') {
+      return null;
+    }
+
+    $host = trim((string) config('mail.mailers.smtp.host'));
+    $port = trim((string) config('mail.mailers.smtp.port'));
+
+    if ($host === '' || $port === '') {
+      return 'SMTP mail configuration is incomplete.';
     }
 
     return null;

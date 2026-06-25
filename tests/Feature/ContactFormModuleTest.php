@@ -70,6 +70,8 @@ class ContactFormModuleTest extends TestCase
 
   private function createContactFormPage(): array
   {
+    $this->configureRealMailTransport();
+
     $slotType = $this->slotType();
     $blockType = $this->contactBlockType();
     $site = $this->defaultSite();
@@ -118,6 +120,14 @@ class ContactFormModuleTest extends TestCase
     ]);
 
     return [$page, $block];
+  }
+
+  private function configureRealMailTransport(): void
+  {
+    config()->set('mail.default', 'smtp');
+    config()->set('mail.mailers.smtp.host', 'smtp.example.test');
+    config()->set('mail.mailers.smtp.port', 587);
+    config()->set('mail.from.address', 'from@example.test');
   }
 
   private function updateContactFormSettings(Block $block, array $settings): void
@@ -534,6 +544,8 @@ class ContactFormModuleTest extends TestCase
     $message = ContactMessage::query()->latest('id')->firstOrFail();
 
     $this->assertSame('block@example.com', $message->notification_recipient);
+    $this->assertSame('block', $message->notification_recipient_source);
+    $this->assertSame('sent', $message->notification_status);
     $this->assertNotNull($message->notification_sent_at);
     $this->assertNull($message->notification_error);
     Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('block@example.com'));
@@ -553,6 +565,8 @@ class ContactFormModuleTest extends TestCase
     $message = ContactMessage::query()->latest('id')->firstOrFail();
 
     $this->assertSame('site@example.com', $message->notification_recipient);
+    $this->assertSame('site', $message->notification_recipient_source);
+    $this->assertSame('sent', $message->notification_status);
     $this->assertNotNull($message->notification_sent_at);
     $this->assertNull($message->notification_error);
     Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('site@example.com'));
@@ -574,6 +588,8 @@ class ContactFormModuleTest extends TestCase
     $message = ContactMessage::query()->latest('id')->firstOrFail();
 
     $this->assertSame('config@example.com', $message->notification_recipient);
+    $this->assertSame('CONTACT_RECIPIENT_EMAIL', $message->notification_recipient_source);
+    $this->assertSame('sent', $message->notification_status);
     $this->assertNotNull($message->notification_sent_at);
     $this->assertNull($message->notification_error);
     Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('config@example.com'));
@@ -593,16 +609,18 @@ class ContactFormModuleTest extends TestCase
     $message = ContactMessage::query()->latest('id')->first();
 
     $this->assertNotNull($message);
+    $this->assertSame('failed', $message->notification_status);
     $this->assertSame('SMTP unavailable for password=[redacted] token=[redacted]', $message->notification_error);
+    $this->assertSame('SMTP unavailable for password=[redacted] token=[redacted]', $message->notification_reason);
     $this->assertSame('new', $message->status);
   }
 
   #[Test]
   public function notification_falls_back_to_mail_from_address_when_block_and_contact_recipient_are_empty(): void
   {
+    [, $block] = $this->createContactFormPage();
     config()->set('contact.recipient_email', null);
     config()->set('mail.from.address', 'hello@example.com');
-    [, $block] = $this->createContactFormPage();
     $block->page->site->update(['contact_recipient_email' => null]);
     $this->updateContactFormSettings($block, ['recipient_email' => null]);
 
@@ -614,17 +632,19 @@ class ContactFormModuleTest extends TestCase
     $message = ContactMessage::query()->latest('id')->firstOrFail();
 
     $this->assertSame('hello@example.com', $message->notification_recipient);
+    $this->assertSame('MAIL_FROM_ADDRESS', $message->notification_recipient_source);
+    $this->assertSame('sent', $message->notification_status);
     $this->assertNotNull($message->notification_sent_at);
     $this->assertNull($message->notification_error);
     Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('hello@example.com'));
   }
 
   #[Test]
-  public function missing_recipient_marks_failure_without_claiming_a_transport_send(): void
+  public function missing_recipient_is_not_configured_without_claiming_a_transport_send(): void
   {
+    [, $block] = $this->createContactFormPage();
     config()->set('contact.recipient_email', null);
     config()->set('mail.from.address', null);
-    [, $block] = $this->createContactFormPage();
     $block->page->site->update(['contact_recipient_email' => null]);
     $this->updateContactFormSettings($block, ['recipient_email' => null]);
 
@@ -635,9 +655,51 @@ class ContactFormModuleTest extends TestCase
 
     $message = ContactMessage::query()->latest('id')->firstOrFail();
 
-    $this->assertSame('No contact recipient email is configured.', $message->notification_error);
+    $this->assertSame('not_configured', $message->notification_status);
+    $this->assertSame('No contact recipient email is configured.', $message->notification_reason);
+    $this->assertNull($message->notification_error);
     $this->assertNull($message->notification_sent_at);
     $this->assertNull($message->notification_recipient);
+    Mail::assertNothingSent();
+  }
+
+  #[Test]
+  public function log_mailer_is_recorded_as_not_configured_without_claiming_a_send(): void
+  {
+    [, $block] = $this->createContactFormPage();
+    config()->set('mail.default', 'log');
+
+    Mail::fake();
+
+    $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+      ->assertRedirect();
+
+    $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+    $this->assertSame('not_configured', $message->notification_status);
+    $this->assertSame('Mail delivery is not configured for a real outbound transport.', $message->notification_reason);
+    $this->assertNull($message->notification_sent_at);
+    $this->assertSame('team@example.com', $message->notification_recipient);
+    Mail::assertNothingSent();
+  }
+
+  #[Test]
+  public function array_mailer_is_recorded_as_not_configured_without_claiming_a_send(): void
+  {
+    [, $block] = $this->createContactFormPage();
+    config()->set('mail.default', 'array');
+
+    Mail::fake();
+
+    $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+      ->assertRedirect();
+
+    $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+    $this->assertSame('not_configured', $message->notification_status);
+    $this->assertSame('Mail delivery is not configured for a real outbound transport.', $message->notification_reason);
+    $this->assertNull($message->notification_sent_at);
+    $this->assertSame('team@example.com', $message->notification_recipient);
     Mail::assertNothingSent();
   }
 
@@ -658,6 +720,8 @@ class ContactFormModuleTest extends TestCase
     $message = ContactMessage::query()->latest('id')->firstOrFail();
 
     $this->assertFalse($message->notification_enabled);
+    $this->assertSame('skipped', $message->notification_status);
+    $this->assertSame('Email notification is disabled for this Contact Form.', $message->notification_reason);
     $this->assertNull($message->notification_error);
     $this->assertSame('Skipped', $message->notificationLabel());
     Mail::assertNothingSent();
@@ -1355,16 +1419,34 @@ class ContactFormModuleTest extends TestCase
       'source_url' => route('pages.show', $page->slug),
       'notification_enabled' => true,
       'notification_recipient' => 'team@example.com',
+      'notification_recipient_source' => 'block',
+      'notification_status' => 'failed',
       'notification_error' => 'SMTP unavailable',
+      'notification_reason' => 'SMTP unavailable',
       'spam_score' => 75,
       'spam_reasons' => ['Commercial outreach language'],
+    ]);
+
+    ContactMessage::create([
+      'block_id' => $block->id,
+      'page_id' => $page->id,
+      'name' => 'Jordan Editor',
+      'email' => 'jordan@example.com',
+      'subject' => 'No mailer',
+      'message' => 'Notification was skipped.',
+      'status' => 'new',
+      'notification_enabled' => true,
+      'notification_status' => 'not_configured',
+      'notification_reason' => 'Mail delivery is not configured for a real outbound transport.',
     ]);
 
     $this->actingAs($user)
       ->get(route('admin.contact-messages.index'))
       ->assertOk()
       ->assertSee('Failed', false)
+      ->assertSee('Not configured', false)
       ->assertSee('SMTP unavailable', false)
+      ->assertSee('Sent means handed to mail transport; skipped means no send was attempted.', false)
       ->assertSee('Editorial status')
       ->assertSee('Email notification')
       ->assertSee('Spam score 75');
@@ -1372,8 +1454,12 @@ class ContactFormModuleTest extends TestCase
     $this->actingAs($user)
       ->get(route('admin.contact-messages.show', $message))
       ->assertOk()
-      ->assertSee('Failure detail:', false)
+      ->assertSee('Failure or skipped reason:', false)
       ->assertSee('SMTP unavailable', false)
+      ->assertSee('Recipient source:', false)
+      ->assertSee('Block recipient', false)
+      ->assertSee('Sent means the CMS handed the message to the configured mail transport.', false)
+      ->assertSee('php artisan contact:mail-diagnose', false)
       ->assertSee('Message classification')
       ->assertSee('Editorial status:')
       ->assertSee('Spam score:')
