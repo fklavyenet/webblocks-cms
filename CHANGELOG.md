@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.166
+
+- Fix the CMS API token one-time `.env` example so local AI/operator tools use `WEBBLOCKS_CMS_API_URL=https://example.com/webadmin/api` instead of the public site root.
 - Seed docs-only Docs to CMS source metadata front matter for the initial public documentation batch.
 - Expand docs-only Docs to CMS source metadata coverage across remaining public product documentation under `docs/`.
 

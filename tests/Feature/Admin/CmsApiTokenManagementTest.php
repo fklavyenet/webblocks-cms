@@ -129,8 +129,11 @@ class CmsApiTokenManagementTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('Copy this token now');
+    $response->assertSee('WEBBLOCKS_CMS_API_URL=https://webblocks-cms.test/webadmin/api', false);
     $response->assertSee('WEBBLOCKS_CMS_API_TOKEN=wbcms_', false);
+    $response->assertDontSee('WEBBLOCKS_CMS_URL=https://webblocks-cms.test', false);
     $response->assertSee('How to use this token');
+    $response->assertSee('<code>https://webblocks-cms.test/webadmin/api</code>', false);
     $response->assertSee('GET /webadmin/api');
     $response->assertSee('OpenAPI');
     $response->assertSee('AI Guide');

@@ -38,6 +38,13 @@ System -> API Tokens
 
 The plain token is shown once immediately after creation. Store it in a trusted operator secret store and never paste a real token into prompts, documentation, logs, screenshots, tickets, or release reports.
 
+Use the API discovery base URL in local tool configuration:
+
+```dotenv
+WEBBLOCKS_CMS_API_URL=https://example.com/webadmin/api
+WEBBLOCKS_CMS_API_TOKEN=...
+```
+
 For normal page-building tools, keep the default page-building capabilities selected. Grant advanced publish or page-delete capabilities only to trusted operator tools that explicitly need them.
 
 API requests use:

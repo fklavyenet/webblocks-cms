@@ -42,7 +42,6 @@ class CmsApiTokenController extends Controller
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('CMS API Tokens'),
       'tokens' => $tokens,
       'totalCount' => $totalCount,
-      'currentCmsUrl' => url('/'),
       'apiBaseUrl' => url('/webadmin/api'),
       'defaultCapabilities' => CmsApiTokenCapabilities::DEFAULT,
       'advancedCapabilities' => CmsApiTokenCapabilities::DESTRUCTIVE,

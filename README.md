@@ -106,7 +106,7 @@ The [Feature Inventory](docs/feature-inventory.md) is a documentation and naviga
 
 ### AI/API Discovery
 
-External AI/operator tools can start from only the CMS API base URL and a CMS API token. First call `GET /webadmin/api`; with a valid Bearer token, the response links to OpenAPI, the AI guide, content contract, examples, validate/apply, pages, navigation, and Shared Slots. See [API Discovery](docs/api-discovery.md), [Internal Content API](docs/internal-content-api.md), and the [AI Page Building Guide](docs/ai-page-building-guide.md).
+External AI/operator tools can start from only the CMS API base URL and a CMS API token. Use `WEBBLOCKS_CMS_API_URL=https://example.com/webadmin/api` in local operator `.env` examples, then first call `GET /webadmin/api`; with a valid Bearer token, the response links to OpenAPI, the AI guide, content contract, examples, validate/apply, pages, navigation, and Shared Slots. See [API Discovery](docs/api-discovery.md), [Internal Content API](docs/internal-content-api.md), and the [AI Page Building Guide](docs/ai-page-building-guide.md).
 
 This split is deliberate. Nginx `try_files` can resolve `/cms/` as the physical `public/cms/` directory before Laravel sees a route. The final v1.32.56 behavior avoids that collision with `/webadmin` instead of relying on a `public/cms/index.php` front-controller handoff. That handoff file must stay absent from both root `public/cms/` and package `packages/webblocks-cms/public/cms/` assets.
 

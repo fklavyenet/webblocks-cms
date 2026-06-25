@@ -18,6 +18,13 @@ WebBlocks CMS exposes a discovery-first Content API for trusted AI and operator 
 /webadmin/api
 ```
 
+For local AI/operator tooling, store the API base URL rather than the public site root:
+
+```dotenv
+WEBBLOCKS_CMS_API_URL=https://example.com/webadmin/api
+WEBBLOCKS_CMS_API_TOKEN=...
+```
+
 The first request should be:
 
 ```http

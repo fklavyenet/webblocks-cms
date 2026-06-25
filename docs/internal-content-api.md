@@ -77,6 +77,13 @@ Super admins can revoke a token to immediately disable API access while keeping 
 
 Local AI and operator tools should store the generated token in a trusted operator secret store.
 
+Use the Internal Content API base URL in local operator configuration:
+
+```dotenv
+WEBBLOCKS_CMS_API_URL=https://example.com/webadmin/api
+WEBBLOCKS_CMS_API_TOKEN=...
+```
+
 The CMS runtime does not require `WEBBLOCKS_CMS_INTERNAL_API_TOKEN`.
 
 Authentication rules:

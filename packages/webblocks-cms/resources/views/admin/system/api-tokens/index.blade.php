@@ -33,7 +33,7 @@
 
                 <div class="wb-stack wb-gap-2">
                     <label class="wb-label" for="created_cms_api_token_env">Local .env example</label>
-                    <textarea id="created_cms_api_token_env" class="wb-textarea" rows="3" readonly>WEBBLOCKS_CMS_URL={{ $currentCmsUrl }}
+                    <textarea id="created_cms_api_token_env" class="wb-textarea" rows="3" readonly>WEBBLOCKS_CMS_API_URL={{ $apiBaseUrl }}
 WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                 </div>
             </div>
