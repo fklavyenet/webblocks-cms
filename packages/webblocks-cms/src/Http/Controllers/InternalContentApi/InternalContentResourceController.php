@@ -323,12 +323,13 @@ class InternalContentResourceController extends Controller
         'email' => 'required RFC email max 255',
         'subject' => 'nullable string max 255',
         'message' => 'required string',
-        'website' => 'nullable honeypot string',
+        '_form_check_name' => 'renderer-generated signed metadata; not normal visitor input',
+        'form_check_{token}' => 'renderer-generated anti-spam check field; not normal visitor input',
         'submitted_at' => 'required integer timestamp',
       ];
       $payload['spam_behavior'] = [
-        'honeypot_field' => 'website',
-        'honeypot_response' => 'generic success redirect without storing or notifying',
+        'check_field' => 'renderer-generated form_check_{token} field signed by _form_check_name',
+        'check_response' => 'generic success redirect without storing or notifying when the generated check field is filled or invalid',
         'classification' => 'stored submissions may be classified as spam from conservative commercial/link/repeat-IP signals',
       ];
       $payload['storage_behavior'] = 'Legitimate submissions are stored in contact_messages before email notification is attempted; notification status fields do not change the editorial message status.';

@@ -23,6 +23,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Contact\ContactFormCheck;
 
 class ContactFormModuleTest extends TestCase
 {
@@ -132,17 +133,68 @@ class ContactFormModuleTest extends TestCase
 
   private function submissionPayload(Block $block, ?array $overrides = []): array
   {
+    $formCheck = app(ContactFormCheck::class);
+    $formCheckName = $formCheck->fieldName($block);
+
     return array_merge([
       'block_id' => $block->id,
       'page_id' => $block->page_id,
       'source_url' => route('pages.show', $block->page?->slug ?? 'contact', false),
       'submitted_at' => now()->subSeconds(5)->timestamp,
+      '_form_check_name' => $formCheck->signedFieldName($block),
+      $formCheckName => '',
       'name' => 'Taylor Editor',
       'email' => 'taylor@example.com',
       'subject' => 'Partnership request',
       'message' => 'We would like to discuss a new project.',
-      'website' => '',
     ], $overrides ?? []);
+  }
+
+  #[Test]
+  public function contact_form_public_render_uses_hidden_cms_owned_form_check_field(): void
+  {
+    [$page, $block] = $this->createContactFormPage();
+    $formCheckName = app(ContactFormCheck::class)->fieldName($block);
+
+    $html = view('webblocks-cms::pages.partials.blocks.contact_form', [
+      'block' => $block->fresh(),
+      'page' => $page,
+      'errors' => new ViewErrorBag,
+    ])->render();
+
+    $this->assertStringContainsString('class="wb-form-check"', $html);
+    $this->assertStringContainsString('inert', $html);
+    $this->assertStringContainsString('aria-hidden="true"', $html);
+    $this->assertStringContainsString('name="_form_check_name"', $html);
+    $this->assertStringContainsString('name="'.$formCheckName.'"', $html);
+    $this->assertStringContainsString('tabindex="-1"', $html);
+    $this->assertStringContainsString('autocomplete="off"', $html);
+    $this->assertStringNotContainsString('style=', $html);
+    $this->assertStringNotContainsString('name="website"', $html);
+    $this->assertStringNotContainsString('contact-website-', $html);
+    $this->assertStringNotContainsString('>Website<', $html);
+    $this->assertStringNotContainsString('wb-public-contact-honeypot', $html);
+  }
+
+  #[Test]
+  public function cms_public_css_contains_form_check_offscreen_rules_in_root_and_package_assets(): void
+  {
+    foreach ([
+      base_path('public/cms/css/public.css'),
+      base_path('packages/webblocks-cms/public/cms/css/public.css'),
+    ] as $path) {
+      $css = File::get($path);
+
+      $this->assertStringContainsString('.wb-form-check', $css);
+      $this->assertStringContainsString('position: absolute', $css);
+      $this->assertStringContainsString('inset-inline-start: -10000px', $css);
+      $this->assertStringContainsString('width: 1px', $css);
+      $this->assertStringContainsString('height: 1px', $css);
+      $this->assertStringContainsString('overflow: hidden', $css);
+      $this->assertStringContainsString('opacity: 0', $css);
+      $this->assertStringContainsString('pointer-events: none', $css);
+      $this->assertStringNotContainsString('.wb-form-check { display: none', $css);
+    }
   }
 
   #[Test]
@@ -612,13 +664,14 @@ class ContactFormModuleTest extends TestCase
   }
 
   #[Test]
-  public function honeypot_submission_is_treated_as_success_without_persisting(): void
+  public function filled_generated_form_check_submission_is_treated_as_success_without_persisting(): void
   {
     Mail::fake();
     [, $block] = $this->createContactFormPage();
+    $formCheckName = app(ContactFormCheck::class)->fieldName($block);
 
     $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
-      'website' => 'https://spam.example.com',
+      $formCheckName => 'https://spam.example.com',
     ]));
 
     $response->assertStatus(302);
@@ -627,6 +680,24 @@ class ContactFormModuleTest extends TestCase
     $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
     $this->assertDatabaseCount('contact_messages', 0);
     Mail::assertNothingSent();
+  }
+
+  #[Test]
+  public function old_website_field_is_not_part_of_the_submission_contract(): void
+  {
+    Mail::fake();
+    [, $block] = $this->createContactFormPage();
+
+    $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
+      'website' => 'https://legacy.example.com',
+    ]))->assertRedirect(route('pages.show', ['slug' => 'contact'], false));
+
+    $this->assertDatabaseHas('contact_messages', [
+      'block_id' => $block->id,
+      'email' => 'taylor@example.com',
+      'status' => 'new',
+    ]);
+    Mail::assertSent(PackageContactMessageNotification::class);
   }
 
   #[Test]
@@ -1328,10 +1399,16 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('method="POST"', false);
     $response->assertSee('name="_token"', false);
     $response->assertSee('name="source_url" value="/p/contact"', false);
-    $response->assertSee('class="wb-public-contact-honeypot"', false);
-    $response->assertSee('name="website"', false);
+    $response->assertSee('class="wb-form-check"', false);
+    $response->assertSee('inert', false);
+    $response->assertSee('aria-hidden="true"', false);
+    $response->assertSee('name="_form_check_name"', false);
+    $response->assertSee('name="form_check_', false);
     $response->assertSee('tabindex="-1"', false);
     $response->assertSee('autocomplete="off"', false);
+    $response->assertDontSee('class="wb-public-contact-honeypot"', false);
+    $response->assertDontSee('name="website"', false);
+    $response->assertDontSee('>Website<', false);
   }
 
   #[Test]

@@ -41,7 +41,7 @@ class ContactMessageController extends Controller
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $fallbackUrl);
     $successMessage = $block->success_message ?? config('contact.success_message');
 
-    if ($payload['website'] !== '' || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
+    if ($payload['form_check_filled'] || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
       return redirect($sourceUrl)
         ->with('contact_form_success_block_id', $block->id)
         ->with('contact_form_success_message', $successMessage);

@@ -284,12 +284,13 @@ class InternalContentApiTest extends TestCase
     $this->assertSame(['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions'], $contactFormContract['shared_settings_fields']);
     $this->assertSame('/contact-messages', $contactFormContract['public_submit_endpoint']['path']);
     $this->assertSame('required for browser submissions', $contactFormContract['public_submit_endpoint']['csrf']);
-    $this->assertSame('website', $contactFormContract['spam_behavior']['honeypot_field']);
+    $this->assertSame('renderer-generated form_check_{token} field signed by _form_check_name', $contactFormContract['spam_behavior']['check_field']);
     $this->assertSame(['block recipient_email', 'site contact_recipient_email', 'CONTACT_RECIPIENT_EMAIL', 'MAIL_FROM_ADDRESS'], $contactFormContract['notification_behavior']['recipient_order']);
 
     $encoded = json_encode($response->json(), JSON_UNESCAPED_SLASHES);
 
     $this->assertIsString($encoded);
+    $this->assertStringNotContainsString('"website"', $encoded);
     $this->assertStringNotContainsString(base_path(), $encoded);
     $this->assertStringNotContainsString(storage_path(), $encoded);
     $this->assertStringNotContainsString(public_path(), $encoded);

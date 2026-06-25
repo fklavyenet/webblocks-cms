@@ -73,11 +73,14 @@ Optional field:
 
 - `subject`
 
-Hidden honeypot field:
+Renderer-generated anti-spam check field:
 
-- `website`
+- `_form_check_name` signed metadata
+- `form_check_{token}` generated check input
 
-Honeypot hits receive the same generic success behavior as a normal accepted submission, but they are not stored and do not trigger notification. Very fast automated submissions are handled the same way. Public visitors should not receive spam or delivery diagnostics.
+The renderer creates these fields automatically. Do not create them manually in content, raw HTML, or API payloads. The check field is not part of normal visitor input, and the old `website` field is no longer the public Contact Form contract.
+
+Filled check-field submissions receive the same generic success behavior as a normal accepted submission, but they are not stored and do not trigger notification. Very fast automated submissions are handled the same way. Public visitors should not receive spam or delivery diagnostics.
 
 ## Storage And Contact Messages Admin
 
@@ -105,14 +108,14 @@ Contact Messages also follows the shared admin listing behavior for selected bul
 
 Spam handling has two layers.
 
-The honeypot layer is immediate discard:
+The renderer-generated check-field layer is immediate discard:
 
-- the hidden `website` field should stay empty for normal visitors
-- filled honeypot submissions receive generic success
-- honeypot submissions are not stored
-- honeypot submissions do not trigger notification
+- the hidden generated `form_check_{token}` field should stay empty for normal visitors
+- filled check-field submissions receive generic success
+- check-field submissions are not stored
+- check-field submissions do not trigger notification
 
-Submissions that pass the honeypot can still be scored conservatively. Current examples of scoring signals include:
+Submissions that pass the generated check field can still be scored conservatively. Current examples of scoring signals include:
 
 - high link density or multiple links
 - commercial outreach language

@@ -147,7 +147,7 @@ Contact page:
 section -> hero + contact_form
 ```
 
-Use the native `contact_form` block for contact pages after discovery confirms the handle is available. Its visible copy is translated with `title`, `content`, `submit_label`, and `success_message`; shared settings are `recipient_email`, `send_email_notification`, and `store_submissions`. The renderer emits the native CSRF-protected public form, hidden `website` honeypot, and `/contact-messages` submit endpoint.
+Use the native `contact_form` block for contact pages after discovery confirms the handle is available. Its visible copy is translated with `title`, `content`, `submit_label`, and `success_message`; shared settings are `recipient_email`, `send_email_notification`, and `store_submissions`. The renderer emits the native CSRF-protected public form, CMS-owned hidden generated anti-spam check field, and `/contact-messages` submit endpoint. AI/operator tools should not create the check field manually and should not use Trusted HTML, raw forms, or `mailto:` as substitutes.
 
 ## Bad Structures
 

@@ -18,6 +18,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Add a feature inventory documentation page that maps CMS features to admin/public/API surfaces and documentation gaps.
 - Add user-facing Contact Forms and Contact Messages documentation covering native form blocks, submissions, spam handling, notifications, diagnostics, and AI/operator usage.
 
+## 1.32.163
+
+- Hide the native Contact Form anti-spam check field with CMS-owned public CSS and replace the old public `website` field contract with a renderer-generated signed `form_check_{token}` field.
+- Keep filled check-field and too-fast Contact Form submissions on the normal generic success path without storing Contact Messages or sending notifications.
+- Update Contact Form docs and Internal Content API metadata so AI/operator tools use the native `contact_form` block instead of raw forms or `mailto:` workarounds.
+
 ## 1.32.162
 
 - Add optional page-owned block publishing on Edit Page -> Overview while keeping normal page publish page-only by default.

@@ -442,7 +442,7 @@ Public pages now use explicit layout composition modes:
 - Translatable fields: `heading`, `intro_text`, `submit_label`, `success_message`
 - Shared fields: `recipient_email`, `send_email_notification`, `store_submissions`
 - Intended behavior: public submission stores the message first, then attempts synchronous email notification to the resolved recipient; admin views should show compact notification state and safe failure detail when delivery fails.
-- Public submit endpoint: native browser form `POST /contact-messages` with CSRF, hidden `website` honeypot, required `name`, `email`, and `message` validation, optional `subject`, and generic success behavior for honeypot hits.
+- Public submit endpoint: native browser form `POST /contact-messages` with CSRF, CMS-owned hidden generated anti-spam check field, required `name`, `email`, and `message` validation, optional `subject`, and generic success behavior for filled check-field submissions.
 - Notes: block recipient override wins first, then the current public site's `contact_recipient_email`, then `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as a last safe local fallback when no explicit contact recipient is configured.
 
 ### `video`

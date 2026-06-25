@@ -159,6 +159,18 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
+  public function release_artifact_includes_contact_form_check_public_css_in_package_assets(): void
+  {
+    $installedPackageRoot = $this->buildInstalledPackageSnapshot();
+    $publicCss = (string) file_get_contents($installedPackageRoot.'/public/cms/css/public.css');
+
+    $this->assertStringContainsString('.wb-form-check', $publicCss);
+    $this->assertStringContainsString('inset-inline-start: -10000px', $publicCss);
+    $this->assertStringContainsString('pointer-events: none', $publicCss);
+    $this->assertStringNotContainsString('.wb-form-check { display: none', $publicCss);
+  }
+
+  #[Test]
   public function native_release_zip_installs_bulk_listing_admin_javascript_at_composer_vendor_package_root(): void
   {
     $vendorPackageRoot = $this->buildNativeReleaseZipVendorPackageSnapshot();

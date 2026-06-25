@@ -1,6 +1,8 @@
 @php
     $hasTargetedErrors = $errors->any() && (int) old('block_id') === $block->id;
     $submitLabel = $block->submit_label ?? 'Send message';
+    $formCheck = app(\WebBlocks\Cms\Support\Contact\ContactFormCheck::class);
+    $formCheckName = $formCheck->fieldName($block);
 @endphp
 
 <section class="wb-card wb-public-contact-form-card" id="contact-form-{{ $block->id }}">
@@ -32,10 +34,11 @@
             <input type="hidden" name="page_id" value="{{ $page->id ?? $block->renderPageId() ?? $block->page_id }}">
             <input type="hidden" name="source_url" value="{{ request()->getRequestUri() }}">
             <input type="hidden" name="submitted_at" value="{{ now()->timestamp }}">
+            <input type="hidden" name="_form_check_name" value="{{ $formCheck->signedFieldName($block) }}">
 
-            <div class="wb-public-contact-honeypot" aria-hidden="true">
-                <label for="contact-website-{{ $block->id }}">Website</label>
-                <input id="contact-website-{{ $block->id }}" type="text" name="website" tabindex="-1" autocomplete="off">
+            <div class="wb-form-check" inert aria-hidden="true">
+                <label for="contact-form-check-{{ $block->id }}">Leave this field empty</label>
+                <input id="contact-form-check-{{ $block->id }}" type="text" name="{{ $formCheckName }}" tabindex="-1" autocomplete="off">
             </div>
 
             <div class="wb-grid wb-grid-2">

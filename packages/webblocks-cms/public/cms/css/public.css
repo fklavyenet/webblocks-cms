@@ -225,6 +225,16 @@
     margin-block-end: var(--wb-gallery-gap);
 }
 
+.wb-form-check {
+    position: absolute;
+    inset-inline-start: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .wb-gallery--masonry .wb-gallery-item > a {
     inline-size: 100%;
 }

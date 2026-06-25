@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Support\Contact\ContactFormCheck;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 
 class ContactMessageRequest extends FormRequest
@@ -22,7 +23,7 @@ class ContactMessageRequest extends FormRequest
       'email' => ['required', 'email:rfc', 'max:255'],
       'subject' => ['nullable', 'string', 'max:255'],
       'message' => ['required', 'string'],
-      'website' => ['nullable', 'string', 'max:255'],
+      '_form_check_name' => ['nullable', 'string', 'max:255'],
       'submitted_at' => ['required', 'integer'],
     ];
   }
@@ -39,7 +40,7 @@ class ContactMessageRequest extends FormRequest
       'email' => trim((string) $data['email']),
       'subject' => trim((string) ($data['subject'] ?? '')) ?: null,
       'message' => trim((string) $data['message']),
-      'website' => trim((string) ($data['website'] ?? '')),
+      'form_check_filled' => app(ContactFormCheck::class)->isFilled($this->all(), (int) $data['block_id']),
       'submitted_at' => (int) $data['submitted_at'],
     ];
   }
