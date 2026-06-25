@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/internal-content-api
+cms_title: Internal Content API
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/internal-content-api.md
+---
+
 # Internal Content API
 
 ## Purpose

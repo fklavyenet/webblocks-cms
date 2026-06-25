@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/contact-forms-and-messages
+cms_title: Contact Forms And Messages
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/contact-forms-and-messages.md
+---
+
 # Contact Forms And Messages
 
 Contact Form and Contact Messages are first-class WebBlocks CMS features. Use the native `contact_form` block for contact pages instead of Trusted HTML, raw form markup, or `mailto:` fallbacks.

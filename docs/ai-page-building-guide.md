@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/ai-page-building-guide
+cms_title: AI Page Building Guide
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/ai-page-building-guide.md
+---
+
 # AI Page Building Guide
 
 This guide defines the safe workflow for trusted AI/operator tools that build WebBlocks CMS pages through the Internal Content API. It is generic CMS product guidance. Do not add site-specific import, sync, or scraping behavior to CMS core.

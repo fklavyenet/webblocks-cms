@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/getting-started
+cms_title: Getting Started
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/getting-started.md
+---
+
 # Getting Started
 
 ## Log In To Admin

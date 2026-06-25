@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/core-concepts
+cms_title: Core Concepts
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/core-concepts.md
+---
+
 # Core Concepts
 
 WebBlocks CMS uses an explicit relational content model built around pages, layouts, slots, and blocks.

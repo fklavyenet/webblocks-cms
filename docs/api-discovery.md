@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/api-discovery
+cms_title: API Discovery
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/api-discovery.md
+---
+
 # API Discovery
 
 WebBlocks CMS exposes a discovery-first Content API for trusted AI and operator tools. An external tool should need only the CMS API base URL and a CMS API token to learn the available endpoints, schemas, examples, and safe content workflow.

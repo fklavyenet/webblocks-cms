@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/markdown-docs-to-cms-sync
+cms_title: Markdown Docs To CMS Sync
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/markdown-docs-to-cms-sync.md
+---
+
 # Markdown Docs To CMS Sync
 
 This document is an operational runbook for trusted AI/operator workflows that sync changed Markdown documentation files from the repository `docs/` folder into source-linked WebBlocks CMS documentation pages. It is documentation-only product guidance. It does not add a runtime sync engine, endpoint, migration, Artisan command, script, job, queue, database table, release process, or connection to any live target.
@@ -73,6 +83,8 @@ Metadata rules:
 - `cms_title` defaults to the first H1 or a title derived from the file name when absent.
 - the source hash is a SHA-256 hash of the Markdown source content used to detect changes.
 - missing `cms_sync` metadata means the file is skipped by normal update mode and can be reported for adoption planning.
+
+Initial adoption can be done as a docs-only metadata seeding step before any live CMS discovery or apply attempt. That step should add safe generic front matter to selected public documentation Markdown files so later plans can identify source ids, paths, locales, layouts, and titles without guessing.
 
 ## CMS Source Metadata
 

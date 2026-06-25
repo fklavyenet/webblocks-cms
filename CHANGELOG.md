@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Seed docs-only Docs to CMS source metadata front matter for the initial public documentation batch.
+
 ## 1.32.165
 
 - Keep Contact Messages notification status cells compact by removing list-level explanatory text and showing failed notification summaries only through a WebBlocks UI tooltip help icon.

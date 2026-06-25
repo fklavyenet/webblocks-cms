@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/feature-inventory
+cms_title: Feature Inventory
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/feature-inventory.md
+---
+
 # Feature Inventory
 
 This document is the source inventory for making WebBlocks CMS product features discoverable. It is a product and operational visibility inventory, not a runtime contract. Detailed technical contracts remain in the linked docs.

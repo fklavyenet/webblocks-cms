@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs
+cms_title: Documentation
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/index.md
+---
+
 # Documentation
 
 WebBlocks CMS documentation is organized around installation, day-to-day content work, public rendering, and development.
