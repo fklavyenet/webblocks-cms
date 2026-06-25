@@ -37,7 +37,7 @@ class PublicSearchTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('Alpha Title');
-    $response->assertSee('/p/alpha-title');
+    $response->assertSee('/alpha-title');
   }
 
   #[Test]
@@ -93,7 +93,7 @@ class PublicSearchTest extends TestCase
     $this->get('/tr/search?q=arama')
       ->assertOk()
       ->assertSee('Turkce Sonuc')
-      ->assertSee('/tr/p/turkce-sonuc');
+      ->assertSee('/tr/turkce-sonuc');
   }
 
   #[Test]
@@ -110,7 +110,7 @@ class PublicSearchTest extends TestCase
       ->assertJsonPath('count', 1)
       ->assertJsonPath('minimum_length', 2)
       ->assertJsonPath('results.0.title', 'Alpha Title')
-      ->assertJsonPath('results.0.url', '/p/alpha-title');
+      ->assertJsonPath('results.0.url', '/alpha-title');
   }
 
   #[Test]
@@ -176,7 +176,7 @@ class PublicSearchTest extends TestCase
     $response->assertJsonPath('query', 'alert(2)');
     $response->assertJsonPath('count', 1);
     $response->assertJsonPath('results.0.title', 'alert(2)');
-    $response->assertJsonPath('results.0.url', '/p/dangerous-title');
+    $response->assertJsonPath('results.0.url', '/dangerous-title');
     $this->assertIsString($response->json('results.0.excerpt'));
   }
 
@@ -251,7 +251,7 @@ class PublicSearchTest extends TestCase
     $campaignSite->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
     $this->pageWithText($campaignSite, $locale, $slotType, $plainTextType, 'Campaign Home', 'campaign-home', 'Campaign content');
 
-    $response = $this->get('http://campaign.example.test/p/campaign-home');
+    $response = $this->get('http://campaign.example.test/campaign-home');
 
     $response->assertOk();
     $response->assertSee('Search published content in Campaign Public Name.');

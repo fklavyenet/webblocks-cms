@@ -102,6 +102,7 @@ class InternalContentApiPresenter
       'layout' => $page->publicShellPreset(),
       'title' => $page->name,
       'slug' => $page->slug,
+      'source_sync' => $this->sourceSync($page),
       'translations' => $translations->map(fn ($translation) => [
         'id' => $translation->id,
         'locale_id' => $translation->locale_id,
@@ -257,6 +258,25 @@ class InternalContentApiPresenter
     };
 
     return $build(0);
+  }
+
+  private function sourceSync(Page $page): ?array
+  {
+    $settings = is_array($page->settings) ? $page->settings : [];
+    $sourceSync = $settings['source_sync'] ?? null;
+
+    if (! is_array($sourceSync)) {
+      return null;
+    }
+
+    return array_intersect_key($sourceSync, array_flip([
+      'type',
+      'source_id',
+      'source_path',
+      'source_sha256',
+      'managed_slots',
+      'last_synced_at',
+    ]));
   }
 
   private function decodeJson(mixed $value): mixed

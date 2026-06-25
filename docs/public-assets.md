@@ -24,6 +24,8 @@ CMS core assets are static package/runtime assets. The CMS runtime and release p
 
 The `/cms/...` URL namespace is reserved for these static CMS assets. It must not be reused as a CMS admin route prefix, alias, or redirect. The canonical CMS admin namespace is `/webadmin/...`, including `/webadmin/login` when package-owned CMS auth routes are active.
 
+Public page paths are canonical Page Translation paths such as `/contact` or `/docs/internal-content-api`. They must not claim `/cms/...`; that namespace remains static assets only. The old `/p/...` public page shape is a legacy redirect/alias and is not used for new canonical URLs.
+
 This separation protects common Nginx `try_files` deployments. A request to `/cms/` can match the physical `public/cms/` directory before Laravel receives the request, so CMS admin routing must not depend on `/cms`. The final admin-prefix design avoids the collision entirely and does not use a `public/cms/index.php` front-controller handoff; that file must remain absent from both install-root `public/cms/` and package `packages/webblocks-cms/public/cms/` assets.
 
 ## Site Handle Convention

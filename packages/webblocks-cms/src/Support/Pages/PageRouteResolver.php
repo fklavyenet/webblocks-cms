@@ -88,7 +88,7 @@ class PageRouteResolver
       return null;
     }
 
-    return $this->applyLocalePrefix($translation->path, $resolvedLocale);
+    return $this->applyLocalePrefix($this->canonicalPublicPath($translation), $resolvedLocale);
   }
 
   public function urlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
@@ -152,6 +152,11 @@ class PageRouteResolver
 
   public function findPublishedPage(Request $request, ?string $slug = null): ?Page
   {
+    return $this->findPublishedPageByPath($request, $slug === null ? '/' : PageTranslation::pathFromSlug($slug));
+  }
+
+  public function findPublishedPageByPath(Request $request, string $path): ?Page
+  {
     $site = $this->resolvedSite($request)->site;
     $localeCode = Locale::normalizeCode((string) $request->route('locale'));
     $locale = $localeCode !== null
@@ -166,19 +171,27 @@ class PageRouteResolver
       return null;
     }
 
-    $path = $slug === null ? '/' : PageTranslation::pathFromSlug($slug);
+    try {
+      $path = PagePath::canonicalize($path);
+    } catch (\InvalidArgumentException) {
+      return null;
+    }
+
+    if (PagePath::isReserved($path)) {
+      return null;
+    }
+
+    $legacyPath = $path !== '/' && ! str_starts_with($path, '/p/')
+      ? '/p'.$path
+      : null;
 
     $translation = PageTranslation::query()
       ->with(['page', 'locale'])
       ->where('site_id', $site->id)
       ->where('locale_id', $locale->id)
-      ->where(function ($query) use ($path, $slug) {
-        $query->where('path', $path);
-
-        if ($slug !== null) {
-          $query->orWhere('slug', $slug);
-        }
-      })
+      ->where(fn ($query) => $query
+        ->where('path', $path)
+        ->when($legacyPath, fn ($legacyQuery) => $legacyQuery->orWhere('path', $legacyPath)))
       ->whereHas('page', fn ($query) => $query
         ->where('site_id', $site->id)
         ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
@@ -194,6 +207,18 @@ class PageRouteResolver
     $page->setRelation('site', $page->site ?? $site);
 
     return $page;
+  }
+
+  public function legacyRedirectPath(Request $request, string $legacyPath): ?string
+  {
+    $path = '/'.ltrim($legacyPath, '/');
+    $page = $this->findPublishedPageByPath($request, $path);
+
+    if (! $page) {
+      return null;
+    }
+
+    return $this->pathFor($page, $request->route('locale'), $page->site);
   }
 
   public function translationFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?PageTranslation
@@ -275,5 +300,16 @@ class PageRouteResolver
     return $normalizedPath === '/'
       ? '/'.$locale->code
       : '/'.$locale->code.$normalizedPath;
+  }
+
+  private function canonicalPublicPath(PageTranslation $translation): string
+  {
+    $path = $translation->path ?: PageTranslation::pathFromSlug($translation->slug);
+
+    if (str_starts_with($path, '/p/')) {
+      return '/'.ltrim(substr($path, 3), '/');
+    }
+
+    return $path;
   }
 }

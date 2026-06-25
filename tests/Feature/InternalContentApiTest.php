@@ -801,6 +801,156 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function validate_and_apply_preserve_canonical_slash_page_paths(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $payload = $this->validPlanPayload([
+      'plan' => [
+        'page' => [
+          'title' => 'Internal Content API',
+          'path' => 'docs/internal-content-api/',
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertOk()
+      ->assertJsonPath('normalized_plan.page.slug', 'internal-content-api')
+      ->assertJsonPath('normalized_plan.page.path', '/docs/internal-content-api');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $payload)
+      ->assertCreated()
+      ->assertJsonPath('data.page.translations.0.path', '/docs/internal-content-api');
+
+    $this->assertDatabaseHas('page_translations', [
+      'slug' => 'internal-content-api',
+      'path' => '/docs/internal-content-api',
+    ]);
+    $this->assertDatabaseMissing('page_translations', ['path' => '/p/docsinternal-content-api']);
+  }
+
+  #[Test]
+  public function apply_rejects_reserved_and_unsafe_canonical_paths(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->validPlanPayload([
+        'plan' => [
+          'page' => ['path' => '/webadmin/api'],
+        ],
+      ]))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Page path is reserved by CMS or host routes.']);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->validPlanPayload([
+        'plan' => [
+          'page' => ['path' => '/docs/../x'],
+        ],
+      ]))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Page path contains an unsafe segment.']);
+  }
+
+  #[Test]
+  public function existing_page_conflicts_are_detected_by_canonical_path(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $site = $this->defaultSite();
+    $locale = $this->defaultLocale();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    PageTranslation::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'locale_id' => $locale->id,
+      'name' => 'Existing Docs',
+      'slug' => 'internal-content-api',
+      'path' => '/docs/internal-content-api',
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->validPlanPayload([
+        'plan' => [
+          'page' => ['path' => '/docs/internal-content-api'],
+        ],
+      ]))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'A page already exists at this path for the selected site and locale.']);
+  }
+
+  #[Test]
+  public function existing_draft_page_replacement_accepts_canonical_expected_path(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page] = $this->createDraftPageWithMainAndSharedChrome('/docs/internal-content-api');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->replacementPlanPayload($page, [
+        'plan' => [
+          'page' => ['expected_path' => '/docs/internal-content-api'],
+        ],
+      ]))
+      ->assertCreated()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('data.page.translations.0.path', '/docs/internal-content-api');
+  }
+
+  #[Test]
+  public function source_sync_metadata_is_validated_persisted_and_readable(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $sourceSync = $this->sourceSyncPayload();
+
+    $create = $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $this->validPlanPayload([
+        'plan' => [
+          'page' => [
+            'settings' => [
+              'source_sync' => $sourceSync,
+            ],
+          ],
+        ],
+      ]))
+      ->assertCreated()
+      ->assertJsonPath('data.page.source_sync.source_path', 'docs/internal-content-api.md');
+
+    $pageId = $create->json('data.page.id');
+    $page = Page::query()->findOrFail($pageId);
+
+    $this->assertSame('webblocks-cms:docs/internal-content-api.md', data_get($page->settings, 'source_sync.source_id'));
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/pages/'.$pageId)
+      ->assertOk()
+      ->assertJsonPath('page.source_sync.source_sha256', $sourceSync['source_sha256'])
+      ->assertJsonMissingPath('page.settings');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->validPlanPayload([
+        'plan' => [
+          'page' => [
+            'settings' => [
+              'source_sync' => [
+                ...$sourceSync,
+                'local_path' => base_path(),
+              ],
+            ],
+          ],
+        ],
+      ]))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'source_sync contains unsupported fields.']);
+  }
+
+  #[Test]
   public function new_phase_two_endpoints_keep_database_token_json_guards(): void
   {
     $this->getJson('/webadmin/api/navigation-menus')
@@ -1308,7 +1458,19 @@ class InternalContentApiTest extends TestCase
     return array_replace_recursive($base, $overrides);
   }
 
-  private function createDraftPageWithMainAndSharedChrome(): array
+  private function sourceSyncPayload(): array
+  {
+    return [
+      'type' => 'markdown_documentation',
+      'source_id' => 'webblocks-cms:docs/internal-content-api.md',
+      'source_path' => 'docs/internal-content-api.md',
+      'source_sha256' => hash('sha256', 'docs internal content api'),
+      'managed_slots' => ['main'],
+      'last_synced_at' => '2026-06-25T00:00:00Z',
+    ];
+  }
+
+  private function createDraftPageWithMainAndSharedChrome(string $path = '/p/existing-contact'): array
   {
     $site = $this->defaultSite();
     $locale = $this->defaultLocale();
@@ -1323,8 +1485,8 @@ class InternalContentApiTest extends TestCase
       'site_id' => $site->id,
       'locale_id' => $locale->id,
       'name' => 'Existing Contact',
-      'slug' => 'existing-contact',
-      'path' => '/p/existing-contact',
+      'slug' => trim(basename($path), '/') ?: 'existing-contact',
+      'path' => $path,
     ]);
 
     app(PageLayoutSlotSyncer::class)->seedInitialSlots($page, 'default');

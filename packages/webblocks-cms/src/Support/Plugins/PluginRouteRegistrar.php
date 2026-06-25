@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginRouteFallbackController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginSettingsController;
 use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
+use WebBlocks\Cms\Http\Middleware\ServeCmsPageBeforeRedirectCatchAll;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\Locale;
 
@@ -200,6 +201,7 @@ class PluginRouteRegistrar
       'webblocks-ui',
       'p',
       'search',
+      'search\.json',
       Locale::routePattern(),
     ];
 
@@ -207,6 +209,7 @@ class PluginRouteRegistrar
       'webblocksRedirectManagerPath',
       '^(?!(?:'.implode('|', $reservedPrefixes).')(?:/|$)).+',
     );
+    $redirectManagerRoute->middleware(ServeCmsPageBeforeRedirectCatchAll::class);
   }
 
   private function registerDefaultSettingsRoute(PluginDefinition $plugin): void

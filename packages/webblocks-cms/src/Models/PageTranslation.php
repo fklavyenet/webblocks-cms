@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
@@ -73,7 +74,9 @@ class PageTranslation extends Model
       }
 
       $translation->site_id = $siteId;
-      $translation->path = self::pathFromSlug((string) $translation->slug);
+      $translation->path = $translation->path
+        ? PagePath::canonicalize((string) $translation->path)
+        : self::pathFromSlug((string) $translation->slug);
     });
 
     static::saved(function (self $translation): void {
@@ -91,7 +94,7 @@ class PageTranslation extends Model
 
   public static function pathFromSlug(string $slug): string
   {
-    return $slug === 'home' ? '/' : '/p/'.$slug;
+    return PagePath::fromSlug($slug);
   }
 
   public function page(): BelongsTo

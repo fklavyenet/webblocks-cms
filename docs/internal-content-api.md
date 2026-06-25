@@ -193,6 +193,8 @@ POST /webadmin/api/content/apply
 
 Use `mode: replace_existing_draft_page` to replace one or more page-owned slots on an existing draft page. The operation requires `content.validate` for validate and `content.apply` for apply. It does not require `pages.delete`, because it is not a general page delete operation.
 
+Page Translation `path` is the canonical public URL. New plans should use paths such as `/contact`, `/features`, or `/docs/internal-content-api`; `/p/...` is legacy compatibility only. Slash-bearing paths are normalized segment by segment, so `/docs/internal-content-api/` becomes `/docs/internal-content-api` and is not collapsed into `docsinternal-content-api`. Reserved route areas such as `/webadmin`, `/webadmin/api`, `/cms`, `/search`, `/search.json`, `/contact-messages`, `/install`, and host auth routes cannot be created as public page paths.
+
 Example:
 
 ```json
@@ -203,7 +205,7 @@ Example:
     "locale": "en",
     "page": {
       "id": 9,
-      "expected_path": "/p/contact",
+      "expected_path": "/contact",
       "status": "draft"
     },
     "replace_slots": {
@@ -224,6 +226,7 @@ Rules:
 
 - target page must be in `draft` status
 - `expected_path` or `expected_updated_at` is required
+- `expected_path` uses the canonical public Page Translation path, not a `/p/...` legacy alias
 - the target page must belong to the requested site and locale must be enabled for that site
 - each slot must exist on the page and use page-owned blocks
 - Shared Slot-backed slots are rejected instead of being cleared
@@ -231,6 +234,29 @@ Rules:
 - old blocks are removed and new blocks are written in one transaction
 - page revisions are captured before and after apply
 - no publish, media fetch/import, broad delete, or Shared Slot assignment clearing happens
+
+### Source Sync Metadata
+
+Content plans may persist a limited, secret-safe `source_sync` object for AI/operator docs sync workflows. Arbitrary page settings are rejected. The accepted shape is:
+
+```json
+{
+  "page": {
+    "settings": {
+      "source_sync": {
+        "type": "markdown_documentation",
+        "source_id": "webblocks-cms:docs/internal-content-api.md",
+        "source_path": "docs/internal-content-api.md",
+        "source_sha256": "64-character-lowercase-sha256",
+        "managed_slots": ["main"],
+        "last_synced_at": "2026-06-25T00:00:00Z"
+      }
+    }
+  }
+}
+```
+
+Apply persists this metadata to page settings, and page list/detail API responses expose the same allowlisted `source_sync` fields for future matching. Do not include tokens, environment values, local/server absolute paths, or other secrets.
 
 ### Explicit Publish Endpoints
 

@@ -40,6 +40,8 @@ CMS admin prefixes must never reuse a physical public asset directory segment. I
 
 The final solution avoids the route/filesystem collision entirely instead of relying on a `public/cms/index.php` handoff or front-controller bridge. `public/cms/index.php` must stay absent from both root public assets and package public assets.
 
+Public pages use Page Translation `path` as the canonical URL and may include slash-bearing paths such as `/docs/internal-content-api`. Public page catchalls must continue to leave `/webadmin`, `/webadmin/api`, `/cms`, `/search`, `/search.json`, `/contact-messages`, `/install`, and host auth routes to their owning route files. `/p/...` is legacy compatibility only and must not be generated as a new canonical URL.
+
 ## Admin Resource And Action URLs
 
 CMS browser admin routes use `/webadmin`, while `/webadmin/api` is reserved for token-protected JSON APIs. Resource URLs should be predictable:

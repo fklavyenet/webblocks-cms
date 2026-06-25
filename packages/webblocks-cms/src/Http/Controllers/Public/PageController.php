@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
@@ -34,15 +35,25 @@ class PageController extends Controller
     return $this->renderPage($request, $homePage);
   }
 
-  public function show(Request $request, string $localeOrSlug, ?string $slug = null): View
+  public function show(Request $request, string $localeOrPath, ?string $path = null): View
   {
-    $resolvedSlug = $slug ?? $localeOrSlug;
+    $resolvedPath = $path ?? $localeOrPath;
 
-    $page = $this->routeResolver->findPublishedPage($request, $resolvedSlug);
+    $page = $this->routeResolver->findPublishedPageByPath($request, $resolvedPath);
 
     abort_unless($page, 404);
 
     return $this->renderPage($request, $page);
+  }
+
+  public function legacy(Request $request, string $localeOrPath, ?string $path = null): RedirectResponse
+  {
+    $resolvedPath = $path ?? $localeOrPath;
+    $canonicalPath = $this->routeResolver->legacyRedirectPath($request, $resolvedPath);
+
+    abort_unless($canonicalPath, 404);
+
+    return redirect($canonicalPath, 301);
   }
 
   private function renderPage(Request $request, Page $page): View

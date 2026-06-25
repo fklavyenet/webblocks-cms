@@ -77,7 +77,7 @@ cms_source_id: webblocks-cms:docs/contact-forms-and-messages.md
 Metadata rules:
 
 - `cms_source_id` is the stable source identity.
-- `cms_path` is the intended CMS URL path.
+- `cms_path` is the canonical Page Translation path such as `/docs/internal-content-api`; do not prefix new docs pages with `/p`.
 - `cms_layout` defaults to `docs` when absent.
 - `cms_locale` defaults to `en` when absent.
 - `cms_title` defaults to the first H1 or a title derived from the file name when absent.
@@ -98,14 +98,14 @@ Recommended page settings shape:
     "type": "markdown_documentation",
     "source_id": "webblocks-cms:docs/contact-forms-and-messages.md",
     "source_path": "docs/contact-forms-and-messages.md",
-    "source_sha256": "sha256-value",
+    "source_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     "managed_slots": ["main"],
     "last_synced_at": "2026-06-24T00:00:00Z"
   }
 }
 ```
 
-The source path is descriptive. The stable identity is `source_id`, and the change detector is `source_sha256`.
+The source path is descriptive. The stable identity is `source_id`, and the change detector is `source_sha256`. The Internal Content API accepts this object only through the allowlisted `source_sync` page setting, persists it after apply, and returns the same safe fields in page list/detail responses for matching. Do not store tokens, environment values, local absolute paths, server paths, or other secrets.
 
 ## Page Matching
 
@@ -113,10 +113,10 @@ The matching order must be deterministic:
 
 1. Look for a CMS page with matching `source_sync.source_id` or equivalent `cms_source_id` metadata.
 2. If found, compare `source_sha256`.
-3. If no source-id match exists, look for a page at `cms_path`.
+3. If no source-id match exists, look for a page at canonical `cms_path`.
 4. If the path exists without matching source metadata, report an adoption or conflict review case.
 5. If the path belongs to another `source_id`, report a conflict and stop for that file.
-6. If no page exists at the path, plan `create_draft_page`.
+6. If no page exists at the path, plan `create_draft_page` with `page.path` set to canonical `cms_path`.
 
 Do not use content comparison as the primary match mechanism. Match by stable source identity first, then by path only for adoption or conflict review.
 

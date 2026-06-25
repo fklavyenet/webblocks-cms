@@ -67,7 +67,7 @@ class PageTranslationRequest extends FormRequest
         'required',
         'string',
         'max:255',
-        'regex:/^(?:\/|\/p\/[a-z0-9]+(?:-[a-z0-9]+)*)$/',
+        'regex:/^(?:\/|\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)$/',
         Rule::unique(PageTranslation::class, 'path')
           ->ignore($translation?->id)
           ->where(fn ($query) => $query

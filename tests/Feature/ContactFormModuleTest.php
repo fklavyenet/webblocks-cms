@@ -83,7 +83,7 @@ class ContactFormModuleTest extends TestCase
     ]);
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'Contact', 'slug' => 'contact', 'path' => '/p/contact'],
+      ['site_id' => $site->id, 'name' => 'Contact', 'slug' => 'contact', 'path' => '/contact'],
     );
 
     PageSlot::create([
@@ -323,13 +323,13 @@ class ContactFormModuleTest extends TestCase
     [, $block] = $this->createContactFormPage();
 
     $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
-      'source_url' => '/p/contact#contact-form-'.$block->id,
+      'source_url' => '/contact#contact-form-'.$block->id,
     ]));
 
     $location = (string) $response->baseResponse->headers->get('Location');
 
-    $response->assertRedirect('/p/contact');
-    $this->assertSame('/p/contact', parse_url($location, PHP_URL_PATH));
+    $response->assertRedirect('/contact');
+    $this->assertSame('/contact', parse_url($location, PHP_URL_PATH));
     $this->assertNull(parse_url($location, PHP_URL_FRAGMENT));
     $this->assertDatabaseHas('contact_messages', [
       'block_id' => $block->id,
@@ -347,13 +347,13 @@ class ContactFormModuleTest extends TestCase
     [, $block] = $this->createContactFormPage();
 
     $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
-      'source_url' => 'https://attacker.example.test/p/contact#contact-form-'.$block->id,
+      'source_url' => 'https://attacker.example.test/contact#contact-form-'.$block->id,
     ]));
 
     $location = (string) $response->baseResponse->headers->get('Location');
 
     $response->assertRedirect();
-    $this->assertSame('/p/contact', parse_url($location, PHP_URL_PATH));
+    $this->assertSame('/contact', parse_url($location, PHP_URL_PATH));
     $this->assertNull(parse_url($location, PHP_URL_FRAGMENT));
     $this->assertNotSame('attacker.example.test', parse_url($location, PHP_URL_HOST));
   }
@@ -381,7 +381,7 @@ class ContactFormModuleTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'Contact', 'slug' => 'contact', 'path' => '/p/contact'],
+      ['site_id' => $site->id, 'name' => 'Contact', 'slug' => 'contact', 'path' => '/contact'],
     );
 
     $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -499,7 +499,7 @@ class ContactFormModuleTest extends TestCase
     $this->assertStringContainsString('Submission details', $html);
     $this->assertStringContainsString('F Klavye', $html);
     $this->assertStringContainsString('Contact', $html);
-    $this->assertStringContainsString('/p/contact', $html);
+    $this->assertStringContainsString('/contact', $html);
     $this->assertStringContainsString('Technical details', $html);
     $this->assertStringContainsString('203.0.113.10', $html);
     $this->assertStringContainsString('FeatureTest Browser', $html);
@@ -740,7 +740,7 @@ class ContactFormModuleTest extends TestCase
 
     $response->assertStatus(302);
     $response->assertSessionHas('contact_form_success_block_id', $block->id);
-    $this->assertSame('/p/contact', parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_PATH));
+    $this->assertSame('/contact', parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_PATH));
     $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
     $this->assertDatabaseCount('contact_messages', 0);
     Mail::assertNothingSent();
@@ -1318,7 +1318,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('taylor@example.com');
     $response->assertSee('Submission details');
     $response->assertSee('Path:');
-    $response->assertSee('/p/contact');
+    $response->assertSee('/contact');
     $response->assertSee('Source URL:');
     $response->assertSee('Open source');
     $response->assertSee(route('pages.show', $page->slug), false);
@@ -1490,7 +1490,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee(route('contact-messages.store'), false);
     $response->assertSee('method="POST"', false);
     $response->assertSee('name="_token"', false);
-    $response->assertSee('name="source_url" value="/p/contact"', false);
+    $response->assertSee('name="source_url" value="/contact"', false);
     $response->assertSee('class="wb-form-check"', false);
     $response->assertSee('inert', false);
     $response->assertSee('aria-hidden="true"', false);
@@ -1693,7 +1693,7 @@ class ContactFormModuleTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Iletisim',
       'slug' => 'iletisim',
-      'path' => '/tr/p/iletisim',
+      'path' => '/iletisim',
     ]);
 
     $block->contactFormTranslations()->create([
@@ -1716,7 +1716,7 @@ class ContactFormModuleTest extends TestCase
       ->assertOk()
       ->assertSee('Thanks for your message. We will get back to you soon.');
 
-    $this->get('/tr/p/iletisim')
+    $this->get('/tr/iletisim')
       ->assertOk()
       ->assertSee('Mesaj gonder');
 
@@ -1724,7 +1724,7 @@ class ContactFormModuleTest extends TestCase
       'contact_form_success_block_id' => $block->id,
       'contact_form_success_message' => 'Tesekkurler.',
     ])
-      ->get('/tr/p/iletisim')
+      ->get('/tr/iletisim')
       ->assertOk()
       ->assertSee('Tesekkurler.');
 
@@ -1811,7 +1811,7 @@ class ContactFormModuleTest extends TestCase
 
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
 
-    $this->get('http://primary.example.test/tr/p/iletisim')
+    $this->get('http://primary.example.test/tr/iletisim')
       ->assertOk()
       ->assertSee('Bize ulasin')
       ->assertSee('Mesaj gonder');
@@ -1820,7 +1820,7 @@ class ContactFormModuleTest extends TestCase
       'contact_form_success_block_id' => $block->id,
       'contact_form_success_message' => 'Tesekkurler.',
     ])
-      ->get('http://primary.example.test/tr/p/iletisim')
+      ->get('http://primary.example.test/tr/iletisim')
       ->assertOk()
       ->assertSee('Tesekkurler.');
   }

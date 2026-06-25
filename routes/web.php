@@ -24,6 +24,6 @@ Route::middleware(['install.required', 'auth'])->group(function () {
 
 require base_path('packages/webblocks-cms/routes/admin.php');
 
-require base_path('packages/webblocks-cms/routes/public.php');
-
 require __DIR__.'/auth.php';
+
+require base_path('packages/webblocks-cms/routes/public.php');

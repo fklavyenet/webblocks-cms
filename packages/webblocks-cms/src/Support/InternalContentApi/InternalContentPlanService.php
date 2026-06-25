@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
+use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 
 class InternalContentPlanService
@@ -117,6 +118,7 @@ class InternalContentPlanService
           }
         }
 
+        $this->persistPageSourceSync($page, $plan['page_settings']);
         $page->touch();
 
         $page = $page->fresh([
@@ -161,7 +163,10 @@ class InternalContentPlanService
           'page_type' => Page::TYPE_DEFAULT,
           'status' => Page::STATUS_DRAFT,
           'settings' => Page::supportsSettingsColumn()
-            ? ['public_shell' => $plan['layout']['handle']]
+            ? array_filter([
+              'public_shell' => $plan['layout']['handle'],
+              'source_sync' => $plan['page_settings']['source_sync'] ?? null,
+            ], fn ($value) => $value !== null)
             : null,
         ]);
 
@@ -171,7 +176,7 @@ class InternalContentPlanService
           'locale_id' => $plan['locale']['id'],
           'name' => $plan['page']['title'],
           'slug' => $plan['page']['slug'],
-          'path' => PageTranslation::pathFromSlug($plan['page']['slug']),
+          'path' => $plan['page']['path'],
         ]);
 
         $this->slotSyncer->seedInitialSlots($page, $plan['layout']['handle']);
@@ -318,8 +323,22 @@ class InternalContentPlanService
     $locale = $this->resolveLocale($input, $site, $errors);
     $layout = $hasPagePlan ? $this->resolveLayout($input, $errors) : null;
     $title = $hasPagePlan ? trim((string) data_get($input, 'page.title', data_get($input, 'title', ''))) : '';
-    $path = $hasPagePlan ? trim((string) data_get($input, 'page.path', data_get($input, 'path', ''))) : '';
-    $slug = $hasPagePlan ? $this->slugFromPath($path) : '';
+    $rawPath = $hasPagePlan ? trim((string) data_get($input, 'page.path', data_get($input, 'path', ''))) : '';
+    $path = '';
+    $slug = '';
+
+    if ($hasPagePlan && $rawPath !== '') {
+      try {
+        $path = PagePath::canonicalize($rawPath);
+        $slug = PagePath::slugFromPath($path);
+
+        if (PagePath::isReserved($path)) {
+          $errors[] = $this->error('plan.page.path', 'Page path is reserved by CMS or host routes.');
+        }
+      } catch (\InvalidArgumentException $exception) {
+        $errors[] = $this->error('plan.page.path', $exception->getMessage());
+      }
+    }
 
     if ($hasPagePlan && $title === '') {
       $errors[] = $this->error('plan.page.title', 'Page title is required.');
@@ -329,10 +348,10 @@ class InternalContentPlanService
       $errors[] = $this->error('plan.page.path', 'Page path is required.');
     }
 
-    if ($hasPagePlan && $site && $locale && $slug !== '' && PageTranslation::query()
+    if ($hasPagePlan && $site && $locale && $path !== '' && PageTranslation::query()
       ->where('site_id', $site->id)
       ->where('locale_id', $locale->id)
-      ->where('slug', $slug)
+      ->where('path', $path)
       ->exists()) {
       $errors[] = $this->error('plan.page.path', 'A page already exists at this path for the selected site and locale.');
     }
@@ -341,6 +360,7 @@ class InternalContentPlanService
     $navigationMenus = $this->normalizeNavigationMenus($input, $site, $errors);
     $sharedSlots = $this->normalizeSharedSlots($input, $site, $errors, $warnings);
     $pageSlotSharedSlots = $this->normalizePageSlotSharedSlots($input, $site, $hasPagePlan, $errors);
+    $pageSettings = $hasPagePlan ? $this->normalizePageSettings($input, $errors) : [];
 
     $normalized = [
       'mode' => 'create_draft_page',
@@ -349,9 +369,10 @@ class InternalContentPlanService
       'layout' => $layout ? ['id' => $layout->id, 'handle' => $layout->handle] : null,
       'replace_page' => null,
       'replace_slots' => [],
+      'page_settings' => $pageSettings,
       'page' => $hasPagePlan ? [
         'title' => $title,
-        'path' => $slug !== '' ? PageTranslation::pathFromSlug($slug) : '',
+        'path' => $path,
         'slug' => $slug,
         'status' => Page::STATUS_DRAFT,
       ] : null,
@@ -403,7 +424,15 @@ class InternalContentPlanService
 
     $locale = $this->resolveReplacementLocale($input, $page, $site, $errors);
 
-    $expectedPath = trim((string) data_get($input, 'page.expected_path', data_get($input, 'expected_path', '')));
+    $rawExpectedPath = trim((string) data_get($input, 'page.expected_path', data_get($input, 'expected_path', '')));
+    $expectedPath = '';
+    if ($rawExpectedPath !== '') {
+      try {
+        $expectedPath = PagePath::canonicalize($rawExpectedPath);
+      } catch (\InvalidArgumentException $exception) {
+        $errors[] = $this->error('plan.page.expected_path', $exception->getMessage());
+      }
+    }
     if ($page && $locale && $expectedPath !== '') {
       $translation = $page->translations->first(fn (PageTranslation $translation) => (int) $translation->locale_id === (int) $locale->id);
       $actualPath = $translation?->path ?: PageTranslation::pathFromSlug($translation?->slug ?? $page->slug ?? '');
@@ -429,12 +458,14 @@ class InternalContentPlanService
     }
 
     $replaceSlots = $this->normalizeReplacementSlots($input, $page, $errors, $warnings);
+    $pageSettings = $this->normalizePageSettings($input, $errors);
 
     $normalized = [
       'mode' => 'replace_existing_draft_page',
       'site' => $site ? ['id' => $site->id, 'handle' => $site->handle] : null,
       'locale' => $locale ? ['id' => $locale->id, 'code' => $locale->code] : null,
       'layout' => null,
+      'page_settings' => $pageSettings,
       'replace_page' => $page ? [
         'id' => $page->id,
         'status' => $page->status,
@@ -899,16 +930,151 @@ class InternalContentPlanService
     }
   }
 
-  private function slugFromPath(string $path): string
+  private function normalizePageSettings(array $input, array &$errors): array
   {
-    $path = trim($path);
-    $path = trim($path, '/');
+    $settings = data_get($input, 'page.settings', []);
+    $sourceSync = data_get($input, 'page.source_sync', data_get($input, 'source_sync'));
 
-    if ($path === '') {
-      return 'home';
+    if ($settings !== [] && $settings !== null) {
+      if (! is_array($settings)) {
+        $errors[] = $this->error('plan.page.settings', 'Page settings must be an object.');
+
+        return [];
+      }
+
+      $extraKeys = array_diff(array_keys($settings), ['source_sync']);
+      if ($extraKeys !== []) {
+        $errors[] = $this->error('plan.page.settings', 'Only source_sync page settings are supported.');
+      }
+
+      if (array_key_exists('source_sync', $settings)) {
+        $sourceSync = $settings['source_sync'];
+      }
     }
 
-    return Str::slug($path);
+    if ($sourceSync === null || $sourceSync === '') {
+      return [];
+    }
+
+    if (! is_array($sourceSync)) {
+      $errors[] = $this->error('plan.page.settings.source_sync', 'source_sync must be an object.');
+
+      return [];
+    }
+
+    $allowedKeys = ['type', 'source_id', 'source_path', 'source_sha256', 'managed_slots', 'last_synced_at'];
+    $extraKeys = array_diff(array_keys($sourceSync), $allowedKeys);
+    if ($extraKeys !== []) {
+      $errors[] = $this->error('plan.page.settings.source_sync', 'source_sync contains unsupported fields.');
+    }
+
+    $normalized = [
+      'type' => $this->safeSourceSyncString($sourceSync['type'] ?? null, 'type', $errors, 80),
+      'source_id' => $this->safeSourceSyncString($sourceSync['source_id'] ?? null, 'source_id', $errors, 180),
+      'source_path' => $this->safeSourceSyncPath($sourceSync['source_path'] ?? null, $errors),
+      'source_sha256' => $this->safeSourceSyncSha((string) ($sourceSync['source_sha256'] ?? ''), $errors),
+      'managed_slots' => $this->safeSourceSyncSlots($sourceSync['managed_slots'] ?? null, $errors),
+      'last_synced_at' => $this->safeSourceSyncTimestamp($sourceSync['last_synced_at'] ?? null, $errors),
+    ];
+
+    return in_array(null, $normalized, true) ? [] : ['source_sync' => $normalized];
+  }
+
+  private function persistPageSourceSync(Page $page, array $pageSettings): void
+  {
+    if (! Page::supportsSettingsColumn() || ! array_key_exists('source_sync', $pageSettings)) {
+      return;
+    }
+
+    $settings = is_array($page->settings) ? $page->settings : [];
+    $settings['source_sync'] = $pageSettings['source_sync'];
+    $page->settings = $settings;
+  }
+
+  private function safeSourceSyncString(mixed $value, string $field, array &$errors, int $max): ?string
+  {
+    $value = is_string($value) ? trim($value) : '';
+
+    if ($value === '' || mb_strlen($value) > $max || preg_match('/[\x00-\x1F\x7F]/', $value)) {
+      $errors[] = $this->error('plan.page.settings.source_sync.'.$field, 'source_sync '.$field.' is invalid.');
+
+      return null;
+    }
+
+    if (preg_match('/(token|secret|password|\\.env)/i', $value)) {
+      $errors[] = $this->error('plan.page.settings.source_sync.'.$field, 'source_sync '.$field.' must not contain secret-like values.');
+
+      return null;
+    }
+
+    return $value;
+  }
+
+  private function safeSourceSyncPath(mixed $value, array &$errors): ?string
+  {
+    $value = $this->safeSourceSyncString($value, 'source_path', $errors, 240);
+
+    if ($value === null) {
+      return null;
+    }
+
+    if (str_starts_with($value, '/') || str_contains($value, '\\') || str_contains($value, '..')) {
+      $errors[] = $this->error('plan.page.settings.source_sync.source_path', 'source_sync source_path must be a relative documentation path.');
+
+      return null;
+    }
+
+    return $value;
+  }
+
+  private function safeSourceSyncSha(string $value, array &$errors): ?string
+  {
+    $value = trim($value);
+
+    if (! preg_match('/^[a-f0-9]{64}$/', $value)) {
+      $errors[] = $this->error('plan.page.settings.source_sync.source_sha256', 'source_sync source_sha256 must be a lowercase SHA-256 hex value.');
+
+      return null;
+    }
+
+    return $value;
+  }
+
+  private function safeSourceSyncSlots(mixed $value, array &$errors): ?array
+  {
+    if (! is_array($value) || $value === []) {
+      $errors[] = $this->error('plan.page.settings.source_sync.managed_slots', 'source_sync managed_slots must be a non-empty array.');
+
+      return null;
+    }
+
+    $slots = [];
+    foreach (array_values($value) as $slot) {
+      $slot = is_string($slot) ? trim($slot) : '';
+
+      if (! preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slot)) {
+        $errors[] = $this->error('plan.page.settings.source_sync.managed_slots', 'source_sync managed_slots contains an invalid slot.');
+
+        return null;
+      }
+
+      $slots[] = $slot;
+    }
+
+    return array_values(array_unique($slots));
+  }
+
+  private function safeSourceSyncTimestamp(mixed $value, array &$errors): ?string
+  {
+    $value = is_string($value) ? trim($value) : '';
+
+    try {
+      return Carbon::parse($value)->utc()->toIso8601String();
+    } catch (\Throwable) {
+      $errors[] = $this->error('plan.page.settings.source_sync.last_synced_at', 'source_sync last_synced_at must be a valid date-time string.');
+
+      return null;
+    }
   }
 
   private function error(string $path, string $message): array

@@ -9,6 +9,13 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.167
+
+- Make Page Translation `path` the canonical public page URL, including slash-bearing paths such as `/docs/internal-content-api`, while keeping `/p/...` as a legacy redirect.
+- Fix Internal Content API draft create/replace path handling so `page.path` and `expected_path` use canonical public paths instead of slug-normalized `/p` paths.
+- Add allowlisted `source_sync` page metadata persistence and readback for trusted AI/operator docs sync workflows.
+- Preserve `/webadmin`, `/webadmin/api`, `/cms`, `/search`, `/search.json`, `/contact-messages`, `/install`, and host auth route ownership ahead of public page matching.
+
 ## 1.32.166
 
 - Fix the CMS API token one-time `.env` example so local AI/operator tools use `WEBBLOCKS_CMS_API_URL=https://example.com/webadmin/api` instead of the public site root.

@@ -128,6 +128,7 @@ Do not substitute nearby spellings such as `plain-text`, `rich_text`, `button`, 
 - Do not overwrite existing pages or blocks except with the explicit `replace_existing_draft_page` mode.
 - Do not call apply if the target path already exists unless the user explicitly approves a conflict-handling plan supported by the API.
 - For existing draft replacement, include `expected_path` or `expected_updated_at` and replace only page-owned slots.
+- Treat `page.path` as the canonical public URL. Use `/contact` or `/docs/internal-content-api`, not `/p/contact`; `/p/...` is only a legacy public redirect.
 - Do not try to replace Shared Slot-backed slots; leave shared header/footer assignments intact.
 - Do not fetch remote pages.
 - Do not use browser automation or admin UI clicks when API discovery is available.
@@ -334,7 +335,7 @@ Use this mode only when the user explicitly wants to update an existing draft pa
     "locale": "en",
     "page": {
       "id": 9,
-      "expected_path": "/p/contact",
+      "expected_path": "/contact",
       "status": "draft"
     },
     "replace_slots": {

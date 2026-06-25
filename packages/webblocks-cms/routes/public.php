@@ -8,6 +8,7 @@ use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 if (config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, false)) {
@@ -47,7 +48,18 @@ Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name(
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
 });
 
-Route::middleware(['web', 'install.required'])->get('/p/{slug}', [PageController::class, 'show'])->name('pages.show');
-Route::middleware(['web', 'install.required'])->get('/{locale}/p/{slug}', [PageController::class, 'show'])
+Route::middleware(['web', 'install.required'])->get('/p/{path}', [PageController::class, 'legacy'])
+  ->where('path', '.*')
+  ->name('pages.legacy');
+Route::middleware(['web', 'install.required'])->get('/{locale}/p/{path}', [PageController::class, 'legacy'])
   ->where('locale', Locale::routePattern())
+  ->where('path', '.*')
+  ->name('localized.pages.legacy');
+
+Route::middleware(['web', 'install.required'])->get('/{locale}/{slug}', [PageController::class, 'show'])
+  ->where('locale', Locale::routePattern())
+  ->where('slug', PagePath::routePattern())
   ->name('localized.pages.show');
+Route::middleware(['web', 'install.required'])->get('/{slug}', [PageController::class, 'show'])
+  ->where('slug', PagePath::routePattern())
+  ->name('pages.show');
