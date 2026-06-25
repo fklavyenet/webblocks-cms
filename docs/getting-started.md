@@ -14,6 +14,49 @@ If your install uses more than one site, start by confirming which site you are 
 - `super_admin` users can manage sites in the `System` section
 - `site_admin` and `editor` users work only inside their assigned sites
 
+Before publishing a public contact page, configure the site identity, domain, and Contact recipient. The site-level Contact recipient in `Site -> Edit -> Contact` is preferred over relying only on `.env`, because it travels with the site configuration.
+
+## Configure Email For Contact Forms
+
+Contact Form notifications use Laravel mail delivery. Typical `.env` settings are:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=no-reply@example.com
+MAIL_FROM_NAME="Site Name"
+
+CONTACT_RECIPIENT_EMAIL=contact@example.com
+```
+
+`MAIL_*` controls the SMTP transport. `MAIL_FROM_ADDRESS` is the safe sender/from address and final recipient fallback. `CONTACT_RECIPIENT_EMAIL` is optional; use it as an environment-level fallback, not as a replacement for the site Contact recipient when the site setting is available.
+
+If `.env` mail settings are changed after configuration has been cached, run:
+
+```bash
+php artisan optimize:clear
+```
+
+Recipient resolution order is:
+
+1. Contact Form block `recipient_email`
+2. Site default contact recipient from `Site -> Edit -> Contact`
+3. `.env` `CONTACT_RECIPIENT_EMAIL`
+4. safe `MAIL_FROM_ADDRESS` fallback
+
+Run a secret-safe diagnostic check before relying on notifications:
+
+```bash
+php artisan contact:mail-diagnose
+php artisan contact:mail-diagnose --send-test=you@example.com
+```
+
+Use `php artisan contact:mail-diagnose --block=ID` when you need to inspect the fallback chain for one Contact Form block.
+
 ## Create Your First Page
 
 Open `Pages` in the admin sidebar and create a page.
@@ -107,9 +150,24 @@ After publishing, open the page through its public route or use the admin previe
 
 In multisite installs, public URLs follow the resolved site and locale context.
 
+## Verify A Contact Page
+
+Use the native `contact_form` block for contact pages. Do not use Trusted HTML, raw `<form>` markup, or `mailto:` links as the normal submission path. The CMS renderer creates the hidden anti-spam check field; editors and AI/operator tools should not create that field manually, and the old `website` field is no longer the public contract.
+
+Smoke test before announcing the page:
+
+1. Preview or publish a page with `contact_form`.
+2. Submit a test name, email, subject, and message.
+3. Open `/webadmin/contact-messages`.
+4. Confirm the message was stored.
+5. Check notification status and safe failure details if delivery failed.
+
+Accepted real submissions are stored before notification is attempted. A notification failure does not mean the visitor submission failed, and public visitors should not see mail diagnostics.
+
 ## Next Areas To Learn
 
 - Users and roles: `docs/users-and-permissions.md`
+- Contact Forms and Messages: `docs/contact-forms-and-messages.md`
 - Workflow and approvals: `docs/editorial-workflow.md`
 - Revision recovery: `docs/revisions.md`
 - Backups, updates, export/import: `docs/operations.md`

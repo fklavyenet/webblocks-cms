@@ -10,6 +10,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Installation
 
 - [Installation](installation.md)
+- [Contact Forms And Messages](contact-forms-and-messages.md)
 - [Coexistence](coexistence.md)
 
 ## Getting Started
@@ -58,6 +59,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Operations (Backup, Restore, Updates)
 
 - [Operations](operations.md)
+- [Contact Forms And Messages](contact-forms-and-messages.md)
 - [Search](search.md)
 - [Updates](updates.md)
 

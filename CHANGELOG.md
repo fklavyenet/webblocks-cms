@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add installation and setup guidance for Contact Form mail delivery, recipient fallback order, storage-vs-notification behavior, smoke testing, and secret-safe diagnostics.
 - Expand the Markdown Docs to CMS Sync documentation into an operational runbook for changed `docs/` Markdown files, including source matching, batch behavior, stop conditions, report formats, and safe draft apply rules.
 - Document the internal CMS admin/auth UI standards under `ai/standards` and move internal audit notes out of public `docs/`.
 - Document the Internal Content API route contract for token-protected AI/operator CMS content operations.

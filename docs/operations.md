@@ -87,6 +87,34 @@ Installed CMS working copies are update consumers. They may fetch source history
 
 Contact Form submissions are saved before notification delivery. SMTP failures are recorded on the saved Contact Message as email notification state and do not change the editorial status or spam classification. Scored spam is intentionally stored/quarantined for admin review; only filled generated check-field or too-fast submissions may be discarded before storage with the generic success redirect. A future configurable threshold such as `CONTACT_SPAM_AUTO_DISCARD_SCORE` can be considered after enough production data exists to tune it safely.
 
+Contact Form notification recipients resolve in this order:
+
+1. Contact Form block `recipient_email`
+2. Site default contact recipient from `Site -> Edit -> Contact`
+3. `.env` `CONTACT_RECIPIENT_EMAIL`
+4. safe `MAIL_FROM_ADDRESS` fallback
+
+Typical Laravel SMTP `.env` settings are:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=no-reply@example.com
+MAIL_FROM_NAME="Site Name"
+
+CONTACT_RECIPIENT_EMAIL=contact@example.com
+```
+
+After editing `.env` mail settings on a production or package install, clear cached configuration when needed:
+
+```bash
+php artisan optimize:clear
+```
+
 Use the secret-free mail diagnostic command when a Contact Message shows notification failure:
 
 ```bash
@@ -96,6 +124,15 @@ php artisan contact:mail-diagnose --send-test=operator@example.com
 ```
 
 The command reports the resolved mailer, host, port, scheme/encryption fields, username, from address, `CONTACT_RECIPIENT_EMAIL`, config-cache state, and optional Contact Form block/site recipient fallbacks. It never prints `MAIL_PASSWORD` or token values. The optional send test reports only success or a sanitized failure detail, so operators can distinguish stale config, host/port/encryption mismatch, username/from mismatch, and invalid mailbox credentials without leaking secrets into terminal logs.
+
+Operational smoke test:
+
+1. Publish or preview a page with the native `contact_form` block.
+2. Submit a test message.
+3. Confirm the message appears in `/webadmin/contact-messages`.
+4. Review notification status and safe failure detail.
+5. Run `php artisan contact:mail-diagnose --block=ID` if recipient resolution is unclear.
+6. Run `php artisan contact:mail-diagnose --send-test=operator@example.com` only for a controlled SMTP send check.
 
 ## WebBlocks UI Manager Operator Plugin
 

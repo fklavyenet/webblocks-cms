@@ -135,6 +135,31 @@ Contact Form notification uses this recipient order:
 
 Storage success is separate from notification success. A public success response means the CMS accepted the message flow, not necessarily that email delivery succeeded. Admins should inspect Contact Messages for notification status and safe failure details.
 
+## Email Setup
+
+Contact Form notifications use Laravel mail delivery. Typical SMTP `.env` settings are:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=no-reply@example.com
+MAIL_FROM_NAME="Site Name"
+
+CONTACT_RECIPIENT_EMAIL=contact@example.com
+```
+
+`MAIL_*` controls Laravel mail transport. `MAIL_FROM_ADDRESS` is the safe fallback sender/from address and the final safe recipient fallback. `CONTACT_RECIPIENT_EMAIL` is optional and is used only after the block and site recipients are empty. Prefer the site-level Contact recipient from `Site -> Edit -> Contact` for normal site routing.
+
+After editing `.env` mail settings on a production or package install, clear cached configuration when config caching may be active:
+
+```bash
+php artisan optimize:clear
+```
+
 ## Troubleshooting And Diagnostics
 
 For local development, use a local SMTP catcher or a trusted SMTP test account. Avoid testing contact delivery against personal or production mailboxes unless the operator intentionally configured that environment.
@@ -158,6 +183,22 @@ php artisan contact:mail-diagnose --send-test=address@example.com
 ```
 
 Diagnostics must not print passwords, tokens, mail secrets, or raw sensitive configuration. Failed notifications can be inspected from Contact Messages delivery and failure details.
+
+## Publish Readiness Checklist
+
+Before publishing or announcing a public contact page:
+
+1. Confirm admin login works.
+2. Confirm site identity and domain settings are correct.
+3. Configure `MAIL_*` delivery or approved system mail settings.
+4. Configure the Contact recipient, preferably under `Site -> Edit -> Contact`.
+5. Run `php artisan contact:mail-diagnose`.
+6. Preview or publish a page containing the native `contact_form` block.
+7. Submit a test message with name, email, subject, and message.
+8. Confirm `/webadmin/contact-messages` shows the stored message.
+9. Review notification status and any safe failure details.
+
+If notification fails but the message is stored, treat it as a mail delivery issue, not a failed public form submission.
 
 ## Internal Content API And AI Operator Support
 

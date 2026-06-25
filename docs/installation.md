@@ -218,11 +218,71 @@ The first `super_admin` is required for a completed install.
 
 The `/webadmin` and `/cms` split avoids the Nginx `try_files` collision where `/cms/` can be resolved as the physical `public/cms/` asset directory before Laravel handles a route. Do not solve admin access by adding a `public/cms/index.php` handoff; that front-controller bridge must stay absent from root and package public assets.
 
+## Email And Contact Form Readiness
+
+Configure Laravel mail delivery before publishing a public contact page. A typical SMTP `.env` setup looks like:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=no-reply@example.com
+MAIL_FROM_NAME="Site Name"
+
+CONTACT_RECIPIENT_EMAIL=contact@example.com
+```
+
+`MAIL_*` controls Laravel mail delivery for Contact Form notification attempts. `MAIL_FROM_ADDRESS` is the safe fallback sender/from address and is also the last safe Contact Form recipient fallback when no more specific recipient is configured. `CONTACT_RECIPIENT_EMAIL` is optional and acts as an environment-level fallback recipient. Prefer configuring the site-level Contact recipient in `Site -> Edit -> Contact` when available, so contact routing lives with the site instead of only in `.env`.
+
+After changing production or package-install `.env` mail settings, clear cached configuration if the install uses config caching:
+
+```bash
+php artisan optimize:clear
+```
+
+Contact Form notifications resolve recipients in this order:
+
+1. Contact Form block `recipient_email`
+2. Site default contact recipient from `Site -> Edit -> Contact`
+3. `.env` `CONTACT_RECIPIENT_EMAIL`
+4. safe `MAIL_FROM_ADDRESS` fallback
+
+Accepted real Contact Form submissions are stored before email notification is attempted. Notification failure does not mean the public form submission failed. Admins should check `/webadmin/contact-messages` for stored messages, notification status, and safe failure details. Public visitors should only see normal success or validation feedback, not mail diagnostics.
+
+Use the native `contact_form` block for contact pages. Do not replace it with Trusted HTML, raw `<form>` markup, or `mailto:` fallbacks. The CMS renderer generates the hidden anti-spam check field automatically; do not create it manually. The old `website` honeypot field is no longer the public contract.
+
+Practical Contact Form smoke test:
+
+1. Publish or preview a page containing the native `contact_form` block.
+2. Submit a test message with name, email, subject, and message.
+3. Open `/webadmin/contact-messages`.
+4. Confirm the message was stored.
+5. Review notification status.
+6. If email did not arrive, inspect the safe failure details and run mail diagnostics.
+
+Diagnostic commands:
+
+```bash
+php artisan contact:mail-diagnose
+php artisan contact:mail-diagnose --block=ID
+php artisan contact:mail-diagnose --send-test=you@example.com
+```
+
+The diagnostic command must not print passwords, tokens, or mail secrets. Use `--block=ID` to inspect the recipient fallback chain for one Contact Form block. Use `--send-test=` only for a controlled SMTP send check to an intentional test address.
+
 ## Post-Install Next Steps
 
 1. Sign in to `/webadmin`.
 2. Review your site and locale configuration.
-3. Create or edit a site if needed.
-4. Create your first page.
-5. Add media, navigation, and blocks.
-6. Publish content through the editorial workflow.
+3. Configure site identity and domains.
+4. Configure Laravel mail settings or approved system mail settings.
+5. Configure a Contact Form recipient, preferably on `Site -> Edit -> Contact`.
+6. Run `php artisan contact:mail-diagnose`.
+7. Submit a test native Contact Form and confirm it stores a Contact Message.
+8. Review email notification status for that test message.
+9. Create your first page.
+10. Add media, navigation, and blocks.
+11. Publish content through the editorial workflow.
