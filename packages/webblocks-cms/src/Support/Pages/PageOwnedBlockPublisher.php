@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
@@ -69,9 +68,12 @@ class PageOwnedBlockPublisher
           ->map(fn (Collection $blocks) => $blocks->count())
           ->all();
 
-        $published->each(function (Block $block): void {
-          $block->forceFill(['status' => 'published'])->save();
-        });
+        Block::query()
+          ->whereKey($published->modelKeys())
+          ->update([
+            'status' => 'published',
+            'updated_at' => now(),
+          ]);
       } else {
         $publishedByStatus = [];
       }

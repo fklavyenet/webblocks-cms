@@ -1139,6 +1139,60 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function api_publish_can_include_many_nested_page_owned_blocks_without_shared_slot_cascade(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_PUBLISH]);
+    [$page, $draftBlock, $reviewBlock, $sharedBlock] = $this->createDraftPageWithPublishableBlocks(includeSharedSlot: true);
+
+    $sourceSync = [
+      'type' => 'markdown_documentation',
+      'source_id' => 'webblocks-cms:docs/large-page.md',
+      'source_path' => 'docs/large-page.md',
+      'source_sha256' => str_repeat('a', 64),
+      'managed_slots' => ['main'],
+      'last_synced_at' => now()->toIso8601String(),
+    ];
+    $page->forceFill(['settings' => ['source_sync' => $sourceSync]])->save();
+
+    $parent = $draftBlock;
+    for ($index = 0; $index < 360; $index++) {
+      $parent = Block::query()->create([
+        'page_id' => $page->id,
+        'parent_id' => $index % 3 === 0 ? $parent->id : null,
+        'block_type_id' => $this->blockTypeId('plain_text'),
+        'type' => 'plain_text',
+        'source_type' => 'static',
+        'slot_type_id' => $this->slotTypeId('main'),
+        'slot' => 'main',
+        'status' => $index % 2 === 0 ? 'draft' : 'in_review',
+        'sort_order' => $index + 1,
+      ]);
+    }
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/pages/'.$page->id.'/publish', [
+        'include_page_owned_blocks' => true,
+      ])
+      ->assertOk()
+      ->assertJsonPath('page.status', Page::STATUS_PUBLISHED)
+      ->assertJsonPath('included_page_owned_blocks', true)
+      ->assertJsonPath('page_owned_blocks_published_count', 362)
+      ->assertJsonPath('shared_slots_excluded.0.shared_slot_label', 'Site Header')
+      ->assertJsonPath('page.source_sync.source_id', 'webblocks-cms:docs/large-page.md')
+      ->assertJsonPath('revision_id', PageRevision::query()->latest('id')->value('id'));
+
+    $this->assertSame(0, Block::query()
+      ->where('page_id', $page->id)
+      ->where('slot_type_id', $this->slotTypeId('main'))
+      ->whereIn('status', ['draft', 'in_review'])
+      ->count());
+    $this->assertSame('draft', $sharedBlock->fresh()->status);
+    $this->assertSame($sourceSync['source_sha256'], data_get($page->fresh()->settings, 'source_sync.source_sha256'));
+    $this->assertSame('published', $draftBlock->fresh()->status);
+    $this->assertSame('published', $reviewBlock->fresh()->status);
+  }
+
+  #[Test]
   public function api_rejects_shared_slot_cascade_publish_attempts(): void
   {
     $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_PUBLISH]);

@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.168
+
+- Fix large Internal Content API page publish requests so `include_page_owned_blocks` publishes page-owned draft or in-review block trees in bulk while still excluding Shared Slot content.
+
 ## 1.32.167
 
 - Make Page Translation `path` the canonical public page URL, including slash-bearing paths such as `/docs/internal-content-api`, while keeping `/p/...` as a legacy redirect.
