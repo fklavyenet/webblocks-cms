@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/public-theme-and-tones.md
 
 # Public Theme And Visual Tones
 
-This document records the product direction for site-level public theme presets and public block visual tones in WebBlocks CMS. The initial `icon_tone` block setting is implemented for selected public icon-enabled blocks. Phase 2A adds site-scoped public theme preset selection and a public body marker; full preset token styling remains future work.
+This document records the product direction for site-level public theme presets and public block visual tones in WebBlocks CMS. The initial `icon_tone` block setting is implemented for selected public icon-enabled blocks. Phase 2A added site-scoped public theme preset selection and a public body marker. Phase 2B adds CMS-owned public token styling so selected presets visibly affect public pages.
 
 ## Purpose
 
@@ -108,7 +108,7 @@ Supported public theme presets:
 | Graphite | `graphite` | Serious, dark, and technical. |
 | Horizon | `horizon` | Open, airy, and modern. |
 
-`canvas` is the default and fallback preset. The exact token values are future implementation work. Presets should define tone tokens for public rendering and may need light/dark-aware values.
+`canvas` is the default and fallback preset. CMS core maps every supported preset to public page, surface, text, border, link/accent, button, badge, and visual icon tone tokens in `public/cms/css/public.css`.
 
 ## Rendering Model
 
@@ -129,24 +129,28 @@ Example public body theme marker:
 Example token shape:
 
 ```css
-[data-wb-public-theme="prism"] {
-  --wb-public-tone-brand: ...;
-  --wb-public-tone-accent: ...;
+body[data-wb-public-theme="prism"] {
+  --wb-public-page-bg: ...;
+  --wb-public-accent: ...;
   --wb-public-tone-highlight: ...;
 }
 ```
+
+The public layout loads WebBlocks UI CSS first, then CMS public CSS. This lets CMS-owned public theme tokens override WebBlocks UI foundation variables only inside public rendering contexts. Admin chrome, admin sidebar, admin topbar, and admin user appearance preferences do not use `data-wb-public-theme` and are not controlled by these site presets.
 
 The Content API and content-contract discovery should eventually expose tone fields so trusted tools can choose supported values without guessing.
 
 ## Accessibility And Dark Mode Rules
 
-Theme presets should be designed as token sets, not isolated colors. Any future implementation should account for:
+Theme presets are token sets, not isolated colors. The current implementation accounts for:
 
 - Text and icon contrast against relevant backgrounds.
 - Light and dark context pairs where applicable.
 - Token fallback behavior when a theme is missing or incompatible.
 - Preview states that show common blocks, icons, borders, links, and surfaces.
 - No arbitrary block-level color fields in the default authoring flow.
+
+The site theme preset is the identity layer. The WebBlocks UI color mode toggle remains available through Header Actions where enabled and controls `html[data-mode]`; CMS public theme CSS provides dark-context overrides for non-Graphite presets when `data-mode="dark"` or `data-mode="auto"` resolves dark. `graphite` is intentionally dark by preset character, so its visual identity stays dark in every mode.
 
 Custom theme builders, if added later, must include guardrails before user-defined colors can affect public pages.
 
@@ -171,9 +175,10 @@ Custom theme builders, if added later, must include guardrails before user-defin
 
 ### Phase 2B - Public Theme Tokens
 
-- Define light/dark-aware preset tokens.
-- Apply selected themes to supported public tone hooks.
-- Keep selected themes scoped to public pages only.
+- Done: define CMS-owned public preset tokens for `canvas`, `atlas`, `pulse`, `prism`, `graphite`, and `horizon`.
+- Done: map selected presets through public page, surface, text, border, link/accent, button, badge, and visual icon tone hooks.
+- Done: keep selected themes scoped to public pages and the admin-safe Theme preview only.
+- Done: keep Header Actions preset/accent controls removed while search and safe color mode controls continue to render.
 
 ### Phase 3 - Optional Custom Theme Builder
 
@@ -185,7 +190,6 @@ Custom theme builders, if added later, must include guardrails before user-defin
 
 ## Non-Goals
 
-- Full public theme token styling is not implemented by this document.
 - Custom theme builders are not implemented by this document.
 - Do not add Tailwind, Vite, Node build-chain requirements, or package locks.
 - Do not expose arbitrary hex color pickers in the first phase.

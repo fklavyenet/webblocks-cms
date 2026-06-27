@@ -174,6 +174,22 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
+  public function release_artifact_includes_public_theme_preset_css_in_package_assets(): void
+  {
+    $installedPackageRoot = $this->buildInstalledPackageSnapshot();
+    $publicCss = (string) file_get_contents($installedPackageRoot.'/public/cms/css/public.css');
+
+    foreach (['canvas', 'atlas', 'pulse', 'prism', 'graphite', 'horizon'] as $preset) {
+      $this->assertStringContainsString('body[data-wb-public-theme="'.$preset.'"]', $publicCss);
+      $this->assertStringContainsString('[data-wb-public-theme-preview="'.$preset.'"]', $publicCss);
+    }
+
+    $this->assertStringContainsString('--wb-public-tone-brand: var(--wb-public-accent);', $publicCss);
+    $this->assertStringContainsString('--wb-public-page-bg: #090d12;', $publicCss);
+    $this->assertStringContainsString('html[data-mode="dark"] body[data-wb-public-theme="canvas"]', $publicCss);
+  }
+
+  #[Test]
   public function native_release_zip_installs_bulk_listing_admin_javascript_at_composer_vendor_package_root(): void
   {
     $vendorPackageRoot = $this->buildNativeReleaseZipVendorPackageSnapshot();

@@ -1257,7 +1257,7 @@ Avoid for: custom business CTAs; use Button Link/Button.
 
 ### Notes
 
-Header Actions does not emit public preset/accent dropdown controls in the site-level Public Theme model. Public pages use the body `data-wb-public-theme` marker for selected theme presets; full preset token styling is a later phase.
+Header Actions does not emit public preset/accent dropdown controls in the site-level Public Theme model. Public pages use the body `data-wb-public-theme` marker for selected theme presets, and CMS public CSS maps that marker to public theme tokens.
 
 Settings can hide the search, mode toggle, or accent/theme menu. This block does not own a slot-level root. It uses WebBlocks UI dropdown hooks and CMS public search hooks.
 

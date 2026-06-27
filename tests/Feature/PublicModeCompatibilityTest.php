@@ -21,7 +21,7 @@ class PublicModeCompatibilityTest extends TestCase
   use RefreshDatabase;
 
   #[Test]
-  public function cms_public_css_only_contains_small_structural_public_mode_tweaks(): void
+  public function cms_public_css_contains_controlled_public_theme_token_hooks(): void
   {
     $css = File::get(public_path('cms/css/public.css'));
 
@@ -32,17 +32,27 @@ class PublicModeCompatibilityTest extends TestCase
     $this->assertStringContainsString('min-height: auto;', $css);
     $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', $css);
     $this->assertStringContainsString('width: 100%;', $css);
+    $this->assertStringContainsString(':is(body[data-wb-public-theme], [data-wb-public-theme-preview]) {', $css);
+    $this->assertStringContainsString('--wb-bg: var(--wb-public-page-bg);', $css);
+    $this->assertStringContainsString('--wb-surface: var(--wb-public-surface);', $css);
+    $this->assertStringContainsString('--wb-text: var(--wb-public-text);', $css);
+    $this->assertStringContainsString('--wb-muted: var(--wb-public-muted);', $css);
+    $this->assertStringContainsString('--wb-border: var(--wb-public-border);', $css);
+    $this->assertStringContainsString('--wb-accent: var(--wb-public-accent);', $css);
+    $this->assertStringContainsString('--wb-public-tone-brand: var(--wb-public-accent);', $css);
 
-    $this->assertDoesNotMatchRegularExpression('/#[0-9a-fA-F]{3,8}/', $css);
-    $this->assertStringNotContainsString('rgb(', $css);
-    $this->assertStringNotContainsString('rgba(', $css);
-    $this->assertStringNotContainsString('hsl(', $css);
-    $this->assertStringNotContainsString('hsla(', $css);
-    $this->assertStringNotContainsString('var(--wb-text)', $css);
-    $this->assertStringNotContainsString('var(--wb-bg)', $css);
-    $this->assertStringNotContainsString('var(--wb-surface)', $css);
-    $this->assertStringNotContainsString('var(--wb-border)', $css);
-    $this->assertStringNotContainsString('var(--wb-accent)', $css);
+    foreach (Site::PUBLIC_THEME_PRESETS as $preset) {
+      $this->assertStringContainsString('body[data-wb-public-theme="'.$preset.'"]', $css);
+      $this->assertStringContainsString('[data-wb-public-theme-preview="'.$preset.'"]', $css);
+    }
+
+    $this->assertStringContainsString('body[data-wb-public-theme="graphite"]', $css);
+    $this->assertStringContainsString('--wb-public-page-bg: #090d12;', $css);
+    $this->assertStringContainsString('html[data-mode="dark"] body[data-wb-public-theme="canvas"]', $css);
+    $this->assertStringContainsString('html[data-mode="auto"] body[data-wb-public-theme="horizon"]', $css);
+    $this->assertStringContainsString('.wb-btn-primary {', $css);
+    $this->assertStringContainsString('.wb-card-accent,', $css);
+    $this->assertStringContainsString('.wb-icon-tone-brand {', $css);
   }
 
   #[Test]
