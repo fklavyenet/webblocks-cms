@@ -7,7 +7,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
-## Unreleased
+## 1.32.175
 
 - Add site-scoped Public Theme selection under `Sites -> Edit Site -> Theme`, save supported presets with existing-install update migration coverage, and render `data-wb-public-theme="{preset}"` on public bodies with `canvas` fallback.
 - Clarify repo-local AI skill boundaries so live installed-site `Update Now` actions and live browser smoke/visual checks remain operator-owned unless explicitly requested.
