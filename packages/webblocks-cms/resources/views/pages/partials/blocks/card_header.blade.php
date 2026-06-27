@@ -1,4 +1,14 @@
-<div class="wb-card-header" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+@php
+    $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug());
+    $headerClass = trim('wb-card-header'.($iconClass !== null ? ' wb-cms-public-card-header-with-icon' : ''));
+@endphp
+
+<div class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+    @if ($iconClass !== null)
+        <i class="{{ $iconClass }}" aria-hidden="true"></i>
+    @endif
+
     @foreach ($block->children as $child)
         @include('webblocks-cms::pages.partials.block', ['block' => $child])
     @endforeach

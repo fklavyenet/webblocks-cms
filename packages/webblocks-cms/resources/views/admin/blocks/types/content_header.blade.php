@@ -25,6 +25,8 @@
         <textarea id="intro_text" name="intro_text" class="wb-textarea" rows="4">{{ old('intro_text', $block->subtitle) }}</textarea>
     </div>
 
+    @include('webblocks-cms::admin.blocks.types.partials.icon-badge-fields')
+
     <div class="wb-card wb-card-muted" data-wb-builder-items-editor="content-header-meta-items">
         <div class="wb-card-header wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
             <strong>Meta items</strong>

@@ -4,9 +4,25 @@
     $metaItems = $block->metaItems();
     $alignmentClass = $block->contentHeaderAlignmentClass();
     $headerClass = trim('wb-content-header '.($alignmentClass ?? ''));
+    $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug());
+    $badgeLabel = $block->publicBadgeLabel();
+    $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
 @endphp
 
 <header class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+    @if ($iconClass !== null || $badgeLabel !== null)
+        <div class="wb-cms-public-kicker">
+            @if ($iconClass !== null)
+                <i class="{{ $iconClass }}" aria-hidden="true"></i>
+            @endif
+
+            @if ($badgeLabel !== null)
+                <span class="{{ $badgeClass }}">{{ $badgeLabel }}</span>
+            @endif
+        </div>
+    @endif
+
     <h1 class="wb-content-title">{{ $title }}</h1>
 
     @if ($introText !== '')

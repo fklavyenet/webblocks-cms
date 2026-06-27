@@ -599,6 +599,26 @@ class Block extends Model
     };
   }
 
+  public function publicContentIconSlug(): ?string
+  {
+    $icon = trim((string) $this->setting('icon_slug', ''));
+
+    return $icon !== '' ? $icon : null;
+  }
+
+  public function publicBadgeLabel(): ?string
+  {
+    return $this->stringValueOrNull($this->eyebrow ?? null)
+      ?? $this->translatedTextFieldValue('eyebrow');
+  }
+
+  public function publicBadgeTone(): ?string
+  {
+    $tone = trim((string) $this->setting('badge_tone', ''));
+
+    return $tone !== '' ? $tone : null;
+  }
+
   public function buttonLinkVariantClass(): string
   {
     return match ($this->variant) {

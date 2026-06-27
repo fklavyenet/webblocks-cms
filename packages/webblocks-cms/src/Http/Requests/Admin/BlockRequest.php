@@ -89,6 +89,8 @@ class BlockRequest extends FormRequest
     $isGrid = $selectedBlockType?->slug === 'grid';
     $isCard = $selectedBlockType?->slug === 'card';
     $isCardRegion = in_array($selectedBlockType?->slug, ['card_header', 'card_body', 'card_footer'], true);
+    $supportsPublicIcon = in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'link-list-item'], true);
+    $supportsPublicBadgeLabel = in_array($selectedBlockType?->slug, ['content_header', 'column_item', 'link-list-item'], true);
     $isStatCard = $selectedBlockType?->slug === 'stat-card';
     $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
     $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
@@ -115,6 +117,9 @@ class BlockRequest extends FormRequest
       'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
       'title' => [($isContentHeader || $isStatCard || $isDownload || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
       'eyebrow' => ['prohibited', 'string', 'max:255'],
+      'icon_slug' => [$supportsPublicIcon ? 'nullable' : 'prohibited', 'string', 'max:255'],
+      'badge_label' => [$supportsPublicBadgeLabel ? 'nullable' : 'prohibited', 'string', 'max:255'],
+      'badge_tone' => [$supportsPublicIcon ? 'nullable' : 'prohibited', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'subtitle' => ['nullable', 'string', 'max:255'],
       'content' => [($isAlert || $isTextRequiredBuilderChild || ($isLocaleRequest && $isTranslatedTextRequiredBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
       'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
@@ -186,6 +191,9 @@ class BlockRequest extends FormRequest
       'column_items.*.title' => ['nullable', 'string', 'max:255'],
       'column_items.*.content' => ['nullable', 'string'],
       'column_items.*.url' => ['nullable', 'string', 'max:2048'],
+      'column_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
+      'column_items.*.badge_label' => ['nullable', 'string', 'max:255'],
+      'column_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'column_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
       'column_items.*.is_system' => ['nullable', 'boolean'],
       'column_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
@@ -207,6 +215,9 @@ class BlockRequest extends FormRequest
       'link_list_items.*.subtitle' => ['nullable', 'string', 'max:255'],
       'link_list_items.*.content' => ['nullable', 'string'],
       'link_list_items.*.url' => ['nullable', 'string', 'max:2048'],
+      'link_list_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
+      'link_list_items.*.badge_label' => ['nullable', 'string', 'max:255'],
+      'link_list_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'link_list_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
       'link_list_items.*.is_system' => ['nullable', 'boolean'],
       'link_list_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
@@ -358,6 +369,14 @@ class BlockRequest extends FormRequest
         }
       }
 
+      if (in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'link-list-item'], true)) {
+        $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon_slug'));
+
+        if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
+          $validator->errors()->add('icon_slug', 'Select an active content icon from the catalog.');
+        }
+      }
+
       if ($selectedBlockType?->slug === 'image') {
         $url = trim((string) $this->input('url', ''));
 
@@ -443,6 +462,12 @@ class BlockRequest extends FormRequest
           if (blank($columnItem['content'] ?? null)) {
             $validator->errors()->add("column_items.{$index}.content", 'Column item text is required.');
           }
+
+          $icon = app(IconCatalog::class)->normalizeSlug($columnItem['icon_slug'] ?? null);
+
+          if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
+            $validator->errors()->add("column_items.{$index}.icon_slug", 'Select an active content icon from the catalog.');
+          }
         }
       }
 
@@ -474,6 +499,12 @@ class BlockRequest extends FormRequest
 
           if (blank($item['url'] ?? null)) {
             $validator->errors()->add("link_list_items.{$index}.url", 'Link list item URL is required.');
+          }
+
+          $icon = app(IconCatalog::class)->normalizeSlug($item['icon_slug'] ?? null);
+
+          if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
+            $validator->errors()->add("link_list_items.{$index}.icon_slug", 'Select an active content icon from the catalog.');
           }
         }
       }
@@ -975,10 +1006,17 @@ class BlockRequest extends FormRequest
           } else {
             unset($settings['alignment']);
           }
+
+          $settings = $this->applyPublicIconBadgeSettings($settings, $data);
         }
 
-        $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-        $data['subtitle'] = trim((string) ($data['intro_text'] ?? '')) ?: null;
+        $contentHeaderTitle = trim((string) ($data['title'] ?? ''));
+        $contentHeaderBadgeLabel = trim((string) ($data['badge_label'] ?? ''));
+        $contentHeaderIntro = trim((string) ($data['intro_text'] ?? ''));
+
+        $data['title'] = $contentHeaderTitle !== '' ? $contentHeaderTitle : null;
+        $data['eyebrow'] = $contentHeaderBadgeLabel !== '' ? $contentHeaderBadgeLabel : null;
+        $data['subtitle'] = $contentHeaderIntro !== '' ? $contentHeaderIntro : null;
         $data['content'] = null;
         $data['meta'] = $metaItems === []
           ? null
@@ -1019,17 +1057,40 @@ class BlockRequest extends FormRequest
 
       if (in_array($blockType?->slug, ['column_item', 'feature-item'], true)) {
         $isTranslatedStructuredChildEdit = $data['locale'] !== null;
+        $existingSettings = $this->route('block') instanceof Block
+          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          : [];
+        $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+        $settings = $existingSettings;
 
-        $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-        $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
-        $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+        if ($blockType?->slug === 'column_item' && ! $isTranslatedStructuredChildEdit) {
+          $settings = $this->applyPublicIconBadgeSettings($settings, $data);
+        }
+
+        $structuredTitle = trim((string) ($data['title'] ?? ''));
+        $structuredBadgeLabel = trim((string) ($data['badge_label'] ?? ''));
+        $structuredSubtitle = trim((string) ($data['subtitle'] ?? ''));
+        $structuredContent = trim((string) ($data['content'] ?? ''));
+
+        $data['title'] = $structuredTitle !== '' ? $structuredTitle : null;
+        $data['eyebrow'] = $blockType?->slug === 'column_item' && $structuredBadgeLabel !== ''
+          ? $structuredBadgeLabel
+          : null;
+        $data['subtitle'] = $structuredSubtitle !== '' ? $structuredSubtitle : null;
+        $data['content'] = $structuredContent !== '' ? $structuredContent : null;
         $data['url'] = $isTranslatedStructuredChildEdit
           ? ($this->route('block')?->getRawOriginal('url'))
           : (trim((string) ($data['url'] ?? '')) ?: null);
         $data['asset_id'] = null;
         $data['variant'] = null;
         $data['meta'] = null;
-        $data['settings'] = null;
+        $data['settings'] = $blockType?->slug === 'column_item' && $settings !== []
+          ? json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== ''), JSON_UNESCAPED_SLASHES)
+          : null;
+
+        if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+          $data['settings'] = null;
+        }
       }
 
       if ($blockType?->slug === 'button_link') {
@@ -1077,6 +1138,10 @@ class BlockRequest extends FormRequest
           $settings['layout_name'] = $layoutName;
         }
 
+        if ($blockType?->slug === 'card_header') {
+          $settings = $this->applyPublicIconBadgeSettings($settings, $data);
+        }
+
         $data['title'] = null;
         $data['eyebrow'] = null;
         $data['subtitle'] = null;
@@ -1119,6 +1184,39 @@ class BlockRequest extends FormRequest
         if ($data['settings'] === '[]' || $data['settings'] === '{}') {
           $data['settings'] = null;
         }
+      }
+
+      if ($blockType?->slug === 'link-list-item') {
+        $isTranslatedLinkListItemEdit = $data['locale'] !== null;
+        $existingSettings = $this->route('block') instanceof Block
+          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          : [];
+        $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+        $settings = $existingSettings;
+
+        if (! $isTranslatedLinkListItemEdit) {
+          $settings = $this->applyPublicIconBadgeSettings($settings, $data);
+        }
+
+        $title = trim((string) ($data['title'] ?? ''));
+        $badgeLabel = trim((string) ($data['badge_label'] ?? ''));
+        $subtitle = trim((string) ($data['subtitle'] ?? ''));
+        $content = trim((string) ($data['content'] ?? ''));
+
+        $data['title'] = $title !== '' ? $title : null;
+        $data['eyebrow'] = $badgeLabel !== '' ? $badgeLabel : null;
+        $data['subtitle'] = $subtitle !== '' ? $subtitle : null;
+        $data['content'] = $content !== '' ? $content : null;
+        $data['url'] = $isTranslatedLinkListItemEdit
+          ? ($this->route('block')?->getRawOriginal('url'))
+          : (trim((string) ($data['url'] ?? '')) ?: null);
+        $data['asset_id'] = null;
+        $data['variant'] = null;
+        $data['meta'] = null;
+        $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+        $data['settings'] = $settings === []
+          ? null
+          : json_encode($settings, JSON_UNESCAPED_SLASHES);
       }
 
       if ($blockType?->slug === 'image') {
@@ -1741,8 +1839,29 @@ class BlockRequest extends FormRequest
     unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
     unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
     unset($data['show_button']);
+    unset($data['icon_slug'], $data['badge_label'], $data['badge_tone']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
     return $data;
+  }
+
+  private function applyPublicIconBadgeSettings(array $settings, array $data): array
+  {
+    $icon = app(IconCatalog::class)->normalizeSlug($data['icon_slug'] ?? null);
+    $badgeTone = trim((string) ($data['badge_tone'] ?? 'neutral'));
+
+    if ($icon !== null) {
+      $settings['icon_slug'] = $icon;
+    } else {
+      unset($settings['icon_slug']);
+    }
+
+    if (in_array($badgeTone, ['info', 'success', 'warning', 'danger'], true)) {
+      $settings['badge_tone'] = $badgeTone;
+    } else {
+      unset($settings['badge_tone']);
+    }
+
+    return $settings;
   }
 }

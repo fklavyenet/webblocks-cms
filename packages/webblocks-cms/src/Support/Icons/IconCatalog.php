@@ -9,12 +9,12 @@ use WebBlocks\Cms\Models\IconCatalogItem;
 
 class IconCatalog
 {
-  public function navigationPickerOptions(?string $selectedSlug = null, ?string $currentSlug = null): Collection
+  public function pickerOptions(string $context = 'content', ?string $selectedSlug = null, ?string $currentSlug = null): Collection
   {
     $selectedSlug = $this->normalizeSlug($selectedSlug);
     $currentSlug = $this->normalizeSlug($currentSlug);
 
-    $options = $this->navigationIconsQuery()
+    $options = $this->activeContextQuery($context)
       ->orderBy('sort_order')
       ->orderBy('label')
       ->get()
@@ -30,6 +30,11 @@ class IconCatalog
     }
 
     return $options->values();
+  }
+
+  public function navigationPickerOptions(?string $selectedSlug = null, ?string $currentSlug = null): Collection
+  {
+    return $this->pickerOptions('navigation', $selectedSlug, $currentSlug);
   }
 
   public function isValidNavigationSelection(?string $slug, ?string $currentSlug = null): bool
@@ -48,6 +53,30 @@ class IconCatalog
     return $this->navigationIconsQuery()->where('slug', $slug)->exists();
   }
 
+  public function isValidSelection(?string $slug, string $context = 'content'): bool
+  {
+    $slug = $this->normalizeSlug($slug);
+
+    if ($slug === null) {
+      return true;
+    }
+
+    return $this->activeContextQuery($context)->where('slug', $slug)->exists();
+  }
+
+  public function activePublicIconSlug(?string $slug, string $context = 'content'): ?string
+  {
+    $slug = $this->normalizeSlug($slug);
+
+    if ($slug === null) {
+      return null;
+    }
+
+    return $this->activeContextQuery($context)->where('slug', $slug)->exists()
+      ? $slug
+      : null;
+  }
+
   public function normalizeSlug(?string $slug): ?string
   {
     return IconCatalogItem::normalizeSlug($slug);
@@ -55,9 +84,16 @@ class IconCatalog
 
   private function navigationIconsQuery(): Builder
   {
+    return $this->activeContextQuery('navigation');
+  }
+
+  private function activeContextQuery(string $context): Builder
+  {
+    $context = IconCatalogItem::normalizeTag($context) ?? 'content';
+
     return IconCatalogItem::query()
       ->active()
-      ->tagged('navigation');
+      ->tagged($context);
   }
 
   private function syntheticOption(string $slug, ?string $currentSlug): array

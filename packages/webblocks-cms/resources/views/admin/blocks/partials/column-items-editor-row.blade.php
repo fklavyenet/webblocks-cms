@@ -14,6 +14,11 @@
     $enableAdminSortable = $enableAdminSortable ?? false;
     $rowPrefix = is_numeric($index) ? "{$inputName}[{$index}]" : "{$inputName}[__INDEX__]";
     $rowSortOrder = is_numeric($index) ? ($columnItem->sort_order ?? $index) : '__INDEX__';
+    $itemSettings = is_array($columnItem->settings ?? null) ? $columnItem->settings : json_decode((string) ($columnItem->settings ?? ''), true);
+    $itemSettings = is_array($itemSettings) ? $itemSettings : [];
+    $selectedIcon = $itemSettings['icon_slug'] ?? '';
+    $selectedTone = $itemSettings['badge_tone'] ?? 'neutral';
+    $iconOptions = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->pickerOptions('content', $selectedIcon, $selectedIcon);
     $summaryText = $showSubtitle
         ? ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder)
         : ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder);
@@ -65,6 +70,32 @@
                 <input class="wb-input" type="text" name="{{ $rowPrefix }}[subtitle]" value="{{ $columnItem->subtitle }}" @if ($subtitlePlaceholder) placeholder="{{ $subtitlePlaceholder }}" @endif>
             </div>
         @endif
+
+        <div class="wb-grid wb-grid-3">
+            <div class="wb-stack wb-gap-1">
+                <label>Icon</label>
+                <select class="wb-select" name="{{ $rowPrefix }}[icon_slug]">
+                    <option value="">No icon</option>
+                    @foreach ($iconOptions as $icon)
+                        <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="wb-stack wb-gap-1">
+                <label>Badge</label>
+                <input class="wb-input" type="text" name="{{ $rowPrefix }}[badge_label]" value="{{ $columnItem->eyebrow ?? $columnItem->translatedTextFieldValue('eyebrow') }}">
+            </div>
+
+            <div class="wb-stack wb-gap-1">
+                <label>Badge tone</label>
+                <select class="wb-select" name="{{ $rowPrefix }}[badge_tone]">
+                    @foreach (['neutral' => 'Neutral', 'info' => 'Info', 'success' => 'Success', 'warning' => 'Warning', 'danger' => 'Danger'] as $value => $label)
+                        <option value="{{ $value }}" @selected($selectedTone === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
 
         <div class="wb-stack wb-gap-1">
             <label>{{ $contentLabel }}</label>

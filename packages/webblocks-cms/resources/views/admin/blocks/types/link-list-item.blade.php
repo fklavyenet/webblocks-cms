@@ -26,6 +26,8 @@
         <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
     </div>
 
+    @include('webblocks-cms::admin.blocks.types.partials.icon-badge-fields')
+
     <div class="wb-stack wb-gap-1">
         <label for="content">Optional Description</label>
         <textarea id="content" name="content" class="wb-textarea" rows="6">{{ old('content', $block->content) }}</textarea>

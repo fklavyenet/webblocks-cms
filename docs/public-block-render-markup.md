@@ -254,6 +254,10 @@ The block owns its root `<div>`. It renders child blocks directly. This is the n
 
 ```html
 <header class="wb-content-header wb-text-center" data-wb-public-block-type="content-header">
+  <div class="wb-cms-public-kicker">
+    <i class="wb-icon wb-icon-sparkles" aria-hidden="true"></i>
+    <span class="wb-badge wb-badge-info">Beta</span>
+  </div>
   <h1 class="wb-content-title">Page title</h1>
   <p class="wb-content-subtitle">Intro text</p>
   <div class="wb-content-meta">
@@ -266,13 +270,16 @@ The block owns its root `<div>`. It renders child blocks directly. This is the n
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-content-header`, optional alignment class, `wb-content-title`, `wb-content-subtitle`, `wb-content-meta`, `wb-content-meta-divider`.
+`wb-content-header`, optional alignment class, `wb-cms-public-kicker`, `wb-icon wb-icon-{slug}`, `wb-badge`, `wb-content-title`, `wb-content-subtitle`, `wb-content-meta`, `wb-content-meta-divider`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | settings.alignment | left/center/right | `contentHeaderAlignmentClass()` adds `wb-text-left`, `wb-text-center`, or `wb-text-right`. |
+| settings.icon_slug | active content icon catalog slug | Renders a decorative `<i class="wb-icon wb-icon-{slug}" aria-hidden="true">`; inactive or unknown slugs render nothing. |
+| settings.badge_tone | neutral/info/success/warning/danger | Adds an allowlisted badge tone class when a badge label is present. |
+| eyebrow / badge label | translated text | Renders escaped badge text. |
 | title | any text | Renders as `<h1 class="wb-content-title">`. |
 | subtitle | any text | Renders `<p class="wb-content-subtitle">` when present. |
 | meta | list | Renders `.wb-content-meta` spans separated by `.wb-content-meta-divider`. |
@@ -1704,9 +1711,11 @@ The block renders published `link-list-item` children only. It does not own the 
 
 ```html
 <a href="/item" class="wb-link-list-item">
+  <i class="wb-icon wb-icon-book-open" aria-hidden="true"></i>
   <div class="wb-link-list-main">
     <span class="wb-link-list-title">Title</span>
     <span class="wb-link-list-meta">Meta</span>
+    <span class="wb-badge wb-badge-success">New</span>
   </div>
   <div class="wb-link-list-desc">Description.</div>
 </a>
@@ -1714,13 +1723,16 @@ The block renders published `link-list-item` children only. It does not own the 
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-link-list-item`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-meta`, `wb-link-list-desc`.
+`wb-link-list-item`, `wb-icon wb-icon-{slug}`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-meta`, `wb-badge`, `wb-link-list-desc`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | url | safe URL | Required for output; becomes anchor `href`. |
+| settings.icon_slug | active content icon catalog slug | Renders a decorative icon before the row body; inactive or unknown slugs render nothing. |
+| settings.badge_tone | neutral/info/success/warning/danger | Adds an allowlisted badge tone class when a badge label is present. |
+| eyebrow / badge label | translated text | Renders escaped badge text. |
 | title | text | Required for output; renders `.wb-link-list-title`. |
 | subtitle | text | Renders `.wb-link-list-meta`. |
 | content | text | Renders `.wb-link-list-desc`. |

@@ -139,6 +139,7 @@ Public pages now use explicit layout composition modes:
 - `card_body` owns `div.wb-card-body` with `data-wb-public-block-type="card-body"`.
 - `card_footer` owns `div.wb-card-footer` with `data-wb-public-block-type="card-footer"`.
 - Card regions should render their own roots directly and must not receive extra generic public wrappers.
+- Optional card header icons belong on the `card_header` region block, not on the parent `card` shell.
 - The normal Card contract is composable child content through those three regions, not a built-in promo or media renderer.
 - Older saved Card rows may still use a minimal fallback renderer only when the Card has no Card region children.
 - `wb-sidebar` is reserved for a true docs/app navigation shell. Generic marketing or editorial sidebars should stay ordinary `aside` content composed from `wb-grid`, `wb-stack`, cards, callouts, and link lists.

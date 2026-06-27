@@ -5,11 +5,37 @@
     $subtitle = $hasRenderableText($block->subtitle) ? (string) $block->subtitle : null;
     $content = $hasRenderableText($block->content) ? (string) $block->content : null;
     $statValue = $subtitle ?? $title;
+    $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug());
+    $badgeLabel = $block->publicBadgeLabel();
+    $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
+@endphp
+
+@php
+    $renderKicker = function () use ($iconClass, $badgeLabel, $badgeClass): string {
+        if ($iconClass === null && $badgeLabel === null) {
+            return '';
+        }
+
+        $html = '<div class="wb-cms-public-kicker">';
+
+        if ($iconClass !== null) {
+            $html .= '<i class="'.e($iconClass).'" aria-hidden="true"></i>';
+        }
+
+        if ($badgeLabel !== null) {
+            $html .= '<span class="'.e($badgeClass).'">'.e($badgeLabel).'</span>';
+        }
+
+        return $html.'</div>';
+    };
 @endphp
 
 @switch($columnsVariant)
     @case('plain')
         <div class="wb-stack wb-gap-2">
+            {!! $renderKicker() !!}
+
             @if ($title !== null)
                 <strong>{{ $title }}</strong>
             @endif
@@ -22,6 +48,8 @@
 
     @case('stats')
         <div class="wb-stat">
+            {!! $renderKicker() !!}
+
             @if ($title !== null)
                 <div class="wb-stat-label">{{ $title }}</div>
             @endif
@@ -43,6 +71,8 @@
                 @if ($block->url)
                     <a href="{{ $block->url }}" class="wb-no-decoration">
                         <div class="wb-stack wb-gap-2">
+                            {!! $renderKicker() !!}
+
                             @if ($title !== null)
                                 <strong>{{ $title }}</strong>
                             @endif
@@ -54,6 +84,8 @@
                     </a>
                 @else
                     <div class="wb-stack wb-gap-2">
+                        {!! $renderKicker() !!}
+
                         @if ($title !== null)
                             <strong>{{ $title }}</strong>
                         @endif

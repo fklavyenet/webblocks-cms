@@ -63,6 +63,32 @@
     align-items: stretch !important;
 }
 
+.wb-cms-public-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--wb-s2);
+}
+
+.wb-cms-public-kicker .wb-icon {
+    flex: 0 0 auto;
+}
+
+.wb-cms-public-card-header-with-icon {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--wb-s3);
+}
+
+.wb-cms-public-card-header-with-icon > .wb-icon {
+    flex: 0 0 auto;
+    margin-top: 0.125rem;
+}
+
+.wb-link-list-item > .wb-icon {
+    flex: 0 0 auto;
+    margin-top: 0.125rem;
+}
+
 .wb-gallery {
     --wb-gallery-columns: 3;
     --wb-gallery-gap: var(--wb-s3);

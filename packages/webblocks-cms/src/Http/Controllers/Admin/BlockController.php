@@ -23,6 +23,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -698,14 +699,23 @@ class BlockController extends Controller
         $subtitle = trim((string) ($item['subtitle'] ?? ''));
         $content = trim((string) ($item['content'] ?? ''));
         $url = trim((string) ($item['url'] ?? ''));
+        $iconSlug = app(IconCatalog::class)->normalizeSlug($item['icon_slug'] ?? null);
+        $badgeLabel = trim((string) ($item['badge_label'] ?? ''));
+        $badgeTone = trim((string) ($item['badge_tone'] ?? ''));
+        $settings = array_filter([
+          'icon_slug' => $iconSlug,
+          'badge_tone' => in_array($badgeTone, ['info', 'success', 'warning', 'danger'], true) ? $badgeTone : null,
+        ], fn ($value) => $value !== null && $value !== '');
 
         return [
           'id' => ! empty($item['id']) ? (int) $item['id'] : null,
           'block_type_id' => ! empty($item['block_type_id']) ? (int) $item['block_type_id'] : null,
           'title' => $title !== '' ? $title : null,
+          'eyebrow' => $badgeLabel !== '' ? $badgeLabel : null,
           'subtitle' => $subtitle !== '' ? $subtitle : null,
           'content' => $content !== '' ? $content : null,
           'url' => $url !== '' ? $url : null,
+          'settings' => $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES),
           'status' => in_array(($item['status'] ?? 'published'), ['draft', 'published'], true) ? $item['status'] : 'published',
           'is_system' => (bool) ($item['is_system'] ?? false),
           'sort_order' => is_numeric($item['sort_order'] ?? null) ? (int) $item['sort_order'] : $index,
@@ -858,6 +868,7 @@ class BlockController extends Controller
 
       if ($localeCode !== null && $columnItem->exists) {
         $itemData['url'] = $columnItem->getRawOriginal('url');
+        $itemData['settings'] = $columnItem->getRawOriginal('settings');
       }
 
       $payload = $itemData + [
@@ -916,6 +927,11 @@ class BlockController extends Controller
 
       if (! $blockType || $blockType->slug !== 'link-list-item') {
         continue;
+      }
+
+      if ($localeCode !== null && $itemId && $existingItems->has($itemId)) {
+        $itemData['url'] = $existingItems[$itemId]->getRawOriginal('url');
+        $itemData['settings'] = $existingItems[$itemId]->getRawOriginal('settings');
       }
 
       $payload = $itemData + [

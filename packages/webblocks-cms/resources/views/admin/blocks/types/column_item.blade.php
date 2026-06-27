@@ -21,4 +21,6 @@
         <label for="content">Column Text</label>
         <textarea id="content" name="content" class="wb-textarea" rows="6" required>{{ old('content', $block->content) }}</textarea>
     </div>
+
+    @include('webblocks-cms::admin.blocks.types.partials.icon-badge-fields')
 </div>

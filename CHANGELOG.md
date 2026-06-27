@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.170
+
+- Add reusable product-level public icon and badge support for selected content blocks using active `System -> Icons` catalog slugs and safe `wb-icon wb-icon-{slug}` public output.
+
 ## 1.32.169
 
 - Add stable `wb-page-{slug}` public body classes, including `wb-page-home` for root homepage rendering, so site-level CSS can target individual pages safely.
