@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.173
+
+- Fix public icon tone CSS so icon-enabled content blocks visually apply selected icon tones in public rendering.
+
 ## 1.32.172
 
 - Add public icon tone support for icon-enabled content blocks using controlled visual tone settings and safe public CSS classes.

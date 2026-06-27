@@ -181,6 +181,23 @@ class PublicIconBadgeSupportTest extends TestCase
   }
 
   #[Test]
+  public function public_icon_tone_css_sets_explicit_color_in_runtime_and_package_assets(): void
+  {
+    foreach ([
+      public_path('cms/css/public.css'),
+      base_path('packages/webblocks-cms/public/cms/css/public.css'),
+    ] as $cssPath) {
+      $css = (string) file_get_contents($cssPath);
+
+      $this->assertStringContainsString('.wb-icon-tone-bold {', $css, $cssPath);
+      $this->assertStringContainsString('color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));', $css, $cssPath);
+      $this->assertStringContainsString('.wb-icon-tone-highlight {', $css, $cssPath);
+      $this->assertStringContainsString('color: var(--wb-public-tone-highlight, #7c3aed);', $css, $cssPath);
+      $this->assertStringNotContainsString('color: var(--wb-public-tone-bold, var(--wb-color-heading, currentColor));', $css, $cssPath);
+    }
+  }
+
+  #[Test]
   public function default_and_invalid_public_icon_tones_do_not_render_tone_classes(): void
   {
     $this->createIcon('sparkles', true);
