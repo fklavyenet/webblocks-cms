@@ -606,6 +606,13 @@ class Block extends Model
     return $icon !== '' ? $icon : null;
   }
 
+  public function publicIconTone(): ?string
+  {
+    $tone = trim((string) $this->setting('icon_tone', ''));
+
+    return $tone !== '' ? $tone : null;
+  }
+
   public function publicBadgeLabel(): ?string
   {
     return $this->stringValueOrNull($this->eyebrow ?? null)

@@ -17,8 +17,18 @@
     $itemSettings = is_array($columnItem->settings ?? null) ? $columnItem->settings : json_decode((string) ($columnItem->settings ?? ''), true);
     $itemSettings = is_array($itemSettings) ? $itemSettings : [];
     $selectedIcon = $itemSettings['icon_slug'] ?? '';
+    $selectedIconTone = $itemSettings['icon_tone'] ?? 'default';
     $selectedTone = $itemSettings['badge_tone'] ?? 'neutral';
     $iconOptions = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->pickerOptions('content', $selectedIcon, $selectedIcon);
+    $iconToneOptions = [
+        'default' => 'Default',
+        'soft' => 'Soft',
+        'brand' => 'Brand',
+        'accent' => 'Accent',
+        'highlight' => 'Highlight',
+        'bold' => 'Bold',
+        'quiet' => 'Quiet',
+    ];
     $summaryText = $showSubtitle
         ? ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder)
         : ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder);
@@ -71,13 +81,22 @@
             </div>
         @endif
 
-        <div class="wb-grid wb-grid-3">
+        <div class="wb-grid wb-grid-4">
             <div class="wb-stack wb-gap-1">
                 <label>Icon</label>
                 <select class="wb-select" name="{{ $rowPrefix }}[icon_slug]">
                     <option value="">No icon</option>
                     @foreach ($iconOptions as $icon)
                         <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="wb-stack wb-gap-1">
+                <label>Icon tone</label>
+                <select class="wb-select" name="{{ $rowPrefix }}[icon_tone]">
+                    @foreach ($iconToneOptions as $value => $label)
+                        <option value="{{ $value }}" @selected($selectedIconTone === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>

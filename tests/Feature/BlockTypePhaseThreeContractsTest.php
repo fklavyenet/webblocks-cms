@@ -294,7 +294,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
     $this->assertTrue($columns->ownsPublicRootHelper);
     $this->assertSame('clear', $columns->currentContractStatus);
     $this->assertSame(['title', 'eyebrow as badge_label', 'subtitle', 'content'], $columnItem->translatableFields);
-    $this->assertSame(['url', 'settings.icon_slug', 'settings.badge_tone'], $columnItem->sharedSettingsFields);
+    $this->assertSame(['url', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone'], $columnItem->sharedSettingsFields);
     $this->assertFalse($columnItem->ownsPublicRootHelper);
     $this->assertSame('clear', $columnItem->currentContractStatus);
     $this->assertSame(['title', 'subtitle', 'content'], $cta->translatableFields);
@@ -327,7 +327,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
     $this->assertTrue($cardHeader->ownsPublicRootHelper);
     $this->assertTrue($cardBody->ownsPublicRootHelper);
     $this->assertTrue($cardFooter->ownsPublicRootHelper);
-    $this->assertSame(['settings.alignment', 'settings.icon_slug', 'settings.badge_tone'], $contentHeader->sharedSettingsFields);
+    $this->assertSame(['settings.alignment', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone'], $contentHeader->sharedSettingsFields);
     $this->assertSame(['title', 'eyebrow as badge_label', 'subtitle', 'meta'], $contentHeader->translatableFields);
     $this->assertTrue($section->ownsPublicRootHelper);
     $this->assertTrue($container->ownsPublicRootHelper);

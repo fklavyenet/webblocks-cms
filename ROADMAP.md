@@ -76,10 +76,10 @@ This is planned product direction for controlled public styling. It does not imp
 
 ### Phase 1 - Block Visual Tone Foundation
 
-- Planned: add `icon_tone` support for `content_header`, `card_header`, `column_item`, and `link-list-item`.
-- Planned: expose admin select fields for visual design roles: `default`, `soft`, `brand`, `accent`, `highlight`, `bold`, and `quiet`.
-- Planned: expose supported tone fields through Internal Content API/content-contract discovery.
-- Planned: render public classes or token hooks instead of arbitrary inline color styles.
+- Done: add `icon_tone` support for `content_header`, `card_header`, `column_item`, and `link-list-item`.
+- Done: expose admin select fields for visual design roles: `default`, `soft`, `brand`, `accent`, `highlight`, `bold`, and `quiet`.
+- Done: expose supported tone fields through Internal Content API/content-contract discovery.
+- Done: render public classes or token hooks instead of arbitrary inline color styles.
 
 ### Phase 2 - Site-Level Public Theme Presets
 

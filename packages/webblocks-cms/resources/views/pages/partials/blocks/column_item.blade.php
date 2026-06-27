@@ -6,7 +6,7 @@
     $content = $hasRenderableText($block->content) ? (string) $block->content : null;
     $statValue = $subtitle ?? $title;
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
-    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug());
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();
     $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
 @endphp

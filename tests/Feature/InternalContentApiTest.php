@@ -295,6 +295,16 @@ class InternalContentApiTest extends TestCase
     $this->assertSame('renderer-generated form_check_{token} field signed by _form_check_name', $contactFormContract['spam_behavior']['check_field']);
     $this->assertSame(['block recipient_email', 'site contact_recipient_email', 'CONTACT_RECIPIENT_EMAIL', 'MAIL_FROM_ADDRESS'], $contactFormContract['notification_behavior']['recipient_order']);
 
+    $contentHeaderContract = collect($response->json('block_contracts'))
+      ->firstWhere('handle', 'content_header');
+    $plainTextContract = collect($response->json('block_contracts'))
+      ->firstWhere('handle', 'plain_text');
+
+    $this->assertIsArray($contentHeaderContract);
+    $this->assertContains('settings.icon_tone', $contentHeaderContract['shared_settings_fields']);
+    $this->assertIsArray($plainTextContract);
+    $this->assertNotContains('settings.icon_tone', $plainTextContract['shared_settings_fields']);
+
     $encoded = json_encode($response->json(), JSON_UNESCAPED_SLASHES);
 
     $this->assertIsString($encoded);
@@ -306,6 +316,133 @@ class InternalContentApiTest extends TestCase
     $this->assertStringNotContainsString('token_hash', $encoded);
     $this->assertStringNotContainsString('token_preview', $encoded);
     $this->assertStringNotContainsString('WEBBLOCKS_CMS_API_TOKEN', $encoded);
+  }
+
+  #[Test]
+  public function content_validate_accepts_supported_icon_tones_and_rejects_invalid_or_unsupported_icon_tones(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $validPayload = $this->validPlanPayload([
+      'plan' => [
+        'slots' => [
+          'main' => [
+            [
+              'children' => [
+                [
+                  'children' => [
+                    [
+                      'type' => 'content_header',
+                      'translations' => [
+                        'title' => 'Docs',
+                      ],
+                      'settings' => [
+                        'icon_slug' => 'sparkles',
+                        'icon_tone' => 'brand',
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $validPayload)
+      ->assertOk()
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.0.settings.icon_tone', 'brand');
+
+    $defaultPayload = $this->validPlanPayload([
+      'plan' => [
+        'slots' => [
+          'main' => [
+            [
+              'children' => [
+                [
+                  'children' => [
+                    [
+                      'type' => 'content_header',
+                      'translations' => [
+                        'title' => 'Docs',
+                      ],
+                      'settings' => [
+                        'icon_tone' => 'default',
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $defaultPayload)
+      ->assertOk()
+      ->assertJsonMissingPath('normalized_plan.slots.main.0.children.0.children.0.settings.icon_tone');
+
+    $invalidPayload = $this->validPlanPayload([
+      'plan' => [
+        'slots' => [
+          'main' => [
+            [
+              'children' => [
+                [
+                  'children' => [
+                    [
+                      'type' => 'content_header',
+                      'translations' => [
+                        'title' => 'Docs',
+                      ],
+                      'settings' => [
+                        'icon_tone' => 'success',
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $invalidPayload)
+      ->assertStatus(422)
+      ->assertJsonPath('errors.0.path', 'plan.slots.main.0.children.0.children.0.settings.icon_tone');
+
+    $unsupportedPayload = $this->validPlanPayload([
+      'plan' => [
+        'slots' => [
+          'main' => [
+            [
+              'children' => [
+                [
+                  'children' => [
+                    [
+                      'settings' => [
+                        'icon_tone' => 'brand',
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $unsupportedPayload)
+      ->assertStatus(422)
+      ->assertJsonPath('errors.0.path', 'plan.slots.main.0.children.0.children.0.settings.icon_tone');
   }
 
   #[Test]

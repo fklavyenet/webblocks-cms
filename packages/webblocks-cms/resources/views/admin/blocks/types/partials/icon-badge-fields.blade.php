@@ -4,17 +4,36 @@
     $settings = is_array($block->settings ?? null) ? $block->settings : json_decode((string) ($block->getRawOriginal('settings') ?? $block->settings ?? ''), true);
     $settings = is_array($settings) ? $settings : [];
     $selectedIcon = old('icon_slug', $settings['icon_slug'] ?? '');
+    $selectedIconTone = old('icon_tone', $settings['icon_tone'] ?? 'default');
     $selectedTone = old('badge_tone', $settings['badge_tone'] ?? 'neutral');
     $iconOptions = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->pickerOptions($iconContext, $selectedIcon, $settings['icon_slug'] ?? null);
+    $iconToneOptions = [
+        'default' => 'Default',
+        'soft' => 'Soft',
+        'brand' => 'Brand',
+        'accent' => 'Accent',
+        'highlight' => 'Highlight',
+        'bold' => 'Bold',
+        'quiet' => 'Quiet',
+    ];
 @endphp
 
-<div class="wb-grid wb-grid-2">
+<div class="wb-grid wb-grid-3">
     <div class="wb-stack wb-gap-1">
         <label for="icon_slug">Icon</label>
         <select id="icon_slug" name="icon_slug" class="wb-select">
             <option value="">No icon</option>
             @foreach ($iconOptions as $icon)
                 <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="icon_tone">Icon tone</label>
+        <select id="icon_tone" name="icon_tone" class="wb-select">
+            @foreach ($iconToneOptions as $value => $label)
+                <option value="{{ $value }}" @selected($selectedIconTone === $value)>{{ $label }}</option>
             @endforeach
         </select>
     </div>

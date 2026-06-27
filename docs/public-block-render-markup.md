@@ -270,7 +270,7 @@ The block owns its root `<div>`. It renders child blocks directly. This is the n
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-content-header`, optional alignment class, `wb-cms-public-kicker`, `wb-icon wb-icon-{slug}`, `wb-badge`, `wb-content-title`, `wb-content-subtitle`, `wb-content-meta`, `wb-content-meta-divider`.
+`wb-content-header`, optional alignment class, `wb-cms-public-kicker`, `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, `wb-badge`, `wb-content-title`, `wb-content-subtitle`, `wb-content-meta`, `wb-content-meta-divider`.
 
 ### Settings -> class / markup map
 
@@ -278,6 +278,7 @@ The block owns its root `<div>`. It renders child blocks directly. This is the n
 | --- | --- | --- |
 | settings.alignment | left/center/right | `contentHeaderAlignmentClass()` adds `wb-text-left`, `wb-text-center`, or `wb-text-right`. |
 | settings.icon_slug | active content icon catalog slug | Renders a decorative `<i class="wb-icon wb-icon-{slug}" aria-hidden="true">`; inactive or unknown slugs render nothing. |
+| settings.icon_tone | default/soft/brand/accent/highlight/bold/quiet | Adds `wb-icon-tone-{tone}` for non-default visual tones when an active icon renders; unknown tones and missing icons produce no tone class. |
 | settings.badge_tone | neutral/info/success/warning/danger | Adds an allowlisted badge tone class when a badge label is present. |
 | eyebrow / badge label | translated text | Renders escaped badge text. |
 | title | any text | Renders as `<h1 class="wb-content-title">`. |
@@ -455,13 +456,15 @@ The block owns its root `<article>`. Normal structure is child `card_header`, `c
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-card-header`.
+`wb-card-header`, optional `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | settings.layout_name | any stored value | Admin/layout metadata only; no public class effect in the current renderer. |
+| settings.icon_slug | active content icon catalog slug | Renders a decorative icon before child content; inactive or unknown slugs render nothing. |
+| settings.icon_tone | default/soft/brand/accent/highlight/bold/quiet | Adds `wb-icon-tone-{tone}` for non-default visual tones when an active icon renders; unknown tones and missing icons produce no tone class. |
 | child blocks | published children | Rendered inside the card or region root. |
 | legacy card fields | older Card rows without region children | Card parent can render a minimal legacy header/body/footer fallback. |
 
@@ -876,7 +879,7 @@ Stats variant:
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-card`, `wb-card-body`, `wb-stack`, `wb-gap-2`, `wb-no-decoration`, `wb-m-0`, `wb-stat`, `wb-stat-label`, `wb-stat-value`, `wb-stat-delta`.
+`wb-card`, `wb-card-body`, `wb-stack`, `wb-gap-2`, `wb-no-decoration`, `wb-m-0`, `wb-stat`, `wb-stat-label`, `wb-stat-value`, `wb-stat-delta`, optional `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`.
 
 ### Settings -> class / markup map
 
@@ -886,6 +889,8 @@ Stats variant:
 | parent columns variant | stats | Renders `.wb-stat` with label/value/detail. |
 | parent columns variant | plain/default | Renders `.wb-stack wb-gap-2`. |
 | url | safe URL | Cards/plain variants wrap content in `a.wb-no-decoration`; stats do not render a link in current renderer. |
+| settings.icon_slug | active content icon catalog slug | Renders a decorative icon in the item kicker; inactive or unknown slugs render nothing. |
+| settings.icon_tone | default/soft/brand/accent/highlight/bold/quiet | Adds `wb-icon-tone-{tone}` for non-default visual tones when an active icon renders; unknown tones and missing icons produce no tone class. |
 
 ### Use for / Avoid for
 
@@ -1711,7 +1716,7 @@ The block renders published `link-list-item` children only. It does not own the 
 
 ```html
 <a href="/item" class="wb-link-list-item">
-  <i class="wb-icon wb-icon-book-open" aria-hidden="true"></i>
+  <i class="wb-icon wb-icon-book-open wb-icon-tone-brand" aria-hidden="true"></i>
   <div class="wb-link-list-main">
     <span class="wb-link-list-title">Title</span>
     <span class="wb-link-list-meta">Meta</span>
@@ -1723,7 +1728,7 @@ The block renders published `link-list-item` children only. It does not own the 
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-link-list-item`, `wb-icon wb-icon-{slug}`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-meta`, `wb-badge`, `wb-link-list-desc`.
+`wb-link-list-item`, `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-meta`, `wb-badge`, `wb-link-list-desc`.
 
 ### Settings -> class / markup map
 
@@ -1731,6 +1736,7 @@ The block renders published `link-list-item` children only. It does not own the 
 | --- | --- | --- |
 | url | safe URL | Required for output; becomes anchor `href`. |
 | settings.icon_slug | active content icon catalog slug | Renders a decorative icon before the row body; inactive or unknown slugs render nothing. |
+| settings.icon_tone | default/soft/brand/accent/highlight/bold/quiet | Adds `wb-icon-tone-{tone}` for non-default visual tones when an active icon renders; unknown tones and missing icons produce no tone class. |
 | settings.badge_tone | neutral/info/success/warning/danger | Adds an allowlisted badge tone class when a badge label is present. |
 | eyebrow / badge label | translated text | Renders escaped badge text. |
 | title | text | Required for output; renders `.wb-link-list-title`. |

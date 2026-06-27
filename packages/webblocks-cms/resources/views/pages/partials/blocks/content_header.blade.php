@@ -5,7 +5,7 @@
     $alignmentClass = $block->contentHeaderAlignmentClass();
     $headerClass = trim('wb-content-header '.($alignmentClass ?? ''));
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
-    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug());
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();
     $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
 @endphp

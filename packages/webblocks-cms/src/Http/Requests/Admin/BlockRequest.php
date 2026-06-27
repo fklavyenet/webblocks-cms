@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class BlockRequest extends FormRequest
@@ -118,6 +119,7 @@ class BlockRequest extends FormRequest
       'title' => [($isContentHeader || $isStatCard || $isDownload || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
       'eyebrow' => ['prohibited', 'string', 'max:255'],
       'icon_slug' => [$supportsPublicIcon ? 'nullable' : 'prohibited', 'string', 'max:255'],
+      'icon_tone' => [$supportsPublicIcon ? 'nullable' : 'prohibited', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
       'badge_label' => [$supportsPublicBadgeLabel ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'badge_tone' => [$supportsPublicIcon ? 'nullable' : 'prohibited', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'subtitle' => ['nullable', 'string', 'max:255'],
@@ -192,6 +194,7 @@ class BlockRequest extends FormRequest
       'column_items.*.content' => ['nullable', 'string'],
       'column_items.*.url' => ['nullable', 'string', 'max:2048'],
       'column_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
+      'column_items.*.icon_tone' => ['nullable', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
       'column_items.*.badge_label' => ['nullable', 'string', 'max:255'],
       'column_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'column_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
@@ -216,6 +219,7 @@ class BlockRequest extends FormRequest
       'link_list_items.*.content' => ['nullable', 'string'],
       'link_list_items.*.url' => ['nullable', 'string', 'max:2048'],
       'link_list_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
+      'link_list_items.*.icon_tone' => ['nullable', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
       'link_list_items.*.badge_label' => ['nullable', 'string', 'max:255'],
       'link_list_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'link_list_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
@@ -1839,7 +1843,7 @@ class BlockRequest extends FormRequest
     unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
     unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
     unset($data['show_button']);
-    unset($data['icon_slug'], $data['badge_label'], $data['badge_tone']);
+    unset($data['icon_slug'], $data['icon_tone'], $data['badge_label'], $data['badge_tone']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
     return $data;
@@ -1848,12 +1852,19 @@ class BlockRequest extends FormRequest
   private function applyPublicIconBadgeSettings(array $settings, array $data): array
   {
     $icon = app(IconCatalog::class)->normalizeSlug($data['icon_slug'] ?? null);
+    $iconTone = app(PublicIconPresenter::class)->visualTone($data['icon_tone'] ?? null);
     $badgeTone = trim((string) ($data['badge_tone'] ?? 'neutral'));
 
     if ($icon !== null) {
       $settings['icon_slug'] = $icon;
     } else {
       unset($settings['icon_slug']);
+    }
+
+    if ($iconTone !== null && $iconTone !== 'default') {
+      $settings['icon_tone'] = $iconTone;
+    } else {
+      unset($settings['icon_tone']);
     }
 
     if (in_array($badgeTone, ['info', 'success', 'warning', 'danger'], true)) {

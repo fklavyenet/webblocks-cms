@@ -8,13 +8,19 @@ class PublicIconPresenter
 {
   public const BADGE_TONES = ['neutral', 'info', 'success', 'warning', 'danger'];
 
+  public const VISUAL_TONES = ['default', 'soft', 'brand', 'accent', 'highlight', 'bold', 'quiet'];
+
   public function __construct(private readonly IconCatalog $catalog) {}
 
-  public function iconClass(?string $slug, string $context = 'content'): ?string
+  public function iconClass(?string $slug, string $context = 'content', ?string $tone = null): ?string
   {
     $slug = $this->catalog->activePublicIconSlug($slug, $context);
 
-    return $slug !== null ? 'wb-icon wb-icon-'.$slug : null;
+    if ($slug === null) {
+      return null;
+    }
+
+    return trim('wb-icon wb-icon-'.$slug.' '.$this->iconToneClass($tone));
   }
 
   public function badgeTone(?string $tone): string
@@ -31,5 +37,21 @@ class PublicIconPresenter
     return $tone === 'neutral'
       ? 'wb-badge'
       : 'wb-badge wb-badge-'.$tone;
+  }
+
+  public function visualTone(?string $tone): ?string
+  {
+    $tone = trim((string) $tone);
+
+    return in_array($tone, self::VISUAL_TONES, true) ? $tone : null;
+  }
+
+  public function iconToneClass(?string $tone): ?string
+  {
+    $tone = $this->visualTone($tone);
+
+    return $tone !== null && $tone !== 'default'
+      ? 'wb-icon-tone-'.$tone
+      : null;
   }
 }

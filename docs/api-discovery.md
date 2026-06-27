@@ -83,7 +83,7 @@ GET /webadmin/api/navigation-menus
 GET /webadmin/api/shared-slots
 ```
 
-The content validate/apply links support `create_draft_page`, `replace_existing_draft_page`, and published-page staged update modes. Use `GET /webadmin/api/content-contract` for the current mode list and safety rules. Promoting a staged update onto a published page requires `content.publish` in addition to `content.apply`.
+The content validate/apply links support `create_draft_page`, `replace_existing_draft_page`, and published-page staged update modes. Use `GET /webadmin/api/content-contract` for the current mode list, safety rules, and block field discovery, including allowlisted public visual tone fields such as `settings.icon_tone` when a block supports them. Promoting a staged update onto a published page requires `content.publish` in addition to `content.apply`.
 
 Publish links require `content.publish`. `POST /webadmin/api/pages/{page}/publish` defaults to page-only publishing with `include_page_owned_blocks: false`; it does not publish draft blocks unless the request explicitly sets `include_page_owned_blocks: true`. Shared Slot cascade publishing is unsupported and returns JSON validation feedback. `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes eligible page-owned draft or in-review blocks without changing the page workflow status.
 

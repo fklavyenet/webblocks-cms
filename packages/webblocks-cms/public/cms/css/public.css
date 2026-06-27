@@ -73,6 +73,31 @@
     flex: 0 0 auto;
 }
 
+.wb-icon-tone-soft {
+    color: var(--wb-public-tone-soft, var(--wb-color-muted, #64748b));
+}
+
+.wb-icon-tone-brand {
+    color: var(--wb-public-tone-brand, var(--wb-color-primary, #2563eb));
+}
+
+.wb-icon-tone-accent {
+    color: var(--wb-public-tone-accent, var(--wb-color-accent, #7c3aed));
+}
+
+.wb-icon-tone-highlight {
+    color: var(--wb-public-tone-highlight, var(--wb-color-warning, #b45309));
+}
+
+.wb-icon-tone-bold {
+    color: var(--wb-public-tone-bold, var(--wb-color-heading, currentColor));
+}
+
+.wb-icon-tone-quiet {
+    color: var(--wb-public-tone-quiet, var(--wb-color-muted, #64748b));
+    opacity: 0.72;
+}
+
 .wb-cms-public-card-header-with-icon {
     display: flex;
     align-items: flex-start;

@@ -27,6 +27,7 @@ use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 
 class InternalContentPlanService
 {
@@ -1672,6 +1673,8 @@ class InternalContentPlanService
       $settings = [];
     }
 
+    $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
+
     foreach (['media_id', 'asset_id', 'gallery_media_ids', 'gallery_items', 'remote_url', 'source_url'] as $mediaKey) {
       if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {
         $errors[] = $this->error($path.'.'.$mediaKey, 'Media import, media assignment, and remote fetch are outside Phase 1.');
@@ -1728,6 +1731,37 @@ class InternalContentPlanService
     }
 
     return in_array($childType->slug, $allowed, true);
+  }
+
+  private function normalizePublicIconToneSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
+  {
+    if (! array_key_exists('icon_tone', $settings)) {
+      return $settings;
+    }
+
+    if (! in_array($blockType->slug, ['content_header', 'card_header', 'column_item', 'link-list-item'], true)) {
+      $errors[] = $this->error($path.'.settings.icon_tone', 'icon_tone is only supported by public icon-enabled block types.');
+      unset($settings['icon_tone']);
+
+      return $settings;
+    }
+
+    $tone = app(PublicIconPresenter::class)->visualTone($settings['icon_tone']);
+
+    if ($tone === null) {
+      $errors[] = $this->error($path.'.settings.icon_tone', 'icon_tone must be one of: default, soft, brand, accent, highlight, bold, quiet.');
+      unset($settings['icon_tone']);
+
+      return $settings;
+    }
+
+    if ($tone === 'default') {
+      unset($settings['icon_tone']);
+    } else {
+      $settings['icon_tone'] = $tone;
+    }
+
+    return $settings;
   }
 
   private function rejectForbiddenKeys(array $data, string $path, array &$errors, array $allowedKeys = []): void

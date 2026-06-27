@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/public-theme-and-tones.md
 
 # Public Theme And Visual Tones
 
-This document records the planned product direction for site-level public theme presets and public block visual tones in WebBlocks CMS. It is documentation-only planning and does not describe runtime behavior that exists today.
+This document records the product direction for site-level public theme presets and public block visual tones in WebBlocks CMS. The initial `icon_tone` block setting is implemented for selected public icon-enabled blocks; site-level public theme preset selection remains planned.
 
 ## Purpose
 
@@ -78,12 +78,14 @@ Example block settings:
 }
 ```
 
-Initial implementation should start narrow. The recommended first block setting is `icon_tone` for selected blocks where decorative icons already exist or are planned:
+The initial implementation starts narrow with the shared `settings.icon_tone` field for selected blocks where decorative icons already exist:
 
 - `content_header`
 - `card_header`
 - `column_item`
 - `link-list-item`
+
+`icon_tone` is a shared setting, not locale-owned content. Unknown tones are rejected by admin/API validation or ignored by public rendering as a safe fallback. The renderer emits no tone class for `default`, empty, unknown, inactive, or missing icons.
 
 ## Semantic Status Tones
 
@@ -152,11 +154,11 @@ Custom theme builders, if added later, must include guardrails before user-defin
 
 ### Phase 1 - Block Visual Tone Foundation
 
-- Add `icon_tone` support for the initial target blocks.
-- Add admin select fields using the visual tone list.
-- Expose tone field metadata through Internal Content API/content-contract discovery.
-- Render public tone classes such as `wb-icon-tone-brand`.
-- Add focused tests, README updates, changelog notes, and relevant docs updates.
+- Done: add `icon_tone` support for the initial target blocks.
+- Done: add admin select fields using the visual tone list.
+- Done: expose tone field metadata through Internal Content API/content-contract discovery.
+- Done: render public tone classes such as `wb-icon-tone-brand`.
+- Done: add focused tests, README updates, changelog notes, and relevant docs updates.
 
 ### Phase 2 - Site-Level Public Theme Presets
 
@@ -177,10 +179,9 @@ Custom theme builders, if added later, must include guardrails before user-defin
 
 ## Non-Goals
 
-- No runtime code is defined by this document.
+- Site-level theme preset selection is not implemented by this document.
+- Custom theme builders are not implemented by this document.
 - No migration is approved by this document.
-- No admin screen is implemented by this document.
-- No CSS, JavaScript, Blade, or API endpoint is implemented by this document.
 - Do not add Tailwind, Vite, Node build-chain requirements, or package locks.
 - Do not expose arbitrary hex color pickers in the first phase.
 - Do not couple public themes to admin user theme or accent preferences.

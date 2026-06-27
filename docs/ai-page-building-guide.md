@@ -105,7 +105,7 @@ sticky-navbar
 
 Do not substitute nearby spellings such as `plain-text`, `rich_text`, `button`, `navbar`, or `navigation_auto` unless discovery confirms those exact handles.
 
-For blocks that expose `settings.icon_slug`, use only active icon slugs confirmed by the live icon/catalog-backed admin contract. Do not invent icon class names, upload SVGs, inject inline SVG, or add site-specific CSS to simulate product icons. Badge labels are locale-owned where the block contract exposes `eyebrow`/`badge_label`; badge tones are shared settings and must stay within the discovered allowlist.
+For blocks that expose `settings.icon_slug`, use only active icon slugs confirmed by the live icon/catalog-backed admin contract. Blocks may also expose shared `settings.icon_tone` with the public visual tone values `default`, `soft`, `brand`, `accent`, `highlight`, `bold`, and `quiet`; do not use semantic status tones such as `success` or `danger` for icon tone. Do not invent icon class names, upload SVGs, inject inline SVG, add inline colors, or add site-specific CSS to simulate product icons. Badge labels are locale-owned where the block contract exposes `eyebrow`/`badge_label`; badge tones are shared settings and must stay within the discovered semantic allowlist.
 
 ## Safe Workflow
 

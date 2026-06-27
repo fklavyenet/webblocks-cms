@@ -26,6 +26,7 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
+use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -700,10 +701,12 @@ class BlockController extends Controller
         $content = trim((string) ($item['content'] ?? ''));
         $url = trim((string) ($item['url'] ?? ''));
         $iconSlug = app(IconCatalog::class)->normalizeSlug($item['icon_slug'] ?? null);
+        $iconTone = app(PublicIconPresenter::class)->visualTone($item['icon_tone'] ?? null);
         $badgeLabel = trim((string) ($item['badge_label'] ?? ''));
         $badgeTone = trim((string) ($item['badge_tone'] ?? ''));
         $settings = array_filter([
           'icon_slug' => $iconSlug,
+          'icon_tone' => $iconTone !== 'default' ? $iconTone : null,
           'badge_tone' => in_array($badgeTone, ['info', 'success', 'warning', 'danger'], true) ? $badgeTone : null,
         ], fn ($value) => $value !== null && $value !== '');
 
