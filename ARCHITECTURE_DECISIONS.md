@@ -89,6 +89,25 @@ Consequences:
 - `System -> Plugins` reports configured enabled state separately from active compatibility. A plugin can be configured enabled yet remain inactive when its required CMS version constraint is not satisfied.
 - WebBlocks UI Manager is not registered, routed, migrated, menu-visible, command-registered, or health-visible in normal CMS installs. It becomes available only when an operator manually uploads its plugin ZIP and explicitly enables it. Existing tables created by v1.32.67 are not dropped automatically.
 
+## Public Themes And Visual Tones
+
+- Public themes are site-scoped identity settings, not install-level preferences or admin-user theme/accent preferences.
+- Public block design colors use visual tones and theme-owned tokens by default, not arbitrary per-block hex colors.
+- Visual tones describe public design roles such as `default`, `soft`, `brand`, `accent`, `highlight`, `bold`, and `quiet`.
+- Semantic status tones such as `info`, `success`, `warning`, and `danger` remain separate and keep their meaning for alerts, validation, form feedback, and status messaging.
+
+Reason:
+
+- Multisite installs need each public site to own its theme independently from the admin UI and from other sites.
+- Role-based tones let block plans remain portable across presets while preserving brand consistency, accessibility, and future dark mode support.
+
+Consequences:
+
+- Public theme controls should live under site editing, with `Sites -> Edit Site -> Theme` as the target admin home.
+- Public renderers should use classes, attributes, and CSS variables instead of inline arbitrary color styles.
+- The first implementation should start with narrow block visual tone fields such as `icon_tone` before adding full site preset selection.
+- Future custom theme builders require contrast, fallback, reset, import/export, and accessibility guardrails.
+
 ## Markdown-Sourced Documentation Publishing
 
 - Technical documentation source lives in Git Markdown files.

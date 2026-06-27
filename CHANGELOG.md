@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Document planned site-level public theme presets and block visual tones.
+
 ## 1.32.171
 
 - Add Internal Content API staged updates for published pages, letting operator tools create a draft staging copy, replace page-owned managed slots, preview it, and explicitly promote it back to the published source page with `content.publish` while preserving public page status/path and excluding Shared Slot cascades.

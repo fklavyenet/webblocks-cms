@@ -70,6 +70,30 @@ This is documentation planning only. It does not define a new runtime phase.
 - Use the Feature Inventory as a source page for deciding which user-facing docs and future technical product-site pages are missing.
 - Keep technical Markdown documentation separate from marketing content, while allowing the same source docs to inform future source-linked CMS documentation pages.
 
+## Public Theme / Visual Tones
+
+This is planned product direction for controlled public styling. It does not imply that runtime code, migrations, admin screens, CSS, or API endpoints exist today.
+
+### Phase 1 - Block Visual Tone Foundation
+
+- Planned: add `icon_tone` support for `content_header`, `card_header`, `column_item`, and `link-list-item`.
+- Planned: expose admin select fields for visual design roles: `default`, `soft`, `brand`, `accent`, `highlight`, `bold`, and `quiet`.
+- Planned: expose supported tone fields through Internal Content API/content-contract discovery.
+- Planned: render public classes or token hooks instead of arbitrary inline color styles.
+
+### Phase 2 - Site-Level Public Theme Presets
+
+- Planned: add site-scoped public theme selection under `Sites -> Edit Site -> Theme`.
+- Planned: provide theme preview/mockup UI for presets such as `canvas`, `atlas`, `pulse`, `prism`, `graphite`, and `horizon`.
+- Planned: output a public body marker such as `data-wb-public-theme` and theme-owned CSS variables for public pages only.
+- Planned: keep admin user accent/theme preferences separate from public site themes.
+
+### Phase 3 - Optional Custom Theme Builder
+
+- Deferred: add user-defined theme sets with guarded color fields.
+- Deferred: include accessibility and contrast warnings, reset/fallback behavior, import/export portability, and light/dark-aware token pairs.
+- Excluded: arbitrary block-level random colors as the default authoring workflow.
+
 ## CMS Plugin System
 
 ### Phase 0 - Documentation And Rules
