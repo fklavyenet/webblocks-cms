@@ -18,6 +18,17 @@ class Site extends Model
 {
   use HasFactory;
 
+  public const PUBLIC_THEME_CANVAS = 'canvas';
+
+  public const PUBLIC_THEME_PRESETS = [
+    self::PUBLIC_THEME_CANVAS,
+    'atlas',
+    'pulse',
+    'prism',
+    'graphite',
+    'horizon',
+  ];
+
   protected $fillable = [
     'name',
     'handle',
@@ -33,6 +44,7 @@ class Site extends Model
     'social_image_media_id',
     'social_image_asset_id',
     'contact_recipient_email',
+    'public_theme_preset',
   ];
 
   protected function casts(): array
@@ -271,7 +283,16 @@ class Site extends Model
   {
     $displayName = trim((string) $this->display_name);
 
-    return $displayName !== '' ? $displayName : $this->name;
+    return $displayName !== '' ? $displayName : (string) $this->name;
+  }
+
+  public function resolvedPublicThemePreset(): string
+  {
+    $preset = trim((string) ($this->public_theme_preset ?? ''));
+
+    return in_array($preset, self::PUBLIC_THEME_PRESETS, true)
+      ? $preset
+      : self::PUBLIC_THEME_CANVAS;
   }
 
   public static function enforcePrimaryInvariant(self $site): void

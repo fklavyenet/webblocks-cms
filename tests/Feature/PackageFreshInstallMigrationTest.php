@@ -183,6 +183,7 @@ class PackageFreshInstallMigrationTest extends TestCase
   public function fresh_install_schema_keeps_site_variables_runtime_columns_and_query_contract(): void
   {
     $this->assertTrue(Schema::hasColumn('sites', 'contact_recipient_email'));
+    $this->assertTrue(Schema::hasColumn('sites', 'public_theme_preset'));
     $this->assertTrue(Schema::hasTable('site_variables'));
     $this->assertTrue(Schema::hasColumn('site_variables', 'site_id'));
     $this->assertTrue(Schema::hasColumn('site_variables', 'key'));
@@ -200,6 +201,8 @@ class PackageFreshInstallMigrationTest extends TestCase
       'tagline' => null,
       'favicon_media_id' => null,
       'social_image_media_id' => null,
+      'contact_recipient_email' => null,
+      'public_theme_preset' => 'canvas',
       'seo_title' => null,
       'seo_description' => null,
       'seo_keywords' => null,

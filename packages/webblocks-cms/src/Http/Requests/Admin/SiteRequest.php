@@ -49,6 +49,7 @@ class SiteRequest extends FormRequest
       'seo_title' => trim((string) $this->input('seo_title')),
       'seo_description' => trim((string) $this->input('seo_description')),
       'seo_keywords' => trim((string) $this->input('seo_keywords')),
+      'public_theme_preset' => trim((string) $this->input('public_theme_preset', Site::PUBLIC_THEME_CANVAS)) ?: Site::PUBLIC_THEME_CANVAS,
       'favicon_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('favicon_media_id') ?: $this->integer('favicon_asset_id') ?: null) : null,
       'social_image_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('social_image_media_id') ?: $this->integer('social_image_asset_id') ?: null) : null,
       '_site_tab' => trim((string) $this->input('_site_tab', 'site')),
@@ -73,6 +74,7 @@ class SiteRequest extends FormRequest
       'seo_title' => ['nullable', 'string', 'max:255'],
       'seo_description' => ['nullable', 'string', 'max:1000'],
       'seo_keywords' => ['nullable', 'string', 'max:500'],
+      'public_theme_preset' => ['required', 'string', Rule::in(Site::PUBLIC_THEME_PRESETS)],
       'social_image_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
       'locale_ids' => ['required', 'array', 'min:1'],
       'locale_ids.*' => ['integer', Rule::exists(Locale::class, 'id')->where(fn ($query) => $query

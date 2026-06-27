@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use RuntimeException;
 use WebBlocks\Cms\Http\Requests\Admin\SiteCloneRequest;
@@ -99,6 +100,7 @@ class SiteController extends Controller
       $data = $request->validated();
       $localeIds = $data['locale_ids'];
       unset($data['locale_ids']);
+      $data = $this->runtimeSafeSiteData($data);
 
       $site = Site::query()->create($data);
 
@@ -122,7 +124,7 @@ class SiteController extends Controller
     $canManageDomains = request()->user()?->isSuperAdmin() ?? false;
 
     $requestedTab = trim((string) request()->query('tab', old('_site_tab', 'site')));
-    $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables'], true)
+    $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme'], true)
           ? $requestedTab
           : 'site';
     $requestedModal = trim((string) request()->query('modal', old('_site_variable_modal', '')));
@@ -229,6 +231,7 @@ class SiteController extends Controller
       $data = $request->validated();
       $localeIds = $data['locale_ids'];
       unset($data['locale_ids']);
+      $data = $this->runtimeSafeSiteData($data);
 
       $site->update($data);
 
@@ -255,6 +258,15 @@ class SiteController extends Controller
       ->unique()
       ->mapWithKeys(fn (int $localeId) => [$localeId => ['is_enabled' => true]])
       ->all());
+  }
+
+  private function runtimeSafeSiteData(array $data): array
+  {
+    if (! Schema::hasColumn('sites', 'public_theme_preset')) {
+      unset($data['public_theme_preset']);
+    }
+
+    return $data;
   }
 
   private function assetPickerAssets()

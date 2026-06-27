@@ -55,7 +55,7 @@ class PublicLayoutStructureTest extends TestCase
     $response = $this->get('/');
 
     $response->assertOk();
-    $response->assertSee('<body class="wb-public-body wb-page-home layout-docs">', false);
+    $response->assertSee('<body class="wb-public-body wb-page-home layout-docs" data-wb-public-theme="canvas">', false);
   }
 
   #[Test]
@@ -172,8 +172,38 @@ class PublicLayoutStructureTest extends TestCase
     $response = $this->get('/marketing');
 
     $response->assertOk();
-    $response->assertSee('<body class="wb-public-body wb-page-marketing layout-marketing hero-shell">', false);
+    $response->assertSee('<body class="wb-public-body wb-page-marketing layout-marketing hero-shell" data-wb-public-theme="canvas">', false);
     $response->assertSee('<section data-wb-slot="main" class="marketing-main wb-sticky">', false);
+  }
+
+  #[Test]
+  public function public_body_outputs_site_scoped_theme_preset(): void
+  {
+    $page = $this->buildHomepageWithHeaderSidebarAndFooter();
+    $page->site->update(['public_theme_preset' => 'pulse']);
+
+    $response = $this->get('/');
+
+    $response->assertOk();
+    $response->assertSee('data-wb-public-theme="pulse"', false);
+  }
+
+  #[Test]
+  public function public_body_theme_falls_back_to_canvas_for_null_or_unknown_values(): void
+  {
+    $page = $this->buildHomepageWithHeaderSidebarAndFooter();
+    $page->site->update(['public_theme_preset' => null]);
+
+    $this->get('/')
+      ->assertOk()
+      ->assertSee('data-wb-public-theme="canvas"', false);
+
+    $page->site->forceFill(['public_theme_preset' => 'unknown'])->save();
+
+    $this->get('/')
+      ->assertOk()
+      ->assertSee('data-wb-public-theme="canvas"', false)
+      ->assertDontSee('data-wb-public-theme="unknown"', false);
   }
 
   #[Test]
@@ -1104,8 +1134,8 @@ class PublicLayoutStructureTest extends TestCase
 
   private function assertBodyClassContains(string $html, string $expectedClass): void
   {
-    $this->assertMatchesRegularExpression('/<body class="([^"]+)">/', $html);
-    preg_match('/<body class="([^"]+)">/', $html, $matches);
+    $this->assertMatchesRegularExpression('/<body\b[^>]*class="([^"]+)"/', $html);
+    preg_match('/<body\b[^>]*class="([^"]+)"/', $html, $matches);
 
     $classes = preg_split('/\s+/', $matches[1] ?? '', -1, PREG_SPLIT_NO_EMPTY);
 

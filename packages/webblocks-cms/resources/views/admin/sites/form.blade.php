@@ -3,7 +3,7 @@
 @php
   $canManageSiteSettings = $canManageSiteSettings ?? true;
   $canManageDomains = $canManageDomains ?? false;
-  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables'], true)
+  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme'], true)
     ? ($siteTab ?? old('_site_tab', 'site'))
     : 'site';
   $isReadOnly = ! $canManageSiteSettings;
@@ -17,6 +17,9 @@
     ? $assetPickerAssets->firstWhere('id', (int) old('social_image_media_id', old('social_image_asset_id')))
     : $site->socialImageAsset;
   $siteVariablesUi = $siteVariablesUi ?? ['requestedModal' => '', 'selectedVariable' => null, 'closeUrl' => $site->exists ? route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']) : route('admin.sites.create', ['tab' => 'variables'])];
+  $publicThemePresets = collect(\WebBlocks\Cms\Models\Site::PUBLIC_THEME_PRESETS)
+    ->mapWithKeys(fn (string $preset) => [$preset => str($preset)->headline()->toString()]);
+  $selectedPublicThemePreset = old('public_theme_preset', $site->resolvedPublicThemePreset());
   $tabUrl = fn (string $tab) => $site->exists
     ? route('admin.sites.edit', ['site' => $site, 'tab' => $tab])
     : route('admin.sites.create', ['tab' => $tab]);
@@ -83,6 +86,7 @@
               'seo-defaults' => 'SEO Defaults',
               'contact' => 'Contact',
               'variables' => 'Variables',
+              'theme' => 'Theme',
             ] as $tabKey => $tabLabel)
               <a
                 href="{{ $tabUrl($tabKey) }}"
@@ -279,6 +283,15 @@
                 'site' => $site,
                 'canManageSiteSettings' => $canManageSiteSettings,
                 'siteVariablesUi' => $siteVariablesUi,
+              ])
+            </div>
+
+            <div class="wb-tabs-panel {{ $siteTab === 'theme' ? 'is-active' : '' }}">
+              @include('webblocks-cms::admin.sites.partials.theme-tab', [
+                'site' => $site,
+                'canManageSiteSettings' => $canManageSiteSettings,
+                'publicThemePresets' => $publicThemePresets,
+                'selectedPublicThemePreset' => $selectedPublicThemePreset,
               ])
             </div>
           </div>

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -43,5 +44,24 @@ class CmsApiTokensUpdateMigrationTest extends TestCase
 
     $this->assertTrue(Schema::hasTable('cms_api_tokens'));
     $this->assertTrue(Schema::hasColumn('cms_api_tokens', 'token_preview'));
+  }
+
+  #[Test]
+  public function sites_public_theme_update_migration_adds_missing_column_to_existing_sites_table(): void
+  {
+    Schema::table('sites', function ($table): void {
+      $table->dropColumn('public_theme_preset');
+    });
+
+    $this->assertFalse(Schema::hasColumn('sites', 'public_theme_preset'));
+
+    $migration = require base_path('packages/webblocks-cms/database/migrations/updates/2026_06_27_120000_ensure_sites_public_theme_preset.php');
+    $migration->up();
+
+    $this->assertTrue(Schema::hasColumn('sites', 'public_theme_preset'));
+
+    DB::table('sites')->where('handle', 'default')->update(['public_theme_preset' => 'atlas']);
+
+    $this->assertSame('atlas', DB::table('sites')->where('handle', 'default')->value('public_theme_preset'));
   }
 }

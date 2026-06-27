@@ -29,6 +29,7 @@
         $siteAssetResolver = app(SiteAssetResolver::class);
         $siteCssPath = $siteAssetResolver->cssPathFor($resolvedSite);
         $siteJsPath = $siteAssetResolver->jsPathFor($resolvedSite);
+        $publicThemePreset = $resolvedSite?->resolvedPublicThemePreset() ?? \WebBlocks\Cms\Models\Site::PUBLIC_THEME_CANVAS;
         $publicMeta = $publicMeta ?? [
             'site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
             'site_label' => trim((string) ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name'))),
@@ -104,7 +105,7 @@
             <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
         @endforeach
     </head>
-    <body class="{{ $publicBodyClass ?? 'wb-public-body' }}">
+    <body class="{{ $publicBodyClass ?? 'wb-public-body' }}" data-wb-public-theme="{{ $publicThemePreset }}">
         @if ($previewMode ?? false)
             <div class="wb-alert wb-alert-warning wb-m-0" role="status">
                 <strong>Preview mode</strong> — this page is not public unless it is published.

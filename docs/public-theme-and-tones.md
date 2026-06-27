@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/public-theme-and-tones.md
 
 # Public Theme And Visual Tones
 
-This document records the product direction for site-level public theme presets and public block visual tones in WebBlocks CMS. The initial `icon_tone` block setting is implemented for selected public icon-enabled blocks; site-level public theme preset selection remains planned.
+This document records the product direction for site-level public theme presets and public block visual tones in WebBlocks CMS. The initial `icon_tone` block setting is implemented for selected public icon-enabled blocks. Phase 2A adds site-scoped public theme preset selection and a public body marker; full preset token styling remains future work.
 
 ## Purpose
 
@@ -47,11 +47,11 @@ The admin surface may eventually expose public theme controls, but those control
 
 Public theme selection should be site-scoped. In multisite installs, each site may need its own identity, audience, public palette, and tone mapping.
 
-Long-term admin ownership should live under:
+Admin ownership lives under:
 
 `Sites -> Edit Site -> Theme`
 
-The first implementation can add a new `Theme` tab to the existing Edit Site tab architecture if that is the smallest compatible path. Public theme selection must not become install-level state in a way that breaks multisite behavior.
+The `Theme` tab in the existing Edit Site tab architecture stores the selected public preset on the Site record. Public theme selection must not become install-level state in a way that breaks multisite behavior.
 
 ## Block Visual Tones
 
@@ -97,7 +97,7 @@ They should not become the primary vocabulary for public block design controls. 
 
 ## Theme Preset Names And Character
 
-Planned public theme presets:
+Supported public theme presets:
 
 | Label | Value | Character |
 | --- | --- | --- |
@@ -108,7 +108,7 @@ Planned public theme presets:
 | Graphite | `graphite` | Serious, dark, and technical. |
 | Horizon | `horizon` | Open, airy, and modern. |
 
-The exact token values are future implementation work. Presets should define tone tokens for public rendering and may need light/dark-aware values.
+`canvas` is the default and fallback preset. The exact token values are future implementation work. Presets should define tone tokens for public rendering and may need light/dark-aware values.
 
 ## Rendering Model
 
@@ -160,14 +160,20 @@ Custom theme builders, if added later, must include guardrails before user-defin
 - Done: render public tone classes such as `wb-icon-tone-brand`.
 - Done: add focused tests, README updates, changelog notes, and relevant docs updates.
 
-### Phase 2 - Site-Level Public Theme Presets
+### Phase 2A - Site-Level Public Theme Preset Selection
 
-- Add site-scoped public theme selection.
-- Place controls under `Sites -> Edit Site -> Theme`.
-- Add a theme preview or mockup UI.
+- Done: add site-scoped public theme selection.
+- Done: place controls under `Sites -> Edit Site -> Theme`.
+- Done: add a compact theme preview/mockup UI.
+- Done: output `data-wb-public-theme="{preset}"` on the public body.
+- Done: keep `canvas` as the default/fallback for null, unknown, or missing values.
+- Done: keep admin theme/accent preferences separate from public site theme selection.
+
+### Phase 2B - Public Theme Tokens
+
 - Define light/dark-aware preset tokens.
-- Output a public body class or `data-wb-public-theme` attribute.
-- Ensure selected themes apply to public pages only.
+- Apply selected themes to supported public tone hooks.
+- Keep selected themes scoped to public pages only.
 
 ### Phase 3 - Optional Custom Theme Builder
 
@@ -179,9 +185,8 @@ Custom theme builders, if added later, must include guardrails before user-defin
 
 ## Non-Goals
 
-- Site-level theme preset selection is not implemented by this document.
+- Full public theme token styling is not implemented by this document.
 - Custom theme builders are not implemented by this document.
-- No migration is approved by this document.
 - Do not add Tailwind, Vite, Node build-chain requirements, or package locks.
 - Do not expose arbitrary hex color pickers in the first phase.
 - Do not couple public themes to admin user theme or accent preferences.

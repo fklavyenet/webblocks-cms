@@ -409,10 +409,105 @@ class SiteLocaleManagementTest extends TestCase
     $response->assertSee('SEO Defaults');
     $response->assertSee('Contact');
     $response->assertSee('Variables');
+    $response->assertSee('Theme');
     $response->assertDontSee('<strong>Domains</strong>', false);
     $response->assertSee('Public display name');
     $response->assertSee('Default meta title');
     $response->assertSee('Default recipient email');
+  }
+
+  #[Test]
+  public function site_edit_theme_tab_renders_public_theme_controls_after_variables(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+    $response = $this->actingAs($user)->get(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']));
+
+    $response->assertOk();
+    $response->assertSeeInOrder(['Variables', 'Theme'], false);
+    $response->assertSee('<strong>Public Theme</strong>', false);
+    $response->assertSee('name="public_theme_preset"', false);
+    $response->assertSeeInOrder(['Canvas', 'Atlas', 'Pulse', 'Prism', 'Graphite', 'Horizon']);
+    $response->assertSee('data-wb-public-theme-preview="canvas"', false);
+    $response->assertSee('Public visual tones are design roles', false);
+    $response->assertSee('data-wb-public-theme="canvas"', false);
+  }
+
+  #[Test]
+  public function site_theme_preset_can_be_saved_and_unknown_presets_are_rejected(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+    $this->actingAs($user)->put(route('admin.sites.update', $site), [
+      'name' => $site->name,
+      'handle' => $site->handle,
+      'domain' => $site->domain,
+      'is_primary' => 1,
+      'public_theme_preset' => 'prism',
+      'locale_ids' => [$defaultLocale->id],
+      '_site_tab' => 'theme',
+    ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']));
+
+    $this->assertSame('prism', $site->fresh()->public_theme_preset);
+
+    $this->actingAs($user)->from(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']))
+      ->put(route('admin.sites.update', $site), [
+        'name' => $site->name,
+        'handle' => $site->handle,
+        'domain' => $site->domain,
+        'is_primary' => 1,
+        'public_theme_preset' => 'unknown',
+        'locale_ids' => [$defaultLocale->id],
+        '_site_tab' => 'theme',
+      ])
+      ->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']))
+      ->assertSessionHasErrors('public_theme_preset');
+
+    $this->assertSame('prism', $site->fresh()->public_theme_preset);
+  }
+
+  #[Test]
+  public function site_scoped_admin_can_save_theme_only_for_assigned_site(): void
+  {
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+    $user = User::factory()->siteAdmin()->create();
+    $user->sites()->sync([$site->id]);
+
+    $this->actingAs($user)->put(route('admin.sites.update', $site), [
+      'name' => $site->name,
+      'handle' => $site->handle,
+      'domain' => $site->domain,
+      'is_primary' => 1,
+      'public_theme_preset' => 'horizon',
+      'locale_ids' => [$defaultLocale->id],
+      '_site_tab' => 'theme',
+    ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']));
+
+    $this->assertSame('horizon', $site->fresh()->public_theme_preset);
+
+    $otherSite = Site::query()->create([
+      'name' => 'Blocked Theme',
+      'handle' => 'blocked-theme',
+      'domain' => null,
+      'is_primary' => false,
+    ]);
+    $otherSite->locales()->syncWithoutDetaching([$defaultLocale->id => ['is_enabled' => true]]);
+
+    $this->actingAs($user)->put(route('admin.sites.update', $otherSite), [
+      'name' => $otherSite->name,
+      'handle' => $otherSite->handle,
+      'domain' => $otherSite->domain,
+      'is_primary' => 0,
+      'public_theme_preset' => 'graphite',
+      'locale_ids' => [$defaultLocale->id],
+      '_site_tab' => 'theme',
+    ])->assertForbidden();
+
+    $this->assertNull($otherSite->fresh()->public_theme_preset);
   }
 
   #[Test]

@@ -197,6 +197,7 @@ return new class extends Migration
       $table->foreignId('favicon_media_id')->nullable()->constrained('media')->nullOnDelete();
       $table->foreignId('social_image_media_id')->nullable()->constrained('media')->nullOnDelete();
       $table->string('contact_recipient_email')->nullable();
+      $table->string('public_theme_preset')->nullable();
       $table->string('seo_title')->nullable();
       $table->text('seo_description')->nullable();
       $table->text('seo_keywords')->nullable();
