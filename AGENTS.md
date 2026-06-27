@@ -13,6 +13,17 @@
 - Keep implementation prompts and project commands in English.
 - Prefer focused, reviewable changes over broad rewrites.
 
+## Repo-local AI Skills
+
+Reusable task playbooks live under `ai/skills/`.
+
+- `ai/skills/webblocks-cms-release.md` covers CMS release, validation, package, and Publisher workflows.
+- `ai/skills/webblocks-cms-admin-ui.md` covers CMS admin/auth/dashboard UI pattern-first workflows.
+- `ai/skills/cms-internal-content-api-page-building.md` covers trusted `/webadmin/api` page-building workflows.
+- `ai/skills/docs-to-cms-sync.md` covers Markdown `docs/` to source-linked CMS documentation page workflows.
+
+Use these skills for matching tasks instead of repeating long instructions in prompts. Keep secrets, tokens, local absolute paths, live logs, temporary deployment details, and environment values out of committed skill files.
+
 ## PHP / Laravel
 
 - Keep controllers thin.

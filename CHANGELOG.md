@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add repo-local AI skill playbooks for CMS release, admin UI, Internal Content API page building, and Docs to CMS sync workflows.
+
 ## 1.32.173
 
 - Fix public icon tone CSS so icon-enabled content blocks visually apply selected icon tones in public rendering.
