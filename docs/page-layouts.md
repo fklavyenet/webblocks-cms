@@ -109,7 +109,9 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 
 - `Body Class` is an optional whitespace-separated token list added to the public `<body>`
 - Built-in seeded values are currently `layout-default` and `layout-docs`
-- Public rendering keeps the base `wb-public-body` class and appends the Page Layout body classes when available
+- Public rendering keeps the base `wb-public-body` class, appends a stable `wb-page-{slug}` class from the resolved Page Translation slug, and appends Page Layout body classes when available
+- The root homepage uses `wb-page-home`; for example `/contact` with slug `contact` renders `wb-page-contact`, and `/docs/internal-content-api` uses the translation slug `internal-content-api` rather than the full path
+- The page slug class is normalized to lowercase `a-z`, `0-9`, and hyphen tokens so site-level CSS can target one page without content-only hooks or broad global selectors
 - Layout-specific CSS can target combinations such as `body.layout-docs` plus slot ids and classes defined by Page Layout Slots
 - Prefer a Navbar block for sticky public headers; CMS promotes single-Navbar default header slots to the `nav.wb-navbar` root so WebBlocks UI owns the sticky offset and stacking behavior
 

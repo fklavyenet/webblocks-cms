@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
@@ -53,7 +55,69 @@ class PublicLayoutStructureTest extends TestCase
     $response = $this->get('/');
 
     $response->assertOk();
-    $response->assertSee('<body class="wb-public-body layout-docs">', false);
+    $response->assertSee('<body class="wb-public-body wb-page-home layout-docs">', false);
+  }
+
+  #[Test]
+  public function public_homepage_body_includes_stable_home_page_class(): void
+  {
+    $this->buildHomepageWithHeaderSidebarAndFooter();
+
+    $response = $this->get('/');
+
+    $response->assertOk();
+    $this->assertBodyClassContains($response->getContent(), 'wb-public-body');
+    $this->assertBodyClassContains($response->getContent(), 'wb-page-home');
+  }
+
+  #[Test]
+  public function public_page_body_class_uses_current_translation_slug(): void
+  {
+    $this->buildPublishedMainPage('Contact', 'contact', '/contact');
+
+    $response = $this->get('/contact');
+
+    $response->assertOk();
+    $this->assertBodyClassContains($response->getContent(), 'wb-public-body');
+    $this->assertBodyClassContains($response->getContent(), 'wb-page-contact');
+  }
+
+  #[Test]
+  public function public_page_body_class_normalizes_unsafe_slug_safely(): void
+  {
+    $this->buildPublishedMainPage('Odd Slug', ' Über CMS! ++ Contact__Page ', '/odd-slug');
+
+    $response = $this->get('/odd-slug');
+
+    $response->assertOk();
+    $this->assertBodyClassContains($response->getContent(), 'wb-page-uber-cms-contact-page');
+    $response->assertDontSee('wb-page- Über', false);
+    $response->assertDontSee('wb-page--', false);
+  }
+
+  #[Test]
+  public function nested_public_path_body_class_uses_slug_not_full_path(): void
+  {
+    $this->buildPublishedMainPage('Internal Content API', 'internal-content-api', '/docs/internal-content-api');
+
+    $response = $this->get('/docs/internal-content-api');
+
+    $response->assertOk();
+    $this->assertBodyClassContains($response->getContent(), 'wb-page-internal-content-api');
+    $response->assertDontSee('wb-page-docs-internal-content-api', false);
+  }
+
+  #[Test]
+  public function authenticated_preview_uses_same_page_slug_body_class(): void
+  {
+    $page = $this->buildHomepageWithHeaderSidebarAndFooter();
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.pages.preview', $page));
+
+    $response->assertOk();
+    $this->assertBodyClassContains($response->getContent(), 'wb-page-home');
+    $response->assertSee('Preview mode', false);
   }
 
   #[Test]
@@ -96,7 +160,7 @@ class PublicLayoutStructureTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Marketing', 'slug' => 'marketing', 'path' => '/p/marketing'],
+      ['site_id' => $site->id, 'name' => 'Marketing', 'slug' => 'marketing', 'path' => '/marketing'],
     );
 
     PageSlot::query()->create([
@@ -105,10 +169,10 @@ class PublicLayoutStructureTest extends TestCase
       'sort_order' => 0,
     ]);
 
-    $response = $this->get('/p/marketing');
+    $response = $this->get('/marketing');
 
     $response->assertOk();
-    $response->assertSee('<body class="wb-public-body layout-marketing hero-shell">', false);
+    $response->assertSee('<body class="wb-public-body wb-page-marketing layout-marketing hero-shell">', false);
     $response->assertSee('<section data-wb-slot="main" class="marketing-main wb-sticky">', false);
   }
 
@@ -251,10 +315,10 @@ class PublicLayoutStructureTest extends TestCase
     ]);
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $otherPage->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $page->site_id, 'name' => 'Other', 'slug' => 'other', 'path' => '/p/other'],
+      ['site_id' => $page->site_id, 'name' => 'Other', 'slug' => 'other', 'path' => '/other'],
     );
 
-    $this->get('/p/other')
+    $this->get('/other')
       ->assertOk()
       ->assertDontSee('/site/default/pages/home/page.css', false)
       ->assertDontSee('/site/default/pages/home/page.js', false);
@@ -413,7 +477,7 @@ class PublicLayoutStructureTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Header Slot Shell', 'slug' => 'header-slot-shell', 'path' => '/p/header-slot-shell'],
+      ['site_id' => $site->id, 'name' => 'Header Slot Shell', 'slug' => 'header-slot-shell', 'path' => '/header-slot-shell'],
     );
 
     PageSlot::query()->create([
@@ -506,7 +570,7 @@ class PublicLayoutStructureTest extends TestCase
     ]);
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($mainBlock->fresh(['textTranslations']));
 
-    $response = $this->get('/p/header-slot-shell');
+    $response = $this->get('/header-slot-shell');
 
     $response->assertOk();
     $response->assertSee('<nav data-wb-slot="header" class="wb-public-site-header wb-navbar" data-wb-public-block-type="sticky-navbar">', false);
@@ -544,7 +608,7 @@ class PublicLayoutStructureTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Static Header Slot Shell', 'slug' => 'static-header-slot-shell', 'path' => '/p/static-header-slot-shell'],
+      ['site_id' => $site->id, 'name' => 'Static Header Slot Shell', 'slug' => 'static-header-slot-shell', 'path' => '/static-header-slot-shell'],
     );
 
     PageSlot::query()->create([
@@ -572,7 +636,7 @@ class PublicLayoutStructureTest extends TestCase
       'is_system' => true,
     ]);
 
-    $response = $this->get('/p/static-header-slot-shell');
+    $response = $this->get('/static-header-slot-shell');
 
     $response->assertOk();
     $response->assertSee('<nav data-wb-slot="header" class="wb-public-site-header wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
@@ -604,7 +668,7 @@ class PublicLayoutStructureTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
 
     PageSlot::query()->create([
@@ -714,7 +778,7 @@ class PublicLayoutStructureTest extends TestCase
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($alert->fresh(['textTranslations']));
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($gridHeader->fresh(['textTranslations']));
 
-    $response = $this->get('/p/about');
+    $response = $this->get('/about');
 
     $response->assertOk();
     $response->assertSeeInOrder([
@@ -812,7 +876,7 @@ class PublicLayoutStructureTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Container Legacy', 'slug' => 'container-legacy', 'path' => '/p/container-legacy'],
+      ['site_id' => $site->id, 'name' => 'Container Legacy', 'slug' => 'container-legacy', 'path' => '/container-legacy'],
     );
 
     PageSlot::query()->create([
@@ -857,7 +921,7 @@ class PublicLayoutStructureTest extends TestCase
       'title' => 'Legacy container heading',
     ]);
 
-    $response = $this->get('/p/container-legacy');
+    $response = $this->get('/container-legacy');
 
     $response->assertOk();
     $response->assertSee('<div class="wb-container wb-stack" data-wb-public-block-type="container">', false);
@@ -941,6 +1005,52 @@ class PublicLayoutStructureTest extends TestCase
     return $page;
   }
 
+  private function buildPublishedMainPage(string $name, string $slug, string $path): Page
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+
+    $site = Site::query()->firstOrFail();
+    $main = $this->slotType('main', 'Main', 1);
+    $plainTextType = $this->blockType('plain_text', 'Plain Text', 1);
+
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => $name,
+      'slug' => Str::slug($slug),
+      'status' => 'published',
+    ]);
+
+    PageTranslation::query()->updateOrCreate(
+      ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+      ['site_id' => $site->id, 'name' => $name, 'slug' => $slug, 'path' => $path],
+    );
+
+    PageSlot::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+    ]);
+
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'plain_text',
+      'block_type_id' => $plainTextType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+    $block->textTranslations()->create([
+      'locale_id' => Page::defaultLocaleId(),
+      'content' => $name.' content',
+    ]);
+    app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+    return $page;
+  }
+
   private function slotType(string $slug, string $name, int $sortOrder): SlotType
   {
     return SlotType::query()->firstOrCreate(
@@ -990,5 +1100,15 @@ class PublicLayoutStructureTest extends TestCase
 
       $offset = $position + strlen($needle);
     }
+  }
+
+  private function assertBodyClassContains(string $html, string $expectedClass): void
+  {
+    $this->assertMatchesRegularExpression('/<body class="([^"]+)">/', $html);
+    preg_match('/<body class="([^"]+)">/', $html, $matches);
+
+    $classes = preg_split('/\s+/', $matches[1] ?? '', -1, PREG_SPLIT_NO_EMPTY);
+
+    $this->assertContains($expectedClass, $classes);
   }
 }

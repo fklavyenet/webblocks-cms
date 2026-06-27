@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.169
+
+- Add stable `wb-page-{slug}` public body classes, including `wb-page-home` for root homepage rendering, so site-level CSS can target individual pages safely.
+
 ## 1.32.168
 
 - Fix large Internal Content API page publish requests so `include_page_owned_blocks` publishes page-owned draft or in-review block trees in bulk while still excluding Shared Slot content.

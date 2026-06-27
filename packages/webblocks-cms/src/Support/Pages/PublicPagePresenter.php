@@ -47,9 +47,21 @@ class PublicPagePresenter
       'publicMeta' => $this->publicMeta($page),
       'publicBodyClass' => trim(implode(' ', array_filter([
         'wb-public-body',
+        $this->pageBodyClass($page),
         app(PageLayoutManager::class)->bodyClassForHandle($page->publicShellPreset()),
       ]))),
     ];
+  }
+
+  private function pageBodyClass(Page $page): string
+  {
+    $slug = (string) ($page->currentTranslation?->slug ?? '');
+    $slug = Str::slug($slug);
+    $slug = preg_replace('/[^a-z0-9-]+/', '-', strtolower($slug)) ?? '';
+    $slug = preg_replace('/-+/', '-', $slug) ?? '';
+    $slug = trim($slug, '-');
+
+    return 'wb-page-'.($slug !== '' ? $slug : 'home');
   }
 
   public function publicMeta(?Page $page = null): array
