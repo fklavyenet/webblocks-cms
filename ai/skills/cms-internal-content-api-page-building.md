@@ -49,6 +49,10 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 - For contact pages, use native `contact_form` when discovered; do not use Trusted HTML, raw forms, or `mailto:` substitutes.
 - For icons and badges, use only active catalog-backed icon slugs and allowlisted badge fields discovered from block contracts.
 
+## Live Site Testing Boundary
+
+For API-created drafts, staged pages, or promoted content, report edit and preview URLs. Do not run live browser or public-site visual tests unless explicitly requested in the same prompt. Live visual checks are operator-owned by default.
+
 ## Final Report
 
 Include:

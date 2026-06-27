@@ -44,6 +44,12 @@ Use this skill when changing CMS admin, auth, dashboard, settings, listing, moda
 - Run `composer test:admin-smoke` for layout, sidebar, shared admin UI, or broad shell changes.
 - Run `git diff --check`.
 
+## Live Visual Testing Boundary
+
+Use local or test-environment validation for AI-run checks. Do not include live public-site or live admin-panel visual testing in AI commands unless explicitly requested in the same prompt.
+
+By default, Osman/operator performs live browser checks after a release has been applied to the live installation. AI reports should mark live visual checks as not performed and operator-owned.
+
 ## Final Report
 
 Include:
@@ -53,4 +59,5 @@ Include:
 - forbidden patterns avoided
 - tests and validation
 - screenshots or preview notes when available
+- live visual checks: not performed; operator-owned
 - warnings or limitations

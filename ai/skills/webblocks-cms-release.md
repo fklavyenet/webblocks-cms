@@ -23,6 +23,22 @@ Use this skill when preparing an actual WebBlocks CMS product release, package p
 9. Verify latest metadata from Publisher, including version, product, channel, artifact URL, and checksum.
 10. Create and push a git tag only when the release flow requires it.
 
+## Live Install Boundary
+
+Publisher publish is not the same as applying the update to a live installed CMS site.
+
+After `composer release:publish-update` and Publisher latest metadata verification, stop and report the release result. Do not connect to a live CMS installation, do not open the live admin panel, and do not run or click `Update Now` unless the user explicitly asks for that live operation in the same prompt.
+
+By default, Osman/operator manually performs:
+
+- live CMS admin sign-in
+- `System -> Updates -> Update Now`
+- live installed-site update verification
+- live public-site visual/smoke testing
+- live admin-panel visual/smoke testing
+
+Do not include those live steps in generated AI implementation commands or release commands. At most, report them as `Operator next steps`, clearly marked as manual and not performed.
+
 ## Schema-Changing Releases
 
 For schema-changing releases:
@@ -52,5 +68,7 @@ Include:
 - SHA-256
 - Publisher latest verification
 - validation commands and results
+- live installed-site update: not performed; operator-owned
+- live public/admin smoke tests: not performed; operator-owned
 - schema/update migration status if relevant
 - warnings or limitations

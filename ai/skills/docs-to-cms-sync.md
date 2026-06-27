@@ -62,6 +62,10 @@ Batch reports should group skipped, planned, validated, applied, failed, conflic
 
 Reports must not include tokens, secrets, local absolute paths, raw logs, real target-site names, or real domains.
 
+## Live Documentation Site Testing Boundary
+
+For docs sync work, report validation/apply results and preview URLs. Do not run live documentation-site browser checks unless explicitly requested in the same prompt. Live visual checks are operator-owned by default.
+
 ## Final Report
 
 Include:

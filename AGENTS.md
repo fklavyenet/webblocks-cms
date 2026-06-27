@@ -24,6 +24,14 @@ Reusable task playbooks live under `ai/skills/`.
 
 Use these skills for matching tasks instead of repeating long instructions in prompts. Keep secrets, tokens, local absolute paths, live logs, temporary deployment details, and environment values out of committed skill files.
 
+## Operator-Owned Live Steps
+
+Do not include live installed-site operations in implementation or release commands unless the user explicitly asks for that exact live operation in the same prompt.
+
+Operator-owned live steps include signing in to a live CMS admin panel, clicking or running `Update Now` on a live installed CMS site, applying a published CMS release to a live installed site, live public-site browser smoke tests, live admin-panel visual checks, and live SSH checks against production installs.
+
+For release work, AI/operator automation may stop after source validation, release artifact creation, Publisher publish, and Publisher latest metadata verification when those steps are explicitly requested. Applying the release from a live CMS installation and testing the live site are manual operator responsibilities by default.
+
 ## PHP / Laravel
 
 - Keep controllers thin.

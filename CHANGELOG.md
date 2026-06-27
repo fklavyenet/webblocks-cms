@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Clarify repo-local AI skill boundaries so live installed-site `Update Now` actions and live browser smoke/visual checks remain operator-owned unless explicitly requested.
+
 ## 1.32.174
 
 - Ensure public icon tone CSS is shipped and served from the live CMS public asset path so selected icon tones visibly affect rendered icons.
