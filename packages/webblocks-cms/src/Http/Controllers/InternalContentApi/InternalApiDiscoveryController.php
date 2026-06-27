@@ -44,7 +44,7 @@ class InternalApiDiscoveryController extends Controller
         'Read the OpenAPI schema, AI guide, content contract, and examples.',
         'Validate content plans with POST /webadmin/api/content/validate before apply.',
         'Apply only after explicit user approval.',
-        'Publish only with explicit content.publish capability; page publishing does not publish draft blocks unless include_page_owned_blocks is true.',
+        'Promote staged updates or publish only with explicit content.publish capability; page publishing does not publish draft blocks unless include_page_owned_blocks is true.',
         'Use JSON requests with Authorization, Accept, and Content-Type headers.',
       ],
       '_links' => $this->links(),
@@ -206,8 +206,8 @@ class InternalApiDiscoveryController extends Controller
       ],
       '/pages/{page}/publish' => ['post' => ['summary' => 'Publish page', 'x-required-capability' => 'content.publish', 'x-defaults' => ['include_page_owned_blocks' => false], 'responses' => ['200' => ['description' => 'Published page JSON', 'content' => $json], '403' => ['description' => 'Requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/pages/{page}/publish-page-owned-blocks' => ['post' => ['summary' => 'Publish page-owned blocks without changing page status', 'x-required-capability' => 'content.publish', 'responses' => ['200' => ['description' => 'Published blocks JSON', 'content' => $json], '403' => ['description' => 'Requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
-      '/content/validate' => ['post' => ['summary' => 'Validate content plan', 'x-supported-modes' => ['create_draft_page', 'replace_existing_draft_page'], 'responses' => ['200' => ['description' => 'Valid plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
-      '/content/apply' => ['post' => ['summary' => 'Apply content plan', 'x-supported-modes' => ['create_draft_page', 'replace_existing_draft_page'], 'responses' => ['201' => ['description' => 'Applied plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/content/validate' => ['post' => ['summary' => 'Validate content plan', 'x-supported-modes' => $this->contentModes(), 'responses' => ['200' => ['description' => 'Valid plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/content/apply' => ['post' => ['summary' => 'Apply content plan', 'x-supported-modes' => $this->contentModes(), 'x-mode-capabilities' => ['promote_staged_page_update' => 'content.publish plus content.apply'], 'responses' => ['201' => ['description' => 'Applied plan JSON', 'content' => $json], '403' => ['description' => 'Promote requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/navigation-menus' => ['get' => ['summary' => 'List navigation menus', 'responses' => ['200' => ['description' => 'Navigation JSON', 'content' => $json]]], 'post' => ['summary' => 'Create navigation menu items', 'responses' => ['201' => ['description' => 'Created navigation JSON', 'content' => $json]]]],
       '/navigation-menus/{navigationMenu}' => ['get' => ['summary' => 'Read navigation menu', 'responses' => ['200' => ['description' => 'Navigation JSON', 'content' => $json]]]],
       '/navigation-menus/{navigationMenu}/items' => ['post' => ['summary' => 'Create navigation item', 'responses' => ['201' => ['description' => 'Created navigation item JSON', 'content' => $json]]]],
@@ -266,6 +266,17 @@ class InternalApiDiscoveryController extends Controller
           ],
         ],
       ],
+    ];
+  }
+
+  private function contentModes(): array
+  {
+    return [
+      'create_draft_page',
+      'replace_existing_draft_page',
+      'create_staged_update_for_published_page',
+      'replace_staged_page_update',
+      'promote_staged_page_update',
     ];
   }
 }

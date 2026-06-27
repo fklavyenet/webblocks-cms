@@ -110,3 +110,9 @@ Workflow state also affects who can keep editing page content.
 3. site admin or super admin reviews the page
 4. site admin or super admin publishes the page
 5. later updates can move the page back to `draft`, then through review again
+
+## Staged Updates For Published Pages
+
+Internal operator workflows can prepare updates for a published page without moving the source page back to `draft`. The staged update workflow creates a separate draft staging page linked to the published source page. The published source page stays public at its existing path while the staged page can be previewed through `/webadmin/pages/{page}/preview`.
+
+Promotion is explicit. When a staged update is promoted, WebBlocks CMS copies approved page-owned slot content back to the published source page, writes promoted page-owned blocks as `published`, preserves the source page path and status, and leaves Shared Slot-backed slots out of scope.

@@ -103,6 +103,7 @@ class InternalContentApiPresenter
       'title' => $page->name,
       'slug' => $page->slug,
       'source_sync' => $this->sourceSync($page),
+      'staged_update' => $this->stagedUpdate($page),
       'translations' => $translations->map(fn ($translation) => [
         'id' => $translation->id,
         'locale_id' => $translation->locale_id,
@@ -276,6 +277,28 @@ class InternalContentApiPresenter
       'source_sha256',
       'managed_slots',
       'last_synced_at',
+    ]));
+  }
+
+  private function stagedUpdate(Page $page): ?array
+  {
+    $settings = is_array($page->settings) ? $page->settings : [];
+    $metadata = $settings['staged_update'] ?? null;
+
+    if (! is_array($metadata) || ($metadata['type'] ?? null) !== 'published_page_update') {
+      return null;
+    }
+
+    return array_intersect_key($metadata, array_flip([
+      'type',
+      'source_page_id',
+      'source_path',
+      'source_updated_at',
+      'state',
+      'managed_slots',
+      'created_at',
+      'promoted_at',
+      'promoted_to_page_id',
     ]));
   }
 

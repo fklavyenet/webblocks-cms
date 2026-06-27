@@ -94,15 +94,19 @@ class InternalContentResourceController extends Controller
         'modes' => [
           'create_draft_page',
           'replace_existing_draft_page',
+          'create_staged_update_for_published_page',
+          'replace_staged_page_update',
+          'promote_staged_page_update',
         ],
       ],
       'safety' => [
-        'draft_only' => true,
+        'draft_only' => false,
         'apply_requires_explicit_user_approval' => true,
         'publishes' => false,
         'page_publish_default_includes_blocks' => false,
         'overwrites_existing_content' => false,
         'draft_slot_replacement' => true,
+        'published_page_staged_updates' => true,
         'remote_fetch' => false,
         'media_import' => false,
       ],
@@ -146,6 +150,67 @@ class InternalContentResourceController extends Controller
         'include_page_owned_blocks_field' => 'include_page_owned_blocks',
         'shared_slot_cascade' => 'unsupported',
         'shared_slot_content' => 'excluded and must be reviewed separately',
+      ],
+      'published_page_staged_updates' => [
+        'create_mode' => 'create_staged_update_for_published_page',
+        'replace_mode' => 'replace_staged_page_update',
+        'promote_mode' => 'promote_staged_page_update',
+        'validate_url' => '/webadmin/api/content/validate',
+        'apply_url' => '/webadmin/api/content/apply',
+        'create_requires_capability' => 'content.apply',
+        'replace_requires_capability' => 'content.apply',
+        'promote_requires_capability' => 'content.apply + content.publish',
+        'source_page_status' => Page::STATUS_PUBLISHED,
+        'staged_page_status' => Page::STATUS_DRAFT,
+        'source_public_route' => 'preserved until explicit promote',
+        'staged_public_route' => 'not public because staged page remains draft',
+        'preview_url_template' => '/webadmin/pages/{page}/preview',
+        'requires_safety_guard' => 'expected_source_path or expected_source_updated_at',
+        'shared_slot_backed_slots' => 'rejected for replace/promote',
+        'promote_blocks_status' => 'promoted page-owned blocks are written as published',
+        'shared_slot_cascade' => 'unsupported',
+        'storage' => 'draft page with settings.staged_update metadata',
+        'example' => [
+          'create' => [
+            'plan' => [
+              'mode' => 'create_staged_update_for_published_page',
+              'site' => 'default',
+              'locale' => 'en',
+              'page' => [
+                'id' => 123,
+              ],
+              'expected_source_path' => '/docs',
+              'managed_slots' => ['main'],
+            ],
+          ],
+          'replace' => [
+            'plan' => [
+              'mode' => 'replace_staged_page_update',
+              'staged_page_id' => 456,
+              'expected_source_page_id' => 123,
+              'expected_source_path' => '/docs',
+              'replace_slots' => [
+                'main' => [
+                  [
+                    'type' => 'plain_text',
+                    'translations' => [
+                      'content' => 'Replacement staged content.',
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+          'promote' => [
+            'plan' => [
+              'mode' => 'promote_staged_page_update',
+              'staged_page_id' => 456,
+              'expected_source_page_id' => 123,
+              'expected_source_path' => '/docs',
+              'promote_slots' => ['main'],
+            ],
+          ],
+        ],
       ],
       'discovery' => [
         'sites' => '/webadmin/api/sites',

@@ -127,7 +127,7 @@ For changed Markdown docs, use these defaults:
 - If the source hash is unchanged in CMS metadata, skip the file.
 - If no matching CMS page exists, plan `create_draft_page`.
 - If a matching draft page exists, plan `replace_existing_draft_page` for managed page-owned slots.
-- If only a matching published page exists, do not directly replace it unless the workflow has a documented safe draft or staging path and the user explicitly approves that path.
+- If only a matching published page exists, plan `create_staged_update_for_published_page`, then `replace_staged_page_update` for managed page-owned slots. Promote only after preview and explicit approval with `content.publish`.
 - The default managed slot is `main`.
 - Preserve header, footer, disabled slots, and Shared Slot assignments.
 - Do not replace a Shared Slot-backed slot.
@@ -168,7 +168,7 @@ The workflow is API-first:
 5. Build page plans using discovered handles only.
 6. Run `POST /webadmin/api/content/validate` before apply.
 7. Apply only after explicit approval or when the user's instruction explicitly authorizes safe draft apply.
-8. Never publish unless the user explicitly requests publish and the token has `content.publish`.
+8. Never publish or promote unless the user explicitly requests it and the token has `content.publish`.
 9. Never use browser automation when the API is available.
 
 API errors are workflow feedback. Treat `401`, `403`, and `422` JSON responses as stop or revise signals, follow discovery/documentation links, and report safe summarized status without printing secrets.

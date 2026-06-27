@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.171
+
+- Add Internal Content API staged updates for published pages, letting operator tools create a draft staging copy, replace page-owned managed slots, preview it, and explicitly promote it back to the published source page with `content.publish` while preserving public page status/path and excluding Shared Slot cascades.
+
 ## 1.32.170
 
 - Add reusable product-level public icon and badge support for selected content blocks using active `System -> Icons` catalog slugs and safe `wb-icon wb-icon-{slug}` public output.

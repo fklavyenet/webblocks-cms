@@ -128,6 +128,7 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 - Do not assume page publish makes all blocks public; use `include_page_owned_blocks: true` only after explicit approval.
 - Do not delete pages through content apply.
 - Do not overwrite existing pages or blocks except with the explicit `replace_existing_draft_page` mode.
+- Do not replace live published pages directly. Use `create_staged_update_for_published_page`, `replace_staged_page_update`, preview the staged page, then use `promote_staged_page_update` only after explicit approval and only with `content.publish`.
 - Do not call apply if the target path already exists unless the user explicitly approves a conflict-handling plan supported by the API.
 - For existing draft replacement, include `expected_path` or `expected_updated_at` and replace only page-owned slots.
 - Treat `page.path` as the canonical public URL. Use `/contact` or `/docs/internal-content-api`, not `/p/contact`; `/p/...` is only a legacy public redirect.
@@ -394,6 +395,8 @@ Never request Shared Slot cascade publishing from page publish endpoints. Shared
 ## Real Site Revisions
 
 For real sites, first inspect the current pages and existing drafts. If a draft already exists, preview it before proposing new work. Use `replace_existing_draft_page` only for explicit draft-safe page-owned slot replacement. Otherwise, create a new separate draft page instead of overwriting the existing draft or live published homepage.
+
+When the target is already published and must keep serving its public URL, use the staged update workflow instead of taking the page back to draft. Create a staged update for the published page, replace only page-owned managed slots on the staged draft, preview `/webadmin/pages/{stagedPage}/preview`, and promote only after approval. Promote writes page-owned promoted blocks as published and keeps Shared Slot-backed slots out of scope.
 
 For QuizTem-style homepage revisions, use the existing draft as reference material only unless the user explicitly approves a supported update flow. The safe default for new work is:
 

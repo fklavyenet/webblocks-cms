@@ -2,13 +2,20 @@
 
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockButtonTranslation;
+use WebBlocks\Cms\Models\BlockContactFormTranslation;
+use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
+use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
@@ -23,6 +30,18 @@ use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 
 class InternalContentPlanService
 {
+  public const MODE_CREATE_DRAFT_PAGE = 'create_draft_page';
+
+  public const MODE_REPLACE_EXISTING_DRAFT_PAGE = 'replace_existing_draft_page';
+
+  public const MODE_CREATE_STAGED_UPDATE = 'create_staged_update_for_published_page';
+
+  public const MODE_REPLACE_STAGED_UPDATE = 'replace_staged_page_update';
+
+  public const MODE_PROMOTE_STAGED_UPDATE = 'promote_staged_page_update';
+
+  private const STAGED_UPDATE_TYPE = 'published_page_update';
+
   private const FORBIDDEN_KEYS = [
     'publish',
     'published',
@@ -73,7 +92,56 @@ class InternalContentPlanService
       $page = null;
       $sharedSlotsByHandle = [];
 
-      if ($plan['mode'] === 'replace_existing_draft_page') {
+      if ($plan['mode'] === self::MODE_CREATE_STAGED_UPDATE) {
+        $sourcePage = Page::query()
+          ->with([
+            'site.locales',
+            'translations.locale',
+            'slots.slotType',
+            'slots.sharedSlot',
+            'pageAssets',
+          ])
+          ->find($plan['staged_update']['source_page']['id']);
+
+        if (! $sourcePage) {
+          throw new \InvalidArgumentException('Source page no longer resolves.');
+        }
+
+        $stagedPage = $this->createStagedPage($sourcePage, $plan);
+        $revision = $this->pageRevisionManager->capture(
+          $stagedPage,
+          label: 'Internal Content API staged update created',
+          reason: 'A staged content update was created from published page #'.$sourcePage->id.'.',
+          event: 'internal_content_api_staged_update_created',
+          source: 'internal-content-api',
+        );
+
+        $stagedPage = $stagedPage->fresh([
+          'site.locales',
+          'translations.locale',
+          'slots.slotType',
+          'slots.sharedSlot',
+          'blocks.blockType',
+          'blocks.slotType',
+          'blocks.textTranslations',
+          'blocks.buttonTranslations',
+          'blocks.imageTranslations',
+        ]);
+
+        $writes[] = ['type' => 'staged_page_update', 'id' => $stagedPage->id];
+        $writes[] = ['type' => 'page_revision', 'id' => $revision->id];
+        $writes = [
+          ...$writes,
+          ...$stagedPage->blocks->map(fn (Block $block) => ['type' => 'block', 'id' => $block->id])->all(),
+        ];
+        $data['source_page'] = $this->presenter->page($sourcePage->fresh(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot']), false);
+        $data['staged_page'] = $this->presenter->page($stagedPage, true);
+        $data['preview_url'] = route('admin.pages.preview', $stagedPage, absolute: false);
+
+        return ['writes' => $writes, 'data' => $data];
+      }
+
+      if ($plan['mode'] === self::MODE_REPLACE_EXISTING_DRAFT_PAGE || $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE) {
         $page = Page::query()->with(['site.locales'])->find($plan['replace_page']['id']);
 
         if (! $page) {
@@ -82,9 +150,15 @@ class InternalContentPlanService
 
         $this->pageRevisionManager->capture(
           $page->fresh(),
-          label: 'Pre Internal Content API slot replacement',
-          reason: 'Existing draft page slot content was saved before API replacement.',
-          event: 'internal_content_api_replace',
+          label: $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE
+            ? 'Pre Internal Content API staged update replacement'
+            : 'Pre Internal Content API slot replacement',
+          reason: $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE
+            ? 'Staged page slot content was saved before API replacement.'
+            : 'Existing draft page slot content was saved before API replacement.',
+          event: $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE
+            ? 'internal_content_api_staged_update_replace'
+            : 'internal_content_api_replace',
           source: 'internal-content-api',
         );
 
@@ -135,13 +209,19 @@ class InternalContentPlanService
 
         $revision = $this->pageRevisionManager->capture(
           $page,
-          label: 'Internal Content API slot replacement',
-          reason: 'Existing draft page-owned slot content was replaced through the Internal Content API.',
-          event: 'internal_content_api_replace',
+          label: $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE
+            ? 'Internal Content API staged update replacement'
+            : 'Internal Content API slot replacement',
+          reason: $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE
+            ? 'Staged page-owned slot content was replaced through the Internal Content API.'
+            : 'Existing draft page-owned slot content was replaced through the Internal Content API.',
+          event: $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE
+            ? 'internal_content_api_staged_update_replace'
+            : 'internal_content_api_replace',
           source: 'internal-content-api',
         );
 
-        $writes[] = ['type' => 'page_slot_replacement', 'id' => $page->id];
+        $writes[] = ['type' => $plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE ? 'staged_page_slot_replacement' : 'page_slot_replacement', 'id' => $page->id];
         $writes[] = ['type' => 'page_revision', 'id' => $revision->id];
         $writes[] = ['type' => 'deleted_block', 'count' => $deletedCount];
         $writes = [
@@ -152,7 +232,76 @@ class InternalContentPlanService
             ->values()
             ->all(),
         ];
-        $data['page'] = $this->presenter->page($page, true);
+        $data[$plan['mode'] === self::MODE_REPLACE_STAGED_UPDATE ? 'staged_page' : 'page'] = $this->presenter->page($page, true);
+
+        return ['writes' => $writes, 'data' => $data];
+      }
+
+      if ($plan['mode'] === self::MODE_PROMOTE_STAGED_UPDATE) {
+        $sourcePage = Page::query()
+          ->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])
+          ->lockForUpdate()
+          ->find($plan['staged_update']['source_page']['id']);
+        $stagedPage = Page::query()
+          ->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])
+          ->lockForUpdate()
+          ->find($plan['staged_update']['staged_page']['id']);
+
+        if (! $sourcePage || ! $stagedPage) {
+          throw new \InvalidArgumentException('Source or staged page no longer resolves.');
+        }
+
+        $this->pageRevisionManager->capture(
+          $sourcePage->fresh(),
+          label: 'Pre Internal Content API staged update promote',
+          reason: 'Published page state was saved before staged content promotion.',
+          event: 'internal_content_api_staged_update_promote',
+          source: 'internal-content-api',
+        );
+
+        $deletedCount = $this->promoteStagedSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots']);
+        $this->persistPageSourceSync($sourcePage, $plan['page_settings']);
+        $sourcePage->forceFill([
+          'status' => Page::STATUS_PUBLISHED,
+          'published_at' => $sourcePage->published_at ?? now(),
+        ])->save();
+
+        $this->markStagedUpdatePromoted($stagedPage, $sourcePage);
+
+        $sourcePage = $sourcePage->fresh([
+          'site.locales',
+          'translations.locale',
+          'slots.slotType',
+          'slots.sharedSlot',
+          'blocks.blockType',
+          'blocks.slotType',
+          'blocks.textTranslations',
+          'blocks.buttonTranslations',
+          'blocks.imageTranslations',
+        ]);
+
+        $revision = $this->pageRevisionManager->capture(
+          $sourcePage,
+          label: 'Internal Content API staged update promoted',
+          reason: 'Staged page-owned content was promoted onto the published page.',
+          event: 'internal_content_api_staged_update_promote',
+          source: 'internal-content-api',
+        );
+
+        $writes[] = ['type' => 'staged_page_update_promote', 'id' => $stagedPage->id];
+        $writes[] = ['type' => 'page', 'id' => $sourcePage->id];
+        $writes[] = ['type' => 'page_revision', 'id' => $revision->id];
+        $writes[] = ['type' => 'deleted_block', 'count' => $deletedCount];
+        $writes = [
+          ...$writes,
+          ...$sourcePage->blocks
+            ->whereIn('slot', $plan['staged_update']['promote_slots'])
+            ->map(fn (Block $block) => ['type' => 'block', 'id' => $block->id])
+            ->values()
+            ->all(),
+        ];
+        $data['page'] = $this->presenter->page($sourcePage, true);
+        $data['staged_page'] = $this->presenter->page($stagedPage->fresh(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot']), false);
 
         return ['writes' => $writes, 'data' => $data];
       }
@@ -300,15 +449,264 @@ class InternalContentPlanService
     return $block;
   }
 
+  private function createStagedPage(Page $sourcePage, array $plan): Page
+  {
+    $sourcePage = Page::query()
+      ->with([
+        'site',
+        'translations.locale',
+        'slots.slotType',
+        'slots.sharedSlot',
+        'pageAssets',
+        'blocks.blockAssets',
+        'blocks.textTranslations',
+        'blocks.buttonTranslations',
+        'blocks.imageTranslations',
+        'blocks.contactFormTranslations',
+      ])
+      ->lockForUpdate()
+      ->findOrFail($sourcePage->id);
+
+    $sourcePath = $this->pagePath($sourcePage);
+    $defaultTitle = $sourcePage->defaultTranslation()?->name ?? $sourcePage->name ?? 'Staged update';
+    $settings = is_array($sourcePage->settings) ? $sourcePage->settings : [];
+    $settings['staged_update'] = [
+      'type' => self::STAGED_UPDATE_TYPE,
+      'source_page_id' => $sourcePage->id,
+      'source_path' => $sourcePath,
+      'source_updated_at' => $sourcePage->updated_at?->toIso8601String(),
+      'state' => 'draft',
+      'managed_slots' => $plan['staged_update']['managed_slots'],
+      'created_at' => now()->toIso8601String(),
+    ];
+
+    if (isset($plan['page_settings']['source_sync'])) {
+      $settings['source_sync'] = $plan['page_settings']['source_sync'];
+    }
+
+    $stagedPage = Page::query()->create([
+      'site_id' => $sourcePage->site_id,
+      'title' => $defaultTitle.' staged update',
+      'page_type' => $sourcePage->page_type,
+      'page_type_id' => $sourcePage->page_type_id,
+      'layout_id' => $sourcePage->layout_id,
+      'settings' => $settings,
+      'status' => Page::STATUS_DRAFT,
+      'published_at' => null,
+      'review_requested_at' => null,
+    ]);
+
+    $stagedPage->translations()->delete();
+
+    $basePath = '/staged-updates/page-'.$sourcePage->id.'/update-'.$stagedPage->id;
+    foreach ($sourcePage->translations as $translation) {
+      $path = $this->uniqueStagedPath($sourcePage, $translation->locale_id, $basePath);
+
+      PageTranslation::query()->create([
+        'page_id' => $stagedPage->id,
+        'site_id' => $sourcePage->site_id,
+        'locale_id' => $translation->locale_id,
+        'name' => $translation->name.' staged update',
+        'slug' => PagePath::slugFromPath($path),
+        'path' => $path,
+        'seo_title' => $translation->seo_title,
+        'seo_description' => $translation->seo_description,
+        'seo_keywords' => $translation->seo_keywords,
+        'og_title' => $translation->og_title,
+        'og_description' => $translation->og_description,
+        'og_image_media_id' => $translation->og_image_media_id,
+      ]);
+    }
+
+    foreach ($sourcePage->slots as $slot) {
+      PageSlot::query()->create([
+        'page_id' => $stagedPage->id,
+        'slot_type_id' => $slot->slot_type_id,
+        'source_type' => $slot->runtimeSourceType(),
+        'shared_slot_id' => $slot->shared_slot_id,
+        'sort_order' => $slot->sort_order,
+        'settings' => PageSlot::sanitizeSettings($slot->settings),
+      ]);
+    }
+
+    foreach ($sourcePage->pageAssets as $pageAsset) {
+      PageAsset::query()->create([
+        'page_id' => $stagedPage->id,
+        'type' => $pageAsset->type,
+        'path' => $pageAsset->path,
+        'load_position' => $pageAsset->load_position,
+        'is_defer' => $pageAsset->is_defer,
+        'is_async' => $pageAsset->is_async,
+        'is_module' => $pageAsset->is_module,
+        'is_enabled' => $pageAsset->is_enabled,
+        'sort_order' => $pageAsset->sort_order,
+      ]);
+    }
+
+    $this->cloneBlocks($sourcePage, $stagedPage);
+
+    return $stagedPage;
+  }
+
+  private function promoteStagedSlots(Page $sourcePage, Page $stagedPage, array $slotSlugs): int
+  {
+    $slotTypes = SlotType::query()->whereIn('slug', $slotSlugs)->get()->keyBy('slug');
+    $deletedCount = 0;
+
+    foreach ($slotSlugs as $slotSlug) {
+      $slotType = $slotTypes->get($slotSlug);
+
+      if (! $slotType) {
+        continue;
+      }
+
+      $topLevelBlocks = Block::query()
+        ->where('page_id', $sourcePage->id)
+        ->where('slot_type_id', $slotType->id)
+        ->whereNull('parent_id')
+        ->orderBy('sort_order')
+        ->orderBy('id')
+        ->lockForUpdate()
+        ->get();
+
+      foreach ($topLevelBlocks as $block) {
+        foreach ($this->blockDeletionManager->recursiveDeleteOrder($block) as $deleteBlock) {
+          $deleteBlock->delete();
+          $deletedCount++;
+        }
+      }
+
+      $this->cloneBlocks($stagedPage, $sourcePage, [$slotType->id], 'published');
+    }
+
+    return $deletedCount;
+  }
+
+  private function cloneBlocks(Page $sourcePage, Page $targetPage, ?array $slotTypeIds = null, ?string $forcedStatus = null): void
+  {
+    $blocks = Block::query()
+      ->where('page_id', $sourcePage->id)
+      ->when($slotTypeIds !== null, fn ($query) => $query->whereIn('slot_type_id', $slotTypeIds))
+      ->with(['blockAssets', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+      ->orderBy('id')
+      ->lockForUpdate()
+      ->get();
+    $blockMap = [];
+
+    foreach ($blocks as $block) {
+      $attributes = Arr::except($block->getAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
+      $attributes['page_id'] = $targetPage->id;
+      $attributes['parent_id'] = null;
+
+      if ($forcedStatus !== null) {
+        $attributes['status'] = $forcedStatus;
+      }
+
+      $newBlock = Block::query()->create($attributes);
+      $blockMap[$block->id] = $newBlock->id;
+
+      foreach ($block->blockAssets as $blockAsset) {
+        BlockAsset::query()->create([
+          'block_id' => $newBlock->id,
+          'media_id' => $blockAsset->media_id,
+          'role' => $blockAsset->role,
+          'position' => $blockAsset->position,
+        ]);
+      }
+
+      $this->cloneBlockTranslations($block, $newBlock);
+    }
+
+    foreach ($blocks as $block) {
+      if (! $block->parent_id || ! isset($blockMap[$block->id], $blockMap[$block->parent_id])) {
+        continue;
+      }
+
+      Block::query()->whereKey($blockMap[$block->id])->update([
+        'parent_id' => $blockMap[$block->parent_id],
+      ]);
+    }
+  }
+
+  private function cloneBlockTranslations(Block $source, Block $target): void
+  {
+    foreach ($source->textTranslations as $translation) {
+      BlockTextTranslation::query()->create([
+        'block_id' => $target->id,
+        'locale_id' => $translation->locale_id,
+        'title' => $translation->title,
+        'eyebrow' => $translation->eyebrow,
+        'subtitle' => $translation->subtitle,
+        'content' => $translation->content,
+        'meta' => $translation->meta,
+      ]);
+    }
+
+    foreach ($source->buttonTranslations as $translation) {
+      BlockButtonTranslation::query()->create([
+        'block_id' => $target->id,
+        'locale_id' => $translation->locale_id,
+        'title' => $translation->title,
+      ]);
+    }
+
+    foreach ($source->imageTranslations as $translation) {
+      BlockImageTranslation::query()->create([
+        'block_id' => $target->id,
+        'locale_id' => $translation->locale_id,
+        'caption' => $translation->caption,
+        'alt_text' => $translation->alt_text,
+      ]);
+    }
+
+    foreach ($source->contactFormTranslations as $translation) {
+      BlockContactFormTranslation::query()->create([
+        'block_id' => $target->id,
+        'locale_id' => $translation->locale_id,
+        'title' => $translation->title,
+        'content' => $translation->content,
+        'submit_label' => $translation->submit_label,
+        'success_message' => $translation->success_message,
+      ]);
+    }
+  }
+
+  private function markStagedUpdatePromoted(Page $stagedPage, Page $sourcePage): void
+  {
+    $settings = is_array($stagedPage->settings) ? $stagedPage->settings : [];
+    $metadata = is_array($settings['staged_update'] ?? null) ? $settings['staged_update'] : [];
+    $metadata['state'] = 'promoted';
+    $metadata['promoted_at'] = now()->toIso8601String();
+    $metadata['promoted_to_page_id'] = $sourcePage->id;
+    $settings['staged_update'] = $metadata;
+
+    $stagedPage->forceFill([
+      'settings' => $settings,
+      'status' => Page::STATUS_ARCHIVED,
+    ])->save();
+  }
+
   private function normalize(array $payload): InternalContentPlanResult
   {
     $input = is_array($payload['plan'] ?? null) ? $payload['plan'] : $payload;
     $errors = [];
     $warnings = [];
-    $mode = trim((string) data_get($input, 'mode', 'create_draft_page'));
+    $mode = trim((string) data_get($input, 'mode', self::MODE_CREATE_DRAFT_PAGE));
 
-    if ($mode === 'replace_existing_draft_page') {
+    if ($mode === self::MODE_REPLACE_EXISTING_DRAFT_PAGE) {
       return $this->normalizeDraftPageReplacement($input, $errors, $warnings);
+    }
+
+    if ($mode === self::MODE_CREATE_STAGED_UPDATE) {
+      return $this->normalizeCreateStagedUpdate($input, $errors, $warnings);
+    }
+
+    if ($mode === self::MODE_REPLACE_STAGED_UPDATE) {
+      return $this->normalizeReplaceStagedUpdate($input, $errors, $warnings);
+    }
+
+    if ($mode === self::MODE_PROMOTE_STAGED_UPDATE) {
+      return $this->normalizePromoteStagedUpdate($input, $errors, $warnings);
     }
 
     $this->rejectForbiddenKeys($input, 'plan', $errors);
@@ -363,12 +761,13 @@ class InternalContentPlanService
     $pageSettings = $hasPagePlan ? $this->normalizePageSettings($input, $errors) : [];
 
     $normalized = [
-      'mode' => 'create_draft_page',
+      'mode' => self::MODE_CREATE_DRAFT_PAGE,
       'site' => $site ? ['id' => $site->id, 'handle' => $site->handle] : null,
       'locale' => $locale ? ['id' => $locale->id, 'code' => $locale->code] : null,
       'layout' => $layout ? ['id' => $layout->id, 'handle' => $layout->handle] : null,
       'replace_page' => null,
       'replace_slots' => [],
+      'staged_update' => null,
       'page_settings' => $pageSettings,
       'page' => $hasPagePlan ? [
         'title' => $title,
@@ -461,7 +860,7 @@ class InternalContentPlanService
     $pageSettings = $this->normalizePageSettings($input, $errors);
 
     $normalized = [
-      'mode' => 'replace_existing_draft_page',
+      'mode' => self::MODE_REPLACE_EXISTING_DRAFT_PAGE,
       'site' => $site ? ['id' => $site->id, 'handle' => $site->handle] : null,
       'locale' => $locale ? ['id' => $locale->id, 'code' => $locale->code] : null,
       'layout' => null,
@@ -473,6 +872,7 @@ class InternalContentPlanService
         'expected_updated_at' => $expectedUpdatedAt,
       ] : null,
       'replace_slots' => $replaceSlots,
+      'staged_update' => null,
       'page' => null,
       'slots' => [],
       'navigation_menus' => [],
@@ -486,6 +886,136 @@ class InternalContentPlanService
       warnings: $warnings,
       errors: $errors,
     );
+  }
+
+  private function normalizeCreateStagedUpdate(array $input, array &$errors, array &$warnings): InternalContentPlanResult
+  {
+    $this->rejectForbiddenKeys($input, 'plan', $errors, [
+      'mode',
+    ]);
+
+    $sourcePage = $this->resolveSourcePublishedPage($input, $errors);
+    $site = $sourcePage?->site;
+    $locale = $this->resolveReplacementLocale($input, $sourcePage, $site, $errors);
+    $pageSettings = $this->normalizePageSettings($input, $errors);
+
+    $managedSlots = $this->managedSlotsForStagedUpdate($input, $sourcePage, $errors);
+
+    $normalized = [
+      'mode' => self::MODE_CREATE_STAGED_UPDATE,
+      'site' => $site ? ['id' => $site->id, 'handle' => $site->handle] : null,
+      'locale' => $locale ? ['id' => $locale->id, 'code' => $locale->code] : null,
+      'layout' => null,
+      'page_settings' => $pageSettings,
+      'replace_page' => null,
+      'replace_slots' => [],
+      'staged_update' => [
+        'source_page' => $sourcePage ? [
+          'id' => $sourcePage->id,
+          'status' => $sourcePage->status,
+          'expected_path' => $this->safeExpectedSourcePath($input),
+          'expected_updated_at' => $this->expectedSourceUpdatedAt($input),
+        ] : null,
+        'staged_page' => null,
+        'managed_slots' => $managedSlots,
+        'promote_slots' => [],
+      ],
+      'page' => null,
+      'slots' => [],
+      'navigation_menus' => [],
+      'shared_slots' => [],
+      'page_slot_shared_slots' => [],
+    ];
+
+    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors);
+  }
+
+  private function normalizeReplaceStagedUpdate(array $input, array &$errors, array &$warnings): InternalContentPlanResult
+  {
+    $this->rejectForbiddenKeys($input, 'plan', $errors, [
+      'mode',
+      'replace_slots',
+    ]);
+
+    $stagedPage = $this->resolveStagedPage($input, $errors);
+    $sourcePage = $this->resolveStagedSourcePage($stagedPage, $input, $errors);
+    $site = $stagedPage?->site;
+    $locale = $this->resolveReplacementLocale($input, $stagedPage, $site, $errors);
+    $replaceSlots = $this->normalizeReplacementSlots($input, $stagedPage, $errors, $warnings);
+    $pageSettings = $this->normalizePageSettings($input, $errors);
+
+    $normalized = [
+      'mode' => self::MODE_REPLACE_STAGED_UPDATE,
+      'site' => $site ? ['id' => $site->id, 'handle' => $site->handle] : null,
+      'locale' => $locale ? ['id' => $locale->id, 'code' => $locale->code] : null,
+      'layout' => null,
+      'page_settings' => $pageSettings,
+      'replace_page' => $stagedPage ? [
+        'id' => $stagedPage->id,
+        'status' => $stagedPage->status,
+        'expected_path' => $this->stagedPagePath($stagedPage),
+        'expected_updated_at' => '',
+      ] : null,
+      'replace_slots' => $replaceSlots,
+      'staged_update' => [
+        'source_page' => $sourcePage ? ['id' => $sourcePage->id, 'status' => $sourcePage->status] : null,
+        'staged_page' => $stagedPage ? ['id' => $stagedPage->id, 'status' => $stagedPage->status] : null,
+        'managed_slots' => $this->stagedUpdateMetadata($stagedPage)['managed_slots'] ?? [],
+        'promote_slots' => [],
+      ],
+      'page' => null,
+      'slots' => [],
+      'navigation_menus' => [],
+      'shared_slots' => [],
+      'page_slot_shared_slots' => [],
+    ];
+
+    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors);
+  }
+
+  private function normalizePromoteStagedUpdate(array $input, array &$errors, array &$warnings): InternalContentPlanResult
+  {
+    $this->rejectForbiddenKeys($input, 'plan', $errors, [
+      'mode',
+    ]);
+
+    $stagedPage = $this->resolveStagedPage($input, $errors);
+    $sourcePage = $this->resolveStagedSourcePage($stagedPage, $input, $errors);
+    $site = $sourcePage?->site;
+    $locale = $this->resolveReplacementLocale($input, $sourcePage, $site, $errors);
+    $pageSettings = $this->normalizePageSettings($input, $errors);
+    if ($pageSettings === [] && $this->sourceSync($stagedPage) !== []) {
+      $pageSettings = ['source_sync' => $this->sourceSync($stagedPage)];
+    }
+    $promoteSlots = $this->normalizePromoteSlots($input, $sourcePage, $stagedPage, $errors);
+
+    $normalized = [
+      'mode' => self::MODE_PROMOTE_STAGED_UPDATE,
+      'site' => $site ? ['id' => $site->id, 'handle' => $site->handle] : null,
+      'locale' => $locale ? ['id' => $locale->id, 'code' => $locale->code] : null,
+      'layout' => null,
+      'page_settings' => $pageSettings,
+      'replace_page' => null,
+      'replace_slots' => [],
+      'staged_update' => [
+        'source_page' => $sourcePage ? [
+          'id' => $sourcePage->id,
+          'status' => $sourcePage->status,
+          'expected_path' => $this->safeExpectedSourcePath($input),
+          'expected_updated_at' => $this->expectedSourceUpdatedAt($input),
+        ] : null,
+        'staged_page' => $stagedPage ? ['id' => $stagedPage->id, 'status' => $stagedPage->status] : null,
+        'managed_slots' => $this->stagedUpdateMetadata($stagedPage)['managed_slots'] ?? [],
+        'promote_slots' => $promoteSlots,
+      ],
+      'page' => null,
+      'slots' => [],
+      'navigation_menus' => [],
+      'shared_slots' => [],
+      'page_slot_shared_slots' => [],
+    ];
+
+    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors);
   }
 
   private function resolveReplacementLocale(array $input, ?Page $page, ?Site $site, array &$errors): ?Locale
@@ -573,6 +1103,291 @@ class InternalContentPlanService
     }
 
     return $normalized;
+  }
+
+  private function resolveSourcePublishedPage(array $input, array &$errors): ?Page
+  {
+    $pageId = data_get($input, 'page.id', data_get($input, 'source_page_id', data_get($input, 'page_id')));
+    $page = is_numeric($pageId)
+      ? Page::query()->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])->find((int) $pageId)
+      : null;
+
+    if (! $page) {
+      $errors[] = $this->error('plan.page.id', 'Published source page ID must resolve.');
+
+      return null;
+    }
+
+    if ($page->status !== Page::STATUS_PUBLISHED) {
+      $errors[] = $this->error('plan.page.status', 'Staged updates can only be created for published source pages.');
+    }
+
+    $this->validateSourcePageGuards($page, $input, $errors);
+
+    return $page;
+  }
+
+  private function resolveStagedPage(array $input, array &$errors): ?Page
+  {
+    $pageId = data_get($input, 'staged_page.id', data_get($input, 'staged_page_id', data_get($input, 'page.id')));
+    $page = is_numeric($pageId)
+      ? Page::query()->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])->find((int) $pageId)
+      : null;
+
+    if (! $page) {
+      $errors[] = $this->error('plan.staged_page.id', 'Staged page ID must resolve.');
+
+      return null;
+    }
+
+    $metadata = $this->stagedUpdateMetadata($page);
+    if ($metadata === []) {
+      $errors[] = $this->error('plan.staged_page.id', 'Page is not a staged update.');
+    }
+
+    if ($page->status !== Page::STATUS_DRAFT) {
+      $errors[] = $this->error('plan.staged_page.status', 'Only draft staged updates can be changed or promoted.');
+    }
+
+    if (($metadata['state'] ?? null) !== 'draft') {
+      $errors[] = $this->error('plan.staged_page.state', 'Only active draft staged updates can be changed or promoted.');
+    }
+
+    return $page;
+  }
+
+  private function resolveStagedSourcePage(?Page $stagedPage, array $input, array &$errors): ?Page
+  {
+    if (! $stagedPage) {
+      return null;
+    }
+
+    $metadata = $this->stagedUpdateMetadata($stagedPage);
+    $sourcePageId = $metadata['source_page_id'] ?? null;
+    $sourcePage = is_numeric($sourcePageId)
+      ? Page::query()->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])->find((int) $sourcePageId)
+      : null;
+
+    if (! $sourcePage) {
+      $errors[] = $this->error('plan.source_page.id', 'Staged update source page must resolve.');
+
+      return null;
+    }
+
+    if ($sourcePage->status !== Page::STATUS_PUBLISHED) {
+      $errors[] = $this->error('plan.source_page.status', 'Staged update source page must still be published.');
+    }
+
+    $expectedSourcePageId = data_get($input, 'source_page.id', data_get($input, 'expected_source_page_id'));
+    if ($expectedSourcePageId !== null && (int) $expectedSourcePageId !== (int) $sourcePage->id) {
+      $errors[] = $this->error('plan.expected_source_page_id', 'Expected source page ID does not match the staged update.');
+    }
+
+    $this->validateSourcePageGuards($sourcePage, $input, $errors);
+
+    return $sourcePage;
+  }
+
+  private function validateSourcePageGuards(Page $page, array $input, array &$errors): void
+  {
+    try {
+      $expectedPath = $this->expectedSourcePath($input);
+    } catch (\InvalidArgumentException $exception) {
+      $errors[] = $this->error('plan.expected_source_path', $exception->getMessage());
+      $expectedPath = '';
+    }
+    if ($expectedPath !== '') {
+      $actualPath = $this->pagePath($page);
+
+      if ($actualPath !== $expectedPath) {
+        $errors[] = $this->error('plan.expected_source_path', 'Expected source path does not match the page translation.');
+      }
+    }
+
+    $expectedUpdatedAt = $this->expectedSourceUpdatedAt($input);
+    if ($expectedUpdatedAt !== '') {
+      try {
+        if (! $page->updated_at || ! $page->updated_at->equalTo(Carbon::parse($expectedUpdatedAt))) {
+          $errors[] = $this->error('plan.expected_source_updated_at', 'Expected source updated_at does not match the page.');
+        }
+      } catch (\Throwable) {
+        $errors[] = $this->error('plan.expected_source_updated_at', 'Expected source updated_at must be a valid date-time string.');
+      }
+    }
+
+    if ($expectedPath === '' && $expectedUpdatedAt === '') {
+      $errors[] = $this->error('plan.source_page', 'Published page staged updates require expected_source_path or expected_source_updated_at.');
+    }
+  }
+
+  private function normalizePromoteSlots(array $input, ?Page $sourcePage, ?Page $stagedPage, array &$errors): array
+  {
+    $metadata = $this->stagedUpdateMetadata($stagedPage);
+    $rawSlots = data_get($input, 'promote_slots', data_get($input, 'managed_slots', $metadata['managed_slots'] ?? []));
+
+    if (! is_array($rawSlots) || $rawSlots === []) {
+      $rawSlots = $this->sourceSync($stagedPage)['managed_slots'] ?? [];
+    }
+
+    if (! is_array($rawSlots) || $rawSlots === []) {
+      $rawSlots = $sourcePage
+        ? $sourcePage->slots->filter(fn (PageSlot $slot) => $slot->usesPageOwnedBlocks())->map(fn (PageSlot $slot) => $slot->slotSlug())->values()->all()
+        : [];
+    }
+
+    $slots = [];
+    foreach (array_values($rawSlots) as $slot) {
+      $slot = is_string($slot) ? trim($slot) : '';
+
+      if ($slot === '') {
+        continue;
+      }
+
+      $slots[] = $slot;
+    }
+
+    $slots = array_values(array_unique($slots));
+
+    if ($slots === []) {
+      $errors[] = $this->error('plan.promote_slots', 'At least one page-owned slot must be selected for promote.');
+
+      return [];
+    }
+
+    $this->validatePromoteSlotSet($sourcePage, $stagedPage, $slots, $errors);
+
+    return $slots;
+  }
+
+  private function managedSlotsForStagedUpdate(array $input, ?Page $sourcePage, array &$errors): array
+  {
+    $raw = data_get($input, 'managed_slots', $this->sourceSync($sourcePage)['managed_slots'] ?? []);
+
+    if (! is_array($raw) || $raw === []) {
+      $raw = $sourcePage
+        ? $sourcePage->slots->filter(fn (PageSlot $slot) => $slot->usesPageOwnedBlocks())->map(fn (PageSlot $slot) => $slot->slotSlug())->values()->all()
+        : [];
+    }
+
+    $slots = array_values(array_unique(array_filter(array_map(fn ($slot) => is_string($slot) ? trim($slot) : '', $raw))));
+
+    if ($slots === []) {
+      $errors[] = $this->error('plan.managed_slots', 'At least one page-owned managed slot is required.');
+    }
+
+    $this->validatePromoteSlotSet($sourcePage, null, $slots, $errors);
+
+    return $slots;
+  }
+
+  private function validatePromoteSlotSet(?Page $sourcePage, ?Page $stagedPage, array $slots, array &$errors): void
+  {
+    foreach ($slots as $slotSlug) {
+      if (! SlotType::query()->where('slug', $slotSlug)->where('status', 'published')->exists()) {
+        $errors[] = $this->error('plan.promote_slots', 'Promote slot ['.$slotSlug.'] must resolve to a published slot type.');
+
+        continue;
+      }
+
+      foreach ([['page' => $sourcePage, 'path' => 'source_page'], ['page' => $stagedPage, 'path' => 'staged_page']] as $target) {
+        $page = $target['page'];
+
+        if (! $page) {
+          continue;
+        }
+
+        $pageSlot = $page->slots->first(fn (PageSlot $slot) => $slot->slotSlug() === $slotSlug);
+
+        if (! $pageSlot) {
+          $errors[] = $this->error('plan.'.$target['path'].'.slots', 'Slot ['.$slotSlug.'] must exist on the '.$target['path'].'.');
+
+          continue;
+        }
+
+        if (! $pageSlot->usesPageOwnedBlocks()) {
+          $errors[] = $this->error('plan.'.$target['path'].'.slots', 'Shared-slot-backed slot ['.$slotSlug.'] cannot be promoted or replaced.');
+        }
+      }
+    }
+  }
+
+  private function expectedSourcePath(array $input): string
+  {
+    $raw = trim((string) data_get($input, 'source_page.expected_path', data_get($input, 'expected_source_path', data_get($input, 'page.expected_path', ''))));
+
+    if ($raw === '') {
+      return '';
+    }
+
+    return PagePath::canonicalize($raw);
+  }
+
+  private function safeExpectedSourcePath(array $input): string
+  {
+    try {
+      return $this->expectedSourcePath($input);
+    } catch (\InvalidArgumentException) {
+      return '';
+    }
+  }
+
+  private function expectedSourceUpdatedAt(array $input): string
+  {
+    return trim((string) data_get($input, 'source_page.expected_updated_at', data_get($input, 'expected_source_updated_at', '')));
+  }
+
+  private function pagePath(Page $page): string
+  {
+    $translation = $page->translations->first();
+
+    return $translation?->path ?: PageTranslation::pathFromSlug($translation?->slug ?? $page->slug ?? '');
+  }
+
+  private function stagedPagePath(Page $page): string
+  {
+    return $this->pagePath($page);
+  }
+
+  private function uniqueStagedPath(Page $sourcePage, int $localeId, string $basePath): string
+  {
+    $path = PagePath::canonicalize($basePath);
+    $candidate = $path;
+    $index = 2;
+
+    while (PageTranslation::query()
+      ->where('site_id', $sourcePage->site_id)
+      ->where('locale_id', $localeId)
+      ->where('path', $candidate)
+      ->exists()) {
+      $candidate = $path.'-'.$index;
+      $index++;
+    }
+
+    return $candidate;
+  }
+
+  private function stagedUpdateMetadata(?Page $page): array
+  {
+    if (! $page || ! is_array($page->settings)) {
+      return [];
+    }
+
+    $metadata = $page->settings['staged_update'] ?? null;
+
+    if (! is_array($metadata) || ($metadata['type'] ?? null) !== self::STAGED_UPDATE_TYPE) {
+      return [];
+    }
+
+    return $metadata;
+  }
+
+  private function sourceSync(?Page $page): array
+  {
+    if (! $page || ! is_array($page->settings) || ! is_array($page->settings['source_sync'] ?? null)) {
+      return [];
+    }
+
+    return $page->settings['source_sync'];
   }
 
   private function resolveSite(array $input, array &$errors): ?Site

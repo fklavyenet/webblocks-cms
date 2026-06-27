@@ -235,6 +235,78 @@ Rules:
 - page revisions are captured before and after apply
 - no publish, media fetch/import, broad delete, or Shared Slot assignment clearing happens
 
+### Published Page Staged Updates
+
+Published pages cannot be replaced directly. For source-linked docs pages or other live pages that must remain public while content changes are prepared, use the staged update modes:
+
+```text
+create_staged_update_for_published_page
+replace_staged_page_update
+promote_staged_page_update
+```
+
+`create_staged_update_for_published_page` creates a draft staging page from the published source page. The source page remains published at its existing public path. The staged page stores `settings.staged_update` metadata with the source page id, source path, source updated timestamp, lifecycle state, and managed slots. It uses an internal draft path such as `/staged-updates/page-123/update-456`, so it does not collide with the source canonical path and is not publicly routed. The normal admin preview URL `/webadmin/pages/{page}/preview` can render the staged page for authenticated admin sessions.
+
+`replace_staged_page_update` reuses the draft replacement rules against the staged draft page. It replaces only page-owned slots and rejects Shared Slot-backed slots.
+
+`promote_staged_page_update` applies staged page-owned slot content back onto the published source page in a transaction. It preserves the source page path, status, layout, Shared Slot assignments, and page settings unless an allowlisted `source_sync` update is supplied. Promoted page-owned blocks are written as `published` so the public page reflects the promoted content immediately. Shared Slot content is never cascaded. Promote requires the normal `content.apply` route capability and the advanced `content.publish` capability.
+
+Example staged workflow:
+
+```json
+{
+  "plan": {
+    "mode": "create_staged_update_for_published_page",
+    "site": "default",
+    "locale": "en",
+    "page": {
+      "id": 123
+    },
+    "expected_source_path": "/docs",
+    "managed_slots": ["main"]
+  }
+}
+```
+
+Then replace the staged content:
+
+```json
+{
+  "plan": {
+    "mode": "replace_staged_page_update",
+    "staged_page_id": 456,
+    "expected_source_page_id": 123,
+    "expected_source_path": "/docs",
+    "replace_slots": {
+      "main": [
+        {
+          "type": "plain_text",
+          "translations": {
+            "content": "Replacement staged content."
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Promote after preview and explicit approval:
+
+```json
+{
+  "plan": {
+    "mode": "promote_staged_page_update",
+    "staged_page_id": 456,
+    "expected_source_page_id": 123,
+    "expected_source_path": "/docs",
+    "promote_slots": ["main"]
+  }
+}
+```
+
+No new schema table is required for this workflow; staged lifecycle metadata uses the existing Page `settings` JSON column. Existing installs already updated enough to run current Internal Content API source-sync workflows have the required storage.
+
 ### Source Sync Metadata
 
 Content plans may persist a limited, secret-safe `source_sync` object for AI/operator docs sync workflows. Arbitrary page settings are rejected. The accepted shape is:

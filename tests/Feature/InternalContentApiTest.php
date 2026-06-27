@@ -100,7 +100,10 @@ class InternalContentApiTest extends TestCase
       ->assertOk()
       ->assertJsonPath('openapi', '3.1.0')
       ->assertJsonPath('components.securitySchemes.BearerToken.scheme', 'bearer')
-      ->assertJsonPath('paths./content/validate.post.summary', 'Validate content plan');
+      ->assertJsonPath('paths./content/validate.post.summary', 'Validate content plan')
+      ->assertJsonPath('paths./content/apply.post.x-supported-modes.2', 'create_staged_update_for_published_page')
+      ->assertJsonPath('paths./content/apply.post.x-supported-modes.4', 'promote_staged_page_update')
+      ->assertJsonPath('paths./content/apply.post.x-mode-capabilities.promote_staged_page_update', 'content.publish plus content.apply');
 
     $guide = $this->withInternalToken()
       ->getJson('/webadmin/api/ai-guide')
@@ -232,13 +235,18 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('api.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('api.content_apply', '/webadmin/api/content/apply')
       ->assertJsonPath('api.modes.1', 'replace_existing_draft_page')
+      ->assertJsonPath('api.modes.2', 'create_staged_update_for_published_page')
+      ->assertJsonPath('api.modes.4', 'promote_staged_page_update')
       ->assertJsonPath('api.preview_url_template', '/webadmin/pages/{page}/preview')
-      ->assertJsonPath('safety.draft_only', true)
+      ->assertJsonPath('safety.draft_only', false)
       ->assertJsonPath('safety.apply_requires_explicit_user_approval', true)
       ->assertJsonPath('safety.publishes', false)
       ->assertJsonPath('safety.overwrites_existing_content', false)
       ->assertJsonPath('safety.draft_slot_replacement', true)
+      ->assertJsonPath('safety.published_page_staged_updates', true)
       ->assertJsonPath('draft_slot_replacement.shared_slot_backed_slots', 'rejected')
+      ->assertJsonPath('published_page_staged_updates.promote_requires_capability', 'content.apply + content.publish')
+      ->assertJsonPath('published_page_staged_updates.shared_slot_backed_slots', 'rejected for replace/promote')
       ->assertJsonPath('safety.remote_fetch', false)
       ->assertJsonPath('safety.media_import', false)
       ->assertJsonPath('discovery.sites', '/webadmin/api/sites')
@@ -621,6 +629,205 @@ class InternalContentApiTest extends TestCase
       'shared_slot_id' => $sharedSlot->id,
     ]);
     $this->assertSame(2, PageRevision::query()->where('page_id', $page->id)->count());
+  }
+
+  #[Test]
+  public function published_page_direct_replacement_remains_rejected(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page] = $this->createDraftPageWithMainAndSharedChrome('/docs');
+    $page->forceFill(['status' => Page::STATUS_PUBLISHED, 'published_at' => now()])->save();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->replacementPlanPayload($page))
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Existing page replacement is draft-only. Published pages are not supported.']);
+  }
+
+  #[Test]
+  public function staged_update_create_copies_published_page_without_changing_public_source(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page, $mainBlock, $sharedSlot] = $this->createDraftPageWithMainAndSharedChrome('/docs');
+    $sourceSync = $this->sourceSyncPayload();
+    $page->forceFill([
+      'status' => Page::STATUS_PUBLISHED,
+      'published_at' => now(),
+      'settings' => ['source_sync' => $sourceSync],
+    ])->save();
+
+    $response = $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'create_staged_update_for_published_page',
+          'site' => 'default',
+          'locale' => 'en',
+          'page' => ['id' => $page->id],
+          'expected_source_path' => '/docs',
+          'managed_slots' => ['main'],
+        ],
+      ])
+      ->assertCreated()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('data.source_page.id', $page->id)
+      ->assertJsonPath('data.staged_page.status', Page::STATUS_DRAFT)
+      ->assertJsonPath('data.staged_page.staged_update.source_page_id', $page->id)
+      ->assertJsonPath('data.staged_page.staged_update.managed_slots.0', 'main')
+      ->assertJsonPath('data.preview_url', '/webadmin/pages/'.Page::query()->whereKeyNot($page->id)->latest('id')->value('id').'/preview');
+
+    $stagedPageId = $response->json('data.staged_page.id');
+    $stagedPage = Page::query()->with(['translations', 'slots.slotType'])->findOrFail($stagedPageId);
+
+    $this->assertSame(Page::STATUS_PUBLISHED, $page->fresh()->status);
+    $this->assertSame('/docs', $page->fresh('translations')->translations->first()->path);
+    $this->assertSame(Page::STATUS_DRAFT, $stagedPage->status);
+    $this->assertStringStartsWith('/staged-updates/page-'.$page->id.'/update-', $stagedPage->translations->first()->path);
+    $this->assertSame('draft', data_get($stagedPage->settings, 'staged_update.state'));
+    $this->assertSame($sourceSync['source_id'], data_get($stagedPage->settings, 'source_sync.source_id'));
+    $this->assertDatabaseHas('page_slots', [
+      'page_id' => $stagedPage->id,
+      'slot_type_id' => $this->slotTypeId('header'),
+      'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+      'shared_slot_id' => $sharedSlot->id,
+    ]);
+    $this->assertDatabaseHas('blocks', ['id' => $mainBlock->id, 'page_id' => $page->id]);
+    $this->assertSame(1, Block::query()->where('page_id', $stagedPage->id)->where('slot', 'main')->count());
+  }
+
+  #[Test]
+  public function staged_update_replace_and_promote_preserve_source_path_status_and_source_sync(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page, $mainBlock] = $this->createDraftPageWithMainAndSharedChrome('/docs');
+    $sourceSync = $this->sourceSyncPayload();
+    $page->forceFill([
+      'status' => Page::STATUS_PUBLISHED,
+      'published_at' => now(),
+      'settings' => ['source_sync' => $sourceSync],
+    ])->save();
+
+    $createResponse = $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'create_staged_update_for_published_page',
+          'site' => 'default',
+          'locale' => 'en',
+          'page' => ['id' => $page->id],
+          'expected_source_path' => '/docs',
+          'managed_slots' => ['main'],
+        ],
+      ])
+      ->assertCreated();
+
+    $stagedPageId = $createResponse->json('data.staged_page.id');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'replace_staged_page_update',
+          'staged_page_id' => $stagedPageId,
+          'expected_source_page_id' => $page->id,
+          'expected_source_path' => '/docs',
+          'replace_slots' => [
+            'main' => [
+              [
+                'type' => 'plain_text',
+                'translations' => [
+                  'content' => 'Promoted staged copy',
+                ],
+              ],
+            ],
+          ],
+        ],
+      ])
+      ->assertCreated()
+      ->assertJsonPath('normalized_plan.mode', 'replace_staged_page_update')
+      ->assertJsonPath('data.staged_page.id', $stagedPageId);
+
+    $this->assertDatabaseHas('blocks', ['id' => $mainBlock->id, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('block_text_translations', ['content' => 'Promoted staged copy']);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'promote_staged_page_update',
+          'staged_page_id' => $stagedPageId,
+          'expected_source_page_id' => $page->id,
+          'expected_source_path' => '/docs',
+          'promote_slots' => ['main'],
+        ],
+      ])
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::CONTENT_PUBLISH);
+
+    CmsApiToken::query()->delete();
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_APPLY, CmsApiTokenCapabilities::CONTENT_VALIDATE, CmsApiTokenCapabilities::CONTENT_PUBLISH]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'promote_staged_page_update',
+          'staged_page_id' => $stagedPageId,
+          'expected_source_page_id' => $page->id,
+          'expected_source_path' => '/docs',
+          'promote_slots' => ['main'],
+        ],
+      ])
+      ->assertCreated()
+      ->assertJsonPath('normalized_plan.mode', 'promote_staged_page_update')
+      ->assertJsonPath('data.page.id', $page->id)
+      ->assertJsonPath('data.page.status', Page::STATUS_PUBLISHED)
+      ->assertJsonPath('data.page.translations.0.path', '/docs')
+      ->assertJsonPath('data.page.source_sync.source_id', $sourceSync['source_id']);
+
+    $page = $page->fresh(['translations']);
+    $this->assertSame(Page::STATUS_PUBLISHED, $page->status);
+    $this->assertSame('/docs', $page->translations->first()->path);
+    $this->assertSame($sourceSync['source_sha256'], data_get($page->settings, 'source_sync.source_sha256'));
+    $this->assertDatabaseMissing('blocks', ['id' => $mainBlock->id]);
+    $this->assertDatabaseHas('blocks', [
+      'page_id' => $page->id,
+      'slot' => 'main',
+      'status' => 'published',
+    ]);
+    $this->assertDatabaseHas('block_text_translations', ['content' => 'Promoted staged copy']);
+    $this->assertSame(Page::STATUS_ARCHIVED, Page::query()->findOrFail($stagedPageId)->status);
+    $this->assertSame('promoted', data_get(Page::query()->findOrFail($stagedPageId)->settings, 'staged_update.state'));
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'promote_staged_page_update',
+          'staged_page_id' => $stagedPageId,
+          'expected_source_page_id' => $page->id,
+          'expected_source_path' => '/docs',
+          'promote_slots' => ['main'],
+        ],
+      ])
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Only draft staged updates can be changed or promoted.']);
+  }
+
+  #[Test]
+  public function staged_update_rejects_shared_slot_backed_slots(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page] = $this->createDraftPageWithMainAndSharedChrome('/docs');
+    $page->forceFill(['status' => Page::STATUS_PUBLISHED, 'published_at' => now()])->save();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', [
+        'plan' => [
+          'mode' => 'create_staged_update_for_published_page',
+          'site' => 'default',
+          'locale' => 'en',
+          'page' => ['id' => $page->id],
+          'expected_source_path' => '/docs',
+          'managed_slots' => ['header'],
+        ],
+      ])
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Shared-slot-backed slot [header] cannot be promoted or replaced.']);
   }
 
   #[Test]

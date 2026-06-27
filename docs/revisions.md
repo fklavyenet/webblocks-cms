@@ -48,8 +48,11 @@ Revisions are created automatically when these areas change:
 - page translation records
 - slot structure
 - block creation, updates, deletion, and ordering
+- Internal Content API staged update create, replace, and promote operations
 
 When possible, the revision entry also records who triggered the change and what kind of workflow produced it.
+
+For published-page staged updates, revisions are captured for the staged draft as it is created or replaced, and the published source page receives pre-promote and post-promote safety snapshots when staged content is promoted.
 
 ## Restore Behavior
 
