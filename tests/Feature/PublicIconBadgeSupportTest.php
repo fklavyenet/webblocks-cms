@@ -190,8 +190,10 @@ class PublicIconBadgeSupportTest extends TestCase
       $css = (string) file_get_contents($cssPath);
 
       $this->assertStringContainsString('.wb-icon-tone-bold {', $css, $cssPath);
+      $this->assertStringContainsString('background-color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));', $css, $cssPath);
       $this->assertStringContainsString('color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));', $css, $cssPath);
       $this->assertStringContainsString('.wb-icon-tone-highlight {', $css, $cssPath);
+      $this->assertStringContainsString('background-color: var(--wb-public-tone-highlight, #7c3aed);', $css, $cssPath);
       $this->assertStringContainsString('color: var(--wb-public-tone-highlight, #7c3aed);', $css, $cssPath);
       $this->assertStringNotContainsString('color: var(--wb-public-tone-bold, var(--wb-color-heading, currentColor));', $css, $cssPath);
     }

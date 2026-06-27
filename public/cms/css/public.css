@@ -74,26 +74,32 @@
 }
 
 .wb-icon-tone-soft {
+    background-color: var(--wb-public-tone-soft, var(--wb-muted, var(--wb-color-muted, #64748b)));
     color: var(--wb-public-tone-soft, var(--wb-muted, var(--wb-color-muted, #64748b)));
 }
 
 .wb-icon-tone-brand {
+    background-color: var(--wb-public-tone-brand, var(--wb-accent, var(--wb-color-primary, #2563eb)));
     color: var(--wb-public-tone-brand, var(--wb-accent, var(--wb-color-primary, #2563eb)));
 }
 
 .wb-icon-tone-accent {
+    background-color: var(--wb-public-tone-accent, var(--wb-accent, var(--wb-color-accent, #2563eb)));
     color: var(--wb-public-tone-accent, var(--wb-accent, var(--wb-color-accent, #2563eb)));
 }
 
 .wb-icon-tone-highlight {
+    background-color: var(--wb-public-tone-highlight, #7c3aed);
     color: var(--wb-public-tone-highlight, #7c3aed);
 }
 
 .wb-icon-tone-bold {
+    background-color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));
     color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));
 }
 
 .wb-icon-tone-quiet {
+    background-color: var(--wb-public-tone-quiet, var(--wb-muted, var(--wb-color-muted, #64748b)));
     color: var(--wb-public-tone-quiet, var(--wb-muted, var(--wb-color-muted, #64748b)));
     opacity: 0.72;
 }

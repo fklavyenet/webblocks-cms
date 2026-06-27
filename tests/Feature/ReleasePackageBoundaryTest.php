@@ -168,6 +168,7 @@ class ReleasePackageBoundaryTest extends TestCase
     $this->assertStringContainsString('inset-inline-start: -10000px', $publicCss);
     $this->assertStringContainsString('pointer-events: none', $publicCss);
     $this->assertStringContainsString('.wb-icon-tone-bold {', $publicCss);
+    $this->assertStringContainsString('background-color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));', $publicCss);
     $this->assertStringContainsString('color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));', $publicCss);
     $this->assertStringNotContainsString('.wb-form-check { display: none', $publicCss);
   }

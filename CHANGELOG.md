@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.174
+
+- Ensure public icon tone CSS is shipped and served from the live CMS public asset path so selected icon tones visibly affect rendered icons.
 - Add repo-local AI skill playbooks for CMS release, admin UI, Internal Content API page building, and Docs to CMS sync workflows.
 
 ## 1.32.173
