@@ -1381,7 +1381,7 @@ class BlockRequest extends FormRequest
 
         if (! $isTranslatedHeaderActionsEdit) {
           $settings['show_mode_toggle'] = (bool) ($data['header_actions_show_mode_toggle'] ?? true);
-          $settings['show_accent_toggle'] = (bool) ($data['header_actions_show_accent_toggle'] ?? true);
+          $settings['show_accent_toggle'] = (bool) ($data['header_actions_show_accent_toggle'] ?? false);
           $settings['show_search'] = (bool) ($data['header_actions_show_search'] ?? true);
         }
 

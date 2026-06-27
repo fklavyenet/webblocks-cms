@@ -1231,12 +1231,6 @@ The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees
       <button class="wb-topbar-action" data-wb-mode-cycle>
         <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
       </button>
-      <div class="wb-dropdown wb-dropdown-end">
-        <button class="wb-topbar-action" data-wb-toggle="dropdown">
-          <i class="wb-icon wb-icon-palette" aria-hidden="true"></i>
-        </button>
-        <div class="wb-dropdown-menu">...</div>
-      </div>
     </div>
   </div>
 </div>
@@ -1244,7 +1238,7 @@ The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-cluster`, `wb-cluster-2`, `wb-cluster-end`, `wb-topbar-actions`, `wb-topbar-action`, `wb-icon`, `wb-icon-search`, `wb-icon-sun-moon`, `wb-icon-palette`, `wb-dropdown`, `wb-dropdown-end`, `wb-dropdown-menu`, `wb-dropdown-item`, `wb-dropdown-label`, `wb-dropdown-divider`.
+`wb-cluster`, `wb-cluster-2`, `wb-cluster-end`, `wb-topbar-actions`, `wb-topbar-action`, `wb-icon`, `wb-icon-search`, `wb-icon-sun-moon`.
 
 ### Settings -> class / markup map
 
@@ -1252,16 +1246,18 @@ The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees
 | --- | --- | --- |
 | settings.show_search | false | Hides public search action. |
 | settings.show_mode_toggle | false | Hides mode toggle action. |
-| settings.show_accent_toggle | false | Hides accent/theme dropdown. |
-| default settings | empty/true | Renders all actions. |
+| settings.show_accent_toggle | any | Public rendering suppresses preset/accent controls while site-level Public Theme presets are active. |
+| default settings | empty/true | Renders search and mode actions. |
 
 ### Use for / Avoid for
 
-Use for: standard search/theme utilities in headers.
+Use for: standard search and safe color mode utilities in headers.
 
 Avoid for: custom business CTAs; use Button Link/Button.
 
 ### Notes
+
+Header Actions does not emit public preset/accent dropdown controls in the site-level Public Theme model. Public pages use the body `data-wb-public-theme` marker for selected theme presets; full preset token styling is a later phase.
 
 Settings can hide the search, mode toggle, or accent/theme menu. This block does not own a slot-level root. It uses WebBlocks UI dropdown hooks and CMS public search hooks.
 

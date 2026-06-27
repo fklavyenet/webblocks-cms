@@ -1019,9 +1019,10 @@ class PublicEditorialBlocksRenderingTest extends TestCase
   }
 
   #[Test]
-  public function header_actions_renders_theme_buttons_without_inline_script(): void
+  public function header_actions_keeps_public_theme_preset_controls_out_of_public_rendering(): void
   {
     $page = $this->pageWithMainSlot();
+    $page->site->update(['public_theme_preset' => 'graphite']);
 
     Block::query()->create([
       'page_id' => $page->id,
@@ -1039,53 +1040,29 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response = $this->get(route('pages.show', 'about'));
 
     $response->assertOk();
+    $response->assertSee('data-wb-public-theme="graphite"', false);
     $response->assertSee('data-wb-header-actions', false);
     $response->assertSee('data-wb-mode-cycle', false);
     $response->assertSee('data-wb-header-actions-mode-toggle', false);
-    $response->assertSee('data-wb-header-actions-accent-toggle', false);
-    $response->assertSee('data-wb-header-actions-preset-option', false);
     $response->assertSee('data-wb-public-search-open', false);
-    $response->assertSee('data-wb-toggle="dropdown"', false);
-    $response->assertSee('class="wb-dropdown-label">Presets</div>', false);
-    $response->assertSee('data-wb-preset-set="modern"', false);
-    $response->assertSee('data-wb-preset-set="corporate"', false);
-    $response->assertSee('data-wb-preset-set="minimal"', false);
-    $response->assertSee('data-wb-preset-set="editorial"', false);
-    $response->assertSee('data-wb-preset-set="playful"', false);
-    $response->assertSee('Modern', false);
-    $response->assertSee('Corporate', false);
-    $response->assertSee('Minimal', false);
-    $response->assertSee('Editorial', false);
-    $response->assertSee('Playful', false);
-    $response->assertSee('class="wb-dropdown-label">Accent</div>', false);
-    $response->assertSee('data-wb-accent-set="ocean"', false);
-    $response->assertSee('data-wb-accent-set="royal"', false);
-    $response->assertSee('data-wb-accent-set="forest"', false);
-    $response->assertSee('data-wb-accent-set="sunset"', false);
-    $response->assertSee('data-wb-accent-set="mint"', false);
-    $response->assertSee('data-wb-accent-set="amber"', false);
-    $response->assertSee('data-wb-accent-set="rose"', false);
-    $response->assertSee('data-wb-accent-set="slate-fire"', false);
-    $response->assertSee('Ocean', false);
-    $response->assertSee('Royal', false);
-    $response->assertSee('Forest', false);
-    $response->assertSee('Sunset', false);
-    $response->assertSee('Mint', false);
-    $response->assertSee('Amber', false);
-    $response->assertSee('Rose', false);
-    $response->assertSee('Slate Fire', false);
+    $response->assertDontSee('data-wb-header-actions-accent-toggle', false);
+    $response->assertDontSee('data-wb-header-actions-preset-option', false);
+    $response->assertDontSee('data-wb-header-actions-accent-option', false);
+    $response->assertDontSee('data-wb-preset-set=', false);
+    $response->assertDontSee('data-wb-accent-set=', false);
+    $response->assertDontSee('class="wb-dropdown-label">Presets</div>', false);
+    $response->assertDontSee('class="wb-dropdown-label">Accent</div>', false);
     $response->assertSee('type="button"', false);
     $response->assertSee('aria-pressed="false"', false);
     $response->assertSee('<i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>', false);
-    $response->assertSee('<i class="wb-icon wb-icon-palette" aria-hidden="true"></i>', false);
+    $response->assertDontSee('<i class="wb-icon wb-icon-palette" aria-hidden="true"></i>', false);
     $response->assertSee('<i class="wb-icon wb-icon-search" aria-hidden="true"></i>', false);
     $response->assertSee('aria-label="Auto mode"', false);
-    $response->assertSee('aria-label="Theme settings"', false);
+    $response->assertDontSee('aria-label="Theme settings"', false);
     $response->assertSee('aria-label="Search"', false);
     $response->assertSee('href="/search"', false);
-    $response->assertSee('aria-expanded="false"', false);
-    $response->assertSee('aria-haspopup="menu"', false);
-    $response->assertSee('aria-controls="wb-header-actions-theme-menu-', false);
+    $response->assertDontSee('aria-haspopup="menu"', false);
+    $response->assertDontSee('aria-controls="wb-header-actions-theme-menu-', false);
     $response->assertDontSee('onclick=', false);
     $response->assertDontSee('onchange=', false);
     $response->assertDontSee('javascript:', false);
@@ -1113,7 +1090,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     $response->assertOk();
     $response->assertDontSee('data-wb-header-actions-mode-toggle', false);
-    $response->assertSee('data-wb-header-actions-accent-toggle', false);
+    $response->assertDontSee('data-wb-header-actions-accent-toggle', false);
+    $response->assertDontSee('data-wb-preset-set=', false);
+    $response->assertDontSee('data-wb-accent-set=', false);
     $response->assertSee('data-wb-public-search-open', false);
 
     Block::query()->where('page_id', $page->id)->where('type', 'header-actions')->delete();

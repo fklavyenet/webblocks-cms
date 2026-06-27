@@ -118,7 +118,7 @@ The internal/operator WebBlocks UI Manager plugin uses a separate CDN artifact c
 - The public page shell owns the single shared `#wb-overlay-root.wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers and the public search modal
 - Public partials and trusted HTML content must contribute overlay children to that canonical root instead of rendering competing roots such as `#wb-public-overlay-root`, `#public-overlay-root`, or `#overlay-root`
 - The shared public dialog layer must not be rendered with `hidden`; WebBlocks UI `v2.7.12` reuses that layer for modal, gallery viewer, and toast targets and only toggles visibility on the active backdrop/modal or toast state, not on a reused layer wrapper
-- CMS core only ships public JS when WebBlocks UI does not already cover the behavior; `public-search-modal.js` remains CMS-owned, while Header Actions mode, preset, accent, and dropdown behavior now rely on shipped WebBlocks UI `data-wb-*` behavior without an extra CMS runtime
+- CMS core only ships public JS when WebBlocks UI does not already cover the behavior; `public-search-modal.js` remains CMS-owned, while Header Actions mode behavior relies on shipped WebBlocks UI `data-wb-*` behavior without an extra CMS runtime. Public preset/accent controls stay suppressed while site-level Public Theme presets own public theme selection.
 
 ## Site Branding Assets
 

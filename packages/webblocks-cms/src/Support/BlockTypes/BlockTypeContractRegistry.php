@@ -658,7 +658,7 @@ class BlockTypeContractRegistry
         'translatable_fields' => [],
         'shared_settings_fields' => ['settings.show_mode_toggle', 'settings.show_accent_toggle', 'settings.show_search'],
         'storage_fields' => ['Shared header action toggles stay in block settings.'],
-        'media_relationship_fields' => ['Search route and public WebBlocks UI behavior are consumed at render time.'],
+        'media_relationship_fields' => ['Search route and public WebBlocks UI mode behavior are consumed at render time; preset/accent controls are suppressed while site-level Public Theme presets own public theme selection.'],
         'child_container_behavior' => ['Not a container in the current contract.'],
         'renderer_root_contract' => 'Owns its inner public action cluster only; it does not own the outer header shell.',
         'current_contract_status' => 'clear',

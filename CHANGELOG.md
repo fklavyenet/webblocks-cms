@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.177
+
+- Hide public Header Actions preset/accent controls so site-level Public Theme presets remain the single public theme selector while search and safe color mode controls continue to render.
+
 ## 1.32.176
 
 - Fix Public Theme preset saving so `Sites -> Edit Site -> Theme` posts lowercase preset values, accepts accidental title-case input, and keeps public body hook previews lowercase.

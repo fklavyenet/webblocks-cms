@@ -465,7 +465,7 @@ class CoreBlockTypeCatalogSyncer
         'name' => 'Header Actions',
         'slug' => 'header-actions',
         'category' => 'navigation',
-        'description' => 'Renders public header utility actions such as color mode and accent controls.',
+        'description' => 'Renders public header utility actions such as color mode and search controls.',
         'source_type' => 'static',
         'is_system' => true,
         'is_container' => false,

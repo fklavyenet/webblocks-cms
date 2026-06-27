@@ -2,7 +2,7 @@
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
     $showModeToggle = old('header_actions_show_mode_toggle', ($settings['show_mode_toggle'] ?? true) ? '1' : '0');
-    $showAccentToggle = old('header_actions_show_accent_toggle', ($settings['show_accent_toggle'] ?? true) ? '1' : '0');
+    $showAccentToggle = old('header_actions_show_accent_toggle', ($settings['show_accent_toggle'] ?? false) ? '1' : '0');
     $showSearch = old('header_actions_show_search', ($settings['show_search'] ?? true) ? '1' : '0');
 @endphp
 
@@ -10,7 +10,7 @@
     <div class="wb-alert wb-alert-info">
         <div>
             <div class="wb-alert-title">System Header Actions</div>
-            <div>Header Actions renders compact public utility controls such as color mode and accent selection. It pairs naturally with Breadcrumb in the Header slot and is not a navigation menu.</div>
+            <div>Header Actions renders compact public utility controls such as color mode and search. Public preset and accent controls stay disabled while site-level Public Theme presets own public theme selection.</div>
         </div>
     </div>
 
@@ -29,6 +29,7 @@
                 <option value="1" @selected((string) $showAccentToggle === '1')>Show accent toggle</option>
                 <option value="0" @selected((string) $showAccentToggle === '0')>Hide accent toggle</option>
             </select>
+            <div class="wb-text-sm wb-text-muted">Public rendering ignores this while site-level Public Theme presets are active.</div>
         </div>
 
         <div class="wb-stack wb-gap-1">
