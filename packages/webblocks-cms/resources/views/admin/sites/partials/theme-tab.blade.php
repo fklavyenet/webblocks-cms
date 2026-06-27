@@ -1,7 +1,17 @@
 @php
-  $publicThemePresets = collect($publicThemePresets ?? \WebBlocks\Cms\Models\Site::PUBLIC_THEME_PRESETS)
-    ->mapWithKeys(fn (string $preset) => [$preset => str($preset)->headline()->toString()]);
-  $selectedPublicThemePreset = in_array($selectedPublicThemePreset ?? null, $publicThemePresets->keys()->all(), true)
+  $publicThemePresetValues = \WebBlocks\Cms\Models\Site::PUBLIC_THEME_PRESETS;
+  $publicThemePresets = collect($publicThemePresets ?? $publicThemePresetValues)
+    ->mapWithKeys(function ($label, $preset) use ($publicThemePresetValues): array {
+      $value = is_string($preset) && in_array($preset, $publicThemePresetValues, true)
+        ? $preset
+        : strtolower(trim((string) $label));
+
+      return in_array($value, $publicThemePresetValues, true)
+        ? [$value => str($value)->headline()->toString()]
+        : [];
+    });
+  $selectedPublicThemePreset = strtolower(trim((string) ($selectedPublicThemePreset ?? '')));
+  $selectedPublicThemePreset = in_array($selectedPublicThemePreset, $publicThemePresets->keys()->all(), true)
     ? $selectedPublicThemePreset
     : \WebBlocks\Cms\Models\Site::PUBLIC_THEME_CANVAS;
 @endphp

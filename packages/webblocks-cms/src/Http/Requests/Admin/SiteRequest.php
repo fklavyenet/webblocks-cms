@@ -49,7 +49,7 @@ class SiteRequest extends FormRequest
       'seo_title' => trim((string) $this->input('seo_title')),
       'seo_description' => trim((string) $this->input('seo_description')),
       'seo_keywords' => trim((string) $this->input('seo_keywords')),
-      'public_theme_preset' => trim((string) $this->input('public_theme_preset', Site::PUBLIC_THEME_CANVAS)) ?: Site::PUBLIC_THEME_CANVAS,
+      'public_theme_preset' => strtolower(trim((string) $this->input('public_theme_preset', Site::PUBLIC_THEME_CANVAS))) ?: Site::PUBLIC_THEME_CANVAS,
       'favicon_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('favicon_media_id') ?: $this->integer('favicon_asset_id') ?: null) : null,
       'social_image_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('social_image_media_id') ?: $this->integer('social_image_asset_id') ?: null) : null,
       '_site_tab' => trim((string) $this->input('_site_tab', 'site')),

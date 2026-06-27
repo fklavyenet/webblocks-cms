@@ -428,6 +428,9 @@ class SiteLocaleManagementTest extends TestCase
     $response->assertSeeInOrder(['Variables', 'Theme'], false);
     $response->assertSee('<strong>Public Theme</strong>', false);
     $response->assertSee('name="public_theme_preset"', false);
+    foreach (Site::PUBLIC_THEME_PRESETS as $preset) {
+      $response->assertSee('value="'.$preset.'"', false);
+    }
     $response->assertSeeInOrder(['Canvas', 'Atlas', 'Pulse', 'Prism', 'Graphite', 'Horizon']);
     $response->assertSee('data-wb-public-theme-preview="canvas"', false);
     $response->assertSee('Public visual tones are design roles', false);
@@ -447,6 +450,25 @@ class SiteLocaleManagementTest extends TestCase
       'domain' => $site->domain,
       'is_primary' => 1,
       'public_theme_preset' => 'prism',
+      'locale_ids' => [$defaultLocale->id],
+      '_site_tab' => 'theme',
+    ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']));
+
+    $this->assertSame('prism', $site->fresh()->public_theme_preset);
+
+    $response = $this->actingAs($user)->get(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']));
+
+    $response->assertOk();
+    $response->assertSee('value="prism" selected', false);
+    $response->assertSee('data-wb-public-theme-preview="prism"', false);
+    $response->assertSee('data-wb-public-theme="prism"', false);
+
+    $this->actingAs($user)->put(route('admin.sites.update', $site), [
+      'name' => $site->name,
+      'handle' => $site->handle,
+      'domain' => $site->domain,
+      'is_primary' => 1,
+      'public_theme_preset' => 'Prism',
       'locale_ids' => [$defaultLocale->id],
       '_site_tab' => 'theme',
     ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme']));

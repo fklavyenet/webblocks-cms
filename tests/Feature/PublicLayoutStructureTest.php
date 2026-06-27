@@ -180,12 +180,12 @@ class PublicLayoutStructureTest extends TestCase
   public function public_body_outputs_site_scoped_theme_preset(): void
   {
     $page = $this->buildHomepageWithHeaderSidebarAndFooter();
-    $page->site->update(['public_theme_preset' => 'pulse']);
+    $page->site->update(['public_theme_preset' => 'prism']);
 
     $response = $this->get('/');
 
     $response->assertOk();
-    $response->assertSee('data-wb-public-theme="pulse"', false);
+    $response->assertSee('data-wb-public-theme="prism"', false);
   }
 
   #[Test]
