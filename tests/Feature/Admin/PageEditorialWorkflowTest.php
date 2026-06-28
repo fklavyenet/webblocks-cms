@@ -254,7 +254,7 @@ class PageEditorialWorkflowTest extends TestCase
   }
 
   #[Test]
-  public function pages_index_renders_bulk_selection_and_view_column_after_page_without_browser_confirm(): void
+  public function pages_index_renders_bulk_selection_id_and_view_column_without_browser_confirm(): void
   {
     $site = $this->defaultSite();
     $user = $this->editorFor($site);
@@ -270,10 +270,13 @@ class PageEditorialWorkflowTest extends TestCase
     $response->assertSee(route('admin.pages.bulk-destroy'), false);
     $response->assertSee('data-wb-admin-bulk-input-name="page_ids[]"', false);
     $response->assertSee('data-wb-target="#delete-page-'.$page->id.'-modal"', false);
+    $response->assertSee('<th>ID</th>', false);
+    $response->assertSee('#'.$page->id);
     $response->assertDontSee('confirm(', false);
 
     $content = $response->getContent();
-    $this->assertLessThan(strpos($content, '<th>Page</th>'), strpos($content, 'Select all visible pages'));
+    $this->assertLessThan(strpos($content, '<th>ID</th>'), strpos($content, 'Select all visible pages'));
+    $this->assertLessThan(strpos($content, '<th>Page</th>'), strpos($content, '<th>ID</th>'));
     $this->assertLessThan(strpos($content, '<th>View</th>'), strpos($content, '<th>Page</th>'));
     $this->assertLessThan(strpos($content, '<th>Blocks</th>'), strpos($content, '<th>View</th>'));
   }

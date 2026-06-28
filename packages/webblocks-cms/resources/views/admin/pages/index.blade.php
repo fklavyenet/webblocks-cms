@@ -151,6 +151,7 @@
                                         <span class="wb-sr-only">Select all visible pages</span>
                                     </label>
                                 </th>
+                                <th>ID</th>
                                 <th>Page</th>
                                 <th>View</th>
                                 <th>Blocks</th>
@@ -174,6 +175,7 @@
                                             <span class="wb-sr-only">Select page {{ $page->title }}</span>
                                         </label>
                                     </td>
+                                    <td class="wb-admin-pages-table-cell wb-text-sm wb-text-muted">#{{ $page->id }}</td>
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-page-cell">
                                         <div class="wb-admin-pages-page-meta">
                                             <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">
