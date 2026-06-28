@@ -36,6 +36,7 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 - Use `replace_existing_draft_page` only for draft pages with `expected_path` or `expected_updated_at`.
 - Do not overwrite published pages directly.
 - For published pages, use `create_staged_update_for_published_page`, then `replace_staged_page_update`, preview the staged draft, and run `promote_staged_page_update` only after explicit approval and only with `content.publish`.
+- Before promoting a staged update, read `GET /webadmin/api/pages/{staged_page}` and follow `page._actions.promote`; do not call `POST /webadmin/api/pages/{staged_page}/publish` for staged updates.
 - Preserve Shared Slot-backed slots.
 - Do not replace, clear, or cascade Shared Slot content unless an explicit supported API operation is discovered and approved.
 - Page publish and page-owned block publish are separate.

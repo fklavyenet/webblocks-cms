@@ -85,6 +85,9 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.content_contract', '/webadmin/api/content-contract')
       ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonPath('token.can.promote_staged_update', false)
+      ->assertJsonPath('workflows.published_page_staged_update.available.promote', false)
+      ->assertJsonPath('workflows.published_page_staged_update.do_not_use.0', 'POST /webadmin/api/pages/{staged_page}/publish')
       ->assertJsonFragment(['content.apply'])
       ->assertJsonMissingPath('token.token_hash')
       ->assertJsonMissingPath('token.token_preview');
@@ -115,6 +118,7 @@ class InternalContentApiTest extends TestCase
     $this->assertStringContainsString('GET /webadmin/api', (string) $guideContent);
     $this->assertStringContainsString('Authorization: Bearer <token>', (string) $guideContent);
     $this->assertStringContainsString('Do not use browser automation', (string) $guideContent);
+    $this->assertStringContainsString('page._actions.promote', (string) $guideContent);
 
     $example = $this->withInternalToken()
       ->getJson('/webadmin/api/examples/contact-page')
@@ -815,6 +819,21 @@ class InternalContentApiTest extends TestCase
     $stagedPageId = $response->json('data.staged_page.id');
     $stagedPage = Page::query()->with(['translations', 'slots.slotType'])->findOrFail($stagedPageId);
 
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/pages/'.$stagedPageId)
+      ->assertOk()
+      ->assertJsonPath('page._actions.promote.method', 'POST')
+      ->assertJsonPath('page._actions.promote.url', '/webadmin/api/content/apply')
+      ->assertJsonPath('page._actions.promote.available', false)
+      ->assertJsonPath('page._actions.promote.required_capabilities.0', CmsApiTokenCapabilities::CONTENT_APPLY)
+      ->assertJsonPath('page._actions.promote.required_capabilities.1', CmsApiTokenCapabilities::CONTENT_PUBLISH)
+      ->assertJsonPath('page._actions.promote.body.plan.mode', 'promote_staged_page_update')
+      ->assertJsonPath('page._actions.promote.body.plan.staged_page_id', $stagedPageId)
+      ->assertJsonPath('page._actions.promote.body.plan.expected_source_page_id', $page->id)
+      ->assertJsonPath('page._actions.promote.body.plan.expected_source_path', '/docs')
+      ->assertJsonPath('page._actions.promote.body.plan.promote_slots.0', 'main')
+      ->assertJsonPath('page._actions.page_publish.available', false);
+
     $this->assertSame(Page::STATUS_PUBLISHED, $page->fresh()->status);
     $this->assertSame('/docs', $page->fresh('translations')->translations->first()->path);
     $this->assertSame(Page::STATUS_DRAFT, $stagedPage->status);
@@ -943,6 +962,48 @@ class InternalContentApiTest extends TestCase
       ])
       ->assertStatus(422)
       ->assertJsonFragment(['message' => 'Only draft staged updates can be changed or promoted.']);
+  }
+
+  #[Test]
+  public function api_rejects_page_publish_for_staged_updates_with_promote_guidance(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    [$page] = $this->createDraftPageWithMainAndSharedChrome('/docs');
+    $page->forceFill([
+      'status' => Page::STATUS_PUBLISHED,
+      'published_at' => now(),
+    ])->save();
+
+    $createResponse = $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'create_staged_update_for_published_page',
+          'site' => 'default',
+          'locale' => 'en',
+          'page' => ['id' => $page->id],
+          'expected_source_path' => '/docs',
+          'managed_slots' => ['main'],
+        ],
+      ])
+      ->assertCreated();
+
+    $stagedPageId = $createResponse->json('data.staged_page.id');
+
+    $this->createInternalApiToken('publish-token', [CmsApiTokenCapabilities::CONTENT_PUBLISH]);
+
+    $this->withHeader('Authorization', 'Bearer publish-token')
+      ->postJson('/webadmin/api/pages/'.$stagedPageId.'/publish')
+      ->assertStatus(409)
+      ->assertJsonPath('code', 'staged_update_requires_promote')
+      ->assertJsonPath('recommended_action.url', '/webadmin/api/content/apply')
+      ->assertJsonPath('recommended_action.body.plan.mode', 'promote_staged_page_update')
+      ->assertJsonPath('recommended_action.body.plan.staged_page_id', $stagedPageId)
+      ->assertJsonPath('recommended_action.body.plan.expected_source_page_id', $page->id)
+      ->assertJsonPath('recommended_action.body.plan.expected_source_path', '/docs')
+      ->assertJsonPath('recommended_action.body.plan.promote_slots.0', 'main');
+
+    $this->assertSame(Page::STATUS_DRAFT, Page::query()->findOrFail($stagedPageId)->status);
+    $this->assertSame(Page::STATUS_PUBLISHED, $page->fresh()->status);
   }
 
   #[Test]

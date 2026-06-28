@@ -13,6 +13,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 
 class InternalContentResourceController extends Controller
@@ -20,6 +21,7 @@ class InternalContentResourceController extends Controller
   public function __construct(
     private readonly InternalContentApiPresenter $presenter,
     private readonly PageDeleter $pageDeleter,
+    private readonly CmsApiTokenCapabilities $capabilities,
   ) {}
 
   public function sites(): JsonResponse
@@ -104,6 +106,7 @@ class InternalContentResourceController extends Controller
         'apply_requires_explicit_user_approval' => true,
         'publishes' => false,
         'page_publish_default_includes_blocks' => false,
+        'staged_updates_use_promote_not_page_publish' => true,
         'overwrites_existing_content' => false,
         'draft_slot_replacement' => true,
         'published_page_staged_updates' => true,
@@ -150,6 +153,7 @@ class InternalContentResourceController extends Controller
         'include_page_owned_blocks_field' => 'include_page_owned_blocks',
         'shared_slot_cascade' => 'unsupported',
         'shared_slot_content' => 'excluded and must be reviewed separately',
+        'staged_update_pages' => 'rejected; use content/apply mode promote_staged_page_update',
       ],
       'published_page_staged_updates' => [
         'create_mode' => 'create_staged_update_for_published_page',
@@ -170,6 +174,8 @@ class InternalContentResourceController extends Controller
         'promote_blocks_status' => 'promoted page-owned blocks are written as published',
         'shared_slot_cascade' => 'unsupported',
         'storage' => 'draft page with settings.staged_update metadata',
+        'wrong_endpoint_guard' => 'POST /webadmin/api/pages/{staged_page}/publish is rejected for staged updates. Use content/apply with mode promote_staged_page_update.',
+        'promote_action_discovery' => 'GET /webadmin/api/pages/{staged_page} returns _actions.promote with the exact guarded payload.',
         'example' => [
           'create' => [
             'plan' => [
@@ -260,7 +266,7 @@ class InternalContentResourceController extends Controller
     return $this->ok(['pages' => $pages]);
   }
 
-  public function page(Page $page): JsonResponse
+  public function page(Request $request, Page $page): JsonResponse
   {
     $page->load([
       'site.locales',
@@ -273,7 +279,62 @@ class InternalContentResourceController extends Controller
       'blocks.imageTranslations',
     ]);
 
-    return $this->ok(['page' => $this->presenter->page($page, true)]);
+    $payload = $this->presenter->page($page, true);
+    $actions = $this->stagedUpdateActions($request, $page);
+
+    if ($actions !== []) {
+      $payload['_actions'] = $actions;
+    }
+
+    return $this->ok(['page' => $payload]);
+  }
+
+  private function stagedUpdateActions(Request $request, Page $page): array
+  {
+    $metadata = $page->settings['staged_update'] ?? null;
+
+    if (! is_array($metadata) || ($metadata['type'] ?? null) !== 'published_page_update') {
+      return [];
+    }
+
+    $token = $request->attributes->get('cms_api_token');
+    $canPromote = $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_APPLY)
+      && $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_PUBLISH);
+    $isActiveDraft = $page->status === Page::STATUS_DRAFT && ($metadata['state'] ?? null) === 'draft';
+    $managedSlots = is_array($metadata['managed_slots'] ?? null)
+      ? array_values(array_filter($metadata['managed_slots'], 'is_string'))
+      : [];
+
+    return [
+      'promote' => [
+        'method' => 'POST',
+        'url' => '/webadmin/api/content/apply',
+        'available' => $canPromote && $isActiveDraft,
+        'required_capabilities' => [
+          CmsApiTokenCapabilities::CONTENT_APPLY,
+          CmsApiTokenCapabilities::CONTENT_PUBLISH,
+        ],
+        'required_state' => [
+          'page_status' => Page::STATUS_DRAFT,
+          'staged_update_state' => 'draft',
+        ],
+        'body' => [
+          'plan' => [
+            'mode' => 'promote_staged_page_update',
+            'staged_page_id' => $page->id,
+            'expected_source_page_id' => $metadata['source_page_id'] ?? null,
+            'expected_source_path' => $metadata['source_path'] ?? null,
+            'promote_slots' => $managedSlots,
+          ],
+        ],
+      ],
+      'page_publish' => [
+        'available' => false,
+        'method' => 'POST',
+        'url' => '/webadmin/api/pages/'.$page->id.'/publish',
+        'reason' => 'This page is a staged update. Use _actions.promote instead of page publish.',
+      ],
+    ];
   }
 
   public function deletePage(Page $page): JsonResponse

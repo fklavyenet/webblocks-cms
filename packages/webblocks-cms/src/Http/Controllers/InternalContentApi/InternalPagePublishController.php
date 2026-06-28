@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class InternalPagePublishController extends Controller
   public function publish(Request $request, Page $page): JsonResponse
   {
     $this->rejectSharedSlotCascade($request);
+    $this->rejectStagedUpdatePagePublish($page);
 
     $validated = $request->validate([
       'include_page_owned_blocks' => ['sometimes', 'boolean'],
@@ -96,6 +98,7 @@ class InternalPagePublishController extends Controller
   public function publishPageOwnedBlocks(Request $request, Page $page): JsonResponse
   {
     $this->rejectSharedSlotCascade($request);
+    $this->rejectStagedUpdatePagePublish($page);
 
     $result = $this->pageOwnedBlockPublisher->publish($page, source: 'internal-api');
 
@@ -113,6 +116,51 @@ class InternalPagePublishController extends Controller
       'warnings' => [],
       'errors' => [],
     ]);
+  }
+
+  private function rejectStagedUpdatePagePublish(Page $page): void
+  {
+    $metadata = $page->settings['staged_update'] ?? null;
+
+    if (! is_array($metadata) || ($metadata['type'] ?? null) !== 'published_page_update') {
+      return;
+    }
+
+    $managedSlots = is_array($metadata['managed_slots'] ?? null)
+      ? array_values(array_filter($metadata['managed_slots'], 'is_string'))
+      : [];
+
+    throw new HttpResponseException(response()->json([
+      'ok' => false,
+      'code' => 'staged_update_requires_promote',
+      'message' => 'This page is a staged update. Use promote_staged_page_update instead of page publish.',
+      'recommended_action' => [
+        'method' => 'POST',
+        'url' => '/webadmin/api/content/apply',
+        'required_capabilities' => [
+          'content.apply',
+          'content.publish',
+        ],
+        'body' => [
+          'plan' => [
+            'mode' => 'promote_staged_page_update',
+            'staged_page_id' => $page->id,
+            'expected_source_page_id' => $metadata['source_page_id'] ?? null,
+            'expected_source_path' => $metadata['source_path'] ?? null,
+            'promote_slots' => $managedSlots,
+          ],
+        ],
+      ],
+      'warnings' => [
+        'Publishing a staged update page would not update the public source page.',
+      ],
+      'errors' => [
+        [
+          'path' => 'page.staged_update',
+          'message' => 'Staged updates must be promoted onto their source page.',
+        ],
+      ],
+    ], 409));
   }
 
   private function rejectSharedSlotCascade(Request $request): void

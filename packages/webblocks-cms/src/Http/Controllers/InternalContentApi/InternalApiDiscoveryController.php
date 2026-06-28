@@ -45,8 +45,10 @@ class InternalApiDiscoveryController extends Controller
         'Validate content plans with POST /webadmin/api/content/validate before apply.',
         'Apply only after explicit user approval.',
         'Promote staged updates or publish only with explicit content.publish capability; page publishing does not publish draft blocks unless include_page_owned_blocks is true.',
+        'For published-page staged updates, read GET /webadmin/api/pages/{staged_page}; follow page._actions.promote and do not call page publish on the staged page.',
         'Use JSON requests with Authorization, Accept, and Content-Type headers.',
       ],
+      'workflows' => $this->workflows($token),
       '_links' => $this->links(),
     ]);
   }
@@ -89,6 +91,7 @@ class InternalApiDiscoveryController extends Controller
         'Do not use browser automation or admin UI clicks for content API work. Follow discovery, then OpenAPI/content-contract/examples, then validate, then apply after explicit user approval.',
         'Content writes use JSON-only API responses. Missing, invalid, or insufficient tokens return JSON `401` or `403`; invalid payloads return JSON `422` with discovery and documentation links.',
         'Destructive operations require explicit capabilities such as `pages.delete` or `content.publish`. Standard page-building tokens should not include destructive capabilities.',
+        "Published page updates use staged pages. The safe flow is:\n\n1. `POST /webadmin/api/content/validate` with `mode=create_staged_update_for_published_page` or `mode=replace_staged_page_update`.\n2. `POST /webadmin/api/content/apply` to create or replace the staged draft.\n3. Preview the staged page.\n4. After explicit approval, read `GET /webadmin/api/pages/{staged_page}` and follow `page._actions.promote`.\n5. Do not use `POST /webadmin/api/pages/{staged_page}/publish` to promote staged content; that endpoint is rejected for staged updates.",
       ]),
       '_links' => $this->links(),
     ]);
@@ -277,6 +280,38 @@ class InternalApiDiscoveryController extends Controller
       'create_staged_update_for_published_page',
       'replace_staged_page_update',
       'promote_staged_page_update',
+    ];
+  }
+
+  private function workflows(CmsApiToken $token): array
+  {
+    $canPromote = $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_APPLY)
+      && $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_PUBLISH);
+
+    return [
+      'published_page_staged_update' => [
+        'description' => 'Safely edit a published page through a staged draft, then promote it onto the source page after approval.',
+        'steps' => [
+          'POST /webadmin/api/content/validate with mode=create_staged_update_for_published_page or mode=replace_staged_page_update',
+          'POST /webadmin/api/content/apply to create or replace the staged draft',
+          'Preview /webadmin/pages/{staged_page}/preview outside the API',
+          'GET /webadmin/api/pages/{staged_page} and follow page._actions.promote',
+          'POST /webadmin/api/content/apply with mode=promote_staged_page_update',
+        ],
+        'do_not_use' => [
+          'POST /webadmin/api/pages/{staged_page}/publish',
+        ],
+        'required_capabilities' => [
+          'create_or_replace' => [CmsApiTokenCapabilities::CONTENT_APPLY],
+          'promote' => [
+            CmsApiTokenCapabilities::CONTENT_APPLY,
+            CmsApiTokenCapabilities::CONTENT_PUBLISH,
+          ],
+        ],
+        'available' => [
+          'promote' => $canPromote,
+        ],
+      ],
     ];
   }
 }

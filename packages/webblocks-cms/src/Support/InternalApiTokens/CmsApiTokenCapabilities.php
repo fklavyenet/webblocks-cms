@@ -85,6 +85,16 @@ class CmsApiTokenCapabilities
       'capabilities' => $capabilities,
       'destructive_capabilities' => array_values(array_intersect($capabilities, self::DESTRUCTIVE)),
       'destructive_requires_explicit_capability' => true,
+      'can' => [
+        'read_content' => $this->has($token, self::CONTENT_READ),
+        'validate_content_plans' => $this->has($token, self::CONTENT_VALIDATE),
+        'apply_draft_content_plans' => $this->has($token, self::CONTENT_APPLY),
+        'create_staged_update' => $this->has($token, self::CONTENT_APPLY),
+        'replace_staged_update' => $this->has($token, self::CONTENT_APPLY),
+        'promote_staged_update' => $this->has($token, self::CONTENT_APPLY) && $this->has($token, self::CONTENT_PUBLISH),
+        'publish_page' => $this->has($token, self::CONTENT_PUBLISH),
+        'delete_page' => $this->has($token, self::PAGES_DELETE),
+      ],
     ];
   }
 

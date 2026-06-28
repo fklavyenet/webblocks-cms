@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.179
+
+- Improve Internal Content API staged update guidance by exposing promote workflow metadata, returning staged-page promote actions, and rejecting staged update page publish calls with safe promote instructions.
+
 ## 1.32.178
 
 - Add CMS-owned public theme preset token styling so `canvas`, `atlas`, `pulse`, `prism`, `graphite`, and `horizon` visibly affect public page backgrounds, surfaces, text, links, buttons, badges, and public icon tone roles through `data-wb-public-theme`.
