@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;

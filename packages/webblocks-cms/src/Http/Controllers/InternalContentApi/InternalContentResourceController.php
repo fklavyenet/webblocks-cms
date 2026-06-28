@@ -12,8 +12,8 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
+use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 
 class InternalContentResourceController extends Controller
