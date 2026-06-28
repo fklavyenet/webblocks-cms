@@ -78,12 +78,6 @@ For release work, AI/operator automation may stop after source validation, relea
 - Avoid large inline Blade scripts.
 - Named CMS admin JavaScript belongs under `public/cms/js/admin/`.
 
-## Advisor-First Development Standard
-
-- Before standards-sensitive CMS work, ask WebBlocks Advisor and include the Advisor answer as an implementation note in the report.
-- Use this gate for Admin UI/WebBlocks UI alignment, table/action/modal/dashboard behavior, release/update/publish workflows, Publisher integration, Herne artifact safety, migration/database compatibility, native/local workflow, secrets/env policy, plugin conventions, and cross-project decisions.
-- If Advisor guidance is missing, stale, or wrong, update the relevant knowledge chunk/source before treating a local workaround as the project standard.
-
 ## WebBlocks UI Usage
 
 WebBlocks CMS uses WebBlocks UI for admin, auth, dashboard, settings, and related control panel UI. Before making admin/auth/dashboard UI changes, read the WebBlocks UI sources and AI usage contract from:
