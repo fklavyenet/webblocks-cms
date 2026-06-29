@@ -79,6 +79,9 @@ GET /webadmin/api/content-contract
 GET /webadmin/api/navigation-menus
 GET /webadmin/api/shared-slots
 GET /webadmin/api/pages
+POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks
+POST /webadmin/api/pages/{page}/sync-layout-slots
+POST /webadmin/api/sites/{site}/public-theme
 ```
 
 Use `GET /webadmin/api/pages` when you need to check existing slugs, live placeholder pages, or previous drafts before proposing a new page.
@@ -113,7 +116,7 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 2. Read OpenAPI, the content contract, and examples from the live API links.
 3. Build a content plan using only discovered handles and the current site/layout/locale.
 4. Validate with `POST /webadmin/api/content/validate`.
-5. Read validation errors and adjust the plan.
+5. Read validation errors, warnings, and the `renderability` summary; adjust until the plan has no empty wrapper or empty user-facing content problems.
 6. Ask the user for explicit approval to apply the exact final plan.
 7. Only after approval, call `POST /webadmin/api/content/apply`.
 8. Read the created draft page id from the apply response.
@@ -133,6 +136,8 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 - For existing draft replacement, include `expected_path` or `expected_updated_at` and replace only page-owned slots.
 - Treat `page.path` as the canonical public URL. Use `/contact` or `/docs/internal-content-api`, not `/p/contact`; `/p/...` is only a legacy public redirect.
 - Do not try to replace Shared Slot-backed slots; leave shared header/footer assignments intact.
+- Before assigning a Shared Slot to a layout slot such as `header`, confirm the page actually has that Page Slot. If it is missing but belongs to the selected Page Layout, call `POST /webadmin/api/pages/{page}/sync-layout-slots` before assignment.
+- Shared Slot blocks are draft by default. When the user explicitly approves public Shared Slot changes and the token has `content.publish`, call `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks`; do not try to publish Shared Slot content through page publish cascade fields.
 - Do not fetch remote pages.
 - Do not use browser automation or admin UI clicks when API discovery is available.
 - Do not download or import media.
@@ -140,6 +145,9 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 - Do not print, log, or report token values.
 - Report only status codes and safe summarized response data.
 - Treat `401`, `403`, and `422` JSON responses as API feedback and follow their discovery/documentation links.
+- Build block trees with nested `children` arrays only. Do not use flat `id`, `parent_id`, `block_id`, `slot_type_id`, or `block_type_id` fields in content plans; those are database implementation details and validation rejects them.
+- Put block translations directly under `translations` for the selected plan locale, such as `translations.title` or `translations.content`. Do not nest block copy under `translations.en`, `translations.tr`, or other locale keys.
+- Wrapper blocks such as `section`, `container`, `cluster`, `grid`, `card`, `card_body`, `card_footer`, `sticky-navbar`, and `sidebar-navigation` must contain meaningful child blocks. Creating wrappers without children is invalid because it renders empty chrome.
 
 ## Good Structures
 
@@ -148,9 +156,10 @@ Prefer structured blocks over a single large content blob.
 Marketing homepage:
 
 ```text
-section -> container -> hero
-section -> container -> grid -> card -> card_body
-section -> container -> cta
+section -> container -> content_header + cluster -> button_link
+section -> container -> grid -> stat-card
+section -> container -> columns -> column_item
+section -> container -> cta + cluster -> button_link
 ```
 
 Header/navbar:
@@ -159,6 +168,8 @@ Header/navbar:
 shared_slot header
 sticky-navbar -> container(flow:none) -> cluster -> navbar-brand + cluster -> navbar-navigation + header-actions
 ```
+
+Use the CMS Navigation API for navbar links. Navigation item URLs must be safe paths or `http`/`https` URLs; for same-page anchors, use a path plus fragment such as `/#platform`, not a raw `#platform` value. If `GET /webadmin/api/sites` shows the target site rendering with the wrong `public_theme_preset`, update it with `POST /webadmin/api/sites/{site}/public-theme` instead of trying to force theme mode with page content.
 
 For most public pages, place wide promo blocks such as `hero` and `cta` inside `section -> container`. Direct full-width `hero` or `cta` blocks under `main` should be intentional edge-to-edge design choices, not the default.
 
@@ -174,6 +185,9 @@ Use the native `contact_form` block for contact pages after discovery confirms t
 
 - Do not put a full page into one `rich-text` block.
 - Do not put a full page into one trusted `html` block when structured blocks can represent it.
+- Do not represent nesting with sibling rows plus `id`/`parent_id`; use nested `children`.
+- Do not create `section`, `container`, `cluster`, or `grid` blocks unless they contain useful child content.
+- Do not submit locale-keyed block translation shapes such as `translations.en.title`; use `translations.title` for the plan locale.
 - Do not build contact forms with Trusted HTML, raw form markup, or `mailto:` links when `contact_form` is available.
 - Do not guess handles.
 - Do not overwrite published content.
@@ -182,7 +196,7 @@ Use the native `contact_form` block for contact pages after discovery confirms t
 
 ## Minimal Draft Plan Example
 
-This example assumes discovery confirmed `section`, `container`, `hero`, `grid`, `card`, `card_body`, `plain_text`, `button_link`, and `cta`.
+This example assumes discovery confirmed `section`, `container`, `content_header`, `cluster`, `grid`, `card`, `card_body`, `plain_text`, `button_link`, and `cta`.
 
 ```json
 {
@@ -207,12 +221,15 @@ This example assumes discovery confirmed `section`, `container`, `hero`, `grid`,
               "type": "container",
               "children": [
                 {
-                  "type": "hero",
+                  "type": "content_header",
                   "translations": {
                     "title": "Build useful pages faster",
                     "subtitle": "A structured CMS workflow for practical content teams.",
                     "content": "Create focused draft pages from reusable blocks, then review them safely before publishing."
-                  },
+                  }
+                },
+                {
+                  "type": "cluster",
                   "children": [
                     {
                       "type": "button_link",
@@ -295,6 +312,21 @@ This example assumes discovery confirmed `section`, `container`, `hero`, `grid`,
                     "title": "Ready for review?",
                     "content": "Validate the plan, apply only after approval, then open the admin preview."
                   }
+                },
+                {
+                  "type": "cluster",
+                  "children": [
+                    {
+                      "type": "button_link",
+                      "translations": {
+                        "title": "Open docs"
+                      },
+                      "settings": {
+                        "url": "/docs",
+                        "variant": "primary"
+                      }
+                    }
+                  ]
                 }
               ]
             }

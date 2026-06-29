@@ -182,11 +182,14 @@ class InternalApiDiscoveryController extends Controller
       'content_apply' => '/webadmin/api/content/apply',
       'pages' => '/webadmin/api/pages',
       'page' => '/webadmin/api/pages/{page}',
+      'page_layout_slots_sync' => '/webadmin/api/pages/{page}/sync-layout-slots',
       'page_publish' => '/webadmin/api/pages/{page}/publish',
       'page_owned_blocks_publish' => '/webadmin/api/pages/{page}/publish-page-owned-blocks',
       'page_delete' => '/webadmin/api/pages/{page}',
       'navigation_menus' => '/webadmin/api/navigation-menus',
       'shared_slots' => '/webadmin/api/shared-slots',
+      'shared_slot_blocks_publish' => '/webadmin/api/shared-slots/{sharedSlot}/publish-blocks',
+      'site_public_theme' => '/webadmin/api/sites/{site}/public-theme',
     ];
   }
 
@@ -209,6 +212,8 @@ class InternalApiDiscoveryController extends Controller
       ],
       '/pages/{page}/publish' => ['post' => ['summary' => 'Publish page', 'x-required-capability' => 'content.publish', 'x-defaults' => ['include_page_owned_blocks' => false], 'responses' => ['200' => ['description' => 'Published page JSON', 'content' => $json], '403' => ['description' => 'Requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/pages/{page}/publish-page-owned-blocks' => ['post' => ['summary' => 'Publish page-owned blocks without changing page status', 'x-required-capability' => 'content.publish', 'responses' => ['200' => ['description' => 'Published blocks JSON', 'content' => $json], '403' => ['description' => 'Requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/pages/{page}/sync-layout-slots' => ['post' => ['summary' => 'Create missing page layout slots', 'x-required-capability' => 'content.apply', 'responses' => ['200' => ['description' => 'Synced page slots JSON', 'content' => $json], '403' => ['description' => 'Requires content.apply capability', 'content' => $json]]]],
+      '/sites/{site}/public-theme' => ['post' => ['summary' => 'Update safe site public theme preset', 'x-required-capability' => 'site-settings.write', 'responses' => ['200' => ['description' => 'Updated site JSON', 'content' => $json], '403' => ['description' => 'Requires site-settings.write capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/content/validate' => ['post' => ['summary' => 'Validate content plan', 'x-supported-modes' => $this->contentModes(), 'responses' => ['200' => ['description' => 'Valid plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/content/apply' => ['post' => ['summary' => 'Apply content plan', 'x-supported-modes' => $this->contentModes(), 'x-mode-capabilities' => ['promote_staged_page_update' => 'content.publish plus content.apply'], 'responses' => ['201' => ['description' => 'Applied plan JSON', 'content' => $json], '403' => ['description' => 'Promote requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/navigation-menus' => ['get' => ['summary' => 'List navigation menus', 'responses' => ['200' => ['description' => 'Navigation JSON', 'content' => $json]]], 'post' => ['summary' => 'Create navigation menu items', 'responses' => ['201' => ['description' => 'Created navigation JSON', 'content' => $json]]]],
@@ -217,6 +222,7 @@ class InternalApiDiscoveryController extends Controller
       '/shared-slots' => ['get' => ['summary' => 'List Shared Slots', 'responses' => ['200' => ['description' => 'Shared Slots JSON', 'content' => $json]]], 'post' => ['summary' => 'Create Shared Slot', 'responses' => ['201' => ['description' => 'Created Shared Slot JSON', 'content' => $json]]]],
       '/shared-slots/{sharedSlot}' => ['get' => ['summary' => 'Read Shared Slot', 'responses' => ['200' => ['description' => 'Shared Slot JSON', 'content' => $json]]]],
       '/shared-slots/{sharedSlot}/blocks' => ['post' => ['summary' => 'Create Shared Slot block', 'responses' => ['201' => ['description' => 'Created Shared Slot block JSON', 'content' => $json]]]],
+      '/shared-slots/{sharedSlot}/publish-blocks' => ['post' => ['summary' => 'Publish Shared Slot blocks', 'x-required-capability' => 'shared-slots.write plus content.publish', 'responses' => ['200' => ['description' => 'Published Shared Slot blocks JSON', 'content' => $json], '403' => ['description' => 'Requires shared-slots.write and content.publish capabilities', 'content' => $json]]]],
       '/pages/{page}/slots/{slot}/shared-slot' => ['post' => ['summary' => 'Assign Shared Slot to page slot', 'responses' => ['200' => ['description' => 'Assignment JSON', 'content' => $json]]]],
     ];
   }

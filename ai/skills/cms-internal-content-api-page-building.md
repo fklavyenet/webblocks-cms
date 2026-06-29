@@ -7,7 +7,7 @@ Use this skill when creating, replacing, staging, or publishing CMS page content
 Start from live API discovery:
 
 1. `GET /webadmin/api`
-2. Follow discovered links to OpenAPI, AI guide, content contract, examples, pages, navigation, and Shared Slots.
+2. Follow discovered links to OpenAPI, AI guide, content contract, examples, pages, navigation, Shared Slots, layout slot sync, and site public theme endpoints.
 3. Use only discovered sites, locales, page layouts, block handles, icon slugs, capabilities, and contract fields.
 
 Never guess block handles or field names. Do not scrape browser admin UI when API discovery is available. Do not fetch remote pages.
@@ -25,7 +25,7 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 1. Perform read-only discovery.
 2. Build a content plan using discovered contracts.
 3. `POST /webadmin/api/content/validate`.
-4. Revise until valid.
+4. Revise until valid and review the `renderability` summary.
 5. Apply only after explicit approval.
 6. Report the preview URL.
 7. Do not publish unless explicitly approved and the token has `content.publish`.
@@ -39,16 +39,25 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 - Before promoting a staged update, read `GET /webadmin/api/pages/{staged_page}` and follow `page._actions.promote`; do not call `POST /webadmin/api/pages/{staged_page}/publish` for staged updates.
 - Preserve Shared Slot-backed slots.
 - Do not replace, clear, or cascade Shared Slot content unless an explicit supported API operation is discovered and approved.
+- Before assigning a Shared Slot to a page slot such as `header`, confirm the page has that Page Slot. If the selected Page Layout defines it but the page is missing it, call `POST /webadmin/api/pages/{page}/sync-layout-slots` first.
+- Shared Slot blocks are draft by default. Publish them only after explicit approval with `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks` when discovered and when the token has `content.publish`.
 - Page publish and page-owned block publish are separate.
 - Do not assume page publish makes draft blocks public.
 - Use `include_page_owned_blocks: true` only after explicit approval.
 - Use canonical `page.path` values such as `/contact` or `/docs/internal-content-api`; do not generate `/p/...`.
+- Build nested block trees with `children` arrays only. Never send flat block `id`, `parent_id`, `block_id`, `slot_type_id`, or `block_type_id` fields in content plans.
+- Put block copy directly under `translations` for the selected plan locale. Do not send locale-keyed block shapes such as `translations.en.title`.
+- Do not create wrapper-only blocks such as `section`, `container`, `cluster`, `grid`, `card`, `card_body`, `card_footer`, or `sticky-navbar` without meaningful children.
+- Treat nonzero `renderability.wrapper_blocks_without_children`, `renderability.text_blocks_without_visible_content`, or `renderability.button_blocks_without_label_or_url` as a failed plan even if the API returns other useful metadata.
+- Treat `renderability.html_blocks > 0` as use of the Trusted HTML escape hatch and require explicit operator approval plus a report of the missing native block type.
+- If a public page renders with the wrong site theme preset, update the site through `POST /webadmin/api/sites/{site}/public-theme` when discovered and authorized; do not try to solve site-level theme with content blocks.
 
 ## Content Rules
 
 - Do not import or download media unless a later explicit contract supports it.
 - For contact pages, use native `contact_form` when discovered; do not use Trusted HTML, raw forms, or `mailto:` substitutes.
 - For icons and badges, use only active catalog-backed icon slugs and allowlisted badge fields discovered from block contracts.
+- For navbar links managed by CMS Navigation, use safe internal paths or `http`/`https` URLs. For same-page anchors, send a path plus fragment such as `/#platform`, not raw `#platform`.
 
 ## Live Site Testing Boundary
 
@@ -63,6 +72,7 @@ Include:
 - source page or target path
 - plan mode
 - validation result
+- renderability summary
 - apply result
 - created, replaced, staged, or promoted page id
 - edit or preview URL

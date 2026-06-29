@@ -47,6 +47,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceCon
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
@@ -75,12 +76,14 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/examples/contact-page', [InternalApiDiscoveryController::class, 'contactPageExample'])->name('examples.contact-page');
     Route::get('/examples/landing-page', [InternalApiDiscoveryController::class, 'landingPageExample'])->name('examples.landing-page');
     Route::get('/sites', [InternalContentResourceController::class, 'sites'])->name('sites.index');
+    Route::post('/sites/{site}/public-theme', [InternalSiteController::class, 'updatePublicTheme'])->middleware('internal-api.capability:site-settings.write')->name('sites.public-theme.update');
     Route::get('/locales', [InternalContentResourceController::class, 'locales'])->name('locales.index');
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/pages', [InternalContentResourceController::class, 'pages'])->name('pages.index');
     Route::get('/pages/{page}', [InternalContentResourceController::class, 'page'])->name('pages.show');
+    Route::post('/pages/{page}/sync-layout-slots', [InternalSiteController::class, 'syncPageLayoutSlots'])->middleware('internal-api.capability:content.apply')->name('pages.layout-slots.sync');
     Route::post('/pages/{page}/publish', [InternalPagePublishController::class, 'publish'])->middleware('internal-api.capability:content.publish')->name('pages.publish');
     Route::post('/pages/{page}/publish-page-owned-blocks', [InternalPagePublishController::class, 'publishPageOwnedBlocks'])->middleware('internal-api.capability:content.publish')->name('pages.publish-page-owned-blocks');
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
@@ -93,6 +96,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/shared-slots', [InternalSharedSlotController::class, 'store'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.store');
     Route::get('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'show'])->name('shared-slots.show');
     Route::post('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'storeBlock'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.blocks.store');
+    Route::post('/shared-slots/{sharedSlot}/publish-blocks', [InternalSharedSlotController::class, 'publishBlocks'])->middleware(['internal-api.capability:shared-slots.write', 'internal-api.capability:content.publish'])->name('shared-slots.blocks.publish');
     Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
     Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');
     Route::post('/content/validate', [InternalContentPlanController::class, 'validatePlan'])->middleware('internal-api.capability:content.validate')->name('content.validate');

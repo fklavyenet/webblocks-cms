@@ -177,7 +177,8 @@ class InternalContentApiTest extends TestCase
       ->getJson('/webadmin/api/sites')
       ->assertOk()
       ->assertJsonPath('ok', true)
-      ->assertJsonPath('sites.0.handle', 'default');
+      ->assertJsonPath('sites.0.handle', 'default')
+      ->assertJsonPath('sites.0.public_theme_preset', Site::PUBLIC_THEME_CANVAS);
 
     $this->withInternalToken()
       ->getJson('/webadmin/api/locales')
@@ -205,6 +206,74 @@ class InternalContentApiTest extends TestCase
     $this->withInternalToken()
       ->getJson('/webadmin/api/content-plans/example')
       ->assertNotFound();
+  }
+
+  #[Test]
+  public function valid_token_can_update_safe_site_public_theme_preset(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $site = $this->defaultSite();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/sites/'.$site->id.'/public-theme', [
+        'public_theme_preset' => 'canvas',
+      ])
+      ->assertOk()
+      ->assertJsonPath('site.id', $site->id)
+      ->assertJsonPath('site.public_theme_preset', 'canvas')
+      ->assertJsonPath('writes.0.type', 'site_public_theme_preset');
+
+    $this->assertDatabaseHas('sites', [
+      'id' => $site->id,
+      'public_theme_preset' => 'canvas',
+    ]);
+  }
+
+  #[Test]
+  public function invalid_site_public_theme_preset_is_rejected(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/sites/'.$this->defaultSite()->id.'/public-theme', [
+        'public_theme_preset' => 'midnight-hack',
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('ok', false)
+      ->assertJsonFragment(['path' => 'site.public_theme_preset']);
+  }
+
+  #[Test]
+  public function valid_token_can_sync_missing_page_layout_slots_before_shared_slot_assignment(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $site = $this->defaultSite();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+
+    PageSlot::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $this->slotTypeId('main'),
+      'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+      'sort_order' => 0,
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/pages/'.$page->id.'/sync-layout-slots')
+      ->assertOk()
+      ->assertJsonPath('added_count', 3)
+      ->assertJsonPath('page.slots.0.slot', 'main')
+      ->assertJsonFragment(['slot' => 'header'])
+      ->assertJsonFragment(['slot' => 'sidebar'])
+      ->assertJsonFragment(['slot' => 'footer']);
+
+    $this->assertDatabaseHas('page_slots', [
+      'page_id' => $page->id,
+      'slot_type_id' => $this->slotTypeId('header'),
+    ]);
   }
 
   #[Test]
@@ -450,6 +519,106 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function content_validate_rejects_flat_parent_references_for_block_trees(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $payload = $this->validPlanPayload();
+    $payload['plan']['slots']['main'] = [
+      [
+        'id' => 'hero-section',
+        'type' => 'section',
+      ],
+      [
+        'id' => 'hero-container',
+        'parent_id' => 'hero-section',
+        'type' => 'container',
+      ],
+      [
+        'parent_id' => 'hero-container',
+        'type' => 'plain_text',
+        'translations' => [
+          'content' => 'This looks nested but is actually flat.',
+        ],
+      ],
+    ];
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertStatus(422)
+      ->assertJsonPath('ok', false)
+      ->assertJsonFragment([
+        'path' => 'plan.slots.main.0.id',
+        'message' => 'Content plans do not accept flat block relationship fields. Nest child blocks inside the parent block children array instead.',
+      ])
+      ->assertJsonFragment([
+        'path' => 'plan.slots.main.1.parent_id',
+        'message' => 'Content plans do not accept flat block relationship fields. Nest child blocks inside the parent block children array instead.',
+      ]);
+  }
+
+  #[Test]
+  public function content_validate_rejects_locale_keyed_block_translations(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $payload = $this->validPlanPayload();
+    $payload['plan']['slots']['main'][0]['children'][0]['children'][0] = [
+      'type' => 'content_header',
+      'translations' => [
+        'en' => [
+          'title' => 'Locale-keyed title',
+        ],
+      ],
+    ];
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertStatus(422)
+      ->assertJsonPath('ok', false)
+      ->assertJsonPath('errors.0.path', 'plan.slots.main.0.children.0.children.0.translations.en');
+  }
+
+  #[Test]
+  public function content_validate_rejects_wrapper_blocks_without_children(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $payload = $this->validPlanPayload();
+    $payload['plan']['slots']['main'] = [
+      [
+        'type' => 'section',
+        'settings' => [
+          'spacing' => 'lg',
+        ],
+      ],
+    ];
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertStatus(422)
+      ->assertJsonPath('ok', false)
+      ->assertJsonPath('errors.0.path', 'plan.slots.main.0.children')
+      ->assertJsonPath('renderability.wrapper_blocks_without_children', 1);
+  }
+
+  #[Test]
+  public function content_validate_returns_renderability_summary_for_nested_native_blocks(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $this->validPlanPayload())
+      ->assertOk()
+      ->assertJsonPath('renderability.root_blocks', 1)
+      ->assertJsonPath('renderability.total_blocks', 4)
+      ->assertJsonPath('renderability.html_blocks', 0)
+      ->assertJsonPath('renderability.wrapper_blocks_without_children', 0)
+      ->assertJsonPath('renderability.text_blocks_without_visible_content', 0)
+      ->assertJsonPath('renderability.button_blocks_without_label_or_url', 0);
+  }
+
+  #[Test]
   public function validate_returns_normalized_plan_without_writing_content(): void
   {
     $this->createInternalApiToken('secret-token');
@@ -579,7 +748,10 @@ class InternalContentApiTest extends TestCase
       '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items' => CmsApiTokenCapabilities::NAVIGATION_WRITE,
       '/webadmin/api/shared-slots' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
       '/webadmin/api/shared-slots/'.$sharedSlot->id.'/blocks' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+      '/webadmin/api/shared-slots/'.$sharedSlot->id.'/publish-blocks' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
       '/webadmin/api/pages/'.$page->id.'/slots/header/shared-slot' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+      '/webadmin/api/sites/'.$site->id.'/public-theme' => CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
+      '/webadmin/api/pages/'.$page->id.'/sync-layout-slots' => CmsApiTokenCapabilities::CONTENT_APPLY,
     ] as $uri => $capability) {
       $this->withInternalToken()
         ->postJson($uri, [])
@@ -608,7 +780,10 @@ class InternalContentApiTest extends TestCase
       'internal-content-api.navigation-menus.items.store',
       'internal-content-api.shared-slots.store',
       'internal-content-api.shared-slots.blocks.store',
+      'internal-content-api.shared-slots.blocks.publish',
       'internal-content-api.pages.slots.shared-slot',
+      'internal-content-api.sites.public-theme.update',
+      'internal-content-api.pages.layout-slots.sync',
     ];
 
     foreach ($writeRouteNames as $routeName) {
@@ -636,6 +811,8 @@ class InternalContentApiTest extends TestCase
 
       $this->assertTrue($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/api/content/validate'));
       $this->assertTrue($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/api/navigation-menus'));
+      $this->assertTrue($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/api/sites/1/public-theme'));
+      $this->assertTrue($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/api/pages/1/sync-layout-slots'));
       $this->assertFalse($this->csrfMiddlewareExcludesPath($middleware, '/webadmin/system/api-tokens'));
     }
   }
@@ -1468,6 +1645,56 @@ class InternalContentApiTest extends TestCase
 
     $this->assertSame('Reusable header copy', $block->textTranslations()->firstOrFail()->content);
     $this->assertDatabaseHas('shared_slot_blocks', ['shared_slot_id' => $sharedSlotId, 'block_id' => $block->id]);
+  }
+
+  #[Test]
+  public function shared_slot_blocks_require_explicit_publish_capability_to_publish(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $this->defaultSite()->id,
+      'name' => 'Site Header',
+      'handle' => 'site-header',
+      'slot_name' => 'header',
+      'is_active' => true,
+    ]);
+    $block = Block::query()->create([
+      'page_id' => Page::query()->create([
+        'site_id' => $this->defaultSite()->id,
+        'page_type' => Page::TYPE_SHARED_SLOT_SOURCE,
+        'status' => Page::STATUS_DRAFT,
+      ])->id,
+      'block_type_id' => $this->blockTypeId('plain_text'),
+      'type' => 'plain_text',
+      'source_type' => 'static',
+      'slot_type_id' => $this->slotTypeId('header'),
+      'slot' => 'header',
+      'status' => Page::STATUS_DRAFT,
+      'sort_order' => 0,
+    ]);
+
+    SharedSlotBlock::query()->create([
+      'shared_slot_id' => $sharedSlot->id,
+      'block_id' => $block->id,
+      'sort_order' => 0,
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/shared-slots/'.$sharedSlot->id.'/publish-blocks')
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::CONTENT_PUBLISH);
+
+    $this->createInternalApiToken('publish-token', [
+      CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+      CmsApiTokenCapabilities::CONTENT_PUBLISH,
+    ]);
+
+    $this->withHeader('Authorization', 'Bearer publish-token')
+      ->postJson('/webadmin/api/shared-slots/'.$sharedSlot->id.'/publish-blocks')
+      ->assertOk()
+      ->assertJsonPath('published_blocks_count', 1);
+
+    $this->assertSame('published', $block->fresh()->status);
   }
 
   #[Test]

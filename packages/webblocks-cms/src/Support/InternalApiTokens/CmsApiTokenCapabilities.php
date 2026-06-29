@@ -20,12 +20,15 @@ class CmsApiTokenCapabilities
 
   public const SHARED_SLOTS_WRITE = 'shared-slots.write';
 
+  public const SITE_SETTINGS_WRITE = 'site-settings.write';
+
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
     self::CONTENT_APPLY,
     self::NAVIGATION_WRITE,
     self::SHARED_SLOTS_WRITE,
+    self::SITE_SETTINGS_WRITE,
   ];
 
   public const DESTRUCTIVE = [
@@ -39,6 +42,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_APPLY,
     self::NAVIGATION_WRITE,
     self::SHARED_SLOTS_WRITE,
+    self::SITE_SETTINGS_WRITE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
   ];
@@ -49,6 +53,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_APPLY => 'Apply draft content plans',
     self::NAVIGATION_WRITE => 'Write navigation menu items',
     self::SHARED_SLOTS_WRITE => 'Write Shared Slots',
+    self::SITE_SETTINGS_WRITE => 'Write safe site presentation settings',
     self::CONTENT_PUBLISH => 'Publish content',
     self::PAGES_DELETE => 'Delete pages',
   ];
@@ -94,6 +99,7 @@ class CmsApiTokenCapabilities
         'promote_staged_update' => $this->has($token, self::CONTENT_APPLY) && $this->has($token, self::CONTENT_PUBLISH),
         'publish_page' => $this->has($token, self::CONTENT_PUBLISH),
         'delete_page' => $this->has($token, self::PAGES_DELETE),
+        'write_site_presentation_settings' => $this->has($token, self::SITE_SETTINGS_WRITE),
       ],
     ];
   }

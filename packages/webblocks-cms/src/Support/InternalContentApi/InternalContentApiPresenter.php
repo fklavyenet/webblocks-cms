@@ -28,6 +28,7 @@ class InternalContentApiPresenter
       'name' => $site->name,
       'is_primary' => (bool) $site->is_primary,
       'primary_domain' => $site->canonicalDomain(),
+      'public_theme_preset' => $site->resolvedPublicThemePreset(),
       'locales' => $site->relationLoaded('locales')
         ? $site->locales->map(fn (Locale $locale) => $this->locale($locale))->values()->all()
         : [],

@@ -37,6 +37,38 @@ class InternalContentApiOperations
     'overwrite',
   ];
 
+  private const PLAN_MANAGED_RELATION_KEYS = [
+    'id',
+    'parent_id',
+    'block_id',
+    'slot_type_id',
+    'block_type_id',
+  ];
+
+  private const CHILD_REQUIRED_BLOCK_TYPES = [
+    'section',
+    'container',
+    'cluster',
+    'grid',
+    'card',
+    'card_body',
+    'card_footer',
+    'sticky-navbar',
+    'sidebar-navigation',
+  ];
+
+  private const TRANSLATABLE_FIELDS = [
+    'title',
+    'eyebrow',
+    'subtitle',
+    'content',
+    'meta',
+    'caption',
+    'alt_text',
+    'submit_label',
+    'success_message',
+  ];
+
   public function __construct(
     private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
@@ -315,6 +347,7 @@ class InternalContentApiOperations
     }
 
     $this->rejectForbiddenKeys($block, $path, $errors);
+    $this->rejectPlanManagedRelationKeys($block, $path, $errors);
 
     $typeSlug = trim((string) ($block['type'] ?? $block['block_type'] ?? ''));
     $blockType = BlockType::query()->where('slug', $typeSlug)->where('status', 'published')->first();
@@ -349,6 +382,8 @@ class InternalContentApiOperations
       $translations = [];
     }
 
+    $this->validateTranslationShape($translations, $path.'.translations', $errors);
+
     foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta'] as $field) {
       if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {
         $translations[$field] = $block[$field];
@@ -363,6 +398,10 @@ class InternalContentApiOperations
 
     if ($children !== [] && ! (new Block(['type' => $blockType->slug]))->setRelation('blockType', $blockType)->canAcceptChildren()) {
       $errors[] = $this->error($path.'.children', 'This block type does not accept children.');
+    }
+
+    if ($children === [] && $this->requiresChildren($blockType)) {
+      $errors[] = $this->error($path.'.children', 'This wrapper block type must contain renderable child blocks. Use nested children arrays; flat id/parent_id references are not part of the content plan contract.');
     }
 
     $normalizedChildren = [];
@@ -461,6 +500,49 @@ class InternalContentApiOperations
     }
 
     return in_array($childType->slug, $allowed, true);
+  }
+
+  private function rejectPlanManagedRelationKeys(array $block, string $path, array &$errors): void
+  {
+    foreach (self::PLAN_MANAGED_RELATION_KEYS as $key) {
+      if (! array_key_exists($key, $block)) {
+        continue;
+      }
+
+      $errors[] = $this->error(
+        $path.'.'.$key,
+        'Content plans do not accept flat block relationship fields. Nest child blocks inside the parent block children array instead.',
+      );
+    }
+  }
+
+  private function validateTranslationShape(array $translations, string $path, array &$errors): void
+  {
+    foreach ($translations as $key => $value) {
+      if (! is_array($value)) {
+        continue;
+      }
+
+      $key = (string) $key;
+      if (in_array($key, self::TRANSLATABLE_FIELDS, true)) {
+        continue;
+      }
+
+      $looksLikeLocale = Locale::query()->where('code', Locale::normalizeCode($key))->exists()
+        || preg_match('/^[a-z]{2}(?:[-_][A-Za-z]{2})?$/', $key) === 1;
+
+      if ($looksLikeLocale) {
+        $errors[] = $this->error(
+          $path.'.'.$key,
+          'Locale-keyed translations are not accepted inside block content plans. Put translated fields directly under translations, such as translations.title or translations.content, for the selected plan locale.',
+        );
+      }
+    }
+  }
+
+  private function requiresChildren(BlockType $blockType): bool
+  {
+    return in_array($blockType->slug, self::CHILD_REQUIRED_BLOCK_TYPES, true);
   }
 
   private function normalizePublicIconToneSettings(array $settings, BlockType $blockType, string $path, array &$errors): array

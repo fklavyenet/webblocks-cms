@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
@@ -117,6 +118,34 @@ class InternalSharedSlotController extends Controller
       'ok' => true,
       'page_slot' => $this->presenter->pageSlot($pageSlot),
       'writes' => [['type' => 'page_slot_shared_slot', 'id' => $pageSlot->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  public function publishBlocks(SharedSlot $sharedSlot): JsonResponse
+  {
+    $publishedCount = DB::transaction(function () use ($sharedSlot): int {
+      $blockIds = $sharedSlot->slotBlocks()
+        ->pluck('block_id')
+        ->map(fn ($value) => (int) $value)
+        ->filter()
+        ->values();
+
+      if ($blockIds->isEmpty()) {
+        return 0;
+      }
+
+      return Block::query()
+        ->whereIn('id', $blockIds)
+        ->where('status', '!=', 'published')
+        ->update(['status' => 'published']);
+    });
+
+    return response()->json([
+      'ok' => true,
+      'shared_slot' => $this->presenter->sharedSlot($sharedSlot->fresh(['site', 'slotBlocks.block.blockType', 'slotBlocks.block.slotType']), true),
+      'published_blocks_count' => $publishedCount,
       'warnings' => [],
       'errors' => [],
     ]);

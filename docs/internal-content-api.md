@@ -114,6 +114,7 @@ Super admins choose token capabilities when creating a token from `System -> API
 - `content.apply`
 - `navigation.write`
 - `shared-slots.write`
+- `site-settings.write`
 
 Destructive and publish capabilities are separate advanced options and are not selected by default:
 
@@ -395,6 +396,7 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 
 - `GET /webadmin/api/pages`
 - `GET /webadmin/api/pages/{page}`
+- `POST /webadmin/api/pages/{page}/sync-layout-slots`
 - `POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot`
 
 ### Block Endpoints
@@ -411,7 +413,7 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 
 Navigation menus use the existing CMS `navigation_items.menu_key` model. Phase 2A supports the shipped CMS menu handles such as `primary`, `footer`, `mobile`, `legal`, and `docs`; it does not add a separate menu table. Creating a navigation menu is treated as creating a safe site-scoped menu group with optional initial items. It refuses to overwrite a site/menu that already has items.
 
-Navigation item URLs may be internal paths such as `/`, `/about`, and `/contact`, or safe `http`/`https` URLs. The API rejects `javascript:`, `data:`, protocol-relative URLs, traversal, malformed URLs, unsupported targets, and empty labels. Navigation endpoints do not create pages, publish pages, crawl sites, or fetch remote URLs.
+Navigation item URLs may be internal paths such as `/`, `/about`, `/contact`, and `/#platform`, or safe `http`/`https` URLs. Use a path plus fragment for same-page anchors; raw fragment-only values such as `#platform` are not navigation URLs. The API rejects `javascript:`, `data:`, protocol-relative URLs, traversal, malformed URLs, unsupported targets, and empty labels. Navigation endpoints do not create pages, publish pages, crawl sites, or fetch remote URLs.
 
 ### Shared Slot Endpoints
 
@@ -419,8 +421,9 @@ Navigation item URLs may be internal paths such as `/`, `/about`, and `/contact`
 - `GET /webadmin/api/shared-slots/{sharedSlot}`
 - `POST /webadmin/api/shared-slots`
 - `POST /webadmin/api/shared-slots/{sharedSlot}/blocks`
+- `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks`
 
-Shared Slot creation is site-scoped and refuses duplicate handles for the same site. Shared Slot blocks reuse the same block payload writer used by page-owned blocks, so locale-owned copy stays in translation rows and shared settings remain on the block record/settings path. Media import and media assignment remain outside this phase.
+Shared Slot creation is site-scoped and refuses duplicate handles for the same site. Shared Slot blocks reuse the same block payload writer used by page-owned blocks, so locale-owned copy stays in translation rows and shared settings remain on the block record/settings path. Shared Slot blocks are created as draft content and require explicit `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks` with `shared-slots.write` plus `content.publish` before they render publicly. Media import and media assignment remain outside this phase.
 
 ### Page Slot Assignment
 
@@ -428,7 +431,17 @@ Shared Slot creation is site-scoped and refuses duplicate handles for the same s
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
 ```
 
-The endpoint assigns an existing compatible same-site active Shared Slot to an existing page slot. It does not create missing pages or slots. It does not publish the page. It refuses cross-site, inactive, and incompatible Shared Slots. It also refuses to switch a slot that still has page-owned blocks, because Phase 2A does not delete or replace those blocks automatically.
+The endpoint assigns an existing compatible same-site active Shared Slot to an existing page slot. It does not publish the page. It refuses cross-site, inactive, and incompatible Shared Slots. It also refuses to switch a slot that still has page-owned blocks, because Phase 2A does not delete or replace those blocks automatically.
+
+If the page layout contains a slot such as `header` but the page record was created before that Page Slot existed, call `POST /webadmin/api/pages/{page}/sync-layout-slots` first. Slot sync is idempotent and only creates missing Page Slots from the selected Page Layout; it never deletes existing slots, blocks, disabled states, Shared Slot assignments, translations, or revisions. For a new Shared Slot header, publish the Shared Slot blocks explicitly before expecting public output.
+
+### Site Presentation Endpoint
+
+```text
+POST /webadmin/api/sites/{site}/public-theme
+```
+
+This endpoint updates only the safe site public theme preset used by public rendering. Send `public_theme_preset` or `theme` with one of the supported `Site::PUBLIC_THEME_PRESETS` values such as `canvas`, `atlas`, `pulse`, `prism`, `graphite`, or `horizon`. Use this when API discovery shows a site rendering with the wrong `data-wb-public-theme` preset; do not try to override the preset with content blocks.
 
 ### Content Validate / Apply Endpoints
 
@@ -524,22 +537,35 @@ Example English marketing homepage draft:
     "slots": {
       "main": [
         {
-          "type": "hero",
-          "translations": {
-            "title": "Plan, build, and publish with confidence",
-            "subtitle": "Structured content for modern teams",
-            "content": "Create a draft homepage from a validated content plan."
-          },
+          "type": "section",
           "children": [
             {
-              "type": "button_link",
-              "translations": {
-                "title": "Start planning"
-              },
-              "settings": {
-                "url": "/contact",
-                "variant": "primary"
-              }
+              "type": "container",
+              "children": [
+                {
+                  "type": "content_header",
+                  "translations": {
+                    "title": "Plan, build, and publish with confidence",
+                    "subtitle": "Structured content for modern teams",
+                    "content": "Create a draft homepage from a validated content plan."
+                  }
+                },
+                {
+                  "type": "cluster",
+                  "children": [
+                    {
+                      "type": "button_link",
+                      "translations": {
+                        "title": "Start planning"
+                      },
+                      "settings": {
+                        "url": "/contact",
+                        "variant": "primary"
+                      }
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -578,21 +604,34 @@ Example English marketing homepage draft:
           ]
         },
         {
-          "type": "cta",
-          "translations": {
-            "title": "Ready to shape the next page?",
-            "content": "Use structured plans for repeatable content creation."
-          },
+          "type": "section",
           "children": [
             {
-              "type": "button_link",
-              "translations": {
-                "title": "Contact us"
-              },
-              "settings": {
-                "url": "/contact",
-                "variant": "primary"
-              }
+              "type": "container",
+              "children": [
+                {
+                  "type": "cta",
+                  "translations": {
+                    "title": "Ready to shape the next page?",
+                    "content": "Use structured plans for repeatable content creation."
+                  }
+                },
+                {
+                  "type": "cluster",
+                  "children": [
+                    {
+                      "type": "button_link",
+                      "translations": {
+                        "title": "Contact us"
+                      },
+                      "settings": {
+                        "url": "/contact",
+                        "variant": "primary"
+                      }
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -610,6 +649,9 @@ Example English marketing homepage draft:
 - path conflict blocks page creation
 - block type must be published and usable
 - child support must follow block contracts where available
+- content plan block trees must use nested `children`; flat `id`, `parent_id`, `block_id`, `slot_type_id`, and `block_type_id` relationship fields are rejected because the API owns database IDs and parent assignment
+- block `translations` must contain direct field keys for the selected plan locale, such as `title`, `subtitle`, and `content`; locale-keyed shapes such as `translations.en.title` are rejected instead of being silently ignored
+- wrapper blocks such as `section`, `container`, `cluster`, `grid`, `card`, `card_body`, `card_footer`, `sticky-navbar`, and `sidebar-navigation` must include child blocks so they cannot validate as empty public chrome
 - user-facing text belongs in translation rows
 - shared settings remain shared
 - unknown unsafe settings are rejected
@@ -636,6 +678,14 @@ Responses should be predictable JSON:
     }
   },
   "normalized_plan": {},
+  "renderability": {
+    "root_blocks": 3,
+    "total_blocks": 12,
+    "html_blocks": 0,
+    "wrapper_blocks_without_children": 0,
+    "text_blocks_without_visible_content": 0,
+    "button_blocks_without_label_or_url": 0
+  },
   "warnings": [],
   "errors": []
 }
@@ -649,6 +699,14 @@ Validation errors should include a path and message:
   "writes": [],
   "data": null,
   "normalized_plan": {},
+  "renderability": {
+    "root_blocks": 2,
+    "total_blocks": 3,
+    "html_blocks": 0,
+    "wrapper_blocks_without_children": 1,
+    "text_blocks_without_visible_content": 0,
+    "button_blocks_without_label_or_url": 0
+  },
   "warnings": [
     {
       "path": "plan.slots.main.1.settings.theme",
@@ -665,6 +723,8 @@ Validation errors should include a path and message:
 ```
 
 Include `edit_url` where useful for created or updated CMS resources.
+
+`renderability` is a plan-sanity summary for AI/operator tools. A successful structured page plan should normally have `wrapper_blocks_without_children`, `text_blocks_without_visible_content`, and `button_blocks_without_label_or_url` at `0`. `html_blocks` above `0` means the plan used the Trusted HTML escape hatch; tools should do that only with explicit operator approval and only when first-class block types cannot represent the content.
 
 ## Phase 2A Plan Sections
 

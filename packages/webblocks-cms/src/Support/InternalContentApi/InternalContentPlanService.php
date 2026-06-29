@@ -62,6 +62,38 @@ class InternalContentPlanService
     'overwrite',
   ];
 
+  private const PLAN_MANAGED_RELATION_KEYS = [
+    'id',
+    'parent_id',
+    'block_id',
+    'slot_type_id',
+    'block_type_id',
+  ];
+
+  private const CHILD_REQUIRED_BLOCK_TYPES = [
+    'section',
+    'container',
+    'cluster',
+    'grid',
+    'card',
+    'card_body',
+    'card_footer',
+    'sticky-navbar',
+    'sidebar-navigation',
+  ];
+
+  private const TRANSLATABLE_FIELDS = [
+    'title',
+    'eyebrow',
+    'subtitle',
+    'content',
+    'meta',
+    'caption',
+    'alt_text',
+    'submit_label',
+    'success_message',
+  ];
+
   public function __construct(
     private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly BlockDeletionManager $blockDeletionManager,
@@ -404,6 +436,7 @@ class InternalContentPlanService
         normalizedPlan: $plan,
         warnings: $validated->warnings,
         errors: [$this->error('plan', $exception->getMessage())],
+        renderability: $validated->renderability,
       );
     }
 
@@ -413,6 +446,7 @@ class InternalContentPlanService
       warnings: $validated->warnings,
       writes: $applied['writes'],
       data: $applied['data'],
+      renderability: $validated->renderability,
     );
   }
 
@@ -787,6 +821,7 @@ class InternalContentPlanService
       normalizedPlan: $normalized,
       warnings: $warnings,
       errors: $errors,
+      renderability: $this->summarizeRenderability($normalized),
     );
   }
 
@@ -886,6 +921,7 @@ class InternalContentPlanService
       normalizedPlan: $normalized,
       warnings: $warnings,
       errors: $errors,
+      renderability: $this->summarizeRenderability($normalized),
     );
   }
 
@@ -928,7 +964,7 @@ class InternalContentPlanService
       'page_slot_shared_slots' => [],
     ];
 
-    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors);
+    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors, renderability: $this->summarizeRenderability($normalized));
   }
 
   private function normalizeReplaceStagedUpdate(array $input, array &$errors, array &$warnings): InternalContentPlanResult
@@ -971,7 +1007,7 @@ class InternalContentPlanService
       'page_slot_shared_slots' => [],
     ];
 
-    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors);
+    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors, renderability: $this->summarizeRenderability($normalized));
   }
 
   private function normalizePromoteStagedUpdate(array $input, array &$errors, array &$warnings): InternalContentPlanResult
@@ -1016,7 +1052,7 @@ class InternalContentPlanService
       'page_slot_shared_slots' => [],
     ];
 
-    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors);
+    return new InternalContentPlanResult($errors === [], $normalized, $warnings, $errors, renderability: $this->summarizeRenderability($normalized));
   }
 
   private function resolveReplacementLocale(array $input, ?Page $page, ?Site $site, array &$errors): ?Locale
@@ -1652,6 +1688,7 @@ class InternalContentPlanService
     }
 
     $this->rejectForbiddenKeys($block, $path, $errors);
+    $this->rejectPlanManagedRelationKeys($block, $path, $errors);
 
     $typeSlug = trim((string) ($block['type'] ?? $block['block_type'] ?? ''));
     $blockType = BlockType::query()->where('slug', $typeSlug)->where('status', 'published')->first();
@@ -1687,6 +1724,8 @@ class InternalContentPlanService
       $translations = [];
     }
 
+    $this->validateTranslationShape($translations, $path.'.translations', $errors);
+
     foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta'] as $field) {
       if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {
         $translations[$field] = $block[$field];
@@ -1701,6 +1740,10 @@ class InternalContentPlanService
 
     if ($children !== [] && ! (new Block(['type' => $blockType->slug]))->setRelation('blockType', $blockType)->canAcceptChildren()) {
       $errors[] = $this->error($path.'.children', 'This block type does not accept children.');
+    }
+
+    if ($children === [] && $this->requiresChildren($blockType)) {
+      $errors[] = $this->error($path.'.children', 'This wrapper block type must contain renderable child blocks. Use nested children arrays; flat id/parent_id references are not part of the content plan contract.');
     }
 
     $normalizedChildren = [];
@@ -1731,6 +1774,144 @@ class InternalContentPlanService
     }
 
     return in_array($childType->slug, $allowed, true);
+  }
+
+  private function rejectPlanManagedRelationKeys(array $block, string $path, array &$errors): void
+  {
+    foreach (self::PLAN_MANAGED_RELATION_KEYS as $key) {
+      if (! array_key_exists($key, $block)) {
+        continue;
+      }
+
+      $errors[] = $this->error(
+        $path.'.'.$key,
+        'Content plans do not accept flat block relationship fields. Nest child blocks inside the parent block children array instead.',
+      );
+    }
+  }
+
+  private function validateTranslationShape(array $translations, string $path, array &$errors): void
+  {
+    foreach ($translations as $key => $value) {
+      if (! is_array($value)) {
+        continue;
+      }
+
+      $key = (string) $key;
+      if (in_array($key, self::TRANSLATABLE_FIELDS, true)) {
+        continue;
+      }
+
+      $looksLikeLocale = Locale::query()->where('code', Locale::normalizeCode($key))->exists()
+        || preg_match('/^[a-z]{2}(?:[-_][A-Za-z]{2})?$/', $key) === 1;
+
+      if ($looksLikeLocale) {
+        $errors[] = $this->error(
+          $path.'.'.$key,
+          'Locale-keyed translations are not accepted inside block content plans. Put translated fields directly under translations, such as translations.title or translations.content, for the selected plan locale.',
+        );
+      }
+    }
+  }
+
+  private function requiresChildren(BlockType $blockType): bool
+  {
+    return in_array($blockType->slug, self::CHILD_REQUIRED_BLOCK_TYPES, true);
+  }
+
+  private function summarizeRenderability(array $normalized): array
+  {
+    $summary = [
+      'root_blocks' => 0,
+      'total_blocks' => 0,
+      'html_blocks' => 0,
+      'wrapper_blocks_without_children' => 0,
+      'text_blocks_without_visible_content' => 0,
+      'button_blocks_without_label_or_url' => 0,
+    ];
+
+    foreach ($this->renderabilityRoots($normalized) as $block) {
+      $this->accumulateRenderability($block, $summary, true);
+    }
+
+    return $summary;
+  }
+
+  private function renderabilityRoots(array $normalized): array
+  {
+    $roots = [];
+
+    foreach (($normalized['slots'] ?? []) as $blocks) {
+      if (is_array($blocks)) {
+        $roots = [...$roots, ...array_values($blocks)];
+      }
+    }
+
+    foreach (($normalized['replace_slots'] ?? []) as $blocks) {
+      if (is_array($blocks)) {
+        $roots = [...$roots, ...array_values($blocks)];
+      }
+    }
+
+    foreach (($normalized['shared_slots'] ?? []) as $sharedSlot) {
+      foreach (($sharedSlot['blocks'] ?? []) as $block) {
+        if (is_array($block)) {
+          $roots[] = $block;
+        }
+      }
+    }
+
+    return $roots;
+  }
+
+  private function accumulateRenderability(array $block, array &$summary, bool $isRoot = false): void
+  {
+    $summary['total_blocks']++;
+
+    if ($isRoot) {
+      $summary['root_blocks']++;
+    }
+
+    $type = (string) ($block['type'] ?? '');
+    $children = is_array($block['children'] ?? null) ? $block['children'] : [];
+    $translations = is_array($block['translations'] ?? null) ? $block['translations'] : [];
+    $settings = is_array($block['settings'] ?? null) ? $block['settings'] : [];
+
+    if ($type === 'html') {
+      $summary['html_blocks']++;
+    }
+
+    if (in_array($type, self::CHILD_REQUIRED_BLOCK_TYPES, true) && $children === []) {
+      $summary['wrapper_blocks_without_children']++;
+    }
+
+    if (in_array($type, ['content_header', 'header', 'plain_text', 'rich-text', 'column_item', 'feature-item', 'stat-card', 'alert', 'cta'], true)
+      && ! $this->hasVisibleTranslationContent($translations)) {
+      $summary['text_blocks_without_visible_content']++;
+    }
+
+    if ($type === 'button_link' && (trim((string) ($translations['title'] ?? '')) === '' || trim((string) ($settings['url'] ?? '')) === '')) {
+      $summary['button_blocks_without_label_or_url']++;
+    }
+
+    foreach ($children as $child) {
+      if (is_array($child)) {
+        $this->accumulateRenderability($child, $summary);
+      }
+    }
+  }
+
+  private function hasVisibleTranslationContent(array $translations): bool
+  {
+    foreach (self::TRANSLATABLE_FIELDS as $field) {
+      $value = $translations[$field] ?? null;
+
+      if (is_string($value) && trim(strip_tags($value)) !== '') {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private function normalizePublicIconToneSettings(array $settings, BlockType $blockType, string $path, array &$errors): array

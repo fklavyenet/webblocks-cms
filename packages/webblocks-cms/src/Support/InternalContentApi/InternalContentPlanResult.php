@@ -11,6 +11,7 @@ class InternalContentPlanResult
     public readonly array $errors = [],
     public readonly array $writes = [],
     public readonly mixed $data = null,
+    public readonly array $renderability = [],
   ) {}
 
   public function toArray(): array
@@ -20,6 +21,7 @@ class InternalContentPlanResult
       'writes' => $this->writes,
       'data' => $this->data,
       'normalized_plan' => $this->normalizedPlan,
+      'renderability' => $this->renderability,
       'warnings' => $this->warnings,
       'errors' => $this->errors,
     ];

@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.181
+
+- Tighten Internal Content API content plan validation so AI/operator tools must use nested `children`, cannot submit locale-keyed block translations or flat `id`/`parent_id` block relationships, cannot create childless wrapper blocks, and receive a `renderability` summary in validate/apply responses.
+- Add Internal Content API support for safe site public theme preset updates, missing page layout slot sync, and explicit Shared Slot block publishing so AI/operator tools can prepare reusable header navigation without browser-admin workarounds.
+
 ## 1.32.180
 
 - Show page IDs in the Pages admin listing so operators can identify records directly from the first data column.
