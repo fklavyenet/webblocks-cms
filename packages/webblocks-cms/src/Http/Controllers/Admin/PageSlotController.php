@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Http\Requests\Admin\StorePageSlotRequest;
@@ -78,26 +79,28 @@ class PageSlotController extends Controller
     return $this->redirectToEdit($page, 'Slot added successfully.');
   }
 
-  public function destroy(Page $page, PageSlot $slot): RedirectResponse
+  public function destroy(Request $request, Page $page, PageSlot $slot): RedirectResponse
   {
-    $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
-    abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
+    $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+    abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
     abort_unless($slot->page_id === $page->id, 404);
 
-    if ($page->blocks()->where('slot_type_id', $slot->slot_type_id)->exists()) {
-      return redirect()
-        ->route('admin.pages.edit', $page)
-        ->withErrors(['slot' => 'Slot cannot be deleted while it still contains blocks.']);
+    if (! $request->boolean('confirm_delete_slot')) {
+      return $this->redirectToEditWithErrors($page, ['slot' => 'Confirm slot deletion before deleting the slot.'], $request->input('return_url'));
     }
 
-    DB::transaction(function () use ($page, $slot): void {
+    if ($page->blocks()->where('slot_type_id', $slot->slot_type_id)->exists()) {
+      return $this->redirectToEditWithErrors($page, ['slot' => 'Slot cannot be deleted while it still contains blocks.'], $request->input('return_url'));
+    }
+
+    DB::transaction(function () use ($request, $page, $slot): void {
       $slot->delete();
       $this->normalizeSortOrder($page);
-      $page->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
+      $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
 
       $this->revisionManager->capture(
         $page->fresh(),
-        request()->user(),
+        $request->user(),
         'Slot deleted',
         'Page slot structure was updated by removing a slot.',
         event: 'slot_changed',
@@ -242,5 +245,19 @@ class PageSlotController extends Controller
     }
 
     return $redirect;
+  }
+
+  private function redirectToEditWithErrors(Page $page, array $errors, ?string $returnUrl = null): RedirectResponse
+  {
+    $parameters = ['page' => $page];
+    $safeReturnUrl = $returnUrl ?? $this->pageIndexState->safeReturnUrlFromRequest(request());
+
+    if ($safeReturnUrl !== null && $safeReturnUrl !== '') {
+      $parameters['return_url'] = $safeReturnUrl;
+    }
+
+    return redirect()
+      ->route('admin.pages.edit', $parameters)
+      ->withErrors($errors);
   }
 }

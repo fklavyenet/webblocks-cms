@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.182
+
+- Require the Edit Page slot delete action to open a WebBlocks UI confirmation modal and reject direct slot delete requests that do not include the modal confirmation guard.
+
 ## 1.32.181
 
 - Tighten Internal Content API content plan validation so AI/operator tools must use nested `children`, cannot submit locale-keyed block translations or flat `id`/`parent_id` block relationships, cannot create childless wrapper blocks, and receive a `renderability` summary in validate/apply responses.

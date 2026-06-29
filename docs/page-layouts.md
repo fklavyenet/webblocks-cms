@@ -92,6 +92,7 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - It does not silently reorder or rewrite existing Page Slots
 - Extra Page Slots are preserved and reported for safety, even if the selected Page Layout does not define them
 - Shared Slot compatibility stays exact by stored `public_shell` handle
+- Manual Page Slot deletion from Edit Page requires the WebBlocks UI confirmation modal, and direct delete requests without the modal confirmation guard are rejected
 
 ## New Page Defaults
 

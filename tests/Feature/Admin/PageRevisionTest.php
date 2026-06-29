@@ -186,7 +186,9 @@ class PageRevisionTest extends TestCase
     $deletableSlot = $page->fresh()->slots()->where('slot_type_id', $sidebar->id)->firstOrFail();
 
     $this->actingAs($user)
-      ->delete(route('admin.pages.slots.destroy', [$page, $deletableSlot]))
+      ->delete(route('admin.pages.slots.destroy', [$page, $deletableSlot]), [
+        'confirm_delete_slot' => '1',
+      ])
       ->assertRedirect(route('admin.pages.edit', $page));
 
     $this->assertDatabaseHas('page_revisions', [

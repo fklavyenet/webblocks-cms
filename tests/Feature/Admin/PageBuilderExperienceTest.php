@@ -163,7 +163,10 @@ class PageBuilderExperienceTest extends TestCase
     $editResponse->assertSee('action="'.route('admin.pages.update', $page).'"', false);
     $editResponse->assertSee('action="'.route('admin.pages.slots.store', $page).'"', false);
     $editResponse->assertSee('action="'.route('admin.pages.slots.move-up', [$page, $page->slots()->firstOrFail()]).'"', false);
-    $editResponse->assertSee('action="'.route('admin.pages.slots.destroy', [$page, $pageSlot]).'"', false);
+    $editResponse->assertSee('modal=delete-page-slot', false);
+    $editResponse->assertSee('slot='.$pageSlot->id, false);
+    $editResponse->assertSee('aria-haspopup="dialog"', false);
+    $editResponse->assertDontSee('action="'.route('admin.pages.slots.destroy', [$page, $pageSlot]).'"', false);
     $editResponse->assertDontSee('name="slots[', false);
     $this->assertNotFalse($content);
     $this->assertFalse(str_contains($content, 'data-wb-slot-builder'));
@@ -949,7 +952,27 @@ class PageBuilderExperienceTest extends TestCase
     [$page, $pageSlot] = $this->pageWithSlot($main);
     [$otherPage, $otherSlot] = $this->pageWithSlot($main, 'Docs', 'docs');
 
+    $modalResponse = $this->actingAs($user)->get(route('admin.pages.edit', [
+      'page' => $page,
+      'modal' => 'delete-page-slot',
+      'slot' => $pageSlot->id,
+    ]));
+
+    $modalResponse->assertOk();
+    $modalResponse->assertSee('Delete Page Slot');
+    $modalResponse->assertSee('class="wb-modal wb-modal-lg is-open"', false);
+    $modalResponse->assertSee('action="'.route('admin.pages.slots.destroy', [$page, $pageSlot]).'"', false);
+    $modalResponse->assertSee('name="confirm_delete_slot" value="1"', false);
+
     $response = $this->actingAs($user)->delete(route('admin.pages.slots.destroy', [$page, $pageSlot]));
+
+    $response->assertRedirect(route('admin.pages.edit', $page));
+    $response->assertSessionHasErrors('slot');
+    $this->assertDatabaseHas('page_slots', ['id' => $pageSlot->id]);
+
+    $response = $this->actingAs($user)->delete(route('admin.pages.slots.destroy', [$page, $pageSlot]), [
+      'confirm_delete_slot' => '1',
+    ]);
 
     $response->assertRedirect(route('admin.pages.edit', $page));
     $this->assertDatabaseMissing('page_slots', ['id' => $pageSlot->id]);
@@ -985,7 +1008,9 @@ class PageBuilderExperienceTest extends TestCase
 
     $response = $this->actingAs($user)
       ->from(route('admin.pages.edit', $page))
-      ->delete(route('admin.pages.slots.destroy', [$page, $pageSlot]));
+      ->delete(route('admin.pages.slots.destroy', [$page, $pageSlot]), [
+        'confirm_delete_slot' => '1',
+      ]);
 
     $response->assertRedirect(route('admin.pages.edit', $page));
     $response->assertSessionHasErrors('slot');

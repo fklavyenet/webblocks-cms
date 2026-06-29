@@ -8,6 +8,11 @@
     $canCreateSharedSlots = $canCreateSharedSlots ?? false;
     $sharedSlotSourcesAvailable = $sharedSlotSourcesAvailable ?? false;
     $pageReturnUrl = $pageReturnUrl ?? route('admin.pages.index', ['site' => $page->site_id]);
+    $requestedModal = request('modal');
+    $selectedDeleteSlotId = (int) request('slot');
+    $selectedDeleteSlot = $requestedModal === 'delete-page-slot'
+        ? $pageSlots->firstWhere('id', $selectedDeleteSlotId)
+        : null;
 @endphp
 
 <div class="wb-card">
@@ -177,12 +182,15 @@
                                                     <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
                                                     <button type="submit" class="wb-action-btn" title="Move slot down" aria-label="Move slot down" @disabled($loop->last)><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                                                 </form>
-                                                <form method="POST" action="{{ route('admin.pages.slots.destroy', [$page, $pageSlot]) }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete slot" aria-label="Delete slot"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                                                </form>
+                                                <a
+                                                    href="{{ route('admin.pages.edit', ['page' => $page, 'modal' => 'delete-page-slot', 'slot' => $pageSlot->id, 'return_url' => $pageReturnUrl]) }}"
+                                                    class="wb-action-btn wb-action-btn-delete"
+                                                    title="Delete slot"
+                                                    aria-label="Delete slot"
+                                                    aria-haspopup="dialog"
+                                                >
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </a>
                                             </div>
                                         </div>
                                     @else
@@ -350,5 +358,79 @@
                 </div>
             </div>
         @endforeach
+    @endpush
+@endif
+
+@if ($canEditContent && $selectedDeleteSlot)
+    @push('overlays')
+        @php
+            $deleteSlotName = $selectedDeleteSlot->slotType?->name ?? 'Slot';
+            $deleteSlotKey = $selectedDeleteSlot->slotSlug();
+            $deleteSlotPreview = $slotBlockPreviews->get($selectedDeleteSlot->id, [
+                'items' => collect(),
+                'remaining' => 0,
+                'is_empty' => true,
+            ]);
+            $deleteSlotBlockCount = $deleteSlotPreview['is_empty']
+                ? 0
+                : $deleteSlotPreview['items']->count() + $deleteSlotPreview['remaining'];
+            $deleteSlotCloseUrl = route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]);
+            $deleteSlotModalId = 'page-slot-delete-modal-'.$selectedDeleteSlot->id;
+            $deleteSlotTitleId = $deleteSlotModalId.'-title';
+            $deleteSlotDescriptionId = $deleteSlotModalId.'-description';
+        @endphp
+
+        <div class="wb-overlay-layer wb-overlay-layer--dialog">
+            <div class="wb-modal wb-modal-lg is-open" id="{{ $deleteSlotModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $deleteSlotTitleId }}" aria-describedby="{{ $deleteSlotDescriptionId }}">
+                <div class="wb-modal-dialog">
+                    <div class="wb-modal-header">
+                        <div>
+                            <h2 class="wb-modal-title" id="{{ $deleteSlotTitleId }}">Delete Page Slot</h2>
+                            <p class="wb-text-sm wb-text-muted" id="{{ $deleteSlotDescriptionId }}">Confirm whether this page slot should be removed.</p>
+                        </div>
+
+                        <a href="{{ $deleteSlotCloseUrl }}" class="wb-modal-close" aria-label="Close delete page slot dialog">
+                            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                        </a>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.pages.slots.destroy', [$page, $selectedDeleteSlot]) }}">
+                        @csrf
+                        @method('DELETE')
+                        <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+                        <input type="hidden" name="confirm_delete_slot" value="1">
+
+                        <div class="wb-modal-body wb-stack wb-gap-4">
+                            <div class="wb-alert wb-alert-warning">
+                                Deleting a Page Slot removes only this page's slot assignment. It does not delete the Slot Type or blocks in other slots.
+                            </div>
+
+                            <div class="wb-stack wb-gap-2">
+                                <div><strong>{{ $deleteSlotName }}</strong></div>
+                                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                    <span class="wb-status-pill wb-status-info">{{ $deleteSlotKey }}</span>
+                                    <span class="wb-status-pill {{ $deleteSlotBlockCount > 0 ? 'wb-status-pending' : 'wb-status-active' }}">
+                                        {{ $deleteSlotBlockCount }} {{ \Illuminate\Support\Str::plural('block', $deleteSlotBlockCount) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if ($deleteSlotBlockCount > 0)
+                                <div class="wb-alert wb-alert-danger">
+                                    This slot still contains blocks. Move or delete those blocks before deleting the slot.
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                            <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
+                                <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteSlotBlockCount > 0)>Delete slot</button>
+                                <a href="{{ $deleteSlotCloseUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     @endpush
 @endif
