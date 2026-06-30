@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## Unreleased
+
+- Updated the pinned WebBlocks UI CDN/runtime, icon manifest, and AI contract references to `v2.7.13`.
+
 ## 1.32.185
 
 - Add CMS API token activity tracking and a Tokens list history action that shows each token's latest 10 API requests in a WebBlocks UI modal without storing request bodies, query strings, responses, or token values.
