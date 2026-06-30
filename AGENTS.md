@@ -80,20 +80,13 @@ For release work, AI/operator automation may stop after source validation, relea
 
 ## WebBlocks UI Usage
 
-WebBlocks CMS uses WebBlocks UI for admin, auth, dashboard, settings, and related control panel UI. Before making admin/auth/dashboard UI changes, read the WebBlocks UI sources and AI usage contract from:
+WebBlocks CMS uses pinned WebBlocks UI assets for admin, auth, dashboard, settings, and related control panel UI.
 
-`<WEBBLOCKS_UI_REPO_PATH>`
+Before making admin/auth/dashboard UI changes, read the AI contract shipped with the pinned WebBlocks UI version:
 
-Set `<WEBBLOCKS_UI_REPO_PATH>` to the local checkout path of the WebBlocks UI repository. Do not commit machine-specific absolute paths to public repositories.
+`https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.12/packages/webblocks/dist/ai/contract.md`
 
-Required reading:
-
-- `<WEBBLOCKS_UI_REPO_PATH>/ai/DOWNSTREAM_USAGE_RULES.md`
-- `<WEBBLOCKS_UI_REPO_PATH>/ai/REVIEW_CHECKLIST.md`
-- `<WEBBLOCKS_UI_REPO_PATH>/ai/FORBIDDEN_PATTERNS.md`
-- `<WEBBLOCKS_UI_REPO_PATH>/PATTERNS.md`
-- `<WEBBLOCKS_UI_REPO_PATH>/PRIMITIVES.md`
-- `<WEBBLOCKS_UI_REPO_PATH>/INTEGRATION.md`
+The CMS code pins this version in `WebBlocks::UI_VERSION`. If the pinned WebBlocks UI version changes, update this contract URL in the same work session.
 
 Use WebBlocks UI pattern-first:
 

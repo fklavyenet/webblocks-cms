@@ -5,11 +5,10 @@ Use this skill when changing CMS admin, auth, dashboard, settings, listing, moda
 ## Starting Point
 
 - Start from `AGENTS.md`.
-- Read the WebBlocks UI downstream usage contract before UI changes when the source checkout is available.
-- Reference the WebBlocks UI checkout as `<WEBBLOCKS_UI_REPO_PATH>`; do not commit machine-specific absolute paths.
-- Required reading from the WebBlocks UI repository includes downstream usage rules, review checklist, forbidden patterns, patterns, primitives, and integration docs.
-- If `<WEBBLOCKS_UI_REPO_PATH>` is not configured, first try an adjacent maintainer checkout only for local reading and never write that path into committed files.
-- If no WebBlocks UI source checkout is available, continue from the committed CMS rules in `AGENTS.md`, this skill, the pinned WebBlocks UI version in `WebBlocks::UI_VERSION`, and existing CMS admin screens that already use WebBlocks UI patterns. In that case, report that source-level UI docs were unavailable and avoid inventing new UI vocabulary, custom shells, custom framed surfaces, or custom overlay behavior.
+- Read the pinned WebBlocks UI AI contract before UI changes:
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.12/packages/webblocks/dist/ai/contract.md`
+- The CMS code pins this version in `WebBlocks::UI_VERSION`. If the pinned WebBlocks UI version changes, update the contract URL in `AGENTS.md` and this skill in the same work session.
+- Use the contract plus existing CMS admin screens that already follow WebBlocks UI patterns; do not invent new UI vocabulary, custom shells, custom framed surfaces, or custom overlay behavior.
 
 ## Pattern-First UI Rules
 
