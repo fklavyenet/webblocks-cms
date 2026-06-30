@@ -122,11 +122,19 @@ Super admins choose token capabilities when creating a token from `System -> API
 Advanced capabilities are separate options and are not selected by default:
 
 - `navigation.delete`
+- `site-assets.read`
+- `site-assets.write`
+- `engagement.read`
+- `engagement.moderate`
 - `media.write`
+- `media.upload`
+- `media.replace`
+- `media.move`
+- `media.delete`
 - `content.publish`
 - `pages.delete`
 
-Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, or page delete.
+Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`.
 
 ## API Model
 
@@ -353,9 +361,9 @@ replace_staged_page_update
 promote_staged_page_update
 ```
 
-`create_staged_update_for_published_page` creates a draft staging page from the published source page. The source page remains published at its existing public path. The staged page stores `settings.staged_update` metadata with the source page id, source path, source updated timestamp, lifecycle state, and managed slots. It uses an internal draft path such as `/staged-updates/page-123/update-456`, so it does not collide with the source canonical path and is not publicly routed. The normal admin preview URL `/webadmin/pages/{page}/preview` can render the staged page for authenticated admin sessions.
+`create_staged_update_for_published_page` creates a draft staging page from the published source page only when that source page does not already have an active draft staged update. Repeating the create call for the same source page returns the existing active staged draft with `data.reused_staged_update=true` instead of creating another technical page. The source page remains published at its existing public path. The staged page stores `settings.staged_update` metadata with the source page id, source path, source updated timestamp, lifecycle state, and managed slots. It uses an internal draft path such as `/staged-updates/page-123/update-456`, so it does not collide with the source canonical path and is not publicly routed. The normal admin preview URL `/webadmin/pages/{page}/preview` can render the staged page for authenticated admin sessions.
 
-`replace_staged_page_update` reuses the draft replacement rules against the staged draft page. It replaces only page-owned slots and rejects Shared Slot-backed slots.
+`replace_staged_page_update` reuses the draft replacement rules against the staged draft page. Use it for every subsequent revision after a staged draft exists. It replaces only page-owned slots and rejects Shared Slot-backed slots.
 
 `promote_staged_page_update` applies staged page-owned slot content back onto the published source page in a transaction. It preserves the source page path, status, layout, Shared Slot assignments, and page settings unless an allowlisted `source_sync` update is supplied. Promoted page-owned blocks are written as `published` so the public page reflects the promoted content immediately. Shared Slot content is never cascaded. Promote requires the normal `content.apply` route capability and the advanced `content.publish` capability.
 
@@ -632,6 +640,33 @@ GET /webadmin/api/pages
 ```text
 GET /webadmin/api/pages/{page}
 ```
+
+### Read Engagement Comments
+
+```text
+GET /webadmin/api/engagement/comments?status=pending&per_page=25
+```
+
+Requires `engagement.read`. Supported filters are `status`, `site_id`, `page_id`, `block_id`, `search`, and `per_page`. Responses include comment body, status, spam score/reasons, source page/block references, and timestamps, but do not expose visitor hashes, IP hashes, or user-agent values.
+
+### Moderate Engagement Comment
+
+```text
+PATCH /webadmin/api/engagement/comments/{comment}
+Content-Type: application/json
+
+{"status":"approved"}
+```
+
+Requires `engagement.moderate`. Supported statuses are `pending`, `approved`, `rejected`, `spam`, and `hidden`.
+
+### Read Engagement Ratings
+
+```text
+GET /webadmin/api/engagement/ratings?block_id=123
+```
+
+Requires `engagement.read`. Supported filters are `status`, `site_id`, `page_id`, `block_id`, and `per_page`. Responses include rating rows plus total, average, and value-count summaries, but do not expose visitor hashes, IP hashes, or user-agent values.
 
 ### List Blocks
 

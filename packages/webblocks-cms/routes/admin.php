@@ -46,6 +46,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
@@ -115,6 +116,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
     Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');
     Route::patch('/blocks/{block}', [InternalContentResourceController::class, 'updateBlock'])->middleware('internal-api.capability:content.apply')->name('blocks.update');
+    Route::get('/engagement/comments', [InternalEngagementController::class, 'comments'])->middleware('internal-api.capability:engagement.read')->name('engagement.comments.index');
+    Route::patch('/engagement/comments/{commentEntry}', [InternalEngagementController::class, 'updateCommentStatus'])->middleware('internal-api.capability:engagement.moderate')->name('engagement.comments.update');
+    Route::get('/engagement/ratings', [InternalEngagementController::class, 'ratings'])->middleware('internal-api.capability:engagement.read')->name('engagement.ratings.index');
     Route::post('/content/validate', [InternalContentPlanController::class, 'validatePlan'])->middleware('internal-api.capability:content.validate')->name('content.validate');
     Route::post('/content/apply', [InternalContentPlanController::class, 'apply'])->middleware('internal-api.capability:content.apply')->name('content.apply');
   });

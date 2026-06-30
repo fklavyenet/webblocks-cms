@@ -7,6 +7,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.196
+
+- Bumped CMS to `1.32.196`.
+- Add Internal Content API engagement endpoints so trusted AI/operator tools can read Comments and Rating feedback with `engagement.read` and moderate comment status with `engagement.moderate` without exposing visitor hashes, IP hashes, or user-agent values.
+- Reuse the active draft staged update for a published source page when AI/operator tools call `create_staged_update_for_published_page` repeatedly, and update discovery guidance so later revisions use `replace_staged_page_update` instead of creating extra staged pages.
+
 ## 1.32.195
 
 - Bumped CMS to `1.32.195`.

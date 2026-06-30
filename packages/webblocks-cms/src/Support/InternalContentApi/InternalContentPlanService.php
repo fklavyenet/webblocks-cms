@@ -155,14 +155,22 @@ class InternalContentPlanService
           throw new \InvalidArgumentException('Source page no longer resolves.');
         }
 
-        $stagedPage = $this->createStagedPage($sourcePage, $plan);
-        $revision = $this->pageRevisionManager->capture(
-          $stagedPage,
-          label: 'Internal Content API staged update created',
-          reason: 'A staged content update was created from published page #'.$sourcePage->id.'.',
-          event: 'internal_content_api_staged_update_created',
-          source: 'internal-content-api',
-        );
+        $stagedPage = $this->findReusableStagedPage($sourcePage);
+        $reusedStagedUpdate = $stagedPage !== null;
+        $revision = null;
+
+        if ($stagedPage) {
+          $this->refreshReusableStagedMetadata($stagedPage, $sourcePage, $plan);
+        } else {
+          $stagedPage = $this->createStagedPage($sourcePage, $plan);
+          $revision = $this->pageRevisionManager->capture(
+            $stagedPage,
+            label: 'Internal Content API staged update created',
+            reason: 'A staged content update was created from published page #'.$sourcePage->id.'.',
+            event: 'internal_content_api_staged_update_created',
+            source: 'internal-content-api',
+          );
+        }
 
         $stagedPage = $stagedPage->fresh([
           'site.locales',
@@ -177,7 +185,9 @@ class InternalContentPlanService
         ]);
 
         $writes[] = ['type' => 'staged_page_update', 'id' => $stagedPage->id];
-        $writes[] = ['type' => 'page_revision', 'id' => $revision->id];
+        if ($revision) {
+          $writes[] = ['type' => 'page_revision', 'id' => $revision->id];
+        }
         $writes = [
           ...$writes,
           ...$stagedPage->blocks->map(fn (Block $block) => ['type' => 'block', 'id' => $block->id])->all(),
@@ -185,6 +195,7 @@ class InternalContentPlanService
         $data['source_page'] = $this->presenter->page($sourcePage->fresh(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot']), false);
         $data['staged_page'] = $this->presenter->page($stagedPage, true);
         $data['preview_url'] = route('admin.pages.preview', $stagedPage, absolute: false);
+        $data['reused_staged_update'] = $reusedStagedUpdate;
 
         return ['writes' => $writes, 'data' => $data];
       }
@@ -599,6 +610,41 @@ class InternalContentPlanService
     $this->cloneBlocks($sourcePage, $stagedPage);
 
     return $stagedPage;
+  }
+
+  private function findReusableStagedPage(Page $sourcePage): ?Page
+  {
+    return Page::query()
+      ->where('site_id', $sourcePage->site_id)
+      ->where('status', Page::STATUS_DRAFT)
+      ->where('settings->staged_update->type', self::STAGED_UPDATE_TYPE)
+      ->where('settings->staged_update->source_page_id', $sourcePage->id)
+      ->where('settings->staged_update->state', 'draft')
+      ->orderByDesc('id')
+      ->lockForUpdate()
+      ->first();
+  }
+
+  private function refreshReusableStagedMetadata(Page $stagedPage, Page $sourcePage, array $plan): void
+  {
+    $settings = is_array($stagedPage->settings) ? $stagedPage->settings : [];
+    $metadata = is_array($settings['staged_update'] ?? null) ? $settings['staged_update'] : [];
+
+    $settings['staged_update'] = array_merge($metadata, [
+      'type' => self::STAGED_UPDATE_TYPE,
+      'source_page_id' => $sourcePage->id,
+      'source_path' => $this->pagePath($sourcePage),
+      'source_updated_at' => $sourcePage->updated_at?->toIso8601String(),
+      'state' => 'draft',
+      'managed_slots' => $plan['staged_update']['managed_slots'],
+      'reused_at' => now()->toIso8601String(),
+    ]);
+
+    if (isset($plan['page_settings']['source_sync'])) {
+      $settings['source_sync'] = $plan['page_settings']['source_sync'];
+    }
+
+    $stagedPage->forceFill(['settings' => $settings])->save();
   }
 
   private function promoteStagedSlots(Page $sourcePage, Page $stagedPage, array $slotSlugs): int

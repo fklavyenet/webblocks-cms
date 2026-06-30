@@ -1144,6 +1144,7 @@ class InternalContentApiTest extends TestCase
       'internal-content-api.pages.slots.shared-slot',
       'internal-content-api.sites.public-theme.update',
       'internal-content-api.pages.layout-slots.sync',
+      'internal-content-api.engagement.comments.update',
     ];
 
     foreach ($writeRouteNames as $routeName) {
@@ -1355,6 +1356,28 @@ class InternalContentApiTest extends TestCase
 
     $stagedPageId = $response->json('data.staged_page.id');
     $stagedPage = Page::query()->with(['translations', 'slots.slotType'])->findOrFail($stagedPageId);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'create_staged_update_for_published_page',
+          'site' => 'default',
+          'locale' => 'en',
+          'page' => ['id' => $page->id],
+          'expected_source_path' => '/docs',
+          'managed_slots' => ['main'],
+        ],
+      ])
+      ->assertCreated()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('data.reused_staged_update', true)
+      ->assertJsonPath('data.staged_page.id', $stagedPageId);
+
+    $this->assertSame(1, Page::query()
+      ->where('settings->staged_update->type', 'published_page_update')
+      ->where('settings->staged_update->source_page_id', $page->id)
+      ->where('settings->staged_update->state', 'draft')
+      ->count());
 
     $this->withInternalToken()
       ->getJson('/webadmin/api/pages/'.$stagedPageId)

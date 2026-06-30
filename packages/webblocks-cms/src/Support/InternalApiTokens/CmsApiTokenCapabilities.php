@@ -40,6 +40,10 @@ class CmsApiTokenCapabilities
 
   public const SITE_ASSETS_WRITE = 'site-assets.write';
 
+  public const ENGAGEMENT_READ = 'engagement.read';
+
+  public const ENGAGEMENT_MODERATE = 'engagement.moderate';
+
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
@@ -53,6 +57,8 @@ class CmsApiTokenCapabilities
   public const ADVANCED = [
     self::SITE_ASSETS_READ,
     self::SITE_ASSETS_WRITE,
+    self::ENGAGEMENT_READ,
+    self::ENGAGEMENT_MODERATE,
     self::MEDIA_WRITE,
     self::MEDIA_UPLOAD,
     self::MEDIA_REPLACE,
@@ -89,6 +95,8 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE,
     self::SITE_ASSETS_READ,
     self::SITE_ASSETS_WRITE,
+    self::ENGAGEMENT_READ,
+    self::ENGAGEMENT_MODERATE,
   ];
 
   public const LABELS = [
@@ -102,6 +110,8 @@ class CmsApiTokenCapabilities
     self::SITE_SETTINGS_WRITE => 'Write safe site presentation settings',
     self::SITE_ASSETS_READ => 'Read canonical site CSS and JS override files',
     self::SITE_ASSETS_WRITE => 'Write canonical site CSS and JS override files',
+    self::ENGAGEMENT_READ => 'Read public comments and ratings',
+    self::ENGAGEMENT_MODERATE => 'Moderate public comments',
     self::MEDIA_WRITE => 'Write safe Media Library metadata',
     self::MEDIA_UPLOAD => 'Upload Media Library files',
     self::MEDIA_REPLACE => 'Replace Media Library files',
@@ -163,6 +173,8 @@ class CmsApiTokenCapabilities
         'write_site_presentation_settings' => $this->has($token, self::SITE_SETTINGS_WRITE),
         'read_site_assets' => $this->has($token, self::SITE_ASSETS_READ),
         'write_site_assets' => $this->has($token, self::SITE_ASSETS_WRITE),
+        'read_engagement' => $this->has($token, self::ENGAGEMENT_READ),
+        'moderate_engagement_comments' => $this->has($token, self::ENGAGEMENT_MODERATE),
       ],
     ];
   }

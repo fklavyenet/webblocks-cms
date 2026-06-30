@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenAuthenticator;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -51,6 +52,7 @@ class InternalApiDiscoveryController extends Controller
         'For public site favicon and social image changes, upload or discover Media Library images, then use PATCH /webadmin/api/sites/{site}/branding with site-settings.write. Do not replace CMS product assets under /cms/brand.',
         'Use GET/PUT /webadmin/api/sites/{site}/assets/{css|js} with site-assets.read/write for canonical physical site.css and site.js edits; inspect readiness before writes and include expected_checksum on writes.',
         'Use PATCH /webadmin/api/blocks/{block} for supported existing block fields such as brand logo media; Shared Slot source blocks also require shared-slots.write.',
+        'Use GET /webadmin/api/engagement/comments and GET /webadmin/api/engagement/ratings with engagement.read to analyze public feedback. Use PATCH /webadmin/api/engagement/comments/{comment} with engagement.moderate to approve, reject, hide, or mark comments as spam.',
         'Use JSON requests with Authorization, Accept, and Content-Type headers.',
       ],
       'workflows' => $this->workflows($token),
@@ -98,10 +100,11 @@ class InternalApiDiscoveryController extends Controller
         'Navigation item create/update/visibility/reorder operations require `navigation.write`. Navigation item deletion requires explicit `navigation.delete`; child items are never cascaded by delete and must be moved or deleted first.',
         'Media uploads require `media.upload`; metadata writes require `media.write`; file replacement requires `media.replace`; folder moves require `media.move`; deletion requires `media.delete`. Destructive operations require explicit capabilities such as `navigation.delete`, `media.replace`, `media.delete`, `pages.delete`, or `content.publish`. Standard page-building tokens should not include upload or destructive capabilities unless the operator explicitly grants them.',
         'Canonical site CSS/JS file edits require explicit `site-assets.read` and `site-assets.write`. Read `GET /webadmin/api/sites/{site}/assets/css`, inspect `asset.readiness`, update the returned `contents`, then write with `PUT /webadmin/api/sites/{site}/assets/css` and the returned `expected_checksum` value. The same pattern works for `js`. Hosting permission failures return JSON `422` with `asset.write`; do not invent alternate public paths or database-backed CSS fallbacks.',
-        "Published page updates use staged pages. The safe flow is:\n\n1. `POST /webadmin/api/content/validate` with `mode=create_staged_update_for_published_page` or `mode=replace_staged_page_update`.\n2. `POST /webadmin/api/content/apply` to create or replace the staged draft.\n3. Preview the staged page.\n4. After explicit approval, read `GET /webadmin/api/pages/{staged_page}` and follow `page._actions.promote`.\n5. Do not use `POST /webadmin/api/pages/{staged_page}/publish` to promote staged content; that endpoint is rejected for staged updates.",
+        "Published page updates use staged pages. The safe flow is:\n\n1. Read `GET /webadmin/api/pages/{source_page}` and reuse any existing draft staged update exposed by the page metadata/actions.\n2. Use `create_staged_update_for_published_page` only when no active staged draft exists; repeated create calls for the same source page return the existing draft staged update instead of creating another page.\n3. Use `replace_staged_page_update` for subsequent content revisions on that staged page.\n4. Preview the staged page.\n5. After explicit approval, read `GET /webadmin/api/pages/{staged_page}` and follow page._actions.promote.\n6. Do not use `POST /webadmin/api/pages/{staged_page}/publish` to promote staged content; that endpoint is rejected for staged updates.",
         'For site favicon and public brand metadata, upload or discover image media, then use `PATCH /webadmin/api/sites/{site}/branding` with `favicon_media_id`, `social_image_media_id`, `display_name`, or `tagline`. Public site branding must remain visible in the admin Site Branding tab; do not overwrite `/cms/brand/*`, which belongs to the CMS product/admin shell.',
         'For existing structured blocks, do not use HTML fallbacks or invented URL settings to set native fields. Discover or upload media, then use `PATCH /webadmin/api/blocks/{block}` for supported fields such as `media_id`, `settings.url`, `settings.target`, `settings.aria_label`, `settings.background_position`, `settings.background_overlay`, and text translations.',
         'For Media Library cleanup, use dedicated media endpoints and capabilities: metadata PATCH, replace, move, and delete are separate. Delete keeps the admin usage guard and returns a usage report instead of deleting media referenced by blocks, site branding, or page SEO. Do not fetch remote media through this API.',
+        'Public engagement feedback is separate from page-building. Reading comments and ratings requires `engagement.read`; changing comment status requires `engagement.moderate`. Engagement responses do not expose visitor hashes, IP hashes, or user-agent values.',
       ]),
       '_links' => $this->links(),
     ]);
@@ -209,6 +212,9 @@ class InternalApiDiscoveryController extends Controller
       'media_move' => '/webadmin/api/media/{media}/move',
       'media_delete' => '/webadmin/api/media/{media}',
       'block_update' => '/webadmin/api/blocks/{block}',
+      'engagement_comments' => '/webadmin/api/engagement/comments',
+      'engagement_comment_update' => '/webadmin/api/engagement/comments/{comment}',
+      'engagement_ratings' => '/webadmin/api/engagement/ratings',
     ];
   }
 
@@ -238,6 +244,9 @@ class InternalApiDiscoveryController extends Controller
         'get' => ['summary' => 'Read canonical physical site CSS or JS override file', 'x-required-capability' => 'site-assets.read', 'x-supported-types' => ['css', 'js'], 'x-readiness' => 'asset.readiness reports whether CMS can create or write the canonical physical file', 'responses' => ['200' => ['description' => 'Site asset JSON with contents, checksum, and readiness', 'content' => $json], '403' => ['description' => 'Requires site-assets.read capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
         'put' => ['summary' => 'Write canonical physical site CSS or JS override file with checksum protection', 'x-required-capability' => 'site-assets.write', 'x-supported-types' => ['css', 'js'], 'x-required-fields' => ['contents', 'expected_checksum'], 'x-physical-paths' => ['public/site/{site_handle}/css/site.css', 'public/site/{site_handle}/js/site.js'], 'x-permission-failure' => 'Returns JSON 422 with errors.0.path = asset.write and asset.readiness instead of an HTML server error', 'responses' => ['200' => ['description' => 'Updated site asset JSON', 'content' => $json], '403' => ['description' => 'Requires site-assets.write capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
       ],
+      '/engagement/comments' => ['get' => ['summary' => 'List public Comments block submissions for AI/operator feedback analysis', 'x-required-capability' => 'engagement.read', 'x-filters' => ['status', 'site_id', 'page_id', 'block_id', 'search', 'per_page'], 'x-privacy' => 'Visitor hash, IP hash, and user-agent values are not exposed.', 'responses' => ['200' => ['description' => 'Comments JSON', 'content' => $json], '403' => ['description' => 'Requires engagement.read capability', 'content' => $json]]]],
+      '/engagement/comments/{comment}' => ['patch' => ['summary' => 'Moderate a public comment by changing its status', 'x-required-capability' => 'engagement.moderate', 'x-supported-statuses' => CommentEntry::statuses(), 'responses' => ['200' => ['description' => 'Updated comment JSON', 'content' => $json], '403' => ['description' => 'Requires engagement.moderate capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/engagement/ratings' => ['get' => ['summary' => 'List public Rating block submissions and aggregate summaries', 'x-required-capability' => 'engagement.read', 'x-filters' => ['status', 'site_id', 'page_id', 'block_id', 'per_page'], 'x-privacy' => 'Visitor hash, IP hash, and user-agent values are not exposed.', 'responses' => ['200' => ['description' => 'Ratings JSON', 'content' => $json], '403' => ['description' => 'Requires engagement.read capability', 'content' => $json]]]],
       '/content/validate' => ['post' => ['summary' => 'Validate content plan', 'x-supported-modes' => $this->contentModes(), 'responses' => ['200' => ['description' => 'Valid plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/content/apply' => ['post' => ['summary' => 'Apply content plan', 'x-supported-modes' => $this->contentModes(), 'x-mode-capabilities' => ['promote_staged_page_update' => 'content.publish plus content.apply'], 'responses' => ['201' => ['description' => 'Applied plan JSON', 'content' => $json], '403' => ['description' => 'Promote requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/navigation-menus' => ['get' => ['summary' => 'List navigation menus', 'responses' => ['200' => ['description' => 'Navigation JSON', 'content' => $json]]], 'post' => ['summary' => 'Create navigation menu items', 'x-required-capability' => 'navigation.write', 'responses' => ['201' => ['description' => 'Created navigation JSON', 'content' => $json], '403' => ['description' => 'Requires navigation.write capability', 'content' => $json]]]],
@@ -342,8 +351,10 @@ class InternalApiDiscoveryController extends Controller
       'published_page_staged_update' => [
         'description' => 'Safely edit a published page through a staged draft, then promote it onto the source page after approval.',
         'steps' => [
-          'POST /webadmin/api/content/validate with mode=create_staged_update_for_published_page or mode=replace_staged_page_update',
-          'POST /webadmin/api/content/apply to create or replace the staged draft',
+          'GET /webadmin/api/pages/{source_page} and reuse an existing active staged draft when one is exposed.',
+          'POST /webadmin/api/content/validate with mode=create_staged_update_for_published_page only when no active staged draft exists; repeated create calls reuse the existing staged draft.',
+          'POST /webadmin/api/content/apply to create the staged draft or return the reusable staged draft.',
+          'POST /webadmin/api/content/validate and apply with mode=replace_staged_page_update for subsequent revisions on the staged draft.',
           'Preview /webadmin/pages/{staged_page}/preview outside the API',
           'GET /webadmin/api/pages/{staged_page} and follow page._actions.promote',
           'POST /webadmin/api/content/apply with mode=promote_staged_page_update',

@@ -249,6 +249,7 @@ class InternalContentResourceController extends Controller
         'promote_blocks_status' => 'promoted page-owned blocks are written as published',
         'shared_slot_cascade' => 'unsupported',
         'storage' => 'draft page with settings.staged_update metadata',
+        'reuse_policy' => 'Only one active draft staged update is kept per published source page. Repeating create_staged_update_for_published_page for the same source returns the existing active staged draft with data.reused_staged_update=true; use replace_staged_page_update for later content revisions.',
         'wrong_endpoint_guard' => 'POST /webadmin/api/pages/{staged_page}/publish is rejected for staged updates. Use content/apply with mode promote_staged_page_update.',
         'promote_action_discovery' => 'GET /webadmin/api/pages/{staged_page} returns _actions.promote with the exact guarded payload.',
         'example' => [

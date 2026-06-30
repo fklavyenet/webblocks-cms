@@ -93,7 +93,7 @@ GET /webadmin/api/sites/{site}/assets/css
 PUT /webadmin/api/sites/{site}/assets/css
 ```
 
-The content validate/apply links support `create_draft_page`, `replace_existing_draft_page`, and published-page staged update modes. Use `GET /webadmin/api/content-contract` for the current mode list, safety rules, and block field discovery, including allowlisted public visual tone fields such as `settings.icon_tone` when a block supports them. Promoting a staged update onto a published page requires `content.publish` in addition to `content.apply`.
+The content validate/apply links support `create_draft_page`, `replace_existing_draft_page`, and published-page staged update modes. Use `GET /webadmin/api/content-contract` for the current mode list, safety rules, and block field discovery, including allowlisted public visual tone fields such as `settings.icon_tone` when a block supports them. For published pages, tools should read `GET /webadmin/api/pages/{source_page}` first, reuse any active staged draft, and use `replace_staged_page_update` for revisions. Repeating `create_staged_update_for_published_page` for the same source page returns the existing active staged draft with `data.reused_staged_update=true` instead of creating another page. Promoting a staged update onto a published page requires `content.publish` in addition to `content.apply`.
 
 Use `GET /webadmin/api/sites/{site}/assets/{css|js}` with `site-assets.read` and `PUT /webadmin/api/sites/{site}/assets/{css|js}` with `site-assets.write` to read or update the canonical physical `public/site/{site_handle}/css/site.css` and `public/site/{site_handle}/js/site.js` files. Read responses include `readiness` metadata so tools can see whether CMS can create or write the file. Write requests send `contents` and `expected_checksum`; stale checksums are rejected so AI/operator tools must read, merge intentionally, and retry instead of overwriting concurrent edits. Hosting permission failures return JSON `422` with `errors.0.path = asset.write`, not HTML server errors.
 
@@ -128,10 +128,19 @@ Standard page-building capabilities:
 Destructive or publish capabilities are separate advanced options and are not selected by default:
 
 - `navigation.delete`
+- `site-assets.read`
+- `site-assets.write`
+- `engagement.read`
+- `engagement.moderate`
+- `media.write`
+- `media.upload`
+- `media.replace`
+- `media.move`
+- `media.delete`
 - `content.publish`
 - `pages.delete`
 
-Destructive operations must require an explicit matching capability and should not be granted to normal page-building tokens.
+Destructive or sensitive operations must require an explicit matching capability and should not be granted to normal page-building tokens. Public feedback analysis uses `engagement.read`; comment status changes use `engagement.moderate`.
 
 Normal page-building tools should not assume publishing is available. If `content.publish` is absent, tools should stop before calling publish endpoints and report that a trusted operator token with publish capability is required.
 
