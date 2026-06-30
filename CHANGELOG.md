@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.189
+
+- Bumped CMS to `1.32.189`.
+- Add Media Library-backed background images for Hero, Section, Card, CTA, and Content Header blocks, including admin pickers, Internal Content API assignment, and CMS-owned public CSS for cover, position, and overlay rendering.
+
 ## 1.32.188
 
 - Bumped CMS to `1.32.188`.

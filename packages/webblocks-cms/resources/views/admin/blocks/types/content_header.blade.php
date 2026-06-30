@@ -1,5 +1,6 @@
 @php
     $metaItems = old('meta_items', $block->metaItems()->all());
+    $isNonDefaultLocale = isset($activeLocale) && ! $isDefaultLocale;
 @endphp
 
 @once
@@ -26,6 +27,10 @@
     </div>
 
     @include('webblocks-cms::admin.blocks.types.partials.icon-badge-fields')
+
+    @if (! $isNonDefaultLocale)
+        @include('webblocks-cms::admin.blocks.types.partials.background-media-fields')
+    @endif
 
     <div class="wb-card wb-card-muted" data-wb-builder-items-editor="content-header-meta-items">
         <div class="wb-card-header wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">

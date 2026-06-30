@@ -203,9 +203,12 @@ The endpoint requires `content.apply`. If the block is part of a Shared Slot sou
 Supported fields are intentionally narrow:
 
 - `media_id` or `asset_id` for `navbar-brand` and `sidebar-brand` logo media
+- `media_id` or `asset_id` for `hero`, `section`, `card`, `cta`, and `content_header` background media
 - `settings.url`
 - `settings.target`
 - `settings.aria_label`
+- `settings.background_position`
+- `settings.background_overlay`
 - text translations such as `title` and `subtitle`
 - `url`
 - `variant`
@@ -556,7 +559,7 @@ The favicon and social image fields must reference image records from the CMS Me
 - `POST /webadmin/api/content/validate`
 - `POST /webadmin/api/content/apply`
 
-Content plans may assign already-uploaded CMS Media Library records to native media-backed blocks. Use `media_id` or `asset_id` on `image`, `navbar-brand`, `sidebar-brand`, `file`, `download`, and `video` blocks with media of the matching kind. Use `gallery_items` or `gallery_media_ids` on `gallery` blocks with image media records. For card-like layouts, create the normal nested structure, such as `card` -> `card_body` -> `image`, and put `media_id` on the child `image` block. Content plans still reject `remote_url` and `source_url`; upload files through `POST /webadmin/api/media` first, then assign the returned `media.id`.
+Content plans may assign already-uploaded CMS Media Library records to native media-backed blocks. Use `media_id` or `asset_id` on `image`, `navbar-brand`, `sidebar-brand`, `file`, `download`, and `video` blocks with media of the matching kind. Use `media_id` or `asset_id` on `hero`, `section`, `card`, `cta`, and `content_header` when the media is the block background image, with optional `settings.background_position` and `settings.background_overlay`. Use `gallery_items` or `gallery_media_ids` on `gallery` blocks with image media records. For card content images, create the normal nested structure, such as `card` -> `card_body` -> `image`, and put `media_id` on the child `image` block. Content plans still reject `remote_url` and `source_url`; upload files through `POST /webadmin/api/media` first, then assign the returned `media.id`.
 
 ### Phase 1 Safety
 

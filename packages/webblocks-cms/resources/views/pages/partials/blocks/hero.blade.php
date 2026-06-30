@@ -8,6 +8,8 @@
   $headingTag = in_array($settings['title_tag'] ?? null, ['h1', 'h2', 'h3'], true) ? $settings['title_tag'] : 'h1';
   $heroClasses = ['wb-card', 'wb-promo'];
   $copyClasses = ['wb-card-body', 'wb-promo-copy', 'wb-stack', 'wb-gap-3'];
+  $backgroundClass = $block->publicBackgroundMediaClass();
+  $backgroundStyle = $block->publicBackgroundMediaStyle();
 
   if (in_array($variant, ['muted', 'soft'], true)) {
     $heroClasses[] = 'wb-card-muted';
@@ -21,6 +23,10 @@
     $copyClasses[] = 'wb-text-center';
   }
 
+  if ($backgroundClass !== null) {
+    $heroClasses[] = $backgroundClass;
+  }
+
   $actionBlocks = $block->children
     ->filter(fn ($child) => $child->typeSlug() === 'button')
     ->filter(fn ($child) => filled($child->url) && filled($child->title))
@@ -28,7 +34,7 @@
     ->values();
 @endphp
 
-<section class="{{ implode(' ', $heroClasses) }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+<section class="{{ implode(' ', $heroClasses) }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
   <div class="{{ implode(' ', $copyClasses) }}">
     @if ($eyebrow !== '')
       <p class="wb-eyebrow">{{ $eyebrow }}</p>

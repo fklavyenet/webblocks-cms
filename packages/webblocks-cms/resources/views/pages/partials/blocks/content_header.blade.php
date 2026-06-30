@@ -3,14 +3,15 @@
     $introText = trim((string) ($block->subtitle ?? ''));
     $metaItems = $block->metaItems();
     $alignmentClass = $block->contentHeaderAlignmentClass();
-    $headerClass = trim('wb-content-header '.($alignmentClass ?? ''));
+    $headerClass = collect(['wb-content-header', $alignmentClass, $block->publicBackgroundMediaClass()])->filter()->implode(' ');
+    $backgroundStyle = $block->publicBackgroundMediaStyle();
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
     $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();
     $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
 @endphp
 
-<header class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+<header class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
     @if ($iconClass !== null || $badgeLabel !== null)
         <div class="wb-cms-public-kicker">
             @if ($iconClass !== null)

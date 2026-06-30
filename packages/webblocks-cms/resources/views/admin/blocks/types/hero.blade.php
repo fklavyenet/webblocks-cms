@@ -86,7 +86,12 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header"><strong>Shared Fields</strong></div>
-        <div class="wb-card-body wb-grid wb-grid-2">
+        <div class="wb-card-body wb-stack wb-gap-4">
+          @if (! $isNonDefaultLocale)
+              @include('webblocks-cms::admin.blocks.types.partials.background-media-fields')
+          @endif
+
+          <div class="wb-grid wb-grid-2">
             <div class="wb-stack wb-gap-1">
                 <label for="variant">Variant</label>
                 <select id="variant" name="variant" class="wb-select" @disabled($isNonDefaultLocale)>
@@ -123,6 +128,7 @@
                 </select>
                 <div class="wb-text-sm wb-text-muted">Use <code>h1</code> for page-leading heroes and <code>h2</code> or <code>h3</code> for nested section heroes.</div>
             </div>
+          </div>
         </div>
     </div>
 </div>

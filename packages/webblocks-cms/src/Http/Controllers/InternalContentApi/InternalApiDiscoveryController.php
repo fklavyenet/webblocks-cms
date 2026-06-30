@@ -96,7 +96,7 @@ class InternalApiDiscoveryController extends Controller
         'Media uploads require `media.upload`; metadata writes require `media.write`; file replacement requires `media.replace`; folder moves require `media.move`; deletion requires `media.delete`. Destructive operations require explicit capabilities such as `media.replace`, `media.delete`, `pages.delete`, or `content.publish`. Standard page-building tokens should not include upload or destructive capabilities unless the operator explicitly grants them.',
         "Published page updates use staged pages. The safe flow is:\n\n1. `POST /webadmin/api/content/validate` with `mode=create_staged_update_for_published_page` or `mode=replace_staged_page_update`.\n2. `POST /webadmin/api/content/apply` to create or replace the staged draft.\n3. Preview the staged page.\n4. After explicit approval, read `GET /webadmin/api/pages/{staged_page}` and follow `page._actions.promote`.\n5. Do not use `POST /webadmin/api/pages/{staged_page}/publish` to promote staged content; that endpoint is rejected for staged updates.",
         'For site favicon and public brand metadata, upload or discover image media, then use `PATCH /webadmin/api/sites/{site}/branding` with `favicon_media_id`, `social_image_media_id`, `display_name`, or `tagline`. Public site branding must remain visible in the admin Site Branding tab; do not overwrite `/cms/brand/*`, which belongs to the CMS product/admin shell.',
-        'For existing structured blocks, do not use HTML fallbacks or invented URL settings to set native fields. Discover or upload media, then use `PATCH /webadmin/api/blocks/{block}` for supported fields such as `media_id`, `settings.url`, `settings.target`, `settings.aria_label`, and text translations.',
+        'For existing structured blocks, do not use HTML fallbacks or invented URL settings to set native fields. Discover or upload media, then use `PATCH /webadmin/api/blocks/{block}` for supported fields such as `media_id`, `settings.url`, `settings.target`, `settings.aria_label`, `settings.background_position`, `settings.background_overlay`, and text translations.',
         'For Media Library cleanup, use dedicated media endpoints and capabilities: metadata PATCH, replace, move, and delete are separate. Delete keeps the admin usage guard and returns a usage report instead of deleting media referenced by blocks, site branding, or page SEO. Do not fetch remote media through this API.',
       ]),
       '_links' => $this->links(),
@@ -251,7 +251,7 @@ class InternalApiDiscoveryController extends Controller
       '/media/{media}/move' => ['post' => ['summary' => 'Move a Media Library item to another folder or clear its folder', 'x-required-capability' => 'media.move', 'responses' => ['200' => ['description' => 'Moved media JSON', 'content' => $json], '403' => ['description' => 'Requires media.move capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/blocks/{block}' => [
         'get' => ['summary' => 'Read block', 'parameters' => [['name' => 'block', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]], 'responses' => ['200' => ['description' => 'Block JSON', 'content' => $json]]],
-        'patch' => ['summary' => 'Update safe fields on an existing structured block', 'x-required-capability' => 'content.apply; shared-slots.write also required for Shared Slot source blocks', 'x-supported-fields' => ['media_id for navbar-brand/sidebar-brand logo media', 'settings.url', 'settings.target', 'settings.aria_label', 'translations.title', 'translations.subtitle', 'url', 'variant'], 'responses' => ['200' => ['description' => 'Updated block JSON', 'content' => $json], '403' => ['description' => 'Requires additional capability for Shared Slot source blocks', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+        'patch' => ['summary' => 'Update safe fields on an existing structured block', 'x-required-capability' => 'content.apply; shared-slots.write also required for Shared Slot source blocks', 'x-supported-fields' => ['media_id for navbar-brand/sidebar-brand logo media', 'media_id for hero/section/card/cta/content_header background media', 'settings.url', 'settings.target', 'settings.aria_label', 'settings.background_position', 'settings.background_overlay', 'translations.title', 'translations.subtitle', 'url', 'variant'], 'responses' => ['200' => ['description' => 'Updated block JSON', 'content' => $json], '403' => ['description' => 'Requires additional capability for Shared Slot source blocks', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
       ],
       '/pages/{page}/slots/{slot}/shared-slot' => ['post' => ['summary' => 'Assign Shared Slot to page slot', 'responses' => ['200' => ['description' => 'Assignment JSON', 'content' => $json]]]],
     ];
@@ -355,10 +355,12 @@ class InternalApiDiscoveryController extends Controller
           'GET /webadmin/api/media?kind=image to confirm the Media id and public URL',
           'PATCH /webadmin/api/sites/{site}/branding with favicon_media_id or social_image_media_id for site-level public metadata',
           'PATCH /webadmin/api/blocks/{block} with media_id for navbar-brand or sidebar-brand logo media',
+          'PATCH /webadmin/api/blocks/{block} with media_id for hero, section, card, CTA, or content-header background media',
         ],
         'do_not_use' => [
           'Do not overwrite /cms/brand/* product/admin assets for public site branding.',
           'Do not send settings.logo_url for brand blocks; use media_id.',
+          'Do not set background image paths in site CSS when the block supports Media Library background media.',
         ],
         'required_capabilities' => [
           'upload_media' => [CmsApiTokenCapabilities::MEDIA_UPLOAD],

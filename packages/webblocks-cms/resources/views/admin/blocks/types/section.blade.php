@@ -5,5 +5,7 @@
         <div class="wb-text-sm wb-text-muted">Admin-only label used in the block tree and parent selector.</div>
     </div>
 
+    @include('webblocks-cms::admin.blocks.types.partials.background-media-fields')
+
     <div class="wb-text-sm wb-text-muted">This layout block has no public content fields.</div>
 </div>

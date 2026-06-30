@@ -689,6 +689,14 @@ class InternalContentApiTest extends TestCase
           'main' => [
             [
               'type' => 'section',
+              'media_id' => $image->id,
+              'settings' => [
+                'background_position' => 'bottom',
+                'background_overlay' => 'medium',
+              ],
+            ],
+            [
+              'type' => 'section',
               'children' => [
                 [
                   'type' => 'container',
@@ -719,8 +727,11 @@ class InternalContentApiTest extends TestCase
     $this->withInternalToken()
       ->postJson('/webadmin/api/content/validate', $payload)
       ->assertOk()
-      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.0.media_id', $image->id)
-      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.1._block_media.gallery_item.0', $image->id);
+      ->assertJsonPath('normalized_plan.slots.main.0.media_id', $image->id)
+      ->assertJsonPath('normalized_plan.slots.main.0.settings.background_position', 'bottom')
+      ->assertJsonPath('normalized_plan.slots.main.0.settings.background_overlay', 'medium')
+      ->assertJsonPath('normalized_plan.slots.main.1.children.0.children.0.media_id', $image->id)
+      ->assertJsonPath('normalized_plan.slots.main.1.children.0.children.1._block_media.gallery_item.0', $image->id);
 
     $apply = $this->withInternalToken()
       ->postJson('/webadmin/api/content/apply', $payload)
@@ -731,12 +742,20 @@ class InternalContentApiTest extends TestCase
       ->where('page_id', $pageId)
       ->where('type', 'image')
       ->firstOrFail();
+    $sectionBlock = Block::query()
+      ->where('page_id', $pageId)
+      ->where('type', 'section')
+      ->whereNotNull('media_id')
+      ->firstOrFail();
     $galleryBlock = Block::query()
       ->where('page_id', $pageId)
       ->where('type', 'gallery')
       ->firstOrFail();
 
     $this->assertSame((int) $image->id, (int) $imageBlock->media_id);
+    $this->assertSame((int) $image->id, (int) $sectionBlock->media_id);
+    $this->assertSame('bottom', $sectionBlock->setting('background_position'));
+    $this->assertSame('medium', $sectionBlock->setting('background_overlay'));
     $this->assertDatabaseHas('block_media', [
       'block_id' => $galleryBlock->id,
       'media_id' => $image->id,
@@ -1905,6 +1924,66 @@ class InternalContentApiTest extends TestCase
       'locale_id' => $locale->id,
       'title' => 'WebBlocks CMS',
       'subtitle' => 'Composable content operations',
+    ]);
+  }
+
+  #[Test]
+  public function valid_token_can_update_background_media_for_supported_public_blocks(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $locale = $this->defaultLocale();
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'main')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+    $background = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/hero-background.webp',
+      'filename' => 'hero-background.webp',
+      'original_name' => 'hero-background.webp',
+      'extension' => 'webp',
+      'mime_type' => 'image/webp',
+      'size' => 2048,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Hero background',
+      'width' => 1200,
+      'height' => 800,
+    ]);
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Play',
+      'slug' => 'play',
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'main',
+      'type' => 'hero',
+      'status' => 'draft',
+      'sort_order' => 0,
+      'settings' => json_encode(['layout' => 'centered'], JSON_UNESCAPED_SLASHES),
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'locale' => $locale->code,
+        'media_id' => $background->id,
+        'settings' => [
+          'background_position' => 'bottom',
+          'background_overlay' => 'medium',
+        ],
+      ])
+      ->assertOk()
+      ->assertJsonPath('block.id', $block->id)
+      ->assertJsonPath('block.media.id', $background->id)
+      ->assertJsonPath('block.settings.background_position', 'bottom')
+      ->assertJsonPath('block.settings.background_overlay', 'medium');
+
+    $this->assertDatabaseHas('blocks', [
+      'id' => $block->id,
+      'media_id' => $background->id,
     ]);
   }
 

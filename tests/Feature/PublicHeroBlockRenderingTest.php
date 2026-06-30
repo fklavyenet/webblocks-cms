@@ -9,6 +9,7 @@ use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
@@ -101,6 +102,51 @@ class PublicHeroBlockRenderingTest extends TestCase
     $response->assertOk();
     $response->assertSee('<h2 class="wb-promo-title">Nested hero title</h2>', false);
     $response->assertDontSee('<h1 class="wb-promo-title">Nested hero title</h1>', false);
+  }
+
+  #[Test]
+  public function hero_block_renders_selected_background_media_contract(): void
+  {
+    $page = $this->pageWithMainSlot();
+    $media = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/images/hero.webp',
+      'filename' => 'hero.webp',
+      'original_name' => 'hero.webp',
+      'extension' => 'webp',
+      'mime_type' => 'image/webp',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Hero background',
+    ]);
+
+    Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'hero',
+      'block_type_id' => $this->blockType('hero', 'Hero', 1, true)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'title' => 'Image-backed hero',
+      'media_id' => $media->id,
+      'settings' => json_encode([
+        'background_position' => 'bottom',
+        'background_overlay' => 'medium',
+      ], JSON_UNESCAPED_SLASHES),
+      'status' => 'published',
+      'is_system' => true,
+    ]);
+
+    $response = $this->get(route('pages.show', 'about'));
+
+    $response->assertOk();
+    $response->assertSee('wb-has-background-media', false);
+    $response->assertSee('wb-bg-overlay-medium', false);
+    $response->assertSee('--wb-block-bg-image:', false);
+    $response->assertSee('media/images/hero.webp', false);
+    $response->assertSee('--wb-block-bg-position: bottom;', false);
   }
 
   #[Test]

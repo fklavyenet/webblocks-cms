@@ -182,9 +182,12 @@ class InternalContentResourceController extends Controller
         'purpose' => 'Update safe native fields on an existing structured block without changing the block tree.',
         'supported_native_fields' => [
           'media_id or asset_id for navbar-brand/sidebar-brand logo media',
+          'media_id or asset_id for hero/section/card/cta/content_header background media',
           'settings.url',
           'settings.target',
           'settings.aria_label',
+          'settings.background_position',
+          'settings.background_overlay',
           'translations.title',
           'translations.subtitle',
           'url',
@@ -955,6 +958,7 @@ class InternalContentResourceController extends Controller
   {
     return match ($type) {
       'image', 'navbar-brand', 'sidebar-brand' => [Media::KIND_IMAGE],
+      'hero', 'section', 'card', 'cta', 'content_header' => [Media::KIND_IMAGE],
       'download', 'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
       'video' => [Media::KIND_VIDEO],
       default => [],
@@ -1016,7 +1020,14 @@ class InternalContentResourceController extends Controller
       ], 422));
     }
 
-    $unsupported = array_values(array_diff(array_keys($incoming), ['url', 'target', 'aria_label']));
+    $allowedSettings = ['url', 'target', 'aria_label'];
+
+    if ($this->supportsBackgroundMediaBlockType((string) $block->typeSlug())) {
+      $allowedSettings[] = 'background_position';
+      $allowedSettings[] = 'background_overlay';
+    }
+
+    $unsupported = array_values(array_diff(array_keys($incoming), $allowedSettings));
 
     if ($unsupported !== []) {
       abort(response()->json([
@@ -1028,7 +1039,7 @@ class InternalContentResourceController extends Controller
         'errors' => [
           [
             'path' => implode(',', array_map(fn (string $field) => 'settings.'.$field, $unsupported)),
-            'message' => 'Use discovered block contract fields such as media_id for brand logos instead of unsupported settings keys.',
+            'message' => 'Use discovered block contract fields such as media_id for media-backed block visuals instead of unsupported settings keys.',
           ],
         ],
       ], 422));
@@ -1048,10 +1059,29 @@ class InternalContentResourceController extends Controller
       $safeIncoming['aria_label'] = trim((string) $incoming['aria_label']) ?: null;
     }
 
+    if (array_key_exists('background_position', $incoming)) {
+      $position = trim((string) $incoming['background_position']);
+      $safeIncoming['background_position'] = in_array($position, ['top', 'bottom', 'left', 'right'], true)
+        ? $position
+        : null;
+    }
+
+    if (array_key_exists('background_overlay', $incoming)) {
+      $overlay = trim((string) $incoming['background_overlay']);
+      $safeIncoming['background_overlay'] = in_array($overlay, ['none', 'medium', 'strong'], true)
+        ? $overlay
+        : null;
+    }
+
     return array_filter([
       ...$settings,
       ...$safeIncoming,
     ], fn ($value) => $value !== null && $value !== '');
+  }
+
+  private function supportsBackgroundMediaBlockType(string $type): bool
+  {
+    return in_array($type, ['hero', 'section', 'card', 'cta', 'content_header'], true);
   }
 
   private function safeUrl(mixed $url): ?string

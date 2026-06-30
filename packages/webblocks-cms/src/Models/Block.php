@@ -1071,9 +1071,61 @@ class Block extends Model
     return $this->settings;
   }
 
+  public function supportsBackgroundMedia(): bool
+  {
+    return in_array($this->typeSlug(), ['hero', 'section', 'card', 'cta', 'content_header'], true);
+  }
+
+  public function publicBackgroundMediaUrl(): ?string
+  {
+    if (! $this->supportsBackgroundMedia() || ! $this->media?->isImage()) {
+      return null;
+    }
+
+    return $this->media->url();
+  }
+
+  public function publicBackgroundMediaClass(): ?string
+  {
+    if ($this->publicBackgroundMediaUrl() === null) {
+      return null;
+    }
+
+    $overlay = $this->backgroundOverlay();
+
+    return trim('wb-has-background-media wb-bg-overlay-'.$overlay);
+  }
+
+  public function publicBackgroundMediaStyle(): ?string
+  {
+    $url = $this->publicBackgroundMediaUrl();
+
+    if ($url === null) {
+      return null;
+    }
+
+    $escapedUrl = str_replace(['\\', '\''], ['\\\\', '\\\''], $url);
+
+    return "--wb-block-bg-image: url('".$escapedUrl."'); --wb-block-bg-position: ".$this->backgroundPosition().';';
+  }
+
   public function setting(string $key, mixed $default = null): mixed
   {
     return data_get($this->decodedSettings(), $key, $default);
+  }
+
+  private function backgroundPosition(): string
+  {
+    $position = trim((string) $this->setting('background_position', 'center'));
+
+    return in_array($position, ['center', 'top', 'bottom', 'left', 'right'], true) ? $position : 'center';
+  }
+
+  private function backgroundOverlay(): string
+  {
+    $overlay = trim((string) $this->setting('background_overlay', 'soft'));
+
+    return in_array($overlay, ['none', 'soft', 'medium', 'strong'], true) ? $overlay : 'soft';
   }
 
   public function navigationMenuKey(): string

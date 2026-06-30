@@ -101,6 +101,7 @@ class BlockRequest extends FormRequest
     $supportsGridColumns = $isGrid;
     $supportsGridGap = $isGrid;
     $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'cluster', 'grid'], true);
+    $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header'], true);
     $isLocaleRequest = $this->filled('locale');
     $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -158,6 +159,8 @@ class BlockRequest extends FormRequest
       'alert_variant' => [$isAlert ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
       'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
       'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
+      'background_position' => [$supportsBackgroundMedia ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'top', 'bottom', 'left', 'right'])],
+      'background_overlay' => [$supportsBackgroundMedia ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'soft', 'medium', 'strong'])],
       'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
       'breadcrumb_home_label' => [$isBreadcrumb ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'breadcrumb_include_current' => [$isBreadcrumb ? 'nullable' : 'prohibited', Rule::in(['0', '1'])],
@@ -275,6 +278,7 @@ class BlockRequest extends FormRequest
       $existingBlock = $existingBlock instanceof Block ? $existingBlock : null;
       $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
       $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
+      $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header'], true);
       $isColumns = $selectedBlockType?->slug === 'columns';
       $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
       $isLinkList = $selectedBlockType?->slug === 'link-list';
@@ -394,6 +398,14 @@ class BlockRequest extends FormRequest
           if (! $asset?->isImage()) {
             $validator->errors()->add('media_id', 'Image block media must be an image from Media.');
           }
+        }
+      }
+
+      if ($supportsBackgroundMedia && ($this->filled('media_id') || $this->filled('asset_id'))) {
+        $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
+
+        if (! $asset?->isImage()) {
+          $validator->errors()->add('media_id', 'Background media must be an image from Media.');
         }
       }
 
@@ -837,6 +849,7 @@ class BlockRequest extends FormRequest
         if (! $isTranslatedHeroEdit) {
           $settings['layout'] = $layout !== '' ? $layout : null;
           $settings['title_tag'] = in_array($titleTag, ['h1', 'h2', 'h3'], true) ? $titleTag : null;
+          $settings = $this->applyBackgroundMediaSettings($settings, $data);
         }
 
         $data['url'] = null;
@@ -852,12 +865,24 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'cta') {
         $isTranslatedCtaEdit = $data['locale'] !== null;
+        $existingSettings = $this->route('block') instanceof Block
+          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          : [];
+        $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+        $settings = $existingSettings;
+
+        if (! $isTranslatedCtaEdit) {
+          $settings = $this->applyBackgroundMediaSettings($settings, $data);
+        }
 
         $data['url'] = null;
         $data['asset_id'] = null;
         $data['variant'] = $isTranslatedCtaEdit
           ? ($this->route('block')?->getRawOriginal('variant'))
           : (trim((string) ($data['variant'] ?? '')) ?: null);
+        $data['settings'] = $settings === []
+          ? null
+          : json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== '' && $value !== []), JSON_UNESCAPED_SLASHES);
       }
 
       if ($blockType?->slug === 'code') {
@@ -1012,6 +1037,7 @@ class BlockRequest extends FormRequest
           }
 
           $settings = $this->applyPublicIconBadgeSettings($settings, $data);
+          $settings = $this->applyBackgroundMediaSettings($settings, $data);
         }
 
         $contentHeaderTitle = trim((string) ($data['title'] ?? ''));
@@ -1142,6 +1168,10 @@ class BlockRequest extends FormRequest
           $settings['layout_name'] = $layoutName;
         }
 
+        if ($blockType?->slug === 'card') {
+          $settings = $this->applyBackgroundMediaSettings($settings, $data);
+        }
+
         if ($blockType?->slug === 'card_header') {
           $settings = $this->applyPublicIconBadgeSettings($settings, $data);
         }
@@ -1152,7 +1182,9 @@ class BlockRequest extends FormRequest
         $data['content'] = null;
         $data['meta'] = null;
         $data['url'] = null;
-        $data['media_id'] = null;
+        if ($blockType?->slug !== 'card') {
+          $data['media_id'] = null;
+        }
         $data['variant'] = null;
         unset($data['asset_id']);
         $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
@@ -1714,6 +1746,7 @@ class BlockRequest extends FormRequest
             unset($settings['spacing']);
           }
 
+          $settings = $this->applyBackgroundMediaSettings($settings, $data);
           unset($settings['width']);
         }
 
@@ -1844,9 +1877,30 @@ class BlockRequest extends FormRequest
     unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
     unset($data['show_button']);
     unset($data['icon_slug'], $data['icon_tone'], $data['badge_label'], $data['badge_tone']);
+    unset($data['background_position'], $data['background_overlay']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
     return $data;
+  }
+
+  private function applyBackgroundMediaSettings(array $settings, array $data): array
+  {
+    $position = trim((string) ($data['background_position'] ?? 'center'));
+    $overlay = trim((string) ($data['background_overlay'] ?? 'soft'));
+
+    if (in_array($position, ['top', 'bottom', 'left', 'right'], true)) {
+      $settings['background_position'] = $position;
+    } else {
+      unset($settings['background_position']);
+    }
+
+    if (in_array($overlay, ['none', 'medium', 'strong'], true)) {
+      $settings['background_overlay'] = $overlay;
+    } else {
+      unset($settings['background_overlay']);
+    }
+
+    return $settings;
   }
 
   private function applyPublicIconBadgeSettings(array $settings, array $data): array

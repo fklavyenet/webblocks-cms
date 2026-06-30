@@ -1,6 +1,8 @@
 @php
   $variant = $block->variant ?: 'default';
   $ctaClasses = ['wb-card', 'wb-promo'];
+  $backgroundClass = $block->publicBackgroundMediaClass();
+  $backgroundStyle = $block->publicBackgroundMediaStyle();
 
   if (in_array($variant, ['muted', 'soft'], true)) {
     $ctaClasses[] = 'wb-card-muted';
@@ -10,6 +12,10 @@
     $ctaClasses[] = 'wb-card-accent';
   }
 
+  if ($backgroundClass !== null) {
+    $ctaClasses[] = $backgroundClass;
+  }
+
   $actionBlocks = $block->children
     ->filter(fn ($child) => $child->typeSlug() === 'button')
     ->filter(fn ($child) => filled($child->url) && filled($child->title))
@@ -17,7 +23,7 @@
     ->values();
 @endphp
 
-<section class="{{ implode(' ', $ctaClasses) }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+<section class="{{ implode(' ', $ctaClasses) }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
   <div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">
     @if ($block->subtitle)
       <p class="wb-eyebrow">{{ $block->subtitle }}</p>

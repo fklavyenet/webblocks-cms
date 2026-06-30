@@ -1,10 +1,12 @@
 @php
     $regionChildren = $block->children;
     $hasRegionChildren = $regionChildren->contains(fn ($child) => in_array($child->typeSlug(), ['card_header', 'card_body', 'card_footer'], true));
+    $cardClass = collect(['wb-card', $block->publicBackgroundMediaClass()])->filter()->implode(' ');
+    $backgroundStyle = $block->publicBackgroundMediaStyle();
 @endphp
 
 @if ($hasRegionChildren)
-    <article class="wb-card" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+    <article class="{{ $cardClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
         @foreach ($regionChildren as $child)
             @include('webblocks-cms::pages.partials.block', ['block' => $child])
         @endforeach
@@ -21,7 +23,7 @@
         $renderedDescription = app(\WebBlocks\Cms\Support\Formatting\InlineRichTextRenderer::class)->render($description);
     @endphp
 
-    <article class="wb-card" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+    <article class="{{ $cardClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
         @if ($subtitle !== '')
             <div class="wb-card-header">{{ $subtitle }}</div>
         @endif
