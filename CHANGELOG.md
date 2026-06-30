@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.190
+
+- Bumped CMS to `1.32.190`.
+- Generate native update-server release details from the current `CHANGELOG.md` entry so System Updates shows release-specific highlights and technical metadata instead of repeated publishing workflow placeholder text.
+
 ## 1.32.189
 
 - Bumped CMS to `1.32.189`.

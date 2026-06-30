@@ -12,6 +12,7 @@ PAYLOAD_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}-update-server-payload.jso
 STAGING_DIR="$(mktemp -d)"
 PACKAGE_ROOT="packages/webblocks-cms"
 DOCS_SOURCE_ROOT="docs"
+CHANGELOG_PATH="${ROOT_DIR}/CHANGELOG.md"
 
 cleanup() {
   rm -rf "${STAGING_DIR}"
@@ -74,27 +75,84 @@ CHECKSUM="$(shasum -a 256 "${ARCHIVE_PATH}" | cut -d' ' -f1)"
 printf '%s\n' "${CHECKSUM}" > "${ARCHIVE_PATH}.sha256"
 
 "${PHP_BIN}" -r '
+function releaseNoteItemsForVersion(string $changelogPath, string $version): array
+{
+  if (! is_file($changelogPath)) {
+    fwrite(STDERR, "[webblocks-release-prepare] CHANGELOG.md was not found.\n");
+    exit(1);
+  }
+
+  $changelog = (string) file_get_contents($changelogPath);
+  $pattern = "/^##\s+".preg_quote($version, "/")."\s*$(.*?)(?=^##\s+|\z)/ms";
+
+  if (preg_match($pattern, $changelog, $matches) !== 1) {
+    fwrite(STDERR, "[webblocks-release-prepare] CHANGELOG.md does not contain a release section for ".$version.".\n");
+    exit(1);
+  }
+
+  $items = [];
+
+  foreach (preg_split("/\r\n|\r|\n/", trim($matches[1])) ?: [] as $line) {
+    if (preg_match("/^\s*-\s+(.+)$/", $line, $lineMatches) !== 1) {
+      continue;
+    }
+
+    $item = trim($lineMatches[1]);
+
+    if (preg_match("/^Bumped CMS to `?".preg_quote($version, "/")."`?\.$/", $item) === 1) {
+      continue;
+    }
+
+    $item = (string) preg_replace("/`([^`]+)`/", "$1", $item);
+    $item = (string) preg_replace("/\[(.*?)\]\((.*?)\)/", "$1", $item);
+    $item = trim($item);
+
+    if ($item !== "") {
+      $items[] = $item;
+    }
+  }
+
+  if ($items === []) {
+    fwrite(STDERR, "[webblocks-release-prepare] CHANGELOG.md release section for ".$version." does not contain operator-facing notes.\n");
+    exit(1);
+  }
+
+  return array_values(array_unique($items));
+}
+
+$version = $argv[1];
+$archivePath = $argv[2];
+$payloadPath = $argv[3];
+$changelogPath = $argv[4];
+$checksum = trim(file_get_contents($archivePath.".sha256"));
+$minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18";
+$highlights = releaseNoteItemsForVersion($changelogPath, $version);
+
 $payload = [
   "product" => "webblocks-cms",
   "channel" => "stable",
-  "version" => $argv[1],
-  "minimum_client_version" => getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18",
-  "source_reference" => "v".$argv[1],
-  "artifact_filename" => basename($argv[2]),
-  "artifact_path" => $argv[2],
-  "checksum_sha256" => trim(file_get_contents($argv[2].".sha256")),
-  "release_notes" => "WebBlocks CMS ".$argv[1]." native update release.",
+  "version" => $version,
+  "minimum_client_version" => $minimumClientVersion,
+  "source_reference" => "v".$version,
+  "artifact_filename" => basename($archivePath),
+  "artifact_path" => $archivePath,
+  "checksum_sha256" => $checksum,
+  "release_notes" => "WebBlocks CMS ".$version.PHP_EOL.PHP_EOL."- ".implode(PHP_EOL."- ", $highlights),
   "details" => [
-    "title" => "WebBlocks CMS ".$argv[1],
-    "summary" => "Native update-server package release for WebBlocks CMS.",
-    "highlights" => ["Prepared locally through the native update-server publishing workflow."],
-    "compatibility_notes" => ["System Updates continues to consume update-server package metadata."],
-    "operator_notes" => ["Live installs update only through System Updates or supervised manual apply."],
-    "technical_notes" => ["Package artifact checksum is verified before publishing."],
+    "title" => "WebBlocks CMS ".$version,
+    "summary" => $highlights[0],
+    "highlights" => $highlights,
+    "compatibility_notes" => [],
+    "operator_notes" => [],
+    "technical_notes" => [
+      "Source reference: v".$version,
+      "Artifact checksum: ".$checksum,
+      "Minimum update client version: ".$minimumClientVersion,
+    ],
   ],
 ];
-file_put_contents($argv[3], json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
-' "${VERSION}" "${ARCHIVE_PATH}" "${PAYLOAD_PATH}"
+file_put_contents($payloadPath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
+' "${VERSION}" "${ARCHIVE_PATH}" "${PAYLOAD_PATH}" "${CHANGELOG_PATH}"
 
 printf '[webblocks-release-prepare] Retained artifact root: %s\n' "${RELEASE_ROOT}"
 printf '[webblocks-release-prepare] Artifact: %s\n' "${ARCHIVE_PATH}"

@@ -39,11 +39,20 @@ class ReleasePackageBoundaryTest extends TestCase
 
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD "${PACKAGE_ROOT}"', $script);
     $this->assertStringContainsString('DOCS_SOURCE_ROOT="docs"', $script);
+    $this->assertStringContainsString('CHANGELOG_PATH="${ROOT_DIR}/CHANGELOG.md"', $script);
     $this->assertStringContainsString('mkdir -p "${PACKAGE_DIR}/docs"', $script);
     $this->assertStringContainsString('cp "${doc_file}" "${PACKAGE_DIR}/docs/$(basename "${doc_file}")"', $script);
     $this->assertStringContainsString('cd "${PACKAGE_DIR}"', $script);
     $this->assertStringContainsString('zip -qr "${ARCHIVE_PATH}" .', $script);
-    $this->assertStringContainsString('"minimum_client_version" => getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18"', $script);
+    $this->assertStringContainsString('$minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18"', $script);
+    $this->assertStringContainsString('"minimum_client_version" => $minimumClientVersion', $script);
+    $this->assertStringContainsString('releaseNoteItemsForVersion($changelogPath, $version)', $script);
+    $this->assertStringContainsString('"release_notes" => "WebBlocks CMS ".$version.PHP_EOL.PHP_EOL."- ".implode(PHP_EOL."- ", $highlights)', $script);
+    $this->assertStringContainsString('"summary" => $highlights[0]', $script);
+    $this->assertStringContainsString('"highlights" => $highlights', $script);
+    $this->assertStringContainsString('"Source reference: v".$version', $script);
+    $this->assertStringNotContainsString('Prepared locally through the native update-server publishing workflow.', $script);
+    $this->assertStringNotContainsString('Native update-server package release for WebBlocks CMS.', $script);
     $this->assertStringNotContainsString('gh release', $script);
     $this->assertStringNotContainsString('github.com', $script);
   }
