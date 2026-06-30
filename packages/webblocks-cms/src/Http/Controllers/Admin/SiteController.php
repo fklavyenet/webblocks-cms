@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Sites\SiteAssetStore;
 use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use WebBlocks\Cms\Support\Sites\SiteDeleteService;
@@ -27,6 +28,7 @@ class SiteController extends Controller
     private readonly SiteCloneService $siteCloneService,
     private readonly SiteDeleteService $siteDeleteService,
     private readonly AdminAuthorization $authorization,
+    private readonly SiteAssetStore $siteAssetStore,
   ) {}
 
   public function index(): View
@@ -124,7 +126,7 @@ class SiteController extends Controller
     $canManageDomains = request()->user()?->isSuperAdmin() ?? false;
 
     $requestedTab = trim((string) request()->query('tab', old('_site_tab', 'site')));
-    $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme'], true)
+    $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme', 'assets'], true)
           ? $requestedTab
           : 'site';
     $requestedModal = trim((string) request()->query('modal', old('_site_variable_modal', '')));
@@ -155,6 +157,9 @@ class SiteController extends Controller
         'selectedVariable' => $selectedVariable,
         'closeUrl' => route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']),
       ],
+      'siteAssets' => collect(SiteAssetStore::TYPES)
+        ->map(fn (string $type) => $this->siteAssetStore->read($site, $type))
+        ->values(),
     ]);
   }
 

@@ -6,10 +6,12 @@ use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Http\Controllers\Admin\LocaleController as PackageLocaleController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteAssetController as PackageSiteAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteController as PackageSiteController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteDomainController as PackageSiteDomainController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController as PackageSiteVariableController;
@@ -35,6 +37,7 @@ class SiteLocaleManagementTest extends TestCase
   {
     $this->assertRouteUsesPackageController('admin.sites.index', PackageSiteController::class);
     $this->assertRouteUsesPackageController('admin.sites.edit', PackageSiteController::class);
+    $this->assertRouteUsesPackageController('admin.sites.assets.update', PackageSiteAssetController::class);
     $this->assertRouteUsesPackageController('admin.sites.domains.index', PackageSiteDomainController::class);
     $this->assertRouteUsesPackageController('admin.sites.variables.store', PackageSiteVariableController::class);
     $this->assertRouteUsesPackageController('admin.locales.index', PackageLocaleController::class);
@@ -410,10 +413,77 @@ class SiteLocaleManagementTest extends TestCase
     $response->assertSee('Contact');
     $response->assertSee('Variables');
     $response->assertSee('Theme');
+    $response->assertSee('Assets');
     $response->assertDontSee('<strong>Domains</strong>', false);
     $response->assertSee('Public display name');
     $response->assertSee('Default meta title');
     $response->assertSee('Default recipient email');
+  }
+
+  #[Test]
+  public function site_assets_tab_exposes_canonical_site_css_and_js_files(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+    $response = $this->actingAs($user)->get(route('admin.sites.edit', ['site' => $site, 'tab' => 'assets']));
+
+    $response->assertOk();
+    $response->assertSee('<strong>Site Assets</strong>', false);
+    $response->assertSee('/site/'.$site->handle.'/css/site.css');
+    $response->assertSee('/site/'.$site->handle.'/js/site.js');
+    $response->assertSee('form="site-asset-css-form"', false);
+    $response->assertSee('form="site-asset-js-form"', false);
+    $response->assertSee(route('admin.sites.assets.update', ['site' => $site, 'type' => 'css']), false);
+    $response->assertSee(route('admin.sites.assets.update', ['site' => $site, 'type' => 'js']), false);
+  }
+
+  #[Test]
+  public function site_asset_save_updates_only_the_canonical_file_and_snapshots_previous_contents(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $initialContents = 'body { color: red; }';
+    $updatedContents = 'body { color: green; }';
+    $this->putTrackedPublicSiteFile('site/'.$site->handle.'/css/site.css', $initialContents);
+
+    $response = $this->actingAs($user)->put(route('admin.sites.assets.update', ['site' => $site, 'type' => 'css']), [
+      'contents' => $updatedContents,
+      'expected_checksum' => hash('sha256', $initialContents),
+    ]);
+
+    $response->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'assets']));
+    $response->assertSessionHas('status', 'CSS site asset saved.');
+    $this->assertSame($updatedContents, file_get_contents(public_path('site/'.$site->handle.'/css/site.css')));
+
+    $revisionFiles = glob(storage_path('app/cms/site-assets/'.$site->id.'/revisions/css/*.css')) ?: [];
+
+    $this->assertCount(1, $revisionFiles);
+    $this->assertSame($initialContents, file_get_contents($revisionFiles[0]));
+
+    File::deleteDirectory(storage_path('app/cms/site-assets/'.$site->id));
+  }
+
+  #[Test]
+  public function site_asset_save_rejects_stale_checksum_without_overwriting_current_file(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $currentContents = 'body { color: blue; }';
+    $this->putTrackedPublicSiteFile('site/'.$site->handle.'/css/site.css', $currentContents);
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.sites.edit', ['site' => $site, 'tab' => 'assets']))
+      ->put(route('admin.sites.assets.update', ['site' => $site, 'type' => 'css']), [
+        'contents' => 'body { color: black; }',
+        'expected_checksum' => hash('sha256', 'older contents'),
+      ]);
+
+    $response
+      ->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'assets']))
+      ->assertSessionHasErrors('contents');
+
+    $this->assertSame($currentContents, file_get_contents(public_path('site/'.$site->handle.'/css/site.css')));
   }
 
   #[Test]

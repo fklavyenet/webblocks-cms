@@ -27,6 +27,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PluginCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\ProfileController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotRevisionController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteDomainController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteExportController;
@@ -165,6 +166,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::post('/pages/{page}/assets/{type}', [PageAssetController::class, 'store'])->name('pages.assets.store');
     Route::put('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'update'])->name('pages.assets.update');
     Route::delete('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'destroy'])->name('pages.assets.destroy');
+    Route::put('/sites/{site}/assets/{type}', [SiteAssetController::class, 'update'])->name('sites.assets.update');
     Route::get('/pages/{page}/duplicate', [PageDuplicateController::class, 'create'])->name('pages.duplicate.create');
     Route::post('/pages/{page}/duplicate', [PageDuplicateController::class, 'store'])->name('pages.duplicate.store');
     Route::get('/pages/{page}/move-site', [PageSiteMoveController::class, 'create'])->name('pages.move-site.create');

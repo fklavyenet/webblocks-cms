@@ -63,6 +63,8 @@ When Site Export / Import runs with file inclusion enabled, these two canonical 
 
 The canonical override convention requires a site handle segment. Handle-less site override paths are not canonical and should not be used for new runtime behavior.
 
+`Sites -> Edit Site -> Assets` manages the two canonical site-level override files directly from the CMS admin. This is a physical-file workflow only: the public renderer still loads `/site/{site_handle}/css/site.css` and `/site/{site_handle}/js/site.js` when those files exist, and CMS does not provide a database fallback route for missing files. The admin screen creates the missing canonical directories on first save, compares a submitted checksum against the current file before writing, rejects stale edits instead of overwriting concurrent changes, and stores the previous file contents under `storage/app/cms/site-assets/{site_id}/revisions/{css|js}/` before replacing an existing file.
+
 CMS-owned guest and email support styles now live under `public/cms/css/guest.css` and `public/cms/css/email.css`.
 
 CMS-owned product brand assets such as default CMS favicons and compatibility mark files ship from package `public/cms/brand/` and are installed, published, or synced into install-root `public/cms/brand/`. These are product identity assets for the CMS shell, not site-specific Media Library branding and not `public/site/...` overrides. The canonical product brand set is `logo-mark.svg`, `logo-mark-dark.svg`, `logo-mark-on-accent.svg`, `favicon.svg`, `favicon-32x32.png`, `favicon-16x16.png`, and `apple-touch-icon.png`. Package-owned CMS auth screens and the admin sidebar render the mark through an inline SVG component that inherits `currentColor`.

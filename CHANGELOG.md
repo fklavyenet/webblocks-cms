@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.191
+
+- Bumped CMS to `1.32.191`.
+- Add `Sites -> Edit Site -> Assets` for managing canonical physical `site.css` and `site.js` override files without SSH, including checksum conflict protection and pre-overwrite revision snapshots.
+
 ## 1.32.190
 
 - Bumped CMS to `1.32.190`.

@@ -3,7 +3,7 @@
 @php
   $canManageSiteSettings = $canManageSiteSettings ?? true;
   $canManageDomains = $canManageDomains ?? false;
-  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme'], true)
+  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme', 'assets'], true)
     ? ($siteTab ?? old('_site_tab', 'site'))
     : 'site';
   $isReadOnly = ! $canManageSiteSettings;
@@ -87,6 +87,7 @@
               'contact' => 'Contact',
               'variables' => 'Variables',
               'theme' => 'Theme',
+              'assets' => 'Assets',
             ] as $tabKey => $tabLabel)
               <a
                 href="{{ $tabUrl($tabKey) }}"
@@ -294,6 +295,14 @@
                 'selectedPublicThemePreset' => $selectedPublicThemePreset,
               ])
             </div>
+
+            <div class="wb-tabs-panel {{ $siteTab === 'assets' ? 'is-active' : '' }}">
+              @include('webblocks-cms::admin.sites.partials.assets-tab', [
+                'site' => $site,
+                'canManageSiteSettings' => $canManageSiteSettings,
+                'siteAssets' => $siteAssets ?? collect(),
+              ])
+            </div>
           </div>
         </div>
       </div>
@@ -316,5 +325,14 @@
       'canManageSiteSettings' => $canManageSiteSettings,
       'siteVariablesUi' => $siteVariablesUi,
     ])
+
+    @foreach (($siteAssets ?? collect()) as $asset)
+      <form id="site-asset-{{ $asset['type'] }}-form" method="POST" action="{{ route('admin.sites.assets.update', ['site' => $site, 'type' => $asset['type']]) }}">
+        @csrf
+        @method('PUT')
+        <input type="hidden" name="expected_checksum" value="{{ $asset['checksum'] }}">
+        <input type="hidden" name="_site_asset_type" value="{{ $asset['type'] }}">
+      </form>
+    @endforeach
   @endif
 @endsection
