@@ -39,10 +39,12 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('content.apply');
     $response->assertSee('navigation.write');
     $response->assertSee('shared-slots.write');
+    $response->assertSee('media.read');
+    $response->assertSee('media.write');
     $response->assertSee('content.publish');
     $response->assertSee('pages.delete');
     $response->assertSee('Local AI - Test MacBook');
-    $response->assertSee('content.read, content.validate, content.apply +2');
+    $response->assertSee('content.read, content.validate, content.apply +4');
     $response->assertSee($token->token_preview);
     $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
@@ -68,6 +70,8 @@ class CmsApiTokenManagementTest extends TestCase
     $this->assertMatchesRegularExpression('/value="content\.apply"[^>]*checked/s', $content);
     $this->assertMatchesRegularExpression('/value="navigation\.write"[^>]*checked/s', $content);
     $this->assertMatchesRegularExpression('/value="shared-slots\.write"[^>]*checked/s', $content);
+    $this->assertMatchesRegularExpression('/value="media\.read"[^>]*checked/s', $content);
+    $this->assertDoesNotMatchRegularExpression('/value="media\.write"[^>]*checked/s', $content);
     $this->assertDoesNotMatchRegularExpression('/value="content\.publish"[^>]*checked/s', $content);
     $this->assertDoesNotMatchRegularExpression('/value="pages\.delete"[^>]*checked/s', $content);
   }
@@ -197,6 +201,7 @@ class CmsApiTokenManagementTest extends TestCase
     $capabilities = [
       CmsApiTokenCapabilities::CONTENT_READ,
       CmsApiTokenCapabilities::CONTENT_VALIDATE,
+      CmsApiTokenCapabilities::MEDIA_WRITE,
       CmsApiTokenCapabilities::CONTENT_PUBLISH,
     ];
 
@@ -217,6 +222,7 @@ class CmsApiTokenManagementTest extends TestCase
       ->assertJsonPath('authenticated', true)
       ->assertJsonPath('token.capabilities', $capabilities)
       ->assertJsonPath('token.destructive_capabilities', [CmsApiTokenCapabilities::CONTENT_PUBLISH])
+      ->assertJsonPath('token.can.write_media_metadata', true)
       ->assertJsonMissingPath('token.token_hash')
       ->assertJsonMissingPath('token.token_preview');
   }

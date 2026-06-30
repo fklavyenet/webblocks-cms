@@ -96,6 +96,7 @@ class InternalContentResourceController extends Controller
         'content_validate' => '/webadmin/api/content/validate',
         'content_apply' => '/webadmin/api/content/apply',
         'media' => '/webadmin/api/media',
+        'media_update' => '/webadmin/api/media/{media}',
         'block_update' => '/webadmin/api/blocks/{block}',
         'page_publish' => '/webadmin/api/pages/{page}/publish',
         'page_owned_blocks_publish' => '/webadmin/api/pages/{page}/publish-page-owned-blocks',
@@ -192,6 +193,29 @@ class InternalContentResourceController extends Controller
         'media_discovery' => 'Use GET /webadmin/api/media?kind=image before assigning logo media. Do not invent public file paths or use HTML fallback blocks for native logo fields.',
         'topology_changes' => 'Use content/validate and content/apply for creating, replacing, nesting, or reordering blocks.',
       ],
+      'media_library' => [
+        'index_url' => '/webadmin/api/media',
+        'update_url_template' => '/webadmin/api/media/{media}',
+        'read_requires_capability' => 'media.read',
+        'read_transitional_capability' => 'content.read',
+        'write_requires_capability' => 'media.write',
+        'write_scope' => 'metadata-only',
+        'supported_update_fields' => [
+          'title',
+          'alt_text',
+          'caption',
+          'description',
+        ],
+        'unsupported_operations' => [
+          'upload files',
+          'delete media',
+          'replace binary files',
+          'move folders',
+          'change storage paths',
+          'change mime type, kind, visibility, size, or dimensions',
+          'fetch remote media',
+        ],
+      ],
       'published_page_staged_updates' => [
         'create_mode' => 'create_staged_update_for_published_page',
         'replace_mode' => 'replace_staged_page_update',
@@ -261,6 +285,7 @@ class InternalContentResourceController extends Controller
         'page_layouts' => '/webadmin/api/page-layouts',
         'block_types' => '/webadmin/api/block-types',
         'media' => '/webadmin/api/media',
+        'media_update' => '/webadmin/api/media/{media}',
         'block_update' => '/webadmin/api/blocks/{block}',
         'navigation_menus' => '/webadmin/api/navigation-menus',
         'shared_slots' => '/webadmin/api/shared-slots',
@@ -439,6 +464,10 @@ class InternalContentResourceController extends Controller
 
   public function media(Request $request): JsonResponse
   {
+    if (! $this->hasAnyCapability($request, [CmsApiTokenCapabilities::MEDIA_READ, CmsApiTokenCapabilities::CONTENT_READ])) {
+      return $this->capabilityError(CmsApiTokenCapabilities::MEDIA_READ, 'Reading Media Library records requires media.read.');
+    }
+
     $media = Media::query()
       ->when($request->filled('kind'), fn ($query) => $query->where('kind', (string) $request->query('kind')))
       ->when($request->boolean('image_only'), fn ($query) => $query->where('kind', Media::KIND_IMAGE))
@@ -461,6 +490,68 @@ class InternalContentResourceController extends Controller
       ->values();
 
     return $this->ok(['media' => $media]);
+  }
+
+  public function updateMedia(Request $request, Media $media): JsonResponse
+  {
+    $blockedFields = array_values(array_intersect(array_keys($request->all()), [
+      'id',
+      'folder_id',
+      'disk',
+      'path',
+      'filename',
+      'original_name',
+      'extension',
+      'mime_type',
+      'size',
+      'kind',
+      'visibility',
+      'width',
+      'height',
+      'duration',
+      'uploaded_by',
+      'remote_url',
+      'source_url',
+      'file',
+      'upload',
+      'delete',
+      'replace',
+    ]));
+
+    if ($blockedFields !== []) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'unsupported_media_update_fields',
+        'message' => 'Media API updates may only change safe descriptive metadata.',
+        'blocked_fields' => $blockedFields,
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => implode(',', $blockedFields),
+            'message' => 'Use the browser admin Media Library for file replacement, upload, delete, storage, folder, or binary changes.',
+          ],
+        ],
+      ], 422);
+    }
+
+    $allowedFields = ['title', 'alt_text', 'caption', 'description'];
+    $payload = [];
+
+    foreach ($allowedFields as $field) {
+      if ($request->has($field)) {
+        $payload[$field] = $this->normalizeNullableString($request->input($field), 2000);
+      }
+    }
+
+    if ($payload === []) {
+      return $this->validationError('media', 'Provide at least one safe media metadata field: title, alt_text, caption, or description.');
+    }
+
+    $media->fill($payload);
+    $media->save();
+    $media->refresh();
+
+    return $this->ok(['media' => $this->presenter->media($media)]);
   }
 
   public function updateBlock(Request $request, Block $block): JsonResponse
@@ -610,6 +701,53 @@ class InternalContentResourceController extends Controller
     $token = $request->attributes->get('cms_api_token');
 
     return $token instanceof CmsApiToken && $this->capabilities->has($token, $capability);
+  }
+
+  private function hasAnyCapability(Request $request, array $capabilities): bool
+  {
+    foreach ($capabilities as $capability) {
+      if ($this->hasCapability($request, $capability)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private function capabilityError(string $capability, string $message): JsonResponse
+  {
+    return response()->json([
+      'ok' => false,
+      'code' => 'missing_internal_api_capability',
+      'message' => $message,
+      'required_capability' => $capability,
+      'warnings' => [],
+      'errors' => [
+        [
+          'path' => 'Authorization',
+          'message' => $message,
+        ],
+      ],
+      'api_discovery_url' => '/webadmin/api',
+      'openapi_url' => '/webadmin/api/openapi.json',
+      'documentation_url' => '/docs/internal-content-api',
+      'example_url' => '/webadmin/api/examples',
+    ], 403);
+  }
+
+  private function normalizeNullableString(mixed $value, int $maxLength): ?string
+  {
+    if ($value === null) {
+      return null;
+    }
+
+    $value = trim((string) $value);
+
+    if ($value === '') {
+      return null;
+    }
+
+    return mb_substr($value, 0, $maxLength);
   }
 
   private function resolveLocale(Request $request): Locale

@@ -237,6 +237,8 @@ class InternalContentApiPresenter
       'visibility' => $media->visibility,
       'url' => $media->url(),
       'alt_text' => $media->alt_text,
+      'caption' => $media->caption,
+      'description' => $media->description,
       'width' => $media->width,
       'height' => $media->height,
       'meta_label' => $media->compactMetaLabel(),

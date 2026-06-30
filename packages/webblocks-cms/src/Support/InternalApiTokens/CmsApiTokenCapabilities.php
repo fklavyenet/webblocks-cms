@@ -20,6 +20,10 @@ class CmsApiTokenCapabilities
 
   public const SHARED_SLOTS_WRITE = 'shared-slots.write';
 
+  public const MEDIA_READ = 'media.read';
+
+  public const MEDIA_WRITE = 'media.write';
+
   public const SITE_SETTINGS_WRITE = 'site-settings.write';
 
   public const DEFAULT = [
@@ -28,7 +32,14 @@ class CmsApiTokenCapabilities
     self::CONTENT_APPLY,
     self::NAVIGATION_WRITE,
     self::SHARED_SLOTS_WRITE,
+    self::MEDIA_READ,
     self::SITE_SETTINGS_WRITE,
+  ];
+
+  public const ADVANCED = [
+    self::MEDIA_WRITE,
+    self::CONTENT_PUBLISH,
+    self::PAGES_DELETE,
   ];
 
   public const DESTRUCTIVE = [
@@ -42,7 +53,9 @@ class CmsApiTokenCapabilities
     self::CONTENT_APPLY,
     self::NAVIGATION_WRITE,
     self::SHARED_SLOTS_WRITE,
+    self::MEDIA_READ,
     self::SITE_SETTINGS_WRITE,
+    self::MEDIA_WRITE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
   ];
@@ -53,7 +66,9 @@ class CmsApiTokenCapabilities
     self::CONTENT_APPLY => 'Apply draft content plans',
     self::NAVIGATION_WRITE => 'Write navigation menu items',
     self::SHARED_SLOTS_WRITE => 'Write Shared Slots',
+    self::MEDIA_READ => 'Read Media Library records',
     self::SITE_SETTINGS_WRITE => 'Write safe site presentation settings',
+    self::MEDIA_WRITE => 'Write safe Media Library metadata',
     self::CONTENT_PUBLISH => 'Publish content',
     self::PAGES_DELETE => 'Delete pages',
   ];
@@ -99,6 +114,8 @@ class CmsApiTokenCapabilities
         'promote_staged_update' => $this->has($token, self::CONTENT_APPLY) && $this->has($token, self::CONTENT_PUBLISH),
         'publish_page' => $this->has($token, self::CONTENT_PUBLISH),
         'delete_page' => $this->has($token, self::PAGES_DELETE),
+        'read_media' => $this->has($token, self::MEDIA_READ) || $this->has($token, self::CONTENT_READ),
+        'write_media_metadata' => $this->has($token, self::MEDIA_WRITE),
         'write_site_presentation_settings' => $this->has($token, self::SITE_SETTINGS_WRITE),
       ],
     ];

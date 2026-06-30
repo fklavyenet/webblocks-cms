@@ -55,7 +55,10 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 ## Content Rules
 
 - Do not import or download media unless a later explicit contract supports it.
-- Use `GET /webadmin/api/media` only for existing CMS Media Library discovery. For existing `navbar-brand` or `sidebar-brand` logo changes, use `PATCH /webadmin/api/blocks/{block}` with `media_id`, safe settings, and translations instead of Trusted HTML, invented file paths, or static markup.
+- Use `GET /webadmin/api/media` only for existing CMS Media Library discovery. Prefer tokens with `media.read`; transitional installs may still allow `content.read` for read-only media discovery.
+- Use `PATCH /webadmin/api/media/{media}` only when discovered and authorized with `media.write`. The first supported write scope is metadata-only: `title`, `alt_text`, `caption`, and `description`.
+- Do not upload, delete, replace, move, or remotely fetch Media Library files unless a later explicit contract supports that exact operation.
+- For existing `navbar-brand` or `sidebar-brand` logo changes, use `PATCH /webadmin/api/blocks/{block}` with `media_id`, safe settings, and translations instead of Trusted HTML, invented file paths, or static markup.
 - Existing block updates require `content.apply`; Shared Slot source blocks additionally require `shared-slots.write`.
 - For contact pages, use native `contact_form` when discovered; do not use Trusted HTML, raw forms, or `mailto:` substitutes.
 - For icons and badges, use only active catalog-backed icon slugs and allowlisted badge fields discovered from block contracts.

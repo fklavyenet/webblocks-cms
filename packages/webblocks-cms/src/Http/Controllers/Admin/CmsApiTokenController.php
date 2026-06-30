@@ -44,7 +44,7 @@ class CmsApiTokenController extends Controller
       'totalCount' => $totalCount,
       'apiBaseUrl' => url('/webadmin/api'),
       'defaultCapabilities' => CmsApiTokenCapabilities::DEFAULT,
-      'advancedCapabilities' => CmsApiTokenCapabilities::DESTRUCTIVE,
+      'advancedCapabilities' => CmsApiTokenCapabilities::ADVANCED,
       'capabilityLabels' => CmsApiTokenCapabilities::LABELS,
       'capabilitiesPresenter' => app(CmsApiTokenCapabilities::class),
       'createdToken' => session('created_cms_api_token'),

@@ -114,14 +114,16 @@ Super admins choose token capabilities when creating a token from `System -> API
 - `content.apply`
 - `navigation.write`
 - `shared-slots.write`
+- `media.read`
 - `site-settings.write`
 
-Destructive and publish capabilities are separate advanced options and are not selected by default:
+Advanced capabilities are separate options and are not selected by default:
 
+- `media.write`
 - `content.publish`
 - `pages.delete`
 
-Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities.
+Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as content publish or page delete.
 
 ## API Model
 
@@ -225,6 +227,42 @@ Example:
   }
 }
 ```
+
+### Media Library API
+
+The Media Library API is intentionally split from broad content permissions so AI/operator tools can be granted media discovery or metadata cleanup without receiving unrelated write powers.
+
+Capabilities:
+
+- `media.read`: list and inspect existing CMS Media Library records.
+- `media.write`: update safe metadata on existing media records.
+
+Phase 1 scope:
+
+```text
+GET /webadmin/api/media
+PATCH /webadmin/api/media/{media}
+```
+
+`GET /webadmin/api/media` returns existing media records with safe fields such as id, kind, title, filename, original name, mime type, visibility, public URL when available, alt text, dimensions, previewability, and compact metadata label. It requires `media.read`. During the transition from older API tokens, `content.read` may also be accepted for read-only media discovery so existing page-building integrations keep working.
+
+`PATCH /webadmin/api/media/{media}` requires `media.write` and updates only safe descriptive metadata:
+
+- `title`
+- `alt_text`
+- `caption`
+- `description`
+
+Phase 1 explicitly does not support:
+
+- uploading new files
+- deleting media
+- replacing binary files
+- moving media between folders
+- changing disk, path, filename, mime type, kind, visibility, size, dimensions, uploader, or usage relationships
+- fetching or importing remote media URLs
+
+This boundary lets AI/operator tools improve accessibility and editorial quality, for example by adding missing alt text, without giving the same token destructive Media Library powers.
 
 ### Existing Draft Page Slot Replacement
 

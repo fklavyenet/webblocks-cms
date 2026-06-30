@@ -98,6 +98,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'storeBlock'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.blocks.store');
     Route::post('/shared-slots/{sharedSlot}/publish-blocks', [InternalSharedSlotController::class, 'publishBlocks'])->middleware(['internal-api.capability:shared-slots.write', 'internal-api.capability:content.publish'])->name('shared-slots.blocks.publish');
     Route::get('/media', [InternalContentResourceController::class, 'media'])->name('media.index');
+    Route::patch('/media/{media}', [InternalContentResourceController::class, 'updateMedia'])->middleware('internal-api.capability:media.write')->name('media.update');
     Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
     Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');
     Route::patch('/blocks/{block}', [InternalContentResourceController::class, 'updateBlock'])->middleware('internal-api.capability:content.apply')->name('blocks.update');

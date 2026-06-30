@@ -87,7 +87,10 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
       ->assertJsonPath('_links.media', '/webadmin/api/media')
+      ->assertJsonPath('_links.media_update', '/webadmin/api/media/{media}')
       ->assertJsonPath('_links.block_update', '/webadmin/api/blocks/{block}')
+      ->assertJsonPath('token.can.read_media', true)
+      ->assertJsonPath('token.can.write_media_metadata', false)
       ->assertJsonPath('token.can.promote_staged_update', false)
       ->assertJsonPath('workflows.published_page_staged_update.available.promote', false)
       ->assertJsonPath('workflows.published_page_staged_update.do_not_use.0', 'POST /webadmin/api/pages/{staged_page}/publish')
@@ -111,6 +114,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./content/apply.post.x-supported-modes.4', 'promote_staged_page_update')
       ->assertJsonPath('paths./content/apply.post.x-mode-capabilities.promote_staged_page_update', 'content.publish plus content.apply')
       ->assertJsonPath('paths./media.get.summary', 'List Media items for API-safe media assignment')
+      ->assertJsonPath('paths./media/{media}.patch.summary', 'Update safe Media Library metadata')
+      ->assertJsonPath('paths./media/{media}.patch.x-required-capability', CmsApiTokenCapabilities::MEDIA_WRITE)
       ->assertJsonPath('paths./blocks/{block}.patch.summary', 'Update safe fields on an existing structured block');
 
     $guide = $this->withInternalToken()
@@ -713,6 +718,18 @@ class InternalContentApiTest extends TestCase
       'slot_name' => 'header',
       'is_active' => true,
     ]);
+    $media = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/logo.png',
+      'filename' => 'logo.png',
+      'original_name' => 'logo.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Logo',
+    ]);
 
     foreach ([
       '/webadmin/api/navigation-menus',
@@ -747,6 +764,18 @@ class InternalContentApiTest extends TestCase
       'slot_name' => 'header',
       'is_active' => true,
     ]);
+    $media = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/logo.png',
+      'filename' => 'logo.png',
+      'original_name' => 'logo.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Logo',
+    ]);
 
     foreach ([
       '/webadmin/api/navigation-menus' => CmsApiTokenCapabilities::NAVIGATION_WRITE,
@@ -757,9 +786,10 @@ class InternalContentApiTest extends TestCase
       '/webadmin/api/pages/'.$page->id.'/slots/header/shared-slot' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
       '/webadmin/api/sites/'.$site->id.'/public-theme' => CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
       '/webadmin/api/pages/'.$page->id.'/sync-layout-slots' => CmsApiTokenCapabilities::CONTENT_APPLY,
+      '/webadmin/api/media/'.$media->id => CmsApiTokenCapabilities::MEDIA_WRITE,
     ] as $uri => $capability) {
       $this->withInternalToken()
-        ->postJson($uri, [])
+        ->json(str_contains($uri, '/media/') ? 'PATCH' : 'POST', $uri, [])
         ->assertForbidden()
         ->assertHeader('content-type', 'application/json')
         ->assertJsonPath('code', 'missing_internal_api_capability')
@@ -1757,6 +1787,78 @@ class InternalContentApiTest extends TestCase
       'title' => 'WebBlocks CMS',
       'subtitle' => 'Composable content operations',
     ]);
+  }
+
+  #[Test]
+  public function media_api_uses_media_capabilities_and_updates_safe_metadata_only(): void
+  {
+    $media = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/cms-logo.png',
+      'filename' => 'cms-logo.png',
+      'original_name' => 'cms-logo.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Old title',
+      'alt_text' => null,
+      'caption' => null,
+      'description' => null,
+      'width' => 64,
+      'height' => 64,
+    ]);
+
+    $this->createInternalApiToken('media-read-token', [CmsApiTokenCapabilities::MEDIA_READ]);
+    $this->withHeader('Authorization', 'Bearer media-read-token')
+      ->getJson('/webadmin/api/media?kind=image&search=cms')
+      ->assertOk()
+      ->assertJsonPath('media.0.id', $media->id)
+      ->assertJsonPath('media.0.title', 'Old title');
+
+    $this->createInternalApiToken('content-read-token', [CmsApiTokenCapabilities::CONTENT_READ]);
+    $this->withHeader('Authorization', 'Bearer content-read-token')
+      ->getJson('/webadmin/api/media?kind=image&search=cms')
+      ->assertOk()
+      ->assertJsonPath('media.0.id', $media->id);
+
+    $this->createInternalApiToken('validate-token', [CmsApiTokenCapabilities::CONTENT_VALIDATE]);
+    $this->withHeader('Authorization', 'Bearer validate-token')
+      ->getJson('/webadmin/api/media?kind=image&search=cms')
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::MEDIA_READ);
+
+    $this->createInternalApiToken('media-write-token', [CmsApiTokenCapabilities::MEDIA_WRITE]);
+    $this->withHeader('Authorization', 'Bearer media-write-token')
+      ->patchJson('/webadmin/api/media/'.$media->id, [
+        'title' => 'WebBlocks CMS logo',
+        'alt_text' => 'WebBlocks CMS mark',
+        'caption' => 'CMS product identity',
+        'description' => 'Square logo used by the CMS homepage brand block.',
+      ])
+      ->assertOk()
+      ->assertJsonPath('media.id', $media->id)
+      ->assertJsonPath('media.title', 'WebBlocks CMS logo')
+      ->assertJsonPath('media.alt_text', 'WebBlocks CMS mark');
+
+    $this->assertDatabaseHas('media', [
+      'id' => $media->id,
+      'title' => 'WebBlocks CMS logo',
+      'alt_text' => 'WebBlocks CMS mark',
+      'caption' => 'CMS product identity',
+      'description' => 'Square logo used by the CMS homepage brand block.',
+      'path' => 'media/cms-logo.png',
+      'kind' => Media::KIND_IMAGE,
+    ]);
+
+    $this->withHeader('Authorization', 'Bearer media-write-token')
+      ->patchJson('/webadmin/api/media/'.$media->id, [
+        'path' => 'media/replaced.png',
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'unsupported_media_update_fields')
+      ->assertJsonPath('blocked_fields.0', 'path');
   }
 
   #[Test]
