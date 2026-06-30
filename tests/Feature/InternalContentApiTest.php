@@ -19,6 +19,7 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
@@ -85,6 +86,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.content_contract', '/webadmin/api/content-contract')
       ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonPath('_links.media', '/webadmin/api/media')
+      ->assertJsonPath('_links.block_update', '/webadmin/api/blocks/{block}')
       ->assertJsonPath('token.can.promote_staged_update', false)
       ->assertJsonPath('workflows.published_page_staged_update.available.promote', false)
       ->assertJsonPath('workflows.published_page_staged_update.do_not_use.0', 'POST /webadmin/api/pages/{staged_page}/publish')
@@ -106,7 +109,9 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./content/validate.post.summary', 'Validate content plan')
       ->assertJsonPath('paths./content/apply.post.x-supported-modes.2', 'create_staged_update_for_published_page')
       ->assertJsonPath('paths./content/apply.post.x-supported-modes.4', 'promote_staged_page_update')
-      ->assertJsonPath('paths./content/apply.post.x-mode-capabilities.promote_staged_page_update', 'content.publish plus content.apply');
+      ->assertJsonPath('paths./content/apply.post.x-mode-capabilities.promote_staged_page_update', 'content.publish plus content.apply')
+      ->assertJsonPath('paths./media.get.summary', 'List Media items for API-safe media assignment')
+      ->assertJsonPath('paths./blocks/{block}.patch.summary', 'Update safe fields on an existing structured block');
 
     $guide = $this->withInternalToken()
       ->getJson('/webadmin/api/ai-guide')
@@ -1645,6 +1650,216 @@ class InternalContentApiTest extends TestCase
 
     $this->assertSame('Reusable header copy', $block->textTranslations()->firstOrFail()->content);
     $this->assertDatabaseHas('shared_slot_blocks', ['shared_slot_id' => $sharedSlotId, 'block_id' => $block->id]);
+  }
+
+  #[Test]
+  public function valid_token_can_discover_media_and_update_shared_slot_brand_logo_block(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $locale = $this->defaultLocale();
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'header')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+    $logo = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/cms-logo.png',
+      'filename' => 'cms-logo.png',
+      'original_name' => 'cms-logo.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'WebBlocks CMS logo',
+      'alt_text' => 'WebBlocks CMS',
+      'width' => 120,
+      'height' => 120,
+    ]);
+    Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/manual.pdf',
+      'filename' => 'manual.pdf',
+      'original_name' => 'manual.pdf',
+      'extension' => 'pdf',
+      'mime_type' => 'application/pdf',
+      'size' => 2048,
+      'kind' => Media::KIND_DOCUMENT,
+      'visibility' => 'public',
+      'title' => 'Manual',
+    ]);
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $site->id,
+      'name' => 'Site Header',
+      'handle' => 'site-header',
+      'slot_name' => 'header',
+      'is_active' => true,
+    ]);
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Shared Slot Source: Site Header',
+      'slug' => 'shared-slot-site-header',
+      'page_type' => Page::TYPE_SHARED_SLOT_SOURCE,
+      'status' => Page::STATUS_DRAFT,
+      'settings' => [
+        'shared_slot_id' => $sharedSlot->id,
+        'shared_slot_handle' => $sharedSlot->handle,
+      ],
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'header',
+      'type' => 'navbar-brand',
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+    SharedSlotBlock::query()->create([
+      'shared_slot_id' => $sharedSlot->id,
+      'block_id' => $block->id,
+      'sort_order' => 0,
+    ]);
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/media?kind=image&search=logo')
+      ->assertOk()
+      ->assertJsonPath('media.0.id', $logo->id)
+      ->assertJsonPath('media.0.kind', Media::KIND_IMAGE)
+      ->assertJsonMissing(['filename' => 'manual.pdf']);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'locale' => $locale->code,
+        'media_id' => $logo->id,
+        'settings' => [
+          'url' => '/',
+          'target' => '_self',
+          'aria_label' => 'WebBlocks CMS home',
+        ],
+        'translations' => [
+          'title' => 'WebBlocks CMS',
+          'subtitle' => 'Composable content operations',
+        ],
+      ])
+      ->assertOk()
+      ->assertJsonPath('block.id', $block->id)
+      ->assertJsonPath('block.media.id', $logo->id)
+      ->assertJsonPath('block.settings.aria_label', 'WebBlocks CMS home')
+      ->assertJsonPath('shared_slot.handle', 'site-header');
+
+    $this->assertDatabaseHas('blocks', [
+      'id' => $block->id,
+      'media_id' => $logo->id,
+    ]);
+    $this->assertDatabaseHas('block_text_translations', [
+      'block_id' => $block->id,
+      'locale_id' => $locale->id,
+      'title' => 'WebBlocks CMS',
+      'subtitle' => 'Composable content operations',
+    ]);
+  }
+
+  #[Test]
+  public function shared_slot_existing_block_updates_require_shared_slot_write_capability(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_APPLY]);
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'header')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $site->id,
+      'name' => 'Site Header',
+      'handle' => 'site-header',
+      'slot_name' => 'header',
+      'is_active' => true,
+    ]);
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Shared Slot Source: Site Header',
+      'slug' => 'shared-slot-site-header',
+      'page_type' => Page::TYPE_SHARED_SLOT_SOURCE,
+      'status' => Page::STATUS_DRAFT,
+      'settings' => ['shared_slot_id' => $sharedSlot->id],
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'header',
+      'type' => 'navbar-brand',
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+    SharedSlotBlock::query()->create([
+      'shared_slot_id' => $sharedSlot->id,
+      'block_id' => $block->id,
+      'sort_order' => 0,
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'translations' => ['title' => 'WebBlocks CMS'],
+      ])
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::SHARED_SLOTS_WRITE);
+  }
+
+  #[Test]
+  public function existing_block_update_rejects_topology_fields_and_non_image_brand_media(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'header')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+    $document = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/manual.pdf',
+      'filename' => 'manual.pdf',
+      'original_name' => 'manual.pdf',
+      'extension' => 'pdf',
+      'mime_type' => 'application/pdf',
+      'size' => 2048,
+      'kind' => Media::KIND_DOCUMENT,
+      'visibility' => 'public',
+      'title' => 'Manual',
+    ]);
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Home',
+      'slug' => 'home',
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'header',
+      'type' => 'navbar-brand',
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'parent_id' => 123,
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'unsupported_existing_block_update_fields')
+      ->assertJsonPath('blocked_fields.0', 'parent_id');
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'media_id' => $document->id,
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('message', 'Brand logo media must be an image from Media.');
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'settings' => ['url' => 'javascript:alert(1)'],
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'unsafe_url');
   }
 
   #[Test]

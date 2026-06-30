@@ -46,7 +46,7 @@ API discovery starts at:
 GET /webadmin/api
 ```
 
-Unauthenticated callers receive only public-safe bootstrap JSON. Authenticated callers receive safe product version metadata plus links to OpenAPI, the AI guide, content contract, examples, content validate/apply, pages, navigation, and Shared Slots. External AI/operator tools should start from this live discovery response instead of reading the CMS repository or local package docs.
+Unauthenticated callers receive only public-safe bootstrap JSON. Authenticated callers receive safe product version metadata plus links to OpenAPI, the AI guide, content contract, examples, content validate/apply, pages, blocks, media, navigation, and Shared Slots. External AI/operator tools should start from this live discovery response instead of reading the CMS repository or local package docs.
 
 Plan-based content operations use:
 
@@ -153,8 +153,10 @@ GET /webadmin/api/pages/{page}
 POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
+GET /webadmin/api/media
 GET /webadmin/api/blocks
 GET /webadmin/api/blocks/{block}
+PATCH /webadmin/api/blocks/{block}
 GET /webadmin/api/navigation-menus
 GET /webadmin/api/navigation-menus/{navigationMenu}
 POST /webadmin/api/navigation-menus
@@ -182,6 +184,47 @@ Both modes are needed:
 
 - the Resource API exposes the existing CMS content model and contracts to internal tools
 - the Content Validate / Apply API avoids partial writes during larger page builds
+
+### Existing Block Native Field Updates
+
+Use content validate/apply for creating, replacing, nesting, or reordering block trees. Use the existing-block update endpoint only when the block already exists and the change maps to a safe native field:
+
+```text
+GET /webadmin/api/media?kind=image
+PATCH /webadmin/api/blocks/{block}
+```
+
+The endpoint requires `content.apply`. If the block is part of a Shared Slot source tree, the token must also have `shared-slots.write`.
+
+Supported fields are intentionally narrow:
+
+- `media_id` or `asset_id` for `navbar-brand` and `sidebar-brand` logo media
+- `settings.url`
+- `settings.target`
+- `settings.aria_label`
+- text translations such as `title` and `subtitle`
+- `url`
+- `variant`
+
+The endpoint rejects topology and database implementation fields such as `parent_id`, `slot_type_id`, `block_type_id`, `type`, `sort_order`, and `children`. It also rejects raw HTML, remote media URLs, and source URLs. Existing media can be selected from the CMS Media Library, but this API does not import or download new remote media.
+
+Example:
+
+```json
+{
+  "locale": "en",
+  "media_id": 12,
+  "settings": {
+    "url": "/",
+    "target": "_self",
+    "aria_label": "WebBlocks CMS home"
+  },
+  "translations": {
+    "title": "WebBlocks CMS",
+    "subtitle": "Composable content operations"
+  }
+}
+```
 
 ### Existing Draft Page Slot Replacement
 

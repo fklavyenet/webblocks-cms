@@ -5,12 +5,17 @@ namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
@@ -90,6 +95,8 @@ class InternalContentResourceController extends Controller
         'prefix' => '/webadmin/api',
         'content_validate' => '/webadmin/api/content/validate',
         'content_apply' => '/webadmin/api/content/apply',
+        'media' => '/webadmin/api/media',
+        'block_update' => '/webadmin/api/blocks/{block}',
         'page_publish' => '/webadmin/api/pages/{page}/publish',
         'page_owned_blocks_publish' => '/webadmin/api/pages/{page}/publish-page-owned-blocks',
         'preview_url_template' => '/webadmin/pages/{page}/preview',
@@ -154,6 +161,36 @@ class InternalContentResourceController extends Controller
         'shared_slot_cascade' => 'unsupported',
         'shared_slot_content' => 'excluded and must be reviewed separately',
         'staged_update_pages' => 'rejected; use content/apply mode promote_staged_page_update',
+      ],
+      'existing_block_updates' => [
+        'update_url_template' => '/webadmin/api/blocks/{block}',
+        'method' => 'PATCH',
+        'requires_capability' => 'content.apply',
+        'shared_slot_source_blocks_require_capability' => 'shared-slots.write',
+        'purpose' => 'Update safe native fields on an existing structured block without changing the block tree.',
+        'supported_native_fields' => [
+          'media_id or asset_id for navbar-brand/sidebar-brand logo media',
+          'settings.url',
+          'settings.target',
+          'settings.aria_label',
+          'translations.title',
+          'translations.subtitle',
+          'url',
+          'variant',
+        ],
+        'rejected_fields' => [
+          'parent_id',
+          'slot_type_id',
+          'block_type_id',
+          'type',
+          'sort_order',
+          'children',
+          'html',
+          'remote_url',
+          'source_url',
+        ],
+        'media_discovery' => 'Use GET /webadmin/api/media?kind=image before assigning logo media. Do not invent public file paths or use HTML fallback blocks for native logo fields.',
+        'topology_changes' => 'Use content/validate and content/apply for creating, replacing, nesting, or reordering blocks.',
       ],
       'published_page_staged_updates' => [
         'create_mode' => 'create_staged_update_for_published_page',
@@ -223,6 +260,8 @@ class InternalContentResourceController extends Controller
         'locales' => '/webadmin/api/locales',
         'page_layouts' => '/webadmin/api/page-layouts',
         'block_types' => '/webadmin/api/block-types',
+        'media' => '/webadmin/api/media',
+        'block_update' => '/webadmin/api/blocks/{block}',
         'navigation_menus' => '/webadmin/api/navigation-menus',
         'shared_slots' => '/webadmin/api/shared-slots',
         'shared_slot_blocks_publish' => '/webadmin/api/shared-slots/{sharedSlot}/publish-blocks',
@@ -365,7 +404,7 @@ class InternalContentResourceController extends Controller
   public function blocks(Request $request): JsonResponse
   {
     $blocks = Block::query()
-      ->with(['blockType', 'slotType', 'textTranslations', 'buttonTranslations', 'imageTranslations'])
+      ->with(['blockType', 'slotType', 'media', 'textTranslations', 'buttonTranslations', 'imageTranslations'])
       ->when($request->filled('page'), fn ($query) => $query->where('page_id', (int) $request->query('page')))
       ->whereNull('parent_id')
       ->orderBy('sort_order')
@@ -383,17 +422,311 @@ class InternalContentResourceController extends Controller
     $block->load([
       'blockType',
       'slotType',
+      'media',
       'textTranslations',
       'buttonTranslations',
       'imageTranslations',
       'children.blockType',
       'children.slotType',
+      'children.media',
       'children.textTranslations',
       'children.buttonTranslations',
       'children.imageTranslations',
     ]);
 
     return $this->ok(['block' => $this->presenter->block($block)]);
+  }
+
+  public function media(Request $request): JsonResponse
+  {
+    $media = Media::query()
+      ->when($request->filled('kind'), fn ($query) => $query->where('kind', (string) $request->query('kind')))
+      ->when($request->boolean('image_only'), fn ($query) => $query->where('kind', Media::KIND_IMAGE))
+      ->when($request->filled('search'), function ($query) use ($request): void {
+        $search = trim((string) $request->query('search'));
+
+        $query->where(function ($searchQuery) use ($search): void {
+          $searchQuery
+            ->where('title', 'like', '%'.$search.'%')
+            ->orWhere('filename', 'like', '%'.$search.'%')
+            ->orWhere('original_name', 'like', '%'.$search.'%')
+            ->orWhere('alt_text', 'like', '%'.$search.'%');
+        });
+      })
+      ->orderByDesc('created_at')
+      ->orderByDesc('id')
+      ->limit(min(max((int) $request->query('limit', 50), 1), 100))
+      ->get()
+      ->map(fn (Media $media) => $this->presenter->media($media))
+      ->values();
+
+    return $this->ok(['media' => $media]);
+  }
+
+  public function updateBlock(Request $request, Block $block): JsonResponse
+  {
+    $blockedFields = array_values(array_intersect(array_keys($request->all()), [
+      'id',
+      'page_id',
+      'parent_id',
+      'slot',
+      'slot_type_id',
+      'block_type_id',
+      'type',
+      'sort_order',
+      'children',
+      'html',
+      'raw_html',
+      'remote_url',
+      'source_url',
+    ]));
+
+    if ($blockedFields !== []) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'unsupported_existing_block_update_fields',
+        'message' => 'Existing block updates may only change safe content fields such as settings, translations, url, variant, and supported media_id.',
+        'blocked_fields' => $blockedFields,
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => implode(',', $blockedFields),
+            'message' => 'Use content/apply for block tree topology changes.',
+          ],
+        ],
+      ], 422);
+    }
+
+    $sharedSlotBlock = SharedSlotBlock::query()
+      ->with('sharedSlot')
+      ->where('block_id', $block->id)
+      ->first();
+
+    if ($sharedSlotBlock && ! $this->hasCapability($request, CmsApiTokenCapabilities::SHARED_SLOTS_WRITE)) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'missing_internal_api_capability',
+        'message' => 'Updating a Shared Slot source block requires shared-slots.write.',
+        'required_capability' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => 'Authorization',
+            'message' => 'The API token does not have the required capability for Shared Slot content.',
+          ],
+        ],
+      ], 403);
+    }
+
+    $block->loadMissing(['blockType', 'textTranslations']);
+    $type = (string) $block->typeSlug();
+    $mediaId = $request->has('media_id') ? $request->input('media_id') : $request->input('asset_id');
+    $mediaChanged = $request->has('media_id') || $request->has('asset_id');
+
+    if ($mediaChanged) {
+      $media = $mediaId ? Media::query()->find((int) $mediaId) : null;
+
+      if ($mediaId && ! $media) {
+        return $this->validationError('media_id', 'The selected media item does not exist.');
+      }
+
+      if (! in_array($type, ['navbar-brand', 'sidebar-brand'], true)) {
+        return $this->validationError('media_id', 'This existing block update endpoint currently supports direct media assignment only for brand logo blocks.');
+      }
+
+      if ($media && ! $media->isImage()) {
+        return $this->validationError('media_id', 'Brand logo media must be an image from Media.');
+      }
+    }
+
+    $locale = $this->resolveLocale($request);
+    $translations = $request->input('translations', []);
+
+    if ($translations !== [] && ! is_array($translations)) {
+      return $this->validationError('translations', 'Translations must be an object.');
+    }
+
+    $textTranslations = $this->normalizeTextTranslations($translations);
+    $settings = $this->mergeSettings($block, $request);
+
+    DB::transaction(function () use ($block, $request, $mediaChanged, $mediaId, $settings, $textTranslations, $locale): void {
+      $updates = [];
+
+      if ($mediaChanged) {
+        $updates['media_id'] = $mediaId ? (int) $mediaId : null;
+      }
+
+      if ($request->has('url')) {
+        $updates['url'] = $this->safeUrl($request->input('url'));
+      }
+
+      if ($request->has('variant')) {
+        $updates['variant'] = trim((string) $request->input('variant')) ?: null;
+      }
+
+      if ($request->has('settings')) {
+        $updates['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+      }
+
+      if ($updates !== []) {
+        $block->fill($updates);
+        $block->save();
+      }
+
+      if ($textTranslations !== []) {
+        BlockTextTranslation::query()->updateOrCreate(
+          ['block_id' => $block->id, 'locale_id' => $locale->id],
+          $textTranslations,
+        );
+      }
+    });
+
+    $block->refresh()->load([
+      'blockType',
+      'slotType',
+      'media',
+      'textTranslations',
+      'buttonTranslations',
+      'imageTranslations',
+      'children.blockType',
+      'children.slotType',
+      'children.media',
+      'children.textTranslations',
+      'children.buttonTranslations',
+      'children.imageTranslations',
+    ]);
+
+    return $this->ok([
+      'block' => $this->presenter->block($block),
+      'shared_slot' => $sharedSlotBlock?->sharedSlot ? [
+        'id' => $sharedSlotBlock->sharedSlot->id,
+        'handle' => $sharedSlotBlock->sharedSlot->handle,
+      ] : null,
+    ]);
+  }
+
+  private function hasCapability(Request $request, string $capability): bool
+  {
+    $token = $request->attributes->get('cms_api_token');
+
+    return $token instanceof CmsApiToken && $this->capabilities->has($token, $capability);
+  }
+
+  private function resolveLocale(Request $request): Locale
+  {
+    $locale = (string) $request->input('locale', $request->query('locale', ''));
+
+    return Locale::query()
+      ->when($locale !== '', fn ($query) => is_numeric($locale)
+        ? $query->whereKey((int) $locale)
+        : $query->where('code', $locale))
+      ->first()
+      ?? Locale::query()->where('is_default', true)->firstOrFail();
+  }
+
+  private function normalizeTextTranslations(array $translations): array
+  {
+    $text = is_array($translations['text'] ?? null) ? $translations['text'] : $translations;
+    $allowed = ['title', 'eyebrow', 'subtitle', 'content', 'meta'];
+    $payload = [];
+
+    foreach ($allowed as $field) {
+      if (array_key_exists($field, $text)) {
+        $payload[$field] = is_array($text[$field])
+          ? json_encode($text[$field], JSON_UNESCAPED_SLASHES)
+          : trim((string) $text[$field]);
+      }
+    }
+
+    return $payload;
+  }
+
+  private function mergeSettings(Block $block, Request $request): array
+  {
+    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+    $settings = is_array($settings) ? $settings : [];
+
+    if (! $request->has('settings')) {
+      return $settings;
+    }
+
+    $incoming = $request->input('settings');
+
+    if (! is_array($incoming)) {
+      abort(response()->json([
+        'ok' => false,
+        'code' => 'invalid_settings',
+        'message' => 'Settings must be an object.',
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => 'settings',
+            'message' => 'Settings must be an object.',
+          ],
+        ],
+      ], 422));
+    }
+
+    $safeIncoming = [];
+
+    if (array_key_exists('url', $incoming)) {
+      $safeIncoming['url'] = $this->safeUrl($incoming['url']);
+    }
+
+    if (array_key_exists('target', $incoming)) {
+      $safeIncoming['target'] = $incoming['target'] === '_blank' ? '_blank' : '_self';
+    }
+
+    if (array_key_exists('aria_label', $incoming)) {
+      $safeIncoming['aria_label'] = trim((string) $incoming['aria_label']) ?: null;
+    }
+
+    return array_filter([
+      ...$settings,
+      ...$safeIncoming,
+    ], fn ($value) => $value !== null && $value !== '');
+  }
+
+  private function safeUrl(mixed $url): ?string
+  {
+    $url = trim((string) $url);
+
+    if ($url === '') {
+      return null;
+    }
+
+    if (str_starts_with($url, '/') || str_starts_with($url, '#') || preg_match('/^https?:\/\//i', $url) === 1) {
+      return $url;
+    }
+
+    abort(response()->json([
+      'ok' => false,
+      'code' => 'unsafe_url',
+      'message' => 'URL must be a safe internal path, anchor, or http(s) URL.',
+      'warnings' => [],
+      'errors' => [
+        [
+          'path' => 'url',
+          'message' => 'URL must be a safe internal path, anchor, or http(s) URL.',
+        ],
+      ],
+    ], 422));
+  }
+
+  private function validationError(string $path, string $message): JsonResponse
+  {
+    return response()->json([
+      'ok' => false,
+      'code' => 'invalid_existing_block_update',
+      'message' => $message,
+      'warnings' => [],
+      'errors' => [
+        [
+          'path' => $path,
+          'message' => $message,
+        ],
+      ],
+    ], 422);
   }
 
   private function ok(array $data): JsonResponse

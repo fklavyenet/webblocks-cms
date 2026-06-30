@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
@@ -207,6 +208,8 @@ class InternalContentApiPresenter
       'settings' => $this->decodeJson($block->settings),
       'variant' => $block->variant,
       'url' => $block->url,
+      'media_id' => $block->media_id,
+      'media' => $block->relationLoaded('media') && $block->media ? $this->media($block->media) : null,
       'translations' => [
         'text' => $block->relationLoaded('textTranslations') ? $block->textTranslations->values()->all() : [],
         'button' => $block->relationLoaded('buttonTranslations') ? $block->buttonTranslations->values()->all() : [],
@@ -220,6 +223,25 @@ class InternalContentApiPresenter
     }
 
     return $payload;
+  }
+
+  public function media(Media $media): array
+  {
+    return [
+      'id' => $media->id,
+      'kind' => $media->kind,
+      'title' => $media->title,
+      'filename' => $media->filename,
+      'original_name' => $media->original_name,
+      'mime_type' => $media->mime_type,
+      'visibility' => $media->visibility,
+      'url' => $media->url(),
+      'alt_text' => $media->alt_text,
+      'width' => $media->width,
+      'height' => $media->height,
+      'meta_label' => $media->compactMetaLabel(),
+      'previewable' => $media->canPreview(),
+    ];
   }
 
   public function blockTree(Collection $blocks): array

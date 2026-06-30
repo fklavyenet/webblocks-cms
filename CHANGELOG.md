@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.183
+
+- Add Internal Content API media discovery and safe existing-block update support so AI/operator tools can assign native brand logo media to structured `navbar-brand` and `sidebar-brand` blocks without Trusted HTML fallbacks.
+- Document the discovery-first media and existing-block update workflow, including the extra `shared-slots.write` requirement for Shared Slot source blocks.
+
 ## 1.32.182
 
 - Require the Edit Page slot delete action to open a WebBlocks UI confirmation modal and reject direct slot delete requests that do not include the modal confirmation guard.

@@ -55,7 +55,7 @@ With a valid CMS API Bearer token, discovery returns:
 - `authenticated: true`
 - token capability names, without token value, token preview, or token hash
 - recommended next steps
-- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, page publish, page-owned block publish, navigation, and Shared Slots
+- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, blocks, media, page publish, page-owned block publish, navigation, and Shared Slots
 
 The authenticated response is the canonical bootstrap contract for AI/operator tools. Tools should follow returned links instead of assuming local filesystem access to the CMS repository or package docs.
 
@@ -77,6 +77,10 @@ POST /webadmin/api/content/validate
 POST /webadmin/api/content/apply
 GET /webadmin/api/pages
 GET /webadmin/api/pages/{page}
+GET /webadmin/api/media
+GET /webadmin/api/blocks
+GET /webadmin/api/blocks/{block}
+PATCH /webadmin/api/blocks/{block}
 POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 GET /webadmin/api/navigation-menus
@@ -84,6 +88,8 @@ GET /webadmin/api/shared-slots
 ```
 
 The content validate/apply links support `create_draft_page`, `replace_existing_draft_page`, and published-page staged update modes. Use `GET /webadmin/api/content-contract` for the current mode list, safety rules, and block field discovery, including allowlisted public visual tone fields such as `settings.icon_tone` when a block supports them. Promoting a staged update onto a published page requires `content.publish` in addition to `content.apply`.
+
+Use `GET /webadmin/api/media` to discover existing CMS Media records before assigning media-backed native block fields. For supported existing structured blocks, such as `navbar-brand` and `sidebar-brand`, use `PATCH /webadmin/api/blocks/{block}` to assign `media_id` and update safe settings or translations. Shared Slot source blocks additionally require `shared-slots.write`. Do not use Trusted HTML or invented public file paths when a native block contract exposes the needed media field.
 
 Publish links require `content.publish`. `POST /webadmin/api/pages/{page}/publish` defaults to page-only publishing with `include_page_owned_blocks: false`; it does not publish draft blocks unless the request explicitly sets `include_page_owned_blocks: true`. Shared Slot cascade publishing is unsupported and returns JSON validation feedback. `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes eligible page-owned draft or in-review blocks without changing the page workflow status.
 

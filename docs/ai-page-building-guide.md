@@ -76,6 +76,10 @@ GET /webadmin/api/locales
 GET /webadmin/api/page-layouts
 GET /webadmin/api/block-types
 GET /webadmin/api/content-contract
+GET /webadmin/api/media
+GET /webadmin/api/blocks
+GET /webadmin/api/blocks/{block}
+PATCH /webadmin/api/blocks/{block}
 GET /webadmin/api/navigation-menus
 GET /webadmin/api/shared-slots
 GET /webadmin/api/pages
@@ -140,7 +144,8 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 - Shared Slot blocks are draft by default. When the user explicitly approves public Shared Slot changes and the token has `content.publish`, call `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks`; do not try to publish Shared Slot content through page publish cascade fields.
 - Do not fetch remote pages.
 - Do not use browser automation or admin UI clicks when API discovery is available.
-- Do not download or import media.
+- Do not download or import media. Use `GET /webadmin/api/media` only to discover existing CMS Media Library records.
+- Do not use Trusted HTML, invented file paths, or static markup for native media-backed fields. For an existing `navbar-brand` or `sidebar-brand` block, discover the image media id and use `PATCH /webadmin/api/blocks/{block}` with `media_id`, safe settings, and translations. Shared Slot source blocks also require `shared-slots.write`.
 - Do not create API tokens from automation unless the user explicitly asks for token administration.
 - Do not print, log, or report token values.
 - Report only status codes and safe summarized response data.

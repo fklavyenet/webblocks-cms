@@ -46,6 +46,7 @@ class InternalApiDiscoveryController extends Controller
         'Apply only after explicit user approval.',
         'Promote staged updates or publish only with explicit content.publish capability; page publishing does not publish draft blocks unless include_page_owned_blocks is true.',
         'For published-page staged updates, read GET /webadmin/api/pages/{staged_page}; follow page._actions.promote and do not call page publish on the staged page.',
+        'Use GET /webadmin/api/media and PATCH /webadmin/api/blocks/{block} for supported existing block fields such as brand logo media; Shared Slot source blocks also require shared-slots.write.',
         'Use JSON requests with Authorization, Accept, and Content-Type headers.',
       ],
       'workflows' => $this->workflows($token),
@@ -92,6 +93,7 @@ class InternalApiDiscoveryController extends Controller
         'Content writes use JSON-only API responses. Missing, invalid, or insufficient tokens return JSON `401` or `403`; invalid payloads return JSON `422` with discovery and documentation links.',
         'Destructive operations require explicit capabilities such as `pages.delete` or `content.publish`. Standard page-building tokens should not include destructive capabilities.',
         "Published page updates use staged pages. The safe flow is:\n\n1. `POST /webadmin/api/content/validate` with `mode=create_staged_update_for_published_page` or `mode=replace_staged_page_update`.\n2. `POST /webadmin/api/content/apply` to create or replace the staged draft.\n3. Preview the staged page.\n4. After explicit approval, read `GET /webadmin/api/pages/{staged_page}` and follow `page._actions.promote`.\n5. Do not use `POST /webadmin/api/pages/{staged_page}/publish` to promote staged content; that endpoint is rejected for staged updates.",
+        'For existing structured blocks, do not use HTML fallbacks to set native fields. Discover media with `GET /webadmin/api/media?kind=image`, then use `PATCH /webadmin/api/blocks/{block}` for supported fields such as `media_id`, `settings.url`, `settings.target`, `settings.aria_label`, and text translations.',
       ]),
       '_links' => $this->links(),
     ]);
@@ -190,6 +192,8 @@ class InternalApiDiscoveryController extends Controller
       'shared_slots' => '/webadmin/api/shared-slots',
       'shared_slot_blocks_publish' => '/webadmin/api/shared-slots/{sharedSlot}/publish-blocks',
       'site_public_theme' => '/webadmin/api/sites/{site}/public-theme',
+      'media' => '/webadmin/api/media',
+      'block_update' => '/webadmin/api/blocks/{block}',
     ];
   }
 
@@ -223,6 +227,11 @@ class InternalApiDiscoveryController extends Controller
       '/shared-slots/{sharedSlot}' => ['get' => ['summary' => 'Read Shared Slot', 'responses' => ['200' => ['description' => 'Shared Slot JSON', 'content' => $json]]]],
       '/shared-slots/{sharedSlot}/blocks' => ['post' => ['summary' => 'Create Shared Slot block', 'responses' => ['201' => ['description' => 'Created Shared Slot block JSON', 'content' => $json]]]],
       '/shared-slots/{sharedSlot}/publish-blocks' => ['post' => ['summary' => 'Publish Shared Slot blocks', 'x-required-capability' => 'shared-slots.write plus content.publish', 'responses' => ['200' => ['description' => 'Published Shared Slot blocks JSON', 'content' => $json], '403' => ['description' => 'Requires shared-slots.write and content.publish capabilities', 'content' => $json]]]],
+      '/media' => ['get' => ['summary' => 'List Media items for API-safe media assignment', 'x-required-capability' => 'content.read', 'parameters' => [['name' => 'kind', 'in' => 'query', 'schema' => ['type' => 'string']], ['name' => 'search', 'in' => 'query', 'schema' => ['type' => 'string']]], 'responses' => ['200' => ['description' => 'Media JSON', 'content' => $json]]]],
+      '/blocks/{block}' => [
+        'get' => ['summary' => 'Read block', 'parameters' => [['name' => 'block', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]], 'responses' => ['200' => ['description' => 'Block JSON', 'content' => $json]]],
+        'patch' => ['summary' => 'Update safe fields on an existing structured block', 'x-required-capability' => 'content.apply; shared-slots.write also required for Shared Slot source blocks', 'x-supported-fields' => ['media_id for navbar-brand/sidebar-brand logo media', 'settings.url', 'settings.target', 'settings.aria_label', 'translations.title', 'translations.subtitle', 'url', 'variant'], 'responses' => ['200' => ['description' => 'Updated block JSON', 'content' => $json], '403' => ['description' => 'Requires additional capability for Shared Slot source blocks', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+      ],
       '/pages/{page}/slots/{slot}/shared-slot' => ['post' => ['summary' => 'Assign Shared Slot to page slot', 'responses' => ['200' => ['description' => 'Assignment JSON', 'content' => $json]]]],
     ];
   }
