@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.185
+
+- Add CMS API token activity tracking and a Tokens list history action that shows each token's latest 10 API requests in a WebBlocks UI modal without storing request bodies, query strings, responses, or token values.
+- Clarify the CMS admin UI playbook so AI agents prefer a configured WebBlocks UI source checkout when available, but can still work from committed CMS rules and existing CMS WebBlocks UI patterns when ordinary installs do not have the UI repository locally.
+
 ## 1.32.184
 
 - Add Internal Content API `media.read` and metadata-only `media.write` capabilities, including safe Media Library metadata updates for `title`, `alt_text`, `caption`, and `description` without upload, delete, replace, or remote fetch support.

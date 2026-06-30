@@ -7,7 +7,10 @@ use WebBlocks\Cms\Models\CmsApiToken;
 
 class CmsApiTokenAuthenticator
 {
-  public function __construct(private readonly CmsApiTokenIssuer $issuer) {}
+  public function __construct(
+    private readonly CmsApiTokenIssuer $issuer,
+    private readonly CmsApiTokenActivityLogger $activityLogger,
+  ) {}
 
   public function authenticate(string $plainToken, Request $request): ?CmsApiToken
   {
@@ -34,6 +37,8 @@ class CmsApiTokenAuthenticator
       'last_used_ip' => $request->ip(),
       'last_used_user_agent' => mb_substr((string) $request->userAgent(), 0, 255),
     ])->save();
+
+    $this->activityLogger->authenticated($token, $request);
 
     return $token;
   }

@@ -192,6 +192,18 @@ Content-Type: application/json</textarea>
                                             </button>
                                             <button
                                                 type="button"
+                                                class="wb-action-btn wb-action-btn-view"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#activity-cms-api-token-{{ $token->id }}"
+                                                title="View API activity"
+                                                aria-label="View API activity"
+                                                aria-haspopup="dialog"
+                                                @disabled(! $activitySchemaReady)
+                                            >
+                                                <i class="wb-icon wb-icon-history" aria-hidden="true"></i>
+                                            </button>
+                                            <button
+                                                type="button"
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#revoke-cms-api-token-{{ $token->id }}"
@@ -265,6 +277,83 @@ Content-Type: application/json</textarea>
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <div class="wb-modal wb-modal-lg" id="activity-cms-api-token-{{ $token->id }}" role="dialog" aria-modal="true" aria-labelledby="activity-cms-api-token-{{ $token->id }}-title">
+            <div class="wb-modal-dialog">
+                <div class="wb-modal-header">
+                    <div>
+                        <h2 class="wb-modal-title" id="activity-cms-api-token-{{ $token->id }}-title">Recent API Activity</h2>
+                        <p class="wb-text-sm wb-text-muted">Latest 10 requests for {{ $token->name }}. Request bodies, query strings, responses, and token values are never stored.</p>
+                    </div>
+
+                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close Recent API Activity">
+                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="wb-modal-body">
+                    @if (! $activitySchemaReady)
+                        <div class="wb-alert wb-alert-warning">
+                            API token activity storage is not ready. Run System Update again to apply the required activity schema.
+                        </div>
+                    @elseif ($token->activityLogs->isEmpty())
+                        <div class="wb-empty">
+                            <div class="wb-empty-title">No activity yet</div>
+                            <div class="wb-empty-text">This token has not been used since activity tracking was enabled.</div>
+                        </div>
+                    @else
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-sm wb-table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Request</th>
+                                        <th>Capability</th>
+                                        <th>Client</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($token->activityLogs as $activity)
+                                        <tr>
+                                            <td class="wb-nowrap">{{ $activity->occurredAtLabel() }}</td>
+                                            <td><span class="wb-status-pill {{ $activity->statusBadgeClass() }}">{{ $activity->statusLabel() }}</span></td>
+                                            <td>
+                                                <div class="wb-stack wb-gap-1">
+                                                    <code>{{ $activity->method }} {{ $activity->path }}</code>
+                                                    @if ($activity->route_name)
+                                                        <span class="wb-text-sm wb-text-muted">{{ $activity->route_name }}</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if ($activity->required_capability)
+                                                    <code>{{ $activity->required_capability }}</code>
+                                                @else
+                                                    <span class="wb-text-muted">None</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="wb-stack wb-gap-1">
+                                                    <span>{{ $activity->ip ?? 'Unknown IP' }}</span>
+                                                    @if ($activity->user_agent)
+                                                        <span class="wb-text-sm wb-text-muted">{{ Str::limit($activity->user_agent, 80) }}</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="wb-modal-footer">
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
 

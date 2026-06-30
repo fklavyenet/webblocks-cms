@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Models\CmsApiTokenActivityLog;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 
@@ -52,6 +54,11 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('aria-label="Edit token"', false);
     $response->assertSee('data-wb-target="#edit-cms-api-token-'.$token->id.'"', false);
     $response->assertSee('wb-icon wb-icon-pencil', false);
+    $response->assertSee('title="View API activity"', false);
+    $response->assertSee('aria-label="View API activity"', false);
+    $response->assertSee('data-wb-target="#activity-cms-api-token-'.$token->id.'"', false);
+    $response->assertSee('wb-icon wb-icon-history', false);
+    $response->assertSee('Recent API Activity');
     $response->assertSee('Edit API Token');
     $response->assertSee('value="Local AI - Test MacBook"', false);
     $response->assertSee('title="Delete token"', false);
@@ -382,6 +389,12 @@ class CmsApiTokenManagementTest extends TestCase
 
     $this->assertNotNull($token->fresh()->last_used_at);
     $this->assertNotNull($token->fresh()->last_used_user_agent);
+    $this->assertDatabaseHas('cms_api_token_activity_logs', [
+      'cms_api_token_id' => $token->id,
+      'status' => 'authenticated',
+      'method' => 'GET',
+      'path' => '/webadmin/api/sites',
+    ]);
 
     $token->forceFill(['revoked_at' => now()])->save();
 
@@ -389,6 +402,76 @@ class CmsApiTokenManagementTest extends TestCase
       ->getJson('/webadmin/api/sites')
       ->assertUnauthorized()
       ->assertJsonPath('code', 'invalid_internal_api_token');
+  }
+
+  #[Test]
+  public function token_activity_modal_lists_recent_api_usage_without_exposing_secret_values(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $user = User::factory()->superAdmin()->create();
+    $plainToken = 'secret-token';
+    $token = $this->createToken($plainToken, ['name' => 'Activity Token']);
+    $media = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/cms-logo.png',
+      'filename' => 'cms-logo.png',
+      'original_name' => 'cms-logo.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'CMS logo',
+    ]);
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->withHeader('User-Agent', 'WebBlocks Test Agent')
+      ->getJson('/webadmin/api/sites')
+      ->assertOk();
+
+    $this->withHeader('Authorization', 'Bearer '.$plainToken)
+      ->patchJson('/webadmin/api/media/'.$media->id, ['title' => 'Blocked'])
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::MEDIA_WRITE);
+
+    $response = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
+
+    $response->assertOk();
+    $response->assertSee('Recent API Activity');
+    $response->assertSee('Latest 10 requests for Activity Token');
+    $response->assertSee('GET /webadmin/api/sites');
+    $response->assertSee('PATCH /webadmin/api/media/'.$media->id);
+    $response->assertSee('Authenticated');
+    $response->assertSee('Denied');
+    $response->assertSee(CmsApiTokenCapabilities::MEDIA_WRITE);
+    $response->assertSee('WebBlocks Test Agent');
+    $response->assertDontSee($plainToken);
+    $response->assertDontSee($token->token_hash);
+  }
+
+  #[Test]
+  public function token_activity_logs_keep_only_the_latest_ten_records_per_token(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $plainToken = 'secret-token';
+    $token = $this->createToken($plainToken);
+
+    for ($index = 1; $index <= 12; $index++) {
+      $this->withHeader('Authorization', 'Bearer '.$plainToken)
+        ->getJson('/webadmin/api/sites')
+        ->assertOk();
+    }
+
+    $logs = CmsApiTokenActivityLog::query()
+      ->where('cms_api_token_id', $token->id)
+      ->latest('occurred_at')
+      ->latest('id')
+      ->get();
+
+    $this->assertCount(10, $logs);
+    $this->assertSame('/webadmin/api/sites', $logs->first()->path);
+    $this->assertDatabaseMissing('cms_api_token_activity_logs', ['id' => 1]);
+    $this->assertDatabaseMissing('cms_api_token_activity_logs', ['id' => 2]);
   }
 
   #[Test]

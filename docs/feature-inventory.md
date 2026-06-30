@@ -110,7 +110,7 @@ Recommended additional docs:
 
 | Feature | Area | Status | Admin path | Public behavior | API support | Source / implementation notes | Existing docs | Documentation gap / next docs page |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| API Tokens | AI operations | Implemented | `/webadmin/system/api-tokens` | No public behavior | Bearer token authentication | Tokens are hashed and shown once | [docs/internal-content-api.md](internal-content-api.md), [docs/api-discovery.md](api-discovery.md) | covered |
+| API Tokens | AI operations | Implemented | `/webadmin/system/api-tokens` | No public behavior | Bearer token authentication | Tokens are hashed and shown once; latest 10 API activity rows are visible per token without request bodies, responses, query strings, or token values | [docs/internal-content-api.md](internal-content-api.md), [docs/api-discovery.md](api-discovery.md) | covered |
 | Token capabilities | AI operations | Implemented | API token create/edit | No public behavior | Capability-scoped API authorization | Publish/delete capabilities are advanced opt-ins | [docs/internal-content-api.md](internal-content-api.md) | needs AI/operator example |
 | API discovery endpoint | AI operations | Implemented | No browser admin path | No public behavior | Discovery root for trusted tools | Starts from API base URL and token | [docs/api-discovery.md](api-discovery.md) | covered |
 | OpenAPI endpoint | AI operations | Implemented | No browser admin path | No public behavior | Machine-readable API contract | Linked from discovery | [docs/api-discovery.md](api-discovery.md), [docs/internal-content-api.md](internal-content-api.md) | covered |

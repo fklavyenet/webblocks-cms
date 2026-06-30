@@ -24,6 +24,7 @@ class CmsApiTokenController extends Controller
   public function index(): View
   {
     $schemaReady = $this->apiTokenSchemaReady();
+    $activitySchemaReady = $this->apiTokenActivitySchemaReady();
     $tokens = new LengthAwarePaginator([], 0, $this->systemSettings->adminListingPerPage());
     $totalCount = 0;
 
@@ -33,6 +34,19 @@ class CmsApiTokenController extends Controller
         ->orderByRaw('case when revoked_at is null then 0 else 1 end')
         ->latest()
         ->paginate($this->systemSettings->adminListingPerPage());
+      if ($activitySchemaReady) {
+        $tokens->getCollection()->each(function (CmsApiToken $token): void {
+          $token->setRelation(
+            'activityLogs',
+            $token->activityLogs()
+              ->latest('occurred_at')
+              ->latest('id')
+              ->limit(10)
+              ->get()
+          );
+        });
+      }
+
       $totalCount = CmsApiToken::query()->count();
     }
 
@@ -50,6 +64,7 @@ class CmsApiTokenController extends Controller
       'createdToken' => session('created_cms_api_token'),
       'createdTokenName' => session('created_cms_api_token_name'),
       'schemaReady' => $schemaReady,
+      'activitySchemaReady' => $activitySchemaReady,
     ]);
   }
 
@@ -110,6 +125,21 @@ class CmsApiTokenController extends Controller
 
     foreach (['id', 'name', 'token_hash', 'token_preview', 'capabilities', 'created_by_user_id', 'last_used_at', 'last_used_ip', 'last_used_user_agent', 'revoked_at', 'created_at', 'updated_at'] as $column) {
       if (! Schema::hasColumn('cms_api_tokens', $column)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private function apiTokenActivitySchemaReady(): bool
+  {
+    if (! Schema::hasTable('cms_api_token_activity_logs')) {
+      return false;
+    }
+
+    foreach (['id', 'cms_api_token_id', 'occurred_at', 'status', 'method', 'path', 'route_name', 'required_capability', 'ip', 'user_agent', 'created_at', 'updated_at'] as $column) {
+      if (! Schema::hasColumn('cms_api_token_activity_logs', $column)) {
         return false;
       }
     }

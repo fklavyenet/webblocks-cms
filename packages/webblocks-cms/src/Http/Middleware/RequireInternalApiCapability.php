@@ -6,12 +6,14 @@ use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenActivityLogger;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiResponseMetadata;
 
 class RequireInternalApiCapability
 {
   public function __construct(
+    private readonly CmsApiTokenActivityLogger $activityLogger,
     private readonly CmsApiTokenCapabilities $capabilities,
     private readonly InternalApiResponseMetadata $metadata,
   ) {}
@@ -21,8 +23,14 @@ class RequireInternalApiCapability
     $token = $request->attributes->get('cms_api_token');
 
     if (! $token instanceof CmsApiToken || ! $this->capabilities->has($token, $capability)) {
+      if ($token instanceof CmsApiToken) {
+        $this->activityLogger->capabilityDenied($token, $request, $capability);
+      }
+
       return $this->error($capability);
     }
+
+    $this->activityLogger->capabilityAllowed($token, $request, $capability);
 
     return $next($request);
   }

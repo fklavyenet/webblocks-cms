@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CmsApiToken extends Model
 {
@@ -33,6 +34,11 @@ class CmsApiToken extends Model
   public function creator(): BelongsTo
   {
     return $this->belongsTo(User::class, 'created_by_user_id');
+  }
+
+  public function activityLogs(): HasMany
+  {
+    return $this->hasMany(CmsApiTokenActivityLog::class, 'cms_api_token_id');
   }
 
   public function scopeActive(Builder $query): Builder

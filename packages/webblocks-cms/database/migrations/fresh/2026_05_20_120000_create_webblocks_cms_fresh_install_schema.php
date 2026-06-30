@@ -26,6 +26,7 @@ return new class extends Migration
       'block_button_translations',
       'block_text_translations',
       'system_backup_restores',
+      'cms_api_token_activity_logs',
       'cms_api_tokens',
       'system_backups',
       'system_update_runs',
@@ -725,6 +726,22 @@ return new class extends Migration
       $table->timestamps();
 
       $table->index(['revoked_at', 'created_at']);
+    });
+
+    $this->createTableIfMissing('cms_api_token_activity_logs', function (Blueprint $table): void {
+      $table->id();
+      $table->foreignId('cms_api_token_id')->constrained('cms_api_tokens')->cascadeOnDelete();
+      $table->timestamp('occurred_at')->useCurrent();
+      $table->string('status', 32);
+      $table->string('method', 12);
+      $table->string('path', 512);
+      $table->string('route_name')->nullable();
+      $table->string('required_capability')->nullable();
+      $table->string('ip', 45)->nullable();
+      $table->string('user_agent', 255)->nullable();
+      $table->timestamps();
+
+      $table->index(['cms_api_token_id', 'occurred_at']);
     });
 
     $this->createTableIfMissing('system_backups', function (Blueprint $table): void {
