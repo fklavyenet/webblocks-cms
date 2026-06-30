@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.188
+
+- Bumped CMS to `1.32.188`.
+- Allow Internal Content API content plans to assign uploaded Media Library records to native media-backed blocks, including image, gallery, file/download, video, and brand logo blocks, while keeping remote media fetch rejected.
+
 ## 1.32.187
 
 - Bumped CMS to `1.32.187`.

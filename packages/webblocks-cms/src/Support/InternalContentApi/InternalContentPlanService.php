@@ -14,6 +14,7 @@ use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageLayout;
@@ -80,6 +81,15 @@ class InternalContentPlanService
     'card_footer',
     'sticky-navbar',
     'sidebar-navigation',
+  ];
+
+  private const DIRECT_MEDIA_KIND_RULES = [
+    'image' => [Media::KIND_IMAGE],
+    'navbar-brand' => [Media::KIND_IMAGE],
+    'sidebar-brand' => [Media::KIND_IMAGE],
+    'download' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
+    'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
+    'video' => [Media::KIND_VIDEO],
   ];
 
   private const TRANSLATABLE_FIELDS = [
@@ -469,6 +479,9 @@ class InternalContentPlanService
       'settings' => $settings,
       'variant' => $payload['variant'] ?? ($payload['settings']['variant'] ?? null),
       'url' => $payload['settings']['url'] ?? null,
+      'media_id' => $payload['media_id'] ?? null,
+      '_block_media' => $payload['_block_media'] ?? [],
+      '_gallery_items' => $payload['_gallery_items'] ?? [],
       'title' => $translations['title'] ?? null,
       'subtitle' => $translations['subtitle'] ?? null,
       'content' => $translations['content'] ?? null,
@@ -1712,11 +1725,13 @@ class InternalContentPlanService
 
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
 
-    foreach (['media_id', 'asset_id', 'gallery_media_ids', 'gallery_items', 'remote_url', 'source_url'] as $mediaKey) {
+    foreach (['remote_url', 'source_url'] as $mediaKey) {
       if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {
-        $errors[] = $this->error($path.'.'.$mediaKey, 'Media import, media assignment, and remote fetch are outside Phase 1.');
+        $errors[] = $this->error($path.'.'.$mediaKey, 'Remote media fetch is not supported. Upload media through the Media API first, then assign the returned media_id.');
       }
     }
+
+    $mediaAssignment = $this->normalizeMediaAssignment($block, $settings, $blockType, $path, $errors);
 
     $translations = $block['translations'] ?? [];
     if (! is_array($translations)) {
@@ -1759,6 +1774,9 @@ class InternalContentPlanService
       'type' => $blockType->slug,
       'translations' => $translations,
       'settings' => $settings,
+      'media_id' => $mediaAssignment['media_id'],
+      '_block_media' => $mediaAssignment['_block_media'],
+      '_gallery_items' => $mediaAssignment['_gallery_items'],
       'children' => $normalizedChildren,
     ];
   }
@@ -1943,6 +1961,106 @@ class InternalContentPlanService
     }
 
     return $settings;
+  }
+
+  private function normalizeMediaAssignment(array $block, array &$settings, BlockType $blockType, string $path, array &$errors): array
+  {
+    $mediaId = $block['media_id'] ?? $block['asset_id'] ?? $settings['media_id'] ?? $settings['asset_id'] ?? null;
+    unset($settings['media_id'], $settings['asset_id']);
+
+    $galleryItems = $block['gallery_items'] ?? $settings['gallery_items'] ?? null;
+    $galleryMediaIds = $block['gallery_media_ids'] ?? $block['gallery_asset_ids'] ?? $settings['gallery_media_ids'] ?? $settings['gallery_asset_ids'] ?? null;
+    unset($settings['gallery_items'], $settings['gallery_media_ids'], $settings['gallery_asset_ids']);
+
+    $payload = [
+      'media_id' => null,
+      '_block_media' => [],
+      '_gallery_items' => [],
+    ];
+
+    if ($mediaId !== null && $mediaId !== '') {
+      if (! array_key_exists($blockType->slug, self::DIRECT_MEDIA_KIND_RULES)) {
+        $errors[] = $this->error($path.'.media_id', 'This block type does not support direct Media Library assignment through media_id.');
+      } else {
+        $media = Media::query()->find((int) $mediaId);
+
+        if (! $media) {
+          $errors[] = $this->error($path.'.media_id', 'Media Library record must exist.');
+        } elseif (! in_array($media->kind, self::DIRECT_MEDIA_KIND_RULES[$blockType->slug], true)) {
+          $errors[] = $this->error($path.'.media_id', 'Media Library record kind is not compatible with this block type.');
+        } else {
+          $payload['media_id'] = (int) $media->id;
+        }
+      }
+    }
+
+    if ($galleryItems === null && $galleryMediaIds === null) {
+      return $payload;
+    }
+
+    if ($blockType->slug !== 'gallery') {
+      $errors[] = $this->error($path.'.gallery_media_ids', 'Gallery media assignment is only supported by Gallery blocks.');
+
+      return $payload;
+    }
+
+    $items = collect(is_array($galleryItems) ? $galleryItems : [])
+      ->map(function (mixed $item, int $index): array {
+        $item = is_array($item) ? $item : [];
+
+        return [
+          'media_id' => (int) ($item['media_id'] ?? $item['asset_id'] ?? 0),
+          'sort_order' => (int) ($item['sort_order'] ?? $index),
+          'alt_text' => trim((string) ($item['alt_text'] ?? '')) ?: null,
+          'caption' => trim((string) ($item['caption'] ?? '')) ?: null,
+          'overlay_title' => trim((string) ($item['overlay_title'] ?? '')) ?: null,
+          'overlay_text' => trim((string) ($item['overlay_text'] ?? '')) ?: null,
+        ];
+      });
+
+    if ($items->isEmpty() && is_array($galleryMediaIds)) {
+      $items = collect($galleryMediaIds)
+        ->map(fn (mixed $id, int $index): array => [
+          'media_id' => (int) $id,
+          'sort_order' => $index,
+          'alt_text' => null,
+          'caption' => null,
+          'overlay_title' => null,
+          'overlay_text' => null,
+        ]);
+    }
+
+    $items = $items
+      ->filter(fn (array $item): bool => (int) $item['media_id'] > 0)
+      ->sortBy('sort_order')
+      ->values();
+
+    $mediaIds = $items->pluck('media_id')->unique()->values()->all();
+
+    if ($mediaIds === []) {
+      return $payload;
+    }
+
+    $validMediaIds = Media::query()
+      ->whereIn('id', $mediaIds)
+      ->where('kind', Media::KIND_IMAGE)
+      ->pluck('id')
+      ->map(fn ($id): int => (int) $id)
+      ->all();
+
+    $invalidMediaIds = array_values(array_diff($mediaIds, $validMediaIds));
+
+    if ($invalidMediaIds !== []) {
+      $errors[] = $this->error($path.'.gallery_media_ids', 'Gallery media items must be existing image Media Library records.');
+    }
+
+    $payload['_block_media'] = ['gallery_item' => $validMediaIds];
+    $payload['_gallery_items'] = $items
+      ->filter(fn (array $item): bool => in_array((int) $item['media_id'], $validMediaIds, true))
+      ->values()
+      ->all();
+
+    return $payload;
   }
 
   private function rejectForbiddenKeys(array $data, string $path, array &$errors, array $allowedKeys = []): void

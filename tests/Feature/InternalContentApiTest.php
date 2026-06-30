@@ -650,6 +650,122 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function content_plans_can_assign_uploaded_media_to_native_media_blocks(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $image = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/images/play-card.png',
+      'filename' => 'play-card.png',
+      'original_name' => 'play-card.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Play card',
+      'width' => 640,
+      'height' => 360,
+    ]);
+    $document = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/documents/manual.pdf',
+      'filename' => 'manual.pdf',
+      'original_name' => 'manual.pdf',
+      'extension' => 'pdf',
+      'mime_type' => 'application/pdf',
+      'size' => 2048,
+      'kind' => Media::KIND_DOCUMENT,
+      'visibility' => 'public',
+      'title' => 'Manual',
+    ]);
+    $payload = $this->validPlanPayload([
+      'plan' => [
+        'page' => [
+          'title' => 'Media Blocks',
+          'path' => '/media-blocks',
+        ],
+        'slots' => [
+          'main' => [
+            [
+              'type' => 'section',
+              'children' => [
+                [
+                  'type' => 'container',
+                  'children' => [
+                    [
+                      'type' => 'image',
+                      'media_id' => $image->id,
+                    ],
+                    [
+                      'type' => 'gallery',
+                      'gallery_items' => [
+                        [
+                          'media_id' => $image->id,
+                          'alt_text' => 'Play card screenshot',
+                          'caption' => 'Uploaded through the CMS API.',
+                        ],
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertOk()
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.0.media_id', $image->id)
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.1._block_media.gallery_item.0', $image->id);
+
+    $apply = $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $payload)
+      ->assertCreated();
+
+    $pageId = (int) $apply->json('data.page.id');
+    $imageBlock = Block::query()
+      ->where('page_id', $pageId)
+      ->where('type', 'image')
+      ->firstOrFail();
+    $galleryBlock = Block::query()
+      ->where('page_id', $pageId)
+      ->where('type', 'gallery')
+      ->firstOrFail();
+
+    $this->assertSame((int) $image->id, (int) $imageBlock->media_id);
+    $this->assertDatabaseHas('block_media', [
+      'block_id' => $galleryBlock->id,
+      'media_id' => $image->id,
+      'role' => 'gallery_item',
+    ]);
+
+    $invalidPayload = $this->validPlanPayload([
+      'plan' => [
+        'slots' => [
+          'main' => [
+            [
+              'type' => 'image',
+              'media_id' => $document->id,
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $invalidPayload)
+      ->assertStatus(422)
+      ->assertJsonFragment([
+        'path' => 'plan.slots.main.0.media_id',
+        'message' => 'Media Library record kind is not compatible with this block type.',
+      ]);
+  }
+
+  #[Test]
   public function content_write_endpoints_return_json_for_missing_invalid_and_empty_payloads(): void
   {
     $this->post('/webadmin/api/content/validate', [], ['Accept' => 'text/html'])
@@ -2218,7 +2334,7 @@ class InternalContentApiTest extends TestCase
         'media_id' => $document->id,
       ])
       ->assertStatus(422)
-      ->assertJsonPath('message', 'Brand logo media must be an image from Media.');
+      ->assertJsonPath('message', 'Selected media kind is not compatible with this block type.');
 
     $this->withInternalToken()
       ->patchJson('/webadmin/api/blocks/'.$block->id, [
