@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.193
+
+- Bumped CMS to `1.32.193`.
+- Add Internal Content API endpoints for updating, hiding, reordering, and deleting CMS Navigation menu items, with `navigation.write` for non-destructive mutations and explicit `navigation.delete` for item deletion.
+
 ## 1.32.192
 
 - Bumped CMS to `1.32.192`.

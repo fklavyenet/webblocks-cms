@@ -121,11 +121,12 @@ Super admins choose token capabilities when creating a token from `System -> API
 
 Advanced capabilities are separate options and are not selected by default:
 
+- `navigation.delete`
 - `media.write`
 - `content.publish`
 - `pages.delete`
 
-Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as content publish or page delete.
+Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, or page delete.
 
 ## API Model
 
@@ -165,6 +166,9 @@ GET /webadmin/api/navigation-menus
 GET /webadmin/api/navigation-menus/{navigationMenu}
 POST /webadmin/api/navigation-menus
 POST /webadmin/api/navigation-menus/{navigationMenu}/items
+PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
+PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/reorder
+DELETE /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
 GET /webadmin/api/shared-slots
 GET /webadmin/api/shared-slots/{sharedSlot}
 POST /webadmin/api/shared-slots
@@ -513,10 +517,15 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 - `GET /webadmin/api/navigation-menus/{navigationMenu}`
 - `POST /webadmin/api/navigation-menus`
 - `POST /webadmin/api/navigation-menus/{navigationMenu}/items`
+- `PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/{item}`
+- `PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/reorder`
+- `DELETE /webadmin/api/navigation-menus/{navigationMenu}/items/{item}`
 
 Navigation menus use the existing CMS `navigation_items.menu_key` model. Phase 2A supports the shipped CMS menu handles such as `primary`, `footer`, `mobile`, `legal`, and `docs`; it does not add a separate menu table. Creating a navigation menu is treated as creating a safe site-scoped menu group with optional initial items. It refuses to overwrite a site/menu that already has items.
 
-Navigation item URLs may be internal paths such as `/`, `/about`, `/contact`, and `/#platform`, or safe `http`/`https` URLs. Use a path plus fragment for same-page anchors; raw fragment-only values such as `#platform` are not navigation URLs. The API rejects `javascript:`, `data:`, protocol-relative URLs, traversal, malformed URLs, unsupported targets, and empty labels. Navigation endpoints do not create pages, publish pages, crawl sites, or fetch remote URLs.
+Navigation item create, update, visibility changes, and reorder require `navigation.write`. Delete requires the explicit destructive `navigation.delete` capability. Item updates support `label`/`title`, `url`, `link_type`, `page_id`, `target`, `visibility`, `sort_order`/`position`, `parent_id`, and `icon` where those fields are valid for the selected link type. Reorder payloads must include every item in the selected site/menu exactly once. Delete rejects parent items that still have child items, so tools must move or delete children first instead of relying on cascades.
+
+Navigation item URLs may be internal paths such as `/`, `/about`, `/contact`, and `/#platform`, or safe `http`/`https` URLs. Use a path plus fragment for same-page anchors; raw fragment-only values such as `#platform` are not navigation URLs. The API rejects `javascript:`, `data:`, protocol-relative URLs, traversal, malformed URLs, unsupported targets, and empty labels. Navigation endpoints do not create pages, publish pages, crawl sites, fetch remote URLs, or cascade-delete child items.
 
 ### Shared Slot Endpoints
 
@@ -783,7 +792,8 @@ Example English marketing homepage draft:
 - apply validates again before writing
 - apply is transactional
 - Content apply still rejects publish, site creation, media import, remote fetch, unsupported overwrite, unsupported replace, and delete operations
-- navigation and Shared Slot creation are create-only unless a later phase adds explicit draft-safe mutation contracts
+- Shared Slot creation remains create-only unless a later phase adds explicit draft-safe mutation contracts
+- navigation item resource endpoints support explicit update, visibility, reorder, and delete operations outside content apply with capability guards
 
 ## Response Shape
 

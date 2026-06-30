@@ -81,6 +81,10 @@ GET /webadmin/api/blocks
 GET /webadmin/api/blocks/{block}
 PATCH /webadmin/api/blocks/{block}
 GET /webadmin/api/navigation-menus
+POST /webadmin/api/navigation-menus/{navigationMenu}/items
+PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
+PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/reorder
+DELETE /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
 GET /webadmin/api/shared-slots
 GET /webadmin/api/pages
 POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks

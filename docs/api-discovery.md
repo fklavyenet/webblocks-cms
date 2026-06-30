@@ -84,6 +84,10 @@ PATCH /webadmin/api/blocks/{block}
 POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 GET /webadmin/api/navigation-menus
+POST /webadmin/api/navigation-menus/{navigationMenu}/items
+PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
+PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/reorder
+DELETE /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
 GET /webadmin/api/shared-slots
 GET /webadmin/api/sites/{site}/assets/css
 PUT /webadmin/api/sites/{site}/assets/css
@@ -123,6 +127,7 @@ Standard page-building capabilities:
 
 Destructive or publish capabilities are separate advanced options and are not selected by default:
 
+- `navigation.delete`
 - `content.publish`
 - `pages.delete`
 

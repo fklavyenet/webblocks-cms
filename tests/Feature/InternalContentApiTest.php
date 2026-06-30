@@ -98,7 +98,11 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('token.can.write_media_metadata', false)
       ->assertJsonPath('token.can.read_site_assets', false)
       ->assertJsonPath('token.can.write_site_assets', false)
+      ->assertJsonPath('token.can.write_navigation_items', true)
+      ->assertJsonPath('token.can.delete_navigation_items', false)
       ->assertJsonPath('token.can.promote_staged_update', false)
+      ->assertJsonPath('workflows.navigation_menu_management.available.create_update_reorder', true)
+      ->assertJsonPath('workflows.navigation_menu_management.available.delete', false)
       ->assertJsonPath('workflows.published_page_staged_update.available.promote', false)
       ->assertJsonPath('workflows.canonical_site_assets.available.write', false)
       ->assertJsonPath('workflows.published_page_staged_update.do_not_use.0', 'POST /webadmin/api/pages/{staged_page}/publish')
@@ -126,6 +130,9 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./media/{media}.patch.x-required-capability', CmsApiTokenCapabilities::MEDIA_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_READ)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE)
+      ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
+      ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.delete.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_DELETE)
+      ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/reorder.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
       ->assertJsonPath('paths./blocks/{block}.patch.summary', 'Update safe fields on an existing structured block');
 
     $guide = $this->withInternalToken()
@@ -971,6 +978,15 @@ class InternalContentApiTest extends TestCase
       'visibility' => 'public',
       'title' => 'Logo',
     ]);
+    $navigationItem = NavigationItem::query()->create([
+      'site_id' => $site->id,
+      'menu_key' => NavigationItem::MENU_PRIMARY,
+      'title' => 'Existing',
+      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'url' => '/',
+      'position' => 1,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+    ]);
 
     foreach ([
       '/webadmin/api/navigation-menus',
@@ -985,6 +1001,20 @@ class InternalContentApiTest extends TestCase
         ->assertHeader('content-type', 'application/json')
         ->assertJsonPath('ok', false);
     }
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/'.$navigationItem->id, [
+        'url' => 'javascript:alert(1)',
+      ])
+      ->assertStatus(422)
+      ->assertHeader('content-type', 'application/json')
+      ->assertJsonPath('ok', false);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/reorder', [])
+      ->assertStatus(422)
+      ->assertHeader('content-type', 'application/json')
+      ->assertJsonPath('ok', false);
   }
 
   #[Test]
@@ -1017,20 +1047,32 @@ class InternalContentApiTest extends TestCase
       'visibility' => 'public',
       'title' => 'Logo',
     ]);
+    $navigationItem = NavigationItem::query()->create([
+      'site_id' => $site->id,
+      'menu_key' => NavigationItem::MENU_PRIMARY,
+      'title' => 'Existing',
+      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'url' => '/',
+      'position' => 1,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+    ]);
 
     foreach ([
-      '/webadmin/api/navigation-menus' => CmsApiTokenCapabilities::NAVIGATION_WRITE,
-      '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items' => CmsApiTokenCapabilities::NAVIGATION_WRITE,
-      '/webadmin/api/shared-slots' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
-      '/webadmin/api/shared-slots/'.$sharedSlot->id.'/blocks' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
-      '/webadmin/api/shared-slots/'.$sharedSlot->id.'/publish-blocks' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
-      '/webadmin/api/pages/'.$page->id.'/slots/header/shared-slot' => CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
-      '/webadmin/api/sites/'.$site->id.'/public-theme' => CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
-      '/webadmin/api/pages/'.$page->id.'/sync-layout-slots' => CmsApiTokenCapabilities::CONTENT_APPLY,
-      '/webadmin/api/media/'.$media->id => CmsApiTokenCapabilities::MEDIA_WRITE,
-    ] as $uri => $capability) {
+      ['POST', '/webadmin/api/navigation-menus', CmsApiTokenCapabilities::NAVIGATION_WRITE],
+      ['POST', '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items', CmsApiTokenCapabilities::NAVIGATION_WRITE],
+      ['PATCH', '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/'.$navigationItem->id, CmsApiTokenCapabilities::NAVIGATION_WRITE],
+      ['PATCH', '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/reorder', CmsApiTokenCapabilities::NAVIGATION_WRITE],
+      ['DELETE', '/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/'.$navigationItem->id, CmsApiTokenCapabilities::NAVIGATION_DELETE],
+      ['POST', '/webadmin/api/shared-slots', CmsApiTokenCapabilities::SHARED_SLOTS_WRITE],
+      ['POST', '/webadmin/api/shared-slots/'.$sharedSlot->id.'/blocks', CmsApiTokenCapabilities::SHARED_SLOTS_WRITE],
+      ['POST', '/webadmin/api/shared-slots/'.$sharedSlot->id.'/publish-blocks', CmsApiTokenCapabilities::SHARED_SLOTS_WRITE],
+      ['POST', '/webadmin/api/pages/'.$page->id.'/slots/header/shared-slot', CmsApiTokenCapabilities::SHARED_SLOTS_WRITE],
+      ['POST', '/webadmin/api/sites/'.$site->id.'/public-theme', CmsApiTokenCapabilities::SITE_SETTINGS_WRITE],
+      ['POST', '/webadmin/api/pages/'.$page->id.'/sync-layout-slots', CmsApiTokenCapabilities::CONTENT_APPLY],
+      ['PATCH', '/webadmin/api/media/'.$media->id, CmsApiTokenCapabilities::MEDIA_WRITE],
+    ] as [$method, $uri, $capability]) {
       $this->withInternalToken()
-        ->json(str_contains($uri, '/media/') ? 'PATCH' : 'POST', $uri, [])
+        ->json($method, $uri, [])
         ->assertForbidden()
         ->assertHeader('content-type', 'application/json')
         ->assertJsonPath('code', 'missing_internal_api_capability')
@@ -1054,6 +1096,9 @@ class InternalContentApiTest extends TestCase
       'internal-content-api.content.apply',
       'internal-content-api.navigation-menus.store',
       'internal-content-api.navigation-menus.items.store',
+      'internal-content-api.navigation-menus.items.update',
+      'internal-content-api.navigation-menus.items.reorder',
+      'internal-content-api.navigation-menus.items.destroy',
       'internal-content-api.shared-slots.store',
       'internal-content-api.shared-slots.blocks.store',
       'internal-content-api.shared-slots.blocks.publish',
@@ -1849,6 +1894,99 @@ class InternalContentApiTest extends TestCase
       'menu_key' => NavigationItem::MENU_PRIMARY,
       'title' => 'Home',
       'url' => '/',
+    ]);
+  }
+
+  #[Test]
+  public function valid_token_can_update_hide_reorder_and_delete_navigation_items(): void
+  {
+    $this->createInternalApiToken('secret-token', [
+      CmsApiTokenCapabilities::CONTENT_READ,
+      CmsApiTokenCapabilities::NAVIGATION_WRITE,
+      CmsApiTokenCapabilities::NAVIGATION_DELETE,
+    ]);
+
+    $site = $this->defaultSite();
+    $catalog = NavigationItem::query()->create([
+      'site_id' => $site->id,
+      'menu_key' => NavigationItem::MENU_PRIMARY,
+      'title' => 'Games',
+      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'url' => '/games',
+      'position' => 1,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+    ]);
+    $singleGame = NavigationItem::query()->create([
+      'site_id' => $site->id,
+      'menu_key' => NavigationItem::MENU_PRIMARY,
+      'title' => 'Cloud Garden',
+      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'url' => '/games/cloud-garden',
+      'position' => 2,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/'.$singleGame->id.'?site=default', [
+        'label' => 'Hidden Game',
+        'url' => '/games/hidden-game',
+        'visibility' => NavigationItem::VISIBILITY_HIDDEN,
+        'sort_order' => 10,
+      ])
+      ->assertOk()
+      ->assertJsonPath('navigation_item.label', 'Hidden Game')
+      ->assertJsonPath('navigation_item.url', '/games/hidden-game')
+      ->assertJsonPath('navigation_item.visibility', NavigationItem::VISIBILITY_HIDDEN)
+      ->assertJsonPath('navigation_item.sort_order', 10);
+
+    $this->assertDatabaseHas('navigation_items', [
+      'id' => $singleGame->id,
+      'title' => 'Hidden Game',
+      'url' => '/games/hidden-game',
+      'visibility' => NavigationItem::VISIBILITY_HIDDEN,
+      'position' => 10,
+    ]);
+
+    $group = NavigationItem::query()->create([
+      'site_id' => $site->id,
+      'menu_key' => NavigationItem::MENU_PRIMARY,
+      'title' => 'Play',
+      'link_type' => NavigationItem::LINK_GROUP,
+      'position' => 3,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/reorder?site=default', [
+        'items' => [
+          ['id' => $group->id, 'parent_id' => null, 'position' => 1],
+          ['id' => $catalog->id, 'parent_id' => $group->id, 'position' => 1],
+          ['id' => $singleGame->id, 'parent_id' => null, 'position' => 2],
+        ],
+      ])
+      ->assertOk()
+      ->assertJsonPath('navigation_menu.items.0.label', 'Play')
+      ->assertJsonPath('navigation_menu.items.0.children.0.label', 'Games');
+
+    $this->assertDatabaseHas('navigation_items', [
+      'id' => $catalog->id,
+      'parent_id' => $group->id,
+      'position' => 1,
+    ]);
+
+    $this->withInternalToken()
+      ->deleteJson('/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/'.$group->id.'?site=default')
+      ->assertStatus(422)
+      ->assertJsonFragment(['message' => 'Navigation items with child items cannot be deleted through the API. Reorder or delete child items first.']);
+
+    $this->withInternalToken()
+      ->deleteJson('/webadmin/api/navigation-menus/'.NavigationItem::MENU_PRIMARY.'/items/'.$singleGame->id.'?site=default')
+      ->assertOk()
+      ->assertJsonPath('deleted.type', 'navigation_item')
+      ->assertJsonPath('deleted.id', $singleGame->id);
+
+    $this->assertDatabaseMissing('navigation_items', [
+      'id' => $singleGame->id,
     ]);
   }
 

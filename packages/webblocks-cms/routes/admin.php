@@ -95,6 +95,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/navigation-menus', [InternalNavigationController::class, 'store'])->middleware('internal-api.capability:navigation.write')->name('navigation-menus.store');
     Route::get('/navigation-menus/{navigationMenu}', [InternalNavigationController::class, 'show'])->name('navigation-menus.show');
     Route::post('/navigation-menus/{navigationMenu}/items', [InternalNavigationController::class, 'storeItem'])->middleware('internal-api.capability:navigation.write')->name('navigation-menus.items.store');
+    Route::patch('/navigation-menus/{navigationMenu}/items/reorder', [InternalNavigationController::class, 'reorderItems'])->middleware('internal-api.capability:navigation.write')->name('navigation-menus.items.reorder');
+    Route::patch('/navigation-menus/{navigationMenu}/items/{item}', [InternalNavigationController::class, 'updateItem'])->middleware('internal-api.capability:navigation.write')->name('navigation-menus.items.update');
+    Route::delete('/navigation-menus/{navigationMenu}/items/{item}', [InternalNavigationController::class, 'destroyItem'])->middleware('internal-api.capability:navigation.delete')->name('navigation-menus.items.destroy');
     Route::get('/shared-slots', [InternalSharedSlotController::class, 'index'])->name('shared-slots.index');
     Route::post('/shared-slots', [InternalSharedSlotController::class, 'store'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.store');
     Route::get('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'show'])->name('shared-slots.show');

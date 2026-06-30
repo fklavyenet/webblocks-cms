@@ -18,6 +18,8 @@ class CmsApiTokenCapabilities
 
   public const NAVIGATION_WRITE = 'navigation.write';
 
+  public const NAVIGATION_DELETE = 'navigation.delete';
+
   public const SHARED_SLOTS_WRITE = 'shared-slots.write';
 
   public const MEDIA_READ = 'media.read';
@@ -56,6 +58,7 @@ class CmsApiTokenCapabilities
     self::MEDIA_REPLACE,
     self::MEDIA_MOVE,
     self::MEDIA_DELETE,
+    self::NAVIGATION_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
   ];
@@ -63,6 +66,7 @@ class CmsApiTokenCapabilities
   public const DESTRUCTIVE = [
     self::MEDIA_REPLACE,
     self::MEDIA_DELETE,
+    self::NAVIGATION_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
   ];
@@ -72,6 +76,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_VALIDATE,
     self::CONTENT_APPLY,
     self::NAVIGATION_WRITE,
+    self::NAVIGATION_DELETE,
     self::SHARED_SLOTS_WRITE,
     self::MEDIA_READ,
     self::SITE_SETTINGS_WRITE,
@@ -91,6 +96,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_VALIDATE => 'Validate content plans',
     self::CONTENT_APPLY => 'Apply draft content plans',
     self::NAVIGATION_WRITE => 'Write navigation menu items',
+    self::NAVIGATION_DELETE => 'Delete navigation menu items',
     self::SHARED_SLOTS_WRITE => 'Write Shared Slots',
     self::MEDIA_READ => 'Read Media Library records',
     self::SITE_SETTINGS_WRITE => 'Write safe site presentation settings',
@@ -146,6 +152,8 @@ class CmsApiTokenCapabilities
         'promote_staged_update' => $this->has($token, self::CONTENT_APPLY) && $this->has($token, self::CONTENT_PUBLISH),
         'publish_page' => $this->has($token, self::CONTENT_PUBLISH),
         'delete_page' => $this->has($token, self::PAGES_DELETE),
+        'write_navigation_items' => $this->has($token, self::NAVIGATION_WRITE),
+        'delete_navigation_items' => $this->has($token, self::NAVIGATION_DELETE),
         'read_media' => $this->has($token, self::MEDIA_READ) || $this->has($token, self::CONTENT_READ),
         'write_media_metadata' => $this->has($token, self::MEDIA_WRITE),
         'upload_media' => $this->has($token, self::MEDIA_UPLOAD),

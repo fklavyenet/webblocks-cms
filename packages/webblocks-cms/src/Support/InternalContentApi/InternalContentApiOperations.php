@@ -699,7 +699,7 @@ class InternalContentApiOperations
     return $payload;
   }
 
-  private function isSafeNavigationUrl(string $url): bool
+  public function isSafeNavigationUrl(string $url): bool
   {
     if ($url === '') {
       return false;
