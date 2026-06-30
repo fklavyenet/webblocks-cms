@@ -7,9 +7,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
-## Unreleased
+## 1.32.186
 
-- Updated the pinned WebBlocks UI CDN/runtime, icon manifest, and AI contract references to `v2.7.13`.
+- Bumped CMS to `1.32.186` and updated the pinned WebBlocks UI CDN/runtime, icon manifest, and AI contract references to `v2.7.13`.
 
 ## 1.32.185
 
