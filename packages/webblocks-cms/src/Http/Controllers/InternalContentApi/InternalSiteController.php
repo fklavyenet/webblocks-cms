@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Sites\SiteAssetStore;
+use WebBlocks\Cms\Support\Sites\SiteAssetWriteException;
 
 class InternalSiteController extends Controller
 {
@@ -149,6 +150,18 @@ class InternalSiteController extends Controller
         (string) $data['contents'],
         $data['expected_checksum'] ?? null
       );
+    } catch (SiteAssetWriteException $exception) {
+      return response()->json([
+        'ok' => false,
+        'asset' => [
+          'type' => $type,
+          'readiness' => $exception->readiness,
+        ],
+        'warnings' => [],
+        'errors' => [
+          ['path' => 'asset.write', 'message' => $exception->getMessage()],
+        ],
+      ], 422);
     } catch (RuntimeException $exception) {
       return $this->validationError([
         ['path' => 'expected_checksum', 'message' => $exception->getMessage()],

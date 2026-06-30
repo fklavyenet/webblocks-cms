@@ -567,12 +567,12 @@ This endpoint updates only the safe site public theme preset used by public rend
 
 The favicon and social image fields must reference image records from the CMS Media Library, and `null` clears the selected media. Public site favicon changes should use this endpoint so the result remains admin-editable. Do not overwrite `/cms/brand/*`; those files are CMS product/admin shell assets, not site-level public branding.
 
-`GET /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.read` and reads the canonical physical site-level override file. It returns `relative_path`, `public_path`, `exists`, `contents`, `checksum`, `size`, and `updated_at` without exposing the server absolute path. `PUT /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.write` and accepts:
+`GET /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.read` and reads the canonical physical site-level override file. It returns `relative_path`, `public_path`, `exists`, `contents`, `checksum`, `size`, `updated_at`, and `readiness` without exposing the server absolute path. The `readiness` object reports whether the site directory, asset directory, and file are writable enough for CMS to create or update the asset. `PUT /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.write` and accepts:
 
 - `contents`
 - `expected_checksum`
 
-The write endpoint uses the same physical-file store as `Sites -> Edit Site -> Assets`. It writes only `public/site/{site_handle}/css/site.css` or `public/site/{site_handle}/js/site.js`, creates missing directories on first save, rejects stale `expected_checksum` values, and stores a pre-overwrite revision snapshot before replacing an existing changed file. There is no database fallback route and no arbitrary `/site/...` path writer.
+The write endpoint uses the same physical-file store as `Sites -> Edit Site -> Assets`. It writes only `public/site/{site_handle}/css/site.css` or `public/site/{site_handle}/js/site.js`, creates missing directories on first save, rejects stale `expected_checksum` values, and stores a pre-overwrite revision snapshot before replacing an existing changed file. There is no database fallback route and no arbitrary `/site/...` path writer. If hosting permissions prevent directory creation or file writes, the endpoint returns JSON `422` with `errors.0.path = asset.write` and the current readiness metadata instead of an HTML server error.
 
 ### Content Validate / Apply Endpoints
 

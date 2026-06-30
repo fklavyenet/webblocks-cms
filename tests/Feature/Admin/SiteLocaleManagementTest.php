@@ -275,6 +275,10 @@ class SiteLocaleManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.sites.edit', $site));
     $this->assertSame('ui-webblocksui-com', $site->handle);
+    $this->assertDirectoryExists(public_path('site/'.$site->handle.'/css'));
+    $this->assertDirectoryExists(public_path('site/'.$site->handle.'/js'));
+
+    File::deleteDirectory(public_path('site/'.$site->handle));
   }
 
   #[Test]
@@ -436,6 +440,7 @@ class SiteLocaleManagementTest extends TestCase
     $response->assertSee('form="site-asset-js-form"', false);
     $response->assertSee(route('admin.sites.assets.update', ['site' => $site, 'type' => 'css']), false);
     $response->assertSee(route('admin.sites.assets.update', ['site' => $site, 'type' => 'js']), false);
+    $response->assertSee('Ready to create');
   }
 
   #[Test]

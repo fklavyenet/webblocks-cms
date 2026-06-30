@@ -292,6 +292,8 @@ class InternalContentApiTest extends TestCase
         ->assertJsonPath('asset.exists', false)
         ->assertJsonPath('asset.contents', '')
         ->assertJsonPath('asset.checksum', null)
+        ->assertJsonPath('asset.readiness.ready', true)
+        ->assertJsonPath('asset.readiness.writable', true)
         ->assertJsonMissingPath('asset.absolute_path');
 
       $this->withInternalToken()
@@ -303,6 +305,7 @@ class InternalContentApiTest extends TestCase
         ->assertJsonPath('ok', true)
         ->assertJsonPath('asset.exists', true)
         ->assertJsonPath('asset.contents', '.hero { color: #13201f; }')
+        ->assertJsonPath('asset.readiness.ready', true)
         ->assertJsonPath('writes.0.type', 'site_asset_css')
         ->assertJsonMissingPath('asset.absolute_path');
 
@@ -314,6 +317,42 @@ class InternalContentApiTest extends TestCase
         ->assertJsonPath('asset.checksum', hash('sha256', '.hero { color: #13201f; }'));
     } finally {
       File::deleteDirectory(public_path('site/'.$site->handle));
+    }
+  }
+
+  #[Test]
+  public function api_site_asset_write_returns_validation_json_when_directory_is_not_writable(): void
+  {
+    $this->createInternalApiToken('secret-token', [
+      CmsApiTokenCapabilities::SITE_ASSETS_READ,
+      CmsApiTokenCapabilities::SITE_ASSETS_WRITE,
+    ]);
+    $site = Site::query()->create([
+      'name' => 'Locked Assets',
+      'handle' => 'locked-assets',
+      'domain' => 'locked-assets.test',
+      'is_primary' => false,
+    ]);
+    $siteDirectory = public_path('site/'.$site->handle);
+    File::ensureDirectoryExists($siteDirectory);
+    chmod($siteDirectory, 0555);
+
+    try {
+      $this->withInternalToken()
+        ->putJson('/webadmin/api/sites/'.$site->id.'/assets/css', [
+          'contents' => 'body { color: black; }',
+          'expected_checksum' => null,
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('ok', false)
+        ->assertJsonPath('errors.0.path', 'asset.write')
+        ->assertJsonPath('asset.readiness.writable', false)
+        ->assertJsonMissingPath('asset.absolute_path');
+
+      $this->assertFileDoesNotExist(public_path('site/'.$site->handle.'/css/site.css'));
+    } finally {
+      chmod($siteDirectory, 0775);
+      File::deleteDirectory($siteDirectory);
     }
   }
 

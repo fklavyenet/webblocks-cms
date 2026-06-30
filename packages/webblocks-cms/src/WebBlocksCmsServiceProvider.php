@@ -716,11 +716,13 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'Support/Sites/SiteCloneResult.php',
     'Support/Sites/SiteCloneService.php',
     'Support/Sites/SiteAssetStore.php',
+    'Support/Sites/SiteAssetWriteException.php',
     'Support/Sites/SiteDeleteResult.php',
     'Support/Sites/SiteDeleteService.php',
     'Support/Sites/SiteDomainManager.php',
     'Support/Sites/SiteDomainNormalizer.php',
     'Support/Sites/SiteHandle.php',
+    'Support/Sites/SitePublicDirectoryManager.php',
     'Support/Visitors/VisitorReportsQuery.php',
   ];
 

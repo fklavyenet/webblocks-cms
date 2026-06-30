@@ -20,6 +20,7 @@ use WebBlocks\Cms\Support\Sites\SiteAssetStore;
 use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use WebBlocks\Cms\Support\Sites\SiteDeleteService;
+use WebBlocks\Cms\Support\Sites\SitePublicDirectoryManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class SiteController extends Controller
@@ -29,6 +30,7 @@ class SiteController extends Controller
     private readonly SiteDeleteService $siteDeleteService,
     private readonly AdminAuthorization $authorization,
     private readonly SiteAssetStore $siteAssetStore,
+    private readonly SitePublicDirectoryManager $sitePublicDirectories,
   ) {}
 
   public function index(): View
@@ -112,7 +114,11 @@ class SiteController extends Controller
       return $site;
     });
 
-    return redirect()->route('admin.sites.edit', $site)->with('status', 'Site created successfully.');
+    $warnings = $this->sitePublicDirectories->ensureAssetDirectories($site);
+
+    return redirect()
+      ->route('admin.sites.edit', $site)
+      ->with('status', 'Site created successfully.'.($warnings ? ' '.implode(' ', $warnings) : ''));
   }
 
   public function edit(Site $site): View
@@ -225,7 +231,11 @@ class SiteController extends Controller
       return back()->with('status', $summary);
     }
 
-    return redirect()->route('admin.sites.edit', $result->targetSite)->with('status', $summary);
+    $warnings = $this->sitePublicDirectories->ensureAssetDirectories($result->targetSite);
+
+    return redirect()
+      ->route('admin.sites.edit', $result->targetSite)
+      ->with('status', $summary.($warnings ? ' '.implode(' ', $warnings) : ''));
   }
 
   public function update(SiteRequest $request, Site $site): RedirectResponse
@@ -244,7 +254,11 @@ class SiteController extends Controller
       $this->syncLocales($site, $localeIds);
     });
 
-    return redirect()->route('admin.sites.edit', ['site' => $site, 'tab' => $request->input('_site_tab', 'site')])->with('status', 'Site updated successfully.');
+    $warnings = $this->sitePublicDirectories->ensureAssetDirectories($site->fresh());
+
+    return redirect()
+      ->route('admin.sites.edit', ['site' => $site, 'tab' => $request->input('_site_tab', 'site')])
+      ->with('status', 'Site updated successfully.'.($warnings ? ' '.implode(' ', $warnings) : ''));
   }
 
   private function syncLocales(Site $site, array $localeIds): void

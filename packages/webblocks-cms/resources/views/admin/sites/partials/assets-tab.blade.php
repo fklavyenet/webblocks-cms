@@ -29,6 +29,8 @@
       @foreach ($siteAssets as $asset)
         @php($formId = 'site-asset-'.$asset['type'].'-form')
         @php($isFailedAsset = old('_site_asset_type') === $asset['type'])
+        @php($readiness = $asset['readiness'] ?? [])
+        @php($isWritable = (bool) ($readiness['writable'] ?? true))
         <section class="wb-card">
           <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <div class="wb-stack wb-gap-1">
@@ -36,10 +38,19 @@
               <span class="wb-text-sm wb-text-muted"><code>/{{ $asset['relative_path'] }}</code></span>
             </div>
 
-            <span class="wb-status-pill {{ $asset['exists'] ? 'wb-status-active' : 'wb-status-pending' }}">{{ $asset['exists'] ? 'File exists' : 'Not created' }}</span>
+            <span class="wb-status-pill {{ $isWritable ? ($asset['exists'] ? 'wb-status-active' : 'wb-status-pending') : 'wb-status-danger' }}">{{ $isWritable ? ($asset['exists'] ? 'File exists' : 'Ready to create') : 'Not writable' }}</span>
           </div>
 
           <div class="wb-card-body wb-stack wb-gap-3">
+            @if (! $isWritable)
+              <div class="wb-alert wb-alert-warning">
+                <div>
+                  <div class="wb-alert-title">Asset path is not writable</div>
+                  <div>{{ $readiness['problem'] ?? 'CMS cannot create or write this canonical asset file yet.' }}</div>
+                </div>
+              </div>
+            @endif
+
             <div class="wb-grid wb-grid-2 wb-gap-3">
               <div class="wb-text-sm wb-text-muted">
                 Public URL: <code>{{ $asset['public_path'] }}</code>
@@ -62,7 +73,7 @@
                 class="wb-input"
                 rows="16"
                 spellcheck="false"
-                @disabled(! $canManageSiteSettings)
+                @disabled(! $canManageSiteSettings || ! $isWritable)
               >{{ $isFailedAsset ? old('contents', $asset['contents']) : $asset['contents'] }}</textarea>
               <div class="wb-text-sm wb-text-muted">Only this canonical {{ $asset['label'] }} file is managed here. Arbitrary public paths are intentionally not editable from this screen.</div>
               @if ($isFailedAsset)
@@ -76,7 +87,7 @@
           @if ($canManageSiteSettings)
             <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2">
               <span class="wb-text-sm wb-text-muted">Checksum guard: {{ $asset['checksum'] ? str($asset['checksum'])->limit(16, '') : 'new file' }}</span>
-              <button type="submit" form="{{ $formId }}" class="wb-btn wb-btn-primary">Save {{ $asset['label'] }}</button>
+              <button type="submit" form="{{ $formId }}" class="wb-btn wb-btn-primary" @disabled(! $isWritable)>Save {{ $asset['label'] }}</button>
             </div>
           @endif
         </section>

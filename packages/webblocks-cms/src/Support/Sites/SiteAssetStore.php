@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Sites;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 use WebBlocks\Cms\Models\Site;
 
 class SiteAssetStore
@@ -17,6 +18,10 @@ class SiteAssetStore
     self::TYPE_CSS,
     self::TYPE_JS,
   ];
+
+  public function __construct(
+    private readonly SitePublicDirectoryManager $directories,
+  ) {}
 
   public function read(Site $site, string $type): array
   {
@@ -36,6 +41,7 @@ class SiteAssetStore
       'checksum' => $exists ? hash('sha256', $contents) : null,
       'size' => $exists ? strlen($contents) : 0,
       'updated_at' => $exists ? filemtime($path) : null,
+      'readiness' => $this->directories->readiness($site, $type),
     ];
   }
 
@@ -54,8 +60,13 @@ class SiteAssetStore
     }
 
     $path = $this->absolutePath($site, $type);
-    File::ensureDirectoryExists(dirname($path));
-    File::put($path, $contents);
+
+    try {
+      File::ensureDirectoryExists(dirname($path));
+      File::put($path, $contents);
+    } catch (Throwable $exception) {
+      throw $this->writeException($site, $type, $exception);
+    }
 
     return $this->read($site, $type);
   }
@@ -91,8 +102,12 @@ class SiteAssetStore
     $filename = $timestamp.'-'.$checksum.'.'.$suffix;
     $path = storage_path('app/cms/site-assets/'.$site->id.'/revisions/'.$type.'/'.$filename);
 
-    File::ensureDirectoryExists(dirname($path));
-    File::put($path, $contents);
+    try {
+      File::ensureDirectoryExists(dirname($path));
+      File::put($path, $contents);
+    } catch (Throwable $exception) {
+      throw new SiteAssetWriteException('CMS could not create a revision snapshot before replacing this site asset. Check storage/app/cms/site-assets permissions.', [], previous: $exception);
+    }
   }
 
   private function normalizeType(string $type): string
@@ -104,5 +119,18 @@ class SiteAssetStore
     }
 
     return $type;
+  }
+
+  private function writeException(Site $site, string $type, Throwable $exception): SiteAssetWriteException
+  {
+    $relativePath = $this->relativePath($site, $type);
+    $readiness = $this->directories->readiness($site, $type);
+    $message = 'CMS could not create or write /'.$relativePath.'. Make sure public/site/'.SiteHandle::normalize((string) $site->handle).' is writable by the web server user or group.';
+
+    if (is_string($readiness['problem'] ?? null) && $readiness['problem'] !== '') {
+      $message .= ' '.$readiness['problem'];
+    }
+
+    return new SiteAssetWriteException($message, $readiness, previous: $exception);
   }
 }

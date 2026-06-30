@@ -9,6 +9,7 @@ use RuntimeException;
 use WebBlocks\Cms\Http\Requests\Admin\SiteAssetRequest;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Sites\SiteAssetStore;
+use WebBlocks\Cms\Support\Sites\SiteAssetWriteException;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class SiteAssetController extends Controller
@@ -29,6 +30,10 @@ class SiteAssetController extends Controller
         $request->contents(),
         $request->expectedChecksum(),
       );
+    } catch (SiteAssetWriteException $exception) {
+      throw ValidationException::withMessages([
+        'contents' => $exception->getMessage(),
+      ]);
     } catch (RuntimeException $exception) {
       throw ValidationException::withMessages([
         'contents' => $exception->getMessage(),
