@@ -1058,6 +1058,8 @@ class Block extends Model
       'file',
       'video',
       'audio',
+      'rating',
+      'comments',
       'sticky-navbar',
     ], true);
   }

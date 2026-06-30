@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
+use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\LocaleController;
 use WebBlocks\Cms\Http\Controllers\Admin\MediaController;
@@ -216,6 +217,10 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
     Route::patch('contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');
     Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+    Route::get('engagement/comments', [EngagementController::class, 'comments'])->name('engagement.comments.index');
+    Route::patch('engagement/comments/{commentEntry}/status', [EngagementController::class, 'updateCommentStatus'])->name('engagement.comments.status');
+    Route::delete('engagement/comments/{commentEntry}', [EngagementController::class, 'destroyComment'])->name('engagement.comments.destroy');
+    Route::get('engagement/ratings', [EngagementController::class, 'ratings'])->name('engagement.ratings.index');
     Route::post('/blocks/{block}/move-up', [BlockController::class, 'moveUp'])->name('blocks.move-up');
     Route::post('/blocks/{block}/move-down', [BlockController::class, 'moveDown'])->name('blocks.move-down');
     Route::get('/blocks', [BlockController::class, 'index'])->name('blocks.index')->middleware('can:access-system');

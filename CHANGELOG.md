@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.195
+
+- Bumped CMS to `1.32.195`.
+- Add system-owned Rating and Comments blocks with separate storage for idempotent star ratings and moderated public comments, plus rate limits, spam quarantine, public renderers, and an Engagement admin review surface.
+
 ## 1.32.194
 
 - Bumped CMS to `1.32.194`.

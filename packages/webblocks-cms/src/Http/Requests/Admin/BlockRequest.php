@@ -61,6 +61,8 @@ class BlockRequest extends FormRequest
     $isLinkList = $selectedBlockType?->slug === 'link-list';
     $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
     $isContactForm = $selectedBlockType?->slug === 'contact_form';
+    $isRating = $selectedBlockType?->slug === 'rating';
+    $isComments = $selectedBlockType?->slug === 'comments';
     $isHero = $selectedBlockType?->slug === 'hero';
     $isCode = $selectedBlockType?->slug === 'code';
     $isHeader = $selectedBlockType?->slug === 'header';
@@ -164,6 +166,13 @@ class BlockRequest extends FormRequest
       'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
       'breadcrumb_home_label' => [$isBreadcrumb ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'breadcrumb_include_current' => [$isBreadcrumb ? 'nullable' : 'prohibited', Rule::in(['0', '1'])],
+      'rating_scale' => [$isRating ? 'required' : 'prohibited', Rule::in(['5'])],
+      'rating_allow_change' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
+      'rating_show_summary' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
+      'comments_form_enabled' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
+      'comments_show_approved' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
+      'comments_show_author_name' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
+      'comments_sort_order' => [$isComments ? 'required' : 'prohibited', Rule::in(['newest', 'oldest'])],
       'primary_cta_label' => ['nullable', 'string', 'max:255'],
       'primary_cta_url' => ['nullable', 'string', 'max:2048'],
       'secondary_cta_label' => ['nullable', 'string', 'max:255'],
@@ -1374,6 +1383,43 @@ class BlockRequest extends FormRequest
         $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
       }
 
+      if ($blockType?->slug === 'rating') {
+        $settings = [
+          'scale' => 5,
+          'allow_change' => (bool) ($data['rating_allow_change'] ?? true),
+          'show_summary' => (bool) ($data['rating_show_summary'] ?? true),
+        ];
+
+        $data['title'] = null;
+        $data['subtitle'] = null;
+        $data['content'] = null;
+        $data['url'] = null;
+        $data['asset_id'] = null;
+        $data['variant'] = null;
+        $data['meta'] = null;
+        $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+      }
+
+      if ($blockType?->slug === 'comments') {
+        $settings = [
+          'form_enabled' => (bool) ($data['comments_form_enabled'] ?? true),
+          'show_approved' => (bool) ($data['comments_show_approved'] ?? true),
+          'show_author_name' => (bool) ($data['comments_show_author_name'] ?? false),
+          'sort_order' => in_array(($data['comments_sort_order'] ?? 'newest'), ['newest', 'oldest'], true)
+            ? $data['comments_sort_order']
+            : 'newest',
+        ];
+
+        $data['title'] = null;
+        $data['subtitle'] = null;
+        $data['content'] = null;
+        $data['url'] = null;
+        $data['asset_id'] = null;
+        $data['variant'] = null;
+        $data['meta'] = null;
+        $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+      }
+
       if ($blockType?->slug === 'stat-card') {
         $isTranslatedStatCardEdit = $data['locale'] !== null;
         $title = trim((string) ($data['title'] ?? ''));
@@ -1869,6 +1915,8 @@ class BlockRequest extends FormRequest
     unset($data['language']);
     unset($data['navigation_menu_key']);
     unset($data['text'], $data['level'], $data['anchor']);
+    unset($data['rating_scale'], $data['rating_allow_change'], $data['rating_show_summary']);
+    unset($data['comments_form_enabled'], $data['comments_show_approved'], $data['comments_show_author_name'], $data['comments_sort_order']);
     unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['alert_variant']);
     unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
     unset($data['sticky_navbar_mode'], $data['navbar_brand_aria_label'], $data['navbar_navigation_menu_key']);

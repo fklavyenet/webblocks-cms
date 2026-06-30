@@ -91,6 +91,14 @@ class AppServiceProvider extends ServiceProvider
         ->by($request->ip().'|'.((string) $request->input('block_id')));
     });
 
+    RateLimiter::for('engagement-ratings', function (Request $request) {
+      return Limit::perMinute(20)->by($request->ip().'|'.((string) $request->input('block_id')));
+    });
+
+    RateLimiter::for('engagement-comments', function (Request $request) {
+      return Limit::perMinute(3)->by($request->ip().'|'.((string) $request->input('block_id')));
+    });
+
     if ($this->app->runningInConsole()) {
       Event::listen(CommandStarting::class, function (CommandStarting $event): void {
         app(DestructiveDatabaseCommandGuard::class)->ensureAllowed($event->command);

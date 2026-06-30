@@ -29,6 +29,18 @@ Do not prefer these for new hand-built pages unless you are preserving legacy co
 
 Use Safe HTML (`html`) and fallback renderers only as reviewed fallbacks when the content cannot yet be represented by structured CMS blocks. They should not be the default output for migrated or AI-created pages.
 
+For public engagement, use normal heading/copy blocks before the system behavior block:
+
+```text
+Section
+└── Container
+    ├── Content Header
+    ├── Rating
+    └── Comments
+```
+
+`rating` stores lightweight 1-5 star feedback without creating comment rows. `comments` stores visitor text for moderation and only renders approved comments publicly. Both blocks own their public `section.wb-card` root, but they intentionally do not own visible section headings.
+
 ## Common page trees
 
 Marketing page:

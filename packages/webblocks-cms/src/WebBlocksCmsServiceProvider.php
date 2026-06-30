@@ -831,6 +831,14 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->by($request->ip().'|'.((string) $request->input('block_id')));
     });
 
+    RateLimiter::for('engagement-ratings', function (Request $request) {
+      return Limit::perMinute(20)->by($request->ip().'|'.((string) $request->input('block_id')));
+    });
+
+    RateLimiter::for('engagement-comments', function (Request $request) {
+      return Limit::perMinute(3)->by($request->ip().'|'.((string) $request->input('block_id')));
+    });
+
     RateLimiter::for('internal-content-api', function (Request $request) {
       return Limit::perMinute(120)->by($request->ip().'|'.((string) $request->bearerToken()));
     });

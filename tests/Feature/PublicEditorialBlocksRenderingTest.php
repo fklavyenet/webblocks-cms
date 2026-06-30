@@ -30,7 +30,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
   #[Test]
   public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
   {
-    foreach (['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'sticky-navbar', 'navbar-brand', 'navbar-navigation', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
+    foreach (['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'rating', 'comments', 'sticky-navbar', 'navbar-brand', 'navbar-navigation', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
       $this->assertTrue(View::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$slug));
       $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
     }

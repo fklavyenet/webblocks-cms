@@ -46,6 +46,7 @@
                 ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
                 ['label' => 'Media', 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
                 ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
+                ['label' => 'Engagement', 'route' => 'admin.engagement.comments.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
             ];
 
             if (! $user?->can('access-system')) {

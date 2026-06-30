@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\AdminApi\SiteDomainApiController;
+use WebBlocks\Cms\Http\Controllers\Public\CommentEntryController;
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
+use WebBlocks\Cms\Http\Controllers\Public\ContentRatingController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
@@ -43,6 +45,14 @@ Route::middleware(['web', 'install.required', 'internal-api.token'])->prefix('ad
 Route::middleware(['web', 'install.required'])->post('/contact-messages', [ContactMessageController::class, 'store'])
   ->middleware('throttle:contact-form-submissions')
   ->name('contact-messages.store');
+
+Route::middleware(['web', 'install.required'])->post('/content-ratings', [ContentRatingController::class, 'store'])
+  ->middleware('throttle:engagement-ratings')
+  ->name('content-ratings.store');
+
+Route::middleware(['web', 'install.required'])->post('/comment-entries', [CommentEntryController::class, 'store'])
+  ->middleware('throttle:engagement-comments')
+  ->name('comment-entries.store');
 
 Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
