@@ -6,6 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
@@ -40,6 +43,64 @@ class InternalSiteController extends Controller
       'ok' => true,
       'site' => $this->presenter->site($site->fresh(['locales'])),
       'writes' => [['type' => 'site_public_theme_preset', 'id' => $site->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  public function updateBranding(Request $request, Site $site): JsonResponse
+  {
+    if (! Schema::hasColumn('sites', 'favicon_media_id') || ! Schema::hasColumn('sites', 'social_image_media_id')) {
+      return $this->validationError([
+        ['path' => 'site.branding', 'message' => 'Site branding media fields are not available until the latest site schema has been applied.'],
+      ]);
+    }
+
+    $validator = Validator::make($request->all(), [
+      'display_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+      'tagline' => ['sometimes', 'nullable', 'string', 'max:255'],
+      'favicon_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Media::class, 'id')],
+      'social_image_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Media::class, 'id')],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationError(collect($validator->errors()->toArray())
+        ->map(fn (array $messages, string $field) => [
+          'path' => $field,
+          'message' => $messages[0] ?? 'Invalid value.',
+        ])
+        ->values()
+        ->all());
+    }
+
+    $data = $validator->validated();
+
+    foreach (['favicon_media_id' => 'Favicon', 'social_image_media_id' => 'Social image'] as $field => $label) {
+      if (! array_key_exists($field, $data) || $data[$field] === null) {
+        continue;
+      }
+
+      $media = Media::query()->find((int) $data[$field]);
+
+      if (! $media?->isImage()) {
+        return $this->validationError([
+          ['path' => $field, 'message' => $label.' media must be an image from Media.'],
+        ]);
+      }
+    }
+
+    if ($data === []) {
+      return $this->validationError([
+        ['path' => 'site.branding', 'message' => 'Provide at least one site branding field.'],
+      ]);
+    }
+
+    $site->forceFill($data)->save();
+
+    return response()->json([
+      'ok' => true,
+      'site' => $this->presenter->site($site->fresh(['locales', 'faviconMedia', 'socialImageMedia'])),
+      'writes' => [['type' => 'site_branding', 'id' => $site->id]],
       'warnings' => [],
       'errors' => [],
     ]);

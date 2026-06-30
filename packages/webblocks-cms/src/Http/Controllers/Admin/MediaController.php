@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -19,7 +18,7 @@ use WebBlocks\Cms\Support\Media\MediaBulkDeleter;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaIndexState;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
-use WebBlocks\Cms\Support\Media\MediaKindResolver;
+use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\MediaUsageFilter;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -47,6 +46,7 @@ class MediaController extends Controller
     private readonly AdminAuthorization $authorization,
     private readonly MediaDeleter $mediaDeleter,
     private readonly MediaBulkDeleter $mediaBulkDeleter,
+    private readonly MediaUploader $mediaUploader,
   ) {}
 
   public function index(): View
@@ -202,37 +202,7 @@ class MediaController extends Controller
 
   public function store(MediaUploadRequest $request): RedirectResponse
   {
-    $file = $request->file('file');
-    $mimeType = $file?->getMimeType();
-    $extension = strtolower($file?->getClientOriginalExtension() ?: $file?->extension() ?: '');
-    $kind = MediaKindResolver::resolve($mimeType, $extension);
-    $disk = 'public';
-    $directory = 'media/'.MediaKindResolver::directoryFor($kind);
-    $filename = $this->buildFilename($file, $extension);
-    $path = $file->storeAs($directory, $filename, $disk);
-
-    $dimensions = $this->imageDimensions($file, $kind);
-
-    Media::create([
-      'folder_id' => $request->validated('folder_id'),
-      'disk' => $disk,
-      'path' => $path,
-      'filename' => basename($path),
-      'original_name' => $file->getClientOriginalName(),
-      'extension' => $extension ?: null,
-      'mime_type' => $mimeType,
-      'size' => $file->getSize(),
-      'kind' => $kind,
-      'visibility' => 'public',
-      'title' => $request->validated('title') ?: pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
-      'alt_text' => $request->validated('alt_text'),
-      'caption' => $request->validated('caption'),
-      'description' => $request->validated('description'),
-      'width' => $dimensions['width'],
-      'height' => $dimensions['height'],
-      'duration' => null,
-      'uploaded_by' => $request->user()?->id,
-    ]);
+    $this->mediaUploader->upload($request->file('file'), $request->validated(), $request->user()?->id);
 
     return redirect()
       ->route('admin.media.index', array_filter(['folder_id' => $request->validated('folder_id')]))
@@ -246,31 +216,6 @@ class MediaController extends Controller
     return redirect()
       ->route('admin.media.index', ['folder_id' => $folder->id])
       ->with('status', 'Folder created successfully.');
-  }
-
-  private function buildFilename(UploadedFile $file, string $extension): string
-  {
-    $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-
-    return trim($name !== '' ? $name : 'media').'-'.Str::lower(Str::random(10)).($extension !== '' ? '.'.$extension : '');
-  }
-
-  private function imageDimensions(UploadedFile $file, string $kind): array
-  {
-    if ($kind !== Media::KIND_IMAGE) {
-      return ['width' => null, 'height' => null];
-    }
-
-    $size = @getimagesize($file->getRealPath());
-
-    if (! is_array($size)) {
-      return ['width' => null, 'height' => null];
-    }
-
-    return [
-      'width' => $size[0] ?? null,
-      'height' => $size[1] ?? null,
-    ];
   }
 
   private function folderOptions()

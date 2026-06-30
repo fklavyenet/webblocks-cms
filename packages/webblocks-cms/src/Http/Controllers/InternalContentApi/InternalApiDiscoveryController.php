@@ -46,7 +46,8 @@ class InternalApiDiscoveryController extends Controller
         'Apply only after explicit user approval.',
         'Promote staged updates or publish only with explicit content.publish capability; page publishing does not publish draft blocks unless include_page_owned_blocks is true.',
         'For published-page staged updates, read GET /webadmin/api/pages/{staged_page}; follow page._actions.promote and do not call page publish on the staged page.',
-        'Use GET /webadmin/api/media with media.read and PATCH /webadmin/api/media/{media} with media.write for safe metadata-only Media Library work.',
+        'Use GET /webadmin/api/media with media.read, POST /webadmin/api/media with media.upload, PATCH /webadmin/api/media/{media} with media.write, POST /webadmin/api/media/{media}/replace with media.replace, POST /webadmin/api/media/{media}/move with media.move, and DELETE /webadmin/api/media/{media} with media.delete for Media Library work.',
+        'For public site favicon and social image changes, upload or discover Media Library images, then use PATCH /webadmin/api/sites/{site}/branding with site-settings.write. Do not replace CMS product assets under /cms/brand.',
         'Use PATCH /webadmin/api/blocks/{block} for supported existing block fields such as brand logo media; Shared Slot source blocks also require shared-slots.write.',
         'Use JSON requests with Authorization, Accept, and Content-Type headers.',
       ],
@@ -92,10 +93,11 @@ class InternalApiDiscoveryController extends Controller
         "Send every request with:\n\n```http\nAuthorization: Bearer <token>\nAccept: application/json\nContent-Type: application/json\n```",
         'Do not use browser automation or admin UI clicks for content API work. Follow discovery, then OpenAPI/content-contract/examples, then validate, then apply after explicit user approval.',
         'Content writes use JSON-only API responses. Missing, invalid, or insufficient tokens return JSON `401` or `403`; invalid payloads return JSON `422` with discovery and documentation links.',
-        'Media metadata writes require `media.write`; destructive operations require explicit capabilities such as `pages.delete` or `content.publish`. Standard page-building tokens should not include destructive capabilities.',
+        'Media uploads require `media.upload`; metadata writes require `media.write`; file replacement requires `media.replace`; folder moves require `media.move`; deletion requires `media.delete`. Destructive operations require explicit capabilities such as `media.replace`, `media.delete`, `pages.delete`, or `content.publish`. Standard page-building tokens should not include upload or destructive capabilities unless the operator explicitly grants them.',
         "Published page updates use staged pages. The safe flow is:\n\n1. `POST /webadmin/api/content/validate` with `mode=create_staged_update_for_published_page` or `mode=replace_staged_page_update`.\n2. `POST /webadmin/api/content/apply` to create or replace the staged draft.\n3. Preview the staged page.\n4. After explicit approval, read `GET /webadmin/api/pages/{staged_page}` and follow `page._actions.promote`.\n5. Do not use `POST /webadmin/api/pages/{staged_page}/publish` to promote staged content; that endpoint is rejected for staged updates.",
-        'For existing structured blocks, do not use HTML fallbacks to set native fields. Discover media with `GET /webadmin/api/media?kind=image`, then use `PATCH /webadmin/api/blocks/{block}` for supported fields such as `media_id`, `settings.url`, `settings.target`, `settings.aria_label`, and text translations.',
-        'For Media Library cleanup, use `PATCH /webadmin/api/media/{media}` only for metadata fields: `title`, `alt_text`, `caption`, and `description`. Do not upload, delete, replace files, move folders, or fetch remote media through this API.',
+        'For site favicon and public brand metadata, upload or discover image media, then use `PATCH /webadmin/api/sites/{site}/branding` with `favicon_media_id`, `social_image_media_id`, `display_name`, or `tagline`. Public site branding must remain visible in the admin Site Branding tab; do not overwrite `/cms/brand/*`, which belongs to the CMS product/admin shell.',
+        'For existing structured blocks, do not use HTML fallbacks or invented URL settings to set native fields. Discover or upload media, then use `PATCH /webadmin/api/blocks/{block}` for supported fields such as `media_id`, `settings.url`, `settings.target`, `settings.aria_label`, and text translations.',
+        'For Media Library cleanup, use dedicated media endpoints and capabilities: metadata PATCH, replace, move, and delete are separate. Delete keeps the admin usage guard and returns a usage report instead of deleting media referenced by blocks, site branding, or page SEO. Do not fetch remote media through this API.',
       ]),
       '_links' => $this->links(),
     ]);
@@ -194,8 +196,13 @@ class InternalApiDiscoveryController extends Controller
       'shared_slots' => '/webadmin/api/shared-slots',
       'shared_slot_blocks_publish' => '/webadmin/api/shared-slots/{sharedSlot}/publish-blocks',
       'site_public_theme' => '/webadmin/api/sites/{site}/public-theme',
+      'site_branding' => '/webadmin/api/sites/{site}/branding',
       'media' => '/webadmin/api/media',
+      'media_upload' => '/webadmin/api/media',
       'media_update' => '/webadmin/api/media/{media}',
+      'media_replace' => '/webadmin/api/media/{media}/replace',
+      'media_move' => '/webadmin/api/media/{media}/move',
+      'media_delete' => '/webadmin/api/media/{media}',
       'block_update' => '/webadmin/api/blocks/{block}',
     ];
   }
@@ -221,6 +228,7 @@ class InternalApiDiscoveryController extends Controller
       '/pages/{page}/publish-page-owned-blocks' => ['post' => ['summary' => 'Publish page-owned blocks without changing page status', 'x-required-capability' => 'content.publish', 'responses' => ['200' => ['description' => 'Published blocks JSON', 'content' => $json], '403' => ['description' => 'Requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/pages/{page}/sync-layout-slots' => ['post' => ['summary' => 'Create missing page layout slots', 'x-required-capability' => 'content.apply', 'responses' => ['200' => ['description' => 'Synced page slots JSON', 'content' => $json], '403' => ['description' => 'Requires content.apply capability', 'content' => $json]]]],
       '/sites/{site}/public-theme' => ['post' => ['summary' => 'Update safe site public theme preset', 'x-required-capability' => 'site-settings.write', 'responses' => ['200' => ['description' => 'Updated site JSON', 'content' => $json], '403' => ['description' => 'Requires site-settings.write capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/sites/{site}/branding' => ['patch' => ['summary' => 'Update safe site public branding fields such as favicon media', 'x-required-capability' => 'site-settings.write', 'x-supported-fields' => ['display_name', 'tagline', 'favicon_media_id', 'social_image_media_id'], 'x-public-site-branding-note' => 'Use Media Library image ids so changes remain visible in the admin Site Branding tab; do not overwrite /cms/brand product assets.', 'responses' => ['200' => ['description' => 'Updated site branding JSON', 'content' => $json], '403' => ['description' => 'Requires site-settings.write capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/content/validate' => ['post' => ['summary' => 'Validate content plan', 'x-supported-modes' => $this->contentModes(), 'responses' => ['200' => ['description' => 'Valid plan JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/content/apply' => ['post' => ['summary' => 'Apply content plan', 'x-supported-modes' => $this->contentModes(), 'x-mode-capabilities' => ['promote_staged_page_update' => 'content.publish plus content.apply'], 'responses' => ['201' => ['description' => 'Applied plan JSON', 'content' => $json], '403' => ['description' => 'Promote requires content.publish capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/navigation-menus' => ['get' => ['summary' => 'List navigation menus', 'responses' => ['200' => ['description' => 'Navigation JSON', 'content' => $json]]], 'post' => ['summary' => 'Create navigation menu items', 'responses' => ['201' => ['description' => 'Created navigation JSON', 'content' => $json]]]],
@@ -230,8 +238,17 @@ class InternalApiDiscoveryController extends Controller
       '/shared-slots/{sharedSlot}' => ['get' => ['summary' => 'Read Shared Slot', 'responses' => ['200' => ['description' => 'Shared Slot JSON', 'content' => $json]]]],
       '/shared-slots/{sharedSlot}/blocks' => ['post' => ['summary' => 'Create Shared Slot block', 'responses' => ['201' => ['description' => 'Created Shared Slot block JSON', 'content' => $json]]]],
       '/shared-slots/{sharedSlot}/publish-blocks' => ['post' => ['summary' => 'Publish Shared Slot blocks', 'x-required-capability' => 'shared-slots.write plus content.publish', 'responses' => ['200' => ['description' => 'Published Shared Slot blocks JSON', 'content' => $json], '403' => ['description' => 'Requires shared-slots.write and content.publish capabilities', 'content' => $json]]]],
-      '/media' => ['get' => ['summary' => 'List Media items for API-safe media assignment', 'x-required-capability' => 'media.read; content.read accepted for transitional compatibility', 'parameters' => [['name' => 'kind', 'in' => 'query', 'schema' => ['type' => 'string']], ['name' => 'search', 'in' => 'query', 'schema' => ['type' => 'string']]], 'responses' => ['200' => ['description' => 'Media JSON', 'content' => $json], '403' => ['description' => 'Requires media.read capability', 'content' => $json]]]],
-      '/media/{media}' => ['patch' => ['summary' => 'Update safe Media Library metadata', 'x-required-capability' => 'media.write', 'x-supported-fields' => ['title', 'alt_text', 'caption', 'description'], 'x-unsupported-fields' => ['file upload', 'delete', 'replace', 'folder moves', 'storage paths', 'remote media fetch'], 'responses' => ['200' => ['description' => 'Updated media JSON', 'content' => $json], '403' => ['description' => 'Requires media.write capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/media' => [
+        'get' => ['summary' => 'List Media items for API-safe media assignment', 'x-required-capability' => 'media.read; content.read accepted for transitional compatibility', 'parameters' => [['name' => 'kind', 'in' => 'query', 'schema' => ['type' => 'string']], ['name' => 'search', 'in' => 'query', 'schema' => ['type' => 'string']]], 'responses' => ['200' => ['description' => 'Media JSON', 'content' => $json], '403' => ['description' => 'Requires media.read capability', 'content' => $json]]],
+        'post' => ['summary' => 'Upload a file into the Media Library', 'x-required-capability' => 'media.upload', 'x-consumes' => 'multipart/form-data', 'x-supported-kinds' => ['image', 'video', 'document', 'other'], 'responses' => ['201' => ['description' => 'Uploaded media JSON', 'content' => $json], '403' => ['description' => 'Requires media.upload capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+      ],
+      '/media/{media}' => [
+        'get' => ['summary' => 'Read Media Library item and usage summary', 'x-required-capability' => 'media.read; content.read accepted for transitional compatibility', 'responses' => ['200' => ['description' => 'Media JSON', 'content' => $json], '403' => ['description' => 'Requires media.read capability', 'content' => $json]]],
+        'patch' => ['summary' => 'Update safe Media Library metadata', 'x-required-capability' => 'media.write', 'x-supported-fields' => ['title', 'alt_text', 'caption', 'description'], 'x-unsupported-fields' => ['file upload', 'delete', 'replace', 'folder moves', 'storage paths', 'remote media fetch'], 'responses' => ['200' => ['description' => 'Updated media JSON', 'content' => $json], '403' => ['description' => 'Requires media.write capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+        'delete' => ['summary' => 'Delete unused Media Library item', 'x-required-capability' => 'media.delete', 'x-usage-guard' => 'Media in use by blocks, site branding, or page SEO is rejected with usage details.', 'responses' => ['200' => ['description' => 'Deleted media JSON', 'content' => $json], '403' => ['description' => 'Requires media.delete capability', 'content' => $json], '422' => ['description' => 'Media in use JSON', 'content' => $json]]],
+      ],
+      '/media/{media}/replace' => ['post' => ['summary' => 'Replace a Media Library file while preserving the media id', 'x-required-capability' => 'media.replace', 'x-kind-guard' => 'Replacement file must resolve to the same media kind as the existing record.', 'responses' => ['200' => ['description' => 'Replaced media JSON', 'content' => $json], '403' => ['description' => 'Requires media.replace capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
+      '/media/{media}/move' => ['post' => ['summary' => 'Move a Media Library item to another folder or clear its folder', 'x-required-capability' => 'media.move', 'responses' => ['200' => ['description' => 'Moved media JSON', 'content' => $json], '403' => ['description' => 'Requires media.move capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/blocks/{block}' => [
         'get' => ['summary' => 'Read block', 'parameters' => [['name' => 'block', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]], 'responses' => ['200' => ['description' => 'Block JSON', 'content' => $json]]],
         'patch' => ['summary' => 'Update safe fields on an existing structured block', 'x-required-capability' => 'content.apply; shared-slots.write also required for Shared Slot source blocks', 'x-supported-fields' => ['media_id for navbar-brand/sidebar-brand logo media', 'settings.url', 'settings.target', 'settings.aria_label', 'translations.title', 'translations.subtitle', 'url', 'variant'], 'responses' => ['200' => ['description' => 'Updated block JSON', 'content' => $json], '403' => ['description' => 'Requires additional capability for Shared Slot source blocks', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
@@ -329,6 +346,33 @@ class InternalApiDiscoveryController extends Controller
         ],
         'available' => [
           'promote' => $canPromote,
+        ],
+      ],
+      'public_branding_media' => [
+        'description' => 'Upload or discover Media Library images, then assign them to site favicon/social image fields or existing brand logo blocks while keeping admin-editable CMS state.',
+        'steps' => [
+          'POST /webadmin/api/media with multipart/form-data and media.upload when the image is not already in the Media Library',
+          'GET /webadmin/api/media?kind=image to confirm the Media id and public URL',
+          'PATCH /webadmin/api/sites/{site}/branding with favicon_media_id or social_image_media_id for site-level public metadata',
+          'PATCH /webadmin/api/blocks/{block} with media_id for navbar-brand or sidebar-brand logo media',
+        ],
+        'do_not_use' => [
+          'Do not overwrite /cms/brand/* product/admin assets for public site branding.',
+          'Do not send settings.logo_url for brand blocks; use media_id.',
+        ],
+        'required_capabilities' => [
+          'upload_media' => [CmsApiTokenCapabilities::MEDIA_UPLOAD],
+          'assign_site_branding' => [CmsApiTokenCapabilities::SITE_SETTINGS_WRITE],
+          'assign_brand_block_logo' => [CmsApiTokenCapabilities::CONTENT_APPLY],
+          'assign_shared_slot_brand_block_logo' => [
+            CmsApiTokenCapabilities::CONTENT_APPLY,
+            CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+          ],
+        ],
+        'available' => [
+          'upload_media' => $this->capabilities->has($token, CmsApiTokenCapabilities::MEDIA_UPLOAD),
+          'assign_site_branding' => $this->capabilities->has($token, CmsApiTokenCapabilities::SITE_SETTINGS_WRITE),
+          'assign_brand_block_logo' => $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_APPLY),
         ],
       ],
     ];

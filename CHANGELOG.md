@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.187
+
+- Bumped CMS to `1.32.187`.
+- Add full Internal Content API Media Library management with explicit `media.upload`, `media.replace`, `media.move`, and `media.delete` capabilities, site branding updates for `favicon_media_id` and social image media, and stricter brand block settings validation so AI/operator tools can manage admin-visible media records, assign public favicon/logo fields normally, and avoid `/cms/brand` file bypasses.
+
 ## 1.32.186
 
 - Bumped CMS to `1.32.186` and updated the pinned WebBlocks UI CDN/runtime, icon manifest, and AI contract references to `v2.7.13`.

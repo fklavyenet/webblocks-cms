@@ -11,7 +11,9 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionClass;
 use Tests\TestCase;
@@ -20,6 +22,7 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
@@ -1859,6 +1862,267 @@ class InternalContentApiTest extends TestCase
       ->assertStatus(422)
       ->assertJsonPath('code', 'unsupported_media_update_fields')
       ->assertJsonPath('blocked_fields.0', 'path');
+  }
+
+  #[Test]
+  public function media_upload_can_feed_site_favicon_and_brand_logo_assignments(): void
+  {
+    Storage::fake('public');
+    $this->createInternalApiToken('brand-token', [
+      CmsApiTokenCapabilities::MEDIA_UPLOAD,
+      CmsApiTokenCapabilities::MEDIA_READ,
+      CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
+      CmsApiTokenCapabilities::CONTENT_APPLY,
+    ]);
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'header')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Home',
+      'slug' => 'home',
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'header',
+      'type' => 'navbar-brand',
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+
+    $upload = $this->withHeader('Authorization', 'Bearer brand-token')
+      ->post('/webadmin/api/media', [
+        'file' => UploadedFile::fake()->image('play-logo.png', 128, 128),
+        'title' => 'Play logo',
+        'alt_text' => 'Play',
+      ]);
+
+    $upload
+      ->assertCreated()
+      ->assertJsonPath('media.kind', Media::KIND_IMAGE)
+      ->assertJsonPath('media.title', 'Play logo')
+      ->assertJsonPath('media.alt_text', 'Play')
+      ->assertJsonPath('writes.0.type', 'media_upload');
+
+    $mediaId = (int) $upload->json('media.id');
+    $media = Media::query()->findOrFail($mediaId);
+
+    Storage::disk('public')->assertExists($media->path);
+
+    $this->withHeader('Authorization', 'Bearer brand-token')
+      ->patchJson('/webadmin/api/sites/'.$site->id.'/branding', [
+        'display_name' => 'Play',
+        'tagline' => 'WebBlocks playground',
+        'favicon_media_id' => $mediaId,
+      ])
+      ->assertOk()
+      ->assertJsonPath('site.id', $site->id)
+      ->assertJsonPath('site.display_name', 'Play')
+      ->assertJsonPath('site.favicon_media.id', $mediaId)
+      ->assertJsonPath('writes.0.type', 'site_branding');
+
+    $this->withHeader('Authorization', 'Bearer brand-token')
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'media_id' => $mediaId,
+        'translations' => [
+          'title' => 'Play',
+        ],
+      ])
+      ->assertOk()
+      ->assertJsonPath('block.media.id', $mediaId);
+
+    $this->assertDatabaseHas('sites', [
+      'id' => $site->id,
+      'display_name' => 'Play',
+      'tagline' => 'WebBlocks playground',
+      'favicon_media_id' => $mediaId,
+    ]);
+    $this->assertDatabaseHas('blocks', [
+      'id' => $block->id,
+      'media_id' => $mediaId,
+    ]);
+  }
+
+  #[Test]
+  public function media_upload_requires_explicit_upload_capability_and_accepts_library_file_types(): void
+  {
+    Storage::fake('public');
+    $this->createInternalApiToken('media-read-token', [CmsApiTokenCapabilities::MEDIA_READ]);
+
+    $this->withHeader('Authorization', 'Bearer media-read-token')
+      ->post('/webadmin/api/media', [
+        'file' => UploadedFile::fake()->image('logo.png'),
+      ])
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::MEDIA_UPLOAD);
+
+    $this->createInternalApiToken('upload-token', [CmsApiTokenCapabilities::MEDIA_UPLOAD]);
+
+    $this->withHeader('Authorization', 'Bearer upload-token')
+      ->post('/webadmin/api/media', [
+        'file' => UploadedFile::fake()->create('brief.pdf', 20, 'application/pdf'),
+      ])
+      ->assertCreated()
+      ->assertJsonPath('media.kind', Media::KIND_DOCUMENT)
+      ->assertJsonPath('media.mime_type', 'application/pdf');
+  }
+
+  #[Test]
+  public function media_api_can_replace_move_and_delete_with_explicit_capabilities(): void
+  {
+    Storage::fake('public');
+    $this->createInternalApiToken('media-admin-token', [
+      CmsApiTokenCapabilities::MEDIA_UPLOAD,
+      CmsApiTokenCapabilities::MEDIA_READ,
+      CmsApiTokenCapabilities::MEDIA_REPLACE,
+      CmsApiTokenCapabilities::MEDIA_MOVE,
+      CmsApiTokenCapabilities::MEDIA_DELETE,
+      CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
+    ]);
+    $folder = MediaFolder::query()->create(['name' => 'Brand']);
+
+    $upload = $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->post('/webadmin/api/media', [
+        'file' => UploadedFile::fake()->image('logo-old.png', 80, 80),
+        'title' => 'Old logo',
+      ])
+      ->assertCreated();
+
+    $mediaId = (int) $upload->json('media.id');
+    $oldMedia = Media::query()->findOrFail($mediaId);
+    $oldPath = $oldMedia->path;
+    Storage::disk('public')->assertExists($oldPath);
+
+    $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->post('/webadmin/api/media/'.$mediaId.'/replace', [
+        'file' => UploadedFile::fake()->image('logo-new.png', 120, 120),
+        'title' => 'New logo',
+      ])
+      ->assertOk()
+      ->assertJsonPath('media.id', $mediaId)
+      ->assertJsonPath('media.title', 'New logo')
+      ->assertJsonPath('media.width', 120)
+      ->assertJsonPath('writes.0.type', 'media_replace');
+
+    $replacedMedia = Media::query()->findOrFail($mediaId);
+    Storage::disk('public')->assertMissing($oldPath);
+    Storage::disk('public')->assertExists($replacedMedia->path);
+
+    $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->post('/webadmin/api/media/'.$mediaId.'/replace', [
+        'file' => UploadedFile::fake()->create('manual.pdf', 20, 'application/pdf'),
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'incompatible_media_replacement')
+      ->assertJsonPath('errors.0.path', 'file');
+
+    $this->assertSame($replacedMedia->path, Media::query()->findOrFail($mediaId)->path);
+
+    $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->postJson('/webadmin/api/media/'.$mediaId.'/move', [
+        'folder_id' => $folder->id,
+      ])
+      ->assertOk()
+      ->assertJsonPath('media.id', $mediaId)
+      ->assertJsonPath('writes.0.type', 'media_move');
+
+    $this->assertDatabaseHas('media', [
+      'id' => $mediaId,
+      'folder_id' => $folder->id,
+    ]);
+
+    $site = $this->defaultSite();
+
+    $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->patchJson('/webadmin/api/sites/'.$site->id.'/branding', [
+        'favicon_media_id' => $mediaId,
+      ])
+      ->assertOk();
+
+    $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->deleteJson('/webadmin/api/media/'.$mediaId)
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'media_in_use')
+      ->assertJsonPath('usage_count', 1)
+      ->assertJsonPath('usages.0.context', 'Site favicon');
+
+    $documentUpload = $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->post('/webadmin/api/media', [
+        'file' => UploadedFile::fake()->create('brief.pdf', 20, 'application/pdf'),
+      ])
+      ->assertCreated();
+    $documentId = (int) $documentUpload->json('media.id');
+    $documentPath = Media::query()->findOrFail($documentId)->path;
+
+    $this->withHeader('Authorization', 'Bearer media-admin-token')
+      ->deleteJson('/webadmin/api/media/'.$documentId)
+      ->assertOk()
+      ->assertJsonPath('deleted_media.id', $documentId)
+      ->assertJsonPath('writes.0.type', 'media_delete');
+
+    $this->assertDatabaseMissing('media', ['id' => $documentId]);
+    Storage::disk('public')->assertMissing($documentPath);
+  }
+
+  #[Test]
+  public function site_branding_requires_image_media_and_block_settings_reject_unknown_logo_url(): void
+  {
+    $this->createInternalApiToken('brand-token', [
+      CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
+      CmsApiTokenCapabilities::CONTENT_APPLY,
+    ]);
+    $site = $this->defaultSite();
+    $document = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/documents/manual.pdf',
+      'filename' => 'manual.pdf',
+      'original_name' => 'manual.pdf',
+      'extension' => 'pdf',
+      'mime_type' => 'application/pdf',
+      'size' => 2048,
+      'kind' => Media::KIND_DOCUMENT,
+      'visibility' => 'public',
+      'title' => 'Manual',
+    ]);
+    $slotType = SlotType::query()->where('slug', 'header')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Home',
+      'slug' => 'home',
+      'page_type' => Page::TYPE_DEFAULT,
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'header',
+      'type' => 'navbar-brand',
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+
+    $this->withHeader('Authorization', 'Bearer brand-token')
+      ->patchJson('/webadmin/api/sites/'.$site->id.'/branding', [
+        'favicon_media_id' => $document->id,
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('errors.0.path', 'favicon_media_id');
+
+    $this->withHeader('Authorization', 'Bearer brand-token')
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'settings' => [
+          'logo_url' => '/cms/brand/logo-mark.svg',
+        ],
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'unsupported_block_settings_fields')
+      ->assertJsonPath('blocked_fields.0', 'settings.logo_url');
   }
 
   #[Test]

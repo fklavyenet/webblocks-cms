@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
@@ -19,6 +21,9 @@ use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\Media\MediaDeleter;
+use WebBlocks\Cms\Support\Media\MediaInUseException;
+use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 
 class InternalContentResourceController extends Controller
@@ -27,12 +32,18 @@ class InternalContentResourceController extends Controller
     private readonly InternalContentApiPresenter $presenter,
     private readonly PageDeleter $pageDeleter,
     private readonly CmsApiTokenCapabilities $capabilities,
+    private readonly MediaUploader $mediaUploader,
+    private readonly MediaDeleter $mediaDeleter,
   ) {}
 
   public function sites(): JsonResponse
   {
     $sites = Site::query()
-      ->with(['locales' => fn ($query) => $query->orderByDesc('is_default')->orderBy('name')])
+      ->with([
+        'faviconMedia',
+        'locales' => fn ($query) => $query->orderByDesc('is_default')->orderBy('name'),
+        'socialImageMedia',
+      ])
       ->primaryFirst()
       ->orderBy('name')
       ->get()
@@ -554,6 +565,167 @@ class InternalContentResourceController extends Controller
     return $this->ok(['media' => $this->presenter->media($media)]);
   }
 
+  public function showMedia(Request $request, Media $media): JsonResponse
+  {
+    if (! $this->hasAnyCapability($request, [CmsApiTokenCapabilities::MEDIA_READ, CmsApiTokenCapabilities::CONTENT_READ])) {
+      return $this->capabilityError(CmsApiTokenCapabilities::MEDIA_READ, 'Reading Media Library records requires media.read.');
+    }
+
+    return $this->ok([
+      'media' => $this->presenter->media($media),
+      'usages' => $media->usages()->values()->all(),
+      'usage_count' => $media->usageCount(),
+    ]);
+  }
+
+  public function storeMedia(Request $request): JsonResponse
+  {
+    $validator = Validator::make($request->all(), [
+      'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+      'file' => $this->mediaFileRules(),
+      'title' => ['nullable', 'string', 'max:255'],
+      'alt_text' => ['nullable', 'string', 'max:255'],
+      'caption' => ['nullable', 'string'],
+      'description' => ['nullable', 'string'],
+    ]);
+
+    if ($validator->fails()) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'invalid_media_upload',
+        'message' => 'Media upload failed validation.',
+        'warnings' => [],
+        'errors' => collect($validator->errors()->toArray())
+          ->map(fn (array $messages, string $field) => [
+            'path' => $field,
+            'message' => $messages[0] ?? 'Invalid value.',
+          ])
+          ->values()
+          ->all(),
+      ], 422);
+    }
+
+    $media = $this->mediaUploader->upload($request->file('file'), $validator->validated());
+    $media->refresh();
+
+    return response()->json([
+      'ok' => true,
+      'media' => $this->presenter->media($media),
+      'writes' => [['type' => 'media_upload', 'id' => $media->id]],
+      'warnings' => [],
+      'errors' => [],
+    ], 201);
+  }
+
+  public function replaceMedia(Request $request, Media $media): JsonResponse
+  {
+    $validator = Validator::make($request->all(), [
+      'file' => $this->mediaFileRules(),
+      'title' => ['nullable', 'string', 'max:255'],
+      'alt_text' => ['nullable', 'string', 'max:255'],
+      'caption' => ['nullable', 'string'],
+      'description' => ['nullable', 'string'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationErrors('invalid_media_replace', 'Media replace failed validation.', $validator->errors()->toArray());
+    }
+
+    $oldDisk = $media->disk;
+    $oldPath = $media->path;
+    $stored = $this->mediaUploader->storeFile($request->file('file'));
+
+    if (($stored['kind'] ?? null) !== $media->kind) {
+      Storage::disk((string) $stored['disk'])->delete((string) $stored['path']);
+
+      return response()->json([
+        'ok' => false,
+        'code' => 'incompatible_media_replacement',
+        'message' => 'Replacement media must keep the same media kind as the existing record.',
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => 'file',
+            'message' => 'Expected '.$media->kind.' media, received '.($stored['kind'] ?? 'unknown').'.',
+          ],
+        ],
+      ], 422);
+    }
+
+    $metadata = [];
+
+    foreach (['title', 'alt_text', 'caption', 'description'] as $field) {
+      if ($request->has($field)) {
+        $metadata[$field] = $this->normalizeNullableString($request->input($field), $field === 'title' || $field === 'alt_text' ? 255 : 2000);
+      }
+    }
+
+    $media->forceFill([
+      ...$stored,
+      ...$metadata,
+    ])->save();
+
+    Storage::disk($oldDisk)->delete($oldPath);
+    $media->refresh();
+
+    return $this->ok([
+      'media' => $this->presenter->media($media),
+      'usages' => $media->usages()->values()->all(),
+      'usage_count' => $media->usageCount(),
+      'writes' => [['type' => 'media_replace', 'id' => $media->id]],
+    ]);
+  }
+
+  public function moveMedia(Request $request, Media $media): JsonResponse
+  {
+    $validator = Validator::make($request->all(), [
+      'folder_id' => ['present', 'nullable', 'integer', 'exists:media_folders,id'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationErrors('invalid_media_move', 'Media move failed validation.', $validator->errors()->toArray());
+    }
+
+    $data = $validator->validated();
+
+    $media->forceFill(['folder_id' => $data['folder_id'] ?? null])->save();
+    $media->refresh()->load('folder');
+
+    return $this->ok([
+      'media' => $this->presenter->media($media),
+      'writes' => [['type' => 'media_move', 'id' => $media->id]],
+    ]);
+  }
+
+  public function deleteMedia(Media $media): JsonResponse
+  {
+    $payload = $this->presenter->media($media);
+
+    try {
+      $this->mediaDeleter->delete($media);
+    } catch (MediaInUseException $exception) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'media_in_use',
+        'message' => 'Media cannot be deleted because it is in use.',
+        'usage_count' => $exception->usages()->count(),
+        'usages' => $exception->usages()->values()->all(),
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => 'media',
+            'message' => $exception->summary() ?: 'Media is in use.',
+          ],
+        ],
+      ], 422);
+    }
+
+    return $this->ok([
+      'deleted_media' => $payload,
+      'writes' => [['type' => 'media_delete', 'id' => $payload['id']]],
+    ]);
+  }
+
   public function updateBlock(Request $request, Block $block): JsonResponse
   {
     $blockedFields = array_values(array_intersect(array_keys($request->all()), [
@@ -750,6 +922,33 @@ class InternalContentResourceController extends Controller
     return mb_substr($value, 0, $maxLength);
   }
 
+  private function validationErrors(string $code, string $message, array $errors): JsonResponse
+  {
+    return response()->json([
+      'ok' => false,
+      'code' => $code,
+      'message' => $message,
+      'warnings' => [],
+      'errors' => collect($errors)
+        ->map(fn (array $messages, string $field) => [
+          'path' => $field,
+          'message' => $messages[0] ?? 'Invalid value.',
+        ])
+        ->values()
+        ->all(),
+    ], 422);
+  }
+
+  private function mediaFileRules(): array
+  {
+    return [
+      'required',
+      'file',
+      'max:51200',
+      'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,application/pdf,text/plain,text/csv,application/msword,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/rtf,application/zip',
+    ];
+  }
+
   private function resolveLocale(Request $request): Locale
   {
     $locale = (string) $request->input('locale', $request->query('locale', ''));
@@ -800,6 +999,24 @@ class InternalContentResourceController extends Controller
           [
             'path' => 'settings',
             'message' => 'Settings must be an object.',
+          ],
+        ],
+      ], 422));
+    }
+
+    $unsupported = array_values(array_diff(array_keys($incoming), ['url', 'target', 'aria_label']));
+
+    if ($unsupported !== []) {
+      abort(response()->json([
+        'ok' => false,
+        'code' => 'unsupported_block_settings_fields',
+        'message' => 'Existing block updates may only change supported settings fields.',
+        'blocked_fields' => array_map(fn (string $field) => 'settings.'.$field, $unsupported),
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => implode(',', array_map(fn (string $field) => 'settings.'.$field, $unsupported)),
+            'message' => 'Use discovered block contract fields such as media_id for brand logos instead of unsupported settings keys.',
           ],
         ],
       ], 422));

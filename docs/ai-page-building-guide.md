@@ -144,10 +144,12 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 - Shared Slot blocks are draft by default. When the user explicitly approves public Shared Slot changes and the token has `content.publish`, call `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks`; do not try to publish Shared Slot content through page publish cascade fields.
 - Do not fetch remote pages.
 - Do not use browser automation or admin UI clicks when API discovery is available.
-- Do not download or import media. Use `GET /webadmin/api/media` only to discover existing CMS Media Library records; the dedicated read capability is `media.read`, with transitional `content.read` compatibility on older tokens.
-- Use `PATCH /webadmin/api/media/{media}` only when discovered and when the token has `media.write`; this first media-write scope is metadata-only for `title`, `alt_text`, `caption`, and `description`.
-- Do not upload, delete, replace, move, or remotely fetch Media Library files through the Internal Content API unless a later explicit contract supports that exact operation.
-- Do not use Trusted HTML, invented file paths, or static markup for native media-backed fields. For an existing `navbar-brand` or `sidebar-brand` block, discover the image media id and use `PATCH /webadmin/api/blocks/{block}` with `media_id`, safe settings, and translations. Shared Slot source blocks also require `shared-slots.write`.
+- Do not download or import remote media. Use `GET /webadmin/api/media` to discover existing CMS Media Library records; the dedicated read capability is `media.read`, with transitional `content.read` compatibility on older tokens.
+- Use `POST /webadmin/api/media` only when discovered and when the token has `media.upload`; uploaded files become normal admin-visible Media Library records.
+- Use `PATCH /webadmin/api/media/{media}` only when discovered and when the token has `media.write`; this media-write scope is metadata-only for `title`, `alt_text`, `caption`, and `description`.
+- Use `POST /webadmin/api/media/{media}/replace`, `POST /webadmin/api/media/{media}/move`, or `DELETE /webadmin/api/media/{media}` only when discovered and when the token has the matching `media.replace`, `media.move`, or `media.delete` capability. Delete keeps the CMS usage guard and must not remove media still referenced by blocks, site branding, or page SEO.
+- Do not remotely fetch Media Library files through the Internal Content API.
+- Do not use Trusted HTML, invented file paths, static markup, unsupported `settings.logo_url`, or `/cms/brand/*` product assets for native media-backed fields. For public favicon/social image changes, upload or discover an image media id and use `PATCH /webadmin/api/sites/{site}/branding`. For an existing `navbar-brand` or `sidebar-brand` block, upload or discover the image media id and use `PATCH /webadmin/api/blocks/{block}` with `media_id`, safe settings, and translations. Shared Slot source blocks also require `shared-slots.write`.
 - Do not create API tokens from automation unless the user explicitly asks for token administration.
 - Do not print, log, or report token values.
 - Report only status codes and safe summarized response data.

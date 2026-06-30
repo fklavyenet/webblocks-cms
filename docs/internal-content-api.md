@@ -237,16 +237,29 @@ The Media Library API is intentionally split from broad content permissions so A
 Capabilities:
 
 - `media.read`: list and inspect existing CMS Media Library records.
+- `media.upload`: upload files into the Media Library.
 - `media.write`: update safe metadata on existing media records.
+- `media.replace`: replace an existing media file while preserving its media id.
+- `media.move`: move media between folders or clear its folder.
+- `media.delete`: delete unused media with the same usage guard as the admin panel.
 
 Phase 1 scope:
 
 ```text
 GET /webadmin/api/media
+POST /webadmin/api/media
+GET /webadmin/api/media/{media}
 PATCH /webadmin/api/media/{media}
+POST /webadmin/api/media/{media}/replace
+POST /webadmin/api/media/{media}/move
+DELETE /webadmin/api/media/{media}
 ```
 
 `GET /webadmin/api/media` returns existing media records with safe fields such as id, kind, title, filename, original name, mime type, visibility, public URL when available, alt text, dimensions, previewability, and compact metadata label. It requires `media.read`. During the transition from older API tokens, `content.read` may also be accepted for read-only media discovery so existing page-building integrations keep working.
+
+`POST /webadmin/api/media` requires `media.upload` and accepts `multipart/form-data` uploads into the normal CMS Media Library. The uploaded file becomes a regular `media` row and is visible in the browser admin Media screen and media pickers. The upload validation mirrors the browser admin Media Library allowed file types: common images, videos, PDFs, Office documents, text/CSV/RTF, and ZIP files.
+
+Supported metadata fields are `folder_id`, `title`, `alt_text`, `caption`, and `description`. The endpoint returns the created media object with its id and public URL when available.
 
 `PATCH /webadmin/api/media/{media}` requires `media.write` and updates only safe descriptive metadata:
 
@@ -255,16 +268,18 @@ PATCH /webadmin/api/media/{media}
 - `caption`
 - `description`
 
-Phase 1 explicitly does not support:
+`POST /webadmin/api/media/{media}/replace` requires `media.replace` and replaces the stored binary file while preserving the media id and existing references. The replacement file must resolve to the same media kind as the existing record, such as image-to-image or document-to-document. The response includes current usage details so tools can see whether the replacement affects blocks, site branding, or page SEO.
 
-- uploading new files
-- deleting media
-- replacing binary files
-- moving media between folders
-- changing disk, path, filename, mime type, kind, visibility, size, dimensions, uploader, or usage relationships
+`POST /webadmin/api/media/{media}/move` requires `media.move` and accepts `folder_id`, including `null` to clear the folder assignment.
+
+`DELETE /webadmin/api/media/{media}` requires `media.delete` and uses the same usage guard as the browser admin. Media referenced by blocks, galleries, attachments, site branding, or page SEO is not deleted; the API returns `422` with usage details instead.
+
+This API explicitly does not support:
+
+- changing disk, path, filename, mime type, kind, visibility, size, dimensions, uploader, or usage relationships directly
 - fetching or importing remote media URLs
 
-This boundary lets AI/operator tools improve accessibility and editorial quality, for example by adding missing alt text, without giving the same token destructive Media Library powers.
+This boundary lets AI/operator tools receive only the media powers they need. For example, a page-building token can read and upload media without being able to delete or replace existing files, while a trusted maintenance token can be granted `media.replace` or `media.delete` explicitly.
 
 ### Existing Draft Page Slot Replacement
 
@@ -522,9 +537,19 @@ If the page layout contains a slot such as `header` but the page record was crea
 
 ```text
 POST /webadmin/api/sites/{site}/public-theme
+PATCH /webadmin/api/sites/{site}/branding
 ```
 
 This endpoint updates only the safe site public theme preset used by public rendering. Send `public_theme_preset` or `theme` with one of the supported `Site::PUBLIC_THEME_PRESETS` values such as `canvas`, `atlas`, `pulse`, `prism`, `graphite`, or `horizon`. Use this when API discovery shows a site rendering with the wrong `data-wb-public-theme` preset; do not try to override the preset with content blocks.
+
+`PATCH /webadmin/api/sites/{site}/branding` requires `site-settings.write` and updates safe public site branding fields that are also visible in `Sites -> Edit Site -> Branding`:
+
+- `display_name`
+- `tagline`
+- `favicon_media_id`
+- `social_image_media_id`
+
+The favicon and social image fields must reference image records from the CMS Media Library, and `null` clears the selected media. Public site favicon changes should use this endpoint so the result remains admin-editable. Do not overwrite `/cms/brand/*`; those files are CMS product/admin shell assets, not site-level public branding.
 
 ### Content Validate / Apply Endpoints
 

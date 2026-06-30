@@ -29,6 +29,12 @@ class InternalContentApiPresenter
       'name' => $site->name,
       'is_primary' => (bool) $site->is_primary,
       'primary_domain' => $site->canonicalDomain(),
+      'display_name' => $site->display_name,
+      'tagline' => $site->tagline,
+      'favicon_media_id' => $site->favicon_media_id,
+      'favicon_media' => $site->relationLoaded('faviconMedia') && $site->faviconMedia ? $this->media($site->faviconMedia) : null,
+      'social_image_media_id' => $site->social_image_media_id,
+      'social_image_media' => $site->relationLoaded('socialImageMedia') && $site->socialImageMedia ? $this->media($site->socialImageMedia) : null,
       'public_theme_preset' => $site->resolvedPublicThemePreset(),
       'locales' => $site->relationLoaded('locales')
         ? $site->locales->map(fn (Locale $locale) => $this->locale($locale))->values()->all()
