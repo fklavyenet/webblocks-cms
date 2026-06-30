@@ -85,9 +85,13 @@ POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 GET /webadmin/api/navigation-menus
 GET /webadmin/api/shared-slots
+GET /webadmin/api/sites/{site}/assets/css
+PUT /webadmin/api/sites/{site}/assets/css
 ```
 
 The content validate/apply links support `create_draft_page`, `replace_existing_draft_page`, and published-page staged update modes. Use `GET /webadmin/api/content-contract` for the current mode list, safety rules, and block field discovery, including allowlisted public visual tone fields such as `settings.icon_tone` when a block supports them. Promoting a staged update onto a published page requires `content.publish` in addition to `content.apply`.
+
+Use `GET /webadmin/api/sites/{site}/assets/{css|js}` with `site-assets.read` and `PUT /webadmin/api/sites/{site}/assets/{css|js}` with `site-assets.write` to read or update the canonical physical `public/site/{site_handle}/css/site.css` and `public/site/{site_handle}/js/site.js` files. Write requests send `contents` and `expected_checksum`; stale checksums are rejected so AI/operator tools must read, merge intentionally, and retry instead of overwriting concurrent edits.
 
 Use `GET /webadmin/api/media` to discover existing CMS Media records before assigning media-backed native block fields. This read-only endpoint is moving to the dedicated `media.read` capability, with transitional `content.read` compatibility for older page-building tokens. If an approved file does not exist yet, use `POST /webadmin/api/media` with `media.upload` to create a normal Media Library record, then use the returned media id. Content plans can assign that id through `media_id` or `asset_id` on native `image`, `navbar-brand`, `sidebar-brand`, `file`, `download`, and `video` blocks, and through `gallery_items` or `gallery_media_ids` on `gallery` blocks. For card-like content, nest an `image` block inside `card` / `card_body` rather than putting media directly on the card shell. For supported existing structured blocks, such as `navbar-brand` and `sidebar-brand`, use `PATCH /webadmin/api/blocks/{block}` to assign image `media_id` and update safe settings or translations. Shared Slot source blocks additionally require `shared-slots.write`. For site favicon and social image changes, use `PATCH /webadmin/api/sites/{site}/branding` with Media Library image ids so the result remains visible in the Site Branding admin tab. Do not use Trusted HTML, invented public file paths, unsupported `settings.logo_url`, or `/cms/brand/*` product assets when a native CMS field exposes the needed media relationship.
 

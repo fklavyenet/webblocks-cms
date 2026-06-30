@@ -12,6 +12,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
@@ -91,11 +92,15 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
       ->assertJsonPath('_links.media', '/webadmin/api/media')
       ->assertJsonPath('_links.media_update', '/webadmin/api/media/{media}')
+      ->assertJsonPath('_links.site_asset', '/webadmin/api/sites/{site}/assets/{css|js}')
       ->assertJsonPath('_links.block_update', '/webadmin/api/blocks/{block}')
       ->assertJsonPath('token.can.read_media', true)
       ->assertJsonPath('token.can.write_media_metadata', false)
+      ->assertJsonPath('token.can.read_site_assets', false)
+      ->assertJsonPath('token.can.write_site_assets', false)
       ->assertJsonPath('token.can.promote_staged_update', false)
       ->assertJsonPath('workflows.published_page_staged_update.available.promote', false)
+      ->assertJsonPath('workflows.canonical_site_assets.available.write', false)
       ->assertJsonPath('workflows.published_page_staged_update.do_not_use.0', 'POST /webadmin/api/pages/{staged_page}/publish')
       ->assertJsonFragment(['content.apply'])
       ->assertJsonMissingPath('token.token_hash')
@@ -119,6 +124,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./media.get.summary', 'List Media items for API-safe media assignment')
       ->assertJsonPath('paths./media/{media}.patch.summary', 'Update safe Media Library metadata')
       ->assertJsonPath('paths./media/{media}.patch.x-required-capability', CmsApiTokenCapabilities::MEDIA_WRITE)
+      ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_READ)
+      ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE)
       ->assertJsonPath('paths./blocks/{block}.patch.summary', 'Update safe fields on an existing structured block');
 
     $guide = $this->withInternalToken()
@@ -132,6 +139,7 @@ class InternalContentApiTest extends TestCase
     $this->assertStringContainsString('Authorization: Bearer <token>', (string) $guideContent);
     $this->assertStringContainsString('Do not use browser automation', (string) $guideContent);
     $this->assertStringContainsString('page._actions.promote', (string) $guideContent);
+    $this->assertStringContainsString('site-assets.write', (string) $guideContent);
 
     $example = $this->withInternalToken()
       ->getJson('/webadmin/api/examples/contact-page')
@@ -254,6 +262,101 @@ class InternalContentApiTest extends TestCase
       ->assertStatus(422)
       ->assertJsonPath('ok', false)
       ->assertJsonFragment(['path' => 'site.public_theme_preset']);
+  }
+
+  #[Test]
+  public function api_can_read_and_write_canonical_site_assets_with_explicit_capabilities(): void
+  {
+    $this->createInternalApiToken('secret-token', [
+      CmsApiTokenCapabilities::SITE_ASSETS_READ,
+      CmsApiTokenCapabilities::SITE_ASSETS_WRITE,
+    ]);
+    $site = $this->defaultSite();
+    File::deleteDirectory(public_path('site/'.$site->handle));
+
+    try {
+      $read = $this->withInternalToken()
+        ->getJson('/webadmin/api/sites/'.$site->id.'/assets/css')
+        ->assertOk()
+        ->assertJsonPath('ok', true)
+        ->assertJsonPath('asset.type', 'css')
+        ->assertJsonPath('asset.relative_path', 'site/'.$site->handle.'/css/site.css')
+        ->assertJsonPath('asset.public_path', '/site/'.$site->handle.'/css/site.css')
+        ->assertJsonPath('asset.exists', false)
+        ->assertJsonPath('asset.contents', '')
+        ->assertJsonPath('asset.checksum', null)
+        ->assertJsonMissingPath('asset.absolute_path');
+
+      $this->withInternalToken()
+        ->putJson('/webadmin/api/sites/'.$site->id.'/assets/css', [
+          'contents' => '.hero { color: #13201f; }',
+          'expected_checksum' => $read->json('asset.checksum'),
+        ])
+        ->assertOk()
+        ->assertJsonPath('ok', true)
+        ->assertJsonPath('asset.exists', true)
+        ->assertJsonPath('asset.contents', '.hero { color: #13201f; }')
+        ->assertJsonPath('writes.0.type', 'site_asset_css')
+        ->assertJsonMissingPath('asset.absolute_path');
+
+      $this->assertSame('.hero { color: #13201f; }', (string) file_get_contents(public_path('site/'.$site->handle.'/css/site.css')));
+
+      $this->withInternalToken()
+        ->getJson('/webadmin/api/sites/'.$site->id.'/assets/css')
+        ->assertOk()
+        ->assertJsonPath('asset.checksum', hash('sha256', '.hero { color: #13201f; }'));
+    } finally {
+      File::deleteDirectory(public_path('site/'.$site->handle));
+    }
+  }
+
+  #[Test]
+  public function api_site_asset_write_rejects_stale_checksum_without_overwriting_file(): void
+  {
+    $this->createInternalApiToken('secret-token', [
+      CmsApiTokenCapabilities::SITE_ASSETS_READ,
+      CmsApiTokenCapabilities::SITE_ASSETS_WRITE,
+    ]);
+    $site = $this->defaultSite();
+    $path = public_path('site/'.$site->handle.'/css/site.css');
+    File::ensureDirectoryExists(dirname($path));
+    File::put($path, ".hero { color: red; }\n");
+    $staleChecksum = hash('sha256', ".hero { color: blue; }\n");
+
+    try {
+      $this->withInternalToken()
+        ->putJson('/webadmin/api/sites/'.$site->id.'/assets/css', [
+          'contents' => ".hero { color: green; }\n",
+          'expected_checksum' => $staleChecksum,
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('ok', false)
+        ->assertJsonPath('errors.0.path', 'expected_checksum');
+
+      $this->assertSame(".hero { color: red; }\n", (string) file_get_contents($path));
+    } finally {
+      File::deleteDirectory(public_path('site/'.$site->handle));
+    }
+  }
+
+  #[Test]
+  public function api_site_asset_endpoints_require_dedicated_capabilities(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $site = $this->defaultSite();
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/sites/'.$site->id.'/assets/css')
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::SITE_ASSETS_READ);
+
+    $this->withInternalToken()
+      ->putJson('/webadmin/api/sites/'.$site->id.'/assets/css', [
+        'contents' => 'body { color: black; }',
+        'expected_checksum' => null,
+      ])
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE);
   }
 
   #[Test]

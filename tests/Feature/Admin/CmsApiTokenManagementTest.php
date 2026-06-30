@@ -42,6 +42,8 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('navigation.write');
     $response->assertSee('shared-slots.write');
     $response->assertSee('media.read');
+    $response->assertSee('site-assets.read');
+    $response->assertSee('site-assets.write');
     $response->assertSee('media.write');
     $response->assertSee('content.publish');
     $response->assertSee('pages.delete');
@@ -78,6 +80,8 @@ class CmsApiTokenManagementTest extends TestCase
     $this->assertMatchesRegularExpression('/value="navigation\.write"[^>]*checked/s', $content);
     $this->assertMatchesRegularExpression('/value="shared-slots\.write"[^>]*checked/s', $content);
     $this->assertMatchesRegularExpression('/value="media\.read"[^>]*checked/s', $content);
+    $this->assertDoesNotMatchRegularExpression('/value="site-assets\.read"[^>]*checked/s', $content);
+    $this->assertDoesNotMatchRegularExpression('/value="site-assets\.write"[^>]*checked/s', $content);
     $this->assertDoesNotMatchRegularExpression('/value="media\.write"[^>]*checked/s', $content);
     $this->assertDoesNotMatchRegularExpression('/value="content\.publish"[^>]*checked/s', $content);
     $this->assertDoesNotMatchRegularExpression('/value="pages\.delete"[^>]*checked/s', $content);

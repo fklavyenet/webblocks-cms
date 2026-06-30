@@ -78,6 +78,8 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/examples/landing-page', [InternalApiDiscoveryController::class, 'landingPageExample'])->name('examples.landing-page');
     Route::get('/sites', [InternalContentResourceController::class, 'sites'])->name('sites.index');
     Route::post('/sites/{site}/public-theme', [InternalSiteController::class, 'updatePublicTheme'])->middleware('internal-api.capability:site-settings.write')->name('sites.public-theme.update');
+    Route::get('/sites/{site}/assets/{type}', [InternalSiteController::class, 'showAsset'])->middleware('internal-api.capability:site-assets.read')->name('sites.assets.show');
+    Route::put('/sites/{site}/assets/{type}', [InternalSiteController::class, 'updateAsset'])->middleware('internal-api.capability:site-assets.write')->name('sites.assets.update');
     Route::get('/locales', [InternalContentResourceController::class, 'locales'])->name('locales.index');
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');

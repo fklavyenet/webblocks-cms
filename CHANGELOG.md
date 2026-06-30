@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.192
+
+- Bumped CMS to `1.32.192`.
+- Add Internal Content API read/write endpoints for canonical site `site.css` and `site.js` files, guarded by explicit `site-assets.read` and `site-assets.write` token capabilities and the same checksum/revision protection used by the admin editor.
+
 ## 1.32.191
 
 - Bumped CMS to `1.32.191`.

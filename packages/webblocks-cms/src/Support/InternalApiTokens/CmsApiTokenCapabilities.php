@@ -34,6 +34,10 @@ class CmsApiTokenCapabilities
 
   public const SITE_SETTINGS_WRITE = 'site-settings.write';
 
+  public const SITE_ASSETS_READ = 'site-assets.read';
+
+  public const SITE_ASSETS_WRITE = 'site-assets.write';
+
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
@@ -45,6 +49,8 @@ class CmsApiTokenCapabilities
   ];
 
   public const ADVANCED = [
+    self::SITE_ASSETS_READ,
+    self::SITE_ASSETS_WRITE,
     self::MEDIA_WRITE,
     self::MEDIA_UPLOAD,
     self::MEDIA_REPLACE,
@@ -76,6 +82,8 @@ class CmsApiTokenCapabilities
     self::MEDIA_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
+    self::SITE_ASSETS_READ,
+    self::SITE_ASSETS_WRITE,
   ];
 
   public const LABELS = [
@@ -86,6 +94,8 @@ class CmsApiTokenCapabilities
     self::SHARED_SLOTS_WRITE => 'Write Shared Slots',
     self::MEDIA_READ => 'Read Media Library records',
     self::SITE_SETTINGS_WRITE => 'Write safe site presentation settings',
+    self::SITE_ASSETS_READ => 'Read canonical site CSS and JS override files',
+    self::SITE_ASSETS_WRITE => 'Write canonical site CSS and JS override files',
     self::MEDIA_WRITE => 'Write safe Media Library metadata',
     self::MEDIA_UPLOAD => 'Upload Media Library files',
     self::MEDIA_REPLACE => 'Replace Media Library files',
@@ -143,6 +153,8 @@ class CmsApiTokenCapabilities
         'move_media' => $this->has($token, self::MEDIA_MOVE),
         'delete_media' => $this->has($token, self::MEDIA_DELETE),
         'write_site_presentation_settings' => $this->has($token, self::SITE_SETTINGS_WRITE),
+        'read_site_assets' => $this->has($token, self::SITE_ASSETS_READ),
+        'write_site_assets' => $this->has($token, self::SITE_ASSETS_WRITE),
       ],
     ];
   }

@@ -169,6 +169,8 @@ GET /webadmin/api/shared-slots
 GET /webadmin/api/shared-slots/{sharedSlot}
 POST /webadmin/api/shared-slots
 POST /webadmin/api/shared-slots/{sharedSlot}/blocks
+GET /webadmin/api/sites/{site}/assets/css
+PUT /webadmin/api/sites/{site}/assets/css
 ```
 
 ### Content Validate / Apply API
@@ -541,6 +543,8 @@ If the page layout contains a slot such as `header` but the page record was crea
 ```text
 POST /webadmin/api/sites/{site}/public-theme
 PATCH /webadmin/api/sites/{site}/branding
+GET /webadmin/api/sites/{site}/assets/{css|js}
+PUT /webadmin/api/sites/{site}/assets/{css|js}
 ```
 
 This endpoint updates only the safe site public theme preset used by public rendering. Send `public_theme_preset` or `theme` with one of the supported `Site::PUBLIC_THEME_PRESETS` values such as `canvas`, `atlas`, `pulse`, `prism`, `graphite`, or `horizon`. Use this when API discovery shows a site rendering with the wrong `data-wb-public-theme` preset; do not try to override the preset with content blocks.
@@ -553,6 +557,13 @@ This endpoint updates only the safe site public theme preset used by public rend
 - `social_image_media_id`
 
 The favicon and social image fields must reference image records from the CMS Media Library, and `null` clears the selected media. Public site favicon changes should use this endpoint so the result remains admin-editable. Do not overwrite `/cms/brand/*`; those files are CMS product/admin shell assets, not site-level public branding.
+
+`GET /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.read` and reads the canonical physical site-level override file. It returns `relative_path`, `public_path`, `exists`, `contents`, `checksum`, `size`, and `updated_at` without exposing the server absolute path. `PUT /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.write` and accepts:
+
+- `contents`
+- `expected_checksum`
+
+The write endpoint uses the same physical-file store as `Sites -> Edit Site -> Assets`. It writes only `public/site/{site_handle}/css/site.css` or `public/site/{site_handle}/js/site.js`, creates missing directories on first save, rejects stale `expected_checksum` values, and stores a pre-overwrite revision snapshot before replacing an existing changed file. There is no database fallback route and no arbitrary `/site/...` path writer.
 
 ### Content Validate / Apply Endpoints
 
