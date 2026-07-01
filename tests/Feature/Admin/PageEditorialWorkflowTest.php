@@ -178,11 +178,11 @@ class PageEditorialWorkflowTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $secondaryLocale->id],
-      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/tr/p/hakkinda'],
+      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/hakkinda'],
     );
 
     $slot = PageSlot::query()->create([
@@ -219,7 +219,7 @@ class PageEditorialWorkflowTest extends TestCase
     $response->assertSee('Name');
     $response->assertSee('About');
     $response->assertSee('Path');
-    $response->assertSee('/p/about');
+    $response->assertSee('/about');
     $response->assertSee('Site');
     $response->assertSee($site->name);
     $response->assertSee('Default URL');
@@ -227,8 +227,8 @@ class PageEditorialWorkflowTest extends TestCase
     $response->assertSee('Slug');
     $response->assertSee('about');
     $response->assertSee('Locales');
-    $response->assertSee('EN: about | /p/about');
-    $response->assertSee('TR: hakkinda | /tr/p/hakkinda');
+    $response->assertSee('EN: about | /about');
+    $response->assertSee('TR: hakkinda | /tr/hakkinda');
     $response->assertSee('Status');
     $response->assertSee('Published');
     $response->assertSee('Review Requested');
@@ -278,7 +278,7 @@ class PageEditorialWorkflowTest extends TestCase
     $this->assertLessThan(strpos($content, '<th>ID</th>'), strpos($content, 'Select all visible pages'));
     $this->assertLessThan(strpos($content, '<th>Page</th>'), strpos($content, '<th>ID</th>'));
     $this->assertLessThan(strpos($content, '<th>View</th>'), strpos($content, '<th>Page</th>'));
-    $this->assertLessThan(strpos($content, '<th>Blocks</th>'), strpos($content, '<th>View</th>'));
+    $this->assertLessThan(strpos($content, '<th title="Total page-owned blocks, including nested child blocks">Total Blocks</th>'), strpos($content, '<th>View</th>'));
   }
 
   #[Test]
@@ -779,10 +779,11 @@ class PageEditorialWorkflowTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
-    $this->get('/tr/p/hakkinda')->assertOk();
+    $this->get('/tr/hakkinda')->assertOk();
+    $this->get('/tr/p/hakkinda')->assertRedirect('/tr/hakkinda');
   }
 
   #[Test]

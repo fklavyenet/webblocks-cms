@@ -25,7 +25,15 @@ class SiteAssetResolver
     }
 
     $relativePath = 'site/'.$handle.'/'.$suffix;
+    $absolutePath = public_path($relativePath);
 
-    return is_file(public_path($relativePath)) ? '/'.$relativePath : null;
+    if (! is_file($absolutePath)) {
+      return null;
+    }
+
+    $hash = hash_file('sha256', $absolutePath);
+    $version = is_string($hash) ? substr($hash, 0, 12) : (string) filemtime($absolutePath);
+
+    return '/'.$relativePath.'?v='.$version;
   }
 }

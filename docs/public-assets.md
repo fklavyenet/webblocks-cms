@@ -53,9 +53,9 @@ Install-specific or site-specific public overrides live under the resolved site 
 
 These files are override space for the current install and should not be used for CMS core behavior.
 
-When present, `public/site/{site_handle}/css/site.css` renders in the public `<head>` for the currently resolved public site.
+When present, `public/site/{site_handle}/css/site.css` renders in the public `<head>` for the currently resolved public site. The rendered URL includes a content-hash `?v=` query so browser caches refresh after admin or API writes.
 
-When present, `public/site/{site_handle}/js/site.js` renders in the public `<head>` with `defer` for the currently resolved public site.
+When present, `public/site/{site_handle}/js/site.js` renders in the public `<head>` with `defer` for the currently resolved public site. The rendered URL includes a content-hash `?v=` query so browser caches refresh after admin or API writes.
 
 When Site Export / Import runs with file inclusion enabled, these two canonical site-level override files are packaged when present and restored under the final imported site handle. Missing `site.css` or `site.js` files are skipped cleanly. Export / Import does not package arbitrary `public/site/{site_handle}/...` trees through this site-level path.
 

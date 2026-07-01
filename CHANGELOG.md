@@ -7,11 +7,14 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
-## 1.32.199
+## 1.32.200
 
-- Bumped CMS to `1.32.199`.
+- Bumped CMS to `1.32.200`.
 - Let editors set slash-bearing Page Translation paths from the admin form, so nested public URLs such as `/games/fruit-train` can be corrected without API or database access.
 - Clarify Internal Content API guidance and examples so AI/operator tools preserve slash-bearing page paths such as `/games/fruit-train` instead of flattening them.
+- Clarify Pages admin block counts by labeling the index count as total nested page-owned blocks and slot counts as top-level slot blocks.
+- Clean up remaining admin editorial tests and block editor placeholder examples so canonical page URLs use Page Translation paths such as `/about`, while `/p/...` remains legacy redirect-only.
+- Add content-hash cache busting to public site-level `site.css` and `site.js` asset URLs so browser caches refresh after admin or API asset writes.
 
 ## 1.32.198
 

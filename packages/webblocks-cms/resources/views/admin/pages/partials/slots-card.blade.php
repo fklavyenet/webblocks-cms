@@ -74,7 +74,7 @@
                         <tr>
                             <th>Slot</th>
                             <th>Source</th>
-                            <th>Blocks</th>
+                            <th title="Top-level page-owned blocks in this slot">Top-level Blocks</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -102,9 +102,10 @@
                                 $pageBlockCount = $preview['is_empty'] ? 0 : $preview['items']->count() + $preview['remaining'];
                                 $sourceModalId = 'slot-source-modal-'.$pageSlot->id;
                                 $slotName = $pageSlot->slotType?->name ?? 'Slot';
+                                $topLevelLabel = $pageBlockCount === 1 ? 'top-level block' : 'top-level blocks';
                                 $pageBlockCountLabel = $sourceType === PageSlot::SOURCE_TYPE_PAGE
-                                    ? $pageBlockCount.' '.($pageBlockCount === 1 ? 'block' : 'blocks')
-                                    : $pageBlockCount.' '.($pageBlockCount === 1 ? 'page-owned block' : 'page-owned blocks');
+                                    ? $pageBlockCount.' '.$topLevelLabel
+                                    : $pageBlockCount.' page-owned '.$topLevelLabel;
                             @endphp
                             <tr>
                                 <td>

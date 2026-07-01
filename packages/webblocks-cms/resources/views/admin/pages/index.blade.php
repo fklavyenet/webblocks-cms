@@ -154,7 +154,7 @@
                                 <th>ID</th>
                                 <th>Page</th>
                                 <th>View</th>
-                                <th>Blocks</th>
+                                <th title="Total page-owned blocks, including nested child blocks">Total Blocks</th>
                                 <th>Status</th>
                                 <th>Last edited</th>
                                 <th>Actions</th>
@@ -240,7 +240,7 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="wb-admin-pages-table-cell wb-admin-pages-count-cell">{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-count-cell" title="Includes nested child blocks">{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-status-cell">
                                         <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">
                                             {{ $page->workflowLabel() }}

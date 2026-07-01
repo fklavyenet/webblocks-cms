@@ -7,6 +7,7 @@
 - PHP files in this repository use 2-space indentation.
 - Use native local commands by default.
 - Use `php artisan` for Artisan commands.
+- For trusted CMS API work, first check the ignored local `.env` for `WEBBLOCKS_CMS_URL` or `WEBBLOCKS_CMS_API_URL` and `WEBBLOCKS_CMS_API_TOKEN`; never print, log, commit, or echo the token value.
 - Native local development targets trusted HTTPS only, and local domains must use `.test` rather than `.local`.
 - Do not include manual verification/check steps inside implementation commands.
 - After meaningful feature or behavior changes, update `README.md`, `CHANGELOG.md`, and relevant docs.

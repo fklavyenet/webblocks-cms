@@ -278,8 +278,12 @@ class PublicLayoutStructureTest extends TestCase
     ]);
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($headerBlock->fresh(['textTranslations']));
 
-    $this->putTrackedPublicSiteFile('site/docs-site/css/site.css', 'body { color: blue; }');
-    $this->putTrackedPublicSiteFile('site/docs-site/js/site.js', 'window.docsSiteLoaded = true;');
+    $siteCssContents = 'body { color: blue; }';
+    $siteJsContents = 'window.docsSiteLoaded = true;';
+    $this->putTrackedPublicSiteFile('site/docs-site/css/site.css', $siteCssContents);
+    $this->putTrackedPublicSiteFile('site/docs-site/js/site.js', $siteJsContents);
+    $siteCssVersion = substr(hash('sha256', $siteCssContents), 0, 12);
+    $siteJsVersion = substr(hash('sha256', $siteJsContents), 0, 12);
 
     $response = $this->get('http://docs.example.test/');
     $headHtml = $this->headHtml($response->getContent());
@@ -290,8 +294,8 @@ class PublicLayoutStructureTest extends TestCase
     $response->assertSee('/site/docs-site/js/site.js', false);
     $response->assertDontSee('/site/default/css/site.css', false);
     $response->assertDontSee('/site/default/js/site.js', false);
-    $this->assertStringContainsString('<link rel="stylesheet" href="/site/docs-site/css/site.css">', $headHtml);
-    $this->assertStringContainsString('<script src="/site/docs-site/js/site.js" defer></script>', $headHtml);
+    $this->assertStringContainsString('<link rel="stylesheet" href="/site/docs-site/css/site.css?v='.$siteCssVersion.'">', $headHtml);
+    $this->assertStringContainsString('<script src="/site/docs-site/js/site.js?v='.$siteJsVersion.'" defer></script>', $headHtml);
   }
 
   #[Test]
@@ -355,7 +359,7 @@ class PublicLayoutStructureTest extends TestCase
   }
 
   #[Test]
-  public function public_layout_uses_pinned_webblocks_ui_v2711_standard_dist_assets_and_not_master_or_minified_urls(): void
+  public function public_layout_uses_pinned_webblocks_ui_standard_dist_assets_and_not_master_or_minified_urls(): void
   {
     $this->buildHomepageWithHeaderSidebarAndFooter();
 
@@ -366,7 +370,7 @@ class PublicLayoutStructureTest extends TestCase
     $response->assertSee(WebBlocks::iconsCssUrl(), false);
     $response->assertSee(WebBlocks::uiJsUrl(), false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.12', false);
+    $response->assertSee('webblocks-ui@'.WebBlocks::UI_VERSION, false);
     $response->assertSee('webblocks-ui.css', false);
     $response->assertSee('webblocks-icons.css', false);
     $response->assertSee('webblocks-ui.js', false);
