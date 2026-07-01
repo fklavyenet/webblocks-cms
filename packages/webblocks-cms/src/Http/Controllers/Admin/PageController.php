@@ -330,7 +330,9 @@ class PageController extends Controller
 
   public function preview(Page $page, PublicPagePresenter $presenter): Response
   {
-    $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+    if (! (bool) request()->attributes->get('cms_internal_preview', false)) {
+      $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+    }
 
     abort_if($page->isSharedSlotSourcePage(), 404);
 

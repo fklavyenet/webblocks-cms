@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.201
+
+- Bumped CMS to `1.32.201`.
+- Allow trusted CMS API tokens with `content.read` to fetch the canonical HTML page preview at `/webadmin/pages/{page}/preview`, while preserving browser login behavior for unauthenticated visitors.
+
 ## 1.32.200
 
 - Bumped CMS to `1.32.200`.

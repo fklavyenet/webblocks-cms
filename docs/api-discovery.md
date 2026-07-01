@@ -165,4 +165,4 @@ Expected status behavior:
 
 Discovery, OpenAPI, AI guide, examples, and content contract responses must not expose real token values, token hashes, `.env` values, local filesystem paths, server paths, stack traces, raw exceptions, database internals, user lists, or private operator details.
 
-Preview URLs such as `/webadmin/pages/{page}/preview` are browser/admin routes. They require an authenticated admin browser session and are not opened with CMS API Bearer tokens. A login redirect from that URL means the browser session is missing; it is not an Internal Content API authentication failure.
+Preview URLs such as `/webadmin/pages/{page}/preview` are browser/admin routes, not JSON API endpoints. They can be opened by an authenticated admin browser session or fetched with `Authorization: Bearer <token>` when the CMS API token has `content.read`. Missing or invalid preview tokens return JSON `401`, insufficient preview tokens return JSON `403`, and browser requests without a token continue to redirect to the CMS login page.

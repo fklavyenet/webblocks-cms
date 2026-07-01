@@ -8,11 +8,14 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 
 class PagePreviewTest extends TestCase
 {
@@ -43,6 +46,48 @@ class PagePreviewTest extends TestCase
     $response->assertSee('<meta name="robots" content="noindex, nofollow">', false);
     $this->assertDatabaseCount('visitor_events', 0);
     $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+  }
+
+  #[Test]
+  public function internal_api_token_with_content_read_can_preview_draft_page_html(): void
+  {
+    $page = $this->pageWithMainSlot(Page::STATUS_DRAFT, 'token-preview');
+    $this->plainTextBlock($page, 'Bearer-token preview content', Page::STATUS_DRAFT);
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_READ]);
+
+    $response = $this
+      ->withHeader('Authorization', 'Bearer secret-token')
+      ->get(route('admin.pages.preview', $page));
+
+    $response->assertOk();
+    $response->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+    $response->assertSee('Preview mode');
+    $response->assertSee('Bearer-token preview content');
+    $this->assertDatabaseCount('visitor_events', 0);
+  }
+
+  #[Test]
+  public function internal_api_token_without_content_read_cannot_preview_page_html(): void
+  {
+    $page = $this->pageWithMainSlot(Page::STATUS_DRAFT, 'token-preview-denied');
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_APPLY]);
+
+    $this
+      ->withHeader('Authorization', 'Bearer secret-token')
+      ->get(route('admin.pages.preview', $page))
+      ->assertForbidden()
+      ->assertJsonPath('code', 'missing_internal_api_capability')
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::CONTENT_READ);
+  }
+
+  #[Test]
+  public function preview_without_user_or_token_still_redirects_to_cms_login(): void
+  {
+    $page = $this->pageWithMainSlot(Page::STATUS_DRAFT, 'login-preview');
+
+    $this
+      ->get(route('admin.pages.preview', $page))
+      ->assertRedirect(route('webblocks.auth.login'));
   }
 
   #[Test]
@@ -180,6 +225,16 @@ class PagePreviewTest extends TestCase
       'content' => $content,
       'status' => $status,
       'is_system' => false,
+    ]);
+  }
+
+  private function createInternalApiToken(string $token, ?array $capabilities = null): void
+  {
+    CmsApiToken::query()->create([
+      'name' => 'Test token',
+      'token_hash' => app(CmsApiTokenIssuer::class)->hash($token),
+      'token_preview' => app(CmsApiTokenIssuer::class)->preview($token),
+      'capabilities' => $capabilities,
     ]);
   }
 }

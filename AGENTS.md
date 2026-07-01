@@ -8,6 +8,7 @@
 - Use native local commands by default.
 - Use `php artisan` for Artisan commands.
 - For trusted CMS API work, first check the ignored local `.env` for `WEBBLOCKS_CMS_URL` or `WEBBLOCKS_CMS_API_URL` and `WEBBLOCKS_CMS_API_TOKEN`; never print, log, commit, or echo the token value.
+- For live/admin visual checks on `cms.webblocksui.com`, the operator owns browser control and will provide screenshots; do not use browser automation for those checks unless the user explicitly asks for it in the same prompt.
 - Native local development targets trusted HTTPS only, and local domains must use `.test` rather than `.local`.
 - Do not include manual verification/check steps inside implementation commands.
 - After meaningful feature or behavior changes, update `README.md`, `CHANGELOG.md`, and relevant docs.

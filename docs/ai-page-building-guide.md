@@ -128,7 +128,7 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 6. Ask the user for explicit approval to apply the exact final plan.
 7. Only after approval, call `POST /webadmin/api/content/apply`.
 8. Read the created draft page id from the apply response.
-9. Produce the admin preview URL with `/webadmin/pages/{page}/preview`.
+9. Produce the admin preview URL with `/webadmin/pages/{page}/preview`; tools may fetch it with the same Bearer token when it has `content.read`.
 10. Leave publishing to a human workflow unless the user explicitly approved an API publish operation and the token has `content.publish`.
 
 ## Safety Rules
@@ -370,7 +370,7 @@ Then preview:
 /webadmin/pages/{page}/preview
 ```
 
-The preview URL is a browser/admin route. It requires an authenticated admin browser session and is not accessible with a CMS API Bearer token. If browser smoke testing lands on a login page, report that the admin browser session is missing; do not treat it as a JSON API token failure.
+The preview URL is a browser/admin route, not a JSON API endpoint. It can be opened by an authenticated admin browser session or fetched with `Authorization: Bearer <token>` when the CMS API token has `content.read`. Missing or invalid preview tokens return JSON `401`, insufficient preview tokens return JSON `403`, and browser requests without a token continue to redirect to the CMS login page.
 
 ## Existing Draft Slot Replacement
 

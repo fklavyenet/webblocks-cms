@@ -51,6 +51,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationControll
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
+use WebBlocks\Cms\Http\Middleware\AllowPagePreviewAccess;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
@@ -123,6 +124,13 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/content/apply', [InternalContentPlanController::class, 'apply'])->middleware('internal-api.capability:content.apply')->name('content.apply');
   });
 
+Route::middleware(['web', 'install.required', AllowPagePreviewAccess::class])
+  ->prefix('webadmin')
+  ->name('admin.')
+  ->group(function () {
+    Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
+  });
+
 Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access'])
   ->prefix('webadmin')
   ->name('admin.')
@@ -168,7 +176,6 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('/pages/converter', [PageConverterController::class, 'index'])->name('pages.converter.index');
     Route::post('/pages/converter/analyze', [PageConverterController::class, 'analyze'])->name('pages.converter.analyze');
     Route::post('/pages/converter/create-draft', [PageConverterController::class, 'createDraft'])->name('pages.converter.create-draft');
-    Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
     Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
     Route::post('/pages/{page}/publish-page-owned-blocks', [PageController::class, 'publishPageOwnedBlocks'])->name('pages.publish-page-owned-blocks');
     Route::post('/pages/import-json', [PageImportController::class, 'store'])->name('pages.import.store');
