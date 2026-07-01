@@ -65,6 +65,28 @@ composer release:publish-update
 
 Maintainer publishing normally only needs `WEBBLOCKS_PUBLISHER_TOKEN`. Installed CMS update checks use product defaults for `https://publisher.webblocksui.com`, product `webblocks-cms`, channel `stable`, and read path `/api/updates/latest`; maintainer publishing uses the same product-owned identity and publish path `/api/updates/publish`. Cached-config publish runs refresh only the publisher token from the project `.env` so a locally configured token is detected without requiring shell exports. Dry-run validates inputs without uploading. A real publish without a token reports a controlled non-published state, exits unsuccessfully, and must not be treated as a release publication.
 
+## Anonymous Adoption Telemetry
+
+Update checks include privacy-preserving product adoption telemetry so Publisher analytics can distinguish package downloads from active anonymous installations. Downloads count artifact retrieval. Active anonymous installations count unique update-check installation IDs that report back over time.
+
+Telemetry is enabled by default and can be disabled with:
+
+```env
+WEBBLOCKS_TELEMETRY=false
+```
+
+When telemetry is enabled, the CMS creates a random local `installation_id` the first time an update check needs it and stores it in install-level system settings. The ID is generated randomly, contains no site or personal information, remains stable for the existing install, and may change if the install is recreated or storage/database settings are reset.
+
+The update check sends only these telemetry fields:
+
+- `product_key`
+- `installed_version`
+- `channel`
+- `installation_id`
+- `telemetry_schema_version`
+
+The CMS update check does not send domain names, full URLs, admin emails, server paths, database names, license owner data, user counts, tokens, secrets, or arbitrary environment/config values. When `WEBBLOCKS_TELEMETRY=false`, the update check still requests release metadata with product, channel, and installed version, but it does not create or send an `installation_id`.
+
 ## Update Apply Flow
 
 When an in-app System Update is applied successfully, WebBlocks CMS runs the post-install flow in this order:

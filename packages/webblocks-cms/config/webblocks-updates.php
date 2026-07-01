@@ -11,8 +11,10 @@ return [
     'api_version' => '1',
     'product' => ReleaseDefaults::PRODUCT_KEY,
     'current_version' => WebBlocks::VERSION,
-    'site_url' => env('APP_URL', 'http://localhost'),
-    'instance_id' => null,
+    'telemetry' => [
+        'enabled' => env('WEBBLOCKS_TELEMETRY', true),
+        'schema_version' => '1',
+    ],
     'timeout_seconds' => 5,
     'connect_timeout_seconds' => 3,
     'retry_times' => 0,

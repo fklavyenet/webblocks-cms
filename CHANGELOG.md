@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.205
+
+- Bumped CMS to `1.32.205`.
+- Add privacy-preserving CMS adoption telemetry to update checks with a random local installation ID, opt-out via `WEBBLOCKS_TELEMETRY=false`, and documentation that Publisher downloads and active anonymous installations are separate metrics.
+
 ## 1.32.204
 
 - Bumped CMS to `1.32.204`.

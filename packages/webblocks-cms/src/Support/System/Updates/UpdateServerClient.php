@@ -3,7 +3,6 @@
 namespace WebBlocks\Cms\Support\System\Updates;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -24,6 +23,7 @@ class UpdateServerClient
 
   public function __construct(
     private readonly InstalledVersionStore $installedVersionStore,
+    private readonly InstallationTelemetry $installationTelemetry,
   ) {}
 
   public function check(): UpdateCheckResult
@@ -82,8 +82,6 @@ class UpdateServerClient
       ->connectTimeout((int) config('webblocks-updates.connect_timeout_seconds', 3))
       ->withHeaders(array_filter([
         'User-Agent' => 'WebBlocks-CMS/'.$installedVersion,
-        'X-WebBlocks-Site-Url' => (string) config('webblocks-updates.site_url', config('app.url')),
-        'X-WebBlocks-Instance-Id' => config('webblocks-updates.instance_id'),
       ], fn ($value): bool => is_string($value) && $value !== ''));
 
     $retryTimes = (int) config('webblocks-updates.retry_times', 0);
@@ -93,13 +91,11 @@ class UpdateServerClient
     }
 
     try {
-      $response = $request->get($serverUrl.$latestPath, [
+      $response = $request->get($serverUrl.$latestPath, array_merge([
         'product' => $product,
         'channel' => $channel,
         'installed_version' => $installedVersion,
-        'php_version' => PHP_VERSION,
-        'laravel_version' => Application::VERSION,
-      ]);
+      ], $this->installationTelemetry->updateCheckPayload($product, $installedVersion, $channel)));
     } catch (ConnectionException $exception) {
       return $this->result(
         state: 'server_unreachable',

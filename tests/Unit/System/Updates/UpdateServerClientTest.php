@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\Updates\InstallationTelemetry;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -55,7 +56,80 @@ class UpdateServerClientTest extends TestCase
     Http::assertSent(fn ($request): bool => $request->method() === 'GET'
       && str_starts_with($request->url(), ReleaseDefaults::latestUrl())
       && $request['product'] === ReleaseDefaults::PRODUCT_KEY
-      && $request['channel'] === ReleaseDefaults::CHANNEL);
+      && $request['channel'] === ReleaseDefaults::CHANNEL
+      && $request['product_key'] === ReleaseDefaults::PRODUCT_KEY
+      && $request['installed_version'] === WebBlocks::version()
+      && $request['telemetry_schema_version'] === '1'
+      && is_string($request['installation_id'] ?? null)
+      && ! $request->hasHeader('X-WebBlocks-Site-Url')
+      && ! $request->hasHeader('X-WebBlocks-Instance-Id')
+      && ! isset($request['site_url'])
+      && ! isset($request['domain'])
+      && ! isset($request['url'])
+      && ! isset($request['app_url'])
+      && ! isset($request['email'])
+      && ! isset($request['admin_email'])
+      && ! isset($request['path'])
+      && ! isset($request['database'])
+      && ! isset($request['token'])
+      && ! isset($request['secret'])
+      && ! isset($request['php_version'])
+      && ! isset($request['laravel_version']));
+  }
+
+  #[Test]
+  public function telemetry_installation_id_is_generated_without_site_data_and_persisted(): void
+  {
+    $telemetry = app(InstallationTelemetry::class);
+
+    $first = $telemetry->installationId();
+    $second = $telemetry->installationId();
+
+    $this->assertIsString($first);
+    $this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $first);
+    $this->assertSame($first, $second);
+    $this->assertDatabaseHas('system_settings', [
+      'key' => InstallationTelemetry::SETTING_KEY,
+      'value' => $first,
+    ]);
+  }
+
+  #[Test]
+  public function telemetry_opt_out_does_not_generate_or_send_installation_id(): void
+  {
+    config()->set('webblocks-updates.telemetry.enabled', false);
+
+    $this->assertNull(app(InstallationTelemetry::class)->installationId());
+    $this->assertDatabaseMissing('system_settings', [
+      'key' => InstallationTelemetry::SETTING_KEY,
+    ]);
+
+    Http::fake([
+      ReleaseDefaults::latestUrl().'*' => Http::response([
+        'status' => 'ok',
+        'data' => [
+          'product' => ReleaseDefaults::PRODUCT_KEY,
+          'channel' => ReleaseDefaults::CHANNEL,
+          'version' => WebBlocks::version(),
+          'published_at' => '2026-06-09T10:00:00Z',
+          'artifact_url' => ReleaseDefaults::SERVER_URL.'/downloads/webblocks-cms-current.zip',
+          'checksum_sha256' => str_repeat('a', 64),
+        ],
+      ]),
+    ]);
+
+    app(InstalledVersionStore::class)->persist('0.1.0');
+
+    $this->assertSame('up_to_date', app(UpdateServerClient::class)->check()->state);
+
+    Http::assertSent(fn ($request): bool => $request->method() === 'GET'
+      && str_starts_with($request->url(), ReleaseDefaults::latestUrl())
+      && $request['product'] === ReleaseDefaults::PRODUCT_KEY
+      && $request['channel'] === ReleaseDefaults::CHANNEL
+      && $request['installed_version'] === WebBlocks::version()
+      && ! isset($request['product_key'])
+      && ! isset($request['installation_id'])
+      && ! isset($request['telemetry_schema_version']));
   }
 
   #[Test]

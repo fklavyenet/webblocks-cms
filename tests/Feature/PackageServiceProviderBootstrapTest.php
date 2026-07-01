@@ -679,6 +679,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertSame('1', config('webblocks-updates.api_version'));
     $this->assertSame(ReleaseDefaults::PRODUCT_KEY, config('webblocks-updates.product'));
     $this->assertSame(WebBlocks::VERSION, config('webblocks-updates.current_version'));
+    $this->assertTrue((bool) config('webblocks-updates.telemetry.enabled'));
+    $this->assertSame('1', config('webblocks-updates.telemetry.schema_version'));
   }
 
   #[Test]
