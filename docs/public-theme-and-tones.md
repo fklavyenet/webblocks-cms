@@ -152,6 +152,19 @@ Theme presets are token sets, not isolated colors. The current implementation ac
 
 The site theme preset is the identity layer. The WebBlocks UI color mode toggle remains available through Header Actions where enabled and controls `html[data-mode]`; CMS public theme CSS provides dark-context overrides for non-Graphite presets when `data-mode="dark"` or `data-mode="auto"` resolves dark. `graphite` is intentionally dark by preset character, so its visual identity stays dark in every mode.
 
+## Mode-Aware Site CSS
+
+Canonical `site.css` can refine public pages, but it should cooperate with the selected public theme preset and WebBlocks UI Light/Dark/Auto mode. It should not freeze a page into a separate light or dark design by hard-coding page-wide backgrounds, text colors, white cards, or one-off dark palettes.
+
+Use this order when a page needs visual adjustment:
+
+1. Prefer native block structure and settings, including Media Library background fields and public tone settings.
+2. Prefer inherited WebBlocks UI `wb-*` component styling and CMS public theme custom properties.
+3. Add semantic site custom properties for site-specific composition.
+4. Only use raw colors when existing tokens cannot express the design, and provide light and dark values through active mode selectors or public theme tokens.
+
+The Internal Content API exposes this rule in site asset `guidance`, OpenAPI `x-css-guidance`, discovery workflows, and the content contract so AI/operator tools can read the same constraint before editing `site.css`.
+
 Custom theme builders, if added later, must include guardrails before user-defined colors can affect public pages.
 
 ## Implementation Phases

@@ -105,6 +105,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('workflows.navigation_menu_management.available.delete', false)
       ->assertJsonPath('workflows.published_page_staged_update.available.promote', false)
       ->assertJsonPath('workflows.canonical_site_assets.available.write', false)
+      ->assertJsonPath('workflows.canonical_site_assets.css_mode_policy.0', 'site.css must cooperate with WebBlocks UI Light/Dark/Auto mode rather than replacing it.')
       ->assertJsonPath('workflows.published_page_staged_update.do_not_use.0', 'POST /webadmin/api/pages/{staged_page}/publish')
       ->assertJsonFragment(['content.apply'])
       ->assertJsonMissingPath('token.token_hash')
@@ -129,7 +130,9 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./media/{media}.patch.summary', 'Update safe Media Library metadata')
       ->assertJsonPath('paths./media/{media}.patch.x-required-capability', CmsApiTokenCapabilities::MEDIA_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_READ)
+      ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-css-guidance', 'asset.guidance explains token-first, mode-aware site.css expectations so Light/Dark/Auto mode remains consistent.')
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE)
+      ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-guidance', 'For CSS writes, prefer native block settings and public theme/WebBlocks UI custom properties; avoid hard-coded light/dark page palettes that bypass mode behavior.')
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.delete.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_DELETE)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/reorder.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
@@ -147,6 +150,8 @@ class InternalContentApiTest extends TestCase
     $this->assertStringContainsString('Do not use browser automation', (string) $guideContent);
     $this->assertStringContainsString('page._actions.promote', (string) $guideContent);
     $this->assertStringContainsString('site-assets.write', (string) $guideContent);
+    $this->assertStringContainsString('asset.guidance', (string) $guideContent);
+    $this->assertStringContainsString('Light/Dark/Auto mode', (string) $guideContent);
 
     $example = $this->withInternalToken()
       ->getJson('/webadmin/api/examples/contact-page')
@@ -294,6 +299,8 @@ class InternalContentApiTest extends TestCase
         ->assertJsonPath('asset.checksum', null)
         ->assertJsonPath('asset.readiness.ready', true)
         ->assertJsonPath('asset.readiness.writable', true)
+        ->assertJsonPath('asset.guidance.mode_aware_css', 'Site CSS should be token-first and mode-aware. Prefer WebBlocks UI/CMS public theme custom properties and inherited wb-* component styles over hard-coded light or dark colors.')
+        ->assertJsonPath('asset.guidance.preferred.0', 'Use native block structure and settings first.')
         ->assertJsonMissingPath('asset.absolute_path');
 
       $this->withInternalToken()
@@ -484,6 +491,9 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('published_page_staged_updates.shared_slot_backed_slots', 'rejected for replace/promote')
       ->assertJsonPath('safety.remote_fetch', false)
       ->assertJsonPath('safety.media_import', false)
+      ->assertJsonPath('site_assets.css_url_template', '/webadmin/api/sites/{site}/assets/css')
+      ->assertJsonPath('site_assets.css_mode_policy.1', 'Keep site.css token-first and mode-aware so WebBlocks UI Light/Dark/Auto mode remains consistent.')
+      ->assertJsonPath('site_assets.do_not_use.2', 'white card overrides that ignore dark mode')
       ->assertJsonPath('discovery.sites', '/webadmin/api/sites')
       ->assertJsonPath('discovery.locales', '/webadmin/api/locales')
       ->assertJsonPath('discovery.page_layouts', '/webadmin/api/page-layouts')
@@ -493,6 +503,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonStructure([
         'api',
         'safety',
+        'site_assets',
         'discovery',
         'recommended_patterns' => ['marketing_homepage', 'avoid'],
         'block_contracts' => [

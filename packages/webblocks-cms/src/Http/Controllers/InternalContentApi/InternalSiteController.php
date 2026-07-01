@@ -220,6 +220,23 @@ class InternalSiteController extends Controller
   {
     unset($asset['absolute_path']);
 
+    $asset['guidance'] = $asset['type'] === SiteAssetStore::TYPE_CSS
+      ? [
+        'mode_aware_css' => 'Site CSS should be token-first and mode-aware. Prefer WebBlocks UI/CMS public theme custom properties and inherited wb-* component styles over hard-coded light or dark colors.',
+        'avoid' => [
+          'Do not hard-code page-wide light backgrounds, dark text, white cards, or one-off dark-mode override palettes unless the design truly cannot use existing public theme tokens.',
+          'Do not solve block content or media fields with CSS when native CMS block settings or Media Library relationships exist.',
+        ],
+        'preferred' => [
+          'Use native block structure and settings first.',
+          'Use site.css for narrow layout refinements, token mapping, and site-specific composition.',
+          'When custom colors are unavoidable, define semantic custom properties with both light and dark values tied to the active mode selectors or public theme tokens.',
+        ],
+      ]
+      : [
+        'site_js' => 'Site JS should enhance existing CMS-rendered markup and must not replace native block behavior or duplicate WebBlocks UI mode controls.',
+      ];
+
     return $asset;
   }
 }

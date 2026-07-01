@@ -29,6 +29,7 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 5. Apply only after explicit approval.
 6. Report the preview URL.
 7. Do not publish unless explicitly approved and the token has `content.publish`.
+8. For canonical site CSS changes, read `GET /webadmin/api/sites/{site}/assets/css`, inspect `asset.guidance`, and keep `site.css` token-first and mode-aware.
 
 ## Draft And Staged Safety
 
@@ -53,6 +54,7 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 - Treat nonzero `renderability.wrapper_blocks_without_children`, `renderability.text_blocks_without_visible_content`, or `renderability.button_blocks_without_label_or_url` as a failed plan even if the API returns other useful metadata.
 - Treat `renderability.html_blocks > 0` as use of the Trusted HTML escape hatch and require explicit operator approval plus a report of the missing native block type.
 - If a public page renders with the wrong site theme preset, update the site through `POST /webadmin/api/sites/{site}/public-theme` when discovered and authorized; do not try to solve site-level theme with content blocks.
+- If a public page needs site CSS, use the canonical site asset endpoint and preserve WebBlocks UI Light/Dark/Auto behavior. Prefer public theme custom properties, inherited `wb-*` component styling, and semantic site custom properties over hard-coded light backgrounds, dark text, white cards, or one-off dark palettes.
 
 ## Content Rules
 

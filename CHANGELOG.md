@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.198
+
+- Bumped CMS to `1.32.198`.
+- Expose and document mode-aware `site.css` guidance through the Internal Content API, OpenAPI discovery, content contract, AI guide, and public asset/theme docs so AI/operator tools preserve WebBlocks UI Light/Dark/Auto behavior when editing canonical site CSS.
+
 ## 1.32.197
 
 - Bumped CMS to `1.32.197`.
