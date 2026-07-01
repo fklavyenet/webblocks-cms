@@ -1,5 +1,5 @@
 @php
-  $pageTitle = 'Edit Page: '.$page->title;
+  $pageTitle = 'Edit Page #'.$page->id.': '.$page->title;
   $settingsTab = old('_page_settings_tab', match (request('tab')) {
     'page-assets' => 'assets',
     'layout-slots' => 'layout-slots',

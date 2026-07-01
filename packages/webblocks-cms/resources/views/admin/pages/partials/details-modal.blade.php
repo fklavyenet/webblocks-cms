@@ -39,94 +39,106 @@
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-card">
                             <div class="wb-card-header"><strong>Page</strong></div>
-                            <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>ID</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $page->id }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Name</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $page->title }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Slug</strong></div>
-                                    <div class="wb-settings-row-control"><span><code>{{ $page->slug }}</code></span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Path</strong></div>
-                                    <div class="wb-settings-row-control"><span><code>{{ $defaultPublicPath ?? 'Missing' }}</code></span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Site</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $page->site?->name }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Default URL</strong></div>
-                                    <div class="wb-settings-row-control"><span><code>{{ $defaultPublicUrl ?? 'Missing' }}</code></span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Locales</strong></div>
-                                    <div class="wb-settings-row-control">
-                                        <div class="wb-stack wb-gap-1">
-                                            @foreach ($localeSummaries as $localeSummary)
-                                                <span>{{ $localeSummary }}</span>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Slot count</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $slotCount }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Block count</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $blockCount }}</span></div>
+                            <div class="wb-card-body">
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-striped wb-table-hover wb-text-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th scope="row">ID</th>
+                                                <td>{{ $page->id }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Name</th>
+                                                <td>{{ $page->title }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Slug</th>
+                                                <td><code>{{ $page->slug }}</code></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Path</th>
+                                                <td><code>{{ $defaultPublicPath ?? 'Missing' }}</code></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Site</th>
+                                                <td>{{ $page->site?->name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Default URL</th>
+                                                <td><code>{{ $defaultPublicUrl ?? 'Missing' }}</code></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Locales</th>
+                                                <td>
+                                                    <div class="wb-stack wb-gap-1">
+                                                        @foreach ($localeSummaries as $localeSummary)
+                                                            <span>{{ $localeSummary }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Slot count</th>
+                                                <td>{{ $slotCount }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Block count</th>
+                                                <td>{{ $blockCount }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
 
                         <div class="wb-card">
                             <div class="wb-card-header"><strong>Status &amp; Audit</strong></div>
-                            <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Status</strong></div>
-                                    <div class="wb-settings-row-control"><span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Review Requested</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $reviewRequestedLabel }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Published</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $publishedLabel }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Created by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->createdByUser])</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Last edited by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->updatedByUser])</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Published by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->publishedByUser])</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Archived by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->archivedByUser])</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Review requested by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Created</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $page->created_at?->format('Y-m-d H:i') }}</span></div>
-                                </div>
-                                <div class="wb-settings-row">
-                                    <div class="wb-settings-row-label"><strong>Updated</strong></div>
-                                    <div class="wb-settings-row-control"><span>{{ $page->updated_at?->format('Y-m-d H:i') }}</span></div>
+                            <div class="wb-card-body">
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-striped wb-table-hover wb-text-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th scope="row">Status</th>
+                                                <td><span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span></td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Review Requested</th>
+                                                <td>{{ $reviewRequestedLabel }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Published</th>
+                                                <td>{{ $publishedLabel }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Created by</th>
+                                                <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->createdByUser])</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Last edited by</th>
+                                                <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->updatedByUser])</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Published by</th>
+                                                <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->publishedByUser])</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Archived by</th>
+                                                <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->archivedByUser])</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Review requested by</th>
+                                                <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Created</th>
+                                                <td>{{ $page->created_at?->format('Y-m-d H:i') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Updated</th>
+                                                <td>{{ $page->updated_at?->format('Y-m-d H:i') }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

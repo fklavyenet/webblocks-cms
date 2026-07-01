@@ -167,6 +167,7 @@
                                     $enabledLocaleCount = (int) ($siteLocaleCounts[$page->site_id] ?? $translations->count());
                                     $missingTranslations = max($enabledLocaleCount - $translations->count(), 0);
                                     $defaultPublicUrl = $page->publicUrl();
+                                    $previewUrl = route('admin.pages.preview', $page);
                                 @endphp
                                 <tr>
                                     <td>
@@ -235,9 +236,16 @@
                                                 <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                                             </a>
                                         @else
-                                            <span class="wb-action-btn" title="Only published pages can be opened publicly" aria-label="Only published pages can be opened publicly" aria-disabled="true">
-                                                <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
-                                            </span>
+                                            <a
+                                                href="{{ $previewUrl }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="wb-action-btn wb-action-btn-view"
+                                                title="Preview page in new tab"
+                                                aria-label="Preview page in new tab"
+                                            >
+                                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                            </a>
                                         @endif
                                     </td>
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-count-cell" title="Includes nested child blocks">{{ $page->blocks_count ?? $page->blocks()->count() }}</td>

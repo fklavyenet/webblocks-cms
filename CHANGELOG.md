@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.202
+
+- Bumped CMS to `1.32.202`.
+- Let Pages list View actions open the admin preview for draft/unpublished pages, show the page ID in Edit Page titles, and render Page Details metadata in wrapping tables.
+
 ## 1.32.201
 
 - Bumped CMS to `1.32.201`.

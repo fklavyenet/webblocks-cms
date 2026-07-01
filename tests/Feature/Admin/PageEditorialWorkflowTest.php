@@ -213,7 +213,10 @@ class PageEditorialWorkflowTest extends TestCase
     $response->assertSee('Review page metadata without leaving the index.');
     $response->assertSee('Page');
     $response->assertSee('Status &amp; Audit', false);
+    $response->assertSee('class="wb-table wb-table-striped wb-table-hover wb-text-sm"', false);
+    $response->assertSee('<th scope="row">Locales</th>', false);
     $response->assertDontSee('<div class="wb-card-header"><strong>Structure</strong></div>', false);
+    $response->assertDontSee('class="wb-settings-row"', false);
     $response->assertSee('ID');
     $response->assertSee((string) $page->id);
     $response->assertSee('Name');
@@ -272,6 +275,11 @@ class PageEditorialWorkflowTest extends TestCase
     $response->assertSee('data-wb-target="#delete-page-'.$page->id.'-modal"', false);
     $response->assertSee('<th>ID</th>', false);
     $response->assertSee('#'.$page->id);
+    $response->assertSee('href="'.route('admin.pages.preview', $page).'"', false);
+    $response->assertSee('title="Preview page in new tab"', false);
+    $response->assertSee('aria-label="Preview page in new tab"', false);
+    $response->assertSee('wb-icon-eye', false);
+    $response->assertDontSee('Only published pages can be opened publicly');
     $response->assertDontSee('confirm(', false);
 
     $content = $response->getContent();
@@ -834,6 +842,7 @@ class PageEditorialWorkflowTest extends TestCase
 
     $editorEdit = $this->actingAs($editor)->get(route('admin.pages.edit', $page));
     $editorEdit->assertOk();
+    $editorEdit->assertSee('Edit Page #'.$page->id.': '.$page->title);
     $editorEdit->assertSee('Submit for Review');
     $editorEdit->assertDontSee('<button type="submit" class="wb-btn wb-btn-primary">Publish</button>', false);
     $editorEdit->assertDontSee('<button type="submit" class="wb-btn wb-btn-danger">Archive</button>', false);
