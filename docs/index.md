@@ -16,6 +16,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 
 - [Core Concepts](core-concepts.md)
 - [Feature Inventory](feature-inventory.md)
+- [Product Maturity Assessment](product-maturity-assessment.md)
 
 ## Installation
 
@@ -94,6 +95,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Development Workflow](../DEVELOPMENT.md)
 - [Native Local Development](native-local-development.md)
 - [Testing Strategy](testing-strategy.md)
+- [Product Maturity Assessment](product-maturity-assessment.md)
 - [CMS Brand Standard](brand-standard.md)
 - [Plugin System](plugin-system.md) - implemented runtime foundations, including manual ZIP upload/install, package conventions, compatibility checks, inert disabled/incompatible behavior, and WebBlocks UI Manager as a separate operator plugin artifact
 - [Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md) - ecosystem-wide plugin identity, manifest, catalog/store, and future `plugins.webblocksui.com` direction

@@ -7,6 +7,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.203
+
+- Bumped CMS to `1.32.203`.
+- Move admin breadcrumbs into the top navbar across management screens, remove the fixed topbar product identity, and correct Edit Page titles to `Edit Page: #{id} {title}`.
+- Add the Product Maturity Assessment documentation entry to the distributed docs index.
+
 ## 1.32.202
 
 - Bumped CMS to `1.32.202`.

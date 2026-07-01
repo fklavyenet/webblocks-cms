@@ -1,9 +1,5 @@
 <div class="wb-page-header">
     <div class="wb-page-header-main">
-        @isset($breadcrumb)
-            {!! $breadcrumb !!}
-        @endisset
-
         <div class="wb-cluster wb-cluster-2">
             <h1 class="wb-page-header-title">{{ $title }}</h1>
 

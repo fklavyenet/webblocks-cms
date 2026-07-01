@@ -582,7 +582,7 @@ class SystemSettingsTest extends TestCase
   }
 
   #[Test]
-  public function admin_topbar_uses_project_identity_while_browser_title_uses_product_suffix(): void
+  public function admin_topbar_uses_breadcrumb_while_browser_title_uses_product_suffix(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -593,7 +593,12 @@ class SystemSettingsTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('<title>System Settings - WebBlocks CMS</title>', false);
-    $response->assertSee('<span class="wb-navbar-brand">', false);
+    $response->assertSee('<nav class="wb-breadcrumb wb-navbar-breadcrumb" aria-label="Breadcrumb">', false);
+    $response->assertSee('<a class="wb-breadcrumb-link" href="'.route('admin.dashboard').'">Dashboard</a>', false);
+    $response->assertSee('<span class="wb-breadcrumb-current">System</span>', false);
+    $response->assertSee('<span class="wb-breadcrumb-current" aria-current="page">System Settings</span>', false);
+    $response->assertDontSee('<span class="wb-navbar-brand">', false);
+    $response->assertDontSee('class="wb-navbar-context"', false);
     $response->assertSee('WebBlocks UI Docs');
     $response->assertSee('Install-specific admin context');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::VERSION);
@@ -602,7 +607,7 @@ class SystemSettingsTest extends TestCase
   }
 
   #[Test]
-  public function admin_topbar_falls_back_to_primary_site_name_without_using_site_tagline(): void
+  public function admin_topbar_breadcrumb_does_not_fall_back_to_primary_site_name_or_tagline(): void
   {
     $user = User::factory()->superAdmin()->create();
     $site = Site::query()->where('is_primary', true)->firstOrFail();
@@ -614,7 +619,9 @@ class SystemSettingsTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.dashboard'));
 
     $response->assertOk();
-    $response->assertSee('Primary Public Site');
+    $response->assertSee('<nav class="wb-breadcrumb wb-navbar-breadcrumb" aria-label="Breadcrumb">', false);
+    $response->assertSee('<span class="wb-breadcrumb-current" aria-current="page">Dashboard</span>', false);
+    $response->assertDontSee('Primary Public Site');
     $response->assertDontSee('Public site tagline');
     $response->assertSee('<title>Dashboard - WebBlocks CMS</title>', false);
   }

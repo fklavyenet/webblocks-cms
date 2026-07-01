@@ -126,6 +126,63 @@
             $matchesActiveRoute = static fn (array $item): bool => collect($item['active'] ?? [])->contains(
                 fn (string $pattern) => request()->routeIs($pattern)
             );
+
+            $adminNavbarBreadcrumb = $breadcrumb ?? null;
+
+            if (! $adminNavbarBreadcrumb) {
+                $currentTitle = $heading ?? $title ?? 'Dashboard';
+                $activeTopItem = collect($menuItems)->first(fn (array $item) => $matchesActiveRoute($item));
+                $activeGroup = collect($sidebarGroups)
+                    ->map(function (array $group) use ($matchesActiveRoute) {
+                        $activeItem = collect($group['items'])->first(fn (array $item) => $matchesActiveRoute($item));
+
+                        return $activeItem ? ['group' => $group, 'item' => $activeItem] : null;
+                    })
+                    ->filter()
+                    ->first();
+                $breadcrumbItems = [];
+
+                if (! request()->routeIs('admin.dashboard')) {
+                    $breadcrumbItems[] = ['label' => 'Dashboard', 'url' => route('admin.dashboard')];
+                }
+
+                if ($activeGroup) {
+                    $breadcrumbItems[] = ['label' => $activeGroup['group']['label'], 'url' => null];
+                    $activeItemLabel = $activeGroup['item']['label'] ?? $currentTitle;
+
+                    if ($activeItemLabel !== $currentTitle) {
+                        $breadcrumbItems[] = [
+                            'label' => $activeItemLabel,
+                            'url' => $activeGroup['item']['url'] ?? (isset($activeGroup['item']['route']) ? route($activeGroup['item']['route']) : null),
+                        ];
+                    }
+                } elseif ($activeTopItem) {
+                    $activeItemLabel = $activeTopItem['label'] ?? $currentTitle;
+
+                    if ($activeItemLabel !== $currentTitle) {
+                        $breadcrumbItems[] = ['label' => $activeItemLabel, 'url' => route($activeTopItem['route'])];
+                    }
+                }
+
+                $breadcrumbItems[] = ['label' => $currentTitle, 'url' => null];
+
+                $adminNavbarBreadcrumb = '<nav class="wb-breadcrumb wb-navbar-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list">';
+
+                foreach ($breadcrumbItems as $index => $item) {
+                    $isLast = $index === array_key_last($breadcrumbItems);
+                    $adminNavbarBreadcrumb .= '<li class="wb-breadcrumb-item">';
+
+                    if (! $isLast && ! empty($item['url'])) {
+                        $adminNavbarBreadcrumb .= '<a class="wb-breadcrumb-link" href="'.e($item['url']).'">'.e($item['label']).'</a>';
+                    } else {
+                        $adminNavbarBreadcrumb .= '<span class="wb-breadcrumb-current"'.($isLast ? ' aria-current="page"' : '').'>'.e($item['label']).'</span>';
+                    }
+
+                    $adminNavbarBreadcrumb .= '</li>';
+                }
+
+                $adminNavbarBreadcrumb .= '</ol></nav>';
+            }
         @endphp
 
         <div class="wb-dashboard-shell">
@@ -199,14 +256,9 @@
                         <span></span><span></span><span></span>
                     </button>
 
-                     <div class="wb-navbar-identity">
-                         <span class="wb-navbar-brand">
-                            <span>{{ $adminProjectIdentity['name'] ?? WebBlocks::name() }}</span>
-                         </span>
-                        @if (($adminProjectIdentity['tagline'] ?? '') !== '')
-                            <span class="wb-navbar-context">{{ $adminProjectIdentity['tagline'] }}</span>
-                        @endif
-                     </div>
+                    <div class="wb-navbar-identity wb-navbar-breadcrumb-wrap">
+                        {!! $adminNavbarBreadcrumb !!}
+                    </div>
 
                     <div class="wb-navbar-end wb-ms-auto">
                         <div class="wb-navbar-iconbar">

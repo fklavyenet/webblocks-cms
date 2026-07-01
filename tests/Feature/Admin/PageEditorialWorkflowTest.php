@@ -842,7 +842,9 @@ class PageEditorialWorkflowTest extends TestCase
 
     $editorEdit = $this->actingAs($editor)->get(route('admin.pages.edit', $page));
     $editorEdit->assertOk();
-    $editorEdit->assertSee('Edit Page #'.$page->id.': '.$page->title);
+    $editorEdit->assertSee('Edit Page: #'.$page->id.' '.$page->title);
+    $editorEdit->assertSee('<nav class="wb-breadcrumb wb-navbar-breadcrumb" aria-label="Breadcrumb">', false);
+    $editorEdit->assertSee('<span class="wb-breadcrumb-current" aria-current="page">#'.$page->id.' '.$page->title.'</span>', false);
     $editorEdit->assertSee('Submit for Review');
     $editorEdit->assertDontSee('<button type="submit" class="wb-btn wb-btn-primary">Publish</button>', false);
     $editorEdit->assertDontSee('<button type="submit" class="wb-btn wb-btn-danger">Archive</button>', false);

@@ -79,6 +79,24 @@ svg.wb-sidebar-brand-logo {
     gap: var(--wb-s2);
 }
 
+.wb-navbar-breadcrumb-wrap {
+    min-width: 0;
+}
+
+.wb-navbar-breadcrumb {
+    min-width: 0;
+}
+
+.wb-navbar-breadcrumb .wb-breadcrumb-list {
+    flex-wrap: wrap;
+    row-gap: var(--wb-s1);
+}
+
+.wb-navbar-breadcrumb .wb-breadcrumb-current,
+.wb-navbar-breadcrumb .wb-breadcrumb-link {
+    overflow-wrap: anywhere;
+}
+
 .wb-navbar-icon-trigger {
     display: inline-flex;
     align-items: center;
