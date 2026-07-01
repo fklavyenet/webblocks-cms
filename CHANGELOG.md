@@ -7,6 +7,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.199
+
+- Bumped CMS to `1.32.199`.
+- Let editors set slash-bearing Page Translation paths from the admin form, so nested public URLs such as `/games/fruit-train` can be corrected without API or database access.
+- Clarify Internal Content API guidance and examples so AI/operator tools preserve slash-bearing page paths such as `/games/fruit-train` instead of flattening them.
+
 ## 1.32.198
 
 - Bumped CMS to `1.32.198`.

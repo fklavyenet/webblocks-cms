@@ -148,6 +148,8 @@ class InternalContentApiTest extends TestCase
     $this->assertStringContainsString('GET /webadmin/api', (string) $guideContent);
     $this->assertStringContainsString('Authorization: Bearer <token>', (string) $guideContent);
     $this->assertStringContainsString('Do not use browser automation', (string) $guideContent);
+    $this->assertStringContainsString('page.path', (string) $guideContent);
+    $this->assertStringContainsString('/games/fruit-train', (string) $guideContent);
     $this->assertStringContainsString('page._actions.promote', (string) $guideContent);
     $this->assertStringContainsString('site-assets.write', (string) $guideContent);
     $this->assertStringContainsString('asset.guidance', (string) $guideContent);
@@ -1806,6 +1808,38 @@ class InternalContentApiTest extends TestCase
       'path' => '/docs/internal-content-api',
     ]);
     $this->assertDatabaseMissing('page_translations', ['path' => '/p/docsinternal-content-api']);
+  }
+
+  #[Test]
+  public function validate_and_apply_preserve_section_page_paths_for_game_pages(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $payload = $this->validPlanPayload([
+      'plan' => [
+        'page' => [
+          'title' => 'Fruit Train',
+          'path' => '/games/fruit-train',
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertOk()
+      ->assertJsonPath('normalized_plan.page.slug', 'fruit-train')
+      ->assertJsonPath('normalized_plan.page.path', '/games/fruit-train');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $payload)
+      ->assertCreated()
+      ->assertJsonPath('data.page.translations.0.slug', 'fruit-train')
+      ->assertJsonPath('data.page.translations.0.path', '/games/fruit-train');
+
+    $this->assertDatabaseHas('page_translations', [
+      'slug' => 'fruit-train',
+      'path' => '/games/fruit-train',
+    ]);
   }
 
   #[Test]

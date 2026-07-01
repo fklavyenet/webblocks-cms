@@ -142,7 +142,7 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 - Do not replace live published pages directly. Use `create_staged_update_for_published_page`, `replace_staged_page_update`, preview the staged page, then use `promote_staged_page_update` only after explicit approval and only with `content.publish`.
 - Do not call apply if the target path already exists unless the user explicitly approves a conflict-handling plan supported by the API.
 - For existing draft replacement, include `expected_path` or `expected_updated_at` and replace only page-owned slots.
-- Treat `page.path` as the canonical public URL. Use `/contact` or `/docs/internal-content-api`, not `/p/contact`; `/p/...` is only a legacy public redirect.
+- Treat `page.path` as the canonical public URL. Use `/contact`, `/games/fruit-train`, or `/docs/internal-content-api`, not `/p/contact`; `/p/...` is only a legacy public redirect. Preserve slash-bearing section paths; CMS derives the short slug from the final path segment.
 - Do not try to replace Shared Slot-backed slots; leave shared header/footer assignments intact.
 - Before assigning a Shared Slot to a layout slot such as `header`, confirm the page actually has that Page Slot. If it is missing but belongs to the selected Page Layout, call `POST /webadmin/api/pages/{page}/sync-layout-slots` before assignment.
 - Shared Slot blocks are draft by default. When the user explicitly approves public Shared Slot changes and the token has `content.publish`, call `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks`; do not try to publish Shared Slot content through page publish cascade fields.

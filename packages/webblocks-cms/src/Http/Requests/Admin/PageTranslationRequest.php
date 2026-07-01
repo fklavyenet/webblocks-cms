@@ -9,6 +9,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class PageTranslationRequest extends FormRequest
@@ -23,12 +24,13 @@ class PageTranslationRequest extends FormRequest
     $name = (string) $this->input('name');
     $slug = (string) $this->input('slug');
     $normalizedSlug = Str::slug($slug !== '' ? $slug : $name);
+    $path = trim((string) $this->input('path'));
     $authorization = app(AdminAuthorization::class);
     $user = $this->user();
 
     $this->merge([
       'slug' => $normalizedSlug,
-      'path' => PageTranslation::pathFromSlug($normalizedSlug),
+      'path' => $path !== '' ? $this->normalizePathInput($path) : PageTranslation::pathFromSlug($normalizedSlug),
       'seo_title' => $this->nullableTrimmed('seo_title'),
       'seo_description' => $this->nullableTrimmed('seo_description'),
       'seo_keywords' => $this->nullableTrimmed('seo_keywords'),
@@ -68,6 +70,11 @@ class PageTranslationRequest extends FormRequest
         'string',
         'max:255',
         'regex:/^(?:\/|\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)$/',
+        function (string $attribute, mixed $value, \Closure $fail): void {
+          if (is_string($value) && PagePath::isReserved($value)) {
+            $fail('This path uses a reserved CMS or host route segment.');
+          }
+        },
         Rule::unique(PageTranslation::class, 'path')
           ->ignore($translation?->id)
           ->where(fn ($query) => $query
@@ -89,7 +96,7 @@ class PageTranslationRequest extends FormRequest
     return [
       'slug.regex' => 'Use only lowercase letters, numbers, and hyphens.',
       'slug.unique' => 'This slug is already used in this site for this locale.',
-      'path.regex' => 'The generated path format is invalid.',
+      'path.regex' => 'Use a slash path with lowercase letters, numbers, and hyphens only.',
       'path.unique' => 'This path is already used in this site for this locale.',
     ];
   }
@@ -101,7 +108,7 @@ class PageTranslationRequest extends FormRequest
     return [
       'name' => $data['name'],
       'slug' => $data['slug'],
-      'path' => PageTranslation::pathFromSlug($data['slug']),
+      'path' => PagePath::canonicalize($data['path']),
       'seo_title' => $data['seo_title'] ?? null,
       'seo_description' => $data['seo_description'] ?? null,
       'seo_keywords' => $data['seo_keywords'] ?? null,
@@ -109,6 +116,15 @@ class PageTranslationRequest extends FormRequest
       'og_description' => $data['og_description'] ?? null,
       'og_image_media_id' => $data['og_image_media_id'] ?? null,
     ];
+  }
+
+  private function normalizePathInput(string $path): string
+  {
+    if ($path === '/') {
+      return '/';
+    }
+
+    return '/'.trim(str_replace('\\', '/', $path), '/');
   }
 
   private function nullableTrimmed(string $key): ?string

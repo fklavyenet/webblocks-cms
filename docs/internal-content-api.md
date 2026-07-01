@@ -309,7 +309,7 @@ POST /webadmin/api/content/apply
 
 Use `mode: replace_existing_draft_page` to replace one or more page-owned slots on an existing draft page. The operation requires `content.validate` for validate and `content.apply` for apply. It does not require `pages.delete`, because it is not a general page delete operation.
 
-Page Translation `path` is the canonical public URL. New plans should use paths such as `/contact`, `/features`, or `/docs/internal-content-api`; `/p/...` is legacy compatibility only. Slash-bearing paths are normalized segment by segment, so `/docs/internal-content-api/` becomes `/docs/internal-content-api` and is not collapsed into `docsinternal-content-api`. Reserved route areas such as `/webadmin`, `/webadmin/api`, `/cms`, `/search`, `/search.json`, `/contact-messages`, `/install`, and host auth routes cannot be created as public page paths.
+Page Translation `path` is the canonical public URL. New plans should use paths such as `/contact`, `/features`, `/games/fruit-train`, or `/docs/internal-content-api`; `/p/...` is legacy compatibility only. Slash-bearing paths are normalized segment by segment, so `/docs/internal-content-api/` becomes `/docs/internal-content-api` and is not collapsed into `docsinternal-content-api`. CMS derives the short page slug from the final path segment, so `/games/fruit-train` stores slug `fruit-train` and path `/games/fruit-train`. Reserved route areas such as `/webadmin`, `/webadmin/api`, `/cms`, `/search`, `/search.json`, `/contact-messages`, `/install`, and host auth routes cannot be created as public page paths.
 
 Example:
 

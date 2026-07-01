@@ -3,6 +3,7 @@
     $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
     $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
     $siteName = $page->site?->name ?? 'Site';
+    $currentPath = old('path', $translation->path ?: ($translation->slug ? \WebBlocks\Cms\Models\PageTranslation::pathFromSlug($translation->slug) : ($locale->is_default ? '/' : '/'.$locale->code)));
     $selectedOgImage = old('og_image_media_id', old('og_image_asset_id'))
         ? $assetPickerAssets->firstWhere('id', (int) old('og_image_media_id', old('og_image_asset_id')))
         : $translation->ogImage;
@@ -50,13 +51,19 @@
                             <label for="translation_slug">Slug</label>
                             <input id="translation_slug" name="slug" class="wb-input" type="text" value="{{ old('slug', $translation->slug) }}" required>
                         </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="translation_path">Path</label>
+                            <input id="translation_path" name="path" class="wb-input" type="text" value="{{ $currentPath }}" required placeholder="/games/fruit-train">
+                            <div class="wb-text-sm wb-text-muted">Use slash-bearing paths such as <code>/games/fruit-train</code> when this page belongs under a public section.</div>
+                        </div>
                     </div>
 
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-body wb-stack wb-gap-2">
                             <strong>Routing</strong>
                             <div class="wb-text-sm wb-text-muted">Default locale stays prefixless. Non-default locales use a prefixed public URL.</div>
-                            <div><strong>Path</strong><br>{{ $translation->slug ? $page->publicPath($locale->code) : ($locale->is_default ? '/' : '/'.$locale->code) }}</div>
+                            <div><strong>Current public path</strong><br>{{ $translation->exists ? $page->publicPath($locale->code) : $currentPath }}</div>
                             @if ($locale->is_default)
                                 <div class="wb-text-sm wb-text-muted">This locale uses the canonical prefixless public route.</div>
                             @else

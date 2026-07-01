@@ -1105,6 +1105,65 @@ class PageEditorialWorkflowTest extends TestCase
   }
 
   #[Test]
+  public function page_translation_path_can_be_edited_independently_from_slug(): void
+  {
+    $site = $this->defaultSite();
+    $user = User::factory()->superAdmin()->create();
+    $page = $this->pageFor($site, Page::STATUS_DRAFT, 'fruit-train');
+    $translation = PageTranslation::query()
+      ->where('page_id', $page->id)
+      ->where('locale_id', $this->defaultLocale()->id)
+      ->firstOrFail();
+
+    $this->actingAs($user)
+      ->get(route('admin.pages.translations.edit', [$page, $translation]))
+      ->assertOk()
+      ->assertSee('name="path"', false)
+      ->assertSee('Current public path');
+
+    $this->actingAs($user)
+      ->put(route('admin.pages.translations.update', [$page, $translation]), [
+        'name' => 'Fruit Train',
+        'slug' => 'fruit-train',
+        'path' => '/games/fruit-train',
+      ])
+      ->assertRedirect(route('admin.pages.edit', $page));
+
+    $this->assertDatabaseHas('page_translations', [
+      'id' => $translation->id,
+      'slug' => 'fruit-train',
+      'path' => '/games/fruit-train',
+    ]);
+  }
+
+  #[Test]
+  public function page_translation_rejects_reserved_public_paths(): void
+  {
+    $site = $this->defaultSite();
+    $user = User::factory()->superAdmin()->create();
+    $page = $this->pageFor($site, Page::STATUS_DRAFT, 'search-page');
+    $translation = PageTranslation::query()
+      ->where('page_id', $page->id)
+      ->where('locale_id', $this->defaultLocale()->id)
+      ->firstOrFail();
+
+    $this->actingAs($user)
+      ->from(route('admin.pages.translations.edit', [$page, $translation]))
+      ->put(route('admin.pages.translations.update', [$page, $translation]), [
+        'name' => 'Search Page',
+        'slug' => 'search-page',
+        'path' => '/search',
+      ])
+      ->assertRedirect(route('admin.pages.translations.edit', [$page, $translation]))
+      ->assertSessionHasErrors('path');
+
+    $this->assertDatabaseHas('page_translations', [
+      'id' => $translation->id,
+      'path' => '/search-page',
+    ]);
+  }
+
+  #[Test]
   public function invalid_transition_is_rejected_cleanly(): void
   {
     $site = $this->defaultSite();
