@@ -282,6 +282,47 @@ class PageEditorialWorkflowTest extends TestCase
   }
 
   #[Test]
+  public function pages_index_search_matches_page_id(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->editorFor($site);
+    $matchingPage = $this->pageFor($site, Page::STATUS_DRAFT, 'id-search-target');
+    $otherPage = $this->pageFor($site, Page::STATUS_DRAFT, 'id-search-other');
+
+    $response = $this->actingAs($user)->get(route('admin.pages.index', [
+      'site' => $site->id,
+      'search' => (string) $matchingPage->id,
+    ]));
+
+    $response->assertOk();
+    $response->assertSee('Search by ID, title, slug, or page type');
+    $response->assertSee('#'.$matchingPage->id);
+    $response->assertSee('Id-search-target');
+    $response->assertDontSee('#'.$otherPage->id);
+    $response->assertDontSee('Id-search-other');
+  }
+
+  #[Test]
+  public function pages_index_search_matches_hash_prefixed_page_id(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->editorFor($site);
+    $matchingPage = $this->pageFor($site, Page::STATUS_DRAFT, 'hash-id-search-target');
+    $otherPage = $this->pageFor($site, Page::STATUS_DRAFT, 'hash-id-search-other');
+
+    $response = $this->actingAs($user)->get(route('admin.pages.index', [
+      'site' => $site->id,
+      'search' => '#'.$matchingPage->id,
+    ]));
+
+    $response->assertOk();
+    $response->assertSee('#'.$matchingPage->id);
+    $response->assertSee('Hash-id-search-target');
+    $response->assertDontSee('#'.$otherPage->id);
+    $response->assertDontSee('Hash-id-search-other');
+  }
+
+  #[Test]
   public function pages_bulk_delete_requires_authentication(): void
   {
     $page = $this->pageFor($this->defaultSite(), Page::STATUS_DRAFT, 'guest-bulk-delete');

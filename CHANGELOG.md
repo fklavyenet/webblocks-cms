@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.197
+
+- Bumped CMS to `1.32.197`.
+- Let the Pages admin search box match numeric page IDs, so operators can paste IDs such as `27` and find the matching page directly.
+
 ## 1.32.196
 
 - Bumped CMS to `1.32.196`.

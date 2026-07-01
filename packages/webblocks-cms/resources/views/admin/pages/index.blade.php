@@ -39,7 +39,7 @@
                     'name' => 'search',
                     'label' => 'Search',
                     'value' => $filters['search'],
-                    'placeholder' => 'Search by title, slug, or page type',
+                    'placeholder' => 'Search by ID, title, slug, or page type',
                 ],
                 'selects' => [
                     [

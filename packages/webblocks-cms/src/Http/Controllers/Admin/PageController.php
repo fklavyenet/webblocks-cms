@@ -84,6 +84,7 @@ class PageController extends Controller
     }
 
     $search = trim((string) $request->string('search'));
+    $searchPageId = preg_match('/^#?(\d+)$/', $search, $matches) === 1 ? (int) $matches[1] : null;
     $status = $request->string('status')->toString();
     $detailsPageId = $request->integer('details');
     $sort = $request->string('sort')->toString();
@@ -121,9 +122,10 @@ class PageController extends Controller
       ])
       ->with('slots.slotType')
       ->withCount(['slots', 'blocks'])
-      ->when($search !== '', function ($query) use ($search, $defaultLocaleId) {
-        $query->where(function ($inner) use ($search, $defaultLocaleId) {
+      ->when($search !== '', function ($query) use ($search, $searchPageId, $defaultLocaleId) {
+        $query->where(function ($inner) use ($search, $searchPageId, $defaultLocaleId) {
           $inner->where('page_type', 'like', "%{$search}%")
+            ->when($searchPageId !== null, fn ($idQuery) => $idQuery->orWhere('id', $searchPageId))
             ->orWhereHas('blocks.textTranslations', fn ($translations) => $translations
               ->where('title', 'like', "%{$search}%")
               ->orWhere('subtitle', 'like', "%{$search}%")
