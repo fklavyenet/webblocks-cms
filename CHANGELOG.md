@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.32.204
+
+- Bumped CMS to `1.32.204`.
+- Add a cached async top-navbar update indicator so super admins can see when a CMS update is available without opening `Maintenance -> Update`.
+
 ## 1.32.203
 
 - Bumped CMS to `1.32.203`.

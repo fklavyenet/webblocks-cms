@@ -262,6 +262,22 @@
 
                     <div class="wb-navbar-end wb-ms-auto">
                         <div class="wb-navbar-iconbar">
+                            @if ($user?->can('access-system') && Route::has('admin.system.updates.indicator'))
+                                <a
+                                    href="{{ route('admin.system.updates.index') }}"
+                                    class="wb-navbar-icon-trigger wb-navbar-update-indicator"
+                                    data-wb-update-indicator
+                                    data-wb-update-indicator-url="{{ route('admin.system.updates.indicator') }}"
+                                    aria-label="Update status"
+                                    title="Update status"
+                                    hidden
+                                >
+                                    <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
+                                    <span class="wb-navbar-update-dot" aria-hidden="true"></span>
+                                    <span class="wb-sr-only" data-wb-update-indicator-label>Update status</span>
+                                </a>
+                            @endif
+
                             <button type="button" class="wb-navbar-icon-trigger" data-wb-mode-cycle aria-label="Color mode" title="Color mode">
                                 <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
                             </button>

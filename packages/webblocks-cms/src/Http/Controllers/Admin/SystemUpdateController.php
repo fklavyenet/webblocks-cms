@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -14,6 +15,7 @@ use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
+use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateSupportReport;
@@ -26,6 +28,7 @@ class SystemUpdateController extends Controller
     private readonly SystemUpdater $systemUpdater,
     private readonly SystemUpdateRunRetention $runRetention,
     private readonly SystemUpdateSupportReport $supportReport,
+    private readonly AdminUpdateIndicator $updateIndicator,
   ) {}
 
   public function index(Request $request): View
@@ -54,6 +57,7 @@ class SystemUpdateController extends Controller
   public function check(): RedirectResponse
   {
     $report = $this->systemUpdateInspector->refreshReport();
+    $this->updateIndicator->storeVersionStatus($report['version'] ?? []);
     $this->runRetention->prune();
 
     return redirect()
@@ -78,6 +82,7 @@ class SystemUpdateController extends Controller
       }
 
       $result = $this->systemUpdater->run($request->user());
+      $this->updateIndicator->clear();
       $this->runRetention->prune();
 
       return redirect()
@@ -105,6 +110,7 @@ class SystemUpdateController extends Controller
     try {
       $result = $this->systemUpdater->continuePreparedUpdate($request->user(), $pending);
       $this->clearPendingUpdate();
+      $this->updateIndicator->clear();
       $this->runRetention->prune();
 
       return redirect()
@@ -144,6 +150,14 @@ class SystemUpdateController extends Controller
       'Content-Type' => 'application/json',
       'Content-Disposition' => 'attachment; filename="'.$filename.'"',
     ]);
+  }
+
+  public function indicator(): JsonResponse
+  {
+    $payload = $this->updateIndicator->payload();
+    $payload['url'] = route('admin.system.updates.index');
+
+    return response()->json($payload);
   }
 
   private function latestUpdateRun(): ?SystemUpdateRun

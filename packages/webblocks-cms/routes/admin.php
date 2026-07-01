@@ -316,6 +316,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/search', [SystemSearchController::class, 'index'])->name('system.search.index');
       Route::post('system/search/rebuild', [SystemSearchController::class, 'rebuild'])->name('system.search.rebuild');
       Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
+      Route::get('system/updates/indicator', [SystemUpdateController::class, 'indicator'])->name('system.updates.indicator');
       Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
       Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
       Route::post('system/updates/continue', [SystemUpdateController::class, 'continue'])->name('system.updates.continue');

@@ -431,11 +431,61 @@
         });
     }
 
+    function bindUpdateIndicator() {
+        document.querySelectorAll('[data-wb-update-indicator]').forEach(function (indicator) {
+            var url = indicator.getAttribute('data-wb-update-indicator-url');
+
+            if (indicator.getAttribute('data-wb-update-indicator-bound') === 'true' || !url || typeof window.fetch !== 'function') {
+                return;
+            }
+
+            indicator.setAttribute('data-wb-update-indicator-bound', 'true');
+
+            window.fetch(url, {
+                headers: {
+                    Accept: 'application/json'
+                },
+                credentials: 'same-origin'
+            }).then(function (response) {
+                if (!response.ok) {
+                    return null;
+                }
+
+                return response.json();
+            }).then(function (data) {
+                var labelNode;
+                var label;
+                var targetUrl;
+
+                if (!data || data.visible !== true) {
+                    return;
+                }
+
+                label = String(data.label || 'Update available');
+                targetUrl = String(data.url || indicator.getAttribute('href') || '');
+                labelNode = indicator.querySelector('[data-wb-update-indicator-label]');
+
+                indicator.hidden = false;
+                indicator.setAttribute('aria-label', label);
+                indicator.setAttribute('title', label);
+
+                if (targetUrl) {
+                    indicator.setAttribute('href', targetUrl);
+                }
+
+                if (labelNode) {
+                    labelNode.textContent = label;
+                }
+            }).catch(function () {});
+        });
+    }
+
     admin.escapeHtml = escapeHtml;
     admin.resetAdminTransientUiState = resetAdminTransientUiState;
     admin.bindAdminTransientUiReset = bindAdminTransientUiReset;
     admin.redirectToLoginFromAdmin = redirectToLoginFromAdmin;
     admin.normalizeSiteHandle = normalizeSiteHandle;
+    admin.bindUpdateIndicator = bindUpdateIndicator;
 
     bindAdminTransientUiReset();
     bindNavGroupToggles();
@@ -443,4 +493,5 @@
     bootstrapAdminAutoloadOverlays();
     bindDirtyCloseConfirmationActions();
     bindDirtyOverlayGuards();
+    bindUpdateIndicator();
 }());

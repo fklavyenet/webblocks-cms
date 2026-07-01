@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as PackageContactMessageController;
@@ -19,6 +20,9 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\VisitorEvent;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
+use WebBlocks\Cms\Support\System\Updates\UpdateCheckResult;
+use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -212,6 +216,85 @@ class AdminDashboardRouteTest extends TestCase
     $response->assertSee('Backups');
     $response->assertSee('href="'.route('admin.system.updates.index').'"', false);
     $response->assertSee('Update');
+  }
+
+  #[Test]
+  public function admin_navbar_renders_hidden_update_indicator_shell_for_super_admins_only(): void
+  {
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $superAdmin = User::factory()->superAdmin()->create();
+    $siteAdmin = User::factory()->siteAdmin()->create();
+    $siteAdmin->sites()->sync([$site->id]);
+
+    $superAdminResponse = $this->actingAs($superAdmin)->get(route('admin.dashboard'));
+
+    $superAdminResponse->assertOk();
+    $superAdminResponse->assertSee('data-wb-update-indicator', false);
+    $superAdminResponse->assertSee('data-wb-update-indicator-url="'.route('admin.system.updates.indicator').'"', false);
+    $superAdminResponse->assertSee('href="'.route('admin.system.updates.index').'"', false);
+    $superAdminResponse->assertSee('class="wb-icon wb-icon-download"', false);
+    $superAdminResponse->assertSee('hidden', false);
+
+    $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.pages.index'));
+
+    $siteAdminResponse->assertOk();
+    $siteAdminResponse->assertDontSee('data-wb-update-indicator', false);
+  }
+
+  #[Test]
+  public function admin_update_indicator_endpoint_returns_available_update_payload_and_caches_result(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    Cache::forget(AdminUpdateIndicator::CACHE_KEY);
+
+    $this->mock(UpdateServerClient::class, function ($mock): void {
+      $mock->shouldReceive('check')->once()->andReturn(new UpdateCheckResult(
+        state: 'update_available',
+        label: 'Update available',
+        message: 'A newer published release is available from the configured update server.',
+        badgeClass: 'wb-status-info',
+        serverReachable: true,
+        apiVersion: '1',
+        serverUrl: 'https://updates.example.test',
+        product: 'webblocks-cms',
+        channel: 'stable',
+        installedVersion: WebBlocks::version(),
+        latestVersion: '99.0.0',
+        updateAvailable: true,
+        compatibility: ['status' => 'compatible', 'reasons' => []],
+        release: ['download_url' => 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip'],
+        errorCode: null,
+        errorMessage: null,
+        checkedAt: CarbonImmutable::now(),
+      ));
+    });
+
+    $response = $this->actingAs($user)->getJson(route('admin.system.updates.indicator'));
+
+    $response->assertOk();
+    $response->assertJsonPath('visible', true);
+    $response->assertJsonPath('state', 'update_available');
+    $response->assertJsonPath('label', 'Update 99.0.0 available');
+    $response->assertJsonPath('latest_version', '99.0.0');
+    $response->assertJsonPath('url', route('admin.system.updates.index'));
+
+    $cachedResponse = $this->actingAs($user)->getJson(route('admin.system.updates.indicator'));
+
+    $cachedResponse->assertOk();
+    $cachedResponse->assertJsonPath('visible', true);
+    $cachedResponse->assertJsonPath('latest_version', '99.0.0');
+  }
+
+  #[Test]
+  public function admin_update_indicator_endpoint_requires_system_access(): void
+  {
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $siteAdmin = User::factory()->siteAdmin()->create();
+    $siteAdmin->sites()->sync([$site->id]);
+
+    $this->actingAs($siteAdmin)
+      ->getJson(route('admin.system.updates.indicator'))
+      ->assertForbidden();
   }
 
   #[Test]

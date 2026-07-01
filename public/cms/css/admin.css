@@ -97,6 +97,22 @@ svg.wb-sidebar-brand-logo {
     overflow-wrap: anywhere;
 }
 
+.wb-navbar-update-indicator {
+    position: relative;
+    color: var(--wb-accent);
+}
+
+.wb-navbar-update-dot {
+    position: absolute;
+    inset-block-start: 0.35rem;
+    inset-inline-end: 0.35rem;
+    inline-size: 0.65rem;
+    block-size: 0.65rem;
+    border: 2px solid var(--wb-surface);
+    border-radius: 9999px;
+    background: var(--wb-danger);
+}
+
 .wb-navbar-icon-trigger {
     display: inline-flex;
     align-items: center;
