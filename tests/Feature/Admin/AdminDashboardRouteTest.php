@@ -219,7 +219,7 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function admin_navbar_renders_system_updates_shortcut_for_super_admins_only(): void
+  public function admin_navbar_renders_hidden_update_indicator_shell_for_super_admins_only(): void
   {
     $site = Site::query()->where('is_primary', true)->firstOrFail();
     $superAdmin = User::factory()->superAdmin()->create();
@@ -236,6 +236,7 @@ class AdminDashboardRouteTest extends TestCase
     $superAdminResponse->assertSee('class="wb-icon wb-icon-download"', false);
     $superAdminResponse->assertSee('aria-label="System Updates"', false);
     $superAdminResponse->assertSee('title="System Updates"', false);
+    $superAdminResponse->assertSee('hidden', false);
 
     $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.pages.index'));
 

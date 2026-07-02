@@ -132,7 +132,7 @@
 
   @include('webblocks-cms::admin.partials.page-header', [
     'title' => 'System Updates',
-    'description' => 'Install validated WebBlocks CMS package updates and review release, readiness, and run history.',
+    'description' => 'Review the current CMS update status and install a validated release when one is available.',
   ])
 
   <div class="wb-stack wb-stack-4" data-webblocks-updates-layout="designed">
@@ -144,7 +144,7 @@
       <div class="wb-card-header">
         <div>
           <h2 class="wb-card-title">Update Status</h2>
-          <p class="wb-card-description">{{ $showLatestVersion ? 'A published package is ready for this install.' : 'Validated package status for this WebBlocks CMS install.' }}</p>
+          <p class="wb-card-description">{{ $showLatestVersion ? 'A published package is ready for this install.' : 'This screen stays quiet until a trusted update is available.' }}</p>
         </div>
         <div class="wb-action-group">
           <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $summaryTitle }}</span>
@@ -172,9 +172,14 @@
 
           <div data-webblocks-updates-hero-aside>
             <div>
-              <span class="wb-meta-label">{{ $showLatestVersion ? 'Latest published' : 'Installed version' }}</span>
-              <strong>{{ $showLatestVersion ? $updateStatus['latest_version'] : $installedVersion }}</strong>
-              @if ($latestPublishedAt)
+              @if ($showLatestVersion)
+                <span class="wb-meta-label">Latest published</span>
+                <strong>{{ $updateStatus['latest_version'] }}</strong>
+              @else
+                <span class="wb-meta-label">Last checked</span>
+                <strong>{{ optional($checkedAt ?? null)->format('Y-m-d H:i') ?? 'Not available' }}</strong>
+              @endif
+              @if ($showLatestVersion && $latestPublishedAt)
                 <span class="wb-text-muted wb-text-sm">Published {{ $latestPublishedAt }}</span>
               @endif
             </div>
@@ -257,45 +262,10 @@
           <p class="wb-text-muted">{{ $autoUpdate['blockers'][0] ?? 'No newer release is ready for this install.' }}</p>
         @endif
 
-        <div data-webblocks-updates-metrics>
-          <div>
-            <span class="wb-meta-label">Current CMS Version</span>
-            <strong>{{ $installedVersion }}</strong>
-          </div>
-
-          @if ($showLatestVersion)
-            <div>
-              <span class="wb-meta-label">Latest Published Version</span>
-              <strong>{{ $updateStatus['latest_version'] }}</strong>
-              @if ($latestPublishedAt)
-                <span class="wb-text-muted wb-text-sm">Published Date: {{ $latestPublishedAt }}</span>
-              @endif
-            </div>
-          @endif
-
-          <div>
-            <span class="wb-meta-label">Compatibility</span>
-            <strong>{{ $compatibilityStatus }}</strong>
-          </div>
-
-          <div>
-            <span class="wb-meta-label">Channel</span>
-            <strong>{{ $updateStatus['channel'] ?? 'stable' }}</strong>
-          </div>
-
-          <div>
-            <span class="wb-meta-label">Update server</span>
-            <strong>{{ $updateStatus['server_url'] ?: 'not configured' }}</strong>
-          </div>
-
-          <div>
-            <span class="wb-meta-label">Last checked</span>
-            <strong>{{ optional($checkedAt ?? null)->format('Y-m-d H:i') ?? 'Not available' }}</strong>
-          </div>
-        </div>
       </div>
     </section>
 
+    @if ($showUpdateAction || $pendingUpdate || $readinessNeedsAttention || $state === 'incompatible')
     <div class="wb-grid wb-grid-3" data-webblocks-updates-card="safety-summary">
       <section class="wb-card">
         <div class="wb-card-body">
@@ -342,8 +312,64 @@
         </div>
       </section>
     </div>
+    @endif
 
-    <div class="wb-grid wb-grid-2" data-webblocks-updates-card="details">
+    <section class="wb-card" data-webblocks-updates-card="maintenance-details">
+      <div class="wb-card-header">
+        <div>
+          <h2 class="wb-card-title">Technical details and history</h2>
+          <p class="wb-card-description">Package metadata, readiness checks, and retained update runs for maintenance/support use.</p>
+        </div>
+      </div>
+
+      <div class="wb-card-body">
+        <div class="wb-accordion" data-wb-accordion data-webblocks-updates-accordion="maintenance-details">
+          <div class="wb-accordion-item">
+            <button
+              class="wb-accordion-trigger"
+              type="button"
+              data-wb-accordion-trigger
+              aria-expanded="false"
+              aria-controls="webblocks-update-maintenance-details"
+            >
+              <span>Show technical details</span>
+              <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
+            </button>
+            <div class="wb-accordion-content" id="webblocks-update-maintenance-details">
+              <div class="wb-accordion-body wb-stack wb-stack-4">
+                <div data-webblocks-updates-metrics>
+                  <div>
+                    <span class="wb-meta-label">Current CMS Version</span>
+                    <strong>{{ $installedVersion }}</strong>
+                  </div>
+
+                  @if ($showLatestVersion)
+                    <div>
+                      <span class="wb-meta-label">Latest Published Version</span>
+                      <strong>{{ $updateStatus['latest_version'] }}</strong>
+                      @if ($latestPublishedAt)
+                        <span class="wb-text-muted wb-text-sm">Published Date: {{ $latestPublishedAt }}</span>
+                      @endif
+                    </div>
+                  @endif
+
+                  <div>
+                    <span class="wb-meta-label">Compatibility</span>
+                    <strong>{{ $compatibilityStatus }}</strong>
+                  </div>
+
+                  <div>
+                    <span class="wb-meta-label">Channel</span>
+                    <strong>{{ $updateStatus['channel'] ?? 'stable' }}</strong>
+                  </div>
+
+                  <div>
+                    <span class="wb-meta-label">Update server</span>
+                    <strong>{{ $updateStatus['server_url'] ?: 'not configured' }}</strong>
+                  </div>
+                </div>
+
+                <div class="wb-grid wb-grid-2" data-webblocks-updates-card="details">
       <section class="wb-card" data-webblocks-updates-panel="release">
         <div class="wb-card-header">
           <div class="wb-cluster wb-cluster-2 wb-items-center">
@@ -570,6 +596,12 @@ Cache clears, update run recording, and installed version persistence</div>
             View run details
           </button>
         @endif
+      </div>
+    </section>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </div>

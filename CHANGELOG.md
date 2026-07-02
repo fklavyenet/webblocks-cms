@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.213
+
+- Bumped CMS to `1.32.213`.
+- Hide the topbar System Updates indicator by default and reveal it only when the async update check reports a newer trusted release.
+- Simplify the System Updates up-to-date view by avoiding duplicate installed-version messaging and moving package metadata, readiness rows, and retained history into a secondary technical details area.
+
 ## 1.32.212
 
 - Bumped CMS to `1.32.212`.

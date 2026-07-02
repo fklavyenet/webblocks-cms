@@ -458,21 +458,20 @@
                 var state;
                 var targetUrl;
 
-                if (!data) {
+                if (!data || data.visible !== true) {
+                    indicator.hidden = true;
                     return;
                 }
 
                 state = String(data.state || 'unknown');
-                label = data.visible === true
-                    ? String(data.label || 'Update available')
-                    : 'System Updates';
+                label = String(data.label || 'Update available');
                 targetUrl = String(data.url || indicator.getAttribute('href') || '');
                 labelNode = indicator.querySelector('[data-wb-update-indicator-label]');
 
                 indicator.hidden = false;
                 indicator.setAttribute('data-wb-update-indicator-state', state);
                 indicator.setAttribute('aria-label', label);
-                indicator.setAttribute('title', data.visible === true ? label : String(data.label || 'System Updates'));
+                indicator.setAttribute('title', label);
 
                 if (targetUrl) {
                     indicator.setAttribute('href', targetUrl);

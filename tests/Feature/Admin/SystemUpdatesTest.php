@@ -66,7 +66,10 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
     $response->assertSee('data-webblocks-updates-layout="designed"', false);
     $response->assertSee('data-webblocks-updates-card="summary"', false);
-    $response->assertSee('data-webblocks-updates-card="safety-summary"', false);
+    $response->assertSee('data-webblocks-updates-card="maintenance-details"', false);
+    $response->assertSee('Technical details and history');
+    $response->assertSee('Show technical details');
+    $response->assertDontSee('data-webblocks-updates-card="safety-summary"', false);
     $response->assertSee('data-webblocks-updates-card="details"', false);
     $response->assertSee('data-webblocks-updates-card="history"', false);
     $response->assertDontSee('data-webblocks-updates-card="install"', false);
@@ -76,7 +79,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertSeeInOrder([
       'data-webblocks-updates-card="summary"',
       'Update Status',
-      'data-webblocks-updates-card="safety-summary"',
+      'data-webblocks-updates-card="maintenance-details"',
+      'Technical details and history',
       'data-webblocks-updates-card="details"',
       'Release',
       'Readiness',
@@ -155,9 +159,10 @@ class SystemUpdatesTest extends TestCase
     $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Update Status</h2>');
     $buttonPosition = strpos($html, 'data-default-label="Update Now"');
 
-    $this->assertStringContainsString('Current CMS Version', $installHtml);
-    $this->assertStringContainsString('Latest Published Version', $installHtml);
-    $this->assertStringContainsString('Published Date', $installHtml);
+    $this->assertStringContainsString(WebBlocks::version().' → 99.0.0', $installHtml);
+    $this->assertStringNotContainsString('Current CMS Version', $installHtml);
+    $this->assertStringNotContainsString('Latest Published Version', $installHtml);
+    $this->assertStringNotContainsString('Published Date', $installHtml);
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($buttonPosition);
     $this->assertGreaterThan($optionsHeaderPosition, $buttonPosition);
@@ -595,6 +600,7 @@ class SystemUpdatesTest extends TestCase
       ->get(route('admin.system.updates.index'))
       ->assertOk()
       ->assertSee('data-webblocks-updates-card="summary"', false)
+      ->assertSee('data-webblocks-updates-card="maintenance-details"', false)
       ->assertSee('data-webblocks-updates-card="details"', false)
       ->assertSee('data-webblocks-updates-card="history"', false)
       ->assertSee('Last update run')

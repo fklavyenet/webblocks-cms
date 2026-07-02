@@ -271,6 +271,7 @@
                                     data-wb-update-indicator-state="unknown"
                                     aria-label="System Updates"
                                     title="System Updates"
+                                    hidden
                                 >
                                     <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                     <span class="wb-navbar-update-dot" aria-hidden="true"></span>
