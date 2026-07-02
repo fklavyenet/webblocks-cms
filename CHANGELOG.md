@@ -7,6 +7,14 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## Unreleased
+
+## 1.32.206
+
+- Bumped CMS to `1.32.206`.
+- Add the first WebBlocks Commerce plugin foundation with a manual ZIP package skeleton, plugin-owned commerce tables/models, setup-required health checks, MVP architecture documentation, operator guide, product admin screens, read-only order admin screens, secret-safe settings diagnostics, public buy pages, a plugin-owned Commerce Buy Button block, a no-network fake checkout flow, and PayPal hosted checkout/webhook capture handling when configured.
+- Add trusted CMS API endpoints for plugin lifecycle actions, WebBlocks Commerce product/order access, and Commerce Buy Button placement discovery so operator tools can install/setup Commerce, create products, and add plugin-owned buy buttons without browser admin automation.
+
 ## 1.32.205
 
 - Bumped CMS to `1.32.205`.

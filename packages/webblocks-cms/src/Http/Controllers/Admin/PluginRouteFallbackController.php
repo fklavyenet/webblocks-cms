@@ -35,6 +35,10 @@ class PluginRouteFallbackController extends Controller
       return $this->webBlocksUiManager($request, $path);
     }
 
+    if ($plugin === 'webblocks-commerce') {
+      return $this->webBlocksCommerce($request, $path);
+    }
+
     abort(404);
   }
 
@@ -132,6 +136,97 @@ class PluginRouteFallbackController extends Controller
     abort(404);
   }
 
+  private function webBlocksCommerce(Request $request, string $path): Response|View
+  {
+    $productController = 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\CommerceProductController';
+    $orderController = 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\CommerceOrderController';
+    $settingsController = 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\CommerceSettingsController';
+    abort_unless(class_exists($productController), 404);
+
+    $routeName = (string) $request->route()?->getName();
+
+    if ($request->isMethod('GET') && $this->matches($routeName, $path, 'products.index', 'products')) {
+      abort_unless($request->user()?->can('webblocks-commerce.view'), 403);
+
+      return app($productController)->index($request);
+    }
+
+    if ($request->isMethod('GET') && $this->matches($routeName, $path, 'products.create', 'products/create')) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-products'), 403);
+
+      return app($productController)->create();
+    }
+
+    if ($request->isMethod('POST') && $this->matches($routeName, $path, 'products.store', 'products')) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-products'), 403);
+
+      if ($this->webBlocksCommerceTablesMissing()) {
+        return $this->commerceTablesMissingRedirect();
+      }
+
+      return app()->call([app($productController), 'store']);
+    }
+
+    $product = $this->productRouteValue($request, $path);
+
+    if ($request->isMethod('GET') && $product !== null && $this->matches($routeName, $path, 'products.show', 'products/'.$product)) {
+      abort_unless($request->user()?->can('webblocks-commerce.view'), 403);
+
+      return app($productController)->show($product);
+    }
+
+    if ($request->isMethod('GET') && $product !== null && $this->matches($routeName, $path, 'products.edit', 'products/'.$product.'/edit')) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-products'), 403);
+
+      return app($productController)->edit($product);
+    }
+
+    if ($request->isMethod('PUT') && $product !== null && $this->matches($routeName, $path, 'products.update', 'products/'.$product)) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-products'), 403);
+
+      if ($this->webBlocksCommerceTablesMissing()) {
+        return $this->commerceTablesMissingRedirect();
+      }
+
+      return app()->call([app($productController), 'update'], ['product' => $product]);
+    }
+
+    if ($request->isMethod('POST') && $product !== null && $this->matches($routeName, $path, 'products.archive', 'products/'.$product.'/archive')) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-products'), 403);
+
+      if ($this->webBlocksCommerceTablesMissing()) {
+        return $this->commerceTablesMissingRedirect();
+      }
+
+      return app($productController)->archive($product);
+    }
+
+    if ($request->isMethod('GET') && $this->matches($routeName, $path, 'orders.index', 'orders')) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-orders'), 403);
+      abort_unless(class_exists($orderController), 404);
+
+      return app($orderController)->index($request);
+    }
+
+    $order = $this->orderRouteValue($request, $path);
+
+    if ($request->isMethod('GET') && $order !== null && $this->matches($routeName, $path, 'orders.show', 'orders/'.$order)) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-orders'), 403);
+      abort_unless(class_exists($orderController), 404);
+
+      return app($orderController)->show($order);
+    }
+
+    if ($request->isMethod('GET') && $this->matches($routeName, $path, 'settings.edit', 'settings')) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-settings'), 403);
+      abort_unless(class_exists($settingsController), 404);
+
+      return app($settingsController)->edit();
+    }
+
+    abort(404);
+  }
+
   private function matches(string $routeName, string $path, string $routeSuffix, string $expectedPath): bool
   {
     return str_ends_with($routeName, '.'.$routeSuffix) || $path === $expectedPath;
@@ -153,6 +248,25 @@ class PluginRouteFallbackController extends Controller
 
     return redirect()
       ->route('webblocks.plugins.webblocks_ui_manager.releases.index')
+      ->withErrors(['plugin' => $message]);
+  }
+
+  private function webBlocksCommerceTablesMissing(): bool
+  {
+    $schema = 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Support\\WebBlocksCommerceSchema';
+
+    return class_exists($schema) && ! app($schema)->isReady();
+  }
+
+  private function commerceTablesMissingRedirect(): Response
+  {
+    $schema = 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Support\\WebBlocksCommerceSchema';
+    $message = class_exists($schema)
+      ? app($schema)->message()
+      : 'Setup required. Plugin migrations pending. Commerce tables are missing.';
+
+    return redirect()
+      ->route('webblocks.plugins.webblocks_commerce.products.index')
       ->withErrors(['plugin' => $message]);
   }
 
@@ -192,6 +306,36 @@ class PluginRouteFallbackController extends Controller
     }
 
     if (preg_match('#^releases/([^/]+)(?:/edit|/publish|/publish-dry-run)?$#', $path, $matches) === 1) {
+      return $matches[1];
+    }
+
+    return null;
+  }
+
+  private function productRouteValue(Request $request, string $path): ?string
+  {
+    $routeValue = $this->routeString($request, 'product');
+
+    if ($routeValue !== null) {
+      return $routeValue;
+    }
+
+    if (preg_match('#^products/([^/]+)(?:/edit|/archive)?$#', $path, $matches) === 1) {
+      return $matches[1];
+    }
+
+    return null;
+  }
+
+  private function orderRouteValue(Request $request, string $path): ?string
+  {
+    $routeValue = $this->routeString($request, 'order');
+
+    if ($routeValue !== null) {
+      return $routeValue;
+    }
+
+    if (preg_match('#^orders/([^/]+)$#', $path, $matches) === 1) {
       return $matches[1];
     }
 

@@ -17,6 +17,7 @@ class PluginRuntimeRefresher
       PluginPermissionRegistry::class,
       PluginAuthorizationRegistrar::class,
       PluginAdminExtensionRegistry::class,
+      PluginBlockCatalog::class,
       PluginBlockRegistry::class,
       PluginPublicAssetRegistry::class,
       PluginHealthMonitor::class,

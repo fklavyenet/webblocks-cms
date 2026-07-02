@@ -10,6 +10,7 @@ class PagePath
   private const RESERVED_FIRST_SEGMENTS = [
     'admin-api',
     'cms',
+    'commerce',
     'contact-messages',
     'confirm-password',
     'dashboard',
@@ -116,6 +117,6 @@ class PagePath
       self::RESERVED_FIRST_SEGMENTS,
     ));
 
-    return '.*';
+    return '(?!(?:'.$reserved.')(?:/|$)).*';
   }
 }

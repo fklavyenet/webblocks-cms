@@ -25,6 +25,7 @@ use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 
 class InternalContentResourceController extends Controller
 {
@@ -34,6 +35,7 @@ class InternalContentResourceController extends Controller
     private readonly CmsApiTokenCapabilities $capabilities,
     private readonly MediaUploader $mediaUploader,
     private readonly MediaDeleter $mediaDeleter,
+    private readonly PluginBlockCatalog $pluginBlockCatalog,
   ) {}
 
   public function sites(): JsonResponse
@@ -85,7 +87,8 @@ class InternalContentResourceController extends Controller
       ->orderBy('sort_order')
       ->orderBy('name')
       ->get()
-      ->map(fn (BlockType $blockType) => $this->presenter->blockType($blockType))
+      ->pipe(fn ($blockTypes) => $this->pluginBlockCatalog->filterDiscoverableBlockTypes($blockTypes))
+      ->map(fn (BlockType $blockType) => $this->apiBlockType($blockType))
       ->values();
 
     return $this->ok(['block_types' => $blockTypes]);
@@ -98,6 +101,7 @@ class InternalContentResourceController extends Controller
       ->orderBy('sort_order')
       ->orderBy('name')
       ->get()
+      ->pipe(fn ($blockTypes) => $this->pluginBlockCatalog->filterDiscoverableBlockTypes($blockTypes))
       ->map(fn (BlockType $blockType) => $this->safeBlockContract($blockType))
       ->values();
 
@@ -1159,6 +1163,18 @@ class InternalContentResourceController extends Controller
     ]);
   }
 
+  private function apiBlockType(BlockType $blockType): array
+  {
+    $payload = $this->presenter->blockType($blockType);
+
+    if ($blockType->slug === 'webblocks-commerce-buy-button') {
+      $payload['settings_schema'] = $this->commerceBuyButtonSettingsSchema();
+      $payload['commerce_products_url'] = '/webadmin/api/commerce/products';
+    }
+
+    return $payload;
+  }
+
   private function safeBlockContract(BlockType $blockType): array
   {
     $blockTypePayload = $this->presenter->blockType($blockType);
@@ -1222,6 +1238,28 @@ class InternalContentResourceController extends Controller
       $payload['admin_review_behavior'] = 'Stored messages appear under /webadmin/contact-messages with editorial status, spam score/reasons, notification status, and safe failure detail.';
     }
 
+    if ($blockType->slug === 'webblocks-commerce-buy-button') {
+      $payload['settings_schema'] = $this->commerceBuyButtonSettingsSchema();
+      $payload['commerce_products_url'] = '/webadmin/api/commerce/products';
+      $payload['public_behavior'] = 'Renders a plugin-owned buy button that links visitors to the public Commerce checkout page for the selected active product.';
+      $payload['validation_rules'] = [
+        'settings.commerce_product_id' => 'required integer id from GET /webadmin/api/commerce/products',
+        'settings.label' => 'nullable string max 80',
+        'settings.show_price' => 'nullable boolean; default true',
+        'settings.alignment' => 'nullable one of start, center, end',
+      ];
+    }
+
     return $payload;
+  }
+
+  private function commerceBuyButtonSettingsSchema(): array
+  {
+    return [
+      'commerce_product_id' => 'required integer; use an active product id from GET /webadmin/api/commerce/products',
+      'label' => 'nullable string max 80; default Buy Now',
+      'show_price' => 'boolean; default true',
+      'alignment' => 'start|center|end; default start',
+    ];
   }
 }

@@ -44,6 +44,22 @@ class CmsApiTokenCapabilities
 
   public const ENGAGEMENT_MODERATE = 'engagement.moderate';
 
+  public const PLUGINS_READ = 'plugins.read';
+
+  public const PLUGINS_INSTALL = 'plugins.install';
+
+  public const PLUGINS_MANAGE = 'plugins.manage';
+
+  public const PLUGINS_SETUP = 'plugins.setup';
+
+  public const PLUGINS_UNINSTALL = 'plugins.uninstall';
+
+  public const COMMERCE_READ = 'commerce.read';
+
+  public const COMMERCE_PRODUCTS_WRITE = 'commerce.products.write';
+
+  public const COMMERCE_ORDERS_READ = 'commerce.orders.read';
+
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
@@ -59,6 +75,14 @@ class CmsApiTokenCapabilities
     self::SITE_ASSETS_WRITE,
     self::ENGAGEMENT_READ,
     self::ENGAGEMENT_MODERATE,
+    self::PLUGINS_READ,
+    self::PLUGINS_INSTALL,
+    self::PLUGINS_MANAGE,
+    self::PLUGINS_SETUP,
+    self::PLUGINS_UNINSTALL,
+    self::COMMERCE_READ,
+    self::COMMERCE_PRODUCTS_WRITE,
+    self::COMMERCE_ORDERS_READ,
     self::MEDIA_WRITE,
     self::MEDIA_UPLOAD,
     self::MEDIA_REPLACE,
@@ -67,6 +91,10 @@ class CmsApiTokenCapabilities
     self::NAVIGATION_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
+    self::PLUGINS_INSTALL,
+    self::PLUGINS_MANAGE,
+    self::PLUGINS_SETUP,
+    self::PLUGINS_UNINSTALL,
   ];
 
   public const DESTRUCTIVE = [
@@ -97,6 +125,14 @@ class CmsApiTokenCapabilities
     self::SITE_ASSETS_WRITE,
     self::ENGAGEMENT_READ,
     self::ENGAGEMENT_MODERATE,
+    self::PLUGINS_READ,
+    self::PLUGINS_INSTALL,
+    self::PLUGINS_MANAGE,
+    self::PLUGINS_SETUP,
+    self::PLUGINS_UNINSTALL,
+    self::COMMERCE_READ,
+    self::COMMERCE_PRODUCTS_WRITE,
+    self::COMMERCE_ORDERS_READ,
   ];
 
   public const LABELS = [
@@ -112,6 +148,14 @@ class CmsApiTokenCapabilities
     self::SITE_ASSETS_WRITE => 'Write canonical site CSS and JS override files',
     self::ENGAGEMENT_READ => 'Read public comments and ratings',
     self::ENGAGEMENT_MODERATE => 'Moderate public comments',
+    self::PLUGINS_READ => 'Read installed plugin status',
+    self::PLUGINS_INSTALL => 'Install manually uploaded plugin ZIP artifacts',
+    self::PLUGINS_MANAGE => 'Enable or disable installed plugins',
+    self::PLUGINS_SETUP => 'Run plugin setup migrations',
+    self::PLUGINS_UNINSTALL => 'Uninstall disabled manually uploaded plugins',
+    self::COMMERCE_READ => 'Read commerce product catalog records',
+    self::COMMERCE_PRODUCTS_WRITE => 'Create or update commerce products',
+    self::COMMERCE_ORDERS_READ => 'Read commerce order records',
     self::MEDIA_WRITE => 'Write safe Media Library metadata',
     self::MEDIA_UPLOAD => 'Upload Media Library files',
     self::MEDIA_REPLACE => 'Replace Media Library files',
@@ -175,6 +219,14 @@ class CmsApiTokenCapabilities
         'write_site_assets' => $this->has($token, self::SITE_ASSETS_WRITE),
         'read_engagement' => $this->has($token, self::ENGAGEMENT_READ),
         'moderate_engagement_comments' => $this->has($token, self::ENGAGEMENT_MODERATE),
+        'read_plugins' => $this->has($token, self::PLUGINS_READ),
+        'install_plugins' => $this->has($token, self::PLUGINS_INSTALL),
+        'manage_plugins' => $this->has($token, self::PLUGINS_MANAGE),
+        'setup_plugins' => $this->has($token, self::PLUGINS_SETUP),
+        'uninstall_plugins' => $this->has($token, self::PLUGINS_UNINSTALL),
+        'read_commerce_products' => $this->has($token, self::COMMERCE_READ),
+        'write_commerce_products' => $this->has($token, self::COMMERCE_PRODUCTS_WRITE),
+        'read_commerce_orders' => $this->has($token, self::COMMERCE_ORDERS_READ),
       ],
     ];
   }

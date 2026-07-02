@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -15,6 +16,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
@@ -370,7 +372,7 @@ class InternalContentApiOperations
     $typeSlug = trim((string) ($block['type'] ?? $block['block_type'] ?? ''));
     $blockType = BlockType::query()->where('slug', $typeSlug)->where('status', 'published')->first();
 
-    if (! $blockType) {
+    if (! $blockType || $this->pluginBlockUnavailable($blockType)) {
       $errors[] = $this->error($path.'.type', 'Block type must be published and usable.');
 
       return null;
@@ -386,6 +388,7 @@ class InternalContentApiOperations
       $settings = [];
     }
 
+    $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {
@@ -717,5 +720,47 @@ class InternalContentApiOperations
 
     return (bool) filter_var($url, FILTER_VALIDATE_URL)
       && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
+  }
+
+  private function pluginBlockUnavailable(BlockType $blockType): bool
+  {
+    $catalog = app(PluginBlockCatalog::class);
+
+    return $catalog->isPluginCatalogSlug($blockType->slug) && ! $catalog->isEnabledCatalogSlug($blockType->slug);
+  }
+
+  private function normalizeCommerceBuyButtonSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
+  {
+    if ($blockType->slug !== 'webblocks-commerce-buy-button') {
+      return $settings;
+    }
+
+    $productId = (int) ($settings['commerce_product_id'] ?? $settings['product_id'] ?? 0);
+
+    if ($productId <= 0) {
+      $errors[] = $this->error($path.'.settings.commerce_product_id', 'Commerce Buy Button requires a commerce_product_id from GET /webadmin/api/commerce/products.');
+
+      return $settings;
+    }
+
+    if (! Schema::hasTable('webblocks_commerce_products')) {
+      $errors[] = $this->error($path.'.settings.commerce_product_id', 'WebBlocks Commerce setup is required before using Commerce Buy Button blocks.');
+
+      return $settings;
+    }
+
+    $exists = DB::table('webblocks_commerce_products')
+      ->where('id', $productId)
+      ->where('status', 'active')
+      ->exists();
+
+    if (! $exists) {
+      $errors[] = $this->error($path.'.settings.commerce_product_id', 'Commerce Buy Button product must be an existing active Commerce product.');
+    }
+
+    $settings['commerce_product_id'] = $productId;
+    unset($settings['product_id']);
+
+    return $settings;
   }
 }

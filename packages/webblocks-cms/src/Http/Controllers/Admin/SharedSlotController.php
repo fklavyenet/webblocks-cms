@@ -24,6 +24,7 @@ use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
@@ -286,7 +287,9 @@ class SharedSlotController extends Controller
     $rootBlocks = $this->blockTranslationResolver
       ->resolveCollection($allBlocks->whereNull('parent_id')->values(), $activeLocale)
       ->values();
-    $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
+    $blockTypes = app(PluginBlockCatalog::class)->filterDiscoverableBlockTypes(
+      BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get()
+    );
     $pickerParentId = request()->integer('parent_id') ?: null;
     $pickerBlockTypes = $this->pickerBlockTypes($resolvedBlocks, $blockTypes, $pickerParentId);
     $pickerCategory = $this->pickerCategory($pickerBlockTypes);

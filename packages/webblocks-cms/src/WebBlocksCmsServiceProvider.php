@@ -50,6 +50,7 @@ use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -863,6 +864,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $paths = [
       'webadmin/api',
       'webadmin/api/*',
+      'commerce/webhooks/paypal',
     ];
 
     foreach ($this->internalApiCsrfMiddlewareClasses() as $middleware) {
@@ -932,6 +934,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ));
 
     $this->app->singleton(PluginBlockRegistry::class, fn ($app): PluginBlockRegistry => new PluginBlockRegistry(
+      $app->make(PluginRegistry::class)
+    ));
+
+    $this->app->singleton(PluginBlockCatalog::class, fn ($app): PluginBlockCatalog => new PluginBlockCatalog(
       $app->make(PluginRegistry::class)
     ));
 

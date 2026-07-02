@@ -55,7 +55,7 @@ With a valid CMS API Bearer token, discovery returns:
 - `authenticated: true`
 - token capability names, without token value, token preview, or token hash
 - recommended next steps
-- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, blocks, media, page publish, page-owned block publish, navigation, and Shared Slots
+- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, blocks, media, page publish, page-owned block publish, navigation, Shared Slots, plugin lifecycle endpoints, and Commerce product/order endpoints
 
 The authenticated response is the canonical bootstrap contract for AI/operator tools. Tools should follow returned links instead of assuming local filesystem access to the CMS repository or package docs.
 
@@ -89,6 +89,17 @@ PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
 PATCH /webadmin/api/navigation-menus/{navigationMenu}/items/reorder
 DELETE /webadmin/api/navigation-menus/{navigationMenu}/items/{item}
 GET /webadmin/api/shared-slots
+GET /webadmin/api/plugins
+POST /webadmin/api/plugins/install
+POST /webadmin/api/plugins/{plugin}/enable
+POST /webadmin/api/plugins/{plugin}/setup
+POST /webadmin/api/plugins/{plugin}/disable
+DELETE /webadmin/api/plugins/{plugin}
+GET /webadmin/api/commerce/products
+POST /webadmin/api/commerce/products
+PATCH /webadmin/api/commerce/products/{product}
+GET /webadmin/api/commerce/orders
+GET /webadmin/api/commerce/orders/{order}
 GET /webadmin/api/sites/{site}/assets/css
 PUT /webadmin/api/sites/{site}/assets/css
 ```
@@ -102,6 +113,8 @@ For `site.css`, tools should prefer native block settings, CMS public theme cust
 Use `GET /webadmin/api/media` to discover existing CMS Media records before assigning media-backed native block fields. This read-only endpoint is moving to the dedicated `media.read` capability, with transitional `content.read` compatibility for older page-building tokens. If an approved file does not exist yet, use `POST /webadmin/api/media` with `media.upload` to create a normal Media Library record, then use the returned media id. Content plans can assign that id through `media_id` or `asset_id` on native `image`, `navbar-brand`, `sidebar-brand`, `file`, `download`, and `video` blocks, and through `gallery_items` or `gallery_media_ids` on `gallery` blocks. For card-like content, nest an `image` block inside `card` / `card_body` rather than putting media directly on the card shell. For supported existing structured blocks, such as `navbar-brand` and `sidebar-brand`, use `PATCH /webadmin/api/blocks/{block}` to assign image `media_id` and update safe settings or translations. Shared Slot source blocks additionally require `shared-slots.write`. For site favicon and social image changes, use `PATCH /webadmin/api/sites/{site}/branding` with Media Library image ids so the result remains visible in the Site Branding admin tab. Do not use Trusted HTML, invented public file paths, unsupported `settings.logo_url`, or `/cms/brand/*` product assets when a native CMS field exposes the needed media relationship.
 
 The Media Library write surface separates powers: `POST /webadmin/api/media` with `media.upload` uploads files, `PATCH /webadmin/api/media/{media}` with `media.write` updates only `title`, `alt_text`, `caption`, and `description`, `POST /webadmin/api/media/{media}/replace` with `media.replace` replaces same-kind files while preserving references, `POST /webadmin/api/media/{media}/move` with `media.move` changes folder assignment, and `DELETE /webadmin/api/media/{media}` with `media.delete` deletes only unused media. These endpoints must not change storage paths directly or fetch remote media.
+
+Use plugin lifecycle endpoints only with explicit plugin token capabilities. `POST /webadmin/api/plugins/install` accepts a plugin ZIP and leaves it disabled, `POST /webadmin/api/plugins/{plugin}/enable` enables it, `POST /webadmin/api/plugins/{plugin}/setup` runs plugin migrations, and uninstall requires a disabled manually uploaded plugin. WebBlocks Commerce automation then uses `POST /webadmin/api/commerce/products` to create active products and `webblocks-commerce-buy-button` blocks through content validate/apply with `settings.commerce_product_id` from the product response. The Commerce API returns setup-required JSON when the plugin is disabled or migrations are pending.
 
 Publish links require `content.publish`. `POST /webadmin/api/pages/{page}/publish` defaults to page-only publishing with `include_page_owned_blocks: false`; it does not publish draft blocks unless the request explicitly sets `include_page_owned_blocks: true`. Shared Slot cascade publishing is unsupported and returns JSON validation feedback. `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes eligible page-owned draft or in-review blocks without changing the page workflow status.
 

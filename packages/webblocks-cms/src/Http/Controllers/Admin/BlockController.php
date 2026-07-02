@@ -26,6 +26,7 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
@@ -141,7 +142,9 @@ class BlockController extends Controller
       ->with(['blocks', 'translations'])
       ->orderByDefaultTranslation('name')
       ->get();
-    $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
+    $blockTypes = app(PluginBlockCatalog::class)->filterDiscoverableBlockTypes(
+      BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get()
+    );
     $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
     $assetPickerAssets = $this->assetPickerAssets();
     $selectedAsset = $block->media_id
@@ -280,7 +283,9 @@ class BlockController extends Controller
       ->with(['blocks', 'translations'])
       ->orderByDefaultTranslation('name')
       ->get();
-    $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
+    $blockTypes = app(PluginBlockCatalog::class)->filterDiscoverableBlockTypes(
+      BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get()
+    );
     $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
     $assetPickerAssets = $this->assetPickerAssets();
     $selectedAsset = $block->media_id

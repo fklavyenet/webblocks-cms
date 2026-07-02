@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Plugins;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use SplFileInfo;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class InstalledPluginDefinitionFactory
@@ -42,7 +43,7 @@ class InstalledPluginDefinitionFactory
     if (is_array($settings)) {
       $definition
         ->settingsNamespace($settings['namespace'] ?? null)
-        ->settings(PluginSettingsDefinition::make()
+        ->settings(PluginSettingsDefinition::make($this->settingsRouteName($settings))
           ->label((string) ($settings['label'] ?? $manifest['label'].' Settings'))
           ->description($settings['description'] ?? null));
     }
@@ -67,6 +68,7 @@ class InstalledPluginDefinitionFactory
 
     $definition->permissions($permissions);
     $definition->menu($this->menuItems($manifest));
+    $definition->blockTypes($this->blockTypes($manifest));
     $definition->migrations($this->migrationPaths($manifest));
 
     if ($enabled) {
@@ -125,6 +127,20 @@ class InstalledPluginDefinitionFactory
   }
 
   /**
+   * @param  array<string, mixed>  $settings
+   */
+  private function settingsRouteName(array $settings): ?string
+  {
+    $routeName = $settings['route_name'] ?? null;
+
+    if (! is_string($routeName) || trim($routeName) === '') {
+      return null;
+    }
+
+    return trim($routeName);
+  }
+
+  /**
    * @param  array<string, mixed>  $manifest
    * @return array<int, PluginMenuItem>
    */
@@ -176,6 +192,55 @@ class InstalledPluginDefinitionFactory
     return $menuItems;
   }
 
+  /**
+   * @param  array<string, mixed>  $manifest
+   * @return array<int, PluginBlockTypeDefinition>
+   */
+  private function blockTypes(array $manifest): array
+  {
+    $items = $manifest['block_types'] ?? [];
+
+    if (! is_array($items)) {
+      return [];
+    }
+
+    $blockTypes = [];
+
+    foreach ($items as $item) {
+      if (! is_array($item)) {
+        continue;
+      }
+
+      $handle = $item['handle'] ?? null;
+
+      if (! is_string($handle) || ! PluginBlockTypeDefinition::isValidHandle($handle)) {
+        continue;
+      }
+
+      $label = $item['label'] ?? null;
+      $description = $item['description'] ?? null;
+      $blockType = PluginBlockTypeDefinition::make($handle)
+        ->label(is_string($label) && trim($label) !== '' ? $label : $handle)
+        ->description(is_string($description) ? $description : null);
+
+      if (is_string($item['admin_view'] ?? null)) {
+        $blockType->adminView((string) $item['admin_view']);
+      }
+
+      if (is_string($item['public_view'] ?? null)) {
+        $blockType->publicView((string) $item['public_view']);
+      }
+
+      if (is_array($item['metadata'] ?? null)) {
+        $blockType->metadata($item['metadata']);
+      }
+
+      $blockTypes[] = $blockType;
+    }
+
+    return $blockTypes;
+  }
+
   private function loadPluginSource(string $path, string $provider): void
   {
     $views = $path.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'views';
@@ -194,10 +259,14 @@ class InstalledPluginDefinitionFactory
       return;
     }
 
-    foreach (File::allFiles($source) as $file) {
+    $files = collect(File::allFiles($source))
+      ->sortBy(fn (SplFileInfo $file): string => $this->pluginSourceLoadPriority($file).':'.$file->getPathname())
+      ->values();
+
+    foreach ($files as $file) {
       $declaredClass = $this->fileDeclaredClass($file->getPathname());
 
-      if ($declaredClass !== null && class_exists($declaredClass)) {
+      if ($declaredClass !== null && $this->declaredSymbolLoaded($declaredClass)) {
         continue;
       }
 
@@ -251,6 +320,23 @@ class InstalledPluginDefinitionFactory
       || str_contains($path, DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'testing'.DIRECTORY_SEPARATOR.'plugins'.DIRECTORY_SEPARATOR);
   }
 
+  private function pluginSourceLoadPriority(SplFileInfo $file): string
+  {
+    $contents = is_file($file->getPathname()) ? file_get_contents($file->getPathname()) : false;
+
+    if (! is_string($contents)) {
+      return '9';
+    }
+
+    return match (true) {
+      preg_match('/\binterface\s+[A-Za-z_][A-Za-z0-9_]*\b/', $contents) === 1 => '0',
+      preg_match('/\btrait\s+[A-Za-z_][A-Za-z0-9_]*\b/', $contents) === 1 => '1',
+      preg_match('/\benum\s+[A-Za-z_][A-Za-z0-9_]*\b/', $contents) === 1 => '2',
+      preg_match('/\bclass\s+[A-Za-z_][A-Za-z0-9_]*\b/', $contents) === 1 => '3',
+      default => '9',
+    };
+  }
+
   private function providerUsableForPath(string $provider, string $path): bool
   {
     if ($provider === '' || ! class_exists($provider)) {
@@ -287,12 +373,20 @@ class InstalledPluginDefinitionFactory
       ? trim($namespaceMatches[1])
       : '';
 
-    if (preg_match('/\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\b/', $contents, $classMatches) !== 1) {
+    if (preg_match('/\b(?:class|interface|trait|enum)\s+([A-Za-z_][A-Za-z0-9_]*)\b/', $contents, $classMatches) !== 1) {
       return null;
     }
 
     return $namespace !== ''
       ? $namespace.'\\'.$classMatches[1]
       : $classMatches[1];
+  }
+
+  private function declaredSymbolLoaded(string $symbol): bool
+  {
+    return class_exists($symbol, false)
+      || interface_exists($symbol, false)
+      || trait_exists($symbol, false)
+      || (function_exists('enum_exists') && enum_exists($symbol, false));
   }
 }

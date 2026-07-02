@@ -47,4 +47,28 @@ class PagePathTest extends TestCase
       ["/docs/\ninternal-content-api"],
     ];
   }
+
+  #[Test]
+  #[DataProvider('routePatternMatches')]
+  public function route_pattern_excludes_reserved_first_segments(string $path, bool $expected): void
+  {
+    $matches = preg_match('#^'.PagePath::routePattern().'$#', $path) === 1;
+
+    $this->assertSame($expected, $matches);
+  }
+
+  public static function routePatternMatches(): array
+  {
+    return [
+      ['docs/internal-content-api', true],
+      ['portfolio/original-paintings', true],
+      ['webadmin/plugins/webblocks-commerce/products', false],
+      ['cms/app.css', false],
+      ['commerce/products/original-painting/buy', false],
+      ['admin-api/sites', false],
+      ['search', false],
+      ['search.json', false],
+      ['login', false],
+    ];
+  }
 }

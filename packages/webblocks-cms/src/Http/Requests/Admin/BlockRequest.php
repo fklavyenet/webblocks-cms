@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -92,6 +93,8 @@ class BlockRequest extends FormRequest
     $isGrid = $selectedBlockType?->slug === 'grid';
     $isCard = $selectedBlockType?->slug === 'card';
     $isCardRegion = in_array($selectedBlockType?->slug, ['card_header', 'card_body', 'card_footer'], true);
+    $isPluginBlock = $selectedBlockType?->slug !== null
+      && app(PluginBlockCatalog::class)->isEnabledCatalogSlug($selectedBlockType->slug);
     $supportsPublicIcon = in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'link-list-item'], true);
     $supportsPublicBadgeLabel = in_array($selectedBlockType?->slug, ['content_header', 'column_item', 'link-list-item'], true);
     $isStatCard = $selectedBlockType?->slug === 'stat-card';
@@ -240,7 +243,9 @@ class BlockRequest extends FormRequest
       'link_list_items.*._delete' => ['nullable', 'boolean'],
       'variant' => [($isLayoutPrimitive || $isContentHeader || $isBreadcrumb) ? 'prohibited' : 'nullable', ($isButtonLink || $isDownload) ? Rule::in(['primary', 'secondary', 'ghost']) : 'string', 'max:255'],
       'meta' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
-      'settings' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
+      'settings' => [($isLayoutPrimitive || $isPluginBlock) ? 'prohibited' : 'nullable', 'string'],
+      'plugin_settings' => [$isPluginBlock ? 'nullable' : 'prohibited', 'array'],
+      'plugin_settings.*' => [$isPluginBlock ? 'nullable' : 'prohibited'],
       'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
       'intro_text' => [$isContactForm ? 'nullable' : 'nullable', 'string'],
       'submit_label' => [$requiresContactCopy ? 'required' : 'nullable', 'string', 'max:255'],
@@ -842,6 +847,15 @@ class BlockRequest extends FormRequest
       $data['type'] = $blockType?->slug;
       $data['source_type'] = $blockType?->source_type ?? 'static';
       $data['is_system'] = (bool) ($blockType?->is_system ?? false);
+
+      if ($blockType?->slug !== null && app(PluginBlockCatalog::class)->isEnabledCatalogSlug($blockType->slug)) {
+        $settings = $this->sanitizePluginSettings($data['plugin_settings'] ?? []);
+
+        $data['settings'] = $settings === []
+          ? null
+          : json_encode($settings, JSON_UNESCAPED_SLASHES);
+        $data['meta'] = null;
+      }
 
       if ($blockType?->slug === 'hero') {
         $existingSettings = $this->route('block') instanceof Block
@@ -1928,7 +1942,40 @@ class BlockRequest extends FormRequest
     unset($data['background_position'], $data['background_overlay']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
+    unset($data['plugin_settings']);
+
     return $data;
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function sanitizePluginSettings(mixed $settings): array
+  {
+    if (! is_array($settings)) {
+      return [];
+    }
+
+    $sanitized = [];
+
+    foreach ($settings as $key => $value) {
+      if (! is_string($key) || preg_match('/^[A-Za-z0-9_.-]{1,80}$/', $key) !== 1) {
+        continue;
+      }
+
+      if (is_bool($value) || is_int($value) || is_float($value)) {
+        $sanitized[$key] = $value;
+
+        continue;
+      }
+
+      if (is_string($value)) {
+        $value = trim($value);
+        $sanitized[$key] = Str::limit($value, 2000, '');
+      }
+    }
+
+    return array_filter($sanitized, fn (mixed $value): bool => $value !== null && $value !== '');
   }
 
   private function applyBackgroundMediaSettings(array $settings, array $data): array

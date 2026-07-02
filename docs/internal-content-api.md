@@ -126,6 +126,14 @@ Advanced capabilities are separate options and are not selected by default:
 - `site-assets.write`
 - `engagement.read`
 - `engagement.moderate`
+- `plugins.read`
+- `plugins.install`
+- `plugins.manage`
+- `plugins.setup`
+- `plugins.uninstall`
+- `commerce.read`
+- `commerce.products.write`
+- `commerce.orders.read`
 - `media.write`
 - `media.upload`
 - `media.replace`
@@ -134,7 +142,7 @@ Advanced capabilities are separate options and are not selected by default:
 - `content.publish`
 - `pages.delete`
 
-Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`.
+Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, plugin install/manage/setup/uninstall, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`. Plugin lifecycle automation requires explicit plugin capabilities, and WebBlocks Commerce product/order API access requires explicit commerce capabilities.
 
 ## API Model
 
@@ -181,6 +189,17 @@ GET /webadmin/api/shared-slots
 GET /webadmin/api/shared-slots/{sharedSlot}
 POST /webadmin/api/shared-slots
 POST /webadmin/api/shared-slots/{sharedSlot}/blocks
+GET /webadmin/api/plugins
+POST /webadmin/api/plugins/install
+POST /webadmin/api/plugins/{plugin}/enable
+POST /webadmin/api/plugins/{plugin}/setup
+POST /webadmin/api/plugins/{plugin}/disable
+DELETE /webadmin/api/plugins/{plugin}
+GET /webadmin/api/commerce/products
+POST /webadmin/api/commerce/products
+PATCH /webadmin/api/commerce/products/{product}
+GET /webadmin/api/commerce/orders
+GET /webadmin/api/commerce/orders/{order}
 GET /webadmin/api/sites/{site}/assets/css
 PUT /webadmin/api/sites/{site}/assets/css
 ```
@@ -202,6 +221,35 @@ Both modes are needed:
 
 - the Resource API exposes the existing CMS content model and contracts to internal tools
 - the Content Validate / Apply API avoids partial writes during larger page builds
+
+### Plugin And Commerce API
+
+Trusted operator tools can manage manually installed plugins through explicit lifecycle endpoints:
+
+```text
+GET /webadmin/api/plugins
+POST /webadmin/api/plugins/install
+POST /webadmin/api/plugins/{plugin}/enable
+POST /webadmin/api/plugins/{plugin}/setup
+POST /webadmin/api/plugins/{plugin}/disable
+DELETE /webadmin/api/plugins/{plugin}
+```
+
+These endpoints require `plugins.read`, `plugins.install`, `plugins.manage`, `plugins.setup`, or `plugins.uninstall` respectively. The install endpoint accepts a validated plugin ZIP artifact and keeps the plugin disabled by default. Setup runs the plugin-declared migrations. Uninstall is limited to disabled manually uploaded plugins and preserves plugin-owned tables.
+
+When WebBlocks Commerce is enabled and setup-ready, trusted tools can create/list products and read orders:
+
+```text
+GET /webadmin/api/commerce/products
+POST /webadmin/api/commerce/products
+PATCH /webadmin/api/commerce/products/{product}
+GET /webadmin/api/commerce/orders
+GET /webadmin/api/commerce/orders/{order}
+```
+
+Commerce product reads require `commerce.read`, product writes require `commerce.products.write`, and order reads require `commerce.orders.read`. If the plugin is disabled or setup migrations have not run, Commerce endpoints return JSON `409` with setup guidance instead of a raw database error.
+
+The plugin-owned `webblocks-commerce-buy-button` block is discoverable from `GET /webadmin/api/block-types` and `GET /webadmin/api/content-contract` only while the plugin is enabled. Its settings require `settings.commerce_product_id` from `GET /webadmin/api/commerce/products`; validate/apply rejects missing, unknown, or inactive product ids. Checkout remains on the public Commerce/PayPal flow. The CMS API creates products and page blocks, but it does not collect card data or start a card-entry flow.
 
 ### Existing Block Native Field Updates
 

@@ -41,6 +41,7 @@ use WebBlocks\Cms\Support\Pages\PageOwnedBlockPublisher;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -469,7 +470,9 @@ class PageController extends Controller
       ->orderBy('sort_order')
       ->get();
 
-    $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
+    $blockTypes = app(PluginBlockCatalog::class)->filterDiscoverableBlockTypes(
+      BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get()
+    );
     $pickerParentId = request()->integer('parent_id') ?: null;
     $resolvedBlocks = $this->blockTranslationResolver->resolveCollection($blocks, $activeLocale)->values();
     $pickerBlockTypes = $this->pickerBlockTypes($resolvedBlocks, $blockTypes, $pickerParentId);

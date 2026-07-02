@@ -1,0 +1,90 @@
+{
+  "handle": "webblocks-commerce",
+  "label": "WebBlocks Commerce",
+  "description": "Simple product sales and hosted checkout foundations for WebBlocks CMS sites.",
+  "version": "0.1.0",
+  "provider": "WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\WebBlocksCommercePlugin",
+  "required_cms_version": "^1.32",
+  "permissions": [
+    {
+      "name": "webblocks-commerce.view",
+      "label": "View commerce",
+      "description": "View commerce setup, products, orders, and payment status."
+    },
+    {
+      "name": "webblocks-commerce.manage",
+      "label": "Manage commerce",
+      "description": "Manage commerce setup and settings."
+    },
+    {
+      "name": "webblocks-commerce.manage-products",
+      "label": "Manage commerce products",
+      "description": "Create and edit simple commerce products."
+    },
+    {
+      "name": "webblocks-commerce.manage-orders",
+      "label": "Manage commerce orders",
+      "description": "View orders and payment attempts."
+    },
+    {
+      "name": "webblocks-commerce.manage-settings",
+      "label": "Manage commerce settings",
+      "description": "Review checkout gateway readiness and plugin setup."
+    }
+  ],
+  "settings": {
+    "namespace": "webblocks_commerce",
+    "route_name": "webblocks.plugins.webblocks_commerce.settings.edit",
+    "label": "Commerce Settings",
+    "description": "Review checkout mode, currency, gateway configuration, and webhook readiness. Payment secrets are read from environment config and are never displayed."
+  },
+  "menu": [
+    {
+      "key": "commerce-products",
+      "label": "Commerce Products",
+      "route": "webblocks.plugins.webblocks_commerce.products.index",
+      "icon": "wb-icon-package",
+      "permission": "webblocks-commerce.view",
+      "group": "Content",
+      "sort": 70
+    },
+    {
+      "key": "commerce-orders",
+      "label": "Commerce Orders",
+      "route": "webblocks.plugins.webblocks_commerce.orders.index",
+      "icon": "wb-icon-receipt",
+      "permission": "webblocks-commerce.manage-orders",
+      "group": "Content",
+      "sort": 71
+    },
+    {
+      "key": "commerce-settings",
+      "label": "Commerce Settings",
+      "route": "webblocks.plugins.webblocks_commerce.settings.edit",
+      "icon": "wb-icon-settings",
+      "permission": "webblocks-commerce.manage-settings",
+      "group": "Content",
+      "sort": 72
+    }
+  ],
+  "block_types": [
+    {
+      "handle": "webblocks-commerce::buy-button",
+      "label": "Commerce Buy Button",
+      "description": "Links visitors to a WebBlocks Commerce product buy page.",
+      "admin_view": "webblocks-cms::admin.blocks.types.webblocks-commerce-buy-button",
+      "public_view": "webblocks-cms::pages.partials.blocks.webblocks-commerce-buy-button",
+      "metadata": {
+        "catalog_slug": "webblocks-commerce-buy-button"
+      }
+    }
+  ],
+  "routes": {
+    "admin": "routes/webblocks-commerce.php"
+  },
+  "migrations": [
+    "database/migrations"
+  ],
+  "assets": [],
+  "health": "WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Support\\WebBlocksCommerceHealth"
+}

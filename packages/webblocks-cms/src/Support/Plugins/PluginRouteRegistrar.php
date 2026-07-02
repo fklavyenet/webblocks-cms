@@ -193,6 +193,7 @@ class PluginRouteRegistrar
     $reservedPrefixes = [
       'webadmin',
       'cms',
+      'commerce',
       'storage',
       'assets',
       'static',
