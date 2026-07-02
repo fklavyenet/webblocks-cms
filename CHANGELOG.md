@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.209
+
+- Bumped CMS to `1.32.209`.
+- Redesign the CMS System Updates admin screen into a status-first WebBlocks UI layout with compact safety cards, visible Release and Readiness panels, and a read-only Update History table.
+
 ## 1.32.208
 
 - Bumped CMS to `1.32.208`.

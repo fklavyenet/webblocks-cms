@@ -52,38 +52,39 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee(WebBlocks::version());
     $response->assertSee(WebBlocks::version());
     $response->assertDontSee('Latest Published Version');
-    $response->assertSee('Update Details');
+    $response->assertSee('Update Status');
+    $response->assertSee('Release');
+    $response->assertSee('Readiness');
+    $response->assertSee('Update History');
     $response->assertDontSee('<strong>Actions</strong>', false);
     $response->assertSee('Check again');
     $response->assertDontSee('Recent Backup');
-    $response->assertSee('Update Readiness');
+    $response->assertSee('Readiness');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
-    $response->assertSee('data-webblocks-updates-layout="two-card"', false);
-    $response->assertSee('data-webblocks-updates-card="install"', false);
+    $response->assertSee('data-webblocks-updates-layout="standard"', false);
+    $response->assertSee('data-webblocks-updates-card="summary"', false);
+    $response->assertSee('data-webblocks-updates-card="safety-summary"', false);
     $response->assertSee('data-webblocks-updates-card="details"', false);
-    $response->assertSee('data-webblocks-updates-accordion="details"', false);
-    $response->assertDontSee('data-webblocks-updates-card="summary"', false);
+    $response->assertSee('data-webblocks-updates-card="history"', false);
+    $response->assertDontSee('data-webblocks-updates-card="install"', false);
     $response->assertDontSee('data-webblocks-updates-card="diagnostics"', false);
-    $response->assertDontSee('data-webblocks-updates-card="history"', false);
     $response->assertDontSee('data-webblocks-updates-accordion="package-safety"', false);
-    $response->assertSee('class="wb-accordion" data-wb-accordion', false);
-    $response->assertSee('class="wb-accordion-trigger"', false);
-    $response->assertSee('class="wb-icon wb-icon-chevron-down wb-accordion-icon"', false);
     $response->assertSee('Download support report');
     $response->assertSeeInOrder([
-      'data-webblocks-updates-card="install"',
-      'Install Update',
+      'data-webblocks-updates-card="summary"',
+      'Update Status',
+      'data-webblocks-updates-card="safety-summary"',
       'data-webblocks-updates-card="details"',
-      'Update Details',
-      'Release Notes',
-      'Update Readiness',
-      'Last Update Run',
+      'Release',
+      'Readiness',
+      'data-webblocks-updates-card="history"',
+      'Update History',
     ], false);
     $response->assertDontSee('<details', false);
     $response->assertDontSee('<summary', false);
     $this->assertFalse(File::isDirectory(base_path('.github')));
 
-    $installHtml = $this->cardHtml($response->getContent(), 'Install Update');
+    $installHtml = $this->cardHtml($response->getContent(), 'Update Status');
     $this->assertStringNotContainsString('Stored installed version', $installHtml);
     $this->assertStringNotContainsString('Effective installed version', $installHtml);
     $this->assertStringNotContainsString('Source checkout notice', $installHtml);
@@ -137,7 +138,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('Install Update');
+    $response->assertSee('Update Status');
     $response->assertSee('A newer published release is available from the configured update server.');
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
@@ -147,8 +148,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();
-    $installHtml = $this->cardHtml($html, 'Install Update');
-    $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Install Update</h2>');
+    $installHtml = $this->cardHtml($html, 'Update Status');
+    $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Update Status</h2>');
     $buttonPosition = strpos($html, 'data-default-label="Install update"');
 
     $this->assertStringContainsString('Current CMS Version', $installHtml);
@@ -168,7 +169,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $response->assertSee('<h2 class="wb-card-title">Update Status</h2>', false);
     $response->assertSee('Package Safety Details');
     $response->assertSee('data-webblocks-updates-accordion="package-safety"', false);
     $response->assertSee('Download the backup before installation starts');
@@ -176,11 +177,11 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Install update');
 
     $html = $response->getContent();
-    $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Install Update</h2>');
+    $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Update Status</h2>');
     $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $optionsHeaderPosition);
     $backupHelpPosition = strpos($html, 'A pre-update backup will be created automatically before installation.', $optionsHeaderPosition);
     $buttonPosition = strpos($html, 'data-default-label="Install update"', $optionsHeaderPosition);
-    $detailsPosition = strpos($html, '<h2 class="wb-card-title">Update Details</h2>');
+    $detailsPosition = strpos($html, '<h2 class="wb-card-title">Release</h2>');
 
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($checkboxPosition);
@@ -252,8 +253,8 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertDontSee('<strong>Release Preview</strong>', false);
-    $response->assertSee('data-webblocks-updates-accordion="details"', false);
-    $response->assertSee('<span>Release Notes</span>', false);
+    $response->assertSee('data-webblocks-updates-panel="release"', false);
+    $response->assertSee('<h2 class="wb-card-title">Release</h2>', false);
     $response->assertDontSee('What&#039;s included', false);
     $response->assertSee('Operator-friendly release details');
     $response->assertSee('This release improves update review before installation.');
@@ -271,7 +272,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Read the details before running Update now');
     $response->assertSee('Technical notes');
     $response->assertSee('Artifact checksum remains verified before install.');
-    $response->assertSee('Update Readiness');
+    $response->assertSee('Readiness');
     $response->assertDontSee('<summary><strong>Release notes</strong></summary>', false);
   }
 
@@ -295,7 +296,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertDontSee('<strong>Release Preview</strong>', false);
     $response->assertSee('Release v1.32.83 no build-chain boundary');
-    $response->assertSee('Release Notes');
+    $response->assertSee('Release');
     $response->assertSee('No Vite, npm, or Tailwind assumptions return.');
   }
 
@@ -372,8 +373,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertSee('Update server unavailable');
     $response->assertSee('Server detail');
-    $response->assertSee('Update Readiness');
-    $response->assertSee('Install Update');
+    $response->assertSee('Readiness');
+    $response->assertSee('Update Status');
     $response->assertDontSee('<strong>Actions</strong>', false);
   }
 
@@ -388,8 +389,8 @@ class SystemUpdatesTest extends TestCase
     $upToDateResponse->assertOk();
     $upToDateResponse->assertSee('This install already matches the latest published release.');
     $upToDateResponse->assertSee('Up to date');
-    $upToDateResponse->assertSee('Install Update');
-    $upToDateResponse->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $upToDateResponse->assertSee('Update Status');
+    $upToDateResponse->assertSee('<h2 class="wb-card-title">Update Status</h2>', false);
     $upToDateResponse->assertSee('No newer release is ready for this install.');
     $upToDateResponse->assertDontSee('name="download_pre_update_backup"', false);
   }
@@ -426,8 +427,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
     $response->assertSee('This codebase is ahead of the latest published package on the selected channel.');
-    $response->assertSee('Install Update');
-    $response->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $response->assertSee('Update Status');
+    $response->assertSee('<h2 class="wb-card-title">Update Status</h2>', false);
     $response->assertSee('No newer release is ready for this install.');
   }
 
@@ -447,8 +448,8 @@ class SystemUpdatesTest extends TestCase
     $incompatibleResponse->assertOk();
     $incompatibleResponse->assertSee('Incompatible update available');
     $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
-    $incompatibleResponse->assertSee('Install Update');
-    $incompatibleResponse->assertSee('<h2 class="wb-card-title">Install Update</h2>', false);
+    $incompatibleResponse->assertSee('Update Status');
+    $incompatibleResponse->assertSee('<h2 class="wb-card-title">Update Status</h2>', false);
     $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
   }
 
@@ -474,9 +475,9 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertSee('This install already matches the latest published release.');
     $response->assertDontSee('Update available');
-    $response->assertSee('No update runs have been recorded yet.');
-    $response->assertDontSee('<h2 class="wb-card-title">Update History</h2>', false);
-    $response->assertDontSee('1.32.80 → '.WebBlocks::version());
+    $response->assertSee('<h2 class="wb-card-title">Update History</h2>', false);
+    $response->assertSee('Historical failed update');
+    $response->assertSee('1.32.80 → '.WebBlocks::version());
   }
 
   #[Test]
@@ -499,7 +500,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<h2 class="wb-card-title">Update Details</h2>', false);
+    $response->assertSee('<h2 class="wb-card-title">Update History</h2>', false);
     $response->assertSee(WebBlocks::version().' → 99.0.0');
     $response->assertSee('failed');
     $response->assertSee('View run details');
@@ -527,11 +528,13 @@ class SystemUpdatesTest extends TestCase
     $this->actingAs($user)
       ->get(route('admin.system.updates.index'))
       ->assertOk()
-      ->assertSee('data-webblocks-updates-card="install"', false)
+      ->assertSee('data-webblocks-updates-card="summary"', false)
       ->assertSee('data-webblocks-updates-card="details"', false)
-      ->assertSee('Last Update Run')
+      ->assertSee('data-webblocks-updates-card="history"', false)
+      ->assertSee('Last update run')
       ->assertSee('View run details')
-      ->assertDontSee('<h2 class="wb-card-title">Update History</h2>', false)
+      ->assertSee('<h2 class="wb-card-title">Update History</h2>', false)
+      ->assertSee('<table class="wb-table wb-table-striped wb-table-hover">', false)
       ->assertDontSee('<td class="wb-table-actions">', false)
       ->assertDontSee('Delete update history entry')
       ->assertDontSee('wb-icon-trash', false);

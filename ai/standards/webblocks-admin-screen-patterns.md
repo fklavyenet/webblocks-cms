@@ -101,14 +101,14 @@ Implementation note: The WebBlocks Advisor gate was checked for this documentati
 
 ## Update Screen
 
-- The System Updates screen uses a two-card operational layout: install/status first, details/readiness second.
-- Use status pills, alerts, callouts, accordions, and exact code blocks for package safety details.
+- The System Updates screen uses a status-first operational layout: `Update Status`, compact safety summary, visible `Release` and `Readiness` cards, then read-only `Update History`.
+- Use status pills, alerts, meta grids, WebBlocks UI tables, and exact code blocks for package safety details.
 - Update actions must remain POST-backed and readiness-aware.
-- Release notes, readiness diagnostics, support report download, and retained update-run details must stay separate from the primary install action.
+- Release notes, readiness diagnostics, support report download, and retained update-run history must stay separate from the primary install action.
 
 ## Admin Copy
 
 - Copy should be direct and operational.
-- Prefer concrete nouns: `Pages`, `Media`, `System Updates`, `Install Update`, `Update Details`.
+- Prefer concrete nouns: `Pages`, `Media`, `System Updates`, `Update Status`, `Release`, `Readiness`, `Update History`.
 - Avoid marketing promises, vague reassurance, and implementation backstory in UI copy.
 - Risk copy belongs next to the action it affects, usually in alerts, danger zones, modal descriptions, or callouts.
