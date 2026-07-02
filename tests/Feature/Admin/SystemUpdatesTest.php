@@ -270,7 +270,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Refreshes shipped CMS static assets.');
     $response->assertSee('Operator notes');
     $response->assertSee('Read the details before running Update now');
-    $response->assertSee('Technical notes');
+    $response->assertSee('Technical package metadata');
+    $response->assertSee('data-webblocks-updates-accordion="release-technical"', false);
     $response->assertSee('Artifact checksum remains verified before install.');
     $response->assertSee('Readiness');
     $response->assertDontSee('<summary><strong>Release notes</strong></summary>', false);

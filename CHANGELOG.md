@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.210
+
+- Bumped CMS to `1.32.210`.
+- Polish the System Updates screen with a stronger status band, icon-led safety/readiness sections, cleaner release metadata, and duplicate release-note suppression.
+
 ## 1.32.209
 
 - Bumped CMS to `1.32.209`.
