@@ -280,7 +280,7 @@ Content-Type: application/json</textarea>
             </div>
         </div>
 
-        <div class="wb-modal wb-modal-lg" id="activity-cms-api-token-{{ $token->id }}" role="dialog" aria-modal="true" aria-labelledby="activity-cms-api-token-{{ $token->id }}-title">
+        <div class="wb-modal wb-modal-xl" id="activity-cms-api-token-{{ $token->id }}" role="dialog" aria-modal="true" aria-labelledby="activity-cms-api-token-{{ $token->id }}-title">
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div>
@@ -293,7 +293,7 @@ Content-Type: application/json</textarea>
                     </button>
                 </div>
 
-                <div class="wb-modal-body">
+                <div class="wb-modal-body wb-api-token-activity-modal-body">
                     @if (! $activitySchemaReady)
                         <div class="wb-alert wb-alert-warning">
                             API token activity storage is not ready. Run System Update again to apply the required activity schema.
@@ -304,49 +304,55 @@ Content-Type: application/json</textarea>
                             <div class="wb-empty-text">This token has not been used since activity tracking was enabled.</div>
                         </div>
                     @else
-                        <div class="wb-table-wrap">
-                            <table class="wb-table wb-table-sm wb-table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>Status</th>
-                                        <th>Request</th>
-                                        <th>Capability</th>
-                                        <th>Client</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($token->activityLogs as $activity)
-                                        <tr>
-                                            <td class="wb-nowrap">{{ $activity->occurredAtLabel() }}</td>
-                                            <td><span class="wb-status-pill {{ $activity->statusBadgeClass() }}">{{ $activity->statusLabel() }}</span></td>
-                                            <td>
-                                                <div class="wb-stack wb-gap-1">
-                                                    <code>{{ $activity->method }} {{ $activity->path }}</code>
-                                                    @if ($activity->route_name)
-                                                        <span class="wb-text-sm wb-text-muted">{{ $activity->route_name }}</span>
-                                                    @endif
+                        <div class="wb-api-token-activity-list" role="list" aria-label="Recent API activity entries">
+                            @foreach ($token->activityLogs as $activity)
+                                <article class="wb-card wb-card-muted wb-api-token-activity-item" role="listitem">
+                                    <div class="wb-card-body wb-stack wb-gap-3">
+                                        <div class="wb-api-token-activity-header">
+                                            <div class="wb-stack wb-gap-2">
+                                                <div class="wb-cluster wb-gap-2 wb-flex-wrap">
+                                                    <span class="wb-status-pill {{ $activity->statusBadgeClass() }}">{{ $activity->statusLabel() }}</span>
+                                                    <span class="wb-text-sm wb-text-muted">{{ $activity->occurredAtLabel() }}</span>
                                                 </div>
-                                            </td>
-                                            <td>
-                                                @if ($activity->required_capability)
-                                                    <code>{{ $activity->required_capability }}</code>
-                                                @else
-                                                    <span class="wb-text-muted">None</span>
+
+                                                <code class="wb-api-token-activity-request">
+                                                    <span class="wb-api-token-activity-method">{{ $activity->method }}</span>
+                                                    <span>{{ $activity->path }}</span>
+                                                </code>
+
+                                                @if ($activity->route_name)
+                                                    <span class="wb-text-sm wb-text-muted wb-api-token-activity-route">{{ $activity->route_name }}</span>
                                                 @endif
-                                            </td>
-                                            <td>
-                                                <div class="wb-stack wb-gap-1">
-                                                    <span>{{ $activity->ip ?? 'Unknown IP' }}</span>
-                                                    @if ($activity->user_agent)
-                                                        <span class="wb-text-sm wb-text-muted">{{ Str::limit($activity->user_agent, 80) }}</span>
+                                            </div>
+
+                                            <div class="wb-api-token-activity-client">
+                                                <span class="wb-text-xs wb-text-muted">Client</span>
+                                                <strong>{{ $activity->ip ?? 'Unknown IP' }}</strong>
+                                            </div>
+                                        </div>
+
+                                        <dl class="wb-api-token-activity-meta">
+                                            <div>
+                                                <dt>Capability</dt>
+                                                <dd>
+                                                    @if ($activity->required_capability)
+                                                        <code>{{ $activity->required_capability }}</code>
+                                                    @else
+                                                        <span class="wb-text-muted">None</span>
                                                     @endif
+                                                </dd>
+                                            </div>
+
+                                            @if ($activity->user_agent)
+                                                <div class="wb-api-token-activity-user-agent">
+                                                    <dt>User agent</dt>
+                                                    <dd title="{{ $activity->user_agent }}">{{ Str::limit($activity->user_agent, 140) }}</dd>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                            @endif
+                                        </dl>
+                                    </div>
+                                </article>
+                            @endforeach
                         </div>
                     @endif
                 </div>

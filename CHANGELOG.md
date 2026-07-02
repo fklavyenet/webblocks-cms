@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.208
+
+- Bumped CMS to `1.32.208`.
+- Replace the Recent API Activity token modal table with responsive activity cards so long request paths, capabilities, and user-agent values stay readable without stretching the dialog.
+
 ## 1.32.207
 
 - Bumped CMS to `1.32.207`.

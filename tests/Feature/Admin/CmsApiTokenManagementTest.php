@@ -68,6 +68,8 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('data-wb-target="#activity-cms-api-token-'.$token->id.'"', false);
     $response->assertSee('wb-icon wb-icon-history', false);
     $response->assertSee('Recent API Activity');
+    $response->assertSee('class="wb-modal wb-modal-xl" id="activity-cms-api-token-'.$token->id.'"', false);
+    $response->assertSee('wb-api-token-activity-modal-body', false);
     $response->assertSee('Edit API Token');
     $response->assertSee('value="Local AI - Test MacBook"', false);
     $response->assertSee('title="Delete token"', false);
@@ -453,8 +455,14 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertOk();
     $response->assertSee('Recent API Activity');
     $response->assertSee('Latest 10 requests for Activity Token');
-    $response->assertSee('GET /webadmin/api/sites');
-    $response->assertSee('PATCH /webadmin/api/media/'.$media->id);
+    $response->assertSee('Recent API activity entries');
+    $response->assertSee('wb-api-token-activity-item', false);
+    $response->assertSee('wb-api-token-activity-request', false);
+    $response->assertSee('wb-api-token-activity-meta', false);
+    $response->assertSee('GET');
+    $response->assertSee('/webadmin/api/sites');
+    $response->assertSee('PATCH');
+    $response->assertSee('/webadmin/api/media/'.$media->id);
     $response->assertSee('Authenticated');
     $response->assertSee('Denied');
     $response->assertSee(CmsApiTokenCapabilities::MEDIA_WRITE);
