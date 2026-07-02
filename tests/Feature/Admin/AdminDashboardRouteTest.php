@@ -286,6 +286,72 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
+  public function admin_update_indicator_refreshes_inactive_statuses_quickly(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    Cache::forget(AdminUpdateIndicator::CACHE_KEY);
+    config()->set('webblocks-updates.indicator_inactive_cache_ttl_seconds', 60);
+    config()->set('webblocks-updates.indicator_cache_ttl_seconds', 3600);
+
+    $this->mock(UpdateServerClient::class, function ($mock): void {
+      $mock->shouldReceive('check')->once()->andReturn(new UpdateCheckResult(
+        state: 'up_to_date',
+        label: 'Already up to date',
+        message: 'This install is already on the latest published release.',
+        badgeClass: 'wb-status-active',
+        serverReachable: true,
+        apiVersion: '1',
+        serverUrl: 'https://updates.example.test',
+        product: 'webblocks-cms',
+        channel: 'stable',
+        installedVersion: WebBlocks::version(),
+        latestVersion: WebBlocks::version(),
+        updateAvailable: false,
+        compatibility: ['status' => 'compatible', 'reasons' => []],
+        release: null,
+        errorCode: null,
+        errorMessage: null,
+        checkedAt: CarbonImmutable::now(),
+      ));
+
+      $mock->shouldReceive('check')->once()->andReturn(new UpdateCheckResult(
+        state: 'update_available',
+        label: 'Update available',
+        message: 'A newer published release is available from the configured update server.',
+        badgeClass: 'wb-status-info',
+        serverReachable: true,
+        apiVersion: '1',
+        serverUrl: 'https://updates.example.test',
+        product: 'webblocks-cms',
+        channel: 'stable',
+        installedVersion: WebBlocks::version(),
+        latestVersion: '99.0.0',
+        updateAvailable: true,
+        compatibility: ['status' => 'compatible', 'reasons' => []],
+        release: ['download_url' => 'https://updates.example.test/downloads/webblocks-cms-99.0.0.zip'],
+        errorCode: null,
+        errorMessage: null,
+        checkedAt: CarbonImmutable::now()->addSeconds(61),
+      ));
+    });
+
+    $initialResponse = $this->actingAs($user)->getJson(route('admin.system.updates.indicator'));
+
+    $initialResponse->assertOk();
+    $initialResponse->assertJsonPath('visible', false);
+    $initialResponse->assertJsonPath('state', 'up_to_date');
+
+    $this->travel(61)->seconds();
+
+    $refreshedResponse = $this->actingAs($user)->getJson(route('admin.system.updates.indicator'));
+
+    $refreshedResponse->assertOk();
+    $refreshedResponse->assertJsonPath('visible', true);
+    $refreshedResponse->assertJsonPath('state', 'update_available');
+    $refreshedResponse->assertJsonPath('latest_version', '99.0.0');
+  }
+
+  #[Test]
   public function admin_update_indicator_endpoint_requires_system_access(): void
   {
     $site = Site::query()->where('is_primary', true)->firstOrFail();

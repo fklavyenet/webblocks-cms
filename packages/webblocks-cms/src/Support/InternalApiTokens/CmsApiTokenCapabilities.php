@@ -14,6 +14,8 @@ class CmsApiTokenCapabilities
 
   public const CONTENT_PUBLISH = 'content.publish';
 
+  public const ADMIN_RENDER = 'admin.render';
+
   public const PAGES_DELETE = 'pages.delete';
 
   public const NAVIGATION_WRITE = 'navigation.write';
@@ -64,6 +66,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
     self::CONTENT_APPLY,
+    self::ADMIN_RENDER,
     self::NAVIGATION_WRITE,
     self::SHARED_SLOTS_WRITE,
     self::MEDIA_READ,
@@ -109,6 +112,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
     self::CONTENT_APPLY,
+    self::ADMIN_RENDER,
     self::NAVIGATION_WRITE,
     self::NAVIGATION_DELETE,
     self::SHARED_SLOTS_WRITE,
@@ -139,6 +143,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_READ => 'Read content metadata and contracts',
     self::CONTENT_VALIDATE => 'Validate content plans',
     self::CONTENT_APPLY => 'Apply draft content plans',
+    self::ADMIN_RENDER => 'Render allowlisted admin screen snapshots',
     self::NAVIGATION_WRITE => 'Write navigation menu items',
     self::NAVIGATION_DELETE => 'Delete navigation menu items',
     self::SHARED_SLOTS_WRITE => 'Write Shared Slots',
@@ -205,6 +210,7 @@ class CmsApiTokenCapabilities
         'replace_staged_update' => $this->has($token, self::CONTENT_APPLY),
         'promote_staged_update' => $this->has($token, self::CONTENT_APPLY) && $this->has($token, self::CONTENT_PUBLISH),
         'publish_page' => $this->has($token, self::CONTENT_PUBLISH),
+        'render_admin_snapshots' => $this->has($token, self::ADMIN_RENDER),
         'delete_page' => $this->has($token, self::PAGES_DELETE),
         'write_navigation_items' => $this->has($token, self::NAVIGATION_WRITE),
         'delete_navigation_items' => $this->has($token, self::NAVIGATION_DELETE),

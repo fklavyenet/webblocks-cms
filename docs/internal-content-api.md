@@ -12,7 +12,7 @@ cms_source_id: webblocks-cms:docs/internal-content-api.md
 
 ## Purpose
 
-The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts, create draft-first content, replace specific page-owned slots on existing draft pages, and run explicit publish operations through structured JSON without logging into, scraping, or automating the browser admin UI.
+The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts, create draft-first content, replace specific page-owned slots on existing draft pages, run explicit publish operations through structured JSON, and request allowlisted admin render snapshots for visual QA without logging into, scraping, or automating the browser admin UI.
 
 Phase 1 is implemented as a token-protected, JSON-only, non-public API for read-only content discovery plus draft page creation through validated content plans. Phase 2A adds safe foundations for navigation menus, Shared Slots, and explicit page slot Shared Slot assignment. Phase 2B adds controlled draft-only replacement for page-owned slot content on existing pages. Publish endpoints are explicit and require `content.publish`; content apply remains draft-first and does not publish. The API remains intentionally narrow: no remote fetch, no broad page delete through content apply, no replacement of Shared Slot-backed slots, and no Shared Slot cascade publishing.
 
@@ -96,7 +96,7 @@ Authentication rules:
 - token comparison must use a constant-time comparison
 - successful API requests update the token's `last_used_at` and `last_used_ip`
 - successful API requests also store a truncated user-agent for operator audit context
-- responses are JSON-only
+- normal resource responses and all errors are JSON; allowlisted visual QA routes may return direct HTML only when the caller explicitly requests an HTML format
 
 Example request:
 
@@ -678,6 +678,15 @@ Expected statuses:
 - `422` for validation errors
 
 ## Resource API Examples
+
+### Render System Updates Admin Snapshot
+
+```text
+GET /webadmin/api/admin-render/system-updates
+GET /webadmin/api/admin-render/system-updates?format=html
+```
+
+Requires `admin.render` and a token created by a user who can access `System`. The JSON response includes the rendered admin HTML for the allowlisted `System Updates` screen; `?format=html` returns direct `text/html` so operator tools can load the snapshot into a local browser and capture screenshots for visual comparison. The endpoint is read-only and must not click, install, publish, or mutate update state.
 
 ### List Pages
 

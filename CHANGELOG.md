@@ -9,6 +9,13 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.211
+
+- Bumped CMS to `1.32.211`.
+- Add an allowlisted Internal Content API admin render snapshot for System Updates so trusted operator tools can retrieve HTML for visual QA without browser-admin clicks.
+- Recompose the System Updates screen around a stronger status hero, denser safety cards, balanced release/readiness panels, and scoped visual polish.
+- Shorten inactive admin update indicator caching so the topbar notices newly published updates quickly instead of hiding behind a stale up-to-date check.
+
 ## 1.32.210
 
 - Bumped CMS to `1.32.210`.

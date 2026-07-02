@@ -19,18 +19,19 @@ class AdminUpdateIndicator
       $this->clear();
     }
 
-    $status = Cache::remember(
-      self::CACHE_KEY,
-      now()->addSeconds($this->ttlSeconds()),
-      fn (): array => $this->safeStatus()
-    );
+    $status = $refresh ? null : Cache::get(self::CACHE_KEY);
+
+    if (! is_array($status)) {
+      $status = $this->safeStatus();
+      $this->storeVersionStatus($status);
+    }
 
     return $this->payloadFromStatus(is_array($status) ? $status : []);
   }
 
   public function storeVersionStatus(array $status): void
   {
-    Cache::put(self::CACHE_KEY, $status, now()->addSeconds($this->ttlSeconds()));
+    Cache::put(self::CACHE_KEY, $status, now()->addSeconds($this->ttlSecondsForStatus($status)));
   }
 
   public function clear(): void
@@ -72,5 +73,24 @@ class AdminUpdateIndicator
   private function ttlSeconds(): int
   {
     return max(60, (int) config('webblocks-updates.indicator_cache_ttl_seconds', 3600));
+  }
+
+  private function inactiveTtlSeconds(): int
+  {
+    return max(30, (int) config('webblocks-updates.indicator_inactive_cache_ttl_seconds', 60));
+  }
+
+  private function ttlSecondsForStatus(array $status): int
+  {
+    $latestVersion = $status['latest_version'] ?? null;
+
+    if (($status['state'] ?? null) === 'update_available'
+      && ($status['update_available'] ?? false) === true
+      && is_string($latestVersion)
+      && $latestVersion !== '') {
+      return $this->ttlSeconds();
+    }
+
+    return $this->inactiveTtlSeconds();
   }
 }

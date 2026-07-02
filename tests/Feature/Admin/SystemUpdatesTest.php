@@ -14,8 +14,11 @@ use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
@@ -61,7 +64,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertDontSee('Recent Backup');
     $response->assertSee('Readiness');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
-    $response->assertSee('data-webblocks-updates-layout="standard"', false);
+    $response->assertSee('data-webblocks-updates-layout="designed"', false);
     $response->assertSee('data-webblocks-updates-card="summary"', false);
     $response->assertSee('data-webblocks-updates-card="safety-summary"', false);
     $response->assertSee('data-webblocks-updates-card="details"', false);
@@ -275,6 +278,68 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Artifact checksum remains verified before install.');
     $response->assertSee('Readiness');
     $response->assertDontSee('<summary><strong>Release notes</strong></summary>', false);
+  }
+
+  #[Test]
+  public function internal_api_can_render_system_updates_admin_snapshot(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->createInternalApiToken('secret-token', $user, [CmsApiTokenCapabilities::ADMIN_RENDER]);
+    app(InstalledVersionStore::class)->persist('0.1.4');
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, WebBlocks::version());
+
+    $response = $this->withHeader('Authorization', 'Bearer secret-token')
+      ->getJson('/webadmin/api/admin-render/system-updates');
+
+    $response->assertOk();
+    $response->assertJsonPath('ok', true);
+    $response->assertJsonPath('screen', 'system-updates');
+    $response->assertJsonPath('format', 'html');
+    $response->assertJsonPath('_links.html', '/webadmin/api/admin-render/system-updates?format=html');
+
+    $html = (string) $response->json('html');
+
+    $this->assertStringContainsString('data-webblocks-updates-layout="designed"', $html);
+    $this->assertStringContainsString('System Updates', $html);
+    $this->assertStringContainsString('WebBlocks CMS v'.WebBlocks::version(), $html);
+    $this->assertStringNotContainsString('secret-token', $html);
+    $this->assertStringNotContainsString('token_hash', $html);
+  }
+
+  #[Test]
+  public function internal_api_admin_render_can_return_direct_html(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->createInternalApiToken('secret-token', $user, [CmsApiTokenCapabilities::ADMIN_RENDER]);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, WebBlocks::version());
+
+    $response = $this->withHeader('Authorization', 'Bearer secret-token')
+      ->get('/webadmin/api/admin-render/system-updates?format=html');
+
+    $response->assertOk();
+    $response->assertHeader('Content-Type', 'text/html; charset=UTF-8');
+    $response->assertSee('data-webblocks-updates-layout="designed"', false);
+    $response->assertSee('System Updates');
+  }
+
+  #[Test]
+  public function internal_api_admin_render_requires_render_capability_and_system_creator(): void
+  {
+    $superAdmin = User::factory()->superAdmin()->create();
+    $siteAdmin = User::factory()->siteAdmin()->create();
+    $this->createInternalApiToken('content-token', $superAdmin, [CmsApiTokenCapabilities::CONTENT_READ]);
+    $this->createInternalApiToken('site-admin-token', $siteAdmin, [CmsApiTokenCapabilities::ADMIN_RENDER]);
+
+    $this->withHeader('Authorization', 'Bearer content-token')
+      ->getJson('/webadmin/api/admin-render/system-updates')
+      ->assertForbidden()
+      ->assertJsonPath('code', 'missing_internal_api_capability')
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::ADMIN_RENDER);
+
+    $this->withHeader('Authorization', 'Bearer site-admin-token')
+      ->getJson('/webadmin/api/admin-render/system-updates')
+      ->assertForbidden()
+      ->assertJsonPath('code', 'admin_render_forbidden');
   }
 
   #[Test]
@@ -1262,6 +1327,19 @@ class SystemUpdatesTest extends TestCase
     return $nextCard === false
       ? substr($html, $start)
       : substr($html, $start, $nextCard - $start);
+  }
+
+  private function createInternalApiToken(string $plainToken, User $creator, ?array $capabilities = null): void
+  {
+    $issuer = app(CmsApiTokenIssuer::class);
+
+    CmsApiToken::query()->create([
+      'name' => 'Test token',
+      'token_hash' => $issuer->hash($plainToken),
+      'token_preview' => $issuer->preview($plainToken),
+      'capabilities' => $capabilities,
+      'created_by_user_id' => $creator->id,
+    ]);
   }
 
   private function prepareSuccessfulUpdateScenario(string $packageVersion = '0.2.0'): array

@@ -43,6 +43,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalAdminRenderController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalCommerceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
@@ -81,6 +82,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/examples', [InternalApiDiscoveryController::class, 'examples'])->name('examples.index');
     Route::get('/examples/contact-page', [InternalApiDiscoveryController::class, 'contactPageExample'])->name('examples.contact-page');
     Route::get('/examples/landing-page', [InternalApiDiscoveryController::class, 'landingPageExample'])->name('examples.landing-page');
+    Route::get('/admin-render/system-updates', [InternalAdminRenderController::class, 'systemUpdates'])->middleware('internal-api.capability:admin.render')->name('admin-render.system-updates');
     Route::get('/sites', [InternalContentResourceController::class, 'sites'])->name('sites.index');
     Route::post('/sites/{site}/public-theme', [InternalSiteController::class, 'updatePublicTheme'])->middleware('internal-api.capability:site-settings.write')->name('sites.public-theme.update');
     Route::get('/sites/{site}/assets/{type}', [InternalSiteController::class, 'showAsset'])->middleware('internal-api.capability:site-assets.read')->name('sites.assets.show');

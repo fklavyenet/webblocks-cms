@@ -135,39 +135,71 @@
     'description' => 'Install validated WebBlocks CMS package updates and review release, readiness, and run history.',
   ])
 
-  @include('webblocks-cms::admin.partials.flash')
+  <div class="wb-stack wb-stack-4" data-webblocks-updates-layout="designed">
+    <div data-webblocks-updates-flash>
+      @include('webblocks-cms::admin.partials.flash')
+    </div>
 
-  <div class="wb-stack wb-stack-4" data-webblocks-updates-layout="standard">
-    <section class="wb-card" data-webblocks-updates-card="summary">
+    <section class="wb-card" data-webblocks-updates-card="summary" data-webblocks-updates-state="{{ $state }}">
       <div class="wb-card-header">
         <div>
           <h2 class="wb-card-title">Update Status</h2>
-          <p class="wb-card-description">{{ $summaryMessage }}</p>
+          <p class="wb-card-description">{{ $showLatestVersion ? 'A published package is ready for this install.' : 'Validated package status for this WebBlocks CMS install.' }}</p>
         </div>
         <div class="wb-action-group">
           <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $summaryTitle }}</span>
           <a href="{{ route('admin.system.updates.check') }}" class="wb-btn wb-btn-secondary">Check again</a>
-          @if ($pendingUpdate && $pendingBackup)
-            <form method="POST" action="{{ route('admin.system.updates.continue') }}" data-wb-update-form>
-              @csrf
-              <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit data-default-label="Continue update" data-busy-label="Updating...">Continue update</button>
-            </form>
-          @elseif ($showUpdateAction)
-            <button
-              type="submit"
-              form="webblocks-update-install-form"
-              class="wb-btn wb-btn-primary"
-              data-wb-update-submit
-              data-default-label="Install update"
-              data-busy-label="Updating..."
-            >
-              {{ $autoUpdate['busy'] ? 'Updating...' : 'Install update' }}
-            </button>
-          @endif
         </div>
       </div>
 
       <div class="wb-card-body wb-stack wb-stack-4">
+        <div data-webblocks-updates-hero>
+          <div data-webblocks-updates-hero-main>
+            <span data-webblocks-updates-hero-icon aria-hidden="true">
+              <i class="wb-icon {{ $statusIconClass }}"></i>
+            </span>
+            <div class="wb-stack wb-gap-2">
+              <div>
+                <div class="wb-alert-title">{{ $summaryTitle }}</div>
+                <p>{{ $summaryMessage }}</p>
+              </div>
+              <div data-webblocks-updates-version-path>
+                <span class="wb-meta-label">{{ $showLatestVersion ? 'Version path' : 'Installed version' }}</span>
+                <strong>{{ $versionPath }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div data-webblocks-updates-hero-aside>
+            <div>
+              <span class="wb-meta-label">{{ $showLatestVersion ? 'Latest published' : 'Installed version' }}</span>
+              <strong>{{ $showLatestVersion ? $updateStatus['latest_version'] : $installedVersion }}</strong>
+              @if ($latestPublishedAt)
+                <span class="wb-text-muted wb-text-sm">Published {{ $latestPublishedAt }}</span>
+              @endif
+            </div>
+            <div class="wb-action-group">
+              @if ($pendingUpdate && $pendingBackup)
+                <form method="POST" action="{{ route('admin.system.updates.continue') }}" data-wb-update-form>
+                  @csrf
+                  <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit data-default-label="Continue update" data-busy-label="Updating...">Continue update</button>
+                </form>
+              @elseif ($showUpdateAction)
+                <button
+                  type="submit"
+                  form="webblocks-update-install-form"
+                  class="wb-btn wb-btn-primary"
+                  data-wb-update-submit
+                  data-default-label="Install update"
+                  data-busy-label="Updating..."
+                >
+                  {{ $autoUpdate['busy'] ? 'Updating...' : 'Install update' }}
+                </button>
+              @endif
+            </div>
+          </div>
+        </div>
+
         @if ($updateStatus['error_message'])
           <div class="wb-alert wb-alert-warning">
             <div>
@@ -176,65 +208,6 @@
             </div>
           </div>
         @endif
-
-        <div class="wb-alert {{ $statusAlertClass }}">
-          <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-items-center">
-              <span class="wb-action-btn" aria-hidden="true">
-                <i class="wb-icon {{ $statusIconClass }}"></i>
-              </span>
-              <div>
-                <div class="wb-alert-title">{{ $summaryTitle }}</div>
-                <div>{{ $summaryMessage }}</div>
-              </div>
-            </div>
-
-            <div class="wb-stack wb-gap-1">
-              <span class="wb-meta-label">{{ $showLatestVersion ? 'Version path' : 'Installed version' }}</span>
-              <strong>{{ $versionPath }}</strong>
-              @if ($latestPublishedAt)
-                <span class="wb-text-muted wb-text-sm">Published {{ $latestPublishedAt }}</span>
-              @endif
-            </div>
-          </div>
-        </div>
-
-        <div class="wb-grid wb-grid-3">
-          <div class="wb-stack wb-gap-1">
-            <span class="wb-meta-label">Current CMS Version</span>
-            <strong>{{ $installedVersion }}</strong>
-          </div>
-
-          @if ($showLatestVersion)
-            <div class="wb-stack wb-gap-1">
-              <span class="wb-meta-label">Latest Published Version</span>
-              <strong>{{ $updateStatus['latest_version'] }}</strong>
-              @if ($latestPublishedAt)
-                <span class="wb-text-muted wb-text-sm">Published Date: {{ $latestPublishedAt }}</span>
-              @endif
-            </div>
-          @endif
-
-          <div class="wb-stack wb-gap-1">
-            <span class="wb-meta-label">Compatibility</span>
-            <strong>{{ $compatibilityStatus }}</strong>
-          </div>
-
-          <div class="wb-stack wb-gap-1">
-            <span class="wb-meta-label">Channel</span>
-            <strong>{{ $updateStatus['channel'] ?? 'stable' }}</strong>
-          </div>
-
-          <div class="wb-stack wb-gap-1">
-            <span class="wb-meta-label">Update server</span>
-            <strong>{{ $updateStatus['server_url'] ?: 'not configured' }}</strong>
-          </div>
-
-          <div class="wb-stack wb-gap-1">
-            <span class="wb-meta-label">Last checked</span>
-            <strong>{{ optional($checkedAt ?? null)->format('Y-m-d H:i') ?? 'Not available' }}</strong>
-          </div>
-        </div>
 
         @if ($pendingUpdate && $pendingBackup)
           <div class="wb-alert wb-alert-info">
@@ -268,7 +241,7 @@
           <div class="wb-alert wb-alert-success">
             <div>
               <div class="wb-alert-title">{{ $installedVersion }} → {{ $updateStatus['latest_version'] }}</div>
-              <div>Update available and compatible. A pre-update backup will be created automatically before installation.</div>
+              <div>A pre-update backup will be created automatically before installation.</div>
             </div>
           </div>
 
@@ -283,46 +256,89 @@
         @else
           <p class="wb-text-muted">{{ $autoUpdate['blockers'][0] ?? 'No newer release is ready for this install.' }}</p>
         @endif
+
+        <div data-webblocks-updates-metrics>
+          <div>
+            <span class="wb-meta-label">Current CMS Version</span>
+            <strong>{{ $installedVersion }}</strong>
+          </div>
+
+          @if ($showLatestVersion)
+            <div>
+              <span class="wb-meta-label">Latest Published Version</span>
+              <strong>{{ $updateStatus['latest_version'] }}</strong>
+              @if ($latestPublishedAt)
+                <span class="wb-text-muted wb-text-sm">Published Date: {{ $latestPublishedAt }}</span>
+              @endif
+            </div>
+          @endif
+
+          <div>
+            <span class="wb-meta-label">Compatibility</span>
+            <strong>{{ $compatibilityStatus }}</strong>
+          </div>
+
+          <div>
+            <span class="wb-meta-label">Channel</span>
+            <strong>{{ $updateStatus['channel'] ?? 'stable' }}</strong>
+          </div>
+
+          <div>
+            <span class="wb-meta-label">Update server</span>
+            <strong>{{ $updateStatus['server_url'] ?: 'not configured' }}</strong>
+          </div>
+
+          <div>
+            <span class="wb-meta-label">Last checked</span>
+            <strong>{{ optional($checkedAt ?? null)->format('Y-m-d H:i') ?? 'Not available' }}</strong>
+          </div>
+        </div>
       </div>
     </section>
 
     <div class="wb-grid wb-grid-3" data-webblocks-updates-card="safety-summary">
       <section class="wb-card">
-        <div class="wb-card-body wb-stack wb-gap-2">
-          <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <div class="wb-cluster wb-cluster-2 wb-items-center">
-              <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon wb-icon-cloud"></i></span>
-              <strong>Publisher</strong>
+        <div class="wb-card-body">
+          <div data-webblocks-updates-safety-card>
+            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-cloud"></i></span>
+            <div>
+              <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                <strong>Publisher</strong>
+                <span class="wb-status-pill {{ $publisherUnavailable ? 'wb-status-danger' : 'wb-status-active' }}">{{ $publisherUnavailable ? 'Needs attention' : 'Online' }}</span>
+              </div>
+              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $updateStatus['server_url'] ?: 'Update server is not configured.' }}</p>
             </div>
-            <span class="wb-status-pill {{ $publisherUnavailable ? 'wb-status-danger' : 'wb-status-active' }}">{{ $publisherUnavailable ? 'Needs attention' : 'Online' }}</span>
           </div>
-          <p class="wb-text-sm wb-text-muted wb-m-0">{{ $updateStatus['server_url'] ?: 'Update server is not configured.' }}</p>
         </div>
       </section>
 
       <section class="wb-card">
-        <div class="wb-card-body wb-stack wb-gap-2">
-          <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <div class="wb-cluster wb-cluster-2 wb-items-center">
-              <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon wb-icon-list-checks"></i></span>
-              <strong>Preflight</strong>
+        <div class="wb-card-body">
+          <div data-webblocks-updates-safety-card>
+            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-list-checks"></i></span>
+            <div>
+              <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                <strong>Preflight</strong>
+                <span class="wb-status-pill {{ $readinessNeedsAttention ? 'wb-status-danger' : 'wb-status-active' }}">{{ $readinessNeedsAttention ? 'Needs attention' : 'Ready' }}</span>
+              </div>
+              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $readinessNeedsAttention ? 'Review readiness checks before installing.' : 'Required checks are passing.' }}</p>
             </div>
-            <span class="wb-status-pill {{ $readinessNeedsAttention ? 'wb-status-danger' : 'wb-status-active' }}">{{ $readinessNeedsAttention ? 'Needs attention' : 'Ready' }}</span>
           </div>
-          <p class="wb-text-sm wb-text-muted wb-m-0">{{ $readinessNeedsAttention ? 'Review readiness checks before installing.' : 'Required checks are passing.' }}</p>
         </div>
       </section>
 
       <section class="wb-card">
-        <div class="wb-card-body wb-stack wb-gap-2">
-          <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <div class="wb-cluster wb-cluster-2 wb-items-center">
-              <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon wb-icon-archive"></i></span>
-              <strong>Backup</strong>
+        <div class="wb-card-body">
+          <div data-webblocks-updates-safety-card>
+            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-archive"></i></span>
+            <div>
+              <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                <strong>Backup</strong>
+                <span class="wb-status-pill {{ $pendingBackup ? 'wb-status-info' : 'wb-status-active' }}">{{ $pendingBackup ? 'Created' : 'Will be created' }}</span>
+              </div>
+              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $pendingBackup ? 'Download the prepared backup before continuing.' : 'A pre-update backup is created before apply.' }}</p>
             </div>
-            <span class="wb-status-pill {{ $pendingBackup ? 'wb-status-info' : 'wb-status-active' }}">{{ $pendingBackup ? 'Created' : 'Will be created' }}</span>
           </div>
-          <p class="wb-text-sm wb-text-muted wb-m-0">{{ $pendingBackup ? 'Download the prepared backup before continuing.' : 'A pre-update backup is created before apply.' }}</p>
         </div>
       </section>
     </div>
@@ -344,7 +360,7 @@
 
         <div class="wb-card-body wb-stack wb-stack-4">
           @if ($release)
-            <div class="wb-meta-grid">
+            <div data-webblocks-updates-release-meta>
               <div>
                 <span class="wb-meta-label">Product</span>
                 <strong>{{ $updateStatus['product'] ?? 'webblocks-cms' }}</strong>
@@ -355,12 +371,12 @@
               </div>
               <div>
                 <span class="wb-meta-label">Artifact</span>
-                <strong>{{ $artifactFilename }}</strong>
+                <code>{{ $artifactFilename }}</code>
               </div>
             </div>
 
             @if ($hasReleaseDetails)
-              <div class="wb-stack wb-stack-3">
+              <div class="wb-stack wb-stack-3" data-webblocks-updates-release-notes>
                 @if (trim((string) ($releaseDetails['title'] ?? '')) !== '')
                   <strong>{{ $releaseDetails['title'] }}</strong>
                 @endif
@@ -370,7 +386,7 @@
                 @endif
 
                 @foreach ($visibleReleaseDetailGroups as $group)
-                  <div class="wb-stack wb-gap-1">
+                  <div class="wb-stack wb-gap-1" data-webblocks-updates-release-group>
                     <strong class="wb-text-sm">{{ in_array(($group['key'] ?? ''), ['fixes', 'changes'], true) ? 'Fixes and changes' : ($group['label'] ?? 'Release details') }}</strong>
                     <ul class="wb-m-0 wb-text-sm wb-text-muted">
                       @foreach (collect($group['items'] ?? [])->filter() as $item)
@@ -436,7 +452,7 @@
         </div>
 
         <div class="wb-card-body wb-stack wb-stack-4">
-          <div class="wb-meta-grid">
+          <div data-webblocks-updates-readiness-summary>
             <div>
               <span class="wb-meta-label">Stored installed version</span>
               <strong>{{ is_string($storedInstalledVersion) && $storedInstalledVersion !== '' ? $storedInstalledVersion : 'N/A' }}</strong>
@@ -447,17 +463,15 @@
             </div>
           </div>
 
-          <div class="wb-stack wb-stack-2">
+          <div class="wb-stack wb-stack-2" data-webblocks-updates-checklist>
             @foreach ($diagnosticItems as $diagnostic)
-              <div class="wb-list-item">
-                <div class="wb-cluster wb-cluster-2 wb-items-center">
-                  <span class="wb-action-btn" aria-hidden="true">
-                    <i class="wb-icon {{ in_array((string) ($diagnostic['status'] ?? ''), ['ok', 'pass', 'compatible'], true) ? 'wb-icon-check' : 'wb-icon-alert-circle' }}"></i>
-                  </span>
-                  <div>
-                    <div class="wb-list-item-title">{{ $diagnostic['label'] }}</div>
-                    <div class="wb-list-item-sub">{{ $diagnostic['message'] }}</div>
-                  </div>
+              <div data-webblocks-updates-check>
+                <span data-webblocks-updates-check-icon aria-hidden="true">
+                  <i class="wb-icon {{ in_array((string) ($diagnostic['status'] ?? ''), ['ok', 'pass', 'compatible'], true) ? 'wb-icon-check' : 'wb-icon-alert-circle' }}"></i>
+                </span>
+                <div>
+                  <div class="wb-list-item-title">{{ $diagnostic['label'] }}</div>
+                  <div class="wb-list-item-sub">{{ $diagnostic['message'] }}</div>
                 </div>
                 <span class="wb-status-pill {{ $diagnostic['badge_class'] }}">{{ $diagnostic['status'] }}</span>
               </div>

@@ -90,11 +90,13 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.content_contract', '/webadmin/api/content-contract')
       ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonPath('_links.admin_render_system_updates', '/webadmin/api/admin-render/system-updates')
       ->assertJsonPath('_links.media', '/webadmin/api/media')
       ->assertJsonPath('_links.media_update', '/webadmin/api/media/{media}')
       ->assertJsonPath('_links.site_asset', '/webadmin/api/sites/{site}/assets/{css|js}')
       ->assertJsonPath('_links.block_update', '/webadmin/api/blocks/{block}')
       ->assertJsonPath('token.can.read_media', true)
+      ->assertJsonPath('token.can.render_admin_snapshots', true)
       ->assertJsonPath('token.can.write_media_metadata', false)
       ->assertJsonPath('token.can.read_site_assets', false)
       ->assertJsonPath('token.can.write_site_assets', false)
@@ -133,6 +135,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-css-guidance', 'asset.guidance explains token-first, mode-aware site.css expectations so Light/Dark/Auto mode remains consistent.')
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-guidance', 'For CSS writes, prefer native block settings and public theme/WebBlocks UI custom properties; avoid hard-coded light/dark page palettes that bypass mode behavior.')
+      ->assertJsonPath('paths./admin-render/system-updates.get.x-required-capability', CmsApiTokenCapabilities::ADMIN_RENDER)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.delete.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_DELETE)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/reorder.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
@@ -154,6 +157,7 @@ class InternalContentApiTest extends TestCase
     $this->assertStringContainsString('site-assets.write', (string) $guideContent);
     $this->assertStringContainsString('asset.guidance', (string) $guideContent);
     $this->assertStringContainsString('Light/Dark/Auto mode', (string) $guideContent);
+    $this->assertStringContainsString('/webadmin/api/admin-render/system-updates', (string) $guideContent);
 
     $example = $this->withInternalToken()
       ->getJson('/webadmin/api/examples/contact-page')

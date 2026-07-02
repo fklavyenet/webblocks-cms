@@ -20,6 +20,7 @@ return [
     'retry_times' => 0,
     'retry_sleep_milliseconds' => 150,
     'indicator_cache_ttl_seconds' => 3600,
+    'indicator_inactive_cache_ttl_seconds' => 60,
     'pending_cache_ttl_seconds' => 3600,
     'runs' => [
         'keep' => env('WEBBLOCKS_UPDATES_RUNS_KEEP', 5),

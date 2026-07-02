@@ -34,7 +34,7 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('placeholder="Example: Local AI, Homepage Builder, Operator Tool"', false);
     $response->assertDontSee('Local AI - Osman MacBook');
     $response->assertSee('Choose grouped permissions for this token.');
-    $response->assertSee('7 selected');
+    $response->assertSee('8 selected');
     $response->assertSee('Page building');
     $response->assertSee('Site assets and feedback');
     $response->assertSee('Plugin lifecycle');
@@ -46,6 +46,7 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('content.read');
     $response->assertSee('content.validate');
     $response->assertSee('content.apply');
+    $response->assertSee('admin.render');
     $response->assertSee('navigation.write');
     $response->assertSee('shared-slots.write');
     $response->assertSee('media.read');
@@ -55,7 +56,7 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('content.publish');
     $response->assertSee('pages.delete');
     $response->assertSee('Local AI - Test MacBook');
-    $response->assertSee('content.read, content.validate, content.apply +4');
+    $response->assertSee('content.read, content.validate, content.apply +5');
     $response->assertSee($token->token_preview);
     $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
