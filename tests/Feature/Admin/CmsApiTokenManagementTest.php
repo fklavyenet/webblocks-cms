@@ -33,9 +33,16 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('GET /webadmin/api');
     $response->assertSee('placeholder="Example: Local AI, Homepage Builder, Operator Tool"', false);
     $response->assertDontSee('Local AI - Osman MacBook');
-    $response->assertSee('Choose what this token is allowed to do.');
-    $response->assertSee('Advanced capabilities');
-    $response->assertSee('Grant only to trusted operator tools.');
+    $response->assertSee('Choose grouped permissions for this token.');
+    $response->assertSee('7 selected');
+    $response->assertSee('Page building');
+    $response->assertSee('Site assets and feedback');
+    $response->assertSee('Plugin lifecycle');
+    $response->assertSee('Commerce');
+    $response->assertSee('Media management');
+    $response->assertSee('Publishing and destructive actions');
+    $response->assertSee('Install, enable, setup, disable, or uninstall manually uploaded plugins.');
+    $response->assertSee('Create products, place buy buttons, and read Commerce orders.');
     $response->assertSee('content.read');
     $response->assertSee('content.validate');
     $response->assertSee('content.apply');
@@ -68,6 +75,9 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('data-wb-target="#delete-cms-api-token-'.$token->id.'"', false);
     $response->assertSee('wb-icon wb-icon-trash', false);
     $response->assertSee('class="wb-modal wb-modal-lg"', false);
+    $response->assertSee('wb-api-token-modal-body', false);
+    $response->assertSee('wb-api-token-capability-groups', false);
+    $response->assertSee('wb-api-token-capability-group', false);
     $response->assertDontSee('confirm(');
     $response->assertDontSee($token->token_hash);
 

@@ -883,6 +883,81 @@ svg.wb-sidebar-brand-logo {
     overflow: auto;
 }
 
+.wb-api-token-modal-body {
+    max-block-size: calc(100dvh - 14rem);
+    overflow: auto;
+}
+
+.wb-api-token-capability-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--wb-s3, 1rem);
+}
+
+.wb-api-token-capability-group {
+    border: 1px solid var(--wb-border);
+    border-radius: var(--wb-radius-md, 0.5rem);
+    background: var(--wb-surface);
+}
+
+.wb-api-token-capability-summary {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--wb-s3, 1rem);
+    min-block-size: 4.5rem;
+    padding: var(--wb-s3, 1rem);
+    cursor: pointer;
+}
+
+.wb-api-token-capability-summary::-webkit-details-marker {
+    display: none;
+}
+
+.wb-api-token-capability-summary::before {
+    content: "";
+    flex: 0 0 auto;
+    inline-size: 0.55rem;
+    block-size: 0.55rem;
+    margin-block-start: 0.35rem;
+    border-inline-end: 2px solid currentColor;
+    border-block-end: 2px solid currentColor;
+    transform: rotate(-45deg);
+    opacity: 0.65;
+}
+
+.wb-api-token-capability-group[open] .wb-api-token-capability-summary::before {
+    transform: rotate(45deg);
+}
+
+.wb-api-token-capability-summary-copy,
+.wb-api-token-capability-copy {
+    display: grid;
+    gap: 0.2rem;
+    min-inline-size: 0;
+}
+
+.wb-api-token-capability-list {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0 var(--wb-s3, 1rem) var(--wb-s3, 1rem);
+}
+
+.wb-api-token-capability-option {
+    align-items: flex-start;
+    padding-block: 0.25rem;
+}
+
+.wb-api-token-capability-option strong {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+    .wb-api-token-capability-groups {
+        grid-template-columns: 1fr;
+    }
+}
+
 .wb-slot-block-picker-table-wrap {
     overflow: auto;
 }

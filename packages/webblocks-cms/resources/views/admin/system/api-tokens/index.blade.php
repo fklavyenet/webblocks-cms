@@ -257,7 +257,7 @@ Content-Type: application/json</textarea>
                     @csrf
                     @method('PUT')
 
-                    <div class="wb-modal-body wb-stack wb-gap-4">
+                    <div class="wb-modal-body wb-stack wb-gap-4 wb-api-token-modal-body">
                         <div class="wb-field">
                             <label class="wb-label" for="edit_cms_api_token_name_{{ $token->id }}">Name</label>
                             <input id="edit_cms_api_token_name_{{ $token->id }}" name="name" type="text" class="wb-input" value="{{ $token->name }}" required maxlength="120">

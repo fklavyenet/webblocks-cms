@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.207
+
+- Bumped CMS to `1.32.207`.
+- Compact the CMS API Token create/edit capability picker into grouped, collapsible permission sections so expanded plugin and commerce capabilities remain manageable inside cards and modals.
+
 ## 1.32.206
 
 - Bumped CMS to `1.32.206`.

@@ -59,6 +59,7 @@ class CmsApiTokenController extends Controller
       'apiBaseUrl' => url('/webadmin/api'),
       'defaultCapabilities' => CmsApiTokenCapabilities::DEFAULT,
       'advancedCapabilities' => CmsApiTokenCapabilities::ADVANCED,
+      'capabilityGroups' => $this->capabilityGroups(),
       'capabilityLabels' => CmsApiTokenCapabilities::LABELS,
       'capabilitiesPresenter' => app(CmsApiTokenCapabilities::class),
       'createdToken' => session('created_cms_api_token'),
@@ -130,6 +131,76 @@ class CmsApiTokenController extends Controller
     }
 
     return true;
+  }
+
+  /**
+   * @return array<int, array{key: string, label: string, description: string, capabilities: array<int, string>}>
+   */
+  private function capabilityGroups(): array
+  {
+    return [
+      [
+        'key' => 'page-building',
+        'label' => 'Page building',
+        'description' => 'Default draft content, navigation, Shared Slots, media discovery, and site presentation permissions.',
+        'capabilities' => CmsApiTokenCapabilities::DEFAULT,
+      ],
+      [
+        'key' => 'site-feedback',
+        'label' => 'Site assets and feedback',
+        'description' => 'Physical site CSS/JS edits and public engagement review permissions.',
+        'capabilities' => [
+          CmsApiTokenCapabilities::SITE_ASSETS_READ,
+          CmsApiTokenCapabilities::SITE_ASSETS_WRITE,
+          CmsApiTokenCapabilities::ENGAGEMENT_READ,
+          CmsApiTokenCapabilities::ENGAGEMENT_MODERATE,
+        ],
+      ],
+      [
+        'key' => 'plugins',
+        'label' => 'Plugin lifecycle',
+        'description' => 'Install, enable, setup, disable, or uninstall manually uploaded plugins.',
+        'capabilities' => [
+          CmsApiTokenCapabilities::PLUGINS_READ,
+          CmsApiTokenCapabilities::PLUGINS_INSTALL,
+          CmsApiTokenCapabilities::PLUGINS_MANAGE,
+          CmsApiTokenCapabilities::PLUGINS_SETUP,
+          CmsApiTokenCapabilities::PLUGINS_UNINSTALL,
+        ],
+      ],
+      [
+        'key' => 'commerce',
+        'label' => 'Commerce',
+        'description' => 'Create products, place buy buttons, and read Commerce orders.',
+        'capabilities' => [
+          CmsApiTokenCapabilities::COMMERCE_READ,
+          CmsApiTokenCapabilities::COMMERCE_PRODUCTS_WRITE,
+          CmsApiTokenCapabilities::COMMERCE_ORDERS_READ,
+        ],
+      ],
+      [
+        'key' => 'media',
+        'label' => 'Media management',
+        'description' => 'Upload, edit metadata, replace, move, and delete Media Library records.',
+        'capabilities' => [
+          CmsApiTokenCapabilities::MEDIA_WRITE,
+          CmsApiTokenCapabilities::MEDIA_UPLOAD,
+          CmsApiTokenCapabilities::MEDIA_REPLACE,
+          CmsApiTokenCapabilities::MEDIA_MOVE,
+          CmsApiTokenCapabilities::MEDIA_DELETE,
+        ],
+      ],
+      [
+        'key' => 'destructive',
+        'label' => 'Publishing and destructive actions',
+        'description' => 'Publish content or delete pages/navigation items. Grant only when explicitly needed.',
+        'capabilities' => [
+          CmsApiTokenCapabilities::NAVIGATION_DELETE,
+          CmsApiTokenCapabilities::CONTENT_PUBLISH,
+          CmsApiTokenCapabilities::PAGES_DELETE,
+        ],
+      ],
+    ];
   }
 
   private function apiTokenActivitySchemaReady(): bool
