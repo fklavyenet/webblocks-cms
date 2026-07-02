@@ -73,6 +73,16 @@ class CmsApiTokenCapabilities
     self::SITE_SETTINGS_WRITE,
   ];
 
+  private const LEGACY_DEFAULT_BEFORE_ADMIN_RENDER = [
+    self::CONTENT_READ,
+    self::CONTENT_VALIDATE,
+    self::CONTENT_APPLY,
+    self::NAVIGATION_WRITE,
+    self::SHARED_SLOTS_WRITE,
+    self::MEDIA_READ,
+    self::SITE_SETTINGS_WRITE,
+  ];
+
   public const ADVANCED = [
     self::SITE_ASSETS_READ,
     self::SITE_ASSETS_WRITE,
@@ -182,11 +192,17 @@ class CmsApiTokenCapabilities
       return self::DEFAULT;
     }
 
-    return collect($capabilities)
+    $normalized = collect($capabilities)
       ->filter(fn ($capability) => is_string($capability) && $capability !== '')
       ->unique()
       ->values()
       ->all();
+
+    if ($this->usesLegacyDefaultWithoutAdminRender($normalized)) {
+      array_splice($normalized, 3, 0, [self::ADMIN_RENDER]);
+    }
+
+    return $normalized;
   }
 
   public function has(?CmsApiToken $token, string $capability): bool
@@ -244,5 +260,20 @@ class CmsApiTokenCapabilities
     $remaining = count($capabilities) - count($visible);
 
     return implode(', ', $visible).($remaining > 0 ? ' +'.$remaining : '');
+  }
+
+  private function usesLegacyDefaultWithoutAdminRender(array $capabilities): bool
+  {
+    if (in_array(self::ADMIN_RENDER, $capabilities, true)) {
+      return false;
+    }
+
+    foreach (self::LEGACY_DEFAULT_BEFORE_ADMIN_RENDER as $capability) {
+      if (! in_array($capability, $capabilities, true)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

@@ -458,8 +458,11 @@ class PackageConsumerInstallAuthTest extends TestCase
     $this->actingAs($user)->get(route('admin.system.updates.index'))
       ->assertOk()
       ->assertSee('System Updates')
-      ->assertSee('Install Update')
-      ->assertSee('Update Details')
+      ->assertSee('data-webblocks-updates-card="summary"', false)
+      ->assertSee('data-webblocks-updates-card="details"', false)
+      ->assertSee('data-webblocks-updates-card="history"', false)
+      ->assertDontSee('Install Update')
+      ->assertDontSee('Update Details')
       ->assertDontSee('<strong>Actions</strong>', false);
   }
 

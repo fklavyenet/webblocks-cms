@@ -34,7 +34,7 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('placeholder="Example: Local AI, Homepage Builder, Operator Tool"', false);
     $response->assertDontSee('Local AI - Osman MacBook');
     $response->assertSee('Choose grouped permissions for this token.');
-    $response->assertSee('8 selected');
+    $response->assertSee('8/8 selected');
     $response->assertSee('Page building');
     $response->assertSee('Site assets and feedback');
     $response->assertSee('Plugin lifecycle');
@@ -98,6 +98,23 @@ class CmsApiTokenManagementTest extends TestCase
     $this->assertDoesNotMatchRegularExpression('/value="media\.write"[^>]*checked/s', $content);
     $this->assertDoesNotMatchRegularExpression('/value="content\.publish"[^>]*checked/s', $content);
     $this->assertDoesNotMatchRegularExpression('/value="pages\.delete"[^>]*checked/s', $content);
+  }
+
+  #[Test]
+  public function capability_summary_badge_shows_selected_count_over_selected_total_for_broad_tokens(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $broadToken = $this->createToken('broad-secret-token', [
+      'name' => 'Broad Operator',
+      'capabilities' => array_values(array_diff(CmsApiTokenCapabilities::ALL, [CmsApiTokenCapabilities::NAVIGATION_WRITE])),
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
+
+    $response->assertOk();
+    $response->assertSee('Broad Operator');
+    $response->assertSee('27/27 selected');
+    $response->assertSee('data-wb-target="#edit-cms-api-token-'.$broadToken->id.'"', false);
   }
 
   #[Test]
@@ -249,6 +266,48 @@ class CmsApiTokenManagementTest extends TestCase
       ->assertJsonPath('token.can.write_media_metadata', true)
       ->assertJsonMissingPath('token.token_hash')
       ->assertJsonMissingPath('token.token_preview');
+  }
+
+  #[Test]
+  public function legacy_default_tokens_gain_read_only_admin_render_capability(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $legacyDefaultCapabilities = [
+      CmsApiTokenCapabilities::CONTENT_READ,
+      CmsApiTokenCapabilities::CONTENT_VALIDATE,
+      CmsApiTokenCapabilities::CONTENT_APPLY,
+      CmsApiTokenCapabilities::NAVIGATION_WRITE,
+      CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+      CmsApiTokenCapabilities::MEDIA_READ,
+      CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
+    ];
+
+    $token = $this->createToken('secret-token', [
+      'capabilities' => $legacyDefaultCapabilities,
+      'created_by_user_id' => $user->id,
+    ]);
+
+    $description = app(CmsApiTokenCapabilities::class)->publicDescription($token);
+
+    $this->assertTrue($description['can']['render_admin_snapshots']);
+    $this->assertContains(CmsApiTokenCapabilities::ADMIN_RENDER, $description['capabilities']);
+    $this->assertSame($legacyDefaultCapabilities, $token->fresh()->capabilities);
+  }
+
+  #[Test]
+  public function restricted_tokens_do_not_gain_admin_render_capability(): void
+  {
+    $token = $this->createToken('secret-token', [
+      'capabilities' => [
+        CmsApiTokenCapabilities::CONTENT_READ,
+        CmsApiTokenCapabilities::CONTENT_VALIDATE,
+      ],
+    ]);
+
+    $description = app(CmsApiTokenCapabilities::class)->publicDescription($token);
+
+    $this->assertFalse($description['can']['render_admin_snapshots']);
+    $this->assertNotContains(CmsApiTokenCapabilities::ADMIN_RENDER, $description['capabilities']);
   }
 
   #[Test]

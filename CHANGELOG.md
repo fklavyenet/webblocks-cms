@@ -9,6 +9,13 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.212
+
+- Bumped CMS to `1.32.212`.
+- Keep the topbar System Updates shortcut visible for super admins while reserving the warning dot for real update-available states.
+- Treat legacy default CMS API tokens as eligible for the read-only `admin.render` capability so existing trusted operator tools can use allowlisted admin snapshots after updating.
+- Further polish the System Updates status hero, safety cards, and release/readiness balance, standardize the primary action label as `Update Now`, and show CMS API token capability summary badges as selected/total counts.
+
 ## 1.32.211
 
 - Bumped CMS to `1.32.211`.

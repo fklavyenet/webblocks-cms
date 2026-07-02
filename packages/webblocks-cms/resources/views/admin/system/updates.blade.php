@@ -190,10 +190,10 @@
                   form="webblocks-update-install-form"
                   class="wb-btn wb-btn-primary"
                   data-wb-update-submit
-                  data-default-label="Install update"
+                  data-default-label="Update Now"
                   data-busy-label="Updating..."
                 >
-                  {{ $autoUpdate['busy'] ? 'Updating...' : 'Install update' }}
+                  {{ $autoUpdate['busy'] ? 'Updating...' : 'Update Now' }}
                 </button>
               @endif
             </div>

@@ -268,13 +268,13 @@
                                     class="wb-navbar-icon-trigger wb-navbar-update-indicator"
                                     data-wb-update-indicator
                                     data-wb-update-indicator-url="{{ route('admin.system.updates.indicator') }}"
-                                    aria-label="Update status"
-                                    title="Update status"
-                                    hidden
+                                    data-wb-update-indicator-state="unknown"
+                                    aria-label="System Updates"
+                                    title="System Updates"
                                 >
                                     <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                     <span class="wb-navbar-update-dot" aria-hidden="true"></span>
-                                    <span class="wb-sr-only" data-wb-update-indicator-label>Update status</span>
+                                    <span class="wb-sr-only" data-wb-update-indicator-label>System Updates</span>
                                 </a>
                             @endif
 

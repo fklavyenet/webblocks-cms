@@ -99,10 +99,15 @@ svg.wb-sidebar-brand-logo {
 
 .wb-navbar-update-indicator {
     position: relative;
+    color: var(--wb-muted);
+}
+
+.wb-navbar-update-indicator[data-wb-update-indicator-state="update_available"] {
     color: var(--wb-accent);
 }
 
 .wb-navbar-update-dot {
+    display: none;
     position: absolute;
     inset-block-start: 0.35rem;
     inset-inline-end: 0.35rem;
@@ -111,6 +116,10 @@ svg.wb-sidebar-brand-logo {
     border: 2px solid var(--wb-surface);
     border-radius: 9999px;
     background: var(--wb-danger);
+}
+
+.wb-navbar-update-indicator[data-wb-update-indicator-state="update_available"] .wb-navbar-update-dot {
+    display: block;
 }
 
 .wb-navbar-icon-trigger {
@@ -1146,30 +1155,35 @@ svg.wb-sidebar-brand-logo {
 
 [data-webblocks-updates-card="summary"] {
     overflow: hidden;
+    border-color: color-mix(in srgb, var(--wb-accent) 18%, var(--wb-border));
 }
 
 [data-webblocks-updates-card="summary"] > .wb-card-header {
     align-items: center;
-    background: color-mix(in srgb, var(--wb-surface-2) 72%, transparent);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--wb-accent) 9%, transparent), transparent 62%),
+        color-mix(in srgb, var(--wb-surface-2) 78%, transparent);
 }
 
 [data-webblocks-updates-hero] {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
     gap: var(--wb-s5);
     align-items: stretch;
-    padding: var(--wb-s5);
+    padding: clamp(var(--wb-s4), 3vw, var(--wb-s6));
     border: 1px solid var(--wb-updates-ok-border);
     border-radius: var(--wb-radius-lg);
     background:
-        linear-gradient(135deg, color-mix(in srgb, #22c55e 18%, transparent), transparent 58%),
+        radial-gradient(circle at 0 0, color-mix(in srgb, #22c55e 22%, transparent), transparent 34%),
+        linear-gradient(135deg, color-mix(in srgb, #22c55e 16%, transparent), transparent 62%),
         var(--wb-updates-ok-bg);
 }
 
 [data-webblocks-updates-state="update_available"] [data-webblocks-updates-hero] {
     border-color: var(--wb-updates-info-border);
     background:
-        linear-gradient(135deg, color-mix(in srgb, var(--wb-accent) 16%, transparent), transparent 58%),
+        radial-gradient(circle at 0 0, color-mix(in srgb, var(--wb-accent) 24%, transparent), transparent 34%),
+        linear-gradient(135deg, color-mix(in srgb, var(--wb-accent) 16%, transparent), transparent 62%),
         var(--wb-updates-info-bg);
 }
 
@@ -1181,7 +1195,8 @@ svg.wb-sidebar-brand-logo {
 [data-webblocks-updates-state="client_disabled"] [data-webblocks-updates-hero] {
     border-color: var(--wb-updates-warning-border);
     background:
-        linear-gradient(135deg, color-mix(in srgb, #f59e0b 18%, transparent), transparent 58%),
+        radial-gradient(circle at 0 0, color-mix(in srgb, #f59e0b 24%, transparent), transparent 34%),
+        linear-gradient(135deg, color-mix(in srgb, #f59e0b 16%, transparent), transparent 62%),
         var(--wb-updates-warning-bg);
 }
 
@@ -1212,9 +1227,10 @@ svg.wb-sidebar-brand-logo {
 }
 
 [data-webblocks-updates-hero-icon] {
-    inline-size: 3rem;
-    block-size: 3rem;
-    font-size: 1.25rem;
+    inline-size: 3.25rem;
+    block-size: 3.25rem;
+    font-size: 1.35rem;
+    background: color-mix(in srgb, var(--wb-surface) 82%, transparent);
 }
 
 [data-webblocks-updates-card-icon] {
@@ -1236,7 +1252,7 @@ svg.wb-sidebar-brand-logo {
 
 [data-webblocks-updates-hero-aside] {
     display: grid;
-    align-content: center;
+    align-content: space-between;
     gap: var(--wb-s3);
     min-inline-size: 0;
     padding: var(--wb-s4);
@@ -1298,6 +1314,20 @@ svg.wb-sidebar-brand-logo {
     padding: var(--wb-s4);
 }
 
+[data-webblocks-updates-card="safety-summary"] .wb-card {
+    position: relative;
+    overflow: hidden;
+}
+
+[data-webblocks-updates-card="safety-summary"] .wb-card::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    block-size: 3px;
+    background: color-mix(in srgb, var(--wb-accent) 52%, transparent);
+}
+
 [data-webblocks-updates-safety-card] {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -1310,7 +1340,7 @@ svg.wb-sidebar-brand-logo {
 }
 
 [data-webblocks-updates-card="details"] {
-    grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.95fr);
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 1fr);
     align-items: start;
 }
 

@@ -123,7 +123,7 @@ class SystemUpdatesTest extends TestCase
 
     $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $followUp->assertSee('Update available');
-    $followUp->assertSee('Install update');
+    $followUp->assertSee('Update Now');
     $followUp->assertDontSee('Download package');
     $followUp->assertSee('Check again');
     $followUp->assertSee('Latest Published Version');
@@ -147,13 +147,13 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Latest Published Version');
     $response->assertSee(WebBlocks::version());
     $response->assertSee('99.0.0');
-    $response->assertSee('Install update');
+    $response->assertSee('Update Now');
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();
     $installHtml = $this->cardHtml($html, 'Update Status');
     $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Update Status</h2>');
-    $buttonPosition = strpos($html, 'data-default-label="Install update"');
+    $buttonPosition = strpos($html, 'data-default-label="Update Now"');
 
     $this->assertStringContainsString('Current CMS Version', $installHtml);
     $this->assertStringContainsString('Latest Published Version', $installHtml);
@@ -177,13 +177,13 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('data-webblocks-updates-accordion="package-safety"', false);
     $response->assertSee('Download the backup before installation starts');
     $response->assertSee('A pre-update backup will be created automatically before installation.');
-    $response->assertSee('Install update');
+    $response->assertSee('Update Now');
 
     $html = $response->getContent();
     $optionsHeaderPosition = strpos($html, '<h2 class="wb-card-title">Update Status</h2>');
     $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $optionsHeaderPosition);
     $backupHelpPosition = strpos($html, 'A pre-update backup will be created automatically before installation.', $optionsHeaderPosition);
-    $buttonPosition = strpos($html, 'data-default-label="Install update"', $optionsHeaderPosition);
+    $buttonPosition = strpos($html, 'data-default-label="Update Now"', $optionsHeaderPosition);
     $detailsPosition = strpos($html, '<h2 class="wb-card-title">Release</h2>');
 
     $this->assertIsInt($optionsHeaderPosition);
@@ -475,7 +475,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('This install already matches the latest published release.');
     $response->assertDontSee('Latest Published Version');
     $response->assertSee('No newer release is ready for this install.');
-    $response->assertDontSee('data-default-label="Install update"', false);
+    $response->assertDontSee('data-default-label="Update Now"', false);
     $response->assertDontSee('name="download_pre_update_backup"', false);
   }
 

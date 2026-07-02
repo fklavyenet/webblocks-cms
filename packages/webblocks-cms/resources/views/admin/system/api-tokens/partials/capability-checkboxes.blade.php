@@ -17,6 +17,7 @@
         ],
     ];
     $selectedCount = count(array_intersect($selectedCapabilities, collect($capabilityGroups)->pluck('capabilities')->flatten()->all()));
+    $selectedTotal = max($selectedCount, count(array_unique($selectedCapabilities)));
 @endphp
 
 <div class="wb-field wb-api-token-capabilities">
@@ -26,7 +27,7 @@
                 <div class="wb-label">Capabilities</div>
                 <div class="wb-text-sm wb-text-muted">Choose grouped permissions for this token.</div>
             </div>
-            <span class="wb-status-pill wb-status-info">{{ $selectedCount }} selected</span>
+            <span class="wb-status-pill wb-status-info">{{ $selectedCount }}/{{ $selectedTotal }} selected</span>
         </div>
 
         <div class="wb-api-token-capability-groups">
