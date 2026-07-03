@@ -121,6 +121,39 @@ class PublicLayoutStructureTest extends TestCase
   }
 
   #[Test]
+  public function staged_update_preview_includes_source_page_body_class(): void
+  {
+    $sourcePage = $this->buildHomepageWithHeaderSidebarAndFooter();
+    $user = User::factory()->superAdmin()->create();
+
+    $stagedPage = Page::query()->create([
+      'site_id' => $sourcePage->site_id,
+      'title' => 'Home staged update',
+      'slug' => 'home-staged-update',
+      'status' => Page::STATUS_DRAFT,
+      'settings' => [
+        'staged_update' => [
+          'type' => 'published_page_update',
+          'source_page_id' => $sourcePage->id,
+          'state' => 'draft',
+        ],
+      ],
+    ]);
+
+    PageTranslation::query()->updateOrCreate(
+      ['page_id' => $stagedPage->id, 'locale_id' => Page::defaultLocaleId()],
+      ['site_id' => $sourcePage->site_id, 'name' => 'Home staged update', 'slug' => 'home-staged-update', 'path' => '/staged-updates/page-'.$sourcePage->id.'/update-1'],
+    );
+
+    $response = $this->actingAs($user)->get(route('admin.pages.preview', $stagedPage));
+
+    $response->assertOk();
+    $this->assertBodyClassContains($response->getContent(), 'wb-page-home-staged-update');
+    $this->assertBodyClassContains($response->getContent(), 'wb-page-home');
+    $response->assertSee('Preview mode', false);
+  }
+
+  #[Test]
   public function custom_layout_body_class_and_slot_classes_render_safely(): void
   {
     $this->seed(FoundationSiteLocaleSeeder::class);

@@ -45,11 +45,16 @@ class PublicPagePresenter
       'headPageAssets' => $this->pageAssetRenderer->headAssetsFor($page),
       'bodyEndPageAssets' => $this->pageAssetRenderer->bodyEndAssetsFor($page),
       'publicMeta' => $this->publicMeta($page),
-      'publicBodyClass' => trim(implode(' ', array_filter([
+      'publicBodyClass' => collect([
         'wb-public-body',
         $this->pageBodyClass($page),
+        $this->stagedSourcePageBodyClass($page),
         app(PageLayoutManager::class)->bodyClassForHandle($page->publicShellPreset()),
-      ]))),
+      ])
+        ->filter()
+        ->flatMap(fn (string $classes) => preg_split('/\s+/', $classes, -1, PREG_SPLIT_NO_EMPTY) ?: [])
+        ->unique()
+        ->implode(' '),
     ];
   }
 
@@ -62,6 +67,40 @@ class PublicPagePresenter
     $slug = trim($slug, '-');
 
     return 'wb-page-'.($slug !== '' ? $slug : 'home');
+  }
+
+  private function stagedSourcePageBodyClass(Page $page): ?string
+  {
+    $metadata = is_array($page->settings ?? null) ? ($page->settings['staged_update'] ?? null) : null;
+
+    if (! is_array($metadata) || ($metadata['type'] ?? null) !== 'published_page_update') {
+      return null;
+    }
+
+    $sourcePageId = $metadata['source_page_id'] ?? null;
+
+    if (! is_numeric($sourcePageId) || (int) $sourcePageId === (int) $page->id) {
+      return null;
+    }
+
+    $sourcePage = Page::query()
+      ->whereKey((int) $sourcePageId)
+      ->where('site_id', $page->site_id)
+      ->with(['translations.locale'])
+      ->first();
+
+    if (! $sourcePage) {
+      return null;
+    }
+
+    $localeId = $page->currentTranslation?->locale_id ?? Page::defaultLocaleId();
+    $sourceTranslation = $sourcePage->translationForLocale($localeId) ?? $sourcePage->defaultTranslation();
+
+    if ($sourceTranslation) {
+      $sourcePage->setRelation('currentTranslation', $sourceTranslation);
+    }
+
+    return $this->pageBodyClass($sourcePage);
   }
 
   public function publicMeta(?Page $page = null): array

@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.219
+
+- Bumped CMS to `1.32.219`.
+- Add the published source page body class to staged update previews so site CSS scoped to classes such as `wb-page-home` applies while reviewing a draft update.
+
 ## 1.32.218
 
 - Bumped CMS to `1.32.218`.
