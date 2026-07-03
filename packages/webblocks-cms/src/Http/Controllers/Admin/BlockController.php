@@ -1149,15 +1149,15 @@ class BlockController extends Controller
 
       $query->where(function (Builder $searchQuery) use ($term, $localeId): void {
         $searchQuery
-          ->where('blocks.id', 'like', $term)
-          ->orWhere('blocks.type', 'like', $term)
-          ->orWhere('blocks.title', 'like', $term)
-          ->orWhere('blocks.subtitle', 'like', $term)
-          ->orWhere('blocks.content', 'like', $term)
-          ->orWhere('blocks.meta', 'like', $term)
-          ->orWhere('blocks.url', 'like', $term)
-          ->orWhere('blocks.slot', 'like', $term)
-          ->orWhere('blocks.status', 'like', $term)
+          ->where((new Block)->qualifyColumn('id'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('type'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('title'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('subtitle'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('content'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('meta'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('url'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('slot'), 'like', $term)
+          ->orWhere((new Block)->qualifyColumn('status'), 'like', $term)
           ->orWhereHas('blockType', function (Builder $blockTypeQuery) use ($term): void {
             $blockTypeQuery->where(function (Builder $candidateQuery) use ($term): void {
               $candidateQuery

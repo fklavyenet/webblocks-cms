@@ -46,7 +46,7 @@ class PageRevisionManager
   public function revisionsTableExists(): bool
   {
     try {
-      return Schema::hasTable('page_revisions');
+      return Schema::hasTable('wbcms_page_revisions');
     } catch (Throwable) {
       return false;
     }
@@ -173,10 +173,10 @@ class PageRevisionManager
         ->values()
         ->map(fn ($slot) => [
           'slot_type_id' => $slot->slot_type_id,
-          'source_type' => Schema::hasColumn('page_slots', 'source_type')
+          'source_type' => Schema::hasColumn('wbcms_page_slots', 'source_type')
             ? PageSlot::normalizeRuntimeSourceType($slot->source_type)
             : PageSlot::SOURCE_TYPE_PAGE,
-          'shared_slot_id' => Schema::hasColumn('page_slots', 'shared_slot_id')
+          'shared_slot_id' => Schema::hasColumn('wbcms_page_slots', 'shared_slot_id')
             ? $slot->shared_slot_id
             : null,
           'sort_order' => $slot->sort_order,
@@ -323,11 +323,11 @@ class PageRevisionManager
         'settings' => PageSlot::sanitizeSettings($slot['settings'] ?? null),
       ];
 
-      if (Schema::hasColumn('page_slots', 'source_type')) {
+      if (Schema::hasColumn('wbcms_page_slots', 'source_type')) {
         $attributes['source_type'] = PageSlot::normalizeRuntimeSourceType($slot['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
       }
 
-      if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
+      if (Schema::hasColumn('wbcms_page_slots', 'shared_slot_id')) {
         $attributes['shared_slot_id'] = $attributes['source_type'] === PageSlot::SOURCE_TYPE_SHARED_SLOT
           ? ($slot['shared_slot_id'] ?? null)
           : null;

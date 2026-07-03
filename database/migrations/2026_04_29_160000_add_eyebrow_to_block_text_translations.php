@@ -8,14 +8,14 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('block_text_translations', function (Blueprint $table) {
+    Schema::table('wbcms_block_text_translations', function (Blueprint $table) {
       $table->string('eyebrow')->nullable()->after('title');
     });
   }
 
   public function down(): void
   {
-    Schema::table('block_text_translations', function (Blueprint $table) {
+    Schema::table('wbcms_block_text_translations', function (Blueprint $table) {
       $table->dropColumn('eyebrow');
     });
   }

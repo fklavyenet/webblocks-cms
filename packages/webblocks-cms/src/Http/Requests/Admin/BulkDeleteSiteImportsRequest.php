@@ -15,7 +15,7 @@ class BulkDeleteSiteImportsRequest extends FormRequest
   {
     return [
       'site_import_ids' => ['required', 'array', 'min:1'],
-      'site_import_ids.*' => ['required', 'integer', 'distinct', 'exists:site_imports,id'],
+      'site_import_ids.*' => ['required', 'integer', 'distinct', 'exists:wbcms_site_imports,id'],
     ];
   }
 

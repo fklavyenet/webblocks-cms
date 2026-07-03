@@ -9,17 +9,17 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('pages', function (Blueprint $table) {
-      $table->foreignId('page_type_id')->nullable()->after('page_type')->constrained('page_types')->nullOnDelete();
+    Schema::table('wbcms_pages', function (Blueprint $table) {
+      $table->foreignId('page_type_id')->nullable()->after('page_type')->constrained('wbcms_page_types')->nullOnDelete();
     });
 
-    Schema::table('layouts', function (Blueprint $table) {
-      $table->foreignId('layout_type_id')->nullable()->after('slug')->constrained('layout_types')->nullOnDelete();
+    Schema::table('wbcms_layouts', function (Blueprint $table) {
+      $table->foreignId('layout_type_id')->nullable()->after('slug')->constrained('wbcms_layout_types')->nullOnDelete();
     });
 
-    Schema::table('blocks', function (Blueprint $table) {
-      $table->foreignId('block_type_id')->nullable()->after('type')->constrained('block_types')->nullOnDelete();
-      $table->foreignId('slot_type_id')->nullable()->after('slot')->constrained('slot_types')->nullOnDelete();
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
+      $table->foreignId('block_type_id')->nullable()->after('type')->constrained('wbcms_block_types')->nullOnDelete();
+      $table->foreignId('slot_type_id')->nullable()->after('slot')->constrained('wbcms_slot_types')->nullOnDelete();
     });
 
     $this->backfillPageTypes();
@@ -30,23 +30,23 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::table('blocks', function (Blueprint $table) {
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
       $table->dropConstrainedForeignId('slot_type_id');
       $table->dropConstrainedForeignId('block_type_id');
     });
 
-    Schema::table('layouts', function (Blueprint $table) {
+    Schema::table('wbcms_layouts', function (Blueprint $table) {
       $table->dropConstrainedForeignId('layout_type_id');
     });
 
-    Schema::table('pages', function (Blueprint $table) {
+    Schema::table('wbcms_pages', function (Blueprint $table) {
       $table->dropConstrainedForeignId('page_type_id');
     });
   }
 
   private function backfillPageTypes(): void
   {
-    $slugs = DB::table('pages')
+    $slugs = DB::table('wbcms_pages')
       ->whereNotNull('page_type')
       ->distinct()
       ->pluck('page_type')
@@ -54,13 +54,13 @@ return new class extends Migration
       ->values();
 
     foreach ($slugs as $slug) {
-      $id = $this->upsertCatalogItem('page_types', [
+      $id = $this->upsertCatalogItem('wbcms_page_types', [
         'name' => $this->titleFromSlug($slug),
         'slug' => $slug,
         'status' => 'published',
       ]);
 
-      DB::table('pages')
+      DB::table('wbcms_pages')
         ->where('page_type', $slug)
         ->whereNull('page_type_id')
         ->update(['page_type_id' => $id]);
@@ -69,7 +69,7 @@ return new class extends Migration
 
   private function backfillLayoutTypes(): void
   {
-    if (! DB::table('layouts')->exists()) {
+    if (! DB::table('wbcms_layouts')->exists()) {
       return;
     }
 
@@ -83,25 +83,25 @@ return new class extends Migration
       'system' => 'System',
     ];
 
-    $defaultId = $this->upsertCatalogItem('layout_types', [
+    $defaultId = $this->upsertCatalogItem('wbcms_layout_types', [
       'name' => 'Default',
       'slug' => 'default',
       'status' => 'published',
     ]);
 
     foreach ($knownLayoutTypes as $slug => $name) {
-      $this->upsertCatalogItem('layout_types', [
+      $this->upsertCatalogItem('wbcms_layout_types', [
         'name' => $name,
         'slug' => $slug,
         'status' => 'published',
       ]);
     }
 
-    foreach (DB::table('layouts')->select('id', 'slug')->whereNull('layout_type_id')->get() as $layout) {
+    foreach (DB::table('wbcms_layouts')->select('id', 'slug')->whereNull('layout_type_id')->get() as $layout) {
       $targetSlug = array_key_exists($layout->slug, $knownLayoutTypes) ? $layout->slug : 'default';
-      $layoutTypeId = DB::table('layout_types')->where('slug', $targetSlug)->value('id') ?: $defaultId;
+      $layoutTypeId = DB::table('wbcms_layout_types')->where('slug', $targetSlug)->value('id') ?: $defaultId;
 
-      DB::table('layouts')
+      DB::table('wbcms_layouts')
         ->where('id', $layout->id)
         ->update(['layout_type_id' => $layoutTypeId]);
     }
@@ -109,7 +109,7 @@ return new class extends Migration
 
   private function backfillBlockTypes(): void
   {
-    $slugs = DB::table('blocks')
+    $slugs = DB::table('wbcms_blocks')
       ->whereNotNull('type')
       ->distinct()
       ->pluck('type')
@@ -117,16 +117,16 @@ return new class extends Migration
       ->values();
 
     foreach ($slugs as $slug) {
-      $sourceType = DB::table('blocks')->where('type', $slug)->value('source_type');
+      $sourceType = DB::table('wbcms_blocks')->where('type', $slug)->value('source_type');
 
-      $id = $this->upsertCatalogItem('block_types', [
+      $id = $this->upsertCatalogItem('wbcms_block_types', [
         'name' => $this->titleFromSlug($slug),
         'slug' => $slug,
         'source_type' => $sourceType ?: 'static',
         'status' => 'published',
       ]);
 
-      DB::table('blocks')
+      DB::table('wbcms_blocks')
         ->where('type', $slug)
         ->whereNull('block_type_id')
         ->update(['block_type_id' => $id]);
@@ -135,7 +135,7 @@ return new class extends Migration
 
   private function backfillSlotTypes(): void
   {
-    $slugs = DB::table('blocks')
+    $slugs = DB::table('wbcms_blocks')
       ->whereNotNull('slot')
       ->distinct()
       ->pluck('slot')
@@ -143,13 +143,13 @@ return new class extends Migration
       ->values();
 
     foreach ($slugs as $slug) {
-      $id = $this->upsertCatalogItem('slot_types', [
+      $id = $this->upsertCatalogItem('wbcms_slot_types', [
         'name' => $this->titleFromSlug($slug),
         'slug' => $slug,
         'status' => 'published',
       ]);
 
-      DB::table('blocks')
+      DB::table('wbcms_blocks')
         ->where('slot', $slug)
         ->whereNull('slot_type_id')
         ->update(['slot_type_id' => $id]);

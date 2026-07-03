@@ -10,7 +10,7 @@ class SystemUpdateRunRetention
 {
   public function retainedRuns(?int $keep = null): Collection
   {
-    if (! Schema::hasTable('system_update_runs')) {
+    if (! Schema::hasTable('wbcms_system_update_runs')) {
       return collect();
     }
 
@@ -24,7 +24,7 @@ class SystemUpdateRunRetention
 
   public function prune(?int $keep = null): int
   {
-    if (! Schema::hasTable('system_update_runs')) {
+    if (! Schema::hasTable('wbcms_system_update_runs')) {
       return 0;
     }
 

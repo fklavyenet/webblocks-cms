@@ -43,7 +43,7 @@ class CoreLayoutCatalogSyncer
 
     $summary['layouts'] = count(PageLayoutCatalog::definitions());
 
-    if (! Schema::hasTable('page_layout_slots')) {
+    if (! Schema::hasTable('wbcms_page_layout_slots')) {
       return $summary;
     }
 

@@ -60,7 +60,7 @@ class SiteRequest extends FormRequest
   {
     $site = $this->route('site');
     $site = $site instanceof Site ? $site : null;
-    $preservedLocaleIds = $site?->locales()->pluck('locales.id')->map(fn ($id) => (int) $id)->all() ?? [];
+    $preservedLocaleIds = $site?->locales()->pluck((new Locale)->qualifyColumn('id'))->map(fn ($id) => (int) $id)->all() ?? [];
 
     return [
       'name' => ['required', 'string', 'max:255'],
@@ -98,7 +98,7 @@ class SiteRequest extends FormRequest
 
   private function normalizedLocaleIds(Collection $submittedLocaleIds, ?Site $site, int $defaultLocaleId): Collection
   {
-    $fallbackLocaleIds = $site?->locales()->pluck('locales.id') ?? collect();
+    $fallbackLocaleIds = $site?->locales()->pluck((new Locale)->qualifyColumn('id')) ?? collect();
 
     $localeIds = $submittedLocaleIds->isNotEmpty()
           ? $submittedLocaleIds

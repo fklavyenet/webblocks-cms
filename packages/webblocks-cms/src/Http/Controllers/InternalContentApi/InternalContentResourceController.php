@@ -611,7 +611,7 @@ class InternalContentResourceController extends Controller
   public function storeMedia(Request $request): JsonResponse
   {
     $validator = Validator::make($request->all(), [
-      'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+      'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
       'file' => $this->mediaFileRules(),
       'title' => ['nullable', 'string', 'max:255'],
       'alt_text' => ['nullable', 'string', 'max:255'],
@@ -709,7 +709,7 @@ class InternalContentResourceController extends Controller
   public function moveMedia(Request $request, Media $media): JsonResponse
   {
     $validator = Validator::make($request->all(), [
-      'folder_id' => ['present', 'nullable', 'integer', 'exists:media_folders,id'],
+      'folder_id' => ['present', 'nullable', 'integer', 'exists:wbcms_media_folders,id'],
     ]);
 
     if ($validator->fails()) {

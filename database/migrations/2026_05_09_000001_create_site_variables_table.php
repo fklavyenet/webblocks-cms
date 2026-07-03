@@ -8,9 +8,9 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('site_variables', function (Blueprint $table): void {
+    Schema::create('wbcms_site_variables', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained()->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('key', 100);
       $table->string('label')->nullable();
       $table->text('value')->nullable();
@@ -26,6 +26,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('site_variables');
+    Schema::dropIfExists('wbcms_site_variables');
   }
 };

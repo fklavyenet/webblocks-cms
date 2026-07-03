@@ -11,10 +11,10 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('block_text_translations', function (Blueprint $table) {
+    Schema::create('wbcms_block_text_translations', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('title')->nullable();
       $table->string('subtitle')->nullable();
       $table->longText('content')->nullable();
@@ -23,20 +23,20 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    Schema::create('block_button_translations', function (Blueprint $table) {
+    Schema::create('wbcms_block_button_translations', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('title');
       $table->timestamps();
 
       $table->unique(['block_id', 'locale_id']);
     });
 
-    Schema::create('block_image_translations', function (Blueprint $table) {
+    Schema::create('wbcms_block_image_translations', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('caption')->nullable();
       $table->string('alt_text')->nullable();
       $table->timestamps();
@@ -44,10 +44,10 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    Schema::create('block_contact_form_translations', function (Blueprint $table) {
+    Schema::create('wbcms_block_contact_form_translations', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('title')->nullable();
       $table->longText('content')->nullable();
       $table->string('submit_label')->nullable();
@@ -69,7 +69,7 @@ return new class extends Migration
       $type = $block->typeSlug();
 
       if (in_array($type, $textTypes, true)) {
-        DB::table('block_text_translations')->updateOrInsert(
+        DB::table('wbcms_block_text_translations')->updateOrInsert(
           ['block_id' => $block->id, 'locale_id' => $defaultLocaleId],
           [
             'title' => $block->getRawOriginal('title'),
@@ -84,7 +84,7 @@ return new class extends Migration
       }
 
       if ($type === 'button') {
-        DB::table('block_button_translations')->updateOrInsert(
+        DB::table('wbcms_block_button_translations')->updateOrInsert(
           ['block_id' => $block->id, 'locale_id' => $defaultLocaleId],
           [
             'title' => $block->getRawOriginal('title') ?: 'Open link',
@@ -97,7 +97,7 @@ return new class extends Migration
       }
 
       if ($type === 'image') {
-        DB::table('block_image_translations')->updateOrInsert(
+        DB::table('wbcms_block_image_translations')->updateOrInsert(
           ['block_id' => $block->id, 'locale_id' => $defaultLocaleId],
           [
             'caption' => $block->getRawOriginal('title'),
@@ -115,7 +115,7 @@ return new class extends Migration
           ? $block->settings
           : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
 
-        DB::table('block_contact_form_translations')->updateOrInsert(
+        DB::table('wbcms_block_contact_form_translations')->updateOrInsert(
           ['block_id' => $block->id, 'locale_id' => $defaultLocaleId],
           [
             'title' => $block->getRawOriginal('title'),
@@ -132,9 +132,9 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('block_contact_form_translations');
-    Schema::dropIfExists('block_image_translations');
-    Schema::dropIfExists('block_button_translations');
-    Schema::dropIfExists('block_text_translations');
+    Schema::dropIfExists('wbcms_block_contact_form_translations');
+    Schema::dropIfExists('wbcms_block_image_translations');
+    Schema::dropIfExists('wbcms_block_button_translations');
+    Schema::dropIfExists('wbcms_block_text_translations');
   }
 };

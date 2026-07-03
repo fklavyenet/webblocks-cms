@@ -3,14 +3,13 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
-class PageSlot extends Model
+class PageSlot extends CmsModel
 {
   use HasFactory;
   use ReindexesPublicSearch;

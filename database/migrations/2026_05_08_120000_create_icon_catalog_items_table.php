@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('icon_catalog_items', function (Blueprint $table): void {
+    Schema::create('wbcms_icon_catalog_items', function (Blueprint $table): void {
       $table->id();
       $table->string('source')->default('webblocks-ui');
       $table->string('slug');
@@ -30,6 +30,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('icon_catalog_items');
+    Schema::dropIfExists('wbcms_icon_catalog_items');
   }
 };

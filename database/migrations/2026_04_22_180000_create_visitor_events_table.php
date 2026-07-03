@@ -8,11 +8,11 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('visitor_events', function (Blueprint $table) {
+    Schema::create('wbcms_visitor_events', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-      $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
-      $table->foreignId('locale_id')->nullable()->constrained('locales')->nullOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
+      $table->foreignId('locale_id')->nullable()->constrained('wbcms_locales')->nullOnDelete();
       $table->string('path');
       $table->text('referrer')->nullable();
       $table->string('utm_source')->nullable();
@@ -37,6 +37,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('visitor_events');
+    Schema::dropIfExists('wbcms_visitor_events');
   }
 };

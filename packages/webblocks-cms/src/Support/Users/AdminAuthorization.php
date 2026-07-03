@@ -123,7 +123,7 @@ class AdminAuthorization
       return $query;
     }
 
-    return $query->whereIn('sites.id', $user->accessibleSiteIds());
+    return $query->whereIn((new Site)->qualifyColumn('id'), $user->accessibleSiteIds());
   }
 
   public function scopePagesForUser(Builder $query, User $user): Builder
@@ -175,8 +175,8 @@ class AdminAuthorization
         ->where('uploaded_by', $user->id)
         ->orWhereHas('blocks.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()))
         ->orWhereHas('blockMedia.block.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()))
-        ->orWhereHas('sitesUsingAsFavicon', fn (Builder $siteQuery) => $siteQuery->whereIn('sites.id', $user->accessibleSiteIds()))
-        ->orWhereHas('sitesUsingAsSocialImage', fn (Builder $siteQuery) => $siteQuery->whereIn('sites.id', $user->accessibleSiteIds()))
+        ->orWhereHas('sitesUsingAsFavicon', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $user->accessibleSiteIds()))
+        ->orWhereHas('sitesUsingAsSocialImage', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $user->accessibleSiteIds()))
         ->orWhereHas('pageTranslationsUsingAsOgImage.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
     });
   }

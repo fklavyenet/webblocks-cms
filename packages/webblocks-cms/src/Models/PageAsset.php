@@ -3,10 +3,9 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PageAsset extends Model
+class PageAsset extends CmsModel
 {
   use HasFactory;
 

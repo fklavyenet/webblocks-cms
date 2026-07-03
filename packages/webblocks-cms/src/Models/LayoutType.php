@@ -3,10 +3,9 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class LayoutType extends Model
+class LayoutType extends CmsModel
 {
   use HasFactory;
 

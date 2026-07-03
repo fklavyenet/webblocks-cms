@@ -7,13 +7,13 @@ return new class extends Migration
 {
   public function up(): void
   {
-    $groups = DB::table('blocks')
+    $groups = DB::table('wbcms_blocks')
       ->select('page_id', 'slot_type_id', 'parent_id')
       ->groupBy('page_id', 'slot_type_id', 'parent_id')
       ->get();
 
     foreach ($groups as $group) {
-      $siblings = DB::table('blocks')
+      $siblings = DB::table('wbcms_blocks')
         ->where('page_id', $group->page_id)
         ->where('slot_type_id', $group->slot_type_id)
         ->where(function ($query) use ($group) {
@@ -34,7 +34,7 @@ return new class extends Migration
           continue;
         }
 
-        DB::table('blocks')
+        DB::table('wbcms_blocks')
           ->where('id', $sibling->id)
           ->update([
             'sort_order' => $index,

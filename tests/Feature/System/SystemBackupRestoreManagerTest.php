@@ -12,6 +12,7 @@ use RuntimeException;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\System\DatabaseRestoreRunner;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreMaintenanceRunner;
@@ -272,7 +273,7 @@ class SystemBackupRestoreManagerTest extends TestCase
     $this->assertNull($result->restoreRecord?->source_backup_id);
     $this->assertSame($safetyBackup->id, $result->restoreRecord?->safety_backup_id);
     $this->assertSame(SystemBackupRestore::STATUS_COMPLETED, $result->restoreRecord?->status);
-    $this->assertDatabaseMissing('system_backups', ['id' => $sourceBackup->id]);
+    $this->assertDatabaseMissing(CmsTable::name('system_backups'), ['id' => $sourceBackup->id]);
   }
 
   #[Test]

@@ -8,9 +8,9 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('assets', function (Blueprint $table) {
+    Schema::create('wbcms_assets', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('folder_id')->nullable()->constrained('asset_folders')->nullOnDelete();
+      $table->foreignId('folder_id')->nullable()->constrained('wbcms_asset_folders')->nullOnDelete();
       $table->string('disk')->default('public');
       $table->string('path');
       $table->string('filename');
@@ -37,6 +37,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('assets');
+    Schema::dropIfExists('wbcms_assets');
   }
 };

@@ -55,8 +55,8 @@ class LocaleResolver
 
     if ($site) {
       $query->whereHas('sites', fn ($sites) => $sites
-        ->where('sites.id', $site->id)
-        ->where('site_locales.is_enabled', true));
+        ->where((new Site)->qualifyColumn('id'), $site->id)
+        ->where('wbcms_site_locales.is_enabled', true));
     }
 
     return $query->first();

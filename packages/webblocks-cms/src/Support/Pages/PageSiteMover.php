@@ -68,7 +68,7 @@ class PageSiteMover
         ])
         ->values();
 
-      DB::table('page_translations')
+      DB::table('wbcms_page_translations')
         ->where('page_id', $lockedPage->id)
         ->where('site_id', $sourceSite->id)
         ->delete();
@@ -95,7 +95,7 @@ class PageSiteMover
         ])
         ->all();
 
-      DB::table('page_translations')->insert($translationRows);
+      DB::table('wbcms_page_translations')->insert($translationRows);
 
       $lockedPage->slots()->whereIn('id', $validation->sharedSlotRemaps->keys()->all())->get()
         ->each(function ($slot) use ($validation): void {
@@ -108,7 +108,7 @@ class PageSiteMover
         ->where('page_id', $lockedPage->id)
         ->update(['site_id' => $targetSite->id]);
 
-      DB::table('page_revisions')
+      DB::table('wbcms_page_revisions')
         ->where('page_id', $lockedPage->id)
         ->update(['site_id' => $targetSite->id]);
 

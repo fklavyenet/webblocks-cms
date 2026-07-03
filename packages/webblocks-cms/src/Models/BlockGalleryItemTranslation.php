@@ -3,10 +3,9 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class BlockGalleryItemTranslation extends Model
+class BlockGalleryItemTranslation extends CmsModel
 {
   use HasFactory;
 

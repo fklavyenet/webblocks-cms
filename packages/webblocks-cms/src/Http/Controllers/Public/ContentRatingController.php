@@ -29,7 +29,7 @@ class ContentRatingController extends Controller
     $redirects = app(ContactFormRedirects::class);
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $block->page?->publicUrl() ?: url('/'));
 
-    if (! Schema::hasTable('content_ratings')) {
+    if (! Schema::hasTable('wbcms_content_ratings')) {
       return redirect($sourceUrl)
         ->with('rating_success_block_id', $block->id)
         ->with('rating_success_message', 'Ratings are temporarily unavailable.');

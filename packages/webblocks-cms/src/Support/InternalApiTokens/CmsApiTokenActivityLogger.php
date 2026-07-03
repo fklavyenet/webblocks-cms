@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\CmsApiTokenActivityLog;
 class CmsApiTokenActivityLogger
 {
   private const ACTIVITY_LOG_ATTRIBUTE = 'cms_api_token_activity_log_id';
+
   private const RETAINED_LOGS_PER_TOKEN = 10;
 
   public function authenticated(CmsApiToken $token, Request $request): void
@@ -84,7 +85,7 @@ class CmsApiTokenActivityLogger
 
   private function schemaReady(): bool
   {
-    return Schema::hasTable('cms_api_token_activity_logs')
-      && Schema::hasColumn('cms_api_token_activity_logs', 'cms_api_token_id');
+    return Schema::hasTable('wbcms_cms_api_token_activity_logs')
+      && Schema::hasColumn('wbcms_cms_api_token_activity_logs', 'cms_api_token_id');
   }
 }

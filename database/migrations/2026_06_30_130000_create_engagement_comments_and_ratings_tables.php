@@ -8,11 +8,11 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('comment_entries', function (Blueprint $table): void {
+    Schema::create('wbcms_comment_entries', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->nullable()->constrained()->nullOnDelete();
-      $table->foreignId('page_id')->nullable()->constrained()->nullOnDelete();
-      $table->foreignId('block_id')->nullable()->constrained()->nullOnDelete();
+      $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
+      $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
+      $table->foreignId('block_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
       $table->string('author_name')->nullable();
       $table->longText('body');
       $table->string('status')->default('pending');
@@ -35,11 +35,11 @@ return new class extends Migration
       $table->index(['spam_score', 'created_at']);
     });
 
-    Schema::create('content_ratings', function (Blueprint $table): void {
+    Schema::create('wbcms_content_ratings', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->nullable()->constrained()->nullOnDelete();
-      $table->foreignId('page_id')->nullable()->constrained()->nullOnDelete();
-      $table->foreignId('block_id')->nullable()->constrained()->nullOnDelete();
+      $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
+      $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
+      $table->foreignId('block_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
       $table->unsignedTinyInteger('rating_value');
       $table->unsignedTinyInteger('rating_max')->default(5);
       $table->string('status')->default('active');
@@ -60,7 +60,7 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('content_ratings');
-    Schema::dropIfExists('comment_entries');
+    Schema::dropIfExists('wbcms_content_ratings');
+    Schema::dropIfExists('wbcms_comment_entries');
   }
 };

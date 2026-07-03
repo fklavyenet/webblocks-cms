@@ -10,9 +10,9 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('site_domains', function (Blueprint $table): void {
+    Schema::create('wbcms_site_domains', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('domain')->unique();
       $table->boolean('is_primary')->default(false);
       $table->boolean('redirect_to_primary')->default(false);
@@ -25,7 +25,7 @@ return new class extends Migration
     $normalizer = app(SiteDomainNormalizer::class);
     $now = now();
 
-    DB::table('sites')
+    DB::table('wbcms_sites')
       ->select(['id', 'domain'])
       ->whereNotNull('domain')
       ->orderBy('id')
@@ -37,7 +37,7 @@ return new class extends Migration
           return;
         }
 
-        DB::table('site_domains')->updateOrInsert(
+        DB::table('wbcms_site_domains')->updateOrInsert(
           ['domain' => $domain],
           [
             'site_id' => $site->id,
@@ -53,6 +53,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('site_domains');
+    Schema::dropIfExists('wbcms_site_domains');
   }
 };

@@ -26,7 +26,7 @@ class SitePromotionDryRunRequest extends FormRequest
     return [
       'archive' => ['required_without:archive_path', 'nullable', 'file', 'mimes:zip'],
       'archive_path' => ['required_without:archive', 'nullable', 'string', 'max:500'],
-      'target_site_id' => ['required', 'integer', 'exists:sites,id'],
+      'target_site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'strategy' => ['required', Rule::in(['additive_update', 'mirror'])],
       'apply_assets' => ['nullable', 'boolean'],
     ];

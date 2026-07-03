@@ -36,7 +36,7 @@ return new class extends Migration
         $site->locales()->syncWithoutDetaching([$defaultLocaleId => ['is_enabled' => true]]);
       });
 
-      DB::table('system_settings')->updateOrInsert(
+      DB::table('wbcms_system_settings')->updateOrInsert(
         ['key' => 'system.default_locale'],
         ['value' => Locale::query()->whereKey($defaultLocaleId)->value('code')],
       );

@@ -20,6 +20,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
@@ -281,26 +282,26 @@ PHP;
       'is_admin' => 1,
       'is_active' => 1,
     ]);
-    $this->assertDatabaseHas('sites', [
+    $this->assertDatabaseHas(CmsTable::name('sites'), [
       'handle' => 'consumer-site',
       'name' => 'Consumer Site',
       'is_primary' => 1,
     ]);
-    $this->assertDatabaseHas('site_domains', [
+    $this->assertDatabaseHas(CmsTable::name('site_domains'), [
       'domain' => $expectedHost !== '' ? $expectedHost : 'localhost',
       'is_primary' => 1,
       'status' => 'active',
     ]);
-    $this->assertDatabaseHas('locales', [
+    $this->assertDatabaseHas(CmsTable::name('locales'), [
       'code' => 'en',
       'is_default' => 1,
       'is_enabled' => 1,
     ]);
-    $this->assertDatabaseHas('system_settings', [
+    $this->assertDatabaseHas(CmsTable::name('system_settings'), [
       'key' => InstalledVersionStore::VERSION_KEY,
       'value' => WebBlocks::version(),
     ]);
-    $this->assertDatabaseHas('system_settings', [
+    $this->assertDatabaseHas(CmsTable::name('system_settings'), [
       'key' => InstallState::INSTALL_COMPLETED_AT,
     ]);
 
@@ -308,8 +309,8 @@ PHP;
     $this->assertGreaterThan(0, PageLayout::query()->count());
     $this->assertEmpty(array_diff(app(CoreBlockTypeCatalogSyncer::class)->slugs(), BlockType::query()->pluck('slug')->all()));
     $this->assertEmpty(array_diff($this->coreLayoutSlotTypeSlugs(), SlotType::query()->pluck('slug')->all()));
-    $this->assertDatabaseHas('block_types', ['slug' => 'card-grid', 'status' => 'draft']);
-    $this->assertDatabaseHas('block_types', ['slug' => 'navigation-auto', 'status' => 'published']);
+    $this->assertDatabaseHas(CmsTable::name('block_types'), ['slug' => 'card-grid', 'status' => 'draft']);
+    $this->assertDatabaseHas(CmsTable::name('block_types'), ['slug' => 'navigation-auto', 'status' => 'published']);
     $this->assertTrue(Page::query()->exists());
     $this->assertFileExists(public_path('cms/brand/logo-mark.svg'));
     $this->assertFileExists(public_path('cms/brand/favicon-32x32.png'));
@@ -369,11 +370,11 @@ PHP;
       '--no-interaction' => true,
     ])->assertExitCode(0);
 
-    $this->assertDatabaseHas('block_types', ['slug' => 'header-actions']);
-    $this->assertDatabaseHas('block_types', ['slug' => 'card-grid']);
-    $this->assertDatabaseHas('block_types', ['slug' => 'navigation-auto']);
-    $this->assertDatabaseHas('slot_types', ['slug' => 'footer']);
-    $this->assertDatabaseHas('page_layout_slots', ['slot_name' => 'footer']);
+    $this->assertDatabaseHas(CmsTable::name('block_types'), ['slug' => 'header-actions']);
+    $this->assertDatabaseHas(CmsTable::name('block_types'), ['slug' => 'card-grid']);
+    $this->assertDatabaseHas(CmsTable::name('block_types'), ['slug' => 'navigation-auto']);
+    $this->assertDatabaseHas(CmsTable::name('slot_types'), ['slug' => 'footer']);
+    $this->assertDatabaseHas(CmsTable::name('page_layout_slots'), ['slot_name' => 'footer']);
     $this->assertSame(1, BlockType::query()->where('slug', 'header-actions')->count());
     $this->assertSame(1, BlockType::query()->where('slug', 'card-grid')->count());
     $this->assertSame(1, BlockType::query()->where('slug', 'navigation-auto')->count());

@@ -11,7 +11,7 @@ return new class extends Migration
 
   public function up(): void
   {
-    if (! Schema::hasTable('pages')) {
+    if (! Schema::hasTable('wbcms_pages')) {
       return;
     }
 
@@ -23,7 +23,7 @@ return new class extends Migration
       throw new RuntimeException('Cannot repair pages site parent key because pages_id_site_id_unique exists with an unexpected definition.');
     }
 
-    Schema::table('pages', function (Blueprint $table): void {
+    Schema::table('wbcms_pages', function (Blueprint $table): void {
       $table->unique(['id', 'site_id'], self::INDEX_NAME);
     });
   }
@@ -51,10 +51,10 @@ return new class extends Migration
     return match ($driver) {
       'mysql', 'mariadb' => DB::table('information_schema.statistics')
         ->where('table_schema', DB::raw('database()'))
-        ->where('table_name', 'pages')
+        ->where('table_name', 'wbcms_pages')
         ->where('index_name', $index)
         ->exists(),
-      'sqlite' => collect(DB::select("pragma index_list('pages')"))
+      'sqlite' => collect(DB::select("pragma index_list('wbcms_pages')"))
         ->contains(fn (object $row): bool => ($row->name ?? null) === $index),
       default => false,
     };
@@ -67,7 +67,7 @@ return new class extends Migration
   {
     return DB::table('information_schema.statistics')
       ->where('table_schema', DB::raw('database()'))
-      ->where('table_name', 'pages')
+      ->where('table_name', 'wbcms_pages')
       ->where('index_name', self::INDEX_NAME)
       ->orderBy('seq_in_index')
       ->pluck('column_name')
@@ -79,7 +79,7 @@ return new class extends Migration
   {
     return DB::table('information_schema.statistics')
       ->where('table_schema', DB::raw('database()'))
-      ->where('table_name', 'pages')
+      ->where('table_name', 'wbcms_pages')
       ->where('index_name', self::INDEX_NAME)
       ->where('non_unique', 0)
       ->exists();
@@ -104,7 +104,7 @@ return new class extends Migration
 
   private function sqliteIndexIsUnique(): bool
   {
-    return collect(DB::select("pragma index_list('pages')"))
+    return collect(DB::select("pragma index_list('wbcms_pages')"))
       ->contains(fn (object $row): bool => ($row->name ?? null) === self::INDEX_NAME && (int) ($row->unique ?? 0) === 1);
   }
 };

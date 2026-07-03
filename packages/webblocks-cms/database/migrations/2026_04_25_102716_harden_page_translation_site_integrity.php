@@ -11,8 +11,8 @@ return new class extends Migration
 {
   public function up(): void
   {
-    if (! Schema::hasColumn('page_translations', 'site_id')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if (! Schema::hasColumn('wbcms_page_translations', 'site_id')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->foreignId('site_id')->nullable()->after('page_id');
       });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
       ->select(['id', 'site_id'])
       ->orderBy('id')
       ->get()
-      ->each(fn (Page $page) => DB::table('page_translations')
+      ->each(fn (Page $page) => DB::table('wbcms_page_translations')
         ->where('page_id', $page->id)
         ->update(['site_id' => $page->site_id]));
 
@@ -45,50 +45,50 @@ return new class extends Migration
       throw new RuntimeException('Cannot enforce site-scoped page translation path uniqueness because duplicate rows already exist.');
     }
 
-    if (! $this->hasIndex('pages', 'pages_id_site_id_unique')) {
-      Schema::table('pages', function (Blueprint $table) {
+    if (! $this->hasIndex('wbcms_pages', 'pages_id_site_id_unique')) {
+      Schema::table('wbcms_pages', function (Blueprint $table) {
         $table->unique(['id', 'site_id'], 'pages_id_site_id_unique');
       });
     }
 
-    if (! $this->hasForeignKey('page_translations', 'page_translations_site_id_foreign')) {
-      Schema::table('page_translations', function (Blueprint $table) {
-        $table->foreign('site_id')->references('id')->on('sites')->cascadeOnDelete();
+    if (! $this->hasForeignKey('wbcms_page_translations', 'page_translations_site_id_foreign')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
+        $table->foreign('site_id')->references('id')->on('wbcms_sites')->cascadeOnDelete();
       });
     }
 
-    if (! $this->hasForeignKey('page_translations', 'page_translations_page_id_site_id_foreign')) {
-      Schema::table('page_translations', function (Blueprint $table) {
-        $table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')->references(['id', 'site_id'])->on('pages')->cascadeOnDelete();
+    if (! $this->hasForeignKey('wbcms_page_translations', 'page_translations_page_id_site_id_foreign')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
+        $table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')->references(['id', 'site_id'])->on('wbcms_pages')->cascadeOnDelete();
       });
     }
 
-    if (! $this->hasIndex('page_translations', 'page_translations_site_locale_slug_unique')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if (! $this->hasIndex('wbcms_page_translations', 'page_translations_site_locale_slug_unique')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->unique(['site_id', 'locale_id', 'slug'], 'page_translations_site_locale_slug_unique');
       });
     }
 
-    if (! $this->hasIndex('page_translations', 'page_translations_site_locale_path_unique')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if (! $this->hasIndex('wbcms_page_translations', 'page_translations_site_locale_path_unique')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->unique(['site_id', 'locale_id', 'path'], 'page_translations_site_locale_path_unique');
       });
     }
 
-    if (! $this->hasIndex('page_translations', 'page_translations_site_id_page_id_index')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if (! $this->hasIndex('wbcms_page_translations', 'page_translations_site_id_page_id_index')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->index(['site_id', 'page_id']);
       });
     }
 
-    if (! $this->hasIndex('page_translations', 'page_translations_locale_id_site_id_index')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if (! $this->hasIndex('wbcms_page_translations', 'page_translations_locale_id_site_id_index')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->index(['locale_id', 'site_id']);
       });
     }
 
-    if ($this->columnIsNullable('page_translations', 'site_id')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->columnIsNullable('wbcms_page_translations', 'site_id')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->foreignId('site_id')->nullable(false)->change();
       });
     }
@@ -96,64 +96,64 @@ return new class extends Migration
 
   public function down(): void
   {
-    if (! Schema::hasColumn('page_translations', 'site_id')) {
+    if (! Schema::hasColumn('wbcms_page_translations', 'site_id')) {
       return;
     }
 
-    if ($this->hasForeignKey('page_translations', 'page_translations_site_id_foreign')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->hasForeignKey('wbcms_page_translations', 'page_translations_site_id_foreign')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->dropForeign(['site_id']);
       });
     }
 
-    if ($this->hasForeignKey('page_translations', 'page_translations_page_id_site_id_foreign')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->hasForeignKey('wbcms_page_translations', 'page_translations_page_id_site_id_foreign')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->dropForeign(['page_id', 'site_id']);
       });
     }
 
-    if ($this->hasIndex('page_translations', 'page_translations_site_locale_slug_unique')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->hasIndex('wbcms_page_translations', 'page_translations_site_locale_slug_unique')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->dropUnique('page_translations_site_locale_slug_unique');
       });
     }
 
-    if ($this->hasIndex('page_translations', 'page_translations_site_locale_path_unique')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->hasIndex('wbcms_page_translations', 'page_translations_site_locale_path_unique')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->dropUnique('page_translations_site_locale_path_unique');
       });
     }
 
-    if ($this->hasIndex('page_translations', 'page_translations_site_id_page_id_index')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->hasIndex('wbcms_page_translations', 'page_translations_site_id_page_id_index')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->dropIndex('page_translations_site_id_page_id_index');
       });
     }
 
-    if ($this->hasIndex('page_translations', 'page_translations_locale_id_site_id_index')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->hasIndex('wbcms_page_translations', 'page_translations_locale_id_site_id_index')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->dropIndex('page_translations_locale_id_site_id_index');
       });
     }
 
-    if ($this->hasIndex('pages', 'pages_id_site_id_unique')) {
-      Schema::table('pages', function (Blueprint $table) {
+    if ($this->hasIndex('wbcms_pages', 'pages_id_site_id_unique')) {
+      Schema::table('wbcms_pages', function (Blueprint $table) {
         $table->dropUnique('pages_id_site_id_unique');
       });
     }
 
-    Schema::table('page_translations', function (Blueprint $table) {
+    Schema::table('wbcms_page_translations', function (Blueprint $table) {
       $table->dropColumn('site_id');
     });
 
-    if (! $this->hasIndex('page_translations', 'page_translations_locale_id_slug_index')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if (! $this->hasIndex('wbcms_page_translations', 'page_translations_locale_id_slug_index')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->index(['locale_id', 'slug']);
       });
     }
 
-    if (! $this->hasIndex('page_translations', 'page_translations_locale_id_path_index')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if (! $this->hasIndex('wbcms_page_translations', 'page_translations_locale_id_path_index')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->index(['locale_id', 'path']);
       });
     }

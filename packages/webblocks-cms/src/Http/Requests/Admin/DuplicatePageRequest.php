@@ -53,11 +53,11 @@ class DuplicatePageRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'target_site_id' => ['required', 'integer', 'exists:sites,id'],
+      'target_site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'title' => ['required', 'string', 'max:255'],
       'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
       'translations' => ['nullable', 'array'],
-      'translations.*.locale_id' => ['required', 'integer', 'exists:locales,id'],
+      'translations.*.locale_id' => ['required', 'integer', 'exists:wbcms_locales,id'],
       'translations.*.name' => ['required', 'string', 'max:255'],
       'translations.*.slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
       'disable_incompatible_shared_slots' => ['nullable', 'boolean'],

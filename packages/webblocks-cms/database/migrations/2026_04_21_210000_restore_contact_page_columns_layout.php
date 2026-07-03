@@ -8,7 +8,7 @@ return new class extends Migration
   public function up(): void
   {
     DB::transaction(function (): void {
-      $pageId = DB::table('page_translations')
+      $pageId = DB::table('wbcms_page_translations')
         ->where('path', '/p/contact')
         ->value('page_id');
 
@@ -16,12 +16,12 @@ return new class extends Migration
         return;
       }
 
-      $contactInfo = DB::table('blocks')
+      $contactInfo = DB::table('wbcms_blocks')
         ->where('page_id', $pageId)
         ->where('type', 'contact-info')
         ->first();
 
-      $contactForm = DB::table('blocks')
+      $contactForm = DB::table('wbcms_blocks')
         ->where('page_id', $pageId)
         ->where('type', 'contact_form')
         ->first();
@@ -30,7 +30,7 @@ return new class extends Migration
         return;
       }
 
-      $columnsType = DB::table('block_types')
+      $columnsType = DB::table('wbcms_block_types')
         ->where('slug', 'columns')
         ->first();
 
@@ -41,7 +41,7 @@ return new class extends Migration
       $mainSlotTypeId = $contactInfo->slot_type_id ?: $contactForm->slot_type_id;
       $columnsSortOrder = min((int) $contactInfo->sort_order, (int) $contactForm->sort_order);
 
-      $existingColumns = DB::table('blocks')
+      $existingColumns = DB::table('wbcms_blocks')
         ->where('page_id', $pageId)
         ->where('type', 'columns')
         ->whereNull('parent_id')
@@ -54,7 +54,7 @@ return new class extends Migration
       if ($existingColumns) {
         $columnsId = $existingColumns->id;
 
-        DB::table('blocks')
+        DB::table('wbcms_blocks')
           ->where('id', $columnsId)
           ->update([
             'slot_type_id' => $mainSlotTypeId,
@@ -64,7 +64,7 @@ return new class extends Migration
             'updated_at' => $now,
           ]);
       } else {
-        $columnsId = DB::table('blocks')->insertGetId([
+        $columnsId = DB::table('wbcms_blocks')->insertGetId([
           'page_id' => $pageId,
           'parent_id' => null,
           'type' => 'columns',
@@ -88,7 +88,7 @@ return new class extends Migration
         ]);
       }
 
-      DB::table('blocks')
+      DB::table('wbcms_blocks')
         ->where('id', $contactInfo->id)
         ->update([
           'parent_id' => $columnsId,
@@ -98,7 +98,7 @@ return new class extends Migration
           'updated_at' => $now,
         ]);
 
-      DB::table('blocks')
+      DB::table('wbcms_blocks')
         ->where('id', $contactForm->id)
         ->update([
           'parent_id' => $columnsId,
@@ -113,7 +113,7 @@ return new class extends Migration
   public function down(): void
   {
     DB::transaction(function (): void {
-      $pageId = DB::table('page_translations')
+      $pageId = DB::table('wbcms_page_translations')
         ->where('path', '/p/contact')
         ->value('page_id');
 
@@ -121,7 +121,7 @@ return new class extends Migration
         return;
       }
 
-      $columns = DB::table('blocks')
+      $columns = DB::table('wbcms_blocks')
         ->where('page_id', $pageId)
         ->where('type', 'columns')
         ->whereNull('parent_id')
@@ -135,7 +135,7 @@ return new class extends Migration
 
       $now = now();
 
-      DB::table('blocks')
+      DB::table('wbcms_blocks')
         ->where('page_id', $pageId)
         ->where('parent_id', $columns->id)
         ->where('type', 'contact-info')
@@ -145,7 +145,7 @@ return new class extends Migration
           'updated_at' => $now,
         ]);
 
-      DB::table('blocks')
+      DB::table('wbcms_blocks')
         ->where('page_id', $pageId)
         ->where('parent_id', $columns->id)
         ->where('type', 'contact_form')
@@ -155,7 +155,7 @@ return new class extends Migration
           'updated_at' => $now,
         ]);
 
-      DB::table('blocks')
+      DB::table('wbcms_blocks')
         ->where('id', $columns->id)
         ->delete();
     });

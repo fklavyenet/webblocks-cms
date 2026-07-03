@@ -20,49 +20,49 @@ return new class extends Migration
   public function down(): void
   {
     foreach ([
-      'block_gallery_item_translations',
-      'block_contact_form_translations',
-      'block_image_translations',
-      'block_button_translations',
-      'block_text_translations',
-      'system_backup_restores',
-      'cms_api_token_activity_logs',
-      'cms_api_tokens',
-      'system_backups',
-      'system_update_runs',
-      'public_search_index',
-      'visitor_events',
-      'contact_messages',
-      'site_imports',
-      'site_exports',
-      'icon_catalog_items',
-      'page_assets',
-      'shared_slot_revisions',
-      'shared_slot_blocks',
-      'shared_slots',
-      'page_revisions',
-      'block_media',
-      'page_slots',
-      'blocks',
-      'page_translations',
-      'pages',
-      'page_layout_slots',
-      'page_layouts',
-      'layouts',
-      'site_variables',
-      'site_domains',
-      'site_user',
-      'site_locales',
-      'locales',
-      'sites',
-      'media',
-      'media_folders',
-      'navigation_items',
-      'system_settings',
-      'block_types',
-      'slot_types',
-      'layout_types',
-      'page_types',
+      'wbcms_block_gallery_item_translations',
+      'wbcms_block_contact_form_translations',
+      'wbcms_block_image_translations',
+      'wbcms_block_button_translations',
+      'wbcms_block_text_translations',
+      'wbcms_system_backup_restores',
+      'wbcms_cms_api_token_activity_logs',
+      'wbcms_cms_api_tokens',
+      'wbcms_system_backups',
+      'wbcms_system_update_runs',
+      'wbcms_public_search_index',
+      'wbcms_visitor_events',
+      'wbcms_contact_messages',
+      'wbcms_site_imports',
+      'wbcms_site_exports',
+      'wbcms_icon_catalog_items',
+      'wbcms_page_assets',
+      'wbcms_shared_slot_revisions',
+      'wbcms_shared_slot_blocks',
+      'wbcms_shared_slots',
+      'wbcms_page_revisions',
+      'wbcms_block_media',
+      'wbcms_page_slots',
+      'wbcms_blocks',
+      'wbcms_page_translations',
+      'wbcms_pages',
+      'wbcms_page_layout_slots',
+      'wbcms_page_layouts',
+      'wbcms_layouts',
+      'wbcms_site_variables',
+      'wbcms_site_domains',
+      'wbcms_site_user',
+      'wbcms_site_locales',
+      'wbcms_locales',
+      'wbcms_sites',
+      'wbcms_media',
+      'wbcms_media_folders',
+      'wbcms_navigation_items',
+      'wbcms_system_settings',
+      'wbcms_block_types',
+      'wbcms_slot_types',
+      'wbcms_layout_types',
+      'wbcms_page_types',
     ] as $table) {
       Schema::dropIfExists($table);
     }
@@ -128,7 +128,7 @@ return new class extends Migration
 
   private function createCatalogTables(): void
   {
-    $this->createTableIfMissing('page_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_page_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -139,7 +139,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('layout_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_layout_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -151,7 +151,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('slot_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_slot_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -163,7 +163,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('block_types', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_block_types', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -177,7 +177,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('system_settings', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_system_settings', function (Blueprint $table): void {
       $table->id();
       $table->string('key')->unique();
       $table->longText('value')->nullable();
@@ -187,7 +187,7 @@ return new class extends Migration
 
   private function createCoreSiteTables(): void
   {
-    $this->createTableIfMissing('sites', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_sites', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('handle')->unique();
@@ -195,8 +195,8 @@ return new class extends Migration
       $table->boolean('is_primary')->default(false);
       $table->string('display_name')->nullable();
       $table->string('tagline')->nullable();
-      $table->foreignId('favicon_media_id')->nullable()->constrained('media')->nullOnDelete();
-      $table->foreignId('social_image_media_id')->nullable()->constrained('media')->nullOnDelete();
+      $table->foreignId('favicon_media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();
+      $table->foreignId('social_image_media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();
       $table->string('contact_recipient_email')->nullable();
       $table->string('public_theme_preset')->nullable();
       $table->string('seo_title')->nullable();
@@ -205,7 +205,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('locales', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_locales', function (Blueprint $table): void {
       $table->id();
       $table->string('code')->unique();
       $table->string('name');
@@ -214,26 +214,26 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('site_locales', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_site_locales', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->boolean('is_enabled')->default(true);
       $table->timestamps();
       $table->unique(['site_id', 'locale_id']);
     });
 
-    $this->createTableIfMissing('site_user', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_site_user', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
       $table->timestamps();
       $table->unique(['user_id', 'site_id']);
     });
 
-    $this->createTableIfMissing('site_domains', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_site_domains', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('domain');
       $table->boolean('is_primary')->default(false);
       $table->boolean('redirect_to_primary')->default(false);
@@ -242,9 +242,9 @@ return new class extends Migration
       $table->unique(['site_id', 'domain']);
     });
 
-    $this->createTableIfMissing('site_variables', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_site_variables', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('key');
       $table->string('label');
       $table->text('value')->nullable();
@@ -259,15 +259,15 @@ return new class extends Migration
 
   private function createLayoutAndPageTables(): void
   {
-    $this->createTableIfMissing('layouts', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_layouts', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
-      $table->foreignId('layout_type_id')->nullable()->constrained('layout_types')->nullOnDelete();
+      $table->foreignId('layout_type_id')->nullable()->constrained('wbcms_layout_types')->nullOnDelete();
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('page_layouts', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_page_layouts', function (Blueprint $table): void {
       $table->id();
       $table->string('handle')->unique();
       $table->string('name');
@@ -282,10 +282,10 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('page_layout_slots', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_page_layout_slots', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('page_layout_id')->constrained('page_layouts')->cascadeOnDelete();
-      $table->foreignId('slot_type_id')->constrained('slot_types')->cascadeOnDelete();
+      $table->foreignId('page_layout_id')->constrained('wbcms_page_layouts')->cascadeOnDelete();
+      $table->foreignId('slot_type_id')->constrained('wbcms_slot_types')->cascadeOnDelete();
       $table->string('slot_name');
       $table->string('label')->nullable();
       $table->text('description')->nullable();
@@ -304,14 +304,14 @@ return new class extends Migration
       $table->unique(['page_layout_id', 'slot_name']);
     });
 
-    $this->createTableIfMissing('pages', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_pages', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('title')->nullable();
       $table->string('slug')->nullable();
       $table->string('page_type')->default('default');
-      $table->foreignId('page_type_id')->nullable()->constrained('page_types')->nullOnDelete();
-      $table->foreignId('layout_id')->nullable()->constrained('layouts')->nullOnDelete();
+      $table->foreignId('page_type_id')->nullable()->constrained('wbcms_page_types')->nullOnDelete();
+      $table->foreignId('layout_id')->nullable()->constrained('wbcms_layouts')->nullOnDelete();
       $table->json('settings')->nullable();
       $table->string('status')->default('draft');
       $table->timestamp('published_at')->nullable();
@@ -326,11 +326,11 @@ return new class extends Migration
       $table->unique(['id', 'site_id'], 'pages_id_site_id_unique');
     });
 
-    $this->createTableIfMissing('page_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_page_translations', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('name');
       $table->string('slug');
       $table->string('path');
@@ -339,7 +339,7 @@ return new class extends Migration
       $table->text('seo_keywords')->nullable();
       $table->string('og_title')->nullable();
       $table->text('og_description')->nullable();
-      $table->foreignId('og_image_media_id')->nullable()->constrained('media')->nullOnDelete();
+      $table->foreignId('og_image_media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();
       $table->timestamps();
       $table->unique(['page_id', 'locale_id']);
       $table->unique(['site_id', 'locale_id', 'slug'], 'page_translations_site_locale_slug_unique');
@@ -348,13 +348,13 @@ return new class extends Migration
       $table->index(['locale_id', 'site_id'], 'page_translations_locale_id_site_id_index');
       $table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')
         ->references(['id', 'site_id'])
-        ->on('pages')
+        ->on('wbcms_pages')
         ->cascadeOnDelete();
     });
 
-    $this->createTableIfMissing('page_assets', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_page_assets', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
       $table->string('type');
       $table->string('path');
       $table->string('load_position')->default('body_end');
@@ -366,10 +366,10 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('page_revisions', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_page_revisions', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('created_by')->nullable();
       $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('source')->nullable();
@@ -377,13 +377,13 @@ return new class extends Migration
       $table->string('label')->nullable();
       $table->text('reason')->nullable();
       $table->json('snapshot');
-      $table->foreignId('restored_from_page_revision_id')->nullable()->constrained('page_revisions')->nullOnDelete();
+      $table->foreignId('restored_from_page_revision_id')->nullable()->constrained('wbcms_page_revisions')->nullOnDelete();
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('shared_slots', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_shared_slots', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('name');
       $table->string('handle');
       $table->string('slot_name')->nullable();
@@ -395,12 +395,12 @@ return new class extends Migration
       $table->unique(['site_id', 'handle']);
     });
 
-    $this->createTableIfMissing('page_slots', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_page_slots', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
-      $table->foreignId('slot_type_id')->constrained('slot_types')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('slot_type_id')->constrained('wbcms_slot_types')->cascadeOnDelete();
       $table->string('source_type')->default('page');
-      $table->foreignId('shared_slot_id')->nullable()->constrained('shared_slots')->nullOnDelete();
+      $table->foreignId('shared_slot_id')->nullable()->constrained('wbcms_shared_slots')->nullOnDelete();
       $table->unsignedInteger('sort_order')->default(0);
       $table->json('settings')->nullable();
       $table->timestamps();
@@ -410,17 +410,17 @@ return new class extends Migration
 
   private function createMediaTables(): void
   {
-    $this->createTableIfMissing('media_folders', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_media_folders', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('parent_id')->nullable()->constrained('media_folders')->nullOnDelete();
+      $table->foreignId('parent_id')->nullable()->constrained('wbcms_media_folders')->nullOnDelete();
       $table->string('name');
       $table->string('slug')->nullable();
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('media', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_media', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('folder_id')->nullable()->constrained('media_folders')->nullOnDelete();
+      $table->foreignId('folder_id')->nullable()->constrained('wbcms_media_folders')->nullOnDelete();
       $table->string('disk')->default('public');
       $table->string('path');
       $table->string('filename');
@@ -444,21 +444,21 @@ return new class extends Migration
 
   private function createBlockAndNavigationTables(): void
   {
-    $this->createTableIfMissing('blocks', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_blocks', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
-      $table->foreignId('parent_id')->nullable()->constrained('blocks')->nullOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('parent_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
       $table->string('type');
-      $table->foreignId('block_type_id')->nullable()->constrained('block_types')->nullOnDelete();
+      $table->foreignId('block_type_id')->nullable()->constrained('wbcms_block_types')->nullOnDelete();
       $table->string('source_type')->default('static');
       $table->string('slot')->nullable();
-      $table->foreignId('slot_type_id')->nullable()->constrained('slot_types')->nullOnDelete();
+      $table->foreignId('slot_type_id')->nullable()->constrained('wbcms_slot_types')->nullOnDelete();
       $table->unsignedInteger('sort_order')->default(0);
       $table->string('title')->nullable();
       $table->string('subtitle')->nullable();
       $table->longText('content')->nullable();
       $table->string('url')->nullable();
-      $table->foreignId('media_id')->nullable()->constrained('media')->nullOnDelete();
+      $table->foreignId('media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();
       $table->string('variant')->nullable();
       $table->longText('meta')->nullable();
       $table->json('settings')->nullable();
@@ -467,29 +467,29 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('block_media', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_block_media', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('media_id')->constrained('media')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('media_id')->constrained('wbcms_media')->cascadeOnDelete();
       $table->string('role')->nullable();
       $table->unsignedInteger('position')->default(0);
       $table->timestamps();
       $table->index(['block_id', 'role', 'position']);
     });
 
-    $this->createTableIfMissing('shared_slot_blocks', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_shared_slot_blocks', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('parent_id')->nullable()->constrained('shared_slot_blocks')->nullOnDelete();
+      $table->foreignId('shared_slot_id')->constrained('wbcms_shared_slots')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('parent_id')->nullable()->constrained('wbcms_shared_slot_blocks')->nullOnDelete();
       $table->unsignedInteger('sort_order')->default(0);
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('shared_slot_revisions', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_shared_slot_revisions', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('shared_slot_id')->constrained('wbcms_shared_slots')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('source')->nullable();
@@ -501,15 +501,15 @@ return new class extends Migration
       $table->foreignId('restored_from_shared_slot_revision_id')->nullable();
       $table->foreign('restored_from_shared_slot_revision_id', 'ss_revisions_restored_from_fk')
         ->references('id')
-        ->on('shared_slot_revisions')
+        ->on('wbcms_shared_slot_revisions')
         ->nullOnDelete();
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('block_text_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_block_text_translations', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('title')->nullable();
       $table->string('eyebrow')->nullable();
       $table->string('subtitle')->nullable();
@@ -519,29 +519,29 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    $this->createTableIfMissing('block_button_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_block_button_translations', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('title')->nullable();
       $table->timestamps();
       $table->unique(['block_id', 'locale_id']);
     });
 
-    $this->createTableIfMissing('block_image_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_block_image_translations', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('caption')->nullable();
       $table->string('alt_text')->nullable();
       $table->timestamps();
       $table->unique(['block_id', 'locale_id']);
     });
 
-    $this->createTableIfMissing('block_contact_form_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_block_contact_form_translations', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('title')->nullable();
       $table->longText('content')->nullable();
       $table->string('submit_label')->nullable();
@@ -550,10 +550,10 @@ return new class extends Migration
       $table->unique(['block_id', 'locale_id']);
     });
 
-    $this->createTableIfMissing('block_gallery_item_translations', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_block_gallery_item_translations', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_media_id')->constrained('block_media')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_media_id')->constrained('wbcms_block_media')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('alt_text')->nullable();
       $table->string('caption')->nullable();
       $table->string('overlay_title')->nullable();
@@ -562,12 +562,12 @@ return new class extends Migration
       $table->unique(['block_media_id', 'locale_id']);
     });
 
-    $this->createTableIfMissing('navigation_items', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_navigation_items', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
+      $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
       $table->string('menu_key')->default('primary');
-      $table->foreignId('parent_id')->nullable()->constrained('navigation_items')->nullOnDelete();
-      $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
+      $table->foreignId('parent_id')->nullable()->constrained('wbcms_navigation_items')->nullOnDelete();
+      $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
       $table->string('title')->nullable();
       $table->string('link_type')->default('page');
       $table->string('url')->nullable();
@@ -582,11 +582,11 @@ return new class extends Migration
 
   private function createOperationalTables(): void
   {
-    $this->createTableIfMissing('public_search_index', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_public_search_index', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
       $table->string('title');
       $table->text('excerpt')->nullable();
       $table->string('url');
@@ -595,9 +595,9 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('site_exports', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_site_exports', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('status')->default('running');
       $table->boolean('includes_media')->default(true);
@@ -612,14 +612,14 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('site_imports', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_site_imports', function (Blueprint $table): void {
       $table->id();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('status')->default('running');
       $table->string('source_archive_name')->nullable();
       $table->string('archive_disk')->nullable();
       $table->string('archive_path')->nullable();
-      $table->foreignId('target_site_id')->nullable()->constrained('sites')->nullOnDelete();
+      $table->foreignId('target_site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
       $table->string('imported_site_handle')->nullable();
       $table->string('imported_site_domain')->nullable();
       $table->json('summary_json')->nullable();
@@ -629,10 +629,10 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('contact_messages', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_contact_messages', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_id')->nullable()->constrained('blocks')->nullOnDelete();
-      $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
+      $table->foreignId('block_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
+      $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
       $table->string('name');
       $table->string('email');
       $table->string('subject')->nullable();
@@ -654,11 +654,11 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('visitor_events', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_visitor_events', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
-      $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
-      $table->foreignId('locale_id')->nullable()->constrained('locales')->nullOnDelete();
+      $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
+      $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
+      $table->foreignId('locale_id')->nullable()->constrained('wbcms_locales')->nullOnDelete();
       $table->string('path');
       $table->string('tracking_mode')->default('basic');
       $table->text('referrer')->nullable();
@@ -677,7 +677,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('icon_catalog_items', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_icon_catalog_items', function (Blueprint $table): void {
       $table->id();
       $table->string('source')->default('webblocks-ui');
       $table->string('slug');
@@ -693,7 +693,7 @@ return new class extends Migration
       $table->unique(['source', 'slug']);
     });
 
-    $this->createTableIfMissing('system_update_runs', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_system_update_runs', function (Blueprint $table): void {
       $table->id();
       $table->string('from_version')->nullable();
       $table->string('to_version')->nullable();
@@ -712,7 +712,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('cms_api_tokens', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_cms_api_tokens', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('token_hash', 128)->unique();
@@ -728,9 +728,9 @@ return new class extends Migration
       $table->index(['revoked_at', 'created_at']);
     });
 
-    $this->createTableIfMissing('cms_api_token_activity_logs', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_cms_api_token_activity_logs', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('cms_api_token_id')->constrained('cms_api_tokens')->cascadeOnDelete();
+      $table->foreignId('cms_api_token_id')->constrained('wbcms_cms_api_tokens')->cascadeOnDelete();
       $table->timestamp('occurred_at')->useCurrent();
       $table->string('status', 32);
       $table->string('method', 12);
@@ -744,7 +744,7 @@ return new class extends Migration
       $table->index(['cms_api_token_id', 'occurred_at']);
     });
 
-    $this->createTableIfMissing('system_backups', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_system_backups', function (Blueprint $table): void {
       $table->id();
       $table->string('type')->default('manual');
       $table->string('status')->default('running');
@@ -765,13 +765,13 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    $this->createTableIfMissing('system_backup_restores', function (Blueprint $table): void {
+    $this->createTableIfMissing('wbcms_system_backup_restores', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('source_backup_id')->nullable()->constrained('system_backups')->nullOnDelete();
+      $table->foreignId('source_backup_id')->nullable()->constrained('wbcms_system_backups')->nullOnDelete();
       $table->string('source_archive_disk')->nullable();
       $table->string('source_archive_path')->nullable();
       $table->string('source_archive_filename')->nullable();
-      $table->foreignId('safety_backup_id')->nullable()->constrained('system_backups')->nullOnDelete();
+      $table->foreignId('safety_backup_id')->nullable()->constrained('wbcms_system_backups')->nullOnDelete();
       $table->string('status')->default('completed');
       $table->json('restored_parts')->nullable();
       $table->json('manifest')->nullable();

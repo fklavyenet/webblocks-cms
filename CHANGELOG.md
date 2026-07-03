@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.214
+
+- Bumped CMS to `1.32.214`.
+- Prefix CMS-owned database tables with `wbcms_` on fresh installs so WebBlocks CMS can coexist more cleanly inside host Laravel applications without claiming generic table names.
+- Add the package update migration that renames existing CMS tables to `wbcms_*` while leaving the host-owned `users` table untouched, and route CMS models, validation rules, pivots, install checks, backups, updates, and search queries through the prefixed package table names.
+
 ## 1.32.213
 
 - Bumped CMS to `1.32.213`.

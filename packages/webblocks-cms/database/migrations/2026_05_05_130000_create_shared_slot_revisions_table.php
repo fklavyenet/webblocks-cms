@@ -8,10 +8,10 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('shared_slot_revisions', function (Blueprint $table) {
+    Schema::create('wbcms_shared_slot_revisions', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('shared_slot_id')->constrained('shared_slots', indexName: 'ssr_shared_slot_fk')->cascadeOnDelete();
-      $table->foreignId('site_id')->constrained('sites', indexName: 'ssr_site_fk')->cascadeOnDelete();
+      $table->foreignId('shared_slot_id')->constrained('wbcms_shared_slots', indexName: 'ssr_shared_slot_fk')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites', indexName: 'ssr_site_fk')->cascadeOnDelete();
       $table->foreignId('user_id')->nullable()->constrained('users', indexName: 'ssr_user_fk')->nullOnDelete();
       $table->string('source_event', 100);
       $table->string('label')->nullable();
@@ -19,7 +19,7 @@ return new class extends Migration
       $table->json('snapshot');
       $table->foreignId('restored_from_shared_slot_revision_id')
         ->nullable()
-        ->constrained('shared_slot_revisions', indexName: 'ssr_restored_from_fk')
+        ->constrained('wbcms_shared_slot_revisions', indexName: 'ssr_restored_from_fk')
         ->nullOnDelete();
       $table->timestamps();
 
@@ -31,6 +31,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('shared_slot_revisions');
+    Schema::dropIfExists('wbcms_shared_slot_revisions');
   }
 };

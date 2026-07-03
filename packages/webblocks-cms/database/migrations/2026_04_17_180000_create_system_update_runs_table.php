@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('system_update_runs', function (Blueprint $table) {
+    Schema::create('wbcms_system_update_runs', function (Blueprint $table) {
       $table->id();
       $table->string('from_version');
       $table->string('to_version');
@@ -22,6 +22,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('system_update_runs');
+    Schema::dropIfExists('wbcms_system_update_runs');
   }
 };

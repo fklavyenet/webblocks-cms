@@ -28,7 +28,7 @@ class InternalSiteController extends Controller
 
   public function updatePublicTheme(Request $request, Site $site): JsonResponse
   {
-    if (! Schema::hasColumn('sites', 'public_theme_preset')) {
+    if (! Schema::hasColumn('wbcms_sites', 'public_theme_preset')) {
       return $this->validationError([
         ['path' => 'site.public_theme_preset', 'message' => 'Site public theme presets are not available until the latest site schema has been applied.'],
       ]);
@@ -55,7 +55,7 @@ class InternalSiteController extends Controller
 
   public function updateBranding(Request $request, Site $site): JsonResponse
   {
-    if (! Schema::hasColumn('sites', 'favicon_media_id') || ! Schema::hasColumn('sites', 'social_image_media_id')) {
+    if (! Schema::hasColumn('wbcms_sites', 'favicon_media_id') || ! Schema::hasColumn('wbcms_sites', 'social_image_media_id')) {
       return $this->validationError([
         ['path' => 'site.branding', 'message' => 'Site branding media fields are not available until the latest site schema has been applied.'],
       ]);

@@ -4,13 +4,12 @@ namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
-class PageTranslation extends Model
+class PageTranslation extends CmsModel
 {
   use HasFactory;
   use ReindexesPublicSearch;
@@ -66,7 +65,7 @@ class PageTranslation extends Model
 
       $localeIsEnabled = Site::query()
         ->whereKey($siteId)
-        ->whereHas('enabledLocales', fn ($query) => $query->where('locales.id', $translation->locale_id))
+        ->whereHas('enabledLocales', fn ($query) => $query->where((new Locale)->qualifyColumn('id'), $translation->locale_id))
         ->exists();
 
       if (! $localeIsEnabled) {

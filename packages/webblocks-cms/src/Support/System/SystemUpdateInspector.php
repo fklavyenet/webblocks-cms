@@ -104,7 +104,7 @@ class SystemUpdateInspector
 
   private function updateRunLoggingDiagnostic(): array
   {
-    if (! Schema::hasTable('system_update_runs')) {
+    if (! Schema::hasTable('wbcms_system_update_runs')) {
       return $this->check('Update run logging', 'blocked', 'The system update runs table is missing. Run the latest migrations before updating.', true);
     }
 

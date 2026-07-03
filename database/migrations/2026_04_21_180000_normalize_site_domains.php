@@ -12,16 +12,16 @@ return new class extends Migration
   {
     $normalizer = app(SiteDomainNormalizer::class);
 
-    Schema::table('sites', function (Blueprint $table) {
+    Schema::table('wbcms_sites', function (Blueprint $table) {
       $table->string('domain')->nullable()->change();
     });
 
-    DB::table('sites')
+    DB::table('wbcms_sites')
       ->select(['id', 'domain'])
       ->orderBy('id')
       ->get()
       ->each(function (object $site) use ($normalizer): void {
-        DB::table('sites')
+        DB::table('wbcms_sites')
           ->where('id', $site->id)
           ->update(['domain' => $normalizer->normalize($site->domain)]);
       });

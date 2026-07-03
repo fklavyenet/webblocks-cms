@@ -182,17 +182,17 @@ class PackageFreshInstallMigrationTest extends TestCase
   #[Test]
   public function fresh_install_schema_keeps_site_variables_runtime_columns_and_query_contract(): void
   {
-    $this->assertTrue(Schema::hasColumn('sites', 'contact_recipient_email'));
-    $this->assertTrue(Schema::hasColumn('sites', 'public_theme_preset'));
-    $this->assertTrue(Schema::hasTable('site_variables'));
-    $this->assertTrue(Schema::hasColumn('site_variables', 'site_id'));
-    $this->assertTrue(Schema::hasColumn('site_variables', 'key'));
-    $this->assertTrue(Schema::hasColumn('site_variables', 'label'));
-    $this->assertTrue(Schema::hasColumn('site_variables', 'value'));
-    $this->assertTrue(Schema::hasColumn('site_variables', 'sort_order'));
-    $this->assertTrue(Schema::hasColumn('site_variables', 'is_enabled'));
+    $this->assertTrue(Schema::hasColumn('wbcms_sites', 'contact_recipient_email'));
+    $this->assertTrue(Schema::hasColumn('wbcms_sites', 'public_theme_preset'));
+    $this->assertTrue(Schema::hasTable('wbcms_site_variables'));
+    $this->assertTrue(Schema::hasColumn('wbcms_site_variables', 'site_id'));
+    $this->assertTrue(Schema::hasColumn('wbcms_site_variables', 'key'));
+    $this->assertTrue(Schema::hasColumn('wbcms_site_variables', 'label'));
+    $this->assertTrue(Schema::hasColumn('wbcms_site_variables', 'value'));
+    $this->assertTrue(Schema::hasColumn('wbcms_site_variables', 'sort_order'));
+    $this->assertTrue(Schema::hasColumn('wbcms_site_variables', 'is_enabled'));
 
-    $siteId = DB::table('sites')->insertGetId([
+    $siteId = DB::table('wbcms_sites')->insertGetId([
       'name' => 'Fresh Schema Site',
       'handle' => 'fresh-schema-site',
       'domain' => null,
@@ -210,7 +210,7 @@ class PackageFreshInstallMigrationTest extends TestCase
       'updated_at' => now(),
     ]);
 
-    DB::table('site_variables')->insert([
+    DB::table('wbcms_site_variables')->insert([
       [
         'site_id' => $siteId,
         'key' => 'disabled_variable',
@@ -243,7 +243,7 @@ class PackageFreshInstallMigrationTest extends TestCase
       ],
     ]);
 
-    $rows = DB::table('site_variables')
+    $rows = DB::table('wbcms_site_variables')
       ->where('site_id', $siteId)
       ->whereNotNull('site_id')
       ->where('is_enabled', true)
@@ -279,12 +279,12 @@ class PackageFreshInstallMigrationTest extends TestCase
     $migration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/fresh/2026_05_20_120000_create_webblocks_cms_fresh_install_schema.php'));
     $historicalMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/2026_04_11_120000_create_asset_folders_table.php'));
 
-    $this->assertTrue(Schema::hasTable('media_folders'));
-    $this->assertTrue(Schema::hasColumn('media_folders', 'slug'));
+    $this->assertTrue(Schema::hasTable('wbcms_media_folders'));
+    $this->assertTrue(Schema::hasColumn('wbcms_media_folders', 'slug'));
     $this->assertStringContainsString('$table->string(\'slug\')->nullable();', $historicalMigration);
     $this->assertStringContainsString('$table->string(\'slug\')->nullable();', $migration);
 
-    DB::table('media_folders')->insert([
+    DB::table('wbcms_media_folders')->insert([
       'parent_id' => null,
       'name' => 'Branding',
       'slug' => 'branding',
@@ -292,7 +292,7 @@ class PackageFreshInstallMigrationTest extends TestCase
       'updated_at' => now(),
     ]);
 
-    $this->assertDatabaseHas('media_folders', [
+    $this->assertDatabaseHas('wbcms_media_folders', [
       'name' => 'Branding',
       'slug' => 'branding',
     ]);
@@ -313,7 +313,7 @@ class PackageFreshInstallMigrationTest extends TestCase
       "\$table->index(['locale_id', 'site_id'], 'page_translations_locale_id_site_id_index');",
       "\$table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')",
       "->references(['id', 'site_id'])",
-      "->on('pages')",
+      "->on('wbcms_pages')",
       '->cascadeOnDelete();',
     ] as $expectedFragment) {
       $this->assertStringContainsString($expectedFragment, $migration);

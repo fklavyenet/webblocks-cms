@@ -9,7 +9,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('sites', function (Blueprint $table) {
+    Schema::create('wbcms_sites', function (Blueprint $table) {
       $table->id();
       $table->string('name');
       $table->string('handle')->unique();
@@ -18,7 +18,7 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('locales', function (Blueprint $table) {
+    Schema::create('wbcms_locales', function (Blueprint $table) {
       $table->id();
       $table->string('code')->unique();
       $table->string('name');
@@ -27,10 +27,10 @@ return new class extends Migration
       $table->timestamps();
     });
 
-    Schema::create('site_locales', function (Blueprint $table) {
+    Schema::create('wbcms_site_locales', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->boolean('is_enabled')->default(true);
       $table->timestamps();
 
@@ -39,7 +39,7 @@ return new class extends Migration
 
     $now = now();
 
-    DB::table('sites')->updateOrInsert(
+    DB::table('wbcms_sites')->updateOrInsert(
       ['handle' => 'default'],
       [
         'name' => 'Default Site',
@@ -50,7 +50,7 @@ return new class extends Migration
       ],
     );
 
-    DB::table('locales')->updateOrInsert(
+    DB::table('wbcms_locales')->updateOrInsert(
       ['code' => 'en'],
       [
         'name' => 'English',
@@ -61,10 +61,10 @@ return new class extends Migration
       ],
     );
 
-    $defaultSiteId = (int) DB::table('sites')->where('handle', 'default')->value('id');
-    $defaultLocaleId = (int) DB::table('locales')->where('code', 'en')->value('id');
+    $defaultSiteId = (int) DB::table('wbcms_sites')->where('handle', 'default')->value('id');
+    $defaultLocaleId = (int) DB::table('wbcms_locales')->where('code', 'en')->value('id');
 
-    DB::table('site_locales')->updateOrInsert(
+    DB::table('wbcms_site_locales')->updateOrInsert(
       ['site_id' => $defaultSiteId, 'locale_id' => $defaultLocaleId],
       [
         'is_enabled' => true,
@@ -73,19 +73,19 @@ return new class extends Migration
       ],
     );
 
-    Schema::table('pages', function (Blueprint $table) use ($defaultSiteId) {
-      $table->foreignId('site_id')->default($defaultSiteId)->after('id')->constrained('sites')->cascadeOnDelete();
+    Schema::table('wbcms_pages', function (Blueprint $table) use ($defaultSiteId) {
+      $table->foreignId('site_id')->default($defaultSiteId)->after('id')->constrained('wbcms_sites')->cascadeOnDelete();
     });
 
-    Schema::table('pages', function (Blueprint $table) {
-      $table->dropUnique('pages_slug_unique');
+    Schema::table('wbcms_pages', function (Blueprint $table) {
+      $table->dropUnique('wbcms_pages_slug_unique');
       $table->index('slug');
     });
 
-    Schema::create('page_translations', function (Blueprint $table) {
+    Schema::create('wbcms_page_translations', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('name');
       $table->string('slug');
       $table->string('path');
@@ -96,7 +96,7 @@ return new class extends Migration
       $table->index(['locale_id', 'path']);
     });
 
-    $pages = DB::table('pages')
+    $pages = DB::table('wbcms_pages')
       ->select(['id', 'site_id', 'title', 'slug', 'created_at', 'updated_at'])
       ->orderBy('id')
       ->get();
@@ -104,7 +104,7 @@ return new class extends Migration
     foreach ($pages as $page) {
       $slug = (string) $page->slug;
 
-      DB::table('page_translations')->updateOrInsert(
+      DB::table('wbcms_page_translations')->updateOrInsert(
         ['page_id' => $page->id, 'locale_id' => $defaultLocaleId],
         [
           'name' => $page->title,
@@ -119,16 +119,16 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('page_translations');
+    Schema::dropIfExists('wbcms_page_translations');
 
-    Schema::table('pages', function (Blueprint $table) {
+    Schema::table('wbcms_pages', function (Blueprint $table) {
       $table->dropIndex(['slug']);
       $table->dropConstrainedForeignId('site_id');
       $table->unique('slug');
     });
 
-    Schema::dropIfExists('site_locales');
-    Schema::dropIfExists('locales');
-    Schema::dropIfExists('sites');
+    Schema::dropIfExists('wbcms_site_locales');
+    Schema::dropIfExists('wbcms_locales');
+    Schema::dropIfExists('wbcms_sites');
   }
 };

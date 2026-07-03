@@ -9,12 +9,12 @@ return new class extends Migration
   {
     $now = now();
 
-    DB::table('block_types')->updateOrInsert(
+    DB::table('wbcms_block_types')->updateOrInsert(
       ['slug' => 'download'],
       [
         'name' => 'Download',
         'description' => 'Document or file download block with internal asset support.',
-        'category' => 'media',
+        'category' => 'wbcms_media',
         'source_type' => 'static',
         'is_system' => false,
         'is_container' => false,
@@ -28,6 +28,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    DB::table('block_types')->where('slug', 'download')->delete();
+    DB::table('wbcms_block_types')->where('slug', 'download')->delete();
   }
 };

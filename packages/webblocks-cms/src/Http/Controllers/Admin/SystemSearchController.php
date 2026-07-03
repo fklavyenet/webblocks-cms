@@ -6,7 +6,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\PublicSearchIndex;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\PublicSearchSchema;
 
@@ -20,6 +22,9 @@ class SystemSearchController extends Controller
   public function index(): View
   {
     $ready = $this->schema->tableExists();
+    $indexTable = (new PublicSearchIndex)->getTable();
+    $siteTable = (new Site)->getTable();
+    $localeTable = (new Locale)->getTable();
 
     return view('webblocks-cms::admin.system.search', [
       'searchIndexReady' => $ready,
@@ -27,18 +32,18 @@ class SystemSearchController extends Controller
       'lastIndexedAt' => $ready ? PublicSearchIndex::query()->max('indexed_at') : null,
       'rowsBySite' => $ready
         ? PublicSearchIndex::query()
-          ->select('sites.name', 'sites.domain', 'sites.handle', DB::raw('count(*) as total'))
-          ->join('sites', 'sites.id', '=', 'public_search_index.site_id')
-          ->groupBy('sites.id', 'sites.name', 'sites.domain', 'sites.handle')
-          ->orderBy('sites.name')
+          ->select($siteTable.'.name', $siteTable.'.domain', $siteTable.'.handle', DB::raw('count(*) as total'))
+          ->join($siteTable, $siteTable.'.id', '=', $indexTable.'.site_id')
+          ->groupBy($siteTable.'.id', $siteTable.'.name', $siteTable.'.domain', $siteTable.'.handle')
+          ->orderBy($siteTable.'.name')
           ->get()
         : collect(),
       'rowsByLocale' => $ready
         ? PublicSearchIndex::query()
-          ->select('locales.name', 'locales.code', DB::raw('count(*) as total'))
-          ->join('locales', 'locales.id', '=', 'public_search_index.locale_id')
-          ->groupBy('locales.id', 'locales.name', 'locales.code')
-          ->orderBy('locales.name')
+          ->select($localeTable.'.name', $localeTable.'.code', DB::raw('count(*) as total'))
+          ->join($localeTable, $localeTable.'.id', '=', $indexTable.'.locale_id')
+          ->groupBy($localeTable.'.id', $localeTable.'.name', $localeTable.'.code')
+          ->orderBy($localeTable.'.name')
           ->get()
         : collect(),
     ]);

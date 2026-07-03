@@ -4,11 +4,10 @@ namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 
-class SiteDomain extends Model
+class SiteDomain extends CmsModel
 {
   use HasFactory;
 

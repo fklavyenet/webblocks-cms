@@ -2,12 +2,12 @@
 
 namespace WebBlocks\Cms\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-class CommentEntry extends Model
+class CommentEntry extends CmsModel
 {
   use HasFactory;
 
@@ -59,7 +59,7 @@ class CommentEntry extends Model
 
   public function approvedByUser(): BelongsTo
   {
-    return $this->belongsTo(config('auth.providers.users.model', \App\Models\User::class), 'approved_by_user_id');
+    return $this->belongsTo(config('auth.providers.users.model', User::class), 'approved_by_user_id');
   }
 
   public function statusClass(): string

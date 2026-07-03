@@ -8,10 +8,10 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('contact_messages', function (Blueprint $table): void {
+    Schema::create('wbcms_contact_messages', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('block_id')->nullable()->constrained()->nullOnDelete();
-      $table->foreignId('page_id')->nullable()->constrained()->nullOnDelete();
+      $table->foreignId('block_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
+      $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
       $table->string('name');
       $table->string('email');
       $table->string('subject')->nullable();
@@ -41,6 +41,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('contact_messages');
+    Schema::dropIfExists('wbcms_contact_messages');
   }
 };

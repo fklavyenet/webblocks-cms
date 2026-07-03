@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
 
   private function installedSiteExists(): bool
   {
-    if (! Schema::hasTable('system_settings') || ! Schema::hasTable('users') || ! Schema::hasTable('sites')) {
+    if (! Schema::hasTable('wbcms_system_settings') || ! Schema::hasTable('users') || ! Schema::hasTable('wbcms_sites')) {
       return false;
     }
 

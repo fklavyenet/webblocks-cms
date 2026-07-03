@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\SharedSlots;
 
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 class SharedSlotSchema
 {
@@ -32,7 +33,7 @@ class SharedSlotSchema
   private function hasTable(string $table): bool
   {
     try {
-      return Schema::hasTable($table);
+      return Schema::hasTable(CmsTable::name($table));
     } catch (Throwable) {
       return false;
     }
@@ -41,7 +42,7 @@ class SharedSlotSchema
   private function hasColumn(string $table, string $column): bool
   {
     try {
-      return Schema::hasColumn($table, $column);
+      return Schema::hasColumn(CmsTable::name($table), $column);
     } catch (Throwable) {
       return false;
     }

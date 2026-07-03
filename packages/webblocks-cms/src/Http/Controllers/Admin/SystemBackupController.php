@@ -37,7 +37,7 @@ class SystemBackupController extends Controller
 
   public function index(): View
   {
-    $tableExists = Schema::hasTable('system_backups');
+    $tableExists = Schema::hasTable('wbcms_system_backups');
     $perPage = AdminPagination::perPage();
     $search = trim((string) request()->string('search'));
     $type = request()->string('type')->toString();

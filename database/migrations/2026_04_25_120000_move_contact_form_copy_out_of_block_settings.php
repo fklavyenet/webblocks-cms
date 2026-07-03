@@ -14,7 +14,7 @@ return new class extends Migration
       return;
     }
 
-    DB::table('blocks')
+    DB::table('wbcms_blocks')
       ->where('type', 'contact_form')
       ->orderBy('id')
       ->get()
@@ -29,7 +29,7 @@ return new class extends Migration
           return;
         }
 
-        $translation = DB::table('block_contact_form_translations')
+        $translation = DB::table('wbcms_block_contact_form_translations')
           ->where('block_id', $block->id)
           ->where('locale_id', $defaultLocaleId)
           ->first();
@@ -47,14 +47,14 @@ return new class extends Migration
           'updated_at' => $block->updated_at,
         ];
 
-        DB::table('block_contact_form_translations')->updateOrInsert(
+        DB::table('wbcms_block_contact_form_translations')->updateOrInsert(
           ['block_id' => $block->id, 'locale_id' => $defaultLocaleId],
           $payload,
         );
 
         unset($settings['submit_label'], $settings['success_message']);
 
-        DB::table('blocks')
+        DB::table('wbcms_blocks')
           ->where('id', $block->id)
           ->update([
             'settings' => $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES),
@@ -71,12 +71,12 @@ return new class extends Migration
       return;
     }
 
-    DB::table('blocks')
+    DB::table('wbcms_blocks')
       ->where('type', 'contact_form')
       ->orderBy('id')
       ->get()
       ->each(function (object $block) use ($defaultLocaleId): void {
-        $translation = DB::table('block_contact_form_translations')
+        $translation = DB::table('wbcms_block_contact_form_translations')
           ->where('block_id', $block->id)
           ->where('locale_id', $defaultLocaleId)
           ->first();
@@ -96,7 +96,7 @@ return new class extends Migration
           $settings['success_message'] = $translation->success_message;
         }
 
-        DB::table('blocks')
+        DB::table('wbcms_blocks')
           ->where('id', $block->id)
           ->update([
             'settings' => $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES),

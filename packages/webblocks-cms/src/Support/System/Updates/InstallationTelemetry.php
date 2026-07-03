@@ -70,7 +70,7 @@ final class InstallationTelemetry
   private function settingsTableExists(): bool
   {
     try {
-      return Schema::hasTable('system_settings');
+      return Schema::hasTable('wbcms_system_settings');
     } catch (Throwable) {
       return false;
     }

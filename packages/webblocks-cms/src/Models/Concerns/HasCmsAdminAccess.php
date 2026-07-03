@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Models\Concerns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 trait HasCmsAdminAccess
 {
@@ -45,7 +46,7 @@ trait HasCmsAdminAccess
 
   public function sites(): BelongsToMany
   {
-    return $this->belongsToMany(Site::class)
+    return $this->belongsToMany(Site::class, CmsTable::name('site_user'))
       ->withTimestamps();
   }
 
@@ -110,14 +111,14 @@ trait HasCmsAdminAccess
   public function accessibleSiteIds()
   {
     if ($this->isSuperAdmin()) {
-      return Site::query()->pluck('sites.id');
+      return Site::query()->pluck((new Site)->qualifyColumn('id'));
     }
 
     if ($this->relationLoaded('sites')) {
       return $this->sites->pluck('id')->values();
     }
 
-    return $this->sites()->pluck('sites.id');
+    return $this->sites()->pluck((new Site)->qualifyColumn('id'));
   }
 
   public function hasSiteAccess(Site|int|string|null $site): bool

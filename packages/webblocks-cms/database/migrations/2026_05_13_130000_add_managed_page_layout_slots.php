@@ -9,14 +9,14 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('page_layouts', function (Blueprint $table) {
+    Schema::table('wbcms_page_layouts', function (Blueprint $table) {
       $table->string('body_class')->nullable()->after('sort_order');
     });
 
-    Schema::create('page_layout_slots', function (Blueprint $table) {
+    Schema::create('wbcms_page_layout_slots', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('page_layout_id')->constrained('page_layouts')->cascadeOnDelete();
-      $table->foreignId('slot_type_id')->constrained('slot_types')->restrictOnDelete();
+      $table->foreignId('page_layout_id')->constrained('wbcms_page_layouts')->cascadeOnDelete();
+      $table->foreignId('slot_type_id')->constrained('wbcms_slot_types')->restrictOnDelete();
       $table->string('slot_name');
       $table->string('label')->nullable();
       $table->text('description')->nullable();
@@ -37,20 +37,20 @@ return new class extends Migration
       $table->index(['page_layout_id', 'is_active', 'sort_order']);
     });
 
-    DB::table('page_layouts')
+    DB::table('wbcms_page_layouts')
       ->where('handle', 'default')
       ->update(['body_class' => 'layout-default']);
 
-    DB::table('page_layouts')
+    DB::table('wbcms_page_layouts')
       ->where('handle', 'docs')
       ->update(['body_class' => 'layout-docs']);
   }
 
   public function down(): void
   {
-    Schema::dropIfExists('page_layout_slots');
+    Schema::dropIfExists('wbcms_page_layout_slots');
 
-    Schema::table('page_layouts', function (Blueprint $table) {
+    Schema::table('wbcms_page_layouts', function (Blueprint $table) {
       $table->dropColumn('body_class');
     });
   }

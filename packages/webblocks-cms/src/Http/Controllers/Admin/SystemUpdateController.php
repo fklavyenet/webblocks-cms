@@ -162,7 +162,7 @@ class SystemUpdateController extends Controller
 
   private function latestUpdateRun(): ?SystemUpdateRun
   {
-    if (! Schema::hasTable('system_update_runs')) {
+    if (! Schema::hasTable('wbcms_system_update_runs')) {
       return null;
     }
 

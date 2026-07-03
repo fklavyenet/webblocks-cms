@@ -308,7 +308,7 @@ class SystemBackupRestoreManager
 
   private function hasRestoreTable(): bool
   {
-    return Schema::hasTable('system_backup_restores');
+    return Schema::hasTable('wbcms_system_backup_restores');
   }
 
   private function resolveRestoredBackupReferenceId(?SystemBackup $backup): ?int
@@ -317,7 +317,7 @@ class SystemBackupRestoreManager
       return null;
     }
 
-    if (! Schema::hasTable('system_backups')) {
+    if (! Schema::hasTable('wbcms_system_backups')) {
       return null;
     }
 

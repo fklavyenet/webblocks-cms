@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Media;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Models\Media;
 
 class MediaUsageFilter
 {
@@ -31,7 +32,7 @@ class MediaUsageFilter
         $inner->{$method}(function ($exists) use ($reference): void {
           $exists->selectRaw('1')
             ->from($reference['table'])
-            ->whereColumn($reference['qualified_column'], 'media.id');
+            ->whereColumn($reference['qualified_column'], (new Media)->qualifyColumn('id'));
         });
       }
     });
@@ -43,7 +44,7 @@ class MediaUsageFilter
       $query->whereNotExists(function ($exists) use ($reference): void {
         $exists->selectRaw('1')
           ->from($reference['table'])
-          ->whereColumn($reference['qualified_column'], 'media.id');
+          ->whereColumn($reference['qualified_column'], (new Media)->qualifyColumn('id'));
       });
     }
 
@@ -53,11 +54,11 @@ class MediaUsageFilter
   private function availableReferences(): array
   {
     return collect([
-      ['table' => 'blocks', 'column' => 'media_id'],
-      ['table' => 'block_media', 'column' => 'media_id'],
-      ['table' => 'sites', 'column' => 'favicon_media_id'],
-      ['table' => 'sites', 'column' => 'social_image_media_id'],
-      ['table' => 'page_translations', 'column' => 'og_image_media_id'],
+      ['table' => 'wbcms_blocks', 'column' => 'media_id'],
+      ['table' => 'wbcms_block_media', 'column' => 'media_id'],
+      ['table' => 'wbcms_sites', 'column' => 'favicon_media_id'],
+      ['table' => 'wbcms_sites', 'column' => 'social_image_media_id'],
+      ['table' => 'wbcms_page_translations', 'column' => 'og_image_media_id'],
     ])
       ->filter(fn (array $reference) => Schema::hasTable($reference['table']) && Schema::hasColumn($reference['table'], $reference['column']))
       ->map(fn (array $reference) => [

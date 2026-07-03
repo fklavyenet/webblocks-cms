@@ -8,13 +8,13 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('system_backup_restores', function (Blueprint $table) {
+    Schema::create('wbcms_system_backup_restores', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('source_backup_id')->nullable()->constrained('system_backups')->nullOnDelete();
+      $table->foreignId('source_backup_id')->nullable()->constrained('wbcms_system_backups')->nullOnDelete();
       $table->string('source_archive_disk')->default('backups');
       $table->string('source_archive_path');
       $table->string('source_archive_filename');
-      $table->foreignId('safety_backup_id')->nullable()->constrained('system_backups')->nullOnDelete();
+      $table->foreignId('safety_backup_id')->nullable()->constrained('wbcms_system_backups')->nullOnDelete();
       $table->string('status', 32);
       $table->json('restored_parts')->nullable();
       $table->json('manifest')->nullable();
@@ -34,6 +34,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('system_backup_restores');
+    Schema::dropIfExists('wbcms_system_backup_restores');
   }
 };

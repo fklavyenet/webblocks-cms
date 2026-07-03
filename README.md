@@ -79,12 +79,12 @@ php artisan webblocks:install --name="Admin User" --email="admin@example.com" --
 - installs package CMS assets into `public/cms`
 - creates `public/storage` when safe and missing
 - seeds locales, sites, page layouts, slot types, icons, and core block types idempotently
-- records the installed version and install completion marker in `system_settings`
+- records the installed version and install completion marker in `wbcms_system_settings`
 - creates the first active `super_admin` when one does not already exist
 
 For the current `v1.32.x` consumer boundary, `App\Models\User` remains host-owned and is patched in place with the CMS access trait during install.
 
-If a prior failed install left empty CMS tables such as `page_types`, `layout_types`, `slot_types`, `block_types`, `system_settings`, or `system_update_runs`, run `php artisan webblocks:install` once without repair to review the diagnostic. If every listed CMS table has `0` rows, rerun with `--repair-partial` to rename those empty tables and continue the install. If any listed table has rows, inspect it manually; the installer will not alter non-empty tables.
+If a prior failed install left empty CMS tables such as `wbcms_page_types`, `wbcms_layout_types`, `wbcms_slot_types`, `wbcms_block_types`, `wbcms_system_settings`, or `wbcms_system_update_runs`, run `php artisan webblocks:install` once without repair to review the diagnostic. If every listed CMS table has `0` rows, rerun with `--repair-partial` to rename those empty tables and continue the install. If any listed table has rows, inspect it manually; the installer will not alter non-empty tables.
 
 After install, open:
 

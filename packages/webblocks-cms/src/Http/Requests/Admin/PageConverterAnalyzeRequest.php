@@ -37,8 +37,8 @@ class PageConverterAnalyzeRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'site_id' => ['required', 'integer', 'exists:sites,id'],
-      'locale_id' => ['required', 'integer', 'exists:locales,id'],
+      'site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
+      'locale_id' => ['required', 'integer', 'exists:wbcms_locales,id'],
       'page_layout' => ['required', Rule::in(app(PageLayoutManager::class)->activeHandles())],
       'page_title' => ['required', 'string', 'max:255'],
       'page_path' => ['required', 'string', 'max:255', 'regex:/^\/?[A-Za-z0-9][A-Za-z0-9\/_-]*$/'],

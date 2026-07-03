@@ -35,15 +35,15 @@ class NavigationItemRequest extends FormRequest
     $this->merge(['site_id' => $siteId]);
 
     return [
-      'site_id' => ['required', 'integer', 'exists:sites,id'],
+      'site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'menu_key' => ['required', 'string', Rule::in(NavigationItem::menuKeys())],
       'parent_id' => [
         'nullable',
         'integer',
-        'exists:navigation_items,id',
+        'exists:wbcms_navigation_items,id',
         Rule::notIn([$navigation?->id]),
       ],
-      'page_id' => ['nullable', 'integer', 'exists:pages,id'],
+      'page_id' => ['nullable', 'integer', 'exists:wbcms_pages,id'],
       'title' => ['nullable', 'string', 'max:255'],
       'link_type' => ['required', 'string', Rule::in(NavigationItem::linkTypes())],
       'url' => ['nullable', 'string', 'max:2048'],

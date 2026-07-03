@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -20,7 +19,7 @@ use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
-class Block extends Model
+class Block extends CmsModel
 {
   use HasFactory;
   use ReindexesPublicSearch;

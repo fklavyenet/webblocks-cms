@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('block_types', function (Blueprint $table) {
+    Schema::create('wbcms_block_types', function (Blueprint $table) {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -25,6 +25,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('block_types');
+    Schema::dropIfExists('wbcms_block_types');
   }
 };

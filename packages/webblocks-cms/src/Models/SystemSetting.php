@@ -3,9 +3,8 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
-class SystemSetting extends Model
+class SystemSetting extends CmsModel
 {
   use HasFactory;
 

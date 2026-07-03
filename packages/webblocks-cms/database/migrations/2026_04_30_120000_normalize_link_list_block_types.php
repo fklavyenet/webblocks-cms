@@ -9,7 +9,7 @@ return new class extends Migration
   {
     $timestamp = now();
 
-    DB::table('block_types')->updateOrInsert(
+    DB::table('wbcms_block_types')->updateOrInsert(
       ['slug' => 'link-list'],
       [
         'name' => 'Link List',
@@ -25,7 +25,7 @@ return new class extends Migration
       ],
     );
 
-    DB::table('block_types')->updateOrInsert(
+    DB::table('wbcms_block_types')->updateOrInsert(
       ['slug' => 'link-list-item'],
       [
         'name' => 'Link List Item',
@@ -44,7 +44,7 @@ return new class extends Migration
 
   public function down(): void
   {
-    DB::table('block_types')
+    DB::table('wbcms_block_types')
       ->whereIn('slug', ['link-list', 'link-list-item'])
       ->update([
         'category' => 'legacy',

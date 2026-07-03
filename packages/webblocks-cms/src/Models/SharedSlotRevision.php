@@ -4,11 +4,10 @@ namespace WebBlocks\Cms\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
-class SharedSlotRevision extends Model
+class SharedSlotRevision extends CmsModel
 {
   use HasFactory;
 

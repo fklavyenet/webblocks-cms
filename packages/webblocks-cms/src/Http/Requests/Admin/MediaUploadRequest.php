@@ -14,7 +14,7 @@ class MediaUploadRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+      'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
       'file' => [
         'required',
         'file',

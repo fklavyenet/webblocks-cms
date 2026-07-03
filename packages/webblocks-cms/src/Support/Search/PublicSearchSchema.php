@@ -8,6 +8,6 @@ class PublicSearchSchema
 {
   public function tableExists(): bool
   {
-    return Schema::hasTable('public_search_index');
+    return Schema::hasTable('wbcms_public_search_index');
   }
 }

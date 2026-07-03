@@ -8,10 +8,10 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('blocks', function (Blueprint $table) {
+    Schema::create('wbcms_blocks', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('page_id')->constrained()->cascadeOnDelete();
-      $table->foreignId('parent_id')->nullable()->constrained('blocks')->nullOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('parent_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
       $table->string('type');
       $table->string('source_type');
       $table->string('slot');
@@ -26,6 +26,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('blocks');
+    Schema::dropIfExists('wbcms_blocks');
   }
 };

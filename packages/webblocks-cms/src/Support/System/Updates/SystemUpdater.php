@@ -44,7 +44,7 @@ class SystemUpdater
     }
 
     try {
-      if (! Schema::hasTable('system_update_runs')) {
+      if (! Schema::hasTable('wbcms_system_update_runs')) {
         throw new UpdateException('System update logging is not ready. Run the latest migrations before updating.');
       }
 
@@ -386,7 +386,7 @@ class SystemUpdater
 
   private function recordPreparationFailure(User $user, string $fromVersion, ?string $toVersion, UpdateException $failure): void
   {
-    if (! Schema::hasTable('system_update_runs')) {
+    if (! Schema::hasTable('wbcms_system_update_runs')) {
       return;
     }
 

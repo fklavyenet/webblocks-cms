@@ -264,8 +264,8 @@ class InternalCommerceController extends Controller
     $nullable = $partial ? 'sometimes' : 'nullable';
 
     return [
-      'site_id' => [$nullable, 'integer', 'exists:sites,id'],
-      'image_media_id' => [$nullable, 'integer', 'exists:media,id'],
+      'site_id' => [$nullable, 'integer', 'exists:wbcms_sites,id'],
+      'image_media_id' => [$nullable, 'integer', 'exists:wbcms_media,id'],
       'title' => [$required, 'string', 'max:255'],
       'slug' => [
         $required,

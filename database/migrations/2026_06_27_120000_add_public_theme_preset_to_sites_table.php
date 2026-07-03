@@ -8,14 +8,14 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('sites', function (Blueprint $table): void {
+    Schema::table('wbcms_sites', function (Blueprint $table): void {
       $table->string('public_theme_preset')->nullable()->after('contact_recipient_email');
     });
   }
 
   public function down(): void
   {
-    Schema::table('sites', function (Blueprint $table): void {
+    Schema::table('wbcms_sites', function (Blueprint $table): void {
       $table->dropColumn('public_theme_preset');
     });
   }

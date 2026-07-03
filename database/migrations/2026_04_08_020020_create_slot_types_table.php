@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('slot_types', function (Blueprint $table) {
+    Schema::create('wbcms_slot_types', function (Blueprint $table) {
       $table->id();
       $table->string('name');
       $table->string('slug')->unique();
@@ -23,6 +23,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('slot_types');
+    Schema::dropIfExists('wbcms_slot_types');
   }
 };

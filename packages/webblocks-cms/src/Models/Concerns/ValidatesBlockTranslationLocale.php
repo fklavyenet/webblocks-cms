@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Models\Concerns;
 
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 
 trait ValidatesBlockTranslationLocale
@@ -13,9 +15,9 @@ trait ValidatesBlockTranslationLocale
       $siteId = $translation->block?->page?->site_id
         ?? ($translation->block_id
           ? Block::query()
-            ->join('pages', 'pages.id', '=', 'blocks.page_id')
-            ->where('blocks.id', $translation->block_id)
-            ->value('pages.site_id')
+            ->join((new Page)->getTable(), (new Page)->qualifyColumn('id'), '=', (new Block)->qualifyColumn('page_id'))
+            ->where((new Block)->qualifyColumn('id'), $translation->block_id)
+            ->value((new Page)->qualifyColumn('site_id'))
           : null);
 
       if (! $siteId) {
@@ -24,7 +26,7 @@ trait ValidatesBlockTranslationLocale
 
       $localeIsEnabled = Site::query()
         ->whereKey($siteId)
-        ->whereHas('enabledLocales', fn ($query) => $query->where('locales.id', $translation->locale_id))
+        ->whereHas('enabledLocales', fn ($query) => $query->where((new Locale)->qualifyColumn('id'), $translation->locale_id))
         ->exists();
 
       if (! $localeIsEnabled) {

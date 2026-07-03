@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('system_backups', function (Blueprint $table) {
+    Schema::create('wbcms_system_backups', function (Blueprint $table) {
       $table->id();
       $table->string('type', 32)->default('manual');
       $table->string('status', 32)->default('running');
@@ -35,6 +35,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('system_backups');
+    Schema::dropIfExists('wbcms_system_backups');
   }
 };

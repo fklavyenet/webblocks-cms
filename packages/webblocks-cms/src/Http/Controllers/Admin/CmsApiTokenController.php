@@ -120,12 +120,12 @@ class CmsApiTokenController extends Controller
 
   private function apiTokenSchemaReady(): bool
   {
-    if (! Schema::hasTable('cms_api_tokens')) {
+    if (! Schema::hasTable('wbcms_cms_api_tokens')) {
       return false;
     }
 
     foreach (['id', 'name', 'token_hash', 'token_preview', 'capabilities', 'created_by_user_id', 'last_used_at', 'last_used_ip', 'last_used_user_agent', 'revoked_at', 'created_at', 'updated_at'] as $column) {
-      if (! Schema::hasColumn('cms_api_tokens', $column)) {
+      if (! Schema::hasColumn('wbcms_cms_api_tokens', $column)) {
         return false;
       }
     }
@@ -205,12 +205,12 @@ class CmsApiTokenController extends Controller
 
   private function apiTokenActivitySchemaReady(): bool
   {
-    if (! Schema::hasTable('cms_api_token_activity_logs')) {
+    if (! Schema::hasTable('wbcms_cms_api_token_activity_logs')) {
       return false;
     }
 
     foreach (['id', 'cms_api_token_id', 'occurred_at', 'status', 'method', 'path', 'route_name', 'required_capability', 'ip', 'user_agent', 'created_at', 'updated_at'] as $column) {
-      if (! Schema::hasColumn('cms_api_token_activity_logs', $column)) {
+      if (! Schema::hasColumn('wbcms_cms_api_token_activity_logs', $column)) {
         return false;
       }
     }

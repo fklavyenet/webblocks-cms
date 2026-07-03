@@ -6,15 +6,15 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
 
-class Site extends Model
+class Site extends CmsModel
 {
   use HasFactory;
 
@@ -111,7 +111,7 @@ class Site extends Model
   {
     return Attribute::make(
       get: function ($value, array $attributes) {
-        if (! Schema::hasTable('site_domains')) {
+        if (! Schema::hasTable('wbcms_site_domains')) {
           return $attributes['domain'] ?? null;
         }
 
@@ -172,7 +172,7 @@ class Site extends Model
 
   public function locales(): BelongsToMany
   {
-    return $this->belongsToMany(Locale::class, 'site_locales')
+    return $this->belongsToMany(Locale::class, CmsTable::name('site_locales'))
       ->withPivot('is_enabled')
       ->withTimestamps();
   }
@@ -204,14 +204,14 @@ class Site extends Model
 
   public function users(): BelongsToMany
   {
-    return $this->belongsToMany(User::class)
+    return $this->belongsToMany(User::class, CmsTable::name('site_user'))
       ->withTimestamps();
   }
 
   public function enabledLocales(): BelongsToMany
   {
     return $this->locales()
-      ->where('locales.is_enabled', true)
+      ->where((new Locale)->qualifyColumn('is_enabled'), true)
       ->wherePivot('is_enabled', true);
   }
 
@@ -229,7 +229,7 @@ class Site extends Model
     }
 
     return $this->enabledLocales()
-      ->where('locales.id', $localeId)
+      ->where((new Locale)->qualifyColumn('id'), $localeId)
       ->exists();
   }
 
@@ -268,7 +268,7 @@ class Site extends Model
   {
     $domain = app(SiteDomainNormalizer::class)->normalize($domain);
 
-    if ($domain === null || ! Schema::hasTable('site_domains')) {
+    if ($domain === null || ! Schema::hasTable('wbcms_site_domains')) {
       return null;
     }
 
@@ -310,7 +310,7 @@ class Site extends Model
 
   public function syncPrimaryDomainRecord(): void
   {
-    if (! $this->exists || ! Schema::hasTable('site_domains')) {
+    if (! $this->exists || ! Schema::hasTable('wbcms_site_domains')) {
       return;
     }
 
@@ -369,7 +369,7 @@ class Site extends Model
 
   public function syncLegacyDomainFromPrimaryRecord(): void
   {
-    if (! $this->exists || ! Schema::hasTable('site_domains')) {
+    if (! $this->exists || ! Schema::hasTable('wbcms_site_domains')) {
       return;
     }
 

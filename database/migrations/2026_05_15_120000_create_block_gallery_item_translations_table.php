@@ -8,10 +8,10 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('block_gallery_item_translations', function (Blueprint $table) {
+    Schema::create('wbcms_block_gallery_item_translations', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('block_media_id')->constrained('block_media')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+      $table->foreignId('block_media_id')->constrained('wbcms_block_media')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
       $table->string('alt_text')->nullable();
       $table->string('caption')->nullable();
       $table->string('overlay_title')->nullable();
@@ -24,6 +24,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('block_gallery_item_translations');
+    Schema::dropIfExists('wbcms_block_gallery_item_translations');
   }
 };

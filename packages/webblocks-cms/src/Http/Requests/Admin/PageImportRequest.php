@@ -26,7 +26,7 @@ class PageImportRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'site_id' => ['required', 'integer', 'exists:sites,id'],
+      'site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'json_file' => ['required', 'file', 'mimetypes:application/json,text/plain', 'max:2048'],
       'import_as_draft' => ['required', 'accepted'],
       '_page_import_modal' => ['nullable', 'string', 'max:255'],

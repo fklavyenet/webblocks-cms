@@ -60,7 +60,7 @@ class SharedSlotRequest extends FormRequest
     }
 
     return [
-      'site_id' => ['required', 'integer', 'exists:sites,id'],
+      'site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'name' => ['required', 'string', 'max:255'],
       'handle' => $handleRules,
       'slot_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],

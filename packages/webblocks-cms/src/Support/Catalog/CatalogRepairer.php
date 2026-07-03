@@ -80,7 +80,7 @@ class CatalogRepairer
       dryRun: $dryRun,
     );
 
-    if (! Schema::hasTable('page_layout_slots')) {
+    if (! Schema::hasTable('wbcms_page_layout_slots')) {
       $summary['skipped']++;
 
       return $summary;

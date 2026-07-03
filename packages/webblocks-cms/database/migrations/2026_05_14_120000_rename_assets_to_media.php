@@ -23,69 +23,69 @@ return new class extends Migration
 
   private function renameTables(): void
   {
-    if (Schema::hasTable('asset_folders') && ! Schema::hasTable('media_folders')) {
-      Schema::rename('asset_folders', 'media_folders');
+    if (Schema::hasTable('wbcms_asset_folders') && ! Schema::hasTable('wbcms_media_folders')) {
+      Schema::rename('wbcms_asset_folders', 'wbcms_media_folders');
     }
 
-    if (Schema::hasTable('assets') && ! Schema::hasTable('media')) {
-      Schema::rename('assets', 'media');
+    if (Schema::hasTable('wbcms_assets') && ! Schema::hasTable('wbcms_media')) {
+      Schema::rename('wbcms_assets', 'wbcms_media');
     }
 
-    if (Schema::hasTable('block_assets') && ! Schema::hasTable('block_media')) {
-      Schema::rename('block_assets', 'block_media');
+    if (Schema::hasTable('wbcms_block_assets') && ! Schema::hasTable('wbcms_block_media')) {
+      Schema::rename('wbcms_block_assets', 'wbcms_block_media');
     }
   }
 
   private function renameColumns(): void
   {
-    $this->renameConstrainedColumn('media', 'folder_id', 'media_folders', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('blocks', 'asset_id', 'media', 'media_id', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('block_media', 'asset_id', 'media', 'media_id', onDeleteAction: 'cascade');
-    $this->renameConstrainedColumn('sites', 'favicon_asset_id', 'media', 'favicon_media_id', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('sites', 'social_image_asset_id', 'media', 'social_image_media_id', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('page_translations', 'og_image_asset_id', 'media', 'og_image_media_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_media', 'folder_id', 'wbcms_media_folders', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_blocks', 'asset_id', 'wbcms_media', 'media_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_block_media', 'asset_id', 'wbcms_media', 'media_id', onDeleteAction: 'cascade');
+    $this->renameConstrainedColumn('wbcms_sites', 'favicon_asset_id', 'wbcms_media', 'favicon_media_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_sites', 'social_image_asset_id', 'wbcms_media', 'social_image_media_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_page_translations', 'og_image_asset_id', 'wbcms_media', 'og_image_media_id', onDeleteAction: 'set null');
   }
 
   private function renameColumnsBack(): void
   {
-    $this->renameConstrainedColumn('page_translations', 'og_image_media_id', 'assets', 'og_image_asset_id', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('sites', 'social_image_media_id', 'assets', 'social_image_asset_id', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('sites', 'favicon_media_id', 'assets', 'favicon_asset_id', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('block_media', 'media_id', 'assets', 'asset_id', onDeleteAction: 'cascade');
-    $this->renameConstrainedColumn('blocks', 'media_id', 'assets', 'asset_id', onDeleteAction: 'set null');
-    $this->renameConstrainedColumn('media', 'folder_id', 'asset_folders', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_page_translations', 'og_image_media_id', 'wbcms_assets', 'og_image_asset_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_sites', 'social_image_media_id', 'wbcms_assets', 'social_image_asset_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_sites', 'favicon_media_id', 'wbcms_assets', 'favicon_asset_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_block_media', 'media_id', 'wbcms_assets', 'asset_id', onDeleteAction: 'cascade');
+    $this->renameConstrainedColumn('wbcms_blocks', 'media_id', 'wbcms_assets', 'asset_id', onDeleteAction: 'set null');
+    $this->renameConstrainedColumn('wbcms_media', 'folder_id', 'wbcms_asset_folders', onDeleteAction: 'set null');
   }
 
   private function renameTablesBack(): void
   {
-    if (Schema::hasTable('block_media') && ! Schema::hasTable('block_assets')) {
-      Schema::rename('block_media', 'block_assets');
+    if (Schema::hasTable('wbcms_block_media') && ! Schema::hasTable('wbcms_block_assets')) {
+      Schema::rename('wbcms_block_media', 'wbcms_block_assets');
     }
 
-    if (Schema::hasTable('media') && ! Schema::hasTable('assets')) {
-      Schema::rename('media', 'assets');
+    if (Schema::hasTable('wbcms_media') && ! Schema::hasTable('wbcms_assets')) {
+      Schema::rename('wbcms_media', 'wbcms_assets');
     }
 
-    if (Schema::hasTable('media_folders') && ! Schema::hasTable('asset_folders')) {
-      Schema::rename('media_folders', 'asset_folders');
+    if (Schema::hasTable('wbcms_media_folders') && ! Schema::hasTable('wbcms_asset_folders')) {
+      Schema::rename('wbcms_media_folders', 'wbcms_asset_folders');
     }
   }
 
   private function renameDemoReferencesTable(): void
   {
-    if (Schema::hasTable('demo_asset_references') && ! Schema::hasTable('demo_media_references')) {
-      Schema::rename('demo_asset_references', 'demo_media_references');
+    if (Schema::hasTable('wbcms_demo_asset_references') && ! Schema::hasTable('wbcms_demo_media_references')) {
+      Schema::rename('wbcms_demo_asset_references', 'wbcms_demo_media_references');
     }
 
-    $this->renameConstrainedColumn('demo_media_references', 'asset_id', 'media', 'media_id', onDeleteAction: 'cascade');
+    $this->renameConstrainedColumn('wbcms_demo_media_references', 'asset_id', 'wbcms_media', 'media_id', onDeleteAction: 'cascade');
   }
 
   private function renameDemoReferencesTableBack(): void
   {
-    $this->renameConstrainedColumn('demo_media_references', 'media_id', 'assets', 'asset_id', onDeleteAction: 'cascade');
+    $this->renameConstrainedColumn('wbcms_demo_media_references', 'media_id', 'wbcms_assets', 'asset_id', onDeleteAction: 'cascade');
 
-    if (Schema::hasTable('demo_media_references') && ! Schema::hasTable('demo_asset_references')) {
-      Schema::rename('demo_media_references', 'demo_asset_references');
+    if (Schema::hasTable('wbcms_demo_media_references') && ! Schema::hasTable('wbcms_demo_asset_references')) {
+      Schema::rename('wbcms_demo_media_references', 'wbcms_demo_asset_references');
     }
   }
 
@@ -258,15 +258,15 @@ return new class extends Migration
   {
     $names = [$table.'_'.$column.'_foreign'];
 
-    if ($table === 'block_media' && $column === 'media_id') {
+    if ($table === 'wbcms_block_media' && $column === 'media_id') {
       $names[] = 'block_assets_asset_id_foreign';
     }
 
-    if ($table === 'demo_media_references' && $column === 'media_id') {
+    if ($table === 'wbcms_demo_media_references' && $column === 'media_id') {
       $names[] = 'demo_asset_references_asset_id_foreign';
     }
 
-    if ($table === 'media' && $column === 'folder_id') {
+    if ($table === 'wbcms_media' && $column === 'folder_id') {
       $names[] = 'assets_folder_id_foreign';
     }
 

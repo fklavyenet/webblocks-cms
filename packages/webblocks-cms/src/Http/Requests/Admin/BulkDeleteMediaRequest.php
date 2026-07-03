@@ -15,7 +15,7 @@ class BulkDeleteMediaRequest extends FormRequest
   {
     return [
       'media_ids' => ['required', 'array', 'min:1'],
-      'media_ids.*' => ['integer', 'distinct', 'exists:media,id'],
+      'media_ids.*' => ['integer', 'distinct', 'exists:wbcms_media,id'],
     ];
   }
 

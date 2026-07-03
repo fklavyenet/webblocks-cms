@@ -29,7 +29,7 @@ class InstalledVersionStore
 
   public function storedVersion(): ?string
   {
-    if (! Schema::hasTable('system_settings')) {
+    if (! Schema::hasTable('wbcms_system_settings')) {
       return null;
     }
 
@@ -44,7 +44,7 @@ class InstalledVersionStore
 
   public function persist(string $version): void
   {
-    if (! Schema::hasTable('system_settings')) {
+    if (! Schema::hasTable('wbcms_system_settings')) {
       throw new \RuntimeException('The system settings table is missing. Run the latest migrations before updating.');
     }
 
@@ -56,7 +56,7 @@ class InstalledVersionStore
 
   public function diagnostic(): array
   {
-    if (! Schema::hasTable('system_settings')) {
+    if (! Schema::hasTable('wbcms_system_settings')) {
       return $this->check('Version persistence', 'blocked', 'The system settings table is missing. Run the latest migrations before updating.', true);
     }
 

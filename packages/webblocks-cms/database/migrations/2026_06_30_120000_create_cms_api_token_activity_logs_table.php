@@ -8,9 +8,9 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('cms_api_token_activity_logs', function (Blueprint $table): void {
+    Schema::create('wbcms_cms_api_token_activity_logs', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('cms_api_token_id')->constrained('cms_api_tokens')->cascadeOnDelete();
+      $table->foreignId('cms_api_token_id')->constrained('wbcms_cms_api_tokens')->cascadeOnDelete();
       $table->timestamp('occurred_at')->useCurrent();
       $table->string('status', 32);
       $table->string('method', 12);
@@ -27,6 +27,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('cms_api_token_activity_logs');
+    Schema::dropIfExists('wbcms_cms_api_token_activity_logs');
   }
 };

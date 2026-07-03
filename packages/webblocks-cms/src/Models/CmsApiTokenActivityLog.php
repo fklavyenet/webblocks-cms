@@ -2,10 +2,9 @@
 
 namespace WebBlocks\Cms\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CmsApiTokenActivityLog extends Model
+class CmsApiTokenActivityLog extends CmsModel
 {
   protected $fillable = [
     'cms_api_token_id',

@@ -16,8 +16,8 @@ class CommentEntryRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'block_id' => ['required', 'integer', 'exists:blocks,id'],
-      'page_id' => ['nullable', 'integer', 'exists:pages,id'],
+      'block_id' => ['required', 'integer', 'exists:wbcms_blocks,id'],
+      'page_id' => ['nullable', 'integer', 'exists:wbcms_pages,id'],
       'source_url' => ['nullable', 'string', 'max:2048'],
       'author_name' => ['nullable', 'string', 'max:80'],
       'body' => ['required', 'string', 'min:2', 'max:1200'],

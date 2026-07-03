@@ -31,7 +31,7 @@ class PageTranslationController extends Controller
     $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
     abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
     $page->loadMissing('site');
-    abort_if($page->site->enabledLocales()->where('locales.id', $locale->id)->doesntExist(), 404);
+    abort_if($page->site->enabledLocales()->where((new Locale)->qualifyColumn('id'), $locale->id)->doesntExist(), 404);
 
     $translation = new PageTranslation([
       'name' => $page->defaultTranslation()?->name,
@@ -58,7 +58,7 @@ class PageTranslationController extends Controller
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
     $page->loadMissing('site');
-    abort_if($page->site->enabledLocales()->where('locales.id', $locale->id)->doesntExist(), 404);
+    abort_if($page->site->enabledLocales()->where((new Locale)->qualifyColumn('id'), $locale->id)->doesntExist(), 404);
 
     DB::transaction(function () use ($request, $page, $locale): void {
       $page->translations()->updateOrCreate(
@@ -91,7 +91,7 @@ class PageTranslationController extends Controller
     abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
     abort_unless($translation->page_id === $page->id, 404);
     $page->loadMissing('site');
-    abort_if($page->site->enabledLocales()->where('locales.id', $translation->locale_id)->doesntExist(), 404);
+    abort_if($page->site->enabledLocales()->where((new Locale)->qualifyColumn('id'), $translation->locale_id)->doesntExist(), 404);
 
     return view('webblocks-cms::admin.pages.translations.form', [
       'page' => $page->loadMissing(['site', 'translations.locale']),
@@ -113,7 +113,7 @@ class PageTranslationController extends Controller
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
     abort_unless($translation->page_id === $page->id, 404);
     $page->loadMissing('site');
-    abort_if($page->site->enabledLocales()->where('locales.id', $translation->locale_id)->doesntExist(), 404);
+    abort_if($page->site->enabledLocales()->where((new Locale)->qualifyColumn('id'), $translation->locale_id)->doesntExist(), 404);
 
     DB::transaction(function () use ($request, $page, $translation): void {
       $translation->update($request->validatedTranslation());

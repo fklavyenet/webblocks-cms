@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Install;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 class PartialInstallState
 {
@@ -71,7 +72,7 @@ class PartialInstallState
   public function isComplete(): bool
   {
     foreach (self::REQUIRED_TABLES as $table) {
-      if (! Schema::hasTable($table)) {
+      if (! Schema::hasTable(CmsTable::name($table))) {
         return false;
       }
     }
@@ -141,7 +142,7 @@ class PartialInstallState
   private function existingTables(): array
   {
     return array_values(array_filter(
-      self::CMS_TABLES,
+      array_map(CmsTable::name(...), self::CMS_TABLES),
       fn (string $table): bool => Schema::hasTable($table),
     ));
   }
@@ -210,7 +211,7 @@ class PartialInstallState
     foreach ($this->conflictingForeignKeys() as $foreignKey) {
       $table = $foreignKey['table'];
 
-      if (in_array($table, self::CMS_TABLES, true)) {
+      if (in_array($table, array_map(CmsTable::name(...), self::CMS_TABLES), true)) {
         continue;
       }
 

@@ -2,10 +2,11 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -18,7 +19,7 @@ class EngagementController extends Controller
 {
   public function comments(Request $request): View
   {
-    if (! Schema::hasTable('comment_entries')) {
+    if (! Schema::hasTable('wbcms_comment_entries')) {
       return view('webblocks-cms::admin.engagement.comments', [
         'comments' => new LengthAwarePaginator([], 0, AdminPagination::perPage()),
         'filters' => [
@@ -69,7 +70,7 @@ class EngagementController extends Controller
 
   public function ratings(Request $request): View
   {
-    if (! Schema::hasTable('content_ratings')) {
+    if (! Schema::hasTable('wbcms_content_ratings')) {
       return view('webblocks-cms::admin.engagement.ratings', [
         'ratings' => new LengthAwarePaginator([], 0, AdminPagination::perPage()),
         'totalCount' => 0,
@@ -116,7 +117,7 @@ class EngagementController extends Controller
     return redirect()->route('admin.engagement.comments.index')->with('status', 'Comment deleted.');
   }
 
-  private function scopeCommentsForUser(Builder $query, \App\Models\User $user): Builder
+  private function scopeCommentsForUser(Builder $query, User $user): Builder
   {
     if ($user->isSuperAdmin()) {
       return $query;
@@ -125,7 +126,7 @@ class EngagementController extends Controller
     return $query->whereIn('site_id', $user->accessibleSiteIds());
   }
 
-  private function scopeRatingsForUser(Builder $query, \App\Models\User $user): Builder
+  private function scopeRatingsForUser(Builder $query, User $user): Builder
   {
     if ($user->isSuperAdmin()) {
       return $query;

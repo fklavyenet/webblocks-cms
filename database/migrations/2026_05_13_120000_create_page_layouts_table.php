@@ -10,7 +10,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('page_layouts', function (Blueprint $table) {
+    Schema::create('wbcms_page_layouts', function (Blueprint $table) {
       $table->id();
       $table->string('handle')->unique();
       $table->string('name');
@@ -43,7 +43,7 @@ return new class extends Migration
       ])
       ->all();
 
-    DB::table('page_layouts')->upsert(
+    DB::table('wbcms_page_layouts')->upsert(
       $rows,
       ['handle'],
       ['name', 'description', 'is_system', 'is_active', 'sort_order', 'shell_type', 'slot_schema', 'wrapper_schema', 'updated_at']
@@ -52,6 +52,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('page_layouts');
+    Schema::dropIfExists('wbcms_page_layouts');
   }
 };

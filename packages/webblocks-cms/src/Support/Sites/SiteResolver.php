@@ -62,7 +62,7 @@ class SiteResolver
   {
     $domain = $this->normalizeDomain($domain);
 
-    if ($domain === null || ! Schema::hasTable('site_domains')) {
+    if ($domain === null || ! Schema::hasTable('wbcms_site_domains')) {
       return null;
     }
 
@@ -82,14 +82,14 @@ class SiteResolver
       return $primary;
     }
 
-    return Schema::hasTable('site_domains')
+    return Schema::hasTable('wbcms_site_domains')
       ? $site->activeDomains()->first()
       : null;
   }
 
   private function resolveActiveSiteDomain(string $host): ?SiteDomain
   {
-    if (! Schema::hasTable('site_domains')) {
+    if (! Schema::hasTable('wbcms_site_domains')) {
       return null;
     }
 

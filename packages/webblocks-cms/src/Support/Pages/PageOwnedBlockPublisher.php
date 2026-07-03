@@ -149,12 +149,14 @@ class PageOwnedBlockPublisher
     }
 
     $sharedSlotIds = $slots->pluck('shared_slot_id')->filter()->values();
+    $blockTable = (new Block)->getTable();
+    $sharedSlotBlockTable = (new SharedSlotBlock)->getTable();
     $counts = SharedSlotBlock::query()
-      ->join('blocks', 'blocks.id', '=', 'shared_slot_blocks.block_id')
-      ->selectRaw('shared_slot_blocks.shared_slot_id, blocks.status, count(*) as aggregate')
-      ->whereIn('shared_slot_blocks.shared_slot_id', $sharedSlotIds)
-      ->whereIn('blocks.status', self::PUBLISHABLE_STATUSES)
-      ->groupBy('shared_slot_blocks.shared_slot_id', 'blocks.status')
+      ->join($blockTable, $blockTable.'.id', '=', $sharedSlotBlockTable.'.block_id')
+      ->selectRaw($sharedSlotBlockTable.'.shared_slot_id, '.$blockTable.'.status, count(*) as aggregate')
+      ->whereIn($sharedSlotBlockTable.'.shared_slot_id', $sharedSlotIds)
+      ->whereIn($blockTable.'.status', self::PUBLISHABLE_STATUSES)
+      ->groupBy($sharedSlotBlockTable.'.shared_slot_id', $blockTable.'.status')
       ->get()
       ->groupBy('shared_slot_id');
 

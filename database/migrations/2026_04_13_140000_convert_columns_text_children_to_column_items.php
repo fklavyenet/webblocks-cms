@@ -7,14 +7,14 @@ return new class extends Migration
 {
   public function up(): void
   {
-    $columnItemType = DB::table('block_types')->where('slug', 'column_item')->first();
+    $columnItemType = DB::table('wbcms_block_types')->where('slug', 'column_item')->first();
 
     if (! $columnItemType) {
       return;
     }
 
-    DB::table('blocks')
-      ->join('blocks as parents', 'parents.id', '=', 'blocks.parent_id')
+    DB::table('wbcms_blocks as blocks')
+      ->join('wbcms_blocks as parents', 'parents.id', '=', 'blocks.parent_id')
       ->where('parents.type', 'columns')
       ->where('blocks.type', 'text')
       ->update([
@@ -27,14 +27,14 @@ return new class extends Migration
 
   public function down(): void
   {
-    $textType = DB::table('block_types')->where('slug', 'text')->first();
+    $textType = DB::table('wbcms_block_types')->where('slug', 'text')->first();
 
     if (! $textType) {
       return;
     }
 
-    DB::table('blocks')
-      ->join('blocks as parents', 'parents.id', '=', 'blocks.parent_id')
+    DB::table('wbcms_blocks as blocks')
+      ->join('wbcms_blocks as parents', 'parents.id', '=', 'blocks.parent_id')
       ->where('parents.type', 'columns')
       ->where('blocks.type', 'column_item')
       ->update([

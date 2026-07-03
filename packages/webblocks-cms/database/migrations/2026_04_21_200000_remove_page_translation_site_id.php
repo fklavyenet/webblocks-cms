@@ -11,26 +11,26 @@ return new class extends Migration
   {
     $this->dropPageUniqueIfPresent();
 
-    if (! Schema::hasColumn('page_translations', 'site_id')) {
+    if (! Schema::hasColumn('wbcms_page_translations', 'site_id')) {
       return;
     }
 
-    $this->dropPageTranslationForeignIfPresent('page_translations_page_site_foreign', 'page_translations');
+    $this->dropPageTranslationForeignIfPresent('page_translations_page_site_foreign', 'wbcms_page_translations');
 
-    if ($this->hasIndex('page_translations', 'page_translations_page_id_site_id_index')) {
-      Schema::table('page_translations', function (Blueprint $table) {
+    if ($this->hasIndex('wbcms_page_translations', 'page_translations_page_id_site_id_index')) {
+      Schema::table('wbcms_page_translations', function (Blueprint $table) {
         $table->dropIndex('page_translations_page_id_site_id_index');
       });
     }
 
-    Schema::table('page_translations', function (Blueprint $table) {
+    Schema::table('wbcms_page_translations', function (Blueprint $table) {
       $table->dropForeign(['site_id']);
       $table->dropUnique('page_translations_site_id_locale_id_slug_unique');
       $table->dropUnique('page_translations_site_id_locale_id_path_unique');
       $table->dropColumn('site_id');
     });
 
-    Schema::table('page_translations', function (Blueprint $table) {
+    Schema::table('wbcms_page_translations', function (Blueprint $table) {
       $table->index(['locale_id', 'slug']);
       $table->index(['locale_id', 'path']);
     });
@@ -38,21 +38,21 @@ return new class extends Migration
 
   public function down(): void
   {
-    if (Schema::hasColumn('page_translations', 'site_id')) {
+    if (Schema::hasColumn('wbcms_page_translations', 'site_id')) {
       return;
     }
 
-    Schema::table('page_translations', function (Blueprint $table) {
+    Schema::table('wbcms_page_translations', function (Blueprint $table) {
       $table->dropIndex(['locale_id', 'slug']);
       $table->dropIndex(['locale_id', 'path']);
-      $table->foreignId('site_id')->nullable()->after('page_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->nullable()->after('page_id')->constrained('wbcms_sites')->cascadeOnDelete();
     });
 
-    DB::table('page_translations')
-      ->join('pages', 'pages.id', '=', 'page_translations.page_id')
+    DB::table('wbcms_page_translations')
+      ->join('wbcms_pages', 'pages.id', '=', 'page_translations.page_id')
       ->update(['page_translations.site_id' => DB::raw('pages.site_id')]);
 
-    Schema::table('page_translations', function (Blueprint $table) {
+    Schema::table('wbcms_page_translations', function (Blueprint $table) {
       $table->unique(['site_id', 'locale_id', 'slug']);
       $table->unique(['site_id', 'locale_id', 'path']);
     });
@@ -60,11 +60,11 @@ return new class extends Migration
 
   private function dropPageUniqueIfPresent(): void
   {
-    if (! $this->hasIndex('pages', 'pages_id_site_id_unique')) {
+    if (! $this->hasIndex('wbcms_pages', 'pages_id_site_id_unique')) {
       return;
     }
 
-    Schema::table('pages', function (Blueprint $table) {
+    Schema::table('wbcms_pages', function (Blueprint $table) {
       $table->dropUnique('pages_id_site_id_unique');
     });
   }

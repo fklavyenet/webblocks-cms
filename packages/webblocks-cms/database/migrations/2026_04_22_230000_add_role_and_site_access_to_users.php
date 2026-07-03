@@ -14,9 +14,9 @@ return new class extends Migration
       $table->string('role', 32)->nullable()->after('password');
     });
 
-    Schema::create('site_user', function (Blueprint $table) {
+    Schema::create('wbcms_site_user', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('site_id')->constrained()->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->foreignId('user_id')->constrained()->cascadeOnDelete();
       $table->timestamps();
       $table->unique(['user_id', 'site_id']);
@@ -34,10 +34,10 @@ return new class extends Migration
       'is_admin' => DB::raw("case when role = '".User::ROLE_SUPER_ADMIN."' then 1 else 0 end"),
     ]);
 
-    $primarySiteId = DB::table('sites')
+    $primarySiteId = DB::table('wbcms_sites')
       ->where('is_primary', true)
       ->value('id')
-      ?? DB::table('sites')->orderBy('id')->value('id');
+      ?? DB::table('wbcms_sites')->orderBy('id')->value('id');
 
     if ($primarySiteId) {
       $now = now();
@@ -47,7 +47,7 @@ return new class extends Migration
         ->get();
 
       foreach ($users as $user) {
-        DB::table('site_user')->updateOrInsert(
+        DB::table('wbcms_site_user')->updateOrInsert(
           [
             'user_id' => $user->id,
             'site_id' => $primarySiteId,
@@ -63,7 +63,7 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('site_user');
+    Schema::dropIfExists('wbcms_site_user');
 
     Schema::table('users', function (Blueprint $table) {
       $table->dropColumn('role');

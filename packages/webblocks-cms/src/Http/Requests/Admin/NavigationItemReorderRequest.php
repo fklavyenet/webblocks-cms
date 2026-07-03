@@ -26,7 +26,7 @@ class NavigationItemReorderRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'site_id' => ['required', 'integer', 'exists:sites,id'],
+      'site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'menu_key' => ['required', 'string', Rule::in(NavigationItem::menuKeys())],
       'items' => ['required', 'array', 'min:1'],
       'items.*.id' => ['required', 'integer'],

@@ -17,6 +17,7 @@ use Tests\TestCase;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
@@ -663,10 +664,10 @@ class SystemUpdatesTest extends TestCase
     $this->artisan('webblocks:updates:prune-runs')
       ->assertExitCode(0);
 
-    $this->assertDatabaseHas('system_update_runs', ['id' => $failedRun->id]);
-    $this->assertDatabaseMissing('system_update_runs', ['id' => $runs[1]->id]);
-    $this->assertDatabaseMissing('system_update_runs', ['id' => $runs[2]->id]);
-    $this->assertDatabaseMissing('system_update_runs', ['id' => $runs[3]->id]);
+    $this->assertDatabaseHas(CmsTable::name('system_update_runs'), ['id' => $failedRun->id]);
+    $this->assertDatabaseMissing(CmsTable::name('system_update_runs'), ['id' => $runs[1]->id]);
+    $this->assertDatabaseMissing(CmsTable::name('system_update_runs'), ['id' => $runs[2]->id]);
+    $this->assertDatabaseMissing(CmsTable::name('system_update_runs'), ['id' => $runs[3]->id]);
 
     $this->assertSame(5, SystemUpdateRun::query()->count());
   }
@@ -1038,7 +1039,7 @@ class SystemUpdatesTest extends TestCase
 
       $response->assertRedirect(route('admin.system.updates.index'));
       $response->assertSessionHasErrors(['system_update']);
-      $this->assertDatabaseCount('system_update_runs', 0);
+      $this->assertDatabaseCount(CmsTable::name('system_update_runs'), 0);
     } finally {
       $lock->release();
     }

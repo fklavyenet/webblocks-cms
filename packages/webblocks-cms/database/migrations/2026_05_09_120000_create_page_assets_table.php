@@ -8,9 +8,9 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('page_assets', function (Blueprint $table): void {
+    Schema::create('wbcms_page_assets', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('page_id')->constrained()->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
       $table->string('type', 16);
       $table->string('path');
       $table->string('load_position', 32);
@@ -29,6 +29,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('page_assets');
+    Schema::dropIfExists('wbcms_page_assets');
   }
 };

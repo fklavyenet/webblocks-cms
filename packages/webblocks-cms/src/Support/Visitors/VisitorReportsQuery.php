@@ -63,7 +63,7 @@ class VisitorReportsQuery
 
   public function hasEventsTable(): bool
   {
-    return Schema::hasTable('visitor_events');
+    return Schema::hasTable('wbcms_visitor_events');
   }
 
   public function utmTrackingEnabled(): bool
@@ -78,7 +78,7 @@ class VisitorReportsQuery
 
   public function supportsTrackingMode(): bool
   {
-    return $this->hasEventsTable() && Schema::hasColumn('visitor_events', 'tracking_mode');
+    return $this->hasEventsTable() && Schema::hasColumn('wbcms_visitor_events', 'tracking_mode');
   }
 
   public function supportsBotBreakdowns(): bool
@@ -606,6 +606,6 @@ class VisitorReportsQuery
 
   private function supportsColumn(string $column): bool
   {
-    return $this->hasEventsTable() && Schema::hasColumn('visitor_events', $column);
+    return $this->hasEventsTable() && Schema::hasColumn('wbcms_visitor_events', $column);
   }
 }

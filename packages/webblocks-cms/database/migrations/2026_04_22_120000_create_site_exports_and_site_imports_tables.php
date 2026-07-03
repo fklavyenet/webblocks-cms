@@ -8,9 +8,9 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('site_exports', function (Blueprint $table) {
+    Schema::create('wbcms_site_exports', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('status', 32);
       $table->boolean('includes_media')->default(false);
@@ -27,14 +27,14 @@ return new class extends Migration
       $table->index(['status', 'created_at']);
     });
 
-    Schema::create('site_imports', function (Blueprint $table) {
+    Schema::create('wbcms_site_imports', function (Blueprint $table) {
       $table->id();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('status', 32);
       $table->string('source_archive_name')->nullable();
       $table->string('archive_disk')->default('site-transfers');
       $table->string('archive_path')->nullable();
-      $table->foreignId('target_site_id')->nullable()->constrained('sites')->nullOnDelete();
+      $table->foreignId('target_site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
       $table->string('imported_site_handle')->nullable();
       $table->string('imported_site_domain')->nullable();
       $table->json('summary_json')->nullable();
@@ -49,7 +49,7 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('site_imports');
-    Schema::dropIfExists('site_exports');
+    Schema::dropIfExists('wbcms_site_imports');
+    Schema::dropIfExists('wbcms_site_exports');
   }
 };

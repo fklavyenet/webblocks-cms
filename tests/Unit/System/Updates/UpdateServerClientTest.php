@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\Updates\InstallationTelemetry;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
@@ -88,7 +89,7 @@ class UpdateServerClientTest extends TestCase
     $this->assertIsString($first);
     $this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $first);
     $this->assertSame($first, $second);
-    $this->assertDatabaseHas('system_settings', [
+    $this->assertDatabaseHas(CmsTable::name('system_settings'), [
       'key' => InstallationTelemetry::SETTING_KEY,
       'value' => $first,
     ]);
@@ -100,7 +101,7 @@ class UpdateServerClientTest extends TestCase
     config()->set('webblocks-updates.telemetry.enabled', false);
 
     $this->assertNull(app(InstallationTelemetry::class)->installationId());
-    $this->assertDatabaseMissing('system_settings', [
+    $this->assertDatabaseMissing(CmsTable::name('system_settings'), [
       'key' => InstallationTelemetry::SETTING_KEY,
     ]);
 

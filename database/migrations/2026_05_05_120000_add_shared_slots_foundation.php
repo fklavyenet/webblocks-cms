@@ -10,9 +10,9 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('shared_slots', function (Blueprint $table) {
+    Schema::create('wbcms_shared_slots', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
       $table->string('name');
       $table->string('handle');
       $table->string('slot_name');
@@ -24,11 +24,11 @@ return new class extends Migration
       $table->index(['site_id', 'slot_name']);
     });
 
-    Schema::create('shared_slot_blocks', function (Blueprint $table) {
+    Schema::create('wbcms_shared_slot_blocks', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
-      $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
-      $table->foreignId('parent_id')->nullable()->constrained('shared_slot_blocks')->nullOnDelete();
+      $table->foreignId('shared_slot_id')->constrained('wbcms_shared_slots')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('parent_id')->nullable()->constrained('wbcms_shared_slot_blocks')->nullOnDelete();
       $table->unsignedInteger('sort_order')->default(0);
       $table->timestamps();
 
@@ -36,34 +36,34 @@ return new class extends Migration
       $table->index(['shared_slot_id', 'sort_order']);
     });
 
-    Schema::table('page_slots', function (Blueprint $table) {
-      if (! Schema::hasColumn('page_slots', 'source_type')) {
+    Schema::table('wbcms_page_slots', function (Blueprint $table) {
+      if (! Schema::hasColumn('wbcms_page_slots', 'source_type')) {
         $table->string('source_type')->default(PageSlot::SOURCE_TYPE_PAGE)->after('slot_type_id');
       }
 
-      if (! Schema::hasColumn('page_slots', 'shared_slot_id')) {
-        $table->foreignId('shared_slot_id')->nullable()->after('source_type')->constrained('shared_slots')->nullOnDelete();
+      if (! Schema::hasColumn('wbcms_page_slots', 'shared_slot_id')) {
+        $table->foreignId('shared_slot_id')->nullable()->after('source_type')->constrained('wbcms_shared_slots')->nullOnDelete();
       }
     });
 
-    DB::table('page_slots')->update([
+    DB::table('wbcms_page_slots')->update([
       'source_type' => PageSlot::SOURCE_TYPE_PAGE,
     ]);
   }
 
   public function down(): void
   {
-    Schema::table('page_slots', function (Blueprint $table) {
-      if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
+    Schema::table('wbcms_page_slots', function (Blueprint $table) {
+      if (Schema::hasColumn('wbcms_page_slots', 'shared_slot_id')) {
         $table->dropConstrainedForeignId('shared_slot_id');
       }
 
-      if (Schema::hasColumn('page_slots', 'source_type')) {
+      if (Schema::hasColumn('wbcms_page_slots', 'source_type')) {
         $table->dropColumn('source_type');
       }
     });
 
-    Schema::dropIfExists('shared_slot_blocks');
-    Schema::dropIfExists('shared_slots');
+    Schema::dropIfExists('wbcms_shared_slot_blocks');
+    Schema::dropIfExists('wbcms_shared_slots');
   }
 };

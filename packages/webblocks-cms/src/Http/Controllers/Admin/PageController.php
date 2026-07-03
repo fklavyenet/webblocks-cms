@@ -1268,10 +1268,10 @@ class PageController extends Controller
 
   private function sharedSlotsSchemaAvailable(): bool
   {
-    return Schema::hasTable('shared_slots')
-      && Schema::hasTable('shared_slot_blocks')
-      && Schema::hasColumn('page_slots', 'source_type')
-      && Schema::hasColumn('page_slots', 'shared_slot_id');
+    return Schema::hasTable('wbcms_shared_slots')
+      && Schema::hasTable('wbcms_shared_slot_blocks')
+      && Schema::hasColumn('wbcms_page_slots', 'source_type')
+      && Schema::hasColumn('wbcms_page_slots', 'shared_slot_id');
   }
 
   private function assetPickerAssets()

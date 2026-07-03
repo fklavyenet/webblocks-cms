@@ -299,7 +299,7 @@ class SystemSettings
       );
     }
 
-    if (array_key_exists(self::DEFAULT_LOCALE, $values) && Schema::hasTable('locales')) {
+    if (array_key_exists(self::DEFAULT_LOCALE, $values) && Schema::hasTable('wbcms_locales')) {
       $locale = Locale::query()->where('code', Locale::normalizeCode((string) $values[self::DEFAULT_LOCALE]))->first();
 
       if ($locale) {
@@ -335,7 +335,7 @@ class SystemSettings
   private function settingsTableExists(): bool
   {
     try {
-      return Schema::hasTable('system_settings');
+      return Schema::hasTable('wbcms_system_settings');
     } catch (Throwable) {
       return false;
     }
@@ -344,7 +344,7 @@ class SystemSettings
   private function primarySite(): ?Site
   {
     try {
-      if (! Schema::hasTable('sites')) {
+      if (! Schema::hasTable('wbcms_sites')) {
         return null;
       }
 

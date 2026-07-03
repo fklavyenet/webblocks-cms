@@ -281,7 +281,7 @@ class SiteController extends Controller
 
   private function runtimeSafeSiteData(array $data): array
   {
-    if (! Schema::hasColumn('sites', 'public_theme_preset')) {
+    if (! Schema::hasColumn('wbcms_sites', 'public_theme_preset')) {
       unset($data['public_theme_preset']);
     }
 

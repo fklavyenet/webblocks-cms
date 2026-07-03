@@ -3,13 +3,13 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
-class Locale extends Model
+class Locale extends CmsModel
 {
   use HasFactory;
 
@@ -67,7 +67,7 @@ class Locale extends Model
 
   public function sites(): BelongsToMany
   {
-    return $this->belongsToMany(Site::class, 'site_locales')
+    return $this->belongsToMany(Site::class, CmsTable::name('site_locales'))
       ->withPivot('is_enabled')
       ->withTimestamps();
   }
@@ -111,7 +111,7 @@ class Locale extends Model
       });
     }
 
-    if (Schema::hasTable('system_settings')) {
+    if (Schema::hasTable('wbcms_system_settings')) {
       $defaultLocale = static::query()->where('is_default', true)->orderBy('id')->first();
 
       if ($defaultLocale) {

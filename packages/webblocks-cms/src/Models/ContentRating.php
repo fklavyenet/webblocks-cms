@@ -3,10 +3,9 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ContentRating extends Model
+class ContentRating extends CmsModel
 {
   use HasFactory;
 

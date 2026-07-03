@@ -7,7 +7,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    DB::table('block_types')
+    DB::table('wbcms_block_types')
       ->where('slug', 'rich-text')
       ->update([
         'name' => 'Rich Text',
@@ -24,7 +24,7 @@ return new class extends Migration
 
   public function down(): void
   {
-    DB::table('block_types')
+    DB::table('wbcms_block_types')
       ->where('slug', 'rich-text')
       ->update([
         'updated_at' => now(),

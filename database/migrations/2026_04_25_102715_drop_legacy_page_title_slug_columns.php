@@ -14,14 +14,14 @@ return new class extends Migration
      */
   public function up(): void
   {
-    if (! Schema::hasColumns('pages', ['title', 'slug'])) {
+    if (! Schema::hasColumns('wbcms_pages', ['title', 'slug'])) {
       return;
     }
 
-    $this->dropIndexIfExists('pages', 'pages_slug_unique');
-    $this->dropIndexIfExists('pages', 'pages_slug_index');
+    $this->dropIndexIfExists('wbcms_pages', 'wbcms_pages_slug_unique');
+    $this->dropIndexIfExists('wbcms_pages', 'wbcms_pages_slug_index');
 
-    Schema::table('pages', function (Blueprint $table) {
+    Schema::table('wbcms_pages', function (Blueprint $table) {
       $table->dropColumn(['title', 'slug']);
     });
   }
@@ -31,11 +31,11 @@ return new class extends Migration
      */
   public function down(): void
   {
-    if (Schema::hasColumns('pages', ['title', 'slug'])) {
+    if (Schema::hasColumns('wbcms_pages', ['title', 'slug'])) {
       return;
     }
 
-    Schema::table('pages', function (Blueprint $table) {
+    Schema::table('wbcms_pages', function (Blueprint $table) {
       $table->string('title')->nullable()->after('site_id');
       $table->string('slug')->nullable()->after('title');
       $table->index('slug');
@@ -52,7 +52,7 @@ return new class extends Migration
       ->select(['page_id', 'name', 'slug'])
       ->orderBy('page_id')
       ->get()
-      ->each(fn (PageTranslation $translation) => DB::table('pages')
+      ->each(fn (PageTranslation $translation) => DB::table('wbcms_pages')
         ->where('id', $translation->page_id)
         ->update([
           'title' => $translation->name,

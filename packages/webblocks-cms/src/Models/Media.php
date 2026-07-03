@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -13,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 
-class Media extends Model
+class Media extends CmsModel
 {
   use HasFactory;
 

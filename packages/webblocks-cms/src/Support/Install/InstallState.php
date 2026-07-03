@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\PageType;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
 class InstallState
@@ -55,7 +56,7 @@ class InstallState
 
   public function installMarkerExists(): bool
   {
-    if (! Schema::hasTable('system_settings')) {
+    if (! Schema::hasTable('wbcms_system_settings')) {
       return false;
     }
 
@@ -78,7 +79,7 @@ class InstallState
 
   public function markInstalled(): void
   {
-    if (! Schema::hasTable('system_settings')) {
+    if (! Schema::hasTable('wbcms_system_settings')) {
       return;
     }
 
@@ -92,7 +93,7 @@ class InstallState
   {
     try {
       foreach (['users', 'sites', 'locales', 'site_locales', 'system_settings'] as $table) {
-        if (! Schema::hasTable($table)) {
+        if (! Schema::hasTable(CmsTable::name($table))) {
           return false;
         }
       }

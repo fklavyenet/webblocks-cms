@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('blocks', function (Blueprint $table) {
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
       $table->string('subtitle')->nullable()->after('title');
       $table->string('url')->nullable()->after('content');
       $table->string('variant')->nullable()->after('url');
@@ -18,7 +18,7 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::table('blocks', function (Blueprint $table) {
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
       $table->dropColumn(['subtitle', 'url', 'variant', 'meta']);
     });
   }

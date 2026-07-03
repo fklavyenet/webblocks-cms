@@ -13,6 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use WebBlocks\Cms\Auth\Concerns\HasWebBlocksCmsAccess;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 #[Fillable(['name', 'email', 'password', 'role', 'is_admin', 'is_active', 'last_login_at'])]
 #[Hidden(['password', 'remember_token'])]
@@ -63,7 +64,7 @@ class User extends Authenticatable
 
   public function sites(): BelongsToMany
   {
-    return $this->belongsToMany(Site::class)
+    return $this->belongsToMany(Site::class, CmsTable::name('site_user'))
       ->withTimestamps();
   }
 
@@ -126,14 +127,14 @@ class User extends Authenticatable
   public function accessibleSiteIds()
   {
     if ($this->isSuperAdmin()) {
-      return Site::query()->pluck('sites.id');
+      return Site::query()->pluck((new Site)->qualifyColumn('id'));
     }
 
     if ($this->relationLoaded('sites')) {
       return $this->sites->pluck('id')->values();
     }
 
-    return $this->sites()->pluck('sites.id');
+    return $this->sites()->pluck((new Site)->qualifyColumn('id'));
   }
 
   public function hasSiteAccess(Site|PackageSite|int|string|null $site): bool

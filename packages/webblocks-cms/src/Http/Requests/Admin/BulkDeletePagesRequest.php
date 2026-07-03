@@ -15,7 +15,7 @@ class BulkDeletePagesRequest extends FormRequest
   {
     return [
       'page_ids' => ['required', 'array', 'min:1'],
-      'page_ids.*' => ['required', 'integer', 'distinct', 'exists:pages,id'],
+      'page_ids.*' => ['required', 'integer', 'distinct', 'exists:wbcms_pages,id'],
     ];
   }
 

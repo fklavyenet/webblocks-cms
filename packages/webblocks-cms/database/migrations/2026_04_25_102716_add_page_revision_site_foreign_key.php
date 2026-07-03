@@ -17,12 +17,12 @@ return new class extends Migration
       ->select(['id', 'site_id'])
       ->orderBy('id')
       ->get()
-      ->each(fn (Page $page) => DB::table('page_revisions')
+      ->each(fn (Page $page) => DB::table('wbcms_page_revisions')
         ->where('page_id', $page->id)
         ->update(['site_id' => $page->site_id]));
 
-    Schema::table('page_revisions', function (Blueprint $table) {
-      $table->foreign('site_id')->references('id')->on('sites')->restrictOnDelete();
+    Schema::table('wbcms_page_revisions', function (Blueprint $table) {
+      $table->foreign('site_id')->references('id')->on('wbcms_sites')->restrictOnDelete();
     });
   }
 
@@ -31,7 +31,7 @@ return new class extends Migration
      */
   public function down(): void
   {
-    Schema::table('page_revisions', function (Blueprint $table) {
+    Schema::table('wbcms_page_revisions', function (Blueprint $table) {
       $table->dropForeign(['site_id']);
     });
   }

@@ -235,6 +235,6 @@ class SiteDeleteService
 
   private function hasBlockGalleryItemTranslationsTable(): bool
   {
-    return Schema::hasTable('block_gallery_item_translations');
+    return Schema::hasTable('wbcms_block_gallery_item_translations');
   }
 }

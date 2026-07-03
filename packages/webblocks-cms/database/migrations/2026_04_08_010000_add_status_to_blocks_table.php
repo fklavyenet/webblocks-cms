@@ -9,7 +9,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('blocks', function (Blueprint $table) {
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
       $table->string('status')->default('published')->after('settings');
     });
 
@@ -24,7 +24,7 @@ return new class extends Migration
       DB::statement('ALTER TABLE blocks MODIFY settings JSON NULL');
     }
 
-    Schema::table('blocks', function (Blueprint $table) {
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
       $table->dropColumn('status');
     });
   }

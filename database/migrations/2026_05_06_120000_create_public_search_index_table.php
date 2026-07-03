@@ -8,11 +8,11 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('public_search_index', function (Blueprint $table) {
+    Schema::create('wbcms_public_search_index', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-      $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
-      $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
       $table->string('title');
       $table->text('excerpt')->nullable();
       $table->string('url');
@@ -29,6 +29,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('public_search_index');
+    Schema::dropIfExists('wbcms_public_search_index');
   }
 };

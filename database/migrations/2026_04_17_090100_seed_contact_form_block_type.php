@@ -7,7 +7,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    DB::table('block_types')->updateOrInsert(
+    DB::table('wbcms_block_types')->updateOrInsert(
       ['slug' => 'contact_form'],
       [
         'name' => 'Contact Form',
@@ -26,6 +26,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    DB::table('block_types')->where('slug', 'contact_form')->delete();
+    DB::table('wbcms_block_types')->where('slug', 'contact_form')->delete();
   }
 };

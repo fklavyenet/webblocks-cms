@@ -20,6 +20,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
 use WebBlocks\Cms\Support\Install\LaravelWelcomeRouteCleaner;
@@ -476,7 +477,7 @@ class InstallWebBlocksCmsCommand extends Command
   private function cmsSchemaAlreadyExists(): bool
   {
     foreach (['page_types', 'layout_types', 'slot_types', 'block_types', 'sites', 'locales', 'system_settings'] as $table) {
-      if (! Schema::hasTable($table)) {
+      if (! Schema::hasTable(CmsTable::name($table))) {
         return false;
       }
     }

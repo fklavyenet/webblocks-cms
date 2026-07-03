@@ -5,7 +5,6 @@ namespace WebBlocks\Cms\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -18,7 +17,7 @@ use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
-class Page extends Model
+class Page extends CmsModel
 {
   use HasFactory;
   use ReindexesPublicSearch;
@@ -254,7 +253,7 @@ class Page extends Model
     return $query->orderBy(
       PageTranslation::query()
         ->select($column)
-        ->whereColumn('page_translations.page_id', 'pages.id')
+        ->whereColumn((new PageTranslation)->qualifyColumn('page_id'), (new self)->qualifyColumn('id'))
         ->where('locale_id', $defaultLocaleId)
         ->limit(1),
       $direction,
@@ -387,7 +386,7 @@ class Page extends Model
     }
 
     return $site->locales()
-      ->where('locales.is_enabled', true)
+      ->where((new Locale)->qualifyColumn('is_enabled'), true)
       ->wherePivot('is_enabled', true)
       ->orderByDesc('is_default')
       ->orderBy('name')

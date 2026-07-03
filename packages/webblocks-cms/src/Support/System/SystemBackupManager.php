@@ -307,7 +307,7 @@ class SystemBackupManager
 
   private function hasBackupTable(): bool
   {
-    return Schema::hasTable('system_backups');
+    return Schema::hasTable('wbcms_system_backups');
   }
 
   private function backupArchiveResolver(): SystemBackupArchiveResolver

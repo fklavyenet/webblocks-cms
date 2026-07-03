@@ -15,7 +15,7 @@ class BulkDeleteContactMessagesRequest extends FormRequest
   {
     return [
       'contact_message_ids' => ['required', 'array', 'min:1'],
-      'contact_message_ids.*' => ['integer', 'distinct', 'exists:contact_messages,id'],
+      'contact_message_ids.*' => ['integer', 'distinct', 'exists:wbcms_contact_messages,id'],
     ];
   }
 

@@ -13,7 +13,7 @@ class PageLayoutManager
 {
   public function tableExists(): bool
   {
-    return Schema::hasTable('page_layouts');
+    return Schema::hasTable('wbcms_page_layouts');
   }
 
   public function activeHandles(): array
@@ -47,7 +47,7 @@ class PageLayoutManager
 
   public function slotsTableExists(): bool
   {
-    return Schema::hasTable('page_layout_slots');
+    return Schema::hasTable('wbcms_page_layout_slots');
   }
 
   public function resolveShellType(?string $handle): string

@@ -16,7 +16,7 @@ class InternalEngagementController extends Controller
 {
   public function comments(Request $request): JsonResponse
   {
-    if (! Schema::hasTable('comment_entries')) {
+    if (! Schema::hasTable('wbcms_comment_entries')) {
       return $this->ok([
         'table_ready' => false,
         'comments' => [],
@@ -63,7 +63,7 @@ class InternalEngagementController extends Controller
 
   public function updateCommentStatus(Request $request, int $commentEntry): JsonResponse
   {
-    if (! Schema::hasTable('comment_entries')) {
+    if (! Schema::hasTable('wbcms_comment_entries')) {
       return response()->json([
         'ok' => false,
         'code' => 'engagement_schema_not_ready',
@@ -94,7 +94,7 @@ class InternalEngagementController extends Controller
 
   public function ratings(Request $request): JsonResponse
   {
-    if (! Schema::hasTable('content_ratings')) {
+    if (! Schema::hasTable('wbcms_content_ratings')) {
       return $this->ok([
         'table_ready' => false,
         'ratings' => [],

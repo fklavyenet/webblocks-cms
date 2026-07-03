@@ -23,7 +23,7 @@ class MovePageSiteRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'target_site_id' => ['required', 'integer', 'exists:sites,id'],
+      'target_site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
     ];
   }
 

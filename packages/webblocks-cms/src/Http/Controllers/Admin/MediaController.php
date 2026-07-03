@@ -249,25 +249,28 @@ class MediaController extends Controller
 
   private function applySorting(Builder $query, string $sort, string $direction): Builder
   {
+    $mediaTable = (new Media)->getTable();
+    $folderTable = (new MediaFolder)->getTable();
+
     return match ($sort) {
       'created_at', 'updated_at', 'filename', 'kind' => $query
-        ->orderBy('media.'.$sort, $direction)
-        ->orderByDesc('media.updated_at')
-        ->orderByDesc('media.id'),
+        ->orderBy($mediaTable.'.'.$sort, $direction)
+        ->orderByDesc($mediaTable.'.updated_at')
+        ->orderByDesc($mediaTable.'.id'),
       'title' => $query
-        ->orderByRaw('case when media.title is null or trim(media.title) = ? then 1 else 0 end asc', [''])
-        ->orderBy('media.title', $direction)
-        ->orderBy('media.filename', $direction)
-        ->orderByDesc('media.id'),
+        ->orderByRaw('case when '.$mediaTable.'.title is null or trim('.$mediaTable.'.title) = ? then 1 else 0 end asc', [''])
+        ->orderBy($mediaTable.'.title', $direction)
+        ->orderBy($mediaTable.'.filename', $direction)
+        ->orderByDesc($mediaTable.'.id'),
       'folder' => $query
-        ->leftJoin('media_folders', 'media_folders.id', '=', 'media.folder_id')
-        ->select('media.*')
-        ->orderByRaw('case when media_folders.name is null or trim(media_folders.name) = ? then 1 else 0 end asc', [''])
-        ->orderBy('media_folders.name', $direction)
-        ->orderByRaw('case when media.title is null or trim(media.title) = ? then 1 else 0 end asc', [''])
-        ->orderBy('media.title', $direction)
-        ->orderBy('media.filename', $direction)
-        ->orderByDesc('media.id'),
+        ->leftJoin($folderTable, $folderTable.'.id', '=', $mediaTable.'.folder_id')
+        ->select($mediaTable.'.*')
+        ->orderByRaw('case when '.$folderTable.'.name is null or trim('.$folderTable.'.name) = ? then 1 else 0 end asc', [''])
+        ->orderBy($folderTable.'.name', $direction)
+        ->orderByRaw('case when '.$mediaTable.'.title is null or trim('.$mediaTable.'.title) = ? then 1 else 0 end asc', [''])
+        ->orderBy($mediaTable.'.title', $direction)
+        ->orderBy($mediaTable.'.filename', $direction)
+        ->orderByDesc($mediaTable.'.id'),
       'usage' => $query
         ->withCount([
           'blocks as direct_usage_count',
@@ -277,13 +280,13 @@ class MediaController extends Controller
           'pageTranslationsUsingAsOgImage as seo_usage_count',
         ])
         ->orderByRaw('(direct_usage_count + related_media_usage_count + favicon_usage_count + social_image_usage_count + seo_usage_count) '.$direction)
-        ->orderByRaw('case when media.title is null or trim(media.title) = ? then 1 else 0 end asc', [''])
-        ->orderBy('media.title', $direction)
-        ->orderBy('media.filename', $direction)
-        ->orderByDesc('media.id'),
+        ->orderByRaw('case when '.$mediaTable.'.title is null or trim('.$mediaTable.'.title) = ? then 1 else 0 end asc', [''])
+        ->orderBy($mediaTable.'.title', $direction)
+        ->orderBy($mediaTable.'.filename', $direction)
+        ->orderByDesc($mediaTable.'.id'),
       default => $query
-        ->orderBy('media.updated_at', 'desc')
-        ->orderByDesc('media.id'),
+        ->orderBy($mediaTable.'.updated_at', 'desc')
+        ->orderByDesc($mediaTable.'.id'),
     };
   }
 }

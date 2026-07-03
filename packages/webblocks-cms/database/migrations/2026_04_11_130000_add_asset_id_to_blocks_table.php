@@ -8,14 +8,14 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('blocks', function (Blueprint $table) {
-      $table->foreignId('asset_id')->nullable()->after('url')->constrained('assets')->nullOnDelete();
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
+      $table->foreignId('asset_id')->nullable()->after('url')->constrained('wbcms_assets')->nullOnDelete();
     });
   }
 
   public function down(): void
   {
-    Schema::table('blocks', function (Blueprint $table) {
+    Schema::table('wbcms_blocks', function (Blueprint $table) {
       $table->dropConstrainedForeignId('asset_id');
     });
   }

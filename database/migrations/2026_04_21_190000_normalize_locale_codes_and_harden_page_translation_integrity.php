@@ -8,12 +8,12 @@ return new class extends Migration
 {
   public function up(): void
   {
-    DB::table('locales')
+    DB::table('wbcms_locales')
       ->select(['id', 'code'])
       ->orderBy('id')
       ->get()
       ->each(function (object $locale): void {
-        DB::table('locales')
+        DB::table('wbcms_locales')
           ->where('id', $locale->id)
           ->update(['code' => Locale::normalizeCode($locale->code)]);
       });

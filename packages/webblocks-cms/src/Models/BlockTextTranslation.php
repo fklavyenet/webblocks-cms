@@ -3,12 +3,11 @@
 namespace WebBlocks\Cms\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use WebBlocks\Cms\Models\Concerns\ValidatesBlockTranslationLocale;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
-class BlockTextTranslation extends Model
+class BlockTextTranslation extends CmsModel
 {
   use HasFactory;
   use ReindexesPublicSearch;

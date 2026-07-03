@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('cms_api_tokens', function (Blueprint $table): void {
+    Schema::create('wbcms_cms_api_tokens', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('token_hash', 128)->unique();
@@ -27,6 +27,6 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('cms_api_tokens');
+    Schema::dropIfExists('wbcms_cms_api_tokens');
   }
 };

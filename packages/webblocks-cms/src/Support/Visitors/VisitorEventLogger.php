@@ -293,6 +293,6 @@ class VisitorEventLogger
 
   private function supportsColumn(string $column): bool
   {
-    return Schema::hasTable('visitor_events') && Schema::hasColumn('visitor_events', $column);
+    return Schema::hasTable('wbcms_visitor_events') && Schema::hasColumn('wbcms_visitor_events', $column);
   }
 }

@@ -133,11 +133,11 @@ class PageLayoutSlotSyncer
       'sort_order' => $sortOrder,
     ];
 
-    if (Schema::hasColumn('page_slots', 'source_type')) {
+    if (Schema::hasColumn('wbcms_page_slots', 'source_type')) {
       $attributes['source_type'] = PageSlot::SOURCE_TYPE_PAGE;
     }
 
-    if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
+    if (Schema::hasColumn('wbcms_page_slots', 'shared_slot_id')) {
       $attributes['shared_slot_id'] = null;
     }
 

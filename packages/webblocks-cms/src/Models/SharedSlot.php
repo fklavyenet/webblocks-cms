@@ -4,15 +4,15 @@ namespace WebBlocks\Cms\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
-class SharedSlot extends Model
+class SharedSlot extends CmsModel
 {
   use HasFactory;
   use ReindexesPublicSearch;
@@ -65,11 +65,11 @@ class SharedSlot extends Model
 
   public function blocks(): BelongsToMany
   {
-    return $this->belongsToMany(Block::class, 'shared_slot_blocks')
+    return $this->belongsToMany(Block::class, CmsTable::name('shared_slot_blocks'))
       ->withPivot(['id', 'parent_id', 'sort_order'])
       ->withTimestamps()
       ->orderByPivot('sort_order')
-      ->orderBy('blocks.id');
+      ->orderBy((new Block)->qualifyColumn('id'));
   }
 
   public function pageSlots(): HasMany

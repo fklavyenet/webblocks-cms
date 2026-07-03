@@ -16,7 +16,7 @@ class SiteCloneRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'source_site_id' => ['required', 'integer', 'exists:sites,id'],
+      'source_site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'target_identifier' => ['required', 'string', 'max:255'],
       'target_name' => ['nullable', 'string', 'max:255'],
       'target_handle' => ['nullable', 'string', 'max:255'],

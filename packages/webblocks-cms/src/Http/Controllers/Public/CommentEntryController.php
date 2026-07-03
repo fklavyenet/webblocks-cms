@@ -31,7 +31,7 @@ class CommentEntryController extends Controller
     $redirects = app(ContactFormRedirects::class);
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $block->page?->publicUrl() ?: url('/'));
 
-    if (! Schema::hasTable('comment_entries')) {
+    if (! Schema::hasTable('wbcms_comment_entries')) {
       return redirect($sourceUrl)
         ->with('comment_success_block_id', $block->id)
         ->with('comment_success_message', 'Comments are temporarily unavailable.');

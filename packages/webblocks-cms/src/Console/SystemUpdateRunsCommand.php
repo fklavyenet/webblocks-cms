@@ -23,7 +23,7 @@ class SystemUpdateRunsCommand extends Command
 
   public function handle(): int
   {
-    if (! Schema::hasTable('system_update_runs')) {
+    if (! Schema::hasTable('wbcms_system_update_runs')) {
       $this->warn('System update run logging is not ready.');
 
       return self::FAILURE;

@@ -15,7 +15,7 @@ class BulkDeleteSystemBackupsRequest extends FormRequest
   {
     return [
       'backup_ids' => ['required', 'array', 'min:1'],
-      'backup_ids.*' => ['integer', 'distinct', 'exists:system_backups,id'],
+      'backup_ids.*' => ['integer', 'distinct', 'exists:wbcms_system_backups,id'],
     ];
   }
 

@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 class PackageConsumerPartialInstallRepairTest extends TestCase
 {
@@ -95,17 +96,17 @@ PHP);
       '--force' => true,
     ])
       ->expectsOutputToContain('Partial WebBlocks CMS schema detected before fresh-install migrations.')
-      ->expectsOutputToContain('Renamed empty partial CMS table page_types to page_types_before_cms_install_')
+      ->expectsOutputToContain('Renamed empty partial CMS table wbcms_page_types to wbcms_page_types_before_cms_install_')
       ->assertExitCode(0);
 
-    $this->assertTrue(Schema::hasTable('page_types'));
-    $this->assertTrue(Schema::hasColumn('page_types', 'slug'));
-    $this->assertTrue($this->tableExistsLike('page_types_before_cms_install_%'));
+    $this->assertTrue(Schema::hasTable(CmsTable::name('page_types')));
+    $this->assertTrue(Schema::hasColumn(CmsTable::name('page_types'), 'slug'));
+    $this->assertTrue($this->tableExistsLike(CmsTable::name('page_types').'_before_cms_install_%'));
     $this->assertDatabaseHas('users', [
       'email' => 'partial-repair-admin@example.com',
       'role' => 'super_admin',
     ]);
-    $this->assertDatabaseHas('sites', [
+    $this->assertDatabaseHas(CmsTable::name('sites'), [
       'handle' => 'partial-repair-site',
       'is_primary' => 1,
     ]);
@@ -118,7 +119,7 @@ PHP);
   {
     $this->resetCmsTablesForPartialInstallTest();
     $this->createEmptyPartialCmsTables(['page_types']);
-    DB::table('page_types')->insert(['id' => 1]);
+    DB::table(CmsTable::name('page_types'))->insert(['id' => 1]);
 
     try {
       $this->artisan('webblocks:install', [
@@ -147,47 +148,47 @@ PHP);
     Schema::disableForeignKeyConstraints();
 
     foreach ([
-      'block_gallery_item_translations',
-      'block_contact_form_translations',
-      'block_image_translations',
-      'block_button_translations',
-      'block_text_translations',
-      'system_backup_restores',
-      'system_backups',
-      'system_update_runs',
-      'public_search_index',
-      'visitor_events',
-      'contact_messages',
-      'site_imports',
-      'site_exports',
-      'icon_catalog_items',
-      'page_assets',
-      'shared_slot_revisions',
-      'shared_slot_blocks',
-      'shared_slots',
-      'page_revisions',
-      'block_media',
-      'page_slots',
-      'blocks',
-      'page_translations',
-      'pages',
-      'page_layout_slots',
-      'page_layouts',
-      'layouts',
-      'site_variables',
-      'site_domains',
-      'site_user',
-      'site_locales',
-      'locales',
-      'sites',
-      'media',
-      'media_folders',
-      'navigation_items',
-      'system_settings',
-      'block_types',
-      'slot_types',
-      'layout_types',
-      'page_types',
+      CmsTable::name('block_gallery_item_translations'),
+      CmsTable::name('block_contact_form_translations'),
+      CmsTable::name('block_image_translations'),
+      CmsTable::name('block_button_translations'),
+      CmsTable::name('block_text_translations'),
+      CmsTable::name('system_backup_restores'),
+      CmsTable::name('system_backups'),
+      CmsTable::name('system_update_runs'),
+      CmsTable::name('public_search_index'),
+      CmsTable::name('visitor_events'),
+      CmsTable::name('contact_messages'),
+      CmsTable::name('site_imports'),
+      CmsTable::name('site_exports'),
+      CmsTable::name('icon_catalog_items'),
+      CmsTable::name('page_assets'),
+      CmsTable::name('shared_slot_revisions'),
+      CmsTable::name('shared_slot_blocks'),
+      CmsTable::name('shared_slots'),
+      CmsTable::name('page_revisions'),
+      CmsTable::name('block_media'),
+      CmsTable::name('page_slots'),
+      CmsTable::name('blocks'),
+      CmsTable::name('page_translations'),
+      CmsTable::name('pages'),
+      CmsTable::name('page_layout_slots'),
+      CmsTable::name('page_layouts'),
+      CmsTable::name('layouts'),
+      CmsTable::name('site_variables'),
+      CmsTable::name('site_domains'),
+      CmsTable::name('site_user'),
+      CmsTable::name('site_locales'),
+      CmsTable::name('locales'),
+      CmsTable::name('sites'),
+      CmsTable::name('media'),
+      CmsTable::name('media_folders'),
+      CmsTable::name('navigation_items'),
+      CmsTable::name('system_settings'),
+      CmsTable::name('block_types'),
+      CmsTable::name('slot_types'),
+      CmsTable::name('layout_types'),
+      CmsTable::name('page_types'),
     ] as $table) {
       Schema::dropIfExists($table);
     }
@@ -202,7 +203,7 @@ PHP);
   private function createEmptyPartialCmsTables(array $tables): void
   {
     foreach ($tables as $table) {
-      Schema::create($table, function ($blueprint): void {
+      Schema::create(CmsTable::name($table), function ($blueprint): void {
         $blueprint->id();
       });
     }

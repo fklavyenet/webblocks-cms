@@ -9,10 +9,10 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('page_slots', function (Blueprint $table) {
+    Schema::create('wbcms_page_slots', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('page_id')->constrained()->cascadeOnDelete();
-      $table->foreignId('slot_type_id')->constrained('slot_types')->cascadeOnDelete();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('slot_type_id')->constrained('wbcms_slot_types')->cascadeOnDelete();
       $table->unsignedInteger('sort_order')->default(0);
       $table->timestamps();
 
@@ -24,7 +24,7 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('page_slots');
+    Schema::dropIfExists('wbcms_page_slots');
   }
 
   private function seedCanonicalSlotTypes(): void
@@ -37,12 +37,12 @@ return new class extends Migration
       ['name' => 'Sidebar', 'slug' => 'sidebar', 'description' => 'Sidebar slot', 'axis' => 'vertical', 'sort_order' => 3],
       ['name' => 'Footer', 'slug' => 'footer', 'description' => 'Footer slot', 'axis' => 'horizontal', 'sort_order' => 4],
     ] as $slot) {
-      DB::table('slot_types')->updateOrInsert(
+      DB::table('wbcms_slot_types')->updateOrInsert(
         ['slug' => $slot['slug']],
         $slot + ['is_system' => true, 'status' => 'published', 'created_at' => $now, 'updated_at' => $now]
       );
     }
 
-    DB::table('slot_types')->whereNotIn('slug', ['header', 'main', 'sidebar', 'footer'])->delete();
+    DB::table('wbcms_slot_types')->whereNotIn('slug', ['header', 'main', 'sidebar', 'footer'])->delete();
   }
 };

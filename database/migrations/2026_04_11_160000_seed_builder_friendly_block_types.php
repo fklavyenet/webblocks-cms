@@ -14,9 +14,9 @@ return new class extends Migration
       ['slug' => 'heading', 'name' => 'Hero', 'category' => 'marketing', 'sort_order' => 11, 'description' => 'Add a strong title or hero headline to introduce a section or page.'],
       ['slug' => 'rich-text', 'name' => 'Rich Text', 'category' => 'content', 'sort_order' => 12, 'description' => 'Write formatted body content for stories, summaries, and page copy.'],
       ['slug' => 'callout', 'name' => 'CTA', 'category' => 'marketing', 'sort_order' => 13, 'description' => 'Highlight a key next step or promotional call to action.'],
-      ['slug' => 'gallery', 'name' => 'Features', 'category' => 'media', 'sort_order' => 14, 'description' => 'Show a small visual grid for features, values, or image highlights.'],
+      ['slug' => 'gallery', 'name' => 'Features', 'category' => 'wbcms_media', 'sort_order' => 14, 'description' => 'Show a small visual grid for features, values, or image highlights.'],
     ] as $item) {
-      DB::table('block_types')->updateOrInsert(
+      DB::table('wbcms_block_types')->updateOrInsert(
         ['slug' => $item['slug']],
         [
           'name' => $item['name'],
@@ -34,7 +34,7 @@ return new class extends Migration
   public function down(): void
   {
     foreach (['section', 'heading', 'rich-text', 'callout', 'gallery'] as $slug) {
-      DB::table('block_types')->where('slug', $slug)->update([
+      DB::table('wbcms_block_types')->where('slug', $slug)->update([
         'updated_at' => now(),
       ]);
     }

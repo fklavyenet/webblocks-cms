@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    DB::table('page_slots')
+    DB::table('wbcms_page_slots')
       ->select(['id', 'settings'])
       ->orderBy('id')
       ->chunkById(100, function ($slots): void {
@@ -20,7 +20,7 @@ return new class extends Migration
             continue;
           }
 
-          DB::table('page_slots')
+          DB::table('wbcms_page_slots')
             ->where('id', $slot->id)
             ->update([
               'settings' => $sanitized === null ? null : json_encode($sanitized, JSON_UNESCAPED_SLASHES),

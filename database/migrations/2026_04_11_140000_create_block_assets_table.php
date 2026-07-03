@@ -9,10 +9,10 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::create('block_assets', function (Blueprint $table) {
+    Schema::create('wbcms_block_assets', function (Blueprint $table) {
       $table->id();
-      $table->foreignId('block_id')->constrained()->cascadeOnDelete();
-      $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('asset_id')->constrained('wbcms_assets')->cascadeOnDelete();
       $table->string('role')->nullable();
       $table->unsignedInteger('position')->default(0);
       $table->timestamps();
@@ -26,14 +26,14 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::dropIfExists('block_assets');
+    Schema::dropIfExists('wbcms_block_assets');
   }
 
   private function migrateLegacyGalleryAssets(): void
   {
     $now = now();
 
-    foreach (DB::table('blocks')->select('id', 'settings')->where('type', 'gallery')->get() as $block) {
+    foreach (DB::table('wbcms_blocks')->select('id', 'settings')->where('type', 'gallery')->get() as $block) {
       $settings = json_decode((string) $block->settings, true);
 
       if (! is_array($settings)) {
@@ -46,7 +46,7 @@ return new class extends Migration
         ->values();
 
       foreach ($assetIds as $position => $assetId) {
-        DB::table('block_assets')->updateOrInsert(
+        DB::table('wbcms_block_assets')->updateOrInsert(
           [
             'block_id' => $block->id,
             'asset_id' => $assetId,

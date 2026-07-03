@@ -94,7 +94,7 @@ class BlockTranslationWriter
         : json_encode($settings, JSON_UNESCAPED_SLASHES);
     }
 
-    DB::table('blocks')->where('id', $block->id)->update($updates);
+    DB::table('wbcms_blocks')->where('id', $block->id)->update($updates);
   }
 
   private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId, ?Block $translationSourceBlock = null): void
