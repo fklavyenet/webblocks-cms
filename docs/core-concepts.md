@@ -90,6 +90,7 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - Legacy `Asset` names remain only for compatibility wrappers, historical migrations, and older payload or archive normalization.
 - `Admin -> Media` keeps the main list title `Media` and the listing card title `Media Library`.
 - On the Media list, the title link and pencil icon both open `Edit Media: {title}` and carry a safe Media return URL back to the current filtered list.
+- `Admin -> Media -> Fetch URL` imports a public HTTP/HTTPS file into the normal Media Library storage and metadata flow. The server rejects localhost/private/reserved network targets, validates each redirect target, limits redirects, and enforces the same allowed media MIME family and size ceiling as normal uploads.
 - The eye icon remains the large preview modal action from the list.
 - The `/webadmin/media/{id}` detail route redirects to `/webadmin/media/{id}/edit` so media detail links land on the canonical edit screen.
 - `Edit Media` merges preview, file details, metadata, organization, usage, and danger-zone management into one screen.

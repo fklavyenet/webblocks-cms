@@ -145,7 +145,7 @@ class CmsApiTokenManagementTest extends TestCase
   public function schema_missing_state_shows_controlled_setup_guidance(): void
   {
     $user = User::factory()->superAdmin()->create();
-    Schema::dropIfExists('cms_api_tokens');
+    Schema::dropIfExists('wbcms_cms_api_tokens');
 
     $response = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
 
@@ -196,7 +196,7 @@ class CmsApiTokenManagementTest extends TestCase
     $this->assertSame($capabilities, $record->capabilities);
     $this->assertSame(hash('sha256', $plainToken), $record->token_hash);
     $this->assertNotSame($plainToken, $record->token_hash);
-    $this->assertDatabaseMissing('cms_api_tokens', ['token_hash' => $plainToken]);
+    $this->assertDatabaseMissing('wbcms_cms_api_tokens', ['token_hash' => $plainToken]);
 
     $followUp = $this->actingAs($user)->get(route('admin.system.api-tokens.index'));
 
@@ -232,7 +232,7 @@ class CmsApiTokenManagementTest extends TestCase
       ->assertRedirect(route('admin.system.api-tokens.index'))
       ->assertSessionHasErrors('capabilities');
 
-    $this->assertDatabaseCount('cms_api_tokens', 0);
+    $this->assertDatabaseCount('wbcms_cms_api_tokens', 0);
   }
 
   #[Test]
@@ -465,7 +465,7 @@ class CmsApiTokenManagementTest extends TestCase
 
     $this->assertNotNull($token->fresh()->last_used_at);
     $this->assertNotNull($token->fresh()->last_used_user_agent);
-    $this->assertDatabaseHas('cms_api_token_activity_logs', [
+    $this->assertDatabaseHas('wbcms_cms_api_token_activity_logs', [
       'cms_api_token_id' => $token->id,
       'status' => 'authenticated',
       'method' => 'GET',
@@ -552,8 +552,8 @@ class CmsApiTokenManagementTest extends TestCase
 
     $this->assertCount(10, $logs);
     $this->assertSame('/webadmin/api/sites', $logs->first()->path);
-    $this->assertDatabaseMissing('cms_api_token_activity_logs', ['id' => 1]);
-    $this->assertDatabaseMissing('cms_api_token_activity_logs', ['id' => 2]);
+    $this->assertDatabaseMissing('wbcms_cms_api_token_activity_logs', ['id' => 1]);
+    $this->assertDatabaseMissing('wbcms_cms_api_token_activity_logs', ['id' => 2]);
   }
 
   #[Test]
@@ -601,7 +601,7 @@ class CmsApiTokenManagementTest extends TestCase
       ->delete(route('admin.system.api-tokens.destroy', $token))
       ->assertRedirect(route('admin.system.api-tokens.index'));
 
-    $this->assertDatabaseMissing('cms_api_tokens', ['id' => $token->id]);
+    $this->assertDatabaseMissing('wbcms_cms_api_tokens', ['id' => $token->id]);
 
     $this->withHeader('Authorization', 'Bearer '.$plainToken)
       ->getJson('/webadmin/api/sites')
@@ -626,7 +626,7 @@ class CmsApiTokenManagementTest extends TestCase
       ->delete(route('admin.system.api-tokens.destroy', $token))
       ->assertRedirect(route('admin.system.api-tokens.index'));
 
-    $this->assertDatabaseMissing('cms_api_tokens', ['id' => $token->id]);
+    $this->assertDatabaseMissing('wbcms_cms_api_tokens', ['id' => $token->id]);
 
     $this->actingAs($user)
       ->get(route('admin.system.api-tokens.index'))

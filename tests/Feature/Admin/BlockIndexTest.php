@@ -76,7 +76,7 @@ class BlockIndexTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'Getting Started', 'slug' => 'getting-started', 'path' => '/p/getting-started'],
+      ['site_id' => $site->id, 'name' => 'Getting Started', 'slug' => 'getting-started', 'path' => '/getting-started'],
     );
 
     $pageSlot = $page->slots()->create([
@@ -334,7 +334,7 @@ class BlockIndexTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/p/'.$slug],
+      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/'.$slug],
     );
 
     $block = Block::query()->create(array_merge([

@@ -44,7 +44,7 @@ class PagePreviewTest extends TestCase
     $response->assertSee('this page is not public unless it is published');
     $response->assertSee('Draft-only preview content');
     $response->assertSee('<meta name="robots" content="noindex, nofollow">', false);
-    $this->assertDatabaseCount('visitor_events', 0);
+    $this->assertDatabaseCount('wbcms_visitor_events', 0);
     $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
   }
 
@@ -63,7 +63,7 @@ class PagePreviewTest extends TestCase
     $response->assertHeader('X-Robots-Tag', 'noindex, nofollow');
     $response->assertSee('Preview mode');
     $response->assertSee('Bearer-token preview content');
-    $this->assertDatabaseCount('visitor_events', 0);
+    $this->assertDatabaseCount('wbcms_visitor_events', 0);
   }
 
   #[Test]

@@ -8,13 +8,13 @@ return new class extends Migration
 {
   public function up(): void
   {
-    if (! Schema::hasTable('sites') || Schema::hasColumn('sites', 'contact_recipient_email')) {
+    if (! Schema::hasTable('wbcms_sites') || Schema::hasColumn('wbcms_sites', 'contact_recipient_email')) {
       return;
     }
 
-    $afterColumn = Schema::hasColumn('sites', 'social_image_media_id') ? 'social_image_media_id' : null;
+    $afterColumn = Schema::hasColumn('wbcms_sites', 'social_image_media_id') ? 'social_image_media_id' : null;
 
-    Schema::table('sites', function (Blueprint $table) use ($afterColumn): void {
+    Schema::table('wbcms_sites', function (Blueprint $table) use ($afterColumn): void {
       $column = $table->string('contact_recipient_email')->nullable();
 
       if ($afterColumn !== null) {

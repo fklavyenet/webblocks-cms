@@ -107,7 +107,7 @@ class SyncWebBlocksUiIconsCommandTest extends TestCase
       'circle-dot' => 'wb-icon-circle-dot',
       'box' => 'wb-icon-box',
     ] as $slug => $cssClass) {
-      $this->assertDatabaseHas('icon_catalog_items', [
+      $this->assertDatabaseHas('wbcms_icon_catalog_items', [
         'source' => 'webblocks-ui',
         'slug' => $slug,
         'css_class' => $cssClass,
@@ -144,12 +144,12 @@ class SyncWebBlocksUiIconsCommandTest extends TestCase
       ->expectsOutputToContain('Deactivated: 1')
       ->assertExitCode(0);
 
-    $this->assertDatabaseHas('icon_catalog_items', [
+    $this->assertDatabaseHas('wbcms_icon_catalog_items', [
       'source' => 'webblocks-ui',
       'slug' => 'legacy-icon',
       'is_active' => false,
     ]);
-    $this->assertDatabaseHas('icon_catalog_items', [
+    $this->assertDatabaseHas('wbcms_icon_catalog_items', [
       'source' => 'webblocks-ui',
       'slug' => 'layout',
       'is_active' => true,

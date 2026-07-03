@@ -125,7 +125,7 @@ class SitePromotionTest extends TestCase
 
     $this->assertSame('Target only', $existingPage->fresh()->title);
     $this->assertTrue($plan->canApply());
-    $this->assertDatabaseHas('pages', ['id' => $existingPage->id, 'site_id' => $targetSite->id, 'status' => Page::STATUS_PUBLISHED]);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $existingPage->id, 'site_id' => $targetSite->id, 'status' => Page::STATUS_PUBLISHED]);
   }
 
   #[Test]
@@ -162,7 +162,7 @@ class SitePromotionTest extends TestCase
 
     $this->assertInstanceOf(SystemBackup::class, $result->safetyBackup);
     $this->assertSame(SystemBackup::STATUS_COMPLETED, $result->safetyBackup?->status);
-    $this->assertDatabaseHas('system_backups', ['id' => $result->safetyBackup?->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $result->safetyBackup?->id]);
   }
 
   #[Test]
@@ -208,12 +208,12 @@ class SitePromotionTest extends TestCase
     $targetGallery = $targetAbout->blocks()->where('type', 'gallery')->firstOrFail();
     $targetGalleryItem = $targetGallery->blockAssets()->where('role', 'gallery_item')->firstOrFail();
 
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $targetGalleryItem->id,
       'locale_id' => $defaultLocale->id,
       'caption' => 'Gallery caption',
     ]);
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $targetGalleryItem->id,
       'locale_id' => $turkish->id,
       'caption' => 'Galeri aciklamasi',
@@ -290,7 +290,7 @@ class SitePromotionTest extends TestCase
     VisitorEvent::query()->create([
       'site_id' => $targetSite->id,
       'page_id' => $page->id,
-      'path' => '/p/message-page',
+      'path' => '/message-page',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'visited_at' => now(),
     ]);
@@ -304,10 +304,10 @@ class SitePromotionTest extends TestCase
 
     app(SitePromotionApplier::class)->apply($plan->token);
 
-    $this->assertDatabaseHas('site_domains', ['site_id' => $targetSite->id, 'domain' => 'live.target.example.test']);
+    $this->assertDatabaseHas('wbcms_site_domains', ['site_id' => $targetSite->id, 'domain' => 'live.target.example.test']);
     $this->assertDatabaseHas('users', ['id' => $user->id]);
-    $this->assertDatabaseHas('contact_messages', ['page_id' => $page->id, 'email' => 'visitor@example.test']);
-    $this->assertDatabaseHas('visitor_events', ['site_id' => $targetSite->id, 'path' => '/p/message-page']);
+    $this->assertDatabaseHas('wbcms_contact_messages', ['page_id' => $page->id, 'email' => 'visitor@example.test']);
+    $this->assertDatabaseHas('wbcms_visitor_events', ['site_id' => $targetSite->id, 'path' => '/message-page']);
   }
 
   #[Test]
@@ -344,7 +344,7 @@ class SitePromotionTest extends TestCase
       ->first();
 
     $this->assertNotNull($promotedPage);
-    $this->assertDatabaseHas('pages', ['id' => $extraPage->id, 'site_id' => $targetSite->id]);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $extraPage->id, 'site_id' => $targetSite->id]);
   }
 
   #[Test]
@@ -384,7 +384,7 @@ class SitePromotionTest extends TestCase
 
     app(SitePromotionApplier::class)->apply($mirrorPlan->token);
 
-    $this->assertDatabaseHas('pages', ['id' => $extraPage->id, 'site_id' => $targetSite->id, 'status' => Page::STATUS_ARCHIVED]);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $extraPage->id, 'site_id' => $targetSite->id, 'status' => Page::STATUS_ARCHIVED]);
   }
 
   #[Test]
@@ -465,8 +465,8 @@ class SitePromotionTest extends TestCase
     $result = app(SitePromotionApplier::class)->apply($plan->token);
 
     $this->assertGreaterThanOrEqual(1, $result->searchIndexed);
-    $this->assertDatabaseMissing('public_search_index', ['site_id' => $targetSite->id, 'page_id' => $stalePage->id]);
-    $this->assertDatabaseHas('public_search_index', ['site_id' => $targetSite->id]);
+    $this->assertDatabaseMissing('wbcms_public_search_index', ['site_id' => $targetSite->id, 'page_id' => $stalePage->id]);
+    $this->assertDatabaseHas('wbcms_public_search_index', ['site_id' => $targetSite->id]);
   }
 
   #[Test]
@@ -529,12 +529,12 @@ class SitePromotionTest extends TestCase
     ]));
     app(SitePromotionApplier::class)->apply($plan->token);
 
-    $this->assertDatabaseHas('shared_slots', ['site_id' => $targetSite->id, 'handle' => $sharedSlot->handle]);
+    $this->assertDatabaseHas('wbcms_shared_slots', ['site_id' => $targetSite->id, 'handle' => $sharedSlot->handle]);
     $promotedAboutPage = Page::query()
       ->where('site_id', $targetSite->id)
       ->whereHas('translations', fn ($query) => $query->where('slug', 'about'))
       ->firstOrFail();
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $promotedAboutPage->id,
       'source_type' => 'shared_slot',
     ]);

@@ -160,26 +160,26 @@ class PageImportTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'return_url' => route('admin.pages.index', ['site' => $site->id])]));
     $this->assertSame(Page::STATUS_DRAFT, $page->status);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $page->id,
       'site_id' => $site->id,
       'name' => 'Imported Docs Page',
       'slug' => 'imported-docs-page',
-      'path' => '/p/imported-docs-page',
+      'path' => '/imported-docs-page',
     ]);
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $page->id,
       'source_type' => PageSlot::SOURCE_TYPE_PAGE,
     ]);
 
     $block = Block::query()->where('page_id', $page->id)->firstOrFail();
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Imported Body',
       'content' => 'Imported body copy',
     ]);
-    $this->assertDatabaseHas('page_assets', [
+    $this->assertDatabaseHas('wbcms_page_assets', [
       'page_id' => $page->id,
       'type' => PageAsset::TYPE_CSS,
       'path' => '/site/default-site/pages/imported-docs-page/page.css',

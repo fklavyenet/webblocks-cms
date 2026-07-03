@@ -122,7 +122,7 @@ class PageRevisionTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'created_by' => $user->id,
       'created_by_user_id' => $user->id,
@@ -151,7 +151,7 @@ class PageRevisionTest extends TestCase
       'slot_type_id' => $header->id,
     ])->assertRedirect(route('admin.pages.edit', $page));
 
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'created_by' => $user->id,
       'created_by_user_id' => $user->id,
@@ -175,7 +175,7 @@ class PageRevisionTest extends TestCase
       ->post(route('admin.pages.slots.move-down', [$page, $headerSlot]))
       ->assertRedirect(route('admin.pages.edit', $page));
 
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'created_by' => $user->id,
       'created_by_user_id' => $user->id,
@@ -191,7 +191,7 @@ class PageRevisionTest extends TestCase
       ])
       ->assertRedirect(route('admin.pages.edit', $page));
 
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'created_by' => $user->id,
       'created_by_user_id' => $user->id,
@@ -275,7 +275,7 @@ class PageRevisionTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $page->id,
       'locale_id' => $turkish->id,
       'seo_title' => 'TR SEO',
@@ -285,7 +285,7 @@ class PageRevisionTest extends TestCase
       'og_description' => 'TR OG description',
       'og_image_media_id' => $ogImage->id,
     ]);
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'created_by' => $user->id,
       'created_by_user_id' => $user->id,
@@ -335,7 +335,7 @@ class PageRevisionTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'created_by' => $user->id,
       'created_by_user_id' => $user->id,
@@ -406,7 +406,7 @@ class PageRevisionTest extends TestCase
     $user = $this->siteAdminFor($site);
     $page = $this->pageFor($site);
 
-    Schema::dropIfExists('page_revisions');
+    Schema::dropIfExists('wbcms_page_revisions');
 
     $response = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
 
@@ -445,7 +445,7 @@ class PageRevisionTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
       'seo_title' => 'TR SEO Original',
       'seo_description' => 'TR SEO Original Description',
     ]);
@@ -502,7 +502,7 @@ class PageRevisionTest extends TestCase
     $page->translations()->where('locale_id', $turkish->id)->update([
       'name' => 'Degisti',
       'slug' => 'degisti',
-      'path' => '/p/degisti',
+      'path' => '/degisti',
       'seo_title' => 'TR SEO Changed',
       'seo_description' => 'TR SEO Changed Description',
     ]);
@@ -570,13 +570,13 @@ class PageRevisionTest extends TestCase
     });
     $this->assertNotNull($restoredChild);
     $this->assertSame('Sutun cocuk', $restoredChild->textTranslations->firstWhere('locale_id', $turkish->id)?->title);
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'label' => 'Pre-restore safety snapshot',
       'event' => 'revision_restored',
       'source' => 'restore',
     ]);
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'label' => 'Revision restored',
       'event' => 'revision_restored',
@@ -642,8 +642,8 @@ class PageRevisionTest extends TestCase
 
     $user->delete();
 
-    $this->assertDatabaseHas('pages', ['id' => $page->id]);
-    $this->assertDatabaseHas('page_revisions', ['page_id' => $page->id, 'label' => 'User-linked revision']);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_page_revisions', ['page_id' => $page->id, 'label' => 'User-linked revision']);
 
     $details = $this->actingAs($viewer)->get(route('admin.pages.index', ['details' => $page->id]));
     $details->assertOk();

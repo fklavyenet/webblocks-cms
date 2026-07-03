@@ -26,12 +26,12 @@ class SiteDomainTest extends TestCase
   {
     [$site, $page] = $this->seedPublicSiteWithDomain('primary.example.test');
 
-    $response = $this->get('http://primary.example.test/p/about');
+    $response = $this->get('http://primary.example.test/about');
 
     $response->assertOk();
     $response->assertSee('About');
     $this->assertSame('primary.example.test', $site->fresh()->canonicalDomain());
-    $this->assertSame('https://primary.example.test/p/about', $page->fresh()->canonicalUrl());
+    $this->assertSame('https://primary.example.test/about', $page->fresh()->canonicalUrl());
   }
 
   #[Test]
@@ -45,12 +45,12 @@ class SiteDomainTest extends TestCase
       'status' => SiteDomain::STATUS_ACTIVE,
     ]);
 
-    $response = $this->get('http://alias.example.test/p/about');
+    $response = $this->get('http://alias.example.test/about');
 
     $response->assertOk();
     $response->assertSee('About');
-    $response->assertSee('<link rel="canonical" href="https://primary.example.test/p/about">', false);
-    $response->assertSee('<meta property="og:url" content="https://primary.example.test/p/about">', false);
+    $response->assertSee('<link rel="canonical" href="https://primary.example.test/about">', false);
+    $response->assertSee('<meta property="og:url" content="https://primary.example.test/about">', false);
   }
 
   #[Test]
@@ -60,7 +60,7 @@ class SiteDomainTest extends TestCase
 
     config()->set('cms.multisite.unknown_host_fallback', false);
 
-    $this->get('http://unknown.example.test/p/about')->assertNotFound();
+    $this->get('http://unknown.example.test/about')->assertNotFound();
     $this->assertSame('primary.example.test', $site->fresh()->canonicalDomain());
   }
 
@@ -71,7 +71,7 @@ class SiteDomainTest extends TestCase
 
     config()->set('cms.multisite.unknown_host_fallback', true);
 
-    $this->get('http://unknown.example.test/p/about')->assertOk()->assertSee('About');
+    $this->get('http://unknown.example.test/about')->assertOk()->assertSee('About');
   }
 
   #[Test]
@@ -87,7 +87,7 @@ class SiteDomainTest extends TestCase
 
     config()->set('cms.multisite.unknown_host_fallback', false);
 
-    $this->get('http://inactive.example.test/p/about')->assertNotFound();
+    $this->get('http://inactive.example.test/about')->assertNotFound();
   }
 
   #[Test]
@@ -227,7 +227,7 @@ class SiteDomainTest extends TestCase
       ])
       ->assertRedirect(route('admin.sites.domains.index', $site));
 
-    $this->assertDatabaseHas('site_domains', [
+    $this->assertDatabaseHas('wbcms_site_domains', [
       'id' => $alias->id,
       'status' => SiteDomain::STATUS_INACTIVE,
     ]);
@@ -257,7 +257,7 @@ class SiteDomainTest extends TestCase
       ])
       ->assertRedirect(route('admin.sites.domains.index', $site));
 
-    $this->assertDatabaseHas('site_domains', [
+    $this->assertDatabaseHas('wbcms_site_domains', [
       'id' => $alias->id,
       'redirect_to_primary' => true,
     ]);
@@ -288,7 +288,7 @@ class SiteDomainTest extends TestCase
       ->assertRedirect(route('admin.sites.domains.index', $site));
 
     $this->assertSame('alias.example.test', $site->fresh()->canonicalDomain());
-    $this->assertDatabaseHas('site_domains', [
+    $this->assertDatabaseHas('wbcms_site_domains', [
       'id' => $alias->id,
       'is_primary' => true,
       'status' => SiteDomain::STATUS_ACTIVE,
@@ -332,7 +332,7 @@ class SiteDomainTest extends TestCase
       ])
       ->assertRedirect(route('admin.sites.domains.index', $site));
 
-    $this->assertDatabaseMissing('site_domains', ['id' => $alias->id]);
+    $this->assertDatabaseMissing('wbcms_site_domains', ['id' => $alias->id]);
   }
 
   #[Test]
@@ -487,12 +487,12 @@ class SiteDomainTest extends TestCase
       'status' => SiteDomain::STATUS_ACTIVE,
     ]);
 
-    $response = $this->get('http://docs.example.test/p/about');
+    $response = $this->get('http://docs.example.test/about');
 
     $response->assertOk();
-    $response->assertSee('<link rel="canonical" href="https://primary.example.test/p/about">', false);
-    $this->assertSame('https://primary.example.test/p/about', $page->fresh()->canonicalUrl());
-    $this->assertSame('http://docs.example.test/p/about', $page->fresh()->currentHostPublicUrl());
+    $response->assertSee('<link rel="canonical" href="https://primary.example.test/about">', false);
+    $this->assertSame('https://primary.example.test/about', $page->fresh()->canonicalUrl());
+    $this->assertSame('http://docs.example.test/about', $page->fresh()->currentHostPublicUrl());
   }
 
   #[Test]
@@ -536,8 +536,8 @@ class SiteDomainTest extends TestCase
       ->assertOk()
       ->assertJsonPath('deleted', true);
 
-    $this->assertDatabaseMissing('site_domains', ['id' => $domainId]);
-    $this->assertDatabaseHas('site_domains', ['site_id' => $site->id, 'domain' => 'primary.example.test']);
+    $this->assertDatabaseMissing('wbcms_site_domains', ['id' => $domainId]);
+    $this->assertDatabaseHas('wbcms_site_domains', ['site_id' => $site->id, 'domain' => 'primary.example.test']);
   }
 
   private function seedPublicSiteWithDomain(string $domain): array
@@ -564,7 +564,7 @@ class SiteDomainTest extends TestCase
     $page->defaultTranslation()?->update([
       'name' => 'About',
       'slug' => 'about',
-      'path' => '/p/about',
+      'path' => '/about',
     ]);
 
     return [$site, $page, $locale, $slotType, $headerType];

@@ -156,7 +156,7 @@ class SiteLocaleManagementTest extends TestCase
   {
     $user = User::factory()->superAdmin()->create();
 
-    Schema::dropIfExists('block_gallery_item_translations');
+    Schema::dropIfExists('wbcms_block_gallery_item_translations');
 
     $response = $this->actingAs($user)->get(route('admin.sites.index'));
 
@@ -295,7 +295,7 @@ class SiteLocaleManagementTest extends TestCase
       'locale_ids' => [$defaultLocale->id],
     ])->assertRedirect();
 
-    $this->assertDatabaseHas('sites', [
+    $this->assertDatabaseHas('wbcms_sites', [
       'name' => 'WebBlocks UI',
       'handle' => 'docs-site',
     ]);
@@ -671,7 +671,7 @@ class SiteLocaleManagementTest extends TestCase
       '_site_tab' => 'variables',
     ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']));
 
-    $this->assertDatabaseHas('site_variables', [
+    $this->assertDatabaseHas('wbcms_site_variables', [
       'id' => $siteVariable->id,
       'label' => 'Support Inbox',
       'value' => 'support@example.test',
@@ -683,7 +683,7 @@ class SiteLocaleManagementTest extends TestCase
       ->delete(route('admin.sites.variables.destroy', ['site' => $site, 'site_variable' => $siteVariable]))
       ->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']));
 
-    $this->assertDatabaseMissing('site_variables', ['id' => $siteVariable->id]);
+    $this->assertDatabaseMissing('wbcms_site_variables', ['id' => $siteVariable->id]);
   }
 
   #[Test]
@@ -894,7 +894,7 @@ class SiteLocaleManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.locales.index'));
     $response->assertSessionHasErrors('locale_lifecycle');
-    $this->assertDatabaseHas('locales', ['id' => $defaultLocale->id]);
+    $this->assertDatabaseHas('wbcms_locales', ['id' => $defaultLocale->id]);
   }
 
   #[Test]
@@ -914,7 +914,7 @@ class SiteLocaleManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.locales.index'));
     $response->assertSessionHasErrors('locale_lifecycle');
-    $this->assertDatabaseHas('locales', ['id' => $locale->id]);
+    $this->assertDatabaseHas('wbcms_locales', ['id' => $locale->id]);
   }
 
   #[Test]
@@ -936,7 +936,7 @@ class SiteLocaleManagementTest extends TestCase
       'status' => 'published',
     ]);
 
-    DB::table('page_translations')->insert([
+    DB::table('wbcms_page_translations')->insert([
       'page_id' => $page->id,
       'site_id' => $site->id,
       'locale_id' => $locale->id,
@@ -951,7 +951,7 @@ class SiteLocaleManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.locales.index'));
     $response->assertSessionHasErrors('locale_lifecycle');
-    $this->assertDatabaseHas('locales', ['id' => $locale->id]);
+    $this->assertDatabaseHas('wbcms_locales', ['id' => $locale->id]);
   }
 
   #[Test]
@@ -993,7 +993,7 @@ class SiteLocaleManagementTest extends TestCase
       'title' => 'About',
     ]);
 
-    DB::table('block_text_translations')->insert([
+    DB::table('wbcms_block_text_translations')->insert([
       'block_id' => $block->id,
       'locale_id' => $locale->id,
       'title' => 'Acerca de',
@@ -1005,7 +1005,7 @@ class SiteLocaleManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.locales.index'));
     $response->assertSessionHasErrors('locale_lifecycle');
-    $this->assertDatabaseHas('locales', ['id' => $locale->id]);
+    $this->assertDatabaseHas('wbcms_locales', ['id' => $locale->id]);
   }
 
   #[Test]
@@ -1022,7 +1022,7 @@ class SiteLocaleManagementTest extends TestCase
     $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $locale));
 
     $response->assertRedirect(route('admin.locales.index'));
-    $this->assertDatabaseMissing('locales', ['id' => $locale->id]);
+    $this->assertDatabaseMissing('wbcms_locales', ['id' => $locale->id]);
   }
 
   #[Test]

@@ -73,7 +73,7 @@ class VisitorReportsQuery
 
   public function supportsUtmBreakdowns(): bool
   {
-    return $this->hasEventsTable() && Schema::hasColumns('visitor_events', ['utm_source', 'utm_medium', 'utm_campaign']);
+    return $this->hasEventsTable() && Schema::hasColumns('wbcms_visitor_events', ['utm_source', 'utm_medium', 'utm_campaign']);
   }
 
   public function supportsTrackingMode(): bool

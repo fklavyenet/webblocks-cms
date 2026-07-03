@@ -18,14 +18,14 @@ class MediaFolderSlugUpdateMigrationTest extends TestCase
   public function package_update_migration_repairs_existing_media_folders_table_missing_slug(): void
   {
     $this->withSchemaRepairConnection(function (): void {
-      Schema::create('media_folders', function (Blueprint $table): void {
+      Schema::create('wbcms_media_folders', function (Blueprint $table): void {
         $table->id();
         $table->unsignedBigInteger('parent_id')->nullable();
         $table->string('name');
         $table->timestamps();
       });
 
-      DB::table('media_folders')->insert([
+      DB::table('wbcms_media_folders')->insert([
         [
           'parent_id' => null,
           'name' => 'Branding',
@@ -43,8 +43,8 @@ class MediaFolderSlugUpdateMigrationTest extends TestCase
       $migration = require base_path('packages/webblocks-cms/database/migrations/updates/2026_05_24_120000_ensure_media_folders_slug.php');
       $migration->up();
 
-      $this->assertTrue(Schema::hasColumn('media_folders', 'slug'));
-      $this->assertSame(['branding', 'branding-2'], DB::table('media_folders')
+      $this->assertTrue(Schema::hasColumn('wbcms_media_folders', 'slug'));
+      $this->assertSame(['branding', 'branding-2'], DB::table('wbcms_media_folders')
         ->orderBy('id')
         ->pluck('slug')
         ->all());
@@ -55,7 +55,7 @@ class MediaFolderSlugUpdateMigrationTest extends TestCase
   public function package_update_migration_is_idempotent_and_preserves_existing_slugs(): void
   {
     $this->withSchemaRepairConnection(function (): void {
-      Schema::create('media_folders', function (Blueprint $table): void {
+      Schema::create('wbcms_media_folders', function (Blueprint $table): void {
         $table->id();
         $table->unsignedBigInteger('parent_id')->nullable();
         $table->string('name');
@@ -63,7 +63,7 @@ class MediaFolderSlugUpdateMigrationTest extends TestCase
         $table->timestamps();
       });
 
-      DB::table('media_folders')->insert([
+      DB::table('wbcms_media_folders')->insert([
         [
           'parent_id' => null,
           'name' => 'Existing',
@@ -84,7 +84,7 @@ class MediaFolderSlugUpdateMigrationTest extends TestCase
       $migration->up();
       $migration->up();
 
-      $this->assertSame(['custom-existing', 'needs-slug'], DB::table('media_folders')
+      $this->assertSame(['custom-existing', 'needs-slug'], DB::table('wbcms_media_folders')
         ->orderBy('id')
         ->pluck('slug')
         ->all());

@@ -60,7 +60,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
 
     PageSlot::query()->create([

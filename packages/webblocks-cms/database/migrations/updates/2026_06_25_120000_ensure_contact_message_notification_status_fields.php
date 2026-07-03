@@ -8,16 +8,16 @@ return new class extends Migration
 {
   public function up(): void
   {
-    Schema::table('contact_messages', function (Blueprint $table): void {
-      if (! Schema::hasColumn('contact_messages', 'notification_recipient_source')) {
+    Schema::table('wbcms_contact_messages', function (Blueprint $table): void {
+      if (! Schema::hasColumn('wbcms_contact_messages', 'notification_recipient_source')) {
         $table->string('notification_recipient_source')->nullable()->after('notification_recipient');
       }
 
-      if (! Schema::hasColumn('contact_messages', 'notification_status')) {
+      if (! Schema::hasColumn('wbcms_contact_messages', 'notification_status')) {
         $table->string('notification_status')->nullable()->after('notification_recipient_source');
       }
 
-      if (! Schema::hasColumn('contact_messages', 'notification_reason')) {
+      if (! Schema::hasColumn('wbcms_contact_messages', 'notification_reason')) {
         $table->text('notification_reason')->nullable()->after('notification_error');
       }
     });
@@ -25,16 +25,16 @@ return new class extends Migration
 
   public function down(): void
   {
-    Schema::table('contact_messages', function (Blueprint $table): void {
-      if (Schema::hasColumn('contact_messages', 'notification_reason')) {
+    Schema::table('wbcms_contact_messages', function (Blueprint $table): void {
+      if (Schema::hasColumn('wbcms_contact_messages', 'notification_reason')) {
         $table->dropColumn('notification_reason');
       }
 
-      if (Schema::hasColumn('contact_messages', 'notification_status')) {
+      if (Schema::hasColumn('wbcms_contact_messages', 'notification_status')) {
         $table->dropColumn('notification_status');
       }
 
-      if (Schema::hasColumn('contact_messages', 'notification_recipient_source')) {
+      if (Schema::hasColumn('wbcms_contact_messages', 'notification_recipient_source')) {
         $table->dropColumn('notification_recipient_source');
       }
     });

@@ -55,7 +55,7 @@ class PageLayoutManagementTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $this->site()->id, 'name' => 'Docs Page', 'slug' => $slug, 'path' => '/p/'.$slug],
+      ['site_id' => $this->site()->id, 'name' => 'Docs Page', 'slug' => $slug, 'path' => '/'.$slug],
     );
 
     return $page;
@@ -68,14 +68,14 @@ class PageLayoutManagementTest extends TestCase
     $this->seed(PageLayoutSeeder::class);
 
     $this->assertSame(2, PageLayout::query()->count());
-    $this->assertDatabaseHas('page_layouts', [
+    $this->assertDatabaseHas('wbcms_page_layouts', [
       'handle' => 'default',
       'name' => 'Default Layout',
       'is_system' => true,
       'body_class' => 'layout-default',
       'shell_type' => 'default',
     ]);
-    $this->assertDatabaseHas('page_layouts', [
+    $this->assertDatabaseHas('wbcms_page_layouts', [
       'handle' => 'docs',
       'name' => 'Docs Layout',
       'is_system' => true,
@@ -83,11 +83,11 @@ class PageLayoutManagementTest extends TestCase
       'shell_type' => 'docs',
     ]);
     $this->assertSame(8, PageLayoutSlot::query()->count());
-    $this->assertDatabaseHas('page_layout_slots', [
+    $this->assertDatabaseHas('wbcms_page_layout_slots', [
       'slot_name' => 'header',
       'html_element' => 'header',
     ]);
-    $this->assertDatabaseHas('page_layout_slots', [
+    $this->assertDatabaseHas('wbcms_page_layout_slots', [
       'slot_name' => 'sidebar',
       'html_id' => 'docsSidebar',
     ]);
@@ -349,7 +349,7 @@ class PageLayoutManagementTest extends TestCase
       ])
       ->assertRedirect(route('admin.page-layouts.edit', $layout));
 
-    $this->assertDatabaseHas('page_layout_slots', [
+    $this->assertDatabaseHas('wbcms_page_layout_slots', [
       'page_layout_id' => $layout->id,
       'slot_name' => 'promo',
       'html_element' => 'section',

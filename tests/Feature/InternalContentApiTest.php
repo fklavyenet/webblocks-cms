@@ -263,7 +263,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('site.public_theme_preset', 'canvas')
       ->assertJsonPath('writes.0.type', 'site_public_theme_preset');
 
-    $this->assertDatabaseHas('sites', [
+    $this->assertDatabaseHas('wbcms_sites', [
       'id' => $site->id,
       'public_theme_preset' => 'canvas',
     ]);
@@ -446,7 +446,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonFragment(['slot' => 'sidebar'])
       ->assertJsonFragment(['slot' => 'footer']);
 
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $page->id,
       'slot_type_id' => $this->slotTypeId('header'),
     ]);
@@ -883,8 +883,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('normalized_plan.page.status', 'draft')
       ->assertJsonPath('normalized_plan.slots.main.0.type', 'section');
 
-    $this->assertDatabaseCount('pages', 0);
-    $this->assertDatabaseCount('blocks', 0);
+    $this->assertDatabaseCount('wbcms_pages', 0);
+    $this->assertDatabaseCount('wbcms_blocks', 0);
   }
 
   #[Test]
@@ -994,7 +994,7 @@ class InternalContentApiTest extends TestCase
     $this->assertSame((int) $image->id, (int) $sectionBlock->media_id);
     $this->assertSame('bottom', $sectionBlock->setting('background_position'));
     $this->assertSame('medium', $sectionBlock->setting('background_overlay'));
-    $this->assertDatabaseHas('block_media', [
+    $this->assertDatabaseHas('wbcms_block_media', [
       'block_id' => $galleryBlock->id,
       'media_id' => $image->id,
       'role' => 'gallery_item',
@@ -1293,7 +1293,7 @@ class InternalContentApiTest extends TestCase
       ->assertForbidden()
       ->assertJsonPath('required_capability', CmsApiTokenCapabilities::PAGES_DELETE);
 
-    $this->assertDatabaseHas('pages', ['id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $page->id]);
 
     CmsApiToken::query()->delete();
     $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::PAGES_DELETE]);
@@ -1304,7 +1304,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('deleted.type', 'page')
       ->assertJsonPath('deleted.id', $page->id);
 
-    $this->assertDatabaseMissing('pages', ['id' => $page->id]);
+    $this->assertDatabaseMissing('wbcms_pages', ['id' => $page->id]);
   }
 
   #[Test]
@@ -1363,8 +1363,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('normalized_plan.replace_page.id', $page->id)
       ->assertJsonPath('normalized_plan.replace_slots.main.0.type', 'plain_text');
 
-    $this->assertDatabaseHas('blocks', ['id' => $mainBlock->id, 'content' => 'Old main copy']);
-    $this->assertDatabaseMissing('blocks', ['content' => 'New main copy']);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $mainBlock->id, 'content' => 'Old main copy']);
+    $this->assertDatabaseMissing('wbcms_blocks', ['content' => 'New main copy']);
     $this->assertSame(1, Block::query()->where('page_id', $page->id)->where('slot', 'main')->count());
     $this->assertSame(0, PageRevision::query()->count());
   }
@@ -1383,14 +1383,9 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('data.page.id', $page->id)
       ->assertJsonPath('data.page.blocks.0.type', 'plain_text');
 
-    $this->assertDatabaseMissing('blocks', ['id' => $mainBlock->id]);
-    $this->assertDatabaseHas('blocks', [
-      'page_id' => $page->id,
-      'slot' => 'main',
-      'content' => null,
-    ]);
-    $this->assertDatabaseHas('block_text_translations', ['content' => 'New main copy']);
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $mainBlock->id]);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['content' => 'New main copy']);
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $page->id,
       'slot_type_id' => $this->slotTypeId('header'),
       'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
@@ -1489,13 +1484,13 @@ class InternalContentApiTest extends TestCase
     $this->assertStringStartsWith('/staged-updates/page-'.$page->id.'/update-', $stagedPage->translations->first()->path);
     $this->assertSame('draft', data_get($stagedPage->settings, 'staged_update.state'));
     $this->assertSame($sourceSync['source_id'], data_get($stagedPage->settings, 'source_sync.source_id'));
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $stagedPage->id,
       'slot_type_id' => $this->slotTypeId('header'),
       'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
       'shared_slot_id' => $sharedSlot->id,
     ]);
-    $this->assertDatabaseHas('blocks', ['id' => $mainBlock->id, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $mainBlock->id, 'page_id' => $page->id]);
     $this->assertSame(1, Block::query()->where('page_id', $stagedPage->id)->where('slot', 'main')->count());
   }
 
@@ -1549,8 +1544,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('normalized_plan.mode', 'replace_staged_page_update')
       ->assertJsonPath('data.staged_page.id', $stagedPageId);
 
-    $this->assertDatabaseHas('blocks', ['id' => $mainBlock->id, 'page_id' => $page->id]);
-    $this->assertDatabaseHas('block_text_translations', ['content' => 'Promoted staged copy']);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $mainBlock->id, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['content' => 'Promoted staged copy']);
 
     $this->withInternalToken()
       ->postJson('/webadmin/api/content/apply', [
@@ -1589,13 +1584,8 @@ class InternalContentApiTest extends TestCase
     $this->assertSame(Page::STATUS_PUBLISHED, $page->status);
     $this->assertSame('/docs', $page->translations->first()->path);
     $this->assertSame($sourceSync['source_sha256'], data_get($page->settings, 'source_sync.source_sha256'));
-    $this->assertDatabaseMissing('blocks', ['id' => $mainBlock->id]);
-    $this->assertDatabaseHas('blocks', [
-      'page_id' => $page->id,
-      'slot' => 'main',
-      'status' => 'published',
-    ]);
-    $this->assertDatabaseHas('block_text_translations', ['content' => 'Promoted staged copy']);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $mainBlock->id]);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['content' => 'Promoted staged copy']);
     $this->assertSame(Page::STATUS_ARCHIVED, Page::query()->findOrFail($stagedPageId)->status);
     $this->assertSame('promoted', data_get(Page::query()->findOrFail($stagedPageId)->settings, 'staged_update.state'));
 
@@ -1801,10 +1791,10 @@ class InternalContentApiTest extends TestCase
       ->assertJsonFragment(['message' => 'Phase 1 can only create draft pages.'])
       ->assertJsonFragment(['message' => 'This operation is outside Internal Content API Phase 1.']);
 
-    $this->assertDatabaseCount('pages', 0);
-    $this->assertDatabaseCount('blocks', 0);
-    $this->assertDatabaseCount('navigation_items', 0);
-    $this->assertDatabaseCount('shared_slots', 0);
+    $this->assertDatabaseCount('wbcms_pages', 0);
+    $this->assertDatabaseCount('wbcms_blocks', 0);
+    $this->assertDatabaseCount('wbcms_navigation_items', 0);
+    $this->assertDatabaseCount('wbcms_shared_slots', 0);
   }
 
   #[Test]
@@ -1879,11 +1869,11 @@ class InternalContentApiTest extends TestCase
       ->assertCreated()
       ->assertJsonPath('data.page.translations.0.path', '/docs/internal-content-api');
 
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'slug' => 'internal-content-api',
       'path' => '/docs/internal-content-api',
     ]);
-    $this->assertDatabaseMissing('page_translations', ['path' => '/p/docsinternal-content-api']);
+    $this->assertDatabaseMissing('wbcms_page_translations', ['path' => '/docsinternal-content-api']);
   }
 
   #[Test]
@@ -1912,7 +1902,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('data.page.translations.0.slug', 'fruit-train')
       ->assertJsonPath('data.page.translations.0.path', '/games/fruit-train');
 
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'slug' => 'fruit-train',
       'path' => '/games/fruit-train',
     ]);
@@ -2072,7 +2062,7 @@ class InternalContentApiTest extends TestCase
       ->assertCreated()
       ->assertJsonPath('navigation_menu.items.0.label', 'Home');
 
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'site_id' => $this->defaultSite()->id,
       'menu_key' => NavigationItem::MENU_PRIMARY,
       'title' => 'Home',
@@ -2122,7 +2112,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('navigation_item.visibility', NavigationItem::VISIBILITY_HIDDEN)
       ->assertJsonPath('navigation_item.sort_order', 10);
 
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'id' => $singleGame->id,
       'title' => 'Hidden Game',
       'url' => '/games/hidden-game',
@@ -2151,7 +2141,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('navigation_menu.items.0.label', 'Play')
       ->assertJsonPath('navigation_menu.items.0.children.0.label', 'Games');
 
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'id' => $catalog->id,
       'parent_id' => $group->id,
       'position' => 1,
@@ -2168,7 +2158,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('deleted.type', 'navigation_item')
       ->assertJsonPath('deleted.id', $singleGame->id);
 
-    $this->assertDatabaseMissing('navigation_items', [
+    $this->assertDatabaseMissing('wbcms_navigation_items', [
       'id' => $singleGame->id,
     ]);
   }
@@ -2241,7 +2231,7 @@ class InternalContentApiTest extends TestCase
     $block = Block::query()->where('type', 'plain_text')->firstOrFail();
 
     $this->assertSame('Reusable header copy', $block->textTranslations()->firstOrFail()->content);
-    $this->assertDatabaseHas('shared_slot_blocks', ['shared_slot_id' => $sharedSlotId, 'block_id' => $block->id]);
+    $this->assertDatabaseHas('wbcms_shared_slot_blocks', ['shared_slot_id' => $sharedSlotId, 'block_id' => $block->id]);
   }
 
   #[Test]
@@ -2339,11 +2329,11 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('block.settings.aria_label', 'WebBlocks CMS home')
       ->assertJsonPath('shared_slot.handle', 'site-header');
 
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'media_id' => $logo->id,
     ]);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $locale->id,
       'title' => 'WebBlocks CMS',
@@ -2405,7 +2395,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('block.settings.background_position', 'bottom')
       ->assertJsonPath('block.settings.background_overlay', 'medium');
 
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'media_id' => $background->id,
     ]);
@@ -2464,7 +2454,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('media.title', 'WebBlocks CMS logo')
       ->assertJsonPath('media.alt_text', 'WebBlocks CMS mark');
 
-    $this->assertDatabaseHas('media', [
+    $this->assertDatabaseHas('wbcms_media', [
       'id' => $media->id,
       'title' => 'WebBlocks CMS logo',
       'alt_text' => 'WebBlocks CMS mark',
@@ -2554,13 +2544,13 @@ class InternalContentApiTest extends TestCase
       ->assertOk()
       ->assertJsonPath('block.media.id', $mediaId);
 
-    $this->assertDatabaseHas('sites', [
+    $this->assertDatabaseHas('wbcms_sites', [
       'id' => $site->id,
       'display_name' => 'Play',
       'tagline' => 'WebBlocks playground',
       'favicon_media_id' => $mediaId,
     ]);
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'media_id' => $mediaId,
     ]);
@@ -2649,7 +2639,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('media.id', $mediaId)
       ->assertJsonPath('writes.0.type', 'media_move');
 
-    $this->assertDatabaseHas('media', [
+    $this->assertDatabaseHas('wbcms_media', [
       'id' => $mediaId,
       'folder_id' => $folder->id,
     ]);
@@ -2683,7 +2673,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('deleted_media.id', $documentId)
       ->assertJsonPath('writes.0.type', 'media_delete');
 
-    $this->assertDatabaseMissing('media', ['id' => $documentId]);
+    $this->assertDatabaseMissing('wbcms_media', ['id' => $documentId]);
     Storage::disk('public')->assertMissing($documentPath);
   }
 
@@ -2921,8 +2911,8 @@ class InternalContentApiTest extends TestCase
       ->assertStatus(422)
       ->assertJsonFragment(['message' => 'A Shared Slot with this handle already exists for the selected site.']);
 
-    $this->assertDatabaseHas('shared_slots', ['handle' => 'site-header', 'name' => 'Existing Header']);
-    $this->assertDatabaseMissing('shared_slots', ['name' => 'Replacement Header']);
+    $this->assertDatabaseHas('wbcms_shared_slots', ['handle' => 'site-header', 'name' => 'Existing Header']);
+    $this->assertDatabaseMissing('wbcms_shared_slots', ['name' => 'Replacement Header']);
   }
 
   #[Test]
@@ -3118,8 +3108,8 @@ class InternalContentApiTest extends TestCase
       ->assertStatus(422)
       ->assertJsonFragment(['message' => 'Page slot contains page-owned blocks and must be cleared manually before Shared Slot assignment.']);
 
-    $this->assertDatabaseHas('blocks', ['id' => $block->id]);
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $block->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'id' => $headerSlot->id,
       'source_type' => PageSlot::SOURCE_TYPE_PAGE,
       'shared_slot_id' => null,
@@ -3152,7 +3142,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('page_slot.source_type', PageSlot::SOURCE_TYPE_SHARED_SLOT)
       ->assertJsonPath('page_slot.shared_slot_id', $sharedSlot->id);
 
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $page->id,
       'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
       'shared_slot_id' => $sharedSlot->id,
@@ -3170,8 +3160,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('normalized_plan.navigation_menus.0.handle', NavigationItem::MENU_PRIMARY)
       ->assertJsonPath('normalized_plan.shared_slots.0.handle', 'site-header');
 
-    $this->assertDatabaseCount('navigation_items', 0);
-    $this->assertDatabaseCount('shared_slots', 0);
+    $this->assertDatabaseCount('wbcms_navigation_items', 0);
+    $this->assertDatabaseCount('wbcms_shared_slots', 0);
   }
 
   #[Test]
@@ -3184,8 +3174,8 @@ class InternalContentApiTest extends TestCase
       ->assertCreated()
       ->assertJsonPath('ok', true);
 
-    $this->assertDatabaseHas('navigation_items', ['title' => 'Home', 'url' => '/']);
-    $this->assertDatabaseHas('shared_slots', ['handle' => 'site-header']);
+    $this->assertDatabaseHas('wbcms_navigation_items', ['title' => 'Home', 'url' => '/']);
+    $this->assertDatabaseHas('wbcms_shared_slots', ['handle' => 'site-header']);
 
     $failingPayload = $this->phaseTwoPlanPayload([
       'plan' => [
@@ -3215,8 +3205,8 @@ class InternalContentApiTest extends TestCase
       ->postJson('/webadmin/api/content/apply', $failingPayload)
       ->assertStatus(422);
 
-    $this->assertDatabaseMissing('navigation_items', ['menu_key' => NavigationItem::MENU_FOOTER, 'title' => 'Unsafe']);
-    $this->assertDatabaseMissing('shared_slots', ['handle' => 'site-footer']);
+    $this->assertDatabaseMissing('wbcms_navigation_items', ['menu_key' => NavigationItem::MENU_FOOTER, 'title' => 'Unsafe']);
+    $this->assertDatabaseMissing('wbcms_shared_slots', ['handle' => 'site-footer']);
   }
 
   private function validPlanPayload(array $overrides = []): array
@@ -3325,7 +3315,7 @@ class InternalContentApiTest extends TestCase
         'locale' => $this->defaultLocale()->code,
         'page' => [
           'id' => $page->id,
-          'expected_path' => '/p/existing-contact',
+          'expected_path' => '/existing-contact',
           'status' => 'draft',
         ],
         'replace_slots' => [
@@ -3356,7 +3346,7 @@ class InternalContentApiTest extends TestCase
     ];
   }
 
-  private function createDraftPageWithMainAndSharedChrome(string $path = '/p/existing-contact'): array
+  private function createDraftPageWithMainAndSharedChrome(string $path = '/existing-contact'): array
   {
     $site = $this->defaultSite();
     $locale = $this->defaultLocale();

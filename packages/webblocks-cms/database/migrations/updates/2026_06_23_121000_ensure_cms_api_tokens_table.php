@@ -8,11 +8,11 @@ return new class extends Migration
 {
   public function up(): void
   {
-    if (Schema::hasTable('cms_api_tokens')) {
+    if (Schema::hasTable('wbcms_cms_api_tokens')) {
       return;
     }
 
-    Schema::create('cms_api_tokens', function (Blueprint $table): void {
+    Schema::create('wbcms_cms_api_tokens', function (Blueprint $table): void {
       $table->id();
       $table->string('name');
       $table->string('token_hash', 128)->unique();

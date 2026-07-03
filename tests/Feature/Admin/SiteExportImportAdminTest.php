@@ -202,7 +202,7 @@ class SiteExportImportAdminTest extends TestCase
     ]);
 
     $response->assertForbidden();
-    $this->assertDatabaseCount('site_exports', 0);
+    $this->assertDatabaseCount('wbcms_site_exports', 0);
   }
 
   #[Test]
@@ -260,7 +260,7 @@ class SiteExportImportAdminTest extends TestCase
     ]);
 
     $runResponse->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
-    $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
+    $this->assertDatabaseHas('wbcms_sites', ['handle' => 'imported-site']);
     $this->assertGreaterThanOrEqual(2, MediaFolder::query()->where('slug', 'branding')->count());
   }
 
@@ -413,9 +413,9 @@ class SiteExportImportAdminTest extends TestCase
 
     $response->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
     $response->assertSessionDoesntHaveErrors();
-    $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
-    $this->assertDatabaseHas('block_types', ['slug' => 'header']);
-    $this->assertDatabaseHas('slot_types', ['slug' => 'main']);
+    $this->assertDatabaseHas('wbcms_sites', ['handle' => 'imported-site']);
+    $this->assertDatabaseHas('wbcms_block_types', ['slug' => 'header']);
+    $this->assertDatabaseHas('wbcms_slot_types', ['slug' => 'main']);
     $this->assertStringContainsString('Synchronized core block and slot catalogs before import.', (string) $siteImport->fresh()->output_log);
   }
 
@@ -485,9 +485,9 @@ class SiteExportImportAdminTest extends TestCase
 
     $response->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
     $response->assertSessionDoesntHaveErrors();
-    $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
-    $this->assertDatabaseHas('block_types', ['slug' => 'card-grid']);
-    $this->assertDatabaseHas('block_types', ['slug' => 'navigation-auto']);
+    $this->assertDatabaseHas('wbcms_sites', ['handle' => 'imported-site']);
+    $this->assertDatabaseHas('wbcms_block_types', ['slug' => 'card-grid']);
+    $this->assertDatabaseHas('wbcms_block_types', ['slug' => 'navigation-auto']);
     $this->assertSame(1, BlockType::query()->where('slug', 'card-grid')->count());
     $this->assertSame(1, BlockType::query()->where('slug', 'navigation-auto')->count());
     $this->assertStringContainsString('Synchronized core block and slot catalogs before import.', (string) $siteImport->fresh()->output_log);
@@ -534,7 +534,7 @@ class SiteExportImportAdminTest extends TestCase
         'source_site_name' => 'Source Site',
         'source_site_handle' => 'source-site',
         'source_site_domain' => 'source-site.test',
-        'locales' => ['en'],
+        'wbcms_locales' => ['en'],
         'includes_media' => true,
       ],
       'summary_json' => [

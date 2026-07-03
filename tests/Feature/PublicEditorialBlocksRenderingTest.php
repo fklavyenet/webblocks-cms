@@ -238,7 +238,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertSee('data-wb-target="#wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
     $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
     $response->assertSee('class="wb-navbar-links"', false);
-    $response->assertSee('href="/p/about" class="wb-navbar-link is-active" aria-current="page"', false);
+    $response->assertSee('href="/about" class="wb-navbar-link is-active" aria-current="page"', false);
     $response->assertSee('href="/contact" class="wb-navbar-link"', false);
     $response->assertSee('href="/contact" class="wb-dropdown-item"', false);
     $response->assertDontSee('<span></span><span></span><span></span>', false);
@@ -488,7 +488,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'slot' => 'main',
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
-      'settings' => json_encode(['url' => '/p/about', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+      'settings' => json_encode(['url' => '/about', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
       'status' => 'published',
       'is_system' => false,
     ]);
@@ -503,7 +503,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertSee('<nav class="wb-sidebar-nav" aria-label="Documentation navigation">', false);
     $response->assertSee('<div class="wb-sidebar-section">', false);
     $response->assertSee('class="wb-sidebar-link is-active"', false);
-    $response->assertSee('href="/p/about"', false);
+    $response->assertSee('href="/about"', false);
     $response->assertSee('aria-current="page"', false);
     $response->assertDontSee('<div class="wb-sidebar-nav"', false);
   }
@@ -594,11 +594,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertSee('wb-icon-layers', false);
     $response->assertSee('wb-icon-rocket', false);
     $response->assertSee('wb-icon-home', false);
-    $response->assertSee('href="/p/about" class="wb-nav-group-item is-active" aria-current="page"', false);
+    $response->assertSee('href="/about" class="wb-nav-group-item is-active" aria-current="page"', false);
     $response->assertSee('href="https://example.com/docs"', false);
     $response->assertSee('class="wb-nav-group-item"', false);
     $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
-    $response->assertSee('href="/p/about" class="wb-sidebar-link is-active" aria-current="page"', false);
+    $response->assertSee('href="/about" class="wb-sidebar-link is-active" aria-current="page"', false);
     $response->assertSee('cms/js/public/sidebar-navigation.js', false);
   }
 
@@ -671,8 +671,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertSee('class="wb-nav-group-items"', false);
     $response->assertSee('id="wb-nav-group-items-'.$patterns->id.'"', false);
     $response->assertDontSee('id="wb-nav-group-items-'.$patterns->id.'" hidden', false);
-    $response->assertSee('href="/p/dashboard-shell" class="wb-nav-group-item is-active" aria-current="page"', false);
-    $response->assertSee('href="/p/overview" class="wb-nav-group-item"', false);
+    $response->assertSee('href="/dashboard-shell" class="wb-nav-group-item is-active" aria-current="page"', false);
+    $response->assertSee('href="/overview" class="wb-nav-group-item"', false);
   }
 
   #[Test]
@@ -892,7 +892,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'slot' => 'main',
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
-      'settings' => json_encode(['url' => '/p/about', 'target' => '_blank', 'icon' => 'rocket', 'active_mode' => 'path'], JSON_UNESCAPED_SLASHES),
+      'settings' => json_encode(['url' => '/about', 'target' => '_blank', 'icon' => 'rocket', 'active_mode' => 'path'], JSON_UNESCAPED_SLASHES),
       'status' => 'published',
       'is_system' => false,
     ]);
@@ -908,7 +908,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertSee('aria-controls="wb-nav-group-items-'.$group->id.'"', false);
     $response->assertSee('id="wb-nav-group-items-'.$group->id.'"', false);
     $response->assertSee('class="wb-icon wb-icon-rocket wb-sidebar-icon"', false);
-    $response->assertSee('href="/p/about"', false);
+    $response->assertSee('href="/about"', false);
     $response->assertSee('class="wb-nav-group-item is-active"', false);
     $response->assertSee('aria-current="page"', false);
     $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
@@ -928,7 +928,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'slot' => 'main',
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
-      'settings' => json_encode(['url' => '/p/about', 'target' => '_self', 'icon' => 'rocket', 'active_mode' => 'path'], JSON_UNESCAPED_SLASHES),
+      'settings' => json_encode(['url' => '/about', 'target' => '_self', 'icon' => 'rocket', 'active_mode' => 'path'], JSON_UNESCAPED_SLASHES),
       'status' => 'published',
       'is_system' => false,
     ]);
@@ -962,7 +962,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'slot' => 'main',
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 2,
-      'settings' => json_encode(['url' => '/p/about', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+      'settings' => json_encode(['url' => '/about', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
       'status' => 'published',
       'is_system' => false,
     ]);
@@ -975,7 +975,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('class="wb-sidebar-link is-active"', false);
-    $response->assertSee('href="/p/about"', false);
+    $response->assertSee('href="/about"', false);
     $response->assertSee('aria-current="page"', false);
     $response->assertSee('class="wb-icon wb-icon-rocket wb-sidebar-icon"', false);
     $response->assertSee('href="https://example.com/docs"', false);
@@ -1240,11 +1240,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     );
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $about->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $about->id, 'locale_id' => $turkish->id],
-      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/hakkinda'],
     );
 
     PageSlot::query()->create([
@@ -1266,8 +1266,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'is_system' => true,
     ]);
 
-    $defaultResponse = $this->get('/p/about');
-    $turkishResponse = $this->get('/tr/p/hakkinda');
+    $defaultResponse = $this->get('/about');
+    $turkishResponse = $this->get('/tr/hakkinda');
     $turkishHomePath = app(PageRouteResolver::class)->homePath('tr', $site);
 
     $defaultResponse->assertOk();
@@ -1362,7 +1362,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Docs Header Test', 'slug' => 'docs-header-test', 'path' => '/p/docs-header-test'],
+      ['site_id' => $site->id, 'name' => 'Docs Header Test', 'slug' => 'docs-header-test', 'path' => '/docs-header-test'],
     );
 
     PageSlot::query()->create([
@@ -1388,7 +1388,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'content' => 'Docs nav content',
     ]);
 
-    $response = $this->get('/p/docs-header-test');
+    $response = $this->get('/docs-header-test');
 
     $response->assertOk();
     $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
@@ -1413,7 +1413,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Default Shell Sidebar Test', 'slug' => 'default-shell-sidebar-test', 'path' => '/p/default-shell-sidebar-test'],
+      ['site_id' => $site->id, 'name' => 'Default Shell Sidebar Test', 'slug' => 'default-shell-sidebar-test', 'path' => '/default-shell-sidebar-test'],
     );
 
     PageSlot::query()->create([
@@ -1439,7 +1439,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'content' => 'Default shell sidebar content',
     ]);
 
-    $response = $this->get('/p/default-shell-sidebar-test');
+    $response = $this->get('/default-shell-sidebar-test');
 
     $response->assertOk();
     $response->assertSee('<aside data-wb-slot="sidebar">', false);
@@ -1466,7 +1466,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Docs Header Legacy Settings Test', 'slug' => 'docs-header-legacy-settings-test', 'path' => '/p/docs-header-legacy-settings-test'],
+      ['site_id' => $site->id, 'name' => 'Docs Header Legacy Settings Test', 'slug' => 'docs-header-legacy-settings-test', 'path' => '/docs-header-legacy-settings-test'],
     );
 
     PageSlot::query()->create([
@@ -1492,7 +1492,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'content' => 'Legacy docs header content',
     ]);
 
-    $response = $this->get('/p/docs-header-legacy-settings-test');
+    $response = $this->get('/docs-header-legacy-settings-test');
 
     $response->assertOk();
     $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
@@ -2754,11 +2754,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $turkish->id],
-      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/hakkinda'],
     );
 
     PageSlot::query()->create([
@@ -2791,8 +2791,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     ]);
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
-    $defaultResponse = $this->get('/p/about');
-    $turkishResponse = $this->get('/tr/p/hakkinda');
+    $defaultResponse = $this->get('/about');
+    $turkishResponse = $this->get('/tr/hakkinda');
 
     $defaultResponse->assertOk();
     $defaultResponse->assertSee('<a href="/start-here" class="wb-btn wb-btn-primary">Start here</a>', false);
@@ -2904,11 +2904,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $turkish->id],
-      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/hakkinda'],
     );
 
     PageSlot::query()->create([
@@ -2945,8 +2945,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     ]);
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
-    $defaultResponse = $this->get('/p/about');
-    $turkishResponse = $this->get('/tr/p/hakkinda');
+    $defaultResponse = $this->get('/about');
+    $turkishResponse = $this->get('/tr/hakkinda');
 
     $defaultResponse->assertOk();
     $defaultResponse->assertSee('<header class="wb-content-header wb-text-right" data-wb-public-block-type="content-header">', false);
@@ -3357,11 +3357,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $french->id],
-      ['site_id' => $site->id, 'name' => 'A propos', 'slug' => 'a-propos', 'path' => '/p/a-propos'],
+      ['site_id' => $site->id, 'name' => 'A propos', 'slug' => 'a-propos', 'path' => '/a-propos'],
     );
 
     PageSlot::query()->create([
@@ -3395,7 +3395,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
 
     $defaultResponse = $this->get(route('pages.show', 'about'));
-    $frenchResponse = $this->get('/fr/p/a-propos');
+    $frenchResponse = $this->get('/fr/a-propos');
 
     $defaultResponse->assertOk();
     $defaultResponse->assertSee('<h2 class="wb-text-center" data-wb-public-block-type="header">English title</h2>', false);
@@ -3527,7 +3527,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/p/'.$slug],
+      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/'.$slug],
     );
 
     PageSlot::query()->create([

@@ -58,7 +58,7 @@ class LinkListBlockTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
 
     $pageSlot = PageSlot::query()->create([
@@ -139,7 +139,7 @@ class LinkListBlockTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
     $this->assertSame('guide.html', $item->fresh()->url);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $item->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Getting Started',
@@ -174,7 +174,7 @@ class LinkListBlockTest extends TestCase
       'https://webblocksui.com/docs/foundation.html',
       'http://example.com/path',
       '/docs/foundation.html',
-      '/p/about',
+      '/about',
       'foundation.html',
       'docs/foundation.html',
       'guide.html',
@@ -197,7 +197,7 @@ class LinkListBlockTest extends TestCase
       ]);
 
       $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-      $this->assertDatabaseHas('blocks', [
+      $this->assertDatabaseHas('wbcms_blocks', [
         'page_id' => $page->id,
         'parent_id' => $linkList->id,
         'type' => 'link-list-item',
@@ -258,7 +258,7 @@ class LinkListBlockTest extends TestCase
       $this->assertSame((string) $linkListItemType->id, $query['block_type_id'] ?? null);
       $this->assertSame((string) $linkList->id, $query['parent_id'] ?? null);
       $response->assertSessionHasErrors('url');
-      $this->assertDatabaseMissing('blocks', [
+      $this->assertDatabaseMissing('wbcms_blocks', [
         'page_id' => $page->id,
         'parent_id' => $linkList->id,
         'type' => 'link-list-item',
@@ -539,7 +539,7 @@ class LinkListBlockTest extends TestCase
 
     $item = Block::query()->where('page_id', $page->id)->where('type', 'link-list-item')->firstOrFail();
 
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $item->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => '0',

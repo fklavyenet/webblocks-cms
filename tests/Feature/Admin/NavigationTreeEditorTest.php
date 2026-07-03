@@ -117,7 +117,7 @@ class NavigationTreeEditorTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'site_id' => $site->id,
       'menu_key' => NavigationItem::MENU_DOCS,
       'page_id' => $page->id,
@@ -141,7 +141,7 @@ class NavigationTreeEditorTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'site_id' => $site->id,
       'menu_key' => NavigationItem::MENU_DOCS,
       'title' => 'Patterns',
@@ -167,7 +167,7 @@ class NavigationTreeEditorTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'site_id' => $site->id,
       'menu_key' => NavigationItem::MENU_DOCS,
       'title' => 'Patterns',
@@ -200,7 +200,7 @@ class NavigationTreeEditorTest extends TestCase
       'visibility' => NavigationItem::VISIBILITY_VISIBLE,
     ])->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
 
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'id' => $group->id,
       'icon' => 'layout',
     ]);
@@ -318,7 +318,7 @@ class NavigationTreeEditorTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'site_id' => $site->id,
       'menu_key' => NavigationItem::MENU_DOCS,
       'page_id' => $page->id,
@@ -501,9 +501,9 @@ class NavigationTreeEditorTest extends TestCase
       'menu_key' => 'primary',
     ]);
 
-    $this->assertDatabaseHas('navigation_items', ['id' => $contact->id, 'parent_id' => null, 'position' => 1]);
-    $this->assertDatabaseHas('navigation_items', ['id' => $group->id, 'parent_id' => null, 'position' => 2]);
-    $this->assertDatabaseHas('navigation_items', ['id' => $about->id, 'parent_id' => $group->id, 'position' => 1]);
+    $this->assertDatabaseHas('wbcms_navigation_items', ['id' => $contact->id, 'parent_id' => null, 'position' => 1]);
+    $this->assertDatabaseHas('wbcms_navigation_items', ['id' => $group->id, 'parent_id' => null, 'position' => 2]);
+    $this->assertDatabaseHas('wbcms_navigation_items', ['id' => $about->id, 'parent_id' => $group->id, 'position' => 1]);
   }
 
   #[Test]

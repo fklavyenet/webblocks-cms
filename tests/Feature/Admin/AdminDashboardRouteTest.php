@@ -102,7 +102,7 @@ class AdminDashboardRouteTest extends TestCase
     VisitorEvent::query()->create([
       'site_id' => $page->site_id,
       'page_id' => $page->id,
-      'path' => '/p/dashboard-landing',
+      'path' => '/dashboard-landing',
       'session_key' => 'dashboard-session',
       'ip_hash' => 'dashboard-hash',
       'visited_at' => CarbonImmutable::today()->setTime(9, 0),
@@ -115,7 +115,7 @@ class AdminDashboardRouteTest extends TestCase
     $response->assertSee('Dashboard');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
     $response->assertSee('Visitor Summary');
-    $response->assertSee('/p/dashboard-landing');
+    $response->assertSee('/dashboard-landing');
     $response->assertSee('Actions and Shortcuts');
     $response->assertSee('href="'.route('admin.pages.create').'"', false);
     $response->assertSee('New Page');

@@ -340,7 +340,7 @@ class PageEditorialWorkflowTest extends TestCase
     ]);
 
     $response->assertRedirect(route('webblocks.auth.login'));
-    $this->assertDatabaseHas('pages', ['id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $page->id]);
   }
 
   #[Test]
@@ -424,8 +424,8 @@ class PageEditorialWorkflowTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.index'));
     $response->assertSessionHas('status', '2 selected pages deleted.');
-    $this->assertDatabaseMissing('pages', ['id' => $first->id]);
-    $this->assertDatabaseMissing('pages', ['id' => $second->id]);
+    $this->assertDatabaseMissing('wbcms_pages', ['id' => $first->id]);
+    $this->assertDatabaseMissing('wbcms_pages', ['id' => $second->id]);
   }
 
   #[Test]
@@ -449,8 +449,8 @@ class PageEditorialWorkflowTest extends TestCase
     $response->assertRedirect(route('admin.pages.index'));
     $response->assertSessionHas('status', '1 selected page deleted. 1 could not be deleted.');
     $response->assertSessionHasErrors('pages');
-    $this->assertDatabaseMissing('pages', ['id' => $allowed->id]);
-    $this->assertDatabaseHas('pages', ['id' => $outside->id]);
+    $this->assertDatabaseMissing('wbcms_pages', ['id' => $allowed->id]);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $outside->id]);
   }
 
   #[Test]
@@ -471,7 +471,7 @@ class PageEditorialWorkflowTest extends TestCase
     ]);
 
     $invalid->assertSessionHasErrors('page_ids.1');
-    $this->assertDatabaseHas('pages', ['id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_pages', ['id' => $page->id]);
   }
 
   #[Test]
@@ -501,7 +501,7 @@ class PageEditorialWorkflowTest extends TestCase
     $this->assertSame($user->id, $page->fresh()->created_by_user_id);
     $this->assertSame($user->id, $page->fresh()->updated_by_user_id);
 
-    $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
   }
 
   #[Test]
@@ -1141,7 +1141,7 @@ class PageEditorialWorkflowTest extends TestCase
       ])
       ->assertRedirect(route('admin.pages.edit', $page));
 
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'id' => $translation->id,
       'slug' => 'fruit-train',
       'path' => '/games/fruit-train',
@@ -1169,7 +1169,7 @@ class PageEditorialWorkflowTest extends TestCase
       ->assertRedirect(route('admin.pages.translations.edit', [$page, $translation]))
       ->assertSessionHasErrors('path');
 
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'id' => $translation->id,
       'path' => '/search-page',
     ]);

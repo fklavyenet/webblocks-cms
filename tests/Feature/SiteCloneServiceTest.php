@@ -73,13 +73,13 @@ class SiteCloneServiceTest extends TestCase
         ->where('locale_id', $defaultLocaleId)
         ->where('slug', 'about'))
       ->firstOrFail();
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $aboutPage->id,
       'slug' => 'hakkinda',
       'seo_title' => 'Hakkinda SEO',
       'og_title' => 'Hakkinda OG',
     ]);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $aboutPage->id,
       'slug' => 'about',
       'seo_title' => 'About SEO',
@@ -88,7 +88,7 @@ class SiteCloneServiceTest extends TestCase
 
     $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
     $plainText = Block::query()->where('page_id', $aboutPage->id)->where('type', 'plain_text')->firstOrFail();
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $header->id,
       'title' => 'Hakkinda',
     ]);
@@ -130,13 +130,13 @@ class SiteCloneServiceTest extends TestCase
     $this->assertSame('docs', $aboutPage->publicShellPreset());
     $this->assertSame('docs-main', $mainSlot['wrapper']['preset']);
     $this->assertCount(0, $sidebarSlot['blocks']);
-    $this->assertDatabaseHas('navigation_items', [
+    $this->assertDatabaseHas('wbcms_navigation_items', [
       'site_id' => $targetSite->id,
       'menu_key' => NavigationItem::MENU_PRIMARY,
       'title' => 'About',
       'page_id' => $aboutPage->id,
     ]);
-    $this->assertDatabaseHas('site_variables', [
+    $this->assertDatabaseHas('wbcms_site_variables', [
       'site_id' => $targetSite->id,
       'key' => 'support_email',
       'value' => 'support@example.test',
@@ -191,13 +191,13 @@ class SiteCloneServiceTest extends TestCase
     $targetGalleryItem = $targetGallery->blockAssets()->where('role', 'gallery_item')->firstOrFail();
 
     $this->assertNotSame($sourceGalleryItem->id, $targetGalleryItem->id);
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $targetGalleryItem->id,
       'locale_id' => $defaultLocale->id,
       'caption' => 'Gallery caption',
       'overlay_title' => 'Gallery overlay title',
     ]);
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $targetGalleryItem->id,
       'locale_id' => $turkish->id,
       'caption' => 'Galeri aciklamasi',

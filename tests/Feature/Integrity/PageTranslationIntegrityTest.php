@@ -68,7 +68,7 @@ class PageTranslationIntegrityTest extends TestCase
 
     $this->expectException(QueryException::class);
 
-    DB::table('page_translations')->insert([
+    DB::table('wbcms_page_translations')->insert([
       'page_id' => $page->id,
       'site_id' => $site->id,
       'locale_id' => $this->defaultLocale()->id,
@@ -96,8 +96,8 @@ class PageTranslationIntegrityTest extends TestCase
     $firstPage = $this->createPage($firstSite, 'About', 'about');
     $secondPage = $this->createPage($secondSite, 'About', 'about');
 
-    $this->assertSame('/p/about', $firstPage->publicPath());
-    $this->assertSame('/p/about', $secondPage->publicPath());
+    $this->assertSame('/about', $firstPage->publicPath());
+    $this->assertSame('/about', $secondPage->publicPath());
     $this->assertSame(2, PageTranslation::query()->where('slug', 'about')->count());
   }
 
@@ -114,12 +114,12 @@ class PageTranslationIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
-    $this->get('http://primary.example.test/p/about')->assertOk()->assertSee('About');
-    $this->get('http://primary.example.test/tr/p/hakkinda')->assertOk()->assertSee('Hakkinda');
-    $this->get('http://primary.example.test/p/hakkinda')->assertNotFound();
+    $this->get('http://primary.example.test/about')->assertOk()->assertSee('About');
+    $this->get('http://primary.example.test/tr/hakkinda')->assertOk()->assertSee('Hakkinda');
+    $this->get('http://primary.example.test/hakkinda')->assertNotFound();
   }
 
   #[Test]
@@ -133,7 +133,7 @@ class PageTranslationIntegrityTest extends TestCase
 
     $this->assertNull($page->publicPath('tr'));
     $this->assertNull($page->publicUrl('tr'));
-    $this->get('http://primary.example.test/tr/p/about')->assertNotFound();
+    $this->get('http://primary.example.test/tr/about')->assertNotFound();
     $this->get('http://primary.example.test/tr')->assertNotFound();
   }
 
@@ -145,7 +145,7 @@ class PageTranslationIntegrityTest extends TestCase
     $this->createPage($site, 'About', 'about');
 
     $this->get('http://primary.example.test/en')->assertNotFound();
-    $this->get('http://primary.example.test/en/p/about')->assertNotFound();
+    $this->get('http://primary.example.test/en/about')->assertNotFound();
   }
 
   #[Test]
@@ -173,15 +173,15 @@ class PageTranslationIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
     $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
 
     $response->assertOk();
-    $response->assertSee('https://campaign.example.test/p/about', false);
-    $response->assertSee('https://campaign.example.test/tr/p/hakkinda', false);
-    $response->assertDontSee('https://campaign.example.test/de/p/about', false);
+    $response->assertSee('https://campaign.example.test/about', false);
+    $response->assertSee('https://campaign.example.test/tr/hakkinda', false);
+    $response->assertDontSee('https://campaign.example.test/de/about', false);
   }
 
   #[Test]
@@ -199,7 +199,7 @@ class PageTranslationIntegrityTest extends TestCase
       'locale_id' => $locale->id,
       'name' => 'Hakkinda',
       'slug' => 'ortak',
-      'path' => '/p/ortak',
+      'path' => '/ortak',
     ]);
 
     $response = $this->actingAs($user)
@@ -271,7 +271,7 @@ class PageTranslationIntegrityTest extends TestCase
       ]);
 
     $response->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $page->id,
       'locale_id' => $locale->id,
       'slug' => 'hakkinda',

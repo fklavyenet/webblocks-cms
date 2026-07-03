@@ -51,7 +51,7 @@ class PublicHeroBlockRenderingTest extends TestCase
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
       'title' => 'Get started',
-      'url' => '/p/contact',
+      'url' => '/contact',
       'variant' => 'primary',
       'status' => 'published',
       'is_system' => false,
@@ -168,7 +168,7 @@ class PublicHeroBlockRenderingTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
     $hero = Block::query()->create([
@@ -209,7 +209,7 @@ class PublicHeroBlockRenderingTest extends TestCase
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
       'title' => 'Default CTA',
-      'url' => '/p/contact',
+      'url' => '/contact',
       'variant' => 'primary',
       'status' => 'published',
       'is_system' => false,
@@ -223,7 +223,7 @@ class PublicHeroBlockRenderingTest extends TestCase
       'title' => 'Turkce CTA',
     ]);
 
-    $response = $this->get('/tr/p/hakkinda');
+    $response = $this->get('/tr/hakkinda');
 
     $response->assertOk();
     $response->assertSee('Turkce kahraman');
@@ -264,7 +264,7 @@ class PublicHeroBlockRenderingTest extends TestCase
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
       'title' => 'Primary action',
-      'url' => '/p/contact',
+      'url' => '/contact',
       'variant' => 'primary',
       'status' => 'published',
       'is_system' => false,
@@ -454,13 +454,13 @@ class PublicHeroBlockRenderingTest extends TestCase
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
       'title' => 'Explore',
-      'url' => '/p/contact',
+      'url' => '/contact',
       'variant' => 'primary',
       'status' => 'published',
       'is_system' => false,
     ]);
 
-    $response = $this->get('http://campaign.example.test/p/landing');
+    $response = $this->get('http://campaign.example.test/landing');
 
     $response->assertOk();
     $response->assertSee('Campaign hero');
@@ -672,7 +672,7 @@ class PublicHeroBlockRenderingTest extends TestCase
       'sort_order' => 0,
       'title' => 'Editorial control',
       'content' => 'Feature items use the same card shell.',
-      'url' => '/p/features',
+      'url' => '/features',
       'status' => 'published',
       'is_system' => false,
     ]);
@@ -682,7 +682,7 @@ class PublicHeroBlockRenderingTest extends TestCase
     $response->assertOk();
     $response->assertSee('Editorial control');
     $response->assertSee('Feature items use the same card shell.');
-    $response->assertSee('href="/p/features"', false);
+    $response->assertSee('href="/features"', false);
   }
 
   #[Test]

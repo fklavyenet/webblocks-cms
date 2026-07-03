@@ -901,7 +901,7 @@ class PageConverterTest extends TestCase
     $response->assertSessionHas('status', fn (string $status): bool => str_contains($status, '2 block(s) created')
       && str_contains($status, '2 suggestion(s) skipped'));
     $this->assertSame(['section', 'plain_text'], $page->blocks()->pluck('type')->all());
-    $this->assertDatabaseCount('media', 0);
+    $this->assertDatabaseCount('wbcms_media', 0);
   }
 
   #[Test]
@@ -1257,7 +1257,7 @@ HTML;
     $this->assertStringNotContainsString('alert("bad")', $blocks[1]['source_fragment']['html']);
     $this->assertStringNotContainsString('onclick', $blocks[1]['source_fragment']['html']);
     $this->assertStringNotContainsString('onmouseover', $blocks[1]['source_fragment']['html']);
-    $this->assertDatabaseCount('media', 0);
+    $this->assertDatabaseCount('wbcms_media', 0);
   }
 
   #[Test]
@@ -1292,7 +1292,7 @@ HTML;
     $response->assertSeeText('image');
     $response->assertSeeText('gallery');
     $response->assertSeeText('Media import is not implemented in this phase.');
-    $this->assertDatabaseCount('media', 0);
+    $this->assertDatabaseCount('wbcms_media', 0);
   }
 
   #[Test]

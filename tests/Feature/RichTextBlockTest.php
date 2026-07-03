@@ -58,7 +58,7 @@ class RichTextBlockTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $page->site_id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $page->site_id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
 
     $pageSlot = PageSlot::query()->create([
@@ -75,7 +75,7 @@ class RichTextBlockTest extends TestCase
   {
     $this->seedFoundation();
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'rich-text',
       'name' => 'Rich Text',
       'category' => 'content',
@@ -100,7 +100,7 @@ class RichTextBlockTest extends TestCase
     $this->seed(BlockTypeSeeder::class);
 
     $this->assertSame(1, BlockType::query()->where('slug', 'rich-text')->count());
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'rich-text',
       'name' => 'Rich Text',
       'category' => 'content',
@@ -125,7 +125,7 @@ class RichTextBlockTest extends TestCase
     $migration = require base_path('database/migrations/2026_05_04_160000_normalize_rich_text_block_type_visibility.php');
     $migration->up();
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'rich-text',
       'name' => 'Rich Text',
       'category' => 'content',
@@ -228,7 +228,7 @@ class RichTextBlockTest extends TestCase
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
     $block = Block::query()->where('page_id', $page->id)->where('type', 'rich-text')->firstOrFail();
-    $content = DB::table('block_text_translations')->where('block_id', $block->id)->value('content');
+    $content = DB::table('wbcms_block_text_translations')->where('block_id', $block->id)->value('content');
 
     $this->assertNull($block->fresh()->getRawOriginal('content'));
     $this->assertSame('<p>Use <code>light</code>, <code>dark</code>, or <code>auto</code>.</p>', $content);

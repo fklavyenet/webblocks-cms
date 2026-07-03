@@ -50,7 +50,7 @@ class PublicSharedSlotRenderingTest extends TestCase
     ]);
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($breadcrumb);
 
-    $response = $this->get('/p/getting-started');
+    $response = $this->get('/getting-started');
 
     $response->assertOk();
     $response->assertSee('<a class="wb-breadcrumb-link" href="/">Home</a>', false);
@@ -327,7 +327,7 @@ class PublicSharedSlotRenderingTest extends TestCase
       'sort_order' => -10,
     ]);
 
-    $response = $this->get('/p/getting-started');
+    $response = $this->get('/getting-started');
 
     $response->assertOk();
     $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
@@ -354,7 +354,7 @@ class PublicSharedSlotRenderingTest extends TestCase
     $this->assertSame($pageBlockCountBefore, Block::query()->where('page_id', $context['page']->id)->count());
     $this->assertSame($slotBlockCountBefore, SharedSlotBlock::query()->count());
     $this->assertCount(0, $context['pageSlot']->fresh()->blocks()->get());
-    $this->assertDatabaseHas('blocks', ['id' => $context['pageHeader']->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $context['pageHeader']->id]);
   }
 
   #[Test]
@@ -585,11 +585,11 @@ class PublicSharedSlotRenderingTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $context['page']->id, 'locale_id' => $french->id],
-      ['site_id' => $site->id, 'name' => 'Accueil', 'slug' => 'accueil', 'path' => '/fr/p/accueil'],
+      ['site_id' => $site->id, 'name' => 'Accueil', 'slug' => 'accueil', 'path' => '/accueil'],
     );
 
     $defaultResponse = $this->get('/');
-    $frenchResponse = $this->get('/fr/p/accueil');
+    $frenchResponse = $this->get('/fr/accueil');
 
     $defaultResponse->assertOk();
     $defaultResponse->assertSee('Shared Header Title', false);
@@ -643,13 +643,13 @@ class PublicSharedSlotRenderingTest extends TestCase
       ->assertRedirect(route('admin.pages.edit', $page));
 
     $this->get('/')->assertOk()->assertSee('Shared Header Title', false)->assertDontSee('Page Header Content', false);
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'id' => $pageSlot->id,
       'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
       'shared_slot_id' => $sharedSlot->id,
     ]);
     $this->assertSame($pageBlockCountBefore, Block::query()->where('page_id', $page->id)->count());
-    $this->assertDatabaseHas('blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
 
     $this->actingAs($user)
       ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
@@ -658,12 +658,12 @@ class PublicSharedSlotRenderingTest extends TestCase
       ->assertRedirect(route('admin.pages.edit', $page));
 
     $this->get('/')->assertOk()->assertDontSee('Shared Header Title', false)->assertDontSee('Page Header Content', false);
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'id' => $pageSlot->id,
       'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
       'shared_slot_id' => null,
     ]);
-    $this->assertDatabaseHas('blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
 
     $this->actingAs($user)
       ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
@@ -672,12 +672,12 @@ class PublicSharedSlotRenderingTest extends TestCase
       ->assertRedirect(route('admin.pages.edit', $page));
 
     $this->get('/')->assertOk()->assertSee('Page Header Content', false)->assertDontSee('Shared Header Title', false);
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'id' => $pageSlot->id,
       'source_type' => PageSlot::SOURCE_TYPE_PAGE,
       'shared_slot_id' => null,
     ]);
-    $this->assertDatabaseHas('blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
   }
 
   private function publishedPageWithSharedSlotSource(array $overrides = []): array
@@ -703,7 +703,7 @@ class PublicSharedSlotRenderingTest extends TestCase
     ]);
 
     $slug = $overrides['page_slug'] ?? 'home';
-    $path = $overrides['path'] ?? ($slug === 'home' ? '/' : '/p/'.$slug);
+    $path = $overrides['path'] ?? ($slug === 'home' ? '/' : '/'.$slug);
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],

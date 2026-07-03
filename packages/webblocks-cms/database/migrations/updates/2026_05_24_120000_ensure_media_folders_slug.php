@@ -10,12 +10,12 @@ return new class extends Migration
 {
   public function up(): void
   {
-    if (! Schema::hasTable('media_folders')) {
+    if (! Schema::hasTable('wbcms_media_folders')) {
       return;
     }
 
-    if (! Schema::hasColumn('media_folders', 'slug')) {
-      Schema::table('media_folders', function (Blueprint $table): void {
+    if (! Schema::hasColumn('wbcms_media_folders', 'slug')) {
+      Schema::table('wbcms_media_folders', function (Blueprint $table): void {
         $table->string('slug')->nullable()->after('name');
       });
     }
@@ -30,11 +30,11 @@ return new class extends Migration
 
   private function backfillMissingSlugs(): void
   {
-    if (! Schema::hasColumn('media_folders', 'slug')) {
+    if (! Schema::hasColumn('wbcms_media_folders', 'slug')) {
       return;
     }
 
-    $usedSlugs = DB::table('media_folders')
+    $usedSlugs = DB::table('wbcms_media_folders')
       ->whereNotNull('slug')
       ->where('slug', '<>', '')
       ->pluck('slug')
@@ -43,7 +43,7 @@ return new class extends Migration
 
     $used = array_fill_keys($usedSlugs, true);
 
-    DB::table('media_folders')
+    DB::table('wbcms_media_folders')
       ->select(['id', 'name', 'slug'])
       ->whereNull('slug')
       ->orWhere('slug', '')
@@ -59,7 +59,7 @@ return new class extends Migration
         $slug = $this->uniqueSlug($baseSlug, $used);
         $used[$slug] = true;
 
-        DB::table('media_folders')
+        DB::table('wbcms_media_folders')
           ->where('id', $folder->id)
           ->update(['slug' => $slug]);
       });

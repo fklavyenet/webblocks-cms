@@ -219,7 +219,7 @@ class ContactFormModuleTest extends TestCase
     $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
     $response->assertSessionHas('contact_form_success_block_id', $block->id);
     $response->assertSessionHas('contact_form_success_message', 'Thanks for your message. We will get back to you soon.');
-    $this->assertDatabaseHas('contact_messages', [
+    $this->assertDatabaseHas('wbcms_contact_messages', [
       'block_id' => $block->id,
       'page_id' => $block->page_id,
       'email' => 'taylor@example.com',
@@ -331,7 +331,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertRedirect('/contact');
     $this->assertSame('/contact', parse_url($location, PHP_URL_PATH));
     $this->assertNull(parse_url($location, PHP_URL_FRAGMENT));
-    $this->assertDatabaseHas('contact_messages', [
+    $this->assertDatabaseHas('wbcms_contact_messages', [
       'block_id' => $block->id,
       'page_id' => $block->page_id,
       'email' => 'taylor@example.com',
@@ -406,7 +406,7 @@ class ContactFormModuleTest extends TestCase
     $this->assertSame('team@example.com', $settings['recipient_email'] ?? null);
     $this->assertTrue((bool) ($settings['send_email_notification'] ?? false));
     $this->assertTrue((bool) ($settings['store_submissions'] ?? false));
-    $this->assertDatabaseHas('block_contact_form_translations', [
+    $this->assertDatabaseHas('wbcms_block_contact_form_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Contact us',
@@ -446,7 +446,7 @@ class ContactFormModuleTest extends TestCase
     $this->assertSame('hello@example.com', $settings['recipient_email'] ?? null);
     $this->assertFalse((bool) ($settings['send_email_notification'] ?? true));
     $this->assertTrue((bool) ($settings['store_submissions'] ?? false));
-    $this->assertDatabaseHas('block_contact_form_translations', [
+    $this->assertDatabaseHas('wbcms_block_contact_form_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Contact the editorial team',
@@ -742,7 +742,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertSessionHas('contact_form_success_block_id', $block->id);
     $this->assertSame('/contact', parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_PATH));
     $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
-    $this->assertDatabaseCount('contact_messages', 0);
+    $this->assertDatabaseCount('wbcms_contact_messages', 0);
     Mail::assertNothingSent();
   }
 
@@ -756,7 +756,7 @@ class ContactFormModuleTest extends TestCase
       'website' => 'https://legacy.example.com',
     ]))->assertRedirect(route('pages.show', ['slug' => 'contact'], false));
 
-    $this->assertDatabaseHas('contact_messages', [
+    $this->assertDatabaseHas('wbcms_contact_messages', [
       'block_id' => $block->id,
       'email' => 'taylor@example.com',
       'status' => 'new',
@@ -812,7 +812,7 @@ class ContactFormModuleTest extends TestCase
       'email' => 'sender-3@example.com',
     ]))->assertTooManyRequests();
 
-    $this->assertDatabaseCount('contact_messages', 2);
+    $this->assertDatabaseCount('wbcms_contact_messages', 2);
   }
 
   #[Test]
@@ -1061,7 +1061,7 @@ class ContactFormModuleTest extends TestCase
       ->assertRedirect($returnUrl)
       ->assertSessionHas('status', 'Message deleted.');
 
-    $this->assertDatabaseMissing('contact_messages', ['id' => $message->id]);
+    $this->assertDatabaseMissing('wbcms_contact_messages', ['id' => $message->id]);
   }
 
   #[Test]
@@ -1135,9 +1135,9 @@ class ContactFormModuleTest extends TestCase
 
     $response->assertRedirect(route('admin.contact-messages.index'));
     $response->assertSessionHas('status', '2 selected messages deleted.');
-    $this->assertDatabaseMissing('contact_messages', ['id' => $first->id]);
-    $this->assertDatabaseMissing('contact_messages', ['id' => $second->id]);
-    $this->assertDatabaseHas('contact_messages', ['id' => $unselected->id]);
+    $this->assertDatabaseMissing('wbcms_contact_messages', ['id' => $first->id]);
+    $this->assertDatabaseMissing('wbcms_contact_messages', ['id' => $second->id]);
+    $this->assertDatabaseHas('wbcms_contact_messages', ['id' => $unselected->id]);
   }
 
   #[Test]
@@ -1205,8 +1205,8 @@ class ContactFormModuleTest extends TestCase
     $response->assertRedirect(route('admin.contact-messages.index'));
     $response->assertSessionHas('status', '1 selected message deleted. 1 could not be deleted.');
     $response->assertSessionHasErrors(['contact_messages']);
-    $this->assertDatabaseMissing('contact_messages', ['id' => $allowed->id]);
-    $this->assertDatabaseHas('contact_messages', ['id' => $inaccessible->id]);
+    $this->assertDatabaseMissing('wbcms_contact_messages', ['id' => $allowed->id]);
+    $this->assertDatabaseHas('wbcms_contact_messages', ['id' => $inaccessible->id]);
   }
 
   #[Test]
@@ -1663,7 +1663,7 @@ class ContactFormModuleTest extends TestCase
 
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block);
 
-    $this->assertDatabaseHas('block_contact_form_translations', [
+    $this->assertDatabaseHas('wbcms_block_contact_form_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Legacy contact heading',
@@ -1798,7 +1798,7 @@ class ContactFormModuleTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Iletisim',
       'slug' => 'iletisim',
-      'path' => '/p/iletisim',
+      'path' => '/iletisim',
     ]);
 
     $block->contactFormTranslations()->create([
@@ -1839,7 +1839,7 @@ class ContactFormModuleTest extends TestCase
 
     $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false));
     $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
-    $this->assertDatabaseHas('contact_messages', [
+    $this->assertDatabaseHas('wbcms_contact_messages', [
       'block_id' => $block->id,
       'page_id' => $page->id,
       'email' => 'taylor@example.com',

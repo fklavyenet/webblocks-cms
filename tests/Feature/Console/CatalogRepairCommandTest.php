@@ -22,7 +22,7 @@ class CatalogRepairCommandTest extends TestCase
       ->expectsOutputToContain('block-types: created')
       ->assertExitCode(0);
 
-    $this->assertDatabaseMissing('block_types', ['slug' => 'header']);
+    $this->assertDatabaseMissing('wbcms_block_types', ['slug' => 'header']);
   }
 
   #[Test]
@@ -50,7 +50,7 @@ class CatalogRepairCommandTest extends TestCase
       ->assertExitCode(0);
 
     $this->assertSame(1, BlockType::query()->where('slug', 'header')->count());
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'custom-hero',
       'name' => 'Custom Hero',
       'status' => 'published',
@@ -77,10 +77,10 @@ class CatalogRepairCommandTest extends TestCase
       ->expectsOutputToContain('icons:')
       ->assertExitCode(0);
 
-    $this->assertDatabaseHas('slot_types', ['slug' => 'custom-slot', 'name' => 'Custom Slot']);
-    $this->assertDatabaseHas('slot_types', ['slug' => 'header', 'name' => 'Header']);
-    $this->assertDatabaseHas('page_layouts', ['handle' => 'default', 'name' => 'Default Layout']);
-    $this->assertDatabaseHas('icon_catalog_items', ['source' => 'webblocks-ui', 'slug' => 'home']);
+    $this->assertDatabaseHas('wbcms_slot_types', ['slug' => 'custom-slot', 'name' => 'Custom Slot']);
+    $this->assertDatabaseHas('wbcms_slot_types', ['slug' => 'header', 'name' => 'Header']);
+    $this->assertDatabaseHas('wbcms_page_layouts', ['handle' => 'default', 'name' => 'Default Layout']);
+    $this->assertDatabaseHas('wbcms_icon_catalog_items', ['source' => 'webblocks-ui', 'slug' => 'home']);
     $this->assertGreaterThan(0, PageLayout::query()->count());
     $this->assertGreaterThan(0, IconCatalogItem::query()->count());
   }
@@ -92,8 +92,8 @@ class CatalogRepairCommandTest extends TestCase
       ->expectsOutputToContain('page-layouts:')
       ->assertExitCode(0);
 
-    $this->assertDatabaseHas('page_layouts', ['handle' => 'docs', 'name' => 'Docs Layout']);
-    $this->assertDatabaseHas('slot_types', ['slug' => 'main', 'name' => 'Main']);
-    $this->assertDatabaseHas('page_layout_slots', ['slot_name' => 'sidebar', 'html_id' => 'docsSidebar']);
+    $this->assertDatabaseHas('wbcms_page_layouts', ['handle' => 'docs', 'name' => 'Docs Layout']);
+    $this->assertDatabaseHas('wbcms_slot_types', ['slug' => 'main', 'name' => 'Main']);
+    $this->assertDatabaseHas('wbcms_page_layout_slots', ['slot_name' => 'sidebar', 'html_id' => 'docsSidebar']);
   }
 }

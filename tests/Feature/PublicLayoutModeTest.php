@@ -101,7 +101,7 @@ class PublicLayoutModeTest extends TestCase
         'site_id' => $site->id,
         'name' => str($slug)->replace('-', ' ')->title()->toString(),
         'slug' => $slug,
-        'path' => '/p/'.$slug,
+        'path' => '/'.$slug,
       ]
     );
 

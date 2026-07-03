@@ -107,7 +107,7 @@ class PageDuplicateTest extends TestCase
       'locale_id' => $defaultLocale->id,
       'name' => $title,
       'slug' => $slug,
-      'path' => '/p/'.$slug,
+      'path' => '/'.$slug,
       'seo_title' => $title.' SEO',
       'seo_description' => $title.' SEO Description',
       'seo_keywords' => 'about,seo',
@@ -124,7 +124,7 @@ class PageDuplicateTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => $title.' TR',
       'slug' => $slug.'-tr',
-      'path' => '/p/'.$slug.'-tr',
+      'path' => '/'.$slug.'-tr',
       'seo_title' => $title.' TR SEO',
       'seo_description' => $title.' TR SEO Description',
       'seo_keywords' => 'tr,seo',
@@ -441,23 +441,23 @@ class PageDuplicateTest extends TestCase
     $this->assertNotNull($duplicateImage);
     $this->assertNull($duplicateSection->parent_id);
     $this->assertSame($duplicateSection->id, $duplicatePlainText->parent_id);
-    $this->assertDatabaseHas('block_text_translations', ['block_id' => $duplicatePlainText->id, 'locale_id' => Locale::query()->where('code', 'tr')->value('id'), 'title' => 'Govde']);
-    $this->assertDatabaseHas('block_image_translations', ['block_id' => $duplicateImage->id, 'locale_id' => $this->defaultLocale()->id]);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['block_id' => $duplicatePlainText->id, 'locale_id' => Locale::query()->where('code', 'tr')->value('id'), 'title' => 'Govde']);
+    $this->assertDatabaseHas('wbcms_block_image_translations', ['block_id' => $duplicateImage->id, 'locale_id' => $this->defaultLocale()->id]);
     $this->assertSame($sourceBlocks->firstWhere('type', 'image')?->asset_id, $duplicateImage->asset_id);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $duplicate->id,
       'locale_id' => $this->defaultLocale()->id,
       'seo_title' => 'About SEO',
       'og_title' => 'About OG',
       'og_image_media_id' => $sourceBlocks->firstWhere('type', 'image')?->media_id,
     ]);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $duplicate->id,
       'locale_id' => Locale::query()->where('code', 'tr')->value('id'),
       'seo_title' => 'About TR SEO',
       'og_title' => 'About TR OG',
     ]);
-    $this->assertDatabaseHas('page_assets', [
+    $this->assertDatabaseHas('wbcms_page_assets', [
       'page_id' => $duplicate->id,
       'path' => '/site/default/pages/about/page.css',
     ]);
@@ -480,7 +480,7 @@ class PageDuplicateTest extends TestCase
 
     $this->assertSame($otherBlockCount, $otherPage->fresh()->blocks()->count());
     $this->assertSame(1, $duplicate->revisions()->count());
-    $this->assertDatabaseMissing('page_revisions', ['page_id' => $duplicate->id, 'label' => 'Page moved to another site']);
+    $this->assertDatabaseMissing('wbcms_page_revisions', ['page_id' => $duplicate->id, 'label' => 'Page moved to another site']);
   }
 
   #[Test]
@@ -673,12 +673,12 @@ class PageDuplicateTest extends TestCase
         'locale_id' => $this->defaultLocale()->id,
         'name' => 'About Copy',
         'slug' => 'about-copy',
-        'path' => '/p/about-copy',
+        'path' => '/about-copy',
         'name_field' => 'title',
         'slug_field' => 'slug',
       ])
       ->map(fn (array $translation, int $index) => $translation + [
-        'path' => $translation['path'] ?? '/p/'.$translation['slug'],
+        'path' => $translation['path'] ?? '/'.$translation['slug'],
         'name_field' => $translation['name_field'] ?? 'translations.'.$index.'.name',
         'slug_field' => $translation['slug_field'] ?? 'translations.'.$index.'.slug',
       ]);

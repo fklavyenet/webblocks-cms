@@ -60,7 +60,7 @@ class StatCardTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
 
     $pageSlot = PageSlot::query()->create([
@@ -168,7 +168,7 @@ class StatCardTest extends TestCase
 
     $block = Block::query()->where('page_id', $page->id)->where('type', 'stat-card')->firstOrFail();
 
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => '0',
@@ -210,7 +210,7 @@ class StatCardTest extends TestCase
     ], null, true);
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
-    $translation = DB::table('block_text_translations')
+    $translation = DB::table('wbcms_block_text_translations')
       ->where('block_id', $block->id)
       ->where('locale_id', $this->defaultLocale()->id)
       ->first();
@@ -301,14 +301,14 @@ class StatCardTest extends TestCase
       'title' => '173',
       'subtitle' => 'Icons',
       'content' => 'Class-based mask-image icon usage',
-      'url' => '/p/about',
+      'url' => '/about',
       'status' => 'published',
       'is_system' => false,
     ]);
 
     $this->get(route('pages.show', 'about'))
       ->assertOk()
-      ->assertSee('href="/p/about"', false)
+      ->assertSee('href="/about"', false)
       ->assertSee('Learn more');
   }
 }

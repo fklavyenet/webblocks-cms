@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -737,7 +738,7 @@ class MediaManagementTest extends TestCase
         'name' => 'Usage Filter Page',
         'slug' => 'usage-filter-page',
         'site_id' => $site->id,
-        'path' => '/p/usage-filter-page',
+        'path' => '/usage-filter-page',
         'og_image_media_id' => $seoUsed->id,
       ],
     );
@@ -760,10 +761,10 @@ class MediaManagementTest extends TestCase
 
     $this->assertStringNotContainsString('`media_id` is not null', $usedSql);
     $this->assertStringNotContainsString('`asset_id` is not null', $usedSql);
-    $this->assertStringContainsString('from "blocks"', $usedSql);
-    $this->assertStringContainsString('from "block_media"', $usedSql);
-    $this->assertStringContainsString('from "sites"', $usedSql);
-    $this->assertStringContainsString('from "page_translations"', $usedSql);
+    $this->assertStringContainsString('from "wbcms_blocks"', $usedSql);
+    $this->assertStringContainsString('from "wbcms_block_media"', $usedSql);
+    $this->assertStringContainsString('from "wbcms_sites"', $usedSql);
+    $this->assertStringContainsString('from "wbcms_page_translations"', $usedSql);
 
     DB::flushQueryLog();
 
@@ -912,7 +913,7 @@ class MediaManagementTest extends TestCase
     ]);
 
     $uploadResponse->assertRedirect(route('admin.media.index', ['folder_id' => $images->id]));
-    $this->assertDatabaseHas('media', [
+    $this->assertDatabaseHas('wbcms_media', [
       'folder_id' => $images->id,
       'title' => 'Hero image',
       'alt_text' => 'Hero alt',
@@ -929,6 +930,65 @@ class MediaManagementTest extends TestCase
 
     $this->assertNotNull($folder);
     $folderResponse->assertRedirect(route('admin.media.index', ['folder_id' => $folder->id]));
+  }
+
+  #[Test]
+  public function media_library_can_fetch_public_remote_media_urls(): void
+  {
+    Storage::fake('public');
+    Http::fake([
+      'https://93.184.216.34/remote-photo.png' => Http::response(
+        base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII='),
+        200,
+        ['Content-Type' => 'image/png'],
+      ),
+    ]);
+
+    $user = $this->editor();
+    $images = AssetFolder::create(['name' => 'Remote Images']);
+
+    $modalResponse = $this->actingAs($user)->get(route('admin.media.index', ['modal' => 'fetch-media']));
+    $modalResponse->assertOk();
+    $modalResponse->assertSee('media-fetch-modal');
+    $modalResponse->assertSee('Fetch Remote Media');
+    $modalResponse->assertSee('Only public HTTP or HTTPS files are fetched.');
+
+    $response = $this->actingAs($user)->post(route('admin.media.fetch'), [
+      'folder_id' => $images->id,
+      'source_url' => 'https://93.184.216.34/remote-photo.png',
+      'title' => 'Fetched photo',
+      'alt_text' => 'Fetched alt',
+      '_media_modal' => 'fetch-media',
+    ]);
+
+    $response->assertRedirect(route('admin.media.index', ['folder_id' => $images->id]));
+    $response->assertSessionHas('status', 'Remote media fetched successfully.');
+
+    $asset = Asset::query()->where('title', 'Fetched photo')->firstOrFail();
+
+    $this->assertSame($images->id, $asset->folder_id);
+    $this->assertSame('remote-photo.png', $asset->original_name);
+    $this->assertSame('image', $asset->kind);
+    $this->assertSame('image/png', $asset->mime_type);
+    Storage::disk('public')->assertExists($asset->path);
+  }
+
+  #[Test]
+  public function media_remote_fetch_rejects_private_network_targets_before_requesting_them(): void
+  {
+    Storage::fake('public');
+    Http::fake();
+
+    $user = $this->editor();
+
+    $response = $this->actingAs($user)->post(route('admin.media.fetch'), [
+      'source_url' => 'http://127.0.0.1/private.jpg',
+      '_media_modal' => 'fetch-media',
+    ]);
+
+    $response->assertRedirect(route('admin.media.index', ['modal' => 'fetch-media']));
+    $response->assertSessionHasErrors('source_url');
+    Http::assertNothingSent();
   }
 
   #[Test]
@@ -993,7 +1053,7 @@ class MediaManagementTest extends TestCase
     $deleteResponse = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
     $deleteResponse->assertRedirect(route('admin.media.edit', $asset));
-    $this->assertDatabaseHas('media', ['id' => $asset->id]);
+    $this->assertDatabaseHas('wbcms_media', ['id' => $asset->id]);
   }
 
   #[Test]
@@ -1025,7 +1085,7 @@ class MediaManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.media.index'));
 
-    $this->assertDatabaseHas('media', [
+    $this->assertDatabaseHas('wbcms_media', [
       'id' => $asset->id,
       'folder_id' => $folder->id,
       'title' => 'Hero Image',
@@ -1059,7 +1119,7 @@ class MediaManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.media.index'));
     $this->assertFalse(Storage::disk('public')->exists($path));
-    $this->assertDatabaseMissing('media', ['id' => $asset->id]);
+    $this->assertDatabaseMissing('wbcms_media', ['id' => $asset->id]);
   }
 
   #[Test]
@@ -1168,7 +1228,7 @@ class MediaManagementTest extends TestCase
     $response = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
     $response->assertRedirect(route('admin.media.edit', $asset));
-    $this->assertDatabaseHas('media', ['id' => $asset->id]);
+    $this->assertDatabaseHas('wbcms_media', ['id' => $asset->id]);
   }
 
   #[Test]
@@ -1244,13 +1304,13 @@ class MediaManagementTest extends TestCase
 
     $this->assertNotNull($block);
     $this->assertSame([$firstAsset->id, $secondAsset->id], $block->galleryAssetIds());
-    $this->assertDatabaseHas('block_media', [
+    $this->assertDatabaseHas('wbcms_block_media', [
       'block_id' => $block->id,
       'media_id' => $firstAsset->id,
       'role' => 'gallery_item',
       'position' => 0,
     ]);
-    $this->assertDatabaseHas('block_media', [
+    $this->assertDatabaseHas('wbcms_block_media', [
       'block_id' => $block->id,
       'media_id' => $secondAsset->id,
       'role' => 'gallery_item',
@@ -1384,7 +1444,7 @@ class MediaManagementTest extends TestCase
     $response = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
     $response->assertRedirect(route('admin.media.edit', $asset));
-    $this->assertDatabaseHas('media', ['id' => $asset->id]);
+    $this->assertDatabaseHas('wbcms_media', ['id' => $asset->id]);
   }
 
   #[Test]
@@ -1542,7 +1602,7 @@ class MediaManagementTest extends TestCase
     $response = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
     $response->assertRedirect(route('admin.media.edit', $asset));
-    $this->assertDatabaseHas('media', ['id' => $asset->id]);
+    $this->assertDatabaseHas('wbcms_media', ['id' => $asset->id]);
   }
 
   #[Test]
@@ -1669,9 +1729,9 @@ class MediaManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.media.index'));
     $response->assertSessionHas('status', '2 selected media items deleted.');
-    $this->assertDatabaseMissing('media', ['id' => $first->id]);
-    $this->assertDatabaseMissing('media', ['id' => $second->id]);
-    $this->assertDatabaseHas('media', ['id' => $unselected->id]);
+    $this->assertDatabaseMissing('wbcms_media', ['id' => $first->id]);
+    $this->assertDatabaseMissing('wbcms_media', ['id' => $second->id]);
+    $this->assertDatabaseHas('wbcms_media', ['id' => $unselected->id]);
     $this->assertFalse(Storage::disk('public')->exists($first->path));
     $this->assertFalse(Storage::disk('public')->exists($second->path));
     $this->assertTrue(Storage::disk('public')->exists($unselected->path));
@@ -1766,8 +1826,8 @@ class MediaManagementTest extends TestCase
     $response->assertRedirect(route('admin.media.index'));
     $response->assertSessionHas('status', '1 selected media item deleted. 1 could not be deleted.');
     $response->assertSessionHasErrors(['media']);
-    $this->assertDatabaseMissing('media', ['id' => $safeAsset->id]);
-    $this->assertDatabaseHas('media', ['id' => $usedAsset->id]);
+    $this->assertDatabaseMissing('wbcms_media', ['id' => $safeAsset->id]);
+    $this->assertDatabaseHas('wbcms_media', ['id' => $usedAsset->id]);
     $this->assertFalse(Storage::disk('public')->exists($safeAsset->path));
     $this->assertTrue(Storage::disk('public')->exists($usedAsset->path));
   }

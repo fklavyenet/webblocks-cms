@@ -106,11 +106,11 @@ class VisitorReportsTest extends TestCase
 
   private function dropTrackingModeColumnForLegacySchema(): void
   {
-    Schema::table('visitor_events', function (Blueprint $table) {
+    Schema::table('wbcms_visitor_events', function (Blueprint $table) {
       $table->dropIndex(['tracking_mode', 'visited_at']);
     });
 
-    Schema::table('visitor_events', function (Blueprint $table) {
+    Schema::table('wbcms_visitor_events', function (Blueprint $table) {
       $table->dropColumn('tracking_mode');
     });
   }
@@ -130,7 +130,7 @@ class VisitorReportsTest extends TestCase
     $this->assertSame($page->site_id, $event->site_id);
     $this->assertSame($page->id, $event->page_id);
     $this->assertSame($this->defaultLocale()->id, $event->locale_id);
-    $this->assertSame('/p/about', $event->path);
+    $this->assertSame('/about', $event->path);
     $this->assertSame(VisitorEvent::TRACKING_MODE_BASIC, $event->tracking_mode);
     $this->assertSame('example.test', $event->referrer);
     $this->assertSame('example.test', $event->referrer_host);
@@ -255,7 +255,7 @@ class VisitorReportsTest extends TestCase
   {
     $user = User::factory()->editor()->create();
 
-    Schema::dropIfExists('visitor_events');
+    Schema::dropIfExists('wbcms_visitor_events');
 
     $response = $this->actingAs($user)->get(route('admin.reports.visitors.index'));
 
@@ -273,7 +273,7 @@ class VisitorReportsTest extends TestCase
 
     VisitorEvent::query()->create([
       'site_id' => $this->defaultSite()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'session_key' => 'legacy-session',
       'ip_hash' => 'legacy-hash',
       'visited_at' => CarbonImmutable::today()->setTime(10, 0),
@@ -324,7 +324,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $primarySite->id,
       'page_id' => $primaryPage->id,
       'locale_id' => $defaultLocale->id,
-      'path' => '/p/primary-about',
+      'path' => '/primary-about',
       'session_key' => 'primary-session',
       'ip_hash' => 'primary-hash',
       'visited_at' => CarbonImmutable::today()->subDays(15)->setTime(10, 0),
@@ -334,7 +334,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $campaignSite->id,
       'page_id' => $campaignPage->id,
       'locale_id' => $defaultLocale->id,
-      'path' => '/p/campaign-launch',
+      'path' => '/campaign-launch',
       'session_key' => 'campaign-session',
       'ip_hash' => 'campaign-hash',
       'visited_at' => CarbonImmutable::today()->setTime(9, 30),
@@ -346,8 +346,8 @@ class VisitorReportsTest extends TestCase
     ]));
 
     $response->assertOk();
-    $response->assertSee('/p/campaign-launch');
-    $response->assertDontSee('/p/primary-about');
+    $response->assertSee('/campaign-launch');
+    $response->assertDontSee('/primary-about');
     $response->assertSee('Campaign');
     $response->assertSee('1');
   }
@@ -385,7 +385,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $campaignSite->id,
       'page_id' => $campaignPage->id,
       'locale_id' => $defaultLocale->id,
-      'path' => '/p/campaign-launch',
+      'path' => '/campaign-launch',
       'utm_source' => 'newsletter',
       'utm_medium' => 'email',
       'utm_campaign' => 'spring-launch',
@@ -398,7 +398,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $campaignSite->id,
       'page_id' => $campaignPage->id,
       'locale_id' => $defaultLocale->id,
-      'path' => '/p/campaign-launch',
+      'path' => '/campaign-launch',
       'utm_source' => 'newsletter',
       'utm_medium' => 'email',
       'utm_campaign' => 'spring-launch',
@@ -411,7 +411,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $campaignSite->id,
       'page_id' => $campaignPage->id,
       'locale_id' => $trLocale->id,
-      'path' => '/tr/p/campaign-launch',
+      'path' => '/tr/campaign-launch',
       'utm_source' => null,
       'utm_medium' => null,
       'utm_campaign' => null,
@@ -424,7 +424,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $primarySite->id,
       'page_id' => $primaryPage->id,
       'locale_id' => $defaultLocale->id,
-      'path' => '/p/primary-about',
+      'path' => '/primary-about',
       'utm_source' => 'ads',
       'utm_medium' => 'cpc',
       'utm_campaign' => 'other-campaign',
@@ -460,7 +460,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $site->id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/landing',
+      'path' => '/landing',
       'utm_source' => null,
       'utm_medium' => null,
       'utm_campaign' => null,
@@ -560,7 +560,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'visited_at' => CarbonImmutable::today()->setTime(9, 0),
     ]);
@@ -569,7 +569,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_FULL,
       'session_key' => 'session-1',
       'ip_hash' => 'hash-1',
@@ -591,7 +591,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'visited_at' => CarbonImmutable::today()->setTime(9, 0),
     ]);
@@ -600,7 +600,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_FULL,
       'session_key' => 'session-1',
       'ip_hash' => 'hash-1',
@@ -623,7 +623,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'visited_at' => CarbonImmutable::today()->setTime(9, 0),
     ]);
@@ -632,7 +632,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_FULL,
       'session_key' => 'session-1',
       'ip_hash' => 'hash-1',
@@ -662,7 +662,7 @@ class VisitorReportsTest extends TestCase
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $this->defaultLocale()->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'visited_at' => CarbonImmutable::today()->setTime(9, 0),
     ]);
@@ -691,7 +691,7 @@ class VisitorReportsTest extends TestCase
     VisitorEvent::query()->create([
       'site_id' => $site->id,
       'page_id' => $page->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'referrer_host' => 'search.example',
       'referrer_type' => 'external',
@@ -700,7 +700,7 @@ class VisitorReportsTest extends TestCase
     VisitorEvent::query()->create([
       'site_id' => $site->id,
       'page_id' => $page->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'referrer_host' => 'example.test',
       'referrer_type' => 'internal',
@@ -709,7 +709,7 @@ class VisitorReportsTest extends TestCase
     VisitorEvent::query()->create([
       'site_id' => $site->id,
       'page_id' => $page->id,
-      'path' => '/p/about',
+      'path' => '/about',
       'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
       'referrer_type' => 'direct',
       'visited_at' => CarbonImmutable::today()->setTime(10, 0),
@@ -730,9 +730,9 @@ class VisitorReportsTest extends TestCase
     $page = $this->createPublishedPage();
 
     foreach ([
-      ['device_type' => 'desktop', 'is_bot' => false, 'path' => '/p/desktop'],
-      ['device_type' => 'mobile', 'is_bot' => false, 'path' => '/p/mobile'],
-      ['device_type' => 'bot', 'is_bot' => true, 'path' => '/p/bot'],
+      ['device_type' => 'desktop', 'is_bot' => false, 'path' => '/desktop'],
+      ['device_type' => 'mobile', 'is_bot' => false, 'path' => '/mobile'],
+      ['device_type' => 'bot', 'is_bot' => true, 'path' => '/bot'],
     ] as $index => $event) {
       VisitorEvent::query()->create([
         'site_id' => $page->site_id,
@@ -754,12 +754,12 @@ class VisitorReportsTest extends TestCase
     $this->actingAs($user)->get(route('admin.reports.visitors.index', [
       'date_range' => 'today',
       'traffic' => 'bots',
-    ]))->assertOk()->assertSee('/p/bot')->assertDontSee('/p/mobile');
+    ]))->assertOk()->assertSee('/bot')->assertDontSee('/mobile');
 
     $this->actingAs($user)->get(route('admin.reports.visitors.index', [
       'date_range' => 'today',
       'traffic' => 'human',
-    ]))->assertOk()->assertSee('/p/mobile')->assertDontSee('/p/bot');
+    ]))->assertOk()->assertSee('/mobile')->assertDontSee('/bot');
   }
 
   #[Test]
@@ -780,15 +780,15 @@ class VisitorReportsTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
-    $this->get('/tr/p/hakkinda')->assertOk();
+    $this->get('/tr/hakkinda')->assertOk();
 
-    $this->assertDatabaseHas('visitor_events', [
+    $this->assertDatabaseHas('wbcms_visitor_events', [
       'page_id' => $page->id,
       'locale_id' => $turkish->id,
-      'path' => '/tr/p/hakkinda',
+      'path' => '/tr/hakkinda',
     ]);
   }
 }

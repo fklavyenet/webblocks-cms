@@ -21,7 +21,7 @@ class IconCatalogManagementTest extends TestCase
   #[Test]
   public function icon_catalog_table_exists(): void
   {
-    $this->assertTrue(Schema::hasTable('icon_catalog_items'));
+    $this->assertTrue(Schema::hasTable('wbcms_icon_catalog_items'));
   }
 
   #[Test]
@@ -32,7 +32,7 @@ class IconCatalogManagementTest extends TestCase
     $this->seed(IconCatalogSeeder::class);
     $this->seed(IconCatalogSeeder::class);
 
-    $this->assertDatabaseCount('icon_catalog_items', $expected);
+    $this->assertDatabaseCount('wbcms_icon_catalog_items', $expected);
   }
 
   #[Test]

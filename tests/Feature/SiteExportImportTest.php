@@ -35,7 +35,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function can_export_a_site_package_successfully(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('backups');
     [$site] = $this->seedCloneableSite(withFile: true);
 
@@ -43,8 +43,8 @@ class SiteExportImportTest extends TestCase
 
     $this->assertSame('completed', $siteExport->status);
     $this->assertNotNull($siteExport->archive_path);
-    Storage::disk('site-exports')->assertExists($siteExport->archive_path);
-    $this->assertSame('site-exports', $siteExport->archive_disk);
+    Storage::disk($siteExport->archive_disk)->assertExists($siteExport->archive_path);
+    $this->assertSame('site-transfers', $siteExport->archive_disk);
     $this->assertStringNotContainsString('/', (string) $siteExport->archive_path);
     Storage::disk('backups')->assertMissing($siteExport->archive_path);
   }
@@ -52,7 +52,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function new_exports_use_flat_archive_paths(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
@@ -66,7 +66,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_filename_does_not_use_a_random_prefix(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
@@ -80,7 +80,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function same_day_exports_still_use_unique_flat_filenames(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $firstTimestamp = CarbonImmutable::parse('2026-05-03 07:38:50');
     $secondTimestamp = $firstTimestamp->addSecond();
@@ -101,12 +101,12 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_manifest_contains_expected_metadata(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
     $manifest = json_decode((string) $archive->getFromName('manifest.json'), true);
     $archive->close();
 
@@ -119,12 +119,12 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_includes_shared_slot_metadata_and_handle_based_page_slot_references_without_hidden_source_pages(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site, , $sharedSlot] = $this->seedCloneableSite();
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
     $pages = json_decode((string) $archive->getFromName('data/pages.json'), true);
     $pageSlots = json_decode((string) $archive->getFromName('data/page_slots.json'), true);
     $sharedSlots = json_decode((string) $archive->getFromName('data/shared_slots.json'), true);
@@ -150,14 +150,14 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_includes_page_public_shell_in_portable_page_payload(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $aboutPage = Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
     $aboutPage->update(['settings' => ['public_shell' => 'docs']]);
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
     $pages = json_decode((string) $archive->getFromName('data/pages.json'), true);
     $archive->close();
 
@@ -170,13 +170,13 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_excludes_media_files_when_media_not_selected(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('public');
     [$site] = $this->seedCloneableSite(withFile: true);
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
 
     $this->assertFalse($archive->locateName('files/public/media/images/hero.jpg'));
     $archive->close();
@@ -185,13 +185,13 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_includes_media_files_when_selected(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('public');
     [$site] = $this->seedCloneableSite(withFile: true);
 
     $siteExport = app(SiteExportManager::class)->export($site, true);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
 
     $this->assertNotFalse($archive->locateName('files/public/media/images/hero.jpg'));
     $archive->close();
@@ -268,7 +268,7 @@ class SiteExportImportTest extends TestCase
     $this->assertSame('body { color: teal; }', (string) file_get_contents($importedCssPath));
     $this->assertSame('window.webblocksSiteLoaded = true;', (string) file_get_contents($importedJsPath));
 
-    $response = $this->get('http://imported-site-assets.example.test/p/about');
+    $response = $this->get('http://imported-site-assets.example.test/about');
 
     $response->assertOk();
     $response->assertSee('/site/imported-site-assets/css/site.css', false);
@@ -333,7 +333,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_and_import_include_page_asset_rows_and_optional_public_site_files(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $page = Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
@@ -352,14 +352,14 @@ class SiteExportImportTest extends TestCase
 
     $siteExport = app(SiteExportManager::class)->export($site, true);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
     $pageAssets = json_decode((string) $archive->getFromName('data/page_assets.json'), true);
     $this->assertCount(1, $pageAssets);
     $this->assertNotFalse($archive->locateName('files/public/site/webblocks-ui/pages/about/page.css'));
     $archive->close();
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -370,7 +370,7 @@ class SiteExportImportTest extends TestCase
     $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
     $importedPage = Page::query()->where('site_id', $importedSite->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
 
-    $this->assertDatabaseHas('page_assets', [
+    $this->assertDatabaseHas('wbcms_page_assets', [
       'page_id' => $importedPage->id,
       'path' => '/site/webblocks-ui/pages/about/page.css',
     ]);
@@ -384,14 +384,14 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function can_import_package_into_a_new_site(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('public');
     [$site] = $this->seedCloneableSite(withFile: true);
     $siteExport = app(SiteExportManager::class)->export($site, true);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -401,20 +401,20 @@ class SiteExportImportTest extends TestCase
     ]));
 
     $this->assertSame('completed', $siteImport->status);
-    $this->assertDatabaseHas('sites', ['id' => $siteImport->target_site_id, 'handle' => 'imported-ui-docs']);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $siteImport->target_site_id, 'handle' => 'imported-ui-docs']);
   }
 
   #[Test]
   public function imported_pages_belong_to_new_site_and_translations_and_blocks_are_preserved(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('public');
     [$site, , $sourceSharedSlot] = $this->seedCloneableSite(withFile: true);
     $siteExport = app(SiteExportManager::class)->export($site, true);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -433,14 +433,14 @@ class SiteExportImportTest extends TestCase
     $this->assertNull($aboutPage->created_by_user_id);
     $this->assertNull($aboutPage->updated_by_user_id);
 
-    $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $aboutPage->id,
       'slug' => 'about',
       'seo_title' => 'About SEO',
       'og_title' => 'About OG',
     ]);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $aboutPage->id,
       'slug' => 'hakkinda',
       'seo_title' => 'Hakkinda SEO',
@@ -449,7 +449,7 @@ class SiteExportImportTest extends TestCase
 
     $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
     $plainText = Block::query()->where('page_id', $aboutPage->id)->where('type', 'plain_text')->firstOrFail();
-    $this->assertDatabaseHas('block_text_translations', ['block_id' => $header->id, 'title' => 'Hakkinda']);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['block_id' => $header->id, 'title' => 'Hakkinda']);
     $this->assertNull($header->getRawOriginal('title'));
     $this->assertNull($plainText->getRawOriginal('content'));
 
@@ -496,7 +496,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_and_import_preserve_gallery_item_translation_rows(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('public');
 
@@ -514,7 +514,7 @@ class SiteExportImportTest extends TestCase
 
     $siteExport = app(SiteExportManager::class)->export($site, true);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
     $galleryItemTranslations = json_decode((string) $archive->getFromName('data/block_gallery_item_translations.json'), true);
     $archive->close();
 
@@ -522,7 +522,7 @@ class SiteExportImportTest extends TestCase
     $this->assertTrue(collect($galleryItemTranslations)->contains(fn (array $translation) => (int) ($translation['block_media_id'] ?? 0) === $sourceGalleryItem->id));
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -541,12 +541,12 @@ class SiteExportImportTest extends TestCase
     $importedGalleryItem = $importedGallery->blockAssets()->where('role', 'gallery_item')->firstOrFail();
 
     $this->assertNotSame($sourceGalleryItem->id, $importedGalleryItem->id);
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $importedGalleryItem->id,
       'locale_id' => $defaultLocale->id,
       'caption' => 'Gallery caption',
     ]);
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $importedGalleryItem->id,
       'locale_id' => $turkish->id,
       'caption' => 'Galeri aciklamasi',
@@ -557,7 +557,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_and_import_include_site_variables(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $site->siteVariables()->create([
@@ -570,7 +570,7 @@ class SiteExportImportTest extends TestCase
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
     $siteVariables = json_decode((string) $archive->getFromName('data/site_variables.json'), true);
     $archive->close();
 
@@ -578,7 +578,7 @@ class SiteExportImportTest extends TestCase
     $this->assertSame('support_email', $siteVariables[0]['key']);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -587,7 +587,7 @@ class SiteExportImportTest extends TestCase
     ]));
 
     $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
-    $this->assertDatabaseHas('site_variables', [
+    $this->assertDatabaseHas('wbcms_site_variables', [
       'site_id' => $importedSite->id,
       'key' => 'support_email',
       'value' => 'support@example.test',
@@ -597,7 +597,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_and_import_preserve_navigation_item_icons_for_sidebar_navigation_rendering(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
 
@@ -610,7 +610,7 @@ class SiteExportImportTest extends TestCase
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
     $archive = new ZipArchive;
-    $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+    $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
     $navigationItems = json_decode((string) $archive->getFromName('data/navigation_items.json'), true);
     $archive->close();
 
@@ -619,7 +619,7 @@ class SiteExportImportTest extends TestCase
     $this->assertSame('rocket', $exportedItem['icon'] ?? null);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -649,7 +649,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function import_restores_docs_public_shell_and_keeps_compatible_docs_shared_slots_compatible(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
 
     $site = Site::query()->create([
@@ -713,7 +713,7 @@ class SiteExportImportTest extends TestCase
 
     $siteExport = app(SiteExportManager::class)->export($site, false);
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -735,7 +735,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function legacy_import_without_page_public_shell_still_succeeds_and_falls_back_to_default(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $aboutPage = Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
@@ -772,7 +772,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function import_updates_existing_same_handle_shared_slot_deterministically(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('public');
     [$site, , $sourceSharedSlot] = $this->seedCloneableSite(withFile: true);
@@ -816,14 +816,14 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function imported_hidden_shared_slot_source_pages_are_not_publicly_routable(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('public');
     [$site, , $sourceSharedSlot] = $this->seedCloneableSite(withFile: true);
     $siteExport = app(SiteExportManager::class)->export($site, true);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -838,7 +838,7 @@ class SiteExportImportTest extends TestCase
     $sourcePage->update(['status' => Page::STATUS_PUBLISHED]);
 
     $this->withHeader('Host', $importedSite->domain ?? 'localhost')
-      ->get('/p/'.$sourcePage->slug)
+      ->get('/'.$sourcePage->slug)
       ->assertNotFound();
 
     $this->assertSame($importedSharedSlot->id, (int) data_get($sourcePage->settings, 'shared_slot_id'));
@@ -847,7 +847,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function handle_collision_is_resolved_safely(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('public');
     [$site] = $this->seedCloneableSite(withFile: true);
@@ -855,7 +855,7 @@ class SiteExportImportTest extends TestCase
     $siteExport = app(SiteExportManager::class)->export($site, true);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -870,7 +870,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function domain_collision_does_not_overwrite_existing_site_domain(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('public');
     [$site] = $this->seedCloneableSite(withFile: true);
@@ -878,7 +878,7 @@ class SiteExportImportTest extends TestCase
     $siteExport = app(SiteExportManager::class)->export($site, true);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $this->expectExceptionMessage('Selected site domain already exists locally');
@@ -944,12 +944,12 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function import_strips_legacy_slot_wrapper_settings_from_page_slots(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $siteExport = app(SiteExportManager::class)->export($site, false);
 
-    $archivePath = Storage::disk('site-exports')->path($siteExport->archive_path);
+    $archivePath = Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path);
     $archive = new ZipArchive;
     $archive->open($archivePath);
     $pageSlots = json_decode((string) $archive->getFromName('data/page_slots.json'), true);
@@ -1001,7 +1001,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function export_delete_removes_the_exact_flat_archive_file(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('backups');
     [$site] = $this->seedCloneableSite();
 
@@ -1025,13 +1025,13 @@ class SiteExportImportTest extends TestCase
 
     Storage::disk('site-exports')->assertMissing($archivePath);
     Storage::disk('backups')->assertMissing($archivePath);
-    $this->assertDatabaseMissing('site_exports', ['id' => $siteExport->id]);
+    $this->assertDatabaseMissing('wbcms_site_exports', ['id' => $siteExport->id]);
   }
 
   #[Test]
   public function site_transfers_index_renders_bulk_delete_selection_and_modals_without_browser_confirm(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $user = User::factory()->superAdmin()->create();
@@ -1056,7 +1056,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function site_export_bulk_delete_requires_system_access(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $siteExport = $this->createSiteExportRecord($site, 'blocked-export.zip');
     $editor = User::factory()->editor()->create();
@@ -1070,14 +1070,14 @@ class SiteExportImportTest extends TestCase
       'site_export_ids' => [$siteExport->id],
     ])->assertForbidden();
 
-    $this->assertDatabaseHas('site_exports', ['id' => $siteExport->id]);
+    $this->assertDatabaseHas('wbcms_site_exports', ['id' => $siteExport->id]);
     Storage::disk('site-exports')->assertExists('blocked-export.zip');
   }
 
   #[Test]
   public function super_admin_can_bulk_delete_selected_site_exports_and_archive_files(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $user = User::factory()->superAdmin()->create();
     $first = $this->createSiteExportRecord($site, 'first-export.zip');
@@ -1089,8 +1089,8 @@ class SiteExportImportTest extends TestCase
 
     $response->assertRedirect(route('admin.site-transfers.exports.index'));
     $response->assertSessionHas('status', '2 selected site exports deleted.');
-    $this->assertDatabaseMissing('site_exports', ['id' => $first->id]);
-    $this->assertDatabaseMissing('site_exports', ['id' => $second->id]);
+    $this->assertDatabaseMissing('wbcms_site_exports', ['id' => $first->id]);
+    $this->assertDatabaseMissing('wbcms_site_exports', ['id' => $second->id]);
     Storage::disk('site-exports')->assertMissing('first-export.zip');
     Storage::disk('site-exports')->assertMissing('second-export.zip');
   }
@@ -1098,7 +1098,7 @@ class SiteExportImportTest extends TestCase
   #[Test]
   public function site_export_bulk_delete_rejects_missing_or_invalid_ids_safely(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $user = User::factory()->superAdmin()->create();
     $siteExport = $this->createSiteExportRecord($site, 'invalid-export.zip');
@@ -1111,14 +1111,14 @@ class SiteExportImportTest extends TestCase
       'site_export_ids' => [$siteExport->id, 999999],
     ])->assertSessionHasErrors('site_export_ids.1');
 
-    $this->assertDatabaseHas('site_exports', ['id' => $siteExport->id]);
+    $this->assertDatabaseHas('wbcms_site_exports', ['id' => $siteExport->id]);
     Storage::disk('site-exports')->assertExists('invalid-export.zip');
   }
 
   #[Test]
   public function site_export_bulk_delete_reports_partial_failures(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     [$site] = $this->seedCloneableSite();
     $user = User::factory()->superAdmin()->create();
     $safe = $this->createSiteExportRecord($site, 'safe-export.zip');
@@ -1138,8 +1138,8 @@ class SiteExportImportTest extends TestCase
     $response->assertRedirect(route('admin.site-transfers.exports.index'));
     $response->assertSessionHas('status', '1 selected site export deleted. 1 could not be deleted.');
     $response->assertSessionHasErrors('site_exports');
-    $this->assertDatabaseMissing('site_exports', ['id' => $safe->id]);
-    $this->assertDatabaseHas('site_exports', ['id' => $unsafe->id]);
+    $this->assertDatabaseMissing('wbcms_site_exports', ['id' => $safe->id]);
+    $this->assertDatabaseHas('wbcms_site_exports', ['id' => $unsafe->id]);
   }
 
   #[Test]
@@ -1159,7 +1159,7 @@ class SiteExportImportTest extends TestCase
       'site_import_ids' => [$siteImport->id],
     ])->assertForbidden();
 
-    $this->assertDatabaseHas('site_imports', ['id' => $siteImport->id]);
+    $this->assertDatabaseHas('wbcms_site_imports', ['id' => $siteImport->id]);
     Storage::disk('site-transfers')->assertExists('blocked-import.zip');
   }
 
@@ -1177,8 +1177,8 @@ class SiteExportImportTest extends TestCase
 
     $response->assertRedirect(route('admin.site-transfers.exports.index'));
     $response->assertSessionHas('status', '2 selected site imports deleted.');
-    $this->assertDatabaseMissing('site_imports', ['id' => $first->id]);
-    $this->assertDatabaseMissing('site_imports', ['id' => $second->id]);
+    $this->assertDatabaseMissing('wbcms_site_imports', ['id' => $first->id]);
+    $this->assertDatabaseMissing('wbcms_site_imports', ['id' => $second->id]);
     Storage::disk('site-transfers')->assertMissing('first-import.zip');
     Storage::disk('site-transfers')->assertMissing('second-import.zip');
   }
@@ -1198,7 +1198,7 @@ class SiteExportImportTest extends TestCase
       'site_import_ids' => [$siteImport->id, 999999],
     ])->assertSessionHasErrors('site_import_ids.1');
 
-    $this->assertDatabaseHas('site_imports', ['id' => $siteImport->id]);
+    $this->assertDatabaseHas('wbcms_site_imports', ['id' => $siteImport->id]);
     Storage::disk('site-transfers')->assertExists('invalid-import.zip');
   }
 
@@ -1222,14 +1222,14 @@ class SiteExportImportTest extends TestCase
     $response->assertRedirect(route('admin.site-transfers.exports.index'));
     $response->assertSessionHas('status', '1 selected site import deleted. 1 could not be deleted.');
     $response->assertSessionHasErrors('site_imports');
-    $this->assertDatabaseMissing('site_imports', ['id' => $safe->id]);
-    $this->assertDatabaseHas('site_imports', ['id' => $unsafe->id]);
+    $this->assertDatabaseMissing('wbcms_site_imports', ['id' => $safe->id]);
+    $this->assertDatabaseHas('wbcms_site_imports', ['id' => $unsafe->id]);
   }
 
   #[Test]
   public function site_import_uploads_remain_separate_from_backup_upload_storage(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake('site-transfers');
     Storage::fake('site-transfers');
     Storage::fake('backups');
     Storage::fake('public');

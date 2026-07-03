@@ -294,11 +294,11 @@ class PublicRichContentTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $french->id],
-      ['site_id' => $site->id, 'name' => 'A propos', 'slug' => 'a-propos', 'path' => '/p/a-propos'],
+      ['site_id' => $site->id, 'name' => 'A propos', 'slug' => 'a-propos', 'path' => '/a-propos'],
     );
 
     PageSlot::query()->create([
@@ -338,7 +338,7 @@ class PublicRichContentTest extends TestCase
     app(BlockTranslationWriter::class)->sync($header, ['title' => 'Vue d\'ensemble'], 'fr');
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
 
-    $response = $this->get('/fr/p/a-propos');
+    $response = $this->get('/fr/a-propos');
 
     $response->assertOk();
     $response->assertSee('<a class="wb-link-list-item" href="#overview">', false);

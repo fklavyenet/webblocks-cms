@@ -3,12 +3,14 @@
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteMediaRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaFolderRequest;
+use WebBlocks\Cms\Http\Requests\Admin\MediaRemoteFetchRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaUploadRequest;
 use WebBlocks\Cms\Models\Media;
@@ -21,6 +23,7 @@ use WebBlocks\Cms\Support\Media\MediaInUseException;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\MediaUsageFilter;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
+use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -47,6 +50,7 @@ class MediaController extends Controller
     private readonly MediaDeleter $mediaDeleter,
     private readonly MediaBulkDeleter $mediaBulkDeleter,
     private readonly MediaUploader $mediaUploader,
+    private readonly RemoteMediaFetcher $remoteMediaFetcher,
   ) {}
 
   public function index(): View
@@ -122,7 +126,7 @@ class MediaController extends Controller
       'previewMedia' => $previewMedia,
       'usageAsset' => $usageMedia,
       'usageMedia' => $usageMedia,
-      'openModal' => in_array($openModal, ['upload-asset', 'new-folder'], true) ? $openModal : null,
+      'openModal' => in_array($openModal, ['upload-asset', 'fetch-media', 'new-folder'], true) ? $openModal : null,
     ]);
   }
 
@@ -207,6 +211,25 @@ class MediaController extends Controller
     return redirect()
       ->route('admin.media.index', array_filter(['folder_id' => $request->validated('folder_id')]))
       ->with('status', 'Media uploaded successfully.');
+  }
+
+  public function fetchRemote(MediaRemoteFetchRequest $request): RedirectResponse
+  {
+    try {
+      $this->remoteMediaFetcher->fetch((string) $request->validated('source_url'), $request->validated(), $request->user()?->id);
+    } catch (ConnectionException|\RuntimeException $exception) {
+      return redirect()
+        ->route('admin.media.index', array_filter([
+          'folder_id' => $request->validated('folder_id'),
+          'modal' => 'fetch-media',
+        ]))
+        ->withInput()
+        ->withErrors(['source_url' => $exception->getMessage()]);
+    }
+
+    return redirect()
+      ->route('admin.media.index', array_filter(['folder_id' => $request->validated('folder_id')]))
+      ->with('status', 'Remote media fetched successfully.');
   }
 
   public function storeFolder(MediaFolderRequest $request): RedirectResponse

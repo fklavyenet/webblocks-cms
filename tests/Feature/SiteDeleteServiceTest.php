@@ -29,12 +29,12 @@ class SiteDeleteServiceTest extends TestCase
     $report = app(SiteDeleteService::class)->delete($site);
 
     $this->assertTrue($report->deleted);
-    $this->assertDatabaseMissing('sites', ['id' => $site->id]);
-    $this->assertDatabaseMissing('pages', ['id' => $page->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $block->id]);
-    $this->assertDatabaseMissing('page_revisions', ['site_id' => $site->id]);
-    $this->assertDatabaseMissing('navigation_items', ['site_id' => $site->id]);
-    $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
+    $this->assertDatabaseMissing('wbcms_sites', ['id' => $site->id]);
+    $this->assertDatabaseMissing('wbcms_pages', ['id' => $page->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $block->id]);
+    $this->assertDatabaseMissing('wbcms_page_revisions', ['site_id' => $site->id]);
+    $this->assertDatabaseMissing('wbcms_navigation_items', ['site_id' => $site->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $otherSite->id]);
     $this->assertSame(2, Site::query()->count());
   }
 
@@ -53,7 +53,7 @@ class SiteDeleteServiceTest extends TestCase
 
     $this->assertFalse($report->deleted);
     $this->assertContains('Primary site cannot be deleted.', $report->blockers);
-    $this->assertDatabaseHas('sites', ['id' => $primary->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $primary->id]);
   }
 
   #[Test]
@@ -74,7 +74,7 @@ class SiteDeleteServiceTest extends TestCase
 
     app(SiteDeleteService::class)->delete($site);
 
-    $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $otherSite->id]);
     $this->assertSame(1, Page::query()->where('site_id', $otherSite->id)->count());
     $this->assertSame(1, NavigationItem::query()->where('site_id', $otherSite->id)->count());
   }
@@ -97,8 +97,8 @@ class SiteDeleteServiceTest extends TestCase
 
     $this->assertFalse($report->deleted);
     $this->assertSame(1, $report->count('contact_messages'));
-    $this->assertDatabaseHas('sites', ['id' => $site->id]);
-    $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $site->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $otherSite->id]);
   }
 
   #[Test]
@@ -121,9 +121,9 @@ class SiteDeleteServiceTest extends TestCase
 
     $this->assertTrue($report->deleted);
     $this->assertSame(1, $report->count('page_revisions'));
-    $this->assertDatabaseMissing('sites', ['id' => $site->id]);
-    $this->assertDatabaseMissing('page_revisions', ['id' => $revision->id]);
-    $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
+    $this->assertDatabaseMissing('wbcms_sites', ['id' => $site->id]);
+    $this->assertDatabaseMissing('wbcms_page_revisions', ['id' => $revision->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $otherSite->id]);
   }
 
   private function seedDeletableSite(): array

@@ -102,7 +102,7 @@ class SharedSlotRevisionTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => ucfirst(str_replace('-', ' ', $slug)), 'slug' => $slug, 'path' => $slug === 'home' ? '/' : '/p/'.$slug],
+      ['site_id' => $site->id, 'name' => ucfirst(str_replace('-', ' ', $slug)), 'slug' => $slug, 'path' => $slug === 'home' ? '/' : '/'.$slug],
     );
 
     return $page;
@@ -133,7 +133,7 @@ class SharedSlotRevisionTest extends TestCase
     $sharedSlot = SharedSlot::query()->where('handle', 'global-header')->firstOrFail();
 
     $response->assertRedirect(route('admin.shared-slots.edit', $sharedSlot));
-    $this->assertDatabaseHas('shared_slot_revisions', [
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', [
       'shared_slot_id' => $sharedSlot->id,
       'user_id' => $user->id,
       'created_by_user_id' => $user->id,
@@ -164,7 +164,7 @@ class SharedSlotRevisionTest extends TestCase
       'is_active' => '1',
     ])->assertRedirect(route('admin.shared-slots.edit', $sharedSlot));
 
-    $this->assertDatabaseHas('shared_slot_revisions', [
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', [
       'shared_slot_id' => $sharedSlot->id,
       'source' => 'admin',
       'event' => 'metadata_updated',
@@ -203,7 +203,7 @@ class SharedSlotRevisionTest extends TestCase
       'is_active' => '0',
     ])->assertRedirect(route('admin.shared-slots.edit', $sharedSlot));
 
-    $this->assertDatabaseHas('shared_slot_revisions', [
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', [
       'shared_slot_id' => $sharedSlot->id,
       'source' => 'admin',
       'event' => 'status_updated',
@@ -295,9 +295,9 @@ class SharedSlotRevisionTest extends TestCase
     $latestRevision = SharedSlotRevision::query()->where('shared_slot_id', $sharedSlot->id)->latest('id')->firstOrFail();
     $blocks = data_get($latestRevision->snapshot, 'blocks', []);
 
-    $this->assertDatabaseHas('shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'block_created']);
-    $this->assertDatabaseHas('shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'block_updated']);
-    $this->assertDatabaseHas('shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'blocks_reordered']);
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'block_created']);
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'block_updated']);
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'blocks_reordered']);
     $this->assertSame($user->id, $sharedSlot->fresh()->updated_by_user_id);
     $this->assertSame('Reusable Header', data_get($latestRevision->snapshot, 'shared_slot.name'));
     $this->assertCount(3, $blocks);
@@ -335,7 +335,7 @@ class SharedSlotRevisionTest extends TestCase
       ->delete(route('admin.blocks.destroy', $block), ['shared_slot_id' => $sharedSlot->id])
       ->assertRedirect(route('admin.shared-slots.blocks.edit', $sharedSlot));
 
-    $this->assertDatabaseHas('shared_slot_revisions', [
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', [
       'shared_slot_id' => $sharedSlot->id,
       'source_event' => 'block_deleted',
     ]);
@@ -404,7 +404,7 @@ class SharedSlotRevisionTest extends TestCase
     $sharedSlot = $this->sharedSlotFor($site);
     $user = User::factory()->superAdmin()->create();
 
-    Schema::dropIfExists('shared_slot_revisions');
+    Schema::dropIfExists('wbcms_shared_slot_revisions');
 
     $response = $this->actingAs($user)->get(route('admin.shared-slots.revisions.index', $sharedSlot));
 
@@ -419,9 +419,9 @@ class SharedSlotRevisionTest extends TestCase
 
     $user = User::factory()->superAdmin()->create();
 
-    Schema::dropIfExists('shared_slot_revisions');
-    Schema::dropIfExists('shared_slot_blocks');
-    Schema::dropIfExists('shared_slots');
+    Schema::dropIfExists('wbcms_shared_slot_revisions');
+    Schema::dropIfExists('wbcms_shared_slot_blocks');
+    Schema::dropIfExists('wbcms_shared_slots');
 
     $response = $this->actingAs($user)->get(route('admin.shared-slots.revisions.index', ['shared_slot' => 999]));
 
@@ -555,9 +555,9 @@ class SharedSlotRevisionTest extends TestCase
     $this->assertSame('Merhaba dunya', $resolvedTurkishBlocks->firstWhere('type', 'plain_text')?->content);
     $this->assertSame('Hello world', app(BlockTranslationResolver::class)->resolve($restoredChild = $sourcePage->blocks()->with('textTranslations')->where('type', 'plain_text')->firstOrFail(), $this->defaultLocale())->content);
     $this->assertSame('Merhaba dunya', $restoredChild->textTranslations->firstWhere('locale_id', $turkish->id)?->content);
-    $this->assertDatabaseHas('page_slots', ['id' => $pageSlot->id, 'shared_slot_id' => $sharedSlot->id]);
-    $this->assertDatabaseHas('shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'label' => 'Pre-restore safety snapshot']);
-    $this->assertDatabaseHas('shared_slot_revisions', [
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $pageSlot->id, 'shared_slot_id' => $sharedSlot->id]);
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'label' => 'Pre-restore safety snapshot']);
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', [
       'shared_slot_id' => $sharedSlot->id,
       'label' => 'Revision restored',
       'restored_from_shared_slot_revision_id' => $revisionToRestore->id,

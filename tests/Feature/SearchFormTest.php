@@ -23,7 +23,7 @@ class SearchFormTest extends TestCase
   {
     $this->seed(BlockTypeSeeder::class);
 
-    $this->assertDatabaseHas('block_types', ['slug' => 'search-form', 'status' => 'published']);
+    $this->assertDatabaseHas('wbcms_block_types', ['slug' => 'search-form', 'status' => 'published']);
   }
 
   #[Test]

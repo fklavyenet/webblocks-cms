@@ -229,6 +229,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::resource('shared-slots', SharedSlotController::class)->parameters(['shared-slots' => 'shared_slot'])->except(['show'])->missing($missingSharedSlot);
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
+    Route::post('media/fetch', [MediaController::class, 'fetchRemote'])->name('media.fetch');
     Route::post('media/folders', [MediaController::class, 'storeFolder'])->name('media.folders.store');
     Route::delete('media/bulk', [MediaController::class, 'bulkDestroy'])->name('media.bulk-destroy');
     Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');

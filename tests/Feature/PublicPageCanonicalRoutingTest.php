@@ -44,8 +44,8 @@ class PublicPageCanonicalRoutingTest extends TestCase
   {
     $this->createPage('/docs/internal-content-api', Page::STATUS_DRAFT);
 
-    $this->get('/docs/internal-content-api')->assertNotFound();
     $this->get('/p/docs/internal-content-api')->assertNotFound();
+    $this->get('/docs/internal-content-api')->assertNotFound();
   }
 
   #[Test]

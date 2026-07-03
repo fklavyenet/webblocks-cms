@@ -81,7 +81,7 @@ class PublicSearchTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Turkce Sonuc',
       'slug' => 'turkce-sonuc',
-      'path' => '/p/turkce-sonuc',
+      'path' => '/turkce-sonuc',
     ]);
     $page->blocks()->each(function (PackageBlock $block) use ($turkish) {
       $block->textTranslations()->updateOrCreate(['locale_id' => $turkish->id], ['content' => 'Merhaba arama']);
@@ -193,7 +193,7 @@ class PublicSearchTest extends TestCase
     $this->get('/search?q=foundation')
       ->assertOk()
       ->assertSee('Foundation')
-      ->assertSee('/p/foundation');
+      ->assertSee('/foundation');
   }
 
   #[Test]
@@ -310,7 +310,7 @@ class PublicSearchTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $locale->id],
-      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/p/'.$slug],
+      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/'.$slug],
     );
 
     $page->slots()->create([

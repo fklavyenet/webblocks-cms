@@ -41,7 +41,7 @@ class SearchRebuildCommandTest extends TestCase
     ]);
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Searchable', 'slug' => 'searchable', 'path' => '/p/searchable'],
+      ['site_id' => $site->id, 'name' => 'Searchable', 'slug' => 'searchable', 'path' => '/searchable'],
     );
     $page->slots()->create(['slot_type_id' => $slotType->id, 'source_type' => PageSlot::SOURCE_TYPE_PAGE, 'sort_order' => 0]);
     $block = Block::query()->create([
@@ -72,7 +72,7 @@ class SearchRebuildCommandTest extends TestCase
   #[Test]
   public function command_reports_missing_search_table_clearly(): void
   {
-    Schema::dropIfExists('public_search_index');
+    Schema::dropIfExists('wbcms_public_search_index');
 
     $this->artisan('search:rebuild')
       ->expectsOutputToContain('Public search index table is missing. Run `php artisan migrate` first.')
@@ -105,7 +105,7 @@ class SearchRebuildCommandTest extends TestCase
     ]);
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Foundation', 'slug' => 'foundation', 'path' => '/p/foundation'],
+      ['site_id' => $site->id, 'name' => 'Foundation', 'slug' => 'foundation', 'path' => '/foundation'],
     );
     $page->slots()->create(['slot_type_id' => $slotType->id, 'source_type' => PageSlot::SOURCE_TYPE_PAGE, 'sort_order' => 0]);
     $block = Block::query()->create([

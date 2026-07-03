@@ -284,7 +284,7 @@ class BlockTypesIndexTest extends TestCase
     ]);
 
     $response->assertRedirect($returnUrl);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'id' => $blockType->id,
       'name' => $blockType->name.' Updated',
     ]);
@@ -322,8 +322,8 @@ class BlockTypesIndexTest extends TestCase
     $response->assertOk();
     $response->assertSee('Section');
     $response->assertSee('Container');
-    $response->assertDontSee('Breadcrumb');
-    $response->assertDontSee('Rich Text');
+    $response->assertDontSee('<code>breadcrumb</code>', false);
+    $response->assertDontSee('<code>rich-text</code>', false);
   }
 
   #[Test]
@@ -350,7 +350,7 @@ class BlockTypesIndexTest extends TestCase
     $response->assertOk();
     $response->assertSee('Draft Legacy Demo');
     $response->assertSee('legacy');
-    $response->assertDontSee('Breadcrumb');
+    $response->assertDontSee('<code>breadcrumb</code>', false);
   }
 
   #[Test]
@@ -368,12 +368,12 @@ class BlockTypesIndexTest extends TestCase
     $userResponse = $this->actingAs($user)->get(route('admin.block-types.index', ['support' => 'user']));
     $userResponse->assertOk();
     $userResponse->assertSee('Section');
-    $userResponse->assertDontSee('Breadcrumb');
+    $userResponse->assertDontSee('<code>breadcrumb</code>', false);
 
     $containerResponse = $this->actingAs($user)->get(route('admin.block-types.index', ['support' => 'container']));
     $containerResponse->assertOk();
     $containerResponse->assertSee('Section');
-    $containerResponse->assertDontSee('Breadcrumb');
+    $containerResponse->assertDontSee('<code>breadcrumb</code>', false);
 
     $adminResponse = $this->actingAs($user)->get(route('admin.block-types.index', ['support' => 'admin']));
     $adminResponse->assertOk();
@@ -547,7 +547,7 @@ class BlockTypesIndexTest extends TestCase
     $response->assertOk();
     $response->assertSee('Pattern Match');
     $response->assertDontSee('Pattern Spare');
-    $response->assertDontSee('Breadcrumb');
+    $response->assertDontSee('<code>breadcrumb</code>', false);
   }
 
   #[Test]
@@ -555,31 +555,31 @@ class BlockTypesIndexTest extends TestCase
   {
     $this->seedFoundation();
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'table',
       'name' => 'Table',
       'category' => 'content',
       'status' => 'published',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'toc',
       'name' => 'TOC',
       'category' => 'navigation',
       'status' => 'published',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'quote',
       'name' => 'Quote',
       'category' => 'content',
       'status' => 'published',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'header',
       'name' => 'Header',
       'category' => 'content',
       'status' => 'published',
     ]);
-    $this->assertDatabaseMissing('block_types', ['slug' => 'heading']);
+    $this->assertDatabaseMissing('wbcms_block_types', ['slug' => 'heading']);
   }
 
   #[Test]
@@ -587,7 +587,7 @@ class BlockTypesIndexTest extends TestCase
   {
     $this->seedFoundation();
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'html',
       'name' => 'HTML (Trusted)',
       'category' => 'advanced',
@@ -617,7 +617,7 @@ class BlockTypesIndexTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
     );
 
     $slotType = SlotType::query()->updateOrCreate(

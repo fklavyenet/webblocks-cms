@@ -24,6 +24,14 @@ return [
     'assets' => [
         'install_path' => env('WEBBLOCKS_CMS_PUBLIC_ASSET_PATH', 'public/cms'),
     ],
+    'media' => [
+        'remote_fetch' => [
+            'max_kilobytes' => env('WEBBLOCKS_CMS_REMOTE_MEDIA_MAX_KB', 51200),
+            'timeout_seconds' => env('WEBBLOCKS_CMS_REMOTE_MEDIA_TIMEOUT_SECONDS', 15),
+            'connect_timeout_seconds' => env('WEBBLOCKS_CMS_REMOTE_MEDIA_CONNECT_TIMEOUT_SECONDS', 5),
+            'max_redirects' => env('WEBBLOCKS_CMS_REMOTE_MEDIA_MAX_REDIRECTS', 3),
+        ],
+    ],
     'defaults' => [
         'locale' => env('WEBBLOCKS_CMS_DEFAULT_LOCALE', 'en'),
         'site_name' => env('WEBBLOCKS_CMS_DEFAULT_SITE_NAME', 'Default Site'),

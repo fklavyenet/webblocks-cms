@@ -56,7 +56,7 @@ class SiteLocaleIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
   }
 
@@ -66,7 +66,7 @@ class SiteLocaleIntegrityTest extends TestCase
     $site = $this->defaultSite();
     $turkish = $this->createLocale('tr');
     $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
-    DB::table('site_locales')
+    DB::table('wbcms_site_locales')
       ->where('site_id', $site->id)
       ->where('locale_id', $turkish->id)
       ->update(['is_enabled' => false]);
@@ -85,7 +85,7 @@ class SiteLocaleIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
   }
 
@@ -108,23 +108,23 @@ class SiteLocaleIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
-    $this->get('http://primary.example.test/tr/p/hakkinda')->assertOk()->assertSee('Hakkinda');
+    $this->get('http://primary.example.test/tr/hakkinda')->assertOk()->assertSee('Hakkinda');
 
-    DB::table('site_locales')
+    DB::table('wbcms_site_locales')
       ->where('site_id', $site->id)
       ->where('locale_id', $turkish->id)
       ->update(['is_enabled' => false]);
 
     $this->assertNull($page->fresh()->publicPath('tr'));
-    $this->get('http://primary.example.test/tr/p/hakkinda')->assertNotFound();
+    $this->get('http://primary.example.test/tr/hakkinda')->assertNotFound();
 
     $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
 
-    $this->assertSame('/tr/p/hakkinda', $page->fresh()->publicPath('tr'));
-    $this->get('http://primary.example.test/tr/p/hakkinda')->assertOk()->assertSee('Hakkinda');
+    $this->assertSame('/tr/hakkinda', $page->fresh()->publicPath('tr'));
+    $this->get('http://primary.example.test/tr/hakkinda')->assertOk()->assertSee('Hakkinda');
   }
 
   #[Test]
@@ -184,13 +184,13 @@ class SiteLocaleIntegrityTest extends TestCase
 
     $this->expectException(QueryException::class);
 
-    DB::table('page_translations')->insert([
+    DB::table('wbcms_page_translations')->insert([
       'page_id' => $page->id,
       'site_id' => $page->site_id,
       'locale_id' => 999999,
       'name' => 'Broken',
       'slug' => 'broken',
-      'path' => '/p/broken',
+      'path' => '/broken',
       'created_at' => now(),
       'updated_at' => now(),
     ]);

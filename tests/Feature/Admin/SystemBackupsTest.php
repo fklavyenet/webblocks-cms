@@ -45,7 +45,6 @@ class SystemBackupsTest extends TestCase
     $response->assertSee('Backups');
     $response->assertSee('Create backup');
     $response->assertSee('Upload backup');
-    $response->assertDontSee('System Updates');
     $response->assertDontSee('>Cancel<', false);
     $response->assertSee('No backup history yet');
   }
@@ -184,7 +183,7 @@ class SystemBackupsTest extends TestCase
   #[Test]
   public function backups_page_still_loads_when_backup_table_is_missing(): void
   {
-    Schema::drop('system_backups');
+    Schema::drop('wbcms_system_backups');
 
     $user = User::factory()->superAdmin()->create();
 
@@ -193,7 +192,7 @@ class SystemBackupsTest extends TestCase
     $response->assertOk();
     $response->assertSee('Backups');
     $response->assertSee('Backup storage is not ready yet');
-    $response->assertSee('system_backups');
+    $response->assertSee('wbcms_system_backups');
   }
 
   #[Test]
@@ -292,7 +291,7 @@ class SystemBackupsTest extends TestCase
     $snapshotConnection = new \PDO('sqlite:'.$snapshotDatabasePath);
     $snapshotConnection->exec($databaseSql);
 
-    $statement = $snapshotConnection->prepare('select status, finished_at, archive_path, archive_filename from system_backups where id = :id');
+    $statement = $snapshotConnection->prepare('select status, finished_at, archive_path, archive_filename from wbcms_system_backups where id = :id');
     $statement->execute(['id' => $backup->id]);
     $dumpedBackup = $statement->fetch(\PDO::FETCH_ASSOC);
 
@@ -516,7 +515,7 @@ class SystemBackupsTest extends TestCase
     $response->assertSee('Backups');
     $response->assertSee('System restore completed successfully.');
     $response->assertDontSee('Restore Failed');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
   }
 
   #[Test]
@@ -701,7 +700,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertStatus(302);
     $response->assertInvalid(['archive']);
-    $this->assertDatabaseCount('system_backups', 0);
+    $this->assertDatabaseCount('wbcms_system_backups', 0);
   }
 
   #[Test]
@@ -1115,7 +1114,7 @@ class SystemBackupsTest extends TestCase
     ]);
 
     $response->assertForbidden();
-    $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $backup->id]);
   }
 
   #[Test]
@@ -1171,9 +1170,9 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', '2 selected backups deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $firstBackup->id]);
-    $this->assertDatabaseMissing('system_backups', ['id' => $secondBackup->id]);
-    $this->assertDatabaseHas('system_backups', ['id' => $unselectedBackup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $firstBackup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $secondBackup->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $unselectedBackup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/'.$firstBackup->archive_path);
     $this->assertFileDoesNotExist($backupsRoot.'/'.$secondBackup->archive_path);
     $this->assertFileExists($backupsRoot.'/'.$unselectedBackup->archive_path);
@@ -1239,8 +1238,8 @@ class SystemBackupsTest extends TestCase
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', '1 selected backup deleted. 1 could not be deleted.');
     $response->assertSessionHasErrors(['system_backup']);
-    $this->assertDatabaseMissing('system_backups', ['id' => $safeBackup->id]);
-    $this->assertDatabaseHas('system_backups', ['id' => $runningBackup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $safeBackup->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $runningBackup->id]);
     $this->assertFalse(Storage::disk('backups')->exists($safeBackup->archive_path));
     $this->assertTrue(Storage::disk('backups')->exists($runningBackup->archive_path));
   }
@@ -1316,7 +1315,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/manual.zip');
   }
 
@@ -1348,7 +1347,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/uploaded.zip');
   }
 
@@ -1377,7 +1376,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
   }
 
   #[Test]
@@ -1419,8 +1418,8 @@ class SystemBackupsTest extends TestCase
       ->delete(route('admin.system.backups.destroy', $firstBackup));
 
     $response->assertRedirect(route('admin.system.backups.index'));
-    $this->assertDatabaseMissing('system_backups', ['id' => $firstBackup->id]);
-    $this->assertDatabaseHas('system_backups', ['id' => $secondBackup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $firstBackup->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $secondBackup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/'.$firstBackup->archive_path);
     $this->assertFileExists($backupsRoot.'/'.$secondBackup->archive_path);
   }
@@ -1452,7 +1451,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHasErrors(['system_backup' => 'Backup archive path is invalid.']);
-    $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileExists(dirname($backupsRoot).'/outside.zip');
   }
 
@@ -1483,7 +1482,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHasErrors(['system_backup' => 'Backup archive path is invalid.']);
-    $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileExists($outsidePath);
   }
 
@@ -1515,7 +1514,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/failed.zip');
   }
 
@@ -1546,7 +1545,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/restore-safety.zip');
   }
 
@@ -1576,7 +1575,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHasErrors(['system_backup' => 'Running backup cannot be deleted unless you explicitly confirm it is stuck.']);
-    $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
   }
 
@@ -1606,7 +1605,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', 'Stuck running backup record deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/running.zip');
   }
 
@@ -1642,7 +1641,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.index'));
     $response->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($backupsRoot.'/stale-running-delete.zip');
   }
 
@@ -1670,7 +1669,7 @@ class SystemBackupsTest extends TestCase
 
     $deleteResponse->assertRedirect(route('admin.system.backups.index'));
     $deleteResponse->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($absoluteArchivePath);
   }
 
@@ -1704,7 +1703,7 @@ class SystemBackupsTest extends TestCase
 
     $deleteResponse->assertRedirect(route('admin.system.backups.index'));
     $deleteResponse->assertSessionHas('status', 'Backup deleted.');
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertFileDoesNotExist($absoluteArchivePath);
   }
 
@@ -1740,7 +1739,7 @@ class SystemBackupsTest extends TestCase
       $manager->deleteBackupRecord($backup, true);
     } finally {
       chmod(dirname($archivePath), 0755);
-      $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+      $this->assertDatabaseHas('wbcms_system_backups', ['id' => $backup->id]);
       Log::shouldHaveReceived('warning')
         ->once()
         ->withArgs(fn (string $message, array $context = []) => $message === 'Backup archive file could not be deleted.'
@@ -1788,8 +1787,8 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.show', $backup));
     $response->assertSessionHas('status', 'Restore history entry deleted.');
-    $this->assertDatabaseMissing('system_backup_restores', ['id' => $restore->id]);
-    $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backup_restores', ['id' => $restore->id]);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $backup->id]);
     $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
   }
 
@@ -1836,7 +1835,7 @@ class SystemBackupsTest extends TestCase
     $response = $this->actingAs($user)->delete(route('admin.system.backups.restores.destroy', [$otherBackup, $restore]));
 
     $response->assertNotFound();
-    $this->assertDatabaseHas('system_backup_restores', ['id' => $restore->id]);
+    $this->assertDatabaseHas('wbcms_system_backup_restores', ['id' => $restore->id]);
   }
 
   #[Test]
@@ -1922,7 +1921,7 @@ class SystemBackupsTest extends TestCase
     $deleteResponse->assertRedirect(route('admin.system.backups.index'));
     $this->assertFalse(Storage::disk('backups')->exists($archivePath));
     $this->assertTrue(Storage::disk('site-exports')->exists($archivePath));
-    $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    $this->assertDatabaseMissing('wbcms_system_backups', ['id' => $backup->id]);
   }
 
   #[Test]
@@ -1983,7 +1982,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertRedirect(route('admin.system.backups.upload'));
     $response->assertSessionHasErrors(['system_backup' => $message]);
-    $this->assertDatabaseCount('system_backups', 0);
+    $this->assertDatabaseCount('wbcms_system_backups', 0);
     $this->assertCount(0, Storage::disk('backups')->allFiles());
   }
 

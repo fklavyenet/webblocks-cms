@@ -62,7 +62,7 @@ class PageBuilderExperienceTest extends TestCase
 
   private function assertTextTranslation(Block $block, int $localeId, array $expected): void
   {
-    $this->assertDatabaseHas('block_text_translations', ['block_id' => $block->id, 'locale_id' => $localeId] + $expected);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['block_id' => $block->id, 'locale_id' => $localeId] + $expected);
   }
 
   private function pageWithSlot(SlotType $slotType, string $title = 'About', string $slug = 'about'): array
@@ -77,7 +77,7 @@ class PageBuilderExperienceTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/p/'.$slug],
+      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/'.$slug],
     );
 
     $pageSlot = PageSlot::query()->create([
@@ -315,7 +315,7 @@ class PageBuilderExperienceTest extends TestCase
 
     $create->assertRedirect(route('admin.pages.edit', $page));
     $this->assertSame($otherSite->id, $page->site_id);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $page->id,
       'site_id' => $otherSite->id,
       'slug' => 'campaign',
@@ -330,7 +330,7 @@ class PageBuilderExperienceTest extends TestCase
 
     $update->assertRedirect(route('admin.pages.edit', $page));
     $this->assertSame($otherSite->id, $page->fresh()->site_id);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $page->id,
       'site_id' => $otherSite->id,
       'slug' => 'campaign-updated',
@@ -369,7 +369,7 @@ class PageBuilderExperienceTest extends TestCase
       'site_id' => 'Existing pages cannot be moved between sites from the Edit Page screen.',
     ]);
     $this->assertSame($this->defaultSite()->id, $page->fresh()->site_id);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $page->id,
       'site_id' => $this->defaultSite()->id,
       'slug' => 'about',
@@ -443,16 +443,16 @@ class PageBuilderExperienceTest extends TestCase
     $main = $this->slotType('main', 'Main', 1);
     [$page] = $this->pageWithSlot($main);
 
-    Schema::dropIfExists('shared_slot_blocks');
-    Schema::dropIfExists('shared_slots');
-    if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
-      Schema::table('page_slots', function ($table): void {
+    Schema::dropIfExists('wbcms_shared_slot_blocks');
+    Schema::dropIfExists('wbcms_shared_slots');
+    if (Schema::hasColumn('wbcms_page_slots', 'shared_slot_id')) {
+      Schema::table('wbcms_page_slots', function ($table): void {
         $table->dropForeign(['shared_slot_id']);
         $table->dropColumn('shared_slot_id');
       });
     }
-    if (Schema::hasColumn('page_slots', 'source_type')) {
-      Schema::table('page_slots', function ($table): void {
+    if (Schema::hasColumn('wbcms_page_slots', 'source_type')) {
+      Schema::table('wbcms_page_slots', function ($table): void {
         $table->dropColumn('source_type');
       });
     }
@@ -519,10 +519,10 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.edit', $page));
     $this->assertSame(['header', 'sidebar', 'main', 'footer'], $page->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
-    $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $header->id]);
-    $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
-    $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $sidebar->id]);
-    $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $footer->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['page_id' => $page->id, 'slot_type_id' => $header->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['page_id' => $page->id, 'slot_type_id' => $sidebar->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['page_id' => $page->id, 'slot_type_id' => $footer->id]);
   }
 
   #[Test]
@@ -545,7 +545,7 @@ class PageBuilderExperienceTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $page->site_id, 'name' => 'Layout Compare', 'slug' => 'layout-compare', 'path' => '/p/layout-compare'],
+      ['site_id' => $page->site_id, 'name' => 'Layout Compare', 'slug' => 'layout-compare', 'path' => '/layout-compare'],
     );
 
     $sharedSlot = SharedSlot::query()->create([
@@ -608,7 +608,7 @@ class PageBuilderExperienceTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $page->site_id, 'name' => 'Docs Draft', 'slug' => 'docs-draft', 'path' => '/p/docs-draft'],
+      ['site_id' => $page->site_id, 'name' => 'Docs Draft', 'slug' => 'docs-draft', 'path' => '/docs-draft'],
     );
 
     PageSlot::query()->create([
@@ -684,7 +684,7 @@ class PageBuilderExperienceTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $site->id, 'name' => 'Sync Me', 'slug' => 'sync-me', 'path' => '/p/sync-me'],
+      ['site_id' => $site->id, 'name' => 'Sync Me', 'slug' => 'sync-me', 'path' => '/sync-me'],
     );
 
     $sharedSlot = SharedSlot::query()->create([
@@ -735,10 +735,10 @@ class PageBuilderExperienceTest extends TestCase
     $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'layout-slots', 'return_url' => route('admin.pages.index', ['site' => $site->id])]));
     $response->assertSessionHas('status', 'Added 2 missing Page Layout slots.');
     $this->assertSame(['header', 'sidebar', 'promo', 'main', 'footer'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
-    $this->assertDatabaseHas('page_slots', ['id' => $headerSlot->id, 'source_type' => PageSlot::SOURCE_TYPE_DISABLED]);
-    $this->assertDatabaseHas('page_slots', ['id' => $sidebarSlot->id, 'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT, 'shared_slot_id' => $sharedSlot->id]);
-    $this->assertDatabaseHas('page_slots', ['id' => $extraSlot->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $block->id, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $headerSlot->id, 'source_type' => PageSlot::SOURCE_TYPE_DISABLED]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $sidebarSlot->id, 'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT, 'shared_slot_id' => $sharedSlot->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $extraSlot->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $block->id, 'page_id' => $page->id]);
   }
 
   #[Test]
@@ -784,7 +784,7 @@ class PageBuilderExperienceTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $page->site_id, 'name' => 'Layout Switch', 'slug' => 'layout-switch', 'path' => '/p/layout-switch'],
+      ['site_id' => $page->site_id, 'name' => 'Layout Switch', 'slug' => 'layout-switch', 'path' => '/layout-switch'],
     );
 
     PageSlot::query()->create([
@@ -832,7 +832,7 @@ class PageBuilderExperienceTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
-      ['site_id' => $page->site_id, 'name' => 'Published Docs', 'slug' => 'published-docs', 'path' => '/p/published-docs'],
+      ['site_id' => $page->site_id, 'name' => 'Published Docs', 'slug' => 'published-docs', 'path' => '/published-docs'],
     );
 
     $this->actingAs($editor)
@@ -926,7 +926,7 @@ class PageBuilderExperienceTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $page->id,
       'slot_type_id' => $main->id,
       'sort_order' => 1,
@@ -968,20 +968,20 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.edit', $page));
     $response->assertSessionHasErrors('slot');
-    $this->assertDatabaseHas('page_slots', ['id' => $pageSlot->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $pageSlot->id]);
 
     $response = $this->actingAs($user)->delete(route('admin.pages.slots.destroy', [$page, $pageSlot]), [
       'confirm_delete_slot' => '1',
     ]);
 
     $response->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseMissing('page_slots', ['id' => $pageSlot->id]);
+    $this->assertDatabaseMissing('wbcms_page_slots', ['id' => $pageSlot->id]);
 
     $this->actingAs($user)
       ->delete(route('admin.pages.slots.destroy', [$otherPage, $pageSlot]))
       ->assertNotFound();
 
-    $this->assertDatabaseHas('page_slots', ['id' => $otherSlot->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $otherSlot->id]);
   }
 
   #[Test]
@@ -1014,7 +1014,7 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.edit', $page));
     $response->assertSessionHasErrors('slot');
-    $this->assertDatabaseHas('page_slots', ['id' => $pageSlot->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $pageSlot->id]);
   }
 
   #[Test]
@@ -1284,14 +1284,14 @@ class PageBuilderExperienceTest extends TestCase
     $this->assertCount(2, $items);
     $this->assertSame('with-meta.html', $items[0]->url);
     $this->assertSame('without-meta.html', $items[1]->url);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $items[0]->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'With meta only',
       'subtitle' => 'Optional meta',
       'content' => null,
     ]);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $items[1]->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Without meta or description',
@@ -1353,7 +1353,7 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $linkList->id]));
     $response->assertSessionHasErrors('link_list_items.0.title');
-    $this->assertDatabaseMissing('blocks', [
+    $this->assertDatabaseMissing('wbcms_blocks', [
       'parent_id' => $linkList->id,
       'type' => 'link-list-item',
       'url' => 'missing-title.html',
@@ -1402,7 +1402,7 @@ class PageBuilderExperienceTest extends TestCase
     $item = Block::query()->where('parent_id', $linkList->id)->where('type', 'link-list-item')->firstOrFail();
 
     $this->assertSame('direct.html', $item->url);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $item->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Direct item',
@@ -1690,7 +1690,7 @@ class PageBuilderExperienceTest extends TestCase
     ]);
 
     $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'page_id' => $page->id,
       'type' => 'html',
       'content' => null,
@@ -2155,7 +2155,7 @@ class PageBuilderExperienceTest extends TestCase
       ], JSON_UNESCAPED_SLASHES),
     ]);
 
-    $this->assertDatabaseMissing('block_contact_form_translations', ['block_id' => $block->id]);
+    $this->assertDatabaseMissing('wbcms_block_contact_form_translations', ['block_id' => $block->id]);
 
     $payload = [
       'page_id' => $page->id,
@@ -2313,7 +2313,7 @@ class PageBuilderExperienceTest extends TestCase
         'block_type_id' => $itemType->id,
         'sort_order' => 0,
         'title' => 'Root item',
-        'url' => '/p/docs',
+        'url' => '/docs',
         'status' => 'published',
         '_slot_block_mode' => 'create',
       ]);
@@ -2336,7 +2336,7 @@ class PageBuilderExperienceTest extends TestCase
         'block_type_id' => $itemType->id,
         'sort_order' => 0,
         'title' => 'Bad item',
-        'url' => '/p/docs',
+        'url' => '/docs',
         'status' => 'published',
         '_slot_block_mode' => 'create',
       ]);
@@ -2358,14 +2358,14 @@ class PageBuilderExperienceTest extends TestCase
       'block_type_id' => $itemType->id,
       'sort_order' => 0,
       'title' => 'Group child',
-      'url' => '/p/docs',
+      'url' => '/docs',
       'sidebar_nav_item_active_mode' => 'path',
       'status' => 'published',
       '_slot_block_mode' => 'create',
     ]);
 
     $validGroupChild->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'page_id' => $page->id,
       'parent_id' => $group->id,
       'type' => 'sidebar-nav-item',
@@ -2428,7 +2428,7 @@ class PageBuilderExperienceTest extends TestCase
     ]);
 
     $valid->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'page_id' => $page->id,
       'type' => 'sidebar-brand',
       'media_id' => $image->id,
@@ -2556,7 +2556,7 @@ class PageBuilderExperienceTest extends TestCase
         'block_type_id' => $itemType->id,
         'sort_order' => 0,
         'title' => 'Bad icon item',
-        'url' => '/p/docs',
+        'url' => '/docs',
         'sidebar_nav_item_icon' => 'not-a-real-icon',
         'sidebar_nav_item_active_mode' => 'path',
         'status' => 'published',
@@ -2635,7 +2635,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'breadcrumb')->firstOrFail();
 
     $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'breadcrumb',
       'slot' => 'header',
@@ -2688,7 +2688,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'header-actions')->firstOrFail();
 
     $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'header-actions',
       'slot' => 'header',
@@ -3135,11 +3135,11 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
     $response->assertSessionHas('status', 'Deleted all blocks from Main.');
-    $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $child->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $sibling->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $otherSlotBlock->id]);
-    $this->assertDatabaseHas('page_revisions', [
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $parent->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $child->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $sibling->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $otherSlotBlock->id]);
+    $this->assertDatabaseHas('wbcms_page_revisions', [
       'page_id' => $page->id,
       'event' => 'block_deleted',
       'label' => 'All slot blocks deleted',
@@ -3200,9 +3200,9 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => $this->defaultLocale()->code]));
     $response->assertSessionHas('status', 'Block deleted.');
-    $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $child->id, 'parent_id' => null]);
-    $this->assertDatabaseHas('blocks', ['id' => $grandchild->id, 'parent_id' => $child->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $parent->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $child->id, 'parent_id' => null]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $grandchild->id, 'parent_id' => $child->id]);
   }
 
   #[Test]
@@ -3293,11 +3293,11 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => $this->defaultLocale()->code]));
     $response->assertSessionHas('status', 'Block and nested child blocks deleted.');
-    $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $child->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $grandchild->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $sibling->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $otherSlotBlock->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $parent->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $child->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $grandchild->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $sibling->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $otherSlotBlock->id]);
     $this->assertNotNull($otherPageSidebar);
   }
 
@@ -3332,7 +3332,7 @@ class PageBuilderExperienceTest extends TestCase
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => $this->defaultLocale()->code]));
     $response->assertSessionHas('status', 'Block and nested child blocks deleted.');
-    $this->assertDatabaseMissing('blocks', ['id' => $block->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $block->id]);
   }
 
   #[Test]
@@ -3727,7 +3727,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'stat-card')->firstOrFail();
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'stat-card',
       'title' => null,
@@ -3735,7 +3735,7 @@ class PageBuilderExperienceTest extends TestCase
       'content' => null,
       'url' => '/package',
     ]);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => '0',
@@ -3796,7 +3796,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'alert')->firstOrFail();
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'What this page is proving',
@@ -4074,7 +4074,7 @@ class PageBuilderExperienceTest extends TestCase
     $this->assertSame('published', $tocType->status);
     $this->assertSame('published', $quoteType->status);
     $this->assertSame('published', $headerType->status);
-    $this->assertDatabaseMissing('block_types', ['slug' => 'heading']);
+    $this->assertDatabaseMissing('wbcms_block_types', ['slug' => 'heading']);
   }
 
   #[Test]
@@ -4137,14 +4137,14 @@ class PageBuilderExperienceTest extends TestCase
       '_slot_block_mode' => 'create',
     ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'page_id' => $page->id,
       'type' => 'header',
       'url' => 'overview',
     ]);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'table']);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'toc']);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'quote']);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'table']);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'toc']);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'quote']);
   }
 
   #[Test]
@@ -5528,10 +5528,10 @@ class PageBuilderExperienceTest extends TestCase
       '_slot_block_mode' => 'create',
     ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'card_footer', 'parent_id' => $card->id]);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'cluster', 'parent_id' => $cardFooter->id]);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 0]);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 1]);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'card_footer', 'parent_id' => $card->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'cluster', 'parent_id' => $cardFooter->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 0]);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 1]);
     $this->assertTrue($card->fresh()->canAcceptChildren());
     $this->assertTrue($card->fresh(['blockType'])->canAcceptChildType('card_footer'));
     $this->assertFalse($card->fresh(['blockType'])->canAcceptChildType('cluster'));
@@ -5602,7 +5602,7 @@ class PageBuilderExperienceTest extends TestCase
     $this->assertSame((string) $card->id, $query['parent_id'] ?? null);
     $this->assertSame((string) $headerType->id, $query['block_type_id'] ?? null);
     $response->assertSessionHasErrors('parent_id');
-    $this->assertDatabaseMissing('blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $card->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $card->id]);
   }
 
   #[Test]
@@ -5682,7 +5682,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'header')->firstOrFail();
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'header',
       'title' => null,
@@ -5720,7 +5720,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'plain_text')->firstOrFail();
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'plain_text',
       'title' => null,
@@ -5827,7 +5827,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'card')->firstOrFail();
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'card',
       'title' => null,
@@ -5835,7 +5835,7 @@ class PageBuilderExperienceTest extends TestCase
       'content' => null,
       'variant' => null,
     ]);
-    $this->assertDatabaseMissing('block_text_translations', [
+    $this->assertDatabaseMissing('wbcms_block_text_translations', [
       'block_id' => $block->id,
     ]);
     $this->assertSame('Contact card', $block->fresh()->setting('layout_name'));
@@ -5992,7 +5992,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'content_header')->firstOrFail();
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'content_header',
       'title' => null,
@@ -6000,7 +6000,7 @@ class PageBuilderExperienceTest extends TestCase
       'content' => null,
       'variant' => null,
     ]);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Docs heading',
@@ -6037,7 +6037,7 @@ class PageBuilderExperienceTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'button_link')->firstOrFail();
 
     $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas('wbcms_blocks', [
       'id' => $block->id,
       'type' => 'button_link',
       'title' => null,
@@ -6045,7 +6045,7 @@ class PageBuilderExperienceTest extends TestCase
       'content' => null,
       'variant' => 'secondary',
     ]);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Start here',
@@ -6280,9 +6280,9 @@ class PageBuilderExperienceTest extends TestCase
 
     $this->assertNull($section->parent_id);
     $this->assertSame($section->id, $container->parent_id);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $container->id]);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'plain_text', 'parent_id' => $container->id]);
-    $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $container->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'plain_text', 'parent_id' => $container->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id]);
     $this->assertTrue($cluster->fresh()->canAcceptChildren());
 
     $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
@@ -6350,7 +6350,7 @@ class PageBuilderExperienceTest extends TestCase
     [$page, $pageSlot] = $this->pageWithSlot($main);
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $turkish->id],
-      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/hakkinda'],
     );
 
     $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
@@ -6394,7 +6394,7 @@ class PageBuilderExperienceTest extends TestCase
       'content' => null,
     ]);
     $this->assertSame('h2', $header->fresh()->variant);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $header->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'English heading',
@@ -6420,7 +6420,7 @@ class PageBuilderExperienceTest extends TestCase
     [$page, $pageSlot] = $this->pageWithSlot($main);
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $turkish->id],
-      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/hakkinda'],
     );
 
     $ctaType = BlockType::query()->where('slug', 'cta')->firstOrFail();
@@ -6510,12 +6510,12 @@ class PageBuilderExperienceTest extends TestCase
       'subtitle' => 'Turkce etiket',
       'content' => 'Turkce govde',
     ]);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $primaryButton->id,
       'locale_id' => $turkish->id,
       'title' => 'Hemen basla',
     ]);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $secondaryButton->id,
       'locale_id' => $turkish->id,
       'title' => 'Dokumanlari oku',
@@ -6544,7 +6544,7 @@ class PageBuilderExperienceTest extends TestCase
     [$page, $pageSlot] = $this->pageWithSlot($main);
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $turkish->id],
-      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+      ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/hakkinda'],
     );
 
     $columnsType = BlockType::query()->where('slug', 'columns')->firstOrFail();
@@ -6742,10 +6742,10 @@ class PageBuilderExperienceTest extends TestCase
     $response->assertSee('Shared Slot: Reusable Header');
     $response->assertSee('Disabled');
     $response->assertSee('<th>Slot</th>', false);
-    $response->assertSee('<th>Blocks</th>', false);
+    $response->assertSee('Top-level Blocks');
     $response->assertSee('<span class="wb-status-pill wb-status-info">header</span>', false);
     $response->assertSee('<span class="wb-status-pill wb-status-info">main</span>', false);
-    $response->assertSee('<strong>0 page-owned blocks</strong>', false);
+    $response->assertSee('0 page-owned top-level blocks');
     $response->assertSee('Manage Source');
     $response->assertSee('data-wb-page-slot-source-open', false);
     $response->assertSee('data-wb-page-slot-source-target="#slot-source-modal-'.$pageSlot->id.'"', false);
@@ -6893,13 +6893,13 @@ class PageBuilderExperienceTest extends TestCase
     ]);
 
     $toShared->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'id' => $pageSlot->id,
       'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
       'shared_slot_id' => $sharedSlot->id,
     ]);
-    $this->assertDatabaseHas('blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $sharedSourceBlock->id, 'page_id' => $sharedSourcePage->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $sharedSourceBlock->id, 'page_id' => $sharedSourcePage->id]);
 
     $toDisabled = $this->actingAs($user)->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
       'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
@@ -6907,12 +6907,12 @@ class PageBuilderExperienceTest extends TestCase
     ]);
 
     $toDisabled->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'id' => $pageSlot->id,
       'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
       'shared_slot_id' => null,
     ]);
-    $this->assertDatabaseHas('blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
 
     $toPage = $this->actingAs($user)->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
       'source_type' => PageSlot::SOURCE_TYPE_PAGE,
@@ -6920,12 +6920,12 @@ class PageBuilderExperienceTest extends TestCase
     ]);
 
     $toPage->assertRedirect(route('admin.pages.edit', $page));
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'id' => $pageSlot->id,
       'source_type' => PageSlot::SOURCE_TYPE_PAGE,
       'shared_slot_id' => null,
     ]);
-    $this->assertDatabaseHas('blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
   }
 
   #[Test]

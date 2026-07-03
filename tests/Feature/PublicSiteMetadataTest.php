@@ -82,9 +82,9 @@ class PublicSiteMetadataTest extends TestCase
       'seo_keywords' => 'campaign',
     ]);
     $campaignSite->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
-    $this->createPage($campaignSite, $locale, $slotType, $headerType, 'Campaign Home', 'campaign-home', '/p/campaign-home');
+    $this->createPage($campaignSite, $locale, $slotType, $headerType, 'Campaign Home', 'campaign-home', '/campaign-home');
 
-    $response = $this->get('http://campaign.example.test/p/campaign-home');
+    $response = $this->get('http://campaign.example.test/campaign-home');
 
     $response->assertOk();
     $response->assertSee('<title>Campaign Public Name · Campaign Home</title>', false);
@@ -156,7 +156,7 @@ class PublicSiteMetadataTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Ana Sayfa',
       'slug' => 'anasayfa',
-      'path' => '/p/anasayfa',
+      'path' => '/anasayfa',
       'seo_title' => 'TR SEO Baslik',
       'seo_description' => 'TR SEO Aciklama',
       'seo_keywords' => 'tr,anahtar',
@@ -165,7 +165,7 @@ class PublicSiteMetadataTest extends TestCase
       'og_image_asset_id' => $trOgImage->id,
     ]);
 
-    $response = $this->get('http://primary.example.test/tr/p/anasayfa');
+    $response = $this->get('http://primary.example.test/tr/anasayfa');
 
     $response->assertOk();
     $response->assertSee('<title>Site Default Title · TR SEO Baslik</title>', false);
@@ -255,7 +255,7 @@ class PublicSiteMetadataTest extends TestCase
     );
     $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
 
-    $this->createPage($site, $locale, $slotType, $headerType, 'Home', 'home', '/p/home');
+    $this->createPage($site, $locale, $slotType, $headerType, 'Home', 'home', '/');
 
     return [$site, $locale, $slotType, $headerType];
   }

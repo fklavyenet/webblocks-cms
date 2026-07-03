@@ -25,12 +25,12 @@ class MultisiteMultilingualFoundationTest extends TestCase
   {
     $this->seed(FoundationSiteLocaleSeeder::class);
 
-    $this->assertDatabaseHas('sites', [
+    $this->assertDatabaseHas('wbcms_sites', [
       'handle' => 'default',
       'is_primary' => true,
     ]);
 
-    $this->assertDatabaseHas('locales', [
+    $this->assertDatabaseHas('wbcms_locales', [
       'code' => 'en',
       'is_default' => true,
       'is_enabled' => true,
@@ -40,30 +40,55 @@ class MultisiteMultilingualFoundationTest extends TestCase
   #[Test]
   public function existing_pages_are_backfilled_to_the_default_site_and_english_translation_during_migration(): void
   {
-    Schema::dropIfExists('public_search_index');
-    Schema::dropIfExists('page_translations');
-    Schema::dropIfExists('block_contact_form_translations');
-    Schema::dropIfExists('block_image_translations');
-    Schema::dropIfExists('block_button_translations');
-    Schema::dropIfExists('block_text_translations');
-    Schema::dropIfExists('visitor_events');
-    Schema::table('pages', function (Blueprint $table) {
+    Schema::dropIfExists('wbcms_public_search_index');
+    Schema::dropIfExists('wbcms_page_translations');
+    Schema::dropIfExists('wbcms_block_contact_form_translations');
+    Schema::dropIfExists('wbcms_block_image_translations');
+    Schema::dropIfExists('wbcms_block_button_translations');
+    Schema::dropIfExists('wbcms_block_text_translations');
+    Schema::dropIfExists('wbcms_visitor_events');
+    Schema::table('wbcms_pages', function (Blueprint $table) {
       $table->dropUnique('pages_id_site_id_unique');
       $table->dropForeign(['site_id']);
       $table->dropColumn('site_id');
     });
 
-    Schema::table('pages', function (Blueprint $table) {
+    Schema::table('wbcms_pages', function (Blueprint $table) {
       $table->string('title')->nullable();
       $table->string('slug')->nullable();
       $table->unique('slug');
     });
 
-    Schema::dropIfExists('site_locales');
-    Schema::dropIfExists('locales');
-    Schema::dropIfExists('sites');
+    DB::statement('PRAGMA foreign_keys = OFF');
+    foreach ([
+      'wbcms_engagement_ratings',
+      'wbcms_engagement_comments',
+      'wbcms_site_imports',
+      'wbcms_site_exports',
+      'wbcms_site_variables',
+      'wbcms_site_domains',
+      'wbcms_user_site_access',
+      'wbcms_public_search_index',
+      'wbcms_visitor_events',
+      'wbcms_shared_slot_revisions',
+      'wbcms_shared_slot_blocks',
+      'wbcms_shared_slots',
+      'wbcms_block_media',
+      'wbcms_page_slots',
+      'wbcms_blocks',
+      'wbcms_navigation_items',
+      'wbcms_page_revisions',
+      'wbcms_block_gallery_item_translations',
+    ] as $table) {
+      Schema::dropIfExists($table);
+    }
 
-    DB::table('pages')->insert([
+    Schema::dropIfExists('wbcms_site_locales');
+    Schema::dropIfExists('wbcms_sites');
+    Schema::dropIfExists('wbcms_locales');
+    DB::statement('PRAGMA foreign_keys = ON');
+
+    DB::table('wbcms_pages')->insert([
       'title' => 'Legacy About',
       'slug' => 'legacy-about-two',
       'page_type' => 'default',
@@ -81,12 +106,12 @@ class MultisiteMultilingualFoundationTest extends TestCase
     $this->assertSame('default', $page->site?->handle);
     $this->assertSame('legacy-about-two', $page->defaultTranslation()?->slug);
     $this->assertSame('/p/legacy-about-two', $page->defaultTranslation()?->path);
-    $this->assertDatabaseHas('page_translations', [
+    $this->assertDatabaseHas('wbcms_page_translations', [
       'page_id' => $page->id,
       'name' => 'Legacy About',
       'slug' => 'legacy-about-two',
     ]);
-    $this->assertFalse(Schema::hasColumn('page_translations', 'site_id'));
+    $this->assertFalse(Schema::hasColumn('wbcms_page_translations', 'site_id'));
   }
 
   #[Test]
@@ -119,8 +144,8 @@ class MultisiteMultilingualFoundationTest extends TestCase
       'path' => '/p/hakkinda',
     ]);
 
-    $this->assertSame('/p/about', $page->publicPath());
-    $this->assertSame('/tr/p/hakkinda', $page->publicPath('tr'));
+    $this->assertSame('/about', $page->publicPath());
+    $this->assertSame('/tr/hakkinda', $page->publicPath('tr'));
     $this->assertSame('/', app(PageRouteResolver::class)->homePath());
     $this->assertSame('/tr', app(PageRouteResolver::class)->homePath('tr'));
     $this->assertNull($page->publicPath('de'));
@@ -157,13 +182,13 @@ class MultisiteMultilingualFoundationTest extends TestCase
       'locale_id' => $portuguese->id,
       'name' => 'Precos',
       'slug' => 'precos',
-      'path' => '/p/precos',
+      'path' => '/precos',
     ]);
 
-    $this->assertSame('/pt-br/p/precos', $page->publicPath('pt_BR'));
-    $this->get('http://primary.example.test/pt-br/p/precos')->assertOk()->assertSee('Precos');
-    $this->get('http://primary.example.test/pt/p/precos')->assertNotFound();
-    $this->get('http://primary.example.test/pt-br-br/p/precos')->assertNotFound();
+    $this->assertSame('/pt-br/precos', $page->publicPath('pt_BR'));
+    $this->get('http://primary.example.test/pt-br/precos')->assertOk()->assertSee('Precos');
+    $this->get('http://primary.example.test/pt/precos')->assertNotFound();
+    $this->get('http://primary.example.test/pt-br-br/precos')->assertNotFound();
   }
 
   #[Test]
@@ -207,7 +232,7 @@ class MultisiteMultilingualFoundationTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
     $request = request()->create('/tr/p/hakkinda', 'GET');
@@ -216,10 +241,10 @@ class MultisiteMultilingualFoundationTest extends TestCase
     $this->assertNotNull(app(PageRouteResolver::class)->findPublishedPage($request, 'hakkinda'));
 
     $this->get('/')->assertOk();
-    $this->get('/p/about')->assertOk();
+    $this->get('/about')->assertOk();
     $this->get('/tr')->assertOk();
-    $this->assertSame('{locale}/p/{slug}', $route->uri());
-    $this->get('/tr/p/hakkinda')->assertOk();
+    $this->assertSame('{locale}/p/{path}', $route->uri());
+    $this->get('/tr/hakkinda')->assertOk();
   }
 
   #[Test]
@@ -255,17 +280,17 @@ class MultisiteMultilingualFoundationTest extends TestCase
       'status' => 'published',
     ]);
 
-    $this->get('http://primary.example.test/p/about')
+    $this->get('http://primary.example.test/about')
       ->assertOk()
       ->assertSee('Primary About')
       ->assertDontSee('Campaign About');
 
-    $this->get('http://campaign.example.test/p/about')
+    $this->get('http://campaign.example.test/about')
       ->assertOk()
       ->assertSee('Campaign About')
       ->assertDontSee('Primary About');
 
-    $this->assertSame('https://campaign.example.test/p/about', $campaignAbout->fresh()->publicUrl());
+    $this->assertSame('https://campaign.example.test/about', $campaignAbout->fresh()->publicUrl());
   }
 
   #[Test]
@@ -295,19 +320,19 @@ class MultisiteMultilingualFoundationTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
-    DB::table('site_locales')
+    DB::table('wbcms_site_locales')
       ->where('site_id', $site->id)
       ->where('locale_id', $turkish->id)
       ->update(['is_enabled' => false]);
 
-    $this->get('http://primary.example.test/tr/p/hakkinda')->assertNotFound();
+    $this->get('http://primary.example.test/tr/hakkinda')->assertNotFound();
 
     $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
 
-    $this->get('http://primary.example.test/tr/p/hakkinda')->assertOk()->assertSee('Hakkinda');
+    $this->get('http://primary.example.test/tr/hakkinda')->assertOk()->assertSee('Hakkinda');
   }
 
   #[Test]
@@ -325,9 +350,9 @@ class MultisiteMultilingualFoundationTest extends TestCase
       'status' => 'published',
     ]);
 
-    $this->get('http://primary.example.test/TR/p/about')->assertNotFound();
-    $this->get('http://primary.example.test/tr_TR/p/about')->assertNotFound();
-    $this->get('http://primary.example.test/tur/p/about')->assertNotFound();
+    $this->get('http://primary.example.test/TR/about')->assertNotFound();
+    $this->get('http://primary.example.test/tr_TR/about')->assertNotFound();
+    $this->get('http://primary.example.test/tur/about')->assertNotFound();
   }
 
   #[Test]
@@ -344,12 +369,12 @@ class MultisiteMultilingualFoundationTest extends TestCase
       'status' => 'published',
     ]);
 
-    $this->get('http://unknown.example.test/p/about')->assertOk()->assertSee('About');
+    $this->get('http://unknown.example.test/about')->assertOk()->assertSee('About');
 
     config()->set('cms.multisite.unknown_host_fallback', false);
 
-    $this->get('http://unknown.example.test/p/about')->assertNotFound();
-    $this->assertSame('https://primary.example.test/p/about', $page->fresh()->publicUrl());
+    $this->get('http://unknown.example.test/about')->assertNotFound();
+    $this->assertSame('https://primary.example.test/about', $page->fresh()->publicUrl());
   }
 
   #[Test]
@@ -360,7 +385,7 @@ class MultisiteMultilingualFoundationTest extends TestCase
     $site = Site::query()->where('handle', 'default')->firstOrFail();
     $site->update(['domain' => 'primary.example.test']);
 
-    $request = request()->create('https://PRIMARY.EXAMPLE.TEST/p/about', 'GET');
+    $request = request()->create('https://PRIMARY.EXAMPLE.TEST/about', 'GET');
     $route = app('router')->getRoutes()->match($request);
     $request->setRouteResolver(fn () => $route);
 
@@ -387,7 +412,7 @@ class MultisiteMultilingualFoundationTest extends TestCase
     $translation = $page->defaultTranslation();
 
     $this->assertNotNull($translation);
-    $this->assertTrue(Schema::hasColumn('page_translations', 'site_id'));
+    $this->assertTrue(Schema::hasColumn('wbcms_page_translations', 'site_id'));
     $this->assertSame($page->site_id, $translation->site_id);
     $this->assertSame($page->site_id, $translation->page->site_id);
   }

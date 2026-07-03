@@ -36,10 +36,10 @@ class SearchTest extends TestCase
 
     app(PublicSearchIndexer::class)->rebuild();
 
-    $this->assertDatabaseHas('public_search_index', ['page_id' => $published->id, 'locale_id' => $locale->id]);
-    $this->assertDatabaseMissing('public_search_index', ['page_id' => $draft->id]);
-    $this->assertDatabaseMissing('public_search_index', ['page_id' => $review->id]);
-    $this->assertDatabaseMissing('public_search_index', ['page_id' => $archived->id]);
+    $this->assertDatabaseHas('wbcms_public_search_index', ['page_id' => $published->id, 'locale_id' => $locale->id]);
+    $this->assertDatabaseMissing('wbcms_public_search_index', ['page_id' => $draft->id]);
+    $this->assertDatabaseMissing('wbcms_public_search_index', ['page_id' => $review->id]);
+    $this->assertDatabaseMissing('wbcms_public_search_index', ['page_id' => $archived->id]);
   }
 
   #[Test]
@@ -49,11 +49,11 @@ class SearchTest extends TestCase
     $page = $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Published', 'published-page', Page::STATUS_PUBLISHED, 'Alpha content');
 
     app(PublicSearchIndexer::class)->rebuild();
-    $this->assertDatabaseHas('public_search_index', ['page_id' => $page->id]);
+    $this->assertDatabaseHas('wbcms_public_search_index', ['page_id' => $page->id]);
 
     $page->update(['status' => Page::STATUS_DRAFT]);
 
-    $this->assertDatabaseMissing('public_search_index', ['page_id' => $page->id]);
+    $this->assertDatabaseMissing('wbcms_public_search_index', ['page_id' => $page->id]);
   }
 
   #[Test]
@@ -83,7 +83,7 @@ class SearchTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Turkce Baslik',
       'slug' => 'turkce-baslik',
-      'path' => '/p/turkce-baslik',
+      'path' => '/turkce-baslik',
     ]);
     foreach ($page->blocks as $block) {
       $block->textTranslations()->updateOrCreate(['locale_id' => $turkish->id], ['content' => 'Turkce govde']);
@@ -94,9 +94,9 @@ class SearchTest extends TestCase
 
     app(PublicSearchIndexer::class)->rebuild();
 
-    $this->assertDatabaseHas('public_search_index', ['page_id' => $page->id, 'locale_id' => $locale->id, 'url' => '/p/english-title']);
-    $this->assertDatabaseHas('public_search_index', ['page_id' => $page->id, 'locale_id' => $turkish->id, 'url' => '/tr/p/turkce-baslik']);
-    $this->assertDatabaseHas('public_search_index', ['page_id' => $otherPage->id, 'site_id' => $otherSite->id]);
+    $this->assertDatabaseHas('wbcms_public_search_index', ['page_id' => $page->id, 'locale_id' => $locale->id, 'url' => '/english-title']);
+    $this->assertDatabaseHas('wbcms_public_search_index', ['page_id' => $page->id, 'locale_id' => $turkish->id, 'url' => '/tr/turkce-baslik']);
+    $this->assertDatabaseHas('wbcms_public_search_index', ['page_id' => $otherPage->id, 'site_id' => $otherSite->id]);
   }
 
   #[Test]
@@ -116,11 +116,11 @@ class SearchTest extends TestCase
 
     $this->assertSame(1, $result->indexed);
     $this->assertSame(0, $result->skipped);
-    $this->assertDatabaseHas('public_search_index', [
+    $this->assertDatabaseHas('wbcms_public_search_index', [
       'page_id' => $page->id,
       'locale_id' => $locale->id,
       'title' => 'Foundation',
-      'url' => '/p/foundation',
+      'url' => '/foundation',
     ]);
   }
 
@@ -182,7 +182,7 @@ class SearchTest extends TestCase
 
     $indexed = PublicSearchIndex::query()->where('page_id', $page->id)->firstOrFail();
     $this->assertStringContainsString('Shared searchable phrase', $indexed->content);
-    $this->assertDatabaseMissing('public_search_index', ['page_id' => $sourcePage->id]);
+    $this->assertDatabaseMissing('wbcms_public_search_index', ['page_id' => $sourcePage->id]);
   }
 
   private function seedSearchFoundation(): array
@@ -213,7 +213,7 @@ class SearchTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => $locale->id],
-      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => $slug === 'home' ? '/' : '/p/'.$slug],
+      ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => $slug === 'home' ? '/' : '/'.$slug],
     );
 
     $page->slots()->create([

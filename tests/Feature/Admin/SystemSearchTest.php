@@ -59,7 +59,7 @@ class SystemSearchTest extends TestCase
         'site_id' => $site->id,
         'title' => 'Searchable Page',
         'excerpt' => 'Example excerpt',
-        'url' => '/p/searchable-page',
+        'url' => '/searchable-page',
         'content' => 'Example searchable body',
         'indexed_at' => now()->subMinute(),
       ],

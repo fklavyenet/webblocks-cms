@@ -91,7 +91,7 @@ class SharedSlotAdminManagementTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => ucfirst(str_replace('-', ' ', $slug)), 'slug' => $slug, 'path' => $slug === 'home' ? '/' : '/p/'.$slug],
+      ['site_id' => $site->id, 'name' => ucfirst(str_replace('-', ' ', $slug)), 'slug' => $slug, 'path' => $slug === 'home' ? '/' : '/'.$slug],
     );
 
     return $page;
@@ -145,8 +145,8 @@ class SharedSlotAdminManagementTest extends TestCase
 
     $user = User::factory()->superAdmin()->create();
 
-    Schema::dropIfExists('shared_slot_blocks');
-    Schema::dropIfExists('shared_slots');
+    Schema::dropIfExists('wbcms_shared_slot_blocks');
+    Schema::dropIfExists('wbcms_shared_slots');
 
     $response = $this->actingAs($user)->get(route('admin.shared-slots.index'));
 
@@ -162,8 +162,8 @@ class SharedSlotAdminManagementTest extends TestCase
 
     $user = User::factory()->superAdmin()->create();
 
-    Schema::dropIfExists('shared_slot_blocks');
-    Schema::dropIfExists('shared_slots');
+    Schema::dropIfExists('wbcms_shared_slot_blocks');
+    Schema::dropIfExists('wbcms_shared_slots');
 
     $this->actingAs($user)
       ->get(route('admin.shared-slots.create'))
@@ -379,7 +379,7 @@ class SharedSlotAdminManagementTest extends TestCase
     $response = $this->actingAs($user)->delete(route('admin.shared-slots.destroy', $sharedSlot));
 
     $response->assertRedirect(route('admin.shared-slots.index', ['site' => $site->id]));
-    $this->assertDatabaseMissing('shared_slots', ['id' => $sharedSlot->id]);
+    $this->assertDatabaseMissing('wbcms_shared_slots', ['id' => $sharedSlot->id]);
   }
 
   #[Test]
@@ -404,8 +404,8 @@ class SharedSlotAdminManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.shared-slots.edit', $sharedSlot));
     $response->assertSessionHasErrors('shared_slot');
-    $this->assertDatabaseHas('shared_slots', ['id' => $sharedSlot->id]);
-    $this->assertDatabaseHas('page_slots', ['id' => $pageSlot->id, 'shared_slot_id' => $sharedSlot->id]);
+    $this->assertDatabaseHas('wbcms_shared_slots', ['id' => $sharedSlot->id]);
+    $this->assertDatabaseHas('wbcms_page_slots', ['id' => $pageSlot->id, 'shared_slot_id' => $sharedSlot->id]);
   }
 
   #[Test]
@@ -607,10 +607,10 @@ class SharedSlotAdminManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.shared-slots.blocks.edit', $sharedSlot));
     $response->assertSessionHas('status', 'Block and nested child blocks deleted.');
-    $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $child->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $sibling->id]);
-    $this->assertDatabaseHas('blocks', ['id' => $otherSharedBlock->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $parent->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $child->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $sibling->id]);
+    $this->assertDatabaseHas('wbcms_blocks', ['id' => $otherSharedBlock->id]);
   }
 
   #[Test]
@@ -800,13 +800,13 @@ class SharedSlotAdminManagementTest extends TestCase
     $user = User::factory()->superAdmin()->create();
 
     $adminResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-    $publicResponse = $this->get('/p/about');
+    $publicResponse = $this->get('/about');
 
     $adminResponse->assertOk();
     $adminResponse->assertSee('Blocks');
     $publicResponse->assertOk();
     $publicResponse->assertSee('Page owned content', false);
-    $this->assertDatabaseMissing('shared_slot_blocks', ['block_id' => $block->id]);
+    $this->assertDatabaseMissing('wbcms_shared_slot_blocks', ['block_id' => $block->id]);
   }
 
   #[Test]
@@ -891,10 +891,10 @@ class SharedSlotAdminManagementTest extends TestCase
 
     $response->assertRedirect(route('admin.shared-slots.blocks.edit', $sharedSlot));
     $response->assertSessionHas('status', 'Deleted all blocks from Main.');
-    $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $child->id]);
-    $this->assertDatabaseMissing('blocks', ['id' => $sibling->id]);
-    $this->assertDatabaseHas('shared_slot_revisions', [
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $parent->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $child->id]);
+    $this->assertDatabaseMissing('wbcms_blocks', ['id' => $sibling->id]);
+    $this->assertDatabaseHas('wbcms_shared_slot_revisions', [
       'shared_slot_id' => $sharedSlot->id,
       'source_event' => 'block_deleted',
       'label' => 'Shared Slot blocks deleted',

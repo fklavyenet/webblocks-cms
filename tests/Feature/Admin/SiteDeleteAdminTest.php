@@ -35,7 +35,7 @@ class SiteDeleteAdminTest extends TestCase
     $response = $this->actingAs($user)->delete(route('admin.sites.destroy', $site), []);
 
     $response->assertSessionHasErrors('confirm_delete');
-    $this->assertDatabaseHas('sites', ['id' => $site->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $site->id]);
   }
 
   #[Test]
@@ -50,7 +50,7 @@ class SiteDeleteAdminTest extends TestCase
 
     $response->assertRedirect(route('admin.sites.index'));
     $response->assertSessionHas('status');
-    $this->assertDatabaseMissing('sites', ['id' => $site->id]);
+    $this->assertDatabaseMissing('wbcms_sites', ['id' => $site->id]);
   }
 
   #[Test]

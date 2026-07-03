@@ -149,7 +149,7 @@ class NavigationIntegrityTest extends TestCase
       'visibility' => NavigationItem::VISIBILITY_VISIBLE,
     ]);
 
-    $response = $this->get('http://campaign.example.test/p/about');
+    $response = $this->get('http://campaign.example.test/about');
 
     $response->assertOk();
     $response->assertSee('Campaign Link');
@@ -178,7 +178,7 @@ class NavigationIntegrityTest extends TestCase
     $linkedPage->delete();
 
     $this->assertNull($item->fresh()->page_id);
-    $this->get('http://primary.example.test/p/about')->assertOk()->assertSee('Linked Page');
+    $this->get('http://primary.example.test/about')->assertOk()->assertSee('Linked Page');
   }
 
   #[Test]
@@ -202,7 +202,7 @@ class NavigationIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
     $this->addNavigationBlock($homePage);
@@ -220,8 +220,8 @@ class NavigationIntegrityTest extends TestCase
     $response = $this->get('http://primary.example.test/tr');
 
     $response->assertOk();
-    $response->assertSee('/tr/p/hakkinda', false);
-    $response->assertDontSee('href="/p/about"', false);
+    $response->assertSee('/tr/hakkinda', false);
+    $response->assertDontSee('href="/about"', false);
   }
 
   #[Test]
@@ -258,8 +258,8 @@ class NavigationIntegrityTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('About');
-    $response->assertDontSee('href="/tr/p/about"', false);
-    $response->assertDontSee('href="/p/about"', false);
+    $response->assertDontSee('href="/tr/about"', false);
+    $response->assertDontSee('href="/about"', false);
   }
 
   #[Test]
@@ -269,7 +269,7 @@ class NavigationIntegrityTest extends TestCase
     $otherSite = $this->createSite('campaign', 'campaign.example.test');
     $foreignPage = $this->createPage($otherSite, 'Campaign About', 'about');
 
-    DB::table('navigation_items')->insert([
+    DB::table('wbcms_navigation_items')->insert([
       'site_id' => $site->id,
       'menu_key' => NavigationItem::MENU_PRIMARY,
       'parent_id' => null,

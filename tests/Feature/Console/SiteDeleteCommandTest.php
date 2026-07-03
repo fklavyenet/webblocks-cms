@@ -28,7 +28,7 @@ class SiteDeleteCommandTest extends TestCase
       ->expectsOutputToContain('Site delete dry-run passed.')
       ->assertExitCode(0);
 
-    $this->assertDatabaseHas('sites', ['id' => $site->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $site->id]);
   }
 
   #[Test]
@@ -42,7 +42,7 @@ class SiteDeleteCommandTest extends TestCase
       ->expectsOutputToContain('Deletion requires --force.')
       ->assertExitCode(1);
 
-    $this->assertDatabaseHas('sites', ['id' => $site->id]);
+    $this->assertDatabaseHas('wbcms_sites', ['id' => $site->id]);
   }
 
   #[Test]
@@ -57,7 +57,7 @@ class SiteDeleteCommandTest extends TestCase
       ->expectsOutputToContain('Site deleted successfully.')
       ->assertExitCode(0);
 
-    $this->assertDatabaseMissing('sites', ['id' => $site->id]);
+    $this->assertDatabaseMissing('wbcms_sites', ['id' => $site->id]);
   }
 
   #[Test]
@@ -89,8 +89,8 @@ class SiteDeleteCommandTest extends TestCase
       ->expectsOutputToContain('Site deleted successfully.')
       ->assertExitCode(0);
 
-    $this->assertDatabaseMissing('sites', ['id' => $site->id]);
-    $this->assertDatabaseMissing('page_revisions', ['id' => $revision->id]);
+    $this->assertDatabaseMissing('wbcms_sites', ['id' => $site->id]);
+    $this->assertDatabaseMissing('wbcms_page_revisions', ['id' => $revision->id]);
   }
 
   private function createSecondarySite(): Site

@@ -89,7 +89,7 @@ class PageSiteMoveTest extends TestCase
       'locale_id' => $this->defaultLocale()->id,
       'name' => $title,
       'slug' => $slug,
-      'path' => '/p/'.$slug,
+      'path' => '/'.$slug,
       'seo_title' => $title.' SEO',
       'seo_description' => $title.' SEO Description',
     ]);
@@ -243,7 +243,7 @@ class PageSiteMoveTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/tr/p/hakkinda',
+      'path' => '/tr/hakkinda',
       'seo_title' => 'Hakkinda SEO',
       'seo_description' => 'Hakkinda SEO Description',
     ]);
@@ -262,14 +262,14 @@ class PageSiteMoveTest extends TestCase
     $this->assertSame(1, Page::query()->whereKey($page->id)->count());
     $this->assertSame($slotCount, $page->fresh()->slots()->count());
     $this->assertSame($blockCount, $page->fresh()->blocks()->count());
-    $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'about']);
-    $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda']);
-    $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'about', 'seo_title' => 'About SEO']);
-    $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda', 'seo_title' => 'Hakkinda SEO']);
-    $this->assertDatabaseHas('page_assets', ['page_id' => $page->id, 'path' => '/site/default/pages/about/page.js']);
-    $this->assertDatabaseMissing('page_translations', ['page_id' => $page->id, 'site_id' => $this->defaultSite()->id, 'slug' => 'about']);
-    $this->assertDatabaseHas('block_text_translations', ['block_id' => $page->blocks()->firstOrFail()->id, 'title' => 'Body']);
-    $this->assertDatabaseHas('page_revisions', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'label' => 'Page moved to another site']);
+    $this->assertDatabaseHas('wbcms_page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'about']);
+    $this->assertDatabaseHas('wbcms_page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda']);
+    $this->assertDatabaseHas('wbcms_page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'about', 'seo_title' => 'About SEO']);
+    $this->assertDatabaseHas('wbcms_page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda', 'seo_title' => 'Hakkinda SEO']);
+    $this->assertDatabaseHas('wbcms_page_assets', ['page_id' => $page->id, 'path' => '/site/default/pages/about/page.js']);
+    $this->assertDatabaseMissing('wbcms_page_translations', ['page_id' => $page->id, 'site_id' => $this->defaultSite()->id, 'slug' => 'about']);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['block_id' => $page->blocks()->firstOrFail()->id, 'title' => 'Body']);
+    $this->assertDatabaseHas('wbcms_page_revisions', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'label' => 'Page moved to another site']);
   }
 
   #[Test]
@@ -307,7 +307,7 @@ class PageSiteMoveTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/tr/p/hakkinda',
+      'path' => '/tr/hakkinda',
     ]);
 
     $response = $this->actingAs($user)

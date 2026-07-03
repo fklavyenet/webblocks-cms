@@ -47,7 +47,7 @@ class ImportDemoMediaCommandTest extends TestCase
     $this->assertSame('Modern workspace desk', $asset->title);
     $this->assertSame('Modern workspace with laptop and desk', $asset->alt_text);
     $this->assertSame(Media::KIND_IMAGE, $asset->kind);
-    $this->assertDatabaseHas('media_folders', ['name' => 'Demo Content', 'parent_id' => null]);
+    $this->assertDatabaseHas('wbcms_media_folders', ['name' => 'Demo Content', 'parent_id' => null]);
     $folder = MediaFolder::query()->where('name', 'Home')->first();
     $this->assertNotNull($folder);
     $this->assertSame($folder->id, $asset->folder_id);
@@ -93,7 +93,7 @@ class ImportDemoMediaCommandTest extends TestCase
     $exitCode = Artisan::call('demo:import-media');
 
     $this->assertSame(1, $exitCode);
-    $this->assertDatabaseMissing('demo_media_references', ['source_key' => 'home-hero-01']);
+    $this->assertDatabaseMissing('wbcms_demo_media_references', ['source_key' => 'home-hero-01']);
     $this->assertFalse(Storage::disk('public')->exists('assets/demo-content/home/home-hero-01.jpg'));
   }
 

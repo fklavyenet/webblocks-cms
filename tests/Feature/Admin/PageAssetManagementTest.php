@@ -112,7 +112,7 @@ class PageAssetManagementTest extends TestCase
       ]);
 
     $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
-    $this->assertDatabaseHas('page_assets', [
+    $this->assertDatabaseHas('wbcms_page_assets', [
       'page_id' => $page->id,
       'type' => 'css',
       'path' => '/site/webblocks-ui/pages/playground/page.css',
@@ -138,7 +138,7 @@ class PageAssetManagementTest extends TestCase
       ]);
 
     $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
-    $this->assertDatabaseHas('page_assets', [
+    $this->assertDatabaseHas('wbcms_page_assets', [
       'page_id' => $page->id,
       'type' => 'js',
       'path' => '/site/webblocks-ui/pages/playground/page.js',
@@ -176,7 +176,7 @@ class PageAssetManagementTest extends TestCase
       ]);
 
     $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
-    $this->assertDatabaseHas('page_assets', [
+    $this->assertDatabaseHas('wbcms_page_assets', [
       'id' => $asset->id,
       'path' => '/site/default/pages/playground/updated.js',
       'sort_order' => 8,
@@ -215,7 +215,7 @@ class PageAssetManagementTest extends TestCase
       ])
       ->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
 
-    $this->assertDatabaseHas('page_assets', [
+    $this->assertDatabaseHas('wbcms_page_assets', [
       'id' => $asset->id,
       'type' => 'css',
       'path' => '/site/default/pages/playground/updated.css',
@@ -244,7 +244,7 @@ class PageAssetManagementTest extends TestCase
       ])
       ->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
 
-    $this->assertDatabaseMissing('page_assets', ['id' => $asset->id]);
+    $this->assertDatabaseMissing('wbcms_page_assets', ['id' => $asset->id]);
   }
 
   #[Test]
@@ -299,7 +299,7 @@ class PageAssetManagementTest extends TestCase
       ->delete(route('admin.pages.assets.destroy', ['page' => $page, 'page_asset' => $asset]))
       ->assertForbidden();
 
-    $this->assertDatabaseHas('page_assets', ['id' => $asset->id, 'path' => '/site/default/pages/playground/locked.js']);
+    $this->assertDatabaseHas('wbcms_page_assets', ['id' => $asset->id, 'path' => '/site/default/pages/playground/locked.js']);
   }
 
   #[Test]

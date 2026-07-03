@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.223
+
+- Bumped CMS to `1.32.223`.
+- Add a browser Media Library `Fetch URL` action that imports allowed public remote files through the normal CMS media pipeline with private-network and size guards.
+- Align test database assertions with the prefixed `wbcms_*` table names used by current package installs.
+
 ## 1.32.222
 
 - Bumped CMS to `1.32.222`.

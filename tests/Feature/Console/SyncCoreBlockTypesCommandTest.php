@@ -29,12 +29,12 @@ class SyncCoreBlockTypesCommandTest extends TestCase
 
     $this->artisan('block-types:sync-core')->assertExitCode(0);
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'header',
       'name' => 'Header',
       'status' => 'published',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'custom-banner',
       'name' => 'Custom Banner',
       'status' => 'published',
@@ -58,7 +58,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
 
     $this->artisan('block-types:sync-core')->assertExitCode(0);
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'header',
       'name' => 'Header',
       'category' => 'content',
@@ -69,7 +69,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
       'sort_order' => 5,
       'status' => 'published',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'content_header',
       'description' => 'Docs-style content header with a fixed H1 title, intro text, and optional metadata items.',
     ]);
@@ -87,13 +87,13 @@ class SyncCoreBlockTypesCommandTest extends TestCase
 
     $this->assertSame(1, BlockType::query()->where('slug', 'card-grid')->count());
     $this->assertSame(1, BlockType::query()->where('slug', 'navigation-auto')->count());
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'card-grid',
       'name' => 'Card Grid',
       'category' => 'legacy',
       'status' => 'draft',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'navigation-auto',
       'name' => 'Navigation Auto',
       'category' => 'navigation',
@@ -120,7 +120,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
 
     $this->artisan('block-types:sync-core')->assertExitCode(0);
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'custom-hero',
       'name' => 'Custom Hero',
       'category' => 'custom',
@@ -206,7 +206,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
     $this->artisan('block-types:sync-core')->assertExitCode(0);
 
     $this->assertSame(1, BlockType::query()->where('slug', 'contact_form')->count());
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'contact_form',
       'name' => 'Contact Form',
       'category' => 'form',
@@ -247,16 +247,16 @@ class SyncCoreBlockTypesCommandTest extends TestCase
 
     $this->seed(BlockTypeSeeder::class);
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'header',
       'name' => 'Header',
       'status' => 'published',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'custom-legacy',
       'status' => 'draft',
     ]);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'text',
       'category' => 'legacy',
       'status' => 'draft',

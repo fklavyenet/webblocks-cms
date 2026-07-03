@@ -106,7 +106,7 @@ class BlockTranslationIntegrityTest extends TestCase
 
     $this->assertNull($freshBlock->getRawOriginal('title'));
     $this->assertNull($freshBlock->getRawOriginal('content'));
-    $this->get('/p/about')->assertOk()->assertSee('<h1 data-wb-public-block-type="header">Hero heading</h1>', false);
+    $this->get('/about')->assertOk()->assertSee('<h1 data-wb-public-block-type="header">Hero heading</h1>', false);
   }
 
   #[Test]
@@ -121,7 +121,7 @@ class BlockTranslationIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
     $block = Block::query()->create([
@@ -148,7 +148,7 @@ class BlockTranslationIntegrityTest extends TestCase
     $this->assertSame('fallback', $resolved->translation_state);
     $this->assertSame('en', $resolved->resolved_locale_code);
     $this->assertSame('Default content', $resolved->content);
-    $this->get('http://primary.example.test/tr/p/hakkinda')->assertOk()->assertSee('<p>Default content</p>', false);
+    $this->get('http://primary.example.test/tr/hakkinda')->assertOk()->assertSee('<p>Default content</p>', false);
   }
 
   #[Test]
@@ -213,7 +213,7 @@ class BlockTranslationIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Iletisim',
       'slug' => 'iletisim',
-      'path' => '/p/iletisim',
+      'path' => '/iletisim',
     ]);
 
     $block = Block::query()->create([
@@ -247,7 +247,7 @@ class BlockTranslationIntegrityTest extends TestCase
     ], 'tr');
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
 
-    DB::table('block_contact_form_translations')->insert([
+    DB::table('wbcms_block_contact_form_translations')->insert([
       'block_id' => $block->id,
       'locale_id' => $french->id,
       'title' => 'French orphan',
@@ -258,12 +258,12 @@ class BlockTranslationIntegrityTest extends TestCase
       'updated_at' => now(),
     ]);
 
-    $this->get('http://primary.example.test/p/contact')
+    $this->get('http://primary.example.test/contact')
       ->assertOk()
       ->assertSee('Contact us')
       ->assertSee('Send message');
 
-    $this->get('http://primary.example.test/tr/p/iletisim')
+    $this->get('http://primary.example.test/tr/iletisim')
       ->assertOk()
       ->assertSee('Bize ulasin')
       ->assertSee('Mesaj gonder')
@@ -323,7 +323,7 @@ class BlockTranslationIntegrityTest extends TestCase
     ], null, true);
     app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
-    $translation = DB::table('block_text_translations')
+    $translation = DB::table('wbcms_block_text_translations')
       ->where('block_id', $block->id)
       ->where('locale_id', $this->defaultLocale()->id)
       ->first();
@@ -366,7 +366,7 @@ class BlockTranslationIntegrityTest extends TestCase
       'slot_type_id' => $this->slotType()->id,
       'sort_order' => 0,
       'settings' => json_encode([
-        'url' => '/p/about',
+        'url' => '/about',
         'target' => '_blank',
         'icon' => 'code',
         'active_mode' => 'manual',
@@ -395,12 +395,12 @@ class BlockTranslationIntegrityTest extends TestCase
     $fresh = $block->fresh(['textTranslations']);
     $settings = json_decode((string) $fresh->getRawOriginal('settings'), true);
 
-    $this->assertSame('/p/about', $settings['url']);
+    $this->assertSame('/about', $settings['url']);
     $this->assertSame('_blank', $settings['target']);
     $this->assertSame('code', $settings['icon']);
     $this->assertSame('manual', $settings['active_mode']);
     $this->assertTrue($settings['manual_active']);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $turkish->id,
       'title' => 'Baslangic',
@@ -438,7 +438,7 @@ class BlockTranslationIntegrityTest extends TestCase
       'sort_order' => 0,
       'asset_id' => $asset->id,
       'settings' => json_encode([
-        'url' => '/p/about',
+        'url' => '/about',
         'target' => '_blank',
       ], JSON_UNESCAPED_SLASHES),
       'status' => 'published',
@@ -464,9 +464,9 @@ class BlockTranslationIntegrityTest extends TestCase
     $settings = json_decode((string) $fresh->getRawOriginal('settings'), true);
 
     $this->assertSame($asset->id, $fresh->asset_id);
-    $this->assertSame('/p/about', $settings['url']);
+    $this->assertSame('/about', $settings['url']);
     $this->assertSame('_blank', $settings['target']);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $turkish->id,
       'title' => 'WebBlocks TR',
@@ -492,7 +492,7 @@ class BlockTranslationIntegrityTest extends TestCase
       'slot_type_id' => $this->slotType()->id,
       'sort_order' => 0,
       'settings' => json_encode([
-        'url' => '/p/about',
+        'url' => '/about',
         'target' => '_blank',
         'aria_label' => 'Docs Home',
       ], JSON_UNESCAPED_SLASHES),
@@ -519,7 +519,7 @@ class BlockTranslationIntegrityTest extends TestCase
     $settings = json_decode((string) $fresh->getRawOriginal('settings'), true);
 
     $this->assertSame('Docs Home', $settings['aria_label']);
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $turkish->id,
       'title' => 'Belgeler',
@@ -570,10 +570,10 @@ class BlockTranslationIntegrityTest extends TestCase
     $this->assertNull($fresh->getRawOriginal('content'));
     $this->assertNull($fresh->getRawOriginal('meta'));
     $this->assertNull($fresh->media_id);
-    $this->assertDatabaseMissing('block_text_translations', [
+    $this->assertDatabaseMissing('wbcms_block_text_translations', [
       'block_id' => $block->id,
     ]);
-    $this->assertDatabaseMissing('block_image_translations', [
+    $this->assertDatabaseMissing('wbcms_block_image_translations', [
       'block_id' => $block->id,
     ]);
   }
@@ -584,7 +584,7 @@ class BlockTranslationIntegrityTest extends TestCase
     $this->seed(FoundationSiteLocaleSeeder::class);
     $this->seed(BlockTypeSeeder::class);
 
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas('wbcms_block_types', [
       'slug' => 'rich-text',
       'name' => 'Rich Text',
       'status' => 'published',
@@ -616,7 +616,7 @@ class BlockTranslationIntegrityTest extends TestCase
     $block = Block::query()->where('page_id', $page->id)->where('type', 'rich-text')->firstOrFail();
 
     $this->assertNull($block->fresh()->getRawOriginal('content'));
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'content' => 'Hello `world`',
@@ -644,7 +644,7 @@ class BlockTranslationIntegrityTest extends TestCase
     $response->assertRedirect();
 
     $block = Block::query()->where('page_id', $page->id)->where('type', 'rich-text')->firstOrFail();
-    $content = DB::table('block_text_translations')->where('block_id', $block->id)->value('content');
+    $content = DB::table('wbcms_block_text_translations')->where('block_id', $block->id)->value('content');
 
     $this->assertSame('<script>alert(1)</script> `good`', $content);
   }
@@ -669,6 +669,6 @@ class BlockTranslationIntegrityTest extends TestCase
       'content' => '  <p> </p>  ',
     ], null, true);
 
-    $this->assertNull(DB::table('block_text_translations')->where('block_id', $block->id)->value('content'));
+    $this->assertNull(DB::table('wbcms_block_text_translations')->where('block_id', $block->id)->value('content'));
   }
 }

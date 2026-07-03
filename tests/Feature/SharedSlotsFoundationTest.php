@@ -29,10 +29,10 @@ class SharedSlotsFoundationTest extends TestCase
   #[Test]
   public function migrations_create_shared_slot_tables_and_page_slot_source_columns(): void
   {
-    $this->assertTrue(Schema::hasTable('shared_slots'));
-    $this->assertTrue(Schema::hasTable('shared_slot_blocks'));
-    $this->assertTrue(Schema::hasColumn('page_slots', 'source_type'));
-    $this->assertTrue(Schema::hasColumn('page_slots', 'shared_slot_id'));
+    $this->assertTrue(Schema::hasTable('wbcms_shared_slots'));
+    $this->assertTrue(Schema::hasTable('wbcms_shared_slot_blocks'));
+    $this->assertTrue(Schema::hasColumn('wbcms_page_slots', 'source_type'));
+    $this->assertTrue(Schema::hasColumn('wbcms_page_slots', 'shared_slot_id'));
   }
 
   #[Test]
@@ -66,12 +66,12 @@ class SharedSlotsFoundationTest extends TestCase
     $migration = require database_path('migrations/2026_05_05_120000_add_shared_slots_foundation.php');
     $migration->down();
 
-    $this->assertFalse(Schema::hasTable('shared_slots'));
-    $this->assertFalse(Schema::hasColumn('page_slots', 'source_type'));
+    $this->assertFalse(Schema::hasTable('wbcms_shared_slots'));
+    $this->assertFalse(Schema::hasColumn('wbcms_page_slots', 'source_type'));
 
     $migration->up();
 
-    $this->assertDatabaseHas('page_slots', [
+    $this->assertDatabaseHas('wbcms_page_slots', [
       'page_id' => $page->id,
       'slot_type_id' => $slotType->id,
       'source_type' => PageSlot::SOURCE_TYPE_PAGE,

@@ -15,8 +15,8 @@ class ContactMessageNotificationStatusUpdateMigrationTest extends TestCase
   public function update_migration_adds_contact_message_notification_status_columns(): void
   {
     foreach (['notification_reason', 'notification_status', 'notification_recipient_source'] as $column) {
-      if (Schema::hasColumn('contact_messages', $column)) {
-        Schema::table('contact_messages', fn ($table) => $table->dropColumn($column));
+      if (Schema::hasColumn('wbcms_contact_messages', $column)) {
+        Schema::table('wbcms_contact_messages', fn ($table) => $table->dropColumn($column));
       }
     }
 
@@ -24,7 +24,7 @@ class ContactMessageNotificationStatusUpdateMigrationTest extends TestCase
     $migration->up();
 
     foreach (['notification_recipient_source', 'notification_status', 'notification_reason'] as $column) {
-      $this->assertTrue(Schema::hasColumn('contact_messages', $column), 'Missing contact_messages column: '.$column);
+      $this->assertTrue(Schema::hasColumn('wbcms_contact_messages', $column), 'Missing wbcms_contact_messages column: '.$column);
     }
   }
 }

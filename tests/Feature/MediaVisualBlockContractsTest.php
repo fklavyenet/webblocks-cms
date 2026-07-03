@@ -52,7 +52,7 @@ class MediaVisualBlockContractsTest extends TestCase
 
     PageTranslation::query()->updateOrCreate(
       ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-      ['site_id' => $site->id, 'name' => 'Media blocks', 'slug' => 'media-blocks', 'path' => '/p/media-blocks'],
+      ['site_id' => $site->id, 'name' => 'Media blocks', 'slug' => 'media-blocks', 'path' => '/media-blocks'],
     );
 
     PageSlot::query()->create([
@@ -141,7 +141,7 @@ class MediaVisualBlockContractsTest extends TestCase
 
     $this->assertNull($block->media_id);
     $this->assertSame('Support shell', $settings['layout_name']);
-    $this->assertDatabaseMissing('block_text_translations', [
+    $this->assertDatabaseMissing('wbcms_block_text_translations', [
       'block_id' => $block->id,
     ]);
   }
@@ -175,7 +175,7 @@ class MediaVisualBlockContractsTest extends TestCase
     $this->assertSame('/product', $block->url);
     $this->assertNull($block->fresh()->getRawOriginal('title'));
     $this->assertNull($block->fresh()->getRawOriginal('subtitle'));
-    $this->assertDatabaseHas('block_image_translations', [
+    $this->assertDatabaseHas('wbcms_block_image_translations', [
       'block_id' => $block->id,
       'caption' => 'Product overview',
       'alt_text' => 'Overview alt text',
@@ -546,7 +546,7 @@ class MediaVisualBlockContractsTest extends TestCase
 
     $secondRow = BlockMedia::query()->where('block_id', $block->id)->where('media_id', $second->id)->where('role', 'gallery_item')->firstOrFail();
 
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $secondRow->id,
       'locale_id' => Page::defaultLocaleId(),
       'alt_text' => 'Second translated alt',
@@ -739,7 +739,7 @@ class MediaVisualBlockContractsTest extends TestCase
     ])->assertSessionDoesntHaveErrors();
 
     $this->assertSame([$first->id, $second->id], $block->fresh()->galleryMediaIds());
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $block->fresh()->galleryItems()->firstWhere('media_id', $first->id)->id,
       'alt_text' => 'Deutsch alt a',
     ]);
@@ -795,7 +795,7 @@ class MediaVisualBlockContractsTest extends TestCase
     $blockMedia = $block->fresh()->galleryItems()->firstWhere('media_id', $image->id);
 
     $this->assertNotNull($blockMedia);
-    $this->assertDatabaseHas('block_gallery_item_translations', [
+    $this->assertDatabaseHas('wbcms_block_gallery_item_translations', [
       'block_media_id' => $blockMedia->id,
       'locale_id' => Page::defaultLocaleId(),
       'alt_text' => 'Updated alt',

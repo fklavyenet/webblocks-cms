@@ -19,7 +19,7 @@
             <div class="wb-alert wb-alert-warning">
                 <div>
                     <div class="wb-alert-title">Backup storage is not ready yet</div>
-                    <div>The `system_backups` table is missing in this environment. Run the latest migrations before using Backup Manager V1.</div>
+                    <div>The `wbcms_system_backups` table is missing in this environment. Run the latest migrations before using Backup Manager V1.</div>
                 </div>
             </div>
         @endif

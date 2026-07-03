@@ -4,6 +4,7 @@
     use WebBlocks\Cms\Models\Media;
 
     $showUploadModal = $openModal === 'upload-asset';
+    $showFetchModal = $openModal === 'fetch-media';
     $showFolderModal = $openModal === 'new-folder';
     $baseQuery = array_filter([
         'folder_id' => $selectedFolderId,
@@ -109,6 +110,7 @@
 
             <div class="wb-cluster wb-cluster-2">
                 <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])) }}" class="wb-btn wb-btn-primary">Upload Media</a>
+                <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'fetch-media'])) }}" class="wb-btn wb-btn-secondary">Fetch URL</a>
                 <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'new-folder'])) }}" class="wb-btn wb-btn-secondary">New Folder</a>
             </div>
         </div>
@@ -154,6 +156,7 @@
                     <div class="wb-empty-text">Adjust the filters or upload the next file into the shared media library.</div>
                     <div class="wb-cluster wb-cluster-2">
                         <a href="{{ route('admin.media.index', ['modal' => 'upload-asset']) }}" class="wb-btn wb-btn-primary">Upload Media</a>
+                        <a href="{{ route('admin.media.index', ['modal' => 'fetch-media']) }}" class="wb-btn wb-btn-secondary">Fetch URL</a>
                         <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">Reset filters</a>
                     </div>
                 </div>
@@ -473,6 +476,90 @@
 
                         <x-webblocks-cms::admin.form-actions
                             :cancel-url="route('admin.media.index', $baseQuery)"
+                            container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
+                        />
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($showFetchModal)
+        <div class="wb-overlay-layer wb-overlay-layer--dialog">
+            <div class="wb-overlay-backdrop"></div>
+
+            <div class="wb-modal wb-modal-xl is-open" id="media-fetch-modal" role="dialog" aria-modal="true" aria-labelledby="media-fetch-title">
+                <div class="wb-modal-dialog">
+                    <div class="wb-modal-header">
+                        <div class="wb-stack wb-gap-1">
+                            <h2 class="wb-modal-title" id="media-fetch-title">Fetch Remote Media</h2>
+                            <span class="wb-text-sm wb-text-muted">Import a public file URL into the shared media library.</span>
+                        </div>
+
+                        <a href="{{ route('admin.media.index', $baseQuery) }}" class="wb-modal-close" aria-label="Close">
+                            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                        </a>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.media.fetch') }}" class="wb-stack wb-gap-4">
+                        @csrf
+                        <input type="hidden" name="_media_modal" value="fetch-media">
+
+                        <div class="wb-modal-body wb-stack wb-gap-4">
+                            @if ($errors->has('source_url'))
+                                <div class="wb-alert wb-alert-danger">
+                                    <div>{{ $errors->first('source_url') }}</div>
+                                </div>
+                            @endif
+
+                            <div class="wb-grid wb-grid-2">
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="source_url">Remote URL</label>
+                                    <input id="source_url" name="source_url" type="url" class="wb-input" value="{{ old('source_url') }}" placeholder="https://example.com/image.jpg" required>
+                                    <span>Only public HTTP or HTTPS files are fetched. Private network targets are blocked.</span>
+                                </div>
+
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="fetch_folder_id">Folder</label>
+                                    <select id="fetch_folder_id" name="folder_id" class="wb-select">
+                                        <option value="">No folder</option>
+                                        @foreach ($folders as $folder)
+                                            <option value="{{ $folder->id }}" @selected((string) old('folder_id', $selectedFolderId) === (string) $folder->id)>
+                                                {{ $folder->name }}@if($folder->parent) ({{ $folder->parent->name }}) @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="wb-grid wb-grid-2">
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="fetch_title">Title</label>
+                                    <input id="fetch_title" name="title" type="text" class="wb-input" value="{{ old('title') }}">
+                                </div>
+
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="fetch_alt_text">Alt Text</label>
+                                    <input id="fetch_alt_text" name="alt_text" type="text" class="wb-input" value="{{ old('alt_text') }}">
+                                </div>
+                            </div>
+
+                            <div class="wb-grid wb-grid-2">
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="fetch_caption">Caption</label>
+                                    <textarea id="fetch_caption" name="caption" class="wb-textarea" rows="3">{{ old('caption') }}</textarea>
+                                </div>
+
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="fetch_description">Description</label>
+                                    <textarea id="fetch_description" name="description" class="wb-textarea" rows="3">{{ old('description') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <x-webblocks-cms::admin.form-actions
+                            :cancel-url="route('admin.media.index', $baseQuery)"
+                            submit-label="Fetch media"
                             container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                         />
                     </form>

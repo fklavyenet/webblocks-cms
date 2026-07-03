@@ -32,7 +32,7 @@ class PageTranslationParentKeyUpdateMigrationTest extends TestCase
     DB::setDefaultConnection('schema_repair');
 
     try {
-      Schema::create('pages', function (Blueprint $table): void {
+      Schema::create('wbcms_pages', function (Blueprint $table): void {
         $table->id();
         $table->unsignedBigInteger('site_id');
       });
@@ -41,7 +41,7 @@ class PageTranslationParentKeyUpdateMigrationTest extends TestCase
       $migration->up();
       $migration->up();
 
-      $indexes = collect(DB::select("pragma index_list('pages')"))
+      $indexes = collect(DB::select("pragma index_list('wbcms_pages')"))
         ->where('name', 'pages_id_site_id_unique')
         ->values();
 

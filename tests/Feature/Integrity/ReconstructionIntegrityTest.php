@@ -94,7 +94,7 @@ class ReconstructionIntegrityTest extends TestCase
       'locale_id' => $turkish->id,
       'name' => 'Hakkinda',
       'slug' => 'hakkinda',
-      'path' => '/p/hakkinda',
+      'path' => '/hakkinda',
     ]);
 
     PageSlot::query()->create([
@@ -132,7 +132,7 @@ class ReconstructionIntegrityTest extends TestCase
     $page->translations()->where('locale_id', $turkish->id)->update([
       'name' => 'Degisti',
       'slug' => 'degisti',
-      'path' => '/p/degisti',
+      'path' => '/degisti',
     ]);
     $block->textTranslations()->where('locale_id', $this->defaultLocale()->id)->update([
       'title' => 'Changed hero',
@@ -212,8 +212,8 @@ class ReconstructionIntegrityTest extends TestCase
       ->firstOrFail();
     $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
 
-    $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
-    $this->assertDatabaseHas('block_text_translations', ['block_id' => $header->id, 'title' => 'Hakkinda']);
+    $this->assertDatabaseHas('wbcms_page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
+    $this->assertDatabaseHas('wbcms_block_text_translations', ['block_id' => $header->id, 'title' => 'Hakkinda']);
     $this->assertNull($header->getRawOriginal('title'));
     $this->assertSame(['en', 'tr'], $targetSite->fresh()->enabledLocales()->orderBy('code')->pluck('code')->all());
   }
@@ -243,10 +243,10 @@ class ReconstructionIntegrityTest extends TestCase
       ->whereHas('translations', fn ($query) => $query->where('slug', 'about'))
       ->firstOrFail();
 
-    $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
+    $this->assertDatabaseHas('wbcms_page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
     $this->assertSame(['en', 'tr'], $site->enabledLocales()->orderBy('code')->pluck('code')->all());
-    $this->get('http://imported.example.test/p/about')->assertOk()->assertSee('English paragraph content');
-    $this->get('http://imported.example.test/tr/p/hakkinda')->assertOk()->assertSee('Turkce paragraf icerigi');
+    $this->get('http://imported.example.test/about')->assertOk()->assertSee('English paragraph content');
+    $this->get('http://imported.example.test/tr/hakkinda')->assertOk()->assertSee('Turkce paragraf icerigi');
   }
 
   #[Test]
@@ -291,7 +291,7 @@ class ReconstructionIntegrityTest extends TestCase
           'locale_id' => $this->defaultLocale()->id,
           'name' => 'About',
           'slug' => 'about',
-          'path' => '/p/about',
+          'path' => '/about',
         ]],
         'slots' => [[
           'slot_type_id' => $slotType->id,
@@ -329,7 +329,7 @@ class ReconstructionIntegrityTest extends TestCase
 
     $restoredBlock = $page->fresh()->blocks()->with('textTranslations')->firstOrFail();
 
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $restoredBlock->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => 'Legacy hero',
@@ -337,7 +337,7 @@ class ReconstructionIntegrityTest extends TestCase
     ]);
     $this->assertNull($restoredBlock->getRawOriginal('title'));
     $this->assertNull($restoredBlock->getRawOriginal('content'));
-    $this->get('/p/about')->assertOk()->assertSee('<h2 data-wb-public-block-type="header">Legacy hero</h2>', false);
+    $this->get('/about')->assertOk()->assertSee('<h2 data-wb-public-block-type="header">Legacy hero</h2>', false);
   }
 
   #[Test]
@@ -397,7 +397,7 @@ class ReconstructionIntegrityTest extends TestCase
 
     $plainText = Block::query()->where('page_id', $aboutPage->id)->where('type', 'plain_text')->firstOrFail();
 
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas('wbcms_block_text_translations', [
       'block_id' => $plainText->id,
       'locale_id' => $this->defaultLocale()->id,
       'title' => null,
@@ -405,6 +405,6 @@ class ReconstructionIntegrityTest extends TestCase
     ]);
     $this->assertNull($plainText->fresh()->getRawOriginal('title'));
     $this->assertNull($plainText->fresh()->getRawOriginal('content'));
-    $this->get('http://legacy-compatible.example.test/p/about')->assertOk()->assertSee('English paragraph content');
+    $this->get('http://legacy-compatible.example.test/about')->assertOk()->assertSee('English paragraph content');
   }
 }

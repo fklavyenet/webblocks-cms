@@ -8,17 +8,17 @@ return new class extends Migration
 {
   public function up(): void
   {
-    if (Schema::hasTable('cms_api_token_activity_logs')) {
+    if (Schema::hasTable('wbcms_cms_api_token_activity_logs')) {
       return;
     }
 
-    if (! Schema::hasTable('cms_api_tokens')) {
+    if (! Schema::hasTable('wbcms_cms_api_tokens')) {
       return;
     }
 
-    Schema::create('cms_api_token_activity_logs', function (Blueprint $table): void {
+    Schema::create('wbcms_cms_api_token_activity_logs', function (Blueprint $table): void {
       $table->id();
-      $table->foreignId('cms_api_token_id')->constrained('cms_api_tokens')->cascadeOnDelete();
+      $table->foreignId('cms_api_token_id')->constrained('wbcms_cms_api_tokens')->cascadeOnDelete();
       $table->timestamp('occurred_at')->useCurrent();
       $table->string('status', 32);
       $table->string('method', 12);
