@@ -19,6 +19,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
@@ -94,6 +95,47 @@ class InternalContentResourceController extends Controller
     return $this->ok(['block_types' => $blockTypes]);
   }
 
+  public function iconCatalog(Request $request, IconCatalog $iconCatalog): JsonResponse
+  {
+    $context = trim((string) $request->query('context', 'content'));
+    $context = $context === '' ? 'content' : $context;
+
+    if (! in_array($context, ['content', 'navigation'], true)) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'invalid_icon_catalog_context',
+        'message' => 'Icon catalog context must be one of: content, navigation.',
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => 'context',
+            'message' => 'Icon catalog context must be one of: content, navigation.',
+          ],
+        ],
+      ], 422);
+    }
+
+    $icons = $iconCatalog->pickerOptions($context)
+      ->map(fn (array $icon): array => [
+        'slug' => $icon['slug'],
+        'label' => $icon['label'],
+        'context' => $context,
+      ])
+      ->values();
+
+    return $this->ok([
+      'context' => $context,
+      'icons' => $icons,
+      'count' => $icons->count(),
+      '_links' => [
+        'self' => '/webadmin/api/icon-catalog?context='.$context,
+        'content' => '/webadmin/api/icon-catalog?context=content',
+        'navigation' => '/webadmin/api/icon-catalog?context=navigation',
+        'content_contract' => '/webadmin/api/content-contract',
+      ],
+    ]);
+  }
+
   public function contentContract(): JsonResponse
   {
     $blockContracts = BlockType::query()
@@ -110,6 +152,7 @@ class InternalContentResourceController extends Controller
         'prefix' => '/webadmin/api',
         'content_validate' => '/webadmin/api/content/validate',
         'content_apply' => '/webadmin/api/content/apply',
+        'icon_catalog' => '/webadmin/api/icon-catalog?context=content',
         'media' => '/webadmin/api/media',
         'media_update' => '/webadmin/api/media/{media}',
         'block_update' => '/webadmin/api/blocks/{block}',

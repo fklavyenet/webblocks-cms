@@ -510,6 +510,7 @@ class InternalContentPlanService
       '_block_media' => $payload['_block_media'] ?? [],
       '_gallery_items' => $payload['_gallery_items'] ?? [],
       'title' => $translations['title'] ?? null,
+      'eyebrow' => $translations['eyebrow'] ?? null,
       'subtitle' => $translations['subtitle'] ?? null,
       'content' => $translations['content'] ?? null,
       'meta' => $translations['meta'] ?? null,

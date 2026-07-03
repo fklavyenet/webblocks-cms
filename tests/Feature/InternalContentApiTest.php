@@ -89,6 +89,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.openapi', '/webadmin/api/openapi.json')
       ->assertJsonPath('_links.ai_guide', '/webadmin/api/ai-guide')
       ->assertJsonPath('_links.content_contract', '/webadmin/api/content-contract')
+      ->assertJsonPath('_links.icon_catalog', '/webadmin/api/icon-catalog?context=content')
       ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
       ->assertJsonPath('_links.admin_render_system_updates', '/webadmin/api/admin-render/system-updates')
@@ -129,6 +130,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./content/apply.post.x-supported-modes.2', 'create_staged_update_for_published_page')
       ->assertJsonPath('paths./content/apply.post.x-supported-modes.4', 'promote_staged_page_update')
       ->assertJsonPath('paths./content/apply.post.x-mode-capabilities.promote_staged_page_update', 'content.publish plus content.apply')
+      ->assertJsonPath('paths./icon-catalog.get.summary', 'List active safe icon slugs for content or navigation fields')
+      ->assertJsonPath('paths./icon-catalog.get.x-supported-contexts.0', 'content')
       ->assertJsonPath('paths./media.get.summary', 'List Media items for API-safe media assignment')
       ->assertJsonPath('paths./media/{media}.patch.summary', 'Update safe Media Library metadata')
       ->assertJsonPath('paths./media/{media}.patch.x-required-capability', CmsApiTokenCapabilities::MEDIA_WRITE)
@@ -157,6 +160,7 @@ class InternalContentApiTest extends TestCase
     $this->assertStringContainsString('page._actions.promote', (string) $guideContent);
     $this->assertStringContainsString('site-assets.write', (string) $guideContent);
     $this->assertStringContainsString('asset.guidance', (string) $guideContent);
+    $this->assertStringContainsString('/webadmin/api/icon-catalog?context=content', (string) $guideContent);
     $this->assertStringContainsString('Light/Dark/Auto mode', (string) $guideContent);
     $this->assertStringContainsString('/webadmin/api/admin-render/system-updates', (string) $guideContent);
 
@@ -189,6 +193,50 @@ class InternalContentApiTest extends TestCase
       ->assertUnauthorized()
       ->assertJsonPath('ok', false)
       ->assertJsonPath('code', 'invalid_internal_api_token');
+  }
+
+  #[Test]
+  public function icon_catalog_endpoint_returns_active_safe_icon_slugs_for_api_clients(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $this->createContentIcon('sparkles');
+
+    IconCatalogItem::query()->create([
+      'source' => 'webblocks-ui',
+      'slug' => 'menu',
+      'label' => 'Menu',
+      'css_class' => 'wb-icon-menu',
+      'contexts' => ['navigation'],
+      'categories' => ['navigation'],
+      'keywords' => ['menu'],
+      'is_active' => true,
+      'sort_order' => 2,
+    ]);
+
+    $this->getJson('/webadmin/api/icon-catalog')
+      ->assertUnauthorized();
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/icon-catalog')
+      ->assertOk()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('context', 'content')
+      ->assertJsonPath('count', 1)
+      ->assertJsonPath('icons.0.slug', 'sparkles')
+      ->assertJsonPath('icons.0.context', 'content')
+      ->assertJsonPath('_links.navigation', '/webadmin/api/icon-catalog?context=navigation');
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/icon-catalog?context=navigation')
+      ->assertOk()
+      ->assertJsonPath('context', 'navigation')
+      ->assertJsonPath('icons.0.slug', 'menu');
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/icon-catalog?context=unknown')
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'invalid_icon_catalog_context')
+      ->assertJsonPath('errors.0.path', 'context');
   }
 
   #[Test]
@@ -731,6 +779,7 @@ class InternalContentApiTest extends TestCase
                         [
                           'type' => 'feature-item',
                           'translations' => [
+                            'eyebrow' => '01',
                             'title' => 'Reusable blocks',
                             'content' => 'Cards keep their catalog icons in preview.',
                           ],
@@ -760,13 +809,16 @@ class InternalContentApiTest extends TestCase
     $pageId = (int) $response->json('data.page.id');
 
     $this->assertSame('sparkles', Block::query()->where('page_id', $pageId)->where('type', 'content_header')->firstOrFail()->setting('icon_slug'));
-    $this->assertSame('accent', Block::query()->where('page_id', $pageId)->where('type', 'feature-item')->firstOrFail()->setting('icon_tone'));
+    $featureBlock = Block::query()->where('page_id', $pageId)->where('type', 'feature-item')->firstOrFail();
+    $this->assertSame('accent', $featureBlock->setting('icon_tone'));
+    $this->assertSame('01', $featureBlock->fresh(['textTranslations'])->publicBadgeLabel());
 
     $this->withHeader('Authorization', 'Bearer secret-token')
       ->get('/webadmin/pages/'.$pageId.'/preview')
       ->assertOk()
       ->assertSee('wb-icon wb-icon-sparkles wb-icon-tone-brand', false)
-      ->assertSee('wb-icon wb-icon-sparkles wb-icon-tone-accent', false);
+      ->assertSee('wb-icon wb-icon-sparkles wb-icon-tone-accent', false)
+      ->assertSee('01', false);
   }
 
   #[Test]

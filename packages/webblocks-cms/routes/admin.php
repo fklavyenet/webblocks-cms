@@ -90,6 +90,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/locales', [InternalContentResourceController::class, 'locales'])->name('locales.index');
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
+    Route::get('/icon-catalog', [InternalContentResourceController::class, 'iconCatalog'])->name('icon-catalog.index');
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/plugins', [InternalPluginController::class, 'index'])->middleware('internal-api.capability:plugins.read')->name('plugins.index');
     Route::post('/plugins/install', [InternalPluginController::class, 'install'])->middleware('internal-api.capability:plugins.install')->name('plugins.install');
