@@ -21,6 +21,7 @@ use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Models\IconCatalogItem;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
@@ -574,6 +575,7 @@ class InternalContentApiTest extends TestCase
   public function content_validate_accepts_supported_icon_tones_and_rejects_invalid_or_unsupported_icon_tones(): void
   {
     $this->createInternalApiToken('secret-token');
+    $this->createContentIcon('sparkles');
 
     $validPayload = $this->validPlanPayload([
       'plan' => [
@@ -695,6 +697,76 @@ class InternalContentApiTest extends TestCase
       ->postJson('/webadmin/api/content/validate', $unsupportedPayload)
       ->assertStatus(422)
       ->assertJsonPath('errors.0.path', 'plan.slots.main.0.children.0.children.0.settings.icon_tone');
+  }
+
+  #[Test]
+  public function content_apply_preserves_public_icon_settings_and_preview_renders_icon_html(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $this->createContentIcon('sparkles');
+
+    $payload = $this->validPlanPayload([
+      'plan' => [
+        'slots' => [
+          'main' => [
+            [
+              'type' => 'section',
+              'children' => [
+                [
+                  'type' => 'container',
+                  'children' => [
+                    [
+                      'type' => 'content_header',
+                      'translations' => [
+                        'title' => 'Launch Notes',
+                      ],
+                      'settings' => [
+                        'icon_slug' => ' Sparkles ',
+                        'icon_tone' => 'brand',
+                      ],
+                    ],
+                    [
+                      'type' => 'feature-grid',
+                      'children' => [
+                        [
+                          'type' => 'feature-item',
+                          'translations' => [
+                            'title' => 'Reusable blocks',
+                            'content' => 'Cards keep their catalog icons in preview.',
+                          ],
+                          'settings' => [
+                            'icon_slug' => 'sparkles',
+                            'icon_tone' => 'accent',
+                          ],
+                        ],
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $response = $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', $payload)
+      ->assertCreated()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.0.settings.icon_slug', 'sparkles')
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.1.children.0.settings.icon_tone', 'accent');
+
+    $pageId = (int) $response->json('data.page.id');
+
+    $this->assertSame('sparkles', Block::query()->where('page_id', $pageId)->where('type', 'content_header')->firstOrFail()->setting('icon_slug'));
+    $this->assertSame('accent', Block::query()->where('page_id', $pageId)->where('type', 'feature-item')->firstOrFail()->setting('icon_tone'));
+
+    $this->withHeader('Authorization', 'Bearer secret-token')
+      ->get('/webadmin/pages/'.$pageId.'/preview')
+      ->assertOk()
+      ->assertSee('wb-icon wb-icon-sparkles wb-icon-tone-brand', false)
+      ->assertSee('wb-icon wb-icon-sparkles wb-icon-tone-accent', false);
   }
 
   #[Test]
@@ -3443,6 +3515,21 @@ class InternalContentApiTest extends TestCase
       'token_hash' => app(CmsApiTokenIssuer::class)->hash($token),
       'token_preview' => app(CmsApiTokenIssuer::class)->preview($token),
       'capabilities' => $capabilities,
+    ]);
+  }
+
+  private function createContentIcon(string $slug): IconCatalogItem
+  {
+    return IconCatalogItem::query()->create([
+      'source' => 'webblocks-ui',
+      'slug' => $slug,
+      'label' => str($slug)->replace('-', ' ')->title()->toString(),
+      'css_class' => 'wb-icon-'.$slug,
+      'contexts' => ['content'],
+      'categories' => ['content'],
+      'keywords' => [$slug],
+      'is_active' => true,
+      'sort_order' => 1,
     ]);
   }
 

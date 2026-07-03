@@ -1,5 +1,7 @@
 @php
-  $children = $block->children->where('status', 'published')->sortBy('sort_order')->values();
+  $children = (bool) $block->getAttribute('render_preview')
+    ? $block->children->sortBy('sort_order')->values()
+    : $block->children->where('status', 'published')->sortBy('sort_order')->values();
   $childSlugs = $children->map(fn ($child) => $child->typeSlug())->values();
   $isContactColumns = $childSlugs->count() === 2
     && $childSlugs->contains('contact-info')

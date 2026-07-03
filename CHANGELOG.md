@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Fix Internal Content API public icon handling so catalog-backed `settings.icon_slug` values are validated, normalized, persisted, and visible in token-authenticated preview HTML for Content Header and Feature Item card blocks.
+
 ## 1.32.217
 
 - Bumped CMS to `1.32.217`.

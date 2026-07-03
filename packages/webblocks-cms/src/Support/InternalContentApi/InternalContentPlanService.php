@@ -26,6 +26,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -83,6 +84,14 @@ class InternalContentPlanService
     'card_footer',
     'sticky-navbar',
     'sidebar-navigation',
+  ];
+
+  private const PUBLIC_ICON_BLOCK_TYPES = [
+    'content_header',
+    'card_header',
+    'column_item',
+    'feature-item',
+    'link-list-item',
   ];
 
   private const DIRECT_MEDIA_KIND_RULES = [
@@ -1777,6 +1786,7 @@ class InternalContentPlanService
     }
 
     $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
+    $settings = $this->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {
@@ -1992,7 +2002,7 @@ class InternalContentPlanService
       return $settings;
     }
 
-    if (! in_array($blockType->slug, ['content_header', 'card_header', 'column_item', 'link-list-item'], true)) {
+    if (! in_array($blockType->slug, self::PUBLIC_ICON_BLOCK_TYPES, true)) {
       $errors[] = $this->error($path.'.settings.icon_tone', 'icon_tone is only supported by public icon-enabled block types.');
       unset($settings['icon_tone']);
 
@@ -2013,6 +2023,39 @@ class InternalContentPlanService
     } else {
       $settings['icon_tone'] = $tone;
     }
+
+    return $settings;
+  }
+
+  private function normalizePublicIconSlugSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
+  {
+    if (! array_key_exists('icon_slug', $settings)) {
+      return $settings;
+    }
+
+    if (! in_array($blockType->slug, self::PUBLIC_ICON_BLOCK_TYPES, true)) {
+      $errors[] = $this->error($path.'.settings.icon_slug', 'icon_slug is only supported by public icon-enabled block types.');
+      unset($settings['icon_slug']);
+
+      return $settings;
+    }
+
+    $slug = app(IconCatalog::class)->normalizeSlug(is_string($settings['icon_slug']) ? $settings['icon_slug'] : null);
+
+    if ($slug === null) {
+      unset($settings['icon_slug']);
+
+      return $settings;
+    }
+
+    if (! app(IconCatalog::class)->isValidSelection($slug, 'content')) {
+      $errors[] = $this->error($path.'.settings.icon_slug', 'icon_slug must be an active content icon catalog slug.');
+      unset($settings['icon_slug']);
+
+      return $settings;
+    }
+
+    $settings['icon_slug'] = $slug;
 
     return $settings;
   }
