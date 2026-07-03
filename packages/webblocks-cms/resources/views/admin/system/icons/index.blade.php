@@ -10,7 +10,7 @@
         'title' => 'Icons',
         'description' => 'Manage the install-level icon catalog used by admin pickers. WebBlocks UI provides the CSS classes and manifest; CMS stores labels, contexts, activity, and sort order.',
         'count' => $totalCount,
-        'actions' => '<a href="'.e($defaultManifest).'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Open Manifest</a>',
+        'actions' => '<form method="POST" action="'.e(route('admin.system.icons.sync-webblocks-ui')).'">'.csrf_field().'<button type="submit" class="wb-btn wb-btn-primary">Sync Manifest</button></form><a href="'.e($defaultManifest).'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Open Manifest</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')

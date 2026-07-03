@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest;
 use WebBlocks\Cms\Models\IconCatalogItem;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -15,7 +16,10 @@ use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class IconCatalogController extends Controller
 {
-  public function __construct(private readonly AdminAuthorization $authorization) {}
+  public function __construct(
+    private readonly AdminAuthorization $authorization,
+    private readonly WebBlocksIconManifestSyncer $iconManifestSyncer,
+  ) {}
 
   public function index(Request $request): View
   {
@@ -83,6 +87,29 @@ class IconCatalogController extends Controller
     return redirect()
       ->to($request->input('_icon_index_url', route('admin.system.icons.index')))
       ->with('status', 'Icon updated successfully.');
+  }
+
+  public function sync(Request $request): RedirectResponse
+  {
+    $this->authorization->abortUnlessSystem($request->user());
+
+    try {
+      $summary = $this->iconManifestSyncer->sync();
+    } catch (Throwable $exception) {
+      return redirect()
+        ->route('admin.system.icons.index')
+        ->withErrors(['icons' => 'Icon manifest sync failed: '.$exception->getMessage()]);
+    }
+
+    return redirect()
+      ->route('admin.system.icons.index')
+      ->with('status', sprintf(
+        'Icon manifest synchronized. Created: %d. Updated: %d. Unchanged: %d. Deactivated: %d.',
+        $summary['created'],
+        $summary['updated'],
+        $summary['unchanged'],
+        $summary['deactivated'],
+      ));
   }
 
   private function tagOptions(): array

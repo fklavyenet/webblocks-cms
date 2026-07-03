@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.220
+
+- Bumped CMS to `1.32.220`.
+- Add a System -> Icons admin action that synchronizes the install icon catalog from the pinned WebBlocks UI manifest, allowing operators to complete newly installed catalogs from the web UI without running the console command.
+
 ## 1.32.219
 
 - Bumped CMS to `1.32.219`.

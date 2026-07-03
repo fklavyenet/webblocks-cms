@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\User;
 use Database\Seeders\IconCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -141,10 +142,59 @@ class IconCatalogManagementTest extends TestCase
   }
 
   #[Test]
-  public function default_icon_sync_manifest_is_pinned_to_webblocks_ui_v2712(): void
+  public function super_admin_can_sync_icons_from_the_manifest_in_the_icons_index(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    Http::fake([
+      WebBlocksIconManifestSyncer::DEFAULT_MANIFEST => Http::response([
+        [
+          'slug' => 'file-text',
+          'label' => 'File Text',
+          'css_class' => 'wb-icon-file-text',
+          'source' => 'webblocks-ui',
+          'categories' => ['content'],
+          'contexts' => ['content'],
+          'keywords' => ['file', 'content'],
+        ],
+        [
+          'slug' => 'pen-tool',
+          'label' => 'Pen Tool',
+          'css_class' => 'wb-icon-pen-tool',
+          'source' => 'webblocks-ui',
+          'categories' => ['content'],
+          'contexts' => ['content'],
+          'keywords' => ['compose', 'editor'],
+        ],
+      ], 200),
+    ]);
+
+    $indexResponse = $this->actingAs($user)->get(route('admin.system.icons.index'));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('Sync Manifest');
+    $indexResponse->assertSee(route('admin.system.icons.sync-webblocks-ui'), false);
+
+    $response = $this->actingAs($user)->post(route('admin.system.icons.sync-webblocks-ui'));
+
+    $response
+      ->assertRedirect(route('admin.system.icons.index'))
+      ->assertSessionHas('status', 'Icon manifest synchronized. Created: 2. Updated: 0. Unchanged: 0. Deactivated: 0.');
+
+    foreach (['file-text', 'pen-tool'] as $slug) {
+      $this->assertTrue(IconCatalogItem::query()
+        ->where('source', 'webblocks-ui')
+        ->where('slug', $slug)
+        ->where('is_active', true)
+        ->exists());
+    }
+  }
+
+  #[Test]
+  public function default_icon_sync_manifest_is_pinned_to_webblocks_ui_v2713(): void
   {
     $this->assertSame(
-      'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.12/packages/webblocks/dist/webblocks-icons.json',
+      'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.13/packages/webblocks/dist/webblocks-icons.json',
       WebBlocksIconManifestSyncer::DEFAULT_MANIFEST,
     );
   }
