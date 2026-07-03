@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\Database\CmsTableCompatibilityViews;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
@@ -29,10 +30,13 @@ class SystemUpdateController extends Controller
     private readonly SystemUpdateRunRetention $runRetention,
     private readonly SystemUpdateSupportReport $supportReport,
     private readonly AdminUpdateIndicator $updateIndicator,
+    private readonly CmsTableCompatibilityViews $compatibilityViews,
   ) {}
 
   public function index(Request $request): View
   {
+    $this->compatibilityViews->dropLegacyUpdateBridgeViews();
+
     $report = $this->systemUpdateInspector->report();
     $checkedAt = session('system_updates_checked_at');
     $pendingUpdate = $this->pendingUpdate();

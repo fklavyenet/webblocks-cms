@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.215
+
+- Bumped CMS to `1.32.215`.
+- Add a bridge for the CMS table-prefix update so installs updating from a pre-prefix release can finish the same update request without a one-time 500 on the System Updates redirect, then clean up the bridge views when the new updates screen loads.
+
 ## 1.32.214
 
 - Bumped CMS to `1.32.214`.
