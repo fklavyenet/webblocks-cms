@@ -7,12 +7,17 @@
     && $childSlugs->contains('contact-info')
     && $childSlugs->contains('contact_form');
   $columnsVariant = $block->variant ?: 'cards';
-  $gridClass = match (true) {
-    $children->count() <= 1 => 'wb-stack wb-gap-3',
-    $children->count() === 2 => 'wb-grid wb-grid-2',
-    $children->count() === 3 => 'wb-grid wb-grid-3',
-    default => 'wb-grid wb-grid-4',
-  };
+  $preferredColumns = isset($preferredColumns) && in_array((string) $preferredColumns, ['2', '3', '4'], true)
+    ? (string) $preferredColumns
+    : null;
+  $gridClass = $preferredColumns !== null && $children->count() > 1
+    ? 'wb-grid wb-grid-'.$preferredColumns
+    : match (true) {
+      $children->count() <= 1 => 'wb-stack wb-gap-3',
+      $children->count() === 2 => 'wb-grid wb-grid-2',
+      $children->count() === 3 => 'wb-grid wb-grid-3',
+      default => 'wb-grid wb-grid-4',
+    };
   $layoutClass = $gridClass;
 @endphp
 

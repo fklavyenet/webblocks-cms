@@ -686,6 +686,47 @@ class PublicHeroBlockRenderingTest extends TestCase
   }
 
   #[Test]
+  public function feature_grid_keeps_the_cards_pattern_on_three_columns_for_larger_sets(): void
+  {
+    $page = $this->pageWithMainSlot();
+    $featureGrid = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'feature-grid',
+      'block_type_id' => $this->blockType('feature-grid', 'Feature Grid', 3)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'title' => 'Core features',
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    foreach (range(1, 4) as $index) {
+      Block::query()->create([
+        'page_id' => $page->id,
+        'parent_id' => $featureGrid->id,
+        'type' => 'feature-item',
+        'block_type_id' => $this->blockType('feature-item', 'Feature Item', 4)->id,
+        'source_type' => 'static',
+        'slot' => 'main',
+        'slot_type_id' => $this->mainSlotType()->id,
+        'sort_order' => $index,
+        'title' => 'Feature '.$index,
+        'content' => 'Feature item '.$index.' keeps the feature grid rhythm.',
+        'status' => 'published',
+        'is_system' => false,
+      ]);
+    }
+
+    $response = $this->get(route('pages.show', 'about'));
+
+    $response->assertOk();
+    $response->assertSee('wb-grid wb-grid-3', false);
+    $response->assertDontSee('wb-grid wb-grid-4', false);
+  }
+
+  #[Test]
   public function cta_block_renders_promo_markup_with_managed_buttons(): void
   {
     $page = $this->pageWithMainSlot();

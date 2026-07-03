@@ -9,8 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.221
+
+- Bumped CMS to `1.32.221`.
 - Fix the WebBlocks Commerce plugin setup migration so it references prefixed CMS tables such as `wbcms_sites`, `wbcms_media`, and `wbcms_block_types` on current installs.
 - Add the published source page body class to staged update previews so site CSS scoped to classes such as `wb-page-home` applies while reviewing a draft update.
+- Keep Feature Grid public cards on the three-column cards rhythm even when rendering four or more Feature Item children, matching existing staged homepage card layouts while preserving the generic Columns fallback behavior.
 
 ## 1.32.220
 

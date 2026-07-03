@@ -9,4 +9,4 @@
     $delegate->variant = 'cards';
 @endphp
 
-@include('webblocks-cms::pages.partials.blocks.columns', ['block' => $delegate])
+@include('webblocks-cms::pages.partials.blocks.columns', ['block' => $delegate, 'preferredColumns' => '3'])
