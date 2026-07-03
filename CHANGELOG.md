@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Fix the WebBlocks Commerce plugin setup migration so it references prefixed CMS tables such as `wbcms_sites`, `wbcms_media`, and `wbcms_block_types` on current installs.
+- Add the published source page body class to staged update previews so site CSS scoped to classes such as `wb-page-home` applies while reviewing a draft update.
+
 ## 1.32.220
 
 - Bumped CMS to `1.32.220`.
@@ -17,7 +20,6 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 ## 1.32.219
 
 - Bumped CMS to `1.32.219`.
-- Add the published source page body class to staged update previews so site CSS scoped to classes such as `wb-page-home` applies while reviewing a draft update.
 
 ## 1.32.218
 
