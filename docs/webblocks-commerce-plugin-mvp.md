@@ -163,7 +163,7 @@ The plugin definition should follow the current plugin registry shape:
 ```php
 PluginDefinition::make('webblocks-commerce')
   ->label('WebBlocks Commerce')
-  ->version('0.1.0')
+  ->version('0.1.1')
   ->provider(WebBlocksCommercePlugin::class)
   ->description('Simple product sales and hosted checkout for WebBlocks CMS sites.')
   ->requiresCms('^1.32')

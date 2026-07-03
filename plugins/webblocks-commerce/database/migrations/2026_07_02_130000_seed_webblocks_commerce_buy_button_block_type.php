@@ -3,16 +3,19 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 return new class extends Migration
 {
   public function up(): void
   {
-    if (! Schema::hasTable('block_types')) {
+    $table = CmsTable::name('block_types');
+
+    if (! Schema::hasTable($table)) {
       return;
     }
 
-    DB::table('block_types')->updateOrInsert(
+    DB::table($table)->updateOrInsert(
       ['slug' => 'webblocks-commerce-buy-button'],
       [
         'name' => 'Commerce Buy Button',
@@ -31,11 +34,13 @@ return new class extends Migration
 
   public function down(): void
   {
-    if (! Schema::hasTable('block_types')) {
+    $table = CmsTable::name('block_types');
+
+    if (! Schema::hasTable($table)) {
       return;
     }
 
-    $blockTypeId = DB::table('block_types')->where('slug', 'webblocks-commerce-buy-button')->value('id');
+    $blockTypeId = DB::table($table)->where('slug', 'webblocks-commerce-buy-button')->value('id');
 
     if ($blockTypeId === null) {
       return;
@@ -45,6 +50,6 @@ return new class extends Migration
       return;
     }
 
-    DB::table('block_types')->where('id', $blockTypeId)->delete();
+    DB::table($table)->where('id', $blockTypeId)->delete();
   }
 };

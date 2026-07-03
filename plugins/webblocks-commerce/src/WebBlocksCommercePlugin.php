@@ -17,7 +17,7 @@ class WebBlocksCommercePlugin
   {
     return PluginDefinition::make(self::HANDLE)
       ->label('WebBlocks Commerce')
-      ->version('0.1.0')
+      ->version('0.1.1')
       ->provider(self::class)
       ->description('Simple product sales and hosted checkout foundations for WebBlocks CMS sites.')
       ->requiresCms('^1.32')

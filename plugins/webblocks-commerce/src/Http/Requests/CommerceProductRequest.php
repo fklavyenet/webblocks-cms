@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 class CommerceProductRequest extends FormRequest
 {
@@ -22,7 +23,7 @@ class CommerceProductRequest extends FormRequest
     $productId = $this->productRouteId();
 
     return [
-      'site_id' => ['nullable', 'integer', 'exists:sites,id'],
+      'site_id' => ['nullable', 'integer', 'exists:'.CmsTable::name('sites').',id'],
       'title' => ['required', 'string', 'max:255'],
       'slug' => [
         'required',

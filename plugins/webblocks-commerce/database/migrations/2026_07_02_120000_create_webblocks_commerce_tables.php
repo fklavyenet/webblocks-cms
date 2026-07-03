@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\Database\CmsTable;
 
 return new class extends Migration
 {
@@ -11,8 +12,8 @@ return new class extends Migration
     if (! Schema::hasTable('webblocks_commerce_products')) {
       Schema::create('webblocks_commerce_products', function (Blueprint $table): void {
         $table->id();
-        $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
-        $table->foreignId('image_media_id')->nullable()->constrained('media')->nullOnDelete();
+        $table->foreignId('site_id')->nullable()->constrained(CmsTable::name('sites'))->nullOnDelete();
+        $table->foreignId('image_media_id')->nullable()->constrained(CmsTable::name('media'))->nullOnDelete();
         $table->string('title');
         $table->string('slug')->unique();
         $table->text('description')->nullable();
@@ -32,7 +33,7 @@ return new class extends Migration
     if (! Schema::hasTable('webblocks_commerce_orders')) {
       Schema::create('webblocks_commerce_orders', function (Blueprint $table): void {
         $table->id();
-        $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
+        $table->foreignId('site_id')->nullable()->constrained(CmsTable::name('sites'))->nullOnDelete();
         $table->string('order_number', 40)->unique();
         $table->string('customer_email')->nullable();
         $table->string('status', 32)->default('pending');

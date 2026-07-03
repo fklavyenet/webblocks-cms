@@ -23,6 +23,7 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommercePayment;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceWebhookEvent;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -52,7 +53,7 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.1.0', $plugin->versionText());
+    $this->assertSame('0.1.1', $plugin->versionText());
     $this->assertSame('^1.32', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
@@ -169,7 +170,7 @@ class WebBlocksCommercePluginTest extends TestCase
       'payload_digest',
       'status',
     ]));
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas(CmsTable::name('block_types'), [
       'slug' => 'webblocks-commerce-buy-button',
       'name' => 'Commerce Buy Button',
       'category' => 'commerce',
@@ -209,7 +210,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $result = app(PluginMigrationRunner::class)->run($plugin);
 
     $this->assertTrue($result['ran']);
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas(CmsTable::name('block_types'), [
       'slug' => 'webblocks-commerce-buy-button',
       'name' => 'Commerce Buy Button',
     ]);
@@ -259,7 +260,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $setup->assertOk();
     $setup->assertJsonPath('setup.ran', true);
     $this->assertTrue(Schema::hasTable('webblocks_commerce_products'));
-    $this->assertDatabaseHas('block_types', [
+    $this->assertDatabaseHas(CmsTable::name('block_types'), [
       'slug' => 'webblocks-commerce-buy-button',
       'name' => 'Commerce Buy Button',
     ]);
@@ -310,7 +311,7 @@ class WebBlocksCommercePluginTest extends TestCase
       ->postJson('/webadmin/api/content/apply', $this->commerceBuyButtonPlanPayload($productId));
 
     $apply->assertCreated();
-    $this->assertDatabaseHas('blocks', [
+    $this->assertDatabaseHas(CmsTable::name('blocks'), [
       'type' => 'webblocks-commerce-buy-button',
       'status' => 'draft',
     ]);
@@ -1057,8 +1058,8 @@ class WebBlocksCommercePluginTest extends TestCase
     $root = storage_path('framework/testing/plugins/'.str()->uuid());
     config()->set('webblocks-plugins.install.root', $root);
 
-    File::ensureDirectoryExists($root.'/webblocks-commerce/0.1.0');
-    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.1.0');
+    File::ensureDirectoryExists($root.'/webblocks-commerce/0.1.1');
+    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.1.1');
 
     $this->app->forgetInstance(PluginRegistry::class);
   }
