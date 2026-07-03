@@ -95,8 +95,8 @@ class BlockRequest extends FormRequest
     $isCardRegion = in_array($selectedBlockType?->slug, ['card_header', 'card_body', 'card_footer'], true);
     $isPluginBlock = $selectedBlockType?->slug !== null
       && app(PluginBlockCatalog::class)->isEnabledCatalogSlug($selectedBlockType->slug);
-    $supportsPublicIcon = in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'link-list-item'], true);
-    $supportsPublicBadgeLabel = in_array($selectedBlockType?->slug, ['content_header', 'column_item', 'link-list-item'], true);
+    $supportsPublicIcon = in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'feature-item', 'link-list-item'], true);
+    $supportsPublicBadgeLabel = in_array($selectedBlockType?->slug, ['content_header', 'column_item', 'feature-item', 'link-list-item'], true);
     $isStatCard = $selectedBlockType?->slug === 'stat-card';
     $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
     $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
@@ -222,6 +222,10 @@ class BlockRequest extends FormRequest
       'feature_items.*.title' => ['nullable', 'string', 'max:255'],
       'feature_items.*.content' => ['nullable', 'string'],
       'feature_items.*.url' => ['nullable', 'string', 'max:2048'],
+      'feature_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
+      'feature_items.*.icon_tone' => ['nullable', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
+      'feature_items.*.badge_label' => ['nullable', 'string', 'max:255'],
+      'feature_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'feature_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
       'feature_items.*.is_system' => ['nullable', 'boolean'],
       'feature_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
@@ -391,7 +395,7 @@ class BlockRequest extends FormRequest
         }
       }
 
-      if (in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'link-list-item'], true)) {
+      if (in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'feature-item', 'link-list-item'], true)) {
         $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon_slug'));
 
         if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
@@ -513,6 +517,12 @@ class BlockRequest extends FormRequest
 
           if (blank($featureItem['content'] ?? null)) {
             $validator->errors()->add("feature_items.{$index}.content", 'Feature item text is required.');
+          }
+
+          $icon = app(IconCatalog::class)->normalizeSlug($featureItem['icon_slug'] ?? null);
+
+          if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
+            $validator->errors()->add("feature_items.{$index}.icon_slug", 'Select an active content icon from the catalog.');
           }
         }
       }
@@ -1116,7 +1126,7 @@ class BlockRequest extends FormRequest
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
 
-        if ($blockType?->slug === 'column_item' && ! $isTranslatedStructuredChildEdit) {
+        if (in_array($blockType?->slug, ['column_item', 'feature-item'], true) && ! $isTranslatedStructuredChildEdit) {
           $settings = $this->applyPublicIconBadgeSettings($settings, $data);
         }
 
@@ -1126,7 +1136,7 @@ class BlockRequest extends FormRequest
         $structuredContent = trim((string) ($data['content'] ?? ''));
 
         $data['title'] = $structuredTitle !== '' ? $structuredTitle : null;
-        $data['eyebrow'] = $blockType?->slug === 'column_item' && $structuredBadgeLabel !== ''
+        $data['eyebrow'] = in_array($blockType?->slug, ['column_item', 'feature-item'], true) && $structuredBadgeLabel !== ''
           ? $structuredBadgeLabel
           : null;
         $data['subtitle'] = $structuredSubtitle !== '' ? $structuredSubtitle : null;
@@ -1137,7 +1147,7 @@ class BlockRequest extends FormRequest
         $data['asset_id'] = null;
         $data['variant'] = null;
         $data['meta'] = null;
-        $data['settings'] = $blockType?->slug === 'column_item' && $settings !== []
+        $data['settings'] = in_array($blockType?->slug, ['column_item', 'feature-item'], true) && $settings !== []
           ? json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== ''), JSON_UNESCAPED_SLASHES)
           : null;
 

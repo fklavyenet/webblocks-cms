@@ -315,7 +315,7 @@ Public pages now use explicit layout composition modes:
 - CMS block slug: `feature-grid`
 - Admin fields: `title`, `subtitle`, `content`, repeatable `feature_items`
 - Translatable fields: `title`, `subtitle`, `content`, child `feature-item` text
-- Shared fields: child ordering, child links, structure
+- Shared fields: child ordering, child links, child icon slug, child icon tone, child badge tone, structure
 - Intended WebBlocks UI output: the same public card-grid structure used by `columns.variant = cards`
 - Current implementation: acceptable as a compatibility alias
 - Notes for later renderer/admin improvements: keep Feature Grid source-backed and documented, but be explicit that it currently delegates to the shared Columns cards renderer instead of owning distinct feature-grid markup.
@@ -323,9 +323,9 @@ Public pages now use explicit layout composition modes:
 ### `feature-item`
 
 - CMS block slug: `feature-item`
-- Admin fields: `title`, `url`, `content`
-- Translatable fields: `title`, `content`
-- Shared fields: `url`
+- Admin fields: `title`, `url`, `content`, `icon_slug`, `icon_tone`, `badge_label`, `badge_tone`
+- Translatable fields: `title`, `eyebrow` as badge label, `content`
+- Shared fields: `url`, `settings.icon_slug`, `settings.icon_tone`, `settings.badge_tone`
 - Intended WebBlocks UI output: the same card-style item shell used by `column_item` in the Columns cards presentation
 - Current implementation: acceptable as a compatibility alias
 - Notes for later renderer/admin improvements: keep Feature Item documented as a source-backed supporting child contract while it still delegates to the shared Column Item cards presentation.

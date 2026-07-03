@@ -1,7 +1,7 @@
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Feature title and text are translated per locale. Optional link stays shared across locales.</div>
+            <div>Feature title, text, and badge label are translated per locale. Optional link, icon, and tones stay shared across locales.</div>
         </div>
     @endif
 
@@ -21,4 +21,6 @@
         <label for="content">Feature Text</label>
         <textarea id="content" name="content" class="wb-textarea" rows="6" required>{{ old('content', $block->content) }}</textarea>
     </div>
+
+    @include('webblocks-cms::admin.blocks.types.partials.icon-badge-fields')
 </div>

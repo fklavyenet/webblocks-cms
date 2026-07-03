@@ -962,6 +962,10 @@ The renderer replicates the block, filters children to `feature-item` and legacy
 ```html
 <div class="wb-card">
   <div class="wb-card-body wb-stack wb-gap-2">
+    <div class="wb-cms-public-kicker">
+      <i class="wb-icon wb-icon-sparkles wb-icon-tone-brand" aria-hidden="true"></i>
+      <span class="wb-badge wb-badge-info">Badge</span>
+    </div>
     <strong>Feature title</strong>
     <p class="wb-m-0">Feature copy.</p>
   </div>
@@ -970,12 +974,16 @@ The renderer replicates the block, filters children to `feature-item` and legacy
 
 ### Main CSS / WebBlocks UI classes
 
-Delegates to Column Item cards variant: `wb-card`, `wb-card-body`, `wb-stack`, `wb-gap-2`, `wb-m-0`.
+Delegates to Column Item cards variant: `wb-card`, `wb-card-body`, `wb-stack`, `wb-gap-2`, `wb-cms-public-kicker`, optional `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, optional `wb-badge`, `wb-m-0`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
+| settings.icon_slug | active content icon catalog slug | Renders a decorative `<i class="wb-icon wb-icon-{slug}" aria-hidden="true">`; inactive or unknown slugs render nothing. |
+| settings.icon_tone | default/soft/brand/accent/highlight/bold/quiet | Adds `wb-icon-tone-{tone}` for non-default visual tones when an active icon renders; unknown tones and missing icons produce no tone class. |
+| eyebrow / badge_label | text | Renders escaped badge text in the kicker. |
+| settings.badge_tone | neutral/info/success/warning/danger | Adds the matching `wb-badge-{tone}` class; unknown values fall back to neutral. |
 | renderer behavior | delegated alias | Delegates to an existing renderer path; exact setting map follows the delegate where visible. |
 | preferred new pages | n/a | Prefer the canonical block named in Notes instead of this alias/compatibility block. |
 

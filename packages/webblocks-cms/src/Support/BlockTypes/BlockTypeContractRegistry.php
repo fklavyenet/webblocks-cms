@@ -548,12 +548,13 @@ class BlockTypeContractRegistry
         'known_gaps' => ['Feature Grid remains a first-class compatibility alias over the Columns cards presentation path.'],
       ],
       'feature-item' => [
-        'admin_form_fields' => ['Feature Title', 'Optional Link', 'Feature Text'],
-        'translatable_fields' => ['title', 'content'],
-        'shared_settings_fields' => ['url'],
+        'admin_form_fields' => ['Feature Title', 'Optional Link', 'Feature Text', 'Icon', 'Icon tone', 'Badge label', 'Badge tone'],
+        'translatable_fields' => ['title', 'eyebrow as badge_label', 'content'],
+        'shared_settings_fields' => ['url', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone'],
         'storage_fields' => [
-          'Translated feature title and content live in block text translation rows.',
+          'Translated feature title, badge label, and content live in block text translation rows.',
           'Shared optional link URL stays on the canonical block url field.',
+          'Shared active catalog icon slug, icon tone, and badge tone stay in block settings.',
         ],
         'media_relationship_fields' => ['Parent `feature-grid` block is the primary relationship context.'],
         'child_container_behavior' => ['Not a container in the current contract. Public rendering delegates to the shared column-item cards presentation.'],

@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.217
+
+- Bumped CMS to `1.32.217`.
+- Add catalog-backed icon, icon tone, badge label, and badge tone support to Feature Item blocks so Feature Grid cards can use reusable CMS-native iconography.
+
 ## 1.32.216
 
 - Bumped CMS to `1.32.216`.

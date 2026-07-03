@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
+use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PublicIconBadgeSupportTest extends TestCase
@@ -55,7 +56,7 @@ class PublicIconBadgeSupportTest extends TestCase
     $this->assertSame('sparkles', $block->setting('icon_slug'));
     $this->assertSame('brand', $block->setting('icon_tone'));
     $this->assertSame('success', $block->setting('badge_tone'));
-    $this->assertDatabaseHas('block_text_translations', [
+    $this->assertDatabaseHas(CmsTable::name('block_text_translations'), [
       'block_id' => $block->id,
       'locale_id' => $this->defaultLocale()->id,
       'eyebrow' => 'New <Badge>',
@@ -161,6 +162,12 @@ class PublicIconBadgeSupportTest extends TestCase
         'content' => 'Build faster.',
         'settings' => json_encode(['icon_slug' => 'sparkles', 'icon_tone' => 'accent'], JSON_UNESCAPED_SLASHES),
       ]),
+      'feature-item' => new Block([
+        'type' => 'feature-item',
+        'title' => 'Docs',
+        'content' => 'Build faster.',
+        'settings' => json_encode(['icon_slug' => 'sparkles', 'icon_tone' => 'accent'], JSON_UNESCAPED_SLASHES),
+      ]),
       'link-list-item' => new Block([
         'type' => 'link-list-item',
         'title' => 'Docs',
@@ -240,6 +247,56 @@ class PublicIconBadgeSupportTest extends TestCase
 
     $this->assertStringNotContainsString('wb-icon-sparkles', $html);
     $this->assertStringNotContainsString('wb-icon-tone-brand', $html);
+  }
+
+  #[Test]
+  public function feature_item_form_persists_shared_icon_and_translated_badge_label(): void
+  {
+    $this->seedFoundation();
+    $this->createIcon('sparkles', true);
+
+    $user = User::factory()->superAdmin()->create();
+    [$page, $pageSlot, $slotType] = $this->pageWithSlot();
+    $featureGridType = BlockType::query()->where('slug', 'feature-grid')->firstOrFail();
+    $featureItemType = BlockType::query()->where('slug', 'feature-item')->firstOrFail();
+    $featureGrid = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $featureGridType->id,
+      'type' => 'feature-grid',
+      'title' => 'Features',
+      'status' => 'published',
+      'sort_order' => 0,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'parent_id' => $featureGrid->id,
+      'block_type_id' => $featureItemType->id,
+      'sort_order' => 0,
+      'title' => 'Quiz reports',
+      'content' => 'Understand classroom progress.',
+      'url' => '/reports',
+      'icon_slug' => 'sparkles',
+      'icon_tone' => 'brand',
+      'badge_label' => 'Popular',
+      'badge_tone' => 'info',
+      'status' => 'published',
+      '_slot_block_mode' => 'create',
+    ]);
+
+    $featureItem = Block::query()->where('type', 'feature-item')->firstOrFail();
+
+    $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+    $this->assertSame('sparkles', $featureItem->setting('icon_slug'));
+    $this->assertSame('brand', $featureItem->setting('icon_tone'));
+    $this->assertSame('info', $featureItem->setting('badge_tone'));
+    $this->assertDatabaseHas(CmsTable::name('block_text_translations'), [
+      'block_id' => $featureItem->id,
+      'locale_id' => $this->defaultLocale()->id,
+      'eyebrow' => 'Popular',
+    ]);
   }
 
   #[Test]

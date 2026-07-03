@@ -1,7 +1,7 @@
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Feature grid intro copy is translated per locale. Child feature item structure and optional links remain shared.</div>
+            <div>Feature grid intro copy is translated per locale. Child feature item structure, optional links, icons, and tones remain shared.</div>
         </div>
     @endif
 
