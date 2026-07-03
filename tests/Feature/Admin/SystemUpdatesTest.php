@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\MessageBag;
 use Illuminate\Support\Str;
+use Illuminate\Support\ViewErrorBag;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Process\Process;
@@ -550,6 +552,84 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('<h2 class="wb-card-title">Update History</h2>', false);
     $response->assertSee('Historical failed update');
     $response->assertSee('1.32.80 → '.WebBlocks::version());
+  }
+
+  #[Test]
+  public function verified_post_apply_failed_run_is_reconciled_on_updates_screen(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    SystemUpdateRun::query()->create([
+      'from_version' => '1.32.214',
+      'to_version' => WebBlocks::version(),
+      'status' => SystemUpdateRun::STATUS_FAILED,
+      'summary' => 'The update failed. Review the latest update log for details.',
+      'output' => implode(PHP_EOL, [
+        'Starting update from 1.32.214 to '.WebBlocks::version().'.',
+        'Post-update version verified as '.WebBlocks::version().' from canonical WebBlocks version source.',
+        'Update failed: The update failed. Review the latest update log for details.',
+      ]),
+      'started_at' => now()->subMinutes(2),
+      'finished_at' => now()->subMinute(),
+      'duration_ms' => 1000,
+      'triggered_by_user_id' => $user->id,
+    ]);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $response = $this->actingAs($user)
+      ->withSession([
+        'errors' => (new ViewErrorBag)->put('default', new MessageBag([
+          'system_update' => ['The update failed. Review the latest update log for details.'],
+        ])),
+      ])
+      ->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('The update reached '.WebBlocks::version().'; a post-apply finalization warning was reconciled.');
+    $response->assertDontSee('Update Failed');
+    $response->assertSee('success with warnings');
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+
+    $this->assertSame(SystemUpdateRun::STATUS_SUCCESS_WITH_WARNINGS, $run->status);
+    $this->assertSame('Updated to '.WebBlocks::version().'; a post-apply finalization warning was reconciled.', $run->summary);
+    $this->assertSame(1, $run->warning_count);
+    $this->assertStringContainsString('Post-apply reconciliation: active CMS code still reports '.WebBlocks::version(), (string) $run->output);
+  }
+
+  #[Test]
+  public function unverified_failed_run_is_not_reconciled_on_updates_screen(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    SystemUpdateRun::query()->create([
+      'from_version' => '1.32.214',
+      'to_version' => WebBlocks::version(),
+      'status' => SystemUpdateRun::STATUS_FAILED,
+      'summary' => 'The update failed before version verification.',
+      'output' => 'Update failed: Command failed: php artisan config:clear',
+      'started_at' => now()->subMinutes(2),
+      'finished_at' => now()->subMinute(),
+      'duration_ms' => 1000,
+      'triggered_by_user_id' => $user->id,
+    ]);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $response = $this->actingAs($user)
+      ->withSession([
+        'errors' => (new ViewErrorBag)->put('default', new MessageBag([
+          'system_update' => ['The update failed before version verification.'],
+        ])),
+      ])
+      ->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertDontSee('The update reached '.WebBlocks::version().'; a post-apply finalization warning was reconciled.');
+    $response->assertDontSee('success with warnings');
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+
+    $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
+    $this->assertSame('The update failed before version verification.', $run->summary);
+    $this->assertStringNotContainsString('Post-apply reconciliation:', (string) $run->output);
   }
 
   #[Test]

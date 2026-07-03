@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.216
+
+- Bumped CMS to `1.32.216`.
+- Reconcile verified post-apply System Update failures as success-with-warnings when the active CMS code already reports the target version, preventing a stale red failure banner after a completed update.
+
 ## 1.32.215
 
 - Bumped CMS to `1.32.215`.

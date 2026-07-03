@@ -8,7 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\MessageBag;
 use Illuminate\Support\Str;
+use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
@@ -21,6 +23,7 @@ use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateSupportReport;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemUpdateController extends Controller
 {
@@ -36,6 +39,7 @@ class SystemUpdateController extends Controller
   public function index(Request $request): View
   {
     $this->compatibilityViews->dropLegacyUpdateBridgeViews();
+    $this->reconcileVerifiedPostApplyFailure();
 
     $report = $this->systemUpdateInspector->report();
     $checkedAt = session('system_updates_checked_at');
@@ -171,6 +175,81 @@ class SystemUpdateController extends Controller
     }
 
     return SystemUpdateRun::query()->with('triggeredBy')->latest()->first();
+  }
+
+  private function reconcileVerifiedPostApplyFailure(): void
+  {
+    if (! Schema::hasTable('wbcms_system_update_runs')) {
+      return;
+    }
+
+    $run = SystemUpdateRun::query()->latest()->first();
+
+    if (! $run || $run->status !== SystemUpdateRun::STATUS_FAILED) {
+      return;
+    }
+
+    $currentVersion = WebBlocks::version();
+
+    if ((string) $run->to_version !== $currentVersion) {
+      return;
+    }
+
+    $output = (string) $run->output;
+
+    if (! str_contains($output, 'Post-update version verified as '.$currentVersion.' from canonical WebBlocks version source.')) {
+      return;
+    }
+
+    $marker = 'Post-apply reconciliation: active CMS code still reports '.$currentVersion.'; the previous failure was recorded after the target version had been verified.';
+    $lines = trim($output) === '' ? [] : [$output];
+
+    if (! str_contains($output, $marker)) {
+      $lines[] = $marker;
+    }
+
+    $run->forceFill([
+      'status' => SystemUpdateRun::STATUS_SUCCESS_WITH_WARNINGS,
+      'summary' => 'Updated to '.$currentVersion.'; a post-apply finalization warning was reconciled.',
+      'output' => implode(PHP_EOL, $lines),
+      'warning_count' => max(1, (int) $run->warning_count),
+      'finished_at' => $run->finished_at ?? now(),
+    ])->save();
+
+    $this->forgetSystemUpdateErrorFlash();
+
+    if (! session()->has('status')) {
+      session()->flash('status', 'The update reached '.$currentVersion.'; a post-apply finalization warning was reconciled.');
+    }
+  }
+
+  private function forgetSystemUpdateErrorFlash(): void
+  {
+    $errors = session('errors');
+
+    if (! $errors instanceof ViewErrorBag || ! $errors->hasBag('default')) {
+      return;
+    }
+
+    $messages = $errors->getBag('default')->getMessages();
+    unset($messages['system_update']);
+
+    if ($messages === []) {
+      session()->forget('errors');
+
+      return;
+    }
+
+    $replacement = new ViewErrorBag;
+
+    foreach ($errors->getBags() as $name => $bag) {
+      $replacement->put(
+        $name,
+        $name === 'default' ? new MessageBag($messages) : $bag
+      );
+    }
+
+    session()->put('errors', $replacement);
   }
 
   private function mainLatestUpdateRun(?SystemUpdateRun $run, array $report): ?SystemUpdateRun
