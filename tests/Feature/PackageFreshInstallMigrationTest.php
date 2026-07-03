@@ -180,6 +180,23 @@ class PackageFreshInstallMigrationTest extends TestCase
   }
 
   #[Test]
+  public function fresh_install_schema_uses_short_names_for_long_prefixed_mysql_indexes(): void
+  {
+    $migration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/fresh/2026_05_20_120000_create_webblocks_cms_fresh_install_schema.php'));
+    $galleryMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/2026_05_15_120000_create_block_gallery_item_translations_table.php'));
+    $activityLogMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/2026_06_30_120000_create_cms_api_token_activity_logs_table.php'));
+    $activityLogUpdateMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/updates/2026_06_30_120000_ensure_cms_api_token_activity_logs_table.php'));
+
+    $this->assertStringContainsString("\$table->unique(['block_media_id', 'locale_id'], 'wbcms_bg_item_tr_media_locale_unique');", $migration);
+    $this->assertStringContainsString("\$table->index(['cms_api_token_id', 'occurred_at'], 'wbcms_api_token_activity_token_time_idx');", $migration);
+    $this->assertStringContainsString("\$table->unique(['block_media_id', 'locale_id'], 'wbcms_bg_item_tr_media_locale_unique');", $galleryMigration);
+    $this->assertStringContainsString("\$table->index(['cms_api_token_id', 'occurred_at'], 'wbcms_api_token_activity_token_time_idx');", $activityLogMigration);
+    $this->assertStringContainsString("\$table->index(['cms_api_token_id', 'occurred_at'], 'wbcms_api_token_activity_token_time_idx');", $activityLogUpdateMigration);
+    $this->assertStringNotContainsString('wbcms_block_gallery_item_translations_block_media_id_locale_id_unique', $migration);
+    $this->assertStringNotContainsString('wbcms_cms_api_token_activity_logs_cms_api_token_id_occurred_at_index', $migration);
+  }
+
+  #[Test]
   public function fresh_install_schema_keeps_site_variables_runtime_columns_and_query_contract(): void
   {
     $this->assertTrue(Schema::hasColumn('wbcms_sites', 'contact_recipient_email'));

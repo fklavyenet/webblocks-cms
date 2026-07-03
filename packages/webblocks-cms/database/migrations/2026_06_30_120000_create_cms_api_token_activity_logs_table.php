@@ -21,7 +21,7 @@ return new class extends Migration
       $table->string('user_agent', 255)->nullable();
       $table->timestamps();
 
-      $table->index(['cms_api_token_id', 'occurred_at']);
+      $table->index(['cms_api_token_id', 'occurred_at'], 'wbcms_api_token_activity_token_time_idx');
     });
   }
 

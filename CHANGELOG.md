@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.222
+
+- Bumped CMS to `1.32.222`.
+- Use explicit short MySQL index names for gallery item translations and CMS API token activity logs in package fresh installs and package migrations.
+
 ## 1.32.221
 
 - Bumped CMS to `1.32.221`.

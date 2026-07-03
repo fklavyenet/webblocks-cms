@@ -559,7 +559,7 @@ return new class extends Migration
       $table->string('overlay_title')->nullable();
       $table->text('overlay_text')->nullable();
       $table->timestamps();
-      $table->unique(['block_media_id', 'locale_id']);
+      $table->unique(['block_media_id', 'locale_id'], 'wbcms_bg_item_tr_media_locale_unique');
     });
 
     $this->createTableIfMissing('wbcms_navigation_items', function (Blueprint $table): void {
@@ -741,7 +741,7 @@ return new class extends Migration
       $table->string('user_agent', 255)->nullable();
       $table->timestamps();
 
-      $table->index(['cms_api_token_id', 'occurred_at']);
+      $table->index(['cms_api_token_id', 'occurred_at'], 'wbcms_api_token_activity_token_time_idx');
     });
 
     $this->createTableIfMissing('wbcms_system_backups', function (Blueprint $table): void {

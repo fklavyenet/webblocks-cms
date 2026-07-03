@@ -18,7 +18,7 @@ return new class extends Migration
       $table->text('overlay_text')->nullable();
       $table->timestamps();
 
-      $table->unique(['block_media_id', 'locale_id']);
+      $table->unique(['block_media_id', 'locale_id'], 'wbcms_bg_item_tr_media_locale_unique');
     });
   }
 
