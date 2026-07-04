@@ -297,7 +297,7 @@ Homepage conversion work becomes easier and safer if CMS provides:
 - First-class staged Shared Slot workflows, or clearer documentation for create -> publish blocks -> assign.
 - Renderability summaries for Shared Slot block creation and publication.
 - More consistent preservation of nested link/button fields during Shared Slot block tree creation.
-- Structured partial-apply diagnostics for `promote_staged_page_update`.
+- Richer partial-apply diagnostics for `promote_staged_page_update` beyond the baseline `plan.apply` JSON error returned when transactional writes fail.
 - A repair or cleanup action when a staged promote updates public content but leaves the staged update in draft.
 - Preview tooling that can render a page with alternate Shared Slot assignments before public assignment.
 

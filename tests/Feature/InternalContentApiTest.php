@@ -35,9 +35,15 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
+use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
+use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
+use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class InternalContentApiTest extends TestCase
@@ -1758,6 +1764,69 @@ class InternalContentApiTest extends TestCase
       ])
       ->assertStatus(422)
       ->assertJsonFragment(['message' => 'Only draft staged updates can be changed or promoted.']);
+  }
+
+  #[Test]
+  public function staged_update_promote_returns_plan_error_when_apply_write_fails(): void
+  {
+    $this->createInternalApiToken('secret-token', [
+      CmsApiTokenCapabilities::CONTENT_APPLY,
+      CmsApiTokenCapabilities::CONTENT_VALIDATE,
+      CmsApiTokenCapabilities::CONTENT_PUBLISH,
+    ]);
+    [$page] = $this->createDraftPageWithMainAndSharedChrome('/docs');
+    $page->forceFill([
+      'status' => Page::STATUS_PUBLISHED,
+      'published_at' => now(),
+    ])->save();
+
+    $createResponse = $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'mode' => 'create_staged_update_for_published_page',
+          'site' => 'default',
+          'locale' => 'en',
+          'page' => ['id' => $page->id],
+          'expected_source_path' => '/docs',
+          'managed_slots' => ['main'],
+        ],
+      ])
+      ->assertCreated();
+
+    $stagedPageId = $createResponse->json('data.staged_page.id');
+
+    $deletionManager = \Mockery::mock(BlockDeletionManager::class);
+    $deletionManager->shouldReceive('recursiveDeleteOrder')
+      ->once()
+      ->andThrow(new \RuntimeException('Simulated promote write failure.'));
+    $service = new InternalContentPlanService(
+      $this->app->make(BlockPayloadWriter::class),
+      $deletionManager,
+      $this->app->make(PageRevisionManager::class),
+      $this->app->make(PageLayoutSlotSyncer::class),
+      $this->app->make(InternalContentApiPresenter::class),
+      $this->app->make(InternalContentApiOperations::class),
+    );
+
+    $result = $service->apply([
+      'plan' => [
+        'mode' => 'promote_staged_page_update',
+        'staged_page_id' => $stagedPageId,
+        'expected_source_page_id' => $page->id,
+        'expected_source_path' => '/docs',
+        'promote_slots' => ['main'],
+      ],
+    ]);
+
+    $this->assertFalse($result->ok);
+    $this->assertSame('plan.apply', $result->errors[0]['path'] ?? null);
+    $this->assertSame(
+      'Content apply failed while writing the normalized plan. Check application logs for the exception details.',
+      $result->errors[0]['message'] ?? null,
+    );
+
+    $this->assertSame(Page::STATUS_DRAFT, Page::query()->findOrFail($stagedPageId)->status);
+    $this->assertSame(Page::STATUS_PUBLISHED, $page->fresh()->status);
   }
 
   #[Test]

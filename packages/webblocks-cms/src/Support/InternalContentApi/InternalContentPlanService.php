@@ -477,6 +477,16 @@ class InternalContentPlanService
         errors: [$this->error('plan', $exception->getMessage())],
         renderability: $validated->renderability,
       );
+    } catch (\Throwable $exception) {
+      report($exception);
+
+      return new InternalContentPlanResult(
+        ok: false,
+        normalizedPlan: $plan,
+        warnings: $validated->warnings,
+        errors: [$this->error('plan.apply', 'Content apply failed while writing the normalized plan. Check application logs for the exception details.')],
+        renderability: $validated->renderability,
+      );
     }
 
     return new InternalContentPlanResult(

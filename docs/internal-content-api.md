@@ -418,6 +418,8 @@ promote_staged_page_update
 
 `promote_staged_page_update` applies staged page-owned slot content back onto the published source page in a transaction. It preserves the source page path, status, layout, Shared Slot assignments, and page settings unless an allowlisted `source_sync` update is supplied. Promoted page-owned blocks are written as `published` so the public page reflects the promoted content immediately. Shared Slot content is never cascaded. Promote requires the normal `content.apply` route capability and the advanced `content.publish` capability.
 
+If a normalized apply plan passes validation but fails during transactional writes, the API returns normal validation JSON with `ok=false` and an error at `plan.apply`. The detailed exception is recorded in application logs; API responses stay public-safe and do not include stack traces, database internals, tokens, or local paths.
+
 Example staged workflow:
 
 ```json

@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.230
+
+- Bumped CMS to `1.32.230`.
+- Return controlled Internal Content API validation JSON when a normalized content apply plan fails during transactional writes instead of surfacing an unstructured server error.
+
 ## 1.32.229
 
 - Bumped CMS to `1.32.229`.
