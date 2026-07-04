@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.229
+
+- Bumped CMS to `1.32.229`.
+- Return validation JSON instead of a server error when Internal Content API plans send non-scalar site, locale, or layout identifiers.
+
 ## 1.32.228
 
 - Bumped CMS to `1.32.228` and pinned WebBlocks UI to `v2.7.15`.

@@ -1014,6 +1014,37 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function content_validate_rejects_non_scalar_plan_identifiers_without_server_error(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $payload = $this->validPlanPayload([
+      'plan' => [
+        'site' => ['handle' => $this->defaultSite()->handle],
+        'locale' => ['code' => $this->defaultLocale()->code],
+        'layout' => ['handle' => 'default'],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertStatus(422)
+      ->assertJsonPath('ok', false)
+      ->assertJsonFragment([
+        'path' => 'plan.site',
+        'message' => 'Site must be a handle string or numeric ID.',
+      ])
+      ->assertJsonFragment([
+        'path' => 'plan.locale',
+        'message' => 'Locale must be a code string or numeric ID.',
+      ])
+      ->assertJsonFragment([
+        'path' => 'plan.layout',
+        'message' => 'Page layout must be a handle string.',
+      ]);
+  }
+
+  #[Test]
   public function content_plans_can_assign_uploaded_media_to_native_media_blocks(): void
   {
     $this->createInternalApiToken('secret-token');

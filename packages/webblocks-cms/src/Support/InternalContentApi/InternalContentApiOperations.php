@@ -95,6 +95,12 @@ class InternalContentApiOperations
 
   public function resolveSite(mixed $value, string $path, array &$errors): ?Site
   {
+    if (! is_string($value) && ! is_int($value) && ! is_float($value) && ! is_null($value)) {
+      $errors[] = $this->error($path, 'Site must be a handle string or numeric ID.');
+
+      return null;
+    }
+
     $site = Site::query()
       ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
       ->first();
@@ -108,6 +114,12 @@ class InternalContentApiOperations
 
   public function resolveLocale(mixed $value, ?Site $site, string $path, array &$errors): ?Locale
   {
+    if (! is_string($value) && ! is_int($value) && ! is_float($value) && ! is_null($value)) {
+      $errors[] = $this->error($path, 'Locale must be a code string or numeric ID.');
+
+      return null;
+    }
+
     $locale = Locale::query()
       ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('code', Locale::normalizeCode((string) $value)))
       ->first();

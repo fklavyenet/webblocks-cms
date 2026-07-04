@@ -1509,6 +1509,12 @@ class InternalContentPlanService
   {
     $value = data_get($input, 'site', data_get($input, 'site_handle', data_get($input, 'site_id')));
 
+    if (! is_string($value) && ! is_int($value) && ! is_float($value) && ! is_null($value)) {
+      $errors[] = $this->error('plan.site', 'Site must be a handle string or numeric ID.');
+
+      return null;
+    }
+
     $site = Site::query()
       ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
       ->first();
@@ -1523,6 +1529,12 @@ class InternalContentPlanService
   private function resolveLocale(array $input, ?Site $site, array &$errors): ?Locale
   {
     $value = data_get($input, 'locale', data_get($input, 'locale_id'));
+
+    if (! is_string($value) && ! is_int($value) && ! is_float($value) && ! is_null($value)) {
+      $errors[] = $this->error('plan.locale', 'Locale must be a code string or numeric ID.');
+
+      return null;
+    }
 
     $locale = Locale::query()
       ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('code', Locale::normalizeCode((string) $value)))
@@ -1543,7 +1555,15 @@ class InternalContentPlanService
 
   private function resolveLayout(array $input, array &$errors): ?PageLayout
   {
-    $handle = trim((string) data_get($input, 'layout', data_get($input, 'page.layout', data_get($input, 'page_layout', 'default'))));
+    $value = data_get($input, 'layout', data_get($input, 'page.layout', data_get($input, 'page_layout', 'default')));
+
+    if (! is_string($value) && ! is_int($value) && ! is_float($value) && ! is_null($value)) {
+      $errors[] = $this->error('plan.layout', 'Page layout must be a handle string.');
+
+      return null;
+    }
+
+    $handle = trim((string) $value);
     $layout = PageLayout::query()->with(['layoutSlots.slotType'])->where('handle', $handle)->where('is_active', true)->first();
 
     if (! $layout) {
