@@ -46,6 +46,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Internal Content API](internal-content-api.md)
 - [API Discovery](api-discovery.md)
 - [AI Page Building Guide](ai-page-building-guide.md)
+- [Site Homepage Conversion Playbook](site-homepage-conversion-playbook.md)
 - [Page Converter Roadmap](page-converter-roadmap.md)
 
 ## Page Builder / AI-Friendly CMS Operations
@@ -53,6 +54,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Internal Content API](internal-content-api.md)
 - [API Discovery](api-discovery.md)
 - [AI Page Building Guide](ai-page-building-guide.md)
+- [Site Homepage Conversion Playbook](site-homepage-conversion-playbook.md) - field-tested workflow for converting visual homepage designs into native CMS content, Shared Slots, and site assets
 - [Block Type Contracts](block-type-contracts.md)
 - [Markdown Docs To CMS Sync](markdown-docs-to-cms-sync.md) - operator runbook for syncing changed `docs/` Markdown files into source-linked CMS documentation pages
 - [Feature Inventory](feature-inventory.md)
