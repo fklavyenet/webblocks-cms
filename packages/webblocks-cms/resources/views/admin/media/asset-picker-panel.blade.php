@@ -15,11 +15,16 @@
   $pickerClearLabel = $clearLabel ?? 'Remove';
   $pickerCompactControls = (bool) ($compactControls ?? false);
   $pickerPanelMode = $panelMode ?? 'inline';
-  $pickerPanelId = $pickerInputId.'_picker_panel';
+  $pickerInstanceKey = $instanceKey
+    ?? ($block instanceof \WebBlocks\Cms\Models\Block && $block->exists
+      ? 'block-'.$block->id.'-'.$pickerInputId
+      : $pickerName.'-'.$pickerInputId.'-'.str_replace('.', '-', uniqid('', true)));
+  $pickerInstanceId = preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInstanceKey);
+  $pickerPanelId = $pickerInputId.'_'.$pickerInstanceId.'_picker_panel';
   $pickerPanelTitleId = $pickerPanelId.'_title';
   $pickerPanelTitle = $panelTitle ?? ($pickerMode === 'multiple' ? 'Choose Assets' : 'Choose Asset');
   $pickerControlsClass = $controlsClass ?? 'wb-cluster wb-cluster-2';
-  $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
+  $pickerOverlayOwnerId = 'wb-picker-owner-'.$pickerInstanceId;
   $pickerResultsVariant = $resultsVariant ?? 'card';
   $pickerShowPreviewGrid = (bool) ($showPreviewGrid ?? ($pickerMode === 'multiple'));
   $pickerRenderPreviewGrid = (bool) ($renderPreviewGrid ?? ($pickerMode === 'multiple' || ! $pickerCompactControls));

@@ -241,7 +241,7 @@ class MediaVisualBlockContractsTest extends TestCase
     $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
     $this->assertStringNotContainsString('data-wb-picker-preview-grid', $html);
     $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$image->id.'"', $html);
-    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_block-'.$block->id.'-asset_id_picker_panel"/s', $html);
 
     $xpath = $this->htmlXPath($html);
     $selectorCard = $xpath->query('//*[@data-wb-picker-selector-card]')->item(0);
@@ -380,7 +380,7 @@ class MediaVisualBlockContractsTest extends TestCase
       $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
       $this->assertStringNotContainsString('data-wb-picker-preview-grid', $html);
       $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$config['asset']->id.'"', $html);
-      $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
+      $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_block-'.$block->id.'-asset_id_picker_panel"/s', $html);
 
       $xpath = $this->htmlXPath($html);
       $selectorCard = $xpath->query('//*[@data-wb-picker-selector-card]')->item(0);
@@ -448,16 +448,18 @@ class MediaVisualBlockContractsTest extends TestCase
 
     $html = $response->getContent();
     $this->assertNotFalse($html);
-    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*Add Selected/s', $html);
+    $pickerPanelId = 'gallery_media_ids_block-'.$block->id.'-gallery_media_ids_picker_panel';
+
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="'.$pickerPanelId.'".*Add Selected/s', $html);
     $this->assertStringNotContainsString('data-wb-picker-upload-submit', $html);
     $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id=', $html);
 
     $xpath = $this->htmlXPath($html);
-    $modalBody = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]')->item(0);
-    $modalFooter = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]')->item(0);
-    $dialog = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-dialog ")]')->item(0);
-    $filterRegion = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-filter-region ")]')->item(0);
-    $modalHeader = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-header ")]')->item(0);
+    $modalBody = $xpath->query('//*[@id="'.$pickerPanelId.'"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]')->item(0);
+    $modalFooter = $xpath->query('//*[@id="'.$pickerPanelId.'"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]')->item(0);
+    $dialog = $xpath->query('//*[@id="'.$pickerPanelId.'"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-dialog ")]')->item(0);
+    $filterRegion = $xpath->query('//*[@id="'.$pickerPanelId.'"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-filter-region ")]')->item(0);
+    $modalHeader = $xpath->query('//*[@id="'.$pickerPanelId.'"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-header ")]')->item(0);
     $filtersCard = $xpath->query('//*[@data-wb-picker-filters-card]')->item(0);
     $pickerGrid = $xpath->query('//*[@data-wb-picker-grid]')->item(0);
 
@@ -815,5 +817,122 @@ class MediaVisualBlockContractsTest extends TestCase
     $editResponse->assertSee('Updated caption from modal', false);
     $editResponse->assertSee('id="gallery-item-modal-gallery-'.$image->id.'"', false);
     $editResponse->assertSee('value="Updated caption from modal" data-wb-gallery-modal-field="caption"', false);
+  }
+
+  #[Test]
+  public function slide_background_fit_update_preserves_selected_media(): void
+  {
+    $this->seedFoundation();
+    $user = $this->adminUser();
+    $page = $this->page();
+    $image = $this->media('image', 'slide-background.jpg', 'image/jpeg', 'media/images/slide-background.jpg');
+    $sliderType = BlockType::query()->where('slug', 'slider')->firstOrFail();
+    $slideType = BlockType::query()->where('slug', 'slide')->firstOrFail();
+    $slider = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'slider',
+      'block_type_id' => $sliderType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->slotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $slide = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $slider->id,
+      'type' => 'slide',
+      'block_type_id' => $slideType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->slotType()->id,
+      'sort_order' => 0,
+      'media_id' => $image->id,
+      'settings' => json_encode(['aria_label' => 'Poster slide'], JSON_UNESCAPED_SLASHES),
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $this->actingAs($user)->put(route('admin.blocks.update', $slide), [
+      'page_id' => $page->id,
+      'parent_id' => $slider->id,
+      'slot_type_id' => $this->slotType()->id,
+      'block_type_id' => $slideType->id,
+      'sort_order' => 0,
+      'media_id' => $image->id,
+      'slide_aria_label' => 'Poster slide',
+      'slide_background_fit' => 'contain',
+      'status' => 'published',
+    ])->assertSessionDoesntHaveErrors();
+
+    $slide->refresh();
+
+    $this->assertSame($image->id, $slide->media_id);
+    $this->assertSame('contain', $slide->setting('background_fit'));
+    $this->assertSame('Poster slide', $slide->setting('aria_label'));
+  }
+
+  #[Test]
+  public function asset_picker_instances_use_unique_overlay_owner_ids_for_repeated_media_fields(): void
+  {
+    $this->seedFoundation();
+    $page = $this->page();
+    $image = $this->media('image', 'shared-slide-background.jpg', 'image/jpeg', 'media/images/shared-slide-background.jpg');
+    $slideType = BlockType::query()->where('slug', 'slide')->firstOrFail();
+
+    $firstSlide = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'slide',
+      'block_type_id' => $slideType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->slotType()->id,
+      'sort_order' => 0,
+      'media_id' => $image->id,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+    $secondSlide = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'slide',
+      'block_type_id' => $slideType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->slotType()->id,
+      'sort_order' => 1,
+      'media_id' => $image->id,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $firstHtml = view('webblocks-cms::admin.media.asset-picker-panel', [
+      'block' => $firstSlide,
+      'name' => 'background-asset',
+      'inputId' => 'media_id',
+      'fieldName' => 'media_id',
+      'selectedAsset' => $image,
+      'panelMode' => 'overlay',
+      'assetPickerAssets' => collect([$image]),
+    ])->render();
+    $secondHtml = view('webblocks-cms::admin.media.asset-picker-panel', [
+      'block' => $secondSlide,
+      'name' => 'background-asset',
+      'inputId' => 'media_id',
+      'fieldName' => 'media_id',
+      'selectedAsset' => $image,
+      'panelMode' => 'overlay',
+      'assetPickerAssets' => collect([$image]),
+    ])->render();
+
+    $firstOwner = 'wb-picker-owner-block-'.$firstSlide->id.'-media_id';
+    $secondOwner = 'wb-picker-owner-block-'.$secondSlide->id.'-media_id';
+
+    $this->assertStringContainsString('id="'.$firstOwner.'"', $firstHtml);
+    $this->assertStringContainsString('data-wb-picker-owner-id="'.$firstOwner.'"', $firstHtml);
+    $this->assertStringContainsString('id="'.$secondOwner.'"', $secondHtml);
+    $this->assertStringContainsString('data-wb-picker-owner-id="'.$secondOwner.'"', $secondHtml);
+    $this->assertNotSame($firstOwner, $secondOwner);
   }
 }

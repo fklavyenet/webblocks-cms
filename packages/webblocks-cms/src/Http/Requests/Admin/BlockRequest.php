@@ -2026,7 +2026,7 @@ class BlockRequest extends FormRequest
         if ($blockType->slug === 'slider') {
           $data['media_id'] = null;
         }
-        $data['asset_id'] = null;
+        unset($data['asset_id']);
         $data['variant'] = null;
         $data['meta'] = null;
         $data['settings'] = $settings === []

@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.231
+
+- Bumped CMS to `1.32.231`.
+- Keep repeated admin media picker instances isolated so editing a later Slide background image does not target an earlier picker or lose the selected media while changing fit settings.
+
 ## 1.32.230
 
 - Bumped CMS to `1.32.230`.
