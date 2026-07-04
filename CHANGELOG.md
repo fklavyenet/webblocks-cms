@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.227
+
+- Bumped CMS to `1.32.227`.
+- Add published composable `Slider` and `Slide` block types with admin settings, public renderer/runtime JS, Internal Content API media support, and package update migration coverage.
+
 ## 1.32.226
 
 - Bumped CMS to `1.32.226`.

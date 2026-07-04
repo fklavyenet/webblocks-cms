@@ -35,7 +35,6 @@ class LegacyTransitionalBlockContractsTest extends TestCase
       ->all();
 
     $this->assertNotContains('tabs', $publishedSlugs);
-    $this->assertNotContains('slider', $publishedSlugs);
     $this->assertNotContains('menu', $publishedSlugs);
     $this->assertNotContains('faq-list', $publishedSlugs);
     $this->assertNotContains('showcase-list', $publishedSlugs);
@@ -49,13 +48,35 @@ class LegacyTransitionalBlockContractsTest extends TestCase
 
     $registry = app(BlockTypeContractRegistry::class);
 
-    foreach (['tabs', 'slider', 'menu', 'faq-list'] as $slug) {
+    foreach (['tabs', 'menu', 'faq-list'] as $slug) {
       $contract = $registry->resolve(BlockType::query()->where('slug', $slug)->firstOrFail());
 
       $this->assertFalse($contract->documented, $slug);
       $this->assertSame('draft', $contract->status, $slug);
       $this->assertSame('No shipped contract is documented for this block type yet.', $contract->undocumentedMessage, $slug);
     }
+  }
+
+  #[Test]
+  public function slider_and_slide_are_published_documented_core_contracts(): void
+  {
+    $this->seedFoundation();
+
+    $registry = app(BlockTypeContractRegistry::class);
+    $slider = $registry->resolve('slider');
+    $slide = $registry->resolve('slide');
+
+    $this->assertTrue($slider->documented);
+    $this->assertSame('published', $slider->status);
+    $this->assertTrue($slider->supportsChildren);
+    $this->assertSame(['slide'], $slider->allowedChildTypeSlugs);
+    $this->assertTrue($slider->ownsPublicRootHelper);
+
+    $this->assertTrue($slide->documented);
+    $this->assertSame('published', $slide->status);
+    $this->assertTrue($slide->supportsChildren);
+    $this->assertNull($slide->allowedChildTypeSlugs);
+    $this->assertTrue($slide->ownsPublicRootHelper);
   }
 
   #[Test]

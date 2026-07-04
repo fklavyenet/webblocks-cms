@@ -25,7 +25,7 @@ Prefer these blocks for new hand-built CMS pages:
 - Marketing and structured content: `hero`, `cta`, `columns` with `column_item`, `card` with `card_header`, `card_body`, and `card_footer`, `accordion` with FAQ-style child rows, `gallery`, `image`.
 - Navigation and shared chrome: `sticky-navbar`, `navbar-brand`, `navbar-navigation`, `header-actions`, `search-form`, plus sidebar blocks for docs/sidebar layouts.
 
-Do not prefer these for new hand-built pages unless you are preserving legacy content, converter output, or compatibility behavior: `feature-grid`, `feature-item`, `card-grid`, `contact-info`, `faq-list`, `menu`, `metric-card`, `showcase-list`, `slider`, `stats`, `tabs`, `testimonial`, `text`, `callout`, and fallback-only renderer paths.
+Do not prefer these for new hand-built pages unless you are preserving legacy content, converter output, or compatibility behavior: `feature-grid`, `feature-item`, `card-grid`, `contact-info`, `faq-list`, `menu`, `metric-card`, `showcase-list`, `stats`, `tabs`, `testimonial`, `text`, `callout`, and fallback-only renderer paths.
 
 Use Safe HTML (`html`) and fallback renderers only as reviewed fallbacks when the content cannot yet be represented by structured CMS blocks. They should not be the default output for migrated or AI-created pages.
 
@@ -2932,54 +2932,60 @@ This helper renders CMS `NavigationItem` rows for `sidebar-navigation` when that
 ### Rendered HTML
 
 ```html
-<section class="wb-stack wb-gap-3">
-  <h3>Slider</h3>
-  <div class="wb-slider wb-card wb-card-muted" data-wb-slider>
-    <div class="wb-slider-track" data-wb-slider-track>
-      <article class="wb-slider-slide" data-wb-slider-slide>
-        <div class="wb-card-body wb-stack wb-gap-3">
-          <img src="/media/slide.jpg" alt="Slide">
-          <div class="wb-stack wb-gap-1">
-            <strong>Slide title</strong>
-            <p>Caption.</p>
-          </div>
-        </div>
-      </article>
-    </div>
-    <div class="wb-card-body wb-slider-controls">
-      <button type="button" class="wb-btn wb-btn-secondary" data-wb-slider-prev>Previous</button>
-      <div class="wb-slider-dots" role="tablist">
-        <button type="button" class="wb-slider-dot is-active" data-wb-slider-dot></button>
+<section class="wb-cms-slider wb-slider wb-cms-slider-height-viewport wb-cms-slider-transition-fade wb-cms-slider-overlay-dark wb-cms-slider-content-center wb-cms-slider-content-wide wb-cms-slider-text-light wb-cms-slider-bg-cover" data-wb-slider data-wb-slider-transition="fade">
+  <div class="wb-cms-slider-track" data-wb-slider-track>
+    <article class="wb-cms-slide wb-slider-slide wb-has-background-media wb-bg-overlay-soft wb-cms-slider-content-center wb-cms-slider-content-wide wb-cms-slider-text-light wb-cms-slider-bg-cover" data-wb-slider-slide style="--wb-block-bg-image: url('/media/slide.jpg'); --wb-block-bg-position: center;">
+      <div class="wb-cms-slide-content">
+        <!-- nested Header, Text, Card, Button, or layout blocks render here -->
       </div>
-      <button type="button" class="wb-btn wb-btn-secondary" data-wb-slider-next>Next</button>
-    </div>
+    </article>
   </div>
-  <p class="wb-text-sm wb-text-muted">Caption</p>
+  <div class="wb-cms-slider-arrows">
+    <button type="button" class="wb-btn wb-btn-secondary wb-cms-slider-arrow wb-cms-slider-arrow-prev" data-wb-slider-prev>Previous</button>
+    <button type="button" class="wb-btn wb-btn-secondary wb-cms-slider-arrow wb-cms-slider-arrow-next" data-wb-slider-next>Next</button>
+  </div>
+  <div class="wb-cms-slider-dots wb-slider-dots" role="tablist">
+    <button type="button" class="wb-slider-dot is-active" data-wb-slider-dot></button>
+  </div>
 </section>
 ```
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-stack`, `wb-gap-3`, `wb-slider`, `wb-card`, `wb-card-muted`, `wb-slider-track`, `wb-slider-slide`, `wb-card-body`, `wb-gap-1`, `wb-slider-controls`, `wb-btn`, `wb-btn-secondary`, `wb-slider-dots`, `wb-slider-dot`, `is-active`, `wb-text-sm`, `wb-text-muted`.
+`wb-cms-slider`, `wb-slider`, `wb-cms-slider-track`, `wb-cms-slide`, `wb-slider-slide`, `wb-cms-slide-content`, `wb-cms-slider-arrows`, `wb-cms-slider-arrow`, `wb-btn`, `wb-btn-secondary`, `wb-cms-slider-dots`, `wb-slider-dots`, `wb-slider-dot`, `is-active`, plus generated height, transition, overlay, content-position, content-width, text-color, and background-fit classes.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
-| gallery media | one or more assets | Renders slides from `galleryAssets()`. |
-| gallery media count | more than one | Renders previous/next controls and dots. |
-| title | text | Renders `<h3>` above slider. |
-| subtitle | text | Renders muted helper text below slider. |
+| `slider.children` | `slide` blocks | Renders the direct Slide children in the slider track. |
+| `settings.height` | `fill`, `viewport`, `large`, `medium`, `small`, `auto`, `custom` | Emits slider height classes and optional `--wb-cms-slider-min-height`. |
+| `settings.transition` | `slide`, `fade` | Sets `data-wb-slider-transition` and the matching transition class. |
+| `settings.autoplay`, `interval_ms`, `pause_on_hover`, `loop`, `swipe`, `keyboard` | booleans / milliseconds | Emits data attributes consumed by `cms/js/public-slider.js`. |
+| `settings.show_arrows`, `settings.show_dots` | booleans | Controls whether arrows and dots render when more than one slide exists. |
+| `settings.overlay`, `content_position`, `content_width`, `text_color`, `background_fit` | enum values | Emits presentation classes inherited by slide content. |
+| `slide.media_id` | image media | Emits background media custom properties on the Slide root. |
+| `slide.children` | nested blocks | Renders visible slide content inside `.wb-cms-slide-content`. |
 
 ### Use for / Avoid for
 
-Use for: legacy or converter-compatible content that already depends on this renderer.
+Use for: hero sliders, split slider/text sections, carousel panels inside cards, and any page area where the slider should fill its placed container.
 
-Avoid for: new hand-built pages; use the canonical structured blocks listed near the top.
+Avoid for: unrelated galleries where the Gallery block is a better semantic fit.
 
 ### Notes
 
-This is a legacy/compatibility renderer backed by `galleryAssets()`. Slider controls render only when more than one slide asset is present.
+Slider is a published parent/container contract. It accepts only `slide` children; each Slide is also a parent/container and may own background media plus nested content blocks. Slider controls render only when more than one slide exists and the corresponding settings are enabled.
+
+## Slide (`slide`)
+
+### Renderer source
+
+`packages/webblocks-cms/resources/views/pages/partials/blocks/slide.blade.php`
+
+### Notes
+
+Slide renders as `<article data-wb-slider-slide>` and is intended to be rendered inside Slider. It owns optional background media and delegates visible content to nested blocks.
 
 ## Stats (`stats`)
 

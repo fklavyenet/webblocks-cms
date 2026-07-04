@@ -232,7 +232,7 @@ class InternalContentResourceController extends Controller
         'purpose' => 'Update safe native fields on an existing structured block without changing the block tree.',
         'supported_native_fields' => [
           'media_id or asset_id for navbar-brand/sidebar-brand logo media',
-          'media_id or asset_id for hero/section/card/cta/content_header background media',
+          'media_id or asset_id for hero/section/card/cta/content_header/slide background media',
           'settings.url',
           'settings.target',
           'settings.aria_label',
@@ -1076,7 +1076,7 @@ class InternalContentResourceController extends Controller
   {
     return match ($type) {
       'image', 'navbar-brand', 'sidebar-brand' => [Media::KIND_IMAGE],
-      'hero', 'section', 'card', 'cta', 'content_header' => [Media::KIND_IMAGE],
+      'hero', 'section', 'card', 'cta', 'content_header', 'slide' => [Media::KIND_IMAGE],
       'download', 'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
       'video' => [Media::KIND_VIDEO],
       default => [],
@@ -1138,11 +1138,45 @@ class InternalContentResourceController extends Controller
       ], 422));
     }
 
+    $type = (string) $block->typeSlug();
     $allowedSettings = ['url', 'target', 'aria_label'];
 
-    if ($this->supportsBackgroundMediaBlockType((string) $block->typeSlug())) {
+    if ($this->supportsBackgroundMediaBlockType($type)) {
       $allowedSettings[] = 'background_position';
       $allowedSettings[] = 'background_overlay';
+    }
+
+    if ($type === 'slider') {
+      $allowedSettings = [
+        ...$allowedSettings,
+        'height',
+        'min_height',
+        'aspect_ratio',
+        'transition',
+        'interval_ms',
+        'autoplay',
+        'pause_on_hover',
+        'show_arrows',
+        'show_dots',
+        'loop',
+        'swipe',
+        'keyboard',
+        'overlay',
+        'content_position',
+        'content_width',
+        'text_color',
+        'background_fit',
+      ];
+    }
+
+    if ($type === 'slide') {
+      $allowedSettings = [
+        ...$allowedSettings,
+        'content_position',
+        'content_width',
+        'text_color',
+        'background_fit',
+      ];
     }
 
     $unsupported = array_values(array_diff(array_keys($incoming), $allowedSettings));
@@ -1191,6 +1225,65 @@ class InternalContentResourceController extends Controller
         : null;
     }
 
+    if ($type === 'slider') {
+      if (array_key_exists('height', $incoming)) {
+        $height = trim((string) $incoming['height']);
+        $safeIncoming['height'] = in_array($height, ['auto', 'fill', 'viewport', 'large', 'medium', 'small', 'custom'], true) ? $height : 'fill';
+      }
+
+      if (array_key_exists('min_height', $incoming)) {
+        $minHeight = trim((string) $incoming['min_height']);
+        $safeIncoming['min_height'] = preg_match('/^\d{2,4}(px|vh|svh|dvh)$/', $minHeight) === 1 ? $minHeight : null;
+      }
+
+      if (array_key_exists('aspect_ratio', $incoming)) {
+        $aspectRatio = trim((string) $incoming['aspect_ratio']);
+        $safeIncoming['aspect_ratio'] = in_array($aspectRatio, ['16/9', '4/3', '1/1'], true) ? $aspectRatio : null;
+      }
+
+      if (array_key_exists('transition', $incoming)) {
+        $safeIncoming['transition'] = trim((string) $incoming['transition']) === 'fade' ? 'fade' : 'slide';
+      }
+
+      if (array_key_exists('interval_ms', $incoming)) {
+        $safeIncoming['interval_ms'] = min(max((int) $incoming['interval_ms'], 1000), 30000);
+      }
+
+      foreach (['autoplay', 'pause_on_hover', 'show_arrows', 'show_dots', 'loop', 'swipe', 'keyboard'] as $booleanSetting) {
+        if (array_key_exists($booleanSetting, $incoming)) {
+          $safeIncoming[$booleanSetting] = filter_var($incoming[$booleanSetting], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
+        }
+      }
+
+      if (array_key_exists('overlay', $incoming)) {
+        $overlay = trim((string) $incoming['overlay']);
+        $safeIncoming['overlay'] = in_array($overlay, ['soft', 'medium', 'dark', 'strong'], true) ? $overlay : null;
+      }
+    }
+
+    if (in_array($type, ['slider', 'slide'], true)) {
+      if (array_key_exists('content_position', $incoming)) {
+        $contentPosition = trim((string) $incoming['content_position']);
+        $safeIncoming['content_position'] = in_array($contentPosition, ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)
+          ? $contentPosition
+          : null;
+      }
+
+      if (array_key_exists('content_width', $incoming)) {
+        $contentWidth = trim((string) $incoming['content_width']);
+        $safeIncoming['content_width'] = in_array($contentWidth, ['narrow', 'wide', 'full'], true) ? $contentWidth : null;
+      }
+
+      if (array_key_exists('text_color', $incoming)) {
+        $textColor = trim((string) $incoming['text_color']);
+        $safeIncoming['text_color'] = in_array($textColor, ['light', 'dark'], true) ? $textColor : null;
+      }
+
+      if (array_key_exists('background_fit', $incoming)) {
+        $safeIncoming['background_fit'] = trim((string) $incoming['background_fit']) === 'contain' ? 'contain' : null;
+      }
+    }
+
     return array_filter([
       ...$settings,
       ...$safeIncoming,
@@ -1199,7 +1292,7 @@ class InternalContentResourceController extends Controller
 
   private function supportsBackgroundMediaBlockType(string $type): bool
   {
-    return in_array($type, ['hero', 'section', 'card', 'cta', 'content_header'], true);
+    return in_array($type, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
   }
 
   private function safeUrl(mixed $url): ?string

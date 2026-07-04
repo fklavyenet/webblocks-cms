@@ -204,7 +204,8 @@ Current remaining high-signal gaps after the current Phase 3 fixes:
 - `table` renderer still supports a legacy `settings.rows` fallback path even though the core admin form writes translated row copy
 - `hero` still preserves legacy field fallbacks when canonical translated intro fields are empty
 - `feature-grid` and `feature-item` are now published because they are source-backed, but they remain intentionally transitional delegate contracts over the shared Columns or Column Item presentation paths
-- `tabs`, `slider`, `menu`, and `faq-list` still exist as legacy draft catalog rows with compatibility forms or renderers, but they are not published core contracts and should continue to fail safely in the contract modal and audit output
+- `tabs`, `menu`, and `faq-list` still exist as legacy draft catalog rows with compatibility forms or renderers, but they are not published core contracts and should continue to fail safely in the contract modal and audit output
+- `slider` and `slide` are now published layout contracts: Slider owns carousel behavior and accepts only Slide children, while Slide owns optional background media and nested content blocks
 - `showcase-list` and `contact-info` still exist only as public-render compatibility paths rather than shipped published core catalog blocks; their settings-driven links now follow the same safe public URL rules as other block renderers
 - published and draft catalogs coexist, so future admin surfacing must stay explicit about published core contracts versus draft or install-specific rows
 
@@ -246,6 +247,7 @@ Phase 3 starts resolving low-risk documented contract gaps without adding a sche
 - `navbar-brand` and `sidebar-brand` now share a conservative saved-URL or site-home fallback contract, and both preserve safe accessible naming for logo-only output without forcing visible text
 - `sidebar-nav-group` now reuses the same manual sidebar item output semantics as `sidebar-nav-item` for nested child links while preserving the existing WebBlocks UI nav-group wrapper contract
 - `section`, `container`, `grid`, `cluster`, `card`, and `content_header` now use the same shipped contract source across the registry, read-only admin contract modal, audit output, docs, and focused regression coverage
+- `slider` and `slide` now use the same shipped contract source across the catalog, registry, admin forms, public renderer, API media assignment, update migrations, and focused regression coverage
 - `hero`, `columns`, `column_item`, `cta`, `feature-grid`, and `feature-item` are now published in the shipped core catalog, documented in the shared contract registry, and covered as source-backed marketing or structured content contracts instead of remaining draft-only or underdocumented
 - `hero`, `section`, `card`, `cta`, and `content_header` now share the Media Library background media contract: selected images stay on block `media_id`, position and overlay stay in shared settings, and public rendering emits CSS custom properties consumed by CMS-owned public CSS
 - `rating` and `comments` are system engagement blocks: visible section copy stays in neighboring content blocks, Rating stores idempotent 1-5 star rows in `content_ratings`, and Comments stores moderated visitor text in `comment_entries` with pending-by-default review and spam quarantine
@@ -254,4 +256,4 @@ Phase 3 starts resolving low-risk documented contract gaps without adding a sche
 - `card` now uses a composable shell contract: the parent Card owns the `wb-card` root, Card regions own `wb-card-header`, `wb-card-body`, and `wb-card-footer`, region blocks are only valid under Card, and legacy saved Card copy is preserved only through a minimal no-region fallback renderer path
 - `content_header` keeps translated title, intro, and meta copy, always renders its title as H1, safely ignores legacy saved heading-level values, and keeps its semantic `<header class="wb-content-header">` root renderer-owned without a generic wrapper
 - `testimonial` and `stats` remain documented honestly as alias-only behavior that delegates to existing Quote or Columns render paths rather than as standalone published core contracts
-- `tabs`, `slider`, `menu`, and `faq-list` remain draft or alias-era compatibility slugs rather than published core contracts, while `showcase-list` and `contact-info` remain public-only compatibility renderers with no shipped core contract entry
+- `tabs`, `menu`, and `faq-list` remain draft or alias-era compatibility slugs rather than published core contracts, while `showcase-list` and `contact-info` remain public-only compatibility renderers with no shipped core contract entry

@@ -453,19 +453,61 @@ class PublicMediaBlocksTest extends TestCase
   }
 
   #[Test]
-  public function slider_not_promoted(): void
+  public function slider_renders_composable_slide_children(): void
   {
     $page = $this->pageWithMainSlot();
+    $asset = $this->asset('image', 'factory.jpg', 'image/jpeg', 'media/images/factory.jpg');
 
-    Block::query()->create([
+    $slider = Block::query()->create([
       'page_id' => $page->id,
       'type' => 'slider',
       'block_type_id' => $this->blockType('slider', 'Slider', 5)->id,
-      'source_type' => 'asset',
+      'source_type' => 'static',
       'slot' => 'main',
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 0,
-      'title' => 'Legacy slider',
+      'settings' => json_encode([
+        'height' => 'viewport',
+        'transition' => 'fade',
+        'show_arrows' => true,
+        'show_dots' => true,
+        'overlay' => 'dark',
+        'text_color' => 'light',
+      ], JSON_UNESCAPED_SLASHES),
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $slide = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $slider->id,
+      'type' => 'slide',
+      'block_type_id' => $this->blockType('slide', 'Slide', 6)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'media_id' => $asset->id,
+      'settings' => json_encode([
+        'aria_label' => 'Factory hero',
+        'content_position' => 'center',
+        'content_width' => 'wide',
+      ], JSON_UNESCAPED_SLASHES),
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $slide->id,
+      'type' => 'header',
+      'block_type_id' => $this->blockType('header', 'Header', 7)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'title' => 'Renklerin Profesyonel Hali',
+      'variant' => 'h1',
       'status' => 'published',
       'is_system' => false,
     ]);
@@ -473,8 +515,15 @@ class PublicMediaBlocksTest extends TestCase
     $response = $this->get(route('pages.show', 'about'));
 
     $response->assertOk();
-    $response->assertSee('wb-slider', false);
     $response->assertSee('data-wb-slider', false);
+    $response->assertSee('data-wb-slider-transition="fade"', false);
+    $response->assertSee('data-wb-slider-slide', false);
+    $response->assertSee('wb-cms-slider-height-viewport', false);
+    $response->assertSee('wb-cms-slider-overlay-dark', false);
+    $response->assertSee('--wb-block-bg-image', false);
+    $response->assertSee($asset->url(), false);
+    $response->assertSee('aria-label="Factory hero"', false);
+    $response->assertSee('Renklerin Profesyonel Hali');
     $response->assertDontSee('<video', false);
     $response->assertDontSee('<audio', false);
   }

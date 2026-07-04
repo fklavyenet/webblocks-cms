@@ -74,6 +74,8 @@ class BlockRequest extends FormRequest
     $isAlert = $selectedBlockType?->slug === 'alert';
     $isImage = $selectedBlockType?->slug === 'image';
     $isGallery = $selectedBlockType?->slug === 'gallery';
+    $isSlider = $selectedBlockType?->slug === 'slider';
+    $isSlide = $selectedBlockType?->slug === 'slide';
     $isDownload = $selectedBlockType?->slug === 'download';
     $isFile = $selectedBlockType?->slug === 'file';
     $isVideo = $selectedBlockType?->slug === 'video';
@@ -105,8 +107,8 @@ class BlockRequest extends FormRequest
     $supportsClusterGap = $isCluster;
     $supportsGridColumns = $isGrid;
     $supportsGridGap = $isGrid;
-    $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'cluster', 'grid'], true);
-    $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header'], true);
+    $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'cluster', 'grid', 'slider', 'slide'], true);
+    $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
     $isLocaleRequest = $this->filled('locale');
     $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -145,6 +147,28 @@ class BlockRequest extends FormRequest
       'cluster_width' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'full'])],
       'grid_columns' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4'])],
       'grid_gap' => [$supportsGridGap ? 'nullable' : 'prohibited', Rule::in(['', '3', '4', '6'])],
+      'slider_height' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'fill', 'viewport', 'large', 'medium', 'small', 'custom'])],
+      'slider_min_height' => [$isSlider ? 'nullable' : 'prohibited', 'regex:/^\d{2,4}(px|vh|svh|dvh)$/'],
+      'slider_aspect_ratio' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'auto', '16/9', '4/3', '1/1'])],
+      'slider_transition' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'slide', 'fade'])],
+      'slider_interval_ms' => [$isSlider ? 'nullable' : 'prohibited', 'integer', 'min:1000', 'max:30000'],
+      'slider_overlay' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'soft', 'medium', 'dark', 'strong'])],
+      'slider_content_position' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'])],
+      'slider_content_width' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'narrow', 'medium', 'wide', 'full'])],
+      'slider_text_color' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'light', 'dark'])],
+      'slider_background_fit' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'cover', 'contain'])],
+      'slider_autoplay' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
+      'slider_pause_on_hover' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
+      'slider_show_arrows' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
+      'slider_show_dots' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
+      'slider_loop' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
+      'slider_swipe' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
+      'slider_keyboard' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
+      'slide_aria_label' => [$isSlide ? 'nullable' : 'prohibited', 'string', 'max:255'],
+      'slide_content_position' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'])],
+      'slide_content_width' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'narrow', 'medium', 'wide', 'full'])],
+      'slide_text_color' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'light', 'dark'])],
+      'slide_background_fit' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'cover', 'contain'])],
       'intro_text' => [$isContentHeader ? 'nullable' : 'prohibited', 'string'],
       'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
       'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
@@ -296,7 +320,7 @@ class BlockRequest extends FormRequest
       $existingBlock = $existingBlock instanceof Block ? $existingBlock : null;
       $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
       $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
-      $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header'], true);
+      $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
       $isColumns = $selectedBlockType?->slug === 'columns';
       $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
       $isLinkList = $selectedBlockType?->slug === 'link-list';
@@ -1785,7 +1809,7 @@ class BlockRequest extends FormRequest
           : null;
       }
 
-      if (in_array($blockType?->slug, ['section', 'container', 'cluster', 'grid'], true)) {
+      if (in_array($blockType?->slug, ['section', 'container', 'cluster', 'grid', 'slider', 'slide'], true)) {
         $existingSettings = $this->route('block') instanceof Block
           ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
           : [];
@@ -1802,6 +1826,20 @@ class BlockRequest extends FormRequest
         $clusterWidth = trim((string) ($data['cluster_width'] ?? ''));
         $gridColumns = trim((string) ($data['grid_columns'] ?? ''));
         $gridGap = trim((string) ($data['grid_gap'] ?? ''));
+        $sliderHeight = trim((string) ($data['slider_height'] ?? ''));
+        $sliderMinHeight = trim((string) ($data['slider_min_height'] ?? ''));
+        $sliderAspectRatio = trim((string) ($data['slider_aspect_ratio'] ?? ''));
+        $sliderTransition = trim((string) ($data['slider_transition'] ?? ''));
+        $sliderOverlay = trim((string) ($data['slider_overlay'] ?? ''));
+        $sliderContentPosition = trim((string) ($data['slider_content_position'] ?? ''));
+        $sliderContentWidth = trim((string) ($data['slider_content_width'] ?? ''));
+        $sliderTextColor = trim((string) ($data['slider_text_color'] ?? ''));
+        $sliderBackgroundFit = trim((string) ($data['slider_background_fit'] ?? ''));
+        $slideAriaLabel = trim((string) ($data['slide_aria_label'] ?? ''));
+        $slideContentPosition = trim((string) ($data['slide_content_position'] ?? ''));
+        $slideContentWidth = trim((string) ($data['slide_content_width'] ?? ''));
+        $slideTextColor = trim((string) ($data['slide_text_color'] ?? ''));
+        $slideBackgroundFit = trim((string) ($data['slide_background_fit'] ?? ''));
 
         if ($layoutName !== '') {
           $settings['layout_name'] = $layoutName;
@@ -1886,10 +1924,109 @@ class BlockRequest extends FormRequest
           unset($settings['spacing'], $settings['width'], $settings['alignment']);
         }
 
+        if ($blockType->slug === 'slider') {
+          $settings['height'] = in_array($sliderHeight, ['auto', 'fill', 'viewport', 'large', 'medium', 'small', 'custom'], true)
+            ? $sliderHeight
+            : 'fill';
+
+          if ($settings['height'] === 'custom' && $sliderMinHeight !== '') {
+            $settings['min_height'] = $sliderMinHeight;
+          } else {
+            unset($settings['min_height']);
+          }
+
+          if (in_array($sliderAspectRatio, ['16/9', '4/3', '1/1'], true)) {
+            $settings['aspect_ratio'] = $sliderAspectRatio;
+          } else {
+            unset($settings['aspect_ratio']);
+          }
+
+          $settings['transition'] = $sliderTransition === 'fade' ? 'fade' : 'slide';
+          $settings['interval_ms'] = min(max((int) ($data['slider_interval_ms'] ?? 6000), 1000), 30000);
+          $settings['autoplay'] = (bool) ($data['slider_autoplay'] ?? false);
+          $settings['pause_on_hover'] = (bool) ($data['slider_pause_on_hover'] ?? true);
+          $settings['show_arrows'] = (bool) ($data['slider_show_arrows'] ?? true);
+          $settings['show_dots'] = (bool) ($data['slider_show_dots'] ?? true);
+          $settings['loop'] = (bool) ($data['slider_loop'] ?? true);
+          $settings['swipe'] = (bool) ($data['slider_swipe'] ?? true);
+          $settings['keyboard'] = (bool) ($data['slider_keyboard'] ?? true);
+
+          if (in_array($sliderOverlay, ['soft', 'medium', 'dark', 'strong'], true)) {
+            $settings['overlay'] = $sliderOverlay;
+          } else {
+            unset($settings['overlay']);
+          }
+
+          if (in_array($sliderContentPosition, ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)) {
+            $settings['content_position'] = $sliderContentPosition;
+          } else {
+            unset($settings['content_position']);
+          }
+
+          if (in_array($sliderContentWidth, ['narrow', 'wide', 'full'], true)) {
+            $settings['content_width'] = $sliderContentWidth;
+          } else {
+            unset($settings['content_width']);
+          }
+
+          if (in_array($sliderTextColor, ['light', 'dark'], true)) {
+            $settings['text_color'] = $sliderTextColor;
+          } else {
+            unset($settings['text_color']);
+          }
+
+          if ($sliderBackgroundFit === 'contain') {
+            $settings['background_fit'] = 'contain';
+          } else {
+            unset($settings['background_fit']);
+          }
+
+          unset($settings['spacing'], $settings['width'], $settings['alignment'], $settings['background_position'], $settings['background_overlay']);
+        }
+
+        if ($blockType->slug === 'slide') {
+          $settings = $this->applyBackgroundMediaSettings($settings, $data);
+
+          if ($slideAriaLabel !== '') {
+            $settings['aria_label'] = $slideAriaLabel;
+          } else {
+            unset($settings['aria_label']);
+          }
+
+          if (in_array($slideContentPosition, ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)) {
+            $settings['content_position'] = $slideContentPosition;
+          } else {
+            unset($settings['content_position']);
+          }
+
+          if (in_array($slideContentWidth, ['narrow', 'wide', 'full'], true)) {
+            $settings['content_width'] = $slideContentWidth;
+          } else {
+            unset($settings['content_width']);
+          }
+
+          if (in_array($slideTextColor, ['light', 'dark'], true)) {
+            $settings['text_color'] = $slideTextColor;
+          } else {
+            unset($settings['text_color']);
+          }
+
+          if ($slideBackgroundFit === 'contain') {
+            $settings['background_fit'] = 'contain';
+          } else {
+            unset($settings['background_fit']);
+          }
+
+          unset($settings['spacing'], $settings['width'], $settings['alignment']);
+        }
+
         $data['title'] = null;
         $data['subtitle'] = null;
         $data['content'] = null;
         $data['url'] = null;
+        if ($blockType->slug === 'slider') {
+          $data['media_id'] = null;
+        }
         $data['asset_id'] = null;
         $data['variant'] = null;
         $data['meta'] = null;
@@ -1951,6 +2088,10 @@ class BlockRequest extends FormRequest
     unset($data['icon_slug'], $data['icon_tone'], $data['badge_label'], $data['badge_tone']);
     unset($data['background_position'], $data['background_overlay']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+    unset($data['slider_height'], $data['slider_min_height'], $data['slider_aspect_ratio'], $data['slider_transition'], $data['slider_interval_ms']);
+    unset($data['slider_overlay'], $data['slider_content_position'], $data['slider_content_width'], $data['slider_text_color'], $data['slider_background_fit']);
+    unset($data['slider_autoplay'], $data['slider_pause_on_hover'], $data['slider_show_arrows'], $data['slider_show_dots'], $data['slider_loop'], $data['slider_swipe'], $data['slider_keyboard']);
+    unset($data['slide_aria_label'], $data['slide_content_position'], $data['slide_content_width'], $data['slide_text_color'], $data['slide_background_fit']);
 
     unset($data['plugin_settings']);
 

@@ -752,6 +752,76 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function content_validate_accepts_composable_slider_and_slide_blocks(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $media = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/images/slider.jpg',
+      'filename' => 'slider.jpg',
+      'original_name' => 'slider.jpg',
+      'extension' => 'jpg',
+      'mime_type' => 'image/jpeg',
+      'size' => 1024,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Slider',
+    ]);
+
+    $payload = $this->validPlanPayload([
+      'plan' => [
+        'slots' => [
+          'main' => [
+            [
+              'type' => 'slider',
+              'settings' => [
+                'height' => 'viewport',
+                'transition' => 'fade',
+                'autoplay' => false,
+                'show_dots' => true,
+                'overlay' => 'dark',
+                'content_width' => 'wide',
+                'text_color' => 'light',
+              ],
+              'children' => [
+                [
+                  'type' => 'slide',
+                  'media_id' => $media->id,
+                  'settings' => [
+                    'aria_label' => 'Factory hero',
+                    'background_position' => 'center',
+                    'content_position' => 'center',
+                  ],
+                  'children' => [
+                    [
+                      'type' => 'header',
+                      'translations' => [
+                        'title' => 'Renklerin Profesyonel Hali',
+                      ],
+                      'settings' => [
+                        'level' => 'h1',
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/validate', $payload)
+      ->assertOk()
+      ->assertJsonPath('normalized_plan.slots.main.0.type', 'slider')
+      ->assertJsonPath('normalized_plan.slots.main.0.settings.height', 'viewport')
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.type', 'slide')
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.media_id', $media->id)
+      ->assertJsonPath('normalized_plan.slots.main.0.children.0.children.0.type', 'header');
+  }
+
+  #[Test]
   public function content_apply_preserves_public_icon_settings_and_preview_renders_icon_html(): void
   {
     $this->createInternalApiToken('secret-token');

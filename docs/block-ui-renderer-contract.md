@@ -499,12 +499,22 @@ Public pages now use explicit layout composition modes:
 ### `slider`
 
 - CMS block slug: `slider`
-- Admin fields: ordered gallery assets and optional text
+- Admin fields: admin label, height, custom min height, aspect ratio, transition, autoplay interval, overlay, content position, content width, text color, background fit, autoplay, pause on hover, arrows, dots, loop, swipe, keyboard
 - Translatable fields: none
-- Shared fields: assets and structure
-- Intended WebBlocks UI output: no promoted Phase 4 renderer; use `gallery` or other structured media blocks instead when possible.
-- Current implementation: weak
-- Notes for later renderer/admin improvements: slider remains deferred because there is no confirmed shipped WebBlocks UI carousel pattern worth standardizing on.
+- Shared fields: `settings.layout_name`, slider sizing, interaction, overlay, and content presentation settings
+- Intended WebBlocks UI output: a responsive carousel container that owns its public root, track, controls, and dots while delegating visible slide content to nested blocks.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep Slider as a parent/container block. It accepts only `slide` children; do not reintroduce gallery-asset driven slider content.
+
+### `slide`
+
+- CMS block slug: `slide`
+- Admin fields: admin label, accessible label, background media, background position, background overlay, content position, content width, text color, background fit
+- Translatable fields: none
+- Shared fields: `media_id`, `settings.layout_name`, `settings.aria_label`, background settings, content presentation settings
+- Intended WebBlocks UI output: a slider child container with optional Media Library background image and normal nested blocks for headings, text, cards, buttons, and layout.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: Slide can render image-only content through background media, but visible copy should be composed with nested blocks.
 
 ### `code`
 
@@ -549,9 +559,10 @@ Public pages now use explicit layout composition modes:
 
 ### Legacy / Transitional Phase 3 Note
 
-- `tabs`, `slider`, `menu`, and `faq-list` are still legacy draft-era slugs in the CMS catalog rather than published core contracts.
+- `tabs`, `menu`, and `faq-list` are still legacy draft-era slugs in the CMS catalog rather than published core contracts.
+- `slider` has been promoted into the published core catalog together with `slide`.
 - `showcase-list` and `contact-info` still exist only as public-render compatibility blocks and are not promoted into the published core catalog in this phase.
-- This phase keeps those paths documented honestly, preserves compatibility rendering where it already ships, and adds safe link sanitization for settings-driven public links without introducing a new tabs or slider JavaScript system.
+- This phase keeps the remaining legacy paths documented honestly, preserves compatibility rendering where it already ships, and adds safe link sanitization for settings-driven public links without introducing a new tabs system.
 
 ### `contact_form`
 

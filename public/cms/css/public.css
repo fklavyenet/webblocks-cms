@@ -275,6 +275,257 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     --wb-block-bg-overlay: linear-gradient(color-mix(in srgb, var(--wb-public-surface, #ffffff) 78%, transparent), color-mix(in srgb, var(--wb-public-surface, #ffffff) 78%, transparent));
 }
 
+.wb-cms-slider {
+    position: relative;
+    inline-size: 100%;
+    min-block-size: 20rem;
+    overflow: hidden;
+    background: var(--wb-public-surface-muted, var(--wb-surface-2));
+    color: var(--wb-public-text, inherit);
+}
+
+.wb-cms-slider:focus {
+    outline: 2px solid var(--wb-public-accent, var(--wb-accent));
+    outline-offset: 2px;
+}
+
+.wb-cms-slider-height-fill {
+    block-size: 100%;
+    min-block-size: 24rem;
+}
+
+.wb-cms-slider-height-auto {
+    block-size: auto;
+    min-block-size: 0;
+}
+
+.wb-cms-slider-height-viewport {
+    min-block-size: 100svh;
+}
+
+.wb-cms-slider-height-large {
+    min-block-size: min(44rem, 82svh);
+}
+
+.wb-cms-slider-height-medium {
+    min-block-size: 32rem;
+}
+
+.wb-cms-slider-height-small {
+    min-block-size: 20rem;
+}
+
+.wb-cms-slider-height-custom {
+    min-block-size: var(--wb-cms-slider-min-height, 32rem);
+}
+
+.wb-cms-slider-aspect-16-9 {
+    aspect-ratio: 16 / 9;
+}
+
+.wb-cms-slider-aspect-4-3 {
+    aspect-ratio: 4 / 3;
+}
+
+.wb-cms-slider-aspect-1-1 {
+    aspect-ratio: 1 / 1;
+}
+
+.wb-cms-slider-track {
+    display: flex;
+    block-size: 100%;
+    min-block-size: inherit;
+    transition: transform 360ms ease;
+    will-change: transform;
+}
+
+.wb-cms-slide {
+    position: relative;
+    display: grid;
+    flex: 0 0 100%;
+    min-inline-size: 100%;
+    min-block-size: inherit;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.wb-cms-slide.wb-has-background-media {
+    background-size: cover;
+}
+
+.wb-cms-slider-bg-contain.wb-has-background-media {
+    background-size: contain;
+}
+
+.wb-cms-slider-transition-fade .wb-cms-slider-track {
+    display: block;
+    position: relative;
+    transform: none !important;
+}
+
+.wb-cms-slider-transition-fade .wb-cms-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 360ms ease;
+}
+
+.wb-cms-slider-transition-fade .wb-cms-slide.is-active {
+    position: relative;
+    opacity: 1;
+}
+
+.wb-cms-slider-overlay-soft .wb-cms-slide.wb-has-background-media {
+    --wb-block-bg-overlay: linear-gradient(color-mix(in srgb, #000000 22%, transparent), color-mix(in srgb, #000000 22%, transparent));
+}
+
+.wb-cms-slider-overlay-medium .wb-cms-slide.wb-has-background-media {
+    --wb-block-bg-overlay: linear-gradient(color-mix(in srgb, #000000 38%, transparent), color-mix(in srgb, #000000 38%, transparent));
+}
+
+.wb-cms-slider-overlay-dark .wb-cms-slide.wb-has-background-media {
+    --wb-block-bg-overlay: linear-gradient(color-mix(in srgb, #000000 56%, transparent), color-mix(in srgb, #000000 56%, transparent));
+}
+
+.wb-cms-slide-content {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--wb-s4);
+    align-content: center;
+    inline-size: min(100%, 44rem);
+    padding: clamp(2rem, 5vw, 5rem);
+}
+
+.wb-cms-slider-content-narrow .wb-cms-slide-content {
+    inline-size: min(100%, 32rem);
+}
+
+.wb-cms-slider-content-wide .wb-cms-slide-content {
+    inline-size: min(100%, 58rem);
+}
+
+.wb-cms-slider-content-full .wb-cms-slide-content {
+    inline-size: 100%;
+}
+
+.wb-cms-slide.wb-cms-slider-content-narrow .wb-cms-slide-content {
+    inline-size: min(100%, 32rem);
+}
+
+.wb-cms-slide.wb-cms-slider-content-medium .wb-cms-slide-content {
+    inline-size: min(100%, 44rem);
+}
+
+.wb-cms-slide.wb-cms-slider-content-wide .wb-cms-slide-content {
+    inline-size: min(100%, 58rem);
+}
+
+.wb-cms-slide.wb-cms-slider-content-full .wb-cms-slide-content {
+    inline-size: 100%;
+}
+
+.wb-cms-slider-content-center {
+    place-items: center;
+}
+
+.wb-cms-slider-content-center .wb-cms-slide-content,
+.wb-cms-slider-content-top-center .wb-cms-slide-content,
+.wb-cms-slider-content-bottom-center .wb-cms-slide-content {
+    text-align: center;
+}
+
+.wb-cms-slider-content-top-left {
+    place-items: start start;
+}
+
+.wb-cms-slider-content-top-center {
+    place-items: start center;
+}
+
+.wb-cms-slider-content-top-right {
+    place-items: start end;
+}
+
+.wb-cms-slider-content-bottom-left {
+    place-items: end start;
+}
+
+.wb-cms-slider-content-bottom-center {
+    place-items: end center;
+}
+
+.wb-cms-slider-content-bottom-right {
+    place-items: end end;
+}
+
+.wb-cms-slide.wb-cms-slider-content-top-left .wb-cms-slide-content,
+.wb-cms-slide.wb-cms-slider-content-bottom-left .wb-cms-slide-content {
+    text-align: left;
+}
+
+.wb-cms-slide.wb-cms-slider-content-top-center .wb-cms-slide-content,
+.wb-cms-slide.wb-cms-slider-content-bottom-center .wb-cms-slide-content {
+    text-align: center;
+}
+
+.wb-cms-slide.wb-cms-slider-content-top-right .wb-cms-slide-content,
+.wb-cms-slide.wb-cms-slider-content-bottom-right .wb-cms-slide-content {
+    text-align: right;
+}
+
+.wb-cms-slider-text-light,
+.wb-cms-slider-text-light .wb-text-muted,
+.wb-cms-slider-text-light .wb-muted {
+    color: #ffffff !important;
+}
+
+.wb-cms-slider-text-dark,
+.wb-cms-slider-text-dark .wb-text-muted,
+.wb-cms-slider-text-dark .wb-muted {
+    color: #111827 !important;
+}
+
+.wb-cms-slider-arrows {
+    position: absolute;
+    inset-inline: var(--wb-s4);
+    inset-block-start: 50%;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--wb-s2);
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.wb-cms-slider-arrow {
+    pointer-events: auto;
+}
+
+.wb-cms-slider-dots {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: var(--wb-s4);
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    gap: var(--wb-s2);
+}
+
+.wb-slider-dot {
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, #ffffff 82%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, #ffffff 42%, transparent);
+    cursor: pointer;
+}
+
+.wb-slider-dot.is-active {
+    background: #ffffff;
+}
+
 :is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-btn-primary {
     background: var(--wb-public-accent);
     border-color: var(--wb-public-accent);

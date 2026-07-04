@@ -217,7 +217,7 @@ class Block extends CmsModel
     $title = $this->stringValueOrNull($this->title) ?? $this->translatedTextFieldValue('title');
     $content = $this->stringValueOrNull($this->content) ?? $this->translatedTextFieldValue('content');
 
-    if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'sticky-navbar'], true)) {
+    if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'slider', 'slide', 'sticky-navbar'], true)) {
       $layoutName = $this->layoutAdminName();
 
       return $layoutName !== null
@@ -234,12 +234,20 @@ class Block extends CmsModel
 
   public function editorSummary(): ?string
   {
-    if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'sticky-navbar'], true)) {
+    if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'slider', 'slide', 'sticky-navbar'], true)) {
       $childCount = $this->children->count();
 
-      return $childCount > 0
-        ? $childCount.' '.Str::plural('child block', $childCount)
-        : 'Layout wrapper';
+      if ($childCount > 0) {
+        $itemLabel = match ($this->typeSlug()) {
+          'slider' => 'slide',
+          'slide' => 'child block',
+          default => 'child block',
+        };
+
+        return $childCount.' '.Str::plural($itemLabel, $childCount);
+      }
+
+      return 'Layout wrapper';
     }
 
     if (in_array($this->typeSlug(), ['card', 'card_header', 'card_body', 'card_footer'], true) && $this->children->isNotEmpty()) {
@@ -291,7 +299,7 @@ class Block extends CmsModel
   {
     $detail = match ($this->typeSlug()) {
       'card' => $this->parentCandidateDetail($this->title),
-      'section', 'container', 'cluster', 'grid', 'sticky-navbar' => $this->parentCandidateDetail($this->layoutAdminName()),
+      'section', 'container', 'cluster', 'grid', 'slider', 'slide', 'sticky-navbar' => $this->parentCandidateDetail($this->layoutAdminName()),
       default => $this->parentCandidateDetail($this->editorLabel()),
     };
 
@@ -302,7 +310,7 @@ class Block extends CmsModel
 
   public function layoutAdminName(): ?string
   {
-    if (! in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'sticky-navbar'], true)) {
+    if (! in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'slider', 'slide', 'sticky-navbar'], true)) {
       return null;
     }
 
@@ -468,13 +476,14 @@ class Block extends CmsModel
       return true;
     }
 
-    return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'card_header', 'card_body', 'card_footer', 'hero', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
+    return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'card_header', 'card_body', 'card_footer', 'hero', 'slider', 'slide', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
   }
 
   public function allowedChildTypeSlugs(): ?array
   {
     return match ($this->typeSlug()) {
       'hero', 'cta' => ['button'],
+      'slider' => ['slide'],
       'columns' => ['column_item'],
       'feature-grid' => ['feature-item', 'column_item'],
       'card' => ['card_header', 'card_body', 'card_footer'],
@@ -792,6 +801,122 @@ class Block extends CmsModel
     };
   }
 
+  public function sliderHeightClass(): string
+  {
+    return match ($this->appearanceSetting('height')) {
+      'auto' => 'wb-cms-slider-height-auto',
+      'viewport' => 'wb-cms-slider-height-viewport',
+      'large' => 'wb-cms-slider-height-large',
+      'medium' => 'wb-cms-slider-height-medium',
+      'small' => 'wb-cms-slider-height-small',
+      'custom' => 'wb-cms-slider-height-custom',
+      default => 'wb-cms-slider-height-fill',
+    };
+  }
+
+  public function sliderAspectRatioClass(): ?string
+  {
+    return match ($this->appearanceSetting('aspect_ratio')) {
+      '16/9' => 'wb-cms-slider-aspect-16-9',
+      '4/3' => 'wb-cms-slider-aspect-4-3',
+      '1/1' => 'wb-cms-slider-aspect-1-1',
+      default => null,
+    };
+  }
+
+  public function sliderTransition(): string
+  {
+    return $this->appearanceSetting('transition') === 'fade' ? 'fade' : 'slide';
+  }
+
+  public function sliderBooleanSetting(string $key, bool $default): bool
+  {
+    $value = $this->setting($key);
+
+    if (is_bool($value)) {
+      return $value;
+    }
+
+    if (is_numeric($value)) {
+      return (bool) $value;
+    }
+
+    if (is_string($value)) {
+      return in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true)
+        ? true
+        : (in_array(strtolower($value), ['0', 'false', 'no', 'off'], true) ? false : $default);
+    }
+
+    return $default;
+  }
+
+  public function sliderIntervalMs(): int
+  {
+    $interval = (int) $this->setting('interval_ms', 6000);
+
+    return min(max($interval, 1000), 30000);
+  }
+
+  public function sliderOverlayClass(): ?string
+  {
+    return match ($this->appearanceSetting('overlay')) {
+      'soft' => 'wb-cms-slider-overlay-soft',
+      'medium' => 'wb-cms-slider-overlay-medium',
+      'dark', 'strong' => 'wb-cms-slider-overlay-dark',
+      default => null,
+    };
+  }
+
+  public function sliderContentPositionClass(): string
+  {
+    return match ($this->appearanceSetting('content_position')) {
+      'top-left' => 'wb-cms-slider-content-top-left',
+      'top-center' => 'wb-cms-slider-content-top-center',
+      'top-right' => 'wb-cms-slider-content-top-right',
+      'bottom-left' => 'wb-cms-slider-content-bottom-left',
+      'bottom-center' => 'wb-cms-slider-content-bottom-center',
+      'bottom-right' => 'wb-cms-slider-content-bottom-right',
+      default => 'wb-cms-slider-content-center',
+    };
+  }
+
+  public function sliderContentWidthClass(): string
+  {
+    return match ($this->appearanceSetting('content_width')) {
+      'narrow' => 'wb-cms-slider-content-narrow',
+      'wide' => 'wb-cms-slider-content-wide',
+      'full' => 'wb-cms-slider-content-full',
+      default => 'wb-cms-slider-content-medium',
+    };
+  }
+
+  public function sliderTextColorClass(): ?string
+  {
+    return match ($this->appearanceSetting('text_color')) {
+      'light' => 'wb-cms-slider-text-light',
+      'dark' => 'wb-cms-slider-text-dark',
+      default => null,
+    };
+  }
+
+  public function sliderBackgroundFitClass(): string
+  {
+    return $this->appearanceSetting('background_fit') === 'contain'
+      ? 'wb-cms-slider-bg-contain'
+      : 'wb-cms-slider-bg-cover';
+  }
+
+  public function sliderMinHeightStyle(): ?string
+  {
+    $height = trim((string) $this->setting('min_height', ''));
+
+    if ($height === '' || preg_match('/^\d{2,4}(px|vh|svh|dvh)$/', $height) !== 1) {
+      return null;
+    }
+
+    return '--wb-cms-slider-min-height: '.$height.';';
+  }
+
   public function cardUrl(): ?string
   {
     return self::safePublicUrl($this->setting('url', ''));
@@ -1049,6 +1174,8 @@ class Block extends CmsModel
       'card_footer',
       'content_header',
       'hero',
+      'slider',
+      'slide',
       'columns',
       'cta',
       'image',
@@ -1074,7 +1201,7 @@ class Block extends CmsModel
 
   public function supportsBackgroundMedia(): bool
   {
-    return in_array($this->typeSlug(), ['hero', 'section', 'card', 'cta', 'content_header'], true);
+    return in_array($this->typeSlug(), ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
   }
 
   public function publicBackgroundMediaUrl(): ?string
