@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.226
+
+- Bumped CMS to `1.32.226`.
+- Fix package-native engagement table update migrations so prefixed CMS installs can complete System Updates and repair partially created engagement tables.
+
 ## 1.32.225
 
 - Bumped CMS to `1.32.225`.

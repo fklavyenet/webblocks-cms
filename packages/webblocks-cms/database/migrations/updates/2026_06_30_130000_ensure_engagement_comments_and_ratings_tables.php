@@ -11,9 +11,9 @@ return new class extends Migration
     if (! Schema::hasTable('comment_entries')) {
       Schema::create('comment_entries', function (Blueprint $table): void {
         $table->id();
-        $table->foreignId('site_id')->nullable()->constrained()->nullOnDelete();
-        $table->foreignId('page_id')->nullable()->constrained()->nullOnDelete();
-        $table->foreignId('block_id')->nullable()->constrained()->nullOnDelete();
+        $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
+        $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
+        $table->foreignId('block_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
         $table->string('author_name')->nullable();
         $table->longText('body');
         $table->string('status')->default('pending');
@@ -40,9 +40,9 @@ return new class extends Migration
     if (! Schema::hasTable('content_ratings')) {
       Schema::create('content_ratings', function (Blueprint $table): void {
         $table->id();
-        $table->foreignId('site_id')->nullable()->constrained()->nullOnDelete();
-        $table->foreignId('page_id')->nullable()->constrained()->nullOnDelete();
-        $table->foreignId('block_id')->nullable()->constrained()->nullOnDelete();
+        $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
+        $table->foreignId('page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
+        $table->foreignId('block_id')->nullable()->constrained('wbcms_blocks')->nullOnDelete();
         $table->unsignedTinyInteger('rating_value');
         $table->unsignedTinyInteger('rating_max')->default(5);
         $table->string('status')->default('active');
