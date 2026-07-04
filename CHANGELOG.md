@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.225
+
+- Bumped CMS to `1.32.225`.
+- Add Internal Content API remote media fetch so trusted operator tools can import one approved public file URL through the normal Media Library pipeline before assigning the returned media id to native blocks.
+
 ## 1.32.224
 
 - Bumped CMS to `1.32.224`.

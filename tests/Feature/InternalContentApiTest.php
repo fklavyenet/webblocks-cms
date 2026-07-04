@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
@@ -94,6 +95,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
       ->assertJsonPath('_links.admin_render_system_updates', '/webadmin/api/admin-render/system-updates')
       ->assertJsonPath('_links.media', '/webadmin/api/media')
+      ->assertJsonPath('_links.media_remote_fetch', '/webadmin/api/media/fetch')
       ->assertJsonPath('_links.media_update', '/webadmin/api/media/{media}')
       ->assertJsonPath('_links.site_asset', '/webadmin/api/sites/{site}/assets/{css|js}')
       ->assertJsonPath('_links.block_update', '/webadmin/api/blocks/{block}')
@@ -133,6 +135,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./icon-catalog.get.summary', 'List active safe icon slugs for content or navigation fields')
       ->assertJsonPath('paths./icon-catalog.get.x-supported-contexts.0', 'content')
       ->assertJsonPath('paths./media.get.summary', 'List Media items for API-safe media assignment')
+      ->assertJsonPath('paths./media/fetch.post.summary', 'Fetch one approved public remote file into the Media Library')
+      ->assertJsonPath('paths./media/fetch.post.x-required-capability', CmsApiTokenCapabilities::MEDIA_UPLOAD)
       ->assertJsonPath('paths./media/{media}.patch.summary', 'Update safe Media Library metadata')
       ->assertJsonPath('paths./media/{media}.patch.x-required-capability', CmsApiTokenCapabilities::MEDIA_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_READ)
@@ -2630,6 +2634,70 @@ class InternalContentApiTest extends TestCase
       ->assertCreated()
       ->assertJsonPath('media.kind', Media::KIND_DOCUMENT)
       ->assertJsonPath('media.mime_type', 'application/pdf');
+  }
+
+  #[Test]
+  public function media_api_can_fetch_public_remote_media_with_upload_capability(): void
+  {
+    Storage::fake('public');
+    Http::fake([
+      'https://93.184.216.34/remote-photo.png' => Http::response(
+        base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII='),
+        200,
+        ['Content-Type' => 'image/png'],
+      ),
+    ]);
+
+    $folder = MediaFolder::query()->create(['name' => 'Remote Imports']);
+    $this->createInternalApiToken('media-read-token', [CmsApiTokenCapabilities::MEDIA_READ]);
+
+    $this->withHeader('Authorization', 'Bearer media-read-token')
+      ->postJson('/webadmin/api/media/fetch', [
+        'source_url' => 'https://93.184.216.34/remote-photo.png',
+      ])
+      ->assertForbidden()
+      ->assertJsonPath('required_capability', CmsApiTokenCapabilities::MEDIA_UPLOAD);
+
+    $this->createInternalApiToken('remote-fetch-token', [CmsApiTokenCapabilities::MEDIA_UPLOAD]);
+
+    $response = $this->withHeader('Authorization', 'Bearer remote-fetch-token')
+      ->postJson('/webadmin/api/media/fetch', [
+        'folder_id' => $folder->id,
+        'source_url' => 'https://93.184.216.34/remote-photo.png',
+        'title' => 'Fetched photo',
+        'alt_text' => 'Fetched alt',
+      ])
+      ->assertCreated()
+      ->assertJsonPath('media.kind', Media::KIND_IMAGE)
+      ->assertJsonPath('media.mime_type', 'image/png')
+      ->assertJsonPath('media.title', 'Fetched photo')
+      ->assertJsonPath('media.alt_text', 'Fetched alt')
+      ->assertJsonPath('writes.0.type', 'media_remote_fetch');
+
+    $mediaId = (int) $response->json('media.id');
+    $media = Media::query()->findOrFail($mediaId);
+
+    $this->assertSame($folder->id, $media->folder_id);
+    $this->assertSame('remote-photo.png', $media->original_name);
+    Storage::disk('public')->assertExists($media->path);
+  }
+
+  #[Test]
+  public function media_api_remote_fetch_rejects_private_network_targets(): void
+  {
+    Storage::fake('public');
+    Http::fake();
+    $this->createInternalApiToken('remote-fetch-token', [CmsApiTokenCapabilities::MEDIA_UPLOAD]);
+
+    $this->withHeader('Authorization', 'Bearer remote-fetch-token')
+      ->postJson('/webadmin/api/media/fetch', [
+        'source_url' => 'http://127.0.0.1/private.jpg',
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'remote_media_fetch_failed')
+      ->assertJsonPath('errors.0.path', 'source_url');
+
+    Http::assertNothingSent();
   }
 
   #[Test]

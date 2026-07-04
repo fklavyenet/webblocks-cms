@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -25,6 +26,7 @@ use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
 use WebBlocks\Cms\Support\Media\MediaUploader;
+use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 
@@ -35,6 +37,7 @@ class InternalContentResourceController extends Controller
     private readonly PageDeleter $pageDeleter,
     private readonly CmsApiTokenCapabilities $capabilities,
     private readonly MediaUploader $mediaUploader,
+    private readonly RemoteMediaFetcher $remoteMediaFetcher,
     private readonly MediaDeleter $mediaDeleter,
     private readonly PluginBlockCatalog $pluginBlockCatalog,
   ) {}
@@ -685,6 +688,51 @@ class InternalContentResourceController extends Controller
       'ok' => true,
       'media' => $this->presenter->media($media),
       'writes' => [['type' => 'media_upload', 'id' => $media->id]],
+      'warnings' => [],
+      'errors' => [],
+    ], 201);
+  }
+
+  public function fetchRemoteMedia(Request $request): JsonResponse
+  {
+    $validator = Validator::make($request->all(), [
+      'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
+      'source_url' => ['required', 'url:http,https', 'max:2048'],
+      'title' => ['nullable', 'string', 'max:255'],
+      'alt_text' => ['nullable', 'string', 'max:255'],
+      'caption' => ['nullable', 'string'],
+      'description' => ['nullable', 'string'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationErrors('invalid_remote_media_fetch', 'Remote media fetch failed validation.', $validator->errors()->toArray());
+    }
+
+    $data = $validator->validated();
+
+    try {
+      $media = $this->remoteMediaFetcher->fetch((string) $data['source_url'], $data);
+    } catch (ConnectionException|\RuntimeException $exception) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'remote_media_fetch_failed',
+        'message' => $exception->getMessage(),
+        'warnings' => [],
+        'errors' => [
+          [
+            'path' => 'source_url',
+            'message' => $exception->getMessage(),
+          ],
+        ],
+      ], 422);
+    }
+
+    $media->refresh();
+
+    return response()->json([
+      'ok' => true,
+      'media' => $this->presenter->media($media),
+      'writes' => [['type' => 'media_remote_fetch', 'id' => $media->id]],
       'warnings' => [],
       'errors' => [],
     ], 201);

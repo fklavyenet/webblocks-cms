@@ -58,12 +58,13 @@ Do not use the public site root as the API URL. Never print, log, or commit real
 
 ## Content Rules
 
-- Do not import or download remote media unless a later explicit contract supports it.
+- Do not put remote media URLs directly inside content plans. If API discovery exposes `POST /webadmin/api/media/fetch` and the token has `media.upload`, use it only for an approved single public file URL, then assign the returned Media Library id in the content plan.
 - Use `GET /webadmin/api/media` only for existing CMS Media Library discovery. Prefer tokens with `media.read`; transitional installs may still allow `content.read` for read-only media discovery.
 - Use `POST /webadmin/api/media` only when discovered and authorized with `media.upload`; uploaded files become normal admin-visible Media Library records.
+- Use `POST /webadmin/api/media/fetch` only when discovered and authorized with `media.upload`; fetched files become normal admin-visible Media Library records and must pass the CMS remote-fetch public-network, redirect, MIME, and size guards.
 - Use `PATCH /webadmin/api/media/{media}` only when discovered and authorized with `media.write`. This write scope is metadata-only: `title`, `alt_text`, `caption`, and `description`.
 - Use `POST /webadmin/api/media/{media}/replace`, `POST /webadmin/api/media/{media}/move`, or `DELETE /webadmin/api/media/{media}` only when discovered and authorized with the matching `media.replace`, `media.move`, or `media.delete` capability. Delete keeps the CMS usage guard and must not remove media still referenced by blocks, site branding, or page SEO.
-- Do not remotely fetch Media Library files unless a later explicit contract supports that exact operation.
+- Do not remotely fetch Media Library files unless live API discovery supports `POST /webadmin/api/media/fetch` for that exact operation.
 - In content plans, assign uploaded Media Library records to native media blocks with `media_id` or `asset_id` on `image`, `navbar-brand`, `sidebar-brand`, `file`, `download`, and `video`, or with `gallery_items` / `gallery_media_ids` on `gallery`. For card-like designs, put the media on a nested `image` block inside `card` / `card_body`.
 - For site favicon and social image changes, upload or discover image media and use `PATCH /webadmin/api/sites/{site}/branding`; do not overwrite `/cms/brand/*` product/admin assets.
 - For existing `navbar-brand` or `sidebar-brand` logo changes, use `PATCH /webadmin/api/blocks/{block}` with `media_id`, safe settings, and translations instead of Trusted HTML, invented file paths, unsupported `settings.logo_url`, or static markup.
