@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.224
+
+- Bumped CMS to `1.32.224`.
 - Add an Internal Content API icon catalog endpoint so trusted tools can discover active content/navigation icon slugs instead of guessing them.
 - Persist translated `eyebrow` badge labels when content plans create blocks, allowing API-authored Feature Item/Column Item badges to render in preview and public pages.
 
