@@ -496,7 +496,7 @@ class BlockRequest extends FormRequest
       }
 
       if (! $parentId) {
-        if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'card_header', 'card_body', 'card_footer'], true)) {
+        if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'card_header', 'card_body', 'card_footer', 'slide'], true)) {
           $validator->errors()->add('parent_id', 'This block type requires a supported parent block.');
 
           return;
@@ -1829,7 +1829,6 @@ class BlockRequest extends FormRequest
         $sliderHeight = trim((string) ($data['slider_height'] ?? ''));
         $sliderMinHeight = trim((string) ($data['slider_min_height'] ?? ''));
         $sliderAspectRatio = trim((string) ($data['slider_aspect_ratio'] ?? ''));
-        $sliderTransition = trim((string) ($data['slider_transition'] ?? ''));
         $sliderOverlay = trim((string) ($data['slider_overlay'] ?? ''));
         $sliderContentPosition = trim((string) ($data['slider_content_position'] ?? ''));
         $sliderContentWidth = trim((string) ($data['slider_content_width'] ?? ''));
@@ -1941,7 +1940,7 @@ class BlockRequest extends FormRequest
             unset($settings['aspect_ratio']);
           }
 
-          $settings['transition'] = $sliderTransition === 'fade' ? 'fade' : 'slide';
+          $settings['transition'] = 'slide';
           $settings['interval_ms'] = min(max((int) ($data['slider_interval_ms'] ?? 6000), 1000), 30000);
           $settings['autoplay'] = (bool) ($data['slider_autoplay'] ?? false);
           $settings['pause_on_hover'] = (bool) ($data['slider_pause_on_hover'] ?? true);

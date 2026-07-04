@@ -804,29 +804,23 @@ class Block extends CmsModel
   public function sliderHeightClass(): string
   {
     return match ($this->appearanceSetting('height')) {
-      'auto' => 'wb-cms-slider-height-auto',
-      'viewport' => 'wb-cms-slider-height-viewport',
-      'large' => 'wb-cms-slider-height-large',
-      'medium' => 'wb-cms-slider-height-medium',
-      'small' => 'wb-cms-slider-height-small',
-      'custom' => 'wb-cms-slider-height-custom',
-      default => 'wb-cms-slider-height-fill',
+      'auto' => 'wb-slider-height-auto',
+      'viewport' => 'wb-slider-height-viewport',
+      'large' => 'wb-slider-height-lg',
+      'medium' => 'wb-slider-height-md',
+      'small' => 'wb-slider-height-sm',
+      default => 'wb-slider-height-fill',
     };
   }
 
   public function sliderAspectRatioClass(): ?string
   {
     return match ($this->appearanceSetting('aspect_ratio')) {
-      '16/9' => 'wb-cms-slider-aspect-16-9',
-      '4/3' => 'wb-cms-slider-aspect-4-3',
-      '1/1' => 'wb-cms-slider-aspect-1-1',
+      '16/9' => 'wb-slider-ratio-video',
+      '4/3' => 'wb-slider-ratio-standard',
+      '1/1' => 'wb-slider-ratio-square',
       default => null,
     };
-  }
-
-  public function sliderTransition(): string
-  {
-    return $this->appearanceSetting('transition') === 'fade' ? 'fade' : 'slide';
   }
 
   public function sliderBooleanSetting(string $key, bool $default): bool
@@ -860,9 +854,9 @@ class Block extends CmsModel
   public function sliderOverlayClass(): ?string
   {
     return match ($this->appearanceSetting('overlay')) {
-      'soft' => 'wb-cms-slider-overlay-soft',
-      'medium' => 'wb-cms-slider-overlay-medium',
-      'dark', 'strong' => 'wb-cms-slider-overlay-dark',
+      'soft' => 'wb-slider-overlay-soft',
+      'dark', 'strong' => 'wb-slider-overlay-strong',
+      'none' => 'wb-slider-overlay-none',
       default => null,
     };
   }
@@ -870,40 +864,40 @@ class Block extends CmsModel
   public function sliderContentPositionClass(): string
   {
     return match ($this->appearanceSetting('content_position')) {
-      'top-left' => 'wb-cms-slider-content-top-left',
-      'top-center' => 'wb-cms-slider-content-top-center',
-      'top-right' => 'wb-cms-slider-content-top-right',
-      'bottom-left' => 'wb-cms-slider-content-bottom-left',
-      'bottom-center' => 'wb-cms-slider-content-bottom-center',
-      'bottom-right' => 'wb-cms-slider-content-bottom-right',
-      default => 'wb-cms-slider-content-center',
+      'top-left' => 'wb-slider-content-top-start',
+      'top-center' => 'wb-slider-content-top-center',
+      'top-right' => 'wb-slider-content-top-end',
+      'bottom-left' => 'wb-slider-content-bottom-start',
+      'bottom-center' => 'wb-slider-content-bottom-center',
+      'bottom-right' => 'wb-slider-content-bottom-end',
+      default => 'wb-slider-content-center',
     };
   }
 
   public function sliderContentWidthClass(): string
   {
     return match ($this->appearanceSetting('content_width')) {
-      'narrow' => 'wb-cms-slider-content-narrow',
-      'wide' => 'wb-cms-slider-content-wide',
-      'full' => 'wb-cms-slider-content-full',
-      default => 'wb-cms-slider-content-medium',
+      'narrow' => 'wb-slider-content-sm',
+      'wide' => 'wb-slider-content-lg',
+      'full' => 'wb-slider-content-full',
+      default => 'wb-slider-content-md',
     };
   }
 
   public function sliderTextColorClass(): ?string
   {
     return match ($this->appearanceSetting('text_color')) {
-      'light' => 'wb-cms-slider-text-light',
-      'dark' => 'wb-cms-slider-text-dark',
+      'light' => 'wb-slider-text-light',
+      'dark' => 'wb-slider-text-dark',
       default => null,
     };
   }
 
-  public function sliderBackgroundFitClass(): string
+  public function sliderBackgroundFitClass(): ?string
   {
     return $this->appearanceSetting('background_fit') === 'contain'
-      ? 'wb-cms-slider-bg-contain'
-      : 'wb-cms-slider-bg-cover';
+      ? 'wb-slide-media-contain'
+      : null;
   }
 
   public function sliderMinHeightStyle(): ?string
@@ -914,7 +908,12 @@ class Block extends CmsModel
       return null;
     }
 
-    return '--wb-cms-slider-min-height: '.$height.';';
+    return '--wb-slider-min-height: '.$height.';';
+  }
+
+  public function publicBackgroundMediaPositionStyle(): string
+  {
+    return 'object-position: '.$this->backgroundPosition().';';
   }
 
   public function cardUrl(): ?string

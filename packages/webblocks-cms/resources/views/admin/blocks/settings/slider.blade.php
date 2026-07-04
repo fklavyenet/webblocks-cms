@@ -1,7 +1,6 @@
 @php
     $height = old('slider_height', $block->appearanceSetting('height') ?? 'fill');
     $aspectRatio = old('slider_aspect_ratio', $block->appearanceSetting('aspect_ratio') ?? 'auto');
-    $transition = old('slider_transition', $block->appearanceSetting('transition') ?? 'slide');
     $overlay = old('slider_overlay', $block->appearanceSetting('overlay') ?? 'none');
     $contentPosition = old('slider_content_position', $block->appearanceSetting('content_position') ?? 'center');
     $contentWidth = old('slider_content_width', $block->appearanceSetting('content_width') ?? 'medium');
@@ -44,14 +43,6 @@
                 ] as $value => $label)
                     <option value="{{ $value }}" @selected($aspectRatio === $value)>{{ $label }}</option>
                 @endforeach
-            </select>
-        </div>
-
-        <div class="wb-stack wb-gap-1">
-            <label for="slider_transition">Transition</label>
-            <select id="slider_transition" name="slider_transition" class="wb-select">
-                <option value="slide" @selected($transition === 'slide')>Slide</option>
-                <option value="fade" @selected($transition === 'fade')>Fade</option>
             </select>
         </div>
 

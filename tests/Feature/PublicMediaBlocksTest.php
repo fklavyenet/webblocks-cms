@@ -516,14 +516,22 @@ class PublicMediaBlocksTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('data-wb-slider', false);
-    $response->assertSee('data-wb-slider-transition="fade"', false);
-    $response->assertSee('data-wb-slider-slide', false);
-    $response->assertSee('wb-cms-slider-height-viewport', false);
-    $response->assertSee('wb-cms-slider-overlay-dark', false);
-    $response->assertSee('--wb-block-bg-image', false);
+    $response->assertSee('wb-slider-height-viewport', false);
+    $response->assertSee('wb-slider-overlay-strong', false);
+    $response->assertSee('wb-slider-viewport', false);
+    $response->assertSee('wb-slider-track', false);
+    $response->assertSee('wb-slide', false);
+    $response->assertSee('wb-slide-media', false);
+    $response->assertSee('wb-slide-content', false);
+    $response->assertSee('object-position: center;', false);
     $response->assertSee($asset->url(), false);
     $response->assertSee('aria-label="Factory hero"', false);
     $response->assertSee('Renklerin Profesyonel Hali');
+    $response->assertDontSee('data-wb-slider-transition', false);
+    $response->assertDontSee('data-wb-slider-slide', false);
+    $response->assertDontSee('wb-cms-slider', false);
+    $response->assertDontSee('wb-cms-slide', false);
+    $response->assertDontSee('--wb-block-bg-image', false);
     $response->assertDontSee('<video', false);
     $response->assertDontSee('<audio', false);
   }

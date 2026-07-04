@@ -587,11 +587,9 @@ class PackageStatusCommand extends Command
     return str_contains($contents, "asset('cms/css/public.css')")
       && str_contains($contents, "asset('cms/js/public/public-search-modal.js')")
       && str_contains($contents, "asset('cms/js/public/sidebar-navigation.js')")
-      && str_contains($contents, "asset('cms/js/public-slider.js')")
       && str_contains($contents, "public_path('cms/css/public.css')")
       && str_contains($contents, "public_path('cms/js/public/public-search-modal.js')")
-      && str_contains($contents, "public_path('cms/js/public/sidebar-navigation.js')")
-      && str_contains($contents, "public_path('cms/js/public-slider.js')");
+      && str_contains($contents, "public_path('cms/js/public/sidebar-navigation.js')");
   }
 
   /**

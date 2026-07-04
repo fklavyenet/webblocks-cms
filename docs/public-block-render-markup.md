@@ -2932,40 +2932,45 @@ This helper renders CMS `NavigationItem` rows for `sidebar-navigation` when that
 ### Rendered HTML
 
 ```html
-<section class="wb-cms-slider wb-slider wb-cms-slider-height-viewport wb-cms-slider-transition-fade wb-cms-slider-overlay-dark wb-cms-slider-content-center wb-cms-slider-content-wide wb-cms-slider-text-light wb-cms-slider-bg-cover" data-wb-slider data-wb-slider-transition="fade">
-  <div class="wb-cms-slider-track" data-wb-slider-track>
-    <article class="wb-cms-slide wb-slider-slide wb-has-background-media wb-bg-overlay-soft wb-cms-slider-content-center wb-cms-slider-content-wide wb-cms-slider-text-light wb-cms-slider-bg-cover" data-wb-slider-slide style="--wb-block-bg-image: url('/media/slide.jpg'); --wb-block-bg-position: center;">
-      <div class="wb-cms-slide-content">
-        <!-- nested Header, Text, Card, Button, or layout blocks render here -->
-      </div>
-    </article>
+<section class="wb-slider wb-slider-height-viewport wb-slider-overlay-strong wb-slider-content-center wb-slider-content-lg wb-slider-text-light" data-wb-slider>
+  <div class="wb-slider-viewport">
+    <div class="wb-slider-track">
+      <article class="wb-slide wb-slider-content-center wb-slider-content-lg wb-slider-text-light">
+        <img class="wb-slide-media" src="/media/slide.jpg" alt="" style="object-position: center;">
+        <div class="wb-slide-content">
+          <!-- nested Header, Text, Card, Button, or layout blocks render here -->
+        </div>
+      </article>
+    </div>
   </div>
-  <div class="wb-cms-slider-arrows">
-    <button type="button" class="wb-btn wb-btn-secondary wb-cms-slider-arrow wb-cms-slider-arrow-prev" data-wb-slider-prev>Previous</button>
-    <button type="button" class="wb-btn wb-btn-secondary wb-cms-slider-arrow wb-cms-slider-arrow-next" data-wb-slider-next>Next</button>
-  </div>
-  <div class="wb-cms-slider-dots wb-slider-dots" role="tablist">
-    <button type="button" class="wb-slider-dot is-active" data-wb-slider-dot></button>
+  <div class="wb-slider-controls">
+    <button type="button" class="wb-btn wb-btn-icon wb-slider-arrow wb-slider-prev" data-wb-slider-prev aria-label="Previous slide">
+      <i class="wb-icon wb-icon-chevron-left" aria-hidden="true"></i>
+    </button>
+    <div class="wb-slider-dots" data-wb-slider-dots></div>
+    <button type="button" class="wb-btn wb-btn-icon wb-slider-arrow wb-slider-next" data-wb-slider-next aria-label="Next slide">
+      <i class="wb-icon wb-icon-chevron-right" aria-hidden="true"></i>
+    </button>
   </div>
 </section>
 ```
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-cms-slider`, `wb-slider`, `wb-cms-slider-track`, `wb-cms-slide`, `wb-slider-slide`, `wb-cms-slide-content`, `wb-cms-slider-arrows`, `wb-cms-slider-arrow`, `wb-btn`, `wb-btn-secondary`, `wb-cms-slider-dots`, `wb-slider-dots`, `wb-slider-dot`, `is-active`, plus generated height, transition, overlay, content-position, content-width, text-color, and background-fit classes.
+`wb-slider`, `wb-slider-viewport`, `wb-slider-track`, `wb-slide`, `wb-slide-media`, `wb-slide-content`, `wb-slider-controls`, `wb-slider-arrow`, `wb-slider-prev`, `wb-slider-next`, `wb-btn`, `wb-btn-icon`, `wb-slider-dots`, `wb-slider-dot`, `is-active`, plus generated height, ratio, overlay, content-position, content-width, text-color, and media-fit classes.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | `slider.children` | `slide` blocks | Renders the direct Slide children in the slider track. |
-| `settings.height` | `fill`, `viewport`, `large`, `medium`, `small`, `auto`, `custom` | Emits slider height classes and optional `--wb-cms-slider-min-height`. |
-| `settings.transition` | `slide`, `fade` | Sets `data-wb-slider-transition` and the matching transition class. |
-| `settings.autoplay`, `interval_ms`, `pause_on_hover`, `loop`, `swipe`, `keyboard` | booleans / milliseconds | Emits data attributes consumed by `cms/js/public-slider.js`. |
+| `settings.height` | `fill`, `viewport`, `large`, `medium`, `small`, `auto`, `custom` | Emits native `wb-slider-height-*` classes and optional `--wb-slider-min-height`. |
+| `settings.transition` | `slide`, `fade` | Stored for compatibility; the native WebBlocks UI slider uses track movement. |
+| `settings.autoplay`, `interval_ms`, `pause_on_hover`, `loop`, `swipe`, `keyboard` | booleans / milliseconds | Emits data attributes consumed by the pinned WebBlocks UI runtime. |
 | `settings.show_arrows`, `settings.show_dots` | booleans | Controls whether arrows and dots render when more than one slide exists. |
-| `settings.overlay`, `content_position`, `content_width`, `text_color`, `background_fit` | enum values | Emits presentation classes inherited by slide content. |
-| `slide.media_id` | image media | Emits background media custom properties on the Slide root. |
-| `slide.children` | nested blocks | Renders visible slide content inside `.wb-cms-slide-content`. |
+| `settings.overlay`, `content_position`, `content_width`, `text_color`, `background_fit` | enum values | Emits native `wb-slider-*` or `wb-slide-media-*` presentation classes. |
+| `slide.media_id` | image media | Emits an `img.wb-slide-media` element inside the Slide root. |
+| `slide.children` | nested blocks | Renders visible slide content inside `.wb-slide-content`. |
 
 ### Use for / Avoid for
 
@@ -2985,7 +2990,7 @@ Slider is a published parent/container contract. It accepts only `slide` childre
 
 ### Notes
 
-Slide renders as `<article data-wb-slider-slide>` and is intended to be rendered inside Slider. It owns optional background media and delegates visible content to nested blocks.
+Slide renders as `<article class="wb-slide">` and is intended to be rendered inside Slider. It owns optional slide media and delegates visible content to nested blocks.
 
 ## Stats (`stats`)
 

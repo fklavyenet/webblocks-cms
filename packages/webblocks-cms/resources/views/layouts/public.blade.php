@@ -12,7 +12,6 @@
         $publicJsAssets = [
             'public-search-modal' => public_path('cms/js/public/public-search-modal.js'),
             'sidebar-navigation' => public_path('cms/js/public/sidebar-navigation.js'),
-            'public-slider' => public_path('cms/js/public-slider.js'),
         ];
         $headPageAssets = collect($headPageAssets ?? collect());
         $bodyEndPageAssets = collect($bodyEndPageAssets ?? collect());
@@ -95,9 +94,6 @@
         @endif
         @if (is_file($publicJsAssets['sidebar-navigation']))
             <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
-        @endif
-        @if (is_file($publicJsAssets['public-slider']))
-            <script src="{{ asset('cms/js/public-slider.js') }}?v={{ filemtime($publicJsAssets['public-slider']) }}" defer></script>
         @endif
         @if ($siteJsPath)
             <script src="{{ $siteJsPath }}" defer></script>

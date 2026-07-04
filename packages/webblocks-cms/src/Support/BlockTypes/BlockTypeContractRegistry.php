@@ -472,7 +472,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'slider' => [
-        'admin_form_fields' => ['Admin label', 'Height', 'Custom min height', 'Aspect ratio', 'Transition', 'Autoplay interval', 'Overlay', 'Content position', 'Content width', 'Text color', 'Background fit', 'Autoplay', 'Pause on hover', 'Show arrows', 'Show dots', 'Loop', 'Swipe', 'Keyboard navigation'],
+        'admin_form_fields' => ['Admin label', 'Height', 'Custom min height', 'Aspect ratio', 'Autoplay interval', 'Overlay', 'Content position', 'Content width', 'Text color', 'Background fit', 'Autoplay', 'Pause on hover', 'Show arrows', 'Show dots', 'Loop', 'Swipe', 'Keyboard navigation'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['settings.layout_name', 'settings.height', 'settings.min_height', 'settings.aspect_ratio', 'settings.transition', 'settings.interval_ms', 'settings.autoplay', 'settings.pause_on_hover', 'settings.show_arrows', 'settings.show_dots', 'settings.loop', 'settings.swipe', 'settings.keyboard', 'settings.overlay', 'settings.content_position', 'settings.content_width', 'settings.text_color', 'settings.background_fit'],
         'storage_fields' => [
@@ -497,7 +497,7 @@ class BlockTypeContractRegistry
         ],
         'media_relationship_fields' => ['Optional slide background media is owned through the direct block media_id relation. Child blocks are the visible content relationship.'],
         'child_container_behavior' => ['Container-capable. Child types are not explicitly restricted in the current helper.'],
-        'renderer_root_contract' => 'Owns its public `<article data-wb-slider-slide>` root and delegates visible copy/UI to nested child blocks.',
+        'renderer_root_contract' => 'Owns its public `<article class="wb-slide">` root and delegates visible copy/UI to nested child blocks.',
         'current_contract_status' => 'clear',
         'known_gaps' => [],
       ],

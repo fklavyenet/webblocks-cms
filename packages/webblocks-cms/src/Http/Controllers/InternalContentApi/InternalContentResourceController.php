@@ -1242,7 +1242,7 @@ class InternalContentResourceController extends Controller
       }
 
       if (array_key_exists('transition', $incoming)) {
-        $safeIncoming['transition'] = trim((string) $incoming['transition']) === 'fade' ? 'fade' : 'slide';
+        $safeIncoming['transition'] = 'slide';
       }
 
       if (array_key_exists('interval_ms', $incoming)) {

@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.228
+
+- Bumped CMS to `1.32.228` and pinned WebBlocks UI to `v2.7.15`.
+- Render Slider and Slide blocks with the native `wb-slider` UI pattern, including track movement, UI-owned arrows and dots, and slide media as `img.wb-slide-media`.
+- Remove the CMS-owned public slider runtime and legacy `wb-cms-slider` public CSS so sites consume the shared WebBlocks UI slider implementation.
+
 ## 1.32.227
 
 - Bumped CMS to `1.32.227`.
