@@ -18,8 +18,10 @@ use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController as PackageVisit
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Models\VisitorEvent;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\UpdateCheckResult;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
@@ -131,6 +133,24 @@ class AdminDashboardRouteTest extends TestCase
     $this->assertLessThan(strpos($content, 'Recent Pages'), strpos($content, 'Actions and Shortcuts'));
     $this->assertLessThan(strpos($content, 'Recent Media'), strpos($content, 'Overview'));
     $this->assertLessThan(strpos($content, 'Visitor Summary'), strpos($content, 'Recent Pages'));
+  }
+
+  #[Test]
+  public function admin_dashboard_uses_configured_admin_locale_copy(): void
+  {
+    SystemSetting::query()->updateOrCreate(
+      ['key' => SystemSettings::ADMIN_LOCALE],
+      ['value' => 'tr'],
+    );
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)
+      ->get('/webadmin')
+      ->assertOk()
+      ->assertSee('Pano')
+      ->assertSee('Aksiyonlar ve Kisayollar')
+      ->assertSee('Son Sayfalar')
+      ->assertSee('Ziyaretci Ozeti');
   }
 
   #[Test]

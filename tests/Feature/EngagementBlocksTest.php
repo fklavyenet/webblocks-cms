@@ -18,7 +18,9 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Support\Contact\ContactFormCheck;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class EngagementBlocksTest extends TestCase
 {
@@ -191,6 +193,33 @@ class EngagementBlocksTest extends TestCase
       ->get(route('admin.engagement.ratings.index'))
       ->assertOk()
       ->assertSee('Engagement tables are not ready');
+  }
+
+  #[Test]
+  public function engagement_admin_uses_configured_admin_locale_copy(): void
+  {
+    SystemSetting::query()->updateOrCreate(
+      ['key' => SystemSettings::ADMIN_LOCALE],
+      ['value' => 'tr'],
+    );
+    $this->createEngagementPage();
+    $admin = User::factory()->create([
+      'role' => User::ROLE_SUPER_ADMIN,
+      'is_active' => true,
+    ]);
+
+    $this->actingAs($admin)
+      ->get(route('admin.engagement.comments.index'))
+      ->assertOk()
+      ->assertSee('Yorumlar')
+      ->assertSee('Yorumlarda ara')
+      ->assertSee('Yorum bulunamadi');
+
+    $this->actingAs($admin)
+      ->get(route('admin.engagement.ratings.index'))
+      ->assertOk()
+      ->assertSee('Puanlamalar')
+      ->assertSee('Puanlama bulunamadi');
   }
 
   private function createEngagementPage(): array

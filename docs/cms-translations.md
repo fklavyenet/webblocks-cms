@@ -108,6 +108,7 @@ The first file-based implementation includes:
 - `CmsTranslator` with `admin()`, `public()`, and generic `get()` helpers.
 - `AdminLocaleResolver`, backed by user-level `users.admin_locale` preferences with install-wide `admin.locale` fallback.
 - Admin shell/sidebar/topbar translation for high-visibility navigation and account/theme actions.
+- Dashboard and Engagement admin screens for high-visibility operator workflows.
 - Auth and password reset screens, auth validation feedback, and CMS password reset email copy.
 - Profile screen language preference for per-user admin panel language.
 - Public Search modal, public Search page, header Search action, Search Form system defaults, Contact Form default visitor labels, and Comments/Rating engagement system copy.

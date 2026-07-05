@@ -16,6 +16,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Make Contact Form default visitor labels resolve from the block translation catalog.
 - Make public Comments and Rating system block copy and engagement success states resolve from the current public locale.
 - Make CMS auth and password reset screens, auth validation copy, and reset email copy resolve from the admin locale.
+- Make Dashboard and Engagement admin screens resolve visible interface copy from the admin locale.
 
 ## 1.32.246
 

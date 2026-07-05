@@ -1,11 +1,20 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Comments', 'heading' => 'Comments'])
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('engagement.comments'), 'heading' => $adminText('engagement.comments')])
 
 @section('content')
     <div class="wb-stack wb-gap-4">
         @include('webblocks-cms::admin.partials.page-header', [
-            'title' => 'Comments',
-            'description' => 'Review and moderate public comments submitted through Comments system blocks.',
-            'actions' => '<a href="'.route('admin.engagement.ratings.index').'" class="wb-btn wb-btn-secondary">Ratings</a>',
+            'title' => $adminText('engagement.comments'),
+            'description' => $adminText('engagement.comments_description'),
+            'actions' => '<a href="'.route('admin.engagement.ratings.index').'" class="wb-btn wb-btn-secondary">'.$adminText('engagement.ratings').'</a>',
         ])
 
         @include('webblocks-cms::admin.partials.flash')
@@ -13,8 +22,8 @@
         @if (($tableReady ?? true) === false)
             <div class="wb-alert wb-alert-warning">
                 <div>
-                    <div class="wb-alert-title">Engagement tables are not ready</div>
-                    <div>Run System Updates to create the Comments and Rating tables before reviewing public feedback.</div>
+                    <div class="wb-alert-title">{{ $adminText('engagement.tables_not_ready') }}</div>
+                    <div>{{ $adminText('engagement.setup_guidance') }}</div>
                 </div>
             </div>
         @endif
@@ -26,17 +35,17 @@
                     'search' => [
                         'id' => 'engagement_comments_search',
                         'name' => 'search',
-                        'label' => 'Search',
+                        'label' => $adminText('engagement.search'),
                         'value' => $filters['search'] ?? '',
-                        'placeholder' => 'Search comments',
+                        'placeholder' => $adminText('engagement.search_comments'),
                     ],
                     'selects' => [
                         [
                             'id' => 'engagement_comments_status',
                             'name' => 'status',
-                            'label' => 'Status',
+                            'label' => $adminText('engagement.status'),
                             'selected' => $filters['status'] ?? '',
-                            'placeholder' => 'All statuses',
+                            'placeholder' => $adminText('engagement.all_statuses'),
                             'options' => collect($statuses)
                                 ->mapWithKeys(fn (string $status): array => [$status => ucfirst($status)])
                                 ->all(),
@@ -44,7 +53,7 @@
                     ],
                     'showReset' => ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '',
                     'resetUrl' => route('admin.engagement.comments.index'),
-                    'applyLabel' => 'Apply',
+                    'applyLabel' => $adminText('engagement.apply'),
                 ])
             </div>
         </div>
@@ -52,28 +61,28 @@
         <section class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Comments</strong>
+                    <strong>{{ $adminText('engagement.comments') }}</strong>
                     <span class="wb-status-pill wb-status-info">{{ $filteredCount }}</span>
                 </div>
-                <span class="wb-text-sm wb-text-muted">{{ $totalCount }} total</span>
+                <span class="wb-text-sm wb-text-muted">{{ $adminText('engagement.total', ['count' => $totalCount]) }}</span>
             </div>
             <div class="wb-card-body">
                 @if ($comments->isEmpty())
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No comments found</div>
-                        <div class="wb-empty-text">Approved public comments will appear after review.</div>
+                        <div class="wb-empty-title">{{ $adminText('engagement.no_comments') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('engagement.no_comments_help') }}</div>
                     </div>
                 @else
                     <div class="wb-table-wrap">
                         <table class="wb-table">
                             <thead>
                                 <tr>
-                                    <th>Comment</th>
-                                    <th>Source</th>
-                                    <th>Status</th>
-                                    <th>Spam</th>
-                                    <th>Submitted</th>
-                                    <th>Actions</th>
+                                    <th>{{ $adminText('engagement.comment') }}</th>
+                                    <th>{{ $adminText('engagement.source') }}</th>
+                                    <th>{{ $adminText('engagement.status') }}</th>
+                                    <th>{{ $adminText('engagement.spam') }}</th>
+                                    <th>{{ $adminText('engagement.submitted') }}</th>
+                                    <th>{{ $adminText('engagement.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -81,7 +90,7 @@
                                     <tr>
                                         <td>
                                             <div class="wb-stack wb-gap-1">
-                                                <strong>{{ $comment->author_name ?: 'Anonymous' }}</strong>
+                                                <strong>{{ $comment->author_name ?: $adminText('engagement.anonymous') }}</strong>
                                                 <span>{{ \Illuminate\Support\Str::limit($comment->body, 140) }}</span>
                                             </div>
                                         </td>
@@ -102,19 +111,19 @@
                                                     @csrf
                                                     @method('PATCH')
                                                     <input type="hidden" name="status" value="approved">
-                                                    <button class="wb-btn wb-btn-secondary" type="submit">Approve</button>
+                                                    <button class="wb-btn wb-btn-secondary" type="submit">{{ $adminText('engagement.approve') }}</button>
                                                 </form>
                                                 <form method="POST" action="{{ route('admin.engagement.comments.status', $comment) }}">
                                                     @csrf
                                                     @method('PATCH')
                                                     <input type="hidden" name="status" value="rejected">
-                                                    <button class="wb-btn wb-btn-secondary" type="submit">Reject</button>
+                                                    <button class="wb-btn wb-btn-secondary" type="submit">{{ $adminText('engagement.reject') }}</button>
                                                 </form>
                                                 <form method="POST" action="{{ route('admin.engagement.comments.status', $comment) }}">
                                                     @csrf
                                                     @method('PATCH')
                                                     <input type="hidden" name="status" value="spam">
-                                                    <button class="wb-btn wb-btn-secondary" type="submit">Spam</button>
+                                                    <button class="wb-btn wb-btn-secondary" type="submit">{{ $adminText('engagement.mark_spam') }}</button>
                                                 </form>
                                             </div>
                                         </td>
@@ -126,7 +135,7 @@
                 @endif
             </div>
             <div class="wb-card-footer">
-                @include('webblocks-cms::admin.partials.pagination', ['paginator' => $comments, 'ariaLabel' => 'Comments pagination', 'compact' => true])
+                @include('webblocks-cms::admin.partials.pagination', ['paginator' => $comments, 'ariaLabel' => $adminText('engagement.comments_pagination'), 'compact' => true])
             </div>
         </section>
     </div>
