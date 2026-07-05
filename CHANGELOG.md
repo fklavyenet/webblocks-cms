@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.240
+
+- Bumped CMS to `1.32.240`.
+- Center the Gallery lightbox `Viewer title` in the viewer header.
+
 ## 1.32.239
 
 - Bumped CMS to `1.32.239`.

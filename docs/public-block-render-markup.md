@@ -801,7 +801,7 @@ Avoid for: section intro copy; place Content Header/Rich Text before Gallery.
 
 ### Notes
 
-The block owns its gallery root and registers `gallery-viewer` HTML in `PublicOverlayRegistry` when lightbox is enabled. Variants, columns, gap, aspect ratio, captions, overlay mode, and lightbox settings change attributes/classes. Legacy settings-based items remain readable. Technical migration notes such as `Imported from ... during ... migration` are ignored when public Gallery output falls back to media or legacy item captions, overlay meta, and lightbox metadata.
+The block owns its gallery root and registers `gallery-viewer` HTML in `PublicOverlayRegistry` when lightbox is enabled. Variants, columns, gap, aspect ratio, captions, overlay mode, and lightbox settings change attributes/classes. Grid uses equal CSS grid columns, Masonry uses CSS columns with natural image heights, and Collage enlarges the first item in each visual group. Grid and Masonry can look similar when the selected images have similar aspect ratios. Legacy settings-based items remain readable. Technical migration notes such as `Imported from ... during ... migration` are ignored when public Gallery output falls back to media or legacy item captions, overlay meta, and lightbox metadata.
 
 ## Columns (`columns`)
 
