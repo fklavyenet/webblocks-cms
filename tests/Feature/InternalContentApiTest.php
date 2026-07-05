@@ -3130,6 +3130,71 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function shared_slot_header_actions_settings_can_be_updated_through_existing_block_api(): void
+  {
+    $this->createInternalApiToken('secret-token', [
+      CmsApiTokenCapabilities::CONTENT_APPLY,
+      CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+    ]);
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'header')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'header-actions')->firstOrFail();
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $site->id,
+      'name' => 'Site Header',
+      'handle' => 'site-header',
+      'slot_name' => 'header',
+      'is_active' => true,
+    ]);
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Shared Slot Source: Site Header',
+      'slug' => 'shared-slot-site-header',
+      'page_type' => Page::TYPE_SHARED_SLOT_SOURCE,
+      'status' => Page::STATUS_DRAFT,
+      'settings' => ['shared_slot_id' => $sharedSlot->id],
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'header',
+      'type' => 'header-actions',
+      'settings' => json_encode([
+        'show_search' => true,
+        'show_mode_toggle' => true,
+        'show_accent_toggle' => false,
+      ], JSON_UNESCAPED_SLASHES),
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+    SharedSlotBlock::query()->create([
+      'shared_slot_id' => $sharedSlot->id,
+      'block_id' => $block->id,
+      'sort_order' => 0,
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'settings' => [
+          'show_search' => false,
+          'show_mode_toggle' => '0',
+          'show_accent_toggle' => '1',
+        ],
+      ])
+      ->assertOk()
+      ->assertJsonPath('block.settings.show_search', false)
+      ->assertJsonPath('block.settings.show_mode_toggle', false)
+      ->assertJsonPath('block.settings.show_accent_toggle', true);
+
+    $this->assertSame([
+      'show_search' => false,
+      'show_mode_toggle' => false,
+      'show_accent_toggle' => true,
+    ], json_decode((string) $block->fresh()->getRawOriginal('settings'), true));
+  }
+
+  #[Test]
   public function existing_block_update_rejects_topology_fields_and_non_image_brand_media(): void
   {
     $this->createInternalApiToken('secret-token');

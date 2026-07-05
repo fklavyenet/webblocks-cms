@@ -274,6 +274,9 @@ Supported fields are intentionally narrow:
 - `settings.aria_label`
 - `settings.background_position`
 - `settings.background_overlay`
+- `settings.show_search` for `header-actions`
+- `settings.show_mode_toggle` for `header-actions`
+- `settings.show_accent_toggle` for `header-actions`
 - text translations such as `title` and `subtitle`
 - `url`
 - `variant`

@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.233
+
+- Bumped CMS to `1.32.233`.
+- Allow existing `header-actions` blocks to update search, mode, and accent toggle settings through the Internal Content API.
+
 ## 1.32.232
 
 - Bumped CMS to `1.32.232`.

@@ -1179,6 +1179,15 @@ class InternalContentResourceController extends Controller
       ];
     }
 
+    if ($type === 'header-actions') {
+      $allowedSettings = [
+        ...$allowedSettings,
+        'show_mode_toggle',
+        'show_accent_toggle',
+        'show_search',
+      ];
+    }
+
     $unsupported = array_values(array_diff(array_keys($incoming), $allowedSettings));
 
     if ($unsupported !== []) {
@@ -1281,6 +1290,14 @@ class InternalContentResourceController extends Controller
 
       if (array_key_exists('background_fit', $incoming)) {
         $safeIncoming['background_fit'] = trim((string) $incoming['background_fit']) === 'contain' ? 'contain' : null;
+      }
+    }
+
+    if ($type === 'header-actions') {
+      foreach (['show_mode_toggle', 'show_accent_toggle', 'show_search'] as $booleanSetting) {
+        if (array_key_exists($booleanSetting, $incoming)) {
+          $safeIncoming[$booleanSetting] = filter_var($incoming[$booleanSetting], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
+        }
       }
     }
 
