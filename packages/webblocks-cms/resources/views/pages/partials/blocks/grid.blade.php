@@ -20,7 +20,7 @@
                 return;
             }
 
-            $mediaLeft = $block->gridSectionMediaLeft($pairIndex);
+            $mediaLeft = $block->gridMediaTextSequenceMediaLeft($pairIndex);
             $sortedPair = $childPair
                 ->sortBy(fn ($child) => $child->hasMediaTextVisualContent() === $mediaLeft ? 0 : 1)
                 ->values();

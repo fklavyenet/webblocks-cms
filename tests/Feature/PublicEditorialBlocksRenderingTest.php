@@ -2198,6 +2198,135 @@ class PublicEditorialBlocksRenderingTest extends TestCase
   }
 
   #[Test]
+  public function sibling_grids_share_parent_media_text_alternation_sequence(): void
+  {
+    $page = $this->pageWithMainSlot();
+    $sectionType = $this->blockType('section', 'Section', 2);
+    $gridType = $this->blockType('grid', 'Grid', 5);
+    $sliderType = $this->blockType('slider', 'Slider', 7, false, true);
+    $plainTextType = $this->blockType('plain_text', 'Plain Text', 6);
+
+    $parent = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'section',
+      'block_type_id' => $sectionType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $createGrid = function (int $sortOrder, string $alternateStart, string $textContent, bool $alternate = true) use ($page, $parent, $gridType, $sliderType, $sectionType, $plainTextType): void {
+      $grid = Block::query()->create([
+        'page_id' => $page->id,
+        'parent_id' => $parent->id,
+        'type' => 'grid',
+        'block_type_id' => $gridType->id,
+        'source_type' => 'static',
+        'slot' => 'main',
+        'slot_type_id' => $this->mainSlotType()->id,
+        'sort_order' => $sortOrder,
+        'settings' => json_encode([
+          'columns' => '2',
+          'gap' => '6',
+          'alternate_media_text_sections' => $alternate,
+          'alternate_start' => $alternateStart,
+        ], JSON_UNESCAPED_SLASHES),
+        'status' => 'published',
+        'is_system' => false,
+      ]);
+
+      Block::query()->create([
+        'page_id' => $page->id,
+        'parent_id' => $grid->id,
+        'type' => 'slider',
+        'block_type_id' => $sliderType->id,
+        'source_type' => 'static',
+        'slot' => 'main',
+        'slot_type_id' => $this->mainSlotType()->id,
+        'sort_order' => 0,
+        'status' => 'published',
+        'is_system' => false,
+      ]);
+
+      $textSection = Block::query()->create([
+        'page_id' => $page->id,
+        'parent_id' => $grid->id,
+        'type' => 'section',
+        'block_type_id' => $sectionType->id,
+        'source_type' => 'static',
+        'slot' => 'main',
+        'slot_type_id' => $this->mainSlotType()->id,
+        'sort_order' => 1,
+        'status' => 'published',
+        'is_system' => false,
+      ]);
+
+      $text = Block::query()->create([
+        'page_id' => $page->id,
+        'parent_id' => $textSection->id,
+        'type' => 'plain_text',
+        'block_type_id' => $plainTextType->id,
+        'source_type' => 'static',
+        'slot' => 'main',
+        'slot_type_id' => $this->mainSlotType()->id,
+        'sort_order' => 0,
+        'status' => 'published',
+        'is_system' => false,
+      ]);
+
+      $text->textTranslations()->create([
+        'locale_id' => Page::defaultLocaleId(),
+        'content' => $textContent,
+      ]);
+      app(BlockTranslationWriter::class)->normalizeCanonicalStorage($text->fresh(['textTranslations']));
+    };
+
+    $createGrid(0, 'media_left', 'Angela sequence text');
+
+    $interstitial = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $parent->id,
+      'type' => 'plain_text',
+      'block_type_id' => $plainTextType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 1,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+    $interstitial->textTranslations()->create([
+      'locale_id' => Page::defaultLocaleId(),
+      'content' => 'Sequence interstitial text',
+    ]);
+    app(BlockTranslationWriter::class)->normalizeCanonicalStorage($interstitial->fresh(['textTranslations']));
+
+    $createGrid(2, 'media_left', 'Christiane sequence text');
+    $createGrid(3, 'media_left', 'Non alternating grid text', false);
+    $createGrid(4, 'text_left', 'Third sequence text');
+
+    $response = $this->get(route('pages.show', 'about'));
+
+    $response->assertOk();
+    $response->assertSeeInOrder([
+      '<div class="wb-grid wb-grid-2 wb-gap-6" data-wb-public-block-type="grid">',
+      'data-wb-slider',
+      '<p>Angela sequence text</p>',
+      '<p>Sequence interstitial text</p>',
+      '<div class="wb-grid wb-grid-2 wb-gap-6" data-wb-public-block-type="grid">',
+      '<p>Christiane sequence text</p>',
+      'data-wb-slider',
+      '<p>Non alternating grid text</p>',
+      '<div class="wb-grid wb-grid-2 wb-gap-6" data-wb-public-block-type="grid">',
+      'data-wb-slider',
+      '<p>Third sequence text</p>',
+    ], false);
+  }
+
+  #[Test]
   public function card_renders_nested_header_body_and_footer_regions(): void
   {
     $page = $this->pageWithMainSlot();

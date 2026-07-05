@@ -203,6 +203,8 @@ The block owns its root `<div>`. It renders child blocks directly. Width and flo
 | settings.columns | default/3/other | `gridColumnsClass()` adds `wb-grid-3`. |
 | settings.gap | 3/4/6 | `gridGapClass()` adds `wb-gap-3`, `wb-gap-4`, or `wb-gap-6`. |
 | settings.gap | default/empty | No gap class is added beyond `wb-grid`. |
+| settings.alternate_media_text_sections | true | Direct media/text child pairs are reordered by detected visual content while preserving the `wb-grid` wrapper. Sibling alternating Grids under the same parent share one sequence, including across intervening non-alternating blocks. |
+| settings.alternate_start | media_left/text_left | Sets the first alternating Grid direction for the sibling sequence; later alternating sibling Grids follow the sequence position rather than their own start value. |
 
 ### Use for / Avoid for
 

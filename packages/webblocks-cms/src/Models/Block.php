@@ -813,6 +813,30 @@ class Block extends CmsModel
       : 'media_left';
   }
 
+  public function gridMediaTextSequenceIndex(): int
+  {
+    if (! $this->gridAlternatesMediaTextSections()) {
+      return 0;
+    }
+
+    $index = $this->mediaTextGridSequenceSiblings()
+      ->filter(fn (self $sibling): bool => $sibling->gridAlternatesMediaTextSections())
+      ->values()
+      ->search(fn (self $sibling): bool => (int) $sibling->getKey() === (int) $this->getKey());
+
+    return is_int($index) ? $index : 0;
+  }
+
+  public function gridMediaTextSequenceMediaLeft(int $sectionIndex): bool
+  {
+    $startsWithMedia = $this->gridMediaTextSequenceStartsWithMedia();
+    $sequenceIndex = $this->gridMediaTextSequenceIndex() + $sectionIndex;
+
+    return $sequenceIndex % 2 === 0
+      ? $startsWithMedia
+      : ! $startsWithMedia;
+  }
+
   public function gridSectionMediaLeft(int $sectionIndex): bool
   {
     $startsWithMedia = $this->gridAlternateStart() !== 'text_left';
@@ -826,6 +850,42 @@ class Block extends CmsModel
   {
     return in_array($this->typeSlug(), ['slider', 'image', 'gallery', 'video'], true)
       || $this->publicBackgroundMediaUrl() !== null;
+  }
+
+  private function mediaTextGridSequenceSiblings(): Collection
+  {
+    if ($this->parent_id !== null) {
+      if ($this->relationLoaded('parent') && $this->parent?->relationLoaded('children')) {
+        return $this->parent->children
+          ->where('status', $this->status)
+          ->sortBy([['sort_order', 'asc'], ['id', 'asc']])
+          ->values();
+      }
+
+      return self::query()
+        ->where('parent_id', $this->parent_id)
+        ->where('status', $this->status)
+        ->orderBy('sort_order')
+        ->orderBy('id')
+        ->get();
+    }
+
+    return self::query()
+      ->where('page_id', $this->page_id)
+      ->whereNull('parent_id')
+      ->where('slot', $this->slot)
+      ->where('status', $this->status)
+      ->orderBy('sort_order')
+      ->orderBy('id')
+      ->get();
+  }
+
+  private function gridMediaTextSequenceStartsWithMedia(): bool
+  {
+    $firstGrid = $this->mediaTextGridSequenceSiblings()
+      ->first(fn (self $sibling): bool => $sibling->gridAlternatesMediaTextSections());
+
+    return ($firstGrid?->gridAlternateStart() ?? $this->gridAlternateStart()) !== 'text_left';
   }
 
   public function hasMediaTextVisualContent(): bool

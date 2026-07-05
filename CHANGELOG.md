@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.238
+
+- Bumped CMS to `1.32.238`.
+- Make sibling alternating media/text Grid blocks share one parent sequence so reordering adjacent profile grids no longer preserves editor-selected per-grid left/right placement.
+
 ## 1.32.237
 
 - Bumped CMS to `1.32.237`.
