@@ -828,6 +828,17 @@ class Block extends CmsModel
       || $this->publicBackgroundMediaUrl() !== null;
   }
 
+  public function hasMediaTextVisualContent(): bool
+  {
+    if ($this->isMediaTextVisualBlock()) {
+      return true;
+    }
+
+    return $this->children->contains(
+      fn (Block $child): bool => $child->hasMediaTextVisualContent()
+    );
+  }
+
   public function sliderHeightClass(): string
   {
     return match ($this->appearanceSetting('height')) {

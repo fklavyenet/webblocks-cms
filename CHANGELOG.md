@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.236
+
+- Bumped CMS to `1.32.236`.
+- Keep alternating media/text Grid blocks on the normal `wb-grid` wrapper while reordering direct Section columns by detected media/text content.
+
 ## 1.32.235
 
 - Bumped CMS to `1.32.235`.
