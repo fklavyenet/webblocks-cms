@@ -1,6 +1,29 @@
 @php
     $hasTargetedErrors = $errors->any() && (int) old('block_id') === $block->id;
-    $submitLabel = $block->submit_label ?? 'Send message';
+    $resolvedLocaleCode = strtolower((string) ($block->getAttribute('resolved_locale_code') ?? app()->getLocale()));
+    $contactFormCopy = str_starts_with($resolvedLocaleCode, 'de')
+        ? [
+            'submit' => 'Senden',
+            'review' => 'Bitte prüfen Sie das Formular',
+            'name' => 'Ihr Name',
+            'email' => 'Ihre E-Mail',
+            'subject' => 'Betreff',
+            'message' => 'Ihre Nachricht',
+            'storage' => 'Ihre Nachricht wird gespeichert, anschließend wird die E-Mail-Benachrichtigung versucht.',
+        ]
+        : [
+            'submit' => 'Send message',
+            'review' => 'Please review the form',
+            'name' => 'Name',
+            'email' => 'Email',
+            'subject' => 'Subject',
+            'message' => 'Message',
+            'storage' => 'Your message is stored first, then email notification is attempted.',
+        ];
+    $resolvedSubmitLabel = trim((string) ($block->submit_label ?? ''));
+    $submitLabel = $resolvedSubmitLabel === '' || ($resolvedLocaleCode !== 'en' && $resolvedSubmitLabel === 'Send message')
+        ? $contactFormCopy['submit']
+        : $resolvedSubmitLabel;
     $formCheck = app(\WebBlocks\Cms\Support\Contact\ContactFormCheck::class);
     $formCheckName = $formCheck->fieldName($block);
 @endphp
@@ -22,7 +45,7 @@
         @if ($hasTargetedErrors)
             <div class="wb-alert wb-alert-danger">
                 <div>
-                    <div class="wb-alert-title">Please review the form</div>
+                    <div class="wb-alert-title">{{ $contactFormCopy['review'] }}</div>
                     <div>{{ $errors->first() }}</div>
                 </div>
             </div>
@@ -43,7 +66,7 @@
 
             <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-1">
-                    <label for="contact-name-{{ $block->id }}" class="wb-label">Name</label>
+                    <label for="contact-name-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['name'] }}</label>
                     <input id="contact-name-{{ $block->id }}" name="name" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('name') : '' }}" required>
                     @if ((int) old('block_id') === $block->id)
                         @foreach ($errors->get('name') as $message)
@@ -53,7 +76,7 @@
                 </div>
 
                 <div class="wb-stack wb-gap-1">
-                    <label for="contact-email-{{ $block->id }}" class="wb-label">Email</label>
+                    <label for="contact-email-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['email'] }}</label>
                     <input id="contact-email-{{ $block->id }}" name="email" type="email" class="wb-input" value="{{ old('block_id') == $block->id ? old('email') : '' }}" required>
                     @if ((int) old('block_id') === $block->id)
                         @foreach ($errors->get('email') as $message)
@@ -64,7 +87,7 @@
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <label for="contact-subject-{{ $block->id }}" class="wb-label">Subject</label>
+                <label for="contact-subject-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['subject'] }}</label>
                 <input id="contact-subject-{{ $block->id }}" name="subject" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('subject') : '' }}">
                 @if ((int) old('block_id') === $block->id)
                     @foreach ($errors->get('subject') as $message)
@@ -74,7 +97,7 @@
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <label for="contact-message-{{ $block->id }}" class="wb-label">Message</label>
+                <label for="contact-message-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['message'] }}</label>
                 <textarea id="contact-message-{{ $block->id }}" name="message" class="wb-textarea" rows="7" required>{{ old('block_id') == $block->id ? old('message') : '' }}</textarea>
                 @if ((int) old('block_id') === $block->id)
                     @foreach ($errors->get('message') as $message)
@@ -84,7 +107,7 @@
             </div>
 
             <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <span class="wb-text-sm wb-text-muted">Your message is stored first, then email notification is attempted.</span>
+                <span class="wb-text-sm wb-text-muted">{{ $contactFormCopy['storage'] }}</span>
                 <button type="submit" class="wb-btn wb-btn-primary">{{ $submitLabel }}</button>
             </div>
         </form>

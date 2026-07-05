@@ -1504,6 +1504,32 @@ class ContactFormModuleTest extends TestCase
   }
 
   #[Test]
+  public function contact_form_block_uses_german_default_copy_for_german_locale(): void
+  {
+    Locale::query()->where('code', 'en')->update(['is_default' => false]);
+    $german = Locale::query()->create([
+      'code' => 'de',
+      'name' => 'Deutsch',
+      'is_default' => true,
+      'is_enabled' => true,
+    ]);
+
+    [$page, $block] = $this->createContactFormPage();
+    $block->contactFormTranslations()->where('locale_id', $german->id)->update([
+      'submit_label' => null,
+    ]);
+
+    $this->get(route('pages.show', $page->slug))
+      ->assertOk()
+      ->assertSee('Ihr Name')
+      ->assertSee('Ihre E-Mail')
+      ->assertSee('Betreff')
+      ->assertSee('Ihre Nachricht')
+      ->assertSee('Senden')
+      ->assertSee('Ihre Nachricht wird gespeichert');
+  }
+
+  #[Test]
   public function public_contact_form_renderer_does_not_depend_on_host_blade_components(): void
   {
     $contents = File::get(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/contact_form.blade.php'));

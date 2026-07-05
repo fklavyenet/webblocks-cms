@@ -526,6 +526,8 @@ class InternalContentPlanService
       'subtitle' => $translations['subtitle'] ?? null,
       'content' => $translations['content'] ?? null,
       'meta' => $translations['meta'] ?? null,
+      'submit_label' => $translations['submit_label'] ?? null,
+      'success_message' => $translations['success_message'] ?? null,
     ];
 
     $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);

@@ -9,6 +9,13 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.243
+
+- Bumped CMS to `1.32.243`.
+- Fix the Site edit screen so site-level Branding media pickers render outside a block editor context instead of raising a 500 error.
+- Preserve Contact Form submit and success copy from Internal Content API content plans, and use German default public form labels when rendering German locale pages.
+- Add Internal Content API locale create/update endpoints with `site-settings.write` capability checks so migration tools can correct install locales before applying localized content.
+
 ## 1.32.242
 
 - Bumped CMS to `1.32.242`.

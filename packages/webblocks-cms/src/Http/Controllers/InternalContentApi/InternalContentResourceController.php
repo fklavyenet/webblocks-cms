@@ -71,6 +71,99 @@ class InternalContentResourceController extends Controller
     return $this->ok(['locales' => $locales]);
   }
 
+  public function storeLocale(Request $request): JsonResponse
+  {
+    $validator = Validator::make($request->all(), [
+      'code' => ['required', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'unique:wbcms_locales,code'],
+      'name' => ['required', 'string', 'max:255'],
+      'is_default' => ['nullable', 'boolean'],
+      'is_enabled' => ['nullable', 'boolean'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationErrors('invalid_locale_payload', 'Locale payload is invalid.', $validator->errors()->toArray());
+    }
+
+    $data = $validator->validated();
+    $isDefault = (bool) ($data['is_default'] ?? false);
+    $isEnabled = array_key_exists('is_enabled', $data) ? (bool) $data['is_enabled'] : true;
+
+    if ($isDefault && ! $isEnabled) {
+      return $this->validationError('is_enabled', 'The default locale must stay enabled.', 'invalid_locale_payload');
+    }
+
+    $locale = DB::transaction(function () use ($data, $isDefault, $isEnabled): Locale {
+      return Locale::query()->create([
+        'code' => $data['code'],
+        'name' => $data['name'],
+        'is_default' => $isDefault,
+        'is_enabled' => $isDefault || $isEnabled,
+      ]);
+    });
+
+    return response()->json([
+      'ok' => true,
+      'locale' => $this->presenter->locale($locale->fresh()),
+      'writes' => [['type' => 'locale', 'id' => $locale->id]],
+      'warnings' => [],
+      'errors' => [],
+    ], 201);
+  }
+
+  public function updateLocale(Request $request, Locale $locale): JsonResponse
+  {
+    $validator = Validator::make($request->all(), [
+      'code' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'unique:wbcms_locales,code,'.$locale->id],
+      'name' => ['nullable', 'string', 'max:255'],
+      'is_default' => ['nullable', 'boolean'],
+      'is_enabled' => ['nullable', 'boolean'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationErrors('invalid_locale_payload', 'Locale payload is invalid.', $validator->errors()->toArray());
+    }
+
+    $data = $validator->validated();
+    $willBeDefault = array_key_exists('is_default', $data)
+      ? (bool) $data['is_default']
+      : (bool) $locale->is_default;
+    $willBeEnabled = array_key_exists('is_enabled', $data)
+      ? (bool) $data['is_enabled']
+      : (bool) $locale->is_enabled;
+
+    if ($willBeDefault && ! $willBeEnabled) {
+      return $this->validationError('is_enabled', 'The default locale must stay enabled.', 'invalid_locale_payload');
+    }
+
+    DB::transaction(function () use ($locale, $data, $willBeDefault, $willBeEnabled): void {
+      $updates = [];
+
+      foreach (['code', 'name'] as $field) {
+        if (array_key_exists($field, $data)) {
+          $updates[$field] = $data[$field];
+        }
+      }
+
+      if (array_key_exists('is_default', $data)) {
+        $updates['is_default'] = $willBeDefault;
+      }
+
+      if (array_key_exists('is_enabled', $data) || $willBeDefault) {
+        $updates['is_enabled'] = $willBeDefault || $willBeEnabled;
+      }
+
+      if ($updates !== []) {
+        $locale->fill($updates);
+        $locale->save();
+      }
+    });
+
+    return $this->ok([
+      'locale' => $this->presenter->locale($locale->fresh()),
+      'writes' => [['type' => 'locale', 'id' => $locale->id]],
+    ]);
+  }
+
   public function pageLayouts(): JsonResponse
   {
     $layouts = PageLayout::query()
@@ -279,6 +372,20 @@ class InternalContentResourceController extends Controller
           'change mime type, kind, visibility, size, or dimensions',
           'fetch remote media',
         ],
+      ],
+      'locales' => [
+        'index_url' => '/webadmin/api/locales',
+        'create_url' => '/webadmin/api/locales',
+        'update_url_template' => '/webadmin/api/locales/{locale}',
+        'write_requires_capability' => 'site-settings.write',
+        'supported_write_fields' => [
+          'code',
+          'name',
+          'is_default',
+          'is_enabled',
+        ],
+        'default_locale_behavior' => 'Default locales are forced enabled and demote the previous default through the normal CMS locale invariant.',
+        'migration_note' => 'For language-only corrections on an existing install, PATCH the existing locale id so page, block, and site locale relations keep their ids.',
       ],
       'site_assets' => [
         'css_url_template' => '/webadmin/api/sites/{site}/assets/css',
@@ -1339,11 +1446,11 @@ class InternalContentResourceController extends Controller
     ], 422));
   }
 
-  private function validationError(string $path, string $message): JsonResponse
+  private function validationError(string $path, string $message, string $code = 'invalid_existing_block_update'): JsonResponse
   {
     return response()->json([
       'ok' => false,
-      'code' => 'invalid_existing_block_update',
+      'code' => $code,
       'message' => $message,
       'warnings' => [],
       'errors' => [

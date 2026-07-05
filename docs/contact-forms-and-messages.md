@@ -61,7 +61,7 @@ Shared operational settings live on the block settings:
 - `send_email_notification`
 - `store_submissions`
 
-Keep editorial copy and operational routing separate. The form text can vary by locale, while recipient and notification settings stay shared for the block.
+Keep editorial copy and operational routing separate. The form text can vary by locale, while recipient and notification settings stay shared for the block. German locale rendering uses German default labels for the native visitor fields when custom copy is not provided.
 
 ## Public Submit Behavior
 
@@ -240,7 +240,7 @@ GET /webadmin/api/block-types
 GET /webadmin/api/examples/contact-page
 ```
 
-`GET /webadmin/api/examples/contact-page` demonstrates native `contact_form` usage. AI/operator tools must not guess handles and must not build contact forms with Trusted HTML, raw form markup, or `mailto:` links when the native Contact Form block is available.
+`GET /webadmin/api/examples/contact-page` demonstrates native `contact_form` usage. AI/operator tools must not guess handles and must not build contact forms with Trusted HTML, raw form markup, or `mailto:` links when the native Contact Form block is available. Content plans can set `translations.submit_label` and `translations.success_message`; those values are stored in Contact Form translation rows with the rest of the visible form copy.
 
 Content apply remains draft-first and does not publish by default. Operators should validate plans, apply only after explicit approval, preview the draft page, and leave publish to a human or explicitly approved workflow.
 

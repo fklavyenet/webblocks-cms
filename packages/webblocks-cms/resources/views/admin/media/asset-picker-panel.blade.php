@@ -15,9 +15,10 @@
   $pickerClearLabel = $clearLabel ?? 'Remove';
   $pickerCompactControls = (bool) ($compactControls ?? false);
   $pickerPanelMode = $panelMode ?? 'inline';
+  $pickerBlock = $block ?? null;
   $pickerInstanceKey = $instanceKey
-    ?? ($block instanceof \WebBlocks\Cms\Models\Block && $block->exists
-      ? 'block-'.$block->id.'-'.$pickerInputId
+    ?? ($pickerBlock instanceof \WebBlocks\Cms\Models\Block && $pickerBlock->exists
+      ? 'block-'.$pickerBlock->id.'-'.$pickerInputId
       : $pickerName.'-'.$pickerInputId.'-'.str_replace('.', '-', uniqid('', true)));
   $pickerInstanceId = preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInstanceKey);
   $pickerPanelId = $pickerInputId.'_'.$pickerInstanceId.'_picker_panel';

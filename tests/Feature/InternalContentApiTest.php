@@ -99,6 +99,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.icon_catalog', '/webadmin/api/icon-catalog?context=content')
       ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonPath('_links.locale_create', '/webadmin/api/locales')
+      ->assertJsonPath('_links.locale_update', '/webadmin/api/locales/{locale}')
       ->assertJsonPath('_links.admin_render_system_updates', '/webadmin/api/admin-render/system-updates')
       ->assertJsonPath('_links.media', '/webadmin/api/media')
       ->assertJsonPath('_links.media_remote_fetch', '/webadmin/api/media/fetch')
@@ -151,6 +153,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-guidance', 'For CSS writes, prefer native block settings and public theme/WebBlocks UI custom properties; avoid hard-coded light/dark page palettes that bypass mode behavior.')
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-analysis', 'CSS writes return asset.analysis.mode_awareness; warning status is advisory and should be reviewed or fixed by migration/new-site tools before completion.')
+      ->assertJsonPath('paths./locales.post.x-required-capability', CmsApiTokenCapabilities::SITE_SETTINGS_WRITE)
+      ->assertJsonPath('paths./locales/{locale}.patch.x-required-capability', CmsApiTokenCapabilities::SITE_SETTINGS_WRITE)
       ->assertJsonPath('paths./admin-render/system-updates.get.x-required-capability', CmsApiTokenCapabilities::ADMIN_RENDER)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.delete.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_DELETE)
@@ -307,6 +311,127 @@ class InternalContentApiTest extends TestCase
     $this->withInternalToken()
       ->getJson('/webadmin/api/content-plans/example')
       ->assertNotFound();
+  }
+
+  #[Test]
+  public function valid_token_can_create_and_update_locales(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $create = $this->withInternalToken()
+      ->postJson('/webadmin/api/locales', [
+        'code' => 'de',
+        'name' => 'Deutsch',
+        'is_enabled' => true,
+      ])
+      ->assertCreated()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('locale.code', 'de')
+      ->assertJsonPath('locale.name', 'Deutsch')
+      ->assertJsonPath('locale.is_default', false)
+      ->assertJsonPath('locale.is_enabled', true)
+      ->assertJsonPath('writes.0.type', 'locale');
+
+    $localeId = (int) $create->json('locale.id');
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/locales/'.$localeId, [
+        'is_default' => true,
+      ])
+      ->assertOk()
+      ->assertJsonPath('ok', true)
+      ->assertJsonPath('locale.id', $localeId)
+      ->assertJsonPath('locale.code', 'de')
+      ->assertJsonPath('locale.is_default', true)
+      ->assertJsonPath('locale.is_enabled', true);
+
+    $this->assertDatabaseHas('wbcms_locales', [
+      'id' => $localeId,
+      'code' => 'de',
+      'is_default' => true,
+      'is_enabled' => true,
+    ]);
+    $this->assertDatabaseHas('wbcms_locales', [
+      'code' => 'en',
+      'is_default' => false,
+    ]);
+    $this->assertDatabaseHas('wbcms_site_locales', [
+      'site_id' => $this->defaultSite()->id,
+      'locale_id' => $localeId,
+      'is_enabled' => true,
+    ]);
+    $this->assertDatabaseHas('wbcms_system_settings', [
+      'key' => 'system.default_locale',
+      'value' => 'de',
+    ]);
+  }
+
+  #[Test]
+  public function valid_token_can_rename_existing_locale_without_changing_the_locale_id(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $locale = $this->defaultLocale();
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/locales/'.$locale->id, [
+        'code' => 'de',
+        'name' => 'Deutsch',
+        'is_default' => true,
+        'is_enabled' => true,
+      ])
+      ->assertOk()
+      ->assertJsonPath('locale.id', $locale->id)
+      ->assertJsonPath('locale.code', 'de')
+      ->assertJsonPath('locale.name', 'Deutsch')
+      ->assertJsonPath('locale.is_default', true);
+
+    $this->assertDatabaseHas('wbcms_locales', [
+      'id' => $locale->id,
+      'code' => 'de',
+      'name' => 'Deutsch',
+      'is_default' => true,
+      'is_enabled' => true,
+    ]);
+    $this->assertDatabaseMissing('wbcms_locales', [
+      'code' => 'en',
+    ]);
+  }
+
+  #[Test]
+  public function locale_writes_require_site_settings_write_capability(): void
+  {
+    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::CONTENT_READ]);
+    $locale = $this->defaultLocale();
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/locales', [
+        'code' => 'de',
+        'name' => 'Deutsch',
+      ])
+      ->assertForbidden()
+      ->assertJsonPath('code', 'missing_internal_api_capability');
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/locales/'.$locale->id, [
+        'name' => 'Deutsch',
+      ])
+      ->assertForbidden()
+      ->assertJsonPath('code', 'missing_internal_api_capability');
+  }
+
+  #[Test]
+  public function default_locale_cannot_be_disabled_through_the_internal_api(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $locale = $this->defaultLocale();
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/locales/'.$locale->id, [
+        'is_enabled' => false,
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('code', 'invalid_locale_payload')
+      ->assertJsonFragment(['path' => 'is_enabled']);
   }
 
   #[Test]
@@ -1549,6 +1674,57 @@ class InternalContentApiTest extends TestCase
     $this->assertNotNull($plainText);
     $this->assertNull($plainText->getRawOriginal('content'));
     $this->assertSame('Structured draft content.', $plainText->textTranslations->first()->content);
+  }
+
+  #[Test]
+  public function apply_creates_contact_form_translation_copy_from_content_plan(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/content/apply', [
+        'plan' => [
+          'site' => $this->defaultSite()->handle,
+          'locale' => $this->defaultLocale()->code,
+          'layout' => 'default',
+          'page' => [
+            'title' => 'Kontakt',
+            'path' => '/kontakt',
+            'status' => 'draft',
+          ],
+          'slots' => [
+            'main' => [
+              [
+                'type' => 'contact_form',
+                'translations' => [
+                  'title' => 'Kontaktformular',
+                  'content' => 'Ihre Nachricht an uns.',
+                  'submit_label' => 'Senden',
+                  'success_message' => 'Vielen Dank für Ihre Nachricht.',
+                ],
+                'settings' => [
+                  'recipient_email' => 'info@example.test',
+                  'send_email_notification' => true,
+                  'store_submissions' => true,
+                ],
+              ],
+            ],
+          ],
+        ],
+      ])
+      ->assertCreated()
+      ->assertJsonPath('ok', true);
+
+    $block = Block::query()->where('type', 'contact_form')->firstOrFail();
+
+    $this->assertDatabaseHas('wbcms_block_contact_form_translations', [
+      'block_id' => $block->id,
+      'locale_id' => $this->defaultLocale()->id,
+      'title' => 'Kontaktformular',
+      'content' => 'Ihre Nachricht an uns.',
+      'submit_label' => 'Senden',
+      'success_message' => 'Vielen Dank für Ihre Nachricht.',
+    ]);
   }
 
   #[Test]

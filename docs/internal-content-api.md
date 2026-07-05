@@ -168,6 +168,8 @@ Phase 1 resource endpoints:
 ```text
 GET /webadmin/api/sites
 GET /webadmin/api/locales
+POST /webadmin/api/locales
+PATCH /webadmin/api/locales/{locale}
 GET /webadmin/api/page-layouts
 GET /webadmin/api/block-types
 GET /webadmin/api/content-contract
@@ -206,6 +208,8 @@ GET /webadmin/api/commerce/orders/{order}
 GET /webadmin/api/sites/{site}/assets/css
 PUT /webadmin/api/sites/{site}/assets/css
 ```
+
+`POST /webadmin/api/locales` and `PATCH /webadmin/api/locales/{locale}` require `site-settings.write` and accept safe locale fields only: `code`, `name`, `is_default`, and `is_enabled`. Setting `is_default=true` forces the locale enabled and demotes any previous default through the normal CMS locale invariant. Migration tools should patch an existing locale id when correcting a language-only setup mistake, such as changing a fresh single-locale German install from `en` to `de`, so existing page, block, and site locale relations keep their ids.
 
 ### Content Validate / Apply API
 
@@ -561,6 +565,8 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 - `GET /webadmin/api/examples/landing-page`
 - `GET /webadmin/api/sites`
 - `GET /webadmin/api/locales`
+- `POST /webadmin/api/locales`
+- `PATCH /webadmin/api/locales/{locale}`
 - `GET /webadmin/api/page-layouts`
 - `GET /webadmin/api/block-types`
 - `GET /webadmin/api/icon-catalog`

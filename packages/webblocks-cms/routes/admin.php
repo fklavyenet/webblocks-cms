@@ -88,6 +88,8 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/sites/{site}/assets/{type}', [InternalSiteController::class, 'showAsset'])->middleware('internal-api.capability:site-assets.read')->name('sites.assets.show');
     Route::put('/sites/{site}/assets/{type}', [InternalSiteController::class, 'updateAsset'])->middleware('internal-api.capability:site-assets.write')->name('sites.assets.update');
     Route::get('/locales', [InternalContentResourceController::class, 'locales'])->name('locales.index');
+    Route::post('/locales', [InternalContentResourceController::class, 'storeLocale'])->middleware('internal-api.capability:site-settings.write')->name('locales.store');
+    Route::patch('/locales/{locale}', [InternalContentResourceController::class, 'updateLocale'])->middleware('internal-api.capability:site-settings.write')->name('locales.update');
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
     Route::get('/icon-catalog', [InternalContentResourceController::class, 'iconCatalog'])->name('icon-catalog.index');
