@@ -9,12 +9,12 @@
 @endphp
 
 @if ($showModeToggle || $showAccentToggle || ($showSearch && $searchPath))
-    <div class="wb-cluster wb-cluster-2 wb-cluster-end" data-wb-header-actions>
-        <div class="wb-topbar-actions">
+    <div class="wb-navbar-end wb-ms-auto" data-wb-header-actions>
+        <div class="wb-navbar-iconbar">
             @if ($showSearch && $searchPath)
                 <a
                     href="{{ $searchPath }}"
-                    class="wb-topbar-action"
+                    class="wb-navbar-icon-trigger"
                     data-wb-public-search-open
                     aria-label="Search"
                     title="Search"
@@ -27,7 +27,7 @@
             @if ($showModeToggle)
                 <button
                     type="button"
-                    class="wb-topbar-action"
+                    class="wb-navbar-icon-trigger"
                     data-wb-mode-cycle
                     data-wb-header-actions-mode-toggle
                     aria-label="Auto mode"

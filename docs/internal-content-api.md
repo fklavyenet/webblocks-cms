@@ -599,7 +599,7 @@ Navigation item URLs may be internal paths such as `/`, `/about`, `/contact`, an
 - `POST /webadmin/api/shared-slots/{sharedSlot}/blocks`
 - `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks`
 
-Shared Slot creation is site-scoped and refuses duplicate handles for the same site. Shared Slot blocks reuse the same block payload writer used by page-owned blocks, so locale-owned copy stays in translation rows and shared settings remain on the block record/settings path. Shared Slot blocks are created as draft content and require explicit `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks` with `shared-slots.write` plus `content.publish` before they render publicly. Media import and media assignment remain outside this phase.
+Shared Slot creation is site-scoped and refuses duplicate handles for the same site. Shared Slot blocks reuse the same block payload writer used by page-owned blocks, so locale-owned copy stays in translation rows and shared settings remain on the block record/settings path. Shared Slot block append requests may include `parent_id` or `parent_block_id` to add a block under an existing block in the same Shared Slot source tree when that parent accepts the requested child type. Shared Slot blocks are created as draft content and require explicit `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks` with `shared-slots.write` plus `content.publish` before they render publicly. Media import and media assignment remain outside this phase.
 
 ### Page Slot Assignment
 

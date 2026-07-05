@@ -2461,6 +2461,66 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function shared_slot_block_endpoint_can_append_child_blocks_under_existing_parent_blocks(): void
+  {
+    $this->createInternalApiToken('secret-token');
+
+    $response = $this->withInternalToken()
+      ->postJson('/webadmin/api/shared-slots', [
+        'site' => 'default',
+        'locale' => 'en',
+        'handle' => 'site-header',
+        'label' => 'Site Header',
+        'slot' => 'header',
+        'blocks' => [],
+      ])
+      ->assertCreated();
+
+    $sharedSlotId = $response->json('shared_slot.id');
+
+    $navbarResponse = $this->withInternalToken()
+      ->postJson('/webadmin/api/shared-slots/'.$sharedSlotId.'/blocks', [
+        'locale' => 'en',
+        'type' => 'sticky-navbar',
+        'children' => [
+          [
+            'type' => 'plain_text',
+            'translations' => ['content' => 'Header copy'],
+          ],
+        ],
+      ])
+      ->assertCreated()
+      ->assertJsonPath('block.type', 'sticky-navbar');
+
+    $navbarId = (int) $navbarResponse->json('block.id');
+
+    $this->withInternalToken()
+      ->postJson('/webadmin/api/shared-slots/'.$sharedSlotId.'/blocks', [
+        'locale' => 'en',
+        'parent_id' => $navbarId,
+        'type' => 'header-actions',
+        'settings' => [
+          'show_search' => true,
+          'show_mode_toggle' => true,
+        ],
+      ])
+      ->assertCreated()
+      ->assertJsonPath('block.type', 'header-actions')
+      ->assertJsonPath('block.parent_id', $navbarId);
+
+    $this->assertDatabaseHas('wbcms_blocks', [
+      'type' => 'header-actions',
+      'parent_id' => $navbarId,
+    ]);
+
+    $this->withInternalToken()
+      ->getJson('/webadmin/api/shared-slots/'.$sharedSlotId)
+      ->assertOk()
+      ->assertJsonPath('shared_slot.blocks.0.type', 'sticky-navbar')
+      ->assertJsonPath('shared_slot.blocks.0.children.1.type', 'header-actions');
+  }
+
+  #[Test]
   public function valid_token_can_discover_media_and_update_shared_slot_brand_logo_block(): void
   {
     $this->createInternalApiToken('secret-token');

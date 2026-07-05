@@ -1054,6 +1054,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertDontSee('class="wb-dropdown-label">Accent</div>', false);
     $response->assertSee('type="button"', false);
     $response->assertSee('aria-pressed="false"', false);
+    $response->assertSee('class="wb-navbar-iconbar"', false);
+    $response->assertSee('class="wb-navbar-icon-trigger"', false);
+    $response->assertDontSee('class="wb-topbar-action"', false);
     $response->assertSee('<i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>', false);
     $response->assertDontSee('<i class="wb-icon wb-icon-palette" aria-hidden="true"></i>', false);
     $response->assertSee('<i class="wb-icon wb-icon-search" aria-hidden="true"></i>', false);

@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.232
+
+- Bumped CMS to `1.32.232`.
+- Render public Header Actions with navbar icon primitives so search and mode controls align inside Navbar blocks.
+- Allow `POST /webadmin/api/shared-slots/{sharedSlot}/blocks` to append a block under an existing Shared Slot parent block with `parent_id` or `parent_block_id`.
+
 ## 1.32.231
 
 - Bumped CMS to `1.32.231`.

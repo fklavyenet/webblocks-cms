@@ -72,14 +72,19 @@ class InternalSharedSlotController extends Controller
     $warnings = [];
     $site = $sharedSlot->site ?? $sharedSlot->site()->first();
     $locale = $this->operations->resolveLocale($request->input('locale', 'en'), $site, 'block.locale', $errors);
-    $normalized = $this->operations->normalizeBlock($request->json()->all(), 'block', null, $errors, $warnings);
+    $parent = $this->parentBlockFromRequest($request, $sharedSlot, $errors);
+    $blockPayload = $request->json()->all();
+    unset($blockPayload['parent_id'], $blockPayload['parent_block_id']);
+    $normalized = $this->operations->normalizeBlock($blockPayload, 'block', $parent?->blockType, $errors, $warnings);
 
     if ($errors !== [] || ! $normalized || ! $locale) {
       return $this->validationError($errors);
     }
 
-    $block = DB::transaction(function () use ($sharedSlot, $normalized, $locale) {
-      $block = $this->operations->createSharedSlotBlock($sharedSlot, $normalized, $locale->code, null, (int) $sharedSlot->slotBlocks()->whereNull('parent_id')->max('sort_order') + 1);
+    $block = DB::transaction(function () use ($sharedSlot, $normalized, $locale, $parent) {
+      $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
+      $sortOrder = (int) $sourcePage->blocks()->where('parent_id', $parent?->id)->max('sort_order') + 1;
+      $block = $this->operations->createSharedSlotBlock($sharedSlot, $normalized, $locale->code, $parent, $sortOrder);
       $this->sourcePages->rebuildAssignments($sharedSlot);
 
       return $block;
@@ -92,6 +97,42 @@ class InternalSharedSlotController extends Controller
       'warnings' => $warnings,
       'errors' => [],
     ], 201);
+  }
+
+  private function parentBlockFromRequest(Request $request, SharedSlot $sharedSlot, array &$errors): ?Block
+  {
+    $parentId = $request->input('parent_id', $request->input('parent_block_id'));
+
+    if ($parentId === null || $parentId === '') {
+      return null;
+    }
+
+    if (! is_numeric($parentId) || (int) $parentId < 1) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block id must be a positive integer.'];
+
+      return null;
+    }
+
+    $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
+    $parent = Block::query()
+      ->with('blockType')
+      ->whereKey((int) $parentId)
+      ->where('page_id', $sourcePage->id)
+      ->first();
+
+    if (! $parent) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block must belong to this Shared Slot source tree.'];
+
+      return null;
+    }
+
+    if (! $parent->canAcceptChildren()) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block cannot accept child blocks.'];
+
+      return null;
+    }
+
+    return $parent;
   }
 
   public function assignToPageSlot(Request $request, Page $page, string $slot): JsonResponse
