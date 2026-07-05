@@ -4257,6 +4257,8 @@ class PageBuilderExperienceTest extends TestCase
     $response->assertSee('Add Gallery Items');
     $response->assertSee('value="masonry"', false);
     $response->assertSee('Masonry');
+    $response->assertSee('Viewer title');
+    $response->assertSee('name="gallery_viewer_title"', false);
     $response->assertDontSee('Masonary');
     $response->assertSee('data-wb-gallery-items-count', false);
     $response->assertSee('data-wb-gallery-alt-summary', false);
@@ -4266,7 +4268,7 @@ class PageBuilderExperienceTest extends TestCase
     $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
     $response->assertSee('class="wb-modal wb-modal-lg wb-gallery-picker-modal"', false);
     $response->assertDontSee('class="wb-modal wb-modal-xl wb-gallery-picker-modal"', false);
-    $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
+    $this->assertMatchesRegularExpression('/data-wb-picker-owner-id="wb-picker-owner-gallery-assets-gallery_media_ids-[^"]+"/', $response->getContent());
     $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
     $response->assertSee('wb-picker-results--compact', false);
     $response->assertSee('wb-gallery-picker-dialog', false);
@@ -4289,11 +4291,12 @@ class PageBuilderExperienceTest extends TestCase
     $this->assertNotFalse($content);
     $overlayRootPosition = strpos($content, 'id="wb-overlay-root"');
     $this->assertNotFalse($overlayRootPosition);
-    $this->assertSame(1, substr_count($content, 'id="gallery_media_ids_picker_panel"'));
+    $this->assertSame(1, preg_match('/id="(gallery_media_ids_gallery-assets-gallery_media_ids-[^"]+_picker_panel)"/', $content, $pickerPanelMatches));
+    $pickerPanelId = $pickerPanelMatches[1];
     $this->assertSame(1, substr_count($content, 'id="slot-block-editor-modal"'));
-    $this->assertSame(2, substr_count($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"'));
-    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"/s', $content);
-    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*Add Selected/s', $content);
+    $this->assertSame(2, preg_match_all('/data-wb-picker-owner-id="wb-picker-owner-gallery-assets-gallery_media_ids-[^"]+"/', $content));
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_gallery-assets-gallery_media_ids-[^"]+_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-gallery-assets-gallery_media_ids-[^"]+"/s', $content);
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_gallery-assets-gallery_media_ids-[^"]+_picker_panel".*Add Selected/s', $content);
     $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
     $this->assertStringNotContainsString('<div class="wb-overlay-layer wb-overlay-layer--dialog"><div class="wb-overlay-backdrop"></div><div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal"', str_replace(["\n", ' '], '', $content));
     $this->assertStringContainsString('class="wb-modal wb-modal-xl" id="slot-block-editor-modal"', $content);
@@ -4368,11 +4371,12 @@ class PageBuilderExperienceTest extends TestCase
 
       return $document;
     })());
-    $dialog = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-dialog ")]')->item(0);
-    $modalHeader = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-header ")]')->item(0);
-    $filterRegion = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-filter-region ")]')->item(0);
-    $modalBody = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]')->item(0);
-    $modalFooter = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]')->item(0);
+    $pickerPanelQuery = '//*[@id="'.$pickerPanelId.'"]';
+    $dialog = $xpath->query($pickerPanelQuery.'//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-dialog ")]')->item(0);
+    $modalHeader = $xpath->query($pickerPanelQuery.'//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-header ")]')->item(0);
+    $filterRegion = $xpath->query($pickerPanelQuery.'//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-filter-region ")]')->item(0);
+    $modalBody = $xpath->query($pickerPanelQuery.'//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]')->item(0);
+    $modalFooter = $xpath->query($pickerPanelQuery.'//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]')->item(0);
     $filtersCard = $xpath->query('//*[@data-wb-picker-filters-card]')->item(0);
     $pickerGrid = $xpath->query('//*[@data-wb-picker-grid]')->item(0);
     $this->assertNotNull($dialog);

@@ -515,6 +515,7 @@ class MediaVisualBlockContractsTest extends TestCase
       'gallery_captions_mode' => 'below',
       'gallery_overlay_mode' => 'gradient',
       'gallery_lightbox_enabled' => '1',
+      'gallery_viewer_title' => 'Gallery viewer set',
       'gallery_items' => [
         [
           'media_id' => $second->id,
@@ -545,6 +546,7 @@ class MediaVisualBlockContractsTest extends TestCase
     $this->assertSame('4', $block->galleryColumns());
     $this->assertSame('lg', $block->galleryGap());
     $this->assertTrue($block->galleryLightboxEnabled());
+    $this->assertSame('Gallery viewer set', $block->galleryViewerTitle());
 
     $secondRow = BlockMedia::query()->where('block_id', $block->id)->where('media_id', $second->id)->where('role', 'gallery_item')->firstOrFail();
 

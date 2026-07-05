@@ -1,6 +1,7 @@
 @php
     $firstItem = $galleryItems->first();
-    $viewerTitleId = $viewerId.'-title';
+    $viewerTitle = trim((string) ($viewerTitle ?? ''));
+    $viewerTitleId = $viewerTitle !== '' ? $viewerId.'-title' : $viewerId.'-caption';
     $firstItemMeta = trim((string) (($firstItem['meta'] ?? $firstItem['overlay_title'] ?? $firstItem['overlay_text'] ?? '')));
 @endphp
 
@@ -9,6 +10,9 @@
         <div class="wb-modal-dialog">
             <div class="wb-modal-body">
                 <div class="wb-gallery-viewer">
+                    @if ($viewerTitle !== '')
+                        <h2 class="wb-gallery-viewer-title wb-m-0" id="{{ $viewerTitleId }}">{{ $viewerTitle }}</h2>
+                    @endif
                     <div class="wb-gallery-viewer-toolbar">
                         <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-prev" type="button" aria-label="Previous image">
                             <i class="wb-icon wb-icon-chevron-left" aria-hidden="true"></i>
@@ -31,7 +35,7 @@
                             @if ($firstItem['width']) width="{{ $firstItem['width'] }}" @endif
                             @if ($firstItem['height']) height="{{ $firstItem['height'] }}" @endif
                         >
-                        <figcaption class="wb-gallery-viewer-caption" id="{{ $viewerTitleId }}">{{ $firstItem['caption'] ?? '' }}</figcaption>
+                        <figcaption class="wb-gallery-viewer-caption" @if ($viewerTitle === '') id="{{ $viewerTitleId }}" @endif>{{ $firstItem['caption'] ?? '' }}</figcaption>
                     </figure>
                     <p class="wb-gallery-viewer-meta wb-text-sm wb-text-muted wb-m-0">{{ $firstItemMeta }}</p>
                 </div>

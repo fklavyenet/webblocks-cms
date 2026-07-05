@@ -3,6 +3,7 @@
         ? $block->settings
         : (json_decode((string) $block->settings, true) ?: []);
     $viewerId = 'wb-gallery-viewer-'.$block->id;
+    $viewerTitle = $block->galleryViewerTitle();
     $captionMode = $block->galleryCaptionsMode();
     $overlayMode = $block->galleryOverlayMode();
     $lightboxEnabled = $block->galleryLightboxEnabled();
@@ -21,8 +22,28 @@
     $galleryRelations = $block->galleryItems()->loadMissing(['media', 'galleryItemTranslations']);
     $assetSource = $block->galleryAssets()->isNotEmpty() ? $block->galleryAssets()->values() : $legacyAssets;
     $legacyItems = collect($settings['items'] ?? $settings['images'] ?? []);
+    $galleryText = static function ($value): string {
+        $text = trim((string) $value);
+
+        if ($text === '') {
+            return '';
+        }
+
+        return preg_match('/^Imported from\b.+\bduring\b.+\bmigration\.?$/i', $text) ? '' : $text;
+    };
+    $firstGalleryText = static function (...$values) use ($galleryText): string {
+        foreach ($values as $value) {
+            $text = $galleryText($value);
+
+            if ($text !== '') {
+                return $text;
+            }
+        }
+
+        return '';
+    };
     $galleryItems = $assetSource
-        ->map(function ($asset, $index) use ($legacyItems, $block, $galleryRelations) {
+        ->map(function ($asset, $index) use ($legacyItems, $block, $galleryRelations, $firstGalleryText) {
             $legacyItem = $legacyItems->get($index);
             $galleryRelation = $galleryRelations->firstWhere('media_id', $asset->id);
             $translation = $block->resolvedGalleryItemTranslation($galleryRelation);
@@ -35,11 +56,11 @@
                 return null;
             }
 
-            $caption = trim((string) ($translation?->caption ?: $asset->caption ?: (is_array($legacyItem) ? ($legacyItem['caption'] ?? $legacyItem['title'] ?? '') : '')));
-            $overlayTitle = trim((string) ($translation?->overlay_title ?: ''));
-            $overlayText = trim((string) ($translation?->overlay_text ?: $asset->description ?: (is_array($legacyItem) ? ($legacyItem['meta'] ?? $legacyItem['subtitle'] ?? '') : '')));
+            $caption = $firstGalleryText($translation?->caption, $asset->caption, is_array($legacyItem) ? ($legacyItem['caption'] ?? $legacyItem['title'] ?? '') : '');
+            $overlayTitle = $firstGalleryText($translation?->overlay_title);
+            $overlayText = $firstGalleryText($translation?->overlay_text, $asset->description, is_array($legacyItem) ? ($legacyItem['meta'] ?? $legacyItem['subtitle'] ?? '') : '');
             $meta = $overlayTitle !== '' ? $overlayTitle : $overlayText;
-            $alt = trim((string) ($translation?->alt_text ?: $asset->alt_text ?: (is_array($legacyItem) ? ($legacyItem['alt'] ?? $legacyItem['title'] ?? '') : '') ?: $caption ?: $asset->title ?: $asset->filename ?: 'Gallery image'));
+            $alt = $firstGalleryText($translation?->alt_text, $asset->alt_text, is_array($legacyItem) ? ($legacyItem['alt'] ?? $legacyItem['title'] ?? '') : '', $caption, $asset->title, $asset->filename, 'Gallery image');
 
             return [
                 'thumbnail_url' => $thumbnailUrl,
@@ -53,9 +74,9 @@
                 'height' => $asset->height,
             ];
         })
-        ->when($assetSource->isEmpty(), function ($items) use ($legacyItems, $block) {
+        ->when($assetSource->isEmpty(), function ($items) use ($legacyItems, $block, $firstGalleryText) {
             return $items->merge(
-                $legacyItems->map(function ($legacyItem) use ($block) {
+                $legacyItems->map(function ($legacyItem) use ($block, $firstGalleryText) {
                     if (! is_array($legacyItem)) {
                         return null;
                     }
@@ -66,9 +87,9 @@
                         return null;
                     }
 
-                    $caption = trim((string) ($legacyItem['caption'] ?? $legacyItem['title'] ?? ''));
-                    $overlayText = trim((string) ($legacyItem['meta'] ?? $legacyItem['subtitle'] ?? ''));
-                    $alt = trim((string) ($legacyItem['alt'] ?? $legacyItem['title'] ?? $caption ?: 'Gallery image'));
+                    $caption = $firstGalleryText($legacyItem['caption'] ?? null, $legacyItem['title'] ?? null);
+                    $overlayText = $firstGalleryText($legacyItem['meta'] ?? null, $legacyItem['subtitle'] ?? null);
+                    $alt = $firstGalleryText($legacyItem['alt'] ?? null, $legacyItem['title'] ?? null, $caption, 'Gallery image');
 
                     return [
                         'thumbnail_url' => $mediaUrl,
@@ -150,6 +171,7 @@
             @php
                 $galleryViewerHtml = view('webblocks-cms::pages.partials.blocks.gallery-viewer', [
                     'viewerId' => $viewerId,
+                    'viewerTitle' => $viewerTitle,
                     'galleryItems' => $galleryItems,
                 ])->render();
                 app(\WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry::class)->push($galleryViewerHtml);

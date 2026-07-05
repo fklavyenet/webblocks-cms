@@ -1708,6 +1708,11 @@ class Block extends CmsModel
     return (bool) $this->setting('lightbox_enabled', true);
   }
 
+  public function galleryViewerTitle(): ?string
+  {
+    return $this->stringValueOrNull($this->setting('viewer_title'));
+  }
+
   public function galleryAssets(): Collection
   {
     return $this->galleryMedia();

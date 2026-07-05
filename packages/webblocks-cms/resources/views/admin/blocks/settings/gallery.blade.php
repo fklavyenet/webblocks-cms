@@ -1,4 +1,17 @@
 <div class="wb-stack wb-gap-3">
+    <div class="wb-stack wb-gap-1">
+        <label for="gallery_viewer_title">Viewer title</label>
+        <input
+            id="gallery_viewer_title"
+            name="gallery_viewer_title"
+            type="text"
+            value="{{ old('gallery_viewer_title', $block->setting('viewer_title')) }}"
+            class="wb-input"
+            maxlength="255"
+        >
+        <div class="wb-text-sm wb-text-muted">Shown only in the lightbox viewer header.</div>
+    </div>
+
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="gallery_variant">Variant</label>

@@ -791,6 +791,7 @@ The block owns its `<figure>` root and emits nothing without media. Optional lin
 | settings.overlay_mode | none/gradient/solid | Controls overlay caption modifier; default is `gradient`. |
 | settings.lightbox_enabled | true/default | Uses `.wb-gallery-trigger` and registers `gallery-viewer` in `PublicOverlayRegistry`. |
 | settings.lightbox_enabled | false | Uses `.wb-gallery-link` and no viewer modal. |
+| settings.viewer_title | text/null | Renders a lightbox-only `.wb-gallery-viewer-title` above the viewer toolbar when present. |
 
 ### Use for / Avoid for
 
@@ -800,7 +801,7 @@ Avoid for: section intro copy; place Content Header/Rich Text before Gallery.
 
 ### Notes
 
-The block owns its gallery root and registers `gallery-viewer` HTML in `PublicOverlayRegistry` when lightbox is enabled. Variants, columns, gap, aspect ratio, captions, overlay mode, and lightbox settings change attributes/classes. Legacy settings-based items remain readable.
+The block owns its gallery root and registers `gallery-viewer` HTML in `PublicOverlayRegistry` when lightbox is enabled. Variants, columns, gap, aspect ratio, captions, overlay mode, and lightbox settings change attributes/classes. Legacy settings-based items remain readable. Technical migration notes such as `Imported from ... during ... migration` are ignored when public Gallery output falls back to media or legacy item captions, overlay meta, and lightbox metadata.
 
 ## Columns (`columns`)
 
@@ -2641,6 +2642,7 @@ This compatibility partial delegates directly to `accordion.blade.php`.
   <div class="wb-modal-dialog">
     <div class="wb-modal-body">
       <div class="wb-gallery-viewer">
+        <h2 class="wb-gallery-viewer-title wb-m-0" id="wb-gallery-viewer-1-title">Gallery set</h2>
         <div class="wb-gallery-viewer-toolbar">
           <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-prev" type="button"></button>
           <div class="wb-gallery-viewer-counter" aria-live="polite">1 / 3</div>
@@ -2657,13 +2659,14 @@ This compatibility partial delegates directly to `accordion.blade.php`.
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-modal`, `wb-modal-xl`, `wb-modal-dialog`, `wb-modal-body`, `wb-gallery-viewer`, `wb-gallery-viewer-toolbar`, `wb-btn`, `wb-btn-secondary`, `wb-btn-icon`, `wb-icon`, `wb-gallery-viewer-counter`, `wb-gallery-viewer-media`, `wb-gallery-viewer-image`, `wb-gallery-viewer-caption`, `wb-gallery-viewer-meta`, `wb-text-sm`, `wb-text-muted`, `wb-m-0`.
+`wb-modal`, `wb-modal-xl`, `wb-modal-dialog`, `wb-modal-body`, `wb-gallery-viewer`, `wb-gallery-viewer-title`, `wb-gallery-viewer-toolbar`, `wb-btn`, `wb-btn-secondary`, `wb-btn-icon`, `wb-icon`, `wb-gallery-viewer-counter`, `wb-gallery-viewer-media`, `wb-gallery-viewer-image`, `wb-gallery-viewer-caption`, `wb-gallery-viewer-meta`, `wb-text-sm`, `wb-text-muted`, `wb-m-0`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | viewerId input | id string | Sets the modal/gallery target id used by gallery triggers. |
+| viewerTitle input | text/null | Adds the optional viewer header title and uses it as the modal accessible label. |
 | galleryItems input | collection | Renders viewer slides/items from Gallery-prepared item data. |
 | direct block settings | n/a | Internal partial; no standalone block settings map. |
 

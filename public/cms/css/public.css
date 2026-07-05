@@ -582,6 +582,12 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     font-weight: 600;
 }
 
+.wb-gallery-viewer-title {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
 .wb-gallery--masonry .wb-gallery-grid {
     display: block;
     column-count: var(--wb-gallery-columns);

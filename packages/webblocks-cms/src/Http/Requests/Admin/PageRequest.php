@@ -97,6 +97,7 @@ class PageRequest extends FormRequest
       'blocks.*.gallery_captions_mode' => ['nullable', Rule::in(['hidden', 'below', 'overlay', 'on-hover'])],
       'blocks.*.gallery_overlay_mode' => ['nullable', Rule::in(['none', 'gradient', 'solid'])],
       'blocks.*.gallery_lightbox_enabled' => ['nullable', 'boolean'],
+      'blocks.*.gallery_viewer_title' => ['nullable', 'string', 'max:255'],
       'blocks.*.attachment_media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'blocks.*.attachment_asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'blocks.*.variant' => ['nullable', 'string', 'max:255'],
@@ -212,6 +213,7 @@ class PageRequest extends FormRequest
           $settings['lightbox_enabled'] = array_key_exists('gallery_lightbox_enabled', $block)
             ? (bool) $block['gallery_lightbox_enabled']
             : (bool) ($settings['lightbox_enabled'] ?? true);
+          $settings['viewer_title'] = trim((string) ($block['gallery_viewer_title'] ?? ($settings['viewer_title'] ?? ''))) ?: null;
           $block['settings'] = json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== '' && $value !== []), JSON_UNESCAPED_SLASHES);
           $block['title'] = null;
           $block['subtitle'] = null;

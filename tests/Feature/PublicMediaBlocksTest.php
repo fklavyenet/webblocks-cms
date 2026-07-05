@@ -241,6 +241,7 @@ class PublicMediaBlocksTest extends TestCase
         'captions_mode' => 'overlay',
         'overlay_mode' => 'solid',
         'lightbox_enabled' => true,
+        'viewer_title' => 'Studio collection',
       ], JSON_UNESCAPED_SLASHES),
     ]);
 
@@ -270,6 +271,8 @@ class PublicMediaBlocksTest extends TestCase
     $response->assertSee('alt="Translated alt"', false);
     $response->assertSee('Translated overlay title', false);
     $response->assertSee('Translated overlay text', false);
+    $response->assertSee('<h2 class="wb-gallery-viewer-title wb-m-0" id="wb-gallery-viewer-'.$block->id.'-title">Studio collection</h2>', false);
+    $response->assertSee('aria-labelledby="wb-gallery-viewer-'.$block->id.'-title"', false);
     $response->assertSee('data-wb-gallery-caption="Translated caption"', false);
     $response->assertSee('data-wb-gallery-meta="Translated overlay title"', false);
     $response->assertDontSee('Fallback description');
@@ -282,6 +285,52 @@ class PublicMediaBlocksTest extends TestCase
     $this->assertStringContainsString('object-fit: contain;', $css);
     $this->assertStringContainsString('object-position: center;', $css);
     $this->assertStringContainsString('background: color-mix(in srgb, CanvasText 88%, Canvas 12%);', $css);
+    $this->assertStringContainsString('.wb-gallery-viewer-title {', $css);
+  }
+
+  #[Test]
+  public function gallery_block_omits_technical_import_notes_from_public_item_metadata(): void
+  {
+    $page = $this->pageWithMainSlot();
+    $importNote = 'Imported from farbe-bewegung-begegnung.de during Farben migration.';
+    $image = $this->asset('image', 'imported-gallery.jpg', 'image/jpeg', 'media/images/imported-gallery.jpg');
+    $image->update([
+      'title' => 'Imported gallery image',
+      'alt_text' => $importNote,
+      'caption' => $importNote,
+      'description' => $importNote,
+    ]);
+
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'gallery',
+      'block_type_id' => $this->blockType('gallery', 'Gallery', 19)->id,
+      'source_type' => 'asset',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+      'settings' => json_encode([
+        'captions_mode' => 'below',
+        'lightbox_enabled' => true,
+      ], JSON_UNESCAPED_SLASHES),
+    ]);
+
+    BlockMedia::query()->create([
+      'block_id' => $block->id,
+      'media_id' => $image->id,
+      'role' => 'gallery_item',
+      'position' => 0,
+    ]);
+
+    $response = $this->get(route('pages.show', 'about'));
+
+    $response->assertOk();
+    $response->assertSee('data-wb-gallery-alt="Imported gallery image"', false);
+    $response->assertDontSee($importNote);
+    $response->assertDontSee('data-wb-gallery-caption="'.$importNote.'"', false);
+    $response->assertDontSee('data-wb-gallery-meta="'.$importNote.'"', false);
   }
 
   #[Test]

@@ -226,6 +226,7 @@ class BlockRequest extends FormRequest
       'gallery_captions_mode' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['hidden', 'below', 'overlay', 'on-hover'])],
       'gallery_overlay_mode' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['none', 'gradient', 'solid'])],
       'gallery_lightbox_enabled' => [$isGallery ? 'nullable' : 'prohibited', 'boolean'],
+      'gallery_viewer_title' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'attachment_media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'attachment_asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'column_items' => ['nullable', 'array'],
@@ -1361,6 +1362,7 @@ class BlockRequest extends FormRequest
             ? trim((string) ($data['gallery_overlay_mode'] ?? 'gradient'))
             : 'gradient';
           $settings['lightbox_enabled'] = (bool) ($data['gallery_lightbox_enabled'] ?? true);
+          $settings['viewer_title'] = trim((string) ($data['gallery_viewer_title'] ?? '')) ?: null;
         }
 
         $data['title'] = array_key_exists('title', $data)
