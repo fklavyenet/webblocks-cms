@@ -41,7 +41,7 @@ class LocaleController extends Controller
 
     return view('webblocks-cms::admin.locales.form', [
       'locale' => new Locale(['is_enabled' => true]),
-      'localeOptionGroups' => $this->localeOptionCatalog->groupedOptions($installedCodes),
+      'localeOptions' => $this->localeOptionCatalog->options($installedCodes),
       'pageTitle' => 'Add Locale',
       'formAction' => route('admin.locales.store'),
       'formMethod' => 'POST',
@@ -64,7 +64,7 @@ class LocaleController extends Controller
   {
     return view('webblocks-cms::admin.locales.form', [
       'locale' => $locale,
-      'localeOptionGroups' => $this->localeOptionCatalog->groupedOptions(Locale::query()->whereKeyNot($locale->id)->pluck('code')->all()),
+      'localeOptions' => $this->localeOptionCatalog->options(Locale::query()->whereKeyNot($locale->id)->pluck('code')->all()),
       'report' => $this->lifecycleGuard->inspect($locale),
       'pageTitle' => 'Edit Locale: '.$locale->name,
       'formAction' => route('admin.locales.update', $locale),

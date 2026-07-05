@@ -76,15 +76,16 @@ class InternalContentResourceController extends Controller
   public function localeOptions(): JsonResponse
   {
     $installedCodes = Locale::query()->pluck('code')->all();
-    $groups = $this->localeOptionCatalog->groupedOptions($installedCodes);
+    $options = $this->localeOptionCatalog->options($installedCodes);
 
     return $this->ok([
-      'locale_options' => $groups,
-      'count' => count($groups['all']),
+      'locale_options' => $options,
+      'count' => count($options),
       'selection_contract' => [
         'preferred_create_field' => 'locale_option',
         'accepted_locale_code_pattern' => Locale::CODE_PATTERN,
         'fallback_fields' => ['code', 'name'],
+        'catalog_scope' => 'Curated standard language locales; use fallback fields for valid country variants or custom BCP 47 style tags.',
       ],
     ]);
   }
@@ -410,7 +411,7 @@ class InternalContentResourceController extends Controller
           'is_enabled',
         ],
         'default_locale_behavior' => 'Default locales are forced enabled and demote the previous default through the normal CMS locale invariant.',
-        'selection_policy' => 'Read locale_options first and send locale_option for standard locale creation; code and name remain available for controlled custom/operator cases.',
+        'selection_policy' => 'Read locale_options first and send locale_option for standard language locale creation; code and name remain available for controlled country-variant or custom operator cases.',
         'migration_note' => 'For language-only corrections on an existing install, PATCH the existing locale id so page, block, and site locale relations keep their ids.',
       ],
       'site_assets' => [

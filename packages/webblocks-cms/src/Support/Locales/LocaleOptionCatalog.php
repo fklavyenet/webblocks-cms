@@ -2,73 +2,138 @@
 
 namespace WebBlocks\Cms\Support\Locales;
 
-use ResourceBundle;
 use WebBlocks\Cms\Models\Locale;
 
 class LocaleOptionCatalog
 {
-  private const COMMON_CODES = [
+  private const STANDARD_CODES = [
     'en',
-    'en-us',
-    'en-gb',
     'de',
-    'de-de',
     'tr',
-    'tr-tr',
     'fr',
-    'fr-fr',
     'es',
-    'es-es',
     'it',
-    'it-it',
     'nl',
-    'nl-nl',
     'pt',
-    'pt-br',
+    'pl',
+    'sv',
+    'da',
+    'no',
+    'fi',
+    'cs',
+    'sk',
+    'sl',
+    'hu',
+    'ro',
+    'bg',
+    'el',
+    'hr',
+    'sr',
+    'bs',
+    'sq',
+    'et',
+    'lv',
+    'lt',
+    'uk',
     'ar',
+    'he',
+    'fa',
+    'ur',
+    'hi',
+    'bn',
+    'ta',
+    'te',
+    'mr',
     'ru',
     'zh',
-    'zh-hans',
-    'zh-hant',
     'ja',
     'ko',
+    'id',
+    'ms',
+    'th',
+    'vi',
+    'sw',
+    'af',
+    'ca',
+    'eu',
+    'gl',
+    'is',
+    'ga',
+    'mt',
+    'mk',
+    'kk',
+    'az',
+    'hy',
+    'ka',
   ];
 
   private const FALLBACK_NAMES = [
+    'af' => 'Afrikaans',
     'ar' => 'Arabic',
+    'az' => 'Azerbaijani',
+    'bg' => 'Bulgarian',
+    'bn' => 'Bengali',
+    'bs' => 'Bosnian',
+    'ca' => 'Catalan',
+    'cs' => 'Czech',
+    'da' => 'Danish',
     'de' => 'German',
-    'de-de' => 'German (Germany)',
+    'el' => 'Greek',
     'en' => 'English',
-    'en-gb' => 'English (United Kingdom)',
-    'en-us' => 'English (United States)',
     'es' => 'Spanish',
-    'es-es' => 'Spanish (Spain)',
+    'et' => 'Estonian',
+    'eu' => 'Basque',
+    'fa' => 'Persian',
+    'fi' => 'Finnish',
     'fr' => 'French',
-    'fr-fr' => 'French (France)',
+    'ga' => 'Irish',
+    'gl' => 'Galician',
+    'he' => 'Hebrew',
+    'hi' => 'Hindi',
+    'hr' => 'Croatian',
+    'hu' => 'Hungarian',
+    'hy' => 'Armenian',
+    'id' => 'Indonesian',
+    'is' => 'Icelandic',
     'it' => 'Italian',
-    'it-it' => 'Italian (Italy)',
     'ja' => 'Japanese',
+    'ka' => 'Georgian',
+    'kk' => 'Kazakh',
     'ko' => 'Korean',
+    'lt' => 'Lithuanian',
+    'lv' => 'Latvian',
+    'mk' => 'Macedonian',
+    'mr' => 'Marathi',
+    'ms' => 'Malay',
+    'mt' => 'Maltese',
     'nl' => 'Dutch',
-    'nl-nl' => 'Dutch (Netherlands)',
+    'no' => 'Norwegian',
+    'pl' => 'Polish',
     'pt' => 'Portuguese',
-    'pt-br' => 'Portuguese (Brazil)',
+    'ro' => 'Romanian',
     'ru' => 'Russian',
+    'sk' => 'Slovak',
+    'sl' => 'Slovenian',
+    'sq' => 'Albanian',
+    'sr' => 'Serbian',
+    'sv' => 'Swedish',
+    'sw' => 'Swahili',
+    'ta' => 'Tamil',
+    'te' => 'Telugu',
+    'th' => 'Thai',
     'tr' => 'Turkish',
-    'tr-tr' => 'Turkish (Turkey)',
+    'uk' => 'Ukrainian',
+    'ur' => 'Urdu',
+    'vi' => 'Vietnamese',
     'zh' => 'Chinese',
-    'zh-hans' => 'Chinese (Simplified)',
-    'zh-hant' => 'Chinese (Traditional)',
   ];
 
   public function groupedOptions(array $installedCodes = []): array
   {
     $options = $this->options($installedCodes);
-    $commonCodes = array_flip(self::COMMON_CODES);
 
     return [
-      'common' => array_values(array_filter($options, fn (array $option): bool => isset($commonCodes[$option['code']]))),
-      'all' => $options,
+      'standard' => $options,
     ];
   }
 
@@ -103,19 +168,7 @@ class LocaleOptionCatalog
 
   private function catalogCodes(): array
   {
-    $codes = self::COMMON_CODES;
-
-    if (class_exists(ResourceBundle::class)) {
-      $codes = [
-        ...$codes,
-        ...array_map(
-          fn (string $locale): ?string => Locale::normalizeCode($locale),
-          ResourceBundle::getLocales('') ?: [],
-        ),
-      ];
-    }
-
-    return collect($codes)
+    return collect(self::STANDARD_CODES)
       ->filter(fn (?string $code): bool => Locale::isValidCode($code))
       ->unique()
       ->values()
@@ -138,7 +191,7 @@ class LocaleOptionCatalog
       'native_name' => $nativeName,
       'english_name' => $name,
       'label' => $label,
-      'is_common' => in_array($code, self::COMMON_CODES, true),
+      'is_standard' => in_array($code, self::STANDARD_CODES, true),
       'installed' => $installed,
       'search' => strtolower($code.' '.$name.' '.$nativeName.' '.$label),
     ];

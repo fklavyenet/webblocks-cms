@@ -19,11 +19,14 @@ class LocaleRequest extends FormRequest
   {
     $locale = $this->route('locale');
     $locale = $locale instanceof Locale ? $locale : null;
-    $mode = $locale ? 'custom' : (string) $this->input('locale_mode', 'standard');
+    $catalog = app(LocaleOptionCatalog::class);
+    $currentOption = $locale ? $catalog->find($locale->code) : null;
+    $defaultMode = $locale && ! $currentOption ? 'custom' : 'standard';
+    $mode = (string) $this->input('locale_mode', $defaultMode);
     $mode = in_array($mode, ['standard', 'custom'], true) ? $mode : 'standard';
     $localeOption = Locale::normalizeCode($this->input('locale_option'));
     $option = $mode === 'standard'
-      ? app(LocaleOptionCatalog::class)->find($localeOption)
+      ? $catalog->find($localeOption)
       : null;
 
     $this->merge([
@@ -60,7 +63,7 @@ class LocaleRequest extends FormRequest
   {
     $locale = $this->route('locale');
 
-    if ($locale instanceof Locale || $this->input('locale_mode') === 'custom') {
+    if ($this->input('locale_mode') === 'custom') {
       return;
     }
 

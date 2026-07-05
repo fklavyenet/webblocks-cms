@@ -297,7 +297,8 @@ class InternalContentApiTest extends TestCase
       ->getJson('/webadmin/api/locale-options')
       ->assertOk()
       ->assertJsonPath('selection_contract.preferred_create_field', 'locale_option')
-      ->assertJsonFragment(['code' => 'de']);
+      ->assertJsonFragment(['code' => 'de'])
+      ->assertJsonMissing(['code' => 'de-de']);
 
     $this->withInternalToken()
       ->getJson('/webadmin/api/page-layouts')
@@ -329,13 +330,13 @@ class InternalContentApiTest extends TestCase
 
     $create = $this->withInternalToken()
       ->postJson('/webadmin/api/locales', [
-        'locale_option' => 'de-de',
+        'locale_option' => 'de',
         'is_enabled' => true,
       ])
       ->assertCreated()
       ->assertJsonPath('ok', true)
-      ->assertJsonPath('locale.code', 'de-de')
-      ->assertJsonPath('locale.name', 'German (Germany)')
+      ->assertJsonPath('locale.code', 'de')
+      ->assertJsonPath('locale.name', 'German')
       ->assertJsonPath('locale.is_default', false)
       ->assertJsonPath('locale.is_enabled', true)
       ->assertJsonPath('writes.0.type', 'locale');
@@ -349,13 +350,13 @@ class InternalContentApiTest extends TestCase
       ->assertOk()
       ->assertJsonPath('ok', true)
       ->assertJsonPath('locale.id', $localeId)
-      ->assertJsonPath('locale.code', 'de-de')
+      ->assertJsonPath('locale.code', 'de')
       ->assertJsonPath('locale.is_default', true)
       ->assertJsonPath('locale.is_enabled', true);
 
     $this->assertDatabaseHas('wbcms_locales', [
       'id' => $localeId,
-      'code' => 'de-de',
+      'code' => 'de',
       'is_default' => true,
       'is_enabled' => true,
     ]);
@@ -370,7 +371,7 @@ class InternalContentApiTest extends TestCase
     ]);
     $this->assertDatabaseHas('wbcms_system_settings', [
       'key' => 'system.default_locale',
-      'value' => 'de-de',
+      'value' => 'de',
     ]);
   }
 
@@ -382,17 +383,17 @@ class InternalContentApiTest extends TestCase
 
     $this->withInternalToken()
       ->patchJson('/webadmin/api/locales/'.$locale->id, [
-        'locale_option' => 'zh-hant-hk',
+        'locale_option' => 'zh',
       ])
       ->assertOk()
       ->assertJsonPath('locale.id', $locale->id)
-      ->assertJsonPath('locale.code', 'zh-hant-hk')
-      ->assertJsonPath('locale.name', 'Chinese (Traditional, Hong Kong SAR China)');
+      ->assertJsonPath('locale.code', 'zh')
+      ->assertJsonPath('locale.name', 'Chinese');
 
     $this->assertDatabaseHas('wbcms_locales', [
       'id' => $locale->id,
-      'code' => 'zh-hant-hk',
-      'name' => 'Chinese (Traditional, Hong Kong SAR China)',
+      'code' => 'zh',
+      'name' => 'Chinese',
     ]);
   }
 

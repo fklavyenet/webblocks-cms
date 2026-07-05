@@ -1,35 +1,22 @@
 (function () {
   function run() {
     document.querySelectorAll('[data-wb-locale-picker]').forEach(function (picker) {
-      var filter = picker.querySelector('[data-wb-locale-filter]');
       var select = picker.querySelector('[data-wb-locale-options]');
       var form = picker.closest('form');
       var mode = form ? form.querySelector('[data-wb-locale-mode]') : null;
       var custom = form ? form.querySelector('[data-wb-locale-custom]') : null;
 
-      if (!filter || !select) {
+      if (!select) {
         return;
       }
-
-      function applyFilter() {
-        var query = String(filter.value || '').toLowerCase().trim();
-
-        Array.prototype.forEach.call(select.options, function (option) {
-          if (!option.value) {
-            option.hidden = false;
-            return;
-          }
-
-          var haystack = String(option.getAttribute('data-search') || option.textContent || '').toLowerCase();
-          option.hidden = query !== '' && haystack.indexOf(query) === -1;
-        });
-      }
-
-      filter.addEventListener('input', applyFilter);
 
       select.addEventListener('change', function () {
         if (mode) {
           mode.value = 'standard';
+        }
+
+        if (custom && select.value) {
+          custom.open = false;
         }
       });
 

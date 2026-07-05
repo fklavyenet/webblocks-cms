@@ -219,17 +219,41 @@ class SiteLocaleManagementTest extends TestCase
   }
 
   #[Test]
-  public function locale_create_form_uses_searchable_standard_locale_picker(): void
+  public function locale_create_form_uses_simple_standard_locale_picker(): void
   {
     $user = User::factory()->superAdmin()->create();
 
     $response = $this->actingAs($user)->get(route('admin.locales.create'));
 
     $response->assertOk();
-    $response->assertSee('Search by language, region, or code');
     $response->assertSee('data-wb-locale-picker', false);
     $response->assertSee('name="locale_option"', false);
     $response->assertSee('Deutsch', false);
+    $response->assertSee('Use custom locale details');
+    $response->assertSee('wb-icon-chevron-down', false);
+    $response->assertDontSee('<optgroup', false);
+    $response->assertDontSee('size="12"', false);
+    $response->assertDontSee('value="de-de"', false);
+    $response->assertSee('cms/js/admin/locale-picker.js', false);
+  }
+
+  #[Test]
+  public function locale_edit_form_uses_standard_locale_picker_with_current_locale_selected(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $locale = Locale::query()->create([
+      'code' => 'de',
+      'name' => 'German',
+      'is_default' => false,
+      'is_enabled' => true,
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.locales.edit', $locale));
+
+    $response->assertOk();
+    $response->assertSee('name="locale_option"', false);
+    $response->assertSee('value="de"', false);
+    $response->assertSee('selected', false);
     $response->assertSee('Use custom locale details');
     $response->assertSee('cms/js/admin/locale-picker.js', false);
   }
@@ -241,14 +265,14 @@ class SiteLocaleManagementTest extends TestCase
 
     $response = $this->actingAs($user)->post(route('admin.locales.store'), [
       'locale_mode' => 'standard',
-      'locale_option' => 'de-de',
+      'locale_option' => 'de',
       'is_default' => '0',
     ]);
 
-    $locale = Locale::query()->where('code', 'de-de')->firstOrFail();
+    $locale = Locale::query()->where('code', 'de')->firstOrFail();
 
     $response->assertRedirect(route('admin.locales.edit', $locale));
-    $this->assertSame('German (Germany)', $locale->name);
+    $this->assertSame('German', $locale->name);
     $this->assertTrue($locale->is_enabled);
   }
 

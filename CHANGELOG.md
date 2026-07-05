@@ -9,6 +9,13 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.245
+
+- Bumped CMS to `1.32.245`.
+- Replace the Add/Edit Locale picker with a short standard language list and keep country variants/custom BCP 47 style tags behind custom locale details.
+- Show the same locale picker on Edit Locale, with the current standard locale selected when available.
+- Simplify Internal Content API locale options to the same curated standard language list.
+
 ## 1.32.244
 
 - Bumped CMS to `1.32.244`.
