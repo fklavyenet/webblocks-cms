@@ -5,47 +5,47 @@
 
     if ($alternateSections) {
         $children = collect();
-        $sectionPair = collect();
+        $childPair = collect();
         $pairIndex = 0;
-        $flushSectionPair = function () use (&$children, &$sectionPair, &$pairIndex, $block): void {
-            if ($sectionPair->isEmpty()) {
+        $flushChildPair = function () use (&$children, &$childPair, &$pairIndex, $block): void {
+            if ($childPair->isEmpty()) {
                 return;
             }
 
-            if ($sectionPair->count() !== 2) {
-                $sectionPair->each(fn ($section) => $children->push($section));
-                $sectionPair = collect();
+            if ($childPair->count() !== 2) {
+                $childPair->each(fn ($child) => $children->push($child));
+                $childPair = collect();
                 $pairIndex++;
 
                 return;
             }
 
             $mediaLeft = $block->gridSectionMediaLeft($pairIndex);
-            $sortedPair = $sectionPair
-                ->sortBy(fn ($section) => $section->hasMediaTextVisualContent() === $mediaLeft ? 0 : 1)
+            $sortedPair = $childPair
+                ->sortBy(fn ($child) => $child->hasMediaTextVisualContent() === $mediaLeft ? 0 : 1)
                 ->values();
 
-            $sortedPair->each(fn ($section) => $children->push($section));
-            $sectionPair = collect();
+            $sortedPair->each(fn ($child) => $children->push($child));
+            $childPair = collect();
             $pairIndex++;
         };
 
         foreach ($block->children as $child) {
-            if ($child->typeSlug() === 'section') {
-                $sectionPair->push($child);
+            if ($child->hasMediaTextLayoutContent()) {
+                $childPair->push($child);
 
-                if ($sectionPair->count() === 2) {
-                    $flushSectionPair();
+                if ($childPair->count() === 2) {
+                    $flushChildPair();
                 }
 
                 continue;
             }
 
-            $flushSectionPair();
+            $flushChildPair();
             $children->push($child);
         }
 
-        $flushSectionPair();
+        $flushChildPair();
     }
 @endphp
 <div class="{{ $class }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">

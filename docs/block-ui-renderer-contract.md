@@ -281,7 +281,7 @@ Public pages now use explicit layout composition modes:
 - Translatable fields: `title`, `subtitle`, `content`, child `column_item` text
 - Shared fields: `variant`, child ordering, child links, structure
 - Intended WebBlocks UI output: layout container for repeatable children using `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4`, or a generic `wb-grid` when the count is dynamic.
-- Alternating media/text mode is parent-driven on Grid: the Grid keeps its `wb-grid` wrapper and reorders direct Section column pairs by detected media/text content instead of a per-Section left/right setting.
+- Alternating media/text mode is parent-driven on Grid: the Grid keeps its `wb-grid` wrapper and reorders direct media/text child pairs, including Slider plus text Section structures, by detected visual content instead of a per-Section left/right setting.
 - Current implementation: acceptable
 - Variant mapping:
   - `cards` -> grid container with each child rendered as `wb-card > .wb-card-body`

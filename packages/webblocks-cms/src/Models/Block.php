@@ -839,6 +839,13 @@ class Block extends CmsModel
     );
   }
 
+  public function hasMediaTextLayoutContent(): bool
+  {
+    return $this->hasMediaTextVisualContent()
+      || $this->children->isNotEmpty()
+      || in_array($this->typeSlug(), ['section', 'container', 'cluster', 'card'], true);
+  }
+
   public function sliderHeightClass(): string
   {
     return match ($this->appearanceSetting('height')) {

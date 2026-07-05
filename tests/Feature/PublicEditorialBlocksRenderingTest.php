@@ -2121,6 +2121,83 @@ class PublicEditorialBlocksRenderingTest extends TestCase
   }
 
   #[Test]
+  public function grid_can_reorder_direct_slider_and_text_section_columns(): void
+  {
+    $page = $this->pageWithMainSlot();
+    $grid = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'grid',
+      'block_type_id' => $this->blockType('grid', 'Grid', 5)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'settings' => json_encode([
+        'columns' => '2',
+        'gap' => '6',
+        'alternate_media_text_sections' => true,
+        'alternate_start' => 'text_left',
+      ], JSON_UNESCAPED_SLASHES),
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $grid->id,
+      'type' => 'slider',
+      'block_type_id' => $this->blockType('slider', 'Slider', 7, false, true)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $textSection = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $grid->id,
+      'type' => 'section',
+      'block_type_id' => $this->blockType('section', 'Section', 2)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 1,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $text = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $textSection->id,
+      'type' => 'plain_text',
+      'block_type_id' => $this->blockType('plain_text', 'Plain Text', 6)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $text->textTranslations()->create([
+      'locale_id' => Page::defaultLocaleId(),
+      'content' => 'Direct text section',
+    ]);
+    app(BlockTranslationWriter::class)->normalizeCanonicalStorage($text->fresh(['textTranslations']));
+
+    $response = $this->get(route('pages.show', 'about'));
+
+    $response->assertOk();
+    $response->assertSeeInOrder([
+      '<div class="wb-grid wb-grid-2 wb-gap-6" data-wb-public-block-type="grid">',
+      '<p>Direct text section</p>',
+      'data-wb-slider',
+    ], false);
+  }
+
+  #[Test]
   public function card_renders_nested_header_body_and_footer_regions(): void
   {
     $page = $this->pageWithMainSlot();

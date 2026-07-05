@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.237
+
+- Bumped CMS to `1.32.237`.
+- Make alternating media/text Grid ordering work when the Grid directly contains a Slider and a text Section, matching existing editorial page structures.
+
 ## 1.32.236
 
 - Bumped CMS to `1.32.236`.
