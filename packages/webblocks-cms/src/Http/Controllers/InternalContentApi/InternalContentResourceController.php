@@ -23,6 +23,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
 use WebBlocks\Cms\Support\Media\MediaUploader;
@@ -40,6 +41,7 @@ class InternalContentResourceController extends Controller
     private readonly RemoteMediaFetcher $remoteMediaFetcher,
     private readonly MediaDeleter $mediaDeleter,
     private readonly PluginBlockCatalog $pluginBlockCatalog,
+    private readonly LocaleOptionCatalog $localeOptionCatalog,
   ) {}
 
   public function sites(): JsonResponse
@@ -71,9 +73,27 @@ class InternalContentResourceController extends Controller
     return $this->ok(['locales' => $locales]);
   }
 
+  public function localeOptions(): JsonResponse
+  {
+    $installedCodes = Locale::query()->pluck('code')->all();
+    $groups = $this->localeOptionCatalog->groupedOptions($installedCodes);
+
+    return $this->ok([
+      'locale_options' => $groups,
+      'count' => count($groups['all']),
+      'selection_contract' => [
+        'preferred_create_field' => 'locale_option',
+        'accepted_locale_code_pattern' => Locale::CODE_PATTERN,
+        'fallback_fields' => ['code', 'name'],
+      ],
+    ]);
+  }
+
   public function storeLocale(Request $request): JsonResponse
   {
-    $validator = Validator::make($request->all(), [
+    $payload = $this->localePayloadWithSelectedOption($request);
+    $validator = Validator::make($payload, [
+      'locale_option' => ['nullable', 'string', 'max:35'],
       'code' => ['required', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'unique:wbcms_locales,code'],
       'name' => ['required', 'string', 'max:255'],
       'is_default' => ['nullable', 'boolean'],
@@ -112,7 +132,9 @@ class InternalContentResourceController extends Controller
 
   public function updateLocale(Request $request, Locale $locale): JsonResponse
   {
-    $validator = Validator::make($request->all(), [
+    $payload = $this->localePayloadWithSelectedOption($request);
+    $validator = Validator::make($payload, [
+      'locale_option' => ['nullable', 'string', 'max:35'],
       'code' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'unique:wbcms_locales,code,'.$locale->id],
       'name' => ['nullable', 'string', 'max:255'],
       'is_default' => ['nullable', 'boolean'],
@@ -375,16 +397,20 @@ class InternalContentResourceController extends Controller
       ],
       'locales' => [
         'index_url' => '/webadmin/api/locales',
+        'options_url' => '/webadmin/api/locale-options',
         'create_url' => '/webadmin/api/locales',
         'update_url_template' => '/webadmin/api/locales/{locale}',
         'write_requires_capability' => 'site-settings.write',
+        'preferred_create_field' => 'locale_option',
         'supported_write_fields' => [
+          'locale_option',
           'code',
           'name',
           'is_default',
           'is_enabled',
         ],
         'default_locale_behavior' => 'Default locales are forced enabled and demote the previous default through the normal CMS locale invariant.',
+        'selection_policy' => 'Read locale_options first and send locale_option for standard locale creation; code and name remain available for controlled custom/operator cases.',
         'migration_note' => 'For language-only corrections on an existing install, PATCH the existing locale id so page, block, and site locale relations keep their ids.',
       ],
       'site_assets' => [
@@ -475,6 +501,7 @@ class InternalContentResourceController extends Controller
       'discovery' => [
         'sites' => '/webadmin/api/sites',
         'locales' => '/webadmin/api/locales',
+        'locale_options' => '/webadmin/api/locale-options',
         'page_layouts' => '/webadmin/api/page-layouts',
         'block_types' => '/webadmin/api/block-types',
         'media' => '/webadmin/api/media',
@@ -1151,6 +1178,19 @@ class InternalContentResourceController extends Controller
     }
 
     return mb_substr($value, 0, $maxLength);
+  }
+
+  private function localePayloadWithSelectedOption(Request $request): array
+  {
+    $payload = $request->all();
+    $option = $this->localeOptionCatalog->find($payload['locale_option'] ?? null);
+
+    if ($option) {
+      $payload['code'] = $option['code'];
+      $payload['name'] = $option['name'];
+    }
+
+    return $payload;
   }
 
   private function validationErrors(string $code, string $message, array $errors): JsonResponse

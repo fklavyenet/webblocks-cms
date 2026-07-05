@@ -99,6 +99,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('_links.icon_catalog', '/webadmin/api/icon-catalog?context=content')
       ->assertJsonPath('_links.content_validate', '/webadmin/api/content/validate')
       ->assertJsonPath('_links.content_apply', '/webadmin/api/content/apply')
+      ->assertJsonPath('_links.locale_options', '/webadmin/api/locale-options')
       ->assertJsonPath('_links.locale_create', '/webadmin/api/locales')
       ->assertJsonPath('_links.locale_update', '/webadmin/api/locales/{locale}')
       ->assertJsonPath('_links.admin_render_system_updates', '/webadmin/api/admin-render/system-updates')
@@ -153,7 +154,9 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-guidance', 'For CSS writes, prefer native block settings and public theme/WebBlocks UI custom properties; avoid hard-coded light/dark page palettes that bypass mode behavior.')
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-analysis', 'CSS writes return asset.analysis.mode_awareness; warning status is advisory and should be reviewed or fixed by migration/new-site tools before completion.')
+      ->assertJsonPath('paths./locale-options.get.summary', 'List standard locale options for locale creation')
       ->assertJsonPath('paths./locales.post.x-required-capability', CmsApiTokenCapabilities::SITE_SETTINGS_WRITE)
+      ->assertJsonPath('paths./locales.post.x-preferred-field', 'locale_option from GET /webadmin/api/locale-options')
       ->assertJsonPath('paths./locales/{locale}.patch.x-required-capability', CmsApiTokenCapabilities::SITE_SETTINGS_WRITE)
       ->assertJsonPath('paths./admin-render/system-updates.get.x-required-capability', CmsApiTokenCapabilities::ADMIN_RENDER)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
@@ -291,6 +294,12 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('locales.0.code', 'en');
 
     $this->withInternalToken()
+      ->getJson('/webadmin/api/locale-options')
+      ->assertOk()
+      ->assertJsonPath('selection_contract.preferred_create_field', 'locale_option')
+      ->assertJsonFragment(['code' => 'de']);
+
+    $this->withInternalToken()
       ->getJson('/webadmin/api/page-layouts')
       ->assertOk()
       ->assertJsonPath('page_layouts.0.handle', 'default');
@@ -320,14 +329,13 @@ class InternalContentApiTest extends TestCase
 
     $create = $this->withInternalToken()
       ->postJson('/webadmin/api/locales', [
-        'code' => 'de',
-        'name' => 'Deutsch',
+        'locale_option' => 'de-de',
         'is_enabled' => true,
       ])
       ->assertCreated()
       ->assertJsonPath('ok', true)
-      ->assertJsonPath('locale.code', 'de')
-      ->assertJsonPath('locale.name', 'Deutsch')
+      ->assertJsonPath('locale.code', 'de-de')
+      ->assertJsonPath('locale.name', 'German (Germany)')
       ->assertJsonPath('locale.is_default', false)
       ->assertJsonPath('locale.is_enabled', true)
       ->assertJsonPath('writes.0.type', 'locale');
@@ -341,13 +349,13 @@ class InternalContentApiTest extends TestCase
       ->assertOk()
       ->assertJsonPath('ok', true)
       ->assertJsonPath('locale.id', $localeId)
-      ->assertJsonPath('locale.code', 'de')
+      ->assertJsonPath('locale.code', 'de-de')
       ->assertJsonPath('locale.is_default', true)
       ->assertJsonPath('locale.is_enabled', true);
 
     $this->assertDatabaseHas('wbcms_locales', [
       'id' => $localeId,
-      'code' => 'de',
+      'code' => 'de-de',
       'is_default' => true,
       'is_enabled' => true,
     ]);
@@ -362,7 +370,29 @@ class InternalContentApiTest extends TestCase
     ]);
     $this->assertDatabaseHas('wbcms_system_settings', [
       'key' => 'system.default_locale',
-      'value' => 'de',
+      'value' => 'de-de',
+    ]);
+  }
+
+  #[Test]
+  public function api_can_update_locale_identity_from_standard_locale_option(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $locale = $this->defaultLocale();
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/locales/'.$locale->id, [
+        'locale_option' => 'zh-hant-hk',
+      ])
+      ->assertOk()
+      ->assertJsonPath('locale.id', $locale->id)
+      ->assertJsonPath('locale.code', 'zh-hant-hk')
+      ->assertJsonPath('locale.name', 'Chinese (Traditional, Hong Kong SAR China)');
+
+    $this->assertDatabaseHas('wbcms_locales', [
+      'id' => $locale->id,
+      'code' => 'zh-hant-hk',
+      'name' => 'Chinese (Traditional, Hong Kong SAR China)',
     ]);
   }
 

@@ -4,7 +4,9 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 
 class LocaleRequest extends FormRequest
 {
@@ -17,9 +19,18 @@ class LocaleRequest extends FormRequest
   {
     $locale = $this->route('locale');
     $locale = $locale instanceof Locale ? $locale : null;
+    $mode = $locale ? 'custom' : (string) $this->input('locale_mode', 'standard');
+    $mode = in_array($mode, ['standard', 'custom'], true) ? $mode : 'standard';
+    $localeOption = Locale::normalizeCode($this->input('locale_option'));
+    $option = $mode === 'standard'
+      ? app(LocaleOptionCatalog::class)->find($localeOption)
+      : null;
 
     $this->merge([
-      'code' => Locale::normalizeCode($this->input('code')),
+      'locale_mode' => $mode,
+      'locale_option' => $localeOption,
+      'code' => $option['code'] ?? Locale::normalizeCode($this->input('code')),
+      'name' => $option['name'] ?? $this->input('name'),
       'is_default' => $this->boolean('is_default'),
       ...($locale ? [] : ['is_enabled' => true]),
     ]);
@@ -31,8 +42,10 @@ class LocaleRequest extends FormRequest
     $locale = $locale instanceof Locale ? $locale : null;
 
     $rules = [
-      'code' => ['required', 'string', 'max:10', 'regex:'.Locale::CODE_VALIDATION_PATTERN, Rule::unique(Locale::class, 'code')->ignore($locale?->id)],
+      'code' => ['required', 'string', 'max:35', 'regex:'.Locale::CODE_VALIDATION_PATTERN, Rule::unique(Locale::class, 'code')->ignore($locale?->id)],
       'name' => ['required', 'string', 'max:255'],
+      'locale_mode' => ['nullable', 'string', Rule::in(['standard', 'custom'])],
+      'locale_option' => ['nullable', 'string', 'max:35'],
       'is_default' => ['nullable', 'boolean'],
     ];
 
@@ -41,5 +54,20 @@ class LocaleRequest extends FormRequest
     }
 
     return $rules;
+  }
+
+  public function withValidator(Validator $validator): void
+  {
+    $locale = $this->route('locale');
+
+    if ($locale instanceof Locale || $this->input('locale_mode') === 'custom') {
+      return;
+    }
+
+    $validator->after(function (Validator $validator): void {
+      if (! app(LocaleOptionCatalog::class)->find($this->input('locale_option'))) {
+        $validator->errors()->add('locale_option', 'Select a locale from the standard locale list or use custom locale details.');
+      }
+    });
   }
 }

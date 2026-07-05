@@ -10,11 +10,13 @@ use WebBlocks\Cms\Http\Requests\Admin\LocaleRequest;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Locales\LocaleLifecycleGuard;
+use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 
 class LocaleController extends Controller
 {
   public function __construct(
     private readonly LocaleLifecycleGuard $lifecycleGuard,
+    private readonly LocaleOptionCatalog $localeOptionCatalog,
   ) {}
 
   public function index(): View
@@ -35,8 +37,11 @@ class LocaleController extends Controller
 
   public function create(): View
   {
+    $installedCodes = Locale::query()->pluck('code')->all();
+
     return view('webblocks-cms::admin.locales.form', [
       'locale' => new Locale(['is_enabled' => true]),
+      'localeOptionGroups' => $this->localeOptionCatalog->groupedOptions($installedCodes),
       'pageTitle' => 'Add Locale',
       'formAction' => route('admin.locales.store'),
       'formMethod' => 'POST',
@@ -59,6 +64,7 @@ class LocaleController extends Controller
   {
     return view('webblocks-cms::admin.locales.form', [
       'locale' => $locale,
+      'localeOptionGroups' => $this->localeOptionCatalog->groupedOptions(Locale::query()->whereKeyNot($locale->id)->pluck('code')->all()),
       'report' => $this->lifecycleGuard->inspect($locale),
       'pageTitle' => 'Edit Locale: '.$locale->name,
       'formAction' => route('admin.locales.update', $locale),

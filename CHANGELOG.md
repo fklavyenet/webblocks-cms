@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.244
+
+- Bumped CMS to `1.32.244`.
+- Add a searchable standard locale picker to the Add Locale admin form and expose the same locale option catalog through the Internal Content API.
+- Broaden locale code validation to accept route-safe BCP 47 style tags such as `zh-hant-hk` while preserving custom locale support for operator cases.
+
 ## 1.32.243
 
 - Bumped CMS to `1.32.243`.

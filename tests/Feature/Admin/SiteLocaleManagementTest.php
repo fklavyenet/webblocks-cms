@@ -219,6 +219,55 @@ class SiteLocaleManagementTest extends TestCase
   }
 
   #[Test]
+  public function locale_create_form_uses_searchable_standard_locale_picker(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.locales.create'));
+
+    $response->assertOk();
+    $response->assertSee('Search by language, region, or code');
+    $response->assertSee('data-wb-locale-picker', false);
+    $response->assertSee('name="locale_option"', false);
+    $response->assertSee('Deutsch', false);
+    $response->assertSee('Use custom locale details');
+    $response->assertSee('cms/js/admin/locale-picker.js', false);
+  }
+
+  #[Test]
+  public function locale_can_be_created_from_standard_locale_option(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->post(route('admin.locales.store'), [
+      'locale_mode' => 'standard',
+      'locale_option' => 'de-de',
+      'is_default' => '0',
+    ]);
+
+    $locale = Locale::query()->where('code', 'de-de')->firstOrFail();
+
+    $response->assertRedirect(route('admin.locales.edit', $locale));
+    $this->assertSame('German (Germany)', $locale->name);
+    $this->assertTrue($locale->is_enabled);
+  }
+
+  #[Test]
+  public function locale_create_rejects_missing_standard_locale_selection(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->from(route('admin.locales.create'))->post(route('admin.locales.store'), [
+      'locale_mode' => 'standard',
+      'locale_option' => 'not-a-locale',
+      'is_default' => '0',
+    ]);
+
+    $response->assertRedirect(route('admin.locales.create'));
+    $response->assertSessionHasErrors('locale_option');
+  }
+
+  #[Test]
   public function site_domains_are_normalized_and_default_locale_is_preserved_on_save(): void
   {
     $user = User::factory()->superAdmin()->create();

@@ -13,9 +13,9 @@ class Locale extends CmsModel
 {
   use HasFactory;
 
-  public const CODE_PATTERN = '[a-z]{2}(?:-[a-z]{2})?';
+  public const CODE_PATTERN = '[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}';
 
-  public const CODE_VALIDATION_PATTERN = '/^[a-z]{2}(?:-[a-z]{2})?$/';
+  public const CODE_VALIDATION_PATTERN = '/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}$/';
 
   protected $fillable = [
     'code',
@@ -63,6 +63,11 @@ class Locale extends CmsModel
   public static function routePattern(): string
   {
     return self::CODE_PATTERN;
+  }
+
+  public static function isValidCode(?string $code): bool
+  {
+    return is_string($code) && preg_match(self::CODE_VALIDATION_PATTERN, $code) === 1;
   }
 
   public function sites(): BelongsToMany
