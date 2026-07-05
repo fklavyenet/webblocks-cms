@@ -191,7 +191,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
       'slot' => 'main',
       'slot_type_id' => $this->mainSlotType()->id,
       'sort_order' => 1,
-      'settings' => json_encode(['menu_key' => NavigationItem::MENU_PRIMARY], JSON_UNESCAPED_SLASHES),
+      'settings' => json_encode([
+        'menu_key' => NavigationItem::MENU_PRIMARY,
+        'active_indicator' => 'underline',
+        'active_matching' => 'path',
+      ], JSON_UNESCAPED_SLASHES),
       'status' => 'published',
       'is_system' => false,
     ]);
@@ -238,11 +242,94 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertSee('data-wb-target="#wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
     $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
     $response->assertSee('class="wb-navbar-links"', false);
+    $response->assertSee('class="wb-navbar-nav wb-cms-navbar-mobile-nav wb-navbar-nav--active-underline"', false);
+    $response->assertSee('class="wb-navbar-nav wb-navbar-nav--active-underline"', false);
     $response->assertSee('href="/about" class="wb-navbar-link is-active" aria-current="page"', false);
     $response->assertSee('href="/contact" class="wb-navbar-link"', false);
     $response->assertSee('href="/contact" class="wb-dropdown-item"', false);
     $response->assertDontSee('<span></span><span></span><span></span>', false);
     $response->assertDontSee('wb-cms-sticky-navbar', false);
+  }
+
+  #[Test]
+  public function navbar_navigation_supports_active_indicator_and_section_matching(): void
+  {
+    $page = $this->pageWithMainSlot('Article', 'article');
+    $page->translations()->update([
+      'path' => '/news/article',
+    ]);
+
+    $navbar = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'sticky-navbar',
+      'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 18, true, true)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => true,
+    ]);
+
+    $navigation = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $navbar->id,
+      'type' => 'navbar-navigation',
+      'block_type_id' => $this->blockType('navbar-navigation', 'Navbar Navigation', 20)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 1,
+      'settings' => json_encode([
+        'menu_key' => NavigationItem::MENU_PRIMARY,
+        'active_indicator' => 'dot',
+        'active_matching' => 'section',
+      ], JSON_UNESCAPED_SLASHES),
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    NavigationItem::query()->create([
+      'site_id' => $page->site_id,
+      'menu_key' => NavigationItem::MENU_PRIMARY,
+      'title' => 'News',
+      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'url' => '/news',
+      'position' => 1,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+    ]);
+
+    NavigationItem::query()->create([
+      'site_id' => $page->site_id,
+      'menu_key' => NavigationItem::MENU_PRIMARY,
+      'title' => 'Contact',
+      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'url' => '/contact',
+      'position' => 2,
+      'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+    ]);
+
+    $response = $this->get('/news/article');
+
+    $response->assertOk();
+    $response->assertSee('class="wb-navbar-nav wb-navbar-nav--active-dot"', false);
+    $response->assertSee('href="/news" class="wb-navbar-link is-active" aria-current="page"', false);
+    $response->assertSee('href="/contact" class="wb-navbar-link"', false);
+
+    $navigation->update([
+      'settings' => json_encode([
+        'menu_key' => NavigationItem::MENU_PRIMARY,
+        'active_indicator' => 'none',
+        'active_matching' => 'off',
+      ], JSON_UNESCAPED_SLASHES),
+    ]);
+
+    $offResponse = $this->get('/news/article');
+
+    $offResponse->assertOk();
+    $offResponse->assertSee('class="wb-navbar-nav wb-navbar-nav--active-none"', false);
+    $offResponse->assertDontSee('class="wb-navbar-link is-active"', false);
+    $offResponse->assertDontSee('aria-current="page"', false);
   }
 
   #[Test]

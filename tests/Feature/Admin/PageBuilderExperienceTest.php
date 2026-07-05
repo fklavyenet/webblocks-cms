@@ -2003,6 +2003,8 @@ class PageBuilderExperienceTest extends TestCase
       'sort_order' => 0,
       'title' => 'Direct navigation',
       'navbar_navigation_menu_key' => 'primary',
+      'navbar_navigation_active_indicator' => 'pill',
+      'navbar_navigation_active_matching' => 'section',
       'status' => 'published',
     ])->assertSessionDoesntHaveErrors();
 
@@ -2014,6 +2016,8 @@ class PageBuilderExperienceTest extends TestCase
       'sort_order' => 1,
       'title' => 'Nested navigation',
       'navbar_navigation_menu_key' => 'primary',
+      'navbar_navigation_active_indicator' => 'underline',
+      'navbar_navigation_active_matching' => 'path',
       'status' => 'published',
     ])->assertSessionDoesntHaveErrors();
 

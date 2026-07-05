@@ -287,11 +287,12 @@ class InternalContentResourceController extends Controller
         'write_requires_capability' => 'site-assets.write',
         'checksum_required' => true,
         'css_mode_policy' => [
-          'Read asset.guidance before editing site.css.',
+          'Read asset.guidance and asset.analysis.mode_awareness before editing site.css.',
           'Keep site.css token-first and mode-aware so WebBlocks UI Light/Dark/Auto mode remains consistent.',
           'Prefer public theme custom properties, inherited wb-* component styling, and semantic site custom properties over raw light/dark colors.',
           'Use native block settings for content, media, background media, icon tones, and layout roles before adding CSS.',
           'If custom colors are unavoidable, define semantic variables with both light and dark values tied to active mode selectors or public theme tokens.',
+          'Treat asset.analysis.mode_awareness.status = warning as work to review, report, or fix before considering a migration or new site setup complete.',
         ],
         'do_not_use' => [
           'hard-coded page-wide light backgrounds',

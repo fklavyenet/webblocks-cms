@@ -1327,6 +1327,20 @@ class Block extends CmsModel
     return $this->navigationMenuKey();
   }
 
+  public function navbarNavigationActiveIndicator(): string
+  {
+    $value = trim((string) $this->setting('active_indicator', 'underline'));
+
+    return in_array($value, ['underline', 'pill', 'dot', 'background', 'none'], true) ? $value : 'underline';
+  }
+
+  public function navbarNavigationActiveMatching(): string
+  {
+    $value = trim((string) $this->setting('active_matching', 'path'));
+
+    return in_array($value, ['path', 'section', 'current-page', 'exact', 'off'], true) ? $value : 'path';
+  }
+
   public function isNavbarBrand(): bool
   {
     return $this->typeSlug() === 'navbar-brand';

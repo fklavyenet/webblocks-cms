@@ -223,6 +223,11 @@ class InternalSiteController extends Controller
     $asset['guidance'] = $asset['type'] === SiteAssetStore::TYPE_CSS
       ? [
         'mode_aware_css' => 'Site CSS should be token-first and mode-aware. Prefer WebBlocks UI/CMS public theme custom properties and inherited wb-* component styles over hard-coded light or dark colors.',
+        'mode_aware_contract' => [
+          'Keep page, surface, text, muted text, border, and accent roles connected to --wb-public-* tokens.',
+          'When brand colors are required, map them through semantic site variables and provide dark-mode values under html[data-mode="dark"] body[data-wb-public-theme].',
+          'Use Kontakt-style native WebBlocks UI blocks such as wb-card, wb-input, wb-textarea, and wb-btn as the reference behavior for mode-aware custom CSS.',
+        ],
         'avoid' => [
           'Do not hard-code page-wide light backgrounds, dark text, white cards, or one-off dark-mode override palettes unless the design truly cannot use existing public theme tokens.',
           'Do not solve block content or media fields with CSS when native CMS block settings or Media Library relationships exist.',
@@ -237,6 +242,98 @@ class InternalSiteController extends Controller
         'site_js' => 'Site JS should enhance existing CMS-rendered markup and must not replace native block behavior or duplicate WebBlocks UI mode controls.',
       ];
 
+    if ($asset['type'] === SiteAssetStore::TYPE_CSS) {
+      $asset['analysis'] = [
+        'mode_awareness' => $this->analyzeCssModeAwareness((string) ($asset['contents'] ?? '')),
+      ];
+    }
+
     return $asset;
+  }
+
+  private function analyzeCssModeAwareness(string $contents): array
+  {
+    $css = trim($contents);
+    $recommendedTokens = [
+      '--wb-public-page-bg',
+      '--wb-public-surface',
+      '--wb-public-surface-muted',
+      '--wb-public-text',
+      '--wb-public-muted',
+      '--wb-public-border',
+      '--wb-public-accent',
+    ];
+
+    if ($css === '') {
+      return [
+        'status' => 'pass',
+        'warnings' => [],
+        'anti_patterns' => [],
+        'signals' => [
+          'literal_color_declarations' => 0,
+          'uses_public_theme_tokens' => false,
+          'has_dark_mode_scope' => false,
+        ],
+        'recommended_tokens' => $recommendedTokens,
+      ];
+    }
+
+    preg_match_all('/(?<![\w-])(?:background(?:-color)?|color)\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/i', $css, $literalColorMatches);
+
+    $warnings = [];
+    $antiPatterns = [];
+    $literalColorCount = count($literalColorMatches[0] ?? []);
+    $usesPublicTokens = str_contains($css, '--wb-public-');
+    $hasDarkModeScope = preg_match('/html\s*\[\s*data-mode\s*=\s*["\']dark["\']\s*\]|@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)/i', $css) === 1;
+
+    $pageWideChecks = [
+      'body_theme_background' => [
+        '/(?:body(?:\.[\w-]+)?|body\s*\[\s*data-wb-public-theme[^\]]*\])[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        'Body/public-theme selectors set literal background colors; map page background through --wb-public-page-bg or a semantic site variable.',
+      ],
+      'body_theme_color' => [
+        '/(?:body(?:\.[\w-]+)?|body\s*\[\s*data-wb-public-theme[^\]]*\])[^{}]*\{[^{}]*(?<!-)color\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        'Body/public-theme selectors set literal text colors; map page text through --wb-public-text or a semantic site variable.',
+      ],
+      'main_background' => [
+        '/#main-content[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        '#main-content sets a literal background; use --wb-public-page-bg or a semantic site page background variable.',
+      ],
+      'section_background' => [
+        '/\.wb-section[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        '.wb-section sets a literal background; native public sections should inherit public theme surface/page tokens unless the override is paired with dark-mode values.',
+      ],
+      'card_background' => [
+        '/\.wb-card[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        '.wb-card sets a literal background; card-like native blocks should usually keep WebBlocks UI surface tokens.',
+      ],
+    ];
+
+    foreach ($pageWideChecks as $key => [$pattern, $message]) {
+      if (preg_match($pattern, $css) === 1) {
+        $antiPatterns[] = $key;
+        $warnings[] = $message;
+      }
+    }
+
+    if ($literalColorCount > 0 && ! $usesPublicTokens) {
+      $warnings[] = 'CSS uses literal color declarations but no --wb-public-* tokens; this often freezes Light/Dark/Auto mode behavior.';
+    }
+
+    if ($literalColorCount > 0 && ! $hasDarkModeScope) {
+      $warnings[] = 'CSS contains literal colors without an explicit dark-mode scope such as html[data-mode="dark"] body[data-wb-public-theme].';
+    }
+
+    return [
+      'status' => $warnings === [] ? 'pass' : 'warning',
+      'warnings' => array_values(array_unique($warnings)),
+      'anti_patterns' => array_values(array_unique($antiPatterns)),
+      'signals' => [
+        'literal_color_declarations' => $literalColorCount,
+        'uses_public_theme_tokens' => $usesPublicTokens,
+        'has_dark_mode_scope' => $hasDarkModeScope,
+      ],
+      'recommended_tokens' => $recommendedTokens,
+    ];
   }
 }

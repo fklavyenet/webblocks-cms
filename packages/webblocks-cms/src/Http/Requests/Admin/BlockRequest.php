@@ -289,6 +289,8 @@ class BlockRequest extends FormRequest
       'navbar_brand_aria_label' => [$isNavbarBrand ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'sidebar_brand_aria_label' => [$isSidebarBrand ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'navbar_navigation_menu_key' => [$isNavbarNavigation ? 'required' : 'prohibited', Rule::in(NavigationItem::menuKeys())],
+      'navbar_navigation_active_indicator' => [$isNavbarNavigation ? 'nullable' : 'prohibited', Rule::in(['underline', 'pill', 'dot', 'background', 'none'])],
+      'navbar_navigation_active_matching' => [$isNavbarNavigation ? 'nullable' : 'prohibited', Rule::in(['path', 'section', 'current-page', 'exact', 'off'])],
       'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
       'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
       'sidebar_navigation_active_matching' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(['path', 'current-page', 'exact'])],
@@ -1591,6 +1593,8 @@ class BlockRequest extends FormRequest
 
         if (! $isTranslatedNavbarNavigationEdit) {
           $settings['menu_key'] = $data['navbar_navigation_menu_key'] ?? NavigationItem::MENU_PRIMARY;
+          $settings['active_indicator'] = $data['navbar_navigation_active_indicator'] ?? 'underline';
+          $settings['active_matching'] = $data['navbar_navigation_active_matching'] ?? 'path';
         }
 
         $data['title'] = trim((string) ($data['title'] ?? '')) ?: 'Primary navigation';
@@ -2080,6 +2084,7 @@ class BlockRequest extends FormRequest
     unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['alert_variant']);
     unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
     unset($data['sticky_navbar_mode'], $data['navbar_brand_aria_label'], $data['navbar_navigation_menu_key']);
+    unset($data['navbar_navigation_active_indicator'], $data['navbar_navigation_active_matching']);
     unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);
     unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
     unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);

@@ -147,8 +147,10 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('paths./media/{media}.patch.x-required-capability', CmsApiTokenCapabilities::MEDIA_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_READ)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-css-guidance', 'asset.guidance explains token-first, mode-aware site.css expectations so Light/Dark/Auto mode remains consistent.')
+      ->assertJsonPath('paths./sites/{site}/assets/{type}.get.x-css-analysis', 'asset.analysis.mode_awareness reports pass/warning status, literal color signals, detected anti-patterns, warning messages, and recommended --wb-public-* tokens for CSS assets.')
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-required-capability', CmsApiTokenCapabilities::SITE_ASSETS_WRITE)
       ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-guidance', 'For CSS writes, prefer native block settings and public theme/WebBlocks UI custom properties; avoid hard-coded light/dark page palettes that bypass mode behavior.')
+      ->assertJsonPath('paths./sites/{site}/assets/{type}.put.x-css-analysis', 'CSS writes return asset.analysis.mode_awareness; warning status is advisory and should be reviewed or fixed by migration/new-site tools before completion.')
       ->assertJsonPath('paths./admin-render/system-updates.get.x-required-capability', CmsApiTokenCapabilities::ADMIN_RENDER)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.patch.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_WRITE)
       ->assertJsonPath('paths./navigation-menus/{navigationMenu}/items/{item}.delete.x-required-capability', CmsApiTokenCapabilities::NAVIGATION_DELETE)
@@ -170,6 +172,7 @@ class InternalContentApiTest extends TestCase
     $this->assertStringContainsString('page._actions.promote', (string) $guideContent);
     $this->assertStringContainsString('site-assets.write', (string) $guideContent);
     $this->assertStringContainsString('asset.guidance', (string) $guideContent);
+    $this->assertStringContainsString('asset.analysis.mode_awareness', (string) $guideContent);
     $this->assertStringContainsString('/webadmin/api/icon-catalog?context=content', (string) $guideContent);
     $this->assertStringContainsString('Light/Dark/Auto mode', (string) $guideContent);
     $this->assertStringContainsString('/webadmin/api/admin-render/system-updates', (string) $guideContent);
@@ -365,7 +368,10 @@ class InternalContentApiTest extends TestCase
         ->assertJsonPath('asset.readiness.ready', true)
         ->assertJsonPath('asset.readiness.writable', true)
         ->assertJsonPath('asset.guidance.mode_aware_css', 'Site CSS should be token-first and mode-aware. Prefer WebBlocks UI/CMS public theme custom properties and inherited wb-* component styles over hard-coded light or dark colors.')
+        ->assertJsonPath('asset.guidance.mode_aware_contract.0', 'Keep page, surface, text, muted text, border, and accent roles connected to --wb-public-* tokens.')
         ->assertJsonPath('asset.guidance.preferred.0', 'Use native block structure and settings first.')
+        ->assertJsonPath('asset.analysis.mode_awareness.status', 'pass')
+        ->assertJsonPath('asset.analysis.mode_awareness.signals.literal_color_declarations', 0)
         ->assertJsonMissingPath('asset.absolute_path');
 
       $this->withInternalToken()
@@ -378,6 +384,9 @@ class InternalContentApiTest extends TestCase
         ->assertJsonPath('asset.exists', true)
         ->assertJsonPath('asset.contents', '.hero { color: #13201f; }')
         ->assertJsonPath('asset.readiness.ready', true)
+        ->assertJsonPath('asset.analysis.mode_awareness.status', 'warning')
+        ->assertJsonPath('asset.analysis.mode_awareness.signals.literal_color_declarations', 1)
+        ->assertJsonPath('asset.analysis.mode_awareness.signals.uses_public_theme_tokens', false)
         ->assertJsonPath('writes.0.type', 'site_asset_css')
         ->assertJsonMissingPath('asset.absolute_path');
 
@@ -557,6 +566,7 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('safety.remote_fetch', false)
       ->assertJsonPath('safety.media_import', false)
       ->assertJsonPath('site_assets.css_url_template', '/webadmin/api/sites/{site}/assets/css')
+      ->assertJsonPath('site_assets.css_mode_policy.0', 'Read asset.guidance and asset.analysis.mode_awareness before editing site.css.')
       ->assertJsonPath('site_assets.css_mode_policy.1', 'Keep site.css token-first and mode-aware so WebBlocks UI Light/Dark/Auto mode remains consistent.')
       ->assertJsonPath('site_assets.do_not_use.2', 'white card overrides that ignore dark mode')
       ->assertJsonPath('discovery.sites', '/webadmin/api/sites')

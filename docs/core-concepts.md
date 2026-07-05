@@ -140,7 +140,7 @@ Navbar composition is relational rather than JSON-driven:
 - `Cluster` is the horizontal or grouped layout primitive. Its settings control width, justification, cross-axis alignment, wrapping, and gap.
 - `Stack` remains the vertical flow primitive.
 - `Navbar Brand` owns logo and brand text.
-- `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes. On narrow screens it also renders an accessible burger toggle that opens the same menu through the WebBlocks UI dropdown behavior while leaving brand and header actions in the main navbar row.
+- `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes. It can choose a native active indicator style (`underline`, `pill`, `dot`, `background`, or `none`) and active matching mode (`path`, `section`, `current-page`, `exact`, or `off`) without site-specific CSS. On narrow screens it also renders an accessible burger toggle that opens the same menu through the WebBlocks UI dropdown behavior while leaving brand and header actions in the main navbar row.
 - `Header Actions`, `Search Form`, `Container`, and other compatible blocks can be placed inside `Navbar` as children when needed.
 - `Navbar Brand` and `Navbar Navigation` must live somewhere inside the `Navbar` ancestor tree, but they do not need to be direct children of the root `Navbar` block.
 - `Navbar Brand` supports logo-only usage when a logo image exists. When visible title text is empty, an explicit accessible label or the resolved site label provides the safe fallback name.

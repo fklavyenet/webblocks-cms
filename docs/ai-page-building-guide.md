@@ -164,6 +164,33 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 - Put block translations directly under `translations` for the selected plan locale, such as `translations.title` or `translations.content`. Do not nest block copy under `translations.en`, `translations.tr`, or other locale keys.
 - Wrapper blocks such as `section`, `container`, `cluster`, `grid`, `card`, `card_body`, `card_footer`, `sticky-navbar`, and `sidebar-navigation` must contain meaningful child blocks. Creating wrappers without children is invalid because it renders empty chrome.
 
+## Mode-Aware Site CSS
+
+Migration and new-site tools should treat site CSS as a narrow site-specific override layer, not as the primary layout or color system. Use native block settings, Media Library-backed fields, public theme tokens, and inherited WebBlocks UI `wb-*` component styles first.
+
+When site-level CSS is needed, use the canonical asset endpoints:
+
+```text
+GET /webadmin/api/sites/{site}/assets/css
+PUT /webadmin/api/sites/{site}/assets/css
+```
+
+The read and write responses include `asset.analysis.mode_awareness` for CSS assets. Tools should inspect this object together with `asset.guidance` before and after edits. `status = warning` does not block writes, because some brand systems need intentional custom colors, but it is not a completion signal. Review, report, or fix the listed warnings before marking a migration or new site setup complete.
+
+Prefer these patterns:
+
+- connect page, surface, text, muted text, border, and accent roles to `--wb-public-*` tokens
+- define site-specific semantic custom properties, then give them light and dark values
+- scope unavoidable dark values under active mode selectors such as `html[data-mode="dark"] body[data-wb-public-theme]`
+- use native WebBlocks UI controls such as `wb-card`, `wb-input`, `wb-textarea`, and `wb-btn` as the reference for expected mode behavior
+
+Avoid these patterns:
+
+- page-wide hard-coded light backgrounds
+- dark text on surfaces that should follow tokens
+- white card overrides that ignore dark mode
+- one-off custom light/dark palettes when public theme tokens can express the design
+
 ## Good Structures
 
 Prefer structured blocks over a single large content blob.

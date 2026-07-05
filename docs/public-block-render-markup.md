@@ -1183,11 +1183,11 @@ The block does not own the outer navbar shell. Saved URL wins, then site home pa
         <i class="wb-icon wb-icon-menu" aria-hidden="true"></i>
       </button>
       <div class="wb-dropdown-menu wb-cms-navbar-mobile-menu">
-        <ul class="wb-navbar-nav wb-cms-navbar-mobile-nav">...</ul>
+        <ul class="wb-navbar-nav wb-cms-navbar-mobile-nav wb-navbar-nav--active-underline">...</ul>
       </div>
     </div>
     <div class="wb-navbar-links">
-      <ul class="wb-navbar-nav">
+      <ul class="wb-navbar-nav wb-navbar-nav--active-underline">
         <li class="wb-navbar-nav-item">
           <a href="/" class="wb-navbar-link is-active" aria-current="page">Home</a>
         </li>
@@ -1212,13 +1212,23 @@ Dropdown group variant:
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-cms-navbar-navigation`, `wb-dropdown`, `wb-dropdown-end`, `wb-cms-navbar-mobile-toggle`, `wb-navbar-toggle`, `wb-cms-navbar-mobile-toggle-button`, `wb-icon`, `wb-icon-menu`, `wb-dropdown-menu`, `wb-cms-navbar-mobile-menu`, `wb-navbar-nav`, `wb-cms-navbar-mobile-nav`, `wb-navbar-links`, `wb-navbar-nav-item`, `wb-navbar-link`, `wb-dropdown-item`, `is-active`.
+`wb-cms-navbar-navigation`, `wb-dropdown`, `wb-dropdown-end`, `wb-cms-navbar-mobile-toggle`, `wb-navbar-toggle`, `wb-cms-navbar-mobile-toggle-button`, `wb-icon`, `wb-icon-menu`, `wb-dropdown-menu`, `wb-cms-navbar-mobile-menu`, `wb-navbar-nav`, `wb-cms-navbar-mobile-nav`, `wb-navbar-links`, `wb-navbar-nav-item`, `wb-navbar-link`, `wb-dropdown-item`, `wb-navbar-nav--active-underline`, `wb-navbar-nav--active-pill`, `wb-navbar-nav--active-dot`, `wb-navbar-nav--active-background`, `wb-navbar-nav--active-none`, `is-active`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | settings.menu_key | known NavigationItem menu key | Selects the CMS navigation tree to render. |
+| settings.active_indicator | underline/default | Adds `wb-navbar-nav--active-underline` to desktop and mobile navbar nav lists. |
+| settings.active_indicator | pill | Adds `wb-navbar-nav--active-pill`. |
+| settings.active_indicator | dot | Adds `wb-navbar-nav--active-dot`. |
+| settings.active_indicator | background | Adds `wb-navbar-nav--active-background`. |
+| settings.active_indicator | none | Adds `wb-navbar-nav--active-none`; active matching can still be disabled separately. |
+| settings.active_matching | path/default | Marks items active when page id, canonical URL, or normalized path matches. |
+| settings.active_matching | section | Marks a parent section URL such as `/news` active for descendants such as `/news/article`. |
+| settings.active_matching | current-page | Prefers NavigationItem page id matching, falling back to normalized path. |
+| settings.active_matching | exact | Requires exact resolved URL match. |
+| settings.active_matching | off | Suppresses `is-active` and `aria-current`. |
 | title | text | Used as shared ARIA label when present. |
 | navigation group item | group with children | Renders WebBlocks UI dropdown trigger and `.wb-dropdown-menu`. |
 | active item | current page match | Adds `is-active` and `aria-current="page"`. |

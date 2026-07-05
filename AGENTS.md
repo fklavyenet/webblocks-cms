@@ -86,7 +86,7 @@ WebBlocks CMS uses pinned WebBlocks UI assets for admin, auth, dashboard, settin
 
 Before making admin/auth/dashboard UI changes, read the AI contract shipped with the pinned WebBlocks UI version:
 
-`https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.13/packages/webblocks/dist/ai/contract.md`
+`https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.16/packages/webblocks/dist/ai/contract.md`
 
 The CMS code pins this version in `WebBlocks::UI_VERSION`. If the pinned WebBlocks UI version changes, update this contract URL in the same work session.
 

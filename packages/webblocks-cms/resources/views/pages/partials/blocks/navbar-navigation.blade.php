@@ -1,6 +1,15 @@
 @php
   $menuKey = $block->navbarNavigationMenuKey();
   $site = $block->renderSite();
+  $activeIndicator = $block->navbarNavigationActiveIndicator();
+  $activeMatching = $block->navbarNavigationActiveMatching();
+  $activeIndicatorClass = match ($activeIndicator) {
+    'pill' => 'wb-navbar-nav--active-pill',
+    'dot' => 'wb-navbar-nav--active-dot',
+    'background' => 'wb-navbar-nav--active-background',
+    'none' => 'wb-navbar-nav--active-none',
+    default => 'wb-navbar-nav--active-underline',
+  };
   $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
     ->buildMenuTree($menuKey, $site?->id)
     ->filter(fn ($item) => $item->isVisible())
@@ -48,7 +57,11 @@
 
     return $path === '/' ? '/' : rtrim($path, '/');
   };
-  $isItemActive = function ($item) use (&$isItemActive, $currentPageId, $currentPath, $currentUrl, $normalizePath): bool {
+  $isItemActive = function ($item) use (&$isItemActive, $activeMatching, $currentPageId, $currentPath, $currentUrl, $normalizePath): bool {
+    if ($activeMatching === 'off') {
+      return false;
+    }
+
     if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
       return $item->children->contains(fn ($child) => $isItemActive($child));
     }
@@ -59,14 +72,20 @@
       return false;
     }
 
-    if ($item->page_id !== null && (int) $item->page_id === $currentPageId) {
-      return true;
-    }
-
     $normalized = $normalizePath($href);
 
-    return rtrim((string) url()->to($href), '/') === $currentUrl
-      || ($normalized !== null && $normalized === $currentPath);
+    return match ($activeMatching) {
+      'exact' => rtrim((string) url()->to($href), '/') === $currentUrl,
+      'current-page' => $item->page_id !== null
+        ? (int) $item->page_id === $currentPageId
+        : $normalized !== null && $normalized === $currentPath,
+      'section' => $normalized !== null && $normalized !== '/'
+        ? $currentPath === $normalized || str_starts_with($currentPath, $normalized.'/')
+        : $currentPath === '/',
+      default => ($item->page_id !== null && (int) $item->page_id === $currentPageId)
+        || rtrim((string) url()->to($href), '/') === $currentUrl
+        || ($normalized !== null && $normalized === $currentPath),
+    };
   };
   $mobileMenuId = 'wb-navbar-navigation-mobile-menu-'.$block->id;
 
@@ -144,14 +163,14 @@
       </button>
 
       <div class="wb-dropdown-menu wb-cms-navbar-mobile-menu" id="{{ $mobileMenuId }}" role="menu" aria-label="{{ $label }}">
-        <ul class="wb-navbar-nav wb-cms-navbar-mobile-nav">
+        <ul class="wb-navbar-nav wb-cms-navbar-mobile-nav {{ $activeIndicatorClass }}">
           {!! $renderItems($items, true) !!}
         </ul>
       </div>
     </div>
 
     <div class="wb-navbar-links">
-      <ul class="wb-navbar-nav" aria-label="{{ $label }}">
+      <ul class="wb-navbar-nav {{ $activeIndicatorClass }}" aria-label="{{ $label }}">
         {!! $renderItems($items) !!}
       </ul>
     </div>
