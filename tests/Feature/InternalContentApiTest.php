@@ -1078,6 +1078,20 @@ class InternalContentApiTest extends TestCase
       'width' => 640,
       'height' => 360,
     ]);
+    $heroImage = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/images/hero-card.png',
+      'filename' => 'hero-card.png',
+      'original_name' => 'hero-card.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 1536,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Hero card',
+      'width' => 800,
+      'height' => 450,
+    ]);
     $document = Media::query()->create([
       'disk' => 'public',
       'path' => 'media/documents/manual.pdf',
@@ -1120,6 +1134,11 @@ class InternalContentApiTest extends TestCase
                       'type' => 'gallery',
                       'gallery_items' => [
                         [
+                          'media_id' => $heroImage->id,
+                          'alt_text' => 'Hero card screenshot',
+                          'caption' => 'First in the authored gallery order.',
+                        ],
+                        [
                           'media_id' => $image->id,
                           'alt_text' => 'Play card screenshot',
                           'caption' => 'Uploaded through the CMS API.',
@@ -1142,7 +1161,8 @@ class InternalContentApiTest extends TestCase
       ->assertJsonPath('normalized_plan.slots.main.0.settings.background_position', 'bottom')
       ->assertJsonPath('normalized_plan.slots.main.0.settings.background_overlay', 'medium')
       ->assertJsonPath('normalized_plan.slots.main.1.children.0.children.0.media_id', $image->id)
-      ->assertJsonPath('normalized_plan.slots.main.1.children.0.children.1._block_media.gallery_item.0', $image->id);
+      ->assertJsonPath('normalized_plan.slots.main.1.children.0.children.1._block_media.gallery_item.0', $heroImage->id)
+      ->assertJsonPath('normalized_plan.slots.main.1.children.0.children.1._block_media.gallery_item.1', $image->id);
 
     $apply = $this->withInternalToken()
       ->postJson('/webadmin/api/content/apply', $payload)
@@ -1172,6 +1192,15 @@ class InternalContentApiTest extends TestCase
       'media_id' => $image->id,
       'role' => 'gallery_item',
     ]);
+    $this->assertSame(
+      [(int) $heroImage->id, (int) $image->id],
+      $galleryBlock->blockMedia()
+        ->where('role', 'gallery_item')
+        ->orderBy('position')
+        ->pluck('media_id')
+        ->map(fn ($id): int => (int) $id)
+        ->all(),
+    );
 
     $invalidPayload = $this->validPlanPayload([
       'plan' => [

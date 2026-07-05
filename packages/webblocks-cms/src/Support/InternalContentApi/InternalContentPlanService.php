@@ -2171,12 +2171,13 @@ class InternalContentPlanService
       return $payload;
     }
 
-    $validMediaIds = Media::query()
+    $validMediaIdSet = Media::query()
       ->whereIn('id', $mediaIds)
       ->where('kind', Media::KIND_IMAGE)
       ->pluck('id')
-      ->map(fn ($id): int => (int) $id)
+      ->mapWithKeys(fn ($id): array => [(int) $id => true])
       ->all();
+    $validMediaIds = array_values(array_filter($mediaIds, fn (int $id): bool => isset($validMediaIdSet[$id])));
 
     $invalidMediaIds = array_values(array_diff($mediaIds, $validMediaIds));
 
