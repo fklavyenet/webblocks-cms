@@ -11,7 +11,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 - Add the first file-based CMS translations layer for admin, public system copy, and block defaults.
 - Add an install-wide admin panel language setting and use it in the admin shell/sidebar/topbar.
+- Add per-user admin panel language preferences on the Profile screen, with system admin language fallback.
 - Make public Search UI and Search Form defaults resolve copy from the current public locale.
+- Make Contact Form default visitor labels resolve from the block translation catalog.
 
 ## 1.32.246
 

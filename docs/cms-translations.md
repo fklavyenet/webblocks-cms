@@ -17,7 +17,7 @@ Editorial content stays outside this layer. Page titles, block text, gallery ite
 
 Admin and public rendering intentionally resolve locale from different sources:
 
-- Admin UI locale is user/admin preference driven. The target direction is user profile locale, then system admin locale, then Laravel app locale, then `en`.
+- Admin UI locale is preference driven. The resolver checks the authenticated user's profile locale first, then the system admin locale, then Laravel app locale, then `en`.
 - Public system UI locale is rendered page driven. The resolver should use the public page translation locale, then the resolved public route locale, then the default CMS locale, then `en`.
 - Commands, update screens, and background jobs may use the system admin locale or `en` when no user or rendered page locale exists.
 
@@ -106,8 +106,9 @@ Every migrated surface should have a regression test for locale resolution and f
 The first file-based implementation includes:
 
 - `CmsTranslator` with `admin()`, `public()`, and generic `get()` helpers.
-- `AdminLocaleResolver`, backed by the install-wide `admin.locale` system setting.
+- `AdminLocaleResolver`, backed by user-level `users.admin_locale` preferences with install-wide `admin.locale` fallback.
 - Admin shell/sidebar/topbar translation for high-visibility navigation and account/theme actions.
-- Public Search modal, public Search page, header Search action, and Search Form system defaults.
+- Profile screen language preference for per-user admin panel language.
+- Public Search modal, public Search page, header Search action, Search Form system defaults, and Contact Form default visitor labels.
 
-The admin locale is intentionally separate from `system.default_locale`; changing the admin panel language does not change public site routing or page content language.
+The admin locale is intentionally separate from `system.default_locale`; changing an admin panel language preference does not change public site routing or page content language.

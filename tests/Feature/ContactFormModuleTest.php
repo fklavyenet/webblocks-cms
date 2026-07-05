@@ -1768,6 +1768,11 @@ class ContactFormModuleTest extends TestCase
       ->assertSee('Send message')
       ->assertDontSee(config('contact.success_message'));
 
+    $this->get('/tr/iletisim')
+      ->assertOk()
+      ->assertSee('Mesaj gönder')
+      ->assertSee('Mesajınız önce kaydedilir');
+
     $this->withSession([
       'contact_form_success_block_id' => $block->id,
       'contact_form_success_message' => config('contact.success_message'),

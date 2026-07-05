@@ -9,22 +9,30 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\ProfilePasswordUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ProfileUpdateRequest;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 class ProfileController extends Controller
 {
-  public function edit(): View
+  public function edit(AdminLocaleResolver $adminLocaleResolver): View
   {
     return view('webblocks-cms::admin.profile.edit', [
       'user' => request()->user(),
+      'adminLocaleOptions' => $adminLocaleResolver->options(),
+      'adminLocalePreferencesAvailable' => $adminLocaleResolver->userPreferencesAvailable(),
     ]);
   }
 
-  public function update(ProfileUpdateRequest $request): RedirectResponse
+  public function update(ProfileUpdateRequest $request, AdminLocaleResolver $adminLocaleResolver): RedirectResponse
   {
     /** @var User $user */
     $user = $request->user();
 
     $user->fill($request->safe()->only(['name', 'email']));
+
+    if ($adminLocaleResolver->userPreferencesAvailable()) {
+      $user->admin_locale = $request->validated('admin_locale');
+    }
+
     $user->save();
 
     return redirect()->route('admin.profile.edit')->with('status', 'Profile updated successfully.');

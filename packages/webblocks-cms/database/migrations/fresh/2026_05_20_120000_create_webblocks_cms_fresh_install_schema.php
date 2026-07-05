@@ -69,7 +69,7 @@ return new class extends Migration
 
     if (Schema::hasTable('users')) {
       Schema::table('users', function (Blueprint $table): void {
-        foreach (['role', 'is_admin', 'is_active', 'last_login_at'] as $column) {
+        foreach (['role', 'is_admin', 'is_active', 'last_login_at', 'admin_locale'] as $column) {
           if (Schema::hasColumn('users', $column)) {
             $table->dropColumn($column);
           }
@@ -92,6 +92,7 @@ return new class extends Migration
         $table->boolean('is_admin')->default(false);
         $table->boolean('is_active')->default(true);
         $table->timestamp('last_login_at')->nullable();
+        $table->string('admin_locale', 12)->nullable();
         $table->timestamps();
       });
 
@@ -113,6 +114,10 @@ return new class extends Migration
 
       if (! Schema::hasColumn('users', 'last_login_at')) {
         $table->timestamp('last_login_at')->nullable()->after('remember_token');
+      }
+
+      if (! Schema::hasColumn('users', 'admin_locale')) {
+        $table->string('admin_locale', 12)->nullable()->after(Schema::hasColumn('users', 'last_login_at') ? 'last_login_at' : 'remember_token');
       }
     });
   }

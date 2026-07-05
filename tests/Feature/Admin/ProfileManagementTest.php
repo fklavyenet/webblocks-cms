@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Database\CmsTable;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class ProfileManagementTest extends TestCase
 {
@@ -41,6 +44,8 @@ class ProfileManagementTest extends TestCase
     $response->assertSee('Profile');
     $response->assertSee('Manage your account details and password.');
     $response->assertSee('Profile Information');
+    $response->assertSee('Interface language');
+    $response->assertSee('Use system default');
     $response->assertSee('Change Password');
     $response->assertSee('<div class="wb-card-header">', false);
     $response->assertSee('<h2 class="wb-card-title">Profile Information</h2>', false);
@@ -70,6 +75,7 @@ class ProfileManagementTest extends TestCase
     $response = $this->actingAs($user)->put(route('admin.profile.update'), [
       'name' => 'Updated Profile',
       'email' => 'updated-profile@example.com',
+      'admin_locale' => 'tr',
       'role' => User::ROLE_SUPER_ADMIN,
       'is_active' => false,
       'site_ids' => [$otherSite->id],
@@ -80,9 +86,10 @@ class ProfileManagementTest extends TestCase
     $user->refresh();
     $this->assertSame('Updated Profile', $user->name);
     $this->assertSame('updated-profile@example.com', $user->email);
+    $this->assertSame('tr', $user->admin_locale);
     $this->assertSame(User::ROLE_EDITOR, $user->role);
     $this->assertTrue($user->is_active);
-    $this->assertEquals([$site->id], $user->sites()->pluck('sites.id')->all());
+    $this->assertEquals([$site->id], $user->sites()->pluck(CmsTable::name('sites').'.id')->all());
   }
 
   #[Test]
@@ -105,6 +112,33 @@ class ProfileManagementTest extends TestCase
     $this->assertSame('Other User', $otherUser->fresh()->name);
     $this->assertSame('other-user@example.com', $otherUser->fresh()->email);
     $this->get('/webadmin/profile/'.$otherUser->id)->assertNotFound();
+  }
+
+  #[Test]
+  public function profile_locale_preference_overrides_the_system_admin_locale(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'name' => 'Locale User',
+      'email' => 'locale-user@example.com',
+    ]);
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LOCALE], ['value' => 'de']);
+
+    $response = $this->actingAs($user)->put(route('admin.profile.update'), [
+      'name' => 'Locale User',
+      'email' => 'locale-user@example.com',
+      'admin_locale' => 'tr',
+    ]);
+
+    $response->assertRedirect(route('admin.profile.edit'));
+    $this->assertSame('tr', $user->fresh()->admin_locale);
+
+    $dashboard = $this->actingAs($user->fresh())->get(route('admin.dashboard'));
+
+    $dashboard->assertOk();
+    $dashboard->assertSee('<html lang="tr">', false);
+    $dashboard->assertSee('>Pano<', false);
+    $dashboard->assertDontSee('>Uebersicht<', false);
   }
 
   #[Test]

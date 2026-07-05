@@ -1,25 +1,16 @@
 @php
     $hasTargetedErrors = $errors->any() && (int) old('block_id') === $block->id;
     $resolvedLocaleCode = strtolower((string) ($block->getAttribute('resolved_locale_code') ?? app()->getLocale()));
-    $contactFormCopy = str_starts_with($resolvedLocaleCode, 'de')
-        ? [
-            'submit' => 'Senden',
-            'review' => 'Bitte prüfen Sie das Formular',
-            'name' => 'Ihr Name',
-            'email' => 'Ihre E-Mail',
-            'subject' => 'Betreff',
-            'message' => 'Ihre Nachricht',
-            'storage' => 'Ihre Nachricht wird gespeichert, anschließend wird die E-Mail-Benachrichtigung versucht.',
-        ]
-        : [
-            'submit' => 'Send message',
-            'review' => 'Please review the form',
-            'name' => 'Name',
-            'email' => 'Email',
-            'subject' => 'Subject',
-            'message' => 'Message',
-            'storage' => 'Your message is stored first, then email notification is attempted.',
-        ];
+    $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $contactFormCopy = [
+        'submit' => $translator->get('blocks.contact_form.submit', $resolvedLocaleCode),
+        'review' => $translator->get('blocks.contact_form.review', $resolvedLocaleCode),
+        'name' => $translator->get('blocks.contact_form.name', $resolvedLocaleCode),
+        'email' => $translator->get('blocks.contact_form.email', $resolvedLocaleCode),
+        'subject' => $translator->get('blocks.contact_form.subject', $resolvedLocaleCode),
+        'message' => $translator->get('blocks.contact_form.message', $resolvedLocaleCode),
+        'storage' => $translator->get('blocks.contact_form.storage', $resolvedLocaleCode),
+    ];
     $resolvedSubmitLabel = trim((string) ($block->submit_label ?? ''));
     $submitLabel = $resolvedSubmitLabel === '' || ($resolvedLocaleCode !== 'en' && $resolvedSubmitLabel === 'Send message')
         ? $contactFormCopy['submit']

@@ -113,6 +113,25 @@ class AdminSidebarNavigationTest extends TestCase
   }
 
   #[Test]
+  public function admin_shell_prefers_the_authenticated_users_admin_locale(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'admin_locale' => 'tr',
+    ]);
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LOCALE], ['value' => 'de']);
+
+    $response = $this->actingAs($user)->get(route('admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('<html lang="tr">', false);
+    $response->assertSee('>Pano<', false);
+    $response->assertSee('>Sayfalar<', false);
+    $response->assertSee('aria-label="Kullanici menusu"', false);
+    $response->assertDontSee('>Uebersicht<', false);
+  }
+
+  #[Test]
   public function settings_page_marks_system_group_and_settings_item_active(): void
   {
     $user = User::factory()->superAdmin()->create();

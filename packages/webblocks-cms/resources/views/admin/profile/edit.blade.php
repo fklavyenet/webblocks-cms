@@ -55,6 +55,27 @@
                             <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
                         @enderror
                     </div>
+
+                    @if ($adminLocalePreferencesAvailable)
+                        <div class="wb-stack-2 wb-field">
+                            <label for="profile_admin_locale">Interface language</label>
+                            <select
+                                id="profile_admin_locale"
+                                name="admin_locale"
+                                class="wb-select @if ($errors->has('admin_locale')) wb-border-danger @endif"
+                            >
+                                <option value="" @selected(old('admin_locale', $user->admin_locale) === null || old('admin_locale', $user->admin_locale) === '')>Use system default</option>
+                                @foreach ($adminLocaleOptions as $code => $label)
+                                    <option value="{{ $code }}" @selected(old('admin_locale', $user->admin_locale) === $code)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <div class="wb-text-sm wb-text-muted">Overrides the default admin panel language for your account only.</div>
+
+                            @error('admin_locale')
+                                <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                 </form>
             </div>
 

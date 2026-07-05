@@ -15,7 +15,7 @@ use WebBlocks\Cms\Auth\Concerns\HasWebBlocksCmsAccess;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Database\CmsTable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_admin', 'is_active', 'last_login_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_admin', 'is_active', 'last_login_at', 'admin_locale'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -49,6 +49,7 @@ class User extends Authenticatable
       'is_admin' => 'boolean',
       'is_active' => 'boolean',
       'last_login_at' => 'datetime',
+      'admin_locale' => 'string',
       'password' => 'hashed',
     ];
   }
