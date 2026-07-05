@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Search\PublicSearchQuery;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PublicSearchController extends Controller
@@ -15,6 +16,7 @@ class PublicSearchController extends Controller
   public function __construct(
     private readonly PageRouteResolver $pageRouteResolver,
     private readonly PublicSearchQuery $search,
+    private readonly CmsTranslator $translator,
   ) {}
 
   public function __invoke(Request $request): View
@@ -38,6 +40,7 @@ class PublicSearchController extends Controller
     $query = $search['query'];
     $results = $search['results'];
     $minimumLength = $search['minimumLength'];
+    $localeCode = $search['locale']->code;
 
     return response()->json([
       'query' => $query,
@@ -49,10 +52,10 @@ class PublicSearchController extends Controller
         'excerpt' => (string) ($result->display_excerpt ?? ''),
       ])->values()->all() ?? [],
       'no_results' => $search['state'] === 'no-results'
-        ? sprintf('No results matched %s.', $query)
+        ? $this->translator->public('search.no_results', $localeCode, ['query' => $query])
         : null,
       'minimum_query_length' => $search['state'] === 'short'
-        ? sprintf('Enter at least %d characters to search.', $minimumLength)
+        ? $this->translator->public('search.minimum_query_length', $localeCode, ['count' => $minimumLength])
         : null,
     ]);
   }

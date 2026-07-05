@@ -42,6 +42,7 @@ class SystemSettingsTest extends TestCase
     $response->assertSee('Default locale');
     $response->assertSee('Timezone');
     $response->assertSee('Admin listing rows per page');
+    $response->assertSee('Admin panel language');
     $response->assertSee('Mail');
     $response->assertSee('Use environment mail config');
     $response->assertSee('Diagnostics');
@@ -146,6 +147,7 @@ class SystemSettingsTest extends TestCase
       'default_locale' => $locale->code,
       'timezone' => 'Europe/Istanbul',
       'admin_listing_per_page' => '12',
+      'admin_locale' => 'de',
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));
@@ -153,12 +155,14 @@ class SystemSettingsTest extends TestCase
     $this->assertSame($locale->code, SystemSetting::query()->where('key', 'system.default_locale')->value('value'));
     $this->assertSame('Europe/Istanbul', SystemSetting::query()->where('key', 'system.timezone')->value('value'));
     $this->assertSame('12', SystemSetting::query()->where('key', SystemSettings::ADMIN_LISTING_PER_PAGE)->value('value'));
+    $this->assertSame('de', SystemSetting::query()->where('key', SystemSettings::ADMIN_LOCALE)->value('value'));
     $this->assertSame('Existing Project', SystemSetting::query()->where('key', SystemSettings::PROJECT_NAME)->value('value'));
     $this->assertSame('0', SystemSetting::query()->where('key', SystemSettings::VISITOR_CONSENT_BANNER_ENABLED)->value('value'));
 
     $followUp = $this->actingAs($user)->get(route('admin.system.settings.edit'));
     $followUp->assertSee('Europe/Istanbul');
     $followUp->assertSee('value="12"', false);
+    $followUp->assertSee('<option value="de" selected>DE - Deutsch</option>', false);
   }
 
   #[Test]
@@ -519,11 +523,13 @@ class SystemSettingsTest extends TestCase
       'project_tagline' => str_repeat('b', 256),
       'default_locale' => $disabledLocale->code,
       'timezone' => 'Not/A_Timezone',
+      'admin_listing_per_page' => '12',
+      'admin_locale' => 'xx',
       'visitor_consent_banner_enabled' => '1',
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));
-    $response->assertSessionHasErrors(['default_locale', 'timezone']);
+    $response->assertSessionHasErrors(['default_locale', 'timezone', 'admin_locale']);
   }
 
   #[Test]
@@ -537,6 +543,7 @@ class SystemSettingsTest extends TestCase
       'default_locale' => $locale->code,
       'timezone' => 'UTC',
       'admin_listing_per_page' => '101',
+      'admin_locale' => 'en',
     ]);
 
     $response->assertRedirect(route('admin.system.settings.edit'));

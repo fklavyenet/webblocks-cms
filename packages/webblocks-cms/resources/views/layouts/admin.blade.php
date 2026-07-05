@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 @php
     use WebBlocks\Cms\Support\System\SystemSettings;
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
     use WebBlocks\Cms\Support\WebBlocks;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key) => $adminTranslator->admin($key, $adminLocale);
 @endphp
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', $adminLocale) }}">
     @php
         $resolvedAdminBrowserTitle = app(SystemSettings::class)->adminBrowserTitle($adminBrowserTitle ?? $title ?? null);
         $adminCssPath = public_path('cms/css/admin.css');
@@ -39,14 +45,14 @@
                 ->implode('');
 
             $menuItems = [
-                ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => ['admin.dashboard'], 'icon' => 'wb-icon-layout-dashboard'],
-                ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => ['admin.sites.index', 'admin.sites.create', 'admin.sites.store', 'admin.sites.edit', 'admin.sites.update', 'admin.sites.clone', 'admin.sites.clone.prefill', 'admin.sites.clone.store', 'admin.sites.promote', 'admin.sites.promote.*', 'admin.sites.delete', 'admin.sites.destroy'], 'icon' => 'wb-icon-globe'],
-                ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => ['admin.pages.*'], 'icon' => 'wb-icon-file-text'],
-                ['label' => 'Shared Slots', 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-layers'],
-                ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
-                ['label' => 'Media', 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
-                ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
-                ['label' => 'Engagement', 'route' => 'admin.engagement.comments.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
+                ['label' => $adminText('navigation.dashboard'), 'route' => 'admin.dashboard', 'active' => ['admin.dashboard'], 'icon' => 'wb-icon-layout-dashboard'],
+                ['label' => $adminText('navigation.sites'), 'route' => 'admin.sites.index', 'active' => ['admin.sites.index', 'admin.sites.create', 'admin.sites.store', 'admin.sites.edit', 'admin.sites.update', 'admin.sites.clone', 'admin.sites.clone.prefill', 'admin.sites.clone.store', 'admin.sites.promote', 'admin.sites.promote.*', 'admin.sites.delete', 'admin.sites.destroy'], 'icon' => 'wb-icon-globe'],
+                ['label' => $adminText('navigation.pages'), 'route' => 'admin.pages.index', 'active' => ['admin.pages.*'], 'icon' => 'wb-icon-file-text'],
+                ['label' => $adminText('navigation.shared_slots'), 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-layers'],
+                ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
+                ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
+                ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
+                ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.comments.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
             ];
 
             if (! $user?->can('access-system')) {
@@ -55,7 +61,7 @@
 
             if ($user?->can('access-system')) {
                 array_splice($menuItems, 3, 0, [[
-                    'label' => 'Blocks',
+                    'label' => $adminText('navigation.blocks'),
                     'route' => 'admin.blocks.index',
                     'active' => ['admin.blocks.index'],
                     'icon' => 'wb-icon-box',
@@ -66,31 +72,33 @@
 
             if ($user?->can('access-system')) {
                 $sidebarGroups[] = [
-                    'label' => 'System',
+                    'key' => 'system',
+                    'label' => $adminText('navigation.system'),
                     'icon' => 'wb-icon-palette',
                         'items' => [
-                            ['label' => 'Domains', 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*']],
-                            ['label' => 'Icons', 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*']],
-                            ['label' => 'Users', 'route' => 'admin.users.index', 'active' => ['admin.users.*']],
-                            ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => ['admin.locales.*']],
-                            ['label' => 'Page Layouts', 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*']],
-                            ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
-                            ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
-                            ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
-                            ['label' => 'API Tokens', 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*']],
-                            ['label' => 'Plugins', 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*']],
-                            ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => ['admin.reports.visitors.*']],
+                            ['label' => $adminText('navigation.domains'), 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*']],
+                            ['label' => $adminText('navigation.icons'), 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*']],
+                            ['label' => $adminText('navigation.users'), 'route' => 'admin.users.index', 'active' => ['admin.users.*']],
+                            ['label' => $adminText('navigation.locales'), 'route' => 'admin.locales.index', 'active' => ['admin.locales.*']],
+                            ['label' => $adminText('navigation.page_layouts'), 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*']],
+                            ['label' => $adminText('navigation.slot_types'), 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
+                            ['label' => $adminText('navigation.block_types'), 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
+                            ['label' => $adminText('navigation.settings'), 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
+                            ['label' => $adminText('navigation.api_tokens'), 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*']],
+                            ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*']],
+                            ['label' => $adminText('navigation.visitor_reports'), 'route' => 'admin.reports.visitors.index', 'active' => ['admin.reports.visitors.*']],
                         ],
                     ];
 
                 $sidebarGroups[] = [
-                    'label' => 'Maintenance',
+                    'key' => 'maintenance',
+                    'label' => $adminText('navigation.maintenance'),
                     'icon' => 'wb-icon-file',
                     'items' => [
-                        ['label' => 'Search Rebuild', 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*']],
-                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*']],
-                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => ['admin.site-transfers.*']],
-                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => ['admin.system.updates.*']],
+                        ['label' => $adminText('navigation.search_rebuild'), 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*']],
+                        ['label' => $adminText('navigation.backups'), 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*']],
+                        ['label' => $adminText('navigation.export_import'), 'route' => 'admin.site-transfers.exports.index', 'active' => ['admin.site-transfers.*']],
+                        ['label' => $adminText('navigation.update'), 'route' => 'admin.system.updates.index', 'active' => ['admin.system.updates.*']],
                     ],
                 ];
             }
@@ -103,7 +111,10 @@
                 }
 
                 $groupName = $item->groupName() ?: 'System';
-                $groupIndex = collect($sidebarGroups)->search(fn ($group) => $group['label'] === $groupName);
+                $groupKey = $groupName === 'System' ? 'system' : null;
+                $groupIndex = collect($sidebarGroups)->search(
+                    fn ($group) => ($groupKey !== null && ($group['key'] ?? null) === $groupKey) || $group['label'] === $groupName
+                );
 
                 if ($groupIndex === false) {
                     $sidebarGroups[] = [
@@ -130,7 +141,11 @@
             $adminNavbarBreadcrumb = $breadcrumb ?? null;
 
             if (! $adminNavbarBreadcrumb) {
-                $currentTitle = $heading ?? $title ?? 'Dashboard';
+                $currentTitle = $heading ?? $title ?? $adminText('navigation.dashboard');
+
+                if ($currentTitle === 'Dashboard') {
+                    $currentTitle = $adminText('navigation.dashboard');
+                }
                 $activeTopItem = collect($menuItems)->first(fn (array $item) => $matchesActiveRoute($item));
                 $activeGroup = collect($sidebarGroups)
                     ->map(function (array $group) use ($matchesActiveRoute) {
@@ -143,7 +158,7 @@
                 $breadcrumbItems = [];
 
                 if (! request()->routeIs('admin.dashboard')) {
-                    $breadcrumbItems[] = ['label' => 'Dashboard', 'url' => route('admin.dashboard')];
+                    $breadcrumbItems[] = ['label' => $adminText('navigation.dashboard'), 'url' => route('admin.dashboard')];
                 }
 
                 if ($activeGroup) {
@@ -197,7 +212,7 @@
                     </span>
                 </a>
 
-                <nav class="wb-sidebar-nav" aria-label="Admin navigation">
+                <nav class="wb-sidebar-nav" aria-label="{{ $adminText('navigation.aria') }}">
                     <div class="wb-stack wb-stack-1">
                         @foreach ($menuItems as $item)
                             <a
@@ -251,7 +266,7 @@
                         data-wb-target="#admin-sidebar"
                         aria-expanded="false"
                         aria-controls="admin-sidebar"
-                        aria-label="Toggle navigation"
+                        aria-label="{{ $adminText('navigation.toggle') }}"
                     >
                         <span></span><span></span><span></span>
                     </button>
@@ -269,61 +284,61 @@
                                     data-wb-update-indicator
                                     data-wb-update-indicator-url="{{ route('admin.system.updates.indicator') }}"
                                     data-wb-update-indicator-state="unknown"
-                                    aria-label="System Updates"
-                                    title="System Updates"
+                                    aria-label="{{ $adminText('topbar.system_updates') }}"
+                                    title="{{ $adminText('topbar.system_updates') }}"
                                     hidden
                                 >
                                     <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                     <span class="wb-navbar-update-dot" aria-hidden="true"></span>
-                                    <span class="wb-sr-only" data-wb-update-indicator-label>System Updates</span>
+                                    <span class="wb-sr-only" data-wb-update-indicator-label>{{ $adminText('topbar.system_updates') }}</span>
                                 </a>
                             @endif
 
-                            <button type="button" class="wb-navbar-icon-trigger" data-wb-mode-cycle aria-label="Color mode" title="Color mode">
+                            <button type="button" class="wb-navbar-icon-trigger" data-wb-mode-cycle aria-label="{{ $adminText('topbar.color_mode') }}" title="{{ $adminText('topbar.color_mode') }}">
                                 <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
                             </button>
 
                             <div class="wb-dropdown wb-dropdown-end">
-                                <button class="wb-navbar-icon-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-theme-menu" aria-expanded="false" aria-label="Theme settings" title="Theme settings">
+                                <button class="wb-navbar-icon-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-theme-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.theme_settings') }}" title="{{ $adminText('topbar.theme_settings') }}">
                                     <i class="wb-icon wb-icon-palette" aria-hidden="true"></i>
                                 </button>
 
                                 <div class="wb-dropdown-menu" id="admin-theme-menu">
-                                    <div class="wb-dropdown-label">Presets</div>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="modern">Modern</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="minimal">Minimal</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="editorial">Editorial</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="playful">Playful</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="corporate">Corporate</button>
+                                    <div class="wb-dropdown-label">{{ $adminText('topbar.presets') }}</div>
+                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="modern">{{ $adminText('topbar.modern') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="minimal">{{ $adminText('topbar.minimal') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="editorial">{{ $adminText('topbar.editorial') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="playful">{{ $adminText('topbar.playful') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="corporate">{{ $adminText('topbar.corporate') }}</button>
                                     <hr class="wb-dropdown-divider">
-                                    <div class="wb-dropdown-label">Accent</div>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="ocean">Ocean</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="forest">Forest</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="sunset">Sunset</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="royal">Royal</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="mint">Mint</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="amber">Amber</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="rose">Rose</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="slate-fire">Slate Fire</button>
+                                    <div class="wb-dropdown-label">{{ $adminText('topbar.accent') }}</div>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="ocean">{{ $adminText('topbar.ocean') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="forest">{{ $adminText('topbar.forest') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="sunset">{{ $adminText('topbar.sunset') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="royal">{{ $adminText('topbar.royal') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="mint">{{ $adminText('topbar.mint') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="amber">{{ $adminText('topbar.amber') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="rose">{{ $adminText('topbar.rose') }}</button>
+                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="slate-fire">{{ $adminText('topbar.slate_fire') }}</button>
                                 </div>
                             </div>
 
                         </div>
 
                         <div class="wb-dropdown wb-dropdown-end">
-                            <button class="wb-navbar-avatar-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="User menu" title="{{ $user?->name }}">
+                            <button class="wb-navbar-avatar-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}" title="{{ $user?->name }}">
                                 <span class="wb-navbar-avatar" aria-hidden="true">{{ $userInitials }}</span>
                                 <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
                             </button>
 
                             <div class="wb-dropdown-menu" id="admin-user-menu">
                                 @if (Route::has('admin.profile.edit'))
-                                    <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item">Profile</a>
+                                    <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item">{{ $adminText('topbar.profile') }}</a>
                                     <hr class="wb-dropdown-divider">
                                 @endif
                                 <form method="POST" action="{{ route('webblocks.auth.logout') }}">
                                     @csrf
-                                    <button type="submit" class="wb-dropdown-item wb-dropdown-item-danger">Logout</button>
+                                    <button type="submit" class="wb-dropdown-item wb-dropdown-item-danger">{{ $adminText('topbar.logout') }}</button>
                                 </form>
                             </div>
                         </div>

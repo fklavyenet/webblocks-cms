@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class AdminSidebarNavigationTest extends TestCase
@@ -88,6 +89,27 @@ class AdminSidebarNavigationTest extends TestCase
     );
     $this->assertTrue(strpos($content, $reportsHref) < strpos($content, '>Maintenance<'));
     $response->assertSeeText('Search Rebuild');
+  }
+
+  #[Test]
+  public function admin_shell_uses_configured_admin_locale_for_system_navigation(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LOCALE], ['value' => 'de']);
+
+    $response = $this->actingAs($user)->get(route('admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('<html lang="de">', false);
+    $response->assertSee('>Uebersicht<', false);
+    $response->assertSee('>Websites<', false);
+    $response->assertSee('>Seiten<', false);
+    $response->assertSee('>Medien<', false);
+    $response->assertSee('>Kontaktmeldungen<', false);
+    $response->assertSee('>Wartung<', false);
+    $response->assertSee('aria-label="Benutzermenue"', false);
+    $response->assertDontSee('>Contact Messages<', false);
   }
 
   #[Test]

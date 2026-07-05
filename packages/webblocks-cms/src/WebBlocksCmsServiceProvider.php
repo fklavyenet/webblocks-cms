@@ -1071,6 +1071,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function bootViews(): void
   {
+    $this->loadTranslationsFrom($this->langPath(), self::VIEW_NAMESPACE);
+
     if (! is_dir($this->viewsPath())) {
       return;
     }
@@ -1215,6 +1217,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   protected function viewsPath(): string
   {
     return $this->packagePath('resources/views');
+  }
+
+  protected function langPath(): string
+  {
+    return $this->packagePath('resources/lang');
   }
 
   protected function migrationsPath(): string

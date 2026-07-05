@@ -3,6 +3,13 @@
   var BODY_LOCK_CLASS = 'wb-overlay-lock';
   var debounceTimer = null;
   var activeRequest = 0;
+  var copy = {
+    helper: 'Enter a search term to find published content for this site and locale.',
+    unavailable: 'Search is temporarily unavailable. You can still use the search page.',
+    count: '__count__ result for __query__.',
+    countPlural: '__count__ results for __query__.',
+    untitled: 'Untitled'
+  };
 
   function ready(callback) {
     if (document.readyState === 'loading') {
@@ -23,7 +30,7 @@
 
     var title = document.createElement('span');
     title.className = 'wb-link-list-title';
-    title.textContent = String(result.title || 'Untitled');
+    title.textContent = String(result.title || copy.untitled);
 
     var meta = document.createElement('span');
     meta.className = 'wb-link-list-meta';
@@ -68,7 +75,22 @@
       return;
     }
 
-    var helperText = 'Enter a search term to find published content for this site and locale.';
+    function parseCopy() {
+      try {
+        return JSON.parse(form.getAttribute('data-search-copy') || '{}') || {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    copy = Object.assign(copy, parseCopy());
+    var helperText = String(copy.helper);
+
+    function formatTemplate(template, values) {
+      return String(template || '').replace(/__([a-z_]+)__/g, function (match, key) {
+        return Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : match;
+      });
+    }
 
     function setMessage(text, visible) {
       message.hidden = !visible;
@@ -129,7 +151,10 @@
       }
 
       setMessage('', false);
-      setCount(total + ' result' + (total === 1 ? '' : 's') + ' for ' + query + '.', true);
+      setCount(formatTemplate(total === 1 ? copy.count : copy.countPlural, {
+        count: total,
+        query: query
+      }), true);
       results.className = 'wb-link-list';
 
       payloadResults.forEach(function (result) {
@@ -177,7 +202,7 @@
         clearResults();
         setLoading(false);
         setCount('', false);
-        setMessage('Search is temporarily unavailable. You can still use the search page.', true);
+        setMessage(String(copy.unavailable), true);
       });
     }
 

@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SlotType;
@@ -70,6 +71,49 @@ class SearchFormTest extends TestCase
     $response->assertSee('name="q"', false);
     $response->assertSee('action="/search"', false);
     $response->assertDontSee('data-wb-public-search-open', false);
+  }
+
+  #[Test]
+  public function public_renderer_uses_locale_aware_system_defaults_when_copy_is_not_overridden(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $this->seed(BlockTypeSeeder::class);
+
+    Locale::query()->where('is_default', true)->firstOrFail()->update([
+      'code' => 'de',
+      'name' => 'German',
+    ]);
+    $page = Page::query()->create([
+      'site_id' => 1,
+      'title' => 'Home',
+      'slug' => 'home',
+      'status' => Page::STATUS_PUBLISHED,
+      'settings' => ['public_shell' => 'default'],
+    ]);
+    SlotType::query()->updateOrCreate(['slug' => 'main'], ['name' => 'Main', 'status' => 'published', 'sort_order' => 1, 'is_system' => true]);
+    $page->slots()->create(['slot_type_id' => SlotType::query()->where('slug', 'main')->value('id'), 'source_type' => PageSlot::SOURCE_TYPE_PAGE, 'sort_order' => 0]);
+    $searchFormType = BlockType::query()->where('slug', 'search-form')->firstOrFail();
+
+    Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'search-form',
+      'block_type_id' => $searchFormType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => SlotType::query()->where('slug', 'main')->value('id'),
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+      'variant' => 'primary',
+      'settings' => json_encode(['show_button' => true], JSON_UNESCAPED_SLASHES),
+    ]);
+
+    $response = $this->get('/');
+
+    $response->assertOk();
+    $response->assertSee('Suche');
+    $response->assertSee('Diese Website durchsuchen');
+    $response->assertSee('Suchen');
   }
 
   #[Test]

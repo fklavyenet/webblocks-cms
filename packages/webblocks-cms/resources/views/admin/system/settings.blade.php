@@ -1,5 +1,14 @@
 @extends('webblocks-cms::layouts.admin', ['title' => 'System Settings', 'heading' => 'System Settings'])
 
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key) => $adminTranslator->admin($key, $adminLocale);
+@endphp
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'System Settings',
@@ -50,6 +59,16 @@
                             value="{{ $settings['admin_listing_per_page'] }}"
                         >
                         <div class="wb-text-sm wb-text-muted">Controls the default number of rows shown on paginated admin listing screens.</div>
+                    </div>
+
+                    <div class="wb-stack-2 wb-field">
+                        <label for="settings_admin_locale">{{ $adminText('settings.admin_locale') }}</label>
+                        <select id="settings_admin_locale" name="admin_locale" class="wb-select" required>
+                            @foreach ($adminLocaleOptions as $code => $label)
+                                <option value="{{ $code }}" @selected($settings['admin_locale'] === $code)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('settings.admin_locale_help') }}</div>
                     </div>
                 </div>
 

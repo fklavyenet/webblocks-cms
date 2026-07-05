@@ -1,7 +1,9 @@
 @php
-    $label = $block->stringValueOrNull($block->title) ?? 'Search';
-    $placeholder = $block->stringValueOrNull($block->content) ?? 'Search this site';
-    $buttonLabel = $block->stringValueOrNull($block->subtitle) ?? 'Search';
+    $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $localeCode = $block->renderLocaleCode();
+    $label = $block->stringValueOrNull($block->title) ?? $translator->get('blocks.search_form.label', $localeCode);
+    $placeholder = $block->stringValueOrNull($block->content) ?? $translator->get('blocks.search_form.placeholder', $localeCode);
+    $buttonLabel = $block->stringValueOrNull($block->subtitle) ?? $translator->get('blocks.search_form.submit', $localeCode);
     $showButton = (bool) $block->setting('show_button', true);
     $searchPath = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class)->searchPath($block->renderLocaleCode(), $block->renderSite());
     $buttonClass = $block->variant === 'secondary' ? 'wb-btn wb-btn-secondary' : 'wb-btn wb-btn-primary';

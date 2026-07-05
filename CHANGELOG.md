@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add the first file-based CMS translations layer for admin, public system copy, and block defaults.
+- Add an install-wide admin panel language setting and use it in the admin shell/sidebar/topbar.
+- Make public Search UI and Search Form defaults resolve copy from the current public locale.
+
 ## 1.32.246
 
 - Bumped CMS to `1.32.246`.

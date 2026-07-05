@@ -7,6 +7,7 @@ use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 class SystemSettingsRequest extends FormRequest
 {
@@ -24,6 +25,7 @@ class SystemSettingsRequest extends FormRequest
       'default_locale' => Locale::normalizeCode($this->input('default_locale')),
       'timezone' => trim((string) $this->input('timezone')),
       'admin_listing_per_page' => trim((string) $this->input('admin_listing_per_page')),
+      'admin_locale' => Locale::normalizeCode($this->input('admin_locale')),
       'visitor_consent_banner_enabled' => $this->boolean('visitor_consent_banner_enabled'),
       'cms_mail_mode' => trim((string) $this->input('cms_mail_mode', SystemSettings::CMS_MAIL_MODE_ENV)),
       'cms_mail_mailer' => trim((string) $this->input('cms_mail_mailer', 'smtp')),
@@ -62,6 +64,7 @@ class SystemSettingsRequest extends FormRequest
           'min:'.SystemSettings::ADMIN_LISTING_PER_PAGE_MIN,
           'max:'.SystemSettings::ADMIN_LISTING_PER_PAGE_MAX,
         ],
+        'admin_locale' => ['required', 'string', Rule::in(AdminLocaleResolver::SUPPORTED_LOCALES)],
       ],
       'project' => $sectionRules + [
         'project_name' => ['nullable', 'string', 'max:255'],
@@ -95,6 +98,7 @@ class SystemSettingsRequest extends FormRequest
         SystemSettings::DEFAULT_LOCALE => $this->validated('default_locale'),
         SystemSettings::TIMEZONE => $this->validated('timezone'),
         SystemSettings::ADMIN_LISTING_PER_PAGE => $this->validated('admin_listing_per_page'),
+        SystemSettings::ADMIN_LOCALE => $this->validated('admin_locale'),
       ];
     }
 

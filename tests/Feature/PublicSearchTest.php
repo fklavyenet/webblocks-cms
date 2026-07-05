@@ -235,6 +235,30 @@ class PublicSearchTest extends TestCase
   }
 
   #[Test]
+  public function public_search_system_copy_uses_the_current_public_locale(): void
+  {
+    [$site, $locale] = $this->seedSearchFoundation();
+    $locale->update([
+      'code' => 'de',
+      'name' => 'German',
+    ]);
+    $site->update(['display_name' => 'Farben Portal']);
+
+    $response = $this->get('/');
+
+    $response->assertOk();
+    $response->assertSee('Suche');
+    $response->assertSee('Veroeffentlichte Inhalte auf Farben Portal durchsuchen.');
+    $response->assertSee('Suchbegriff');
+    $response->assertSee('Geben Sie einen Suchbegriff ein');
+    $response->assertDontSee('Search query');
+
+    $this->getJson('/search.json?q=a')
+      ->assertOk()
+      ->assertJsonPath('minimum_query_length', 'Geben Sie mindestens 2 Zeichen ein, um zu suchen.');
+  }
+
+  #[Test]
   public function search_modal_description_is_scoped_to_the_current_site_and_not_project_name(): void
   {
     [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();

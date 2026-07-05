@@ -12,6 +12,7 @@ use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class SystemSettingsController extends Controller
@@ -20,6 +21,7 @@ class SystemSettingsController extends Controller
     private readonly SystemSettings $systemSettings,
     private readonly InstalledVersionStore $installedVersionStore,
     private readonly CmsMailSettingsResolver $mailSettingsResolver,
+    private readonly AdminLocaleResolver $adminLocaleResolver,
   ) {}
 
   public function edit(): View
@@ -34,6 +36,7 @@ class SystemSettingsController extends Controller
         'default_locale' => old('default_locale', $this->systemSettings->defaultLocaleCode()),
         'timezone' => old('timezone', $this->systemSettings->timezone()),
         'admin_listing_per_page' => old('admin_listing_per_page', $this->systemSettings->adminListingPerPage()),
+        'admin_locale' => old('admin_locale', $this->adminLocaleResolver->locale()),
         'visitor_consent_banner_enabled' => old('visitor_consent_banner_enabled', $this->systemSettings->visitorConsentBannerEnabled()),
         'cms_mail_mode' => old('cms_mail_mode', $this->systemSettings->cmsMailSettings()['mode']),
         'cms_mail_mailer' => old('cms_mail_mailer', $this->systemSettings->cmsMailSettings()['mailer']),
@@ -50,6 +53,7 @@ class SystemSettingsController extends Controller
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
       'cmsMailMailerOptions' => array_combine(CmsMailSettingsResolver::SUPPORTED_MAILERS, CmsMailSettingsResolver::SUPPORTED_MAILERS),
       'localeOptions' => $this->systemSettings->enabledLocaleOptions(),
+      'adminLocaleOptions' => $this->adminLocaleResolver->options(),
       'timezoneOptions' => $this->systemSettings->timezoneOptions(),
       'installedVersionDisplay' => $this->installedVersionStore->displayVersion(),
       'environment' => app()->environment(),

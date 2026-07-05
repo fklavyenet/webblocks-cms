@@ -26,6 +26,8 @@ class SystemSettings
 
   public const ADMIN_LISTING_PER_PAGE = 'admin.listing_per_page';
 
+  public const ADMIN_LOCALE = 'admin.locale';
+
   public const ADMIN_LISTING_PER_PAGE_DEFAULT = 15;
 
   public const ADMIN_LISTING_PER_PAGE_MIN = 1;
@@ -68,6 +70,7 @@ class SystemSettings
     self::DEFAULT_LOCALE,
     self::TIMEZONE,
     self::ADMIN_LISTING_PER_PAGE,
+    self::ADMIN_LOCALE,
     self::VISITOR_CONSENT_BANNER_ENABLED,
     self::CMS_MAIL_MODE,
     self::CMS_MAIL_MAILER,
@@ -88,6 +91,7 @@ class SystemSettings
     self::DEFAULT_LOCALE,
     self::TIMEZONE,
     self::ADMIN_LISTING_PER_PAGE,
+    self::ADMIN_LOCALE,
     self::VISITOR_CONSENT_BANNER_ENABLED,
     self::CMS_MAIL_MODE,
     self::CMS_MAIL_MAILER,
@@ -171,6 +175,13 @@ class SystemSettings
     ]);
 
     return is_int($perPage) ? $perPage : self::ADMIN_LISTING_PER_PAGE_DEFAULT;
+  }
+
+  public function adminLocale(): string
+  {
+    $locale = Locale::normalizeCode((string) $this->get(self::ADMIN_LOCALE, ''));
+
+    return $locale !== '' ? $locale : Locale::normalizeCode((string) config('app.locale', 'en'));
   }
 
   public function projectName(): ?string
