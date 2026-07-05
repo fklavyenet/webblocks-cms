@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.235
+
+- Bumped CMS to `1.32.235`.
+- Add a Grid setting that renders direct Section children as alternating media/text rows, so editors can reorder sections without manually maintaining left/right slider and copy placement.
+
 ## 1.32.234
 
 - Bumped CMS to `1.32.234`.

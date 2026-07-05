@@ -2029,6 +2029,131 @@ class PublicEditorialBlocksRenderingTest extends TestCase
   }
 
   #[Test]
+  public function grid_can_render_section_children_as_alternating_media_text_rows(): void
+  {
+    $page = $this->pageWithMainSlot();
+    $grid = Block::query()->create([
+      'page_id' => $page->id,
+      'type' => 'grid',
+      'block_type_id' => $this->blockType('grid', 'Grid', 5)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'settings' => json_encode([
+        'gap' => '4',
+        'alternate_media_text_sections' => true,
+        'alternate_start' => 'media_left',
+      ], JSON_UNESCAPED_SLASHES),
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $firstSection = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $grid->id,
+      'type' => 'section',
+      'block_type_id' => $this->blockType('section', 'Section', 2)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $secondSection = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $grid->id,
+      'type' => 'section',
+      'block_type_id' => $this->blockType('section', 'Section', 2)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 1,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $firstText = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $firstSection->id,
+      'type' => 'plain_text',
+      'block_type_id' => $this->blockType('plain_text', 'Plain Text', 6)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $firstSection->id,
+      'type' => 'slider',
+      'block_type_id' => $this->blockType('slider', 'Slider', 7, false, true)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 1,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $secondSection->id,
+      'type' => 'slider',
+      'block_type_id' => $this->blockType('slider', 'Slider', 7, false, true)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $secondText = Block::query()->create([
+      'page_id' => $page->id,
+      'parent_id' => $secondSection->id,
+      'type' => 'plain_text',
+      'block_type_id' => $this->blockType('plain_text', 'Plain Text', 6)->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $this->mainSlotType()->id,
+      'sort_order' => 1,
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $firstText->textTranslations()->create([
+      'locale_id' => Page::defaultLocaleId(),
+      'content' => 'First section text',
+    ]);
+    $secondText->textTranslations()->create([
+      'locale_id' => Page::defaultLocaleId(),
+      'content' => 'Second section text',
+    ]);
+    app(BlockTranslationWriter::class)->normalizeCanonicalStorage($firstText->fresh(['textTranslations']));
+    app(BlockTranslationWriter::class)->normalizeCanonicalStorage($secondText->fresh(['textTranslations']));
+
+    $response = $this->get(route('pages.show', 'about'));
+
+    $response->assertOk();
+    $response->assertSeeInOrder([
+      '<div class="wb-stack wb-gap-4" data-wb-public-block-type="grid">',
+      '<section class="wb-section wb-stack" data-wb-public-block-type="section">',
+      'data-wb-slider',
+      '<p>First section text</p>',
+      '<section class="wb-section wb-stack" data-wb-public-block-type="section">',
+      '<p>Second section text</p>',
+      'data-wb-slider',
+    ], false);
+    $response->assertDontSee('<div class="wb-grid wb-grid-3 wb-gap-4" data-wb-public-block-type="grid">', false);
+  }
+
+  #[Test]
   public function card_renders_nested_header_body_and_footer_regions(): void
   {
     $page = $this->pageWithMainSlot();

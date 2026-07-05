@@ -6,7 +6,7 @@ Use this skill when changing CMS admin, auth, dashboard, settings, listing, moda
 
 - Start from `AGENTS.md`.
 - Read the pinned WebBlocks UI AI contract before UI changes:
-  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.13/packages/webblocks/dist/ai/contract.md`
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.16/packages/webblocks/dist/ai/contract.md`
 - The CMS code pins this version in `WebBlocks::UI_VERSION`. If the pinned WebBlocks UI version changes, update the contract URL in `AGENTS.md` and this skill in the same work session.
 - Use the contract plus existing CMS admin screens that already follow WebBlocks UI patterns; do not invent new UI vocabulary, custom shells, custom framed surfaces, or custom overlay behavior.
 

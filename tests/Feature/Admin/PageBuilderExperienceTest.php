@@ -1115,6 +1115,48 @@ class PageBuilderExperienceTest extends TestCase
   }
 
   #[Test]
+  public function grid_blocks_can_store_alternating_media_text_section_settings(): void
+  {
+    $this->seedFoundation();
+
+    $user = User::factory()->superAdmin()->create();
+    $main = $this->slotType('main', 'Main', 1);
+    [$page, $pageSlot] = $this->pageWithSlot($main);
+    $gridType = BlockType::query()->where('slug', 'grid')->firstOrFail();
+
+    $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $gridType->id]));
+
+    $formResponse->assertOk();
+    $formResponse->assertSee('name="grid_alternate_media_text_sections"', false);
+    $formResponse->assertSee('name="grid_alternate_start"', false);
+    $formResponse->assertSee('Alternate media/text sections');
+
+    $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'block_type_id' => $gridType->id,
+      'sort_order' => 0,
+      'name' => 'Alternating sections',
+      'grid_columns' => '2',
+      'grid_gap' => '4',
+      'grid_alternate_media_text_sections' => '1',
+      'grid_alternate_start' => 'text_left',
+      'status' => 'published',
+      '_slot_block_mode' => 'create',
+    ]);
+
+    $block = Block::query()->where('page_id', $page->id)->where('type', 'grid')->firstOrFail();
+    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+
+    $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+    $this->assertSame('Alternating sections', $settings['layout_name'] ?? null);
+    $this->assertSame('2', $settings['columns'] ?? null);
+    $this->assertSame('4', $settings['gap'] ?? null);
+    $this->assertTrue($settings['alternate_media_text_sections'] ?? false);
+    $this->assertSame('text_left', $settings['alternate_start'] ?? null);
+  }
+
+  #[Test]
   public function slot_block_picker_defaults_to_the_common_tab(): void
   {
     $this->seedFoundation();

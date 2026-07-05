@@ -147,6 +147,8 @@ class BlockRequest extends FormRequest
       'cluster_width' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'full'])],
       'grid_columns' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4'])],
       'grid_gap' => [$supportsGridGap ? 'nullable' : 'prohibited', Rule::in(['', '3', '4', '6'])],
+      'grid_alternate_media_text_sections' => [$supportsGridColumns ? 'nullable' : 'prohibited', 'boolean'],
+      'grid_alternate_start' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['', 'media_left', 'text_left'])],
       'slider_height' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'fill', 'viewport', 'large', 'medium', 'small', 'custom'])],
       'slider_min_height' => [$isSlider ? 'nullable' : 'prohibited', 'regex:/^\d{2,4}(px|vh|svh|dvh)$/'],
       'slider_aspect_ratio' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'auto', '16/9', '4/3', '1/1'])],
@@ -1830,6 +1832,7 @@ class BlockRequest extends FormRequest
         $clusterWidth = trim((string) ($data['cluster_width'] ?? ''));
         $gridColumns = trim((string) ($data['grid_columns'] ?? ''));
         $gridGap = trim((string) ($data['grid_gap'] ?? ''));
+        $gridAlternateStart = trim((string) ($data['grid_alternate_start'] ?? ''));
         $sliderHeight = trim((string) ($data['slider_height'] ?? ''));
         $sliderMinHeight = trim((string) ($data['slider_min_height'] ?? ''));
         $sliderAspectRatio = trim((string) ($data['slider_aspect_ratio'] ?? ''));
@@ -1922,6 +1925,18 @@ class BlockRequest extends FormRequest
             $settings['gap'] = $gridGap;
           } else {
             unset($settings['gap']);
+          }
+
+          $settings['alternate_media_text_sections'] = (bool) ($data['grid_alternate_media_text_sections'] ?? false);
+
+          if (in_array($gridAlternateStart, ['media_left', 'text_left'], true)) {
+            $settings['alternate_start'] = $gridAlternateStart;
+          } else {
+            unset($settings['alternate_start']);
+          }
+
+          if (! $settings['alternate_media_text_sections']) {
+            unset($settings['alternate_media_text_sections'], $settings['alternate_start']);
           }
 
           unset($settings['spacing'], $settings['width'], $settings['alignment']);
@@ -2091,7 +2106,7 @@ class BlockRequest extends FormRequest
     unset($data['show_button']);
     unset($data['icon_slug'], $data['icon_tone'], $data['badge_label'], $data['badge_tone']);
     unset($data['background_position'], $data['background_overlay']);
-    unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+    unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);
     unset($data['slider_height'], $data['slider_min_height'], $data['slider_aspect_ratio'], $data['slider_transition'], $data['slider_interval_ms']);
     unset($data['slider_overlay'], $data['slider_content_position'], $data['slider_content_width'], $data['slider_text_color'], $data['slider_background_fit']);
     unset($data['slider_autoplay'], $data['slider_pause_on_hover'], $data['slider_show_arrows'], $data['slider_show_dots'], $data['slider_loop'], $data['slider_swipe'], $data['slider_keyboard']);

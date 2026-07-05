@@ -801,6 +801,33 @@ class Block extends CmsModel
     };
   }
 
+  public function gridAlternatesMediaTextSections(): bool
+  {
+    return (bool) $this->setting('alternate_media_text_sections', false);
+  }
+
+  public function gridAlternateStart(): string
+  {
+    return $this->appearanceSetting('alternate_start') === 'text_left'
+      ? 'text_left'
+      : 'media_left';
+  }
+
+  public function gridSectionMediaLeft(int $sectionIndex): bool
+  {
+    $startsWithMedia = $this->gridAlternateStart() !== 'text_left';
+
+    return $sectionIndex % 2 === 0
+      ? $startsWithMedia
+      : ! $startsWithMedia;
+  }
+
+  public function isMediaTextVisualBlock(): bool
+  {
+    return in_array($this->typeSlug(), ['slider', 'image', 'gallery', 'video'], true)
+      || $this->publicBackgroundMediaUrl() !== null;
+  }
+
   public function sliderHeightClass(): string
   {
     return match ($this->appearanceSetting('height')) {

@@ -461,9 +461,9 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'grid' => [
-        'admin_form_fields' => ['Admin label', 'Columns', 'Gap'],
+        'admin_form_fields' => ['Admin label', 'Columns', 'Gap', 'Alternate media/text sections', 'First section layout'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['settings.layout_name', 'settings.columns', 'settings.gap'],
+        'shared_settings_fields' => ['settings.layout_name', 'settings.columns', 'settings.gap', 'settings.alternate_media_text_sections', 'settings.alternate_start'],
         'storage_fields' => ['Shared grid layout settings stay in block settings.'],
         'media_relationship_fields' => ['Child blocks are the primary relationship.'],
         'child_container_behavior' => ['Container-capable. Child types are not explicitly restricted in the current helper.'],

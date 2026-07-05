@@ -316,7 +316,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
     $this->assertSame(['media_id', 'settings.layout_name', 'settings.spacing', 'settings.background_position', 'settings.background_overlay'], $section->sharedSettingsFields);
     $this->assertSame(['settings.layout_name', 'settings.width', 'settings.flow'], $container->sharedSettingsFields);
     $this->assertSame(['settings.layout_name', 'settings.gap', 'settings.alignment', 'settings.items_alignment', 'settings.wrap', 'settings.width'], $cluster->sharedSettingsFields);
-    $this->assertSame(['settings.layout_name', 'settings.columns', 'settings.gap'], $grid->sharedSettingsFields);
+    $this->assertSame(['settings.layout_name', 'settings.columns', 'settings.gap', 'settings.alternate_media_text_sections', 'settings.alternate_start'], $grid->sharedSettingsFields);
     $this->assertSame([], $card->translatableFields);
     $this->assertSame(['card_header', 'card_body', 'card_footer'], $card->allowedChildTypeSlugs);
     $this->assertSame('clear', $card->currentContractStatus);
