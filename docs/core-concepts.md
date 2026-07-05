@@ -159,7 +159,7 @@ Use `Container` for width, `Cluster` for horizontal distribution, and `Stack` fo
 
 This keeps header composition explicit, reusable, and aligned with WebBlocks UI instead of duplicating a CMS-only navbar design surface.
 
-This keeps content ownership clear across multisite, localization, revisions, and public rendering.
+This keeps content ownership clear across multisite, localization, revisions, and public rendering. Public page rendering uses the resolved page translation locale for the document `<html lang>` attribute, so a German-only site whose default locale is `de` renders German language metadata even when Laravel's app fallback locale is still `en`.
 
 ## Search
 

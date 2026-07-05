@@ -45,6 +45,7 @@ class PublicPagePresenter
       'headPageAssets' => $this->pageAssetRenderer->headAssetsFor($page),
       'bodyEndPageAssets' => $this->pageAssetRenderer->bodyEndAssetsFor($page),
       'publicMeta' => $this->publicMeta($page),
+      'publicLocaleCode' => $page->currentTranslation?->locale?->code,
       'publicBodyClass' => collect([
         'wb-public-body',
         $this->pageBodyClass($page),

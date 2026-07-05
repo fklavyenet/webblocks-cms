@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', $publicLocaleCode ?? app()->getLocale()) }}">
     @php
         use WebBlocks\Cms\Support\Blocks\PublicBodyEndRegistry;
         use WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry;

@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.246
+
+- Bumped CMS to `1.32.246`.
+- Render public page `<html lang>` from the page translation locale instead of the Laravel app fallback locale.
+
 ## 1.32.245
 
 - Bumped CMS to `1.32.245`.

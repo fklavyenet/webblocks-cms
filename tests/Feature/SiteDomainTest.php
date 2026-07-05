@@ -35,6 +35,23 @@ class SiteDomainTest extends TestCase
   }
 
   #[Test]
+  public function public_page_html_lang_uses_the_rendered_page_locale(): void
+  {
+    [, $page, $locale] = $this->seedPublicSiteWithDomain('primary.example.test');
+    $locale->update([
+      'code' => 'de',
+      'name' => 'German',
+    ]);
+    $page->defaultTranslation()?->update(['name' => 'Ausstellungen']);
+
+    $response = $this->get('http://primary.example.test/about');
+
+    $response->assertOk();
+    $response->assertSee('<html lang="de">', false);
+    $response->assertSee('Ausstellungen');
+  }
+
+  #[Test]
   public function resolving_a_cms_site_by_alias_domain_works(): void
   {
     [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
