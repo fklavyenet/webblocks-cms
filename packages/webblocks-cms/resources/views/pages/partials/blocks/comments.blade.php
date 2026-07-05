@@ -1,6 +1,8 @@
 @php
+    $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $localeCode = $block->renderLocaleCode();
     $sortOrder = $block->setting('sort_order', 'newest') === 'oldest' ? 'oldest' : 'newest';
-    $tableReady = \Illuminate\Support\Facades\Schema::hasTable('comment_entries');
+    $tableReady = \Illuminate\Support\Facades\Schema::hasTable('wbcms_comment_entries');
     $comments = collect();
     if ($tableReady) {
         $commentsQuery = \WebBlocks\Cms\Models\CommentEntry::query()
@@ -27,7 +29,7 @@
 
         @if (! $tableReady)
             <div class="wb-alert wb-alert-warning">
-                <div>Comments are temporarily unavailable.</div>
+                <div>{{ $translator->get('blocks.comments.unavailable', $localeCode) }}</div>
             </div>
         @endif
 
@@ -41,7 +43,7 @@
                         <p>{{ $comment->body }}</p>
                     </article>
                 @empty
-                    <div class="wb-text-sm wb-text-muted">No approved comments yet.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $translator->get('blocks.comments.no_approved', $localeCode) }}</div>
                 @endforelse
             </div>
         @endif
@@ -50,7 +52,7 @@
             @if ($hasTargetedErrors)
                 <div class="wb-alert wb-alert-danger">
                     <div>
-                        <div class="wb-alert-title">Please review the comment</div>
+                        <div class="wb-alert-title">{{ $translator->get('blocks.comments.review_title', $localeCode) }}</div>
                         <div>{{ $errors->first() }}</div>
                     </div>
                 </div>
@@ -65,28 +67,28 @@
                 <input type="hidden" name="_form_check_name" value="{{ $formCheck->signedFieldName($block) }}">
 
                 <div class="wb-form-check" inert aria-hidden="true">
-                    <label for="comment-form-check-{{ $block->id }}">Leave this field empty</label>
+                    <label for="comment-form-check-{{ $block->id }}">{{ $translator->get('blocks.comments.honeypot_label', $localeCode) }}</label>
                     <input id="comment-form-check-{{ $block->id }}" type="text" name="{{ $formCheckName }}" tabindex="-1" autocomplete="off">
                 </div>
 
                 <div class="wb-stack wb-gap-1">
-                    <label for="comment-author-{{ $block->id }}">Name</label>
+                    <label for="comment-author-{{ $block->id }}">{{ $translator->get('blocks.comments.name_label', $localeCode) }}</label>
                     <input id="comment-author-{{ $block->id }}" name="author_name" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('author_name') : '' }}" maxlength="80">
                 </div>
 
                 <div class="wb-stack wb-gap-1">
-                    <label for="comment-body-{{ $block->id }}">Comment</label>
+                    <label for="comment-body-{{ $block->id }}">{{ $translator->get('blocks.comments.body_label', $localeCode) }}</label>
                     <textarea id="comment-body-{{ $block->id }}" name="body" class="wb-textarea" rows="5" maxlength="1200" required>{{ old('block_id') == $block->id ? old('body') : '' }}</textarea>
                 </div>
 
                 <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                    <span class="wb-text-sm wb-text-muted">Comments are reviewed before they appear.</span>
-                    <button type="submit" class="wb-btn wb-btn-primary">Submit comment</button>
+                    <span class="wb-text-sm wb-text-muted">{{ $translator->get('blocks.comments.helper', $localeCode) }}</span>
+                    <button type="submit" class="wb-btn wb-btn-primary">{{ $translator->get('blocks.comments.submit', $localeCode) }}</button>
                 </div>
             </form>
         @elseif ($tableReady)
             <div class="wb-alert wb-alert-info">
-                <div>New comments are closed.</div>
+                <div>{{ $translator->get('blocks.comments.closed', $localeCode) }}</div>
             </div>
         @endif
     </div>

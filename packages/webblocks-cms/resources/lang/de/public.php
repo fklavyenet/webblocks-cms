@@ -18,4 +18,18 @@ return [
     'unavailable' => 'Die Suche ist voruebergehend nicht verfuegbar. Sie koennen weiterhin die Suchseite verwenden.',
     'untitled' => 'Ohne Titel',
   ],
+  'preview' => [
+    'title' => 'Vorschaumodus',
+    'body' => 'diese Seite ist erst oeffentlich, wenn sie veroeffentlicht ist.',
+  ],
+  'toast' => [
+    'contact_message_sent' => 'Nachricht gesendet',
+    'dismiss_message' => 'Nachricht schliessen',
+  ],
+  'engagement' => [
+    'comments_unavailable' => 'Kommentare sind voruebergehend nicht verfuegbar.',
+    'comment_submitted' => 'Danke. Ihr Kommentar wird geprueft, bevor er erscheint.',
+    'ratings_unavailable' => 'Bewertungen sind voruebergehend nicht verfuegbar.',
+    'rating_submitted' => 'Danke fuer Ihre Bewertung.',
+  ],
 ];

@@ -14,6 +14,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Add per-user admin panel language preferences on the Profile screen, with system admin language fallback.
 - Make public Search UI and Search Form defaults resolve copy from the current public locale.
 - Make Contact Form default visitor labels resolve from the block translation catalog.
+- Make public Comments and Rating system block copy and engagement success states resolve from the current public locale.
 
 ## 1.32.246
 

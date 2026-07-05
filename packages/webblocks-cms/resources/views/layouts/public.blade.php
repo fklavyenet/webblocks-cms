@@ -6,8 +6,11 @@
         use WebBlocks\Cms\Support\Plugins\PluginPublicAsset;
         use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
         use WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver;
+        use WebBlocks\Cms\Support\Translations\CmsTranslator;
         use WebBlocks\Cms\Support\WebBlocks;
 
+        $publicTranslator = app(CmsTranslator::class);
+        $publicText = static fn (string $key) => $publicTranslator->public($key, $publicLocaleCode ?? app()->getLocale());
         $cmsPublicCssPath = public_path('cms/css/public.css');
         $publicJsAssets = [
             'public-search-modal' => public_path('cms/js/public/public-search-modal.js'),
@@ -108,7 +111,7 @@
     <body class="{{ $publicBodyClass ?? 'wb-public-body' }}" data-wb-public-theme="{{ $publicThemePreset }}">
         @if ($previewMode ?? false)
             <div class="wb-alert wb-alert-warning wb-m-0" role="status">
-                <strong>Preview mode</strong> — this page is not public unless it is published.
+                <strong>{{ $publicText('preview.title') }}</strong> - {{ $publicText('preview.body') }}
             </div>
         @endif
 
@@ -185,10 +188,10 @@
                 @if (session('contact_form_success_message'))
                     <div class="wb-toast wb-toast-success" role="status" aria-live="polite">
                         <div class="wb-toast-body">
-                            <strong class="wb-toast-title">Message sent</strong>
+                            <strong class="wb-toast-title">{{ $publicText('toast.contact_message_sent') }}</strong>
                             <span>{{ session('contact_form_success_message') }}</span>
                         </div>
-                        <button type="button" class="wb-toast-close" aria-label="Dismiss message" data-wb-dismiss="toast"></button>
+                        <button type="button" class="wb-toast-close" aria-label="{{ $publicText('toast.dismiss_message') }}" data-wb-dismiss="toast"></button>
                     </div>
                 @endif
             </div>

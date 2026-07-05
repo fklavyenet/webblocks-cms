@@ -18,4 +18,18 @@ return [
     'unavailable' => 'Search is temporarily unavailable. You can still use the search page.',
     'untitled' => 'Untitled',
   ],
+  'preview' => [
+    'title' => 'Preview mode',
+    'body' => 'this page is not public unless it is published.',
+  ],
+  'toast' => [
+    'contact_message_sent' => 'Message sent',
+    'dismiss_message' => 'Dismiss message',
+  ],
+  'engagement' => [
+    'comments_unavailable' => 'Comments are temporarily unavailable.',
+    'comment_submitted' => 'Thanks. Your comment will be reviewed before it appears.',
+    'ratings_unavailable' => 'Ratings are temporarily unavailable.',
+    'rating_submitted' => 'Thanks for your rating.',
+  ],
 ];

@@ -109,6 +109,6 @@ The first file-based implementation includes:
 - `AdminLocaleResolver`, backed by user-level `users.admin_locale` preferences with install-wide `admin.locale` fallback.
 - Admin shell/sidebar/topbar translation for high-visibility navigation and account/theme actions.
 - Profile screen language preference for per-user admin panel language.
-- Public Search modal, public Search page, header Search action, Search Form system defaults, and Contact Form default visitor labels.
+- Public Search modal, public Search page, header Search action, Search Form system defaults, Contact Form default visitor labels, and Comments/Rating engagement system copy.
 
 The admin locale is intentionally separate from `system.default_locale`; changing an admin panel language preference does not change public site routing or page content language.

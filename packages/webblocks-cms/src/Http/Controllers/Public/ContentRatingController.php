@@ -10,9 +10,16 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\ContentRating;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Engagement\EngagementVisitor;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
+use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 
 class ContentRatingController extends Controller
 {
+  public function __construct(
+    private readonly CmsTranslator $translator,
+    private readonly PublicLocaleContext $localeContext,
+  ) {}
+
   public function store(ContentRatingRequest $request): RedirectResponse
   {
     $payload = $request->payload();
@@ -28,11 +35,12 @@ class ContentRatingController extends Controller
 
     $redirects = app(ContactFormRedirects::class);
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $block->page?->publicUrl() ?: url('/'));
+    $localeCode = $this->localeContext->forBlockSource($block, $payload['source_url']);
 
     if (! Schema::hasTable('wbcms_content_ratings')) {
       return redirect($sourceUrl)
         ->with('rating_success_block_id', $block->id)
-        ->with('rating_success_message', 'Ratings are temporarily unavailable.');
+        ->with('rating_success_message', $this->translator->public('engagement.ratings_unavailable', $localeCode));
     }
 
     $visitor = app(EngagementVisitor::class);
@@ -63,6 +71,6 @@ class ContentRatingController extends Controller
 
     return redirect($sourceUrl)
       ->with('rating_success_block_id', $block->id)
-      ->with('rating_success_message', 'Thanks for your rating.');
+      ->with('rating_success_message', $this->translator->public('engagement.rating_submitted', $localeCode));
   }
 }

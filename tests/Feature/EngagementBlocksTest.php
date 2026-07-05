@@ -108,7 +108,7 @@ class EngagementBlocksTest extends TestCase
   {
     $this->createEngagementPage();
 
-    Schema::dropIfExists('content_ratings');
+    Schema::dropIfExists('wbcms_content_ratings');
 
     $this->get('/games/test-game')
       ->assertOk()
@@ -120,11 +120,55 @@ class EngagementBlocksTest extends TestCase
   {
     $this->createEngagementPage();
 
-    Schema::dropIfExists('comment_entries');
+    Schema::dropIfExists('wbcms_comment_entries');
 
     $this->get('/games/test-game')
       ->assertOk()
       ->assertSee('Comments are temporarily unavailable.');
+  }
+
+  #[Test]
+  public function public_engagement_blocks_use_current_public_locale_copy(): void
+  {
+    [$page, $ratingBlock, $commentsBlock] = $this->createEngagementPage();
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $turkish = Locale::query()->create([
+      'code' => 'tr',
+      'name' => 'Turkish',
+      'is_default' => false,
+      'is_enabled' => true,
+    ]);
+    $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+    PageTranslation::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'locale_id' => $turkish->id,
+      'name' => 'Test Oyun',
+      'slug' => 'test-oyun',
+      'path' => '/test-oyun',
+    ]);
+
+    $this->get('/tr/test-oyun')
+      ->assertOk()
+      ->assertSee('Bu icerigi puanla')
+      ->assertSee('Henuz puan yok.')
+      ->assertSee('Yorum gonder')
+      ->assertSee('Henuz onaylanmis yorum yok.');
+
+    $this->post(route('content-ratings.store'), [
+      'block_id' => $ratingBlock->id,
+      'page_id' => $page->id,
+      'source_url' => '/tr/test-oyun',
+      'rating_value' => 5,
+    ])->assertRedirect('/tr/test-oyun')
+      ->assertSessionHas('rating_success_message', 'Puaniniz icin tesekkurler.');
+
+    $this->post(route('comment-entries.store'), $this->commentPayload($page, $commentsBlock, [
+      'source_url' => '/tr/test-oyun',
+      'body' => 'Guzel oyun.',
+    ]))->assertRedirect('/tr/test-oyun')
+      ->assertSessionHas('comment_success_message', 'Tesekkurler. Yorumunuz gorunmeden once incelenecek.');
   }
 
   #[Test]
@@ -135,8 +179,8 @@ class EngagementBlocksTest extends TestCase
       'is_active' => true,
     ]);
 
-    Schema::dropIfExists('comment_entries');
-    Schema::dropIfExists('content_ratings');
+    Schema::dropIfExists('wbcms_comment_entries');
+    Schema::dropIfExists('wbcms_content_ratings');
 
     $this->actingAs($admin)
       ->get(route('admin.engagement.comments.index'))

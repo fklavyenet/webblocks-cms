@@ -11,9 +11,16 @@ use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Engagement\CommentSpamScorer;
 use WebBlocks\Cms\Support\Engagement\EngagementVisitor;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
+use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 
 class CommentEntryController extends Controller
 {
+  public function __construct(
+    private readonly CmsTranslator $translator,
+    private readonly PublicLocaleContext $localeContext,
+  ) {}
+
   public function store(CommentEntryRequest $request): RedirectResponse
   {
     $payload = $request->payload();
@@ -30,11 +37,12 @@ class CommentEntryController extends Controller
 
     $redirects = app(ContactFormRedirects::class);
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $block->page?->publicUrl() ?: url('/'));
+    $localeCode = $this->localeContext->forBlockSource($block, $payload['source_url']);
 
     if (! Schema::hasTable('wbcms_comment_entries')) {
       return redirect($sourceUrl)
         ->with('comment_success_block_id', $block->id)
-        ->with('comment_success_message', 'Comments are temporarily unavailable.');
+        ->with('comment_success_message', $this->translator->public('engagement.comments_unavailable', $localeCode));
     }
 
     $minimumSubmitSeconds = (int) config('contact.minimum_submit_seconds', 3);
@@ -42,7 +50,7 @@ class CommentEntryController extends Controller
     if ($payload['form_check_filled'] || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
       return redirect($sourceUrl)
         ->with('comment_success_block_id', $block->id)
-        ->with('comment_success_message', 'Thanks. Your comment will be reviewed before it appears.');
+        ->with('comment_success_message', $this->translator->public('engagement.comment_submitted', $localeCode));
     }
 
     $visitor = app(EngagementVisitor::class);
@@ -67,6 +75,6 @@ class CommentEntryController extends Controller
 
     return redirect($sourceUrl)
       ->with('comment_success_block_id', $block->id)
-      ->with('comment_success_message', 'Thanks. Your comment will be reviewed before it appears.');
+      ->with('comment_success_message', $this->translator->public('engagement.comment_submitted', $localeCode));
   }
 }

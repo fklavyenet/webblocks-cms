@@ -18,4 +18,18 @@ return [
     'unavailable' => 'Arama gecici olarak kullanilamiyor. Arama sayfasini kullanmaya devam edebilirsiniz.',
     'untitled' => 'Basliksiz',
   ],
+  'preview' => [
+    'title' => 'Onizleme modu',
+    'body' => 'bu sayfa yayinlanmadikca herkese acik degildir.',
+  ],
+  'toast' => [
+    'contact_message_sent' => 'Mesaj gonderildi',
+    'dismiss_message' => 'Mesaji kapat',
+  ],
+  'engagement' => [
+    'comments_unavailable' => 'Yorumlar gecici olarak kullanilamiyor.',
+    'comment_submitted' => 'Tesekkurler. Yorumunuz gorunmeden once incelenecek.',
+    'ratings_unavailable' => 'Puanlamalar gecici olarak kullanilamiyor.',
+    'rating_submitted' => 'Puaniniz icin tesekkurler.',
+  ],
 ];
