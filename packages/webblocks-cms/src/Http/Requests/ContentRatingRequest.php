@@ -3,7 +3,10 @@
 namespace WebBlocks\Cms\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
+use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 
 class ContentRatingRequest extends FormRequest
 {
@@ -22,6 +25,16 @@ class ContentRatingRequest extends FormRequest
     ];
   }
 
+  public function messages(): array
+  {
+    return [
+      'rating_value.required' => $this->validationText('rating.required'),
+      'rating_value.integer' => $this->validationText('rating.integer'),
+      'rating_value.min' => $this->validationText('rating.min'),
+      'rating_value.max' => $this->validationText('rating.max'),
+    ];
+  }
+
   public function payload(): array
   {
     $data = $this->validated();
@@ -36,6 +49,14 @@ class ContentRatingRequest extends FormRequest
 
   protected function getRedirectUrl(): string
   {
-    return app(ContactFormRedirects::class)->target($this->input('source_url'), $this->input('block_id'), url('/'));
+    return app(ContactFormRedirects::class)->baseUrl($this->input('source_url'), url('/')).'#rating-'.((int) $this->input('block_id'));
+  }
+
+  private function validationText(string $key): string
+  {
+    $block = Block::query()->with(['page.translations.locale'])->find($this->input('block_id'));
+    $locale = $block ? app(PublicLocaleContext::class)->forBlockSource($block, $this->input('source_url')) : app()->getLocale();
+
+    return app(CmsTranslator::class)->get('validation.'.$key, $locale);
   }
 }

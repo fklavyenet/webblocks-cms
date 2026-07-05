@@ -169,5 +169,7 @@ return [
     'rating' => 'Puan',
     'ratings_pagination' => 'Puanlama sayfalari',
     'comments_pagination' => 'Yorum sayfalari',
+    'comment_status_updated' => 'Yorum durumu guncellendi.',
+    'comment_deleted' => 'Yorum silindi.',
   ],
 ];

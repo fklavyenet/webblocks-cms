@@ -169,5 +169,7 @@ return [
     'rating' => 'Rating',
     'ratings_pagination' => 'Ratings pagination',
     'comments_pagination' => 'Comments pagination',
+    'comment_status_updated' => 'Comment status updated.',
+    'comment_deleted' => 'Comment deleted.',
   ],
 ];

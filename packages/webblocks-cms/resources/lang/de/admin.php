@@ -169,5 +169,7 @@ return [
     'rating' => 'Bewertung',
     'ratings_pagination' => 'Bewertungen-Pagination',
     'comments_pagination' => 'Kommentare-Pagination',
+    'comment_status_updated' => 'Kommentarstatus aktualisiert.',
+    'comment_deleted' => 'Kommentar geloescht.',
   ],
 ];

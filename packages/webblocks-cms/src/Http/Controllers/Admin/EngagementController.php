@@ -14,9 +14,16 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Models\ContentRating;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class EngagementController extends Controller
 {
+  public function __construct(
+    private readonly AdminLocaleResolver $localeResolver,
+    private readonly CmsTranslator $translator,
+  ) {}
+
   public function comments(Request $request): View
   {
     if (! Schema::hasTable('wbcms_comment_entries')) {
@@ -106,7 +113,7 @@ class EngagementController extends Controller
       'approved_by_user_id' => $validated['status'] === 'approved' ? $request->user()?->id : null,
     ]);
 
-    return redirect()->back()->with('status', 'Comment status updated.');
+    return redirect()->back()->with('status', $this->adminText('comment_status_updated'));
   }
 
   public function destroyComment(Request $request, CommentEntry $commentEntry): RedirectResponse
@@ -114,7 +121,12 @@ class EngagementController extends Controller
     $this->abortUnlessCommentAccess($request, $commentEntry);
     $commentEntry->delete();
 
-    return redirect()->route('admin.engagement.comments.index')->with('status', 'Comment deleted.');
+    return redirect()->route('admin.engagement.comments.index')->with('status', $this->adminText('comment_deleted'));
+  }
+
+  private function adminText(string $key): string
+  {
+    return $this->translator->admin('engagement.'.$key, $this->localeResolver->locale());
   }
 
   private function scopeCommentsForUser(Builder $query, User $user): Builder

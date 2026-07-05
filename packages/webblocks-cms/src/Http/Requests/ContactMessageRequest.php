@@ -3,8 +3,11 @@
 namespace WebBlocks\Cms\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\Contact\ContactFormCheck;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
+use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 
 class ContactMessageRequest extends FormRequest
 {
@@ -28,6 +31,16 @@ class ContactMessageRequest extends FormRequest
     ];
   }
 
+  public function messages(): array
+  {
+    return [
+      'name.required' => $this->validationText('contact_form.name_required'),
+      'email.required' => $this->validationText('contact_form.email_required'),
+      'email.email' => $this->validationText('contact_form.email_valid'),
+      'message.required' => $this->validationText('contact_form.message_required'),
+    ];
+  }
+
   public function payload(): array
   {
     $data = $this->validated();
@@ -48,5 +61,13 @@ class ContactMessageRequest extends FormRequest
   protected function getRedirectUrl(): string
   {
     return app(ContactFormRedirects::class)->target($this->input('source_url'), $this->input('block_id'), url('/'));
+  }
+
+  private function validationText(string $key): string
+  {
+    $block = Block::query()->with(['page.translations.locale'])->find($this->input('block_id'));
+    $locale = $block ? app(PublicLocaleContext::class)->forBlockSource($block, $this->input('source_url')) : app()->getLocale();
+
+    return app(CmsTranslator::class)->get('validation.'.$key, $locale);
   }
 }

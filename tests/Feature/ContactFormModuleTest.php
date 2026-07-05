@@ -283,11 +283,14 @@ class ContactFormModuleTest extends TestCase
     ]));
 
     $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
-    $response->assertSessionHasErrors(['name', 'message']);
+    $response->assertSessionHasErrors([
+      'name' => 'Enter your name.',
+      'message' => 'Enter a message.',
+    ]);
 
     $viewErrors = new ViewErrorBag;
     $viewErrors->put('default', new MessageBag([
-      'name' => ['The name field is required.'],
+      'name' => ['Enter your name.'],
     ]));
 
     session()->flashInput(['block_id' => (string) $block->id]);

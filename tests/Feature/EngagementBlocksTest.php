@@ -171,6 +171,36 @@ class EngagementBlocksTest extends TestCase
       'body' => 'Guzel oyun.',
     ]))->assertRedirect('/tr/test-oyun')
       ->assertSessionHas('comment_success_message', 'Tesekkurler. Yorumunuz gorunmeden once incelenecek.');
+
+    $commentValidationResponse = $this->from('/tr/test-oyun')
+      ->post(route('comment-entries.store'), $this->commentPayload($page, $commentsBlock, [
+        'source_url' => '/tr/test-oyun',
+        'body' => '',
+      ]));
+
+    $this->assertSame(302, $commentValidationResponse->baseResponse->getStatusCode());
+    $this->assertStringEndsWith('/tr/test-oyun#comments-'.$commentsBlock->id, (string) $commentValidationResponse->baseResponse->headers->get('Location'));
+    $commentErrors = $commentValidationResponse->baseResponse->getSession()->get('errors');
+    $commentMessage = is_array($commentErrors)
+      ? (data_get($commentErrors, 'body.0') ?? data_get($commentErrors, 'default.messages.body.0'))
+      : $commentErrors->first('body');
+    $this->assertSame('Bir yorum girin.', $commentMessage);
+
+    $ratingValidationResponse = $this->from('/tr/test-oyun')
+      ->post(route('content-ratings.store'), [
+        'block_id' => $ratingBlock->id,
+        'page_id' => $page->id,
+        'source_url' => '/tr/test-oyun',
+        'rating_value' => 9,
+      ]);
+
+    $this->assertSame(302, $ratingValidationResponse->baseResponse->getStatusCode());
+    $this->assertStringEndsWith('/tr/test-oyun#rating-'.$ratingBlock->id, (string) $ratingValidationResponse->baseResponse->headers->get('Location'));
+    $ratingErrors = $ratingValidationResponse->baseResponse->getSession()->get('errors');
+    $ratingMessage = is_array($ratingErrors)
+      ? (data_get($ratingErrors, 'rating_value.0') ?? data_get($ratingErrors, 'default.messages.rating_value.0'))
+      : $ratingErrors->first('rating_value');
+    $this->assertSame('En fazla 5 yildiz secin.', $ratingMessage);
   }
 
   #[Test]
@@ -220,6 +250,25 @@ class EngagementBlocksTest extends TestCase
       ->assertOk()
       ->assertSee('Puanlamalar')
       ->assertSee('Puanlama bulunamadi');
+
+    $comment = CommentEntry::query()->create([
+      'site_id' => null,
+      'page_id' => null,
+      'block_id' => null,
+      'author_name' => 'Oyuncu',
+      'body' => 'Merhaba',
+      'status' => 'pending',
+      'source_url' => '/test-game',
+      'visitor_hash' => 'visitor',
+      'ip_hash' => 'ip',
+      'user_agent' => 'Test',
+      'spam_score' => 0,
+    ]);
+
+    $this->actingAs($admin)
+      ->patch(route('admin.engagement.comments.status', $comment), ['status' => 'approved'])
+      ->assertRedirect()
+      ->assertSessionHas('status', 'Yorum durumu guncellendi.');
   }
 
   private function createEngagementPage(): array
