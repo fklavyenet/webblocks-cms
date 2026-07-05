@@ -29,7 +29,9 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class PageBuilderExperienceTest extends TestCase
 {
@@ -949,7 +951,7 @@ class PageBuilderExperienceTest extends TestCase
 
     $user = User::factory()->superAdmin()->create();
     $main = $this->slotType('main', 'Main', 1);
-    [$page, $pageSlot] = $this->pageWithSlot($main);
+    [$page] = $this->pageWithSlot($main);
     [$otherPage, $otherSlot] = $this->pageWithSlot($main, 'Docs', 'docs');
 
     $modalResponse = $this->actingAs($user)->get(route('admin.pages.edit', [
@@ -2261,6 +2263,53 @@ class PageBuilderExperienceTest extends TestCase
     $followUp->assertSee('Updated intro copy.');
     $followUp->assertSee('name="submit_label"', false);
     $followUp->assertSee('name="success_message"', false);
+  }
+
+  #[Test]
+  public function system_block_editor_uses_configured_admin_locale_copy(): void
+  {
+    $this->seedFoundation();
+
+    SystemSetting::query()->updateOrCreate(
+      ['key' => SystemSettings::ADMIN_LOCALE],
+      ['value' => 'tr'],
+    );
+
+    $user = User::factory()->superAdmin()->create();
+    $main = $this->slotType('main', 'Main', 1);
+    [$page, $pageSlot] = $this->pageWithSlot($main);
+    $commentsType = BlockType::query()->where('slug', 'comments')->firstOrFail();
+    $ratingType = BlockType::query()->where('slug', 'rating')->firstOrFail();
+
+    $pickerResponse = $this->actingAs($user)->get(route('admin.blocks.create'));
+
+    $pickerResponse->assertOk();
+    $pickerResponse->assertSee('Blok Ekle');
+    $pickerResponse->assertSee('Sistem Bloklari');
+    $pickerResponse->assertSee('Blok turu secilmedi');
+    $pickerResponse->assertDontSee('No block type selected');
+
+    $commentsResponse = $this->actingAs($user)->get(route('admin.blocks.create', [
+      'block_type_id' => $commentsType->id,
+    ]));
+
+    $commentsResponse->assertOk();
+    $commentsResponse->assertSee('Sistem Yorumlari');
+    $commentsResponse->assertSee('Yeni yorumlari kabul et');
+    $commentsResponse->assertSee('Yazar adlarini gizle');
+    $commentsResponse->assertDontSee('System Comments');
+    $commentsResponse->assertDontSee('Accept new comments');
+
+    $ratingResponse = $this->actingAs($user)->get(route('admin.blocks.create', [
+      'block_type_id' => $ratingType->id,
+    ]));
+
+    $ratingResponse->assertOk();
+    $ratingResponse->assertSee('Sistem Puanlamasi');
+    $ratingResponse->assertSee('Ziyaretciler puanlarini guncelleyebilsin');
+    $ratingResponse->assertSee('Ortalama ve sayiyi goster');
+    $ratingResponse->assertDontSee('System Rating');
+    $ratingResponse->assertDontSee('Allow visitors to update their rating');
   }
 
   #[Test]

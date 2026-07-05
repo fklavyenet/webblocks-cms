@@ -111,6 +111,7 @@ The first file-based implementation includes:
 - Dashboard and Engagement admin screens for high-visibility operator workflows.
 - Auth and password reset screens, auth validation feedback, and CMS password reset email copy.
 - Contact Form, Comments, and Rating validation feedback, including block-specific redirect anchors for public correction flows.
+- Admin block type picker and Comments/Rating system block editor settings.
 - Profile screen language preference for per-user admin panel language.
 - Public Search modal, public Search page, header Search action, Search Form system defaults, Contact Form default visitor labels, and Comments/Rating engagement system copy.
 

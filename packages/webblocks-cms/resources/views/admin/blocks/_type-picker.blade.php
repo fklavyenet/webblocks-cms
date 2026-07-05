@@ -1,4 +1,7 @@
 @php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.blocks.'.$key, $adminLocale, $replace);
     $search = strtolower(trim((string) request('block_type_search')));
     $availableBlockTypes = $blockTypes
         ->filter(function ($blockType) use ($search) {
@@ -14,7 +17,7 @@
         ->sortBy([fn ($blockType) => $blockType->sort_order, fn ($blockType) => $blockType->name])
         ->values();
 
-    $groups = $availableBlockTypes->groupBy(fn ($blockType) => $blockType->is_system ? 'System Blocks' : 'Content Blocks');
+    $groups = $availableBlockTypes->groupBy(fn ($blockType) => $blockType->is_system ? 'system' : 'content');
 
     $labelMap = [
         'callout' => 'CTA',
@@ -27,7 +30,7 @@
 
 <div class="wb-card wb-card-muted">
     <div class="wb-card-header">
-        <strong>Add a Block</strong>
+        <strong>{{ $adminText('picker.title') }}</strong>
     </div>
     <div class="wb-card-body">
         <form method="GET" action="{{ $action }}" class="wb-stack wb-gap-3">
@@ -40,17 +43,17 @@
             @endif
 
             <div class="wb-stack wb-gap-1">
-                <label for="block_type_search">Search Blocks</label>
-                <input id="block_type_search" name="block_type_search" class="wb-input" type="text" value="{{ request('block_type_search') }}" placeholder="Search by name or intent">
+                <label for="block_type_search">{{ $adminText('picker.search_label') }}</label>
+                <input id="block_type_search" name="block_type_search" class="wb-input" type="text" value="{{ request('block_type_search') }}" placeholder="{{ $adminText('picker.search_placeholder') }}">
             </div>
 
             <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-1">
-                    <label for="block_type_id_picker">Choose Block Type</label>
+                    <label for="block_type_id_picker">{{ $adminText('picker.choose_label') }}</label>
                     <select id="block_type_id_picker" name="block_type_id" class="wb-select" required>
-                        <option value="">Choose block type</option>
+                        <option value="">{{ $adminText('picker.choose_placeholder') }}</option>
                         @foreach ($groups as $category => $items)
-                            <optgroup label="{{ $category }}">
+                            <optgroup label="{{ $adminText('picker.groups.'.$category) }}">
                                 @foreach ($items as $blockType)
                                     <option value="{{ $blockType->id }}" @selected((string) ($selectedBlockType?->id) === (string) $blockType->id)>
                                         {{ $labelMap[$blockType->slug] ?? $blockType->name }}
@@ -62,15 +65,15 @@
                 </div>
 
                 <div class="wb-stack wb-gap-1">
-                    <label>Selection</label>
+                    <label>{{ $adminText('picker.selection') }}</label>
                     <div class="wb-card">
                         <div class="wb-card-body">
                             @if ($selectedBlockType)
                                 <strong>{{ $labelMap[$selectedBlockType->slug] ?? $selectedBlockType->name }}</strong>
-                                <div>{{ $selectedBlockType->description ?: ($selectedBlockType->is_system ? 'This system block renders application data instead of editorial content.' : 'This content block stores editorial fields directly in the block.') }}</div>
+                                <div>{{ $selectedBlockType->description ?: ($selectedBlockType->is_system ? $adminText('picker.system_fallback') : $adminText('picker.content_fallback')) }}</div>
                             @else
-                                <strong>No block type selected</strong>
-                                <div>Choose a content block for authored fields or a system block for application-driven output.</div>
+                                <strong>{{ $adminText('picker.none_selected') }}</strong>
+                                <div>{{ $adminText('picker.none_help') }}</div>
                             @endif
                         </div>
                     </div>
@@ -86,7 +89,7 @@
                     @endif
                 </div>
 
-                <button type="submit" class="wb-btn wb-btn-primary">Open Block Form</button>
+                <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('picker.open_form') }}</button>
             </div>
         </form>
     </div>

@@ -19,6 +19,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Make Dashboard and Engagement admin screens resolve visible interface copy from the admin locale.
 - Make Contact Form, Comments, and Rating validation feedback resolve from the active public locale and keep engagement validation redirects on the relevant block.
 - Make Engagement admin comment status flash messages resolve from the admin locale.
+- Make the admin block type picker and Comments/Rating system block editor settings resolve copy from the admin locale.
 
 ## 1.32.246
 
