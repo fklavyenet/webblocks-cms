@@ -64,6 +64,40 @@ class CmsAuthLinkTest extends TestCase
     $response->assertDontSee('href="http://localhost/login"', false);
   }
 
+  public function test_cms_auth_screens_use_system_admin_locale_copy(): void
+  {
+    SystemSetting::query()->updateOrCreate(
+      ['key' => SystemSettings::ADMIN_LOCALE],
+      ['value' => 'tr'],
+    );
+    $user = User::factory()->create(['email' => 'editor@example.com']);
+
+    $this->get('/webadmin/login')
+      ->assertOk()
+      ->assertSee('Tekrar hos geldiniz')
+      ->assertSee('E-posta adresi')
+      ->assertSee('Sifremi unuttum')
+      ->assertSee('aria-label="Sifreyi goster"', false)
+      ->assertSee('data-password-hide-label="Sifreyi gizle"', false);
+
+    $this->get('/webadmin/forgot-password')
+      ->assertOk()
+      ->assertSee('Sifreyi sifirla')
+      ->assertSee('Sifirlama baglantisi gonder')
+      ->assertSee('Girise don');
+
+    $this->get('/webadmin/reset-password/test-token?email=editor%40example.com')
+      ->assertOk()
+      ->assertSee('Yeni sifre belirle')
+      ->assertSee('Sifreyi onayla')
+      ->assertSee('Sifreyi guncelle');
+
+    $mail = (new CmsResetPassword('test-token', $user->email))->toMail($user);
+
+    $this->assertSame('Sifre Sifirlama Bildirimi', $mail->subject);
+    $this->assertSame('Sifreyi Sifirla', $mail->actionText);
+  }
+
   public function test_cms_forgot_password_sends_prefixed_reset_link(): void
   {
     Notification::fake();

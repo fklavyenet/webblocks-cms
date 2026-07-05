@@ -13,9 +13,16 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class NewPasswordController extends Controller
 {
+  public function __construct(
+    private readonly AdminLocaleResolver $localeResolver,
+    private readonly CmsTranslator $translator,
+  ) {}
+
   public function create(Request $request): View
   {
     return view('webblocks-cms::auth.reset-password', ['request' => $request]);
@@ -45,7 +52,7 @@ class NewPasswordController extends Controller
     );
 
     return $status == Password::PASSWORD_RESET
-      ? redirect()->route('webblocks.auth.login')->with('status', __($status))
+      ? redirect()->route('webblocks.auth.login')->with('status', $this->translator->admin('auth.password_reset', $this->localeResolver->locale()))
       : back()->withInput($request->only('email'))
         ->withErrors(['email' => __($status)]);
   }

@@ -13,13 +13,15 @@ use Illuminate\View\View;
 use Throwable;
 use WebBlocks\Cms\Notifications\Auth\CmsResetPassword;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class PasswordResetLinkController extends Controller
 {
-  private const MAIL_FAILURE_MESSAGE = 'The password reset email could not be sent. Please check CMS Mail settings or contact an administrator.';
-
   public function __construct(
     private readonly CmsMailSettingsResolver $mailSettingsResolver,
+    private readonly AdminLocaleResolver $localeResolver,
+    private readonly CmsTranslator $translator,
   ) {}
 
   public function create(): View
@@ -42,7 +44,7 @@ class PasswordResetLinkController extends Controller
     if (! $user instanceof User || ! $this->userCanReceivePasswordReset($user)) {
       return back()
         ->withInput($request->only('email'))
-        ->with('status', __(Password::RESET_LINK_SENT));
+        ->with('status', $this->authText('reset_link_sent'));
     }
 
     try {
@@ -54,10 +56,15 @@ class PasswordResetLinkController extends Controller
       ]);
 
       return back()->withInput($request->only('email'))
-        ->withErrors(['email' => self::MAIL_FAILURE_MESSAGE]);
+        ->withErrors(['email' => $this->authText('reset_failed')]);
     }
 
-    return back()->with('status', __(Password::RESET_LINK_SENT));
+    return back()->with('status', $this->authText('reset_link_sent'));
+  }
+
+  private function authText(string $key): string
+  {
+    return $this->translator->admin('auth.'.$key, $this->localeResolver->locale());
   }
 
   private function userCanReceivePasswordReset(User $user): bool

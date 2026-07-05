@@ -9,9 +9,16 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class LoginController extends Controller
 {
+  public function __construct(
+    private readonly AdminLocaleResolver $localeResolver,
+    private readonly CmsTranslator $translator,
+  ) {}
+
   public function create(): View
   {
     return view('webblocks-cms::auth.login');
@@ -30,13 +37,13 @@ class LoginController extends Controller
 
     if ($user instanceof User && ! $user->is_active) {
       throw ValidationException::withMessages([
-        'email' => 'This account is inactive. Please contact an administrator.',
+        'email' => $this->translator->admin('auth.inactive_account', $this->localeResolver->locale()),
       ]);
     }
 
     if (! Auth::attempt($credentials, $request->boolean('remember'))) {
       throw ValidationException::withMessages([
-        'email' => 'The provided credentials do not match our records.',
+        'email' => $this->translator->admin('auth.invalid_credentials', $this->localeResolver->locale()),
       ]);
     }
 

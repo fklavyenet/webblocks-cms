@@ -23,7 +23,7 @@ class CmsAuthenticationTest extends TestCase
     $response->assertSee('webblocks-icons.css', false);
     $response->assertSee('webblocks-ui.js', false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.12', false);
+    $response->assertSee('webblocks-ui@'.WebBlocks::UI_VERSION, false);
     $response->assertDontSee('raw.githubusercontent.com/fklavyenet/webblocks-ui', false);
     $response->assertDontSee('@b43f92b', false);
     $response->assertDontSee('webblocks-ui.min.css', false);

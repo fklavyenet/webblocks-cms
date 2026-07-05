@@ -1,13 +1,20 @@
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+    use WebBlocks\Cms\Support\WebBlocks;
+
+    $authLocaleCode = app(AdminLocaleResolver::class)->locale();
+    $authTranslator = app(CmsTranslator::class);
+    $authText = static fn (string $key, array $replace = []) => $authTranslator->admin($key, $authLocaleCode, $replace);
+@endphp
+
 @extends('webblocks-cms::layouts.guest', [
-    'title' => 'Reset Password',
-    'metaDescription' => 'Request a password reset link for your WebBlocks CMS account.',
+    'title' => $authText('auth.reset_title'),
+    'metaDescription' => $authText('auth.reset_meta'),
+    'guestLocaleCode' => $authLocaleCode,
 ])
 
 @section('content')
-    @php
-        use WebBlocks\Cms\Support\WebBlocks;
-    @endphp
-
     <div class="wb-auth-shell wb-auth-split">
         <div class="wb-auth-panel wb-bg-primary">
             <h1 class="wb-auth-panel-title wb-auth-brand">
@@ -23,9 +30,9 @@
                 <div class="wb-auth-header">
                     <h1 class="wb-auth-header-title wb-auth-brand">
                         <x-webblocks-cms::brand-mark class="wb-auth-brand-mark wb-auth-brand-mark-sm wb-auth-brand-mark-on-surface" decorative="true" />
-                        <span>Reset password</span>
+                        <span>{{ $authText('auth.reset_heading') }}</span>
                     </h1>
-                    <p class="wb-auth-header-subtitle">Enter your email address and we will send you a password reset link.</p>
+                    <p class="wb-auth-header-subtitle">{{ $authText('auth.reset_subtitle') }}</p>
                 </div>
 
                 <div class="wb-auth-body wb-stack-4">
@@ -45,19 +52,19 @@
                         @csrf
 
                         <div class="wb-field">
-                            <label for="email" class="wb-label">Email address</label>
+                            <label for="email" class="wb-label">{{ $authText('auth.email') }}</label>
                             <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="wb-input" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
                             @error('email')
                                 <div id="email_error" class="wb-field-error">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <button type="submit" class="wb-btn wb-btn-primary wb-w-full">Send reset link</button>
+                        <button type="submit" class="wb-btn wb-btn-primary wb-w-full">{{ $authText('auth.send_reset_link') }}</button>
                     </form>
                 </div>
 
                 <div class="wb-auth-footer">
-                    <p>Remembered your password? <a href="{{ route('webblocks.auth.login') }}">Back to sign in</a>.</p>
+                    <p>{{ $authText('auth.remembered_password') }} <a href="{{ route('webblocks.auth.login') }}">{{ $authText('auth.back_to_sign_in') }}</a>.</p>
                 </div>
             </div>
         </div>
