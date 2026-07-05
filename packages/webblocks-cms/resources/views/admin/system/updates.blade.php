@@ -128,6 +128,7 @@
       || ! empty($updateStatus['error_message'])
       || ($autoUpdate['allowed'] ?? false) !== true && $state === 'update_available';
     $latestRunModalId = $latestUpdateRun ? 'updateRunDetailsModal-'.$latestUpdateRun->id : null;
+    $updateProgressModalId = 'systemUpdateProgressModal';
   @endphp
 
   @include('webblocks-cms::admin.partials.page-header', [
@@ -606,6 +607,40 @@ Cache clears, update run recording, and installed version persistence</div>
     </section>
   </div>
 
+  @if ($showUpdateAction)
+    <div
+      class="wb-modal"
+      id="{{ $updateProgressModalId }}"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="{{ $updateProgressModalId }}Title"
+      aria-describedby="{{ $updateProgressModalId }}Description"
+      data-webblocks-update-progress-modal
+      hidden
+    >
+      <div class="wb-modal-dialog">
+        <div class="wb-modal-header">
+          <div>
+            <h3 class="wb-modal-title" id="{{ $updateProgressModalId }}Title">Updating WebBlocks CMS</h3>
+            <p class="wb-card-description">
+              {{ $installedVersion ?: 'Current version' }} → {{ $updateStatus['latest_version'] ?? 'latest release' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="wb-modal-body">
+          <div class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
+            <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
+            <div class="wb-stack wb-gap-1">
+              <strong id="{{ $updateProgressModalId }}Description">Applying the published update package...</strong>
+              <span class="wb-text-sm wb-text-muted">Please keep this tab open. The page will continue when the update finishes.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  @endif
+
   @if ($latestUpdateRun)
     <div class="wb-modal" id="{{ $latestRunModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $latestRunModalId }}Title">
       <div class="wb-modal-dialog">
@@ -667,12 +702,25 @@ Cache clears, update run recording, and installed version persistence</div>
 
       var button = form.querySelector('[data-wb-update-submit]');
 
+      if (!button && form.id) {
+        button = document.querySelector('[data-wb-update-submit][form="' + form.id + '"]');
+      }
+
       if (!button || button.disabled) {
         return;
       }
 
       button.disabled = true;
       button.textContent = button.getAttribute('data-busy-label') || 'Updating...';
+
+      var modal = document.querySelector('[data-webblocks-update-progress-modal]');
+
+      if (modal && window.WBModal && typeof window.WBModal.open === 'function') {
+        modal.addEventListener('wb:overlay:close-request', function (closeEvent) {
+          closeEvent.preventDefault();
+        });
+        window.WBModal.open(modal, button);
+      }
     });
   </script>
 @endpush

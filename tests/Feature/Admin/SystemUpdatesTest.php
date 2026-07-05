@@ -155,6 +155,11 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee(WebBlocks::version());
     $response->assertSee('99.0.0');
     $response->assertSee('Update Now');
+    $response->assertSee('data-webblocks-update-progress-modal', false);
+    $response->assertSee('Updating WebBlocks CMS');
+    $response->assertSee(WebBlocks::version().' → 99.0.0');
+    $response->assertSee('wb-spinner-pulse wb-spinner-pulse-lg', false);
+    $response->assertSee('wb:overlay:close-request', false);
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();

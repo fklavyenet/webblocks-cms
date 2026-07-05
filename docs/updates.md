@@ -33,10 +33,6 @@ Updates in WebBlocks CMS are release-based and package-based.
 - Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.
 - A System Update is recorded as successful only after the applied package runtime reports the target version from the canonical `WebBlocks\Cms\Support\WebBlocks` version source. If the applied code still reports an older or unexpected version, the run is recorded as failed and operators should restore the pre-update backup or inspect filesystem/cache state before retrying.
 
-## Advisor-First Release Guidance
-
-Before changing CMS release, update, publish, Publisher, artifact, or migration compatibility behavior, ask WebBlocks Advisor and include the answer as an implementation note in the report. If Advisor does not have the right answer, update the relevant knowledge source or chunk first instead of inventing a one-off workflow.
-
 ## Release Details
 
 The System Updates screen keeps the normal CMS-admin path quiet and action-focused. The main flow is status-first: `Update Status` explains whether an update is available, the running CMS code version is current, the local/source version is newer than the latest published package, the update is incompatible, or the update server response cannot be trusted. The visible summary compares the running CMS code version with the latest published release and avoids repeating install-history values. Stored installed version remains an install-history/update-persistence value and can be inspected in the technical details area, but it is not used to make the install action actionable.
@@ -99,6 +95,8 @@ When an in-app System Update is applied successfully, WebBlocks CMS runs the pos
 Normal System Updates apply published release packages. They do not automatically run core catalog seeding, `block-types:sync-core`, icon sync, slot type repair, page layout slot repair, or broad catalog repair. If a release requires a schema or data transformation, it must be handled as an explicit update migration for that release.
 
 The cache clear steps include Laravel config, view, application cache, and route clears so updated package-owned Blade layouts and helpers are recompiled after file replacement. On live PHP-FPM installs with OPcache configured not to validate timestamps, reload the relevant PHP-FPM service after a successful update so PHP cannot keep serving pre-update package classes from memory.
+
+While the browser request is running, the System Updates screen opens a non-dismissible progress modal that shows the installed-to-target version path and uses the shared WebBlocks UI loading primitive. This first version is intentionally request-state based. Roadmap: expose backend-owned update step state such as package download, backup, install, migrations, cache clear, verification, and finalization so the modal can render real step progress instead of a single indeterminate status.
 
 For source-maintained maintenance checkouts, migration handling keeps the historical root `database/migrations` authority and runs `artisan migrate --force`. This path is selected only when the root Composer manifest has the maintenance-repository WebBlocks CMS autoload authority, including `WebBlocks\\Cms\\ => packages/webblocks-cms/src/`.
 

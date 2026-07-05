@@ -9,6 +9,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.32.241
+
+- Bumped CMS to `1.32.241` and pinned WebBlocks UI to `v2.7.17`.
+- Show a non-dismissible System Updates progress modal with the version path and shared WebBlocks UI spinner when an operator starts or continues an update.
+
 ## 1.32.240
 
 - Bumped CMS to `1.32.240`.
