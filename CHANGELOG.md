@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.33.0
+
+- Bumped CMS to `1.33.0`.
 - Add the first file-based CMS translations layer for admin, public system copy, and block defaults.
 - Add an install-wide admin panel language setting and use it in the admin shell/sidebar/topbar.
 - Add per-user admin panel language preferences on the Profile screen, with system admin language fallback.
