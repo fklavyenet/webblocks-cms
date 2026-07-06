@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.34.1
+
+- Bumped CMS to `1.34.1`.
+- Move System Updates and Backups screen card, body, modal, action, and status copy onto the selected admin locale.
+- Add regression coverage for localized System Updates and Backups admin screen body copy.
+
 ## 1.34.0
 
 - Bumped CMS to `1.34.0`.

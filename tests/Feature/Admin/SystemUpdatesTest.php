@@ -102,6 +102,29 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
+  public function system_updates_page_uses_authenticated_admin_locale_for_screen_copy(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'admin_locale' => 'de',
+    ]);
+
+    app(InstalledVersionStore::class)->persist('0.1.4');
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, WebBlocks::version());
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('<html lang="de">', false);
+    $response->assertSee('System-Updates');
+    $response->assertSee('Update-Status');
+    $response->assertSee('Technische Details und Verlauf');
+    $response->assertSee('Supportbericht herunterladen');
+    $response->assertDontSeeText('Update Status');
+    $response->assertDontSeeText('Technical details and history');
+    $response->assertDontSeeText('Download support report');
+  }
+
+  #[Test]
   public function disabled_client_state_is_honest_when_no_installed_version_has_been_recorded_yet(): void
   {
     $user = User::factory()->superAdmin()->create();

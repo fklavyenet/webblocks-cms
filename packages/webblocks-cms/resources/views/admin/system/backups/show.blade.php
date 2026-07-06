@@ -1,4 +1,24 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Backup Details', 'heading' => 'Backup Details'])
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
+    $backupStatusLabel = static fn (?string $status) => $status ? $adminText('backups.statuses.'.$status) : '-';
+    $restoreStatusLabel = static fn (?string $status) => $status ? $adminText('backups.restore_statuses.'.$status) : '-';
+    $backupContentsLabel = static fn ($backup) => collect([
+        $backup->includes_database ? $adminText('backups.contents.database') : null,
+        $backup->includes_uploads ? $adminText('backups.contents.uploads') : null,
+    ])->filter()->implode(' + ') ?: '-';
+    $restorePartsLabel = static fn ($restoreRun) => collect($restoreRun->restored_parts ?? [])->map(
+        fn (string $part) => $adminText('backups.restore_parts.'.$part)
+    )->implode(' + ') ?: '-';
+    $archiveStatusLabel = static fn ($resolution) => $resolution ? $adminText('backups.archive_statuses.'.$resolution->status) : '';
+    $archiveFeedback = static fn ($resolution) => $resolution ? $adminText('backups.archive_feedback.'.$resolution->status) : $adminText('backups.archive_unavailable');
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('backups.details'), 'heading' => $adminText('backups.details')])
 
 @section('content')
     @php($archiveResolution = $archiveResolution ?? null)
@@ -6,13 +26,13 @@
     @php($canRestore = $canDownload)
     @php($archivePathValue = (string) $backup->archive_path)
     @php($isAbsoluteArchivePath = str_starts_with($archivePathValue, '/') || preg_match('/^[A-Za-z]:[\/\\\\]/', $archivePathValue) === 1)
-    @php($displayArchivePath = $isAbsoluteArchivePath ? '[absolute path hidden]' : ($backup->archive_path ?? '-'))
+    @php($displayArchivePath = $isAbsoluteArchivePath ? $adminText('backups.absolute_path_hidden') : ($backup->archive_path ?? '-'))
     @php($manifest = $inspection?->manifest ?? [])
 
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $backup->archive_filename ?? 'Backup #'.$backup->id,
-        'description' => 'Review backup results, uploaded archive metadata, operational logs, and restore history for this run.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.backups.index').'" class="wb-btn wb-btn-secondary">Back to Backups</a>'.($canDownload ? '<a href="'.route('admin.system.backups.download', $backup).'" class="wb-btn wb-btn-primary">Download</a>' : '').'</div>',
+        'title' => $backup->archive_filename ?? $adminText('backups.backup_number', ['id' => $backup->id]),
+        'description' => $adminText('backups.details_description'),
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.backups.index').'" class="wb-btn wb-btn-secondary">'.$adminText('backups.back_to_backups').'</a>'.($canDownload ? '<a href="'.route('admin.system.backups.download', $backup).'" class="wb-btn wb-btn-primary">'.$adminText('common.download').'</a>' : '').'</div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -21,21 +41,21 @@
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                    <strong>Run Status</strong>
-                    <span class="wb-status-pill {{ $backup->statusBadgeClass() }}">{{ $backup->statusLabel() }}</span>
+                    <strong>{{ $adminText('backups.run_status') }}</strong>
+                    <span class="wb-status-pill {{ $backup->statusBadgeClass() }}">{{ $backupStatusLabel($backup->status) }}</span>
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $backup->summary ?? 'No summary available.' }}</strong></div>
-                    <div class="wb-text-sm wb-text-muted">Started {{ $backup->started_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                    <div class="wb-text-sm wb-text-muted">Finished {{ $backup->finished_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                    <div class="wb-text-sm wb-text-muted">Duration {{ $backup->durationLabel() }}</div>
-                    <div class="wb-text-sm wb-text-muted">Triggered by {{ $backup->triggeredBy?->name ?? '-' }}</div>
+                    <div><strong>{{ $backup->summary ?? $adminText('backups.no_summary_available') }}</strong></div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.started') }} {{ $backup->started_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.finished') }} {{ $backup->finished_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.duration') }} {{ $backup->durationLabel() }}</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.triggered_by') }} {{ $backup->triggeredBy?->name ?? '-' }}</div>
 
                     @if ($backup->error_message)
                         <div class="wb-alert wb-alert-danger">
                             <div>
-                                <div class="wb-alert-title">Backup error</div>
+                                <div class="wb-alert-title">{{ $adminText('backups.error') }}</div>
                                 <div>{{ $backup->error_message }}</div>
                             </div>
                         </div>
@@ -44,82 +64,82 @@
             </div>
 
             <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>Archive Metadata</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('backups.archive_metadata') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>Type:</strong> {{ $backup->type }}</div>
-                    <div><strong>Contents:</strong> {{ $backup->contentsLabel() ?: '-' }}</div>
-                    <div><strong>Source filename:</strong> {{ $backup->label ?? $backup->archive_filename ?? '-' }}</div>
-                    <div><strong>Archive disk:</strong> {{ $backup->archive_disk }}</div>
-                    <div><strong>Archive file:</strong> {{ $backup->archive_filename ?? '-' }}</div>
-                    <div><strong>Archive path:</strong> <code>{{ $displayArchivePath }}</code></div>
+                    <div><strong>{{ $adminText('backups.type') }}:</strong> {{ $adminText('backups.types.'.$backup->type) }}</div>
+                    <div><strong>{{ $adminText('backups.contents_label') }}:</strong> {{ $backupContentsLabel($backup) }}</div>
+                    <div><strong>{{ $adminText('backups.source_filename') }}:</strong> {{ $backup->label ?? $backup->archive_filename ?? '-' }}</div>
+                    <div><strong>{{ $adminText('backups.archive_disk') }}:</strong> {{ $backup->archive_disk }}</div>
+                    <div><strong>{{ $adminText('backups.archive_file') }}:</strong> {{ $backup->archive_filename ?? '-' }}</div>
+                    <div><strong>{{ $adminText('backups.archive_path') }}:</strong> <code>{{ $displayArchivePath }}</code></div>
                     @if ($archiveResolution && ! $archiveResolution->isAvailable())
-                        <div><strong>Archive status:</strong> <span class="wb-status-pill {{ $archiveResolution->uiBadgeClass() }}">{{ $archiveResolution->uiLabel() }}</span></div>
+                        <div><strong>{{ $adminText('backups.archive_status') }}:</strong> <span class="wb-status-pill {{ $archiveResolution->uiBadgeClass() }}">{{ $archiveStatusLabel($archiveResolution) }}</span></div>
                     @endif
-                    <div><strong>Archive size:</strong> {{ $backup->humanArchiveSize() }}</div>
-                    <div><strong>Manifest app:</strong> {{ $manifest['app_name'] ?? '-' }}</div>
-                    <div><strong>Manifest version:</strong> {{ $manifest['app_version'] ?? '-' }}</div>
-                    <div><strong>Manifest created at:</strong> {{ $manifest['created_at'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('backups.archive_size') }}:</strong> {{ $backup->humanArchiveSize() }}</div>
+                    <div><strong>{{ $adminText('backups.manifest_app') }}:</strong> {{ $manifest['app_name'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('backups.manifest_version') }}:</strong> {{ $manifest['app_version'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('backups.manifest_created_at') }}:</strong> {{ $manifest['created_at'] ?? '-' }}</div>
                 </div>
             </div>
         </div>
 
         @if ($inspection)
             <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>Manifest Preview</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('backups.manifest_preview') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>Product:</strong> {{ $manifest['product'] ?? 'Legacy backup manifest' }}</div>
-                    <div><strong>Package type:</strong> {{ $manifest['package_type'] ?? 'legacy_backup' }}</div>
-                    <div><strong>Format version:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
-                    <div><strong>Contents:</strong> DB{{ $inspection->includesUploads ? ' + uploads' : '' }}</div>
+                    <div><strong>{{ $adminText('updates.product') }}:</strong> {{ $manifest['product'] ?? $adminText('backups.legacy_manifest') }}</div>
+                    <div><strong>{{ $adminText('backups.package_type') }}:</strong> {{ $manifest['package_type'] ?? 'legacy_backup' }}</div>
+                    <div><strong>{{ $adminText('backups.format_version') }}:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('backups.contents_label') }}:</strong> {{ $adminText('backups.contents.database') }}{{ $inspection->includesUploads ? ' + '.$adminText('backups.contents.uploads') : '' }}</div>
                 </div>
             </div>
         @endif
 
         <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>Danger Zone</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('backups.danger_zone') }}</strong></div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-alert wb-alert-danger">
                     <div>
-                        <div class="wb-alert-title">Restore backup</div>
-                        <div>This restores a full system backup. It will overwrite the current database and uploaded files. It is different from Export/Import, which creates a new site from a site package. WebBlocks CMS will create a fresh safety backup first and will not delete the source backup archive.</div>
+                        <div class="wb-alert-title">{{ $adminText('backups.restore_backup') }}</div>
+                        <div>{{ $adminText('backups.restore_backup_warning') }}</div>
                     </div>
                 </div>
 
-                <div class="wb-text-sm wb-text-muted">Selected backup: <strong>{{ $backup->archive_filename ?? 'Backup #'.$backup->id }}</strong> at <code>{{ $displayArchivePath !== '-' ? $displayArchivePath : 'archive unavailable' }}</code></div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.selected_backup') }}: <strong>{{ $backup->archive_filename ?? $adminText('backups.backup_number', ['id' => $backup->id]) }}</strong> {{ $adminText('backups.at') }} <code>{{ $displayArchivePath !== '-' ? $displayArchivePath : $adminText('backups.archive_unavailable') }}</code></div>
 
                 @if ($canRestore)
-                    <form method="POST" action="{{ route('admin.system.backups.restore', $backup) }}" class="wb-stack wb-gap-3" onsubmit="return confirm('Restore this backup? This will replace the current database and uploads.');" data-wb-restore-form>
+                    <form method="POST" action="{{ route('admin.system.backups.restore', $backup) }}" class="wb-stack wb-gap-3" onsubmit="return confirm(@json($adminText('backups.restore_confirm')));" data-wb-restore-form>
                         @csrf
 
                         <label class="wb-checkbox" for="acknowledge_restore_risk">
                             <input id="acknowledge_restore_risk" type="checkbox" name="acknowledge_restore_risk" value="1" required {{ old('acknowledge_restore_risk') ? 'checked' : '' }} data-wb-restore-ack>
-                            <span>I understand this will overwrite current data.</span>
+                            <span>{{ $adminText('backups.acknowledge_restore_risk') }}</span>
                         </label>
 
-                        <div class="wb-text-sm wb-text-muted">This restore imports <code>database/database.sql</code>, restores <code>uploads/public/...</code> when present, reruns <code>storage:link</code>, and clears framework caches after the restore.</div>
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.restore_process_help') }}</div>
 
                         <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                             <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                                <button type="submit" class="wb-btn wb-btn-danger" data-wb-restore-submit @disabled(! old('acknowledge_restore_risk'))>Restore backup</button>
+                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('common.cancel') }}</a>
+                                <button type="submit" class="wb-btn wb-btn-danger" data-wb-restore-submit @disabled(! old('acknowledge_restore_risk'))>{{ $adminText('backups.restore_backup') }}</button>
                             </div>
                         </div>
                     </form>
                 @else
                     <div class="wb-alert wb-alert-warning">
                         <div>
-                            <div class="wb-alert-title">Restore is unavailable for this backup</div>
-                            <div>{{ $archiveResolution?->feedbackMessage() ?? 'Only completed backups with a stored archive can be restored from the admin panel.' }}</div>
+                            <div class="wb-alert-title">{{ $adminText('backups.restore_unavailable') }}</div>
+                            <div>{{ $archiveResolution ? $archiveFeedback($archiveResolution) : $adminText('backups.restore_unavailable_help') }}</div>
                         </div>
                     </div>
 
                     <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                         <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                            <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                            <button type="button" class="wb-btn wb-btn-danger" disabled>Restore backup</button>
+                            <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('common.cancel') }}</a>
+                            <button type="button" class="wb-btn wb-btn-danger" disabled>{{ $adminText('backups.restore_backup') }}</button>
                         </div>
                     </div>
                 @endif
@@ -128,28 +148,28 @@
 
         @if ($restoreRuns->isNotEmpty())
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Restore History</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('backups.restore_history') }}</strong></div>
 
                 <div class="wb-card-body">
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                             <thead>
                                 <tr>
-                                    <th>Started at</th>
-                                    <th>Status</th>
-                                    <th>Parts</th>
-                                    <th>Safety backup</th>
-                                    <th>Triggered by</th>
-                                    <th>Duration</th>
-                                    <th>Actions</th>
+                                    <th>{{ $adminText('backups.started_at') }}</th>
+                                    <th>{{ $adminText('common.status') }}</th>
+                                    <th>{{ $adminText('backups.parts') }}</th>
+                                    <th>{{ $adminText('backups.safety_backup') }}</th>
+                                    <th>{{ $adminText('backups.triggered_by') }}</th>
+                                    <th>{{ $adminText('backups.duration') }}</th>
+                                    <th>{{ $adminText('common.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($restoreRuns as $restoreRun)
                                     <tr>
                                         <td>{{ $restoreRun->started_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
-                                        <td><span class="wb-status-pill {{ $restoreRun->statusBadgeClass() }}">{{ $restoreRun->statusLabel() }}</span></td>
-                                        <td>{{ $restoreRun->restoredPartsLabel() ?: '-' }}</td>
+                                        <td><span class="wb-status-pill {{ $restoreRun->statusBadgeClass() }}">{{ $restoreStatusLabel($restoreRun->status) }}</span></td>
+                                        <td>{{ $restorePartsLabel($restoreRun) }}</td>
                                         <td>
                                             @if ($restoreRun->safetyBackup)
                                                 <a href="{{ route('admin.system.backups.show', $restoreRun->safetyBackup) }}">#{{ $restoreRun->safetyBackup->id }}</a>
@@ -161,10 +181,10 @@
                                         <td>{{ $restoreRun->durationLabel() }}</td>
                                         <td>
                                             <div class="wb-action-group">
-                                                <form method="POST" action="{{ route('admin.system.backups.restores.destroy', [$backup, $restoreRun]) }}" onsubmit="return confirm('Delete this restore history entry? This will not delete any backup archive.');">
+                                                <form method="POST" action="{{ route('admin.system.backups.restores.destroy', [$backup, $restoreRun]) }}" onsubmit="return confirm(@json($adminText('backups.delete_restore_history_confirm')));">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete restore history entry" aria-label="Delete restore history entry">
+                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('backups.delete_restore_history') }}" aria-label="{{ $adminText('backups.delete_restore_history') }}">
                                                         <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
@@ -180,14 +200,14 @@
         @endif
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Operational Log</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('backups.operational_log') }}</strong></div>
 
             <div class="wb-card-body">
                 @if ($backup->output)
                     <pre class="wb-code-block">{{ $backup->output }}</pre>
                 @else
                     <div class="wb-empty wb-empty-sm">
-                        <div class="wb-empty-title">No log output captured</div>
+                        <div class="wb-empty-title">{{ $adminText('backups.no_log_output') }}</div>
                     </div>
                 @endif
             </div>

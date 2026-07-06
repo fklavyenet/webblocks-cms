@@ -1,10 +1,19 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Upload Backup', 'heading' => 'Upload Backup'])
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('backups.upload_title'), 'heading' => $adminText('backups.upload_title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Upload Backup',
-        'description' => 'Upload a WebBlocks CMS backup archive previously downloaded from this backup system. This is not a site export/import package.',
-        'actions' => '<a href="'.route('admin.system.backups.index').'" class="wb-btn wb-btn-secondary">Back to Backups</a>',
+        'title' => $adminText('backups.upload_title'),
+        'description' => $adminText('backups.upload_description'),
+        'actions' => '<a href="'.route('admin.system.backups.index').'" class="wb-btn wb-btn-secondary">'.$adminText('backups.back_to_backups').'</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -12,8 +21,8 @@
     <div class="wb-stack wb-stack-4">
         <div class="wb-alert wb-alert-warning">
             <div>
-                <div class="wb-alert-title">Full system restore only</div>
-                <div>This restores a full system backup. It will overwrite the current database and uploaded files. It is different from Export/Import, which creates a new site from a site package.</div>
+                <div class="wb-alert-title">{{ $adminText('backups.full_system_restore_only') }}</div>
+                <div>{{ $adminText('backups.full_system_restore_only_help') }}</div>
             </div>
         </div>
 
@@ -23,15 +32,15 @@
                     @csrf
 
                     <div class="wb-stack wb-gap-2">
-                        <label for="archive">Backup archive (.zip)</label>
+                        <label for="archive">{{ $adminText('backups.archive_zip') }}</label>
                         <input id="archive" type="file" name="archive" class="wb-input" accept=".zip,application/zip" required>
-                        <div class="wb-text-sm wb-text-muted">Upload a WebBlocks CMS backup archive previously downloaded from this backup system. This is not a site export/import package.</div>
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.upload_description') }}</div>
                     </div>
 
                     <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                         <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                            <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                            <button type="submit" class="wb-btn wb-btn-primary">Upload backup</button>
+                            <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('common.cancel') }}</a>
+                            <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('backups.upload_backup') }}</button>
                         </div>
                     </div>
                 </form>

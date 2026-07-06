@@ -50,6 +50,59 @@ class SystemBackupsTest extends TestCase
   }
 
   #[Test]
+  public function backup_screens_use_authenticated_admin_locale_for_card_and_body_copy(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'admin_locale' => 'tr',
+    ]);
+
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => 'manual.zip',
+      'archive_filename' => 'manual.zip',
+      'archive_size_bytes' => 1024,
+      'started_at' => now()->subMinutes(3),
+      'finished_at' => now()->subMinutes(2),
+      'duration_ms' => 1000,
+      'summary' => null,
+      'triggered_by_user_id' => $user->id,
+    ]);
+
+    $indexResponse = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('<html lang="tr">', false);
+    $indexResponse->assertSee('Son Yedek Durumu');
+    $indexResponse->assertSee('Yedek Onerisi');
+    $indexResponse->assertSee('Yedek olustur');
+    $indexResponse->assertDontSeeText('Latest Backup Status');
+    $indexResponse->assertDontSeeText('Backup Recommendation');
+    $indexResponse->assertDontSeeText('Create backup');
+
+    $uploadResponse = $this->actingAs($user)->get(route('admin.system.backups.upload'));
+
+    $uploadResponse->assertOk();
+    $uploadResponse->assertSee('Yedek yukle');
+    $uploadResponse->assertSee('Yalnizca tam sistem restore');
+    $uploadResponse->assertDontSeeText('Upload Backup');
+    $uploadResponse->assertDontSeeText('Full system restore only');
+
+    $detailResponse = $this->actingAs($user)->get(route('admin.system.backups.show', $backup));
+
+    $detailResponse->assertOk();
+    $detailResponse->assertSee('Calistirma durumu');
+    $detailResponse->assertSee('Arsiv Metadata');
+    $detailResponse->assertSee('Tehlikeli Bolge');
+    $detailResponse->assertDontSeeText('Run Status');
+    $detailResponse->assertDontSeeText('Archive Metadata');
+    $detailResponse->assertDontSeeText('Danger Zone');
+  }
+
+  #[Test]
   public function backups_index_has_exactly_one_upload_backup_action_and_no_duplicate_system_updates_control(): void
   {
     $user = User::factory()->superAdmin()->create();
