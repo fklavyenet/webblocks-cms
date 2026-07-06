@@ -1,10 +1,16 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Page Converter', 'heading' => 'Page Converter'])
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.pages.converter.'.$key, $adminLocale, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Page Converter',
-        'description' => 'Convert pasted or uploaded static HTML into a draft CMS page made from structured blocks.',
-        'actions' => '<a href="'.route('admin.pages.index').'" class="wb-btn wb-btn-secondary">Back to Pages</a>',
+        'title' => $adminText('title'),
+        'description' => $adminText('description'),
+        'actions' => '<a href="'.route('admin.pages.index').'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_pages')).'</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -13,10 +19,10 @@
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Analysis Preview</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $conversionPlan->suggestionCount() }} suggested blocks</span>
-                    <span class="wb-status-pill {{ $conversionPlan->fallbackCount() > 0 ? 'wb-status-pending' : 'wb-status-active' }}">{{ $conversionPlan->fallbackCount() }} fallbacks</span>
-                    <span class="wb-status-pill {{ $conversionPlan->warningCount() > 0 ? 'wb-status-pending' : 'wb-status-active' }}">{{ $conversionPlan->warningCount() }} warnings</span>
+                    <strong>{{ $adminText('analysis_preview') }}</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $adminText('suggested_blocks_count', ['count' => $conversionPlan->suggestionCount()]) }}</span>
+                    <span class="wb-status-pill {{ $conversionPlan->fallbackCount() > 0 ? 'wb-status-pending' : 'wb-status-active' }}">{{ $adminText('fallbacks_count', ['count' => $conversionPlan->fallbackCount()]) }}</span>
+                    <span class="wb-status-pill {{ $conversionPlan->warningCount() > 0 ? 'wb-status-pending' : 'wb-status-active' }}">{{ $adminText('warnings_count', ['count' => $conversionPlan->warningCount()]) }}</span>
                 </div>
             </div>
             <div class="wb-card-body wb-stack wb-gap-4">
@@ -25,34 +31,34 @@
                 </div>
 
                 <div class="wb-alert wb-alert-info">
-                    A signed conversion plan has been prepared for review. No page has been created yet. The create action will create a new draft page only; unsupported media-backed suggestions are skipped, and nested content is created only when the current block contract can represent it safely.
+                    {{ $adminText('signed_plan_notice') }}
                 </div>
 
                 <div class="wb-table-wrap">
                     <table class="wb-table">
                         <tbody>
                             <tr>
-                                <th>Target title</th>
+                                <th>{{ $adminText('target_title') }}</th>
                                 <td>{{ $conversionPlan->input->pageTitle }}</td>
                             </tr>
                             <tr>
-                                <th>Target path</th>
+                                <th>{{ $adminText('target_path') }}</th>
                                 <td>{{ $conversionPlan->input->pagePath }}</td>
                             </tr>
                             <tr>
-                                <th>Page layout</th>
+                                <th>{{ $adminText('page_layout') }}</th>
                                 <td>{{ $conversionPlan->input->pageLayout }}</td>
                             </tr>
                             <tr>
-                                <th>Conversion profile</th>
+                                <th>{{ $adminText('conversion_profile') }}</th>
                                 <td>{{ $conversionPlan->profileLabel() }}</td>
                             </tr>
                             <tr>
-                                <th>Source</th>
+                                <th>{{ $adminText('source') }}</th>
                                 <td>{{ $conversionPlan->input->sourceName }} ({{ number_format($conversionPlan->sourceBytes) }} bytes)</td>
                             </tr>
                             <tr>
-                                <th>Extracted content root</th>
+                                <th>{{ $adminText('extracted_content_root') }}</th>
                                 <td>{{ $conversionPlan->contentRootSummary }}</td>
                             </tr>
                         </tbody>
@@ -61,20 +67,20 @@
 
                 @if ($conversionPlan->suggestions === [])
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No content fragments detected</div>
-                        <div class="wb-empty-text">Paste or upload HTML with visible page content and analyze again.</div>
+                        <div class="wb-empty-title">{{ $adminText('no_fragments_title') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('no_fragments_help') }}</div>
                     </div>
                 @else
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                             <thead>
                                 <tr>
-                                    <th>Order</th>
-                                    <th>Suggested block</th>
-                                    <th>Preview</th>
-                                    <th>Confidence</th>
-                                    <th>Source fragment</th>
-                                    <th>Warnings</th>
+                                    <th>{{ $adminText('order') }}</th>
+                                    <th>{{ $adminText('suggested_block') }}</th>
+                                    <th>{{ $adminText('preview') }}</th>
+                                    <th>{{ $adminText('confidence') }}</th>
+                                    <th>{{ $adminText('source_fragment') }}</th>
+                                    <th>{{ $adminText('warnings') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -111,7 +117,7 @@
                 @endif
 
                 <div class="wb-stack wb-gap-3">
-                    <h3>Create draft page</h3>
+                    <h3>{{ $adminText('create_draft_page') }}</h3>
                     <form method="POST" action="{{ route('admin.pages.converter.create-draft') }}" class="wb-stack wb-gap-0">
                         @csrf
                         <input type="hidden" name="plan_payload" value="{{ $planPayload }}">
@@ -122,22 +128,22 @@
                                 <table class="wb-table">
                                     <tbody>
                                         <tr>
-                                            <th>Signed plan blocks</th>
+                                            <th>{{ $adminText('signed_plan_blocks') }}</th>
                                             <td>{{ $conversionPlan->suggestionCount() }}</td>
                                         </tr>
                                         <tr>
-                                            <th>Signed plan fallbacks</th>
+                                            <th>{{ $adminText('signed_plan_fallbacks') }}</th>
                                             <td>{{ $conversionPlan->fallbackCount() }}</td>
                                         </tr>
                                         <tr>
-                                            <th>Signed plan warnings</th>
+                                            <th>{{ $adminText('signed_plan_warnings') }}</th>
                                             <td>{{ $conversionPlan->warningCount() }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="wb-alert wb-alert-info">
-                                The page will be created as draft. Existing pages will not be overwritten.
+                                {{ $adminText('draft_notice') }}
                             </div>
                             @error('plan_payload')
                                 <div class="wb-field-error">{{ $message }}</div>
@@ -145,8 +151,8 @@
                         </div>
 
                         <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                            <span class="wb-text-sm wb-text-muted">Submitting this review action creates one draft page with supported main-slot blocks only. It does not import media, create navigation items, create shared slots, fetch remote resources, or publish content.</span>
-                            <button type="submit" class="wb-btn wb-btn-primary">Create draft page</button>
+                            <span class="wb-text-sm wb-text-muted">{{ $adminText('create_draft_help') }}</span>
+                            <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('create_draft_page') }}</button>
                         </div>
                     </form>
                 </div>
@@ -156,7 +162,7 @@
 
     <div class="wb-card">
         <div class="wb-card-header">
-            <strong>Source and Target</strong>
+            <strong>{{ $adminText('source_and_target') }}</strong>
         </div>
 
         <form method="POST" action="{{ route('admin.pages.converter.analyze') }}" enctype="multipart/form-data" class="wb-stack wb-gap-0">
@@ -164,18 +170,18 @@
 
             <div class="wb-card-body wb-stack wb-gap-4">
                 <div class="wb-alert wb-alert-info">
-                    This first Page Converter step analyzes input only. It does not create, publish, overwrite, crawl, fetch remote URLs, or batch import pages.
+                    {{ $adminText('analysis_only_notice') }}
                 </div>
 
                 @if ($sites->isEmpty())
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No accessible sites</div>
-                        <div class="wb-empty-text">Page Converter becomes available after your account has access to at least one site.</div>
+                        <div class="wb-empty-title">{{ $adminText('no_sites_title') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('no_sites_help') }}</div>
                     </div>
                 @else
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-field">
-                            <label class="wb-label" for="page_converter_site_id">Target site</label>
+                            <label class="wb-label" for="page_converter_site_id">{{ $adminText('target_site') }}</label>
                             <select class="wb-select" id="page_converter_site_id" name="site_id" required>
                                 @foreach ($sites as $site)
                                     <option value="{{ $site->id }}" @selected((int) old('site_id', $selectedSite?->id) === $site->id)>{{ $site->name }}</option>
@@ -187,7 +193,7 @@
                         </div>
 
                         <div class="wb-field">
-                            <label class="wb-label" for="page_converter_locale_id">Target locale</label>
+                            <label class="wb-label" for="page_converter_locale_id">{{ $adminText('target_locale') }}</label>
                             <select class="wb-select" id="page_converter_locale_id" name="locale_id" required>
                                 @foreach ($locales as $locale)
                                     <option value="{{ $locale->id }}" @selected((int) old('locale_id', $locales->firstWhere('is_default', true)?->id ?? $locales->first()?->id) === $locale->id)>{{ $locale->name }} ({{ $locale->code }})</option>
@@ -201,7 +207,7 @@
 
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-field">
-                            <label class="wb-label" for="page_converter_page_layout">Page layout</label>
+                            <label class="wb-label" for="page_converter_page_layout">{{ $adminText('page_layout') }}</label>
                             <select class="wb-select" id="page_converter_page_layout" name="page_layout" required>
                                 @foreach ($pageLayoutOptions as $option)
                                     <option value="{{ $option['value'] }}" @selected(old('page_layout', 'default') === $option['value'])>{{ $option['label'] }}</option>
@@ -213,7 +219,7 @@
                         </div>
 
                         <div class="wb-field">
-                            <label class="wb-label" for="page_converter_conversion_profile">Conversion profile</label>
+                            <label class="wb-label" for="page_converter_conversion_profile">{{ $adminText('conversion_profile') }}</label>
                             <select class="wb-select" id="page_converter_conversion_profile" name="conversion_profile" required>
                                 @foreach ($profiles as $value => $label)
                                     <option value="{{ $value }}" @selected(old('conversion_profile', 'conservative') === $value)>{{ $label }}</option>
@@ -227,7 +233,7 @@
 
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-field">
-                            <label class="wb-label" for="page_converter_page_title">Page title</label>
+                            <label class="wb-label" for="page_converter_page_title">{{ $adminText('page_title') }}</label>
                             <input class="wb-input" id="page_converter_page_title" type="text" name="page_title" value="{{ old('page_title') }}" required>
                             @error('page_title')
                                 <div class="wb-field-error">{{ $message }}</div>
@@ -235,7 +241,7 @@
                         </div>
 
                         <div class="wb-field">
-                            <label class="wb-label" for="page_converter_page_path">Page path or slug</label>
+                            <label class="wb-label" for="page_converter_page_path">{{ $adminText('page_path_or_slug') }}</label>
                             <input class="wb-input" id="page_converter_page_path" type="text" name="page_path" value="{{ old('page_path') }}" placeholder="docs/imported-page" required>
                             @error('page_path')
                                 <div class="wb-field-error">{{ $message }}</div>
@@ -244,7 +250,7 @@
                     </div>
 
                     <div class="wb-field">
-                        <label class="wb-label" for="page_converter_source_html">Source HTML</label>
+                        <label class="wb-label" for="page_converter_source_html">{{ $adminText('source_html') }}</label>
                         <textarea class="wb-textarea" id="page_converter_source_html" name="source_html" rows="14" placeholder="<main>...</main>">{{ old('source_html') }}</textarea>
                         @error('source_html')
                             <div class="wb-field-error">{{ $message }}</div>
@@ -252,7 +258,7 @@
                     </div>
 
                     <div class="wb-field">
-                        <label class="wb-label" for="page_converter_source_file">Optional HTML file</label>
+                        <label class="wb-label" for="page_converter_source_file">{{ $adminText('optional_html_file') }}</label>
                         <input class="wb-input" id="page_converter_source_file" type="file" name="source_file" accept=".html,.htm,text/html">
                         @error('source_file')
                             <div class="wb-field-error">{{ $message }}</div>
@@ -262,7 +268,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.index')" submit-label="Analyze HTML" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.index')" :submit-label="$adminText('analyze_html')" />
             </div>
         </form>
     </div>
