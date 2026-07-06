@@ -14,6 +14,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Move System Updates blocker copy and Export / Import admin screen copy onto structured admin locale keys.
 - Move Columns, Link List, Feature Grid, and Contact Form block editor copy onto structured admin locale keys.
 - Move Header Actions, Audio, Breadcrumb, and Download block editor copy onto structured admin locale keys.
+- Move Link List Item, List, Table, Container, and Grid block editor copy onto structured admin locale keys.
 
 ## 1.34.1
 
