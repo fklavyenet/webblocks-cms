@@ -1,4 +1,7 @@
 @php
+  $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+  $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+  $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.blocks.partials.gallery_items_editor.'.$key, $adminLocale, $replace);
   $activeLocale = $activeLocale ?? null;
   $isDefaultLocale = $isDefaultLocale ?? (! $activeLocale || $activeLocale->is_default);
   $galleryMediaById = ($selectedGalleryAssets ?? collect())
@@ -72,8 +75,8 @@
     <div class="wb-card wb-card-accent">
       <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-          <strong>Gallery Items</strong>
-          <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
+          <strong>{{ $adminText('gallery_items') }}</strong>
+          <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $adminText('items_count', ['count' => $galleryItemRows->count()]) }}</span>
         </div>
 
         @include('webblocks-cms::admin.media.asset-picker-panel', [
@@ -82,13 +85,13 @@
           'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
           'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
           'selectedAssets' => $galleryItemRows->pluck('asset'),
-          'buttonLabel' => 'Add Gallery Items',
-          'replaceLabel' => 'Add Gallery Items',
-          'clearLabel' => 'Remove All',
+          'buttonLabel' => $adminText('add_gallery_items'),
+          'replaceLabel' => $adminText('add_gallery_items'),
+          'clearLabel' => $adminText('remove_all'),
           'accept' => 'image',
                      'compactControls' => true,
                      'panelMode' => 'overlay',
-                     'panelTitle' => 'Add Gallery Items',
+                     'panelTitle' => $adminText('add_gallery_items'),
                      'resultsVariant' => 'compact-list',
                      'showSummary' => false,
                      'showPreviewGrid' => false,
@@ -100,21 +103,21 @@
 
       <div class="wb-card-body">
         <div class="wb-stack wb-gap-2">
-          <span class="wb-text-sm wb-text-muted">Add, remove, and reorder gallery images. Per-item copy stays in each item editor.</span>
+          <span class="wb-text-sm wb-text-muted">{{ $adminText('description') }}</span>
 
           <div class="wb-card wb-card-muted" data-wb-gallery-items-empty @if (! $galleryItemRows->isEmpty()) hidden @endif>
-            <div class="wb-card-body wb-text-sm wb-text-muted">No gallery items selected yet.</div>
+            <div class="wb-card-body wb-text-sm wb-text-muted">{{ $adminText('empty') }}</div>
           </div>
 
           <div class="wb-table-wrap" data-admin-sortable-list data-wb-gallery-items-table @if ($galleryItemRows->isEmpty()) hidden @endif>
             <table class="wb-table wb-table-striped wb-table-hover">
               <thead>
                 <tr>
-                  <th>Order</th>
-                  <th>Preview</th>
-                  <th>Item</th>
-                  <th>Summaries</th>
-                  <th>Actions</th>
+                  <th>{{ $adminText('order') }}</th>
+                  <th>{{ $adminText('preview') }}</th>
+                  <th>{{ $adminText('item') }}</th>
+                  <th>{{ $adminText('summaries') }}</th>
+                  <th>{{ $adminText('actions') }}</th>
                 </tr>
               </thead>
               <tbody data-wb-gallery-items-list>
@@ -122,17 +125,17 @@
                   @php
                     $asset = $item['asset'];
                     $itemLabel = $asset->title ?: $asset->filename;
-                    $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: 'No alt text');
-                    $captionSummary = $item['caption'] !== '' ? $item['caption'] : 'No caption';
+                    $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: $adminText('no_alt_text'));
+                    $captionSummary = $item['caption'] !== '' ? $item['caption'] : $adminText('no_caption');
                     $overlaySummary = $item['overlay_title'] !== ''
                       ? $item['overlay_title']
-                      : ($item['overlay_text'] !== '' ? $item['overlay_text'] : 'No overlay title');
+                      : ($item['overlay_text'] !== '' ? $item['overlay_text'] : $adminText('no_overlay_title'));
                     $modalId = $modalIdValue((int) $asset->id);
                   @endphp
                   <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
                     <td>
                       <div class="wb-cluster wb-cluster-2">
-                        <button type="button" class="wb-action-btn" data-admin-sortable-handle title="Drag to reorder item" aria-label="Drag to reorder item">
+                        <button type="button" class="wb-action-btn" data-admin-sortable-handle title="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
                           <span aria-hidden="true">::</span>
                         </button>
                         <span>{{ $galleryIndex + 1 }}</span>
@@ -148,7 +151,7 @@
                       @if ($asset->canPreview())
                         <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}" width="72" height="48">
                       @else
-                        <span class="wb-text-sm wb-text-muted">No preview</span>
+                        <span class="wb-text-sm wb-text-muted">{{ $adminText('no_preview') }}</span>
                       @endif
                     </td>
                     <td>
@@ -156,16 +159,16 @@
                       <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                     </td>
                     <td>
-                      <div class="wb-text-sm"><strong>Alt:</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
-                      <div class="wb-text-sm"><strong>Caption:</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
-                      <div class="wb-text-sm"><strong>Overlay:</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
+                      <div class="wb-text-sm"><strong>{{ $adminText('alt_summary') }}</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
+                      <div class="wb-text-sm"><strong>{{ $adminText('caption_summary') }}</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
+                      <div class="wb-text-sm"><strong>{{ $adminText('overlay_summary') }}</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
                     </td>
                     <td>
                       <div class="wb-action-group">
-                        <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="Edit item metadata" aria-label="Edit item metadata">
+                        <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
                           <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="Remove item" aria-label="Remove item">
+                        <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
                           <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                         </button>
                       </div>
@@ -177,11 +180,11 @@
                       <div class="wb-modal-dialog">
                         <div class="wb-modal-header">
                           <div class="wb-stack wb-gap-1">
-                            <h2 class="wb-modal-title" id="{{ $modalId }}-title">Edit Gallery Item: {{ $itemLabel }}</h2>
-                            <span class="wb-text-sm wb-text-muted">Per-item copy belongs to the active locale.</span>
+                            <h2 class="wb-modal-title" id="{{ $modalId }}-title">{{ $adminText('edit_gallery_item', ['item' => $itemLabel]) }}</h2>
+                            <span class="wb-text-sm wb-text-muted">{{ $adminText('per_item_locale_help') }}</span>
                           </div>
 
-                          <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
+                          <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('close') }}">
                             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                           </button>
                         </div>
@@ -189,33 +192,33 @@
                         <div class="wb-modal-body wb-stack wb-gap-3">
                           <div class="wb-grid wb-grid-2">
                             <div class="wb-stack wb-gap-1">
-                              <label for="{{ $modalId }}-alt-text">Alt Text</label>
+                              <label for="{{ $modalId }}-alt-text">{{ $adminText('alt_text') }}</label>
                               <input id="{{ $modalId }}-alt-text" class="wb-input" type="text" value="{{ $item['alt_text'] }}" data-wb-gallery-modal-field="alt_text">
                             </div>
 
                             <div class="wb-stack wb-gap-1">
-                              <label for="{{ $modalId }}-caption">Caption</label>
+                              <label for="{{ $modalId }}-caption">{{ $adminText('caption') }}</label>
                               <input id="{{ $modalId }}-caption" class="wb-input" type="text" value="{{ $item['caption'] }}" data-wb-gallery-modal-field="caption">
                             </div>
                           </div>
 
                           <div class="wb-stack wb-gap-1">
-                            <label for="{{ $modalId }}-overlay-title">Overlay Title</label>
+                            <label for="{{ $modalId }}-overlay-title">{{ $adminText('overlay_title') }}</label>
                             <input id="{{ $modalId }}-overlay-title" class="wb-input" type="text" value="{{ $item['overlay_title'] }}" data-wb-gallery-modal-field="overlay_title">
                           </div>
 
                           <div class="wb-stack wb-gap-1">
-                            <label for="{{ $modalId }}-overlay-text">Overlay Text</label>
+                            <label for="{{ $modalId }}-overlay-text">{{ $adminText('overlay_text') }}</label>
                             <textarea id="{{ $modalId }}-overlay-text" class="wb-textarea" rows="4" data-wb-gallery-modal-field="overlay_text">{{ $item['overlay_text'] }}</textarea>
                           </div>
 
                           <div class="wb-text-sm wb-text-muted">
-                            Credit, source text, link URL, and per-item open behavior are deferred until the gallery item model includes explicit shared behavior fields.
+                            {{ $adminText('deferred_fields_help') }}
                           </div>
                         </div>
 
                         <div class="wb-modal-footer wb-flex wb-justify-end wb-gap-2">
-                          <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Done</button>
+                          <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('done') }}</button>
                         </div>
                       </div>
                     </div>
@@ -231,8 +234,8 @@
     <div class="wb-stack wb-gap-2">
       <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-          <strong>Gallery Items</strong>
-          <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
+          <strong>{{ $adminText('gallery_items') }}</strong>
+          <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $adminText('items_count', ['count' => $galleryItemRows->count()]) }}</span>
         </div>
 
         @include('webblocks-cms::admin.media.asset-picker-panel', [
@@ -241,13 +244,13 @@
           'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
           'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
           'selectedAssets' => $galleryItemRows->pluck('asset'),
-          'buttonLabel' => 'Add Gallery Items',
-          'replaceLabel' => 'Add Gallery Items',
-          'clearLabel' => 'Remove All',
+          'buttonLabel' => $adminText('add_gallery_items'),
+          'replaceLabel' => $adminText('add_gallery_items'),
+          'clearLabel' => $adminText('remove_all'),
           'accept' => 'image',
                      'compactControls' => true,
                      'panelMode' => 'overlay',
-                     'panelTitle' => 'Add Gallery Items',
+                     'panelTitle' => $adminText('add_gallery_items'),
                      'resultsVariant' => 'compact-list',
                      'showSummary' => false,
                      'showPreviewGrid' => false,
@@ -256,21 +259,21 @@
                    ])
       </div>
 
-      <span class="wb-text-sm wb-text-muted">Add, remove, and reorder gallery images. Per-item copy stays in each item editor.</span>
+      <span class="wb-text-sm wb-text-muted">{{ $adminText('description') }}</span>
 
       <div class="wb-card wb-card-muted" data-wb-gallery-items-empty @if (! $galleryItemRows->isEmpty()) hidden @endif>
-        <div class="wb-card-body wb-text-sm wb-text-muted">No gallery items selected yet.</div>
+        <div class="wb-card-body wb-text-sm wb-text-muted">{{ $adminText('empty') }}</div>
       </div>
 
       <div class="wb-table-wrap" data-admin-sortable-list data-wb-gallery-items-table @if ($galleryItemRows->isEmpty()) hidden @endif>
         <table class="wb-table wb-table-striped wb-table-hover">
           <thead>
             <tr>
-              <th>Order</th>
-              <th>Preview</th>
-              <th>Item</th>
-              <th>Summaries</th>
-              <th>Actions</th>
+              <th>{{ $adminText('order') }}</th>
+              <th>{{ $adminText('preview') }}</th>
+              <th>{{ $adminText('item') }}</th>
+              <th>{{ $adminText('summaries') }}</th>
+              <th>{{ $adminText('actions') }}</th>
             </tr>
           </thead>
           <tbody data-wb-gallery-items-list>
@@ -278,17 +281,17 @@
               @php
                 $asset = $item['asset'];
                 $itemLabel = $asset->title ?: $asset->filename;
-                $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: 'No alt text');
-                $captionSummary = $item['caption'] !== '' ? $item['caption'] : 'No caption';
+                $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: $adminText('no_alt_text'));
+                $captionSummary = $item['caption'] !== '' ? $item['caption'] : $adminText('no_caption');
                 $overlaySummary = $item['overlay_title'] !== ''
                   ? $item['overlay_title']
-                  : ($item['overlay_text'] !== '' ? $item['overlay_text'] : 'No overlay title');
+                  : ($item['overlay_text'] !== '' ? $item['overlay_text'] : $adminText('no_overlay_title'));
                 $modalId = $modalIdValue((int) $asset->id);
               @endphp
               <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
                 <td>
                   <div class="wb-cluster wb-cluster-2">
-                    <button type="button" class="wb-action-btn" data-admin-sortable-handle title="Drag to reorder item" aria-label="Drag to reorder item">
+                    <button type="button" class="wb-action-btn" data-admin-sortable-handle title="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
                       <span aria-hidden="true">::</span>
                     </button>
                     <span>{{ $galleryIndex + 1 }}</span>
@@ -304,7 +307,7 @@
                   @if ($asset->canPreview())
                     <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}" width="72" height="48">
                   @else
-                    <span class="wb-text-sm wb-text-muted">No preview</span>
+                    <span class="wb-text-sm wb-text-muted">{{ $adminText('no_preview') }}</span>
                   @endif
                 </td>
                 <td>
@@ -312,16 +315,16 @@
                   <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                 </td>
                 <td>
-                  <div class="wb-text-sm"><strong>Alt:</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
-                  <div class="wb-text-sm"><strong>Caption:</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
-                  <div class="wb-text-sm"><strong>Overlay:</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
+                  <div class="wb-text-sm"><strong>{{ $adminText('alt_summary') }}</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
+                  <div class="wb-text-sm"><strong>{{ $adminText('caption_summary') }}</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
+                  <div class="wb-text-sm"><strong>{{ $adminText('overlay_summary') }}</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
                 </td>
                 <td>
                   <div class="wb-action-group">
-                    <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="Edit item metadata" aria-label="Edit item metadata">
+                    <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
                       <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                     </button>
-                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="Remove item" aria-label="Remove item">
+                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
                       <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                     </button>
                   </div>
@@ -333,11 +336,11 @@
                   <div class="wb-modal-dialog">
                     <div class="wb-modal-header">
                       <div class="wb-stack wb-gap-1">
-                        <h2 class="wb-modal-title" id="{{ $modalId }}-title">Edit Gallery Item: {{ $itemLabel }}</h2>
-                        <span class="wb-text-sm wb-text-muted">Per-item copy belongs to the active locale.</span>
+                        <h2 class="wb-modal-title" id="{{ $modalId }}-title">{{ $adminText('edit_gallery_item', ['item' => $itemLabel]) }}</h2>
+                        <span class="wb-text-sm wb-text-muted">{{ $adminText('per_item_locale_help') }}</span>
                       </div>
 
-                      <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
+                      <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('close') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                       </button>
                     </div>
@@ -345,33 +348,33 @@
                     <div class="wb-modal-body wb-stack wb-gap-3">
                       <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-1">
-                          <label for="{{ $modalId }}-alt-text">Alt Text</label>
+                          <label for="{{ $modalId }}-alt-text">{{ $adminText('alt_text') }}</label>
                           <input id="{{ $modalId }}-alt-text" class="wb-input" type="text" value="{{ $item['alt_text'] }}" data-wb-gallery-modal-field="alt_text">
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                          <label for="{{ $modalId }}-caption">Caption</label>
+                          <label for="{{ $modalId }}-caption">{{ $adminText('caption') }}</label>
                           <input id="{{ $modalId }}-caption" class="wb-input" type="text" value="{{ $item['caption'] }}" data-wb-gallery-modal-field="caption">
                         </div>
                       </div>
 
                       <div class="wb-stack wb-gap-1">
-                        <label for="{{ $modalId }}-overlay-title">Overlay Title</label>
+                        <label for="{{ $modalId }}-overlay-title">{{ $adminText('overlay_title') }}</label>
                         <input id="{{ $modalId }}-overlay-title" class="wb-input" type="text" value="{{ $item['overlay_title'] }}" data-wb-gallery-modal-field="overlay_title">
                       </div>
 
                       <div class="wb-stack wb-gap-1">
-                        <label for="{{ $modalId }}-overlay-text">Overlay Text</label>
+                        <label for="{{ $modalId }}-overlay-text">{{ $adminText('overlay_text') }}</label>
                         <textarea id="{{ $modalId }}-overlay-text" class="wb-textarea" rows="4" data-wb-gallery-modal-field="overlay_text">{{ $item['overlay_text'] }}</textarea>
                       </div>
 
                       <div class="wb-text-sm wb-text-muted">
-                        Credit, source text, link URL, and per-item open behavior are deferred until the gallery item model includes explicit shared behavior fields.
+                        {{ $adminText('deferred_fields_help') }}
                       </div>
                     </div>
 
                     <div class="wb-modal-footer wb-flex wb-justify-end wb-gap-2">
-                      <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Done</button>
+                      <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('done') }}</button>
                     </div>
                   </div>
                 </div>
@@ -387,7 +390,7 @@
     <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="__MEDIA_ID__">
       <td>
         <div class="wb-cluster wb-cluster-2">
-          <button type="button" class="wb-action-btn" data-admin-sortable-handle title="Drag to reorder item" aria-label="Drag to reorder item">
+          <button type="button" class="wb-action-btn" data-admin-sortable-handle title="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
             <span aria-hidden="true">::</span>
           </button>
           <span data-wb-gallery-item-index>__INDEX_LABEL__</span>
@@ -407,16 +410,16 @@
         <div class="wb-text-sm wb-text-muted">__ITEM_META__</div>
       </td>
       <td>
-        <div class="wb-text-sm"><strong>Alt:</strong> <span data-wb-gallery-alt-summary>No alt text</span></div>
-        <div class="wb-text-sm"><strong>Caption:</strong> <span data-wb-gallery-caption-summary>No caption</span></div>
-        <div class="wb-text-sm"><strong>Overlay:</strong> <span data-wb-gallery-overlay-summary>No overlay title</span></div>
+        <div class="wb-text-sm"><strong>{{ $adminText('alt_summary') }}</strong> <span data-wb-gallery-alt-summary>{{ $adminText('no_alt_text') }}</span></div>
+        <div class="wb-text-sm"><strong>{{ $adminText('caption_summary') }}</strong> <span data-wb-gallery-caption-summary>{{ $adminText('no_caption') }}</span></div>
+        <div class="wb-text-sm"><strong>{{ $adminText('overlay_summary') }}</strong> <span data-wb-gallery-overlay-summary>{{ $adminText('no_overlay_title') }}</span></div>
       </td>
       <td>
         <div class="wb-action-group">
-          <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" data-wb-gallery-edit-item title="Edit item metadata" aria-label="Edit item metadata">
+          <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" data-wb-gallery-edit-item title="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
           </button>
-          <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="__MEDIA_ID__" title="Remove item" aria-label="Remove item">
+          <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="__MEDIA_ID__" title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
             <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
           </button>
         </div>
@@ -429,11 +432,11 @@
       <div class="wb-modal-dialog">
         <div class="wb-modal-header">
           <div class="wb-stack wb-gap-1">
-            <h2 class="wb-modal-title" id="__MODAL_ID__-title">Edit Gallery Item: __ITEM_LABEL__</h2>
-            <span class="wb-text-sm wb-text-muted">Per-item copy belongs to the active locale.</span>
+            <h2 class="wb-modal-title" id="__MODAL_ID__-title">{{ $adminText('edit_gallery_item_template') }}</h2>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('per_item_locale_help') }}</span>
           </div>
 
-          <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
+          <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('close') }}">
             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
           </button>
         </div>
@@ -441,33 +444,33 @@
         <div class="wb-modal-body wb-stack wb-gap-3">
           <div class="wb-grid wb-grid-2">
             <div class="wb-stack wb-gap-1">
-              <label for="__MODAL_ID__-alt-text">Alt Text</label>
+              <label for="__MODAL_ID__-alt-text">{{ $adminText('alt_text') }}</label>
               <input id="__MODAL_ID__-alt-text" class="wb-input" type="text" value="" data-wb-gallery-modal-field="alt_text">
             </div>
 
             <div class="wb-stack wb-gap-1">
-              <label for="__MODAL_ID__-caption">Caption</label>
+              <label for="__MODAL_ID__-caption">{{ $adminText('caption') }}</label>
               <input id="__MODAL_ID__-caption" class="wb-input" type="text" value="" data-wb-gallery-modal-field="caption">
             </div>
           </div>
 
           <div class="wb-stack wb-gap-1">
-            <label for="__MODAL_ID__-overlay-title">Overlay Title</label>
+            <label for="__MODAL_ID__-overlay-title">{{ $adminText('overlay_title') }}</label>
             <input id="__MODAL_ID__-overlay-title" class="wb-input" type="text" value="" data-wb-gallery-modal-field="overlay_title">
           </div>
 
           <div class="wb-stack wb-gap-1">
-            <label for="__MODAL_ID__-overlay-text">Overlay Text</label>
+            <label for="__MODAL_ID__-overlay-text">{{ $adminText('overlay_text') }}</label>
             <textarea id="__MODAL_ID__-overlay-text" class="wb-textarea" rows="4" data-wb-gallery-modal-field="overlay_text"></textarea>
           </div>
 
           <div class="wb-text-sm wb-text-muted">
-            Credit, source text, link URL, and per-item open behavior are deferred until the gallery item model includes explicit shared behavior fields.
+            {{ $adminText('deferred_fields_help') }}
           </div>
         </div>
 
         <div class="wb-modal-footer wb-flex wb-justify-end wb-gap-2">
-          <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Done</button>
+          <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('done') }}</button>
         </div>
       </div>
     </div>

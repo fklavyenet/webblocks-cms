@@ -1,4 +1,7 @@
 @php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.blocks.partials.rich_text_editor.'.$key, $adminLocale, $replace);
     $translationNotice = $translationNotice ?? null;
     $inputName = $inputName ?? 'content';
     $inputId = $inputId ?? 'content';
@@ -20,34 +23,34 @@
     @endif
 
     <div class="wb-stack wb-gap-1">
-        <label for="{{ $surfaceId }}">Rich Text</label>
+        <label for="{{ $surfaceId }}">{{ $adminText('rich_text') }}</label>
 
         <div class="wb-admin-rich-text-editor" data-wb-rich-text-editor>
-            <div class="wb-toolbar wb-toolbar-sm wb-admin-rich-text-toolbar" role="toolbar" aria-label="Rich Text formatting">
+            <div class="wb-toolbar wb-toolbar-sm wb-admin-rich-text-toolbar" role="toolbar" aria-label="{{ $adminText('formatting') }}">
                 <div class="wb-toolbar-start">
-                    <div class="wb-action-group" role="group" aria-label="Inline formatting">
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bold" aria-label="Bold" title="Bold">B</button>
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="italic" aria-label="Italic" title="Italic">I</button>
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="code" aria-label="Code" title="Code">Code</button>
+                    <div class="wb-action-group" role="group" aria-label="{{ $adminText('inline_formatting') }}">
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bold" aria-label="{{ $adminText('bold') }}" title="{{ $adminText('bold') }}">B</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="italic" aria-label="{{ $adminText('italic') }}" title="{{ $adminText('italic') }}">I</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="code" aria-label="{{ $adminText('code') }}" title="{{ $adminText('code') }}">{{ $adminText('code') }}</button>
                     </div>
 
                     <span class="wb-toolbar-divider" aria-hidden="true"></span>
 
-                    <div class="wb-action-group" role="group" aria-label="Links">
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="link" aria-label="Link" title="Link">Link</button>
+                    <div class="wb-action-group" role="group" aria-label="{{ $adminText('links') }}">
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="link" aria-label="{{ $adminText('link') }}" title="{{ $adminText('link') }}">{{ $adminText('link') }}</button>
                     </div>
 
                     <span class="wb-toolbar-divider" aria-hidden="true"></span>
 
-                    <div class="wb-action-group" role="group" aria-label="Lists">
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bullet-list" aria-label="Bullet List" title="Bullet List">• List</button>
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="numbered-list" aria-label="Numbered List" title="Numbered List">1. List</button>
+                    <div class="wb-action-group" role="group" aria-label="{{ $adminText('lists') }}">
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bullet-list" aria-label="{{ $adminText('bullet_list') }}" title="{{ $adminText('bullet_list') }}">{{ $adminText('bullet_list_button') }}</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="numbered-list" aria-label="{{ $adminText('numbered_list') }}" title="{{ $adminText('numbered_list') }}">{{ $adminText('numbered_list_button') }}</button>
                     </div>
 
                     <span class="wb-toolbar-divider" aria-hidden="true"></span>
 
-                    <div class="wb-action-group" role="group" aria-label="Cleanup">
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="clear" aria-label="Clear formatting" title="Clear formatting">Clear</button>
+                    <div class="wb-action-group" role="group" aria-label="{{ $adminText('cleanup') }}">
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="clear" aria-label="{{ $adminText('clear_formatting') }}" title="{{ $adminText('clear_formatting') }}">{{ $adminText('clear') }}</button>
                     </div>
                 </div>
             </div>
@@ -57,7 +60,7 @@
                 class="wb-admin-rich-text-surface"
                 contenteditable="true"
                 role="textbox"
-                aria-label="Rich Text"
+                aria-label="{{ $adminText('rich_text') }}"
                 aria-multiline="true"
                 data-wb-rich-text-surface
             ></div>
@@ -72,6 +75,6 @@
                 hidden
             >{{ $value }}</textarea>
         </div>
-        <div class="wb-text-sm wb-text-muted">Use safe formatting: paragraphs, bold, italic, inline code, links, bullet lists, and numbered lists. Headings should use Header blocks.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('help') }}</div>
     </div>
 </div>
