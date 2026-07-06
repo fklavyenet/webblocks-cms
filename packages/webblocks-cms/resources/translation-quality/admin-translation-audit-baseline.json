@@ -484,82 +484,6 @@
             "phrase": "Alert title and body copy are translated per locale. Alert variant stays shared across locales."
         },
         {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Audio"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Audio Title"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Choose Audio"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Choose from Media"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "External Audio URL"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Remove"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Replace Audio"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Select a Media audio file or leave it empty and use an external audio URL."
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Supporting Copy"
-        },
-        {
-            "file": "admin/blocks/types/audio.blade.php",
-            "phrase": "Title and supporting copy are translated per locale. The selected Media item and external audio URL stay shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "Breadcrumb is generated from the current page path and translation context. It is appropriate for header and context bars, not full navigation menus."
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "Current page item"
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "Hide current page"
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "Home"
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "Home label"
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "Include current page"
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "Optional override for the root item label. Leave blank to use the translated home page name or Home."
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "System Breadcrumb"
-        },
-        {
-            "file": "admin/blocks/types/breadcrumb.blade.php",
-            "phrase": "When enabled, the final breadcrumb item renders as the current page label."
-        },
-        {
             "file": "admin/blocks/types/button-inline.blade.php",
             "phrase": "Button Label"
         },
@@ -840,42 +764,6 @@
             "phrase": "Variant"
         },
         {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Choose Download File"
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Choose an internal document asset for this download block."
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Choose from Media"
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Download File"
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Download Label"
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Helper Text"
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Remove"
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Replace Document"
-        },
-        {
-            "file": "admin/blocks/types/download.blade.php",
-            "phrase": "Variant"
-        },
-        {
             "file": "admin/blocks/types/fallback-inline.blade.php",
             "phrase": "Generic Block Form"
         },
@@ -1006,50 +894,6 @@
         {
             "file": "admin/blocks/types/grid.blade.php",
             "phrase": "This layout block has no public content fields. Add child cards or other supported blocks inside it."
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Accent control"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Color mode control"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Hide accent toggle"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Hide mode toggle"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Hide search trigger"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Public rendering ignores this while site-level Public Theme presets are active."
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Search trigger"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Show accent toggle"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Show mode toggle"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "Show search trigger"
-        },
-        {
-            "file": "admin/blocks/types/header-actions.blade.php",
-            "phrase": "System Header Actions"
         },
         {
             "file": "admin/blocks/types/header.blade.php",
