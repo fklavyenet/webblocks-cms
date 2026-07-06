@@ -16,7 +16,6 @@ class AdminTranslationAuditCommandTest extends TestCase
     ])
       ->expectsOutputToContain('Admin translation audit for locale [de]')
       ->expectsOutputToContain('Coverage:')
-      ->expectsOutputToContain('Most common missing phrases:')
       ->assertExitCode(0);
   }
 }

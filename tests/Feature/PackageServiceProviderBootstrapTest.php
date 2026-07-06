@@ -12,6 +12,7 @@ use Illuminate\Cache\RateLimiter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Console\AdminTranslationAuditCommand;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
@@ -296,6 +297,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
       SmokeNativeLocalCommand::class,
       SearchRebuildCommand::class,
       PackageSyncWebBlocksUiIconsCommand::class,
+      AdminTranslationAuditCommand::class,
       BlockTypeContractsAuditCommand::class,
       ImportDemoMedia::class,
       ResetPrimitiveBlocksCommand::class,
