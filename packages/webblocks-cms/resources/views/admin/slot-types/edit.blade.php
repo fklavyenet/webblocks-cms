@@ -1,17 +1,23 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Edit Slot Type', 'heading' => 'Edit Slot Type'])
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('slot_types.'.$key, $adminLocale, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('edit_title'), 'heading' => $adminText('edit_title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Edit Slot Type',
-        'description' => 'Slot type management remains product-owned and is not editable from this screen.',
+        'title' => $adminText('edit_title'),
+        'description' => $adminText('edit_description'),
     ])
 
     <div class="wb-card">
         <div class="wb-card-body wb-stack wb-gap-3">
             <div class="wb-alert wb-alert-info">
                 <div>
-                    <div class="wb-alert-title">Read only</div>
-                    <div>Slot Types are maintained by the CMS core catalog. Use the Slot Types index to review them.</div>
+                    <div class="wb-alert-title">{{ $adminText('read_only') }}</div>
+                    <div>{{ $adminText('catalog_help') }}</div>
                 </div>
             </div>
         </div>

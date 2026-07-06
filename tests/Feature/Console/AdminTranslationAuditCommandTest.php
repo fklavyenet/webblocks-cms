@@ -35,25 +35,38 @@ class AdminTranslationAuditCommandTest extends TestCase
   public function admin_translation_audit_can_fail_only_new_missing_phrases_outside_the_baseline(): void
   {
     $baselinePath = storage_path('framework/testing-admin-translation-baseline.json');
+    $testViewDirectory = base_path('packages/webblocks-cms/resources/views/admin/testing-audit');
+    $testViewPath = $testViewDirectory.'/new-hardcoded-copy.blade.php';
 
     file_put_contents($baselinePath, json_encode([
-      'accepted_missing' => [
-        [
-          'file' => 'admin/blocks/types/columns.blade.php',
-          'phrase' => 'Variant',
-        ],
-      ],
+      'accepted_missing' => [],
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-    $this->artisan('webblocks:admin-translation-audit', [
-      '--locale' => 'de',
-      '--limit' => 1,
-      '--baseline' => $baselinePath,
-      '--strict' => true,
-    ])
-      ->expectsOutputToContain('New missing outside baseline:')
-      ->expectsOutputToContain('Strict admin translation audit failed:')
-      ->assertExitCode(1);
+    if (! is_dir($testViewDirectory)) {
+      mkdir($testViewDirectory, 0777, true);
+    }
+
+    file_put_contents($testViewPath, '<div>Temporary untranslated admin phrase</div>');
+
+    try {
+      $this->artisan('webblocks:admin-translation-audit', [
+        '--locale' => 'de',
+        '--limit' => 1,
+        '--baseline' => $baselinePath,
+        '--strict' => true,
+      ])
+        ->expectsOutputToContain('New missing outside baseline:')
+        ->expectsOutputToContain('Strict admin translation audit failed:')
+        ->assertExitCode(1);
+    } finally {
+      if (is_file($testViewPath)) {
+        unlink($testViewPath);
+      }
+
+      if (is_dir($testViewDirectory)) {
+        rmdir($testViewDirectory);
+      }
+    }
   }
 
   #[Test]
