@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Sidebar Nav Item, Sidebar Nav Group, and Sidebar Footer block editor copy onto structured admin locale keys.
 - Move Users admin listing and form copy onto structured admin locale keys.
 - Move Hero block editor copy onto structured admin locale keys.
 - Move Gallery Items and Rich Text editor partial copy onto structured admin locale keys.
