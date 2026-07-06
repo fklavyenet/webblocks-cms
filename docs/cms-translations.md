@@ -48,9 +48,11 @@ packages/webblocks-cms/resources/lang/
 
 Files are the source of truth for product defaults because they are versioned, reviewable, safe to package, and available before database schema is guaranteed ready.
 
+The current accepted admin translation audit debt is tracked separately in `packages/webblocks-cms/resources/translation-quality/admin-translation-audit-baseline.json`. That file is a quality-gate baseline, not a translation source. Do not add new records to it for new UI work; move the UI copy to structured translation keys instead.
+
 ## Resolver Contract
 
-All CMS-owned copy should go through the CMS translator facade/helper instead of raw hard-coded strings once a surface is migrated:
+All CMS-owned copy should go through the CMS translator facade/helper instead of raw hard-coded strings:
 
 ```php
 cms_trans('admin.pages.title', locale: $adminLocale)
@@ -68,9 +70,19 @@ Fallback order:
 
 Placeholders use Laravel-style replacement names such as `:site`, `:query`, and `:count`.
 
-Admin HTML responses also pass through a package-local localization fallback for non-English admin locales. It translates reviewed UI phrases in text nodes and safe interface attributes such as `aria-label`, `placeholder`, `title`, and CMS-owned confirmation copy. This fallback is a bridge for broad admin coverage while individual Blade screens continue moving to explicit translation keys; it does not replace the direct `cms_trans()` contract for newly migrated surfaces.
+Admin Blade files must not introduce new user-visible hard-coded English copy. New headings, descriptions, card titles, empty states, table headers, filters, modal labels, button labels, `aria-label`, `title`, placeholders, confirmation prompts, and status labels must be resolved through structured keys such as `admin.site_transfers.run_export` or shared keys such as `admin.common.actions`.
 
-Use `php artisan webblocks:admin-translation-audit --locale=de` or `--locale=tr` to measure static CMS-owned admin Blade copy against the reviewed `admin.html` fallback phrase map. The audit is intentionally a prioritization tool, not a perfect renderer: it highlights low-coverage screens and common missing phrases so deeper Blade migrations and fallback-map additions can be batched by impact.
+Admin HTML responses also pass through a package-local localization fallback for non-English admin locales. It translates reviewed UI phrases in text nodes and safe interface attributes such as `aria-label`, `placeholder`, `title`, and CMS-owned confirmation copy. This fallback is a bridge for existing legacy admin coverage only; it does not replace the direct `cms_trans()` contract and must not be used as the primary implementation for new screens.
+
+Use `php artisan webblocks:admin-translation-audit --locale=de` or `--locale=tr` to measure static CMS-owned admin Blade copy against the reviewed `admin.html` fallback phrase map. The audit automatically discovers admin Blade files under `packages/webblocks-cms/resources/views/admin/` so newly added admin windows, modals, lists, and partials are included without updating a manual file list.
+
+Use the strict baseline gate before merging admin UI work:
+
+```bash
+composer test:admin-translations
+```
+
+This runs the audit for German and Turkish with `packages/webblocks-cms/resources/translation-quality/admin-translation-audit-baseline.json`. Existing debt remains visible, but new missing user-facing phrases outside the baseline fail the command. A passing baseline audit is still not a substitute for route-level render tests on migrated screens; every migrated admin screen should render in at least one non-English admin locale and assert that high-visibility English copy does not leak.
 
 ## Database Overrides
 
@@ -103,7 +115,7 @@ Do not translate the whole product in one broad rewrite. Move surfaces increment
 4. Migrate validation and lower-level admin screens gradually.
 5. Add optional database overrides after file-based defaults and tests are stable.
 
-Every migrated surface should have a regression test for locale resolution and fallback.
+Every migrated surface should have a regression test for locale resolution and fallback. New admin screens should include a non-English render assertion for page headers, card headings, empty states, modal copy, and primary actions.
 
 ## Initial Implementation
 

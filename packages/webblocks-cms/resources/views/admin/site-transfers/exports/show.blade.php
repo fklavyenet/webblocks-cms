@@ -1,13 +1,24 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Export Details', 'heading' => 'Export Details'])
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
+    $transferStatusLabel = static fn (?string $status) => $status ? $adminText('site_transfers.statuses.'.$status) : '-';
+    $yesNoLabel = static fn (bool $value) => $value ? $adminText('common.yes') : $adminText('common.no');
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('site_transfers.export_details'), 'heading' => $adminText('site_transfers.export_details')])
 
 @section('content')
     @php($manifest = $siteExport->manifest_json ?? [])
     @php($counts = $siteExport->summary_json ?? [])
 
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $siteExport->archive_name ?? 'Site Export #'.$siteExport->id,
-        'description' => 'Review export package metadata, counts, and output log for this site export run.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.site-transfers.exports.index').'" class="wb-btn wb-btn-secondary">Back to Exports</a>'.($siteExport->isCompleted() && $siteExport->archive_path ? '<a href="'.route('admin.site-transfers.exports.download', $siteExport).'" class="wb-btn wb-btn-primary">Download</a>' : '').'</div>',
+        'title' => $siteExport->archive_name ?? $adminText('site_transfers.export_number', ['id' => $siteExport->id]),
+        'description' => $adminText('site_transfers.export_details_description'),
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.site-transfers.exports.index').'" class="wb-btn wb-btn-secondary">'.$adminText('site_transfers.back_to_exports').'</a>'.($siteExport->isCompleted() && $siteExport->archive_path ? '<a href="'.route('admin.site-transfers.exports.download', $siteExport).'" class="wb-btn wb-btn-primary">'.$adminText('common.download').'</a>' : '').'</div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -16,21 +27,21 @@
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                    <strong>Run Status</strong>
-                    <span class="wb-status-pill {{ $siteExport->statusBadgeClass() }}">{{ $siteExport->statusLabel() }}</span>
+                    <strong>{{ $adminText('site_transfers.run_status') }}</strong>
+                    <span class="wb-status-pill {{ $siteExport->statusBadgeClass() }}">{{ $transferStatusLabel($siteExport->status) }}</span>
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>Site:</strong> {{ $siteExport->site?->name ?? '-' }}</div>
-                    <div><strong>Includes media:</strong> {{ $siteExport->includes_media ? 'Yes' : 'No' }}</div>
-                    <div><strong>Archive:</strong> {{ $siteExport->archive_name ?? '-' }}</div>
-                    <div><strong>Size:</strong> {{ $siteExport->humanArchiveSize() }}</div>
-                    <div><strong>Triggered by:</strong> {{ $siteExport->user?->name ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.site') }}:</strong> {{ $siteExport->site?->name ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.includes_media') }}:</strong> {{ $yesNoLabel((bool) $siteExport->includes_media) }}</div>
+                    <div><strong>{{ $adminText('site_transfers.archive') }}:</strong> {{ $siteExport->archive_name ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.size') }}:</strong> {{ $siteExport->humanArchiveSize() }}</div>
+                    <div><strong>{{ $adminText('site_transfers.triggered_by') }}:</strong> {{ $siteExport->user?->name ?? '-' }}</div>
 
                     @if ($siteExport->failure_message)
                         <div class="wb-alert wb-alert-danger">
                             <div>
-                                <div class="wb-alert-title">Export failed</div>
+                                <div class="wb-alert-title">{{ $adminText('site_transfers.export_failed') }}</div>
                                 <div>{{ $siteExport->failure_message }}</div>
                             </div>
                         </div>
@@ -39,22 +50,22 @@
             </div>
 
             <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>Manifest Metadata</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('site_transfers.manifest_metadata') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>Product:</strong> {{ $manifest['product'] ?? '-' }}</div>
-                    <div><strong>Feature version:</strong> {{ $manifest['feature_version'] ?? '-' }}</div>
-                    <div><strong>Format version:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
-                    <div><strong>Exported at:</strong> {{ $manifest['exported_at'] ?? '-' }}</div>
-                    <div><strong>Source app version:</strong> {{ $manifest['source_app_version'] ?? '-' }}</div>
-                    <div><strong>Source handle:</strong> {{ $manifest['source_site_handle'] ?? '-' }}</div>
-                    <div><strong>Source domain:</strong> {{ $manifest['source_site_domain'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.product') }}:</strong> {{ $manifest['product'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.feature_version') }}:</strong> {{ $manifest['feature_version'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.format_version') }}:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.exported_at') }}:</strong> {{ $manifest['exported_at'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.source_app_version') }}:</strong> {{ $manifest['source_app_version'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.source_handle') }}:</strong> {{ $manifest['source_site_handle'] ?? '-' }}</div>
+                    <div><strong>{{ $adminText('site_transfers.source_domain') }}:</strong> {{ $manifest['source_site_domain'] ?? '-' }}</div>
                 </div>
             </div>
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Counts</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('site_transfers.counts') }}</strong></div>
 
             <div class="wb-card-body">
                 <div class="wb-grid wb-grid-3">
@@ -67,7 +78,7 @@
                         </div>
                     @empty
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No count summary recorded</div>
+                            <div class="wb-empty-title">{{ $adminText('site_transfers.no_count_summary') }}</div>
                         </div>
                     @endforelse
                 </div>
@@ -75,14 +86,14 @@
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Output Log</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('site_transfers.output_log') }}</strong></div>
 
             <div class="wb-card-body">
                 @if ($siteExport->output_log)
                     <pre class="wb-code-block">{{ $siteExport->output_log }}</pre>
                 @else
                     <div class="wb-empty wb-empty-sm">
-                        <div class="wb-empty-title">No output log captured</div>
+                        <div class="wb-empty-title">{{ $adminText('site_transfers.no_output_log') }}</div>
                     </div>
                 @endif
             </div>

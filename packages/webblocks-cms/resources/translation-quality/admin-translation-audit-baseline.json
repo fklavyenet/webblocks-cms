@@ -1,0 +1,3187 @@
+{
+    "description": "Accepted existing admin translation audit debt. New CMS-owned admin UI copy must not be added to this file unless the phrase is intentionally being tracked as legacy debt.",
+    "locale": "de",
+    "generated_from": "php artisan webblocks:admin-translation-audit --locale=de --json",
+    "accepted_missing": [
+        {
+            "file": "admin/blocks/settings/alert.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/settings/button_link.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/settings/button_link.blade.php",
+            "phrase": "variant ?: 'primary') === 'primary')>Primary"
+        },
+        {
+            "file": "admin/blocks/settings/button_link.blade.php",
+            "phrase": "variant ?: 'primary') === 'secondary')>Secondary"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Align"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Auto"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Between"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Center"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Controls cross-axis alignment. `Center` keeps the current cluster default."
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "End"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Full"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Gap"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Justify"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Nowrap"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Start"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Stretch"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Use `Full` when the cluster should fill its parent, such as a navbar row that needs left and right groups to separate."
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Use `Nowrap` for single-row groups such as navbar rows. `Wrap` preserves the current cluster behavior."
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Width"
+        },
+        {
+            "file": "admin/blocks/settings/cluster.blade.php",
+            "phrase": "Wrap"
+        },
+        {
+            "file": "admin/blocks/settings/container.blade.php",
+            "phrase": "Container owns width only. Choose `None` for layout-neutral composition, or `Stack` for vertical flow."
+        },
+        {
+            "file": "admin/blocks/settings/container.blade.php",
+            "phrase": "Flow"
+        },
+        {
+            "file": "admin/blocks/settings/container.blade.php",
+            "phrase": "Maps to shipped `wb-container-*` width classes only."
+        },
+        {
+            "file": "admin/blocks/settings/container.blade.php",
+            "phrase": "Width"
+        },
+        {
+            "file": "admin/blocks/settings/container.blade.php",
+            "phrase": "setting('flow')) === 'none')>None"
+        },
+        {
+            "file": "admin/blocks/settings/container.blade.php",
+            "phrase": "setting('flow')) === 'stack')>Stack"
+        },
+        {
+            "file": "admin/blocks/settings/container.blade.php",
+            "phrase": "setting('flow')) === null)>Legacy default (Stack)"
+        },
+        {
+            "file": "admin/blocks/settings/content_header.blade.php",
+            "phrase": "Alignment"
+        },
+        {
+            "file": "admin/blocks/settings/fallback.blade.php",
+            "phrase": "No public settings are available for this block yet."
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Aspect Ratio"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Auto"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Below"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Captions"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Columns"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Enable lightbox viewer"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Gap"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Gradient"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Hidden"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Large"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "On hover"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Overlay"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Overlay Mode"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Portrait"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Shown only in the lightbox viewer header."
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Small"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Solid"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Square"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "Viewer title"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "setting('variant', 'grid')) === 'collage')>Collage"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "setting('variant', 'grid')) === 'grid')>Grid"
+        },
+        {
+            "file": "admin/blocks/settings/gallery.blade.php",
+            "phrase": "setting('variant', 'grid')) === 'masonry')>Masonry"
+        },
+        {
+            "file": "admin/blocks/settings/grid.blade.php",
+            "phrase": "Alternate media/text sections"
+        },
+        {
+            "file": "admin/blocks/settings/grid.blade.php",
+            "phrase": "Columns"
+        },
+        {
+            "file": "admin/blocks/settings/grid.blade.php",
+            "phrase": "First Section Layout"
+        },
+        {
+            "file": "admin/blocks/settings/grid.blade.php",
+            "phrase": "Gap"
+        },
+        {
+            "file": "admin/blocks/settings/grid.blade.php",
+            "phrase": "Maps only to shipped `wb-gap-3`, `wb-gap-4`, and `wb-gap-6` classes."
+        },
+        {
+            "file": "admin/blocks/settings/grid.blade.php",
+            "phrase": "Maps only to shipped `wb-grid-2`, `wb-grid-3`, and `wb-grid-4` classes."
+        },
+        {
+            "file": "admin/blocks/settings/grid.blade.php",
+            "phrase": "When enabled, direct Section children render as alternating two-column media/text rows regardless of child block order."
+        },
+        {
+            "file": "admin/blocks/settings/header.blade.php",
+            "phrase": "Alignment"
+        },
+        {
+            "file": "admin/blocks/settings/plain_text.blade.php",
+            "phrase": "Alignment"
+        },
+        {
+            "file": "admin/blocks/settings/section.blade.php",
+            "phrase": "Maps to shipped `wb-section-sm` and `wb-section-lg` spacing classes."
+        },
+        {
+            "file": "admin/blocks/settings/section.blade.php",
+            "phrase": "Spacing"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Auto"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Background Fit"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Bottom Center"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Bottom Left"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Bottom Right"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Center"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Contain"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Content Position"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Content Width"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Cover"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Dark"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Full"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Light"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Narrow"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Text Color"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Top Center"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Top Left"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Top Right"
+        },
+        {
+            "file": "admin/blocks/settings/slide.blade.php",
+            "phrase": "Wide"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Aspect Ratio"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Auto"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Autoplay Interval"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Background Fit"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Bottom Center"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Bottom Left"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Bottom Right"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Center"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Contain"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Content Position"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Content Width"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Cover"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Custom Min Height"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Dark"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Fill parent"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Full"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Height"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Large"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Light"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Narrow"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Overlay"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Small"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Square"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Text Color"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Top Center"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Top Left"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Top Right"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Viewport"
+        },
+        {
+            "file": "admin/blocks/settings/slider.blade.php",
+            "phrase": "Wide"
+        },
+        {
+            "file": "admin/blocks/settings/sticky-navbar.blade.php",
+            "phrase": "Fixed"
+        },
+        {
+            "file": "admin/blocks/settings/sticky-navbar.blade.php",
+            "phrase": "Position"
+        },
+        {
+            "file": "admin/blocks/settings/sticky-navbar.blade.php",
+            "phrase": "Static"
+        },
+        {
+            "file": "admin/blocks/settings/sticky-navbar.blade.php",
+            "phrase": "Sticky"
+        },
+        {
+            "file": "admin/blocks/types/accordion.blade.php",
+            "phrase": "Accordion Title"
+        },
+        {
+            "file": "admin/blocks/types/accordion.blade.php",
+            "phrase": "Accordion heading is translated per locale. Child item structure stays shared."
+        },
+        {
+            "file": "admin/blocks/types/accordion.blade.php",
+            "phrase": "Add child FAQ or content blocks as accordion items."
+        },
+        {
+            "file": "admin/blocks/types/accordion.blade.php",
+            "phrase": "Intro Text"
+        },
+        {
+            "file": "admin/blocks/types/alert.blade.php",
+            "phrase": "Alert title and body copy are translated per locale. Alert variant stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Audio"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Audio Title"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Choose Audio"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "External Audio URL"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Replace Audio"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Select a Media audio file or leave it empty and use an external audio URL."
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Supporting Copy"
+        },
+        {
+            "file": "admin/blocks/types/audio.blade.php",
+            "phrase": "Title and supporting copy are translated per locale. The selected Media item and external audio URL stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "Breadcrumb is generated from the current page path and translation context. It is appropriate for header and context bars, not full navigation menus."
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "Current page item"
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "Hide current page"
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "Home"
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "Home label"
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "Include current page"
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "Optional override for the root item label. Leave blank to use the translated home page name or Home."
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "System Breadcrumb"
+        },
+        {
+            "file": "admin/blocks/types/breadcrumb.blade.php",
+            "phrase": "When enabled, the final breadcrumb item renders as the current page label."
+        },
+        {
+            "file": "admin/blocks/types/button-inline.blade.php",
+            "phrase": "Button Label"
+        },
+        {
+            "file": "admin/blocks/types/button-inline.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/types/button-inline.blade.php",
+            "phrase": "subtitle ?: '_self') === '_self')>Same tab"
+        },
+        {
+            "file": "admin/blocks/types/button-inline.blade.php",
+            "phrase": "subtitle) === '_blank')>New tab"
+        },
+        {
+            "file": "admin/blocks/types/button.blade.php",
+            "phrase": "Button Label"
+        },
+        {
+            "file": "admin/blocks/types/button.blade.php",
+            "phrase": "Button label is translated per locale. URL, target, and variant stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/button.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/types/button.blade.php",
+            "phrase": "subtitle ?: '_self') === '_self')>Same tab"
+        },
+        {
+            "file": "admin/blocks/types/button.blade.php",
+            "phrase": "subtitle) === '_blank')>New tab"
+        },
+        {
+            "file": "admin/blocks/types/button_link.blade.php",
+            "phrase": "Button label is translated per locale. URL, target, and variant stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/button_link.blade.php",
+            "phrase": "Use a full URL, site path, anchor, mailto link, or telephone link."
+        },
+        {
+            "file": "admin/blocks/types/callout-inline.blade.php",
+            "phrase": "Callout Content"
+        },
+        {
+            "file": "admin/blocks/types/callout-inline.blade.php",
+            "phrase": "Callout Title"
+        },
+        {
+            "file": "admin/blocks/types/callout-inline.blade.php",
+            "phrase": "Tone"
+        },
+        {
+            "file": "admin/blocks/types/callout.blade.php",
+            "phrase": "Callout Content"
+        },
+        {
+            "file": "admin/blocks/types/callout.blade.php",
+            "phrase": "Callout Title"
+        },
+        {
+            "file": "admin/blocks/types/callout.blade.php",
+            "phrase": "Callout title and content are translated per locale. Tone stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/callout.blade.php",
+            "phrase": "Tone"
+        },
+        {
+            "file": "admin/blocks/types/card.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/card.blade.php",
+            "phrase": "Card is now a composable shell. Add Card Header, Card Body, and Card Footer as child blocks to build the visible structure."
+        },
+        {
+            "file": "admin/blocks/types/card_body.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/card_body.blade.php",
+            "phrase": "Card Body is a composable region. Add nested content or layout blocks inside it."
+        },
+        {
+            "file": "admin/blocks/types/card_footer.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/card_footer.blade.php",
+            "phrase": "Card Footer is a composable region. Add nested action or supporting blocks inside it."
+        },
+        {
+            "file": "admin/blocks/types/card_header.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/card_header.blade.php",
+            "phrase": "Card Header is a composable region. Add nested content blocks inside it."
+        },
+        {
+            "file": "admin/blocks/types/cluster.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/cluster.blade.php",
+            "phrase": "This layout block has no public content fields."
+        },
+        {
+            "file": "admin/blocks/types/code.blade.php",
+            "phrase": "Code title, label, and snippet body are translated per locale. The syntax language stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/code.blade.php",
+            "phrase": "Filename / Language Label"
+        },
+        {
+            "file": "admin/blocks/types/code.blade.php",
+            "phrase": "Shared Fields"
+        },
+        {
+            "file": "admin/blocks/types/code.blade.php",
+            "phrase": "Syntax Language"
+        },
+        {
+            "file": "admin/blocks/types/code.blade.php",
+            "phrase": "Translated Fields"
+        },
+        {
+            "file": "admin/blocks/types/column_item-inline.blade.php",
+            "phrase": "Column Text"
+        },
+        {
+            "file": "admin/blocks/types/column_item-inline.blade.php",
+            "phrase": "Column Title"
+        },
+        {
+            "file": "admin/blocks/types/column_item-inline.blade.php",
+            "phrase": "Optional Link"
+        },
+        {
+            "file": "admin/blocks/types/column_item.blade.php",
+            "phrase": "Column Text"
+        },
+        {
+            "file": "admin/blocks/types/column_item.blade.php",
+            "phrase": "Column Title"
+        },
+        {
+            "file": "admin/blocks/types/column_item.blade.php",
+            "phrase": "Column title and text are translated per locale. Optional link stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/column_item.blade.php",
+            "phrase": "Optional Link"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Add Column"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Add a title and short description for this column."
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Add the first item to build the visible columns for this section."
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Cards"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Column Items"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Column Text"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Column Title"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Columns Subtitle"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Columns Title"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Columns Variant"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Columns intro copy is translated per locale. Child column item structure remains shared."
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Each visible column is a child block under this Columns container."
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Intro Text"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "New Column Item"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "No column items yet"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Optional Link"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Plain"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "Stats"
+        },
+        {
+            "file": "admin/blocks/types/columns.blade.php",
+            "phrase": "The Columns variant controls how child Column Item blocks render publicly."
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Contact messages are always stored first. Notification settings stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Delivery Settings"
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Heading"
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Heading, intro text, submit label, and success message are translated per locale. Delivery settings stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Intro Text"
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Messages are always saved first. Email notification runs after persistence so inbox records survive delivery failures."
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Recipient Email Override"
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Reusable Contact Block"
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Send email notification"
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Submit Label"
+        },
+        {
+            "file": "admin/blocks/types/contact_form.blade.php",
+            "phrase": "Success Message"
+        },
+        {
+            "file": "admin/blocks/types/container.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/container.blade.php",
+            "phrase": "This layout block has no public content fields."
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "Add item"
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "Add the first meta item to continue."
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "Intro text"
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "Item"
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "Meta items"
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "New Item"
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "No items yet"
+        },
+        {
+            "file": "admin/blocks/types/content_header.blade.php",
+            "phrase": "Title, intro text, and meta items are translated per locale. Alignment stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Body Copy"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "CTA Translation Ownership"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Eyebrow / Label"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Eyebrow, title, body copy, and CTA labels are translated per locale. CTA URLs and variant stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Heading"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Label is translated. URL stays shared."
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Muted"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Primary CTA"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Primary CTA Label"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Primary CTA URL"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Secondary CTA"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Secondary CTA Label"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Secondary CTA URL"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Shared Fields"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Translated Fields"
+        },
+        {
+            "file": "admin/blocks/types/cta.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/types/download-inline.blade.php",
+            "phrase": "Document Asset ID"
+        },
+        {
+            "file": "admin/blocks/types/download-inline.blade.php",
+            "phrase": "Download Label"
+        },
+        {
+            "file": "admin/blocks/types/download-inline.blade.php",
+            "phrase": "Helper Text"
+        },
+        {
+            "file": "admin/blocks/types/download-inline.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Choose Download File"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Choose an internal document asset for this download block."
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Download File"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Download Label"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Helper Text"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Replace Document"
+        },
+        {
+            "file": "admin/blocks/types/download.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/types/fallback-inline.blade.php",
+            "phrase": "Generic Block Form"
+        },
+        {
+            "file": "admin/blocks/types/fallback-inline.blade.php",
+            "phrase": "Media Asset ID"
+        },
+        {
+            "file": "admin/blocks/types/fallback-inline.blade.php",
+            "phrase": "No custom inline admin form partial was found for this block type. The safe fallback form is being used."
+        },
+        {
+            "file": "admin/blocks/types/fallback-inline.blade.php",
+            "phrase": "Subtitle"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Generic Block Form"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Media Asset"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Meta"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "No custom admin form partial was found for this block type. The safe fallback form is being used."
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Replace Media"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Subtitle"
+        },
+        {
+            "file": "admin/blocks/types/fallback.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/types/faq-inline.blade.php",
+            "phrase": "Answer"
+        },
+        {
+            "file": "admin/blocks/types/faq-inline.blade.php",
+            "phrase": "Question"
+        },
+        {
+            "file": "admin/blocks/types/faq.blade.php",
+            "phrase": "Answer"
+        },
+        {
+            "file": "admin/blocks/types/faq.blade.php",
+            "phrase": "Question"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Add Feature"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Add a concise feature summary for this card."
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Add the first feature to render the public feature grid."
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Each visible feature card is a child block under this Feature Grid container."
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Feature Grid Subtitle"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Feature Grid Title"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Feature Items"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Feature Text"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Feature Title"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Feature grid intro copy is translated per locale. Child feature item structure, optional links, icons, and tones remain shared."
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Intro Text"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "New Feature Item"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "No feature items yet"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Optional Link"
+        },
+        {
+            "file": "admin/blocks/types/feature-grid.blade.php",
+            "phrase": "Structured publishing"
+        },
+        {
+            "file": "admin/blocks/types/feature-item.blade.php",
+            "phrase": "Feature Text"
+        },
+        {
+            "file": "admin/blocks/types/feature-item.blade.php",
+            "phrase": "Feature Title"
+        },
+        {
+            "file": "admin/blocks/types/feature-item.blade.php",
+            "phrase": "Feature title, text, and badge label are translated per locale. Optional link, icon, and tones stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/feature-item.blade.php",
+            "phrase": "Optional Link"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "Choose File"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "External File URL"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "File Title"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "Replace File"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "Select a Media file for the canonical file source, or leave it empty and use an external file URL."
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "Supporting Copy"
+        },
+        {
+            "file": "admin/blocks/types/file.blade.php",
+            "phrase": "Title and supporting copy are translated per locale. The selected Media item and external URL stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/grid.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/grid.blade.php",
+            "phrase": "This layout block has no public content fields. Add child cards or other supported blocks inside it."
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Accent control"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Color mode control"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Hide accent toggle"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Hide mode toggle"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Hide search trigger"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Public rendering ignores this while site-level Public Theme presets are active."
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Search trigger"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Show accent toggle"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Show mode toggle"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "Show search trigger"
+        },
+        {
+            "file": "admin/blocks/types/header-actions.blade.php",
+            "phrase": "System Header Actions"
+        },
+        {
+            "file": "admin/blocks/types/header.blade.php",
+            "phrase": "Anchor ID"
+        },
+        {
+            "file": "admin/blocks/types/header.blade.php",
+            "phrase": "Header text is translated per locale. The heading level stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/header.blade.php",
+            "phrase": "Level"
+        },
+        {
+            "file": "admin/blocks/types/header.blade.php",
+            "phrase": "Optional shared anchor for TOC links and direct section linking."
+        },
+        {
+            "file": "admin/blocks/types/header.blade.php",
+            "phrase": "Text"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Centered"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Eyebrow / Label"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Eyebrow, title, intro, and CTA labels are translated per locale. CTA URLs, variant, and layout stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Hero Translation Ownership"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Label is translated. URL stays shared."
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Left"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Muted"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Primary CTA"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Primary CTA Label"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Primary CTA URL"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Secondary CTA"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Secondary CTA Label"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Secondary CTA URL"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Shared Fields"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Shared presentation controls stay stable across locales and sites."
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Subtitle / Intro"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Title Tag"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Translated Fields"
+        },
+        {
+            "file": "admin/blocks/types/hero.blade.php",
+            "phrase": "Variant"
+        },
+        {
+            "file": "admin/blocks/types/html-inline.blade.php",
+            "phrase": "Raw HTML"
+        },
+        {
+            "file": "admin/blocks/types/html.blade.php",
+            "phrase": "Trusted HTML"
+        },
+        {
+            "file": "admin/blocks/types/html.blade.php",
+            "phrase": "Trusted HTML content is translated per locale."
+        },
+        {
+            "file": "admin/blocks/types/html.blade.php",
+            "phrase": "Trusted HTML only."
+        },
+        {
+            "file": "admin/blocks/types/image-inline.blade.php",
+            "phrase": "Image Asset ID"
+        },
+        {
+            "file": "admin/blocks/types/image-inline.blade.php",
+            "phrase": "Link URL"
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Caption and alt text are translated per locale. The selected asset and link URL stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Choose Image"
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Choose an internal image asset for this block."
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Link URL"
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Media Asset"
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/image.blade.php",
+            "phrase": "Replace Image"
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": ", Description renders as"
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": ", Meta renders as"
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": ", and URL becomes the item href."
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": "Link Title"
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": "Optional Description"
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": "Optional Meta"
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": "Title renders as"
+        },
+        {
+            "file": "admin/blocks/types/link-list-item.blade.php",
+            "phrase": "Title, optional meta, and optional description are translated per locale. URL stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Add Link"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Add the first Link List Item to render the public wb-link-list rows."
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Each visible row is a child Link List Item block under this Link List container."
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Getting Started"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Includes, root attributes, first workflow"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Link List Items"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Link Title"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "New Link List Item"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "No link list items yet"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Optional Description"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Optional Intro Description"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Optional Intro Meta"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Optional Intro Title"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Optional Meta"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Optional intro copy is translated per locale. Child Link List Item structure remains shared, and each item URL stays shared."
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Optional supporting copy for this container. The public link list renders only child items."
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "This is a container block for docs-style structured navigation rows. Use child Link List Item blocks to render the public"
+        },
+        {
+            "file": "admin/blocks/types/link-list.blade.php",
+            "phrase": "Use this page first if you need the shortest correct setup path for a real project."
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "Enter one item per line."
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "First item Second item Third item"
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "List Items"
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "List Style"
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "List Title"
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "List heading and items are translated per locale. List style stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "variant ?: 'unordered') === 'unordered')>Bulleted list"
+        },
+        {
+            "file": "admin/blocks/types/list.blade.php",
+            "phrase": "variant) === 'ordered')>Numbered list"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Accessible Label"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Brand Title"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Brand title and subtitle are translated per locale. URL, target, and logo stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Falls back to the site home URL"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Logo"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Optional when a logo is present."
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Replace Logo"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Subtitle"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "This block renders the inner"
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "Used for logo-only brands when visible title text is empty. Falls back to the site label if left blank."
+        },
+        {
+            "file": "admin/blocks/types/navbar-brand.blade.php",
+            "phrase": "link only. Place it inside a Navbar block to build a header layout. Provide a visible title, a logo, or both."
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Accent dot"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Active Indicator"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Active Matching"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Background"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Current page"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Exact URL"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Navigation ARIA Label"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Navigation ARIA label is translated per locale. Menu selection and active-state display settings stay shared."
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Navigation Menu"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "No visible navigation items exist for this site yet. Create them in"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Off"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Pill"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Section path"
+        },
+        {
+            "file": "admin/blocks/types/navbar-navigation.blade.php",
+            "phrase": "Underline"
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto-inline.blade.php",
+            "phrase": "Renders navigation items assigned to the selected menu."
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto-inline.blade.php",
+            "phrase": "System Navigation"
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto-inline.blade.php",
+            "phrase": "This block renders navigation items for the selected menu."
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto.blade.php",
+            "phrase": "Renders navigation items assigned to the selected menu."
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto.blade.php",
+            "phrase": "Renders navigation items assigned to the selected menu. Editorial content fields are not used for this block."
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto.blade.php",
+            "phrase": "System Block"
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto.blade.php",
+            "phrase": "System Navigation"
+        },
+        {
+            "file": "admin/blocks/types/navigation-auto.blade.php",
+            "phrase": "Uses navigation items from the Navigation Items tree editor instead of editorial content fields."
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Background Media"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Background Position"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Bottom"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Center"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Choose Background Image"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Choose an internal image asset from the shared media library."
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Left"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Overlay"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Replace Background"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Right"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Strong"
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "The renderer publishes media as a background image; public CSS controls cover, position, and overlay behavior."
+        },
+        {
+            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
+            "phrase": "Top"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Add Gallery Items"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Add, remove, and reorder gallery images. Per-item copy stays in each item editor."
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Alt:"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Caption:"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Credit, source text, link URL, and per-item open behavior are deferred until the gallery item model includes explicit shared behavior fields."
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Done"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Drag to reorder item"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Edit Gallery Item: __ITEM_LABEL__"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Edit item metadata"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Gallery Items"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Item"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "No alt text"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "No caption"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "No gallery items selected yet."
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "No overlay title"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "No preview"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Overlay Text"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Overlay Title"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Overlay:"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Per-item copy belongs to the active locale."
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Remove All"
+        },
+        {
+            "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
+            "phrase": "Summaries"
+        },
+        {
+            "file": "admin/blocks/types/partials/icon-badge-fields.blade.php",
+            "phrase": "Badge label"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "1. List"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Bullet List"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Cleanup"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Clear formatting"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Inline formatting"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Italic"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Link"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Links"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Lists"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Numbered List"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Rich Text formatting"
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "Use safe formatting: paragraphs, bold, italic, inline code, links, bullet lists, and numbered lists. Headings should use Header blocks."
+        },
+        {
+            "file": "admin/blocks/types/partials/rich-text-editor.blade.php",
+            "phrase": "\u2022 List"
+        },
+        {
+            "file": "admin/blocks/types/plain_text.blade.php",
+            "phrase": "Plain text content is translated per locale."
+        },
+        {
+            "file": "admin/blocks/types/plain_text.blade.php",
+            "phrase": "Text"
+        },
+        {
+            "file": "admin/blocks/types/quote-inline.blade.php",
+            "phrase": "Author"
+        },
+        {
+            "file": "admin/blocks/types/quote-inline.blade.php",
+            "phrase": "Quote Text"
+        },
+        {
+            "file": "admin/blocks/types/quote.blade.php",
+            "phrase": "Author"
+        },
+        {
+            "file": "admin/blocks/types/quote.blade.php",
+            "phrase": "Quote Text"
+        },
+        {
+            "file": "admin/blocks/types/quote.blade.php",
+            "phrase": "Quote Variant"
+        },
+        {
+            "file": "admin/blocks/types/quote.blade.php",
+            "phrase": "Use Testimonial when the quote should render as a framed social-proof card."
+        },
+        {
+            "file": "admin/blocks/types/quote.blade.php",
+            "phrase": "variant ?: 'default') === 'default')>Default quote"
+        },
+        {
+            "file": "admin/blocks/types/quote.blade.php",
+            "phrase": "variant) === 'testimonial')>Testimonial"
+        },
+        {
+            "file": "admin/blocks/types/search-form.blade.php",
+            "phrase": "Accessible Label"
+        },
+        {
+            "file": "admin/blocks/types/search-form.blade.php",
+            "phrase": "Button Label"
+        },
+        {
+            "file": "admin/blocks/types/search-form.blade.php",
+            "phrase": "Button Variant"
+        },
+        {
+            "file": "admin/blocks/types/search-form.blade.php",
+            "phrase": "Placeholder"
+        },
+        {
+            "file": "admin/blocks/types/search-form.blade.php",
+            "phrase": "Search label, placeholder, and button label are translated per locale. Button visibility and variant stay shared."
+        },
+        {
+            "file": "admin/blocks/types/search-form.blade.php",
+            "phrase": "Show submit button"
+        },
+        {
+            "file": "admin/blocks/types/section-inline.blade.php",
+            "phrase": "Section Intro"
+        },
+        {
+            "file": "admin/blocks/types/section-inline.blade.php",
+            "phrase": "Section Title"
+        },
+        {
+            "file": "admin/blocks/types/section-inline.blade.php",
+            "phrase": "Section Variant"
+        },
+        {
+            "file": "admin/blocks/types/section.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/section.blade.php",
+            "phrase": "This layout block has no public content fields."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Accessible Label"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Brand Title"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Brand title and subtitle are translated per locale. URL, target, and logo stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Falls back to the site home URL"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Logo"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "New tab"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Optional when a logo is present."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Replace Logo"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Same tab"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Subtitle"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "This block renders only the inner"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Upload the logo in Media, then select it here."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "Used for logo-only brands when visible title text is empty. Falls back to the site label if left blank."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "link. The outer"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-brand.blade.php",
+            "phrase": "wrapper still belongs to the docs public shell when the block lives in the Sidebar slot."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-footer.blade.php",
+            "phrase": "Callout Body"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-footer.blade.php",
+            "phrase": "Callout Title"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-footer.blade.php",
+            "phrase": "Callout Variant"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-footer.blade.php",
+            "phrase": "Footer Text"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-footer.blade.php",
+            "phrase": "Footer title, body, and version text are translated per locale. Callout variant stays shared."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-group.blade.php",
+            "phrase": "Admin Label"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-group.blade.php",
+            "phrase": "Closed"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-group.blade.php",
+            "phrase": "Foundation group"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-group.blade.php",
+            "phrase": "Group Label"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-group.blade.php",
+            "phrase": "Group title is translated per locale. Icon, open state, and admin label stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-group.blade.php",
+            "phrase": "Initially Open"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Active Matching"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Current Page"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Exact URL"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Manual"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Manual Active Fallback"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "New tab"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Off"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "On"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Same tab"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Sidebar link label is translated per locale. URL, target, icon, and active matching stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-nav-item.blade.php",
+            "phrase": "Used only when active matching mode is set to manual."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Active Matching"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Admin Label"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Current page"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Docs navigation"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Editor-only label for tree navigation. Not rendered publicly."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Exact URL"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Manual child blocks"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Navigation ARIA Label"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Navigation ARIA label is translated per locale. Menu selection and display settings stay shared."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Navigation Menu"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Show icons"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "This block renders"
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "Uses optional icon slugs stored on Navigation items."
+        },
+        {
+            "file": "admin/blocks/types/sidebar-navigation.blade.php",
+            "phrase": "When a menu is selected, public rendering comes from Navigation items instead of child Sidebar Nav blocks."
+        },
+        {
+            "file": "admin/blocks/types/slide.blade.php",
+            "phrase": "Accessible Label"
+        },
+        {
+            "file": "admin/blocks/types/slide.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/slide.blade.php",
+            "phrase": "Optional label for screen readers when the slide background carries meaning."
+        },
+        {
+            "file": "admin/blocks/types/slide.blade.php",
+            "phrase": "Slide is a container. Add normal content blocks inside it for visible text, buttons, cards, and layout."
+        },
+        {
+            "file": "admin/blocks/types/slider.blade.php",
+            "phrase": "Admin-only label used in the block tree and parent selector."
+        },
+        {
+            "file": "admin/blocks/types/slider.blade.php",
+            "phrase": "Slider accepts Slide child blocks only. Put headings, text, cards, buttons, and other content inside each Slide."
+        },
+        {
+            "file": "admin/blocks/types/stat-card.blade.php",
+            "phrase": "Eyebrow / Label"
+        },
+        {
+            "file": "admin/blocks/types/stat-card.blade.php",
+            "phrase": "Optional URL"
+        },
+        {
+            "file": "admin/blocks/types/stat-card.blade.php",
+            "phrase": "Translated string value. This may be 0, 6, 14+, 173, or any other display-ready metric."
+        },
+        {
+            "file": "admin/blocks/types/sticky-navbar.blade.php",
+            "phrase": "Admin Label"
+        },
+        {
+            "file": "admin/blocks/types/sticky-navbar.blade.php",
+            "phrase": "Editor-only label for the block tree. No public container or layout wrappers are added automatically."
+        },
+        {
+            "file": "admin/blocks/types/sticky-navbar.blade.php",
+            "phrase": "Main navbar"
+        },
+        {
+            "file": "admin/blocks/types/sticky-navbar.blade.php",
+            "phrase": "Navbar Primitive"
+        },
+        {
+            "file": "admin/blocks/types/sticky-navbar.blade.php",
+            "phrase": "Navbar renders only"
+        },
+        {
+            "file": "admin/blocks/types/sticky-navbar.blade.php",
+            "phrase": "and its child blocks. Add Container, Navbar Brand, Navbar Navigation, Header Actions, Search Form, or other compatible child blocks inside it."
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "Enter one row per line. Separate cells with a vertical bar:"
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "Plan | Seats | Support Starter | 3 | Email Scale | 10 | Priority"
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "Table Rows"
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "Table Style"
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "Table Title"
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "Table heading and cell text are translated per locale. Header-row behavior stays shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "variant ?: 'header-row') === 'header-row')>First row is header"
+        },
+        {
+            "file": "admin/blocks/types/table.blade.php",
+            "phrase": "variant) === 'plain')>All rows are body rows"
+        },
+        {
+            "file": "admin/blocks/types/tabs-inline.blade.php",
+            "phrase": "Tab Content"
+        },
+        {
+            "file": "admin/blocks/types/tabs-inline.blade.php",
+            "phrase": "Tab Group"
+        },
+        {
+            "file": "admin/blocks/types/tabs-inline.blade.php",
+            "phrase": "Tab Label"
+        },
+        {
+            "file": "admin/blocks/types/tabs.blade.php",
+            "phrase": "Tab Content"
+        },
+        {
+            "file": "admin/blocks/types/tabs.blade.php",
+            "phrase": "Tab Group"
+        },
+        {
+            "file": "admin/blocks/types/tabs.blade.php",
+            "phrase": "Tab Label"
+        },
+        {
+            "file": "admin/blocks/types/text-inline.blade.php",
+            "phrase": "Text Content"
+        },
+        {
+            "file": "admin/blocks/types/text.blade.php",
+            "phrase": "Text Content"
+        },
+        {
+            "file": "admin/blocks/types/text.blade.php",
+            "phrase": "Text content is translated per locale."
+        },
+        {
+            "file": "admin/blocks/types/toc.blade.php",
+            "phrase": "Optional label shown above links generated from Header block anchors on the same page."
+        },
+        {
+            "file": "admin/blocks/types/toc.blade.php",
+            "phrase": "TOC Title"
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Choose Video"
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Choose from Media"
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "External Video URL"
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Remove"
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Replace Video"
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Select a hosted Media video or leave it empty and use an external video URL."
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Supporting Copy"
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Title and supporting copy are translated per locale. The selected Media item and external video URL stay shared across locales."
+        },
+        {
+            "file": "admin/blocks/types/video.blade.php",
+            "phrase": "Video Title"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Analysis Preview"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Analyze HTML"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Confidence"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Conversion profile"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Convert pasted or uploaded static HTML into a draft CMS page made from structured blocks."
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Create draft page"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Extracted content root"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "No content fragments detected"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Optional HTML file"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Page Converter becomes available after your account has access to at least one site."
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Page layout"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Page path or slug"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Page title"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Paste or upload HTML with visible page content and analyze again."
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Signed plan blocks"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Signed plan fallbacks"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Signed plan warnings"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Source HTML"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Source and Target"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Source fragment"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Suggested block"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Target locale"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Target path"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "Target title"
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "The page will be created as draft. Existing pages will not be overwritten."
+        },
+        {
+            "file": "admin/pages/converter.blade.php",
+            "phrase": "This first Page Converter step analyzes input only. It does not create, publish, overwrite, crawl, fetch remote URLs, or batch import pages."
+        },
+        {
+            "file": "admin/partials/flash.blade.php",
+            "phrase": "Backup Failed"
+        },
+        {
+            "file": "admin/partials/flash.blade.php",
+            "phrase": "Delete Failed"
+        },
+        {
+            "file": "admin/partials/flash.blade.php",
+            "phrase": "Locale Action Blocked"
+        },
+        {
+            "file": "admin/partials/flash.blade.php",
+            "phrase": "Restore Failed"
+        },
+        {
+            "file": "admin/partials/flash.blade.php",
+            "phrase": "Update Failed"
+        },
+        {
+            "file": "admin/partials/flash.blade.php",
+            "phrase": "User Action Blocked"
+        },
+        {
+            "file": "admin/partials/page-actions.blade.php",
+            "phrase": "Open page details"
+        },
+        {
+            "file": "admin/partials/pagination.blade.php",
+            "phrase": "Next"
+        },
+        {
+            "file": "admin/partials/pagination.blade.php",
+            "phrase": "Previous"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Artifact"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Artifact Status / Validation Status"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Author"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Back to Catalog"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "CMS verifies the SHA-256 checksum before installing."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Catalog Detail"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Catalog Plugin"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Catalog ZIP Install"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Catalog plugin unavailable."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Channel"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Checksum"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Copy checksum"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Copy download URL"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Declared Catalog Metadata"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Documentation"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Download URL"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Download ZIP"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Download the controlled public ZIP URL or install through the catalog bridge when all artifact metadata is available."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Enable and run setup only as separate explicit admin actions."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Install from Catalog"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Keep the plugin disabled until admin review is complete."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Links"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Local Lifecycle"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Local State"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Local Version"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "No downloadable artifact is available for this release."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Not provided"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Providers"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Release Notes"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Release Status"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Review CMS ZIP validation results."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Review compatibility and release metadata."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Scan Status"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Size"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "The manual ZIP upload flow remains available for catalog artifacts downloaded outside CMS and for plugin packages that are not installable from catalog metadata."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "The requested plugin"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Upload plugin ZIP"
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Use the catalog links for project information or install a plugin ZIP manually when one is provided by the plugin maintainer."
+        },
+        {
+            "file": "admin/plugins/catalog/show.blade.php",
+            "phrase": "Website"
+        },
+        {
+            "file": "admin/profile/edit.blade.php",
+            "phrase": "Confirm new password"
+        },
+        {
+            "file": "admin/profile/edit.blade.php",
+            "phrase": "Manage your account details and password."
+        },
+        {
+            "file": "admin/profile/edit.blade.php",
+            "phrase": "New password"
+        },
+        {
+            "file": "admin/profile/edit.blade.php",
+            "phrase": "Overrides the default admin panel language for your account only."
+        },
+        {
+            "file": "admin/profile/edit.blade.php",
+            "phrase": "Update your name and email address."
+        },
+        {
+            "file": "admin/profile/edit.blade.php",
+            "phrase": "Use your current password to set a new one."
+        },
+        {
+            "file": "admin/runtime-status.blade.php",
+            "phrase": "Guarded"
+        },
+        {
+            "file": "admin/runtime-status.blade.php",
+            "phrase": "Guarded package-owned admin runtime slice for the package transition. Root admin routes and views remain authoritative outside this reserved path."
+        },
+        {
+            "file": "admin/runtime-status.blade.php",
+            "phrase": "Named route"
+        },
+        {
+            "file": "admin/runtime-status.blade.php",
+            "phrase": "Package Admin Runtime Status"
+        },
+        {
+            "file": "admin/runtime-status.blade.php",
+            "phrase": "Package Admin Slice"
+        },
+        {
+            "file": "admin/runtime-status.blade.php",
+            "phrase": "Reserved path"
+        },
+        {
+            "file": "admin/runtime-status.blade.php",
+            "phrase": "This screen is package-owned and available only when the dedicated package admin route guard is enabled."
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Additive update"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Apply Promotion"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Apply assets:"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Apply physical media and public `/site/...` files when present in the package"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Behavior:"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Blocking Validation Errors"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Choose target site"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Choose uploaded package"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Compatible:"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Dry Run Plan"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Dry run token:"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Media / Public Files"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Mirror"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Mirror archives absent target pages, deactivates absent Shared Slots, and removes absent site-owned rows where safe. Runtime and install data stay preserved."
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Missing:"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Or select an uploaded package"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Preserved Areas"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Promote site-owned content from a package into a target site while preserving install-level and live-runtime data."
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Run Dry Run"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Run a dry run to inspect package compatibility, preserved areas, and the planned content changes before apply."
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Site Promotion"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Site Variables"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Strategy"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Strategy:"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Target & Strategy"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Target:"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Upload / Select Package"
+        },
+        {
+            "file": "admin/sites/promote.blade.php",
+            "phrase": "Upload promotion package"
+        },
+        {
+            "file": "admin/slot-types/_form.blade.php",
+            "phrase": "Slot Types are maintained by the CMS core catalog."
+        },
+        {
+            "file": "admin/slot-types/create.blade.php",
+            "phrase": "Create Slot Type"
+        },
+        {
+            "file": "admin/slot-types/create.blade.php",
+            "phrase": "Slot Types are maintained by the CMS core catalog. Use the Slot Types index to review them."
+        },
+        {
+            "file": "admin/slot-types/create.blade.php",
+            "phrase": "Slot type management remains product-owned and typically does not require manual creation."
+        },
+        {
+            "file": "admin/slot-types/edit.blade.php",
+            "phrase": "Edit Slot Type"
+        },
+        {
+            "file": "admin/slot-types/edit.blade.php",
+            "phrase": "Slot Types are maintained by the CMS core catalog. Use the Slot Types index to review them."
+        },
+        {
+            "file": "admin/slot-types/edit.blade.php",
+            "phrase": "Slot type management remains product-owned and is not editable from this screen."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "? The audit record will remain visible."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "? This cannot be undone."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "AI Guide"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "AI setup prompt"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "API Base URL"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "API Discovery Quick Start"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "API token activity storage is not ready. Run System Update again to apply the required activity schema."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "API token storage is not ready."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Authorization: Bearer <token> Accept: application/json Content-Type: application/json"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "CMS API Tokens"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "CMS API tokens pagination"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Capability"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Client"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Close Edit API Token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Close Recent API Activity"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Contact Example"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Copy this token now. The full token is shown only once."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Create Token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Create a token for a trusted local AI or operator tool."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Create and revoke bearer tokens for trusted local AI and operator tools."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Delete API Token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Delete Token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Delete token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Discovery"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Edit token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Example: Local AI, Homepage Builder, Operator Tool"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "First request"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Full token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "GET /webadmin/api"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Headers"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "How to use this token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Last Used"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Local .env example"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "No API tokens"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "No activity yet"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Recent API activity entries"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Revoke"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Revoke API Token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Revoke Token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Revoke token"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Revoking this token immediately blocks API access for the connected tool."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Run System Update again to apply the required CMS API token schema, then return to this page."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Start here"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "This token has not been used since activity tracking was enabled."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "This token is active. Any tool currently using it will lose API access immediately."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Tokens"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "Update this token's name and capabilities. The token value and audit metadata are not shown or changed."
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "User agent"
+        },
+        {
+            "file": "admin/system/api-tokens/index.blade.php",
+            "phrase": "View API activity"
+        },
+        {
+            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
+            "phrase": "Advanced capabilities"
+        },
+        {
+            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
+            "phrase": "Choose grouped permissions for this token."
+        },
+        {
+            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
+            "phrase": "Choose what this token is allowed to do."
+        },
+        {
+            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
+            "phrase": "Grant only to trusted operator tools."
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "All contexts"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "All sources"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "Context"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "Contexts"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "Edit icon"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "Icons pagination"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "No icons found"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "Open Manifest"
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "Search icons..."
+        },
+        {
+            "file": "admin/system/icons/index.blade.php",
+            "phrase": "Sync Manifest"
+        },
+        {
+            "file": "admin/system/icons/partials/edit-modal.blade.php",
+            "phrase": "Close icon edit modal"
+        },
+        {
+            "file": "admin/system/icons/partials/edit-modal.blade.php",
+            "phrase": "Update install-level icon metadata used by admin catalog screens and filtered pickers."
+        },
+        {
+            "file": "admin/system/updates.blade.php",
+            "phrase": "Another update run is already in progress."
+        },
+        {
+            "file": "admin/system/updates.blade.php",
+            "phrase": "No newer release is ready for this install."
+        },
+        {
+            "file": "admin/system/updates.blade.php",
+            "phrase": "The latest release does not provide an installable package URL."
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Active account"
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Assigned sites"
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Inactive users cannot sign in. Users management and install-level system screens stay restricted to super admins."
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Last login:"
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Leave both password fields blank to keep the current password unchanged."
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Protected Super Admin"
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Select at least one site for site admins and editors."
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Super admins do not require assigned sites and always have access to every site."
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Super admins have full system access. Site admins and editors are limited to assigned sites."
+        },
+        {
+            "file": "admin/users/form.blade.php",
+            "phrase": "Users stay install-level accounts. Role and assigned sites now determine which CMS areas each person can access."
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "All roles"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Clear Filters"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Delete user"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Edit user"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Editors"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Last Login"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Manage CMS users, admin access, and active account state without leaving the admin workspace."
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "No users found"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Search by name or email"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Site Access"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Site admins"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Super admins"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "Users pagination"
+        },
+        {
+            "file": "admin/users/index.blade.php",
+            "phrase": "You"
+        }
+    ]
+}

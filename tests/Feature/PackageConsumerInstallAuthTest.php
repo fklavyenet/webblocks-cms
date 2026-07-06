@@ -427,12 +427,12 @@ class PackageConsumerInstallAuthTest extends TestCase
 
     $this->actingAs($user)->get(route('admin.site-transfers.exports.show', $siteExport))
       ->assertOk()
-      ->assertSee('Export Details')
+      ->assertSee('Review export package metadata')
       ->assertDontSee('admin.site-transfers.exports.show');
 
     $this->actingAs($user)->get(route('admin.site-transfers.imports.show', $siteImport))
       ->assertOk()
-      ->assertSee('Import Details')
+      ->assertSee('Review the package manifest')
       ->assertDontSee('admin.site-transfers.imports.show');
 
     $this->actingAs($user)->get(route('admin.sites.promote'))

@@ -91,6 +91,10 @@
             "@php artisan config:clear --ansi",
             "@php artisan test tests/Feature/Admin/AdminDashboardRouteTest.php tests/Feature/Admin/AdminSidebarNavigationTest.php tests/Feature/Admin/SharedAdminPartialPackageViewTest.php --exclude-group=legacy --stop-on-failure"
         ],
+        "test:admin-translations": [
+            "@php artisan webblocks:admin-translation-audit --locale=de --baseline=packages/webblocks-cms/resources/translation-quality/admin-translation-audit-baseline.json --strict",
+            "@php artisan webblocks:admin-translation-audit --locale=tr --baseline=packages/webblocks-cms/resources/translation-quality/admin-translation-audit-baseline.json --strict"
+        ],
         "test:artifacts": [
             "@php artisan config:clear --ansi",
             "@php artisan test tests/Feature/ReleasePackageBoundaryTest.php --exclude-group=legacy --stop-on-failure"

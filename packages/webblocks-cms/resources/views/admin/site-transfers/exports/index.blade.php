@@ -1,14 +1,22 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Export / Import', 'heading' => 'Export / Import'])
-
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
+    $transferStatusLabel = static fn (?string $status) => $status ? $adminText('site_transfers.statuses.'.$status) : '-';
+    $yesNoLabel = static fn (bool $value) => $value ? $adminText('common.yes') : $adminText('common.no');
     $requestedModal = trim((string) request()->query('modal', old('_site_export_modal', '')));
     $showExportModal = $requestedModal === 'create-export';
 @endphp
 
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('site_transfers.title'), 'heading' => $adminText('site_transfers.title')])
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Export / Import',
-        'description' => 'Run portable site exports, inspect package history, and validate or import transfer packages from one operational screen.',
+        'title' => $adminText('site_transfers.title'),
+        'description' => $adminText('site_transfers.description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -17,26 +25,26 @@
         <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Site Exports</strong>
+                    <strong>{{ $adminText('site_transfers.exports') }}</strong>
                     <span class="wb-status-pill wb-status-info">{{ $exports->total() }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <a href="{{ route('admin.site-transfers.exports.index', ['modal' => 'create-export']) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="siteTransferExportModal">Run Export</a>
+                    <a href="{{ route('admin.site-transfers.exports.index', ['modal' => 'create-export']) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="siteTransferExportModal">{{ $adminText('site_transfers.run_export') }}</a>
                 </div>
             </div>
 
             <div class="wb-card-body">
                 @if ($exports->isEmpty())
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No site exports yet</div>
-                        <div class="wb-empty-text">The first completed site export package will appear here with download and detail actions.</div>
+                        <div class="wb-empty-title">{{ $adminText('site_transfers.no_exports') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('site_transfers.no_exports_help') }}</div>
                     </div>
                 @else
                     @include('webblocks-cms::admin.partials.listing-bulk-actions', [
-                        'label' => 'selected',
+                        'label' => $adminText('common.selected'),
                         'deleteTarget' => '#bulk-delete-site-exports-modal',
-                        'deleteLabel' => 'Delete selected',
+                        'deleteLabel' => $adminText('common.delete_selected'),
                     ])
 
                     <div class="wb-table-wrap">
@@ -45,16 +53,16 @@
                                 <tr>
                                     <th>
                                         <label class="wb-checkbox" for="select_all_visible_site_exports">
-                                            <input id="select_all_visible_site_exports" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible site exports">
-                                            <span class="wb-sr-only">Select all visible site exports</span>
+                                            <input id="select_all_visible_site_exports" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('site_transfers.select_all_exports') }}">
+                                            <span class="wb-sr-only">{{ $adminText('site_transfers.select_all_exports') }}</span>
                                         </label>
                                     </th>
-                                    <th>Created at</th>
-                                    <th>Site</th>
-                                    <th>Includes media</th>
-                                    <th>Package size</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>{{ $adminText('site_transfers.created_at') }}</th>
+                                    <th>{{ $adminText('site_transfers.site') }}</th>
+                                    <th>{{ $adminText('site_transfers.includes_media') }}</th>
+                                    <th>{{ $adminText('site_transfers.package_size') }}</th>
+                                    <th>{{ $adminText('common.status') }}</th>
+                                    <th>{{ $adminText('common.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -62,23 +70,23 @@
                                     <tr>
                                         <td>
                                             <label class="wb-checkbox" for="site_export_select_{{ $siteExport->id }}">
-                                                <input id="site_export_select_{{ $siteExport->id }}" type="checkbox" value="{{ $siteExport->id }}" data-wb-admin-row-select aria-label="Select site export {{ $siteExport->archive_name ?? '#'.$siteExport->id }}">
-                                                <span class="wb-sr-only">Select site export {{ $siteExport->archive_name ?? '#'.$siteExport->id }}</span>
+                                                <input id="site_export_select_{{ $siteExport->id }}" type="checkbox" value="{{ $siteExport->id }}" data-wb-admin-row-select aria-label="{{ $adminText('site_transfers.select_export', ['name' => $siteExport->archive_name ?? '#'.$siteExport->id]) }}">
+                                                <span class="wb-sr-only">{{ $adminText('site_transfers.select_export', ['name' => $siteExport->archive_name ?? '#'.$siteExport->id]) }}</span>
                                             </label>
                                         </td>
                                         <td>{{ $siteExport->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td>{{ $siteExport->site?->name ?? '-' }}</td>
-                                        <td>{{ $siteExport->includes_media ? 'Yes' : 'No' }}</td>
+                                        <td>{{ $yesNoLabel((bool) $siteExport->includes_media) }}</td>
                                         <td>{{ $siteExport->humanArchiveSize() }}</td>
-                                        <td><span class="wb-status-pill {{ $siteExport->statusBadgeClass() }}">{{ $siteExport->statusLabel() }}</span></td>
+                                        <td><span class="wb-status-pill {{ $siteExport->statusBadgeClass() }}">{{ $transferStatusLabel($siteExport->status) }}</span></td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
-                                                <a href="{{ route('admin.site-transfers.exports.show', $siteExport) }}" class="wb-action-btn wb-action-btn-view" title="Export details" aria-label="Export details">
+                                                <a href="{{ route('admin.site-transfers.exports.show', $siteExport) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('site_transfers.export_details') }}" aria-label="{{ $adminText('site_transfers.export_details') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
                                                 @if ($siteExport->isCompleted() && $siteExport->archive_path)
-                                                    <a href="{{ route('admin.site-transfers.exports.download', $siteExport) }}" class="wb-action-btn wb-action-btn-edit" title="Download export package" aria-label="Download export package">
+                                                    <a href="{{ route('admin.site-transfers.exports.download', $siteExport) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('site_transfers.download_export_package') }}" aria-label="{{ $adminText('site_transfers.download_export_package') }}">
                                                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                     </a>
                                                 @endif
@@ -86,8 +94,8 @@
                                                 <button
                                                     type="button"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="Delete export"
-                                                    aria-label="Delete export"
+                                                    title="{{ $adminText('site_transfers.delete_export') }}"
+                                                    aria-label="{{ $adminText('site_transfers.delete_export') }}"
                                                     data-wb-toggle="modal"
                                                     data-wb-target="#delete-site-export-{{ $siteExport->id }}-modal"
                                                 >
@@ -100,20 +108,20 @@
                                     @push('overlays')
                                         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                                             'id' => 'delete-site-export-'.$siteExport->id.'-modal',
-                                            'title' => 'Delete Site Export',
-                                            'description' => 'This deletes the site export record and stored archive file when present.',
+                                            'title' => $adminText('site_transfers.delete_export_title'),
+                                            'description' => $adminText('site_transfers.delete_export_description'),
                                             'action' => route('admin.site-transfers.exports.destroy', $siteExport),
                                             'method' => 'DELETE',
-                                            'submitLabel' => 'Delete export',
+                                            'submitLabel' => $adminText('site_transfers.delete_export'),
                                         ])
                                             <div class="wb-card wb-card-muted">
                                                 <div class="wb-card-body wb-stack wb-gap-2">
-                                                    <div><strong>{{ $siteExport->archive_name ?? 'Site export #'.$siteExport->id }}</strong></div>
-                                                    <div class="wb-text-sm wb-text-muted">Status {{ $siteExport->statusLabel() }} | Site {{ $siteExport->site?->name ?? '-' }}</div>
+                                                    <div><strong>{{ $siteExport->archive_name ?? $adminText('site_transfers.export_number', ['id' => $siteExport->id]) }}</strong></div>
+                                                    <div class="wb-text-sm wb-text-muted">{{ $adminText('common.status') }} {{ $transferStatusLabel($siteExport->status) }} | {{ $adminText('site_transfers.site') }} {{ $siteExport->site?->name ?? '-' }}</div>
                                                 </div>
                                             </div>
 
-                                            <p class="wb-text-sm wb-text-muted">This does not delete any site content.</p>
+                                            <p class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.delete_export_warning') }}</p>
                                         @endcomponent
                                     @endpush
                                 @endforeach
@@ -123,18 +131,18 @@
                 @endif
             </div>
 
-            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $exports, 'compact' => true, 'ariaLabel' => 'Exports pagination'])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $exports, 'compact' => true, 'ariaLabel' => $adminText('site_transfers.exports_pagination')])
         </div>
 
         @if ($exports->isNotEmpty())
             @push('overlays')
                 @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                     'id' => 'bulk-delete-site-exports-modal',
-                    'title' => 'Delete Selected Site Exports',
-                    'description' => 'This deletes the selected site export records and stored archive files when present.',
+                    'title' => $adminText('site_transfers.delete_selected_exports_title'),
+                    'description' => $adminText('site_transfers.delete_selected_exports_description'),
                     'action' => route('admin.site-transfers.exports.bulk-destroy'),
                     'method' => 'DELETE',
-                    'submitLabel' => 'Delete selected',
+                    'submitLabel' => $adminText('common.delete_selected'),
                     'formAttributes' => [
                         'data-wb-admin-bulk-delete-form' => true,
                         'data-wb-admin-bulk-input-name' => 'site_export_ids[]',
@@ -146,8 +154,8 @@
                 ])
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-body wb-stack wb-gap-2">
-                            <strong><span data-wb-admin-bulk-modal-count>0</span> selected site exports will be deleted.</strong>
-                            <p class="wb-text-sm wb-text-muted">This applies only to exports visible on this page. Export records and archive paths are re-checked server-side before deletion.</p>
+                            <strong><span data-wb-admin-bulk-modal-count>0</span> {{ $adminText('site_transfers.selected_exports_will_be_deleted') }}</strong>
+                            <p class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.bulk_delete_exports_help') }}</p>
                         </div>
                     </div>
 
@@ -160,26 +168,26 @@
         <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Site Imports</strong>
+                    <strong>{{ $adminText('site_transfers.imports') }}</strong>
                     <span class="wb-status-pill wb-status-info">{{ $imports->total() }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <a href="{{ route('admin.site-transfers.imports.create') }}" class="wb-btn wb-btn-primary">Run Import</a>
+                    <a href="{{ route('admin.site-transfers.imports.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('site_transfers.run_import') }}</a>
                 </div>
             </div>
 
             <div class="wb-card-body">
                 @if ($imports->isEmpty())
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No site imports yet</div>
-                        <div class="wb-empty-text">Validated and completed site imports will appear here with result and log details.</div>
+                        <div class="wb-empty-title">{{ $adminText('site_transfers.no_imports') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('site_transfers.no_imports_help') }}</div>
                     </div>
                 @else
                     @include('webblocks-cms::admin.partials.listing-bulk-actions', [
-                        'label' => 'selected',
+                        'label' => $adminText('common.selected'),
                         'deleteTarget' => '#bulk-delete-site-imports-modal',
-                        'deleteLabel' => 'Delete selected',
+                        'deleteLabel' => $adminText('common.delete_selected'),
                     ])
 
                     <div class="wb-table-wrap">
@@ -188,15 +196,15 @@
                                 <tr>
                                     <th>
                                         <label class="wb-checkbox" for="select_all_visible_site_imports">
-                                            <input id="select_all_visible_site_imports" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible site imports">
-                                            <span class="wb-sr-only">Select all visible site imports</span>
+                                            <input id="select_all_visible_site_imports" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('site_transfers.select_all_imports') }}">
+                                            <span class="wb-sr-only">{{ $adminText('site_transfers.select_all_imports') }}</span>
                                         </label>
                                     </th>
-                                    <th>Created at</th>
-                                    <th>Imported site/result</th>
-                                    <th>Source package name</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>{{ $adminText('site_transfers.created_at') }}</th>
+                                    <th>{{ $adminText('site_transfers.imported_site_result') }}</th>
+                                    <th>{{ $adminText('site_transfers.source_package_name') }}</th>
+                                    <th>{{ $adminText('common.status') }}</th>
+                                    <th>{{ $adminText('common.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -204,8 +212,8 @@
                                     <tr>
                                         <td>
                                             <label class="wb-checkbox" for="site_import_select_{{ $siteImport->id }}">
-                                                <input id="site_import_select_{{ $siteImport->id }}" type="checkbox" value="{{ $siteImport->id }}" data-wb-admin-row-select aria-label="Select site import {{ $siteImport->source_archive_name ?? '#'.$siteImport->id }}">
-                                                <span class="wb-sr-only">Select site import {{ $siteImport->source_archive_name ?? '#'.$siteImport->id }}</span>
+                                                <input id="site_import_select_{{ $siteImport->id }}" type="checkbox" value="{{ $siteImport->id }}" data-wb-admin-row-select aria-label="{{ $adminText('site_transfers.select_import', ['name' => $siteImport->source_archive_name ?? '#'.$siteImport->id]) }}">
+                                                <span class="wb-sr-only">{{ $adminText('site_transfers.select_import', ['name' => $siteImport->source_archive_name ?? '#'.$siteImport->id]) }}</span>
                                             </label>
                                         </td>
                                         <td>{{ $siteImport->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
@@ -213,22 +221,22 @@
                                             @if ($siteImport->targetSite)
                                                 {{ $siteImport->targetSite->name }} ({{ $siteImport->targetSite->handle }})
                                             @else
-                                                {{ $siteImport->imported_site_handle ?? 'Pending / failed' }}
+                                                {{ $siteImport->imported_site_handle ?? $adminText('site_transfers.pending_failed') }}
                                             @endif
                                         </td>
                                         <td>{{ $siteImport->source_archive_name ?? '-' }}</td>
-                                        <td><span class="wb-status-pill {{ $siteImport->statusBadgeClass() }}">{{ $siteImport->statusLabel() }}</span></td>
+                                        <td><span class="wb-status-pill {{ $siteImport->statusBadgeClass() }}">{{ $transferStatusLabel($siteImport->status) }}</span></td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
-                                                <a href="{{ route('admin.site-transfers.imports.show', $siteImport) }}" class="wb-action-btn wb-action-btn-view" title="Import details" aria-label="Import details">
+                                                <a href="{{ route('admin.site-transfers.imports.show', $siteImport) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('site_transfers.import_details') }}" aria-label="{{ $adminText('site_transfers.import_details') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
                                                 <button
                                                     type="button"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="Delete import log"
-                                                    aria-label="Delete import log"
+                                                    title="{{ $adminText('site_transfers.delete_import_log') }}"
+                                                    aria-label="{{ $adminText('site_transfers.delete_import_log') }}"
                                                     data-wb-toggle="modal"
                                                     data-wb-target="#delete-site-import-{{ $siteImport->id }}-modal"
                                                 >
@@ -241,20 +249,20 @@
                                     @push('overlays')
                                         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                                             'id' => 'delete-site-import-'.$siteImport->id.'-modal',
-                                            'title' => 'Delete Site Import',
-                                            'description' => 'This deletes the site import log and stored package archive when present.',
+                                            'title' => $adminText('site_transfers.delete_import_title'),
+                                            'description' => $adminText('site_transfers.delete_import_description'),
                                             'action' => route('admin.site-transfers.imports.destroy', $siteImport),
                                             'method' => 'DELETE',
-                                            'submitLabel' => 'Delete import log',
+                                            'submitLabel' => $adminText('site_transfers.delete_import_log'),
                                         ])
                                             <div class="wb-card wb-card-muted">
                                                 <div class="wb-card-body wb-stack wb-gap-2">
-                                                    <div><strong>{{ $siteImport->source_archive_name ?? 'Site import #'.$siteImport->id }}</strong></div>
-                                                    <div class="wb-text-sm wb-text-muted">Status {{ $siteImport->statusLabel() }} | Result {{ $siteImport->targetSite?->name ?? ($siteImport->imported_site_handle ?? 'Pending / failed') }}</div>
+                                                    <div><strong>{{ $siteImport->source_archive_name ?? $adminText('site_transfers.import_number', ['id' => $siteImport->id]) }}</strong></div>
+                                                    <div class="wb-text-sm wb-text-muted">{{ $adminText('common.status') }} {{ $transferStatusLabel($siteImport->status) }} | {{ $adminText('site_transfers.result') }} {{ $siteImport->targetSite?->name ?? ($siteImport->imported_site_handle ?? $adminText('site_transfers.pending_failed')) }}</div>
                                                 </div>
                                             </div>
 
-                                            <p class="wb-text-sm wb-text-muted">Imported site content remains intact.</p>
+                                            <p class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.import_content_remains') }}</p>
                                         @endcomponent
                                     @endpush
                                 @endforeach
@@ -264,18 +272,18 @@
                 @endif
             </div>
 
-            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $imports, 'compact' => true, 'ariaLabel' => 'Imports pagination'])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $imports, 'compact' => true, 'ariaLabel' => $adminText('site_transfers.imports_pagination')])
         </div>
 
         @if ($imports->isNotEmpty())
             @push('overlays')
                 @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                     'id' => 'bulk-delete-site-imports-modal',
-                    'title' => 'Delete Selected Site Imports',
-                    'description' => 'This deletes the selected site import logs and stored package archives when present.',
+                    'title' => $adminText('site_transfers.delete_selected_imports_title'),
+                    'description' => $adminText('site_transfers.delete_selected_imports_description'),
                     'action' => route('admin.site-transfers.imports.bulk-destroy'),
                     'method' => 'DELETE',
-                    'submitLabel' => 'Delete selected',
+                    'submitLabel' => $adminText('common.delete_selected'),
                     'formAttributes' => [
                         'data-wb-admin-bulk-delete-form' => true,
                         'data-wb-admin-bulk-input-name' => 'site_import_ids[]',
@@ -287,8 +295,8 @@
                 ])
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-body wb-stack wb-gap-2">
-                            <strong><span data-wb-admin-bulk-modal-count>0</span> selected site imports will be deleted.</strong>
-                            <p class="wb-text-sm wb-text-muted">This applies only to imports visible on this page. Imported site content remains intact.</p>
+                            <strong><span data-wb-admin-bulk-modal-count>0</span> {{ $adminText('site_transfers.selected_imports_will_be_deleted') }}</strong>
+                            <p class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.bulk_delete_imports_help') }}</p>
                         </div>
                     </div>
 
@@ -301,8 +309,8 @@
 
     @include('webblocks-cms::admin.site-transfers.partials.export-modal', [
         'modalId' => 'siteTransferExportModal',
-        'modalTitle' => 'Export Site',
-        'modalDescription' => 'Create a portable site export package for migration, duplication, or transfer between installs.',
+        'modalTitle' => $adminText('site_transfers.export_site'),
+        'modalDescription' => $adminText('site_transfers.export_site_description'),
         'sites' => $sites,
         'show' => $showExportModal,
         'closeUrl' => route('admin.site-transfers.exports.index'),

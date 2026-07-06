@@ -31,6 +31,36 @@ class SiteExportImportAdminTest extends TestCase
   use RefreshDatabase;
 
   #[Test]
+  public function site_transfer_admin_screens_use_authenticated_admin_locale_for_screen_copy(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'admin_locale' => 'de',
+    ]);
+
+    $indexResponse = $this->actingAs($user)->get(route('admin.site-transfers.exports.index'));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('<html lang="de">', false);
+    $indexResponse->assertSee('Website-Exporte');
+    $indexResponse->assertSee('Noch keine Website-Exporte');
+    $indexResponse->assertSee('Export ausfuehren');
+    $indexResponse->assertSee('Website-Importe');
+    $indexResponse->assertDontSeeText('Run portable site exports');
+    $indexResponse->assertDontSeeText('No site exports yet');
+    $indexResponse->assertDontSeeText('Run Export');
+
+    $createResponse = $this->actingAs($user)->get(route('admin.site-transfers.imports.create'));
+
+    $createResponse->assertOk();
+    $createResponse->assertSee('Import ausfuehren');
+    $createResponse->assertSee('Importpaket (.zip)');
+    $createResponse->assertSee('Paket validieren');
+    $createResponse->assertDontSeeText('Run Import');
+    $createResponse->assertDontSeeText('Import package (.zip)');
+    $createResponse->assertDontSeeText('Validate Package');
+  }
+
+  #[Test]
   public function admin_export_action_creates_downloadable_package(): void
   {
     Storage::fake(SiteTransferDisk::DISK);

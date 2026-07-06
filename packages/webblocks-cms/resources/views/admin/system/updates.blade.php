@@ -21,6 +21,13 @@
     $latestUpdateRun = $latestUpdateRun ?? null;
     $retainedUpdateRuns = $retainedUpdateRuns ?? collect();
     $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
+    $updateBlockerText = static fn (?string $message) => match ($message) {
+      'Another update run is already in progress.' => $adminText('updates.blockers.busy'),
+      'No newer release is ready for this install.' => $adminText('updates.blockers.no_newer_release_ready'),
+      'The latest release does not provide an installable package URL.' => $adminText('updates.blockers.missing_package_url'),
+      null, '' => null,
+      default => $message,
+    };
     $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
     $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
       && (string) $installedVersion !== (string) $updateStatus['latest_version'];
@@ -269,7 +276,7 @@
             </label>
           </form>
         @else
-          <p class="wb-text-muted">{{ $autoUpdate['blockers'][0] ?? $adminText('updates.no_newer_release_ready') }}</p>
+          <p class="wb-text-muted">{{ $updateBlockerText($autoUpdate['blockers'][0] ?? null) ?? $adminText('updates.blockers.no_newer_release_ready') }}</p>
         @endif
 
       </div>

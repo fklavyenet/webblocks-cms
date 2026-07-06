@@ -11,9 +11,11 @@ class AdminTranslationAuditCommand extends Command
   protected $signature = 'webblocks:admin-translation-audit
     {--locale=de : Locale to audit against}
     {--limit=25 : Number of files or phrases to show}
+    {--strict : Return a failure exit code when any admin Blade UI phrase is not covered}
+    {--baseline= : JSON file of accepted existing missing admin UI phrase records}
     {--json : Output the audit as JSON}';
 
-  protected $description = 'Audit hard-coded admin Blade UI copy against the admin HTML localization fallback map';
+  protected $description = 'Audit hard-coded admin Blade UI copy against the admin translation contract';
 
   private const IGNORE_EXACT = [
     '-',
@@ -33,15 +35,34 @@ class AdminTranslationAuditCommand extends Command
     $phrases = $this->htmlPhrases($locale);
     $files = $this->auditFiles($phrases);
     $summary = $this->summary($files);
+    $baselinePath = (string) $this->option('baseline');
+
+    try {
+      $baselineRecords = $baselinePath !== ''
+        ? $this->baselineRecords($baselinePath)
+        : null;
+    } catch (\RuntimeException $exception) {
+      $this->error($exception->getMessage());
+
+      return self::FAILURE;
+    }
+
+    $newMissing = $baselineRecords === null
+      ? $this->missingRecords($files)
+      : $this->newMissingRecords($files, $baselineRecords);
+
+    $summary['new_missing'] = count($newMissing);
 
     if ($this->option('json')) {
       $this->line(json_encode([
         'locale' => $locale,
         'summary' => $summary,
+        'baseline' => $baselinePath !== '' ? $baselinePath : null,
+        'new_missing' => $newMissing,
         'files' => $files,
       ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-      return self::SUCCESS;
+      return $this->strictExitCode($summary, $baselineRecords !== null);
     }
 
     $this->info('Admin translation audit for locale ['.$locale.']');
@@ -50,6 +71,11 @@ class AdminTranslationAuditCommand extends Command
     $this->line('Covered by admin.html fallback: '.$summary['covered']);
     $this->line('Missing: '.$summary['missing']);
     $this->line('Coverage: '.$summary['coverage'].'%');
+
+    if ($baselineRecords !== null) {
+      $this->line('New missing outside baseline: '.$summary['new_missing']);
+    }
+
     $this->newLine();
 
     $this->table(
@@ -82,6 +108,24 @@ class AdminTranslationAuditCommand extends Command
       }
     }
 
+    if ($baselineRecords !== null && count($newMissing) > 0) {
+      $this->newLine();
+      $this->line('New missing phrases outside baseline:');
+
+      foreach (array_slice($newMissing, 0, $limit) as $record) {
+        $this->line($record['file'].': '.$record['phrase']);
+      }
+    }
+
+    if ($this->strictExitCode($summary, $baselineRecords !== null) === self::FAILURE) {
+      $this->newLine();
+      $this->error($baselineRecords !== null
+        ? 'Strict admin translation audit failed: '.$summary['new_missing'].' new UI phrases are not covered by structured translations or the accepted baseline.'
+        : 'Strict admin translation audit failed: '.$summary['missing'].' UI phrases are not covered by structured translations or the reviewed fallback map.');
+
+      return self::FAILURE;
+    }
+
     return self::SUCCESS;
   }
 
@@ -105,7 +149,7 @@ class AdminTranslationAuditCommand extends Command
     $basePath = dirname(__DIR__, 2).'/resources/views';
     $phraseLookup = array_fill_keys($phrases, true);
 
-    return collect(WebBlocksCmsServiceProvider::ADMIN_RUNTIME_VIEW_FILES)
+    return collect($this->adminViewFiles($basePath))
       ->map(function (string $file) use ($basePath, $phraseLookup): ?array {
         $path = $basePath.'/'.$file;
 
@@ -136,6 +180,39 @@ class AdminTranslationAuditCommand extends Command
       ->all();
   }
 
+  private function adminViewFiles(string $basePath): array
+  {
+    $files = ['layouts/admin.blade.php'];
+    $adminPath = $basePath.'/admin';
+
+    if (is_dir($adminPath)) {
+      $iterator = new \RecursiveIteratorIterator(
+        new \RecursiveDirectoryIterator($adminPath, \FilesystemIterator::SKIP_DOTS),
+      );
+
+      foreach ($iterator as $file) {
+        if (! $file instanceof \SplFileInfo || ! $file->isFile()) {
+          continue;
+        }
+
+        $path = $file->getPathname();
+
+        if (! str_ends_with($path, '.blade.php')) {
+          continue;
+        }
+
+        $files[] = str_replace($basePath.'/', '', $path);
+      }
+    }
+
+    return collect($files)
+      ->merge(WebBlocksCmsServiceProvider::ADMIN_RUNTIME_VIEW_FILES)
+      ->unique()
+      ->sort()
+      ->values()
+      ->all();
+  }
+
   private function summary(array $files): array
   {
     $phraseCount = array_sum(array_column($files, 'phrase_count'));
@@ -149,6 +226,63 @@ class AdminTranslationAuditCommand extends Command
       'missing' => $missingCount,
       'coverage' => $phraseCount === 0 ? 100 : round(($coveredCount / $phraseCount) * 100, 1),
     ];
+  }
+
+  private function strictExitCode(array $summary, bool $usesBaseline): int
+  {
+    $missing = $usesBaseline ? $summary['new_missing'] : $summary['missing'];
+
+    return $this->option('strict') && $missing > 0
+      ? self::FAILURE
+      : self::SUCCESS;
+  }
+
+  private function baselineRecords(string $path): array
+  {
+    $resolvedPath = str_starts_with($path, '/')
+      ? $path
+      : base_path($path);
+
+    if (! is_file($resolvedPath)) {
+      throw new \RuntimeException('Admin translation audit baseline was not found: '.$path);
+    }
+
+    $decoded = json_decode((string) file_get_contents($resolvedPath), true);
+
+    if (! is_array($decoded) || ! isset($decoded['accepted_missing']) || ! is_array($decoded['accepted_missing'])) {
+      throw new \RuntimeException('Admin translation audit baseline must contain an accepted_missing array: '.$path);
+    }
+
+    return collect($decoded['accepted_missing'])
+      ->filter(fn ($record): bool => is_array($record) && is_string($record['file'] ?? null) && is_string($record['phrase'] ?? null))
+      ->mapWithKeys(fn (array $record): array => [$this->recordKey($record['file'], $record['phrase']) => true])
+      ->all();
+  }
+
+  private function missingRecords(array $files): array
+  {
+    return collect($files)
+      ->flatMap(fn (array $file): array => collect($file['missing'])
+        ->map(fn (string $phrase): array => [
+          'file' => $file['file'],
+          'phrase' => $phrase,
+        ])
+        ->all())
+      ->values()
+      ->all();
+  }
+
+  private function newMissingRecords(array $files, array $baselineRecords): array
+  {
+    return collect($this->missingRecords($files))
+      ->reject(fn (array $record): bool => isset($baselineRecords[$this->recordKey($record['file'], $record['phrase'])]))
+      ->values()
+      ->all();
+  }
+
+  private function recordKey(string $file, string $phrase): string
+  {
+    return $file."\n".$phrase;
   }
 
   private function candidatePhrases(string $contents): array

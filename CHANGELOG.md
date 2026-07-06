@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Harden admin translation auditing so new admin Blade view families are discovered automatically and strict baseline checks fail on newly uncovered UI phrases.
+- Add an admin translation quality gate script for German and Turkish admin locales.
+- Move System Updates blocker copy and Export / Import admin screen copy onto structured admin locale keys.
+
 ## 1.34.1
 
 - Bumped CMS to `1.34.1`.
