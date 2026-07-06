@@ -1,29 +1,35 @@
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.link_list.'.$key, $adminLocale);
+@endphp
+
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Optional intro copy is translated per locale. Child Link List Item structure remains shared, and each item URL stays shared.</div>
+            <div>{{ $adminText('locale_help') }}</div>
         </div>
     @endif
 
     <div class="wb-alert wb-alert-info">
-        <div>This is a container block for docs-style structured navigation rows. Use child Link List Item blocks to render the public <code>wb-link-list</code> pattern.</div>
+        <div>{!! $adminText('system_help') !!}</div>
     </div>
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
-            <label for="subtitle">Optional Intro Meta</label>
+            <label for="subtitle">{{ $adminText('meta_label') }}</label>
             <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
         </div>
 
         <div class="wb-stack wb-gap-1">
-            <label for="title">Optional Intro Title</label>
+            <label for="title">{{ $adminText('title_label') }}</label>
             <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
         </div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="content">Optional Intro Description</label>
-        <textarea id="content" name="content" class="wb-textarea" rows="5" placeholder="Optional supporting copy for this container. The public link list renders only child items.">{{ old('content', $block->content) }}</textarea>
+        <label for="content">{{ $adminText('description_label') }}</label>
+        <textarea id="content" name="content" class="wb-textarea" rows="5" placeholder="{{ $adminText('description_placeholder') }}">{{ old('content', $block->content) }}</textarea>
     </div>
 
     @include('webblocks-cms::admin.blocks.partials.column-items-editor', [
@@ -31,20 +37,20 @@
         'inputName' => 'link_list_items',
         'itemBlockType' => $linkListItemBlockType ?? null,
         'editorKey' => 'link-list-item',
-        'editorTitle' => 'Link List Items',
-        'editorDescription' => 'Each visible row is a child Link List Item block under this Link List container.',
-        'addButtonLabel' => 'Add Link',
-        'emptyTitle' => 'No link list items yet',
-        'emptyDescription' => 'Add the first Link List Item to render the public wb-link-list rows.',
-        'newItemLabel' => 'New Link List Item',
-        'titleLabel' => 'Link Title',
-        'titlePlaceholder' => 'Getting Started',
-        'subtitleLabel' => 'Optional Meta',
-        'subtitlePlaceholder' => 'Includes, root attributes, first workflow',
+        'editorTitle' => $adminText('items_title'),
+        'editorDescription' => $adminText('items_description'),
+        'addButtonLabel' => $adminText('add_item'),
+        'emptyTitle' => $adminText('empty_title'),
+        'emptyDescription' => $adminText('empty_description'),
+        'newItemLabel' => $adminText('new_item'),
+        'titleLabel' => $adminText('item_title_label'),
+        'titlePlaceholder' => $adminText('item_title_placeholder'),
+        'subtitleLabel' => $adminText('item_meta_label'),
+        'subtitlePlaceholder' => $adminText('item_meta_placeholder'),
         'showSubtitle' => true,
-        'urlLabel' => 'URL',
-        'contentLabel' => 'Optional Description',
-        'contentPlaceholder' => 'Use this page first if you need the shortest correct setup path for a real project.',
+        'urlLabel' => $adminText('item_url_label'),
+        'contentLabel' => $adminText('item_content_label'),
+        'contentPlaceholder' => $adminText('item_content_placeholder'),
         'enableAdminSortable' => true,
     ])
 </div>
