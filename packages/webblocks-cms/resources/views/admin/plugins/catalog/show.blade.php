@@ -1,9 +1,12 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $title, 'heading' => $title])
 
 @php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.plugin_catalog.show.'.$key, $adminLocale, $replace);
     $plugin = $catalog->plugin;
     $release = $plugin?->latestCompatibleRelease;
-    $notProvided = '<span class="wb-text-muted">Not provided</span>';
+    $notProvided = '<span class="wb-text-muted">'.e($adminText('not_provided')).'</span>';
     $value = fn (?string $text): string => $text !== null && trim($text) !== '' ? e($text) : $notProvided;
     $urlValue = function (?string $url, string $label) use ($notProvided): string {
         return $url !== null
@@ -33,22 +36,22 @@
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $plugin?->label ?? 'Plugin Catalog Detail',
-        'description' => 'Review public catalog metadata for a WebBlocks CMS-compatible plugin.',
-        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary">Back to Catalog</a>',
-        'context' => '<span class="wb-text-sm wb-text-muted">Compatibility is checked against this CMS installation.</span>',
+        'title' => $plugin?->label ?? $adminText('title'),
+        'description' => $adminText('description'),
+        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_catalog')).'</a>',
+        'context' => '<span class="wb-text-sm wb-text-muted">'.e($adminText('compatibility_context')).'</span>',
     ])
 
     @if (! $catalog->available || $plugin === null)
         <div class="wb-alert wb-alert-danger wb-mb-4">
-            {{ $catalog->message ?? 'The Plugin Catalog detail is currently unavailable.' }}
+            {{ $catalog->message ?? $adminText('unavailable_alert') }}
         </div>
 
         <div class="wb-card">
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">Catalog plugin unavailable.</div>
-                    <div class="wb-empty-text">The requested plugin <code>{{ $handle }}</code> could not be loaded from the configured read-only catalog.</div>
+                    <div class="wb-empty-title">{{ $adminText('unavailable_title') }}</div>
+                    <div class="wb-empty-text">{!! $adminText('unavailable_text', ['handle' => '<code>'.e($handle).'</code>']) !!}</div>
                 </div>
             </div>
         </div>
@@ -56,42 +59,42 @@
         <div class="wb-grid wb-grid-2 wb-gap-4">
             <div class="wb-card">
                 <div class="wb-card-header">
-                    <strong>Catalog Plugin</strong>
+                    <strong>{{ $adminText('catalog_plugin') }}</strong>
                 </div>
                 <div class="wb-card-body wb-stack wb-gap-3">
                     <div>
                         <strong>{{ $plugin->label }}</strong>
                         <div class="wb-text-sm wb-text-muted"><code>{{ $plugin->handle }}</code></div>
                     </div>
-                    <div>{{ $plugin->summary ?? 'Not provided' }}</div>
+                    <div>{{ $plugin->summary ?? $adminText('not_provided') }}</div>
                     <div class="wb-grid wb-grid-2">
                         <div>
-                            <strong>Vendor</strong>
+                            <strong>{{ $adminText('vendor') }}</strong>
                             <div>{!! $value($plugin->vendor) !!}</div>
                         </div>
                         <div>
-                            <strong>Author</strong>
+                            <strong>{{ $adminText('author') }}</strong>
                             <div>{!! $value($plugin->author) !!}</div>
                         </div>
                         <div>
-                            <strong>Status</strong>
+                            <strong>{{ $adminText('status') }}</strong>
                             <div>{!! $value($plugin->status) !!}</div>
                         </div>
                         <div>
-                            <strong>Channel</strong>
+                            <strong>{{ $adminText('channel') }}</strong>
                             <div>{!! $value($plugin->displayChannel()) !!}</div>
                         </div>
                     </div>
                     <div>
-                        <strong>Description</strong>
-                        <div>{{ $plugin->description ?? 'Not provided' }}</div>
+                        <strong>{{ $adminText('plugin_description') }}</strong>
+                        <div>{{ $plugin->description ?? $adminText('not_provided') }}</div>
                     </div>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-header">
-                    <strong>Compatibility</strong>
+                    <strong>{{ $adminText('compatibility') }}</strong>
                 </div>
                 <div class="wb-card-body wb-stack wb-gap-3">
                     <div>
@@ -99,29 +102,29 @@
                     </div>
                     <div class="wb-grid wb-grid-2">
                         <div>
-                            <strong>Required CMS</strong>
+                            <strong>{{ $adminText('required_cms') }}</strong>
                             <div>{!! $value($plugin->displayRequiredCmsVersion()) !!}</div>
                         </div>
                         <div>
-                            <strong>Latest Compatible Release</strong>
+                            <strong>{{ $adminText('latest_compatible_release') }}</strong>
                             <div>{!! $value($release?->version) !!}</div>
                         </div>
                         <div>
-                            <strong>Release Status</strong>
+                            <strong>{{ $adminText('release_status') }}</strong>
                             <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
                         </div>
                         <div>
-                            <strong>Local State</strong>
-                            <div>{{ $installedState['installed'] ? 'Installed' : 'Not installed' }}</div>
+                            <strong>{{ $adminText('local_state') }}</strong>
+                            <div>{{ $installedState['installed'] ? $adminText('installed') : $adminText('not_installed') }}</div>
                         </div>
                         @if ($installedState['installed'])
                             <div>
-                                <strong>Local Version</strong>
+                                <strong>{{ $adminText('local_version') }}</strong>
                                 <div>{!! $value($installedState['version']) !!}</div>
                             </div>
                             <div>
-                                <strong>Local Lifecycle</strong>
-                                <div>{{ $installedState['enabled'] ? 'Enabled' : 'Disabled' }}</div>
+                                <strong>{{ $adminText('local_lifecycle') }}</strong>
+                                <div>{{ $installedState['enabled'] ? $adminText('enabled') : $adminText('disabled') }}</div>
                             </div>
                         @endif
                     </div>
@@ -131,7 +134,7 @@
 
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Catalog ZIP Install</strong>
+                <strong>{{ $adminText('zip_install') }}</strong>
             </div>
             <div class="wb-card-body wb-stack wb-gap-3">
                 @if ($errors->has('catalog_install'))
@@ -140,21 +143,21 @@
                     </div>
                 @endif
                 <div class="wb-alert wb-alert-info">
-                    Catalog installs download the public ZIP on the server, verify the catalog SHA-256 checksum, and use the same CMS plugin ZIP validation path as manual uploads. Installed catalog plugins remain disabled until explicitly enabled.
+                    {{ $adminText('zip_install_info') }}
                 </div>
                 <ol>
-                    <li>Review compatibility and release metadata.</li>
-                    <li>Download the controlled public ZIP URL or install through the catalog bridge when all artifact metadata is available.</li>
-                    <li>CMS verifies the SHA-256 checksum before installing.</li>
-                    <li>Review CMS ZIP validation results.</li>
-                    <li>Keep the plugin disabled until admin review is complete.</li>
-                    <li>Enable and run setup only as separate explicit admin actions.</li>
+                    <li>{{ $adminText('install_step_review') }}</li>
+                    <li>{{ $adminText('install_step_download') }}</li>
+                    <li>{{ $adminText('install_step_checksum') }}</li>
+                    <li>{{ $adminText('install_step_validation') }}</li>
+                    <li>{{ $adminText('install_step_disabled') }}</li>
+                    <li>{{ $adminText('install_step_enable') }}</li>
                 </ol>
-                <p>The manual ZIP upload flow remains available for catalog artifacts downloaded outside CMS and for plugin packages that are not installable from catalog metadata.</p>
+                <p>{{ $adminText('manual_upload_note') }}</p>
 
                 <div class="wb-grid wb-grid-2">
                     <div>
-                        <strong>Download URL</strong>
+                        <strong>{{ $adminText('download_url') }}</strong>
                         @if ($downloadUrl)
                             <div><code class="wb-text-break">{{ $downloadUrl }}</code></div>
                         @else
@@ -170,30 +173,30 @@
                         @endif
                     </div>
                     <div>
-                        <strong>Filename</strong>
+                        <strong>{{ $adminText('filename') }}</strong>
                         <div>{!! $value($release?->artifactFilename) !!}</div>
                     </div>
                     <div>
-                        <strong>Size</strong>
+                        <strong>{{ $adminText('size') }}</strong>
                         <div>{!! $value($release?->artifactSize) !!}</div>
                     </div>
                     <div>
-                        <strong>Release Status</strong>
+                        <strong>{{ $adminText('release_status') }}</strong>
                         <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
                     </div>
                     <div>
-                        <strong>Artifact Status / Validation Status</strong>
+                        <strong>{{ $adminText('artifact_validation_status') }}</strong>
                         <div>{!! $value($release?->artifactStatus) !!}</div>
                     </div>
                     <div>
-                        <strong>Scan Status</strong>
+                        <strong>{{ $adminText('scan_status') }}</strong>
                         <div>{!! $value($release?->scanStatus) !!}</div>
                     </div>
                 </div>
 
                 @if (! $hasArtifactMetadata)
                     <div class="wb-alert wb-alert-warning">
-                        No downloadable artifact is available for this release.
+                        {{ $adminText('no_artifact') }}
                     </div>
                 @endif
 
@@ -207,35 +210,35 @@
                         @csrf
                         <button type="submit" class="wb-btn wb-btn-primary">
                             <i class="wb-icon wb-icon-package-plus" aria-hidden="true"></i>
-                            Install from Catalog
+                            {{ $adminText('install_from_catalog') }}
                         </button>
                     </form>
                 @else
                     <button type="button" class="wb-btn wb-btn-primary" disabled>
                         <i class="wb-icon wb-icon-package-plus" aria-hidden="true"></i>
-                        Install from Catalog
+                        {{ $adminText('install_from_catalog') }}
                     </button>
                 @endif
                 @if ($manualUploadUrl)
                     <a href="{{ $manualUploadUrl }}" class="wb-btn wb-btn-secondary">
                         <i class="wb-icon wb-icon-upload" aria-hidden="true"></i>
-                        Upload plugin ZIP
+                        {{ $adminText('upload_plugin_zip') }}
                     </a>
                 @endif
                 @if ($downloadUrl)
                     <a href="{{ $downloadUrl }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">
                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
-                        Download ZIP
+                        {{ $adminText('download_zip') }}
                     </a>
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-copy-value="{{ $downloadUrl }}" data-wb-copy-label="Download URL">
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-copy-value="{{ $downloadUrl }}" data-wb-copy-label="{{ $adminText('download_url') }}">
                         <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
-                        Copy download URL
+                        {{ $adminText('copy_download_url') }}
                     </button>
                 @endif
                 @if ($checksum)
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-copy-value="{{ $checksum }}" data-wb-copy-label="Checksum">
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-copy-value="{{ $checksum }}" data-wb-copy-label="{{ $adminText('checksum') }}">
                         <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
-                        Copy checksum
+                        {{ $adminText('copy_checksum') }}
                     </button>
                 @endif
             </div>
@@ -244,25 +247,25 @@
         <div class="wb-grid wb-grid-2 wb-gap-4">
             <div class="wb-card">
                 <div class="wb-card-header">
-                    <strong>Links</strong>
+                    <strong>{{ $adminText('links') }}</strong>
                 </div>
                 <div class="wb-card-body">
                     <div class="wb-grid wb-grid-2">
                         <div>
-                            <strong>Website</strong>
-                            <div>{!! $urlValue($plugin->firstWebsiteUrl(), 'Open website') !!}</div>
+                            <strong>{{ $adminText('website') }}</strong>
+                            <div>{!! $urlValue($plugin->firstWebsiteUrl(), $adminText('open_website')) !!}</div>
                         </div>
                         <div>
-                            <strong>Documentation</strong>
-                            <div>{!! $urlValue($plugin->firstDocumentationUrl(), 'Open documentation') !!}</div>
+                            <strong>{{ $adminText('documentation') }}</strong>
+                            <div>{!! $urlValue($plugin->firstDocumentationUrl(), $adminText('open_documentation')) !!}</div>
                         </div>
                         <div>
-                            <strong>Support</strong>
-                            <div>{!! $urlValue($plugin->firstSupportUrl(), 'Open support') !!}</div>
+                            <strong>{{ $adminText('support') }}</strong>
+                            <div>{!! $urlValue($plugin->firstSupportUrl(), $adminText('open_support')) !!}</div>
                         </div>
                         <div>
-                            <strong>Catalog Detail</strong>
-                            <div>{!! $urlValue($plugin->firstDetailsUrl(), 'Open catalog detail') !!}</div>
+                            <strong>{{ $adminText('catalog_detail') }}</strong>
+                            <div>{!! $urlValue($plugin->firstDetailsUrl(), $adminText('open_catalog_detail')) !!}</div>
                         </div>
                     </div>
                 </div>
@@ -270,26 +273,26 @@
 
             <div class="wb-card">
                 <div class="wb-card-header">
-                    <strong>Artifact</strong>
+                    <strong>{{ $adminText('artifact') }}</strong>
                 </div>
                 <div class="wb-card-body">
                     @if (! $hasArtifactMetadata)
                         <div class="wb-empty">
-                            <div class="wb-empty-title">No downloadable artifact is available for this release.</div>
-                            <div class="wb-empty-text">Use the catalog links for project information or install a plugin ZIP manually when one is provided by the plugin maintainer.</div>
+                            <div class="wb-empty-title">{{ $adminText('no_artifact') }}</div>
+                            <div class="wb-empty-text">{{ $adminText('no_artifact_help') }}</div>
                         </div>
                     @else
                         <div class="wb-grid wb-grid-2">
                             <div>
-                                <strong>Download URL</strong>
-                                <div>{!! $urlValue($downloadUrl, 'Download ZIP') !!}</div>
+                                <strong>{{ $adminText('download_url') }}</strong>
+                                <div>{!! $urlValue($downloadUrl, $adminText('download_zip')) !!}</div>
                             </div>
                             <div>
-                                <strong>Filename</strong>
+                                <strong>{{ $adminText('filename') }}</strong>
                                 <div>{!! $value($release?->artifactFilename) !!}</div>
                             </div>
                             <div>
-                                <strong>Size</strong>
+                                <strong>{{ $adminText('size') }}</strong>
                                 <div>{!! $value($release?->artifactSize) !!}</div>
                             </div>
                             <div>
@@ -297,15 +300,15 @@
                                 <div>{!! $value($checksum) !!}</div>
                             </div>
                             <div>
-                                <strong>Release Status</strong>
+                                <strong>{{ $adminText('release_status') }}</strong>
                                 <div>{!! $value($release?->status ?? $plugin->displayStatus()) !!}</div>
                             </div>
                             <div>
-                                <strong>Artifact Status / Validation Status</strong>
+                                <strong>{{ $adminText('artifact_validation_status') }}</strong>
                                 <div>{!! $value($release?->artifactStatus) !!}</div>
                             </div>
                             <div>
-                                <strong>Scan Status</strong>
+                                <strong>{{ $adminText('scan_status') }}</strong>
                                 <div>{!! $value($release?->scanStatus) !!}</div>
                             </div>
                         </div>
@@ -316,7 +319,7 @@
 
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Release Notes</strong>
+                <strong>{{ $adminText('release_notes') }}</strong>
             </div>
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div>{!! $value($release?->displaySummary()) !!}</div>
@@ -327,35 +330,35 @@
                         @endforeach
                     </ul>
                 @else
-                    <div class="wb-text-muted">Not provided</div>
+                    <div class="wb-text-muted">{{ $adminText('not_provided') }}</div>
                 @endif
             </div>
         </div>
 
         <details class="wb-card">
             <summary class="wb-card-header">
-                <strong>Declared Catalog Metadata</strong>
+                <strong>{{ $adminText('declared_metadata') }}</strong>
             </summary>
             <div class="wb-card-body">
                 <div class="wb-grid wb-grid-2">
                     <div>
-                        <strong>Permissions</strong>
+                        <strong>{{ $adminText('permissions') }}</strong>
                         <div>{!! $listValue($plugin->declaredPermissions) !!}</div>
                     </div>
                     <div>
-                        <strong>Routes</strong>
+                        <strong>{{ $adminText('routes') }}</strong>
                         <div>{!! $listValue($plugin->declaredRoutes) !!}</div>
                     </div>
                     <div>
-                        <strong>Migrations</strong>
+                        <strong>{{ $adminText('migrations') }}</strong>
                         <div>{!! $listValue($plugin->declaredMigrations) !!}</div>
                     </div>
                     <div>
-                        <strong>Providers</strong>
+                        <strong>{{ $adminText('providers') }}</strong>
                         <div>{!! $listValue($plugin->declaredProviders) !!}</div>
                     </div>
                     <div>
-                        <strong>Commands</strong>
+                        <strong>{{ $adminText('commands') }}</strong>
                         <div>{!! $listValue($plugin->declaredCommands) !!}</div>
                     </div>
                 </div>
