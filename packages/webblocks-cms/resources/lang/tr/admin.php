@@ -88,6 +88,17 @@ return [
     'next' => 'Sonraki',
     'showing' => ':first-:last / :total gosteriliyor',
   ],
+  'api_tokens' => [
+    'capabilities' => [
+      'title' => 'Yetkiler',
+      'description' => 'Bu token icin gruplanmis izinleri sec.',
+      'default_group' => 'Yetkiler',
+      'default_description' => 'Bu tokenin ne yapabilecegini sec.',
+      'advanced_group' => 'Gelismis yetkiler',
+      'advanced_description' => 'Yalnizca guvenilir operator araclarina ver.',
+      'selected_count' => ':selected/:total secili',
+    ],
+  ],
   'updates' => [
     'title' => 'Sistem Guncellemeleri',
     'description' => 'Guncel CMS update durumunu inceleyin ve uygun oldugunda dogrulanmis bir surumu kurun.',
@@ -1981,6 +1992,18 @@ return [
       'url_label' => 'Harici Dosya URL',
       'content_label' => 'Destek Metni',
     ],
+    'image' => [
+      'locale_help' => 'Caption ve alt metin dile gore cevrilir. Secili varlik ve link URL diller arasinda ortak kalir.',
+      'choose_media' => 'Medyadan Sec',
+      'replace_image' => 'Gorseli Degistir',
+      'remove' => 'Kaldir',
+      'choose_image' => 'Gorsel Sec',
+      'asset_title' => 'Medya Varligi',
+      'asset_help' => 'Bu blok icin dahili bir gorsel varligi sec.',
+      'alt_label' => 'Alt Metin',
+      'url_label' => 'Link URL',
+      'caption_label' => 'Caption',
+    ],
     'video' => [
       'locale_help' => 'Baslik ve destek metni dile gore cevrilir. Secili Medya ogesi ve harici video URLsi diller arasinda ortak kalir.',
       'choose_media' => 'Medyadan Sec',
@@ -2040,10 +2063,18 @@ return [
     'navigation_auto' => [
       'system_title' => 'Sistem Navigasyonu',
       'system_help' => 'Secili menuye atanmis navigasyon ogelerini render eder. Bu blok icin editor icerik alanlari kullanilmaz.',
+      'inline_system_help' => 'Bu blok secili menu icin navigasyon ogelerini render eder.',
       'menu_label' => 'Menu',
       'menu_help' => 'Secili menuye atanmis navigasyon ogelerini render eder.',
       'system_block' => 'Sistem Blogu',
       'system_block_help' => 'Editor icerik alanlari yerine Navigation Items agac editorundeki navigasyon ogelerini kullanir.',
+    ],
+    'slide' => [
+      'name_label' => 'Ad',
+      'name_help' => 'Blok agaci ve parent secici icin yalnizca admin etiketi.',
+      'aria_label' => 'Erisilebilir Etiket',
+      'aria_help' => 'Slide arka plani anlam tasiyorsa ekran okuyucular icin opsiyonel etiket.',
+      'container_help' => 'Slide bir containerdir. Gorunur metin, buton, kart ve layout icin icine normal icerik bloklari ekle.',
     ],
     'cta' => [
       'translation_title' => 'CTA Ceviri Sahipligi',

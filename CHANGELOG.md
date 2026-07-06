@@ -25,6 +25,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Move File, Video, Quote, Text Inline, and Feature Grid editor copy onto structured admin locale keys.
 - Move Cluster and Slider block settings copy onto structured admin locale keys.
 - Move CTA, Button, Navigation Auto, and shared background media editor copy onto structured admin locale keys.
+- Move Image, Button Inline, Slide, Navigation Auto Inline, and API token capability copy onto structured admin locale keys.
 
 ## 1.34.1
 

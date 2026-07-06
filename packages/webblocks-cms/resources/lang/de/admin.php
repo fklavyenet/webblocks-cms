@@ -88,6 +88,17 @@ return [
     'next' => 'Weiter',
     'showing' => ':first-:last von :total',
   ],
+  'api_tokens' => [
+    'capabilities' => [
+      'title' => 'Berechtigungen',
+      'description' => 'Waehle gruppierte Berechtigungen fuer diesen Token.',
+      'default_group' => 'Berechtigungen',
+      'default_description' => 'Waehle, was dieser Token tun darf.',
+      'advanced_group' => 'Erweiterte Berechtigungen',
+      'advanced_description' => 'Nur vertrauenswuerdigen Operator-Tools gewaehren.',
+      'selected_count' => ':selected/:total ausgewaehlt',
+    ],
+  ],
   'updates' => [
     'title' => 'System-Updates',
     'description' => 'Pruefen Sie den aktuellen CMS-Update-Status und installieren Sie eine validierte Version, wenn sie verfuegbar ist.',
@@ -1982,6 +1993,18 @@ return [
       'url_label' => 'Externe Datei-URL',
       'content_label' => 'Begleittext',
     ],
+    'image' => [
+      'locale_help' => 'Caption und Alt-Text werden pro Sprache uebersetzt. Das ausgewaehlte Asset und die Link-URL bleiben sprachuebergreifend gemeinsam.',
+      'choose_media' => 'Aus Medien waehlen',
+      'replace_image' => 'Bild ersetzen',
+      'remove' => 'Entfernen',
+      'choose_image' => 'Bild waehlen',
+      'asset_title' => 'Medien-Asset',
+      'asset_help' => 'Waehle ein internes Bild-Asset fuer diesen Block.',
+      'alt_label' => 'Alt-Text',
+      'url_label' => 'Link-URL',
+      'caption_label' => 'Caption',
+    ],
     'video' => [
       'locale_help' => 'Titel und Begleittext werden pro Sprache uebersetzt. Das ausgewaehlte Medienobjekt und die externe Video-URL bleiben sprachuebergreifend gemeinsam.',
       'choose_media' => 'Aus Medien waehlen',
@@ -2041,10 +2064,18 @@ return [
     'navigation_auto' => [
       'system_title' => 'Systemnavigation',
       'system_help' => 'Rendert Navigationseintraege, die dem ausgewaehlten Menue zugeordnet sind. Redaktionelle Inhaltsfelder werden fuer diesen Block nicht genutzt.',
+      'inline_system_help' => 'Dieser Block rendert Navigationseintraege fuer das ausgewaehlte Menue.',
       'menu_label' => 'Menue',
       'menu_help' => 'Rendert Navigationseintraege, die dem ausgewaehlten Menue zugeordnet sind.',
       'system_block' => 'Systemblock',
       'system_block_help' => 'Verwendet Navigationseintraege aus dem Navigation-Items-Baumeditor statt redaktioneller Inhaltsfelder.',
+    ],
+    'slide' => [
+      'name_label' => 'Name',
+      'name_help' => 'Nur im Admin sichtbares Label fuer Blockbaum und Parent-Auswahl.',
+      'aria_label' => 'Barrierefreies Label',
+      'aria_help' => 'Optionales Label fuer Screenreader, wenn der Slide-Hintergrund Bedeutung traegt.',
+      'container_help' => 'Slide ist ein Container. Fuege normale Inhaltsbloecke fuer sichtbaren Text, Buttons, Karten und Layout darin hinzu.',
     ],
     'cta' => [
       'translation_title' => 'CTA-Uebersetzungszustand',

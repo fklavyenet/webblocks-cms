@@ -8,22 +8,6 @@
             "phrase": "Alert title and body copy are translated per locale. Alert variant stays shared across locales."
         },
         {
-            "file": "admin/blocks/types/button-inline.blade.php",
-            "phrase": "Button Label"
-        },
-        {
-            "file": "admin/blocks/types/button-inline.blade.php",
-            "phrase": "Variant"
-        },
-        {
-            "file": "admin/blocks/types/button-inline.blade.php",
-            "phrase": "subtitle ?: '_self') === '_self')>Same tab"
-        },
-        {
-            "file": "admin/blocks/types/button-inline.blade.php",
-            "phrase": "subtitle) === '_blank')>New tab"
-        },
-        {
             "file": "admin/blocks/types/button_link.blade.php",
             "phrase": "Button label is translated per locale. URL, target, and variant stay shared across locales."
         },
@@ -276,50 +260,6 @@
             "phrase": "Link URL"
         },
         {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Caption and alt text are translated per locale. The selected asset and link URL stay shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Choose Image"
-        },
-        {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Choose an internal image asset for this block."
-        },
-        {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Choose from Media"
-        },
-        {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Link URL"
-        },
-        {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Media Asset"
-        },
-        {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Remove"
-        },
-        {
-            "file": "admin/blocks/types/image.blade.php",
-            "phrase": "Replace Image"
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto-inline.blade.php",
-            "phrase": "Renders navigation items assigned to the selected menu."
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto-inline.blade.php",
-            "phrase": "System Navigation"
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto-inline.blade.php",
-            "phrase": "This block renders navigation items for the selected menu."
-        },
-        {
             "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
             "phrase": "Add Gallery Items"
         },
@@ -566,22 +506,6 @@
         {
             "file": "admin/blocks/types/sidebar-nav-item.blade.php",
             "phrase": "Used only when active matching mode is set to manual."
-        },
-        {
-            "file": "admin/blocks/types/slide.blade.php",
-            "phrase": "Accessible Label"
-        },
-        {
-            "file": "admin/blocks/types/slide.blade.php",
-            "phrase": "Admin-only label used in the block tree and parent selector."
-        },
-        {
-            "file": "admin/blocks/types/slide.blade.php",
-            "phrase": "Optional label for screen readers when the slide background carries meaning."
-        },
-        {
-            "file": "admin/blocks/types/slide.blade.php",
-            "phrase": "Slide is a container. Add normal content blocks inside it for visible text, buttons, cards, and layout."
         },
         {
             "file": "admin/blocks/types/slider.blade.php",
@@ -1250,22 +1174,6 @@
         {
             "file": "admin/system/api-tokens/index.blade.php",
             "phrase": "View API activity"
-        },
-        {
-            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
-            "phrase": "Advanced capabilities"
-        },
-        {
-            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
-            "phrase": "Choose grouped permissions for this token."
-        },
-        {
-            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
-            "phrase": "Choose what this token is allowed to do."
-        },
-        {
-            "file": "admin/system/api-tokens/partials/capability-checkboxes.blade.php",
-            "phrase": "Grant only to trusted operator tools."
         },
         {
             "file": "admin/system/icons/index.blade.php",

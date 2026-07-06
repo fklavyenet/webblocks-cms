@@ -88,6 +88,17 @@ return [
     'next' => 'Next',
     'showing' => 'Showing :first-:last of :total',
   ],
+  'api_tokens' => [
+    'capabilities' => [
+      'title' => 'Capabilities',
+      'description' => 'Choose grouped permissions for this token.',
+      'default_group' => 'Capabilities',
+      'default_description' => 'Choose what this token is allowed to do.',
+      'advanced_group' => 'Advanced capabilities',
+      'advanced_description' => 'Grant only to trusted operator tools.',
+      'selected_count' => ':selected/:total selected',
+    ],
+  ],
   'html' => [],
   'updates' => [
     'title' => 'System Updates',
@@ -741,6 +752,18 @@ return [
       'url_label' => 'External File URL',
       'content_label' => 'Supporting Copy',
     ],
+    'image' => [
+      'locale_help' => 'Caption and alt text are translated per locale. The selected asset and link URL stay shared across locales.',
+      'choose_media' => 'Choose from Media',
+      'replace_image' => 'Replace Image',
+      'remove' => 'Remove',
+      'choose_image' => 'Choose Image',
+      'asset_title' => 'Media Asset',
+      'asset_help' => 'Choose an internal image asset for this block.',
+      'alt_label' => 'Alt Text',
+      'url_label' => 'Link URL',
+      'caption_label' => 'Caption',
+    ],
     'video' => [
       'locale_help' => 'Title and supporting copy are translated per locale. The selected Media item and external video URL stay shared across locales.',
       'choose_media' => 'Choose from Media',
@@ -800,10 +823,18 @@ return [
     'navigation_auto' => [
       'system_title' => 'System Navigation',
       'system_help' => 'Renders navigation items assigned to the selected menu. Editorial content fields are not used for this block.',
+      'inline_system_help' => 'This block renders navigation items for the selected menu.',
       'menu_label' => 'Menu',
       'menu_help' => 'Renders navigation items assigned to the selected menu.',
       'system_block' => 'System Block',
       'system_block_help' => 'Uses navigation items from the Navigation Items tree editor instead of editorial content fields.',
+    ],
+    'slide' => [
+      'name_label' => 'Name',
+      'name_help' => 'Admin-only label used in the block tree and parent selector.',
+      'aria_label' => 'Accessible Label',
+      'aria_help' => 'Optional label for screen readers when the slide background carries meaning.',
+      'container_help' => 'Slide is a container. Add normal content blocks inside it for visible text, buttons, cards, and layout.',
     ],
     'cta' => [
       'translation_title' => 'CTA Translation Ownership',

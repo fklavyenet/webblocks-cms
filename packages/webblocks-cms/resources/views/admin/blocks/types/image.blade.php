@@ -1,7 +1,13 @@
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.image.'.$key, $adminLocale);
+@endphp
+
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Caption and alt text are translated per locale. The selected asset and link URL stay shared across locales.</div>
+            <div>{{ $adminText('locale_help') }}</div>
         </div>
     @endif
 
@@ -10,34 +16,34 @@
         'inputId' => 'asset_id',
         'fieldName' => 'asset_id',
         'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-        'buttonLabel' => 'Choose from Media',
-        'replaceLabel' => 'Replace Image',
-        'clearLabel' => 'Remove',
+        'buttonLabel' => $adminText('choose_media'),
+        'replaceLabel' => $adminText('replace_image'),
+        'clearLabel' => $adminText('remove'),
         'accept' => 'image',
         'panelMode' => 'overlay',
-        'panelTitle' => 'Choose Image',
+        'panelTitle' => $adminText('choose_image'),
         'compactControls' => true,
         'resultsVariant' => 'compact-list',
         'showUpload' => false,
         'selectorCard' => true,
-        'selectorCardTitle' => 'Media Asset',
-        'selectorHelperText' => 'Choose an internal image asset for this block.',
+        'selectorCardTitle' => $adminText('asset_title'),
+        'selectorHelperText' => $adminText('asset_help'),
     ])
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
-            <label for="subtitle">Alt Text</label>
+            <label for="subtitle">{{ $adminText('alt_label') }}</label>
             <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
         </div>
 
         <div class="wb-stack wb-gap-1">
-            <label for="url">Link URL</label>
+            <label for="url">{{ $adminText('url_label') }}</label>
             <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->url) }}">
         </div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="title">Caption</label>
+        <label for="title">{{ $adminText('caption_label') }}</label>
         <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
     </div>
 </div>

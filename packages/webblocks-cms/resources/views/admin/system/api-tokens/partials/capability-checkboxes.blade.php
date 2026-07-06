@@ -1,18 +1,21 @@
 @php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.api_tokens.capabilities.'.$key, $adminLocale, $replace);
     $fieldPrefix = $fieldPrefix ?? 'api_token_capability';
     $selectedCapabilities = $selectedCapabilities ?? [];
     $showErrors = $showErrors ?? false;
     $capabilityGroups = $capabilityGroups ?? [
         [
             'key' => 'default',
-            'label' => 'Capabilities',
-            'description' => 'Choose what this token is allowed to do.',
+            'label' => $adminText('default_group'),
+            'description' => $adminText('default_description'),
             'capabilities' => $defaultCapabilities,
         ],
         [
             'key' => 'advanced',
-            'label' => 'Advanced capabilities',
-            'description' => 'Grant only to trusted operator tools.',
+            'label' => $adminText('advanced_group'),
+            'description' => $adminText('advanced_description'),
             'capabilities' => $advancedCapabilities,
         ],
     ];
@@ -24,10 +27,10 @@
     <div class="wb-stack wb-gap-3">
         <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-stack wb-gap-1">
-                <div class="wb-label">Capabilities</div>
-                <div class="wb-text-sm wb-text-muted">Choose grouped permissions for this token.</div>
+                <div class="wb-label">{{ $adminText('title') }}</div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('description') }}</div>
             </div>
-            <span class="wb-status-pill wb-status-info">{{ $selectedCount }}/{{ $selectedTotal }} selected</span>
+            <span class="wb-status-pill wb-status-info">{{ $adminText('selected_count', ['selected' => $selectedCount, 'total' => $selectedTotal]) }}</span>
         </div>
 
         <div class="wb-api-token-capability-groups">
