@@ -16,6 +16,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Move Header Actions, Audio, Breadcrumb, and Download block editor copy onto structured admin locale keys.
 - Move Link List Item, List, Table, Container, and Grid block editor copy onto structured admin locale keys.
 - Move Runtime Status, Search Form, Sticky Navbar, Header, and Sticky Navbar settings copy onto structured admin locale keys.
+- Move Accordion, Callout, Column Item, Download Inline, and Feature Item block editor copy onto structured admin locale keys.
 
 ## 1.34.1
 

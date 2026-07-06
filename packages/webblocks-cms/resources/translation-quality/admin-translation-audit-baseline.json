@@ -392,22 +392,6 @@
             "phrase": "Wide"
         },
         {
-            "file": "admin/blocks/types/accordion.blade.php",
-            "phrase": "Accordion Title"
-        },
-        {
-            "file": "admin/blocks/types/accordion.blade.php",
-            "phrase": "Accordion heading is translated per locale. Child item structure stays shared."
-        },
-        {
-            "file": "admin/blocks/types/accordion.blade.php",
-            "phrase": "Add child FAQ or content blocks as accordion items."
-        },
-        {
-            "file": "admin/blocks/types/accordion.blade.php",
-            "phrase": "Intro Text"
-        },
-        {
             "file": "admin/blocks/types/alert.blade.php",
             "phrase": "Alert title and body copy are translated per locale. Alert variant stays shared across locales."
         },
@@ -454,34 +438,6 @@
         {
             "file": "admin/blocks/types/button_link.blade.php",
             "phrase": "Use a full URL, site path, anchor, mailto link, or telephone link."
-        },
-        {
-            "file": "admin/blocks/types/callout-inline.blade.php",
-            "phrase": "Callout Content"
-        },
-        {
-            "file": "admin/blocks/types/callout-inline.blade.php",
-            "phrase": "Callout Title"
-        },
-        {
-            "file": "admin/blocks/types/callout-inline.blade.php",
-            "phrase": "Tone"
-        },
-        {
-            "file": "admin/blocks/types/callout.blade.php",
-            "phrase": "Callout Content"
-        },
-        {
-            "file": "admin/blocks/types/callout.blade.php",
-            "phrase": "Callout Title"
-        },
-        {
-            "file": "admin/blocks/types/callout.blade.php",
-            "phrase": "Callout title and content are translated per locale. Tone stays shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/callout.blade.php",
-            "phrase": "Tone"
         },
         {
             "file": "admin/blocks/types/card.blade.php",
@@ -542,34 +498,6 @@
         {
             "file": "admin/blocks/types/code.blade.php",
             "phrase": "Translated Fields"
-        },
-        {
-            "file": "admin/blocks/types/column_item-inline.blade.php",
-            "phrase": "Column Text"
-        },
-        {
-            "file": "admin/blocks/types/column_item-inline.blade.php",
-            "phrase": "Column Title"
-        },
-        {
-            "file": "admin/blocks/types/column_item-inline.blade.php",
-            "phrase": "Optional Link"
-        },
-        {
-            "file": "admin/blocks/types/column_item.blade.php",
-            "phrase": "Column Text"
-        },
-        {
-            "file": "admin/blocks/types/column_item.blade.php",
-            "phrase": "Column Title"
-        },
-        {
-            "file": "admin/blocks/types/column_item.blade.php",
-            "phrase": "Column title and text are translated per locale. Optional link stays shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/column_item.blade.php",
-            "phrase": "Optional Link"
         },
         {
             "file": "admin/blocks/types/container.blade.php",
@@ -676,22 +604,6 @@
             "phrase": "Variant"
         },
         {
-            "file": "admin/blocks/types/download-inline.blade.php",
-            "phrase": "Document Asset ID"
-        },
-        {
-            "file": "admin/blocks/types/download-inline.blade.php",
-            "phrase": "Download Label"
-        },
-        {
-            "file": "admin/blocks/types/download-inline.blade.php",
-            "phrase": "Helper Text"
-        },
-        {
-            "file": "admin/blocks/types/download-inline.blade.php",
-            "phrase": "Variant"
-        },
-        {
             "file": "admin/blocks/types/fallback-inline.blade.php",
             "phrase": "Generic Block Form"
         },
@@ -762,22 +674,6 @@
         {
             "file": "admin/blocks/types/feature-grid.blade.php",
             "phrase": "Structured publishing"
-        },
-        {
-            "file": "admin/blocks/types/feature-item.blade.php",
-            "phrase": "Feature Text"
-        },
-        {
-            "file": "admin/blocks/types/feature-item.blade.php",
-            "phrase": "Feature Title"
-        },
-        {
-            "file": "admin/blocks/types/feature-item.blade.php",
-            "phrase": "Feature title, text, and badge label are translated per locale. Optional link, icon, and tones stay shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/feature-item.blade.php",
-            "phrase": "Optional Link"
         },
         {
             "file": "admin/blocks/types/file.blade.php",
