@@ -1,41 +1,44 @@
 @php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.background_media.'.$key, $adminLocale);
     $backgroundSettings = is_array($block->settings) ? $block->settings : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
     $backgroundPosition = old('background_position', $backgroundSettings['background_position'] ?? 'center');
     $backgroundOverlay = old('background_overlay', $backgroundSettings['background_overlay'] ?? 'soft');
 @endphp
 
 <div class="wb-card wb-card-muted">
-    <div class="wb-card-header"><strong>Background Media</strong></div>
+    <div class="wb-card-header"><strong>{{ $adminText('title') }}</strong></div>
     <div class="wb-card-body wb-stack wb-gap-4">
         @include('webblocks-cms::admin.media.asset-picker-panel', [
             'name' => 'background-asset',
             'inputId' => 'media_id',
             'fieldName' => 'media_id',
             'selectedAsset' => old('media_id') ? null : ($selectedAsset ?? $block->asset),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Replace Background',
-            'clearLabel' => 'Remove',
+            'buttonLabel' => $adminText('choose_media'),
+            'replaceLabel' => $adminText('replace_background'),
+            'clearLabel' => $adminText('remove'),
             'accept' => 'image',
             'panelMode' => 'overlay',
-            'panelTitle' => 'Choose Background Image',
+            'panelTitle' => $adminText('choose_background'),
             'compactControls' => true,
             'resultsVariant' => 'compact-list',
             'showUpload' => false,
             'selectorCard' => false,
             'showPreviewGrid' => true,
-            'selectorHelperText' => 'Choose an internal image asset from the shared media library.',
+            'selectorHelperText' => $adminText('asset_help'),
         ])
 
         <div class="wb-grid wb-grid-2">
             <div class="wb-stack wb-gap-1">
-                <label for="background_position">Background Position</label>
+                <label for="background_position">{{ $adminText('position_label') }}</label>
                 <select id="background_position" name="background_position" class="wb-select">
                     @foreach ([
-                        'center' => 'Center',
-                        'top' => 'Top',
-                        'bottom' => 'Bottom',
-                        'left' => 'Left',
-                        'right' => 'Right',
+                        'center' => $adminText('center'),
+                        'top' => $adminText('top'),
+                        'bottom' => $adminText('bottom'),
+                        'left' => $adminText('left'),
+                        'right' => $adminText('right'),
                     ] as $value => $label)
                         <option value="{{ $value }}" @selected($backgroundPosition === $value)>{{ $label }}</option>
                     @endforeach
@@ -43,18 +46,18 @@
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <label for="background_overlay">Overlay</label>
+                <label for="background_overlay">{{ $adminText('overlay_label') }}</label>
                 <select id="background_overlay" name="background_overlay" class="wb-select">
                     @foreach ([
-                        'soft' => 'Soft',
-                        'medium' => 'Medium',
-                        'strong' => 'Strong',
-                        'none' => 'None',
+                        'soft' => $adminText('soft'),
+                        'medium' => $adminText('medium'),
+                        'strong' => $adminText('strong'),
+                        'none' => $adminText('none'),
                     ] as $value => $label)
                         <option value="{{ $value }}" @selected($backgroundOverlay === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                <div class="wb-text-sm wb-text-muted">The renderer publishes media as a background image; public CSS controls cover, position, and overlay behavior.</div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('overlay_help') }}</div>
             </div>
         </div>
     </div>

@@ -24,26 +24,6 @@
             "phrase": "subtitle) === '_blank')>New tab"
         },
         {
-            "file": "admin/blocks/types/button.blade.php",
-            "phrase": "Button Label"
-        },
-        {
-            "file": "admin/blocks/types/button.blade.php",
-            "phrase": "Button label is translated per locale. URL, target, and variant stay shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/button.blade.php",
-            "phrase": "Variant"
-        },
-        {
-            "file": "admin/blocks/types/button.blade.php",
-            "phrase": "subtitle ?: '_self') === '_self')>Same tab"
-        },
-        {
-            "file": "admin/blocks/types/button.blade.php",
-            "phrase": "subtitle) === '_blank')>New tab"
-        },
-        {
             "file": "admin/blocks/types/button_link.blade.php",
             "phrase": "Button label is translated per locale. URL, target, and variant stay shared across locales."
         },
@@ -150,70 +130,6 @@
         {
             "file": "admin/blocks/types/content_header.blade.php",
             "phrase": "Title, intro text, and meta items are translated per locale. Alignment stays shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Body Copy"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "CTA Translation Ownership"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Eyebrow / Label"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Eyebrow, title, body copy, and CTA labels are translated per locale. CTA URLs and variant stay shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Heading"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Label is translated. URL stays shared."
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Muted"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Primary CTA"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Primary CTA Label"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Primary CTA URL"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Secondary CTA"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Secondary CTA Label"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Secondary CTA URL"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Shared Fields"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Translated Fields"
-        },
-        {
-            "file": "admin/blocks/types/cta.blade.php",
-            "phrase": "Variant"
         },
         {
             "file": "admin/blocks/types/fallback-inline.blade.php",
@@ -402,86 +318,6 @@
         {
             "file": "admin/blocks/types/navigation-auto-inline.blade.php",
             "phrase": "This block renders navigation items for the selected menu."
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto.blade.php",
-            "phrase": "Renders navigation items assigned to the selected menu."
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto.blade.php",
-            "phrase": "Renders navigation items assigned to the selected menu. Editorial content fields are not used for this block."
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto.blade.php",
-            "phrase": "System Block"
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto.blade.php",
-            "phrase": "System Navigation"
-        },
-        {
-            "file": "admin/blocks/types/navigation-auto.blade.php",
-            "phrase": "Uses navigation items from the Navigation Items tree editor instead of editorial content fields."
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Background Media"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Background Position"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Bottom"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Center"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Choose Background Image"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Choose an internal image asset from the shared media library."
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Choose from Media"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Left"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Overlay"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Remove"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Replace Background"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Right"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Strong"
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "The renderer publishes media as a background image; public CSS controls cover, position, and overlay behavior."
-        },
-        {
-            "file": "admin/blocks/types/partials/background-media-fields.blade.php",
-            "phrase": "Top"
         },
         {
             "file": "admin/blocks/types/partials/gallery-items-editor.blade.php",
