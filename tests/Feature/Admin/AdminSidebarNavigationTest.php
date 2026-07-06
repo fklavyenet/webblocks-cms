@@ -148,7 +148,7 @@ class AdminSidebarNavigationTest extends TestCase
       route('admin.locales.index') => ['Sprachen', 'Sprache hinzufuegen', 'Aktiv', 'Add Locale'],
       route('admin.page-layouts.index') => ['Seitenlayouts', 'Handle', 'Status', 'Page Layouts'],
       route('admin.block-types.index') => ['Block-Typen', 'Block-Typen suchen', 'Status', 'Search block types'],
-      route('admin.system.search.index') => ['Suchindex neu bauen', 'Neu bauen', 'Status', 'Search Rebuild'],
+      route('admin.system.search.index') => ['Suchindex neu bauen', 'Indexierte Zeilen', 'Status', 'Search Rebuild'],
       route('admin.system.updates.index') => ['System-Updates', 'Status', 'Update', 'System Updates'],
       route('admin.reports.visitors.index') => ['Besucherberichte', 'Datumsbereich', 'Besucher', 'Visitor Reports'],
     ];

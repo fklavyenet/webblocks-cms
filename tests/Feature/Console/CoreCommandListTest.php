@@ -42,6 +42,7 @@ class CoreCommandListTest extends TestCase
       ->expectsOutputToContain('block-types:sync-core')
       ->expectsOutputToContain('icons:sync-webblocks-ui')
       ->expectsOutputToContain('search:rebuild')
+      ->expectsOutputToContain('webblocks:admin-translation-audit')
       ->expectsOutputToContain('project:init')
       ->assertExitCode(0);
   }

@@ -70,6 +70,8 @@ Placeholders use Laravel-style replacement names such as `:site`, `:query`, and 
 
 Admin HTML responses also pass through a package-local localization fallback for non-English admin locales. It translates reviewed UI phrases in text nodes and safe interface attributes such as `aria-label`, `placeholder`, `title`, and CMS-owned confirmation copy. This fallback is a bridge for broad admin coverage while individual Blade screens continue moving to explicit translation keys; it does not replace the direct `cms_trans()` contract for newly migrated surfaces.
 
+Use `php artisan webblocks:admin-translation-audit --locale=de` or `--locale=tr` to measure static CMS-owned admin Blade copy against the reviewed `admin.html` fallback phrase map. The audit is intentionally a prioritization tool, not a perfect renderer: it highlights low-coverage screens and common missing phrases so deeper Blade migrations and fallback-map additions can be batched by impact.
+
 ## Database Overrides
 
 Database overrides are a later layer, not the first implementation step. When added, overrides should be additive and explicit:
@@ -111,6 +113,7 @@ The first file-based implementation includes:
 - `AdminLocaleResolver`, backed by user-level `users.admin_locale` preferences with install-wide `admin.locale` fallback.
 - Admin shell/sidebar/topbar translation for high-visibility navigation and account/theme actions.
 - Admin HTML localization fallback for broad resource, system, media, user, locale, and report screens while deeper Blade migrations continue.
+- Admin translation coverage audit command for finding low-coverage admin screens and common missing UI phrases.
 - Dashboard and Engagement admin screens for high-visibility operator workflows.
 - Auth and password reset screens, auth validation feedback, and CMS password reset email copy.
 - Contact Form, Comments, and Rating validation feedback, including block-specific redirect anchors for public correction flows.

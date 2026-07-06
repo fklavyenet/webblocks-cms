@@ -12,6 +12,7 @@ use Illuminate\Support\ServiceProvider;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use WebBlocks\Cms\Console\AdminTranslationAuditCommand;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
@@ -740,6 +741,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     SmokeNativeLocalCommand::class,
     SearchRebuildCommand::class,
     SyncWebBlocksUiIconsCommand::class,
+    AdminTranslationAuditCommand::class,
     BlockTypeContractsAuditCommand::class,
     ImportDemoMedia::class,
     ResetPrimitiveBlocksCommand::class,

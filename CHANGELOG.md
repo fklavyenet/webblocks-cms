@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add an admin translation audit command for measuring hard-coded Blade UI copy coverage against the admin HTML fallback map.
+- Broaden German and Turkish admin HTML fallback coverage for media, plugins, settings, visitor reports, contact messages, page/slot, site, and revision screens.
+
 ## 1.33.1
 
 - Bumped CMS to `1.33.1`.
