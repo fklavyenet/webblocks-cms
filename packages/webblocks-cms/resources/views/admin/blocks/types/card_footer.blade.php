@@ -1,9 +1,15 @@
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.layout_shell.'.$key, $adminLocale);
+@endphp
+
 <div class="wb-stack wb-gap-3">
     <div class="wb-stack wb-gap-1">
-        <label for="name">Name</label>
+        <label for="name">{{ $adminText('name') }}</label>
         <input id="name" name="name" class="wb-input" type="text" maxlength="100" value="{{ old('name', $block->layoutAdminName()) }}">
-        <div class="wb-text-sm wb-text-muted">Admin-only label used in the block tree and parent selector.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('admin_name_help') }}</div>
     </div>
 
-    <div class="wb-text-sm wb-text-muted">Card Footer is a composable region. Add nested action or supporting blocks inside it.</div>
+    <div class="wb-text-sm wb-text-muted">{{ $adminText('card_footer_help') }}</div>
 </div>
