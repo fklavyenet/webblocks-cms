@@ -1,7 +1,13 @@
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.file.'.$key, $adminLocale);
+@endphp
+
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Title and supporting copy are translated per locale. The selected Media item and external URL stay shared across locales.</div>
+            <div>{{ $adminText('locale_help') }}</div>
         </div>
     @endif
 
@@ -10,34 +16,34 @@
         'inputId' => 'asset_id',
         'fieldName' => 'asset_id',
         'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-        'buttonLabel' => 'Choose from Media',
-        'replaceLabel' => 'Replace File',
-        'clearLabel' => 'Remove',
+        'buttonLabel' => $adminText('choose_media'),
+        'replaceLabel' => $adminText('replace_file'),
+        'clearLabel' => $adminText('remove'),
         'accept' => 'file',
         'panelMode' => 'overlay',
-        'panelTitle' => 'Choose File',
+        'panelTitle' => $adminText('choose_file'),
         'compactControls' => true,
         'resultsVariant' => 'compact-list',
         'showUpload' => false,
         'selectorCard' => true,
-        'selectorCardTitle' => 'File',
-        'selectorHelperText' => 'Select a Media file for the canonical file source, or leave it empty and use an external file URL.',
+        'selectorCardTitle' => $adminText('file_card_title'),
+        'selectorHelperText' => $adminText('file_card_help'),
     ])
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
-            <label for="title">File Title</label>
+            <label for="title">{{ $adminText('title_label') }}</label>
             <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
         </div>
 
         <div class="wb-stack wb-gap-1">
-            <label for="url">External File URL</label>
+            <label for="url">{{ $adminText('url_label') }}</label>
             <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->url) }}" placeholder="https://example.com/file.pdf">
         </div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="content">Supporting Copy</label>
+        <label for="content">{{ $adminText('content_label') }}</label>
         <textarea id="content" name="content" class="wb-textarea" rows="4">{{ old('content', $block->content) }}</textarea>
     </div>
 </div>

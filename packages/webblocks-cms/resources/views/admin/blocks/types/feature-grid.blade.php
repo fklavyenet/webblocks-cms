@@ -40,7 +40,7 @@
         'emptyDescription' => $adminText('empty_description'),
         'newItemLabel' => $adminText('new_item'),
         'titleLabel' => $adminText('item_title_label'),
-        'titlePlaceholder' => 'Structured publishing',
+        'titlePlaceholder' => $adminText('item_title_placeholder'),
         'subtitleLabel' => null,
         'subtitlePlaceholder' => null,
         'showSubtitle' => false,

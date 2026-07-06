@@ -448,46 +448,6 @@
             "phrase": "Variant"
         },
         {
-            "file": "admin/blocks/types/feature-grid.blade.php",
-            "phrase": "Structured publishing"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "Choose File"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "Choose from Media"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "External File URL"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "File Title"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "Remove"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "Replace File"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "Select a Media file for the canonical file source, or leave it empty and use an external file URL."
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "Supporting Copy"
-        },
-        {
-            "file": "admin/blocks/types/file.blade.php",
-            "phrase": "Title and supporting copy are translated per locale. The selected Media item and external URL stay shared across locales."
-        },
-        {
             "file": "admin/blocks/types/grid.blade.php",
             "phrase": "Admin-only label used in the block tree and parent selector."
         },
@@ -856,30 +816,6 @@
             "phrase": "Quote Text"
         },
         {
-            "file": "admin/blocks/types/quote.blade.php",
-            "phrase": "Author"
-        },
-        {
-            "file": "admin/blocks/types/quote.blade.php",
-            "phrase": "Quote Text"
-        },
-        {
-            "file": "admin/blocks/types/quote.blade.php",
-            "phrase": "Quote Variant"
-        },
-        {
-            "file": "admin/blocks/types/quote.blade.php",
-            "phrase": "Use Testimonial when the quote should render as a framed social-proof card."
-        },
-        {
-            "file": "admin/blocks/types/quote.blade.php",
-            "phrase": "variant ?: 'default') === 'default')>Default quote"
-        },
-        {
-            "file": "admin/blocks/types/quote.blade.php",
-            "phrase": "variant) === 'testimonial')>Testimonial"
-        },
-        {
             "file": "admin/blocks/types/section.blade.php",
             "phrase": "Admin-only label used in the block tree and parent selector."
         },
@@ -1010,46 +946,6 @@
         {
             "file": "admin/blocks/types/stat-card.blade.php",
             "phrase": "Translated string value. This may be 0, 6, 14+, 173, or any other display-ready metric."
-        },
-        {
-            "file": "admin/blocks/types/text-inline.blade.php",
-            "phrase": "Text Content"
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Choose Video"
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Choose from Media"
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "External Video URL"
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Remove"
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Replace Video"
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Select a hosted Media video or leave it empty and use an external video URL."
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Supporting Copy"
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Title and supporting copy are translated per locale. The selected Media item and external video URL stay shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/video.blade.php",
-            "phrase": "Video Title"
         },
         {
             "file": "admin/pages/converter.blade.php",

@@ -22,6 +22,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Move Slide and Gallery block settings copy onto structured admin locale keys.
 - Move Sidebar and Navbar brand/navigation block editor copy onto structured admin locale keys.
 - Move shared pagination and small block presentation settings copy onto structured admin locale keys.
+- Move File, Video, Quote, Text Inline, and Feature Grid editor copy onto structured admin locale keys.
 
 ## 1.34.1
 
