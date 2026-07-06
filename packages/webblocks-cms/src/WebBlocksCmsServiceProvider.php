@@ -36,6 +36,7 @@ use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
 use WebBlocks\Cms\Console\SystemUpdatePruneRunsCommand;
 use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
+use WebBlocks\Cms\Http\Middleware\LocalizeAdminHtml;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
@@ -1110,6 +1111,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
 
     Route::aliasMiddleware('admin.access', RequireAdminAccess::class);
+    Route::aliasMiddleware('admin.localize-html', LocalizeAdminHtml::class);
     Route::aliasMiddleware('internal-api.capability', RequireInternalApiCapability::class);
     Route::aliasMiddleware('internal-api.token', RequireInternalApiToken::class);
     Route::aliasMiddleware('install.complete', RedirectIfInstalled::class);

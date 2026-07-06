@@ -10,6 +10,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 ## Unreleased
 
 - Make Sites and Pages admin listing screens resolve primary screen, filter, table, and action copy from the selected admin locale.
+- Add an admin HTML localization fallback so resource, system, media, user, locale, and report screens use the authenticated admin locale beyond the sidebar/topbar while deeper Blade migrations continue.
 
 ## 1.33.0
 

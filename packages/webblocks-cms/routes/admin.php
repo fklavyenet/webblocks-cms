@@ -151,7 +151,7 @@ Route::middleware(['web', 'install.required', AllowPagePreviewAccess::class])
     Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
   });
 
-Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access'])
+Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access', 'admin.localize-html'])
   ->prefix('webadmin')
   ->name('admin.')
   ->group(function () {

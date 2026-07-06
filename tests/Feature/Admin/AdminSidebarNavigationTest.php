@@ -132,6 +132,42 @@ class AdminSidebarNavigationTest extends TestCase
   }
 
   #[Test]
+  public function admin_resource_screens_apply_the_authenticated_admin_locale_beyond_the_shell(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'admin_locale' => 'de',
+    ]);
+
+    $expectations = [
+      route('admin.sites.index') => ['Websites', 'Website hinzufuegen', 'Domains verwalten', 'Add Site'],
+      route('admin.pages.index') => ['Seiten', 'Neue Seite', 'Seitenkonverter', 'New Page'],
+      route('admin.shared-slots.index') => ['Geteilte Slots', 'Nach Name, Handle, Slot oder Shell suchen', 'Website', 'Shared Slots'],
+      route('admin.media.index') => ['Medien', 'Medienbibliothek', 'Medien hochladen', 'Media Library'],
+      route('admin.contact-messages.index') => ['Kontaktmeldungen', 'Suche', 'Status', 'Contact Messages'],
+      route('admin.users.index') => ['Benutzer', 'Benutzer hinzufuegen', 'Suche', 'Add User'],
+      route('admin.locales.index') => ['Sprachen', 'Sprache hinzufuegen', 'Aktiv', 'Add Locale'],
+      route('admin.page-layouts.index') => ['Seitenlayouts', 'Handle', 'Status', 'Page Layouts'],
+      route('admin.block-types.index') => ['Block-Typen', 'Block-Typen suchen', 'Status', 'Search block types'],
+      route('admin.system.search.index') => ['Suchindex neu bauen', 'Neu bauen', 'Status', 'Search Rebuild'],
+      route('admin.system.updates.index') => ['System-Updates', 'Status', 'Update', 'System Updates'],
+      route('admin.reports.visitors.index') => ['Besucherberichte', 'Datumsbereich', 'Besucher', 'Visitor Reports'],
+    ];
+
+    foreach ($expectations as $url => [$firstExpected, $secondExpected, $thirdExpected, $unexpected]) {
+      $response = $this->actingAs($user)->get($url);
+
+      $response->assertOk();
+      $response->assertSee('<html lang="de">', false);
+      $response->assertSee($firstExpected);
+      $response->assertSee($secondExpected);
+      $response->assertSee($thirdExpected);
+      $response->assertSee('WebBlocks CMS');
+      $response->assertDontSee('WebBloecke CMS');
+      $response->assertDontSeeText($unexpected);
+    }
+  }
+
+  #[Test]
   public function settings_page_marks_system_group_and_settings_item_active(): void
   {
     $user = User::factory()->superAdmin()->create();

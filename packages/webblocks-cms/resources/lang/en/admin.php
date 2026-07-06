@@ -75,6 +75,7 @@ return [
     'status' => 'Status',
     'all_statuses' => 'All statuses',
   ],
+  'html' => [],
   'sites' => [
     'title' => 'Sites',
     'singular' => 'Site',
