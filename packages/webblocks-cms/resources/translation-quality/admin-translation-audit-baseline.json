@@ -392,22 +392,6 @@
             "phrase": "Wide"
         },
         {
-            "file": "admin/blocks/settings/sticky-navbar.blade.php",
-            "phrase": "Fixed"
-        },
-        {
-            "file": "admin/blocks/settings/sticky-navbar.blade.php",
-            "phrase": "Position"
-        },
-        {
-            "file": "admin/blocks/settings/sticky-navbar.blade.php",
-            "phrase": "Static"
-        },
-        {
-            "file": "admin/blocks/settings/sticky-navbar.blade.php",
-            "phrase": "Sticky"
-        },
-        {
             "file": "admin/blocks/types/accordion.blade.php",
             "phrase": "Accordion Title"
         },
@@ -838,26 +822,6 @@
         {
             "file": "admin/blocks/types/grid.blade.php",
             "phrase": "This layout block has no public content fields. Add child cards or other supported blocks inside it."
-        },
-        {
-            "file": "admin/blocks/types/header.blade.php",
-            "phrase": "Anchor ID"
-        },
-        {
-            "file": "admin/blocks/types/header.blade.php",
-            "phrase": "Header text is translated per locale. The heading level stays shared across locales."
-        },
-        {
-            "file": "admin/blocks/types/header.blade.php",
-            "phrase": "Level"
-        },
-        {
-            "file": "admin/blocks/types/header.blade.php",
-            "phrase": "Optional shared anchor for TOC links and direct section linking."
-        },
-        {
-            "file": "admin/blocks/types/header.blade.php",
-            "phrase": "Text"
         },
         {
             "file": "admin/blocks/types/hero.blade.php",
@@ -1376,30 +1340,6 @@
             "phrase": "variant) === 'testimonial')>Testimonial"
         },
         {
-            "file": "admin/blocks/types/search-form.blade.php",
-            "phrase": "Accessible Label"
-        },
-        {
-            "file": "admin/blocks/types/search-form.blade.php",
-            "phrase": "Button Label"
-        },
-        {
-            "file": "admin/blocks/types/search-form.blade.php",
-            "phrase": "Button Variant"
-        },
-        {
-            "file": "admin/blocks/types/search-form.blade.php",
-            "phrase": "Placeholder"
-        },
-        {
-            "file": "admin/blocks/types/search-form.blade.php",
-            "phrase": "Search label, placeholder, and button label are translated per locale. Button visibility and variant stay shared."
-        },
-        {
-            "file": "admin/blocks/types/search-form.blade.php",
-            "phrase": "Show submit button"
-        },
-        {
             "file": "admin/blocks/types/section-inline.blade.php",
             "phrase": "Section Intro"
         },
@@ -1666,30 +1606,6 @@
         {
             "file": "admin/blocks/types/stat-card.blade.php",
             "phrase": "Translated string value. This may be 0, 6, 14+, 173, or any other display-ready metric."
-        },
-        {
-            "file": "admin/blocks/types/sticky-navbar.blade.php",
-            "phrase": "Admin Label"
-        },
-        {
-            "file": "admin/blocks/types/sticky-navbar.blade.php",
-            "phrase": "Editor-only label for the block tree. No public container or layout wrappers are added automatically."
-        },
-        {
-            "file": "admin/blocks/types/sticky-navbar.blade.php",
-            "phrase": "Main navbar"
-        },
-        {
-            "file": "admin/blocks/types/sticky-navbar.blade.php",
-            "phrase": "Navbar Primitive"
-        },
-        {
-            "file": "admin/blocks/types/sticky-navbar.blade.php",
-            "phrase": "Navbar renders only"
-        },
-        {
-            "file": "admin/blocks/types/sticky-navbar.blade.php",
-            "phrase": "and its child blocks. Add Container, Navbar Brand, Navbar Navigation, Header Actions, Search Form, or other compatible child blocks inside it."
         },
         {
             "file": "admin/blocks/types/tabs-inline.blade.php",
@@ -2090,34 +2006,6 @@
         {
             "file": "admin/profile/edit.blade.php",
             "phrase": "Use your current password to set a new one."
-        },
-        {
-            "file": "admin/runtime-status.blade.php",
-            "phrase": "Guarded"
-        },
-        {
-            "file": "admin/runtime-status.blade.php",
-            "phrase": "Guarded package-owned admin runtime slice for the package transition. Root admin routes and views remain authoritative outside this reserved path."
-        },
-        {
-            "file": "admin/runtime-status.blade.php",
-            "phrase": "Named route"
-        },
-        {
-            "file": "admin/runtime-status.blade.php",
-            "phrase": "Package Admin Runtime Status"
-        },
-        {
-            "file": "admin/runtime-status.blade.php",
-            "phrase": "Package Admin Slice"
-        },
-        {
-            "file": "admin/runtime-status.blade.php",
-            "phrase": "Reserved path"
-        },
-        {
-            "file": "admin/runtime-status.blade.php",
-            "phrase": "This screen is package-owned and available only when the dedicated package admin route guard is enabled."
         },
         {
             "file": "admin/sites/promote.blade.php",
