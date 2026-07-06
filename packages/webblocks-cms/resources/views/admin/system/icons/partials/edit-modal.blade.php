@@ -1,4 +1,7 @@
 @php
+    $adminLocale = $adminLocale ?? app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $adminTranslator = $adminTranslator ?? app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = $adminText ?? static fn (string $key, array $replace = []) => $adminTranslator->admin('icons.'.$key, $adminLocale, $replace);
     $modalId = 'iconEditModal-'.$icon->id;
     $modalTitleId = $modalId.'Title';
     $modalDescriptionId = $modalId.'Description';
@@ -12,10 +15,10 @@
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
-                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">Edit Icon: {{ $icon->label }}</h2>
-                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">Update install-level icon metadata used by admin catalog screens and filtered pickers.</span>
+                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $adminText('edit_title', ['label' => $icon->label]) }}</h2>
+                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $adminText('edit_description') }}</span>
                 </div>
-                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close icon edit modal">
+                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_edit_modal') }}">
                     <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                 </a>
             </div>
@@ -32,7 +35,7 @@
                     @if ($errors->any() && $isOpen)
                         <div class="wb-alert wb-alert-danger">
                             <div>
-                                <div class="wb-alert-title">Validation Error</div>
+                                <div class="wb-alert-title">{{ $adminText('validation_error') }}</div>
                                 <div>{{ $errors->first() }}</div>
                             </div>
                         </div>
@@ -50,42 +53,42 @@
 
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-1">
-                            <label for="icon_label_{{ $icon->id }}">Label</label>
+                            <label for="icon_label_{{ $icon->id }}">{{ $adminText('label') }}</label>
                             <input id="icon_label_{{ $icon->id }}" name="label" class="wb-input" type="text" value="{{ old('label', $icon->label) }}" required>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="icon_sort_order_{{ $icon->id }}">Sort Order</label>
+                            <label for="icon_sort_order_{{ $icon->id }}">{{ $adminText('sort_order') }}</label>
                             <input id="icon_sort_order_{{ $icon->id }}" name="sort_order" class="wb-input" type="number" min="0" value="{{ old('sort_order', $icon->sort_order) }}" required>
                         </div>
                     </div>
 
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-1">
-                            <label for="icon_contexts_{{ $icon->id }}">Contexts</label>
-                            <input id="icon_contexts_{{ $icon->id }}" name="contexts" class="wb-input" type="text" value="{{ old('contexts', implode(', ', $icon->contexts ?? [])) }}" placeholder="navigation, dashboard">
+                            <label for="icon_contexts_{{ $icon->id }}">{{ $adminText('contexts') }}</label>
+                            <input id="icon_contexts_{{ $icon->id }}" name="contexts" class="wb-input" type="text" value="{{ old('contexts', implode(', ', $icon->contexts ?? [])) }}" placeholder="{{ $adminText('contexts_placeholder') }}">
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="icon_categories_{{ $icon->id }}">Categories</label>
-                            <input id="icon_categories_{{ $icon->id }}" name="categories" class="wb-input" type="text" value="{{ old('categories', implode(', ', $icon->categories ?? [])) }}" placeholder="layout, content">
+                            <label for="icon_categories_{{ $icon->id }}">{{ $adminText('categories') }}</label>
+                            <input id="icon_categories_{{ $icon->id }}" name="categories" class="wb-input" type="text" value="{{ old('categories', implode(', ', $icon->categories ?? [])) }}" placeholder="{{ $adminText('categories_placeholder') }}">
                         </div>
                     </div>
 
                     <div class="wb-stack wb-gap-1">
-                        <label for="icon_keywords_{{ $icon->id }}">Keywords</label>
-                        <input id="icon_keywords_{{ $icon->id }}" name="keywords" class="wb-input" type="text" value="{{ old('keywords', implode(', ', $icon->keywords ?? [])) }}" placeholder="home, start, dashboard">
+                        <label for="icon_keywords_{{ $icon->id }}">{{ $adminText('keywords') }}</label>
+                        <input id="icon_keywords_{{ $icon->id }}" name="keywords" class="wb-input" type="text" value="{{ old('keywords', implode(', ', $icon->keywords ?? [])) }}" placeholder="{{ $adminText('keywords_placeholder') }}">
                     </div>
 
                     <label class="wb-checkbox" for="icon_is_active_{{ $icon->id }}">
                         <input id="icon_is_active_{{ $icon->id }}" name="is_active" type="checkbox" value="1" @checked(old('is_active', $icon->is_active))>
-                        <span>Active</span>
+                        <span>{{ $adminText('active') }}</span>
                     </label>
                 </div>
 
                 <x-webblocks-cms::admin.form-actions
                     :cancel-url="$closeUrl"
-                    submit-label="Save changes"
+                    :submit-label="$adminText('save_changes')"
                     container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                 />
             </form>

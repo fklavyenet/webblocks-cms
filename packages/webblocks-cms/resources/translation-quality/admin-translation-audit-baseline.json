@@ -82,54 +82,6 @@
         {
             "file": "admin/slot-types/edit.blade.php",
             "phrase": "Slot type management remains product-owned and is not editable from this screen."
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "All contexts"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "All sources"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "Context"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "Contexts"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "Edit icon"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "Icons pagination"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "No icons found"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "Open Manifest"
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "Search icons..."
-        },
-        {
-            "file": "admin/system/icons/index.blade.php",
-            "phrase": "Sync Manifest"
-        },
-        {
-            "file": "admin/system/icons/partials/edit-modal.blade.php",
-            "phrase": "Close icon edit modal"
-        },
-        {
-            "file": "admin/system/icons/partials/edit-modal.blade.php",
-            "phrase": "Update install-level icon metadata used by admin catalog screens and filtered pickers."
         }
     ]
 }
