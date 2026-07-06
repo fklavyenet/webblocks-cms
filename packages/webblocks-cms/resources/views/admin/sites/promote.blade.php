@@ -1,9 +1,15 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Site Promotion', 'heading' => 'Site Promotion'])
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.sites.promote.'.$key, $adminLocale, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Site Promotion',
-        'description' => 'Promote site-owned content from a package into a target site while preserving install-level and live-runtime data.',
+        'title' => $adminText('title'),
+        'description' => $adminText('description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -14,21 +20,21 @@
 
     <div class="wb-stack wb-gap-4">
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Upload / Select Package</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('upload_select_package') }}</strong></div>
             <div class="wb-card-body">
                 <form method="POST" action="{{ route('admin.sites.promote.dry-run') }}" enctype="multipart/form-data" class="wb-stack wb-gap-4">
                     @csrf
 
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-2">
-                            <label for="archive">Upload promotion package</label>
+                            <label for="archive">{{ $adminText('upload_promotion_package') }}</label>
                             <input id="archive" name="archive" class="wb-input" type="file" accept=".zip">
                         </div>
 
                         <div class="wb-stack wb-gap-2">
-                            <label for="archive_path">Or select an uploaded package</label>
+                            <label for="archive_path">{{ $adminText('or_select_uploaded_package') }}</label>
                             <select id="archive_path" name="archive_path" class="wb-select">
-                                <option value="">Choose uploaded package</option>
+                                <option value="">{{ $adminText('choose_uploaded_package') }}</option>
                                 @foreach ($storedPackages as $storedPackage)
                                     <option value="{{ $storedPackage }}" @selected(old('archive_path') === $storedPackage)>{{ $storedPackage }}</option>
                                 @endforeach
@@ -37,13 +43,13 @@
                     </div>
 
                     <div class="wb-card wb-card-muted">
-                        <div class="wb-card-header"><strong>Target &amp; Strategy</strong></div>
+                        <div class="wb-card-header"><strong>{{ $adminText('target_strategy') }}</strong></div>
                         <div class="wb-card-body wb-stack wb-gap-4">
                             <div class="wb-grid wb-grid-2">
                                 <div class="wb-stack wb-gap-2">
-                                    <label for="target_site_id">Target site</label>
+                                    <label for="target_site_id">{{ $adminText('target_site') }}</label>
                                     <select id="target_site_id" name="target_site_id" class="wb-select" required>
-                                        <option value="">Choose target site</option>
+                                        <option value="">{{ $adminText('choose_target_site') }}</option>
                                         @foreach ($sites as $site)
                                             <option value="{{ $site->id }}" @selected((int) old('target_site_id', $preselectedTargetSiteId ?? ($plan->targetSite['id'] ?? 0)) === $site->id)>
                                                 {{ $site->name }} ({{ $site->handle }})
@@ -53,60 +59,60 @@
                                 </div>
 
                                 <div class="wb-stack wb-gap-2">
-                                    <span>Strategy</span>
-                                    <label class="wb-nowrap"><input type="radio" name="strategy" value="additive_update" @checked(old('strategy', $plan?->strategy() ?? 'additive_update') === 'additive_update')> <span>Additive update</span></label>
-                                    <label class="wb-nowrap"><input type="radio" name="strategy" value="mirror" @checked(old('strategy', $plan?->strategy()) === 'mirror')> <span>Mirror</span></label>
-                                    <div class="wb-alert wb-alert-warning wb-text-sm">Mirror archives absent target pages, deactivates absent Shared Slots, and removes absent site-owned rows where safe. Runtime and install data stay preserved.</div>
+                                    <span>{{ $adminText('strategy') }}</span>
+                                    <label class="wb-nowrap"><input type="radio" name="strategy" value="additive_update" @checked(old('strategy', $plan?->strategy() ?? 'additive_update') === 'additive_update')> <span>{{ $adminText('additive_update') }}</span></label>
+                                    <label class="wb-nowrap"><input type="radio" name="strategy" value="mirror" @checked(old('strategy', $plan?->strategy()) === 'mirror')> <span>{{ $adminText('mirror') }}</span></label>
+                                    <div class="wb-alert wb-alert-warning wb-text-sm">{{ $adminText('mirror_help') }}</div>
                                 </div>
                             </div>
 
                             <label class="wb-checkbox" for="apply_assets">
                                 <input id="apply_assets" type="checkbox" name="apply_assets" value="1" @checked(old('apply_assets', $plan?->applyAssets()))>
-                                <span>Apply physical media and public `/site/...` files when present in the package</span>
+                                <span>{{ $adminText('apply_assets_help') }}</span>
                             </label>
                         </div>
                     </div>
 
                     <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                        <button type="submit" class="wb-btn wb-btn-primary">Run Dry Run</button>
-                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                        <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('run_dry_run') }}</button>
+                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('cancel') }}</a>
                     </div>
                 </form>
             </div>
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Dry Run Plan</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('dry_run_plan') }}</strong></div>
             <div class="wb-card-body">
                 @if (! $plan)
-                    <div class="wb-text-sm wb-text-muted">Run a dry run to inspect package compatibility, preserved areas, and the planned content changes before apply.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('dry_run_empty') }}</div>
                 @else
                     <div class="wb-stack wb-gap-4">
                         <div class="wb-grid wb-grid-2">
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Summary</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('summary') }}</strong></div>
                                 <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                    <div><strong>Source:</strong> {{ $plan->sourceSite['name'] ?? '-' }} ({{ $plan->sourceSite['handle'] ?? '-' }})</div>
-                                    <div><strong>Target:</strong> {{ $plan->targetSite['name'] ?? '-' }} ({{ $plan->targetSite['handle'] ?? '-' }})</div>
-                                    <div><strong>Strategy:</strong> {{ str($plan->strategy())->replace('_', ' ')->title() }}</div>
-                                    <div><strong>Apply assets:</strong> {{ $plan->applyAssets() ? 'Yes' : 'No' }}</div>
-                                    <div><strong>Dry run token:</strong> <code>{{ $plan->token }}</code></div>
+                                    <div><strong>{{ $adminText('source_label') }}</strong> {{ $plan->sourceSite['name'] ?? '-' }} ({{ $plan->sourceSite['handle'] ?? '-' }})</div>
+                                    <div><strong>{{ $adminText('target_label') }}</strong> {{ $plan->targetSite['name'] ?? '-' }} ({{ $plan->targetSite['handle'] ?? '-' }})</div>
+                                    <div><strong>{{ $adminText('strategy_label') }}</strong> {{ str($plan->strategy())->replace('_', ' ')->title() }}</div>
+                                    <div><strong>{{ $adminText('apply_assets_label') }}</strong> {{ $plan->applyAssets() ? $adminText('yes') : $adminText('no') }}</div>
+                                    <div><strong>{{ $adminText('dry_run_token_label') }}</strong> <code>{{ $plan->token }}</code></div>
                                 </div>
                             </div>
 
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Locales</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('locales') }}</strong></div>
                                 <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                    <div><strong>Compatible:</strong> {{ implode(', ', $plan->localeSummary['compatible'] ?? []) ?: 'None' }}</div>
-                                    <div><strong>Missing:</strong> {{ implode(', ', $plan->localeSummary['missing'] ?? []) ?: 'None' }}</div>
-                                    <div><strong>Behavior:</strong> {{ ! empty($plan->localeSummary['will_create_missing']) ? 'Missing locales will be created during apply.' : 'No locale creation required.' }}</div>
+                                    <div><strong>{{ $adminText('compatible_label') }}</strong> {{ implode(', ', $plan->localeSummary['compatible'] ?? []) ?: $adminText('none') }}</div>
+                                    <div><strong>{{ $adminText('missing_label') }}</strong> {{ implode(', ', $plan->localeSummary['missing'] ?? []) ?: $adminText('none') }}</div>
+                                    <div><strong>{{ $adminText('behavior_label') }}</strong> {{ ! empty($plan->localeSummary['will_create_missing']) ? $adminText('missing_locales_created') : $adminText('no_locale_creation') }}</div>
                                 </div>
                             </div>
                         </div>
 
                         @if ($plan->errors !== [])
                             <div class="wb-alert wb-alert-danger">
-                                <div class="wb-alert-title">Blocking Validation Errors</div>
+                                <div class="wb-alert-title">{{ $adminText('blocking_validation_errors') }}</div>
                                 <ul class="wb-list-unstyled wb-stack wb-gap-1 wb-mt-2">
                                     @foreach ($plan->errors as $error)
                                         <li>{{ $error }}</li>
@@ -117,7 +123,7 @@
 
                         @if ($plan->warnings !== [])
                             <div class="wb-alert wb-alert-warning">
-                                <div class="wb-alert-title">Warnings</div>
+                                <div class="wb-alert-title">{{ $adminText('warnings') }}</div>
                                 <ul class="wb-list-unstyled wb-stack wb-gap-1 wb-mt-2">
                                     @foreach ($plan->warnings as $warning)
                                         <li>{{ $warning }}</li>
@@ -128,64 +134,64 @@
 
                         <div class="wb-grid wb-grid-2">
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Pages</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('pages') }}</strong></div>
                                 <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>Create: {{ count($plan->operations['pages']['create'] ?? []) }}</div>
-                                    <div>Update: {{ count($plan->operations['pages']['update'] ?? []) }}</div>
-                                    <div>Archive: {{ count($plan->operations['pages']['archive'] ?? []) }}</div>
+                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['pages']['create'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['pages']['update'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('archive_count', ['count' => count($plan->operations['pages']['archive'] ?? [])]) }}</div>
                                 </div>
                             </div>
 
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Shared Slots</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('shared_slots') }}</strong></div>
                                 <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>Create: {{ count($plan->operations['shared_slots']['create'] ?? []) }}</div>
-                                    <div>Update: {{ count($plan->operations['shared_slots']['update'] ?? []) }}</div>
-                                    <div>Deactivate: {{ count($plan->operations['shared_slots']['deactivate'] ?? []) }}</div>
+                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['shared_slots']['create'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['shared_slots']['update'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('deactivate_count', ['count' => count($plan->operations['shared_slots']['deactivate'] ?? [])]) }}</div>
                                 </div>
                             </div>
 
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Navigation</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('navigation') }}</strong></div>
                                 <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>Create: {{ count($plan->operations['navigation']['create'] ?? []) }}</div>
-                                    <div>Update: {{ count($plan->operations['navigation']['update'] ?? []) }}</div>
-                                    <div>Remove: {{ count($plan->operations['navigation']['remove'] ?? []) }}</div>
+                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['navigation']['create'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['navigation']['update'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('remove_count', ['count' => count($plan->operations['navigation']['remove'] ?? [])]) }}</div>
                                 </div>
                             </div>
 
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Site Variables</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('site_variables') }}</strong></div>
                                 <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>Create: {{ count($plan->operations['site_variables']['create'] ?? []) }}</div>
-                                    <div>Update: {{ count($plan->operations['site_variables']['update'] ?? []) }}</div>
-                                    <div>Remove: {{ count($plan->operations['site_variables']['remove'] ?? []) }}</div>
+                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['site_variables']['create'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['site_variables']['update'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('remove_count', ['count' => count($plan->operations['site_variables']['remove'] ?? [])]) }}</div>
                                 </div>
                             </div>
 
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Page Assets</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('page_assets') }}</strong></div>
                                 <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>Create: {{ count($plan->operations['page_assets']['create'] ?? []) }}</div>
-                                    <div>Update: {{ count($plan->operations['page_assets']['update'] ?? []) }}</div>
-                                    <div>Remove: {{ count($plan->operations['page_assets']['remove'] ?? []) }}</div>
+                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['page_assets']['create'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['page_assets']['update'] ?? [])]) }}</div>
+                                    <div>{{ $adminText('remove_count', ['count' => count($plan->operations['page_assets']['remove'] ?? [])]) }}</div>
                                 </div>
                             </div>
 
                             <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>Media / Public Files</strong></div>
+                                <div class="wb-card-header"><strong>{{ $adminText('media_public_files') }}</strong></div>
                                 <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>Files add: {{ $plan->operations['media']['asset_files_to_add'] ?? 0 }}</div>
-                                    <div>Files overwrite: {{ $plan->operations['media']['asset_files_to_overwrite'] ?? 0 }}</div>
-                                    <div>Page asset files add: {{ $plan->operations['media']['page_asset_files_to_add'] ?? 0 }}</div>
-                                    <div>Page asset files overwrite: {{ $plan->operations['media']['page_asset_files_to_overwrite'] ?? 0 }}</div>
-                                    <div>Files skipped: {{ $plan->operations['media']['files_skipped'] ?? 0 }}</div>
+                                    <div>{{ $adminText('files_add_count', ['count' => $plan->operations['media']['asset_files_to_add'] ?? 0]) }}</div>
+                                    <div>{{ $adminText('files_overwrite_count', ['count' => $plan->operations['media']['asset_files_to_overwrite'] ?? 0]) }}</div>
+                                    <div>{{ $adminText('page_asset_files_add_count', ['count' => $plan->operations['media']['page_asset_files_to_add'] ?? 0]) }}</div>
+                                    <div>{{ $adminText('page_asset_files_overwrite_count', ['count' => $plan->operations['media']['page_asset_files_to_overwrite'] ?? 0]) }}</div>
+                                    <div>{{ $adminText('files_skipped_count', ['count' => $plan->operations['media']['files_skipped'] ?? 0]) }}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="wb-card wb-card-muted">
-                            <div class="wb-card-header"><strong>Preserved Areas</strong></div>
+                            <div class="wb-card-header"><strong>{{ $adminText('preserved_areas') }}</strong></div>
                             <div class="wb-card-body">
                                 <ul class="wb-list-unstyled wb-stack wb-gap-1 wb-text-sm">
                                     @foreach ($plan->preservedAreas as $item)
@@ -200,16 +206,16 @@
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Apply Promotion</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('apply_promotion') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-text-sm wb-text-muted">Apply is only available after a successful dry run plan for the same package and options. A safety backup is created before content changes, and the target site search index is rebuilt after apply.</div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('apply_help') }}</div>
 
                 <form method="POST" action="{{ route('admin.sites.promote.apply') }}">
                     @csrf
                     <input type="hidden" name="plan_token" value="{{ $plan?->token }}">
                     <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                        <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $plan?->canApply())>Apply Promotion</button>
-                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                        <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $plan?->canApply())>{{ $adminText('apply_promotion') }}</button>
+                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('cancel') }}</a>
                     </div>
                 </form>
             </div>

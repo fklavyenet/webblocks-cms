@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Site Promotion admin screen copy onto structured admin locale keys.
 - Move Plugin Catalog detail screen copy onto structured admin locale keys.
 - Move CMS API Tokens main admin screen copy onto structured admin locale keys.
 - Harden admin translation auditing so new admin Blade view families are discovered automatically and strict baseline checks fail on newly uncovered UI phrases.
