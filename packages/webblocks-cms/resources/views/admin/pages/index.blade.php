@@ -1,8 +1,17 @@
 @php
-    $siteContext = $activeSite?->name ?? 'All sites';
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
+    $siteContext = $activeSite?->name ?? $adminText('pages.all_sites');
     $siteContextDescription = $showAllSites
-        ? 'Showing pages across all sites. Choose a site to return to the normal editorial flow.'
-        : 'Showing pages for '.$activeSite->name.($activeSite->canonicalDomain() ? ' ('.$activeSite->canonicalDomain().')' : '').'.';
+        ? $adminText('pages.all_sites_description')
+        : $adminText('pages.site_description', [
+            'site' => $activeSite->name,
+            'domain' => $activeSite->canonicalDomain() ? ' ('.$activeSite->canonicalDomain().')' : '',
+        ]);
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', ['reset' => 1]);
     $detailsBaseQuery = array_filter([
@@ -18,11 +27,11 @@
     $closeImportUrl = route('admin.pages.index', $detailsBaseQuery);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => 'Pages', 'heading' => 'Pages'])
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('pages.title'), 'heading' => $adminText('pages.title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Pages',
+        'title' => $adminText('pages.title'),
         'description' => null,
         'context' => '<span>'.e($siteContextDescription).'</span>',
         'count' => $totalCount,
@@ -37,59 +46,59 @@
                 'search' => [
                     'id' => 'pages_search',
                     'name' => 'search',
-                    'label' => 'Search',
+                    'label' => $adminText('common.search'),
                     'value' => $filters['search'],
-                    'placeholder' => 'Search by ID, title, slug, or page type',
+                    'placeholder' => $adminText('pages.search_placeholder'),
                 ],
                 'selects' => [
                     [
                         'id' => 'pages_site_context',
                         'name' => 'site',
-                        'label' => 'Site',
+                        'label' => $adminText('sites.singular'),
                         'selected' => $filters['site'],
                         'placeholder' => null,
-                        'options' => collect($sites)->mapWithKeys(fn ($site) => [$site->id => $site->name])->all() + ['all' => 'All sites'],
+                        'options' => collect($sites)->mapWithKeys(fn ($site) => [$site->id => $site->name])->all() + ['all' => $adminText('pages.all_sites')],
                     ],
                     [
                         'id' => 'pages_status',
                         'name' => 'status',
-                        'label' => 'Status',
+                        'label' => $adminText('common.status'),
                         'selected' => $filters['status'],
-                        'placeholder' => 'All statuses',
+                        'placeholder' => $adminText('common.all_statuses'),
                         'options' => [
-                            'draft' => 'Draft',
-                            'in_review' => 'In Review',
-                            'published' => 'Published',
-                            'archived' => 'Archived',
+                            'draft' => $adminText('pages.statuses.draft'),
+                            'in_review' => $adminText('pages.statuses.in_review'),
+                            'published' => $adminText('pages.statuses.published'),
+                            'archived' => $adminText('pages.statuses.archived'),
                         ],
                     ],
                     [
                         'id' => 'pages_sort',
                         'name' => 'sort',
-                        'label' => 'Sort by',
+                        'label' => $adminText('common.sort_by'),
                         'selected' => $filters['sort'],
                         'options' => [
-                            'created_at' => 'Created at',
-                            'updated_at' => 'Last edited',
-                            'title' => 'Title',
+                            'created_at' => $adminText('pages.created_at'),
+                            'updated_at' => $adminText('pages.last_edited'),
+                            'title' => $adminText('pages.columns.title'),
                             'slug' => 'Slug',
-                            'status' => 'Status',
+                            'status' => $adminText('common.status'),
                         ],
                     ],
                     [
                         'id' => 'pages_direction',
                         'name' => 'direction',
-                        'label' => 'Direction',
+                        'label' => $adminText('common.direction'),
                         'selected' => $filters['direction'],
                         'options' => [
-                            'desc' => 'Descending',
-                            'asc' => 'Ascending',
+                            'desc' => $adminText('common.descending'),
+                            'asc' => $adminText('common.ascending'),
                         ],
                     ],
                 ],
                 'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc',
                 'resetUrl' => $clearUrl,
-                'applyLabel' => 'Apply',
+                'applyLabel' => $adminText('common.apply'),
             ])
         </div>
     </div>
@@ -98,23 +107,23 @@
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Pages for {{ $siteContext }}</strong>
+                    <strong>{{ $adminText('pages.for_site', ['site' => $siteContext]) }}</strong>
                     <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
-                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">Page Converter</a>
-                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Import Page</a>
+                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
+                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
+                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
                 </div>
             </div>
 
             <div class="wb-card-body">
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No pages found</div>
-                        <div class="wb-empty-text">Adjust the filters or create your first page for {{ strtolower($siteContext) }}.</div>
+                        <div class="wb-empty-title">{{ $adminText('pages.no_pages') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('pages.no_pages_help', ['site' => strtolower($siteContext)]) }}</div>
                         <div class="wb-empty-action">
-                            <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">Create Page</a>
+                            <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.create_page') }}</a>
                         </div>
                     </div>
                 </div>
@@ -123,22 +132,22 @@
         <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Pages for {{ $siteContext }}</strong>
+                    <strong>{{ $adminText('pages.for_site', ['site' => $siteContext]) }}</strong>
                     <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
-                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">Page Converter</a>
-                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Import Page</a>
+                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
+                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
+                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
                 </div>
             </div>
 
             <div class="wb-card-body">
                 @include('webblocks-cms::admin.partials.listing-bulk-actions', [
-                    'label' => 'selected',
+                    'label' => $adminText('common.selected'),
                     'deleteTarget' => '#bulk-delete-pages-modal',
-                    'deleteLabel' => 'Delete selected',
+                    'deleteLabel' => $adminText('common.delete_selected'),
                 ])
 
                 <div class="wb-table-wrap wb-admin-pages-table-wrap">
@@ -147,17 +156,17 @@
                             <tr>
                                 <th>
                                     <label class="wb-checkbox" for="select_all_visible_pages">
-                                        <input id="select_all_visible_pages" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible pages">
-                                        <span class="wb-sr-only">Select all visible pages</span>
+                                        <input id="select_all_visible_pages" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('pages.select_all_visible') }}">
+                                        <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
                                 <th>ID</th>
-                                <th>Page</th>
-                                <th>View</th>
-                                <th title="Total page-owned blocks, including nested child blocks">Total Blocks</th>
-                                <th>Status</th>
-                                <th>Last edited</th>
-                                <th>Actions</th>
+                                <th>{{ $adminText('pages.columns.page') }}</th>
+                                <th>{{ $adminText('pages.columns.view') }}</th>
+                                <th title="{{ $adminText('pages.total_blocks_help') }}">{{ $adminText('pages.columns.total_blocks') }}</th>
+                                <th>{{ $adminText('common.status') }}</th>
+                                <th>{{ $adminText('pages.last_edited') }}</th>
+                                <th>{{ $adminText('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -172,8 +181,8 @@
                                 <tr>
                                     <td>
                                         <label class="wb-checkbox" for="page_select_{{ $page->id }}">
-                                            <input id="page_select_{{ $page->id }}" type="checkbox" value="{{ $page->id }}" data-wb-admin-row-select aria-label="Select page {{ $page->title }}">
-                                            <span class="wb-sr-only">Select page {{ $page->title }}</span>
+                                            <input id="page_select_{{ $page->id }}" type="checkbox" value="{{ $page->id }}" data-wb-admin-row-select aria-label="{{ $adminText('pages.select_page', ['title' => $page->title]) }}">
+                                            <span class="wb-sr-only">{{ $adminText('pages.select_page', ['title' => $page->title]) }}</span>
                                         </label>
                                     </td>
                                     <td class="wb-admin-pages-table-cell wb-text-sm wb-text-muted">#{{ $page->id }}</td>
@@ -194,13 +203,13 @@
                                                     <span class="wb-status-pill {{ $translation->locale?->is_default ? 'wb-status-info' : 'wb-status-active' }}">
                                                         {{ $translation->locale?->code }}
                                                         @if ($translation->locale?->is_default)
-                                                            Default
+                                                            {{ $adminText('common.default') }}
                                                         @endif
                                                     </span>
                                                 @endforeach
 
                                                 @if ($missingTranslations > 0)
-                                                    <span class="wb-text-sm wb-text-muted">Missing {{ $missingTranslations }}</span>
+                                                    <span class="wb-text-sm wb-text-muted">{{ $adminText('pages.missing_translations', ['count' => $missingTranslations]) }}</span>
                                                 @endif
                                             </div>
 
@@ -215,9 +224,9 @@
                                                             {{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }}
                                                           </a>
                                                       @elseif ($translationPublicPath && ! $page->isPublished())
-                                                          <span class="wb-text-muted wb-admin-pages-path-text">{{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }} (not public)</span>
+                                                          <span class="wb-text-muted wb-admin-pages-path-text">{{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }} ({{ $adminText('pages.not_public') }})</span>
                                                       @else
-                                                          <span class="wb-text-muted wb-admin-pages-path-text">{{ strtoupper($translation->locale?->code ?? 'en') }} Missing route</span>
+                                                          <span class="wb-text-muted wb-admin-pages-path-text">{{ strtoupper($translation->locale?->code ?? 'en') }} {{ $adminText('pages.missing_route') }}</span>
                                                        @endif
                                                    @endforeach
                                             </div>
@@ -230,8 +239,8 @@
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 class="wb-action-btn wb-action-btn-view"
-                                                title="Open page in new tab"
-                                                aria-label="Open page in new tab"
+                                                title="{{ $adminText('pages.open_new_tab') }}"
+                                                aria-label="{{ $adminText('pages.open_new_tab') }}"
                                             >
                                                 <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                                             </a>
@@ -241,14 +250,14 @@
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 class="wb-action-btn wb-action-btn-view"
-                                                title="Preview page in new tab"
-                                                aria-label="Preview page in new tab"
+                                                title="{{ $adminText('pages.preview_new_tab') }}"
+                                                aria-label="{{ $adminText('pages.preview_new_tab') }}"
                                             >
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
                                         @endif
                                     </td>
-                                    <td class="wb-admin-pages-table-cell wb-admin-pages-count-cell" title="Includes nested child blocks">{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-count-cell" title="{{ $adminText('pages.includes_nested_blocks') }}">{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-status-cell">
                                         <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">
                                             {{ $page->workflowLabel() }}
@@ -258,7 +267,7 @@
                                         <div class="wb-admin-pages-last-edited wb-text-sm">
                                             <span>{{ $page->updated_at?->format('Y-m-d H:i') ?? '-' }}</span>
                                             <span class="wb-text-muted">
-                                                {{ $page->updatedByUser?->name ?? 'Not recorded' }}
+                                                {{ $page->updatedByUser?->name ?? $adminText('common.not_recorded') }}
                                             </span>
                                         </div>
                                     </td>
@@ -269,18 +278,18 @@
                                                 class="wb-action-btn"
                                                 aria-haspopup="dialog"
                                                 aria-controls="pageDetailsModal-{{ $page->id }}"
-                                                title="Page details"
-                                                aria-label="Open page details"
+                                                title="{{ $adminText('pages.details') }}"
+                                                aria-label="{{ $adminText('pages.open_details') }}"
                                             >
                                                 <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
                                             </a>
 
-                                            <a href="{{ route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit page" aria-label="Edit page"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('pages.edit_page') }}" aria-label="{{ $adminText('pages.edit_page') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             <button
                                                 type="button"
                                                 class="wb-action-btn wb-action-btn-delete"
-                                                title="Delete page"
-                                                aria-label="Delete page"
+                                                title="{{ $adminText('pages.delete_page') }}"
+                                                aria-label="{{ $adminText('pages.delete_page') }}"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#delete-page-{{ $page->id }}-modal"
                                             >
@@ -293,20 +302,20 @@
                                 @push('overlays')
                                     @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                                         'id' => 'delete-page-'.$page->id.'-modal',
-                                        'title' => 'Delete Page',
-                                        'description' => 'This deletes the page and its related CMS content according to the existing page cleanup rules.',
+                                        'title' => $adminText('pages.delete_page_title'),
+                                        'description' => $adminText('pages.delete_page_description'),
                                         'action' => route('admin.pages.destroy', $page),
                                         'method' => 'DELETE',
-                                        'submitLabel' => 'Delete page',
+                                        'submitLabel' => $adminText('pages.delete_page'),
                                     ])
                                         <div class="wb-card wb-card-muted">
                                             <div class="wb-card-body wb-stack wb-gap-2">
                                                 <div><strong>{{ $page->title }}</strong></div>
-                                                <div class="wb-text-sm wb-text-muted">Status {{ $page->workflowLabel() }} | Site {{ $page->site?->name ?? '-' }}</div>
+                                                <div class="wb-text-sm wb-text-muted">{{ $adminText('common.status') }} {{ $page->workflowLabel() }} | {{ $adminText('sites.singular') }} {{ $page->site?->name ?? '-' }}</div>
                                             </div>
                                         </div>
 
-                                        <p class="wb-text-sm wb-text-muted">This cannot be undone from the admin UI. Recovery requires revision history or a backup restore.</p>
+                                        <p class="wb-text-sm wb-text-muted">{{ $adminText('pages.delete_page_warning') }}</p>
                                     @endcomponent
                                 @endpush
                             @endforeach
@@ -315,17 +324,17 @@
                 </div>
             </div>
 
-            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pages, 'ariaLabel' => 'Pages pagination', 'compact' => true])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pages, 'ariaLabel' => $adminText('pages.pagination'), 'compact' => true])
         </div>
 
         @push('overlays')
             @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                 'id' => 'bulk-delete-pages-modal',
-                'title' => 'Delete Selected Pages',
-                'description' => 'This deletes the selected pages and their related CMS content according to the existing page cleanup rules.',
+                'title' => $adminText('pages.bulk_delete_title'),
+                'description' => $adminText('pages.bulk_delete_description'),
                 'action' => route('admin.pages.bulk-destroy'),
                 'method' => 'DELETE',
-                'submitLabel' => 'Delete selected',
+                'submitLabel' => $adminText('common.delete_selected'),
                 'formAttributes' => [
                     'data-wb-admin-bulk-delete-form' => true,
                     'data-wb-admin-bulk-input-name' => 'page_ids[]',
@@ -337,8 +346,8 @@
             ])
                 <div class="wb-card wb-card-muted">
                     <div class="wb-card-body wb-stack wb-gap-2">
-                        <strong><span data-wb-admin-bulk-modal-count>0</span> selected pages will be deleted.</strong>
-                        <p class="wb-text-sm wb-text-muted">This applies only to pages visible on this page. Every selected page is re-checked server-side against your site access before deletion.</p>
+                        <strong>{{ $adminText('pages.bulk_delete_count_prefix') }} <span data-wb-admin-bulk-modal-count>0</span> {{ $adminText('pages.bulk_delete_count_suffix') }}</strong>
+                        <p class="wb-text-sm wb-text-muted">{{ $adminText('pages.bulk_delete_help') }}</p>
                     </div>
                 </div>
 

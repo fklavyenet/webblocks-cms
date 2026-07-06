@@ -1,16 +1,22 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Sites', 'heading' => 'Sites'])
-
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
     $siteExportUi = $siteExportUi ?? ['requestedModal' => '', 'selectedSite' => null, 'closeUrl' => route('admin.sites.index')];
     $showExportModal = $canExportSites && $siteExportUi['requestedModal'] === 'export-site' && $siteExportUi['selectedSite'];
     $siteDetailsUi = $siteDetailsUi ?? ['requestedModal' => '', 'selectedSite' => null, 'closeUrl' => route('admin.sites.index')];
     $showDetailsModal = $siteDetailsUi['requestedModal'] === 'site-details' && $siteDetailsUi['selectedSite'];
 @endphp
 
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('sites.title'), 'heading' => $adminText('sites.title')])
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Sites',
-        'description' => 'Manage the small multisite foundation and the locales available on each site.',
+        'title' => $adminText('sites.title'),
+        'description' => $adminText('sites.description'),
         'count' => $totalCount,
     ])
 
@@ -19,12 +25,12 @@
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>Sites</strong>
+                <strong>{{ $adminText('sites.title') }}</strong>
                 <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $sites->total() }}</span>
             </div>
 
             <div class="wb-cluster wb-cluster-2">
-                <a href="{{ route('admin.sites.create') }}" class="wb-btn wb-btn-primary">Add Site</a>
+                <a href="{{ route('admin.sites.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('sites.add_site') }}</a>
             </div>
         </div>
 
@@ -33,13 +39,13 @@
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Handle</th>
-                            <th>Domains</th>
-                            <th>Locales</th>
-                            <th>Pages</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>{{ $adminText('sites.columns.name') }}</th>
+                            <th>{{ $adminText('sites.columns.handle') }}</th>
+                            <th>{{ $adminText('sites.columns.domains') }}</th>
+                            <th>{{ $adminText('sites.columns.locales') }}</th>
+                            <th>{{ $adminText('sites.columns.pages') }}</th>
+                            <th>{{ $adminText('sites.columns.status') }}</th>
+                            <th>{{ $adminText('sites.columns.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,13 +56,13 @@
                                 <td><code>{{ $site->handle }}</code></td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
-                                        <span>{{ $site->canonicalDomain() ?: 'Not set' }}</span>
+                                        <span>{{ $site->canonicalDomain() ?: $adminText('common.not_set') }}</span>
                                         @if ($site->canonicalDomain())
                                             <span class="wb-text-sm wb-text-muted">https://{{ $site->canonicalDomain() }}</span>
                                         @endif
                                         @php($aliasCount = $site->siteDomains()->where('is_primary', false)->count())
                                         @if ($aliasCount > 0)
-                                            <span class="wb-text-sm wb-text-muted">+{{ $aliasCount }} alias{{ $aliasCount === 1 ? '' : 'es' }}</span>
+                                            <span class="wb-text-sm wb-text-muted">{{ $adminText('sites.alias_count', ['count' => $aliasCount]) }}</span>
                                         @endif
                                     </div>
                                 </td>
@@ -69,7 +75,7 @@
                                 </td>
                                 <td data-column="pages">{{ $site->pages_count }}</td>
                                 <td>
-                                    <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? 'Primary' : 'Standard' }}</span>
+                                    <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? $adminText('sites.primary') : $adminText('sites.standard') }}</span>
                                 </td>
                                 <td>
                                     <div class="wb-dropdown wb-dropdown-end">
@@ -79,23 +85,23 @@
                                             data-wb-toggle="dropdown"
                                             data-wb-target="#site-actions-{{ $site->id }}"
                                             aria-expanded="false"
-                                            title="Manage {{ $site->name }}"
-                                            aria-label="Manage {{ $site->name }}"
+                                            title="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
+                                            aria-label="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
                                         >
-                                            Manage
+                                            {{ $adminText('common.manage') }}
                                         </button>
 
                                         <div class="wb-dropdown-menu" id="site-actions-{{ $site->id }}">
-                                            <a href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteDetailsModal">View details</a>
-                                            <a href="{{ route('admin.sites.edit', $site) }}" class="wb-dropdown-item">Edit site</a>
-                                            <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-dropdown-item">Manage domains</a>
-                                            <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-dropdown-item">Clone site</a>
+                                            <a href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteDetailsModal">{{ $adminText('sites.view_details') }}</a>
+                                            <a href="{{ route('admin.sites.edit', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.edit_site') }}</a>
+                                            <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.manage_domains') }}</a>
+                                            <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.clone_site') }}</a>
                                             @if ($canExportSites)
-                                                <a href="{{ route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteIndexExportModal">Export site</a>
-                                                <a href="{{ route('admin.sites.promote', ['target_site_id' => $site->id]) }}" class="wb-dropdown-item">Promote to this site</a>
+                                                <a href="{{ route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteIndexExportModal">{{ $adminText('sites.export_site') }}</a>
+                                                <a href="{{ route('admin.sites.promote', ['target_site_id' => $site->id]) }}" class="wb-dropdown-item">{{ $adminText('sites.promote_to_site') }}</a>
                                             @endif
                                             <hr class="wb-dropdown-divider">
-                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! $deleteReport?->canDelete) aria-disabled="true" @endif>Delete site</a>
+                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! $deleteReport?->canDelete) aria-disabled="true" @endif>{{ $adminText('sites.delete_site') }}</a>
                                         </div>
                                     </div>
                                 </td>
@@ -119,8 +125,8 @@
     @if ($canExportSites)
         @include('webblocks-cms::admin.site-transfers.partials.export-modal', [
             'modalId' => 'siteIndexExportModal',
-            'modalTitle' => 'Export Site',
-            'modalDescription' => 'Create a portable site export package for the selected site without leaving the Sites list.',
+            'modalTitle' => $adminText('sites.export_modal_title'),
+            'modalDescription' => $adminText('sites.export_modal_description'),
             'selectedSite' => $siteExportUi['selectedSite'],
             'show' => $showExportModal,
             'closeUrl' => $siteExportUi['closeUrl'],

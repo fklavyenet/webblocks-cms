@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Make Sites and Pages admin listing screens resolve primary screen, filter, table, and action copy from the selected admin locale.
+
 ## 1.33.0
 
 - Bumped CMS to `1.33.0`.

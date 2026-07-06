@@ -25,8 +25,10 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteVariable;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class SiteLocaleManagementTest extends TestCase
 {
@@ -93,6 +95,47 @@ class SiteLocaleManagementTest extends TestCase
     $response->assertSee($site->name);
     $response->assertSee('Primary');
     $response->assertSee('tr');
+  }
+
+  #[Test]
+  public function sites_and_pages_indexes_use_the_authenticated_admin_locale_for_screen_copy(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'admin_locale' => 'de',
+    ]);
+    SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LOCALE], ['value' => 'en']);
+
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+    Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Locale Fixture',
+      'slug' => 'locale-fixture',
+      'status' => Page::STATUS_PUBLISHED,
+    ]);
+
+    $sitesResponse = $this->actingAs($user)->get(route('admin.sites.index'));
+
+    $sitesResponse->assertOk();
+    $sitesResponse->assertSee('<html lang="de">', false);
+    $sitesResponse->assertSee('Websites');
+    $sitesResponse->assertSee('Website hinzufuegen');
+    $sitesResponse->assertSee('Domains verwalten');
+    $sitesResponse->assertSee('Primaer');
+    $sitesResponse->assertDontSee('Add Site');
+    $sitesResponse->assertDontSee('Manage domains');
+
+    $pagesResponse = $this->actingAs($user)->get(route('admin.pages.index', ['site' => $site->id]));
+
+    $pagesResponse->assertOk();
+    $pagesResponse->assertSee('<html lang="de">', false);
+    $pagesResponse->assertSee('Seiten');
+    $pagesResponse->assertSee('Neue Seite');
+    $pagesResponse->assertSee('Seitenkonverter');
+    $pagesResponse->assertSee('Nach ID, Titel, Slug oder Seitentyp suchen');
+    $pagesResponse->assertSee('Bloecke gesamt');
+    $pagesResponse->assertDontSee('New Page');
+    $pagesResponse->assertDontSee('Page Converter');
   }
 
   #[Test]
