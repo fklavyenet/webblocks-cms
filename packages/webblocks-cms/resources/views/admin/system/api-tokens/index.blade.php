@@ -1,9 +1,15 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'CMS API Tokens', 'heading' => 'CMS API Tokens'])
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.api_tokens.index.'.$key, $adminLocale, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'CMS API Tokens',
-        'description' => 'Create and revoke bearer tokens for trusted local AI and operator tools.',
+        'title' => $adminText('title'),
+        'description' => $adminText('description'),
         'count' => $totalCount,
     ])
 
@@ -12,8 +18,8 @@
     @if (! $schemaReady)
         <div class="wb-alert wb-alert-warning">
             <div class="wb-stack wb-gap-2">
-                <strong>API token storage is not ready.</strong>
-                <div>Run System Update again to apply the required CMS API token schema, then return to this page.</div>
+                <strong>{{ $adminText('storage_not_ready') }}</strong>
+                <div>{{ $adminText('storage_not_ready_help') }}</div>
             </div>
         </div>
     @endif
@@ -22,17 +28,17 @@
         <div class="wb-alert wb-alert-success">
             <div class="wb-stack wb-gap-3">
                 <div>
-                    <strong>Token created: {{ $createdTokenName }}</strong>
-                    <div class="wb-text-sm">Copy this token now. The full token is shown only once.</div>
+                    <strong>{{ $adminText('token_created', ['name' => $createdTokenName]) }}</strong>
+                    <div class="wb-text-sm">{{ $adminText('token_created_help') }}</div>
                 </div>
 
                 <div class="wb-stack wb-gap-2">
-                    <label class="wb-label" for="created_cms_api_token">Full token</label>
+                    <label class="wb-label" for="created_cms_api_token">{{ $adminText('full_token') }}</label>
                     <textarea id="created_cms_api_token" class="wb-textarea" rows="2" readonly>{{ $createdToken }}</textarea>
                 </div>
 
                 <div class="wb-stack wb-gap-2">
-                    <label class="wb-label" for="created_cms_api_token_env">Local .env example</label>
+                    <label class="wb-label" for="created_cms_api_token_env">{{ $adminText('env_example') }}</label>
                     <textarea id="created_cms_api_token_env" class="wb-textarea" rows="3" readonly>WEBBLOCKS_CMS_API_URL={{ $apiBaseUrl }}
 WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                 </div>
@@ -41,34 +47,32 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
 
         <section class="wb-card">
             <div class="wb-card-header">
-                <strong>How to use this token</strong>
+                <strong>{{ $adminText('usage_title') }}</strong>
             </div>
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-grid wb-grid-2 wb-gap-3">
                     <div class="wb-stack wb-gap-1">
-                        <span class="wb-text-sm wb-text-muted">API Base URL</span>
+                        <span class="wb-text-sm wb-text-muted">{{ $adminText('api_base_url') }}</span>
                         <code>{{ $apiBaseUrl }}</code>
                     </div>
                     <div class="wb-stack wb-gap-1">
-                        <span class="wb-text-sm wb-text-muted">Start here</span>
-                        <code>GET /webadmin/api</code>
+                        <span class="wb-text-sm wb-text-muted">{{ $adminText('start_here') }}</span>
+                        <code>{{ $adminText('discovery_request') }}</code>
                     </div>
                 </div>
                 <div class="wb-stack wb-gap-2">
-                    <label class="wb-label" for="cms_api_token_headers">Headers</label>
-                    <textarea id="cms_api_token_headers" class="wb-textarea" rows="4" readonly>Authorization: Bearer &lt;token&gt;
-Accept: application/json
-Content-Type: application/json</textarea>
+                    <label class="wb-label" for="cms_api_token_headers">{{ $adminText('headers') }}</label>
+                    <textarea id="cms_api_token_headers" class="wb-textarea" rows="4" readonly>{{ $adminText('headers_example') }}</textarea>
                 </div>
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api" target="_blank" rel="noopener">Discovery</a>
+                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api" target="_blank" rel="noopener">{{ $adminText('discovery') }}</a>
                     <a class="wb-btn wb-btn-secondary" href="/webadmin/api/openapi.json" target="_blank" rel="noopener">OpenAPI</a>
-                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api/ai-guide" target="_blank" rel="noopener">AI Guide</a>
-                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api/examples/contact-page" target="_blank" rel="noopener">Contact Example</a>
+                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api/ai-guide" target="_blank" rel="noopener">{{ $adminText('ai_guide') }}</a>
+                    <a class="wb-btn wb-btn-secondary" href="/webadmin/api/examples/contact-page" target="_blank" rel="noopener">{{ $adminText('contact_example') }}</a>
                 </div>
                 <div class="wb-stack wb-gap-2">
-                    <label class="wb-label" for="cms_api_setup_prompt">AI setup prompt</label>
-                    <textarea id="cms_api_setup_prompt" class="wb-textarea" rows="3" readonly>Use this WebBlocks CMS API base URL and token. First call the API discovery endpoint. Follow the returned OpenAPI, content contract, examples, and recommended next steps. Do not use browser automation or admin UI clicks.</textarea>
+                    <label class="wb-label" for="cms_api_setup_prompt">{{ $adminText('ai_setup_prompt') }}</label>
+                    <textarea id="cms_api_setup_prompt" class="wb-textarea" rows="3" readonly>{{ $adminText('ai_setup_prompt_text') }}</textarea>
                 </div>
             </div>
         </section>
@@ -76,26 +80,26 @@ Content-Type: application/json</textarea>
 
     <section class="wb-card">
         <div class="wb-card-header">
-            <strong>API Discovery Quick Start</strong>
+            <strong>{{ $adminText('quick_start') }}</strong>
         </div>
         <div class="wb-card-body wb-stack wb-gap-3">
             <div class="wb-grid wb-grid-2 wb-gap-3">
                 <div class="wb-stack wb-gap-1">
-                    <span class="wb-text-sm wb-text-muted">API Base URL</span>
+                    <span class="wb-text-sm wb-text-muted">{{ $adminText('api_base_url') }}</span>
                     <code>/webadmin/api</code>
                 </div>
                 <div class="wb-stack wb-gap-1">
-                    <span class="wb-text-sm wb-text-muted">First request</span>
-                    <code>GET /webadmin/api</code>
+                    <span class="wb-text-sm wb-text-muted">{{ $adminText('first_request') }}</span>
+                    <code>{{ $adminText('discovery_request') }}</code>
                 </div>
             </div>
-            <div class="wb-text-sm wb-text-muted">Use Bearer auth with JSON headers. Discovery links point AI/operator tools to OpenAPI, the AI guide, content contract, examples, validate, and apply endpoints without exposing token values.</div>
+            <div class="wb-text-sm wb-text-muted">{{ $adminText('quick_start_help') }}</div>
         </div>
     </section>
 
     <div class="wb-card">
         <div class="wb-card-header">
-            <strong>Create Token</strong>
+            <strong>{{ $adminText('create_token') }}</strong>
         </div>
 
         @php($selectedCapabilities = old('capabilities', $defaultCapabilities))
@@ -104,8 +108,8 @@ Content-Type: application/json</textarea>
             @csrf
             <div class="wb-card-body wb-stack wb-gap-4">
                 <div class="wb-field">
-                    <label class="wb-label" for="api_token_name">Name</label>
-                    <input id="api_token_name" name="name" type="text" class="wb-input" value="{{ old('name') }}" placeholder="Example: Local AI, Homepage Builder, Operator Tool" required maxlength="120">
+                    <label class="wb-label" for="api_token_name">{{ $adminText('name') }}</label>
+                    <input id="api_token_name" name="name" type="text" class="wb-input" value="{{ old('name') }}" placeholder="{{ $adminText('name_placeholder') }}" required maxlength="120">
                     @error('name')
                         <div class="wb-field-error">{{ $message }}</div>
                     @enderror
@@ -119,7 +123,7 @@ Content-Type: application/json</textarea>
             </div>
 
             <div class="wb-card-footer">
-                <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $schemaReady)>Create Token</button>
+                <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $schemaReady)>{{ $adminText('create_token') }}</button>
             </div>
         </form>
     </div>
@@ -127,7 +131,7 @@ Content-Type: application/json</textarea>
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>Tokens</strong>
+                <strong>{{ $adminText('tokens') }}</strong>
                 <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $tokens->total() }}</span>
             </div>
         </div>
@@ -135,20 +139,20 @@ Content-Type: application/json</textarea>
         <div class="wb-card-body">
             @if ($tokens->isEmpty())
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No API tokens</div>
-                    <div class="wb-empty-text">Create a token for a trusted local AI or operator tool.</div>
+                    <div class="wb-empty-title">{{ $adminText('empty_title') }}</div>
+                    <div class="wb-empty-text">{{ $adminText('empty_text') }}</div>
                 </div>
             @else
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Status</th>
-                                <th>Preview</th>
-                                <th>Created</th>
-                                <th>Last Used</th>
-                                <th>Actions</th>
+                                <th>{{ $adminText('name') }}</th>
+                                <th>{{ $adminText('status') }}</th>
+                                <th>{{ $adminText('preview') }}</th>
+                                <th>{{ $adminText('created') }}</th>
+                                <th>{{ $adminText('last_used') }}</th>
+                                <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -159,7 +163,7 @@ Content-Type: application/json</textarea>
                                             <strong>{{ $token->name }}</strong>
                                             <span class="wb-text-sm wb-text-muted">{{ $capabilitiesPresenter->summary($token) }}</span>
                                             @if ($token->creator)
-                                                <span class="wb-text-sm wb-text-muted">Created by {{ $token->creator->name }}</span>
+                                                <span class="wb-text-sm wb-text-muted">{{ $adminText('created_by', ['name' => $token->creator->name]) }}</span>
                                             @endif
                                         </div>
                                     </td>
@@ -184,8 +188,8 @@ Content-Type: application/json</textarea>
                                                 class="wb-action-btn wb-action-btn-edit"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#edit-cms-api-token-{{ $token->id }}"
-                                                title="Edit token"
-                                                aria-label="Edit token"
+                                                title="{{ $adminText('edit_token') }}"
+                                                aria-label="{{ $adminText('edit_token') }}"
                                                 aria-haspopup="dialog"
                                             >
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
@@ -195,8 +199,8 @@ Content-Type: application/json</textarea>
                                                 class="wb-action-btn wb-action-btn-view"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#activity-cms-api-token-{{ $token->id }}"
-                                                title="View API activity"
-                                                aria-label="View API activity"
+                                                title="{{ $adminText('view_activity') }}"
+                                                aria-label="{{ $adminText('view_activity') }}"
                                                 aria-haspopup="dialog"
                                                 @disabled(! $activitySchemaReady)
                                             >
@@ -207,8 +211,8 @@ Content-Type: application/json</textarea>
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#revoke-cms-api-token-{{ $token->id }}"
-                                                title="{{ $token->isRevoked() ? 'Token already revoked' : 'Revoke token' }}"
-                                                aria-label="Revoke token"
+                                                title="{{ $token->isRevoked() ? $adminText('already_revoked') : $adminText('revoke_token') }}"
+                                                aria-label="{{ $adminText('revoke_token') }}"
                                                 @disabled($token->isRevoked())
                                             >
                                                 <i class="wb-icon wb-icon-ban" aria-hidden="true"></i>
@@ -218,8 +222,8 @@ Content-Type: application/json</textarea>
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#delete-cms-api-token-{{ $token->id }}"
-                                                title="Delete token"
-                                                aria-label="Delete token"
+                                                title="{{ $adminText('delete_token') }}"
+                                                aria-label="{{ $adminText('delete_token') }}"
                                                 aria-haspopup="dialog"
                                             >
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
@@ -234,7 +238,7 @@ Content-Type: application/json</textarea>
             @endif
         </div>
 
-        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $tokens, 'ariaLabel' => 'CMS API tokens pagination', 'compact' => true])
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $tokens, 'ariaLabel' => $adminText('pagination'), 'compact' => true])
     </div>
 @endsection
 
@@ -244,11 +248,11 @@ Content-Type: application/json</textarea>
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div>
-                        <h2 class="wb-modal-title" id="edit-cms-api-token-{{ $token->id }}-title">Edit API Token</h2>
-                        <p class="wb-text-sm wb-text-muted">Update this token's name and capabilities. The token value and audit metadata are not shown or changed.</p>
+                        <h2 class="wb-modal-title" id="edit-cms-api-token-{{ $token->id }}-title">{{ $adminText('edit_title') }}</h2>
+                        <p class="wb-text-sm wb-text-muted">{{ $adminText('edit_description') }}</p>
                     </div>
 
-                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close Edit API Token">
+                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('close_edit') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -259,7 +263,7 @@ Content-Type: application/json</textarea>
 
                     <div class="wb-modal-body wb-stack wb-gap-4 wb-api-token-modal-body">
                         <div class="wb-field">
-                            <label class="wb-label" for="edit_cms_api_token_name_{{ $token->id }}">Name</label>
+                            <label class="wb-label" for="edit_cms_api_token_name_{{ $token->id }}">{{ $adminText('name') }}</label>
                             <input id="edit_cms_api_token_name_{{ $token->id }}" name="name" type="text" class="wb-input" value="{{ $token->name }}" required maxlength="120">
                         </div>
 
@@ -272,8 +276,8 @@ Content-Type: application/json</textarea>
 
                     <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                         <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                            <button type="submit" class="wb-btn wb-btn-primary">Save Changes</button>
-                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Cancel</button>
+                            <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('save_changes') }}</button>
+                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('cancel') }}</button>
                         </div>
                     </div>
                 </form>
@@ -284,11 +288,11 @@ Content-Type: application/json</textarea>
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div>
-                        <h2 class="wb-modal-title" id="activity-cms-api-token-{{ $token->id }}-title">Recent API Activity</h2>
-                        <p class="wb-text-sm wb-text-muted">Latest 10 requests for {{ $token->name }}. Request bodies, query strings, responses, and token values are never stored.</p>
+                        <h2 class="wb-modal-title" id="activity-cms-api-token-{{ $token->id }}-title">{{ $adminText('activity_title') }}</h2>
+                        <p class="wb-text-sm wb-text-muted">{{ $adminText('activity_description', ['name' => $token->name]) }}</p>
                     </div>
 
-                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close Recent API Activity">
+                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('close_activity') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -296,15 +300,15 @@ Content-Type: application/json</textarea>
                 <div class="wb-modal-body wb-api-token-activity-modal-body">
                     @if (! $activitySchemaReady)
                         <div class="wb-alert wb-alert-warning">
-                            API token activity storage is not ready. Run System Update again to apply the required activity schema.
+                            {{ $adminText('activity_storage_not_ready') }}
                         </div>
                     @elseif ($token->activityLogs->isEmpty())
                         <div class="wb-empty">
-                            <div class="wb-empty-title">No activity yet</div>
-                            <div class="wb-empty-text">This token has not been used since activity tracking was enabled.</div>
+                            <div class="wb-empty-title">{{ $adminText('no_activity_title') }}</div>
+                            <div class="wb-empty-text">{{ $adminText('no_activity_text') }}</div>
                         </div>
                     @else
-                        <div class="wb-api-token-activity-list" role="list" aria-label="Recent API activity entries">
+                        <div class="wb-api-token-activity-list" role="list" aria-label="{{ $adminText('activity_entries') }}">
                             @foreach ($token->activityLogs as $activity)
                                 <article class="wb-card wb-card-muted wb-api-token-activity-item" role="listitem">
                                     <div class="wb-card-body wb-stack wb-gap-3">
@@ -326,26 +330,26 @@ Content-Type: application/json</textarea>
                                             </div>
 
                                             <div class="wb-api-token-activity-client">
-                                                <span class="wb-text-xs wb-text-muted">Client</span>
-                                                <strong>{{ $activity->ip ?? 'Unknown IP' }}</strong>
+                                                <span class="wb-text-xs wb-text-muted">{{ $adminText('client') }}</span>
+                                                <strong>{{ $activity->ip ?? $adminText('unknown_ip') }}</strong>
                                             </div>
                                         </div>
 
                                         <dl class="wb-api-token-activity-meta">
                                             <div>
-                                                <dt>Capability</dt>
+                                                <dt>{{ $adminText('capability') }}</dt>
                                                 <dd>
                                                     @if ($activity->required_capability)
                                                         <code>{{ $activity->required_capability }}</code>
                                                     @else
-                                                        <span class="wb-text-muted">None</span>
+                                                        <span class="wb-text-muted">{{ $adminText('none') }}</span>
                                                     @endif
                                                 </dd>
                                             </div>
 
                                             @if ($activity->user_agent)
                                                 <div class="wb-api-token-activity-user-agent">
-                                                    <dt>User agent</dt>
+                                                    <dt>{{ $adminText('user_agent') }}</dt>
                                                     <dd title="{{ $activity->user_agent }}">{{ Str::limit($activity->user_agent, 140) }}</dd>
                                                 </div>
                                             @endif
@@ -358,37 +362,37 @@ Content-Type: application/json</textarea>
                 </div>
 
                 <div class="wb-modal-footer">
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Close</button>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('close') }}</button>
                 </div>
             </div>
         </div>
 
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
             'id' => 'revoke-cms-api-token-'.$token->id,
-            'title' => 'Revoke API Token',
-            'description' => 'Revoking this token immediately blocks API access for the connected tool.',
+            'title' => $adminText('revoke_title'),
+            'description' => $adminText('revoke_description'),
             'action' => route('admin.system.api-tokens.revoke', $token),
             'method' => 'POST',
-            'submitLabel' => 'Revoke Token',
+            'submitLabel' => $adminText('revoke_submit'),
         ])
-            <p>Revoke <strong>{{ $token->name }}</strong>? The audit record will remain visible.</p>
+            <p>{{ $adminText('revoke_confirm_prefix') }} <strong>{{ $token->name }}</strong>? {{ $adminText('revoke_confirm_suffix') }}</p>
         @endcomponent
 
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
             'id' => 'delete-cms-api-token-'.$token->id,
-            'title' => 'Delete API Token',
+            'title' => $adminText('delete_title'),
             'description' => $token->isRevoked()
-                ? 'Deleting this revoked token permanently removes its audit row from the token list.'
-                : 'Deleting this active token immediately removes API access for the connected tool and permanently removes the token row.',
+                ? $adminText('delete_revoked_description')
+                : $adminText('delete_active_description'),
             'action' => route('admin.system.api-tokens.destroy', $token),
             'method' => 'DELETE',
-            'submitLabel' => 'Delete Token',
+            'submitLabel' => $adminText('delete_submit'),
         ])
-            <p>Delete <strong>{{ $token->name }}</strong>? This cannot be undone.</p>
+            <p>{{ $adminText('delete_confirm_prefix') }} <strong>{{ $token->name }}</strong>? {{ $adminText('cannot_be_undone') }}</p>
 
             @if (! $token->isRevoked())
                 <div class="wb-alert wb-alert-warning">
-                    This token is active. Any tool currently using it will lose API access immediately.
+                    {{ $adminText('active_delete_warning') }}
                 </div>
             @endif
         @endcomponent
