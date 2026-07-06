@@ -8,18 +8,6 @@
             "phrase": "Variant"
         },
         {
-            "file": "admin/blocks/settings/button_link.blade.php",
-            "phrase": "Variant"
-        },
-        {
-            "file": "admin/blocks/settings/button_link.blade.php",
-            "phrase": "variant ?: 'primary') === 'primary')>Primary"
-        },
-        {
-            "file": "admin/blocks/settings/button_link.blade.php",
-            "phrase": "variant ?: 'primary') === 'secondary')>Secondary"
-        },
-        {
             "file": "admin/blocks/settings/cluster.blade.php",
             "phrase": "Align"
         },
@@ -190,14 +178,6 @@
         {
             "file": "admin/blocks/settings/plain_text.blade.php",
             "phrase": "Alignment"
-        },
-        {
-            "file": "admin/blocks/settings/section.blade.php",
-            "phrase": "Maps to shipped `wb-section-sm` and `wb-section-lg` spacing classes."
-        },
-        {
-            "file": "admin/blocks/settings/section.blade.php",
-            "phrase": "Spacing"
         },
         {
             "file": "admin/blocks/settings/slide.blade.php",
@@ -656,22 +636,6 @@
             "phrase": "Variant"
         },
         {
-            "file": "admin/blocks/types/faq-inline.blade.php",
-            "phrase": "Answer"
-        },
-        {
-            "file": "admin/blocks/types/faq-inline.blade.php",
-            "phrase": "Question"
-        },
-        {
-            "file": "admin/blocks/types/faq.blade.php",
-            "phrase": "Answer"
-        },
-        {
-            "file": "admin/blocks/types/faq.blade.php",
-            "phrase": "Question"
-        },
-        {
             "file": "admin/blocks/types/feature-grid.blade.php",
             "phrase": "Structured publishing"
         },
@@ -794,22 +758,6 @@
         {
             "file": "admin/blocks/types/hero.blade.php",
             "phrase": "Variant"
-        },
-        {
-            "file": "admin/blocks/types/html-inline.blade.php",
-            "phrase": "Raw HTML"
-        },
-        {
-            "file": "admin/blocks/types/html.blade.php",
-            "phrase": "Trusted HTML"
-        },
-        {
-            "file": "admin/blocks/types/html.blade.php",
-            "phrase": "Trusted HTML content is translated per locale."
-        },
-        {
-            "file": "admin/blocks/types/html.blade.php",
-            "phrase": "Trusted HTML only."
         },
         {
             "file": "admin/blocks/types/image-inline.blade.php",
@@ -1196,14 +1144,6 @@
             "phrase": "\u2022 List"
         },
         {
-            "file": "admin/blocks/types/plain_text.blade.php",
-            "phrase": "Plain text content is translated per locale."
-        },
-        {
-            "file": "admin/blocks/types/plain_text.blade.php",
-            "phrase": "Text"
-        },
-        {
             "file": "admin/blocks/types/quote-inline.blade.php",
             "phrase": "Author"
         },
@@ -1234,18 +1174,6 @@
         {
             "file": "admin/blocks/types/quote.blade.php",
             "phrase": "variant) === 'testimonial')>Testimonial"
-        },
-        {
-            "file": "admin/blocks/types/section-inline.blade.php",
-            "phrase": "Section Intro"
-        },
-        {
-            "file": "admin/blocks/types/section-inline.blade.php",
-            "phrase": "Section Title"
-        },
-        {
-            "file": "admin/blocks/types/section-inline.blade.php",
-            "phrase": "Section Variant"
         },
         {
             "file": "admin/blocks/types/section.blade.php",
@@ -1504,48 +1432,8 @@
             "phrase": "Translated string value. This may be 0, 6, 14+, 173, or any other display-ready metric."
         },
         {
-            "file": "admin/blocks/types/tabs-inline.blade.php",
-            "phrase": "Tab Content"
-        },
-        {
-            "file": "admin/blocks/types/tabs-inline.blade.php",
-            "phrase": "Tab Group"
-        },
-        {
-            "file": "admin/blocks/types/tabs-inline.blade.php",
-            "phrase": "Tab Label"
-        },
-        {
-            "file": "admin/blocks/types/tabs.blade.php",
-            "phrase": "Tab Content"
-        },
-        {
-            "file": "admin/blocks/types/tabs.blade.php",
-            "phrase": "Tab Group"
-        },
-        {
-            "file": "admin/blocks/types/tabs.blade.php",
-            "phrase": "Tab Label"
-        },
-        {
             "file": "admin/blocks/types/text-inline.blade.php",
             "phrase": "Text Content"
-        },
-        {
-            "file": "admin/blocks/types/text.blade.php",
-            "phrase": "Text Content"
-        },
-        {
-            "file": "admin/blocks/types/text.blade.php",
-            "phrase": "Text content is translated per locale."
-        },
-        {
-            "file": "admin/blocks/types/toc.blade.php",
-            "phrase": "Optional label shown above links generated from Header block anchors on the same page."
-        },
-        {
-            "file": "admin/blocks/types/toc.blade.php",
-            "phrase": "TOC Title"
         },
         {
             "file": "admin/blocks/types/video.blade.php",

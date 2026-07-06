@@ -1,14 +1,20 @@
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.trusted_html.'.$key, $adminLocale);
+@endphp
+
 <div class="wb-stack wb-gap-1">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Trusted HTML content is translated per locale.</div>
+            <div>{{ $adminText('locale_help') }}</div>
         </div>
     @endif
 
     <div class="wb-alert wb-alert-warning">
-        <div><strong>Trusted HTML only.</strong> This block renders stored HTML markup directly. Use Rich Text for normal formatted copy and Code for escaped snippets. Do not paste scripts, event attributes, or untrusted third-party markup.</div>
+        <div><strong>{{ $adminText('warning_title') }}</strong> {{ $adminText('warning_body') }}</div>
     </div>
 
-    <label for="content">Trusted HTML</label>
+    <label for="content">{{ $adminText('label') }}</label>
     <textarea id="content" name="content" class="wb-textarea" rows="10" required>{{ old('content', $block->content) }}</textarea>
 </div>

@@ -74,6 +74,8 @@ Admin Blade files must not introduce new user-visible hard-coded English copy. N
 
 Admin HTML responses also pass through a package-local localization fallback for non-English admin locales. It translates reviewed UI phrases in text nodes and safe interface attributes such as `aria-label`, `placeholder`, `title`, and CMS-owned confirmation copy. This fallback is a bridge for existing legacy admin coverage only; it does not replace the direct `cms_trans()` contract and must not be used as the primary implementation for new screens.
 
+When the admin translation migration is complete, remove the bridge instead of keeping it as permanent architecture. Completion means the strict admin translation audit has no accepted legacy Blade UI phrase debt and migrated route-level render tests cover high-visibility admin screens in a non-English locale. At that point delete the `LocalizeAdminHtml` middleware, its `admin.localize-html` route alias, and the reviewed `admin.html` fallback phrase map. If asked whether the translation migration is complete, explicitly check whether this cleanup has been done.
+
 Use `php artisan webblocks:admin-translation-audit --locale=de` or `--locale=tr` to measure static CMS-owned admin Blade copy against the reviewed `admin.html` fallback phrase map. The audit automatically discovers admin Blade files under `packages/webblocks-cms/resources/views/admin/` so newly added admin windows, modals, lists, and partials are included without updating a manual file list.
 
 Use the strict baseline gate before merging admin UI work:

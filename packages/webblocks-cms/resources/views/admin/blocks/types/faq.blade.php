@@ -1,11 +1,17 @@
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.faq.'.$key, $adminLocale);
+@endphp
+
 <div class="wb-stack wb-gap-4">
     <div class="wb-stack wb-gap-1">
-        <label for="title">Question</label>
+        <label for="title">{{ $adminText('question') }}</label>
         <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}" required>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="content">Answer</label>
+        <label for="content">{{ $adminText('answer') }}</label>
         <textarea id="content" name="content" class="wb-textarea" rows="6" required>{{ old('content', $block->content) }}</textarea>
     </div>
 </div>

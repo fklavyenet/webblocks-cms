@@ -2154,6 +2154,56 @@ return [
       'url_label' => 'Opsiyonel Link',
       'content_label' => 'Feature Metni',
     ],
+    'button_link_settings' => [
+      'variant_label' => 'Varyant',
+      'primary' => 'Birincil',
+      'secondary' => 'Ikincil',
+      'variant_help' => 'Yalnizca gelen WebBlocks UI button classlarini uygular.',
+    ],
+    'trusted_html' => [
+      'locale_help' => 'Trusted HTML icerigi dile gore cevrilir.',
+      'warning_title' => 'Yalnizca Trusted HTML.',
+      'warning_body' => 'Bu blok saklanan HTML markupini dogrudan render eder. Normal formatli metin icin Rich Text, escaped snippetlar icin Code kullan. Script, event attribute veya guvenilmeyen ucuncu taraf markup yapistirma.',
+      'label' => 'Trusted HTML',
+      'raw_label' => 'Raw HTML',
+    ],
+    'section_inline' => [
+      'title_label' => 'Bolum Basligi',
+      'variant_label' => 'Bolum Varyanti',
+      'variant_default' => 'Varsayilan',
+      'variant_muted' => 'Muted',
+      'variant_accent' => 'Accent',
+      'variant_wide' => 'Genis',
+      'intro_label' => 'Bolum Girisi',
+    ],
+    'section_settings' => [
+      'spacing_label' => 'Bosluk',
+      'default' => 'Varsayilan',
+      'compact' => 'Kompakt',
+      'spacious' => 'Ferah',
+      'spacing_help' => 'Gelen `wb-section-sm` ve `wb-section-lg` bosluk classlarina eslenir.',
+    ],
+    'tabs' => [
+      'label' => 'Tab Etiketi',
+      'group' => 'Tab Grubu',
+      'content' => 'Tab Icerigi',
+    ],
+    'faq' => [
+      'question' => 'Soru',
+      'answer' => 'Cevap',
+    ],
+    'plain_text' => [
+      'locale_help' => 'Duz metin icerigi dile gore cevrilir.',
+      'label' => 'Metin',
+    ],
+    'text' => [
+      'locale_help' => 'Metin icerigi dile gore cevrilir.',
+      'label' => 'Metin Icerigi',
+    ],
+    'toc' => [
+      'title_label' => 'TOC Basligi',
+      'title_help' => 'Ayni sayfadaki Header blok anchorlarindan uretilen linklerin ustunde gosterilen opsiyonel etiket.',
+    ],
     'comments' => [
       'system_title' => 'Sistem Yorumlari',
       'system_help' => 'Comments, modere edilen ziyaretci metnini editor blok metinlerinin disinda saklar. Gorunen basliklar bu bloktan once normal icerik bloklariyla kurulmalidir.',

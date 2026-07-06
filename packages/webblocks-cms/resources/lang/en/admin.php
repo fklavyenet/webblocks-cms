@@ -914,6 +914,56 @@ return [
       'url_label' => 'Optional Link',
       'content_label' => 'Feature Text',
     ],
+    'button_link_settings' => [
+      'variant_label' => 'Variant',
+      'primary' => 'Primary',
+      'secondary' => 'Secondary',
+      'variant_help' => 'Applies shipped WebBlocks UI button classes only.',
+    ],
+    'trusted_html' => [
+      'locale_help' => 'Trusted HTML content is translated per locale.',
+      'warning_title' => 'Trusted HTML only.',
+      'warning_body' => 'This block renders stored HTML markup directly. Use Rich Text for normal formatted copy and Code for escaped snippets. Do not paste scripts, event attributes, or untrusted third-party markup.',
+      'label' => 'Trusted HTML',
+      'raw_label' => 'Raw HTML',
+    ],
+    'section_inline' => [
+      'title_label' => 'Section Title',
+      'variant_label' => 'Section Variant',
+      'variant_default' => 'Default',
+      'variant_muted' => 'Muted',
+      'variant_accent' => 'Accent',
+      'variant_wide' => 'Wide',
+      'intro_label' => 'Section Intro',
+    ],
+    'section_settings' => [
+      'spacing_label' => 'Spacing',
+      'default' => 'Default',
+      'compact' => 'Compact',
+      'spacious' => 'Spacious',
+      'spacing_help' => 'Maps to shipped `wb-section-sm` and `wb-section-lg` spacing classes.',
+    ],
+    'tabs' => [
+      'label' => 'Tab Label',
+      'group' => 'Tab Group',
+      'content' => 'Tab Content',
+    ],
+    'faq' => [
+      'question' => 'Question',
+      'answer' => 'Answer',
+    ],
+    'plain_text' => [
+      'locale_help' => 'Plain text content is translated per locale.',
+      'label' => 'Text',
+    ],
+    'text' => [
+      'locale_help' => 'Text content is translated per locale.',
+      'label' => 'Text Content',
+    ],
+    'toc' => [
+      'title_label' => 'TOC Title',
+      'title_help' => 'Optional label shown above links generated from Header block anchors on the same page.',
+    ],
     'comments' => [
       'system_title' => 'System Comments',
       'system_help' => 'Comments stores moderated visitor text outside editorial block copy. Visible headings should be built with normal content blocks before this block.',

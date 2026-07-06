@@ -2155,6 +2155,56 @@ return [
       'url_label' => 'Optionaler Link',
       'content_label' => 'Feature-Text',
     ],
+    'button_link_settings' => [
+      'variant_label' => 'Variante',
+      'primary' => 'Primaer',
+      'secondary' => 'Sekundaer',
+      'variant_help' => 'Wendet nur ausgelieferte WebBlocks-UI-Button-Klassen an.',
+    ],
+    'trusted_html' => [
+      'locale_help' => 'Trusted-HTML-Inhalt wird pro Sprache uebersetzt.',
+      'warning_title' => 'Nur Trusted HTML.',
+      'warning_body' => 'Dieser Block rendert gespeichertes HTML-Markup direkt. Verwende Rich Text fuer normal formatierten Text und Code fuer escaped Snippets. Keine Skripte, Event-Attribute oder nicht vertrauenswuerdiges Drittanbieter-Markup einfuegen.',
+      'label' => 'Trusted HTML',
+      'raw_label' => 'Raw HTML',
+    ],
+    'section_inline' => [
+      'title_label' => 'Section-Titel',
+      'variant_label' => 'Section-Variante',
+      'variant_default' => 'Standard',
+      'variant_muted' => 'Gedimmt',
+      'variant_accent' => 'Akzent',
+      'variant_wide' => 'Breit',
+      'intro_label' => 'Section-Einleitung',
+    ],
+    'section_settings' => [
+      'spacing_label' => 'Abstand',
+      'default' => 'Standard',
+      'compact' => 'Kompakt',
+      'spacious' => 'Grosszuegig',
+      'spacing_help' => 'Verweist auf ausgelieferte `wb-section-sm` und `wb-section-lg` Abstandsklassen.',
+    ],
+    'tabs' => [
+      'label' => 'Tab-Label',
+      'group' => 'Tab-Gruppe',
+      'content' => 'Tab-Inhalt',
+    ],
+    'faq' => [
+      'question' => 'Frage',
+      'answer' => 'Antwort',
+    ],
+    'plain_text' => [
+      'locale_help' => 'Plain-Text-Inhalt wird pro Sprache uebersetzt.',
+      'label' => 'Text',
+    ],
+    'text' => [
+      'locale_help' => 'Textinhalt wird pro Sprache uebersetzt.',
+      'label' => 'Textinhalt',
+    ],
+    'toc' => [
+      'title_label' => 'TOC-Titel',
+      'title_help' => 'Optionales Label ueber Links, die aus Header-Block-Ankern auf derselben Seite erzeugt werden.',
+    ],
     'comments' => [
       'system_title' => 'Systemkommentare',
       'system_help' => 'Comments speichert moderierte Besuchertexte ausserhalb der redaktionellen Blocktexte. Sichtbare Ueberschriften sollten mit normalen Content-Bloecken vor diesem Block aufgebaut werden.',
