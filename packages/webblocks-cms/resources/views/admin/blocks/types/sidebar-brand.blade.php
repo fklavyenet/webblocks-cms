@@ -1,4 +1,7 @@
 @php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.sidebar_brand.'.$key, $adminLocale);
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
 @endphp
@@ -6,58 +9,58 @@
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Brand title and subtitle are translated per locale. URL, target, and logo stay shared across locales.</div>
+            <div>{{ $adminText('locale_help') }}</div>
         </div>
     @endif
 
     <div class="wb-alert wb-alert-info">
-        <div>This block renders only the inner <code>wb-sidebar-brand</code> link. The outer <code>aside.wb-sidebar</code> wrapper still belongs to the docs public shell when the block lives in the Sidebar slot.</div>
+        <div>{!! $adminText('system_help') !!}</div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label>Logo</label>
+        <label>{{ $adminText('logo_label') }}</label>
         @include('webblocks-cms::admin.media.asset-picker-panel', [
             'name' => 'sidebar-brand-logo',
             'inputId' => 'asset_id',
             'fieldName' => 'asset_id',
             'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Replace Logo',
-            'clearLabel' => 'Remove',
+            'buttonLabel' => $adminText('choose_media'),
+            'replaceLabel' => $adminText('replace_logo'),
+            'clearLabel' => $adminText('remove'),
             'accept' => 'image',
         ])
-        <span>Upload the logo in Media, then select it here.</span>
+        <span>{{ $adminText('logo_help') }}</span>
     </div>
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
-            <label for="title">Brand Title</label>
+            <label for="title">{{ $adminText('title_label') }}</label>
             <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
-            <div class="wb-text-sm wb-text-muted">Optional when a logo is present.</div>
+            <div class="wb-text-sm wb-text-muted">{{ $adminText('title_help') }}</div>
         </div>
 
         <div class="wb-stack wb-gap-1">
-            <label for="url">URL</label>
-            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $settings['url'] ?? $block->url) }}" placeholder="Falls back to the site home URL">
+            <label for="url">{{ $adminText('url_label') }}</label>
+            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $settings['url'] ?? $block->url) }}" placeholder="{{ $adminText('url_placeholder') }}">
         </div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="subtitle">Subtitle</label>
+        <label for="subtitle">{{ $adminText('subtitle_label') }}</label>
         <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="sidebar_brand_aria_label">Accessible Label</label>
+        <label for="sidebar_brand_aria_label">{{ $adminText('aria_label') }}</label>
         <input id="sidebar_brand_aria_label" name="sidebar_brand_aria_label" class="wb-input" type="text" value="{{ old('sidebar_brand_aria_label', $settings['aria_label'] ?? '') }}">
-        <div class="wb-text-sm wb-text-muted">Used for logo-only brands when visible title text is empty. Falls back to the site label if left blank.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('aria_help') }}</div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="target">Target</label>
+        <label for="target">{{ $adminText('target_label') }}</label>
         <select id="target" name="target" class="wb-select">
-            <option value="_self" @selected(old('target', $settings['target'] ?? '_self') === '_self')>Same tab</option>
-            <option value="_blank" @selected(old('target', $settings['target'] ?? '_self') === '_blank')>New tab</option>
+            <option value="_self" @selected(old('target', $settings['target'] ?? '_self') === '_self')>{{ $adminText('same_tab') }}</option>
+            <option value="_blank" @selected(old('target', $settings['target'] ?? '_self') === '_blank')>{{ $adminText('new_tab') }}</option>
         </select>
     </div>
 </div>
