@@ -1,4 +1,7 @@
 @php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.cluster_settings.'.$key, $adminLocale);
     $clusterGap = old('cluster_gap', $block->clusterGap());
     $clusterJustify = old('cluster_justify', $block->clusterJustify());
     $clusterAlign = old('cluster_align', $block->clusterAlign());
@@ -8,55 +11,55 @@
 
 <div class="wb-stack wb-gap-3">
     <div class="wb-stack wb-gap-1">
-        <label for="cluster_width">Width</label>
+        <label for="cluster_width">{{ $adminText('width_label') }}</label>
         <select id="cluster_width" name="cluster_width" class="wb-select">
-            <option value="" @selected($clusterWidth === 'auto')>Auto</option>
-            <option value="full" @selected($clusterWidth === 'full')>Full</option>
+            <option value="" @selected($clusterWidth === 'auto')>{{ $adminText('auto') }}</option>
+            <option value="full" @selected($clusterWidth === 'full')>{{ $adminText('full') }}</option>
         </select>
-        <div class="wb-text-sm wb-text-muted">Use `Full` when the cluster should fill its parent, such as a navbar row that needs left and right groups to separate.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('width_help') }}</div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="cluster_justify">Justify</label>
+        <label for="cluster_justify">{{ $adminText('justify_label') }}</label>
         <select id="cluster_justify" name="cluster_justify" class="wb-select">
-            <option value="" @selected($clusterJustify === 'start')>Start</option>
-            <option value="center" @selected($clusterJustify === 'center')>Center</option>
-            <option value="end" @selected($clusterJustify === 'end')>End</option>
-            <option value="between" @selected($clusterJustify === 'between')>Between</option>
+            <option value="" @selected($clusterJustify === 'start')>{{ $adminText('start') }}</option>
+            <option value="center" @selected($clusterJustify === 'center')>{{ $adminText('center') }}</option>
+            <option value="end" @selected($clusterJustify === 'end')>{{ $adminText('end') }}</option>
+            <option value="between" @selected($clusterJustify === 'between')>{{ $adminText('between') }}</option>
         </select>
-        <div class="wb-text-sm wb-text-muted">Controls horizontal distribution for grouped children using WebBlocks UI cluster modifiers.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('justify_help') }}</div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="cluster_align">Align</label>
+        <label for="cluster_align">{{ $adminText('align_label') }}</label>
         <select id="cluster_align" name="cluster_align" class="wb-select">
-            <option value="" @selected($clusterAlign === 'center')>Center</option>
-            <option value="start" @selected($clusterAlign === 'start')>Start</option>
-            <option value="end" @selected($clusterAlign === 'end')>End</option>
-            <option value="stretch" @selected($clusterAlign === 'stretch')>Stretch</option>
+            <option value="" @selected($clusterAlign === 'center')>{{ $adminText('center') }}</option>
+            <option value="start" @selected($clusterAlign === 'start')>{{ $adminText('start') }}</option>
+            <option value="end" @selected($clusterAlign === 'end')>{{ $adminText('end') }}</option>
+            <option value="stretch" @selected($clusterAlign === 'stretch')>{{ $adminText('stretch') }}</option>
         </select>
-        <div class="wb-text-sm wb-text-muted">Controls cross-axis alignment. `Center` keeps the current cluster default.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('align_help') }}</div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="cluster_wrap">Wrap</label>
+        <label for="cluster_wrap">{{ $adminText('wrap_label') }}</label>
         <select id="cluster_wrap" name="cluster_wrap" class="wb-select">
-            <option value="" @selected($clusterWrap === 'wrap')>Wrap</option>
-            <option value="nowrap" @selected($clusterWrap === 'nowrap')>Nowrap</option>
+            <option value="" @selected($clusterWrap === 'wrap')>{{ $adminText('wrap') }}</option>
+            <option value="nowrap" @selected($clusterWrap === 'nowrap')>{{ $adminText('nowrap') }}</option>
         </select>
-        <div class="wb-text-sm wb-text-muted">Use `Nowrap` for single-row groups such as navbar rows. `Wrap` preserves the current cluster behavior.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('wrap_help') }}</div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="cluster_gap">Gap</label>
+        <label for="cluster_gap">{{ $adminText('gap_label') }}</label>
         <select id="cluster_gap" name="cluster_gap" class="wb-select">
-            <option value="" @selected($clusterGap === 'default')>Default</option>
-            <option value="none" @selected($clusterGap === 'none')>None</option>
+            <option value="" @selected($clusterGap === 'default')>{{ $adminText('default') }}</option>
+            <option value="none" @selected($clusterGap === 'none')>{{ $adminText('none') }}</option>
             <option value="xs" @selected($clusterGap === 'xs')>XS</option>
             <option value="sm" @selected($clusterGap === 'sm')>SM</option>
             <option value="md" @selected($clusterGap === 'md')>MD</option>
             <option value="lg" @selected($clusterGap === 'lg')>LG</option>
         </select>
-        <div class="wb-text-sm wb-text-muted">Default keeps the shipped cluster gap. Other options map to WebBlocks UI utilities when available, with a small CMS fallback only for `None`.</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('gap_help') }}</div>
     </div>
 </div>
