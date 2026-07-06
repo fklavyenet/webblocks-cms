@@ -21,6 +21,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Move Button Link, Trusted HTML, Section, Tabs, FAQ, Text, and TOC block editor copy onto structured admin locale keys.
 - Move Slide and Gallery block settings copy onto structured admin locale keys.
 - Move Sidebar and Navbar brand/navigation block editor copy onto structured admin locale keys.
+- Move shared pagination and small block presentation settings copy onto structured admin locale keys.
 
 ## 1.34.1
 

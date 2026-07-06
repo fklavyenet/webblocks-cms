@@ -1,6 +1,7 @@
 @php
   use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
   use WebBlocks\Cms\Support\Translations\CmsTranslator;
+  use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 
   $adminLocale = app(AdminLocaleResolver::class)->locale();
   $adminTranslator = app(CmsTranslator::class);
@@ -22,9 +23,9 @@
     $retainedUpdateRuns = $retainedUpdateRuns ?? collect();
     $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
     $updateBlockerText = static fn (?string $message) => match ($message) {
-      'Another update run is already in progress.' => $adminText('updates.blockers.busy'),
-      'No newer release is ready for this install.' => $adminText('updates.blockers.no_newer_release_ready'),
-      'The latest release does not provide an installable package URL.' => $adminText('updates.blockers.missing_package_url'),
+      SystemUpdateInspector::BLOCKER_BUSY => $adminText('updates.blockers.busy'),
+      SystemUpdateInspector::BLOCKER_NO_NEWER_RELEASE_READY => $adminText('updates.blockers.no_newer_release_ready'),
+      SystemUpdateInspector::BLOCKER_MISSING_PACKAGE_URL => $adminText('updates.blockers.missing_package_url'),
       null, '' => null,
       default => $message,
     };

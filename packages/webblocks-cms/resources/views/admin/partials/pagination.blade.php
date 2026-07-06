@@ -1,5 +1,8 @@
 @php
-  $ariaLabel = $ariaLabel ?? 'Pagination';
+  $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+  $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+  $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.pagination.'.$key, $adminLocale, $replace);
+  $ariaLabel = $ariaLabel ?? $adminText('aria_label');
   $compact = $compact ?? false;
   $summaryText = $paginator->firstItem() !== null && $paginator->lastItem() !== null
     ? $paginator->firstItem().'-'.$paginator->lastItem().'/'.$paginator->total()
@@ -30,9 +33,9 @@
         <ol class="wb-pagination-list">
           <li class="wb-pagination-item{{ $paginator->onFirstPage() ? ' is-disabled' : '' }}">
             @if ($paginator->onFirstPage())
-              <span class="wb-pagination-link">Previous</span>
+              <span class="wb-pagination-link">{{ $adminText('previous') }}</span>
             @else
-              <a href="{{ $paginator->previousPageUrl() }}" class="wb-pagination-link" rel="prev">Previous</a>
+              <a href="{{ $paginator->previousPageUrl() }}" class="wb-pagination-link" rel="prev">{{ $adminText('previous') }}</a>
             @endif
           </li>
 
@@ -58,9 +61,9 @@
 
           <li class="wb-pagination-item{{ $paginator->hasMorePages() ? '' : ' is-disabled' }}">
             @if ($paginator->hasMorePages())
-              <a href="{{ $paginator->nextPageUrl() }}" class="wb-pagination-link" rel="next">Next</a>
+              <a href="{{ $paginator->nextPageUrl() }}" class="wb-pagination-link" rel="next">{{ $adminText('next') }}</a>
             @else
-              <span class="wb-pagination-link">Next</span>
+              <span class="wb-pagination-link">{{ $adminText('next') }}</span>
             @endif
           </li>
         </ol>
@@ -71,7 +74,7 @@
           @if ($compact)
             {{ $summaryText }}
           @else
-            Showing {{ $paginator->firstItem() }}-{{ $paginator->lastItem() }} of {{ $paginator->total() }}
+            {{ $adminText('showing', ['first' => $paginator->firstItem(), 'last' => $paginator->lastItem(), 'total' => $paginator->total()]) }}
           @endif
         </div>
       @endif

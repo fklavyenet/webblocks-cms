@@ -4,10 +4,6 @@
     "generated_from": "php artisan webblocks:admin-translation-audit --locale=de --json",
     "accepted_missing": [
         {
-            "file": "admin/blocks/settings/alert.blade.php",
-            "phrase": "Variant"
-        },
-        {
             "file": "admin/blocks/settings/cluster.blade.php",
             "phrase": "Align"
         },
@@ -70,22 +66,6 @@
         {
             "file": "admin/blocks/settings/cluster.blade.php",
             "phrase": "Wrap"
-        },
-        {
-            "file": "admin/blocks/settings/content_header.blade.php",
-            "phrase": "Alignment"
-        },
-        {
-            "file": "admin/blocks/settings/fallback.blade.php",
-            "phrase": "No public settings are available for this block yet."
-        },
-        {
-            "file": "admin/blocks/settings/header.blade.php",
-            "phrase": "Alignment"
-        },
-        {
-            "file": "admin/blocks/settings/plain_text.blade.php",
-            "phrase": "Alignment"
         },
         {
             "file": "admin/blocks/settings/slider.blade.php",
@@ -1204,14 +1184,6 @@
             "phrase": "Open page details"
         },
         {
-            "file": "admin/partials/pagination.blade.php",
-            "phrase": "Next"
-        },
-        {
-            "file": "admin/partials/pagination.blade.php",
-            "phrase": "Previous"
-        },
-        {
             "file": "admin/plugins/catalog/show.blade.php",
             "phrase": "Artifact"
         },
@@ -1790,18 +1762,6 @@
         {
             "file": "admin/system/icons/partials/edit-modal.blade.php",
             "phrase": "Update install-level icon metadata used by admin catalog screens and filtered pickers."
-        },
-        {
-            "file": "admin/system/updates.blade.php",
-            "phrase": "Another update run is already in progress."
-        },
-        {
-            "file": "admin/system/updates.blade.php",
-            "phrase": "No newer release is ready for this install."
-        },
-        {
-            "file": "admin/system/updates.blade.php",
-            "phrase": "The latest release does not provide an installable package URL."
         },
         {
             "file": "admin/users/form.blade.php",

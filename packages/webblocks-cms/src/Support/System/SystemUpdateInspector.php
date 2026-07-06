@@ -14,6 +14,12 @@ use ZipArchive;
 
 class SystemUpdateInspector
 {
+  public const BLOCKER_BUSY = 'Another update run is already in progress.';
+
+  public const BLOCKER_NO_NEWER_RELEASE_READY = 'No newer release is ready for this install.';
+
+  public const BLOCKER_MISSING_PACKAGE_URL = 'The latest release does not provide an installable package URL.';
+
   public function __construct(
     private readonly UpdateServerClient $updateServerClient,
     private readonly InstalledVersionStore $installedVersionStore,
@@ -197,7 +203,7 @@ class SystemUpdateInspector
     }
 
     if ($this->systemUpdater->isLocked()) {
-      $blockers[] = 'Another update run is already in progress.';
+      $blockers[] = self::BLOCKER_BUSY;
     }
 
     if (($version['state'] ?? null) === 'incompatible') {
@@ -207,11 +213,11 @@ class SystemUpdateInspector
     }
 
     if (($version['update_available'] ?? false) !== true) {
-      $blockers[] = 'No newer release is ready for this install.';
+      $blockers[] = self::BLOCKER_NO_NEWER_RELEASE_READY;
     }
 
     if (! is_string($version['release']['download_url'] ?? null) || trim((string) $version['release']['download_url']) === '') {
-      $blockers[] = 'The latest release does not provide an installable package URL.';
+      $blockers[] = self::BLOCKER_MISSING_PACKAGE_URL;
     }
 
     $blockers = array_values(array_unique(array_filter($blockers, static fn ($message): bool => is_string($message) && $message !== '')));
@@ -219,7 +225,7 @@ class SystemUpdateInspector
     return [
       'allowed' => $blockers === [] && ($version['state'] ?? null) === 'update_available',
       'blockers' => $blockers,
-      'busy' => in_array('Another update run is already in progress.', $blockers, true),
+      'busy' => in_array(self::BLOCKER_BUSY, $blockers, true),
     ];
   }
 
