@@ -176,7 +176,7 @@
         @if ($mobileItems->isNotEmpty())
           <div class="wb-dropdown wb-dropdown-end wb-public-header-mobile">
             <button class="wb-public-header-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#public-mobile-menu" aria-expanded="false" aria-label="Open navigation">
-              <i class="wb-icon wb-icon-menu-2" aria-hidden="true"></i>
+              <i class="wb-icon wb-icon-menu" aria-hidden="true"></i>
             </button>
             <div class="wb-dropdown-menu" id="public-mobile-menu">
               <div class="wb-stack wb-gap-2 wb-public-header-mobile-menu">

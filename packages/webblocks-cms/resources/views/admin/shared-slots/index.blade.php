@@ -165,7 +165,7 @@
                                     <td>
                                         <div class="wb-action-group">
                                             <a href="{{ route('admin.shared-slots.edit', $sharedSlot) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                            <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout-panel-top" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout" aria-hidden="true"></i></a>
                                             <form method="POST" action="{{ route('admin.shared-slots.destroy', $sharedSlot) }}" onsubmit="return confirm('{{ $adminText('delete_confirm') }}');">
                                                 @csrf
                                                 @method('DELETE')

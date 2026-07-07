@@ -68,8 +68,8 @@
     };
     $statusIconClass = match (true) {
       $state === 'update_available' => 'wb-icon-download',
-      $state === 'incompatible' || $publisherUnavailable => 'wb-icon-alert-triangle',
-      default => 'wb-icon-check-circle',
+      $state === 'incompatible' || $publisherUnavailable => 'wb-icon-triangle-alert',
+      default => 'wb-icon-check',
     };
     $versionPath = $showLatestVersion
       ? $installedVersion.' → '.$updateStatus['latest_version']
@@ -303,7 +303,7 @@
       <section class="wb-card">
         <div class="wb-card-body">
           <div data-webblocks-updates-safety-card>
-            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-list-checks"></i></span>
+            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-list"></i></span>
             <div>
               <div class="wb-cluster wb-cluster-between wb-cluster-2">
                 <strong>{{ $adminText('updates.preflight') }}</strong>
@@ -318,7 +318,7 @@
       <section class="wb-card">
         <div class="wb-card-body">
           <div data-webblocks-updates-safety-card>
-            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-archive"></i></span>
+            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-file-archive"></i></span>
             <div>
               <div class="wb-cluster wb-cluster-between wb-cluster-2">
                 <strong>{{ $adminText('updates.backup') }}</strong>
@@ -511,7 +511,7 @@
             @foreach ($diagnosticItems as $diagnostic)
               <div data-webblocks-updates-check>
                 <span data-webblocks-updates-check-icon aria-hidden="true">
-                  <i class="wb-icon {{ in_array((string) ($diagnostic['status'] ?? ''), ['ok', 'pass', 'compatible'], true) ? 'wb-icon-check' : 'wb-icon-alert-circle' }}"></i>
+                  <i class="wb-icon {{ in_array((string) ($diagnostic['status'] ?? ''), ['ok', 'pass', 'compatible'], true) ? 'wb-icon-check' : 'wb-icon-triangle-alert' }}"></i>
                 </span>
                 <div>
                   <div class="wb-list-item-title">{{ $diagnostic['label'] }}</div>

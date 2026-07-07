@@ -115,7 +115,7 @@
                                                 <form method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}">
                                                     @csrf
                                                     <button type="submit" class="wb-action-btn" title="{{ $systemPluginsIndexText('update_from_catalog') }}" aria-label="{{ $systemPluginsIndexText('update_from_catalog') }}">
-                                                        <i class="wb-icon wb-icon-refresh-cw" aria-hidden="true"></i>
+                                                        <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
                                             @endif

@@ -209,13 +209,13 @@
                     <form method="POST" action="{{ route('admin.plugins.catalog.install', $plugin->handle) }}">
                         @csrf
                         <button type="submit" class="wb-btn wb-btn-primary">
-                            <i class="wb-icon wb-icon-package-plus" aria-hidden="true"></i>
+                            <i class="wb-icon wb-icon-package" aria-hidden="true"></i>
                             {{ $adminText('install_from_catalog') }}
                         </button>
                     </form>
                 @else
                     <button type="button" class="wb-btn wb-btn-primary" disabled>
-                        <i class="wb-icon wb-icon-package-plus" aria-hidden="true"></i>
+                        <i class="wb-icon wb-icon-package" aria-hidden="true"></i>
                         {{ $adminText('install_from_catalog') }}
                     </button>
                 @endif
