@@ -4507,7 +4507,7 @@ return [
       'submit_label' => 'Gönder Butonu Etiketi',
       'intro_label' => 'Giriş Metni',
       'success_label' => 'Başarı Mesajı',
-      'recipient_label' => 'Alıcı E-postasıni Ez',
+      'recipient_label' => 'Alıcı e-postasını geçersiz kıl',
       'recipient_locked_help' => 'Teslim ayarları ortak kalır. Alıcıyı güncellemek için varsayılan dile geç.',
       'recipient_help' => 'Boş bırakılırsa form <code>CONTACT_RECIPIENT_EMAIL</code> değerine düşer.',
       'delivery_label' => 'Teslim Ayarları',

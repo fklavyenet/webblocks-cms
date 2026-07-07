@@ -57,6 +57,20 @@ class ProfileManagementTest extends TestCase
   }
 
   #[Test]
+  public function german_profile_email_label_is_not_localized_twice_by_the_html_fallback(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'admin_locale' => 'de',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.profile.edit'));
+
+    $response->assertOk();
+    $response->assertSee('>E-Mail<', false);
+    $response->assertDontSee('E-E-Mail');
+  }
+
+  #[Test]
   public function profile_update_changes_only_the_current_users_name_and_email(): void
   {
     $site = Site::query()->where('is_primary', true)->firstOrFail();

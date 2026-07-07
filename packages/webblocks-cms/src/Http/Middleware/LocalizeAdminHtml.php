@@ -141,7 +141,7 @@ class LocalizeAdminHtml
 
     foreach ($phrases as $english => $translated) {
       $value = preg_replace(
-        '/(?<![A-Za-z0-9_])'.preg_quote($english, '/').'(?![A-Za-z0-9_])/',
+        '/(?<![A-Za-z0-9_-])'.preg_quote($english, '/').'(?![A-Za-z0-9_-])/',
         $translated,
         $value,
       ) ?? $value;

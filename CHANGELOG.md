@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Prevent legacy admin HTML localization from re-translating already localized hyphenated terms such as German `E-Mail`.
+- Polish remaining Turkish and German admin locale diacritic artifacts found after the 1.34.4 locale pass.
+
 ## 1.34.4
 
 - Bumped CMS to `1.34.4`.
