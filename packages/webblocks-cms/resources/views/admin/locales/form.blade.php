@@ -1,9 +1,13 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
+@php
+    $localesFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.locales_form.'.$key, $replace);
+@endphp
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Keep locale setup small and safe. Default locale remains enabled automatically, and delete is reserved for disabled locales that are fully unused.',
+        'description' => $localesFormText('description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -28,12 +32,12 @@
                             @endphp
 
                             <div class="wb-stack-2 wb-field" data-wb-locale-picker>
-                                <label for="locale_option">Locale</label>
+                                <label for="locale_option">{{ $localesFormText('locale') }}</label>
                                 <select id="locale_option" name="locale_option" class="wb-select" data-wb-locale-options>
-                                    <option value="">Select a standard locale</option>
+                                    <option value="">{{ $localesFormText('select_standard_locale') }}</option>
                                     @foreach ($localeOptions as $option)
                                         <option value="{{ $option['code'] }}" data-search="{{ $option['search'] }}" @selected($selectedLocaleOption === $option['code']) @disabled($option['installed'] && $option['code'] !== $locale->code)>
-                                            {{ $option['label'] }}{{ $option['installed'] && $option['code'] !== $locale->code ? ' - already installed' : '' }}
+                                            {{ $option['label'] }}{{ $option['installed'] && $option['code'] !== $locale->code ? ' - '.$localesFormText('already_installed') : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -41,26 +45,26 @@
                                 @error('locale_option')
                                     <div class="wb-alert wb-alert-danger">{{ $message }}</div>
                                 @enderror
-                                <div class="wb-text-sm wb-text-muted">Choose a standard language locale. Use custom details only for valid tags that are not in this list.</div>
+                                <div class="wb-text-sm wb-text-muted">{{ $localesFormText('locale_help') }}</div>
                             </div>
 
                             <details class="wb-card wb-card-muted" data-wb-locale-custom @if (! $customFieldsHidden) open @endif>
                                 <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                                    <span>Use custom locale details</span>
+                                    <span>{{ $localesFormText('use_custom_details') }}</span>
                                     <span class="wb-icon wb-icon-chevron-down" aria-hidden="true"></span>
                                 </summary>
                                 <div class="wb-card-body wb-stack wb-gap-3">
                                     <div class="wb-stack-2 wb-field">
-                                        <label for="locale_code">Code</label>
+                                        <label for="locale_code">{{ $localesFormText('code') }}</label>
                                         <input id="locale_code" name="code" class="wb-input" type="text" value="{{ old('code', $locale->code) }}" data-wb-locale-custom-input>
                                     </div>
 
                                     <div class="wb-stack-2 wb-field">
-                                        <label for="locale_name">Name</label>
+                                        <label for="locale_name">{{ $localesFormText('name') }}</label>
                                         <input id="locale_name" name="name" class="wb-input" type="text" value="{{ old('name', $locale->name) }}" data-wb-locale-custom-input>
                                     </div>
 
-                                    <div class="wb-text-sm wb-text-muted">Use this only for valid BCP 47 style tags that are not present in the standard picker.</div>
+                                    <div class="wb-text-sm wb-text-muted">{{ $localesFormText('custom_help') }}</div>
                                 </div>
                             </details>
                         </div>
@@ -69,24 +73,24 @@
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 <label class="wb-nowrap">
                                     <input type="checkbox" name="is_default" value="1" @checked(old('is_default', $locale->is_default))>
-                                    <span>Default</span>
+                                    <span>{{ $localesFormText('default') }}</span>
                                 </label>
 
                                 @if ($locale->is_default)
-                                    <div class="wb-text-sm wb-text-muted">The default locale remains enabled automatically.</div>
+                                    <div class="wb-text-sm wb-text-muted">{{ $localesFormText('default_enabled_help') }}</div>
                                 @elseif ($locale->exists)
-                                    <div class="wb-text-sm wb-text-muted">Use the locale index actions to enable, disable, or delete this locale safely.</div>
+                                    <div class="wb-text-sm wb-text-muted">{{ $localesFormText('existing_help') }}</div>
                                 @else
-                                    <div class="wb-text-sm wb-text-muted">New locales start enabled. Disable them later from the locale index if they should stop participating in routing and editing.</div>
+                                    <div class="wb-text-sm wb-text-muted">{{ $localesFormText('new_help') }}</div>
                                 @endif
 
                                 <div class="wb-text-sm wb-text-muted">
-                                    Current state: <strong>{{ $locale->exists ? ($locale->is_enabled ? 'Enabled' : 'Disabled') : 'Enabled on create' }}</strong>
+                                    {{ $localesFormText('current_state') }} <strong>{{ $locale->exists ? ($locale->is_enabled ? $localesFormText('enabled') : $localesFormText('disabled')) : $localesFormText('enabled_on_create') }}</strong>
                                 </div>
 
                                 @if (isset($report) && $locale->exists)
                                     <div class="wb-text-sm wb-text-muted">
-                                        Usage: {{ $report->count('site_assignments') }} site assignments, {{ $report->count('page_translations') }} page translations, {{ $report->count('block_translation_rows') }} block translation rows.
+                                        {{ $localesFormText('usage_summary', ['sites' => $report->count('site_assignments'), 'pages' => $report->count('page_translations'), 'blocks' => $report->count('block_translation_rows')]) }}
                                     </div>
                                 @endif
                             </div>

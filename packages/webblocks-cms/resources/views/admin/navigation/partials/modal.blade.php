@@ -1,6 +1,7 @@
 @php
   $modalTitleId = $modalId.'Title';
   $modalDescriptionId = $modalId.'Description';
+  $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
   $openModalId = old('_navigation_modal');
   $isOpen = $openModalId === $modalId || ($show ?? false);
   $closeUrl = $closeUrl ?? route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => $activeMenuKey]);
@@ -26,12 +27,12 @@
           <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $modalTitle }}</h2>
           <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $modalDescription }}</span>
         </div>
-        <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close navigation item modal">
+        <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $navigationItemsText('close_modal') }}">
           <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
         </a>
       </div>
 
-      <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard navigation item changes?">
+      <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $navigationItemsText('discard_changes') }}">
         @csrf
         @if ($formMethod !== 'POST')
           @method($formMethod)
@@ -43,7 +44,7 @@
           @if ($errors->any() && $isOpen)
             <div class="wb-alert wb-alert-danger">
               <div>
-                <div class="wb-alert-title">Validation Error</div>
+                <div class="wb-alert-title">{{ $navigationItemsText('validation_error') }}</div>
                 <div>{{ $errors->first() }}</div>
               </div>
             </div>

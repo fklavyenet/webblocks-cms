@@ -1,12 +1,13 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Navigation Items', 'heading' => 'Navigation Items'])
+@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.navigation_items.title'), 'heading' => __('webblocks-cms::admin.navigation_items.title')])
 
 @php
+  $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
   $baseQuery = ['site_id' => $site->id, 'menu_key' => $activeMenuKey];
   $requestedModal = request('modal');
   $requestedNavigationId = request()->integer('navigation');
   $editModalItem = $editableItems->firstWhere('id', $requestedNavigationId);
   $showDocsGroupHelp = $activeMenuKey === \WebBlocks\Cms\Models\NavigationItem::MENU_DOCS;
-  $contextLabel = 'Site: '.$site->name.' · '.$menuOptions[$activeMenuKey];
+  $contextLabel = $navigationItemsText('context_label', ['site' => $site->name, 'menu' => $menuOptions[$activeMenuKey]]);
 
   $flattenTree = function ($items) use (&$flattenTree) {
     $flat = [];
@@ -29,8 +30,8 @@
 
 @section('content')
   @include('webblocks-cms::admin.partials.page-header', [
-    'title' => 'Navigation Items',
-    'description' => 'Manage site menus, dropdowns, and footer links.',
+    'title' => $navigationItemsText('title'),
+    'description' => $navigationItemsText('description'),
   ])
 
   @include('webblocks-cms::admin.partials.flash')
@@ -74,20 +75,20 @@
 
         @if ($showDocsGroupHelp)
           <div class="wb-text-sm wb-text-muted">
-            Use <code>Add Group</code> for collapsible docs sidebar groups. Then use <code>Parent Group</code> in item modals to nest child links inside that group.
+            {!! $navigationItemsText('docs_group_help') !!}
           </div>
         @endif
       </div>
 
       <div class="wb-cluster wb-cluster-2">
-        <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-item'])) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="navigationCreateItemModal">Add Item</a>
-        <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-group'])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog" aria-controls="navigationCreateGroupModal">Add Group</a>
+        <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-item'])) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="navigationCreateItemModal">{{ $navigationItemsText('add_item') }}</a>
+        <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-group'])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog" aria-controls="navigationCreateGroupModal">{{ $navigationItemsText('add_group') }}</a>
       </div>
     </div>
 
     <div class="wb-card-body wb-stack wb-gap-3">
       <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-        <span class="wb-text-sm wb-text-muted wb-navigation-toolbar-copy">Drag items by the handle. Changes save automatically.</span>
+        <span class="wb-text-sm wb-text-muted wb-navigation-toolbar-copy">{{ $navigationItemsText('drag_help') }}</span>
         <div class="wb-cluster wb-cluster-2">
           <span class="wb-text-sm wb-text-muted" data-navigation-save-status aria-live="polite" hidden></span>
         </div>
@@ -95,8 +96,8 @@
 
       @if ($items->isEmpty())
         <div class="wb-empty">
-          <div class="wb-empty-title">No navigation items yet</div>
-          <div class="wb-empty-text">Create a page link, custom URL, or dropdown group for this menu.</div>
+          <div class="wb-empty-title">{{ $navigationItemsText('empty_title') }}</div>
+          <div class="wb-empty-text">{{ $navigationItemsText('empty_text') }}</div>
         </div>
       @else
         @include('webblocks-cms::admin.navigation.partials.tree-list', ['items' => $items, 'depth' => 1])
@@ -108,8 +109,8 @@
 @push('overlays')
   @include('webblocks-cms::admin.navigation.partials.modal', [
     'modalId' => 'navigationCreateItemModal',
-    'modalTitle' => 'Add Navigation Item',
-    'modalDescription' => 'Create a normal navigation link for this menu.',
+    'modalTitle' => $navigationItemsText('create_item_title'),
+    'modalDescription' => $navigationItemsText('create_item_description'),
     'item' => $newItem,
     'pages' => $pages,
     'parents' => $parentOptions,
@@ -124,8 +125,8 @@
 
   @include('webblocks-cms::admin.navigation.partials.modal', [
     'modalId' => 'navigationCreateGroupModal',
-    'modalTitle' => 'Add Navigation Group',
-    'modalDescription' => 'Create a collapsible parent section that can contain child navigation items.',
+    'modalTitle' => $navigationItemsText('create_group_title'),
+    'modalDescription' => $navigationItemsText('create_group_description'),
     'item' => $newGroup,
     'pages' => $pages,
     'parents' => $parentOptions,
@@ -141,8 +142,8 @@
   @if ($editModalItem)
     @include('webblocks-cms::admin.navigation.partials.modal', [
       'modalId' => 'navigationEditModal-'.$editModalItem->id,
-      'modalTitle' => 'Edit Navigation Item: '.$editModalItem->resolvedTitle(),
-      'modalDescription' => 'Update the menu, parent group, and link settings for this item.',
+      'modalTitle' => $navigationItemsText('edit_title', ['title' => $editModalItem->resolvedTitle()]),
+      'modalDescription' => $navigationItemsText('edit_description'),
       'item' => $editModalItem,
       'pages' => $pages,
       'parents' => app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)->parentOptions($editModalItem->menu_key, $editModalItem->site_id, $editModalItem->id),
@@ -246,7 +247,7 @@
         }
 
         function save() {
-          setStatus('Saving...', 'muted');
+          setStatus(@js($navigationItemsText('saving')), 'muted');
           root.querySelectorAll('.wb-navigation-row').forEach(function (row) {
             row.classList.add('is-saving');
           });
@@ -265,7 +266,7 @@
                 return response.json().catch(function () {
                   return {};
                 }).then(function (payload) {
-                  throw new Error(payload.message || (payload.errors && payload.errors.items ? payload.errors.items[0] : 'Navigation save failed.'));
+                  throw new Error(payload.message || (payload.errors && payload.errors.items ? payload.errors.items[0] : @js($navigationItemsText('save_failed'))));
                 });
               }
 
@@ -273,7 +274,7 @@
             })
             .then(function () {
               snapshot();
-              setStatus('Saved', 'success');
+              setStatus(@js($navigationItemsText('saved')), 'success');
 
               if (saveTimer) {
                 window.clearTimeout(saveTimer);
@@ -284,7 +285,7 @@
               }, 1500);
             })
             .catch(function () {
-              setStatus('Could not save order.', 'error');
+              setStatus(@js($navigationItemsText('could_not_save_order')), 'error');
               restore();
               window.setTimeout(function () {
                 window.location.reload();
@@ -374,7 +375,7 @@
 
               if (newDepth > 3) {
                 restore();
-                setStatus('Could not save order.', 'error');
+                setStatus(@js($navigationItemsText('could_not_save_order')), 'error');
                 return;
               }
 

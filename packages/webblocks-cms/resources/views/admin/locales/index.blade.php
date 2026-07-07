@@ -1,9 +1,13 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Locales', 'heading' => 'Locales'])
+@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.locales_index.title'), 'heading' => __('webblocks-cms::admin.locales_index.title')])
+
+@php
+    $localesIndexText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.locales_index.'.$key, $replace);
+@endphp
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Locales',
-        'description' => 'Manage locale lifecycle safely. Disable locales to remove them from active routing and editing, and only delete locales that are fully unused.',
+        'title' => $localesIndexText('title'),
+        'description' => $localesIndexText('description'),
         'count' => $totalCount,
     ])
 
@@ -12,11 +16,11 @@
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>Locales</strong>
+                <strong>{{ $localesIndexText('title') }}</strong>
                 <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
             </div>
 
-            <a href="{{ route('admin.locales.create') }}" class="wb-btn wb-btn-primary">Add Locale</a>
+            <a href="{{ route('admin.locales.create') }}" class="wb-btn wb-btn-primary">{{ $localesIndexText('add_locale') }}</a>
         </div>
 
         <div class="wb-card-body">
@@ -24,12 +28,12 @@
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
-                            <th>Code</th>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Usage</th>
-                            <th>Lifecycle</th>
-                            <th>Action</th>
+                            <th>{{ $localesIndexText('code') }}</th>
+                            <th>{{ $localesIndexText('name') }}</th>
+                            <th>{{ $localesIndexText('status') }}</th>
+                            <th>{{ $localesIndexText('usage') }}</th>
+                            <th>{{ $localesIndexText('lifecycle') }}</th>
+                            <th>{{ $localesIndexText('action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -41,70 +45,70 @@
                                 <td>
                                     <div class="wb-cluster wb-cluster-2">
                                         @if ($locale->is_default)
-                                            <span class="wb-status-pill wb-status-info">Default</span>
+                                            <span class="wb-status-pill wb-status-info">{{ $localesIndexText('default') }}</span>
                                         @endif
-                                        <span class="wb-status-pill {{ $locale->is_enabled ? 'wb-status-active' : 'wb-status-pending' }}">{{ $locale->is_enabled ? 'Enabled' : 'Disabled' }}</span>
+                                        <span class="wb-status-pill {{ $locale->is_enabled ? 'wb-status-active' : 'wb-status-pending' }}">{{ $locale->is_enabled ? $localesIndexText('enabled') : $localesIndexText('disabled') }}</span>
                                         @if ($report?->inUse())
-                                            <span class="wb-status-pill wb-status-info">In Use</span>
+                                            <span class="wb-status-pill wb-status-info">{{ $localesIndexText('in_use') }}</span>
                                         @endif
                                     </div>
                                 </td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
-                                        <div class="wb-text-sm">Sites: {{ $report?->count('site_assignments') ?? 0 }}</div>
-                                        <div class="wb-text-sm">Pages: {{ $report?->count('page_translations') ?? 0 }}</div>
-                                        <div class="wb-text-sm">Blocks: {{ $report?->count('block_translation_rows') ?? 0 }}</div>
+                                        <div class="wb-text-sm">{{ $localesIndexText('sites_count', ['count' => $report?->count('site_assignments') ?? 0]) }}</div>
+                                        <div class="wb-text-sm">{{ $localesIndexText('pages_count', ['count' => $report?->count('page_translations') ?? 0]) }}</div>
+                                        <div class="wb-text-sm">{{ $localesIndexText('blocks_count', ['count' => $report?->count('block_translation_rows') ?? 0]) }}</div>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="wb-stack wb-gap-1 wb-text-sm">
                                         @if ($locale->is_default)
-                                            <div class="wb-text-muted">Default locale cannot be disabled or deleted.</div>
+                                            <div class="wb-text-muted">{{ $localesIndexText('default_cannot_change') }}</div>
                                         @elseif ($report?->inUse())
-                                            <div class="wb-text-muted">Cannot delete because this locale is in use.</div>
+                                            <div class="wb-text-muted">{{ $localesIndexText('cannot_delete_in_use') }}</div>
                                         @elseif ($locale->is_enabled)
-                                            <div class="wb-text-muted">Disable to remove it from active routing and editing.</div>
+                                            <div class="wb-text-muted">{{ $localesIndexText('disable_help') }}</div>
                                         @else
-                                            <div class="wb-text-muted">Disabled locale keeps translation data until deleted.</div>
+                                            <div class="wb-text-muted">{{ $localesIndexText('disabled_keeps_data') }}</div>
                                         @endif
                                     </div>
                                 </td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2">
-                                        <a href="{{ route('admin.locales.edit', $locale) }}" class="wb-action-btn wb-action-btn-edit" title="Edit locale" aria-label="Edit locale">
+                                        <a href="{{ route('admin.locales.edit', $locale) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $localesIndexText('edit_locale') }}" aria-label="{{ $localesIndexText('edit_locale') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
 
                                         @if ($report?->canEnable())
                                             <form method="POST" action="{{ route('admin.locales.enable', $locale) }}">
                                                 @csrf
-                                                <button type="submit" class="wb-action-btn" title="Enable locale" aria-label="Enable locale">
+                                                <button type="submit" class="wb-action-btn" title="{{ $localesIndexText('enable_locale') }}" aria-label="{{ $localesIndexText('enable_locale') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </button>
                                             </form>
                                         @elseif ($report?->canDisable())
                                             <form method="POST" action="{{ route('admin.locales.disable', $locale) }}">
                                                 @csrf
-                                                <button type="submit" class="wb-action-btn" title="Disable locale" aria-label="Disable locale">
+                                                <button type="submit" class="wb-action-btn" title="{{ $localesIndexText('disable_locale') }}" aria-label="{{ $localesIndexText('disable_locale') }}">
                                                     <i class="wb-icon wb-icon-eye-off" aria-hidden="true"></i>
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="wb-action-btn" aria-disabled="true" title="{{ $report?->disableBlockedReason() ?? 'Locale cannot be toggled' }}">
+                                            <span class="wb-action-btn" aria-disabled="true" title="{{ $report?->disableBlockedReason() ?? $localesIndexText('toggle_blocked') }}">
                                                 <i class="wb-icon {{ $locale->is_enabled ? 'wb-icon-eye-off' : 'wb-icon-eye' }}" aria-hidden="true"></i>
                                             </span>
                                         @endif
 
                                         @if ($report?->canDelete())
-                                            <form method="POST" action="{{ route('admin.locales.destroy', $locale) }}" onsubmit="return confirm('Delete this locale? This action cannot be undone.');">
+                                            <form method="POST" action="{{ route('admin.locales.destroy', $locale) }}" onsubmit="return confirm(@js($localesIndexText('delete_confirm')));">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete locale" aria-label="Delete locale">
+                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $localesIndexText('delete_locale') }}" aria-label="{{ $localesIndexText('delete_locale') }}">
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="wb-action-btn wb-action-btn-delete" aria-disabled="true" title="{{ $report?->deleteBlockedReason() ?? 'Locale cannot be deleted safely' }}">
+                                            <span class="wb-action-btn wb-action-btn-delete" aria-disabled="true" title="{{ $report?->deleteBlockedReason() ?? $localesIndexText('delete_blocked') }}">
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                             </span>
                                         @endif
