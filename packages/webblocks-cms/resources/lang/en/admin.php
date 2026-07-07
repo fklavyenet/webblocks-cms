@@ -1468,7 +1468,6 @@ return [
     'remove_version_help' => 'This will remove version :version from the manual plugin install directory.',
     'unknown' => 'unknown',
   ],
-  'html' => [],
   'updates' => [
     'title' => 'System Updates',
     'description' => 'Review the current CMS update status and install a validated release when one is available.',

@@ -13,7 +13,7 @@ class AdminTranslationAuditCommand extends Command
     {--limit=25 : Number of files or phrases to show}
     {--strict : Return a failure exit code when any admin Blade UI phrase is not covered}
     {--baseline= : JSON file of accepted existing missing admin UI phrase records}
-    {--native-only : Ignore the legacy admin.html fallback map and report hard-coded admin Blade UI phrases that still need direct translation keys}
+    {--native-only : Kept for compatibility; the legacy admin.html fallback map has been removed}
     {--json : Output the audit as JSON}';
 
   protected $description = 'Audit hard-coded admin Blade UI copy against the admin translation contract';
@@ -34,8 +34,7 @@ class AdminTranslationAuditCommand extends Command
     $locale = (string) $this->option('locale');
     $limit = max(1, (int) $this->option('limit'));
     $nativeOnly = (bool) $this->option('native-only');
-    $phrases = $nativeOnly ? [] : $this->htmlPhrases($locale);
-    $files = $this->auditFiles($phrases);
+    $files = $this->auditFiles();
     $summary = $this->summary($files);
     $baselinePath = (string) $this->option('baseline');
 
@@ -69,12 +68,12 @@ class AdminTranslationAuditCommand extends Command
     }
 
     $this->info('Admin translation audit for locale ['.$locale.']');
-    if ($nativeOnly) {
-      $this->line('Mode: native-key readiness (admin.html fallback ignored)');
-    }
+    $this->line($nativeOnly
+      ? 'Mode: native-key readiness (legacy admin.html fallback removed)'
+      : 'Mode: native-key readiness');
     $this->line('Files: '.$summary['files']);
     $this->line('Phrases: '.$summary['phrases']);
-    $this->line(($nativeOnly ? 'Covered by direct structured keys: ' : 'Covered by admin.html fallback: ').$summary['covered']);
+    $this->line('Covered by direct structured keys: '.$summary['covered']);
     $this->line('Missing: '.$summary['missing']);
     $this->line('Coverage: '.$summary['coverage'].'%');
 
@@ -127,9 +126,7 @@ class AdminTranslationAuditCommand extends Command
       $this->newLine();
       $this->error($baselineRecords !== null
         ? 'Strict admin translation audit failed: '.$summary['new_missing'].' new UI phrases are not covered by structured translations or the accepted baseline.'
-        : ($nativeOnly
-          ? 'Strict native admin translation audit failed: '.$summary['missing'].' hard-coded UI phrases still need direct structured translation keys.'
-          : 'Strict admin translation audit failed: '.$summary['missing'].' UI phrases are not covered by structured translations or the reviewed fallback map.'));
+        : 'Strict admin translation audit failed: '.$summary['missing'].' hard-coded UI phrases still need direct structured translation keys.');
 
       return self::FAILURE;
     }
@@ -137,28 +134,12 @@ class AdminTranslationAuditCommand extends Command
     return self::SUCCESS;
   }
 
-  private function htmlPhrases(string $locale): array
-  {
-    $phrases = trans(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.html', [], $locale);
-
-    if (! is_array($phrases)) {
-      return [];
-    }
-
-    return collect($phrases)
-      ->filter(fn ($value, $key): bool => is_string($key) && is_string($value) && $key !== '' && $value !== '')
-      ->keys()
-      ->values()
-      ->all();
-  }
-
-  private function auditFiles(array $phrases): array
+  private function auditFiles(): array
   {
     $basePath = dirname(__DIR__, 2).'/resources/views';
-    $phraseLookup = array_fill_keys($phrases, true);
 
     return collect($this->adminViewFiles($basePath))
-      ->map(function (string $file) use ($basePath, $phraseLookup): ?array {
+      ->map(function (string $file) use ($basePath): ?array {
         $path = $basePath.'/'.$file;
 
         if (! is_file($path)) {
@@ -166,21 +147,15 @@ class AdminTranslationAuditCommand extends Command
         }
 
         $candidates = $this->candidatePhrases((string) file_get_contents($path));
-        $covered = collect($candidates)
-          ->filter(fn (string $phrase): bool => isset($phraseLookup[$phrase]))
-          ->values()
-          ->all();
-        $missing = array_values(array_diff($candidates, $covered));
         $phraseCount = count($candidates);
-        $coveredCount = count($covered);
 
         return [
           'file' => $file,
           'phrase_count' => $phraseCount,
-          'covered_count' => $coveredCount,
-          'missing_count' => count($missing),
-          'coverage' => $phraseCount === 0 ? 100 : round(($coveredCount / $phraseCount) * 100, 1),
-          'missing' => $missing,
+          'covered_count' => 0,
+          'missing_count' => $phraseCount,
+          'coverage' => $phraseCount === 0 ? 100 : 0,
+          'missing' => $candidates,
         ];
       })
       ->filter()

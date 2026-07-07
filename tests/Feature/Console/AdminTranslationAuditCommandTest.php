@@ -8,13 +8,14 @@ use Tests\TestCase;
 class AdminTranslationAuditCommandTest extends TestCase
 {
   #[Test]
-  public function admin_translation_audit_reports_static_admin_html_fallback_coverage(): void
+  public function admin_translation_audit_reports_native_key_readiness(): void
   {
     $this->artisan('webblocks:admin-translation-audit', [
       '--locale' => 'de',
       '--limit' => 5,
     ])
       ->expectsOutputToContain('Admin translation audit for locale [de]')
+      ->expectsOutputToContain('Mode: native-key readiness')
       ->expectsOutputToContain('Coverage:')
       ->assertExitCode(0);
   }
@@ -83,7 +84,7 @@ class AdminTranslationAuditCommandTest extends TestCase
   }
 
   #[Test]
-  public function native_only_admin_translation_audit_reports_bridge_removal_debt(): void
+  public function native_only_admin_translation_audit_passes_after_bridge_removal(): void
   {
     $this->artisan('webblocks:admin-translation-audit', [
       '--locale' => 'de',
@@ -91,8 +92,8 @@ class AdminTranslationAuditCommandTest extends TestCase
       '--native-only' => true,
       '--strict' => true,
     ])
-      ->expectsOutputToContain('Mode: native-key readiness (admin.html fallback ignored)')
-      ->expectsOutputToContain('Strict native admin translation audit failed:')
-      ->assertExitCode(1);
+      ->expectsOutputToContain('Mode: native-key readiness (legacy admin.html fallback removed)')
+      ->expectsOutputToContain('Missing: 0')
+      ->assertExitCode(0);
   }
 }

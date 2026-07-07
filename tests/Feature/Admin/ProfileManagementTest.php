@@ -57,7 +57,7 @@ class ProfileManagementTest extends TestCase
   }
 
   #[Test]
-  public function german_profile_email_label_is_not_localized_twice_by_the_html_fallback(): void
+  public function german_profile_email_label_renders_from_structured_locale_without_duplication(): void
   {
     $user = User::factory()->superAdmin()->create([
       'admin_locale' => 'de',
