@@ -204,12 +204,10 @@ class BlockTranslationWriter
   private function resolvedImageTranslationValue(array $data, Block $block, int $localeId, string $field): ?string
   {
     $sourceField = match ($block->typeSlug()) {
-      'card' => $field === 'caption' ? 'image_caption' : 'image_alt',
       default => $field === 'caption' ? 'title' : 'subtitle',
     };
 
     $fallback = match ($block->typeSlug()) {
-      'card' => null,
       default => $field === 'caption' ? $block->getRawOriginal('title') : $block->getRawOriginal('subtitle'),
     };
 

@@ -106,6 +106,35 @@ class EngagementBlocksTest extends TestCase
   }
 
   #[Test]
+  public function comments_admin_search_matches_page_translations(): void
+  {
+    [$page, , $commentsBlock] = $this->createEngagementPage();
+    $admin = User::factory()->create([
+      'role' => User::ROLE_SUPER_ADMIN,
+      'is_active' => true,
+    ]);
+
+    CommentEntry::query()->create([
+      'site_id' => $page->site_id,
+      'page_id' => $page->id,
+      'block_id' => $commentsBlock->id,
+      'author_name' => 'Player',
+      'body' => 'Loved the pacing.',
+      'status' => 'pending',
+      'source_url' => '/games/test-game',
+      'visitor_hash' => 'visitor',
+      'ip_hash' => 'ip',
+      'user_agent' => 'Test',
+      'spam_score' => 0,
+    ]);
+
+    $this->actingAs($admin)
+      ->get(route('admin.engagement.comments.index', ['search' => 'Test Game']))
+      ->assertOk()
+      ->assertSee('Loved the pacing.');
+  }
+
+  #[Test]
   public function public_engagement_blocks_render_controlled_messages_when_tables_are_not_ready(): void
   {
     $this->createEngagementPage();
@@ -243,13 +272,13 @@ class EngagementBlocksTest extends TestCase
       ->assertOk()
       ->assertSee('Yorumlar')
       ->assertSee('Yorumlarda ara')
-      ->assertSee('Yorum bulunamadi');
+      ->assertSee('Yorum bulunamadı');
 
     $this->actingAs($admin)
       ->get(route('admin.engagement.ratings.index'))
       ->assertOk()
       ->assertSee('Puanlamalar')
-      ->assertSee('Puanlama bulunamadi');
+      ->assertSee('Puanlama bulunamadı');
 
     $comment = CommentEntry::query()->create([
       'site_id' => null,
@@ -268,7 +297,7 @@ class EngagementBlocksTest extends TestCase
     $this->actingAs($admin)
       ->patch(route('admin.engagement.comments.status', $comment), ['status' => 'approved'])
       ->assertRedirect()
-      ->assertSessionHas('status', 'Yorum durumu guncellendi.');
+      ->assertSessionHas('status', 'Yorum durumu güncellendi.');
   }
 
   private function createEngagementPage(): array

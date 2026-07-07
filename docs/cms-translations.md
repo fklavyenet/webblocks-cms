@@ -13,6 +13,8 @@ CMS-owned copy is grouped by domain:
 
 Editorial content stays outside this layer. Page titles, block text, gallery item captions, navigation item labels, and explicit editor overrides continue to be stored in their existing translation-aware content models.
 
+Admin search and listing labels that refer to editorial page identity must read page translation fields such as `name`, `slug`, and `path`; they must not query removed legacy `wbcms_pages.title` or `wbcms_pages.slug` columns. When admin listings render `$page->title` or `$page->slug` across many rows, eager-load page translations so accessors resolve without row-by-row translation queries.
+
 ## Locale Sources
 
 Admin and public rendering intentionally resolve locale from different sources:

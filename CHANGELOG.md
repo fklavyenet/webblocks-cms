@@ -9,6 +9,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.34.11
+
+- Bumped CMS to `1.34.11`.
+- Fix Engagement comment search so page matches use page translations instead of removed legacy page columns.
+- Keep admin page-title lookups translation-aware on Engagement and Blocks listings, and align page slug accessors with the current translation.
+
 ## 1.34.10
 
 - Bumped CMS to `1.34.10`.

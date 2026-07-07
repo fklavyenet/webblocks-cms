@@ -38,6 +38,48 @@ class MultisiteMultilingualFoundationTest extends TestCase
   }
 
   #[Test]
+  public function page_slug_accessor_prefers_the_current_translation(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $english = Locale::query()->where('is_default', true)->firstOrFail();
+    $turkish = Locale::query()->create([
+      'name' => 'Turkish',
+      'code' => 'tr',
+      'is_default' => false,
+      'is_enabled' => true,
+      'sort_order' => 2,
+    ]);
+    $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'About',
+      'slug' => 'about',
+      'status' => 'published',
+    ]);
+    PageTranslation::query()->updateOrCreate(
+      ['page_id' => $page->id, 'locale_id' => $english->id],
+      ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/about'],
+    );
+    $turkishTranslation = PageTranslation::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'locale_id' => $turkish->id,
+      'name' => 'Hakkimizda',
+      'slug' => 'hakkimizda',
+      'path' => '/hakkimizda',
+    ]);
+
+    $page->load('translations');
+    $page->setRelation('currentTranslation', $turkishTranslation);
+
+    $this->assertSame('Hakkimizda', $page->title);
+    $this->assertSame('hakkimizda', $page->slug);
+  }
+
+  #[Test]
   public function existing_pages_are_backfilled_to_the_default_site_and_english_translation_during_migration(): void
   {
     Schema::dropIfExists('wbcms_public_search_index');

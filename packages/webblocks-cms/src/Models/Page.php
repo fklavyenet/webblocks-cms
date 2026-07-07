@@ -229,8 +229,8 @@ class Page extends CmsModel
 
   public function getSlugAttribute($value): ?string
   {
-    return $this->defaultTranslation()?->slug
-      ?? $this->currentTranslation?->slug
+    return $this->currentTranslation?->slug
+      ?? $this->defaultTranslation()?->slug
       ?? $this->pendingDefaultTranslationSlug
       ?? $value;
   }

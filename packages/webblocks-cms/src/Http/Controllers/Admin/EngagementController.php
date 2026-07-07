@@ -53,14 +53,17 @@ class EngagementController extends Controller
         $query->where(function (Builder $inner) use ($search): void {
           $inner->where('author_name', 'like', "%{$search}%")
             ->orWhere('body', 'like', "%{$search}%")
-            ->orWhereHas('page', fn (Builder $pageQuery) => $pageQuery->where('title', 'like', "%{$search}%"));
+            ->orWhereHas('page.translations', fn (Builder $translationQuery) => $translationQuery
+              ->where('name', 'like', "%{$search}%")
+              ->orWhere('slug', 'like', "%{$search}%")
+              ->orWhere('path', 'like', "%{$search}%"));
         });
       })
       ->when($status !== '', fn (Builder $query) => $query->where('status', $status));
 
     return view('webblocks-cms::admin.engagement.comments', [
       'comments' => $filteredQuery
-        ->with(['page.site', 'block.blockType'])
+        ->with(['page.site', 'page.translations', 'block.blockType'])
         ->latest()
         ->paginate(AdminPagination::perPage())
         ->withQueryString(),
@@ -87,7 +90,7 @@ class EngagementController extends Controller
 
     $baseQuery = $this->scopeRatingsForUser(ContentRating::query(), $request->user());
     $ratings = $this->scopeRatingsForUser(ContentRating::query(), $request->user())
-      ->with(['page.site', 'block.blockType'])
+      ->with(['page.site', 'page.translations', 'block.blockType'])
       ->latest()
       ->paginate(AdminPagination::perPage())
       ->withQueryString();

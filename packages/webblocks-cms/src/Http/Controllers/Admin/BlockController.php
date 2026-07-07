@@ -87,6 +87,7 @@ class BlockController extends Controller
       $filters,
       $localeId,
     )
+      ->with('page.translations')
       ->orderByDesc('id')
       ->paginate(AdminPagination::perPage())
       ->withQueryString();

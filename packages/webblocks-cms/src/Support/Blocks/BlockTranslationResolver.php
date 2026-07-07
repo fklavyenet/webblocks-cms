@@ -198,7 +198,7 @@ class BlockTranslationResolver
 
     $slug = $block->typeSlug();
 
-    foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta', 'submit_label', 'success_message', 'image_caption', 'image_alt'] as $field) {
+    foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta', 'submit_label', 'success_message'] as $field) {
       $value = $block->getAttribute($field);
 
       if (! is_string($value) || $value === '') {
