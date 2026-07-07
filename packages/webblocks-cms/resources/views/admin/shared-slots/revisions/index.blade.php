@@ -1,6 +1,12 @@
 @php
-    $pageTitle = 'Shared Slot Revisions: '.$sharedSlot->name;
-    $sharedSlotEditUrl = route('admin.shared-slots.edit', $sharedSlot);
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('shared_slots.'.$key, $adminLocale, $replace);
+  $pageTitle = $adminText('revisions_title', ['name' => $sharedSlot->name]);
+  $sharedSlotEditUrl = route('admin.shared-slots.edit', $sharedSlot);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -8,42 +14,42 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Review Shared Slot revision snapshots for restore. Restoring a Shared Slot can affect every page that references it and does not modify page-owned slot assignments.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$sharedSlotEditUrl.'" class="wb-btn wb-btn-secondary">Back to Shared Slot</a><a href="'.route('admin.shared-slots.blocks.edit', $sharedSlot).'" class="wb-btn wb-btn-secondary">Edit Blocks</a></div>',
+        'description' => $adminText('revisions_description'),
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$sharedSlotEditUrl.'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_shared_slot')).'</a><a href="'.route('admin.shared-slots.blocks.edit', $sharedSlot).'" class="wb-btn wb-btn-secondary">'.e($adminText('edit_blocks')).'</a></div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
-            <span>Site: <strong>{{ $sharedSlot->site?->name ?? 'Site' }}</strong></span>
-            <span>Handle: <strong><code>{{ $sharedSlot->handle }}</code></strong></span>
-            <span>Total revisions: <strong>{{ $revisions->count() }}</strong></span>
-            <span class="wb-text-danger">Warning: restoring this Shared Slot can change every page using it.</span>
+            <span>{{ $adminText('site_label') }}: <strong>{{ $sharedSlot->site?->name ?? $adminText('fallback_site') }}</strong></span>
+            <span>{{ $adminText('handle_label') }}: <strong><code>{{ $sharedSlot->handle }}</code></strong></span>
+            <span>{{ $adminText('total_revisions') }}: <strong>{{ $revisions->count() }}</strong></span>
+            <span class="wb-text-danger">{{ $adminText('restore_warning') }}</span>
         </div>
     </div>
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Revision History</strong>
-            <span class="wb-text-sm wb-text-muted">Newest first</span>
+            <strong>{{ $adminText('revision_history') }}</strong>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('newest_first') }}</span>
         </div>
         <div class="wb-card-body">
             @if ($revisions->isEmpty())
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No revisions yet</div>
-                    <div class="wb-empty-text">Revisions are created automatically when Shared Slot metadata, status, or block structure changes.</div>
+                    <div class="wb-empty-title">{{ $adminText('no_revisions_title') }}</div>
+                    <div class="wb-empty-text">{{ $adminText('no_revisions_help') }}</div>
                 </div>
             @else
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>Created</th>
-                                <th>Event</th>
-                                <th>Audit</th>
-                                <th>Details</th>
-                                <th>Restore</th>
+                                <th>{{ $adminText('created') }}</th>
+                                <th>{{ $adminText('event') }}</th>
+                                <th>{{ $adminText('audit') }}</th>
+                                <th>{{ $adminText('details') }}</th>
+                                <th>{{ $adminText('restore') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -58,28 +64,28 @@
                                                 <span class="wb-text-sm wb-text-muted">{{ $revision->summary }}</span>
                                             @endif
                                             @if ($revision->restoredFrom)
-                                                <span class="wb-text-sm wb-text-muted">Restored from revision #{{ $revision->restoredFrom->id }}</span>
+                                                <span class="wb-text-sm wb-text-muted">{{ $adminText('restored_from_revision', ['id' => $revision->restoredFrom->id]) }}</span>
                                             @endif
                                         </div>
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1 wb-text-sm">
                                             <span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
-                                            <span class="wb-text-muted">Source: {{ $revision->sourceText() }}</span>
-                                            <span class="wb-text-muted">Event: {{ $revision->eventText() }}</span>
+                                            <span class="wb-text-muted">{{ $adminText('source') }}: {{ $revision->sourceText() }}</span>
+                                            <span class="wb-text-muted">{{ $adminText('event') }}: {{ $revision->eventText() }}</span>
                                         </div>
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.shared-slots.revisions.show', [$sharedSlot, $revision]) }}" class="wb-btn wb-btn-secondary">Inspect</a>
+                                        <a href="{{ route('admin.shared-slots.revisions.show', [$sharedSlot, $revision]) }}" class="wb-btn wb-btn-secondary">{{ $adminText('inspect') }}</a>
                                     </td>
                                     <td>
                                         @if ($canRestoreRevisions)
-                                            <form method="POST" action="{{ route('admin.shared-slots.revisions.restore', [$sharedSlot, $revision]) }}" onsubmit="return confirm('Restore this Shared Slot revision? A safety revision will be created first, and every referencing page may change.');">
+                                            <form method="POST" action="{{ route('admin.shared-slots.revisions.restore', [$sharedSlot, $revision]) }}" onsubmit="return confirm('{{ $adminText('restore_confirm') }}');">
                                                 @csrf
-                                                <button type="submit" class="wb-btn wb-btn-secondary">Restore</button>
+                                                <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('restore') }}</button>
                                             </form>
                                         @else
-                                            <span class="wb-text-sm wb-text-muted">View only</span>
+                                            <span class="wb-text-sm wb-text-muted">{{ $adminText('view_only') }}</span>
                                         @endif
                                     </td>
                                 </tr>

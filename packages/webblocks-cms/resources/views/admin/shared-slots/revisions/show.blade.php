@@ -1,14 +1,20 @@
 @php
-    $pageTitle = 'Shared Slot Revision #'.$revision->id;
-    $historyUrl = route('admin.shared-slots.revisions.index', $sharedSlot);
-    ob_start();
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('shared_slots.'.$key, $adminLocale, $replace);
+  $pageTitle = $adminText('revision_title', ['id' => $revision->id]);
+  $historyUrl = route('admin.shared-slots.revisions.index', $sharedSlot);
+  ob_start();
 @endphp
 <div class="wb-cluster wb-cluster-2">
-    <a href="{{ $historyUrl }}" class="wb-btn wb-btn-secondary">Back to Revision History</a>
+    <a href="{{ $historyUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('back_to_revision_history') }}</a>
     @if ($canRestoreRevisions)
-        <form method="POST" action="{{ route('admin.shared-slots.revisions.restore', [$sharedSlot, $revision]) }}" onsubmit="return confirm('Restore this Shared Slot revision? A safety revision will be created first, and every referencing page may change.');">
+        <form method="POST" action="{{ route('admin.shared-slots.revisions.restore', [$sharedSlot, $revision]) }}" onsubmit="return confirm('{{ $adminText('restore_confirm') }}');">
             @csrf
-            <button type="submit" class="wb-btn wb-btn-secondary">Restore Revision</button>
+            <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('restore_revision') }}</button>
         </form>
     @endif
 </div>
@@ -21,7 +27,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Inspect the saved Shared Slot snapshot before restoring it. This restore will keep the same Shared Slot id and existing page slot references intact.',
+        'description' => $adminText('revision_description'),
         'actions' => $pageHeaderActions,
     ])
 
@@ -29,52 +35,52 @@
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>Revision Metadata</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('revision_metadata') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                <div><strong>Shared Slot:</strong> {{ $sharedSlot->name }}</div>
-                <div><strong>Created:</strong> {{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
-                <div><strong>Source:</strong> {{ $revision->sourceText() }}</div>
-                <div><strong>Event:</strong> {{ $revision->eventText() }}</div>
-                <div><strong>User:</strong> @include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</div>
-                <div><strong>Summary:</strong> {{ $revision->summary ?? 'None' }}</div>
+                <div><strong>{{ $adminText('shared_slot') }}:</strong> {{ $sharedSlot->name }}</div>
+                <div><strong>{{ $adminText('created') }}:</strong> {{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                <div><strong>{{ $adminText('source') }}:</strong> {{ $revision->sourceText() }}</div>
+                <div><strong>{{ $adminText('event') }}:</strong> {{ $revision->eventText() }}</div>
+                <div><strong>{{ $adminText('user') }}:</strong> @include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</div>
+                <div><strong>{{ $adminText('summary') }}:</strong> {{ $revision->summary ?? $adminText('none') }}</div>
                 @if ($revision->restoredFrom)
-                    <div><strong>Restored From:</strong> Revision #{{ $revision->restoredFrom->id }}</div>
+                    <div><strong>{{ $adminText('restored_from') }}:</strong> {{ $adminText('revision_title', ['id' => $revision->restoredFrom->id]) }}</div>
                 @endif
             </div>
         </div>
 
         <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>Snapshot Metadata</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('snapshot_metadata') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                <div><strong>Name:</strong> {{ $snapshotMetadata['name'] ?? '-' }}</div>
-                <div><strong>Handle:</strong> <code>{{ $snapshotMetadata['handle'] ?? '-' }}</code></div>
-                <div><strong>Slot:</strong> {{ $snapshotMetadata['slot_name'] ?? 'Any' }}</div>
-                <div><strong>Page Layout:</strong> {{ $snapshotMetadata['public_shell'] ?? 'Any Page Layout' }}</div>
-                <div><strong>Status:</strong> {{ array_key_exists('is_active', $snapshotMetadata) ? ((bool) $snapshotMetadata['is_active'] ? 'Active' : 'Inactive') : '-' }}</div>
-                <div class="wb-text-danger">Restoring this snapshot affects all pages referencing this Shared Slot.</div>
+                <div><strong>{{ $adminText('name') }}:</strong> {{ $snapshotMetadata['name'] ?? '-' }}</div>
+                <div><strong>{{ $adminText('handle') }}:</strong> <code>{{ $snapshotMetadata['handle'] ?? '-' }}</code></div>
+                <div><strong>{{ $adminText('slot') }}:</strong> {{ $snapshotMetadata['slot_name'] ?? $adminText('any') }}</div>
+                <div><strong>{{ $adminText('page_layout') }}:</strong> {{ $snapshotMetadata['public_shell'] ?? $adminText('any_page_layout') }}</div>
+                <div><strong>{{ $adminText('status') }}:</strong> {{ array_key_exists('is_active', $snapshotMetadata) ? ((bool) $snapshotMetadata['is_active'] ? $adminText('active') : $adminText('inactive')) : '-' }}</div>
+                <div class="wb-text-danger">{{ $adminText('snapshot_restore_warning') }}</div>
             </div>
         </div>
     </div>
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Snapshot Block Tree</strong>
-            <span class="wb-text-sm wb-text-muted">{{ $snapshotBlocks->count() }} block(s)</span>
+            <strong>{{ $adminText('snapshot_block_tree') }}</strong>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('block_count', ['count' => $snapshotBlocks->count()]) }}</span>
         </div>
         <div class="wb-card-body">
             @if ($snapshotBlocks->isEmpty())
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No blocks in this revision</div>
-                    <div class="wb-empty-text">This snapshot preserves Shared Slot metadata without a block tree.</div>
+                    <div class="wb-empty-title">{{ $adminText('no_blocks_revision_title') }}</div>
+                    <div class="wb-empty-text">{{ $adminText('no_blocks_revision_help') }}</div>
                 </div>
             @else
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>Block</th>
-                                <th>Preview</th>
-                                <th>Order</th>
+                                <th>{{ $adminText('block') }}</th>
+                                <th>{{ $adminText('preview') }}</th>
+                                <th>{{ $adminText('order') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,7 +91,7 @@
                                             {{ str($snapshotBlock['type'])->replace('-', ' ')->headline() }}
                                         </span>
                                     </td>
-                                    <td>{{ $snapshotBlock['title'] ?: 'No text preview' }}</td>
+                                    <td>{{ $snapshotBlock['title'] ?: $adminText('no_text_preview') }}</td>
                                     <td>{{ $snapshotBlock['sort_order'] }}</td>
                                 </tr>
                             @endforeach
