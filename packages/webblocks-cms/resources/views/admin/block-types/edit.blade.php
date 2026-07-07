@@ -1,9 +1,14 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Edit Block Type: '.$blockType->name, 'heading' => 'Edit Block Type: '.$blockType->name])
+@php
+    $blockTypeFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_type_form.'.$key, $replace);
+    $pageTitle = $blockTypeFormText('edit_title', ['name' => $blockType->name]);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Edit Block Type: '.$blockType->name,
-        'description' => 'Update the selected block type record.',
+        'title' => $pageTitle,
+        'description' => $blockTypeFormText('edit_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -19,7 +24,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="$blockTypesReturnUrl" submit-label="Save Changes" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="$blockTypesReturnUrl" :submit-label="$blockTypeFormText('save_changes')" />
             </div>
         </form>
     </div>

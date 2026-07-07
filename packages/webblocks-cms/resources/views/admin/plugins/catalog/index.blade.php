@@ -1,40 +1,44 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Plugin Catalog', 'heading' => 'Plugin Catalog'])
+@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.plugin_catalog.title'), 'heading' => __('webblocks-cms::admin.plugin_catalog.title')])
+
+@php
+    $pluginCatalogText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.plugin_catalog.'.$key, $replace);
+@endphp
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Plugin Catalog',
-        'description' => 'Browse public WebBlocks CMS-compatible plugins from the read-only Plugin Catalog.',
-        'actions' => '<a href="'.e(route('admin.system.plugins.index')).'" class="wb-btn wb-btn-secondary">Back to Plugins</a>',
-        'context' => '<span class="wb-text-sm wb-text-muted">Compatibility is checked against this CMS installation.</span>',
+        'title' => $pluginCatalogText('title'),
+        'description' => $pluginCatalogText('description'),
+        'actions' => '<a href="'.e(route('admin.system.plugins.index')).'" class="wb-btn wb-btn-secondary">'.e($pluginCatalogText('back_to_plugins')).'</a>',
+        'context' => '<span class="wb-text-sm wb-text-muted">'.e($pluginCatalogText('context')).'</span>',
     ])
 
     @if (! $catalog->available)
         <div class="wb-alert wb-alert-danger wb-mb-4">
-            {{ $catalog->message ?? 'The Plugin Catalog is currently unavailable.' }}
+            {{ $catalog->message ?? $pluginCatalogText('unavailable') }}
         </div>
     @endif
 
     <div class="wb-card">
         <div class="wb-card-header">
-            <strong>Catalog Plugins</strong>
+            <strong>{{ $pluginCatalogText('catalog_plugins') }}</strong>
         </div>
         <div class="wb-card-body">
             @if (count($catalog->plugins) === 0)
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No catalog plugins found.</div>
-                    <div class="wb-empty-text">Public WebBlocks CMS-compatible plugins will appear here when the catalog returns them.</div>
+                    <div class="wb-empty-title">{{ $pluginCatalogText('empty_title') }}</div>
+                    <div class="wb-empty-text">{{ $pluginCatalogText('empty_text') }}</div>
                 </div>
             @else
                 <div class="wb-table-wrap">
                     <table class="wb-table">
                         <thead>
                             <tr>
-                                <th>Plugin</th>
-                                <th>Vendor</th>
-                                <th>Latest Compatible Release</th>
-                                <th>Compatibility</th>
-                                <th>Channel / Status</th>
-                                <th>Actions / Links</th>
+                                <th>{{ $pluginCatalogText('plugin') }}</th>
+                                <th>{{ $pluginCatalogText('vendor') }}</th>
+                                <th>{{ $pluginCatalogText('latest_compatible_release') }}</th>
+                                <th>{{ $pluginCatalogText('compatibility') }}</th>
+                                <th>{{ $pluginCatalogText('channel_status') }}</th>
+                                <th>{{ $pluginCatalogText('actions_links') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -55,43 +59,43 @@
                                             <div class="wb-text-sm">{{ $plugin->summary }}</div>
                                         @endif
                                     </td>
-                                    <td>{{ $plugin->vendor ?? 'Not listed' }}</td>
+                                    <td>{{ $plugin->vendor ?? $pluginCatalogText('not_listed') }}</td>
                                     <td>
                                         @if ($plugin->latestCompatibleRelease?->version)
                                             {{ $plugin->latestCompatibleRelease->version }}
                                         @else
-                                            <span class="wb-text-muted">Not listed</span>
+                                            <span class="wb-text-muted">{{ $pluginCatalogText('not_listed') }}</span>
                                         @endif
                                     </td>
                                     <td>
                                         <span class="wb-status {{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
                                         @if ($plugin->displayRequiredCmsVersion())
-                                            <div class="wb-text-sm wb-text-muted">Requires {{ $plugin->displayRequiredCmsVersion() }}</div>
+                                            <div class="wb-text-sm wb-text-muted">{{ $pluginCatalogText('requires', ['version' => $plugin->displayRequiredCmsVersion()]) }}</div>
                                         @endif
                                     </td>
                                     <td>
-                                        {{ $plugin->displayChannel() ?? 'Not listed' }}
+                                        {{ $plugin->displayChannel() ?? $pluginCatalogText('not_listed') }}
                                         @if ($plugin->displayStatus())
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin->displayStatus() }}</div>
                                         @endif
                                     </td>
                                     <td class="wb-table-actions">
-                                        <div class="wb-action-group" aria-label="Catalog links for {{ $plugin->label }}">
-                                            <a href="{{ route('admin.plugins.catalog.show', $plugin->handle) }}" class="wb-action-btn" title="View details" aria-label="View details">
+                                        <div class="wb-action-group" aria-label="{{ $pluginCatalogText('catalog_links_for', ['label' => $plugin->label]) }}">
+                                            <a href="{{ route('admin.plugins.catalog.show', $plugin->handle) }}" class="wb-action-btn" title="{{ $pluginCatalogText('view_details') }}" aria-label="{{ $pluginCatalogText('view_details') }}">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
                                             @if ($plugin->firstDetailsUrl())
-                                                <a href="{{ $plugin->firstDetailsUrl() }}" class="wb-action-btn" title="Open details" aria-label="Open details" target="_blank" rel="noopener noreferrer">
+                                                <a href="{{ $plugin->firstDetailsUrl() }}" class="wb-action-btn" title="{{ $pluginCatalogText('open_details') }}" aria-label="{{ $pluginCatalogText('open_details') }}" target="_blank" rel="noopener noreferrer">
                                                     <i class="wb-icon wb-icon-external-link" aria-hidden="true"></i>
                                                 </a>
                                             @endif
                                             @if ($plugin->firstDocumentationUrl())
-                                                <a href="{{ $plugin->firstDocumentationUrl() }}" class="wb-action-btn" title="Open documentation" aria-label="Open documentation" target="_blank" rel="noopener noreferrer">
+                                                <a href="{{ $plugin->firstDocumentationUrl() }}" class="wb-action-btn" title="{{ $pluginCatalogText('open_documentation') }}" aria-label="{{ $pluginCatalogText('open_documentation') }}" target="_blank" rel="noopener noreferrer">
                                                     <i class="wb-icon wb-icon-book-open" aria-hidden="true"></i>
                                                 </a>
                                             @endif
                                             @if ($plugin->firstDownloadUrl())
-                                                <a href="{{ $plugin->firstDownloadUrl() }}" class="wb-action-btn" title="Open download" aria-label="Open download" target="_blank" rel="noopener noreferrer">
+                                                <a href="{{ $plugin->firstDownloadUrl() }}" class="wb-action-btn" title="{{ $pluginCatalogText('open_download') }}" aria-label="{{ $pluginCatalogText('open_download') }}" target="_blank" rel="noopener noreferrer">
                                                     <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                 </a>
                                             @endif

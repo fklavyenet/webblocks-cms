@@ -3,15 +3,17 @@
     $isCreateMode = $slotModalMode === 'create';
     $isEditMode = $slotModalMode === 'edit';
     $showModal = $isCreateMode || $isEditMode;
-    $slotName = $slot->slotType?->name ?? 'Slot';
+    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
+    $blockTypeFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_type_form.'.$key, $replace);
+    $slotName = $slot->slotType?->name ?? $blockFormText('slot_fallback');
     $pageName = $page->title;
-    $blockName = $isCreateMode ? ($slotModalSelectedBlockType?->name ?? 'Block') : ($slotModalBlock?->typeName() ?? 'Block');
+    $blockName = $isCreateMode ? ($slotModalSelectedBlockType?->name ?? $blockFormText('block_fallback')) : ($slotModalBlock?->typeName() ?? $blockFormText('block_fallback'));
     $modalTitle = $isCreateMode
-        ? 'Add Block: '.$blockName.' ('.$pageName.' / '.$slotName.')'
-        : 'Edit Block: '.$blockName.' ('.$pageName.' / '.$slotName.')';
+        ? $blockFormText('add_modal_title', ['block' => $blockName, 'page' => $pageName, 'slot' => $slotName])
+        : $blockFormText('edit_modal_title', ['block' => $blockName, 'page' => $pageName, 'slot' => $slotName]);
     $modalDescription = $isCreateMode
-        ? 'Configure the new block, then save it back into the list.'
-        : 'Update this block without leaving the slot management screen.';
+        ? $blockFormText('add_modal_description')
+        : $blockFormText('edit_modal_description');
     $editorRouteName = $editorRouteName ?? 'admin.pages.slots.blocks';
     $editorRouteParameters = $editorRouteParameters ?? [$page, $slot];
     $closeUrl = route($editorRouteName, $editorRouteParameters + ['picker' => $isCreateMode ? 1 : null, 'parent_id' => $isCreateMode ? (request()->integer('parent_id') ?: null) : null, 'locale' => $activeLocale->is_default ? null : $activeLocale->code]);
@@ -27,7 +29,7 @@
                     <span class="wb-text-sm wb-text-muted">{{ $modalDescription }}</span>
                 </div>
 
-                <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
+                <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $blockFormText('close_modal') }}">
                     <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                 </a>
             </div>
@@ -36,13 +38,13 @@
                 @if ($errors->any())
                     <div class="wb-alert wb-alert-danger">
                         <div>
-                            <div class="wb-alert-title">Validation Error</div>
+                            <div class="wb-alert-title">{{ $blockTypeFormText('validation_error') }}</div>
                             <div>{{ $errors->first() }}</div>
                         </div>
                     </div>
                 @endif
 
-                <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard block changes?">
+                <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $blockFormText('discard_changes') }}">
                     @csrf
                     @if ($isEditMode)
                         @method('PUT')
@@ -77,8 +79,8 @@
                         'lockSlot' => true,
                         'cancelUrl' => $closeUrl,
                         'actionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
-                        'submitLabel' => $isCreateMode ? 'Save New Block' : 'Save Block',
-                        'modeLabel' => $isCreateMode ? 'Create' : 'Edit',
+                        'submitLabel' => $isCreateMode ? $blockFormText('save_new_block') : $blockFormText('save_block'),
+                        'modeLabel' => $isCreateMode ? $blockFormText('create') : $blockFormText('edit'),
                         'activeTab' => $activeTab,
                         'activeLocale' => $activeLocale,
                     ])

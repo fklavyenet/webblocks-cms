@@ -1,30 +1,34 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Domains', 'heading' => 'Domains'])
+@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.domains_index.title'), 'heading' => __('webblocks-cms::admin.domains_index.title')])
+
+@php
+    $domainsIndexText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.domains_index.'.$key, $replace);
+@endphp
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Domains',
-        'description' => 'Choose a site to map incoming hosts inside CMS after DNS, SSL, and server routing are already handled outside CMS.',
+        'title' => $domainsIndexText('title'),
+        'description' => $domainsIndexText('description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
-        <div class="wb-card-header"><strong>Select a site</strong></div>
+        <div class="wb-card-header"><strong>{{ $domainsIndexText('select_site') }}</strong></div>
         <div class="wb-card-body">
             @if ($sites->isEmpty())
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No accessible sites</div>
-                    <div class="wb-empty-text">Domain management becomes available once at least one accessible site exists.</div>
+                    <div class="wb-empty-title">{{ $domainsIndexText('empty_title') }}</div>
+                    <div class="wb-empty-text">{{ $domainsIndexText('empty_text') }}</div>
                 </div>
             @else
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>Site</th>
-                                <th>Primary Domain</th>
-                                <th>Assigned Domains</th>
-                                <th>Action</th>
+                                <th>{{ $domainsIndexText('site') }}</th>
+                                <th>{{ $domainsIndexText('primary_domain') }}</th>
+                                <th>{{ $domainsIndexText('assigned_domains') }}</th>
+                                <th>{{ $domainsIndexText('action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -36,10 +40,10 @@
                                             <span class="wb-text-sm wb-text-muted">{{ $site->handle }}</span>
                                         </div>
                                     </td>
-                                    <td>{{ $site->canonicalDomain() ?? 'Not assigned' }}</td>
+                                    <td>{{ $site->canonicalDomain() ?? $domainsIndexText('not_assigned') }}</td>
                                     <td>{{ $site->siteDomains()->count() }}</td>
                                     <td>
-                                        <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-btn wb-btn-secondary">Manage Domains</a>
+                                        <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-btn wb-btn-secondary">{{ $domainsIndexText('manage_domains') }}</a>
                                     </td>
                                 </tr>
                             @endforeach

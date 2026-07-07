@@ -1,5 +1,7 @@
 @php
-    $pageTitle = 'Edit Navigation Item: '.$item->resolvedTitle();
+    $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
+    $navigationFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_form.'.$key, $replace);
+    $pageTitle = $navigationItemsText('edit_page_title', ['title' => $item->resolvedTitle()]);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -7,7 +9,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Update the menu, hierarchy, and link settings for this item.',
+        'description' => $navigationItemsText('edit_page_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -22,7 +24,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY)])" submit-label="Save Changes" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY)])" :submit-label="$navigationFormText('save_changes')" />
             </div>
         </form>
     </div>

@@ -1,5 +1,7 @@
 @php
-    $pageTitle = 'Add Navigation Item';
+    $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
+    $navigationFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_form.'.$key, $replace);
+    $pageTitle = $navigationItemsText('create_item_title');
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -7,7 +9,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Create a page link, custom URL, or group for a selected menu.',
+        'description' => $navigationItemsText('create_page_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -21,7 +23,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY)])" submit-label="Create" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY)])" :submit-label="$navigationFormText('create')" />
             </div>
         </form>
     </div>

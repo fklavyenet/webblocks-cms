@@ -1,8 +1,9 @@
 @php
-    $blockPageName = ($block->page_id && ($contextPage = $pages->firstWhere('id', $block->page_id))) ? $contextPage->title : 'Page';
-    $blockSlotName = $slotTypes->firstWhere('id', (int) old('slot_type_id', $block->slot_type_id))?->name ?? ($block->slot ? str($block->slot)->headline()->toString() : 'Slot');
-    $blockName = $selectedBlockType?->name ?? 'Block';
-    $pageTitle = 'Add Block: '.$blockName.' ('.$blockPageName.' / '.$blockSlotName.')';
+    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
+    $blockPageName = ($block->page_id && ($contextPage = $pages->firstWhere('id', $block->page_id))) ? $contextPage->title : $blockFormText('page_fallback');
+    $blockSlotName = $slotTypes->firstWhere('id', (int) old('slot_type_id', $block->slot_type_id))?->name ?? ($block->slot ? str($block->slot)->headline()->toString() : $blockFormText('slot_fallback'));
+    $blockName = $selectedBlockType?->name ?? $blockFormText('block_fallback');
+    $pageTitle = $blockFormText('add_modal_title', ['block' => $blockName, 'page' => $blockPageName, 'slot' => $blockSlotName]);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -10,14 +11,14 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => $selectedBlockType ? 'Fill out the editor for the selected block type.' : 'Choose the kind of block you want to add to the page.',
+        'description' => $selectedBlockType ? $blockFormText('create_selected_description') : $blockFormText('create_choose_description'),
     ])
 
     @if ($block->page_id && ($page = $pages->firstWhere('id', $block->page_id)))
         <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted">
             <span>{{ $page->title }}</span>
             <span>{{ $page->publicPath() }}</span>
-            <span>{{ $page->slots->pluck('slotType.name')->filter()->implode(', ') ?: 'No slots yet' }}</span>
+            <span>{{ $page->slots->pluck('slotType.name')->filter()->implode(', ') ?: $blockFormText('no_slots_yet') }}</span>
         </div>
     @endif
 
@@ -48,7 +49,7 @@
                 </div>
 
                 <div class="wb-card-footer">
-                    <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.blocks.index')" submit-label="Create" />
+                    <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.blocks.index')" :submit-label="$blockFormText('create')" />
                 </div>
             </form>
         </div>

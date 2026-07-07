@@ -8,7 +8,7 @@
     $visitorSummary = $visitorSummary ?? [
         'is_enabled' => false,
         'table_exists' => false,
-        'range_label' => 'Last 7 days',
+        'range_label' => $adminText('dashboard.last_7_days'),
         'total_page_views' => 0,
         'unique_visitors' => 0,
         'top_page_path' => null,
@@ -16,7 +16,7 @@
     ];
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => 'Admin Dashboard', 'heading' => $adminText('dashboard.title')])
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('dashboard.title'), 'heading' => $adminText('dashboard.title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [

@@ -2,6 +2,7 @@
 
 @php
   $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
+  $navigationFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_form.'.$key, $replace);
   $baseQuery = ['site_id' => $site->id, 'menu_key' => $activeMenuKey];
   $requestedModal = request('modal');
   $requestedNavigationId = request()->integer('navigation');
@@ -44,7 +45,7 @@
           [
             'id' => 'navigation_site_id',
             'name' => 'site_id',
-            'label' => 'Site',
+            'label' => $navigationFormText('site'),
             'selected' => (string) $site->id,
             'placeholder' => null,
             'submitOnChange' => true,
@@ -53,7 +54,7 @@
           [
             'id' => 'navigation_menu_key',
             'name' => 'menu_key',
-            'label' => 'Menu',
+            'label' => $navigationFormText('menu'),
             'selected' => $activeMenuKey,
             'placeholder' => null,
             'submitOnChange' => true,

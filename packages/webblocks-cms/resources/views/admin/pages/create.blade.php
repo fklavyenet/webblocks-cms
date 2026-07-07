@@ -1,5 +1,6 @@
 @php
-    $pageTitle = 'Add Page: New Page';
+    $pageFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_form.'.$key, $replace);
+    $pageTitle = $pageFormText('create_title');
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -7,7 +8,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Create the page on a site and save the English base translation first. New pages start as draft.',
+        'description' => $pageFormText('create_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -21,7 +22,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.index')" submit-label="Create" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.index')" :submit-label="$pageFormText('create')" />
             </div>
         </form>
     </div>

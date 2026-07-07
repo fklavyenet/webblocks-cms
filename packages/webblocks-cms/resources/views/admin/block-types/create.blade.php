@@ -1,9 +1,13 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Create Block Type', 'heading' => 'Create Block Type'])
+@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.block_type_form.create_title'), 'heading' => __('webblocks-cms::admin.block_type_form.create_title')])
+
+@php
+    $blockTypeFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_type_form.'.$key, $replace);
+@endphp
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Create Block Type',
-        'description' => 'Create a new block type record.',
+        'title' => $blockTypeFormText('create_title'),
+        'description' => $blockTypeFormText('create_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -17,7 +21,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.block-types.index')" submit-label="Create" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.block-types.index')" :submit-label="$blockTypeFormText('create')" />
             </div>
         </form>
     </div>

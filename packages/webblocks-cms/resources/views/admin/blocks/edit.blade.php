@@ -1,7 +1,8 @@
 @php
-    $blockPageName = $block->page?->title ?? 'Page';
+    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
+    $blockPageName = $block->page?->title ?? $blockFormText('page_fallback');
     $blockSlotName = $block->slotType?->name ?? $block->slotName();
-    $pageTitle = 'Edit Block: '.$block->typeName().' ('.$blockPageName.' / '.$blockSlotName.')';
+    $pageTitle = $blockFormText('edit_title', ['type' => $block->typeName(), 'page' => $blockPageName, 'slot' => $blockSlotName]);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -9,14 +10,14 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Update the block content, hierarchy, and publishing behavior together.',
+        'description' => $blockFormText('edit_description'),
     ])
 
     @if ($block->page)
         <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted">
             <span>{{ $block->page->title }}</span>
             <span>{{ $block->page->publicPath() }}</span>
-            <span>{{ $block->page->slots->pluck('slotType.name')->filter()->implode(', ') ?: 'No slots yet' }}</span>
+            <span>{{ $block->page->slots->pluck('slotType.name')->filter()->implode(', ') ?: $blockFormText('no_slots_yet') }}</span>
         </div>
     @endif
 
@@ -30,10 +31,10 @@
     ])
 
     <div class="wb-grid wb-grid-4">
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">Block Type</div><div class="wb-stat-value">{{ $block->typeName() }}</div></div></div></div>
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">Slot Type</div><div class="wb-stat-value">{{ $block->slotName() }}</div></div></div></div>
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">Page</div><div class="wb-stat-value">{{ $block->page?->title ?? '-' }}</div></div></div></div>
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">Status</div><div class="wb-stat-value">{{ $block->status }}</div></div></div></div>
+        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('block_type') }}</div><div class="wb-stat-value">{{ $block->typeName() }}</div></div></div></div>
+        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('slot_type') }}</div><div class="wb-stat-value">{{ $block->slotName() }}</div></div></div></div>
+        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('page') }}</div><div class="wb-stat-value">{{ $block->page?->title ?? '-' }}</div></div></div></div>
+        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('status') }}</div><div class="wb-stat-value">{{ $block->status }}</div></div></div></div>
     </div>
 
     <div class="wb-card">
@@ -54,7 +55,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.blocks.index')" submit-label="Save Changes" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.blocks.index')" :submit-label="$blockFormText('save_changes')" />
             </div>
         </form>
     </div>

@@ -1,6 +1,7 @@
 @php
-    $pageTitle = 'Move Page to Another Site';
-    $siteName = $page->site?->name ?? 'Site';
+    $pageMoveSiteText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_move_site.'.$key, $replace);
+    $pageTitle = $pageMoveSiteText('title');
+    $siteName = $page->site?->name ?? $pageMoveSiteText('site_fallback');
     $backUrl = route('admin.pages.edit', $page);
 @endphp
 
@@ -9,8 +10,8 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Move this page to another site with explicit validation and site-scoped remapping.',
-        'actions' => '<a href="'.$backUrl.'" class="wb-btn wb-btn-secondary">Back to Page</a>',
+        'description' => $pageMoveSiteText('description'),
+        'actions' => '<a href="'.$backUrl.'" class="wb-btn wb-btn-secondary">'.e($pageMoveSiteText('back_to_page')).'</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -20,19 +21,19 @@
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div>
                     <strong>{{ $page->title }}</strong>
-                    <div class="wb-text-sm wb-text-muted">Current site: {{ $siteName }}</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $pageMoveSiteText('current_site', ['site' => $siteName]) }}</div>
                 </div>
 
                 <div class="wb-stack wb-gap-2 wb-text-sm">
-                    <div><strong>Current public path:</strong> {{ $page->publicPath() ?? 'Not routable' }}</div>
-                    <div><strong>Workflow:</strong> {{ $page->workflowLabel() }}</div>
-                    <div><strong>Translations:</strong> {{ $page->translations->pluck('locale.code')->filter()->implode(', ') ?: 'None' }}</div>
+                    <div><strong>{{ $pageMoveSiteText('current_public_path') }}</strong> {{ $page->publicPath() ?? $pageMoveSiteText('not_routable') }}</div>
+                    <div><strong>{{ $pageMoveSiteText('workflow') }}</strong> {{ $page->workflowLabel() }}</div>
+                    <div><strong>{{ $pageMoveSiteText('translations') }}</strong> {{ $page->translations->pluck('locale.code')->filter()->implode(', ') ?: $pageMoveSiteText('none') }}</div>
                 </div>
 
                 <div class="wb-alert wb-alert-warning">
                     <div>
-                        <div class="wb-alert-title">Warning</div>
-                        <div>Moving a page changes site ownership. Path conflicts block the move. Shared Slot references must be remappable. Navigation may need manual review after the move.</div>
+                        <div class="wb-alert-title">{{ $pageMoveSiteText('warning') }}</div>
+                        <div>{{ $pageMoveSiteText('warning_text') }}</div>
                     </div>
                 </div>
             </div>
@@ -44,9 +45,9 @@
                     @csrf
 
                     <div class="wb-field">
-                        <label for="target_site_id">Target site</label>
+                        <label for="target_site_id">{{ $pageMoveSiteText('target_site') }}</label>
                         <select id="target_site_id" name="target_site_id" class="wb-select" required>
-                            <option value="">Choose a site</option>
+                            <option value="">{{ $pageMoveSiteText('choose_site') }}</option>
                             @foreach ($sites as $site)
                                 <option value="{{ $site->id }}" @selected((int) old('target_site_id') === (int) $site->id)>{{ $site->name }}</option>
                             @endforeach
@@ -58,7 +59,7 @@
 
                     <x-webblocks-cms::admin.form-actions
                         :cancel-url="$backUrl"
-                        submit-label="Move to another site"
+                        :submit-label="$pageMoveSiteText('move_submit')"
                     />
                 </form>
             </div>
