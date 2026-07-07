@@ -97,7 +97,7 @@ class ReleasePackageBoundaryTest extends TestCase
     $this->assertStringContainsString("if (\$screenTitle === 'Admin Dashboard')", $systemSettings);
     $this->assertStringContainsString("return 'Dashboard';", $systemSettings);
     $this->assertStringContainsString("return \$screenTitle.' - '.\$productName;", $systemSettings);
-    $this->assertStringContainsString("'title' => 'Admin Dashboard'", $dashboard);
+    $this->assertStringContainsString("'title' => \$adminText('dashboard.title')", $dashboard);
     $this->assertStringContainsString("'heading' => \$adminText('dashboard.title')", $dashboard);
   }
 

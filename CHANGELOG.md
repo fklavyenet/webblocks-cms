@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.34.2
+
+- Bumped CMS to `1.34.2`.
 - Move Page details, duplicate, layout slot summary, and slot block delete modal copy onto structured admin locale keys.
 - Move Navigation Items and Locales admin copy onto structured admin locale keys.
 - Move column item editor and Page Layout admin copy onto structured admin locale keys.
