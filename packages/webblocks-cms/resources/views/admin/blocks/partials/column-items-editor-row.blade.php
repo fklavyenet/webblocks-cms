@@ -2,15 +2,16 @@
     $inputName = $inputName ?? 'column_items';
     $itemBlockType = $itemBlockType ?? null;
     $editorKey = $editorKey ?? 'column-item';
-    $newItemLabel = $newItemLabel ?? 'New Item';
-    $titleLabel = $titleLabel ?? 'Title';
+    $columnItemRowText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.column_items_editor_row.'.$key, $replace);
+    $newItemLabel = $newItemLabel ?? $columnItemRowText('new_item');
+    $titleLabel = $titleLabel ?? $columnItemRowText('title');
     $titlePlaceholder = $titlePlaceholder ?? null;
-    $subtitleLabel = $subtitleLabel ?? 'Subtitle';
+    $subtitleLabel = $subtitleLabel ?? $columnItemRowText('subtitle');
     $subtitlePlaceholder = $subtitlePlaceholder ?? null;
     $showSubtitle = $showSubtitle ?? false;
-    $urlLabel = $urlLabel ?? 'URL';
-    $contentLabel = $contentLabel ?? 'Content';
-    $contentPlaceholder = $contentPlaceholder ?? 'Add content.';
+    $urlLabel = $urlLabel ?? $columnItemRowText('url');
+    $contentLabel = $contentLabel ?? $columnItemRowText('content');
+    $contentPlaceholder = $contentPlaceholder ?? $columnItemRowText('content_placeholder');
     $enableAdminSortable = $enableAdminSortable ?? false;
     $rowPrefix = is_numeric($index) ? "{$inputName}[{$index}]" : "{$inputName}[__INDEX__]";
     $rowSortOrder = is_numeric($index) ? ($columnItem->sort_order ?? $index) : '__INDEX__';
@@ -21,13 +22,13 @@
     $selectedTone = $itemSettings['badge_tone'] ?? 'neutral';
     $iconOptions = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->pickerOptions('content', $selectedIcon, $selectedIcon);
     $iconToneOptions = [
-        'default' => 'Default',
-        'soft' => 'Soft',
-        'brand' => 'Brand',
-        'accent' => 'Accent',
-        'highlight' => 'Highlight',
-        'bold' => 'Bold',
-        'quiet' => 'Quiet',
+        'default' => $columnItemRowText('default'),
+        'soft' => $columnItemRowText('soft'),
+        'brand' => $columnItemRowText('brand'),
+        'accent' => $columnItemRowText('accent'),
+        'highlight' => $columnItemRowText('highlight'),
+        'bold' => $columnItemRowText('bold'),
+        'quiet' => $columnItemRowText('quiet'),
     ];
     $summaryText = $showSubtitle
         ? ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder)
@@ -39,7 +40,7 @@
         <div class="wb-stack wb-gap-1">
             <div class="wb-cluster wb-cluster-2">
                 @if ($enableAdminSortable)
-                    <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="Drag to reorder" title="Drag to reorder">
+                    <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="{{ $columnItemRowText('drag_to_reorder') }}" title="{{ $columnItemRowText('drag_to_reorder') }}">
                         <i class="wb-icon wb-icon-grip-vertical" aria-hidden="true"></i>
                     </button>
                 @endif
@@ -49,10 +50,10 @@
         </div>
 
         <div class="wb-action-group">
-            <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" title="Move up" aria-label="Move up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" title="Move down" aria-label="Move down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle title="Collapse item" aria-label="Collapse item" aria-expanded="true"><i class="wb-icon wb-icon-minus" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove title="Remove item" aria-label="Remove item"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" title="{{ $columnItemRowText('move_up') }}" aria-label="{{ $columnItemRowText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" title="{{ $columnItemRowText('move_down') }}" aria-label="{{ $columnItemRowText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle title="{{ $columnItemRowText('collapse_item') }}" aria-label="{{ $columnItemRowText('collapse_item') }}" aria-expanded="true"><i class="wb-icon wb-icon-minus" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove title="{{ $columnItemRowText('remove_item') }}" aria-label="{{ $columnItemRowText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
         </div>
     </div>
 
@@ -83,9 +84,9 @@
 
         <div class="wb-grid wb-grid-4">
             <div class="wb-stack wb-gap-1">
-                <label>Icon</label>
+                <label>{{ $columnItemRowText('icon') }}</label>
                 <select class="wb-select" name="{{ $rowPrefix }}[icon_slug]">
-                    <option value="">No icon</option>
+                    <option value="">{{ $columnItemRowText('no_icon') }}</option>
                     @foreach ($iconOptions as $icon)
                         <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
                     @endforeach
@@ -93,7 +94,7 @@
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <label>Icon tone</label>
+                <label>{{ $columnItemRowText('icon_tone') }}</label>
                 <select class="wb-select" name="{{ $rowPrefix }}[icon_tone]">
                     @foreach ($iconToneOptions as $value => $label)
                         <option value="{{ $value }}" @selected($selectedIconTone === $value)>{{ $label }}</option>
@@ -102,14 +103,14 @@
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <label>Badge</label>
+                <label>{{ $columnItemRowText('badge') }}</label>
                 <input class="wb-input" type="text" name="{{ $rowPrefix }}[badge_label]" value="{{ $columnItem->eyebrow ?? $columnItem->translatedTextFieldValue('eyebrow') }}">
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <label>Badge tone</label>
+                <label>{{ $columnItemRowText('badge_tone') }}</label>
                 <select class="wb-select" name="{{ $rowPrefix }}[badge_tone]">
-                    @foreach (['neutral' => 'Neutral', 'info' => 'Info', 'success' => 'Success', 'warning' => 'Warning', 'danger' => 'Danger'] as $value => $label)
+                    @foreach (['neutral' => $columnItemRowText('neutral'), 'info' => $columnItemRowText('info'), 'success' => $columnItemRowText('success'), 'warning' => $columnItemRowText('warning'), 'danger' => $columnItemRowText('danger')] as $value => $label)
                         <option value="{{ $value }}" @selected($selectedTone === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -123,18 +124,18 @@
 
         <div class="wb-grid wb-grid-2">
             <div class="wb-stack wb-gap-1">
-                <label>Status</label>
+                <label>{{ $columnItemRowText('status') }}</label>
                 <select class="wb-select" name="{{ $rowPrefix }}[status]">
-                    <option value="draft" @selected(($columnItem->status ?? 'published') === 'draft')>draft</option>
-                    <option value="published" @selected(($columnItem->status ?? 'published') === 'published')>published</option>
+                    <option value="draft" @selected(($columnItem->status ?? 'published') === 'draft')>{{ $columnItemRowText('draft') }}</option>
+                    <option value="published" @selected(($columnItem->status ?? 'published') === 'published')>{{ $columnItemRowText('published') }}</option>
                 </select>
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <label>Kind</label>
+                <label>{{ $columnItemRowText('kind') }}</label>
                 <div class="wb-card wb-card-muted">
                     <div class="wb-card-body">
-                        <strong>Content Block</strong>
+                        <strong>{{ $columnItemRowText('content_block') }}</strong>
                     </div>
                 </div>
                 <input type="hidden" name="{{ $rowPrefix }}[is_system]" value="0">

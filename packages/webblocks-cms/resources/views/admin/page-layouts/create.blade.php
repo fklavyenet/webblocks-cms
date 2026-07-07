@@ -1,9 +1,13 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Create Page Layout', 'heading' => 'Page Layouts'])
+@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.page_layouts.create_title'), 'heading' => __('webblocks-cms::admin.page_layouts.title')])
+
+@php
+    $pageLayoutsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_layouts.'.$key, $replace);
+@endphp
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Create Page Layout',
-        'description' => 'Create a reusable page layout with managed body classes and slot wrappers.',
+        'title' => $pageLayoutsText('create_title'),
+        'description' => $pageLayoutsText('create_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -17,7 +21,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.page-layouts.index')" submit-label="Create" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.page-layouts.index')" :submit-label="$pageLayoutsText('create')" />
             </div>
         </form>
     </div>

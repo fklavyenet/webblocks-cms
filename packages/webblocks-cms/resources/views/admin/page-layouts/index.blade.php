@@ -1,9 +1,13 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Page Layouts', 'heading' => 'Page Layouts'])
+@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.page_layouts.title'), 'heading' => __('webblocks-cms::admin.page_layouts.title')])
+
+@php
+    $pageLayoutsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_layouts.'.$key, $replace);
+@endphp
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Page Layouts',
-        'description' => 'Manage reusable public page layout definitions. Pages still store the selected layout handle on public_shell for backward compatibility.',
+        'title' => $pageLayoutsText('title'),
+        'description' => $pageLayoutsText('index_description'),
         'count' => $totalCount,
     ])
 
@@ -12,11 +16,11 @@
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>Page Layouts</strong>
+                <strong>{{ $pageLayoutsText('title') }}</strong>
                 <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
             </div>
 
-            <a href="{{ route('admin.page-layouts.create') }}" class="wb-btn wb-btn-primary">New Page Layout</a>
+            <a href="{{ route('admin.page-layouts.create') }}" class="wb-btn wb-btn-primary">{{ $pageLayoutsText('new_page_layout') }}</a>
         </div>
 
         <div class="wb-card-body">
@@ -24,13 +28,13 @@
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Handle</th>
-                            <th>Body Class</th>
-                            <th>Status</th>
-                            <th>Ownership</th>
-                            <th>Sort Order</th>
-                            <th>Actions</th>
+                            <th>{{ $pageLayoutsText('name') }}</th>
+                            <th>{{ $pageLayoutsText('handle') }}</th>
+                            <th>{{ $pageLayoutsText('body_class') }}</th>
+                            <th>{{ $pageLayoutsText('status') }}</th>
+                            <th>{{ $pageLayoutsText('ownership') }}</th>
+                            <th>{{ $pageLayoutsText('sort_order') }}</th>
+                            <th>{{ $pageLayoutsText('actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -49,7 +53,7 @@
                                 <td class="wb-nowrap">{{ $pageLayout->sort_order }}</td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">
-                                        <a href="{{ route('admin.page-layouts.edit', $pageLayout) }}" class="wb-action-btn wb-action-btn-edit" title="Edit Page Layout" aria-label="Edit Page Layout">
+                                        <a href="{{ route('admin.page-layouts.edit', $pageLayout) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageLayoutsText('edit_page_layout') }}" aria-label="{{ $pageLayoutsText('edit_page_layout') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
                                     </div>
@@ -62,7 +66,7 @@
         </div>
 
         <div class="wb-card-footer wb-text-sm wb-text-muted">
-            System layouts cannot be deleted. V1 supports create, edit, activate, deactivate, and ordering.
+            {{ $pageLayoutsText('index_footer') }}
         </div>
 
         @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pageLayouts])

@@ -1,15 +1,16 @@
 @php
     $pageLayoutUrl = route('admin.page-layouts.edit', $pageLayout);
-    $pageTitle = 'Add Page Layout Slot: '.$pageLayout->name;
+    $pageLayoutsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_layouts.'.$key, $replace);
+    $pageTitle = $pageLayoutsText('add_slot_title', ['name' => $pageLayout->name]);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => 'Page Layouts'])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => __('webblocks-cms::admin.page_layouts.title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.page-layouts.index').'">Page Layouts</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pageLayoutUrl.'">'.e($pageLayout->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">Add Page Layout Slot</span></li></ol></nav>',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="'.e($pageLayoutsText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.page-layouts.index').'">'.e($pageLayoutsText('title')).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pageLayoutUrl.'">'.e($pageLayout->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($pageLayoutsText('add_slot_current')).'</span></li></ol></nav>',
         'title' => $pageTitle,
-        'context' => '<span class="wb-status-pill wb-status-info">Layout</span> <code>'.e($pageLayout->handle).'</code>',
+        'context' => '<span class="wb-status-pill wb-status-info">'.e($pageLayoutsText('layout')).'</span> <code>'.e($pageLayout->handle).'</code>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -23,7 +24,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="$pageLayoutUrl" submit-label="Create Slot" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="$pageLayoutUrl" :submit-label="$pageLayoutsText('create_slot')" />
             </div>
         </form>
     </div>
