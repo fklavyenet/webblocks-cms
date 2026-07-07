@@ -42,7 +42,6 @@ class LocaleController extends Controller
     return view('webblocks-cms::admin.locales.form', [
       'locale' => new Locale(['is_enabled' => true]),
       'localeOptions' => $this->localeOptionCatalog->options($installedCodes),
-      'pageTitle' => 'Add Locale',
       'formAction' => route('admin.locales.store'),
       'formMethod' => 'POST',
     ]);
@@ -57,7 +56,7 @@ class LocaleController extends Controller
       return $locale;
     });
 
-    return redirect()->route('admin.locales.edit', $locale)->with('status', 'Locale created successfully.');
+    return redirect()->route('admin.locales.edit', $locale)->with('status_key', 'locales_form.created');
   }
 
   public function edit(Locale $locale): View
@@ -66,7 +65,6 @@ class LocaleController extends Controller
       'locale' => $locale,
       'localeOptions' => $this->localeOptionCatalog->options(Locale::query()->whereKeyNot($locale->id)->pluck('code')->all()),
       'report' => $this->lifecycleGuard->inspect($locale),
-      'pageTitle' => 'Edit Locale: '.$locale->name,
       'formAction' => route('admin.locales.update', $locale),
       'formMethod' => 'PUT',
     ]);
@@ -79,7 +77,7 @@ class LocaleController extends Controller
       Locale::enforceDefaultInvariant($locale);
     });
 
-    return redirect()->route('admin.locales.edit', $locale)->with('status', 'Locale updated successfully.');
+    return redirect()->route('admin.locales.edit', $locale)->with('status_key', 'locales_form.updated');
   }
 
   public function enable(Locale $locale): RedirectResponse
@@ -95,7 +93,7 @@ class LocaleController extends Controller
 
     $locale->forceFill(['is_enabled' => true])->save();
 
-    return redirect()->route('admin.locales.index')->with('status', 'Locale enabled successfully.');
+    return redirect()->route('admin.locales.index')->with('status_key', 'locales_index.enabled_success');
   }
 
   public function disable(Locale $locale): RedirectResponse
@@ -109,7 +107,7 @@ class LocaleController extends Controller
 
     $locale->forceFill(['is_enabled' => false])->save();
 
-    return redirect()->route('admin.locales.index')->with('status', 'Locale disabled successfully.');
+    return redirect()->route('admin.locales.index')->with('status_key', 'locales_index.disabled_success');
   }
 
   public function destroy(Locale $locale): RedirectResponse
@@ -123,6 +121,6 @@ class LocaleController extends Controller
 
     $locale->delete();
 
-    return redirect()->route('admin.locales.index')->with('status', 'Locale deleted successfully.');
+    return redirect()->route('admin.locales.index')->with('status_key', 'locales_index.deleted_success');
   }
 }

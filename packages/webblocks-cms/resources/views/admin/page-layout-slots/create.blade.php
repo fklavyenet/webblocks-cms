@@ -1,10 +1,12 @@
 @php
     $pageLayoutUrl = route('admin.page-layouts.edit', $pageLayout);
-    $pageLayoutsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_layouts.'.$key, $replace);
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $pageLayoutsText = fn (string $key, array $replace = []) => $adminTranslator->admin('page_layouts.'.$key, $adminLocale, $replace);
     $pageTitle = $pageLayoutsText('add_slot_title', ['name' => $pageLayout->name]);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => __('webblocks-cms::admin.page_layouts.title')])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageLayoutsText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [

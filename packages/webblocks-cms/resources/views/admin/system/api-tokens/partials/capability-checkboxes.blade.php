@@ -39,19 +39,23 @@
                     $groupCapabilities = $group['capabilities'] ?? [];
                     $groupSelectedCount = count(array_intersect($selectedCapabilities, $groupCapabilities));
                     $groupId = $fieldPrefix.'_group_'.Str::slug($group['key'] ?? $group['label']);
+                    $groupLocaleKey = str_replace('-', '_', (string) ($group['key'] ?? 'default'));
+                    $groupLabel = $adminText('groups.'.$groupLocaleKey.'.label');
+                    $groupDescription = $adminText('groups.'.$groupLocaleKey.'.description');
                 @endphp
 
                 <details class="wb-api-token-capability-group" @if (($group['key'] ?? null) === 'page-building') open @endif>
                     <summary class="wb-api-token-capability-summary" id="{{ $groupId }}">
                         <span class="wb-api-token-capability-summary-copy">
-                            <strong>{{ $group['label'] }}</strong>
-                            <span class="wb-text-sm wb-text-muted">{{ $group['description'] }}</span>
+                            <strong>{{ $groupLabel }}</strong>
+                            <span class="wb-text-sm wb-text-muted">{{ $groupDescription }}</span>
                         </span>
                         <span class="wb-status-pill {{ $groupSelectedCount > 0 ? 'wb-status-active' : 'wb-status-info' }}">{{ $groupSelectedCount }}/{{ count($groupCapabilities) }}</span>
                     </summary>
 
                     <div class="wb-api-token-capability-list" aria-labelledby="{{ $groupId }}">
                         @foreach ($groupCapabilities as $capability)
+                            @php($capabilityLocaleKey = str_replace(['.', '-'], '_', $capability))
                             <label class="wb-check wb-api-token-capability-option" for="{{ $fieldPrefix }}_{{ Str::slug($capability) }}">
                                 <input
                                     id="{{ $fieldPrefix }}_{{ Str::slug($capability) }}"
@@ -62,7 +66,7 @@
                                 >
                                 <span class="wb-api-token-capability-copy">
                                     <strong>{{ $capability }}</strong>
-                                    <span class="wb-text-sm wb-text-muted">{{ $capabilityLabels[$capability] ?? $capability }}</span>
+                                    <span class="wb-text-sm wb-text-muted">{{ $adminText('labels.'.$capabilityLocaleKey) }}</span>
                                 </span>
                             </label>
                         @endforeach

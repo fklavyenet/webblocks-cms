@@ -1,9 +1,11 @@
 @php
     $indexUrl = route('admin.page-layouts.index');
-    $pageLayoutsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_layouts.'.$key, $replace);
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $pageLayoutsText = fn (string $key, array $replace = []) => $adminTranslator->admin('page_layouts.'.$key, $adminLocale, $replace);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.page_layouts.edit_page_layout'), 'heading' => __('webblocks-cms::admin.page_layouts.title')])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageLayoutsText('edit_page_layout'), 'heading' => $pageLayoutsText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
@@ -39,8 +41,8 @@
                     <div class="wb-card-header"><strong>{{ $pageLayoutsText('usage') }}</strong></div>
                     <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
                         <div><strong>{{ $pageLayoutsText('handle_label') }}</strong> <code>{{ $pageLayout->handle }}</code></div>
-                        <div><strong>{{ $pageLayoutsText('status_label') }}</strong> <span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->statusLabel() }}</span></div>
-                        <div><strong>{{ $pageLayoutsText('ownership_label') }}</strong> {{ $pageLayout->ownershipLabel() }}</div>
+                        <div><strong>{{ $pageLayoutsText('status_label') }}</strong> <span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->is_active ? $pageLayoutsText('active') : $pageLayoutsText('inactive') }}</span></div>
+                        <div><strong>{{ $pageLayoutsText('ownership_label') }}</strong> {{ $pageLayout->is_system ? $pageLayoutsText('system') : $pageLayoutsText('custom') }}</div>
                         <div><strong>{{ $pageLayoutsText('body_class_label') }}</strong> <code>{{ $pageLayout->body_class ?: '-' }}</code></div>
                     </div>
                 </div>

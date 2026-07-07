@@ -1,8 +1,10 @@
-@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.page_layouts.title'), 'heading' => __('webblocks-cms::admin.page_layouts.title')])
-
 @php
-    $pageLayoutsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_layouts.'.$key, $replace);
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $pageLayoutsText = fn (string $key, array $replace = []) => $adminTranslator->admin('page_layouts.'.$key, $adminLocale, $replace);
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $pageLayoutsText('title'), 'heading' => $pageLayoutsText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
@@ -48,8 +50,8 @@
                                 </td>
                                 <td class="wb-nowrap"><code>{{ $pageLayout->handle }}</code></td>
                                 <td class="wb-nowrap"><code>{{ $pageLayout->body_class ?: '-' }}</code></td>
-                                <td><span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->statusLabel() }}</span></td>
-                                <td><span class="wb-status-pill {{ $pageLayout->is_system ? 'wb-status-info' : 'wb-status-pending' }}">{{ strtolower($pageLayout->ownershipLabel()) }}</span></td>
+                                <td><span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->is_active ? $pageLayoutsText('active') : $pageLayoutsText('inactive') }}</span></td>
+                                <td><span class="wb-status-pill {{ $pageLayout->is_system ? 'wb-status-info' : 'wb-status-pending' }}">{{ $pageLayout->is_system ? $pageLayoutsText('system') : $pageLayoutsText('custom') }}</span></td>
                                 <td class="wb-nowrap">{{ $pageLayout->sort_order }}</td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">

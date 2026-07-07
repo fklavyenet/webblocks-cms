@@ -1,6 +1,8 @@
 @php
     $layoutSlots = $pageLayout->layoutSlots->sortBy('sort_order')->values();
-    $pageLayoutsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_layouts.'.$key, $replace);
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $pageLayoutsText = fn (string $key, array $replace = []) => $adminTranslator->admin('page_layouts.'.$key, $adminLocale, $replace);
 @endphp
 
 <div class="wb-card">
@@ -67,7 +69,7 @@
                                     <div class="wb-stack wb-gap-1">
                                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                                             <span class="wb-status-pill {{ $layoutSlot->is_required ? 'wb-status-info' : 'wb-status-pending' }}">{{ $layoutSlot->is_required ? $pageLayoutsText('required') : $pageLayoutsText('optional') }}</span>
-                                            <span class="wb-status-pill {{ $layoutSlot->statusBadgeClass() }}">{{ $layoutSlot->statusLabel() }}</span>
+                                            <span class="wb-status-pill {{ $layoutSlot->statusBadgeClass() }}">{{ $layoutSlot->is_active ? $pageLayoutsText('active') : $pageLayoutsText('inactive') }}</span>
                                         </div>
                                     </div>
                                 </td>

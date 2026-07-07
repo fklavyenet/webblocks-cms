@@ -1,8 +1,10 @@
-@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.locales_index.title'), 'heading' => __('webblocks-cms::admin.locales_index.title')])
-
 @php
-    $localesIndexText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.locales_index.'.$key, $replace);
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $localesIndexText = fn (string $key, array $replace = []) => $adminTranslator->admin('locales_index.'.$key, $adminLocale, $replace);
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $localesIndexText('title'), 'heading' => $localesIndexText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [

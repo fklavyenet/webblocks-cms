@@ -1,8 +1,13 @@
-@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
-
 @php
-    $localesFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.locales_form.'.$key, $replace);
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $localesFormText = fn (string $key, array $replace = []) => $adminTranslator->admin('locales_form.'.$key, $adminLocale, $replace);
+    $pageTitle = $locale->exists
+        ? $localesFormText('edit_title', ['name' => $locale->name])
+        : $localesFormText('create_title');
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
