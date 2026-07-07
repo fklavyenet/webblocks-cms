@@ -3,6 +3,7 @@
         ->where('page_id', $page->id)
         ->where('slot_type_id', $item['block']->slot_type_id)
         ->value('id');
+    $inlineBlocksText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.inline_blocks.'.$key, $replace);
 @endphp
 
 <div class="wb-card wb-card-muted">
@@ -25,30 +26,30 @@
                 <div class="wb-action-group">
                     <form method="POST" action="{{ route('admin.blocks.move-up', $item['block']) }}">
                         @csrf
-                        <button type="submit" class="wb-action-btn" title="Move block up" aria-label="Move block up">
+                        <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}">
                             <i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i>
                         </button>
                     </form>
 
                     <form method="POST" action="{{ route('admin.blocks.move-down', $item['block']) }}">
                         @csrf
-                        <button type="submit" class="wb-action-btn" title="Move block down" aria-label="Move block down">
+                        <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}">
                             <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
                         </button>
                     </form>
 
-                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'edit' => $item['block']->id]) : route('admin.blocks.edit', $item['block']) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block" aria-label="Edit block">
+                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'edit' => $item['block']->id]) : route('admin.blocks.edit', $item['block']) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $inlineBlocksText('edit') }}" aria-label="{{ $inlineBlocksText('edit') }}">
                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                     </a>
 
-                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'picker' => 1]) : route('admin.pages.edit', $page) }}" class="wb-action-btn" title="Add block in slot" aria-label="Add block in slot">
+                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'picker' => 1]) : route('admin.pages.edit', $page) }}" class="wb-action-btn" title="{{ $inlineBlocksText('add_in_slot') }}" aria-label="{{ $inlineBlocksText('add_in_slot') }}">
                         <i class="wb-icon wb-icon-plus" aria-hidden="true"></i>
                     </a>
 
-                    <form method="POST" action="{{ route('admin.blocks.destroy', $item['block']) }}" onsubmit="return confirm('Delete this block?');">
+                    <form method="POST" action="{{ route('admin.blocks.destroy', $item['block']) }}" onsubmit="return confirm(@js($inlineBlocksText('delete_confirm')));">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block" aria-label="Delete block">
+                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $inlineBlocksText('delete') }}" aria-label="{{ $inlineBlocksText('delete') }}">
                             <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                         </button>
                     </form>

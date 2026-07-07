@@ -7,6 +7,7 @@
     $siteHandle = $page->site?->handle ?: 'site';
     $pageSlug = $page->slug ?: 'page';
     $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';
+    $pageAssetsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_assets.'.$key, $replace);
     $createType = in_array($requestedType, ['css', 'js'], true) ? $requestedType : 'css';
     $showCreateModal = $canManagePageAssets && $requestedModal === 'create-page-asset';
     $showEditModal = $canManagePageAssets && $requestedModal === 'edit-page-asset' && $selectedAsset;
@@ -35,30 +36,30 @@
 @if ($showCreateModal)
     @include('webblocks-cms::admin.pages.partials.page-assets-modal-form', [
         'modalId' => 'page-asset-create-modal',
-        'modalTitle' => 'Add '.strtoupper($createDraft->type).' Asset',
-        'modalDescription' => 'Add a page-specific '.strtoupper($createDraft->type).' file reference for this public page.',
+        'modalTitle' => $pageAssetsText('add_asset_title', ['type' => strtoupper($createDraft->type)]),
+        'modalDescription' => $pageAssetsText('add_asset_description', ['type' => strtoupper($createDraft->type)]),
         'formAction' => route('admin.pages.assets.store', ['page' => $page, 'type' => $createDraft->type]),
         'formMethod' => 'POST',
         'asset' => $createDraft,
         'closeUrl' => $closeUrl,
         'suggestedBase' => $suggestedBase,
         'modalKey' => 'create-page-asset',
-        'submitLabel' => 'Save asset',
+        'submitLabel' => $pageAssetsText('save_asset'),
     ])
 @endif
 
 @if ($showEditModal && $draftAsset)
     @include('webblocks-cms::admin.pages.partials.page-assets-modal-form', [
         'modalId' => 'page-asset-edit-modal-'.$draftAsset->id,
-        'modalTitle' => 'Edit '.strtoupper($draftAsset->type).' Asset',
-        'modalDescription' => 'Update the selected page asset settings.',
+        'modalTitle' => $pageAssetsText('edit_asset_title', ['type' => strtoupper($draftAsset->type)]),
+        'modalDescription' => $pageAssetsText('edit_asset_description'),
         'formAction' => route('admin.pages.assets.update', ['page' => $page, 'page_asset' => $draftAsset]),
         'formMethod' => 'PUT',
         'asset' => $draftAsset,
         'closeUrl' => $closeUrl,
         'suggestedBase' => $suggestedBase,
         'modalKey' => 'edit-page-asset',
-        'submitLabel' => 'Save asset',
+        'submitLabel' => $pageAssetsText('save_asset'),
     ])
 @endif
 
@@ -75,11 +76,11 @@
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div class="wb-stack wb-gap-1">
-                        <h2 class="wb-modal-title" id="{{ $deleteModalTitleId }}">Delete {{ strtoupper($selectedAsset->type) }} Asset</h2>
-                        <span class="wb-text-sm wb-text-muted" id="{{ $deleteModalDescriptionId }}">Confirm whether this page asset should be removed.</span>
+                        <h2 class="wb-modal-title" id="{{ $deleteModalTitleId }}">{{ $pageAssetsText('delete_asset_title', ['type' => strtoupper($selectedAsset->type)]) }}</h2>
+                        <span class="wb-text-sm wb-text-muted" id="{{ $deleteModalDescriptionId }}">{{ $pageAssetsText('delete_asset_description') }}</span>
                     </div>
 
-                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close delete page asset modal">
+                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $pageAssetsText('close_delete_modal') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -94,10 +95,10 @@
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 <div class="wb-cluster wb-cluster-2">
                                     <span class="wb-status-pill {{ $selectedAsset->type === 'js' ? 'wb-status-pending' : 'wb-status-info' }}">{{ strtoupper($selectedAsset->type) }}</span>
-                                    <span class="wb-status-pill {{ $selectedAsset->is_enabled ? 'wb-status-active' : 'wb-status-danger' }}">{{ $selectedAsset->is_enabled ? 'Enabled' : 'Disabled' }}</span>
+                                    <span class="wb-status-pill {{ $selectedAsset->is_enabled ? 'wb-status-active' : 'wb-status-danger' }}">{{ $selectedAsset->is_enabled ? $pageAssetsText('enabled') : $pageAssetsText('disabled') }}</span>
                                 </div>
                                 <strong title="{{ $selectedAsset->path }}"><code>{{ $selectedAsset->path }}</code></strong>
-                                <div class="wb-text-sm wb-text-muted">Sort order: {{ $selectedAsset->sort_order }}</div>
+                                <div class="wb-text-sm wb-text-muted">{{ $pageAssetsText('sort_order_label', ['order' => $selectedAsset->sort_order]) }}</div>
                             </div>
                         </div>
                     </div>
@@ -106,7 +107,7 @@
                         :cancel-url="$closeUrl"
                         :show-submit="false"
                         :delete-submit="true"
-                        delete-label="Delete asset"
+                        :delete-label="$pageAssetsText('delete_asset')"
                         container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                     />
                 </form>

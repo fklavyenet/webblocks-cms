@@ -18,6 +18,7 @@
             fn ($blockType) => $blockType->name,
         ])
         ->groupBy(fn ($blockType) => $blockType->category ?: 'content');
+    $inlineBlocksText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.inline_blocks.'.$key, $replace);
 @endphp
 
 @once
@@ -28,10 +29,10 @@
 
 <div class="wb-card wb-card-accent" data-wb-inline-builder>
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-        <strong>Blocks</strong>
+        <strong>{{ $inlineBlocksText('blocks') }}</strong>
 
         <div class="wb-dropdown wb-dropdown-end">
-            <button class="wb-btn wb-btn-primary" type="button" data-wb-toggle="dropdown" data-wb-target="#inline-block-menu" aria-expanded="false">Add Block</button>
+            <button class="wb-btn wb-btn-primary" type="button" data-wb-toggle="dropdown" data-wb-target="#inline-block-menu" aria-expanded="false">{{ $inlineBlocksText('add_block') }}</button>
             <div class="wb-dropdown-menu" id="inline-block-menu">
                 @foreach ($pickerGroups as $category => $items)
                     <div class="wb-dropdown-label">{{ ucfirst($category) }}</div>
@@ -65,8 +66,8 @@
                 ])
             @empty
                 <div class="wb-empty" data-wb-inline-empty>
-                    <div class="wb-empty-title">No blocks yet</div>
-                    <div class="wb-empty-text">Add the first block to start composing this page inline.</div>
+                    <div class="wb-empty-title">{{ $inlineBlocksText('empty_title') }}</div>
+                    <div class="wb-empty-text">{{ $inlineBlocksText('empty_text') }}</div>
                 </div>
             @endforelse
         </div>
@@ -76,15 +77,15 @@
         <div class="wb-card wb-card-muted" data-wb-inline-block>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
                 <div class="wb-stack wb-gap-1">
-                    <strong data-wb-inline-label>New Block</strong>
-                    <span class="wb-text-sm wb-text-muted">New inline block</span>
+                    <strong data-wb-inline-label>{{ $inlineBlocksText('new_block') }}</strong>
+                    <span class="wb-text-sm wb-text-muted">{{ $inlineBlocksText('new_inline_block') }}</span>
                 </div>
 
                 <div class="wb-action-group">
-                    <button type="button" class="wb-action-btn" data-wb-inline-move="up" title="Move block up" aria-label="Move block up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-                    <button type="button" class="wb-action-btn" data-wb-inline-move="down" title="Move block down" aria-label="Move block down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-                    <button type="button" class="wb-action-btn" data-wb-inline-toggle title="Collapse block" aria-label="Collapse block"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-inline-remove title="Remove block" aria-label="Remove block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                    <button type="button" class="wb-action-btn" data-wb-inline-move="up" title="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+                    <button type="button" class="wb-action-btn" data-wb-inline-move="down" title="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+                    <button type="button" class="wb-action-btn" data-wb-inline-toggle title="{{ $inlineBlocksText('collapse') }}" aria-label="{{ $inlineBlocksText('collapse') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-inline-remove title="{{ $inlineBlocksText('remove') }}" aria-label="{{ $inlineBlocksText('remove') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                 </div>
             </div>
             <div class="wb-card-body" data-wb-inline-body></div>

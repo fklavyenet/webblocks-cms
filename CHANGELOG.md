@@ -12,6 +12,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Move Page details, duplicate, layout slot summary, and slot block delete modal copy onto structured admin locale keys.
 - Move Navigation Items and Locales admin copy onto structured admin locale keys.
 - Move column item editor and Page Layout admin copy onto structured admin locale keys.
+- Move Page asset, import, inline block, and page form helper copy onto structured admin locale keys.
 - Move Blocks, Block Types, and System Plugins listing copy onto structured admin locale keys.
 - Move Block Type contract modal catalog, storage, translation, renderer, and gap copy onto structured admin locale keys.
 - Move Page Layout Slot form identity, wrapper markup, trusted HTML, and status copy onto structured admin locale keys.
