@@ -13,6 +13,7 @@ class AdminTranslationAuditCommand extends Command
     {--limit=25 : Number of files or phrases to show}
     {--strict : Return a failure exit code when any admin Blade UI phrase is not covered}
     {--baseline= : JSON file of accepted existing missing admin UI phrase records}
+    {--native-only : Ignore the legacy admin.html fallback map and report hard-coded admin Blade UI phrases that still need direct translation keys}
     {--json : Output the audit as JSON}';
 
   protected $description = 'Audit hard-coded admin Blade UI copy against the admin translation contract';
@@ -32,7 +33,8 @@ class AdminTranslationAuditCommand extends Command
   {
     $locale = (string) $this->option('locale');
     $limit = max(1, (int) $this->option('limit'));
-    $phrases = $this->htmlPhrases($locale);
+    $nativeOnly = (bool) $this->option('native-only');
+    $phrases = $nativeOnly ? [] : $this->htmlPhrases($locale);
     $files = $this->auditFiles($phrases);
     $summary = $this->summary($files);
     $baselinePath = (string) $this->option('baseline');
@@ -57,6 +59,7 @@ class AdminTranslationAuditCommand extends Command
       $this->line(json_encode([
         'locale' => $locale,
         'summary' => $summary,
+        'native_only' => $nativeOnly,
         'baseline' => $baselinePath !== '' ? $baselinePath : null,
         'new_missing' => $newMissing,
         'files' => $files,
@@ -66,9 +69,12 @@ class AdminTranslationAuditCommand extends Command
     }
 
     $this->info('Admin translation audit for locale ['.$locale.']');
+    if ($nativeOnly) {
+      $this->line('Mode: native-key readiness (admin.html fallback ignored)');
+    }
     $this->line('Files: '.$summary['files']);
     $this->line('Phrases: '.$summary['phrases']);
-    $this->line('Covered by admin.html fallback: '.$summary['covered']);
+    $this->line(($nativeOnly ? 'Covered by direct structured keys: ' : 'Covered by admin.html fallback: ').$summary['covered']);
     $this->line('Missing: '.$summary['missing']);
     $this->line('Coverage: '.$summary['coverage'].'%');
 
@@ -121,7 +127,9 @@ class AdminTranslationAuditCommand extends Command
       $this->newLine();
       $this->error($baselineRecords !== null
         ? 'Strict admin translation audit failed: '.$summary['new_missing'].' new UI phrases are not covered by structured translations or the accepted baseline.'
-        : 'Strict admin translation audit failed: '.$summary['missing'].' UI phrases are not covered by structured translations or the reviewed fallback map.');
+        : ($nativeOnly
+          ? 'Strict native admin translation audit failed: '.$summary['missing'].' hard-coded UI phrases still need direct structured translation keys.'
+          : 'Strict admin translation audit failed: '.$summary['missing'].' UI phrases are not covered by structured translations or the reviewed fallback map.'));
 
       return self::FAILURE;
     }

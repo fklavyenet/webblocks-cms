@@ -81,4 +81,18 @@ class AdminTranslationAuditCommandTest extends TestCase
       ->expectsOutputToContain('New missing outside baseline: 0')
       ->assertExitCode(0);
   }
+
+  #[Test]
+  public function native_only_admin_translation_audit_reports_bridge_removal_debt(): void
+  {
+    $this->artisan('webblocks:admin-translation-audit', [
+      '--locale' => 'de',
+      '--limit' => 1,
+      '--native-only' => true,
+      '--strict' => true,
+    ])
+      ->expectsOutputToContain('Mode: native-key readiness (admin.html fallback ignored)')
+      ->expectsOutputToContain('Strict native admin translation audit failed:')
+      ->assertExitCode(1);
+  }
 }
