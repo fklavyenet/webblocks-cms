@@ -1,10 +1,20 @@
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('contact_messages_show.'.$key, $adminLocale, $replace);
+    $statusLabel = static fn (string $status) => $adminText('status_'.$status);
+@endphp
+
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Inspect the saved submission record, spam signals, and notification delivery without mixing editorial status with SMTP state.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><span class="wb-status-pill '.$message->statusClass().'">'.e($message->status).'</span><a href="'.route('admin.contact-messages.index').'" class="wb-btn wb-btn-secondary">Back to Inbox</a></div>',
+        'description' => $adminText('description'),
+        'actions' => '<div class="wb-cluster wb-cluster-2"><span class="wb-status-pill '.$message->statusClass().'">'.e($message->status).'</span><a href="'.route('admin.contact-messages.index').'" class="wb-btn wb-btn-secondary">'.$adminText('back_to_inbox').'</a></div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -16,33 +26,33 @@
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="status" value="{{ $status }}">
-                    <button type="submit" class="wb-btn {{ $message->status === $status ? 'wb-btn-primary' : 'wb-btn-secondary' }}">{{ $status === 'new' ? 'Mark new' : 'Mark '.$status }}</button>
+                    <button type="submit" class="wb-btn {{ $message->status === $status ? 'wb-btn-primary' : 'wb-btn-secondary' }}">{{ $adminText('mark_status', ['status' => $statusLabel($status)]) }}</button>
                 </form>
             @endforeach
         </div>
 
-        <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#delete-contact-message-modal">Delete</button>
+        <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#delete-contact-message-modal">{{ $adminText('delete') }}</button>
     </div>
 
     <div class="wb-card">
-        <div class="wb-card-header"><strong>Visitor message</strong></div>
+        <div class="wb-card-header"><strong>{{ $adminText('visitor_message') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-4">
             <dl class="wb-detail-list wb-contact-message-meta">
                 <div class="wb-detail-row">
-                    <dt class="wb-detail-label">Name</dt>
+                    <dt class="wb-detail-label">{{ $adminText('name') }}</dt>
                     <dd class="wb-detail-value">{{ $message->name }}</dd>
                 </div>
                 <div class="wb-detail-row">
-                    <dt class="wb-detail-label">Email</dt>
+                    <dt class="wb-detail-label">{{ $adminText('email') }}</dt>
                     <dd class="wb-detail-value"><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></dd>
                 </div>
                 <div class="wb-detail-row">
-                    <dt class="wb-detail-label">Subject</dt>
-                    <dd class="wb-detail-value">{{ $message->subject ?? '—' }}</dd>
+                    <dt class="wb-detail-label">{{ $adminText('subject') }}</dt>
+                    <dd class="wb-detail-value">{{ $message->subject ?? $adminText('empty_value') }}</dd>
                 </div>
             </dl>
             <div class="wb-stack wb-gap-2">
-                <strong>Message</strong>
+                <strong>{{ $adminText('message') }}</strong>
                 <div class="wb-contact-message-body">{{ $message->message }}</div>
             </div>
         </div>
@@ -50,37 +60,37 @@
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Submission details</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('submission_details') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2">
-                <div><strong>Page:</strong> {{ $message->page?->title ?? '-' }}</div>
-                <div><strong>Path:</strong> <code>{{ $message->sourcePath() }}</code></div>
-                <div><strong>Source URL:</strong> @if ($message->source_url)<a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-link">Open source</a>@else - @endif</div>
-                <div><strong>Referrer:</strong> {{ $message->referer ?? '-' }}</div>
-                <div><strong>Received at:</strong> {{ $message->created_at?->format('Y-m-d H:i:s') }}</div>
-                <div><strong>Block / Slot:</strong> {{ $message->block?->typeName() ?? '-' }} / {{ $message->block?->slotType?->name ?? $message->block?->slotName() ?? '-' }}</div>
+                <div><strong>{{ $adminText('page_label') }}</strong> {{ $message->page?->title ?? '-' }}</div>
+                <div><strong>{{ $adminText('path_label') }}</strong> <code>{{ $message->sourcePath() }}</code></div>
+                <div><strong>{{ $adminText('source_url_label') }}</strong> @if ($message->source_url)<a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $adminText('open_source') }}</a>@else - @endif</div>
+                <div><strong>{{ $adminText('referrer_label') }}</strong> {{ $message->referer ?? '-' }}</div>
+                <div><strong>{{ $adminText('received_at_label') }}</strong> {{ $message->created_at?->format('Y-m-d H:i:s') }}</div>
+                <div><strong>{{ $adminText('block_slot_label') }}</strong> {{ $message->block?->typeName() ?? '-' }} / {{ $message->block?->slotType?->name ?? $message->block?->slotName() ?? '-' }}</div>
             </div>
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Email notification</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('email_notification') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2">
-                <div><strong>Status:</strong> <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></div>
-                <div><strong>Recipient:</strong> {{ $message->notification_recipient ?? '-' }}</div>
-                <div><strong>Recipient source:</strong> {{ $message->notificationSourceLabel() }}</div>
-                <div><strong>Attempted/sent at:</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                <div><strong>Failure or skipped reason:</strong> {{ $message->notificationDetail() ?? '-' }}</div>
+                <div><strong>{{ $adminText('status_label') }}</strong> <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></div>
+                <div><strong>{{ $adminText('recipient_label') }}</strong> {{ $message->notification_recipient ?? '-' }}</div>
+                <div><strong>{{ $adminText('recipient_source_label') }}</strong> {{ $message->notificationSourceLabel() }}</div>
+                <div><strong>{{ $adminText('attempted_sent_at_label') }}</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
+                <div><strong>{{ $adminText('failure_or_skipped_reason_label') }}</strong> {{ $message->notificationDetail() ?? '-' }}</div>
                 @if ($message->hasLegacyNotificationState())
-                    <div class="wb-alert wb-alert-info">This message was saved before explicit notification status metadata was available. Its status is inferred from older notification fields.</div>
+                    <div class="wb-alert wb-alert-info">{{ $adminText('legacy_notification_state') }}</div>
                 @endif
-                <div class="wb-text-sm wb-text-muted">Sent means the CMS handed the message to the configured mail transport. It does not guarantee inbox delivery. Skipped means notification was not attempted, usually because mail or recipient settings are missing or disabled.</div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('delivery_help') }}</div>
                 <div class="wb-divider"></div>
                 <div class="wb-stack wb-gap-2">
-                    <strong>Setup guidance</strong>
+                    <strong>{{ $adminText('setup_guidance') }}</strong>
                     <ul class="wb-text-sm wb-text-muted">
-                        <li>Configure <code>MAIL_*</code> in <code>.env</code>, then run <code>php artisan optimize:clear</code>.</li>
-                        <li>Configure Site -&gt; Edit -&gt; Contact recipient when available.</li>
-                        <li>Optionally set <code>CONTACT_RECIPIENT_EMAIL</code> for the CMS fallback recipient.</li>
-                        <li>Run <code>php artisan contact:mail-diagnose</code>, <code>php artisan contact:mail-diagnose --block={{ $message->block_id ?? 'ID' }}</code>, or <code>php artisan contact:mail-diagnose --send-test=you@example.com</code>.</li>
+                        <li>{!! $adminText('setup_mail_html') !!}</li>
+                        <li>{{ $adminText('setup_site_recipient') }}</li>
+                        <li>{!! $adminText('setup_fallback_recipient_html') !!}</li>
+                        <li>{!! $adminText('setup_diagnose_html', ['block' => $message->block_id ?? 'ID']) !!}</li>
                     </ul>
                 </div>
             </div>
@@ -88,30 +98,30 @@
     </div>
 
     <div class="wb-card">
-        <div class="wb-card-header"><strong>Message classification</strong></div>
+        <div class="wb-card-header"><strong>{{ $adminText('message_classification') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-2">
-            <div><strong>Editorial status:</strong> <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></div>
-            <div><strong>Spam score:</strong> {{ $message->spam_score ?? 0 }}</div>
-            <div><strong>Spam signals:</strong>
+            <div><strong>{{ $adminText('editorial_status_label') }}</strong> <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></div>
+            <div><strong>{{ $adminText('spam_score_label') }}</strong> {{ $message->spam_score ?? 0 }}</div>
+            <div><strong>{{ $adminText('spam_signals_label') }}</strong>
                 @if ($message->spamReasonLabels() === [])
                     -
                 @else
                     {{ implode(', ', $message->spamReasonLabels()) }}
                 @endif
             </div>
-            <div class="wb-text-sm wb-text-muted">Mark spam stores a durable editorial status for filtering and future spam-signal workflows; it does not change notification delivery history.</div>
+            <div class="wb-text-sm wb-text-muted">{{ $adminText('classification_help') }}</div>
         </div>
     </div>
 
     <div class="wb-card wb-card-muted">
-        <div class="wb-card-header"><strong>Technical details</strong></div>
+        <div class="wb-card-header"><strong>{{ $adminText('technical_details') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-2">
-            <div class="wb-text-sm wb-text-muted">Admin-only request metadata captured with the submission.</div>
+            <div class="wb-text-sm wb-text-muted">{{ $adminText('technical_details_help') }}</div>
             <div class="wb-grid wb-grid-2">
-                <div><strong>IP address:</strong> {{ $message->ip_address ?? '-' }}</div>
-                <div><strong>User agent:</strong> {{ $message->user_agent ?? '-' }}</div>
-                <div><strong>Block ID:</strong> {{ $message->block_id ? '#'.$message->block_id : '-' }}</div>
-                <div><strong>Page ID:</strong> {{ $message->page_id ? '#'.$message->page_id : '-' }}</div>
+                <div><strong>{{ $adminText('ip_address_label') }}</strong> {{ $message->ip_address ?? '-' }}</div>
+                <div><strong>{{ $adminText('user_agent_label') }}</strong> {{ $message->user_agent ?? '-' }}</div>
+                <div><strong>{{ $adminText('block_id_label') }}</strong> {{ $message->block_id ? '#'.$message->block_id : '-' }}</div>
+                <div><strong>{{ $adminText('page_id_label') }}</strong> {{ $message->page_id ? '#'.$message->page_id : '-' }}</div>
             </div>
         </div>
     </div>
@@ -120,19 +130,19 @@
 @push('overlays')
     @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
         'id' => 'delete-contact-message-modal',
-        'title' => 'Delete Contact Message',
-        'description' => 'This deletes the saved contact submission.',
+        'title' => $adminText('delete_contact_message'),
+        'description' => $adminText('delete_contact_message_description'),
         'action' => route('admin.contact-messages.destroy', $message),
         'method' => 'DELETE',
-        'submitLabel' => 'Delete message',
+        'submitLabel' => $adminText('delete_message'),
     ])
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-stack wb-gap-2">
-                <div><strong>{{ $message->subject ?: 'Contact Message #'.$message->id }}</strong></div>
-                <div class="wb-text-sm wb-text-muted">From {{ $message->name }} &lt;{{ $message->email }}&gt;</div>
+                <div><strong>{{ $message->subject ?: $adminText('contact_message_number', ['id' => $message->id]) }}</strong></div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('from_sender', ['name' => $message->name, 'email' => $message->email]) }}</div>
             </div>
         </div>
 
-        <p class="wb-text-sm wb-text-muted">This cannot be undone from the admin UI.</p>
+        <p class="wb-text-sm wb-text-muted">{{ $adminText('cannot_be_undone') }}</p>
     @endcomponent
 @endpush
