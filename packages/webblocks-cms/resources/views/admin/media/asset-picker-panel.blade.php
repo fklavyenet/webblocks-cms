@@ -1,29 +1,37 @@
 @php
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $assetPickerAdminLocale = app(AdminLocaleResolver::class)->locale();
+  $assetPickerTranslator = app(CmsTranslator::class);
+  $assetPickerText = static fn (string $key, array $replace = []) => $assetPickerTranslator->admin('media_asset_picker.'.$key, $assetPickerAdminLocale, $replace);
   $pickerName = $name ?? 'asset-picker';
   $pickerMode = $mode ?? 'single';
   $pickerAccept = $accept ?? null;
   $pickerInputId = $inputId ?? $pickerName;
   $pickerFieldName = $fieldName ?? $pickerInputId;
-  $pickerTitle = $title ?? 'Asset';
+  $pickerTitle = $title ?? $assetPickerText('asset');
   $pickerSelectedAsset = $selectedAsset ?? null;
   $pickerSelectedAssets = collect($selectedAssets ?? [])->filter()->values();
   $pickerHasSelection = $pickerMode === 'multiple'
     ? $pickerSelectedAssets->isNotEmpty()
     : $pickerSelectedAsset !== null;
-  $pickerButtonLabel = $buttonLabel ?? 'Choose from Media';
-  $pickerReplaceLabel = $replaceLabel ?? 'Replace';
-  $pickerClearLabel = $clearLabel ?? 'Remove';
+  $pickerButtonLabel = $buttonLabel ?? $assetPickerText('choose_from_media');
+  $pickerReplaceLabel = $replaceLabel ?? $assetPickerText('replace');
+  $pickerClearLabel = $clearLabel ?? $assetPickerText('remove');
   $pickerCompactControls = (bool) ($compactControls ?? false);
   $pickerPanelMode = $panelMode ?? 'inline';
   $pickerBlock = $block ?? null;
   $pickerInstanceKey = $instanceKey
-    ?? ($pickerBlock instanceof \WebBlocks\Cms\Models\Block && $pickerBlock->exists
-      ? 'block-'.$pickerBlock->id.'-'.$pickerInputId
+    ?? ($pickerInputId === $pickerFieldName
+      ? $pickerInputId
       : $pickerName.'-'.$pickerInputId.'-'.str_replace('.', '-', uniqid('', true)));
   $pickerInstanceId = preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInstanceKey);
-  $pickerPanelId = $pickerInputId.'_'.$pickerInstanceId.'_picker_panel';
+  $pickerPanelId = $pickerInstanceId === $pickerInputId
+    ? $pickerInputId.'_picker_panel'
+    : $pickerInputId.'_'.$pickerInstanceId.'_picker_panel';
   $pickerPanelTitleId = $pickerPanelId.'_title';
-  $pickerPanelTitle = $panelTitle ?? ($pickerMode === 'multiple' ? 'Choose Assets' : 'Choose Asset');
+  $pickerPanelTitle = $panelTitle ?? ($pickerMode === 'multiple' ? $assetPickerText('choose_assets') : $assetPickerText('choose_asset'));
   $pickerControlsClass = $controlsClass ?? 'wb-cluster wb-cluster-2';
   $pickerOverlayOwnerId = 'wb-picker-owner-'.$pickerInstanceId;
   $pickerResultsVariant = $resultsVariant ?? 'card';
@@ -53,19 +61,19 @@
     };
   };
   $pickerKindOptions = collect([
-    '' => 'All kinds',
-    'image' => 'Image',
-    'document' => 'Document',
-    'video' => 'Video',
-    'other' => 'Other',
+    '' => $assetPickerText('all_kinds'),
+    'image' => $assetPickerText('image'),
+    'document' => $assetPickerText('document'),
+    'video' => $assetPickerText('video'),
+    'other' => $assetPickerText('other'),
   ]);
 
   if ($pickerAccept === 'audio') {
-    $pickerKindOptions->put('audio', 'Audio');
+    $pickerKindOptions->put('audio', $assetPickerText('audio'));
   }
 
   if ($pickerAccept === 'file') {
-    $pickerKindOptions->put('file', 'File');
+    $pickerKindOptions->put('file', $assetPickerText('file'));
   }
 
   $pickerVisibleAssets = collect($assetPickerAssets ?? [])
@@ -73,19 +81,16 @@
     ->values();
   $pickerHasVisibleAssets = $pickerVisibleAssets->isNotEmpty();
   $pickerEmptyTitle = match ($pickerInitialKind) {
-    'image' => 'No matching images',
-    'audio' => 'No matching audio files',
-    'file' => 'No matching files',
-    default => 'No matching assets',
+    'image' => $assetPickerText('empty_images_title'),
+    'audio' => $assetPickerText('empty_audio_title'),
+    'file' => $assetPickerText('empty_files_title'),
+    default => $assetPickerText('empty_assets_title'),
   };
-  $pickerUploadLead = $pickerShowUpload
-    ? 'Upload'
-    : 'Use Admin -> Media to upload';
   $pickerEmptyText = match ($pickerInitialKind) {
-    'image' => $pickerUploadLead.' an image, or adjust the search or folder filter to find one in the shared media library.',
-    'audio' => $pickerUploadLead.' an audio file, or adjust the search or folder filter to find one in the shared media library.',
-    'file' => $pickerUploadLead.' a file, or adjust the search or folder filter to find one in the shared media library.',
-    default => 'Adjust the search or folder filter to find an internal asset.',
+    'image' => $assetPickerText($pickerShowUpload ? 'empty_images_upload_text' : 'empty_images_media_text'),
+    'audio' => $assetPickerText($pickerShowUpload ? 'empty_audio_upload_text' : 'empty_audio_media_text'),
+    'file' => $assetPickerText($pickerShowUpload ? 'empty_files_upload_text' : 'empty_files_media_text'),
+    default => $assetPickerText('empty_assets_text'),
   };
 @endphp
 
@@ -160,10 +165,10 @@
       <div class="wb-stack wb-gap-1" data-wb-picker-summary>
         @if ($pickerMode === 'multiple')
           @if ($pickerSelectedAssets->isEmpty())
-            <strong>No assets selected</strong>
-            <div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>
+            <strong>{{ $assetPickerText('no_assets_selected') }}</strong>
+            <div class="wb-text-sm wb-text-muted">{{ $assetPickerText('choose_internal_assets') }}</div>
           @else
-            <strong>{{ $pickerSelectedAssets->count() }} assets selected</strong>
+            <strong>{{ $assetPickerText($pickerSelectedAssets->count() === 1 ? 'asset_selected_singular' : 'asset_selected_plural', ['count' => $pickerSelectedAssets->count()]) }}</strong>
             <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAssets->pluck('title')->filter()->implode(', ') ?: $pickerSelectedAssets->pluck('filename')->implode(', ') }}</div>
           @endif
         @elseif ($pickerSelectedAsset)
@@ -173,8 +178,8 @@
           <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
           <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
         @else
-          <strong>No asset selected</strong>
-          <div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>
+          <strong>{{ $assetPickerText('no_asset_selected') }}</strong>
+          <div class="wb-text-sm wb-text-muted">{{ $assetPickerText('choose_internal_asset') }}</div>
         @endif
       </div>
     @endif
@@ -189,7 +194,7 @@
                   <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $asset->title ?: $asset->filename }}" width="120" height="84">
                 @endif
                 <strong>{{ $asset->title ?: $asset->filename }}</strong>
-                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">Remove</button>
+                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">{{ $assetPickerText('remove') }}</button>
               </div>
             </div>
           @endforeach
@@ -222,10 +227,10 @@
           <div class="wb-stack wb-gap-1" data-wb-picker-summary>
             @if ($pickerMode === 'multiple')
               @if ($pickerSelectedAssets->isEmpty())
-                <strong>No assets selected</strong>
-                <div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>
+                <strong>{{ $assetPickerText('no_assets_selected') }}</strong>
+                <div class="wb-text-sm wb-text-muted">{{ $assetPickerText('choose_internal_assets') }}</div>
               @else
-                <strong>{{ $pickerSelectedAssets->count() }} assets selected</strong>
+                <strong>{{ $assetPickerText($pickerSelectedAssets->count() === 1 ? 'asset_selected_singular' : 'asset_selected_plural', ['count' => $pickerSelectedAssets->count()]) }}</strong>
                 <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAssets->pluck('title')->filter()->implode(', ') ?: $pickerSelectedAssets->pluck('filename')->implode(', ') }}</div>
               @endif
             @elseif ($pickerSelectedAsset)
@@ -235,8 +240,8 @@
               <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
               <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
             @else
-              <strong>No asset selected</strong>
-              <div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>
+              <strong>{{ $assetPickerText('no_asset_selected') }}</strong>
+              <div class="wb-text-sm wb-text-muted">{{ $assetPickerText('choose_internal_asset') }}</div>
             @endif
           </div>
 
@@ -255,7 +260,7 @@
                     <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $asset->title ?: $asset->filename }}" width="120" height="84">
                   @endif
                   <strong>{{ $asset->title ?: $asset->filename }}</strong>
-                  <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">Remove</button>
+                  <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">{{ $assetPickerText('remove') }}</button>
                 </div>
               </div>
             @endforeach
@@ -282,7 +287,7 @@
           <div class="wb-modal-header">
             <h2 class="wb-modal-title" id="{{ $pickerPanelTitleId }}">{{ $pickerPanelTitle }}</h2>
 
-            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" data-wb-picker-close aria-label="Close">
+            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" data-wb-picker-close aria-label="{{ $assetPickerText('close') }}">
               <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
             </button>
           </div>
@@ -293,14 +298,14 @@
                 <div class="wb-card-body wb-stack wb-gap-2">
                   <div class="wb-grid wb-grid-3" data-wb-picker-filters>
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_asset_search">Search</label>
-                      <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                      <label for="{{ $pickerInputId }}_asset_search">{{ $assetPickerText('search') }}</label>
+                      <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="{{ $assetPickerText('search_assets') }}">
                     </div>
 
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                      <label for="{{ $pickerInputId }}_asset_folder">{{ $assetPickerText('folder') }}</label>
                       <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
-                        <option value="">All folders</option>
+                        <option value="">{{ $assetPickerText('all_folders') }}</option>
                         @foreach (($assetPickerFolders ?? collect()) as $folder)
                           <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
                         @endforeach
@@ -308,7 +313,7 @@
                     </div>
 
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                      <label for="{{ $pickerInputId }}_asset_kind">{{ $assetPickerText('kind') }}</label>
                       <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
                         @foreach ($pickerKindOptions as $value => $label)
                           <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
@@ -327,14 +332,14 @@
                 <div class="wb-card-body wb-stack wb-gap-2">
                   <div class="wb-grid wb-grid-3" data-wb-picker-filters>
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_asset_search">Search</label>
-                      <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                      <label for="{{ $pickerInputId }}_asset_search">{{ $assetPickerText('search') }}</label>
+                      <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="{{ $assetPickerText('search_assets') }}">
                     </div>
 
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                      <label for="{{ $pickerInputId }}_asset_folder">{{ $assetPickerText('folder') }}</label>
                       <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
-                        <option value="">All folders</option>
+                        <option value="">{{ $assetPickerText('all_folders') }}</option>
                         @foreach (($assetPickerFolders ?? collect()) as $folder)
                           <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
                         @endforeach
@@ -342,7 +347,7 @@
                     </div>
 
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                      <label for="{{ $pickerInputId }}_asset_kind">{{ $assetPickerText('kind') }}</label>
                       <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
                         @foreach ($pickerKindOptions as $value => $label)
                           <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
@@ -366,27 +371,27 @@
             </div>
 
             <div class="wb-empty" data-wb-picker-error hidden>
-              <div class="wb-empty-title">Unable to load media</div>
-              <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
+              <div class="wb-empty-title">{{ $assetPickerText('unable_to_load_media') }}</div>
+              <div class="wb-empty-text" data-wb-picker-error-text>{{ $assetPickerText('close_picker_try_again') }}</div>
             </div>
 
             @if ($pickerShowUpload)
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-body wb-stack wb-gap-2">
-                  <strong>Upload to Library</strong>
+                  <strong>{{ $assetPickerText('upload_to_library') }}</strong>
                   <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_inline_upload">File</label>
+                      <label for="{{ $pickerInputId }}_inline_upload">{{ $assetPickerText('file') }}</label>
                       <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
                     </div>
                     <div class="wb-stack wb-gap-1">
-                      <label for="{{ $pickerInputId }}_inline_upload_title">Title</label>
+                      <label for="{{ $pickerInputId }}_inline_upload_title">{{ $assetPickerText('title') }}</label>
                       <input id="{{ $pickerInputId }}_inline_upload_title" type="text" class="wb-input" data-wb-picker-upload-title>
                     </div>
                   </div>
                   <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                    <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>Select a file to upload it to the shared media library.</span>
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>Upload</button>
+                    <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>{{ $assetPickerText('select_file_to_upload') }}</span>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>{{ $assetPickerText('upload') }}</button>
                   </div>
                 </div>
               </div>
@@ -394,9 +399,9 @@
           </div>
 
           <div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">
-            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-picker-close>Close</button>
+            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-picker-close>{{ $assetPickerText('close') }}</button>
             @if ($pickerMode === 'multiple')
-              <button type="button" class="wb-btn wb-btn-primary" data-wb-picker-apply>Add Selected</button>
+              <button type="button" class="wb-btn wb-btn-primary" data-wb-picker-apply>{{ $assetPickerText('add_selected') }}</button>
             @endif
           </div>
         </div>
@@ -409,14 +414,14 @@
           <div class="wb-card-body wb-stack wb-gap-2">
             <div class="wb-grid wb-grid-3" data-wb-picker-filters>
               <div class="wb-stack wb-gap-1">
-                <label for="{{ $pickerInputId }}_asset_search">Search</label>
-                <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                <label for="{{ $pickerInputId }}_asset_search">{{ $assetPickerText('search') }}</label>
+                <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="{{ $assetPickerText('search_assets') }}">
               </div>
 
               <div class="wb-stack wb-gap-1">
-                <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                <label for="{{ $pickerInputId }}_asset_folder">{{ $assetPickerText('folder') }}</label>
                 <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
-                  <option value="">All folders</option>
+                  <option value="">{{ $assetPickerText('all_folders') }}</option>
                   @foreach (($assetPickerFolders ?? collect()) as $folder)
                     <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
                   @endforeach
@@ -424,7 +429,7 @@
               </div>
 
               <div class="wb-stack wb-gap-1">
-                <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                <label for="{{ $pickerInputId }}_asset_kind">{{ $assetPickerText('kind') }}</label>
                 <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
                   @foreach ($pickerKindOptions as $value => $label)
                     <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
@@ -447,36 +452,36 @@
         </div>
 
         <div class="wb-empty" data-wb-picker-error hidden>
-          <div class="wb-empty-title">Unable to load media</div>
-          <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
+          <div class="wb-empty-title">{{ $assetPickerText('unable_to_load_media') }}</div>
+          <div class="wb-empty-text" data-wb-picker-error-text>{{ $assetPickerText('close_picker_try_again') }}</div>
         </div>
 
         @if ($pickerShowUpload)
           <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-stack wb-gap-2">
-              <strong>Upload to Library</strong>
+              <strong>{{ $assetPickerText('upload_to_library') }}</strong>
               <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-1">
-                  <label for="{{ $pickerInputId }}_inline_upload">File</label>
+                  <label for="{{ $pickerInputId }}_inline_upload">{{ $assetPickerText('file') }}</label>
                   <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
                 </div>
                 <div class="wb-stack wb-gap-1">
-                  <label for="{{ $pickerInputId }}_inline_upload_title">Title</label>
+                  <label for="{{ $pickerInputId }}_inline_upload_title">{{ $assetPickerText('title') }}</label>
                   <input id="{{ $pickerInputId }}_inline_upload_title" type="text" class="wb-input" data-wb-picker-upload-title>
                 </div>
               </div>
               <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>Select a file to upload it to the shared media library.</span>
-                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>Upload</button>
+                <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>{{ $assetPickerText('select_file_to_upload') }}</span>
+                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>{{ $assetPickerText('upload') }}</button>
               </div>
             </div>
           </div>
         @endif
 
         <div class="wb-cluster wb-cluster-between wb-cluster-2">
-          <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-close>Close Panel</button>
+          <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-close>{{ $assetPickerText('close_panel') }}</button>
           @if ($pickerMode === 'multiple')
-            <button type="button" class="wb-btn wb-btn-primary" data-wb-picker-apply>Add Selected</button>
+            <button type="button" class="wb-btn wb-btn-primary" data-wb-picker-apply>{{ $assetPickerText('add_selected') }}</button>
           @endif
         </div>
       </div>
