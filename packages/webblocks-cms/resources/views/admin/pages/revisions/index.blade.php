@@ -1,7 +1,13 @@
 @php
-    $pageTitle = 'Page Revisions: '.$page->title;
-    $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
-    $pageEditUrl = route('admin.pages.edit', $page);
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('page_revisions.'.$key, $adminLocale, $replace);
+  $pageTitle = $adminText('title', ['title' => $page->title]);
+  $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
+  $pageEditUrl = route('admin.pages.edit', $page);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -9,40 +15,40 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Review page-level revision snapshots for content restore. This history is page-specific and does not replace system backups or site export packages.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$pageEditUrl.'" class="wb-btn wb-btn-secondary">Back to Page</a>'.($pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '').'</div>',
+        'description' => $adminText('description'),
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$pageEditUrl.'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_page')).'</a>'.($pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>'.e($adminText('view_page')).'</span></a>' : '').'</div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
-            <span>Site: <strong>{{ $page->site?->name ?? 'Site' }}</strong></span>
-            <span>Current workflow: <strong>{{ $page->workflowLabel() }}</strong></span>
-            <span>Total revisions: <strong>{{ $revisions->count() }}</strong></span>
+            <span>{{ $adminText('site') }}: <strong>{{ $page->site?->name ?? $adminText('fallback_site') }}</strong></span>
+            <span>{{ $adminText('current_workflow') }}: <strong>{{ $page->workflowLabel() }}</strong></span>
+            <span>{{ $adminText('total_revisions') }}: <strong>{{ $revisions->count() }}</strong></span>
         </div>
     </div>
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Revision History</strong>
-            <span class="wb-text-sm wb-text-muted">Newest first</span>
+            <strong>{{ $adminText('revision_history') }}</strong>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('newest_first') }}</span>
         </div>
         <div class="wb-card-body">
             @if ($revisions->isEmpty())
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No revisions yet</div>
-                    <div class="wb-empty-text">Revisions are created automatically when page content, translations, workflow, slots, or blocks change.</div>
+                    <div class="wb-empty-title">{{ $adminText('no_revisions_title') }}</div>
+                    <div class="wb-empty-text">{{ $adminText('no_revisions_help') }}</div>
                 </div>
             @else
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>Created</th>
-                                <th>Revision</th>
-                                <th>Audit</th>
-                                <th>Restore</th>
+                                <th>{{ $adminText('created') }}</th>
+                                <th>{{ $adminText('revision') }}</th>
+                                <th>{{ $adminText('audit') }}</th>
+                                <th>{{ $adminText('restore') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -56,25 +62,25 @@
                                                 <span class="wb-text-sm wb-text-muted">{{ $revision->reason }}</span>
                                             @endif
                                             @if ($revision->restoredFrom)
-                                                <span class="wb-text-sm wb-text-muted">Restored from revision #{{ $revision->restoredFrom->id }}</span>
+                                                <span class="wb-text-sm wb-text-muted">{{ $adminText('restored_from_revision', ['id' => $revision->restoredFrom->id]) }}</span>
                                             @endif
                                         </div>
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1 wb-text-sm">
                                             <span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
-                                            <span class="wb-text-muted">Source: {{ $revision->sourceText() }}</span>
-                                            <span class="wb-text-muted">Event: {{ $revision->eventText() }}</span>
+                                            <span class="wb-text-muted">{{ $adminText('source') }}: {{ $revision->sourceText() }}</span>
+                                            <span class="wb-text-muted">{{ $adminText('event') }}: {{ $revision->eventText() }}</span>
                                         </div>
                                     </td>
                                     <td>
                                         @if ($canRestoreRevisions)
-                                            <form method="POST" action="{{ route('admin.pages.revisions.restore', [$page, $revision]) }}" onsubmit="return confirm('Restore this page revision? A safety revision will be created first.');">
+                                            <form method="POST" action="{{ route('admin.pages.revisions.restore', [$page, $revision]) }}" onsubmit="return confirm('{{ $adminText('restore_confirm') }}');">
                                                 @csrf
-                                                <button type="submit" class="wb-btn wb-btn-secondary">Restore</button>
+                                                <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('restore') }}</button>
                                             </form>
                                         @else
-                                            <span class="wb-text-sm wb-text-muted">View only</span>
+                                            <span class="wb-text-sm wb-text-muted">{{ $adminText('view_only') }}</span>
                                         @endif
                                     </td>
                                 </tr>
