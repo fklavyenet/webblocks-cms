@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.34.9
+
+- Bumped CMS to `1.34.9`.
 - Scope `/webadmin/users` to CMS-managed users so host-only coexistence accounts stay out of CMS user management.
 
 ## 1.34.8
