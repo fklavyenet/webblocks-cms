@@ -1,18 +1,26 @@
 @php
-    $siteContext = $activeSite?->name ?? 'All sites';
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('shared_slots.'.$key, $adminLocale, $replace);
+  $localizedPageTitle = $adminText('title');
+  $siteContext = $activeSite?->name ?? $adminText('all_sites');
+  $siteDomain = $activeSite?->canonicalDomain();
     $siteContextDescription = $showAllSites
-        ? 'Showing Shared Slots across all allowed sites.'
-        : 'Showing Shared Slots for '.$activeSite->name.($activeSite?->canonicalDomain() ? ' ('.$activeSite->canonicalDomain().')' : '').'.';
-    $sharedSlotsReady = $sharedSlotsReady ?? true;
-    $newSharedSlotUrl = $activeSite ? route('admin.shared-slots.create', ['site' => $activeSite->id]) : route('admin.shared-slots.create');
-    $clearUrl = route('admin.shared-slots.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
+      ? $adminText('index_all_context')
+      : $adminText('index_site_context', ['site' => $activeSite->name, 'domain' => $siteDomain ? ' ('.$siteDomain.')' : '']);
+  $sharedSlotsReady = $sharedSlotsReady ?? true;
+  $newSharedSlotUrl = $activeSite ? route('admin.shared-slots.create', ['site' => $activeSite->id]) : route('admin.shared-slots.create');
+  $clearUrl = route('admin.shared-slots.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => 'Shared Slots', 'heading' => 'Shared Slots'])
+@extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Shared Slots',
+        'title' => $localizedPageTitle,
         'context' => '<span>'.e($siteContextDescription).'</span>',
         'count' => $sharedSlotsReady ? $totalCount : null,
     ])
@@ -23,8 +31,8 @@
         <div class="wb-card">
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">Shared Slots are not ready yet</div>
-                    <div class="wb-empty-text">Run the latest migrations before using Shared Slot admin screens in this environment.</div>
+                    <div class="wb-empty-title">{{ $adminText('not_ready_title') }}</div>
+                    <div class="wb-empty-text">{{ $adminText('not_ready_help') }}</div>
                 </div>
             </div>
         </div>
@@ -36,57 +44,57 @@
                     'search' => [
                         'id' => 'shared_slots_search',
                         'name' => 'search',
-                        'label' => 'Search',
+                        'label' => $adminText('search'),
                         'value' => $filters['search'],
-                        'placeholder' => 'Search by name, handle, slot, or shell',
+                        'placeholder' => $adminText('search_placeholder'),
                     ],
                     'selects' => [
                         [
                             'id' => 'shared_slots_site_context',
                             'name' => 'site',
-                            'label' => 'Site',
+                            'label' => $adminText('site'),
                             'selected' => $filters['site'],
                             'placeholder' => null,
-                            'options' => collect($sites)->mapWithKeys(fn ($site) => [$site->id => $site->name])->all() + ['all' => 'All sites'],
+                            'options' => collect($sites)->mapWithKeys(fn ($site) => [$site->id => $site->name])->all() + ['all' => $adminText('all_sites')],
                         ],
                         [
                             'id' => 'shared_slots_status',
                             'name' => 'status',
-                            'label' => 'Status',
+                            'label' => $adminText('status'),
                             'selected' => $filters['status'],
-                            'placeholder' => 'All statuses',
+                            'placeholder' => $adminText('all_statuses'),
                             'options' => [
-                                'active' => 'Active',
-                                'inactive' => 'Inactive',
+                                'active' => $adminText('active'),
+                                'inactive' => $adminText('inactive'),
                             ],
                         ],
                         [
                             'id' => 'shared_slots_sort',
                             'name' => 'sort',
-                            'label' => 'Sort by',
+                            'label' => $adminText('sort_by'),
                             'selected' => $filters['sort'],
                             'options' => [
-                                'updated_at' => 'Updated at',
-                                'name' => 'Name',
-                                'handle' => 'Handle',
-                                'slot_name' => 'Slot',
-                                'public_shell' => 'Page Layout',
+                                'updated_at' => $adminText('updated_at'),
+                                'name' => $adminText('name'),
+                                'handle' => $adminText('handle'),
+                                'slot_name' => $adminText('slot'),
+                                'public_shell' => $adminText('page_layout'),
                             ],
                         ],
                         [
                             'id' => 'shared_slots_direction',
                             'name' => 'direction',
-                            'label' => 'Direction',
+                            'label' => $adminText('direction'),
                             'selected' => $filters['direction'],
                             'options' => [
-                                'desc' => 'Descending',
-                                'asc' => 'Ascending',
+                                'desc' => $adminText('descending'),
+                                'asc' => $adminText('ascending'),
                             ],
                         ],
                     ],
                     'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'updated_at' || $filters['direction'] !== 'desc',
                     'resetUrl' => $clearUrl,
-                    'applyLabel' => 'Apply',
+                    'applyLabel' => $adminText('apply'),
                 ])
             </div>
         </div>
@@ -95,22 +103,22 @@
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Shared Slots for {{ $siteContext }}</strong>
+                    <strong>{{ $adminText('shared_slots_for', ['site' => $siteContext]) }}</strong>
                     <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 @if ($canCreateSharedSlots)
-                    <a href="{{ $newSharedSlotUrl }}" class="wb-btn wb-btn-primary">New Shared Slot</a>
+                    <a href="{{ $newSharedSlotUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('new_shared_slot') }}</a>
                 @endif
             </div>
 
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No Shared Slots found</div>
-                    <div class="wb-empty-text">Create reusable Shared Slot content for {{ strtolower($siteContext) }}.</div>
+                    <div class="wb-empty-title">{{ $adminText('no_shared_slots_found') }}</div>
+                    <div class="wb-empty-text">{{ $adminText('empty_help', ['site' => strtolower($siteContext)]) }}</div>
                     @if ($canCreateSharedSlots)
                         <div class="wb-empty-action">
-                            <a href="{{ $newSharedSlotUrl }}" class="wb-btn wb-btn-primary">Create Shared Slot</a>
+                            <a href="{{ $newSharedSlotUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('create_shared_slot') }}</a>
                         </div>
                     @endif
                 </div>
@@ -120,12 +128,12 @@
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Shared Slots for {{ $siteContext }}</strong>
+                    <strong>{{ $adminText('shared_slots_for', ['site' => $siteContext]) }}</strong>
                     <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 @if ($canCreateSharedSlots)
-                    <a href="{{ $newSharedSlotUrl }}" class="wb-btn wb-btn-primary">New Shared Slot</a>
+                    <a href="{{ $newSharedSlotUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('new_shared_slot') }}</a>
                 @endif
             </div>
 
@@ -134,14 +142,14 @@
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Handle</th>
-                                <th>Site</th>
-                                <th>Slot</th>
-                                <th>Page Layout</th>
-                                <th>Status</th>
-                                <th>Updated</th>
-                                <th>Actions</th>
+                                <th>{{ $adminText('name') }}</th>
+                                <th>{{ $adminText('handle') }}</th>
+                                <th>{{ $adminText('site') }}</th>
+                                <th>{{ $adminText('slot') }}</th>
+                                <th>{{ $adminText('page_layout') }}</th>
+                                <th>{{ $adminText('status') }}</th>
+                                <th>{{ $adminText('updated') }}</th>
+                                <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -156,12 +164,12 @@
                                     <td>{{ $sharedSlot->updated_at?->format('Y-m-d H:i') }}</td>
                                     <td>
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.shared-slots.edit', $sharedSlot) }}" class="wb-action-btn wb-action-btn-edit" title="Edit Shared Slot" aria-label="Edit Shared Slot"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                            <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="Edit Shared Slot blocks" aria-label="Edit Shared Slot blocks"><i class="wb-icon wb-icon-layout-panel-top" aria-hidden="true"></i></a>
-                                            <form method="POST" action="{{ route('admin.shared-slots.destroy', $sharedSlot) }}" onsubmit="return confirm('Delete this Shared Slot?');">
+                                            <a href="{{ route('admin.shared-slots.edit', $sharedSlot) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout-panel-top" aria-hidden="true"></i></a>
+                                            <form method="POST" action="{{ route('admin.shared-slots.destroy', $sharedSlot) }}" onsubmit="return confirm('{{ $adminText('delete_confirm') }}');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete Shared Slot" aria-label="Delete Shared Slot"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('delete_shared_slot') }}" aria-label="{{ $adminText('delete_shared_slot') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -172,7 +180,7 @@
                 </div>
             </div>
 
-            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $sharedSlots, 'ariaLabel' => 'Shared Slots pagination', 'compact' => true])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $sharedSlots, 'ariaLabel' => $adminText('pagination'), 'compact' => true])
         </div>
     @endif
     @endif

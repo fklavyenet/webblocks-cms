@@ -1,9 +1,19 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Create Shared Slot', 'heading' => 'Shared Slots'])
+@php
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('shared_slots.'.$key, $adminLocale, $replace);
+  $localizedPageTitle = $adminText('create_title');
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $adminText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Create Shared Slot',
-        'description' => 'Create reusable inner slot content for one site.',
+        'title' => $localizedPageTitle,
+        'description' => $adminText('create_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -17,7 +27,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.shared-slots.index')" submit-label="Create" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.shared-slots.index')" :submit-label="$adminText('create_action')" />
             </div>
         </form>
     </div>
