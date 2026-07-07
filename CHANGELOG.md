@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Block Type contract modal catalog, storage, translation, renderer, and gap copy onto structured admin locale keys.
 - Move Page Layout Slot form identity, wrapper markup, trusted HTML, and status copy onto structured admin locale keys.
 - Move Media asset picker controls, filters, empty states, upload, and modal actions onto structured admin locale keys.
 - Move Page Slot block picker modal, tabs, search, table, and empty-state copy onto structured admin locale keys.
