@@ -1,4 +1,10 @@
 @php
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $slotBlockPickerAdminLocale = app(AdminLocaleResolver::class)->locale();
+  $slotBlockPickerAdminTranslator = app(CmsTranslator::class);
+  $slotBlockPickerText = static fn (string $key, array $replace = []) => $slotBlockPickerAdminTranslator->admin('page_slot_block_picker.'.$key, $slotBlockPickerAdminLocale, $replace);
   $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
   $pickerTab = trim((string) request('block_type_tab', 'common'));
   $pickerParentId = request()->integer('parent_id') ?: null;
@@ -68,40 +74,40 @@
 
   $tabDefinitions = collect([
     'common' => [
-      'label' => 'Common',
+      'label' => $slotBlockPickerText('tabs.common'),
       'filter' => fn ($blockType) => $slugMatches($blockType, $commonSlugs),
-      'emptyTitle' => 'No common block types',
-      'emptyText' => 'No common shortcuts are available for this picker context.',
+      'emptyTitle' => $slotBlockPickerText('empty.common_title'),
+      'emptyText' => $slotBlockPickerText('empty.common_text'),
     ],
     'layout' => [
-      'label' => 'Layout',
+      'label' => $slotBlockPickerText('tabs.layout'),
       'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'layout' || $slugMatches($blockType, $layoutSlugs),
-      'emptyTitle' => 'No layout block types',
-      'emptyText' => 'No layout or container block types are eligible here.',
+      'emptyTitle' => $slotBlockPickerText('empty.layout_title'),
+      'emptyText' => $slotBlockPickerText('empty.layout_text'),
     ],
     'content' => [
-      'label' => 'Content',
+      'label' => $slotBlockPickerText('tabs.content'),
       'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'content' || $slugMatches($blockType, $contentSlugs),
-      'emptyTitle' => 'No content block types',
-      'emptyText' => 'No editorial content block types are eligible here.',
+      'emptyTitle' => $slotBlockPickerText('empty.content_title'),
+      'emptyText' => $slotBlockPickerText('empty.content_text'),
     ],
     'navigation' => [
-      'label' => 'Navigation',
+      'label' => $slotBlockPickerText('tabs.navigation'),
       'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'navigation' || $slugMatches($blockType, $navigationSlugs),
-      'emptyTitle' => 'No navigation block types',
-      'emptyText' => 'No navigation or docs-shell utility blocks are eligible here.',
+      'emptyTitle' => $slotBlockPickerText('empty.navigation_title'),
+      'emptyText' => $slotBlockPickerText('empty.navigation_text'),
     ],
     'advanced' => [
-      'label' => 'Advanced',
+      'label' => $slotBlockPickerText('tabs.advanced'),
       'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'advanced' || $slugMatches($blockType, $advancedSlugs),
-      'emptyTitle' => 'No advanced block types',
-      'emptyText' => 'No advanced block types are eligible here.',
+      'emptyTitle' => $slotBlockPickerText('empty.advanced_title'),
+      'emptyText' => $slotBlockPickerText('empty.advanced_text'),
     ],
     'all' => [
-      'label' => 'All',
+      'label' => $slotBlockPickerText('tabs.all'),
       'filter' => fn () => true,
-      'emptyTitle' => 'No block types',
-      'emptyText' => 'No block types are eligible for this picker context.',
+      'emptyTitle' => $slotBlockPickerText('empty.all_title'),
+      'emptyText' => $slotBlockPickerText('empty.all_text'),
     ],
   ]);
 
@@ -156,11 +162,11 @@
     };
   };
 
-  $descriptionFor = function ($blockType) {
+  $descriptionFor = function ($blockType) use ($slotBlockPickerText) {
     return $blockType->description
       ?: ($blockType->is_system
-        ? 'Configure the system-driven output for this block.'
-        : 'Open the editor for this content block.');
+        ? $slotBlockPickerText('system_block_description')
+        : $slotBlockPickerText('content_block_description'));
   };
 
   $tabUrl = function (string $tabKey) use ($slotBlockRoute, $pickerParentId, $pickerSearch) {
@@ -189,13 +195,13 @@
         <div class="wb-modal-header">
           <div class="wb-stack wb-gap-1">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap wb-items-center">
-              <h2 class="wb-modal-title" id="slot-block-picker-title">Block Types</h2>
+              <h2 class="wb-modal-title" id="slot-block-picker-title">{{ $slotBlockPickerText('title') }}</h2>
               <span class="wb-status-pill wb-status-info" data-slot-block-picker-count>{{ $pickerBlockTypeCount }}</span>
             </div>
-            <span class="wb-text-sm wb-text-muted">Choose a block type, then configure it without leaving the slot editor.@if ($pickerParentBlock) Showing block types allowed inside {{ $pickerParentBlock->typeName() }}.@endif</span>
+            <span class="wb-text-sm wb-text-muted">{{ $slotBlockPickerText('description') }}@if ($pickerParentBlock) {{ $slotBlockPickerText('parent_context', ['type' => $pickerParentBlock->typeName()]) }}@endif</span>
           </div>
 
-          <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close block types modal">
+          <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $slotBlockPickerText('close_modal_aria') }}">
             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
           </a>
         </div>
@@ -206,9 +212,9 @@
             'search' => [
               'id' => 'slot_block_type_search',
               'name' => 'block_type_search',
-              'label' => 'Search block types',
+              'label' => $slotBlockPickerText('search_label'),
               'value' => $pickerSearch,
-              'placeholder' => 'Search by name, intent, or slug',
+              'placeholder' => $slotBlockPickerText('search_placeholder'),
             ],
             'selects' => [],
             'hidden' => [
@@ -218,7 +224,7 @@
             ],
             'showReset' => $showPickerReset,
             'resetUrl' => $resetUrl,
-            'applyLabel' => 'Apply',
+            'applyLabel' => $slotBlockPickerText('apply'),
           ])
 
           <input type="hidden" name="block_type_tab" value="{{ $pickerClientTab !== 'common' ? $pickerClientTab : 'common' }}" data-wb-slot-block-picker-tab-input>
@@ -227,10 +233,10 @@
             <div class="wb-card wb-card-muted">
               <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-stack wb-gap-1">
-                  <strong>Search results</strong>
-                  <span class="wb-text-sm wb-text-muted">Showing matches across the full eligible catalog.</span>
+                  <strong>{{ $slotBlockPickerText('search_results') }}</strong>
+                  <span class="wb-text-sm wb-text-muted">{{ $slotBlockPickerText('search_results_help') }}</span>
                 </div>
-                <span class="wb-text-sm wb-text-muted">{{ $matchingBlockTypes->count() }} result{{ $matchingBlockTypes->count() === 1 ? '' : 's' }}</span>
+                <span class="wb-text-sm wb-text-muted">{{ $slotBlockPickerText($matchingBlockTypes->count() === 1 ? 'result_count_singular' : 'result_count_plural', ['count' => $matchingBlockTypes->count()]) }}</span>
               </div>
             </div>
 
@@ -244,9 +250,9 @@
                   </colgroup>
                   <thead>
                     <tr>
-                      <th class="wb-nowrap">Name</th>
-                      <th>Category</th>
-                      <th>Description</th>
+                      <th class="wb-nowrap">{{ $slotBlockPickerText('name') }}</th>
+                      <th>{{ $slotBlockPickerText('category') }}</th>
+                      <th>{{ $slotBlockPickerText('table_description') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -279,7 +285,7 @@
             @endif
           @else
             <div class="wb-tabs" data-wb-tabs data-wb-slot-block-picker-tabs>
-              <div class="wb-tabs-nav" role="tablist" aria-label="Block type catalog groups">
+              <div class="wb-tabs-nav" role="tablist" aria-label="{{ $slotBlockPickerText('tabs_aria') }}">
                 @foreach ($tabBlockTypes as $tabKey => $blockTypes)
                   <button
                     type="button"
@@ -308,9 +314,9 @@
                           </colgroup>
                           <thead>
                             <tr>
-                              <th class="wb-nowrap">Name</th>
-                              <th>Category</th>
-                              <th>Description</th>
+                              <th class="wb-nowrap">{{ $slotBlockPickerText('name') }}</th>
+                              <th>{{ $slotBlockPickerText('category') }}</th>
+                              <th>{{ $slotBlockPickerText('table_description') }}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -350,9 +356,9 @@
 
         <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
           <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-            <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Close</a>
+            <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $slotBlockPickerText('close') }}</a>
           </div>
-          <span class="wb-text-sm wb-text-muted">Select a block type to open its editor.</span>
+          <span class="wb-text-sm wb-text-muted">{{ $slotBlockPickerText('footer_hint') }}</span>
         </div>
       </div>
   </div>
