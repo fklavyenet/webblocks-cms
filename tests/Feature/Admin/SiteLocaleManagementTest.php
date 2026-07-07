@@ -119,9 +119,9 @@ class SiteLocaleManagementTest extends TestCase
     $sitesResponse->assertOk();
     $sitesResponse->assertSee('<html lang="de">', false);
     $sitesResponse->assertSee('Websites');
-    $sitesResponse->assertSee('Website hinzufuegen');
+    $sitesResponse->assertSee('Website hinzufügen');
     $sitesResponse->assertSee('Domains verwalten');
-    $sitesResponse->assertSee('Primaer');
+    $sitesResponse->assertSee('Primär');
     $sitesResponse->assertDontSee('Add Site');
     $sitesResponse->assertDontSee('Manage domains');
 
@@ -133,7 +133,7 @@ class SiteLocaleManagementTest extends TestCase
     $pagesResponse->assertSee('Neue Seite');
     $pagesResponse->assertSee('Seitenkonverter');
     $pagesResponse->assertSee('Nach ID, Titel, Slug oder Seitentyp suchen');
-    $pagesResponse->assertSee('Bloecke gesamt');
+    $pagesResponse->assertSee('Blöcke gesamt');
     $pagesResponse->assertDontSee('New Page');
     $pagesResponse->assertDontSee('Page Converter');
   }

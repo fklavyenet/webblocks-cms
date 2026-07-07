@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Preserve Turkish and German diacritics in admin locale copy instead of ASCII transliterations.
+
 ## 1.34.2
 
 - Bumped CMS to `1.34.2`.

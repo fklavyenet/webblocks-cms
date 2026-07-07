@@ -102,13 +102,13 @@ class AdminSidebarNavigationTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('<html lang="de">', false);
-    $response->assertSee('>Uebersicht<', false);
+    $response->assertSee('>Übersicht<', false);
     $response->assertSee('>Websites<', false);
     $response->assertSee('>Seiten<', false);
     $response->assertSee('>Medien<', false);
     $response->assertSee('>Kontaktmeldungen<', false);
     $response->assertSee('>Wartung<', false);
-    $response->assertSee('aria-label="Benutzermenue"', false);
+    $response->assertSee('aria-label="Benutzermenü"', false);
     $response->assertDontSee('>Contact Messages<', false);
   }
 
@@ -127,8 +127,8 @@ class AdminSidebarNavigationTest extends TestCase
     $response->assertSee('<html lang="tr">', false);
     $response->assertSee('>Pano<', false);
     $response->assertSee('>Sayfalar<', false);
-    $response->assertSee('aria-label="Kullanici menusu"', false);
-    $response->assertDontSee('>Uebersicht<', false);
+    $response->assertSee('aria-label="Kullanıcı menüsü"', false);
+    $response->assertDontSee('>Übersicht<', false);
   }
 
   #[Test]
@@ -139,13 +139,13 @@ class AdminSidebarNavigationTest extends TestCase
     ]);
 
     $expectations = [
-      route('admin.sites.index') => ['Websites', 'Website hinzufuegen', 'Domains verwalten', 'Add Site'],
+      route('admin.sites.index') => ['Websites', 'Website hinzufügen', 'Domains verwalten', 'Add Site'],
       route('admin.pages.index') => ['Seiten', 'Neue Seite', 'Seitenkonverter', 'New Page'],
       route('admin.shared-slots.index') => ['Geteilte Slots', 'Nach Name, Handle, Slot oder Shell suchen', 'Website', 'Shared Slots'],
       route('admin.media.index') => ['Medien', 'Medienbibliothek', 'Medien hochladen', 'Media Library'],
       route('admin.contact-messages.index') => ['Kontaktmeldungen', 'Suche', 'Status', 'Contact Messages'],
-      route('admin.users.index') => ['Benutzer', 'Benutzer hinzufuegen', 'Suche', 'Add User'],
-      route('admin.locales.index') => ['Sprachen', 'Sprache hinzufuegen', 'Aktiv', 'Add Locale'],
+      route('admin.users.index') => ['Benutzer', 'Benutzer hinzufügen', 'Suche', 'Add User'],
+      route('admin.locales.index') => ['Sprachen', 'Sprache hinzufügen', 'Aktiv', 'Add Locale'],
       route('admin.page-layouts.index') => ['Seitenlayouts', 'Handle', 'Status', 'Page Layouts'],
       route('admin.block-types.index') => ['Block-Typen', 'Block-Typen suchen', 'Status', 'Search block types'],
       route('admin.system.search.index') => ['Suchindex neu bauen', 'Indexierte Zeilen', 'Status', 'Search Rebuild'],
@@ -162,7 +162,7 @@ class AdminSidebarNavigationTest extends TestCase
       $response->assertSee($secondExpected);
       $response->assertSee($thirdExpected);
       $response->assertSee('WebBlocks CMS');
-      $response->assertDontSee('WebBloecke CMS');
+      $response->assertDontSee('WebBlöcke CMS');
       $response->assertDontSeeText($unexpected);
     }
   }

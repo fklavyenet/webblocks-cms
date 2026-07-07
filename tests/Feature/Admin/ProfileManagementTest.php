@@ -138,7 +138,7 @@ class ProfileManagementTest extends TestCase
     $dashboard->assertOk();
     $dashboard->assertSee('<html lang="tr">', false);
     $dashboard->assertSee('>Pano<', false);
-    $dashboard->assertDontSee('>Uebersicht<', false);
+    $dashboard->assertDontSee('>Übersicht<', false);
   }
 
   #[Test]

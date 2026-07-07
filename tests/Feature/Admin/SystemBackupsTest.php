@@ -78,7 +78,7 @@ class SystemBackupsTest extends TestCase
     $indexResponse->assertSee('<html lang="tr">', false);
     $indexResponse->assertSee('Son Yedek Durumu');
     $indexResponse->assertSee('Yedek Onerisi');
-    $indexResponse->assertSee('Yedek olustur');
+    $indexResponse->assertSee('Yedek oluştur');
     $indexResponse->assertDontSeeText('Latest Backup Status');
     $indexResponse->assertDontSeeText('Backup Recommendation');
     $indexResponse->assertDontSeeText('Create backup');

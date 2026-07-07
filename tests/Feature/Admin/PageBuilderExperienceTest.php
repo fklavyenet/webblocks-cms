@@ -2285,8 +2285,8 @@ class PageBuilderExperienceTest extends TestCase
 
     $pickerResponse->assertOk();
     $pickerResponse->assertSee('Blok Ekle');
-    $pickerResponse->assertSee('Sistem Bloklari');
-    $pickerResponse->assertSee('Blok turu secilmedi');
+    $pickerResponse->assertSee('Sistem Blokları');
+    $pickerResponse->assertSee('Blok türü seçilmedi');
     $pickerResponse->assertDontSee('No block type selected');
 
     $commentsResponse = $this->actingAs($user)->get(route('admin.blocks.create', [
@@ -2294,9 +2294,9 @@ class PageBuilderExperienceTest extends TestCase
     ]));
 
     $commentsResponse->assertOk();
-    $commentsResponse->assertSee('Sistem Yorumlari');
-    $commentsResponse->assertSee('Yeni yorumlari kabul et');
-    $commentsResponse->assertSee('Yazar adlarini gizle');
+    $commentsResponse->assertSee('Sistem Yorumları');
+    $commentsResponse->assertSee('Yeni yorumları kabul et');
+    $commentsResponse->assertSee('Yazar adlarını gizle');
     $commentsResponse->assertDontSee('System Comments');
     $commentsResponse->assertDontSee('Accept new comments');
 
@@ -2305,9 +2305,9 @@ class PageBuilderExperienceTest extends TestCase
     ]));
 
     $ratingResponse->assertOk();
-    $ratingResponse->assertSee('Sistem Puanlamasi');
-    $ratingResponse->assertSee('Ziyaretciler puanlarini guncelleyebilsin');
-    $ratingResponse->assertSee('Ortalama ve sayiyi goster');
+    $ratingResponse->assertSee('Sistem Puanlaması');
+    $ratingResponse->assertSee('Ziyaretçiler puanlarını güncelleyebilsin');
+    $ratingResponse->assertSee('Ortalama ve sayıyı göster');
     $ratingResponse->assertDontSee('System Rating');
     $ratingResponse->assertDontSee('Allow visitors to update their rating');
   }
