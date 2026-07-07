@@ -9,6 +9,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Polish Turkish and German admin locale copy for native diacritics, natural wording, and corrected fallback lookup keys.
+
 ## 1.34.3
 
 - Bumped CMS to `1.34.3`.
