@@ -119,7 +119,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Update-Status');
     $response->assertSee('Technische Details und Verlauf');
     $response->assertSee('Supportbericht herunterladen');
-    $response->assertSee('Fuer diese Installation ist keine neuere Version bereit.');
+    $response->assertSee('Für diese Installation ist keine neuere Version bereit.');
     $response->assertDontSeeText('Update Status');
     $response->assertDontSeeText('Technical details and history');
     $response->assertDontSeeText('Download support report');
