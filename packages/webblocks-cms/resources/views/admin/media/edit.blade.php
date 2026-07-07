@@ -1,7 +1,12 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Edit Media: '.$asset->displayTitle(), 'heading' => 'Media'])
-
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('media_index.'.$key, $adminLocale, $replace);
     $editTitle = $asset->displayTitle();
+    $editPageTitle = $adminText('edit_title', ['title' => $editTitle]);
     $publicUrl = $asset->url();
     $deleteModalId = 'media-delete-modal-'.$asset->id;
     $deleteModalTitleId = $deleteModalId.'Title';
@@ -15,14 +20,16 @@
     $previewMeta = collect([
         trim(($asset->extension ? strtoupper($asset->extension).' ' : '').$asset->kind),
         $asset->humanSize(),
-        $asset->disk.' disk',
+        $adminText('disk_meta', ['disk' => $asset->disk]),
     ])->filter()->implode(' · ');
 @endphp
 
+@extends('webblocks-cms::layouts.admin', ['title' => $editPageTitle, 'heading' => $adminText('media')])
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Edit Media: '.$editTitle,
-        'description' => 'Review file details, update metadata, and manage this media item safely.',
+        'title' => $editPageTitle,
+        'description' => $adminText('edit_description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -31,8 +38,8 @@
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                    <strong>Preview</strong>
-                    <a href="{{ $fileDetailsOpenUrl }}" class="wb-btn wb-btn-secondary wb-btn-sm" aria-haspopup="dialog">File Details</a>
+                    <strong>{{ $adminText('preview') }}</strong>
+                    <a href="{{ $fileDetailsOpenUrl }}" class="wb-btn wb-btn-secondary wb-btn-sm" aria-haspopup="dialog">{{ $adminText('file_details') }}</a>
                 </div>
                 <div class="wb-card-body wb-stack wb-gap-3">
                     @if ($asset->canPreview() && $publicUrl)
@@ -40,8 +47,8 @@
                     @else
                         <div class="wb-empty wb-empty-sm">
                             <i class="wb-icon {{ $asset->previewIconClass() }} wb-icon-2xl" aria-hidden="true"></i>
-                            <div class="wb-empty-title">Preview unavailable</div>
-                            <div class="wb-empty-text">This media type does not have an inline preview in the current UI.</div>
+                            <div class="wb-empty-title">{{ $adminText('preview_unavailable') }}</div>
+                            <div class="wb-empty-text">{{ $adminText('edit_preview_unavailable_help') }}</div>
                         </div>
                     @endif
                     @if ($previewMeta !== '')
@@ -51,12 +58,12 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Usage</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('usage') }}</strong></div>
                 <div class="wb-card-body">
                     @if ($usages->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">Unused media</div>
-                            <div class="wb-empty-text">This media item is not referenced by protected CMS consumers yet.</div>
+                            <div class="wb-empty-title">{{ $adminText('unused_media') }}</div>
+                            <div class="wb-empty-text">{{ $adminText('edit_unused_help') }}</div>
                         </div>
                     @else
                         <div class="wb-stack wb-gap-2">
@@ -69,7 +76,7 @@
                                                 <div class="wb-text-sm wb-text-muted">{{ $usage['type'] }} | {{ $usage['context'] }}@if($usage['page_title']) | {{ $usage['page_title'] }}@endif</div>
                                             </div>
                                             @if (! empty($usage['admin_url']))
-                                                <a href="{{ $usage['admin_url'] }}" class="wb-btn wb-btn-secondary">Open</a>
+                                                <a href="{{ $usage['admin_url'] }}" class="wb-btn wb-btn-secondary">{{ $adminText('open') }}</a>
                                             @endif
                                         </div>
                                     </div>
@@ -88,25 +95,25 @@
 
             <div class="wb-card">
                 <div class="wb-card-header">
-                    <strong>Media Information</strong>
+                    <strong>{{ $adminText('media_information') }}</strong>
                 </div>
                 <div class="wb-card-body wb-grid wb-grid-2 wb-gap-4">
                     <div class="wb-stack wb-gap-4">
                         <div class="wb-stack wb-gap-1">
-                            <label for="title">Title</label>
+                            <label for="title">{{ $adminText('title_field') }}</label>
                             <input id="title" name="title" type="text" class="wb-input" value="{{ old('title', $asset->title) }}">
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="alt_text">Alt Text</label>
+                            <label for="alt_text">{{ $adminText('alt_text') }}</label>
                             <input id="alt_text" name="alt_text" type="text" class="wb-input" value="{{ old('alt_text', $asset->alt_text) }}">
-                            <span class="wb-text-sm wb-text-muted">Accessibility text used when this image is rendered publicly.</span>
+                            <span class="wb-text-sm wb-text-muted">{{ $adminText('edit_alt_text_help') }}</span>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="folder_id">Folder</label>
+                            <label for="folder_id">{{ $adminText('folder') }}</label>
                             <select id="folder_id" name="folder_id" class="wb-select">
-                                <option value="">No folder</option>
+                                <option value="">{{ $adminText('no_folder') }}</option>
                                 @foreach ($folders as $folder)
                                     <option value="{{ $folder->id }}" @selected((string) old('folder_id', $asset->folder_id) === (string) $folder->id)>{{ $folder->name }}</option>
                                 @endforeach
@@ -116,21 +123,21 @@
 
                     <div class="wb-stack wb-gap-4">
                         <div class="wb-stack wb-gap-1">
-                            <label for="caption">Caption</label>
+                            <label for="caption">{{ $adminText('caption') }}</label>
                             <textarea id="caption" name="caption" class="wb-textarea" rows="4">{{ old('caption', $asset->caption) }}</textarea>
-                            <span class="wb-text-sm wb-text-muted">Optional visible caption for contexts that support captions.</span>
+                            <span class="wb-text-sm wb-text-muted">{{ $adminText('edit_caption_help') }}</span>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="description">Description</label>
+                            <label for="description">{{ $adminText('description_field') }}</label>
                             <textarea id="description" name="description" class="wb-textarea" rows="5">{{ old('description', $asset->description) }}</textarea>
-                            <span class="wb-text-sm wb-text-muted">Internal notes or longer metadata.</span>
+                            <span class="wb-text-sm wb-text-muted">{{ $adminText('edit_description_help') }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="wb-card-footer">
-                    <x-webblocks-cms::admin.form-actions :cancel-url="$mediaReturnUrl" submit-label="Save changes" />
+                    <x-webblocks-cms::admin.form-actions :cancel-url="$mediaReturnUrl" :submit-label="$adminText('save_changes_lower')" />
                 </div>
             </div>
         </form>
@@ -148,54 +155,54 @@
                 <div class="wb-modal-dialog">
                     <div class="wb-modal-header">
                         <div class="wb-stack wb-gap-1">
-                            <h2 class="wb-modal-title" id="{{ $fileDetailsModalTitleId }}">File Details</h2>
-                            <span class="wb-text-sm wb-text-muted" id="{{ $fileDetailsModalDescriptionId }}">Review read-only file, image, and storage details for this media item.</span>
+                            <h2 class="wb-modal-title" id="{{ $fileDetailsModalTitleId }}">{{ $adminText('file_details') }}</h2>
+                            <span class="wb-text-sm wb-text-muted" id="{{ $fileDetailsModalDescriptionId }}">{{ $adminText('file_details_description') }}</span>
                         </div>
 
-                        <a href="{{ $fileDetailsCloseUrl }}" class="wb-modal-close" aria-label="Close file details modal">
+                        <a href="{{ $fileDetailsCloseUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_file_details_modal') }}">
                             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                         </a>
                     </div>
 
                     <div class="wb-modal-body wb-stack wb-gap-4 wb-text-sm">
                         <div class="wb-card wb-card-muted">
-                            <div class="wb-card-header"><strong>File</strong></div>
+                            <div class="wb-card-header"><strong>{{ $adminText('file') }}</strong></div>
                             <div class="wb-card-body wb-stack wb-gap-3">
-                                <div><strong>Filename:</strong> {{ $asset->filename }}</div>
-                                <div><strong>Original Name:</strong> {{ $asset->original_name }}</div>
-                                <div><strong>MIME Type:</strong> {{ $asset->mime_type ?? '-' }}</div>
-                                <div><strong>Extension:</strong> {{ $asset->extension ?? '-' }}</div>
-                                <div><strong>Size:</strong> {{ $asset->humanSize() }}</div>
-                                <div><strong>Kind:</strong> <span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span></div>
-                                <div><strong>Disk:</strong> {{ $asset->disk }}</div>
+                                <div><strong>{{ $adminText('filename_label') }}</strong> {{ $asset->filename }}</div>
+                                <div><strong>{{ $adminText('original_name_label') }}</strong> {{ $asset->original_name }}</div>
+                                <div><strong>{{ $adminText('mime_type_label') }}</strong> {{ $asset->mime_type ?? '-' }}</div>
+                                <div><strong>{{ $adminText('extension_label') }}</strong> {{ $asset->extension ?? '-' }}</div>
+                                <div><strong>{{ $adminText('size_label') }}</strong> {{ $asset->humanSize() }}</div>
+                                <div><strong>{{ $adminText('kind_label') }}</strong> <span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span></div>
+                                <div><strong>{{ $adminText('disk_label') }}</strong> {{ $asset->disk }}</div>
                             </div>
                         </div>
 
                         <div class="wb-card wb-card-muted">
-                            <div class="wb-card-header"><strong>Image</strong></div>
+                            <div class="wb-card-header"><strong>{{ $adminText('image') }}</strong></div>
                             <div class="wb-card-body wb-stack wb-gap-3">
-                                <div><strong>Dimensions:</strong> {{ $dimensions }}</div>
+                                <div><strong>{{ $adminText('dimensions_label') }}</strong> {{ $dimensions }}</div>
                             </div>
                         </div>
 
                         <div class="wb-card wb-card-muted">
-                            <div class="wb-card-header"><strong>Storage</strong></div>
+                            <div class="wb-card-header"><strong>{{ $adminText('storage') }}</strong></div>
                             <div class="wb-card-body wb-stack wb-gap-3">
                                 <div class="wb-stack wb-gap-1">
-                                    <strong>Path</strong>
+                                    <strong>{{ $adminText('path') }}</strong>
                                     <code style="white-space: normal; word-break: break-word; display: block;">{{ $asset->path }}</code>
                                 </div>
 
                                 <div class="wb-stack wb-gap-1">
                                     <div class="wb-cluster wb-gap-2 wb-flex-wrap">
-                                        <strong>Public URL</strong>
+                                        <strong>{{ $adminText('public_url') }}</strong>
                                         @if ($publicUrl)
                                             <button
                                                 type="button"
                                                 class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon"
                                                 data-wb-copy-url="{{ $publicUrl }}"
-                                                aria-label="Copy public URL"
-                                                title="Copy public URL"
+                                                aria-label="{{ $adminText('copy_public_url') }}"
+                                                title="{{ $adminText('copy_public_url') }}"
                                             >
                                                 <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                                             </button>
@@ -204,14 +211,14 @@
                                     <code style="white-space: normal; word-break: break-word; display: block;">{{ $publicUrl ?: '-' }}</code>
                                 </div>
 
-                                <div><strong>Created:</strong> {{ $asset->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
-                                <div><strong>Updated:</strong> {{ $asset->updated_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                                <div><strong>{{ $adminText('created_label') }}</strong> {{ $asset->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                                <div><strong>{{ $adminText('updated_label') }}</strong> {{ $asset->updated_at?->format('Y-m-d H:i') ?? '-' }}</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                        <a href="{{ $fileDetailsCloseUrl }}" class="wb-btn wb-btn-secondary">Close</a>
+                        <a href="{{ $fileDetailsCloseUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('close') }}</a>
                     </div>
                 </div>
             </div>
@@ -226,11 +233,11 @@
                 <div class="wb-modal-dialog">
                     <div class="wb-modal-header">
                         <div class="wb-stack wb-gap-1">
-                            <h2 class="wb-modal-title" id="{{ $deleteModalTitleId }}">Delete media</h2>
-                            <span class="wb-text-sm wb-text-muted" id="{{ $deleteModalDescriptionId }}">Confirm whether this media item should be deleted permanently.</span>
+                            <h2 class="wb-modal-title" id="{{ $deleteModalTitleId }}">{{ $adminText('delete_media') }}</h2>
+                            <span class="wb-text-sm wb-text-muted" id="{{ $deleteModalDescriptionId }}">{{ $adminText('delete_media_description') }}</span>
                         </div>
 
-                        <a href="{{ route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl]) }}" class="wb-modal-close" aria-label="Close delete media modal">
+                        <a href="{{ route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl]) }}" class="wb-modal-close" aria-label="{{ $adminText('close_delete_media_modal') }}">
                             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                         </a>
                     </div>
@@ -253,7 +260,7 @@
                             :cancel-url="route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl])"
                             :show-submit="false"
                             :delete-submit="true"
-                            delete-label="Delete media"
+                            :delete-label="$adminText('delete_media')"
                             container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                         />
                     </form>

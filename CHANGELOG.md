@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Media edit preview, usage, metadata, file details, and delete modal copy onto structured admin locale keys.
 - Move Page Slots card, source modal, and delete confirmation copy onto structured admin locale keys.
 - Move Page Revision history copy onto structured admin locale keys.
 - Move Page Slot block editor wrapper, locale, empty-state, and table copy onto structured admin locale keys.
