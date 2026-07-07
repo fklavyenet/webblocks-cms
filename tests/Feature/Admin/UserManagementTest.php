@@ -80,6 +80,70 @@ class UserManagementTest extends TestCase
   }
 
   #[Test]
+  public function users_index_renders_bulk_delete_selection_and_modal_without_browser_confirm(): void
+  {
+    $admin = User::factory()->superAdmin()->create();
+    $primarySite = Site::query()->where('is_primary', true)->firstOrFail();
+    $managedUser = User::factory()->editor()->create(['name' => 'Bulk Editor']);
+    $managedUser->sites()->sync([$primarySite->id]);
+
+    $response = $this->actingAs($admin)->get(route('admin.users.index'));
+
+    $response->assertOk();
+    $response->assertSee($managedUser->email);
+    $response->assertSee('data-wb-admin-bulk-listing', false);
+    $response->assertSee('data-wb-admin-select-all-visible', false);
+    $response->assertSee('data-wb-admin-row-select', false);
+    $response->assertSee('id="bulk-delete-users-modal"', false);
+    $response->assertSee(route('admin.users.bulk-destroy'), false);
+    $response->assertSee('data-wb-admin-bulk-input-name="user_ids[]"', false);
+    $response->assertSee('data-wb-target="#delete-user-'.$managedUser->id.'-modal"', false);
+    $response->assertSee('id="delete-user-'.$managedUser->id.'-modal"', false);
+    $response->assertDontSee('confirm(', false);
+  }
+
+  #[Test]
+  public function super_admin_can_bulk_delete_selected_cms_users_and_protected_users_are_skipped(): void
+  {
+    $admin = User::factory()->superAdmin()->create();
+    $managedUser = User::factory()->editor()->create(['email' => 'bulk-delete-editor@example.com']);
+    $hostUserId = DB::table('users')->insertGetId([
+      'name' => 'Quiztem Teacher',
+      'email' => 'quiztem-teacher@example.com',
+      'email_verified_at' => now(),
+      'password' => 'password',
+      'role' => null,
+      'is_admin' => false,
+      'is_active' => true,
+      'created_at' => now(),
+      'updated_at' => now(),
+    ]);
+
+    $response = $this->actingAs($admin)->delete(route('admin.users.bulk-destroy'), [
+      'user_ids' => [$managedUser->id, $admin->id, $hostUserId],
+    ]);
+
+    $response->assertRedirect(route('admin.users.index'));
+    $response->assertSessionHas('status', '1 selected user deleted. 2 could not be deleted.');
+    $response->assertSessionHasErrors('users');
+    $this->assertDatabaseMissing('users', ['id' => $managedUser->id]);
+    $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    $this->assertDatabaseHas('users', ['id' => $hostUserId]);
+  }
+
+  #[Test]
+  public function users_bulk_delete_requires_selected_users(): void
+  {
+    $admin = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($admin)->delete(route('admin.users.bulk-destroy'), [
+      'user_ids' => [],
+    ]);
+
+    $response->assertSessionHasErrors('user_ids');
+  }
+
+  #[Test]
   public function users_index_can_search_by_name(): void
   {
     $admin = User::factory()->superAdmin()->create();

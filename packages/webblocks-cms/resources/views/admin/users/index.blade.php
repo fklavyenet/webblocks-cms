@@ -89,7 +89,7 @@
             </div>
         </div>
     @else
-        <div class="wb-card">
+        <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>{{ $adminText('title') }}</strong>
@@ -100,10 +100,22 @@
             </div>
 
             <div class="wb-card-body">
+                @include('webblocks-cms::admin.partials.listing-bulk-actions', [
+                    'label' => $adminText('selected'),
+                    'deleteTarget' => '#bulk-delete-users-modal',
+                    'deleteLabel' => $adminText('delete_selected'),
+                ])
+
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
+                                <th>
+                                    <label class="wb-checkbox" for="select_all_visible_users">
+                                        <input id="select_all_visible_users" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('select_all_visible') }}">
+                                        <span class="wb-sr-only">{{ $adminText('select_all_visible') }}</span>
+                                    </label>
+                                </th>
                                 <th>{{ $adminText('name') }}</th>
                                 <th>{{ $adminText('email') }}</th>
                                 <th>{{ $adminText('role') }}</th>
@@ -117,6 +129,19 @@
                             @foreach ($users as $managedUser)
                                 @php($deleteBlockedMessage = $userLifecycleGuard->deletionBlocker($managedUser, auth()->user()))
                                 <tr>
+                                    <td>
+                                        <label class="wb-checkbox" for="user_select_{{ $managedUser->id }}">
+                                            <input
+                                                id="user_select_{{ $managedUser->id }}"
+                                                type="checkbox"
+                                                value="{{ $managedUser->id }}"
+                                                @if ($deleteBlockedMessage === null) data-wb-admin-row-select @endif
+                                                aria-label="{{ $adminText('select_user', ['name' => $managedUser->name]) }}"
+                                                @disabled($deleteBlockedMessage !== null)
+                                            >
+                                            <span class="wb-sr-only">{{ $adminText('select_user', ['name' => $managedUser->name]) }}</span>
+                                        </label>
+                                    </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
                                             <strong>{{ $managedUser->name }}</strong>
@@ -141,16 +166,41 @@
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
 
-                                            <form method="POST" action="{{ route('admin.users.destroy', $managedUser) }}" onsubmit="return confirm('{{ $adminText('delete_confirm') }}');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $deleteBlockedMessage ?: $adminText('delete_user') }}" aria-label="{{ $adminText('delete_user') }}" @disabled($deleteBlockedMessage !== null)>
-                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                </button>
-                                            </form>
+                                            <button
+                                                type="button"
+                                                class="wb-action-btn wb-action-btn-delete"
+                                                title="{{ $deleteBlockedMessage ?: $adminText('delete_user') }}"
+                                                aria-label="{{ $adminText('delete_user') }}"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#delete-user-{{ $managedUser->id }}-modal"
+                                                @disabled($deleteBlockedMessage !== null)
+                                            >
+                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
+
+                                @push('overlays')
+                                    @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                                        'id' => 'delete-user-'.$managedUser->id.'-modal',
+                                        'title' => $adminText('delete_user_title'),
+                                        'description' => $adminText('delete_user_description'),
+                                        'action' => route('admin.users.destroy', $managedUser),
+                                        'method' => 'DELETE',
+                                        'submitLabel' => $adminText('delete_user'),
+                                    ])
+                                        <div class="wb-card wb-card-muted">
+                                            <div class="wb-card-body wb-stack wb-gap-2">
+                                                <div><strong>{{ $managedUser->name }}</strong></div>
+                                                <div class="wb-text-sm wb-text-muted">{{ $managedUser->email }}</div>
+                                                <div class="wb-text-sm wb-text-muted">{{ $adminText('role') }} {{ $managedUser->roleLabel() }} | {{ $adminText('site_access') }} {{ $managedUser->siteAccessSummary() }}</div>
+                                            </div>
+                                        </div>
+
+                                        <p class="wb-text-sm wb-text-muted">{{ $adminText('delete_user_warning') }}</p>
+                                    @endcomponent
+                                @endpush
                             @endforeach
                         </tbody>
                     </table>
@@ -159,5 +209,41 @@
 
             @include('webblocks-cms::admin.partials.pagination', ['paginator' => $users, 'ariaLabel' => $adminText('pagination'), 'compact' => true])
         </div>
+
+        @push('overlays')
+            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                'id' => 'bulk-delete-users-modal',
+                'title' => $adminText('bulk_delete_title'),
+                'description' => $adminText('bulk_delete_description'),
+                'action' => route('admin.users.bulk-destroy'),
+                'method' => 'DELETE',
+                'submitLabel' => $adminText('delete_selected'),
+                'formAttributes' => [
+                    'data-wb-admin-bulk-delete-form' => true,
+                    'data-wb-admin-bulk-input-name' => 'user_ids[]',
+                ],
+                'submitAttributes' => [
+                    'data-wb-admin-bulk-delete-submit' => true,
+                    'disabled' => true,
+                ],
+            ])
+                <div class="wb-card wb-card-muted">
+                    <div class="wb-card-body wb-stack wb-gap-2">
+                        <strong><span data-wb-admin-bulk-modal-count>0</span> {{ $adminText('bulk_delete_count_suffix') }}</strong>
+                        <p class="wb-text-sm wb-text-muted">{{ $adminText('bulk_delete_help') }}</p>
+                    </div>
+                </div>
+
+                <div data-wb-admin-bulk-inputs></div>
+                <input type="hidden" name="user_ids[]" value="" disabled data-wb-admin-bulk-empty-input>
+            @endcomponent
+        @endpush
+
+        @push('scripts')
+            @php($bulkActionsJsPath = public_path('cms/js/admin/listing-bulk-actions.js'))
+            @if (is_file($bulkActionsJsPath))
+                <script src="{{ asset('cms/js/admin/listing-bulk-actions.js') }}?v={{ filemtime($bulkActionsJsPath) }}" defer></script>
+            @endif
+        @endpush
     @endif
 @endsection

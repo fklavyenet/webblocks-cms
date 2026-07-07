@@ -44,6 +44,8 @@ Only `super_admin` users can open `/webadmin/users` and manage other CMS account
 
 Users management remains install-level administration. It can manage roles, assigned sites, active or inactive state, delete protection, and admin-set password resets without requiring the target user's current password. Those system-management fields are not available from the Profile page.
 
+Super admins can delete selected users from the Users index with modal confirmation. Bulk deletion still re-checks every selected account server-side and skips protected accounts such as the acting user's own account or the last active `super_admin`.
+
 ### `site_admin`
 
 `site_admin` is site-scoped.

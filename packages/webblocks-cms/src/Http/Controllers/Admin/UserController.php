@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\View\View;
+use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteUsersRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UserStoreRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UserUpdateRequest;
 use WebBlocks\Cms\Models\Site;
@@ -126,6 +127,47 @@ class UserController extends Controller
     return redirect()->route('admin.users.index')->with('status', 'User deleted successfully.');
   }
 
+  public function bulkDestroy(BulkDeleteUsersRequest $request): RedirectResponse
+  {
+    $ids = collect($request->validated('user_ids'))
+      ->map(fn (mixed $id): int => (int) $id)
+      ->unique()
+      ->values();
+
+    $users = User::query()
+      ->cmsUsers()
+      ->whereKey($ids->all())
+      ->get()
+      ->keyBy(fn (User $user): int => (int) $user->getKey());
+
+    $deleted = 0;
+    $failed = 0;
+
+    foreach ($ids as $id) {
+      $user = $users->get($id);
+
+      if (! $user || $this->lifecycleGuard->deletionBlocker($user, $request->user()) !== null) {
+        $failed++;
+
+        continue;
+      }
+
+      $user->delete();
+      $deleted++;
+    }
+
+    $message = $this->bulkDeleteMessage($deleted, $failed);
+    $redirect = redirect()
+      ->route('admin.users.index')
+      ->with($deleted > 0 ? 'status' : 'bulk_status', $message);
+
+    if ($failed > 0) {
+      $redirect->withErrors(['users' => 'Some selected users could not be deleted because they are protected or no longer managed by CMS.']);
+    }
+
+    return $redirect;
+  }
+
   private function filteredUsersQuery(array $filters): Builder
   {
     return User::query()
@@ -160,5 +202,18 @@ class UserController extends Controller
       ->whereKey($user->getKey())
       ->cmsUsers()
       ->exists();
+  }
+
+  private function bulkDeleteMessage(int $deleted, int $failed): string
+  {
+    $message = $deleted === 1
+      ? '1 selected user deleted.'
+      : $deleted.' selected users deleted.';
+
+    if ($failed > 0) {
+      $message .= ' '.$failed.' could not be deleted.';
+    }
+
+    return $message;
   }
 }

@@ -264,6 +264,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::delete('sites/{site}/variables/{site_variable}', [SiteVariableController::class, 'destroy'])->name('sites.variables.destroy');
 
     Route::middleware('can:access-system')->group(function () {
+      Route::delete('users/bulk', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy')->middleware('can:manage-users');
       Route::resource('users', UserController::class)->except(['show'])->middleware('can:manage-users');
       Route::get('sites/clone', [SiteController::class, 'cloneForm'])->name('sites.clone');
       Route::get('sites/{site}/clone', [SiteController::class, 'cloneForm'])->name('sites.clone.prefill');
