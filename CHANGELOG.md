@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.34.7
+
+- Bumped CMS to `1.34.7`.
 - Localize Locales, Page Layouts, and CMS API token capability screens through the authenticated admin locale.
 
 ## 1.34.6
