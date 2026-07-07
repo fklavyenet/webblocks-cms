@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Page edit management, overview, publish modal, and translation table copy onto structured admin locale keys.
 - Move System Settings general, project identity, mail, diagnostics, privacy, and runtime copy onto structured admin locale keys.
 - Move Media Library listing, grid, preview, upload, fetch, folder, and bulk-delete copy onto structured admin locale keys.
 - Move Visitor Reports admin screen copy onto structured admin locale keys for native translation readiness.

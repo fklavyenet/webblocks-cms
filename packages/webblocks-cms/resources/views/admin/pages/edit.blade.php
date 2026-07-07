@@ -1,5 +1,11 @@
 @php
-  $pageTitle = 'Edit Page: #'.$page->id.' '.$page->title;
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('page_edit.'.$key, $adminLocale, $replace);
+  $pageTitle = $adminText('title', ['id' => $page->id, 'title' => $page->title]);
   $settingsTab = old('_page_settings_tab', match (request('tab')) {
     'page-assets' => 'assets',
     'layout-slots' => 'layout-slots',
@@ -16,16 +22,16 @@
   $pageOwnedBlockPublishingSummary = $pageOwnedBlockPublishingSummary ?? ['total' => 0, 'by_slot' => [], 'shared_slots_excluded' => [], 'shared_slots_excluded_total' => 0];
   $hasUnpublishedPageOwnedBlocks = ($pageOwnedBlockPublishingSummary['total'] ?? 0) > 0;
   $hasExcludedSharedSlotBlocks = ($pageOwnedBlockPublishingSummary['shared_slots_excluded_total'] ?? 0) > 0;
-  $siteName = $page->site?->name ?? 'Site';
-  $domainName = $page->site?->canonicalDomain() ?: 'Not set';
+  $siteName = $page->site?->name ?? $adminText('site_fallback');
+  $domainName = $page->site?->canonicalDomain() ?: $adminText('not_set');
   $headerActions = collect([
-    $pageDuplicateUrl ? '<a href="'.$pageDuplicateUrl.'" class="wb-btn wb-btn-secondary">Duplicate page</a>' : null,
-    $pageMoveUrl ? '<a href="'.$pageMoveUrl.'" class="wb-btn wb-btn-secondary">Move to another site</a>' : null,
-    $pageRevisionsUrl ? '<a href="'.$pageRevisionsUrl.'" class="wb-btn wb-btn-secondary">Revision History</a>' : null,
-    '<a href="'.$pagePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i> <span>Preview</span></a>',
-    $pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : null,
+    $pageDuplicateUrl ? '<a href="'.$pageDuplicateUrl.'" class="wb-btn wb-btn-secondary">'.e($adminText('duplicate_page')).'</a>' : null,
+    $pageMoveUrl ? '<a href="'.$pageMoveUrl.'" class="wb-btn wb-btn-secondary">'.e($adminText('move_to_another_site')).'</a>' : null,
+    $pageRevisionsUrl ? '<a href="'.$pageRevisionsUrl.'" class="wb-btn wb-btn-secondary">'.e($adminText('revision_history')).'</a>' : null,
+    '<a href="'.$pagePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i> <span>'.e($adminText('preview')).'</span></a>',
+    $pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>'.e($adminText('view_page')).'</span></a>' : null,
   ])->filter()->implode('');
-  $pageBreadcrumb = '<nav class="wb-breadcrumb wb-navbar-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($siteName).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">#'.$page->id.' '.e($page->title).'</span></li></ol></nav>';
+  $pageBreadcrumb = '<nav class="wb-breadcrumb wb-navbar-breadcrumb" aria-label="'.e($adminText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($siteName).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($adminText('pages')).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">#'.$page->id.' '.e($page->title).'</span></li></ol></nav>';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle, 'breadcrumb' => $pageBreadcrumb])
@@ -33,7 +39,7 @@
 @section('content')
   @include('webblocks-cms::admin.partials.page-header', [
     'title' => $pageTitle,
-    'description' => 'Manage the canonical page, English base fields, and translation routing from one compact screen.',
+    'description' => $adminText('description'),
     'actions' => $headerActions,
   ])
 
@@ -41,64 +47,64 @@
 
   <div class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-      <strong>Page Management</strong>
-      <span class="wb-text-sm wb-text-muted">Manage page status, settings, page-specific assets, and layout slot alignment.</span>
+      <strong>{{ $adminText('page_management') }}</strong>
+      <span class="wb-text-sm wb-text-muted">{{ $adminText('page_management_help') }}</span>
     </div>
     <div class="wb-card-body">
       <div class="wb-tabs" data-wb-tabs data-wb-page-settings-tabs>
-        <div class="wb-tabs-nav" role="tablist" aria-label="Page management sections">
-          <button type="button" class="wb-tabs-btn {{ $settingsTab === 'overview' ? 'is-active' : '' }}" data-wb-tab="page-management-overview-panel" aria-selected="{{ $settingsTab === 'overview' ? 'true' : 'false' }}" @if ($settingsTab !== 'overview') tabindex="-1" @endif>Overview</button>
-          <button type="button" class="wb-tabs-btn {{ $settingsTab === 'settings' ? 'is-active' : '' }}" data-wb-tab="page-management-settings-panel" aria-selected="{{ $settingsTab === 'settings' ? 'true' : 'false' }}" @if ($settingsTab !== 'settings') tabindex="-1" @endif>Settings</button>
+        <div class="wb-tabs-nav" role="tablist" aria-label="{{ $adminText('page_management_sections') }}">
+          <button type="button" class="wb-tabs-btn {{ $settingsTab === 'overview' ? 'is-active' : '' }}" data-wb-tab="page-management-overview-panel" aria-selected="{{ $settingsTab === 'overview' ? 'true' : 'false' }}" @if ($settingsTab !== 'overview') tabindex="-1" @endif>{{ $adminText('overview') }}</button>
+          <button type="button" class="wb-tabs-btn {{ $settingsTab === 'settings' ? 'is-active' : '' }}" data-wb-tab="page-management-settings-panel" aria-selected="{{ $settingsTab === 'settings' ? 'true' : 'false' }}" @if ($settingsTab !== 'settings') tabindex="-1" @endif>{{ $adminText('settings') }}</button>
           @if ($canManagePageAssets || $page->pageAssets->isNotEmpty())
-            <button type="button" class="wb-tabs-btn {{ $settingsTab === 'assets' ? 'is-active' : '' }}" data-wb-tab="page-management-assets-panel" aria-selected="{{ $settingsTab === 'assets' ? 'true' : 'false' }}" @if ($settingsTab !== 'assets') tabindex="-1" @endif>Assets</button>
+            <button type="button" class="wb-tabs-btn {{ $settingsTab === 'assets' ? 'is-active' : '' }}" data-wb-tab="page-management-assets-panel" aria-selected="{{ $settingsTab === 'assets' ? 'true' : 'false' }}" @if ($settingsTab !== 'assets') tabindex="-1" @endif>{{ $adminText('assets') }}</button>
           @endif
-          <button type="button" class="wb-tabs-btn {{ $settingsTab === 'layout-slots' ? 'is-active' : '' }}" data-wb-tab="page-management-layout-slots-panel" aria-selected="{{ $settingsTab === 'layout-slots' ? 'true' : 'false' }}" @if ($settingsTab !== 'layout-slots') tabindex="-1" @endif>Layout Slots</button>
+          <button type="button" class="wb-tabs-btn {{ $settingsTab === 'layout-slots' ? 'is-active' : '' }}" data-wb-tab="page-management-layout-slots-panel" aria-selected="{{ $settingsTab === 'layout-slots' ? 'true' : 'false' }}" @if ($settingsTab !== 'layout-slots') tabindex="-1" @endif>{{ $adminText('layout_slots') }}</button>
         </div>
 
         <div class="wb-tabs-panels">
           <div class="wb-tabs-panel {{ $settingsTab === 'overview' ? 'is-active' : '' }}" id="page-management-overview-panel">
             <div class="wb-card wb-card-muted">
               <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                <strong>Overview</strong>
-                <span class="wb-text-sm wb-text-muted">Only published pages are visible on the public site.</span>
+                <strong>{{ $adminText('overview') }}</strong>
+                <span class="wb-text-sm wb-text-muted">{{ $adminText('overview_help') }}</span>
               </div>
               <div class="wb-card-body">
                 <div class="wb-grid wb-grid-2">
                   <div class="wb-stack wb-gap-3">
                     <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">Site</span>
+                      <span class="wb-text-sm wb-text-muted">{{ $adminText('site') }}</span>
                       <strong>{{ $siteName }}</strong>
                     </div>
 
                     <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">Domain</span>
+                      <span class="wb-text-sm wb-text-muted">{{ $adminText('domain') }}</span>
                       <span>{{ $domainName }}</span>
                     </div>
                   </div>
 
                   <div class="wb-stack wb-gap-3">
                     <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">Status</span>
+                      <span class="wb-text-sm wb-text-muted">{{ $adminText('status') }}</span>
                       <div>
                         <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span>
                       </div>
                     </div>
 
                     <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">Published</span>
-                      <span>{{ $page->published_at ? $page->published_at->format('Y-m-d H:i') : 'Not published' }}</span>
+                      <span class="wb-text-sm wb-text-muted">{{ $adminText('published') }}</span>
+                      <span>{{ $page->published_at ? $page->published_at->format('Y-m-d H:i') : $adminText('not_published') }}</span>
                     </div>
 
                     @if ($page->review_requested_at)
                       <div class="wb-stack wb-gap-1">
-                        <span class="wb-text-sm wb-text-muted">Review requested</span>
+                        <span class="wb-text-sm wb-text-muted">{{ $adminText('review_requested') }}</span>
                         <span>{{ $page->review_requested_at->format('Y-m-d H:i') }}</span>
                       </div>
                     @endif
 
                     @if ($workflowActions !== [])
                       <div class="wb-stack wb-gap-2">
-                        <span class="wb-text-sm wb-text-muted">Actions</span>
+                        <span class="wb-text-sm wb-text-muted">{{ $adminText('actions') }}</span>
                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                           @foreach ($workflowActions as $workflowAction)
                             @if ($workflowAction['value'] === \WebBlocks\Cms\Support\Pages\PageWorkflowManager::ACTION_PUBLISH && $hasUnpublishedPageOwnedBlocks)
@@ -123,20 +129,20 @@
             @if ($hasUnpublishedPageOwnedBlocks)
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                  <strong>Unpublished page content</strong>
+                  <strong>{{ $adminText('unpublished_page_content') }}</strong>
                   @if ($canPublishPageOwnedBlocks)
                     <form method="POST" action="{{ route('admin.pages.publish-page-owned-blocks', $page) }}">
                       @csrf
                       <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                      <button type="submit" class="wb-btn wb-btn-secondary">Publish page-owned blocks</button>
+                      <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('publish_page_owned_blocks') }}</button>
                     </form>
                   @endif
                 </div>
                 <div class="wb-card-body wb-stack wb-gap-3">
-                  <p class="wb-text-sm wb-text-muted">{{ $pageOwnedBlockPublishingSummary['total'] }} page-owned {{ \Illuminate\Support\Str::plural('block', $pageOwnedBlockPublishingSummary['total']) }} are still draft or in review.</p>
+                  <p class="wb-text-sm wb-text-muted">{{ $adminText($pageOwnedBlockPublishingSummary['total'] === 1 ? 'page_owned_block_unpublished_one' : 'page_owned_block_unpublished_many', ['count' => $pageOwnedBlockPublishingSummary['total']]) }}</p>
                   @if ($hasExcludedSharedSlotBlocks)
                     <div class="wb-alert wb-alert-info">
-                      Shared Slot content is not included. Review and publish Shared Slots separately.
+                      {{ $adminText('shared_slot_content_excluded') }}
                     </div>
                   @endif
                 </div>
@@ -154,8 +160,8 @@
                 <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
 
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                  <strong>Settings</strong>
-                  <span class="wb-text-sm wb-text-muted">Update the page fields and default English routing settings.</span>
+                  <strong>{{ $adminText('settings') }}</strong>
+                  <span class="wb-text-sm wb-text-muted">{{ $adminText('settings_help') }}</span>
                 </div>
 
                 <div class="wb-card-body">
@@ -163,7 +169,7 @@
                 </div>
 
                 <div class="wb-card-footer">
-                  <x-webblocks-cms::admin.form-actions :cancel-url="$pageReturnUrl" :show-submit="$canEditContent" submit-label="Save Changes" />
+                  <x-webblocks-cms::admin.form-actions :cancel-url="$pageReturnUrl" :show-submit="$canEditContent" :submit-label="$adminText('save_changes')" />
                 </div>
               </form>
             </div>
@@ -210,10 +216,10 @@
       <div class="wb-modal-dialog">
         <div class="wb-modal-header">
           <div>
-            <h2 class="wb-modal-title" id="publish-page-modal-title">Publish page</h2>
-            <p class="wb-text-sm wb-text-muted" id="publish-page-modal-description">Choose whether page-owned blocks should publish with this page.</p>
+            <h2 class="wb-modal-title" id="publish-page-modal-title">{{ $adminText('publish_page') }}</h2>
+            <p class="wb-text-sm wb-text-muted" id="publish-page-modal-description">{{ $adminText('publish_page_help') }}</p>
           </div>
-          <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close publish page modal">
+          <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('close_publish_page_modal') }}">
             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
           </button>
         </div>
@@ -223,17 +229,17 @@
           <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
           <div class="wb-modal-body wb-stack wb-gap-4">
             <div class="wb-alert wb-alert-info">
-              Publishing the page alone keeps existing draft and in-review blocks unpublished unless you choose the option below.
+              {{ $adminText('publish_page_without_blocks_help') }}
             </div>
 
             <div class="wb-table-wrap">
               <table class="wb-table wb-table-striped">
                 <thead>
                   <tr>
-                    <th>Page-owned slot</th>
-                    <th>Draft</th>
-                    <th>In Review</th>
-                    <th>Total</th>
+                    <th>{{ $adminText('page_owned_slot') }}</th>
+                    <th>{{ $adminText('draft') }}</th>
+                    <th>{{ $adminText('in_review') }}</th>
+                    <th>{{ $adminText('total') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -251,22 +257,22 @@
 
             @if ($hasExcludedSharedSlotBlocks)
               <div class="wb-alert wb-alert-warning">
-                Shared Slot content is not included. Review and publish Shared Slots separately.
+                {{ $adminText('shared_slot_content_excluded') }}
               </div>
               <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped">
                   <thead>
                     <tr>
-                      <th>Shared Slot-backed slot</th>
-                      <th>Shared Slot</th>
-                      <th>Unpublished</th>
+                      <th>{{ $adminText('shared_slot_backed_slot') }}</th>
+                      <th>{{ $adminText('shared_slot') }}</th>
+                      <th>{{ $adminText('unpublished') }}</th>
                     </tr>
                   </thead>
                   <tbody>
                     @foreach ($pageOwnedBlockPublishingSummary['shared_slots_excluded'] as $slotSummary)
                       <tr>
                         <td>{{ $slotSummary['label'] }}</td>
-                        <td>{{ $slotSummary['shared_slot_label'] ?? 'Shared Slot' }}</td>
+                        <td>{{ $slotSummary['shared_slot_label'] ?? $adminText('shared_slot') }}</td>
                         <td>{{ $slotSummary['total'] }}</td>
                       </tr>
                     @endforeach
@@ -277,12 +283,12 @@
 
             <label class="wb-cluster wb-cluster-2" for="include_page_owned_blocks">
               <input id="include_page_owned_blocks" type="checkbox" name="include_page_owned_blocks" value="1">
-              <span>Also publish all unpublished page-owned blocks</span>
+              <span>{{ $adminText('also_publish_page_owned_blocks') }}</span>
             </label>
           </div>
           <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Cancel</button>
-            <button type="submit" class="wb-btn wb-btn-primary">Publish</button>
+            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('cancel') }}</button>
+            <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('publish') }}</button>
           </div>
         </form>
       </div>
@@ -291,20 +297,20 @@
 
   <div class="wb-card wb-card-muted">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-      <strong>Translations</strong>
-      <span class="wb-text-sm wb-text-muted">Page title and routing only</span>
+      <strong>{{ $adminText('translations') }}</strong>
+      <span class="wb-text-sm wb-text-muted">{{ $adminText('translations_help') }}</span>
     </div>
     <div class="wb-card-body">
       <div class="wb-table-wrap">
         <table class="wb-table wb-table-striped wb-table-hover">
           <thead>
             <tr>
-              <th>Locale</th>
-              <th>Status</th>
-              <th>Slug</th>
-              <th>Path</th>
-              <th>Open</th>
-              <th>Action</th>
+              <th>{{ $adminText('locale') }}</th>
+              <th>{{ $adminText('status') }}</th>
+              <th>{{ $adminText('slug') }}</th>
+              <th>{{ $adminText('path') }}</th>
+              <th>{{ $adminText('open') }}</th>
+              <th>{{ $adminText('action') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -319,20 +325,20 @@
                     <strong>{{ strtoupper($locale->code) }}</strong>
                     <span>{{ $locale->name }}</span>
                     @if ($translationStatus['is_default'])
-                      <span class="wb-status-pill wb-status-info">Default</span>
+                      <span class="wb-status-pill wb-status-info">{{ $adminText('default') }}</span>
                     @endif
                   </div>
                 </td>
                 <td>
                   <span class="wb-status-pill {{ $translationStatus['is_missing'] ? 'wb-status-pending' : 'wb-status-active' }}">
-                    {{ $translationStatus['is_missing'] ? 'Missing' : 'Ready' }}
+                    {{ $translationStatus['is_missing'] ? $adminText('missing') : $adminText('ready') }}
                   </span>
                 </td>
-                <td>{{ $translation?->slug ?? 'Missing' }}</td>
-                <td>{{ $translationStatus['public_path'] ?? 'Missing' }}</td>
+                <td>{{ $translation?->slug ?? $adminText('missing') }}</td>
+                <td>{{ $translationStatus['public_path'] ?? $adminText('missing') }}</td>
                 <td>
                   @if ($page->isPublished() && $translationStatus['public_url'])
-                    <a href="{{ $translationStatus['public_url'] }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn wb-action-btn-view" title="Open translation" aria-label="Open translation">
+                    <a href="{{ $translationStatus['public_url'] }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('open_translation') }}" aria-label="{{ $adminText('open_translation') }}">
                       <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                     </a>
                   @else
@@ -341,11 +347,11 @@
                 </td>
                 <td>
                   @if (! $canEditContent)
-                    <span class="wb-text-sm wb-text-muted">Locked by workflow</span>
+                    <span class="wb-text-sm wb-text-muted">{{ $adminText('locked_by_workflow') }}</span>
                   @elseif ($translation)
-                    <a href="{{ route('admin.pages.translations.edit', ['page' => $page, 'translation' => $translation, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">Edit translation</a>
+                    <a href="{{ route('admin.pages.translations.edit', ['page' => $page, 'translation' => $translation, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">{{ $adminText('edit_translation') }}</a>
                   @else
-                    <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">Add translation</a>
+                    <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">{{ $adminText('add_translation') }}</a>
                   @endif
                 </td>
               </tr>
