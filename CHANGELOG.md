@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.34.6
+
+- Bumped CMS to `1.34.6`.
 - Localize Profile success flash messages through structured admin locale keys.
 
 ## 1.34.5
