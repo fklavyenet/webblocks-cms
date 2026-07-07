@@ -5,23 +5,23 @@
 <div class="wb-card wb-card-muted">
   <div class="wb-card-header">
     <div class="wb-stack wb-gap-1">
-      <strong>Site Assets</strong>
-      <span class="wb-text-sm wb-text-muted">Manage canonical site-level override files without SSH. Existing files are protected by checksum checks and revision snapshots before overwrite.</span>
+      <strong>{{ $adminText('site_assets') }}</strong>
+      <span class="wb-text-sm wb-text-muted">{{ $adminText('site_assets_help') }}</span>
     </div>
   </div>
 
   <div class="wb-card-body wb-stack wb-gap-4">
     @if (! $site->exists)
       <div class="wb-empty-state">
-        <div class="wb-empty-title">Save the site first.</div>
-        <div class="wb-empty-text">Site assets are attached to an existing site handle.</div>
+        <div class="wb-empty-title">{{ $adminText('save_site_first') }}</div>
+        <div class="wb-empty-text">{{ $adminText('site_assets_existing_help') }}</div>
       </div>
     @else
       @if (! $canManageSiteSettings)
         <div class="wb-alert wb-alert-info">
           <div>
-            <div class="wb-alert-title">Read only</div>
-            <div>Site assets are visible here, but only site admins and super admins can save changes.</div>
+            <div class="wb-alert-title">{{ $adminText('read_only') }}</div>
+            <div>{{ $adminText('site_assets_read_only_help') }}</div>
           </div>
         </div>
       @endif
@@ -34,38 +34,38 @@
         <section class="wb-card">
           <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <div class="wb-stack wb-gap-1">
-              <strong>{{ $asset['label'] }} override</strong>
+              <strong>{{ $asset['label'] }} {{ $adminText('override_suffix') }}</strong>
               <span class="wb-text-sm wb-text-muted"><code>/{{ $asset['relative_path'] }}</code></span>
             </div>
 
-            <span class="wb-status-pill {{ $isWritable ? ($asset['exists'] ? 'wb-status-active' : 'wb-status-pending') : 'wb-status-danger' }}">{{ $isWritable ? ($asset['exists'] ? 'File exists' : 'Ready to create') : 'Not writable' }}</span>
+            <span class="wb-status-pill {{ $isWritable ? ($asset['exists'] ? 'wb-status-active' : 'wb-status-pending') : 'wb-status-danger' }}">{{ $isWritable ? ($asset['exists'] ? $adminText('file_exists') : $adminText('ready_to_create')) : $adminText('not_writable') }}</span>
           </div>
 
           <div class="wb-card-body wb-stack wb-gap-3">
             @if (! $isWritable)
               <div class="wb-alert wb-alert-warning">
                 <div>
-                  <div class="wb-alert-title">Asset path is not writable</div>
-                  <div>{{ $readiness['problem'] ?? 'CMS cannot create or write this canonical asset file yet.' }}</div>
+                  <div class="wb-alert-title">{{ $adminText('asset_not_writable') }}</div>
+                  <div>{{ $readiness['problem'] ?? $adminText('asset_not_writable_help') }}</div>
                 </div>
               </div>
             @endif
 
             <div class="wb-grid wb-grid-2 wb-gap-3">
               <div class="wb-text-sm wb-text-muted">
-                Public URL: <code>{{ $asset['public_path'] }}</code>
+                {{ $adminText('public_url') }} <code>{{ $asset['public_path'] }}</code>
               </div>
               <div class="wb-text-sm wb-text-muted">
                 @if ($asset['exists'])
-                  Size: {{ number_format((int) $asset['size']) }} bytes
+                  {{ $adminText('file_size', ['size' => number_format((int) $asset['size'])]) }}
                 @else
-                  This file will be created on first save.
+                  {{ $adminText('file_created_on_save') }}
                 @endif
               </div>
             </div>
 
             <div class="wb-stack-2 wb-field">
-              <label for="site_asset_{{ $asset['type'] }}_contents">{{ $asset['label'] }} contents</label>
+              <label for="site_asset_{{ $asset['type'] }}_contents">{{ $asset['label'] }} {{ $adminText('contents_suffix') }}</label>
               <textarea
                 id="site_asset_{{ $asset['type'] }}_contents"
                 name="contents"
@@ -75,7 +75,7 @@
                 spellcheck="false"
                 @disabled(! $canManageSiteSettings || ! $isWritable)
               >{{ $isFailedAsset ? old('contents', $asset['contents']) : $asset['contents'] }}</textarea>
-              <div class="wb-text-sm wb-text-muted">Only this canonical {{ $asset['label'] }} file is managed here. Arbitrary public paths are intentionally not editable from this screen.</div>
+              <div class="wb-text-sm wb-text-muted">{{ $adminText('asset_contents_help', ['label' => $asset['label']]) }}</div>
               @if ($isFailedAsset)
                 @error('contents')
                   <div class="wb-alert wb-alert-danger">{{ $message }}</div>
@@ -86,8 +86,8 @@
 
           @if ($canManageSiteSettings)
             <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2">
-              <span class="wb-text-sm wb-text-muted">Checksum guard: {{ $asset['checksum'] ? str($asset['checksum'])->limit(16, '') : 'new file' }}</span>
-              <button type="submit" form="{{ $formId }}" class="wb-btn wb-btn-primary" @disabled(! $isWritable)>Save {{ $asset['label'] }}</button>
+              <span class="wb-text-sm wb-text-muted">{{ $adminText('checksum_guard', ['checksum' => $asset['checksum'] ? str($asset['checksum'])->limit(16, '') : $adminText('new_file')]) }}</span>
+              <button type="submit" form="{{ $formId }}" class="wb-btn wb-btn-primary" @disabled(! $isWritable)>{{ $adminText('save_asset', ['label' => $asset['label']]) }}</button>
             </div>
           @endif
         </section>

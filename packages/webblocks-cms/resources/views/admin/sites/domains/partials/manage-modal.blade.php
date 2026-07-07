@@ -16,11 +16,11 @@
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
-                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">Manage Domain: {{ $domain->domain }}</h2>
-                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">Update resolution status, alias redirect behavior, and canonical primary-domain selection for this host.</span>
+                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $adminText('manage_domain_title', ['domain' => $domain->domain]) }}</h2>
+                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $adminText('manage_domain_description') }}</span>
                 </div>
 
-                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close domain settings modal">
+                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_domain_settings_modal') }}">
                     <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                 </a>
             </div>
@@ -40,7 +40,7 @@
                     @if ($errors->any() && $isOpen)
                         <div class="wb-alert wb-alert-danger">
                             <div>
-                                <div class="wb-alert-title">Validation Error</div>
+                                <div class="wb-alert-title">{{ $adminText('validation_error') }}</div>
                                 <div>{{ $errors->first() }}</div>
                             </div>
                         </div>
@@ -48,24 +48,24 @@
 
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                            <div>Active domains participate in host resolution. Inactive domains do not resolve public requests.</div>
-                            <div>Primary domain is used for canonical public URLs. Alias domains can serve the site directly or redirect to the primary domain.</div>
+                            <div>{{ $adminText('active_domain_help') }}</div>
+                            <div>{{ $adminText('host_resolution_primary_help') }}</div>
                         </div>
                     </div>
 
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack-2 wb-field">
-                            <label for="manage_domain_status_{{ $domain->id }}">Status</label>
+                            <label for="manage_domain_status_{{ $domain->id }}">{{ $adminText('status') }}</label>
                             <select id="manage_domain_status_{{ $domain->id }}" name="status" class="wb-select">
-                                <option value="active" @selected($draftStatus === 'active')>Active</option>
-                                <option value="inactive" @selected($draftStatus === 'inactive')>Inactive</option>
+                                <option value="active" @selected($draftStatus === 'active')>{{ $adminText('active') }}</option>
+                                <option value="inactive" @selected($draftStatus === 'inactive')>{{ $adminText('inactive') }}</option>
                             </select>
                         </div>
 
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                <div><strong>Role</strong></div>
-                                <div>{{ $domain->is_primary ? 'This host is currently the primary canonical domain for the site.' : 'This host is currently an alias domain for the site.' }}</div>
+                                <div><strong>{{ $adminText('domain_role') }}</strong></div>
+                                <div>{{ $domain->is_primary ? $adminText('domain_current_primary') : $adminText('domain_current_alias') }}</div>
                             </div>
                         </div>
                     </div>
@@ -73,8 +73,8 @@
                     @if ($domain->is_primary)
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                <div><strong>Primary domain</strong></div>
-                                <div>This domain already owns canonical public URLs and remains active while it stays primary.</div>
+                                <div><strong>{{ $adminText('primary_domain') }}</strong></div>
+                                <div>{{ $adminText('primary_domain_locked_help') }}</div>
                             </div>
                         </div>
                     @else
@@ -82,12 +82,12 @@
                             <div class="wb-card-body wb-stack wb-gap-3 wb-text-sm">
                                 <label class="wb-checkbox" for="manage_domain_redirect_to_primary_{{ $domain->id }}">
                                     <input id="manage_domain_redirect_to_primary_{{ $domain->id }}" type="checkbox" name="redirect_to_primary" value="1" @checked($draftRedirectToPrimary)>
-                                    <span>Redirect alias to primary</span>
+                                    <span>{{ $adminText('redirect_alias_to_primary') }}</span>
                                 </label>
 
                                 <label class="wb-checkbox" for="manage_domain_is_primary_{{ $domain->id }}">
                                     <input id="manage_domain_is_primary_{{ $domain->id }}" type="checkbox" name="is_primary" value="1" @checked($draftIsPrimary)>
-                                    <span>Make primary domain</span>
+                                    <span>{{ $adminText('make_primary_domain') }}</span>
                                 </label>
                             </div>
                         </div>
@@ -96,7 +96,7 @@
 
                 <x-webblocks-cms::admin.form-actions
                     :cancel-url="$closeUrl"
-                    submit-label="Save changes"
+                    :submit-label="$adminText('save_changes')"
                     container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                 />
             </form>

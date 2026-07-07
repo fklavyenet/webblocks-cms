@@ -28,28 +28,28 @@
 @if ($showCreateModal)
     @include('webblocks-cms::admin.sites.partials.site-variable-modal-form', [
         'modalId' => 'site-variable-create-modal',
-        'modalTitle' => 'Add Site Variable',
-        'modalDescription' => 'Create a reusable public token for this site.',
+        'modalTitle' => $adminText('add_site_variable'),
+        'modalDescription' => $adminText('add_site_variable_help'),
         'formAction' => route('admin.sites.variables.store', $site),
         'formMethod' => 'POST',
         'siteVariable' => $createDraft,
         'closeUrl' => $closeUrl,
         'modalKey' => 'create-variable',
-        'submitLabel' => 'Save variable',
+        'submitLabel' => $adminText('save_variable'),
     ])
 @endif
 
 @if ($showEditModal && $editDraft)
     @include('webblocks-cms::admin.sites.partials.site-variable-modal-form', [
         'modalId' => 'site-variable-edit-modal-'.$editDraft->id,
-        'modalTitle' => 'Edit Site Variable',
-        'modalDescription' => 'Update the selected site variable.',
+        'modalTitle' => $adminText('edit_site_variable'),
+        'modalDescription' => $adminText('edit_site_variable_help'),
         'formAction' => route('admin.sites.variables.update', ['site' => $site, 'site_variable' => $selectedVariable]),
         'formMethod' => 'PUT',
         'siteVariable' => $editDraft,
         'closeUrl' => $closeUrl,
         'modalKey' => 'edit-variable',
-        'submitLabel' => 'Save variable',
+        'submitLabel' => $adminText('save_variable'),
     ])
 @endif
 
@@ -67,11 +67,11 @@
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div class="wb-stack wb-gap-1">
-                        <h2 class="wb-modal-title" id="{{ $deleteModalTitleId }}">Delete Site Variable</h2>
-                        <span class="wb-text-sm wb-text-muted" id="{{ $deleteModalDescriptionId }}">Confirm whether this site variable should be removed.</span>
+                        <h2 class="wb-modal-title" id="{{ $deleteModalTitleId }}">{{ $adminText('delete_site_variable') }}</h2>
+                        <span class="wb-text-sm wb-text-muted" id="{{ $deleteModalDescriptionId }}">{{ $adminText('delete_site_variable_help') }}</span>
                     </div>
 
-                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close delete site variable modal">
+                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_delete_site_variable_modal') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -94,7 +94,7 @@
                         :cancel-url="$closeUrl"
                         :show-submit="false"
                         :delete-submit="true"
-                        delete-label="Delete variable"
+                        :delete-label="$adminText('delete_variable')"
                         container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                     />
                 </form>

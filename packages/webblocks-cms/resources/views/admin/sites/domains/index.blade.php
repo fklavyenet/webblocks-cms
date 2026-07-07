@@ -1,6 +1,11 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Site Domains', 'heading' => 'Site Domains'])
-
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('site_form.'.$key, $adminLocale, $replace);
+    $localizedPageTitle = $adminText('domains_title');
     $indexUrl = route('admin.sites.domains.index', $site);
     $requestedModal = old('_site_domain_modal', request('modal'));
     $requestedSiteDomainId = (int) old('_site_domain_id', request('site_domain'));
@@ -11,23 +16,25 @@
     $showCreateModal = $requestedModal === 'create-domain';
 @endphp
 
+@extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.index').'">Sites</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.edit', $site).'">'.e($site->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">Domains</span></li></ol></nav>',
-        'title' => 'Domains',
-        'description' => 'Map incoming hosts to this CMS site after DNS, SSL, and server routing are already configured in Herne Panel or by the server operator.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.sites.edit', $site).'" class="wb-btn wb-btn-secondary">Back to Site</a></div>',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="'.e($adminText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.index').'">'.e($adminText('sites')).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.edit', $site).'">'.e($site->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($adminText('domains_title')).'</span></li></ol></nav>',
+        'title' => $adminText('domains_title'),
+        'description' => $adminText('domains_description'),
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.sites.edit', $site).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_site')).'</a></div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
-        <div class="wb-card-header"><strong>Host Resolution</strong></div>
+        <div class="wb-card-header"><strong>{{ $adminText('host_resolution') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-            <div>Configure DNS, SSL, Nginx, Herne Panel, virtual hosts, and server routing outside CMS first.</div>
-            <div>Then add the same host here so WebBlocks CMS can resolve the incoming request to this site.</div>
-            <div>Unknown hosts return a not found response unless local or development fallback is explicitly enabled.</div>
-            <div>The primary domain is used for canonical public URLs. Alias domains can serve this site directly or redirect to the primary domain.</div>
+            <div>{{ $adminText('host_resolution_dns_help') }}</div>
+            <div>{{ $adminText('host_resolution_cms_help') }}</div>
+            <div>{{ $adminText('host_resolution_unknown_help') }}</div>
+            <div>{{ $adminText('host_resolution_primary_help') }}</div>
         </div>
     </div>
 
@@ -35,7 +42,7 @@
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>Assigned Domains</strong>
+                    <strong>{{ $adminText('assigned_domains') }}</strong>
                     <span class="wb-status-pill wb-status-info">{{ $domains->count() }}</span>
                 </div>
 
@@ -45,25 +52,25 @@
                     aria-haspopup="dialog"
                     aria-controls="{{ $createModalId }}"
                 >
-                    Add Domain
+                    {{ $adminText('add_domain') }}
                 </a>
             </div>
             <div class="wb-card-body">
                 @if ($domains->isEmpty())
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No domains assigned</div>
-                        <div class="wb-empty-text">This site can still use the current local fallback behavior, but production public host resolution should use explicit site domains.</div>
+                        <div class="wb-empty-title">{{ $adminText('no_domains_assigned') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('no_domains_help') }}</div>
                     </div>
                 @else
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                             <thead>
                                 <tr>
-                                    <th>Domain</th>
-                                    <th>Role</th>
-                                    <th>Redirect</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>{{ $adminText('domain') }}</th>
+                                    <th>{{ $adminText('domain_role') }}</th>
+                                    <th>{{ $adminText('domain_redirect') }}</th>
+                                    <th>{{ $adminText('status') }}</th>
+                                    <th>{{ $adminText('actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -76,19 +83,19 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="wb-status-pill {{ $domain->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $domain->is_primary ? 'Primary' : 'Alias' }}</span>
+                                            <span class="wb-status-pill {{ $domain->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $domain->is_primary ? $adminText('primary') : $adminText('alias') }}</span>
                                         </td>
-                                        <td>{{ $domain->redirect_to_primary ? 'Yes' : 'No' }}</td>
+                                        <td>{{ $domain->redirect_to_primary ? $adminText('yes') : $adminText('no') }}</td>
                                         <td>
-                                            <span class="wb-status-pill {{ $domain->isActive() ? 'wb-status-active' : 'wb-status-danger' }}">{{ ucfirst($domain->status) }}</span>
+                                            <span class="wb-status-pill {{ $domain->isActive() ? 'wb-status-active' : 'wb-status-danger' }}">{{ $adminText($domain->isActive() ? 'active' : 'inactive') }}</span>
                                         </td>
                                         <td>
                                             <div class="wb-action-group">
                                                 <a
                                                     href="{{ route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $domain->id]) }}"
                                                     class="wb-action-btn wb-action-btn-edit"
-                                                    title="Manage domain settings"
-                                                    aria-label="Manage domain settings"
+                                                    title="{{ $adminText('domain_manage_settings') }}"
+                                                    aria-label="{{ $adminText('domain_manage_settings') }}"
                                                     aria-haspopup="dialog"
                                                     aria-controls="siteDomainManageModal-{{ $domain->id }}"
                                                 >
@@ -97,8 +104,8 @@
                                                 <a
                                                     href="{{ route('admin.sites.domains.index', ['site' => $site, 'modal' => 'remove-domain', 'site_domain' => $domain->id]) }}"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="Remove domain"
-                                                    aria-label="Remove domain"
+                                                    title="{{ $adminText('domain_remove') }}"
+                                                    aria-label="{{ $adminText('domain_remove') }}"
                                                     aria-haspopup="dialog"
                                                     aria-controls="siteDomainRemoveModal-{{ $domain->id }}"
                                                 >
@@ -123,11 +130,11 @@
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div class="wb-stack wb-gap-1">
-                        <h2 class="wb-modal-title" id="{{ $createModalTitleId }}">Add Domain</h2>
-                        <span class="wb-text-sm wb-text-muted" id="{{ $createModalDescriptionId }}">Store the host only, then choose whether it should resolve as an alias or become the primary canonical domain.</span>
+                        <h2 class="wb-modal-title" id="{{ $createModalTitleId }}">{{ $adminText('add_domain') }}</h2>
+                        <span class="wb-text-sm wb-text-muted" id="{{ $createModalDescriptionId }}">{{ $adminText('add_domain_description') }}</span>
                     </div>
 
-                    <a href="{{ $indexUrl }}" class="wb-modal-close" aria-label="Close add domain modal">
+                    <a href="{{ $indexUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_add_domain_modal') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -140,37 +147,37 @@
                         @if ($errors->any() && $showCreateModal)
                             <div class="wb-alert wb-alert-danger">
                                 <div>
-                                    <div class="wb-alert-title">Validation Error</div>
+                                    <div class="wb-alert-title">{{ $adminText('validation_error') }}</div>
                                     <div>{{ $errors->first() }}</div>
                                 </div>
                             </div>
                         @endif
 
                         <div class="wb-stack-2 wb-field">
-                            <label for="site_domain_domain">Domain</label>
+                            <label for="site_domain_domain">{{ $adminText('domain') }}</label>
                             <input id="site_domain_domain" name="domain" class="wb-input" type="text" value="{{ old('domain') }}" required>
-                            <div class="wb-text-sm wb-text-muted">Store the host only, for example <code>www.example.com</code> or <code>docs.example.com</code>.</div>
+                            <div class="wb-text-sm wb-text-muted">{{ $adminText('domain_help_example') }} <code>www.example.com</code> or <code>docs.example.com</code>.</div>
                         </div>
 
                         <div class="wb-grid wb-grid-2">
                             <div class="wb-stack-2 wb-field">
-                                <label for="site_domain_status">Status</label>
+                                <label for="site_domain_status">{{ $adminText('status') }}</label>
                                 <select id="site_domain_status" name="status" class="wb-select">
-                                    <option value="active" @selected(old('status', 'active') === 'active')>Active</option>
-                                    <option value="inactive" @selected(old('status') === 'inactive')>Inactive</option>
+                                    <option value="active" @selected(old('status', 'active') === 'active')>{{ $adminText('active') }}</option>
+                                    <option value="inactive" @selected(old('status') === 'inactive')>{{ $adminText('inactive') }}</option>
                                 </select>
                             </div>
 
                             <div class="wb-stack wb-gap-2 wb-field">
-                                <label class="wb-nowrap"><input type="checkbox" name="is_primary" value="1" @checked(old('is_primary'))> <span>Make primary</span></label>
-                                <label class="wb-nowrap"><input type="checkbox" name="redirect_to_primary" value="1" @checked(old('redirect_to_primary'))> <span>Redirect alias to primary</span></label>
+                                <label class="wb-nowrap"><input type="checkbox" name="is_primary" value="1" @checked(old('is_primary'))> <span>{{ $adminText('make_primary') }}</span></label>
+                                <label class="wb-nowrap"><input type="checkbox" name="redirect_to_primary" value="1" @checked(old('redirect_to_primary'))> <span>{{ $adminText('redirect_alias_to_primary') }}</span></label>
                             </div>
                         </div>
                     </div>
 
                     <x-webblocks-cms::admin.form-actions
                         :cancel-url="$indexUrl"
-                        submit-label="Add Domain"
+                        :submit-label="$adminText('add_domain')"
                         container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                     />
                 </form>

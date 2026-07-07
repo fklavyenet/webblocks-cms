@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Site Domains, Site details, Site Assets, Public Theme, and Site Variables admin copy onto structured admin locale keys.
 - Move Sites create/edit form tabs, branding, SEO, contact, and footer action copy onto structured admin locale keys.
 - Move Page edit management, overview, publish modal, and translation table copy onto structured admin locale keys.
 - Move System Settings general, project identity, mail, diagnostics, privacy, and runtime copy onto structured admin locale keys.

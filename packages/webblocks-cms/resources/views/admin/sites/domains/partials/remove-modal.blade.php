@@ -8,7 +8,7 @@
         ? $site->siteDomains()->whereKeyNot($domain->id)->active()->orderBy('domain')->first()
         : null;
     $removalBlockedMessage = $domain->is_primary && ! $replacementPrimary
-        ? 'A site must keep at least one active primary domain once domains are assigned. Add another active domain before removing this one.'
+        ? $adminText('domain_removal_blocked_help')
         : null;
 @endphp
 
@@ -19,11 +19,11 @@
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
-                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">Remove Domain: {{ $domain->domain }}</h2>
-                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">Confirm whether this {{ $domain->is_primary ? 'primary' : 'alias' }} domain should be removed from the site.</span>
+                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $adminText('remove_domain_title', ['domain' => $domain->domain]) }}</h2>
+                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $adminText('remove_domain_description', ['role' => $domain->is_primary ? $adminText('primary') : $adminText('alias')]) }}</span>
                 </div>
 
-                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close remove domain modal">
+                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_remove_domain_modal') }}">
                     <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                 </a>
             </div>
@@ -39,7 +39,7 @@
                     @if ($errors->any() && $isOpen)
                         <div class="wb-alert wb-alert-danger">
                             <div>
-                                <div class="wb-alert-title">Validation Error</div>
+                                <div class="wb-alert-title">{{ $adminText('validation_error') }}</div>
                                 <div>{{ $errors->first() }}</div>
                             </div>
                         </div>
@@ -48,19 +48,19 @@
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-body wb-stack wb-gap-2">
                             <div class="wb-cluster wb-cluster-2">
-                                <span class="wb-status-pill {{ $domain->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $domain->is_primary ? 'Primary' : 'Alias' }}</span>
-                                <span class="wb-status-pill {{ $domain->isActive() ? 'wb-status-active' : 'wb-status-danger' }}">{{ ucfirst($domain->status) }}</span>
+                                <span class="wb-status-pill {{ $domain->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $domain->is_primary ? $adminText('primary') : $adminText('alias') }}</span>
+                                <span class="wb-status-pill {{ $domain->isActive() ? 'wb-status-active' : 'wb-status-danger' }}">{{ $adminText($domain->isActive() ? 'active' : 'inactive') }}</span>
                             </div>
                             <strong>{{ $domain->domain }}</strong>
-                            <p class="wb-text-sm wb-text-muted">{{ $domain->is_primary ? 'Primary domain removal changes the site canonical host.' : 'Removing an alias host stops this site from resolving public requests on that host.' }}</p>
+                            <p class="wb-text-sm wb-text-muted">{{ $domain->is_primary ? $adminText('primary_domain_remove_help') : $adminText('alias_domain_remove_help') }}</p>
                         </div>
                     </div>
 
                     @if ($domain->is_primary && $replacementPrimary)
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                <div><strong>Primary replacement</strong></div>
-                                <div>If removed, <code>{{ $replacementPrimary->domain }}</code> becomes the new primary domain automatically.</div>
+                                <div><strong>{{ $adminText('primary_replacement') }}</strong></div>
+                                <div>{!! $adminText('primary_replacement_help', ['domain' => '<code>'.e($replacementPrimary->domain).'</code>']) !!}</div>
                             </div>
                         </div>
                     @endif
@@ -68,7 +68,7 @@
                     @if ($removalBlockedMessage)
                         <div class="wb-alert wb-alert-danger">
                             <div>
-                                <div class="wb-alert-title">Removal Blocked</div>
+                                <div class="wb-alert-title">{{ $adminText('removal_blocked') }}</div>
                                 <div>{{ $removalBlockedMessage }}</div>
                             </div>
                         </div>
@@ -79,7 +79,7 @@
                     :cancel-url="$closeUrl"
                     :show-submit="false"
                     :delete-submit="true"
-                    delete-label="Remove domain"
+                    :delete-label="$adminText('domain_remove')"
                     :delete-disabled="$removalBlockedMessage !== null"
                     container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                 />
