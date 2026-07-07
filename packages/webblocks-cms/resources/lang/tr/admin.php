@@ -283,6 +283,8 @@ return [
     'new_password' => 'Yeni şifre',
     'confirm_new_password' => 'Yeni şifreyi onayla',
     'show_password' => 'Şifreyi göster',
+    'updated' => 'Profil güncellendi.',
+    'password_updated' => 'Şifre güncellendi.',
   ],
   'flash' => [
     'success' => 'Başarılı',

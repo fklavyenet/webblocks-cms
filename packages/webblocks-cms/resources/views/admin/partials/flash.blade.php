@@ -3,14 +3,18 @@
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('flash.'.$key, $adminLocale, $replace);
+    $statusKey = session('status_key');
+    $statusMessage = is_string($statusKey) && $statusKey !== ''
+        ? $adminTranslator->admin($statusKey, $adminLocale, session('status_replace', []))
+        : session('status');
 @endphp
 
-@if (session('status'))
+@if ($statusMessage)
     <div class="wb-alert wb-alert-success">
         <div>
             <div class="wb-alert-title">{{ $adminText('success') }}</div>
             <div>
-                {{ session('status') }}
+                {{ $statusMessage }}
 
                 @if (session('status_action'))
                     @php($statusAction = session('status_action'))

@@ -285,6 +285,8 @@ return [
     'new_password' => 'Neues Passwort',
     'confirm_new_password' => 'Neues Passwort bestätigen',
     'show_password' => 'Passwort anzeigen',
+    'updated' => 'Profil wurde aktualisiert.',
+    'password_updated' => 'Passwort wurde aktualisiert.',
   ],
   'flash' => [
     'success' => 'Erfolg',

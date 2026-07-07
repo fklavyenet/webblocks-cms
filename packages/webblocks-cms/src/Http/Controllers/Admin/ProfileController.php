@@ -35,7 +35,7 @@ class ProfileController extends Controller
 
     $user->save();
 
-    return redirect()->route('admin.profile.edit')->with('status', 'Profile updated successfully.');
+    return redirect()->route('admin.profile.edit')->with('status_key', 'profile.updated');
   }
 
   public function updatePassword(ProfilePasswordUpdateRequest $request): RedirectResponse
@@ -50,6 +50,6 @@ class ProfileController extends Controller
 
     $request->session()->regenerate();
 
-    return redirect()->route('admin.profile.edit')->with('status', 'Password updated successfully.');
+    return redirect()->route('admin.profile.edit')->with('status_key', 'profile.password_updated');
   }
 }

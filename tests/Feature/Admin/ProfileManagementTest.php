@@ -156,6 +156,29 @@ class ProfileManagementTest extends TestCase
   }
 
   #[Test]
+  public function profile_update_success_flash_uses_the_new_admin_locale_after_locale_change(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'name' => 'Locale User',
+      'email' => 'locale-user@example.com',
+      'admin_locale' => 'en',
+    ]);
+
+    $response = $this->actingAs($user)
+      ->followingRedirects()
+      ->put(route('admin.profile.update'), [
+        'name' => 'Locale User',
+        'email' => 'locale-user@example.com',
+        'admin_locale' => 'de',
+      ]);
+
+    $response->assertOk();
+    $response->assertSee('Erfolg');
+    $response->assertSee('Profil wurde aktualisiert.');
+    $response->assertDontSee('Profile updated successfully.');
+  }
+
+  #[Test]
   public function password_change_requires_current_password(): void
   {
     $user = User::factory()->superAdmin()->create([
@@ -188,7 +211,7 @@ class ProfileManagementTest extends TestCase
     ]);
 
     $response->assertRedirect(route('admin.profile.edit'));
-    $response->assertSessionHas('status', 'Password updated successfully.');
+    $response->assertSessionHas('status_key', 'profile.password_updated');
     $this->assertTrue(Hash::check('new-password', $user->fresh()->password));
     $this->assertNotNull($user->fresh()->remember_token);
   }

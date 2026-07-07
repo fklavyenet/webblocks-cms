@@ -285,6 +285,8 @@ return [
     'new_password' => 'New password',
     'confirm_new_password' => 'Confirm new password',
     'show_password' => 'Show password',
+    'updated' => 'Profile updated successfully.',
+    'password_updated' => 'Password updated successfully.',
   ],
   'flash' => [
     'success' => 'Success',
