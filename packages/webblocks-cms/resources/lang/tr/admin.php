@@ -186,6 +186,8 @@ return [
     'details' => 'Detaylar',
   ],
   'slot_types' => [
+    'title' => 'Slot Turleri',
+    'description' => 'Slot turleri sayfa yapisi ve blok yerlestirme icin urune ait core katalog kayitlaridir.',
     'create_title' => 'Slot Turu Olustur',
     'create_description' => 'Slot turu yonetimi urune aittir ve genellikle manuel olusturma gerektirmez.',
     'edit_title' => 'Slot Turunu Duzenle',
@@ -193,6 +195,19 @@ return [
     'read_only' => 'Salt okunur',
     'catalog_help' => 'Slot Turleri CMS core katalogu tarafindan yonetilir. Incelemek icin Slot Turleri indeksini kullan.',
     'catalog_short_help' => 'Slot Turleri CMS core katalogu tarafindan yonetilir.',
+    'name' => 'Ad',
+    'slug' => 'Slug',
+    'axis' => 'Eksen',
+    'description_column' => 'Aciklama',
+    'blocks' => 'Bloklar',
+    'sort_order' => 'Siralama',
+    'status' => 'Durum',
+    'status_published' => 'yayinda',
+    'status_draft' => 'taslak',
+    'system' => 'Sistem',
+    'system_status' => 'sistem',
+    'user_status' => 'kullanici',
+    'fixed_slots_help' => 'Header, Main, Sidebar ve Footer, CMS core tarafindan yonetilen sabit sistem slotlaridir. Sayfalar bunlardan hangisini kullanacagini ve hangi sirada olacagini secer.',
   ],
   'api_tokens' => [
     'capabilities' => [

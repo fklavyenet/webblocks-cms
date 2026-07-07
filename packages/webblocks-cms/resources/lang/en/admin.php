@@ -188,6 +188,8 @@ return [
     'details' => 'Details',
   ],
   'slot_types' => [
+    'title' => 'Slot Types',
+    'description' => 'Slot types are product-owned core catalog records for page structure and block placement.',
     'create_title' => 'Create Slot Type',
     'create_description' => 'Slot type management remains product-owned and typically does not require manual creation.',
     'edit_title' => 'Edit Slot Type',
@@ -195,6 +197,19 @@ return [
     'read_only' => 'Read only',
     'catalog_help' => 'Slot Types are maintained by the CMS core catalog. Use the Slot Types index to review them.',
     'catalog_short_help' => 'Slot Types are maintained by the CMS core catalog.',
+    'name' => 'Name',
+    'slug' => 'Slug',
+    'axis' => 'Axis',
+    'description_column' => 'Description',
+    'blocks' => 'Blocks',
+    'sort_order' => 'Sort Order',
+    'status' => 'Status',
+    'status_published' => 'published',
+    'status_draft' => 'draft',
+    'system' => 'System',
+    'system_status' => 'system',
+    'user_status' => 'user',
+    'fixed_slots_help' => 'Header, Main, Sidebar, and Footer are fixed system slots managed by the CMS core. Pages choose which of these to use and in what order.',
   ],
   'api_tokens' => [
     'capabilities' => [

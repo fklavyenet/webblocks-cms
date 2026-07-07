@@ -188,6 +188,8 @@ return [
     'details' => 'Details',
   ],
   'slot_types' => [
+    'title' => 'Slot-Typen',
+    'description' => 'Slot-Typen sind produkt-eigene Core-Katalogeintraege fuer Seitenstruktur und Blockplatzierung.',
     'create_title' => 'Slot-Typ erstellen',
     'create_description' => 'Slot-Typ-Verwaltung bleibt produkt-eigen und erfordert normalerweise keine manuelle Erstellung.',
     'edit_title' => 'Slot-Typ bearbeiten',
@@ -195,6 +197,19 @@ return [
     'read_only' => 'Schreibgeschuetzt',
     'catalog_help' => 'Slot-Typen werden vom CMS-Core-Katalog verwaltet. Verwende den Slot-Typen-Index, um sie zu pruefen.',
     'catalog_short_help' => 'Slot-Typen werden vom CMS-Core-Katalog verwaltet.',
+    'name' => 'Name',
+    'slug' => 'Slug',
+    'axis' => 'Achse',
+    'description_column' => 'Beschreibung',
+    'blocks' => 'Bloecke',
+    'sort_order' => 'Sortierreihenfolge',
+    'status' => 'Status',
+    'status_published' => 'veroeffentlicht',
+    'status_draft' => 'entwurf',
+    'system' => 'System',
+    'system_status' => 'System',
+    'user_status' => 'Benutzer',
+    'fixed_slots_help' => 'Header, Main, Sidebar und Footer sind feste System-Slots, die vom CMS-Core verwaltet werden. Seiten waehlen, welche davon sie verwenden und in welcher Reihenfolge.',
   ],
   'api_tokens' => [
     'capabilities' => [

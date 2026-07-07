@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Slot Types index copy onto structured admin locale keys.
 - Move Site Clone and Delete admin copy onto structured admin locale keys.
 - Move Site Domains, Site details, Site Assets, Public Theme, and Site Variables admin copy onto structured admin locale keys.
 - Move Sites create/edit form tabs, branding, SEO, contact, and footer action copy onto structured admin locale keys.
