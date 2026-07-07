@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+## 1.34.10
+
+- Bumped CMS to `1.34.10`.
 - Add modal-confirmed bulk deletion to CMS Users so super admins can remove selected managed users faster.
 
 ## 1.34.9
