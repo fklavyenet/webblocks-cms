@@ -1,11 +1,21 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Blocks', 'heading' => 'Blocks'])
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $blocksIndexLocale = app(AdminLocaleResolver::class)->locale();
+    $blocksIndexTranslator = app(CmsTranslator::class);
+    $blocksIndexText = static fn (string $key, array $replace = []) => $blocksIndexTranslator->admin('blocks_index.'.$key, $blocksIndexLocale, $replace);
+    $blocksIndexTitle = $currentPage ? $blocksIndexText('blocks_for_page', ['title' => $currentPage->title]) : $blocksIndexText('blocks');
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $blocksIndexText('blocks'), 'heading' => $blocksIndexText('blocks')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks',
-        'description' => $currentPage ? 'Inspect block instances for the selected page.' : 'Inspect and edit block instances across the CMS.',
+        'title' => $blocksIndexTitle,
+        'description' => $currentPage ? $blocksIndexText('page_description') : $blocksIndexText('description'),
         'count' => $totalCount,
-        'actions' => $currentPage && ! $currentPage->isSharedSlotSourcePage() ? '<a href="'.route('admin.pages.edit', $currentPage).'" class="wb-btn wb-btn-primary">Manage Slots</a>' : null,
+        'actions' => $currentPage && ! $currentPage->isSharedSlotSourcePage() ? '<a href="'.route('admin.pages.edit', $currentPage).'" class="wb-btn wb-btn-primary">'.$blocksIndexText('manage_slots').'</a>' : null,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -17,76 +27,76 @@
                 'search' => [
                     'id' => 'blocks_search',
                     'name' => 'search',
-                    'label' => 'Search',
+                    'label' => $blocksIndexText('search'),
                     'value' => $filters['search'],
-                    'placeholder' => 'Search blocks, pages, or translated content',
+                    'placeholder' => $blocksIndexText('search_placeholder'),
                 ],
                 'selects' => [
                     [
                         'id' => 'blocks_site',
                         'name' => 'site',
-                        'label' => 'Site',
+                        'label' => $blocksIndexText('site'),
                         'selected' => $filters['site'],
-                        'placeholder' => 'All sites',
+                        'placeholder' => $blocksIndexText('all_sites'),
                         'options' => $filterSites,
                     ],
                     [
                         'id' => 'blocks_page',
                         'name' => 'page_id',
-                        'label' => 'Page',
+                        'label' => $blocksIndexText('page'),
                         'selected' => $filters['page_id'],
-                        'placeholder' => 'All pages',
+                        'placeholder' => $blocksIndexText('all_pages'),
                         'options' => $filterPages,
                     ],
                     [
                         'id' => 'blocks_block_type',
                         'name' => 'block_type_id',
-                        'label' => 'Block Type',
+                        'label' => $blocksIndexText('block_type'),
                         'selected' => $filters['block_type_id'],
-                        'placeholder' => 'All block types',
+                        'placeholder' => $blocksIndexText('all_block_types'),
                         'options' => $filterBlockTypes,
                     ],
                     [
                         'id' => 'blocks_status',
                         'name' => 'status',
-                        'label' => 'Status',
+                        'label' => $blocksIndexText('status'),
                         'selected' => $filters['status'],
-                        'placeholder' => 'All statuses',
+                        'placeholder' => $blocksIndexText('all_statuses'),
                         'options' => [
-                            'draft' => 'Draft',
-                            'published' => 'Published',
+                            'draft' => $blocksIndexText('draft'),
+                            'published' => $blocksIndexText('published'),
                         ],
                     ],
                     [
                         'id' => 'blocks_locale',
                         'name' => 'locale',
-                        'label' => 'Locale',
+                        'label' => $blocksIndexText('locale'),
                         'selected' => $filters['locale'],
-                        'placeholder' => 'All locales',
+                        'placeholder' => $blocksIndexText('all_locales'),
                         'options' => $filterLocales,
                     ],
                 ],
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.blocks.index'),
-                'applyLabel' => 'Apply',
+                'applyLabel' => $blocksIndexText('apply'),
             ])
         </div>
     </div>
 
     @if ($blocks->isEmpty())
-        <div class="wb-card"><div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><div class="wb-cluster wb-cluster-2 wb-flex-wrap"><strong>{{ $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks' }}</strong><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div></div><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">No blocks found</div><div class="wb-empty-text">Adjust the filters or open a page or shared slot editor to manage block content.</div></div></div></div>
+        <div class="wb-card"><div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><div class="wb-cluster wb-cluster-2 wb-flex-wrap"><strong>{{ $blocksIndexTitle }}</strong><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div></div><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">{{ $blocksIndexText('empty_title') }}</div><div class="wb-empty-text">{{ $blocksIndexText('empty_text') }}</div></div></div></div>
     @else
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks' }}</strong>
+                    <strong>{{ $blocksIndexTitle }}</strong>
                     <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
             </div>
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
-                        <thead><tr><th>ID</th><th>Page</th><th>Parent</th><th>Block Type</th><th>Slot Type</th><th>Order</th><th>Status</th><th>Kind</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>{{ $blocksIndexText('id') }}</th><th>{{ $blocksIndexText('page') }}</th><th>{{ $blocksIndexText('parent') }}</th><th>{{ $blocksIndexText('block_type') }}</th><th>{{ $blocksIndexText('slot_type') }}</th><th>{{ $blocksIndexText('order') }}</th><th>{{ $blocksIndexText('status') }}</th><th>{{ $blocksIndexText('kind') }}</th><th>{{ $blocksIndexText('actions') }}</th></tr></thead>
                         <tbody>
                             @foreach ($blocks as $block)
                                 <tr>
@@ -108,15 +118,15 @@
                                         </span>
                                     </td>
                                     <td>
-                                        {{ $block->is_system ? 'system' : 'user' }}
+                                        {{ $block->is_system ? $blocksIndexText('system') : $blocksIndexText('user') }}
                                         @if ($block->isColumnContainer() && $block->children->isNotEmpty())
-                                            <div class="wb-text-sm wb-text-muted">children: {{ $block->children->count() }}</div>
+                                            <div class="wb-text-sm wb-text-muted">{{ $blocksIndexText('children_count', ['count' => $block->children->count()]) }}</div>
                                         @endif
                                     </td>
                                      <td>
                                          <div class="wb-action-group">
-                                             <a href="{{ route('admin.blocks.edit', $block) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block" aria-label="Edit block"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                              <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('Delete this block?');">@csrf @method('DELETE')<button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block" aria-label="Delete block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button></form>
+                                             <a href="{{ route('admin.blocks.edit', $block) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blocksIndexText('edit_block') }}" aria-label="{{ $blocksIndexText('edit_block') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                              <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('{{ $blocksIndexText('delete_confirm') }}');">@csrf @method('DELETE')<button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $blocksIndexText('delete_block') }}" aria-label="{{ $blocksIndexText('delete_block') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button></form>
                                           </div>
                                       </td>
                                 </tr>
@@ -126,7 +136,7 @@
                 </div>
             </div>
 
-            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $blocks, 'ariaLabel' => 'Blocks pagination', 'compact' => true])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $blocks, 'ariaLabel' => $blocksIndexText('pagination'), 'compact' => true])
         </div>
     @endif
 @endsection

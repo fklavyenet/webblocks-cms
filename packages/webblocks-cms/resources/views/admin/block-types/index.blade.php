@@ -1,4 +1,13 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Block Types', 'heading' => 'Block Types'])
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $blockTypesIndexLocale = app(AdminLocaleResolver::class)->locale();
+    $blockTypesIndexTranslator = app(CmsTranslator::class);
+    $blockTypesIndexText = static fn (string $key, array $replace = []) => $blockTypesIndexTranslator->admin('block_types_index.'.$key, $blockTypesIndexLocale, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $blockTypesIndexText('block_types'), 'heading' => $blockTypesIndexText('block_types')])
 
 @section('content')
     @php
@@ -7,8 +16,8 @@
     @endphp
 
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Block Types',
-        'description' => 'Review the CMS block catalog. System block types are product-owned; non-system entries are install-specific extensions.',
+        'title' => $blockTypesIndexText('block_types'),
+        'description' => $blockTypesIndexText('description'),
         'count' => $totalCount,
     ])
 
@@ -21,50 +30,50 @@
                 'search' => [
                     'id' => 'block_types_search',
                     'name' => 'search',
-                    'label' => 'Search',
+                    'label' => $blockTypesIndexText('search'),
                     'value' => $filters['search'],
-                    'placeholder' => 'Search block types...',
+                    'placeholder' => $blockTypesIndexText('search_placeholder'),
                 ],
                 'selects' => [
                     [
                         'id' => 'block_types_category',
                         'name' => 'category',
-                        'label' => 'Category',
+                        'label' => $blockTypesIndexText('category'),
                         'value' => $filters['category'],
-                        'placeholder' => 'All categories',
+                        'placeholder' => $blockTypesIndexText('all_categories'),
                         'options' => collect($categories)->mapWithKeys(fn (string $category) => [$category => ucfirst($category)])->all(),
                     ],
                     [
                         'id' => 'block_types_status',
                         'name' => 'status',
-                        'label' => 'Status',
+                        'label' => $blockTypesIndexText('status'),
                         'value' => $filters['status'],
-                        'placeholder' => 'All statuses',
+                        'placeholder' => $blockTypesIndexText('all_statuses'),
                         'options' => collect($statuses)->mapWithKeys(fn (string $status) => [$status => ucfirst(str_replace('_', ' ', $status))])->all(),
                     ],
                     [
                         'id' => 'block_types_usage',
                         'name' => 'usage',
-                        'label' => 'Usage',
+                        'label' => $blockTypesIndexText('usage'),
                         'value' => $filters['usage'],
-                        'placeholder' => 'All usage',
+                        'placeholder' => $blockTypesIndexText('all_usage'),
                         'options' => [
-                            'used' => 'Used',
-                            'unused' => 'Unused',
+                            'used' => $blockTypesIndexText('used'),
+                            'unused' => $blockTypesIndexText('unused'),
                         ],
                     ],
                     [
                         'id' => 'block_types_support',
                         'name' => 'support',
-                        'label' => 'Support',
+                        'label' => $blockTypesIndexText('support'),
                         'value' => $filters['support'],
-                        'placeholder' => 'All support',
+                        'placeholder' => $blockTypesIndexText('all_support'),
                         'options' => $supportOptions,
                     ],
                 ],
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.block-types.index'),
-                'applyLabel' => 'Apply filters',
+                'applyLabel' => $blockTypesIndexText('apply_filters'),
             ])
         </div>
     </div>
@@ -72,21 +81,21 @@
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>Block Types</strong>
+                <strong>{{ $blockTypesIndexText('block_types') }}</strong>
                 <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
             </div>
 
-            <a href="{{ route('admin.block-types.create') }}" class="wb-btn wb-btn-primary">New Custom Block Type</a>
+            <a href="{{ route('admin.block-types.create') }}" class="wb-btn wb-btn-primary">{{ $blockTypesIndexText('new_custom_block_type') }}</a>
         </div>
 
         @if ($blockTypes->isEmpty())
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No block types found.</div>
-                    <div class="wb-empty-text">Try changing your filters.</div>
+                    <div class="wb-empty-title">{{ $blockTypesIndexText('empty_title') }}</div>
+                    <div class="wb-empty-text">{{ $blockTypesIndexText('empty_text') }}</div>
                     @if ($hasActiveFilters)
                         <div class="wb-empty-action">
-                            <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">Reset</a>
+                            <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">{{ $blockTypesIndexText('reset') }}</a>
                         </div>
                     @endif
                 </div>
@@ -97,12 +106,12 @@
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Usage</th>
-                                <th>Status</th>
-                                <th>Support</th>
-                                <th>Actions</th>
+                                <th>{{ $blockTypesIndexText('name') }}</th>
+                                <th>{{ $blockTypesIndexText('category') }}</th>
+                                <th>{{ $blockTypesIndexText('usage') }}</th>
+                                <th>{{ $blockTypesIndexText('status') }}</th>
+                                <th>{{ $blockTypesIndexText('support') }}</th>
+                                <th>{{ $blockTypesIndexText('actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,7 +120,7 @@
                                         <td>
                                             <div class="wb-stack wb-stack-1">
                                                 <strong>{{ $blockType->name }}</strong>
-                                                <span class="wb-text-sm wb-text-muted"><code>{{ $blockType->slug }}</code> | {{ $blockType->source_type ?: 'static' }} | {{ $blockType->is_system ? 'system' : 'user' }}{{ $blockType->is_container ? ' | container' : '' }}</span>
+                                                <span class="wb-text-sm wb-text-muted"><code>{{ $blockType->slug }}</code> | {{ $blockType->source_type ?: 'static' }} | {{ $blockType->is_system ? $blockTypesIndexText('system') : $blockTypesIndexText('user') }}{{ $blockType->is_container ? ' | '.$blockTypesIndexText('container') : '' }}</span>
                                             </div>
                                         </td>
                                         <td class="wb-nowrap">{{ $blockType->category ?: '-' }}</td>
@@ -123,8 +132,8 @@
                                         </td>
                                         <td>
                                             <div class="wb-stack wb-stack-1">
-                                                <span class="wb-text-sm wb-text-muted">Admin {!! ($supportedAdminForms[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
-                                                <span class="wb-text-sm wb-text-muted">Render {!! ($supportedPublicRenders[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
+                                                <span class="wb-text-sm wb-text-muted">{{ $blockTypesIndexText('admin') }} {!! ($supportedAdminForms[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
+                                                <span class="wb-text-sm wb-text-muted">{{ $blockTypesIndexText('render') }} {!! ($supportedPublicRenders[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
                                             </div>
                                         </td>
                                         <td class="wb-nowrap">
@@ -132,8 +141,8 @@
                                                 <a
                                                     href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'block-type-contract', 'contract_block_type' => $blockType->id]))) }}"
                                                     class="wb-action-btn wb-action-btn-view"
-                                                    title="View block type contract"
-                                                    aria-label="View block type contract"
+                                                    title="{{ $blockTypesIndexText('view_contract') }}"
+                                                    aria-label="{{ $blockTypesIndexText('view_contract') }}"
                                                     aria-haspopup="dialog"
                                                     aria-controls="blockTypeContractModal-{{ $blockType->id }}"
                                                     data-admin-block-type-contract-action
@@ -142,18 +151,18 @@
                                                 </a>
 
                                                 @if (! $blockType->is_system)
-                                                    <a href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'edit-block-type', 'block_type' => $blockType->id]))) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block type" aria-label="Edit block type" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
+                                                    <a href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'edit-block-type', 'block_type' => $blockType->id]))) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blockTypesIndexText('edit_block_type') }}" aria-label="{{ $blockTypesIndexText('edit_block_type') }}" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
                                                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                     </a>
                                                     <form method="POST" action="{{ route('admin.block-types.destroy', $blockType) }}">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block type" aria-label="Delete block type">
+                                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $blockTypesIndexText('delete_block_type') }}" aria-label="{{ $blockTypesIndexText('delete_block_type') }}">
                                                             <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                         </button>
                                                     </form>
                                                 @else
-                                                    <span class="wb-text-sm wb-text-muted">Core catalog</span>
+                                                    <span class="wb-text-sm wb-text-muted">{{ $blockTypesIndexText('core_catalog') }}</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -165,7 +174,7 @@
             </div>
         @endif
 
-        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $blockTypes, 'ariaLabel' => 'Block types pagination', 'compact' => true])
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $blockTypes, 'ariaLabel' => $blockTypesIndexText('pagination'), 'compact' => true])
     </div>
 @endsection
 
