@@ -1,4 +1,11 @@
 @php
+    use Illuminate\Support\Str;
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $slotBlockDeleteLocale = app(AdminLocaleResolver::class)->locale();
+    $slotBlockDeleteTranslator = app(CmsTranslator::class);
+    $slotBlockDeleteText = static fn (string $key, array $replace = []) => $slotBlockDeleteTranslator->admin('slot_block_delete_modal.'.$key, $slotBlockDeleteLocale, $replace);
     $deleteBlock = $slotDeleteModalBlock ?? null;
     $deleteMeta = $slotDeleteModalMeta ?? null;
     $sharedSlot = $sharedSlot ?? null;
@@ -16,17 +23,17 @@
     $summary = $deleteBlock?->editorSummary();
     $label = $deleteBlock?->editorLabel();
     $childCountLabel = $deleteMeta
-        ? $deleteMeta['direct_child_count'].' '.\Illuminate\Support\Str::plural('direct child', $deleteMeta['direct_child_count'])
+        ? $deleteMeta['direct_child_count'].' '.Str::plural($slotBlockDeleteText('direct_child'), $deleteMeta['direct_child_count'])
         : null;
     $descendantCountLabel = $deleteMeta
-        ? $deleteMeta['descendant_count'].' '.\Illuminate\Support\Str::plural('nested descendant', $deleteMeta['descendant_count'])
+        ? $deleteMeta['descendant_count'].' '.Str::plural($slotBlockDeleteText('nested_descendant'), $deleteMeta['descendant_count'])
         : null;
     $deleteAllMeta = $slotDeleteAllModalMeta ?? null;
     $showDeleteAllModal = request()->boolean('delete_all') && $deleteAllMeta && (($deleteAllMeta['total_count'] ?? 0) > 0);
-    $deleteAllTitle = $sharedSlot ? 'Delete All Shared Slot Blocks' : 'Delete All Blocks';
+    $deleteAllTitle = $sharedSlot ? $slotBlockDeleteText('delete_all_shared_slot_blocks') : $slotBlockDeleteText('delete_all_blocks');
     $deleteAllContext = $sharedSlot
-        ? 'Shared Slot: '.$sharedSlot->name
-        : 'Page: '.$page->title;
+        ? $slotBlockDeleteText('shared_slot_context', ['name' => $sharedSlot->name])
+        : $slotBlockDeleteText('page_context', ['title' => $page->title]);
     $deleteAllAction = $sharedSlot
         ? route('admin.shared-slots.blocks.destroy-all', $sharedSlot)
         : route('admin.pages.slots.blocks.destroy-all', [$page, $slot]);
@@ -38,11 +45,11 @@
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div>
-                        <h2 class="wb-modal-title" id="slot-block-delete-title">Delete Block</h2>
-                        <p class="wb-text-sm wb-text-muted" id="slot-block-delete-description">Choose whether to delete only this block or also remove its nested child blocks.</p>
+                        <h2 class="wb-modal-title" id="slot-block-delete-title">{{ $slotBlockDeleteText('delete_block_title') }}</h2>
+                        <p class="wb-text-sm wb-text-muted" id="slot-block-delete-description">{{ $slotBlockDeleteText('delete_block_description') }}</p>
                     </div>
 
-                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close delete block dialog">
+                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $slotBlockDeleteText('close_delete_block_dialog') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -65,7 +72,7 @@
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 <div class="wb-cluster wb-cluster-2">
                                     <span class="wb-status-pill wb-status-info">{{ $deleteBlock->typeName() }}</span>
-                                    <span class="wb-text-sm wb-text-muted">Block #{{ $deleteBlock->id }}</span>
+                                    <span class="wb-text-sm wb-text-muted">{{ $slotBlockDeleteText('block_number', ['id' => $deleteBlock->id]) }}</span>
                                 </div>
                                 <strong>{{ $label }}</strong>
                                 @if ($summary && $summary !== $label)
@@ -76,11 +83,11 @@
 
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-2">
-                                <strong>Nested Blocks</strong>
+                                <strong>{{ $slotBlockDeleteText('nested_blocks') }}</strong>
                                 @if ($deleteMeta['has_children'])
-                                    <p class="wb-text-sm wb-text-muted">This block currently contains {{ $childCountLabel }} and {{ $descendantCountLabel }}.</p>
+                                    <p class="wb-text-sm wb-text-muted">{{ $slotBlockDeleteText('contains_children', ['children' => $childCountLabel, 'descendants' => $descendantCountLabel]) }}</p>
                                 @else
-                                    <p class="wb-text-sm wb-text-muted">This block has no nested child blocks.</p>
+                                    <p class="wb-text-sm wb-text-muted">{{ $slotBlockDeleteText('no_nested_children') }}</p>
                                 @endif
                             </div>
                         </div>
@@ -89,10 +96,10 @@
                             <div class="wb-card-body wb-stack wb-gap-3">
                                 <label class="wb-checkbox" for="delete_descendants">
                                     <input id="delete_descendants" type="checkbox" name="delete_descendants" value="1" @checked(old('delete_descendants')) data-wb-delete-descendants-toggle>
-                                    <span>Also delete all nested child blocks</span>
+                                    <span>{{ $slotBlockDeleteText('also_delete_nested') }}</span>
                                 </label>
 
-                                <p class="wb-text-sm wb-text-muted">Default behavior is safer and deletes only the selected block. Recursive deletion cannot be undone except by restoring a revision or backup.</p>
+                                <p class="wb-text-sm wb-text-muted">{{ $slotBlockDeleteText('recursive_warning') }}</p>
                             </div>
                         </div>
                     </div>
@@ -101,11 +108,11 @@
                         :cancel-url="$closeUrl"
                         :show-submit="false"
                         :delete-submit="true"
-                        :delete-label="old('delete_descendants') ? 'Delete block and children' : 'Delete block'"
+                        :delete-label="old('delete_descendants') ? $slotBlockDeleteText('delete_block_and_children') : $slotBlockDeleteText('delete_block')"
                         :delete-attributes="[
                             'data-wb-delete-submit' => true,
-                            'data-default-label' => 'Delete block',
-                            'data-recursive-label' => 'Delete block and children',
+                            'data-default-label' => $slotBlockDeleteText('delete_block'),
+                            'data-recursive-label' => $slotBlockDeleteText('delete_block_and_children'),
                         ]"
                         container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                     />
@@ -122,10 +129,10 @@
                 <div class="wb-modal-header">
                     <div>
                         <h2 class="wb-modal-title" id="slot-block-delete-all-title">{{ $deleteAllTitle }}</h2>
-                        <p class="wb-text-sm wb-text-muted" id="slot-block-delete-all-description">Delete every block from this slot only, including nested descendants.</p>
+                        <p class="wb-text-sm wb-text-muted" id="slot-block-delete-all-description">{{ $slotBlockDeleteText('delete_all_description') }}</p>
                     </div>
 
-                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close delete all blocks dialog">
+                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $slotBlockDeleteText('close_delete_all_dialog') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -143,23 +150,23 @@
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 <div><strong>{{ $deleteAllContext }}</strong></div>
-                                <div><strong>Slot:</strong> {{ $slot->slotType?->name ?? 'Slot' }}</div>
-                                <div><strong>Top-level blocks:</strong> {{ $deleteAllMeta['top_level_count'] }}</div>
-                                <div><strong>Nested descendants:</strong> {{ $deleteAllMeta['descendant_count'] }}</div>
+                                <div><strong>{{ $slotBlockDeleteText('slot') }}</strong> {{ $slot->slotType?->name ?? $slotBlockDeleteText('slot_fallback') }}</div>
+                                <div><strong>{{ $slotBlockDeleteText('top_level_blocks') }}</strong> {{ $deleteAllMeta['top_level_count'] }}</div>
+                                <div><strong>{{ $slotBlockDeleteText('nested_descendants') }}</strong> {{ $deleteAllMeta['descendant_count'] }}</div>
                             </div>
                         </div>
 
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-2">
-                                <strong>Warning</strong>
-                                <p class="wb-text-sm wb-text-muted">All blocks in this slot will be deleted. Blocks in other slots will be preserved.</p>
-                                <p class="wb-text-sm wb-text-muted">Recovery is only possible through revisions or backups.</p>
+                                <strong>{{ $slotBlockDeleteText('warning') }}</strong>
+                                <p class="wb-text-sm wb-text-muted">{{ $slotBlockDeleteText('delete_all_warning') }}</p>
+                                <p class="wb-text-sm wb-text-muted">{{ $slotBlockDeleteText('recovery_warning') }}</p>
                             </div>
                         </div>
 
                         <label class="wb-checkbox" for="confirm_delete_all_blocks">
                             <input id="confirm_delete_all_blocks" type="checkbox" name="confirm_delete_all_blocks" value="1" @checked(old('confirm_delete_all_blocks')) required>
-                            <span>I understand that this deletes every block in this slot.</span>
+                            <span>{{ $slotBlockDeleteText('confirm_delete_all') }}</span>
                         </label>
                     </div>
 
@@ -167,7 +174,7 @@
                         :cancel-url="$closeUrl"
                         :show-submit="false"
                         :delete-submit="true"
-                        delete-label="Delete all blocks"
+                        :delete-label="$slotBlockDeleteText('delete_all_blocks_button')"
                         container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                     />
                 </form>
