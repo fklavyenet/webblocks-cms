@@ -1,6 +1,11 @@
-@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
-
 @php
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('site_form.'.$key, $adminLocale, $replace);
+  $localizedPageTitle = $site->exists ? $adminText('edit_title', ['name' => $site->name]) : $adminText('create_title');
   $canManageSiteSettings = $canManageSiteSettings ?? true;
   $canManageDomains = $canManageDomains ?? false;
   $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme', 'assets'], true)
@@ -26,11 +31,11 @@
   $actions = [];
 
   if ($site->exists && $canManageDomains) {
-    $actions[] = '<a href="'.route('admin.sites.domains.index', $site).'" class="wb-btn wb-btn-secondary">Manage Domains</a>';
+    $actions[] = '<a href="'.route('admin.sites.domains.index', $site).'" class="wb-btn wb-btn-secondary">'.e($adminText('manage_domains')).'</a>';
   }
 
   if ($site->exists) {
-    $actions[] = '<a href="'.route('admin.pages.index', ['site' => $site->id]).'" class="wb-btn wb-btn-secondary">Open Pages</a>';
+    $actions[] = '<a href="'.route('admin.pages.index', ['site' => $site->id]).'" class="wb-btn wb-btn-secondary">'.e($adminText('open_pages')).'</a>';
   }
 
   $pageHeaderActions = $actions !== []
@@ -38,10 +43,12 @@
     : '';
 @endphp
 
+@extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
+
 @section('content')
   @include('webblocks-cms::admin.partials.page-header', [
-    'title' => $pageTitle,
-    'description' => 'Keep technical site setup separate from public branding, locale assignment, SEO fallbacks, and reusable site variables for public content.',
+    'title' => $localizedPageTitle,
+    'description' => $adminText('description'),
     'actions' => $pageHeaderActions,
   ])
 
@@ -58,12 +65,12 @@
     <div class="wb-card">
       <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
         <div class="wb-stack wb-gap-1">
-          <strong>Site Settings</strong>
-          <span class="wb-text-sm wb-text-muted">Edit the site record in focused sections without mixing in domain management.</span>
+          <strong>{{ $adminText('site_settings') }}</strong>
+          <span class="wb-text-sm wb-text-muted">{{ $adminText('site_settings_help') }}</span>
         </div>
 
         @if ($isReadOnly)
-          <span class="wb-status-pill wb-status-info">Read only</span>
+          <span class="wb-status-pill wb-status-info">{{ $adminText('read_only') }}</span>
         @endif
       </div>
 
@@ -71,23 +78,23 @@
         @if ($isReadOnly)
           <div class="wb-alert wb-alert-info">
             <div>
-              <div class="wb-alert-title">View only</div>
-              <div>Editors can review site settings and variables for assigned sites, but only site admins and super admins can save changes.</div>
+              <div class="wb-alert-title">{{ $adminText('view_only') }}</div>
+              <div>{{ $adminText('view_only_help') }}</div>
             </div>
           </div>
         @endif
 
         <div class="wb-tabs">
-          <div class="wb-tabs-nav" role="tablist" aria-label="Site settings sections">
+          <div class="wb-tabs-nav" role="tablist" aria-label="{{ $adminText('site_settings_sections') }}">
             @foreach ([
-              'site' => 'Site',
-              'locales' => 'Locales',
-              'branding' => 'Branding',
-              'seo-defaults' => 'SEO Defaults',
-              'contact' => 'Contact',
-              'variables' => 'Variables',
-              'theme' => 'Theme',
-              'assets' => 'Assets',
+              'site' => $adminText('site'),
+              'locales' => $adminText('locales'),
+              'branding' => $adminText('branding'),
+              'seo-defaults' => $adminText('seo_defaults'),
+              'contact' => $adminText('contact'),
+              'variables' => $adminText('variables'),
+              'theme' => $adminText('theme'),
+              'assets' => $adminText('assets'),
             ] as $tabKey => $tabLabel)
               <a
                 href="{{ $tabUrl($tabKey) }}"
@@ -100,30 +107,30 @@
           <div class="wb-tabs-panels">
             <div class="wb-tabs-panel {{ $siteTab === 'site' ? 'is-active' : '' }}">
               <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>Site</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('site') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-3">
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_name">Name</label>
+                    <label for="site_name">{{ $adminText('name') }}</label>
                     <input id="site_name" name="name" class="wb-input" type="text" value="{{ old('name', $site->name) }}" required data-site-name-input @disabled($isReadOnly)>
-                    <div class="wb-text-sm wb-text-muted">Internal admin name for this site record.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('name_help') }}</div>
                   </div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_handle">Handle</label>
+                    <label for="site_handle">{{ $adminText('handle') }}</label>
                     <input id="site_handle" name="handle" class="wb-input" type="text" value="{{ old('handle', $site->handle) }}" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" inputmode="text" data-site-handle-input data-site-handle-autosuggest="{{ $site->exists ? 'off' : 'on' }}" @disabled($isReadOnly)>
-                    <div class="wb-text-sm wb-text-muted">Lowercase letters, numbers, and hyphens only. New sites auto-suggest from Name until you edit Handle manually.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('handle_help') }}</div>
                   </div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_domain">Domain</label>
+                    <label for="site_domain">{{ $adminText('domain') }}</label>
                     <input id="site_domain" name="domain" class="wb-input" type="text" value="{{ old('domain', $site->domain) }}" @disabled($isReadOnly)>
-                    <div class="wb-text-sm wb-text-muted">This remains the canonical primary domain. Use the Domains screen for aliases, activation state, and redirect-to-primary behavior.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('domain_help') }}</div>
                   </div>
 
                   <label class="wb-nowrap">
                     <input type="checkbox" name="is_primary" value="1" @checked(old('is_primary', $site->is_primary)) @disabled($isReadOnly)>
-                    <span>Primary</span>
+                    <span>{{ $adminText('primary') }}</span>
                   </label>
                 </div>
               </div>
@@ -131,10 +138,10 @@
 
             <div class="wb-tabs-panel {{ $siteTab === 'locales' ? 'is-active' : '' }}">
               <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>Locales</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('locales') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                  <div class="wb-text-sm wb-text-muted">Each site must keep at least one locale enabled. The system default locale is always forced on.</div>
+                  <div class="wb-text-sm wb-text-muted">{{ $adminText('locales_help') }}</div>
                   @foreach ($locales as $locale)
                     @if ($locale->is_default)
                       <input type="hidden" name="locale_ids[]" value="{{ $locale->id }}">
@@ -152,12 +159,12 @@
                         @checked($selectedLocaleIds->contains($locale->id))
                         @disabled($isReadOnly || $locale->is_default || ! $locale->is_enabled)
                       >
-                      <span>{{ strtoupper($locale->code) }} - {{ $locale->name }}@if ($locale->is_default) (Default) @elseif (! $locale->is_enabled) (Disabled) @endif</span>
+                      <span>{{ strtoupper($locale->code) }} - {{ $locale->name }}@if ($locale->is_default) ({{ $adminText('default') }}) @elseif (! $locale->is_enabled) ({{ $adminText('disabled') }}) @endif</span>
                     </label>
                   @endforeach
 
                   @if ($locales->contains(fn ($locale) => ! $locale->is_default && ! $locale->is_enabled))
-                    <div class="wb-text-sm wb-text-muted">Disabled locales stay unavailable for new site assignments until they are enabled again from the Locales screen.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('disabled_locales_help') }}</div>
                   @endif
                 </div>
               </div>
@@ -165,73 +172,73 @@
 
             <div class="wb-tabs-panel {{ $siteTab === 'branding' ? 'is-active' : '' }}">
               <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>Branding</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('branding') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-3">
-                  <div class="wb-text-sm wb-text-muted">These values affect the public site only. They do not change the fixed WebBlocks CMS admin product identity.</div>
+                  <div class="wb-text-sm wb-text-muted">{{ $adminText('branding_help') }}</div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_display_name">Public display name</label>
+                    <label for="site_display_name">{{ $adminText('public_display_name') }}</label>
                     <input id="site_display_name" name="display_name" class="wb-input" type="text" value="{{ old('display_name', $site->display_name) }}" @disabled($isReadOnly)>
-                    <div class="wb-text-sm wb-text-muted">Optional public-facing name override. Falls back to the internal site name when empty.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('public_display_name_help') }}</div>
                   </div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_tagline">Tagline</label>
+                    <label for="site_tagline">{{ $adminText('tagline') }}</label>
                     <input id="site_tagline" name="tagline" class="wb-input" type="text" value="{{ old('tagline', $site->tagline) }}" @disabled($isReadOnly)>
                   </div>
 
                   <div class="wb-grid wb-grid-2 wb-gap-4">
                     <div class="wb-stack wb-gap-2 wb-field">
-                      <label for="favicon_media_id">Favicon</label>
+                      <label for="favicon_media_id">{{ $adminText('favicon') }}</label>
                       @if ($canManageSiteSettings)
                         @include('webblocks-cms::admin.media.asset-picker-panel', [
                           'name' => 'site-favicon',
-                          'title' => 'Favicon',
+                          'title' => $adminText('favicon'),
                           'inputId' => 'favicon_media_id',
                           'fieldName' => 'favicon_media_id',
                           'selectedAsset' => $selectedFavicon,
                           'assetPickerAssets' => $assetPickerAssets,
                           'assetPickerFolders' => $assetPickerFolders,
                           'accept' => 'image',
-                          'buttonLabel' => 'Choose favicon',
-                          'replaceLabel' => 'Replace favicon',
-                          'clearLabel' => 'Remove favicon',
+                          'buttonLabel' => $adminText('choose_favicon'),
+                          'replaceLabel' => $adminText('replace_favicon'),
+                          'clearLabel' => $adminText('remove_favicon'),
                         ])
                       @else
                         <div class="wb-card wb-card-muted">
                           <div class="wb-card-body wb-text-sm">
-                            {{ $selectedFavicon?->original_name ?? 'No favicon selected.' }}
+                            {{ $selectedFavicon?->original_name ?? $adminText('no_favicon_selected') }}
                           </div>
                         </div>
                       @endif
-                      <div class="wb-text-sm wb-text-muted">Used for public favicon link tags when the selected image has a public URL.</div>
+                      <div class="wb-text-sm wb-text-muted">{{ $adminText('favicon_help') }}</div>
                     </div>
 
                     <div class="wb-stack wb-gap-2 wb-field">
-                      <label for="social_image_media_id">Social image</label>
+                      <label for="social_image_media_id">{{ $adminText('social_image') }}</label>
                       @if ($canManageSiteSettings)
                         @include('webblocks-cms::admin.media.asset-picker-panel', [
                           'name' => 'site-social-image',
-                          'title' => 'Social image',
+                          'title' => $adminText('social_image'),
                           'inputId' => 'social_image_media_id',
                           'fieldName' => 'social_image_media_id',
                           'selectedAsset' => $selectedSocialImage,
                           'assetPickerAssets' => $assetPickerAssets,
                           'assetPickerFolders' => $assetPickerFolders,
                           'accept' => 'image',
-                          'buttonLabel' => 'Choose social image',
-                          'replaceLabel' => 'Replace social image',
-                          'clearLabel' => 'Remove social image',
+                          'buttonLabel' => $adminText('choose_social_image'),
+                          'replaceLabel' => $adminText('replace_social_image'),
+                          'clearLabel' => $adminText('remove_social_image'),
                         ])
                       @else
                         <div class="wb-card wb-card-muted">
                           <div class="wb-card-body wb-text-sm">
-                            {{ $selectedSocialImage?->original_name ?? 'No social image selected.' }}
+                            {{ $selectedSocialImage?->original_name ?? $adminText('no_social_image_selected') }}
                           </div>
                         </div>
                       @endif
-                      <div class="wb-text-sm wb-text-muted">Used as fallback sharing artwork for the public site.</div>
+                      <div class="wb-text-sm wb-text-muted">{{ $adminText('social_image_help') }}</div>
                     </div>
                   </div>
                 </div>
@@ -240,23 +247,23 @@
 
             <div class="wb-tabs-panel {{ $siteTab === 'seo-defaults' ? 'is-active' : '' }}">
               <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>SEO Defaults</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('seo_defaults') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-3">
-                  <div class="wb-text-sm wb-text-muted">These are site-level public metadata fallbacks. Page-level SEO overrides are intentionally not part of this phase.</div>
+                  <div class="wb-text-sm wb-text-muted">{{ $adminText('seo_defaults_help') }}</div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_seo_title">Default meta title</label>
+                    <label for="site_seo_title">{{ $adminText('default_meta_title') }}</label>
                     <input id="site_seo_title" name="seo_title" class="wb-input" type="text" value="{{ old('seo_title', $site->seo_title) }}" @disabled($isReadOnly)>
                   </div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_seo_description">Default meta description</label>
+                    <label for="site_seo_description">{{ $adminText('default_meta_description') }}</label>
                     <textarea id="site_seo_description" name="seo_description" class="wb-input" rows="5" @disabled($isReadOnly)>{{ old('seo_description', $site->seo_description) }}</textarea>
                   </div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_seo_keywords">Meta keywords</label>
+                    <label for="site_seo_keywords">{{ $adminText('meta_keywords') }}</label>
                     <input id="site_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $site->seo_keywords) }}" @disabled($isReadOnly)>
                   </div>
                 </div>
@@ -265,15 +272,15 @@
 
             <div class="wb-tabs-panel {{ $siteTab === 'contact' ? 'is-active' : '' }}">
               <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>Contact Forms</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('contact_forms') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-3">
-                  <div class="wb-text-sm wb-text-muted">Default recipient for Contact Form blocks on this site. Individual Contact Form blocks can still override this address.</div>
+                  <div class="wb-text-sm wb-text-muted">{{ $adminText('contact_forms_help') }}</div>
 
                   <div class="wb-stack-2 wb-field">
-                    <label for="site_contact_recipient_email">Default recipient email</label>
+                    <label for="site_contact_recipient_email">{{ $adminText('default_recipient_email') }}</label>
                     <input id="site_contact_recipient_email" name="contact_recipient_email" class="wb-input" type="email" value="{{ old('contact_recipient_email', $site->contact_recipient_email) }}" autocomplete="email" @disabled($isReadOnly)>
-                    <div class="wb-text-sm wb-text-muted">Used when a Contact Form block has notifications enabled but no block-level recipient. If empty, CMS falls back to `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS`.</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('default_recipient_email_help') }}</div>
                   </div>
                 </div>
               </div>
@@ -311,7 +318,7 @@
         <x-webblocks-cms::admin.form-actions
           :cancel-url="route('admin.sites.index')"
           :show-submit="$canManageSiteSettings"
-          :submit-label="$site->exists ? 'Save Changes' : 'Create'"
+          :submit-label="$site->exists ? $adminText('save_changes') : $adminText('create')"
           :delete-href="$site->exists && isset($siteDeleteReport) && $canManageDomains ? route('admin.sites.delete', $site) : null"
           :delete-disabled="$site->exists && isset($siteDeleteReport) ? ! $siteDeleteReport->canDelete : false"
         />
