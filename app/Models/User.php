@@ -31,8 +31,10 @@ class User extends Authenticatable
   protected static function booted(): void
   {
     static::saving(function (self $user): void {
-      $user->role = $user->normalizedRole();
-      $user->is_admin = $user->role === self::ROLE_SUPER_ADMIN;
+      $role = $user->normalizedRole();
+
+      $user->role = $role !== '' ? $role : null;
+      $user->is_admin = $role === self::ROLE_SUPER_ADMIN;
     });
   }
 
@@ -78,6 +80,15 @@ class User extends Authenticatable
     ]);
   }
 
+  public function scopeCmsUsers(Builder $query): Builder
+  {
+    return $query->where(function (Builder $subquery): void {
+      $subquery
+        ->where('role', self::ROLE_SUPER_ADMIN)
+        ->orWhereHas('sites');
+    });
+  }
+
   public function normalizedRole(): string
   {
     $role = is_string($this->role) ? trim($this->role) : '';
@@ -86,7 +97,7 @@ class User extends Authenticatable
       return $role;
     }
 
-    return $this->is_admin ? self::ROLE_SUPER_ADMIN : self::ROLE_EDITOR;
+    return $this->is_admin ? self::ROLE_SUPER_ADMIN : '';
   }
 
   public function isSuperAdmin(): bool
@@ -160,7 +171,7 @@ class User extends Authenticatable
   public function canAccessAdmin(): bool
   {
     return $this->is_active
-      && ($this->isSuperAdmin() || $this->accessibleSiteIds()->isNotEmpty());
+      && ($this->isSuperAdmin() || (($this->isSiteAdmin() || $this->isEditor()) && $this->accessibleSiteIds()->isNotEmpty()));
   }
 
   public function roleLabel(): string

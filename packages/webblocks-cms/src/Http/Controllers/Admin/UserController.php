@@ -29,7 +29,7 @@ class UserController extends Controller
       'role' => $this->normalizedRoleFilter((string) $request->string('role')),
     ];
 
-    $totalCount = User::query()->count();
+    $totalCount = User::query()->cmsUsers()->count();
 
     $users = $this->filteredUsersQuery($filters)
       ->with('sites')
@@ -75,6 +75,7 @@ class UserController extends Controller
   public function edit(User $user): View
   {
     abort_unless(request()->user()?->can('manage-users'), 403);
+    abort_unless($this->isCmsManagedUser($user), 404);
 
     return view('webblocks-cms::admin.users.form', [
       'managedUser' => $user,
@@ -89,6 +90,8 @@ class UserController extends Controller
 
   public function update(UserUpdateRequest $request, User $user): RedirectResponse
   {
+    abort_unless($this->isCmsManagedUser($user), 404);
+
     $validated = $request->validated();
     $siteIds = $validated['site_ids'] ?? [];
     unset($validated['site_ids']);
@@ -112,6 +115,7 @@ class UserController extends Controller
   public function destroy(User $user): RedirectResponse
   {
     abort_unless(request()->user()?->can('manage-users'), 403);
+    abort_unless($this->isCmsManagedUser($user), 404);
 
     if ($message = $this->lifecycleGuard->deletionBlocker($user, request()->user())) {
       return redirect()->route('admin.users.index')->withErrors(['user_lifecycle' => $message]);
@@ -125,6 +129,7 @@ class UserController extends Controller
   private function filteredUsersQuery(array $filters): Builder
   {
     return User::query()
+      ->cmsUsers()
       ->when($filters['q'] !== '', function (Builder $query) use ($filters): void {
         $term = '%'.$filters['q'].'%';
 
@@ -147,5 +152,13 @@ class UserController extends Controller
   private function normalizedRoleFilter(string $value): string
   {
     return in_array($value, User::roles(), true) ? $value : '';
+  }
+
+  private function isCmsManagedUser(User $user): bool
+  {
+    return User::query()
+      ->whereKey($user->getKey())
+      ->cmsUsers()
+      ->exists();
   }
 }

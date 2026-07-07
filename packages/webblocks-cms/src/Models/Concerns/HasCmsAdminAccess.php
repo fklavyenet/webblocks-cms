@@ -29,9 +29,14 @@ trait HasCmsAdminAccess
   public static function bootHasCmsAdminAccess(): void
   {
     static::saving(function ($user): void {
-      $user->role = $user->normalizedRole();
-      $user->is_admin = $user->role === static::ROLE_SUPER_ADMIN;
-      $user->is_active = $user->is_active ?? true;
+      $role = $user->normalizedRole();
+
+      $user->role = $role !== '' ? $role : null;
+      $user->is_admin = $role === static::ROLE_SUPER_ADMIN;
+
+      if ($role !== '') {
+        $user->is_active = $user->is_active ?? true;
+      }
     });
   }
 
@@ -59,6 +64,15 @@ trait HasCmsAdminAccess
     ]);
   }
 
+  public function scopeCmsUsers(Builder $query): Builder
+  {
+    return $query->where(function (Builder $subquery): void {
+      $subquery
+        ->where('role', static::ROLE_SUPER_ADMIN)
+        ->orWhereHas('sites');
+    });
+  }
+
   public function normalizedRole(): string
   {
     $role = is_string($this->role ?? null) ? trim((string) $this->role) : '';
@@ -67,9 +81,7 @@ trait HasCmsAdminAccess
       return $role;
     }
 
-    return (bool) ($this->is_admin ?? false)
-      ? static::ROLE_SUPER_ADMIN
-      : static::ROLE_EDITOR;
+    return (bool) ($this->is_admin ?? false) ? static::ROLE_SUPER_ADMIN : '';
   }
 
   public function isSuperAdmin(): bool
@@ -143,7 +155,7 @@ trait HasCmsAdminAccess
   public function canAccessAdmin(): bool
   {
     return (bool) ($this->is_active ?? true)
-      && ($this->isSuperAdmin() || $this->accessibleSiteIds()->isNotEmpty());
+      && ($this->isSuperAdmin() || (($this->isSiteAdmin() || $this->isEditor()) && $this->accessibleSiteIds()->isNotEmpty()));
   }
 
   public function roleLabel(): string

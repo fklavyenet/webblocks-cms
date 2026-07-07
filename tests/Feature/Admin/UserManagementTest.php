@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Site;
@@ -40,6 +41,42 @@ class UserManagementTest extends TestCase
     $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
     $response->assertDontSee('class="wb-action-group wb-whitespace-nowrap"', false);
+  }
+
+  #[Test]
+  public function users_index_only_lists_cms_managed_users(): void
+  {
+    $admin = User::factory()->superAdmin()->create();
+    $managedUser = User::factory()->editor()->create(['email' => 'cms-editor@example.com']);
+    $hostUserId = DB::table('users')->insertGetId([
+      'name' => 'Quiztem Student',
+      'email' => 'quiztem-student@example.com',
+      'email_verified_at' => now(),
+      'password' => 'password',
+      'role' => null,
+      'is_admin' => false,
+      'is_active' => true,
+      'created_at' => now(),
+      'updated_at' => now(),
+    ]);
+    $hostUser = User::query()->findOrFail($hostUserId);
+
+    $response = $this->actingAs($admin)->get(route('admin.users.index'));
+
+    $response->assertOk();
+    $response->assertSee($managedUser->email);
+    $response->assertDontSee('quiztem-student@example.com');
+    $this->assertSame('', $hostUser->normalizedRole());
+    $this->assertFalse($hostUser->canAccessAdmin());
+
+    $searchResponse = $this->actingAs($admin)->get(route('admin.users.index', ['q' => 'quiztem']));
+
+    $searchResponse->assertOk();
+    $searchResponse->assertDontSee('quiztem-student@example.com');
+
+    $this->actingAs($admin)
+      ->get(route('admin.users.edit', $hostUser))
+      ->assertNotFound();
   }
 
   #[Test]
@@ -269,7 +306,7 @@ class UserManagementTest extends TestCase
     $this->assertSame(User::ROLE_SITE_ADMIN, $user->role);
     $this->assertFalse($user->is_admin);
     $this->assertTrue($user->is_active);
-    $this->assertEquals([$primarySite->id], $user->sites()->pluck('sites.id')->all());
+    $this->assertEquals([$primarySite->id], $user->sites()->pluck('wbcms_sites.id')->all());
   }
 
   #[Test]
@@ -335,7 +372,7 @@ class UserManagementTest extends TestCase
     $this->assertSame(User::ROLE_EDITOR, $managedUser->role);
     $this->assertFalse($managedUser->is_admin);
     $this->assertTrue($managedUser->is_active);
-    $this->assertEquals([$secondarySite->id], $managedUser->sites()->pluck('sites.id')->all());
+    $this->assertEquals([$secondarySite->id], $managedUser->sites()->pluck('wbcms_sites.id')->all());
   }
 
   #[Test]
@@ -350,7 +387,7 @@ class UserManagementTest extends TestCase
       'password' => '',
       'password_confirmation' => '',
       'role' => User::ROLE_EDITOR,
-      'site_ids' => $managedUser->sites()->pluck('sites.id')->all(),
+      'site_ids' => $managedUser->sites()->pluck('wbcms_sites.id')->all(),
     ]);
 
     $response->assertRedirect(route('admin.users.edit', $managedUser));

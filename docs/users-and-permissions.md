@@ -18,6 +18,8 @@ These users are for managing the CMS itself. They are not public membership acco
 
 Because users affect the whole install, the `Users` screen lives under the admin `System` navigation.
 
+In coexistence installs, the `Users` screen lists only CMS-managed users. Host-only accounts from the shared Laravel `users` table are excluded unless they have explicit CMS access through the `super_admin` role or a CMS site assignment.
+
 Each signed-in CMS admin user manages their own account details from `/webadmin/profile`. The Profile page is separate from Users management and only exposes the current user's name, email, current-password-confirmed password change form, and Save Changes actions.
 
 Password fields on Profile and Users screens use the shipped WebBlocks UI Password Toggle pattern (`data-wb-password-toggle` with `data-wb-target`) from the pinned WebBlocks UI runtime. CMS core does not add custom password-toggle CSS or JavaScript.

@@ -68,6 +68,8 @@ Authentication only proves that a user is signed in. It does not grant CMS acces
 
 CMS authorization must be decided by the CMS membership and role system. CMS super admin status does not make the user a host product admin, and host product admin status does not make the user a CMS super admin.
 
+Admin user management must stay scoped to CMS-managed users. In a shared `users` table, host-only product users such as students, teachers, customers, or members must not appear in `/webadmin/users` unless they have explicit CMS membership through a CMS super-admin role or CMS site assignment.
+
 ## Users Table And Duplicate Email Behavior
 
 The `users` table is the identity layer in a shared Laravel host. CMS access is represented by CMS-owned membership or role records, not by creating a second user for the same person.
