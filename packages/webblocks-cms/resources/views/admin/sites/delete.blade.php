@@ -1,10 +1,20 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Delete Site', 'heading' => 'Delete Site'])
+@php
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('site_form.'.$key, $adminLocale, $replace);
+  $localizedPageTitle = $adminText('delete_site_title');
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Delete Site',
-        'description' => 'Delete this site and its site-scoped content. This action cannot be undone.',
-        'actions' => '<a href="'.route('admin.sites.edit', $site).'" class="wb-btn wb-btn-secondary">Back to Site</a>',
+        'title' => $localizedPageTitle,
+        'description' => $adminText('delete_site_description'),
+        'actions' => '<a href="'.route('admin.sites.edit', $site).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_site')).'</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -18,24 +28,24 @@
                 </div>
 
                 <div class="wb-stack wb-gap-2 wb-text-sm">
-                    <div><strong>Domain:</strong> {{ $site->canonicalDomain() ?: 'Not set' }}</div>
-                    <div><strong>Pages:</strong> {{ $report->count('pages') }}</div>
-                    <div><strong>Blocks:</strong> {{ $report->count('blocks') }}</div>
-                    <div><strong>Navigation items:</strong> {{ $report->count('navigation_items') }}</div>
-                    <div><strong>Locale assignments:</strong> {{ $report->count('site_locales') }}</div>
+                    <div><strong>{{ $adminText('domain_label') }}</strong> {{ $site->canonicalDomain() ?: $adminText('not_set') }}</div>
+                    <div><strong>{{ $adminText('pages_label') }}</strong> {{ $report->count('pages') }}</div>
+                    <div><strong>{{ $adminText('blocks_label') }}</strong> {{ $report->count('blocks') }}</div>
+                    <div><strong>{{ $adminText('navigation_items_label') }}</strong> {{ $report->count('navigation_items') }}</div>
+                    <div><strong>{{ $adminText('locale_assignments_label') }}</strong> {{ $report->count('site_locales') }}</div>
                 </div>
 
                 <div class="wb-alert wb-alert-warning">
                     <div>
-                        <div class="wb-alert-title">Warning</div>
-                        <div>This permanently deletes the selected site and its site-scoped content. Shared assets and files are not blindly removed.</div>
+                        <div class="wb-alert-title">{{ $adminText('warning') }}</div>
+                        <div>{{ $adminText('delete_site_warning') }}</div>
                     </div>
                 </div>
 
                 @if ($report->hasBlockers())
                     <div class="wb-alert wb-alert-danger">
                         <div>
-                            <div class="wb-alert-title">Delete Blocked</div>
+                            <div class="wb-alert-title">{{ $adminText('delete_blocked') }}</div>
                             <div>{{ $report->firstBlocker() }}</div>
                         </div>
                     </div>
@@ -51,7 +61,7 @@
                 <div class="wb-card-body wb-stack wb-gap-4">
                     <label class="wb-nowrap">
                         <input type="checkbox" name="confirm_delete" value="1" @checked(old('confirm_delete')) @disabled($report->hasBlockers())>
-                        <span>I understand this will permanently delete this site.</span>
+                        <span>{{ $adminText('delete_site_confirm') }}</span>
                     </label>
                 </div>
 
