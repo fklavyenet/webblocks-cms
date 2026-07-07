@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move Page Translation form routing, SEO, Open Graph, and action copy onto structured admin locale keys.
 - Move Shared Slot revision history and snapshot detail copy onto structured admin locale keys.
 - Move Shared Slot block editor wrapper, locale, empty-state, and table copy onto structured admin locale keys.
 - Move Shared Slots index, create, edit, and form copy onto structured admin locale keys.

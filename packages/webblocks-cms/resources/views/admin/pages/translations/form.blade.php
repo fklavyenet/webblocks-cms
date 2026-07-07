@@ -1,22 +1,29 @@
 @php
-    $translationPublicUrl = $translation->exists ? $page->publicUrl($locale->code) : null;
-    $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
-    $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
-    $siteName = $page->site?->name ?? 'Site';
-    $currentPath = old('path', $translation->path ?: ($translation->slug ? \WebBlocks\Cms\Models\PageTranslation::pathFromSlug($translation->slug) : ($locale->is_default ? '/' : '/'.$locale->code)));
-    $selectedOgImage = old('og_image_media_id', old('og_image_asset_id'))
-        ? $assetPickerAssets->firstWhere('id', (int) old('og_image_media_id', old('og_image_asset_id')))
-        : $translation->ogImage;
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('page_translations.'.$key, $adminLocale, $replace);
+  $translationPublicUrl = $translation->exists ? $page->publicUrl($locale->code) : null;
+  $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
+  $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
+  $siteName = $page->site?->name ?? $adminText('site');
+  $localizedPageTitle = $adminText($translation->exists ? 'edit_title' : 'create_title', ['title' => $page->title, 'locale' => strtoupper($locale->code)]);
+  $currentPath = old('path', $translation->path ?: ($translation->slug ? \WebBlocks\Cms\Models\PageTranslation::pathFromSlug($translation->slug) : ($locale->is_default ? '/' : '/'.$locale->code)));
+  $selectedOgImage = old('og_image_media_id', old('og_image_asset_id'))
+    ? $assetPickerAssets->firstWhere('id', (int) old('og_image_media_id', old('og_image_asset_id')))
+    : $translation->ogImage;
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.strtoupper($locale->code).'</span></li></ol></nav>',
-        'title' => $pageTitle,
-        'description' => 'Edit page name, routing, and SEO overrides for this locale. Block content stays shared in this phase.',
-        'actions' => $translationPublicUrl ? '<a href="'.$translationPublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>Open</span></a>' : '',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="'.e($adminText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($adminText('pages')).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($siteName).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.e($page->title).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.strtoupper($locale->code).'</span></li></ol></nav>',
+        'title' => $localizedPageTitle,
+        'description' => $adminText('description'),
+        'actions' => $translationPublicUrl ? '<a href="'.$translationPublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>'.e($adminText('open')).'</span></a>' : '',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -33,41 +40,41 @@
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
-                            <label>Site</label>
+                            <label>{{ $adminText('site') }}</label>
                             <input class="wb-input" type="text" value="{{ $page->site?->name }}{{ $page->site?->canonicalDomain() ? ' | '.$page->site->canonicalDomain() : '' }}" disabled>
                         </div>
 
                         <div class="wb-stack-2 wb-field">
-                            <label>Locale</label>
+                            <label>{{ $adminText('locale') }}</label>
                             <input class="wb-input" type="text" value="{{ $locale->name }} ({{ strtoupper($locale->code) }})" disabled>
                         </div>
 
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_name">Name</label>
+                            <label for="translation_name">{{ $adminText('name') }}</label>
                             <input id="translation_name" name="name" class="wb-input" type="text" value="{{ old('name', $translation->name) }}" required>
                         </div>
 
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_slug">Slug</label>
+                            <label for="translation_slug">{{ $adminText('slug') }}</label>
                             <input id="translation_slug" name="slug" class="wb-input" type="text" value="{{ old('slug', $translation->slug) }}" required>
                         </div>
 
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_path">Path</label>
+                            <label for="translation_path">{{ $adminText('path') }}</label>
                             <input id="translation_path" name="path" class="wb-input" type="text" value="{{ $currentPath }}" required placeholder="/games/fruit-train">
-                            <div class="wb-text-sm wb-text-muted">Use slash-bearing paths such as <code>/games/fruit-train</code> when this page belongs under a public section.</div>
+                            <div class="wb-text-sm wb-text-muted">{!! $adminText('path_help') !!}</div>
                         </div>
                     </div>
 
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-body wb-stack wb-gap-2">
-                            <strong>Routing</strong>
-                            <div class="wb-text-sm wb-text-muted">Default locale stays prefixless. Non-default locales use a prefixed public URL.</div>
-                            <div><strong>Current public path</strong><br>{{ $translation->exists ? $page->publicPath($locale->code) : $currentPath }}</div>
+                            <strong>{{ $adminText('routing') }}</strong>
+                            <div class="wb-text-sm wb-text-muted">{{ $adminText('default_locale_help') }}</div>
+                            <div><strong>{{ $adminText('current_public_path') }}</strong><br>{{ $translation->exists ? $page->publicPath($locale->code) : $currentPath }}</div>
                             @if ($locale->is_default)
-                                <div class="wb-text-sm wb-text-muted">This locale uses the canonical prefixless public route.</div>
+                                <div class="wb-text-sm wb-text-muted">{{ $adminText('default_public_route_help') }}</div>
                             @else
-                                <div class="wb-text-sm wb-text-muted">This locale uses the `{{ '/'.$locale->code }}` public prefix.</div>
+                                <div class="wb-text-sm wb-text-muted">{{ $adminText('prefixed_public_route_help', ['prefix' => '/'.$locale->code]) }}</div>
                             @endif
                         </div>
                     </div>
@@ -76,56 +83,56 @@
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>SEO</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('seo') }}</strong></div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-text-sm wb-text-muted">These fields override the site-level SEO defaults for this locale only. Leave any field blank to fall back to the page title or site default where available.</div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('seo_help') }}</div>
 
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_seo_title">SEO title</label>
+                            <label for="translation_seo_title">{{ $adminText('seo_title') }}</label>
                             <input id="translation_seo_title" name="seo_title" class="wb-input" type="text" value="{{ old('seo_title', $translation->seo_title) }}">
                         </div>
 
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_seo_description">SEO description</label>
+                            <label for="translation_seo_description">{{ $adminText('seo_description') }}</label>
                             <textarea id="translation_seo_description" name="seo_description" class="wb-input" rows="5">{{ old('seo_description', $translation->seo_description) }}</textarea>
                         </div>
 
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_seo_keywords">SEO keywords</label>
+                            <label for="translation_seo_keywords">{{ $adminText('seo_keywords') }}</label>
                             <input id="translation_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $translation->seo_keywords) }}">
                         </div>
                     </div>
 
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_og_title">Open Graph title</label>
+                            <label for="translation_og_title">{{ $adminText('og_title') }}</label>
                             <input id="translation_og_title" name="og_title" class="wb-input" type="text" value="{{ old('og_title', $translation->og_title) }}">
                         </div>
 
                         <div class="wb-stack-2 wb-field">
-                            <label for="translation_og_description">Open Graph description</label>
+                            <label for="translation_og_description">{{ $adminText('og_description') }}</label>
                             <textarea id="translation_og_description" name="og_description" class="wb-input" rows="5">{{ old('og_description', $translation->og_description) }}</textarea>
                         </div>
 
                         <div class="wb-stack wb-gap-2 wb-field">
-                            <label for="og_image_media_id">Open Graph image</label>
+                            <label for="og_image_media_id">{{ $adminText('og_image') }}</label>
                             @include('webblocks-cms::admin.media.asset-picker-panel', [
                                 'name' => 'translation-og-image',
-                                'title' => 'Open Graph image',
+                                'title' => $adminText('og_image'),
                                 'inputId' => 'og_image_media_id',
                                 'fieldName' => 'og_image_media_id',
                                 'selectedAsset' => $selectedOgImage,
                                 'assetPickerAssets' => $assetPickerAssets,
                                 'assetPickerFolders' => $assetPickerFolders,
                                 'accept' => 'image',
-                                'buttonLabel' => 'Choose social image',
-                                'replaceLabel' => 'Replace social image',
-                                'clearLabel' => 'Remove social image',
+                                'buttonLabel' => $adminText('choose_social_image'),
+                                'replaceLabel' => $adminText('replace_social_image'),
+                                'clearLabel' => $adminText('remove_social_image'),
                             ])
-                            <div class="wb-text-sm wb-text-muted">Overrides the site-level social image for this locale when the selected image has a public URL.</div>
+                            <div class="wb-text-sm wb-text-muted">{{ $adminText('og_image_help') }}</div>
                         </div>
                     </div>
                 </div>
