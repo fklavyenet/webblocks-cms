@@ -1,6 +1,10 @@
-@extends('webblocks-cms::layouts.admin', ['title' => $plugin['label'], 'heading' => $plugin['label']])
-
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('system_plugins_show.'.$key, $adminLocale, $replace);
     $statusClass = match ($plugin['lifecycle_label']) {
         'Enabled' => 'wb-status-active',
         'Incompatible', 'Missing files', 'Error' => 'wb-status-danger',
@@ -14,18 +18,20 @@
     $uninstallModalId = 'plugin-uninstall-'.$plugin['handle'];
 @endphp
 
+@extends('webblocks-cms::layouts.admin', ['title' => $plugin['label'], 'heading' => $plugin['label']])
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $plugin['label'],
-        'description' => $plugin['description'] ?? 'Review this plugin lifecycle, capabilities, and manual package details.',
+        'description' => $plugin['description'] ?? $adminText('description'),
     ])
 
-    <p><a href="{{ route('admin.system.plugins.index') }}">Back to Plugins</a></p>
+    <p><a href="{{ route('admin.system.plugins.index') }}">{{ $adminText('back_to_plugins') }}</a></p>
 
     <div class="wb-grid wb-grid-2 wb-gap-4">
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Overview</strong>
+                <strong>{{ $adminText('overview') }}</strong>
             </div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
@@ -33,14 +39,14 @@
                     <strong>{{ $plugin['label'] }}</strong>
                     <div class="wb-text-sm wb-text-muted"><code>{{ $plugin['handle'] }}</code></div>
                 </div>
-                <div>{{ $plugin['description'] ?? 'No description provided.' }}</div>
+                <div>{{ $plugin['description'] ?? $adminText('no_description') }}</div>
                 <div class="wb-grid wb-grid-2">
                     <div>
-                        <strong>Version</strong>
-                        <div>{{ $plugin['version'] ?? 'Not declared' }}</div>
+                        <strong>{{ $adminText('version') }}</strong>
+                        <div>{{ $plugin['version'] ?? $adminText('not_declared') }}</div>
                     </div>
                     <div>
-                        <strong>Source</strong>
+                        <strong>{{ $adminText('source') }}</strong>
                         <div>{{ $plugin['source'] }}</div>
                     </div>
                 </div>
@@ -49,7 +55,7 @@
 
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Lifecycle</strong>
+                <strong>{{ $adminText('lifecycle') }}</strong>
             </div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
@@ -58,9 +64,9 @@
                     @if (! $plugin['compatible'])
                         <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
                     @elseif ($plugin['setup_required'])
-                        <div class="wb-text-sm wb-text-muted">Setup required. Plugin migrations pending before operational routes are fully usable.</div>
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('setup_required_help') }}</div>
                     @elseif (! $plugin['enabled'])
-                        <div class="wb-text-sm wb-text-muted">This plugin is installed but disabled. Enable it to register its routes, commands, menus, settings, health checks, and contributions.</div>
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('disabled_help') }}</div>
                     @endif
                 </div>
 
@@ -70,7 +76,7 @@
                             @csrf
                             <button type="submit" class="wb-btn wb-btn-primary">
                                 <i class="wb-icon wb-icon-play" aria-hidden="true"></i>
-                                Enable Plugin
+                                {{ $adminText('enable_plugin') }}
                             </button>
                         </form>
                     @endif
@@ -80,7 +86,7 @@
                             @csrf
                             <button type="submit" class="wb-btn wb-btn-secondary">
                                 <i class="wb-icon wb-icon-pause" aria-hidden="true"></i>
-                                Disable Plugin
+                                {{ $adminText('disable_plugin') }}
                             </button>
                         </form>
                     @endif
@@ -90,7 +96,7 @@
                             @csrf
                             <button type="submit" class="wb-btn {{ $plugin['setup_required'] ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                                 <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
-                                Run Plugin Migrations
+                                {{ $adminText('run_plugin_migrations') }}
                             </button>
                         </form>
                     @endif
@@ -101,45 +107,45 @@
 
     <div class="wb-card">
         <div class="wb-card-header">
-            <strong>Capabilities</strong>
+            <strong>{{ $adminText('capabilities') }}</strong>
         </div>
 
         <div class="wb-card-body">
             <div class="wb-grid wb-grid-4">
                 <div>
-                    <strong>Routes</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['admin_routes_count'] : 'Available after enabling' }}</div>
+                    <strong>{{ $adminText('routes') }}</strong>
+                    <div>{{ $plugin['enabled'] ? $plugin['admin_routes_count'] : $adminText('available_after_enabling') }}</div>
                 </div>
                 <div>
-                    <strong>Commands</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['commands_count'] : 'Available after enabling' }}</div>
+                    <strong>{{ $adminText('commands') }}</strong>
+                    <div>{{ $plugin['enabled'] ? $plugin['commands_count'] : $adminText('available_after_enabling') }}</div>
                 </div>
                 <div>
-                    <strong>Permissions</strong>
+                    <strong>{{ $adminText('permissions') }}</strong>
                     <div>{{ $plugin['permissions_count'] }}</div>
                 </div>
                 <div>
-                    <strong>Menu Items</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['menu_items_count'] : 'Available after enabling' }}</div>
+                    <strong>{{ $adminText('menu_items') }}</strong>
+                    <div>{{ $plugin['enabled'] ? $plugin['menu_items_count'] : $adminText('available_after_enabling') }}</div>
                 </div>
                 <div>
-                    <strong>Settings</strong>
-                    <div>{{ $plugin['settings'] ? ($plugin['enabled'] ? 'Declared' : 'Available after enabling') : 'Not declared' }}</div>
+                    <strong>{{ $adminText('settings') }}</strong>
+                    <div>{{ $plugin['settings'] ? ($plugin['enabled'] ? $adminText('declared') : $adminText('available_after_enabling')) : $adminText('not_declared') }}</div>
                 </div>
                 <div>
-                    <strong>Migrations</strong>
-                    <div>{{ $plugin['migrations_count'] ?? 'Manual/plugin-owned' }}</div>
+                    <strong>{{ $adminText('migrations') }}</strong>
+                    <div>{{ $plugin['migrations_count'] ?? $adminText('manual_plugin_owned') }}</div>
                 </div>
                 <div>
-                    <strong>Assets</strong>
+                    <strong>{{ $adminText('assets') }}</strong>
                     <div>{{ $plugin['public_assets_count'] }}</div>
                 </div>
                 <div>
-                    <strong>Dashboard Cards</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['dashboard_widgets_count'] + $plugin['system_cards_count'] : 'Available after enabling' }}</div>
+                    <strong>{{ $adminText('dashboard_cards') }}</strong>
+                    <div>{{ $plugin['enabled'] ? $plugin['dashboard_widgets_count'] + $plugin['system_cards_count'] : $adminText('available_after_enabling') }}</div>
                 </div>
                 <div>
-                    <strong>Blocks</strong>
+                    <strong>{{ $adminText('blocks') }}</strong>
                     <div>{{ $plugin['block_types_count'] + $plugin['block_packs_count'] }}</div>
                 </div>
             </div>
@@ -148,34 +154,34 @@
 
     <details class="wb-card">
         <summary class="wb-card-header">
-            <strong>Technical Details</strong>
+            <strong>{{ $adminText('technical_details') }}</strong>
         </summary>
 
         <div class="wb-card-body">
             <div class="wb-grid wb-grid-2">
                 <div>
-                    <strong>Provider</strong>
-                    <div>{{ $plugin['provider'] ?? 'Not declared' }}</div>
+                    <strong>{{ $adminText('provider') }}</strong>
+                    <div>{{ $plugin['provider'] ?? $adminText('not_declared') }}</div>
                 </div>
                 <div>
-                    <strong>Required CMS</strong>
-                    <div>{{ $plugin['required_cms_version'] ?? 'Not declared' }}</div>
+                    <strong>{{ $adminText('required_cms') }}</strong>
+                    <div>{{ $plugin['required_cms_version'] ?? $adminText('not_declared') }}</div>
                 </div>
                 <div>
-                    <strong>Settings Namespace</strong>
+                    <strong>{{ $adminText('settings_namespace') }}</strong>
                     <div><code>{{ $plugin['settings_namespace'] }}</code></div>
                 </div>
                 <div>
-                    <strong>Database Prefix</strong>
+                    <strong>{{ $adminText('database_prefix') }}</strong>
                     <div><code>{{ $plugin['database_prefix'] }}</code></div>
                 </div>
                 <div>
-                    <strong>Route Namespace</strong>
+                    <strong>{{ $adminText('route_namespace') }}</strong>
                     <div><code>{{ $plugin['route_name_prefix'] }}</code></div>
                 </div>
                 <div>
-                    <strong>Install Path</strong>
-                    <div>{{ $plugin['install_path'] ?? 'Not installed from a manual package' }}</div>
+                    <strong>{{ $adminText('install_path') }}</strong>
+                    <div>{{ $plugin['install_path'] ?? $adminText('not_installed_manual') }}</div>
                 </div>
             </div>
         </div>
@@ -184,17 +190,17 @@
     <div class="wb-grid wb-grid-2 wb-gap-4">
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Settings</strong>
+                <strong>{{ $adminText('settings') }}</strong>
             </div>
 
             <div class="wb-card-body">
                 @if ($plugin['settings'])
-                    <p>{{ $plugin['settings']['description'] ?? 'This plugin declares a settings surface.' }}</p>
-                    <div><strong>Route:</strong> {{ $plugin['settings_route'] ?? 'Available after enabling' }}</div>
+                    <p>{{ $plugin['settings']['description'] ?? $adminText('settings_surface_declared') }}</p>
+                    <div><strong>{{ $adminText('route_label') }}</strong> {{ $plugin['settings_route'] ?? $adminText('available_after_enabling') }}</div>
                 @else
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No settings declared.</div>
-                        <div class="wb-empty-text">This plugin has not registered a settings surface.</div>
+                        <div class="wb-empty-title">{{ $adminText('no_settings_declared') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('no_settings_help') }}</div>
                     </div>
                 @endif
             </div>
@@ -202,7 +208,7 @@
                 <div class="wb-card-footer">
                     <a class="wb-btn wb-btn-secondary" href="{{ $plugin['settings_url'] }}">
                         <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
-                        Open Settings
+                        {{ $adminText('open_settings') }}
                     </a>
                 </div>
             @endif
@@ -210,14 +216,14 @@
 
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Health</strong>
+                <strong>{{ $adminText('health') }}</strong>
             </div>
 
             <div class="wb-card-body wb-stack wb-gap-2">
                 <div>
-                    <span class="wb-status {{ $healthClass }}">{{ $plugin['health']['status'] === 'inactive' ? 'Inactive' : ucfirst($plugin['health']['status']) }}</span>
+                    <span class="wb-status {{ $healthClass }}">{{ $plugin['health']['status'] === 'inactive' ? $adminText('inactive') : ucfirst($plugin['health']['status']) }}</span>
                 </div>
-                <div>{{ $plugin['health']['message'] !== '' ? $plugin['health']['message'] : 'No health details reported.' }}</div>
+                <div>{{ $plugin['health']['message'] !== '' ? $plugin['health']['message'] : $adminText('no_health_details') }}</div>
             </div>
         </div>
     </div>
@@ -225,36 +231,36 @@
     @if ($plugin['can_uninstall'])
         <div class="wb-card">
             <div class="wb-card-header">
-                <strong>Danger Zone</strong>
+                <strong>{{ $adminText('danger_zone') }}</strong>
             </div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-alert wb-alert-danger">
-                    Database cleanup is not automatic. Plugin-owned tables are preserved unless a future explicit cleanup tool is added.
+                    {{ $adminText('database_cleanup_warning') }}
                 </div>
             </div>
             <div class="wb-card-footer">
                 <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#{{ $uninstallModalId }}">
                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                    Uninstall Plugin
+                    {{ $adminText('uninstall_plugin') }}
                 </button>
             </div>
         </div>
 
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
             'id' => $uninstallModalId,
-            'title' => 'Uninstall '.$plugin['label'],
-            'description' => 'This removes the uploaded plugin package from storage. Plugin-owned database tables are preserved.',
+            'title' => $adminText('uninstall_title', ['plugin' => $plugin['label']]),
+            'description' => $adminText('uninstall_description'),
             'action' => route('admin.system.plugins.uninstall', $plugin['handle']),
             'method' => 'DELETE',
-            'submitLabel' => 'Uninstall Plugin',
+            'submitLabel' => $adminText('uninstall_plugin'),
             'submitAttributes' => $plugin['enabled'] ? ['disabled' => true] : [],
         ])
             @if ($plugin['enabled'])
-                <div class="wb-alert wb-alert-danger">Disable this plugin before uninstalling it.</div>
+                <div class="wb-alert wb-alert-danger">{{ $adminText('disable_before_uninstall') }}</div>
             @else
-                <p>This will remove version {{ $plugin['version'] ?? 'unknown' }} from the manual plugin install directory.</p>
-                <p class="wb-text-sm wb-text-muted">Database cleanup is not automatic. Plugin-owned tables are preserved unless a future explicit cleanup tool is added.</p>
+                <p>{{ $adminText('remove_version_help', ['version' => $plugin['version'] ?? $adminText('unknown')]) }}</p>
+                <p class="wb-text-sm wb-text-muted">{{ $adminText('database_cleanup_warning') }}</p>
             @endif
         @endcomponent
     @endif

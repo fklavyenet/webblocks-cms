@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Move System Plugin detail lifecycle, capabilities, settings, health, and uninstall copy onto structured admin locale keys.
 - Move Contact Message detail, notification, classification, technical detail, and delete modal copy onto structured admin locale keys.
 - Move Media edit preview, usage, metadata, file details, and delete modal copy onto structured admin locale keys.
 - Move Page Slots card, source modal, and delete confirmation copy onto structured admin locale keys.
