@@ -1,6 +1,10 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Visitor Reports', 'heading' => 'Visitor Reports'])
-
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('visitor_reports.'.$key, $adminLocale, $replace);
     $summary = $report['summary'] ?? [
         'total_page_views' => 0,
         'human_page_views' => 0,
@@ -18,13 +22,13 @@
     $supportsCampaignReports = ($supportsUtmBreakdowns ?? false) && ($utmEnabled ?? true);
     $hasFilters = $filters['date_range'] !== 'last_30_days' || $filters['site'] !== 'all' || $filters['locale'] !== 'all' || ($filters['traffic'] ?? 'all') !== 'all';
 
-    $trackedMetric = function ($value, string $state, int $decimals = 0): string {
+    $trackedMetric = function ($value, string $state, int $decimals = 0) use ($adminText): string {
         if ($state === 'not_tracked') {
-            return 'Not tracked';
+            return $adminText('not_tracked');
         }
 
         if ($state === 'no_data') {
-            return 'No data';
+            return $adminText('no_data');
         }
 
         if ($value === null) {
@@ -35,11 +39,13 @@
     };
 @endphp
 
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => 'Visitor Reports',
-        'description' => 'Review lightweight public visit activity across sites and locales without leaving the CMS.',
-        'context' => '<span>Range: '.e($filters['range_label']).'</span>',
+        'title' => $adminText('title'),
+        'description' => $adminText('description'),
+        'context' => '<span>'.e($adminText('range_context', ['range' => $filters['range_label']])).'</span>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -48,8 +54,8 @@
         <div class="wb-card">
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">Visitor reports are disabled</div>
-                    <div class="wb-empty-text">Set <code>CMS_VISITOR_REPORTS_ENABLED=true</code> to resume public visit tracking and reporting.</div>
+                    <div class="wb-empty-title">{{ $adminText('disabled_title') }}</div>
+                    <div class="wb-empty-text">{!! $adminText('disabled_text') !!}</div>
                 </div>
             </div>
         </div>
@@ -57,8 +63,8 @@
         <div class="wb-card">
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">Visitor reports migration is missing</div>
-                    <div class="wb-empty-text">Run <code>php artisan migrate</code> to create the <code>visitor_events</code> table before opening this report.</div>
+                    <div class="wb-empty-title">{{ $adminText('migration_missing_title') }}</div>
+                    <div class="wb-empty-text">{!! $adminText('migration_missing_text') !!}</div>
                 </div>
             </div>
         </div>
@@ -68,30 +74,30 @@
                 <form method="GET" action="{{ route('admin.reports.visitors.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
                     <div class="wb-cluster wb-cluster-2">
                         <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_date_range">Date range</label>
+                            <label for="visitor_reports_date_range">{{ $adminText('date_range') }}</label>
                             <select id="visitor_reports_date_range" name="date_range" class="wb-select">
-                                <option value="today" @selected($filters['date_range'] === 'today')>Today</option>
-                                <option value="last_7_days" @selected($filters['date_range'] === 'last_7_days')>Last 7 days</option>
-                                <option value="last_30_days" @selected($filters['date_range'] === 'last_30_days')>Last 30 days</option>
-                                <option value="this_month" @selected($filters['date_range'] === 'this_month')>This month</option>
-                                <option value="custom" @selected($filters['date_range'] === 'custom')>Custom</option>
+                                <option value="today" @selected($filters['date_range'] === 'today')>{{ $adminText('today') }}</option>
+                                <option value="last_7_days" @selected($filters['date_range'] === 'last_7_days')>{{ $adminText('last_7_days') }}</option>
+                                <option value="last_30_days" @selected($filters['date_range'] === 'last_30_days')>{{ $adminText('last_30_days') }}</option>
+                                <option value="this_month" @selected($filters['date_range'] === 'this_month')>{{ $adminText('this_month') }}</option>
+                                <option value="custom" @selected($filters['date_range'] === 'custom')>{{ $adminText('custom') }}</option>
                             </select>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_from">From</label>
+                            <label for="visitor_reports_from">{{ $adminText('from') }}</label>
                             <input id="visitor_reports_from" name="from" type="date" class="wb-input" value="{{ $filters['from'] }}">
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_to">To</label>
+                            <label for="visitor_reports_to">{{ $adminText('to') }}</label>
                             <input id="visitor_reports_to" name="to" type="date" class="wb-input" value="{{ $filters['to'] }}">
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_site">Site</label>
+                            <label for="visitor_reports_site">{{ $adminText('site') }}</label>
                             <select id="visitor_reports_site" name="site" class="wb-select">
-                                <option value="all" @selected($filters['site'] === 'all')>All sites</option>
+                                <option value="all" @selected($filters['site'] === 'all')>{{ $adminText('all_sites') }}</option>
                                 @foreach ($sites as $site)
                                     <option value="{{ $site->id }}" @selected($filters['site'] === (string) $site->id)>{{ $site->name }}</option>
                                 @endforeach
@@ -99,9 +105,9 @@
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_locale">Locale</label>
+                            <label for="visitor_reports_locale">{{ $adminText('locale') }}</label>
                             <select id="visitor_reports_locale" name="locale" class="wb-select">
-                                <option value="all" @selected($filters['locale'] === 'all')>All locales</option>
+                                <option value="all" @selected($filters['locale'] === 'all')>{{ $adminText('all_locales') }}</option>
                                 @foreach ($locales as $locale)
                                     <option value="{{ $locale->id }}" @selected($filters['locale'] === (string) $locale->id)>{{ $locale->name }} ({{ strtoupper($locale->code) }})</option>
                                 @endforeach
@@ -109,19 +115,19 @@
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_traffic">Traffic</label>
+                            <label for="visitor_reports_traffic">{{ $adminText('traffic') }}</label>
                             <select id="visitor_reports_traffic" name="traffic" class="wb-select">
-                                <option value="all" @selected(($filters['traffic'] ?? 'all') === 'all')>All traffic</option>
-                                <option value="human" @selected(($filters['traffic'] ?? 'all') === 'human')>Human only</option>
-                                <option value="bots" @selected(($filters['traffic'] ?? 'all') === 'bots')>Bots only</option>
+                                <option value="all" @selected(($filters['traffic'] ?? 'all') === 'all')>{{ $adminText('all_traffic') }}</option>
+                                <option value="human" @selected(($filters['traffic'] ?? 'all') === 'human')>{{ $adminText('human_only') }}</option>
+                                <option value="bots" @selected(($filters['traffic'] ?? 'all') === 'bots')>{{ $adminText('bots_only') }}</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
-                        <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
+                        <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('apply') }}</button>
                         @if ($hasFilters)
-                            <a href="{{ route('admin.reports.visitors.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
+                            <a href="{{ route('admin.reports.visitors.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear') }}</a>
                         @endif
                     </div>
                 </form>
@@ -130,55 +136,55 @@
 
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-text-sm wb-text-muted">
-                {{ $privacyAwareReportingMessage }}
+                {{ $adminText('privacy_message') }}
             </div>
         </div>
 
         <div class="wb-grid wb-grid-4">
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">Total page views</div>
-                    <div class="wb-text-xs wb-text-muted">Anonymous aggregate</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('total_page_views') }}</div>
+                    <div class="wb-text-xs wb-text-muted">{{ $adminText('anonymous_aggregate') }}</div>
                     <strong>{{ number_format($summary['total_page_views']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">Human page views</div>
-                    <div class="wb-text-xs wb-text-muted">Bot flag excluded</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('human_page_views') }}</div>
+                    <div class="wb-text-xs wb-text-muted">{{ $adminText('bot_flag_excluded') }}</div>
                     <strong>{{ number_format($summary['human_page_views']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">Bot page views</div>
-                    <div class="wb-text-xs wb-text-muted">Shown separately, not hidden</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('bot_page_views') }}</div>
+                    <div class="wb-text-xs wb-text-muted">{{ $adminText('shown_separately') }}</div>
                     <strong>{{ number_format($summary['bot_page_views']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">Unique visitors</div>
-                    <div class="wb-text-xs wb-text-muted">Requires session consent</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('unique_visitors') }}</div>
+                    <div class="wb-text-xs wb-text-muted">{{ $adminText('requires_session_consent') }}</div>
                     <strong>{{ $trackedMetric($summary['unique_visitors'], $metricStates['unique_visitors']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">Total sessions</div>
-                    <div class="wb-text-xs wb-text-muted">Requires session consent</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('total_sessions') }}</div>
+                    <div class="wb-text-xs wb-text-muted">{{ $adminText('requires_session_consent') }}</div>
                     <strong>{{ $trackedMetric($summary['total_sessions'], $metricStates['total_sessions']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">Average pages per session</div>
-                    <div class="wb-text-xs wb-text-muted">Tracked page views only</div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('average_pages_per_session') }}</div>
+                    <div class="wb-text-xs wb-text-muted">{{ $adminText('tracked_page_views_only') }}</div>
                     <strong>{{ $trackedMetric($summary['average_pages_per_session'], $metricStates['average_pages_per_session'], 1) }}</strong>
                 </div>
             </div>
@@ -186,32 +192,32 @@
 
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Top Campaigns</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('top_campaigns') }}</strong></div>
                 <div class="wb-card-body">
                     @if (! $supportsCampaignReports)
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">Campaign tracking is unavailable</div>
+                            <div class="wb-empty-title">{{ $adminText('campaign_tracking_unavailable') }}</div>
                             <div class="wb-empty-text">
                                 @if (! $utmEnabled)
-                                    Set <code>CMS_VISITOR_UTM_ENABLED=true</code> to capture UTM parameters for campaign reporting.
+                                    {!! $adminText('campaign_tracking_disabled_help') !!}
                                 @else
-                                    Run <code>php artisan migrate</code> so the UTM columns are available in <code>visitor_events</code>.
+                                    {!! $adminText('campaign_tracking_migration_help') !!}
                                 @endif
                             </div>
                         </div>
                     @elseif ($report['top_campaigns']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No campaign data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_campaign_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Campaign</th>
-                                        <th>Page views</th>
-                                        <th>Visitors</th>
-                                        <th>Sessions</th>
+                                        <th>{{ $adminText('campaign') }}</th>
+                                        <th>{{ $adminText('page_views') }}</th>
+                                        <th>{{ $adminText('visitors') }}</th>
+                                        <th>{{ $adminText('sessions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -231,25 +237,25 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Source Breakdown</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('source_breakdown') }}</strong></div>
                 <div class="wb-card-body">
                     @if (! $supportsCampaignReports)
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No source breakdown yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_source_breakdown') }}</div>
                         </div>
                     @elseif ($report['source_breakdown']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No source data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_source_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Source</th>
-                                        <th>Page views</th>
-                                        <th>Visitors</th>
-                                        <th>Sessions</th>
+                                        <th>{{ $adminText('source') }}</th>
+                                        <th>{{ $adminText('page_views') }}</th>
+                                        <th>{{ $adminText('visitors') }}</th>
+                                        <th>{{ $adminText('sessions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -269,25 +275,25 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Medium Breakdown</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('medium_breakdown') }}</strong></div>
                 <div class="wb-card-body">
                     @if (! $supportsCampaignReports)
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No medium breakdown yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_medium_breakdown') }}</div>
                         </div>
                     @elseif ($report['medium_breakdown']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No medium data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_medium_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Medium</th>
-                                        <th>Page views</th>
-                                        <th>Visitors</th>
-                                        <th>Sessions</th>
+                                        <th>{{ $adminText('medium') }}</th>
+                                        <th>{{ $adminText('page_views') }}</th>
+                                        <th>{{ $adminText('visitors') }}</th>
+                                        <th>{{ $adminText('sessions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -307,21 +313,21 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Top Entry Pages</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('top_entry_pages') }}</strong></div>
                 <div class="wb-card-body">
                     @if ($report['top_entry_pages']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No entry data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_entry_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Path</th>
-                                        <th>Site</th>
-                                        <th>Locale</th>
-                                        <th>Sessions</th>
+                                        <th>{{ $adminText('path') }}</th>
+                                        <th>{{ $adminText('site') }}</th>
+                                        <th>{{ $adminText('locale') }}</th>
+                                        <th>{{ $adminText('sessions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -341,19 +347,19 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Top Referrers</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('top_referrers') }}</strong></div>
                 <div class="wb-card-body">
                     @if ($report['top_referrers']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No referrer data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_referrer_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Referrer</th>
-                                        <th>Visits</th>
+                                        <th>{{ $adminText('referrer') }}</th>
+                                        <th>{{ $adminText('visits') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -371,20 +377,20 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Locale Summary</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('locale_summary') }}</strong></div>
                 <div class="wb-card-body">
                     @if ($report['locale_summary']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No locale data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_locale_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Locale</th>
-                                        <th>Page views</th>
-                                        <th>Visitors</th>
+                                        <th>{{ $adminText('locale') }}</th>
+                                        <th>{{ $adminText('page_views') }}</th>
+                                        <th>{{ $adminText('visitors') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -403,21 +409,21 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Device Summary</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('device_summary') }}</strong></div>
                 <div class="wb-card-body">
                     @if ($report['device_summary']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No device data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_device_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Device</th>
-                                        <th>Page views</th>
-                                        <th>Share</th>
-                                        <th>Sessions</th>
+                                        <th>{{ $adminText('device') }}</th>
+                                        <th>{{ $adminText('page_views') }}</th>
+                                        <th>{{ $adminText('share') }}</th>
+                                        <th>{{ $adminText('sessions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -426,7 +432,7 @@
                                             <td>{{ $row['label'] }}</td>
                                             <td>{{ number_format($row['page_views']) }}</td>
                                             <td>{{ number_format($row['share'], 1) }}%</td>
-                                            <td>{{ $row['sessions'] === null ? 'Not tracked' : number_format($row['sessions']) }}</td>
+                                            <td>{{ $row['sessions'] === null ? $adminText('not_tracked') : number_format($row['sessions']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -437,20 +443,20 @@
             </div>
 
             <div class="wb-card">
-                <div class="wb-card-header"><strong>Bot Visibility</strong></div>
+                <div class="wb-card-header"><strong>{{ $adminText('bot_visibility') }}</strong></div>
                 <div class="wb-card-body">
                     @if ($report['bot_summary']->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">No traffic data yet</div>
+                            <div class="wb-empty-title">{{ $adminText('no_traffic_data') }}</div>
                         </div>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Traffic</th>
-                                        <th>Page views</th>
-                                        <th>Share</th>
+                                        <th>{{ $adminText('traffic') }}</th>
+                                        <th>{{ $adminText('page_views') }}</th>
+                                        <th>{{ $adminText('share') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -470,23 +476,23 @@
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Top Pages</strong></div>
+            <div class="wb-card-header"><strong>{{ $adminText('top_pages') }}</strong></div>
             <div class="wb-card-body">
                 @if ($report['top_pages']->isEmpty())
                     <div class="wb-empty">
-                        <div class="wb-empty-title">No page visits yet</div>
-                        <div class="wb-empty-text">Published public pages will begin appearing here after successful page renders.</div>
+                        <div class="wb-empty-title">{{ $adminText('no_page_visits') }}</div>
+                        <div class="wb-empty-text">{{ $adminText('no_page_visits_help') }}</div>
                     </div>
                 @else
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                             <thead>
                                 <tr>
-                                    <th>Path</th>
-                                    <th>Site</th>
-                                    <th>Locale</th>
-                                    <th>Page views</th>
-                                    <th>Unique visitors</th>
+                                    <th>{{ $adminText('path') }}</th>
+                                    <th>{{ $adminText('site') }}</th>
+                                    <th>{{ $adminText('locale') }}</th>
+                                    <th>{{ $adminText('page_views') }}</th>
+                                    <th>{{ $adminText('unique_visitors') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
