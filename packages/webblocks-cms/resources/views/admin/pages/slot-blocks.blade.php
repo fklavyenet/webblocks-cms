@@ -1,9 +1,16 @@
 @php
-    $slotTitle = 'Edit Slot: '.($slot->slotType?->name ?? 'Slot').' ('.$page->title.')';
-    $activePreviewUrl = $page->isPublished() ? $page->publicUrl($activeLocale->code) : null;
-    $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
-    $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
-    $siteName = $page->site?->name ?? 'Site';
+  use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+  use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+  $adminLocale = app(AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(CmsTranslator::class);
+  $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('page_slot_blocks.'.$key, $adminLocale, $replace);
+  $slotName = $slot->slotType?->name ?? $adminText('fallback_slot');
+  $slotTitle = $adminText('title', ['slot' => $slotName, 'page' => $page->title]);
+  $activePreviewUrl = $page->isPublished() ? $page->publicUrl($activeLocale->code) : null;
+  $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
+  $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
+  $siteName = $page->site?->name ?? $adminText('fallback_site');
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
@@ -38,21 +45,21 @@
     @endphp
 
     @include('webblocks-cms::admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.($slot->slotType?->name ?? 'Slot').'</span></li></ol></nav>',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="'.e($adminText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($adminText('pages')).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($siteName).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.e($page->title).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($slotName).'</span></li></ol></nav>',
         'title' => $slotTitle,
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'" class="wb-btn wb-btn-secondary">Back to Page Slots</a>'.($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '').'</div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_page_slots')).'</a>'.($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>'.e($adminText('view_page')).'</span></a>' : '').'</div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Public Wrapper</strong>
-            <span class="wb-text-sm wb-text-muted">Resolved automatically from the page shell and slot name.</span>
+            <strong>{{ $adminText('public_wrapper') }}</strong>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('public_wrapper_help') }}</span>
         </div>
         <div class="wb-card-body">
             <p class="wb-text-sm wb-text-muted">
-                This slot's public wrapper is resolved automatically from the page shell and slot name. Blocks still render inside this slot normally.
+                {{ $adminText('public_wrapper_body') }}
             </p>
         </div>
     </div>
@@ -60,14 +67,14 @@
     <div class="wb-card" data-wb-cms-slot-block-tree data-wb-slot-id="{{ $slot->id }}" data-page-id="{{ $page->id }}" data-slot-type-id="{{ $slot->slot_type_id }}">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <div class="wb-stack wb-gap-1">
-                <strong>Blocks</strong>
-                <span class="wb-text-sm wb-text-muted">Editing content for {{ strtoupper($activeLocale->code) }}. Structure, ordering, and shared block config remain canonical.</span>
+                <strong>{{ $adminText('blocks') }}</strong>
+                <span class="wb-text-sm wb-text-muted">{{ $adminText('editing_locale_help', ['locale' => strtoupper($activeLocale->code)]) }}</span>
             </div>
             <div class="wb-cluster wb-cluster-2">
                 @if (! $blocks->isEmpty())
-                    <a href="{{ $slotBlockRoute(['delete_all' => 1]) }}" class="wb-btn wb-btn-ghost wb-text-danger" aria-haspopup="dialog">Delete All Blocks</a>
+                    <a href="{{ $slotBlockRoute(['delete_all' => 1]) }}" class="wb-btn wb-btn-ghost wb-text-danger" aria-haspopup="dialog">{{ $adminText('delete_all_blocks') }}</a>
                 @endif
-                <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">Add Block</a>
+                <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">{{ $adminText('add_block') }}</a>
             </div>
         </div>
 
@@ -84,15 +91,15 @@
                         </a>
                     @endforeach
                 </div>
-                <span class="wb-text-sm wb-text-muted">Page route translation and block content translation are edited separately.</span>
+                <span class="wb-text-sm wb-text-muted">{{ $adminText('translations_help') }}</span>
             </div>
         </div>
 
         @if ($blocks->isEmpty())
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No blocks in this slot yet</div>
-                    <div class="wb-empty-text">Use Add Block to start populating this slot.</div>
+                    <div class="wb-empty-title">{{ $adminText('empty_title') }}</div>
+                    <div class="wb-empty-text">{{ $adminText('empty_help') }}</div>
                 </div>
             </div>
         @else
@@ -101,11 +108,11 @@
                     <table class="wb-table wb-table-striped wb-table-hover wb-admin-slot-blocks-table" data-wb-slot-block-table data-admin-sortable-list data-admin-sortable-mode="slot-blocks" data-admin-sortable-reorder-url="{{ route('admin.pages.slots.blocks.reorder', [$page, $slot]) }}">
                         <thead>
                             <tr>
-                                <th>Block Type</th>
-                                <th>Summary</th>
-                                <th>Children</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>{{ $adminText('block_type') }}</th>
+                                <th>{{ $adminText('summary') }}</th>
+                                <th>{{ $adminText('children') }}</th>
+                                <th>{{ $adminText('status') }}</th>
+                                <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>
 
@@ -128,7 +135,7 @@
         @endif
 
         <div class="wb-card-footer">
-            <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-primary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">Add Block</a>
+            <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-primary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">{{ $adminText('add_block') }}</a>
         </div>
     </div>
 
