@@ -951,7 +951,7 @@ class PageBuilderExperienceTest extends TestCase
 
     $user = User::factory()->superAdmin()->create();
     $main = $this->slotType('main', 'Main', 1);
-    [$page] = $this->pageWithSlot($main);
+    [$page, $pageSlot] = $this->pageWithSlot($main);
     [$otherPage, $otherSlot] = $this->pageWithSlot($main, 'Docs', 'docs');
 
     $modalResponse = $this->actingAs($user)->get(route('admin.pages.edit', [

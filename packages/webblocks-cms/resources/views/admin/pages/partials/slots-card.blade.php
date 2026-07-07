@@ -1,6 +1,11 @@
 @php
     use WebBlocks\Cms\Models\PageSlot;
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
+    $adminLocale = app(AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(CmsTranslator::class);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('page_slots_card.'.$key, $adminLocale, $replace);
     $pageSlots = $page->slots->sortBy('sort_order')->values();
     $availableSlotTypes = $slotTypes->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));
     $addSlotMenuId = 'page-slot-add-menu-'.$page->id;
@@ -18,8 +23,8 @@
 <div class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
         <div class="wb-stack wb-gap-1">
-            <strong>Slots</strong>
-            <span class="wb-text-sm wb-text-muted">Manage page structure separately from page settings.</span>
+            <strong>{{ $adminText('slots') }}</strong>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('description') }}</span>
         </div>
 
         @if ($canEditContent)
@@ -32,7 +37,7 @@
                     aria-expanded="false"
                     @disabled($availableSlotTypes->isEmpty())
                 >
-                    Add Slot
+                    {{ $adminText('add_slot') }}
                 </button>
 
                 <div class="wb-dropdown-menu" id="{{ $addSlotMenuId }}">
@@ -44,12 +49,12 @@
                             <button type="submit" class="wb-dropdown-item">{{ $slotType->name }}</button>
                         </form>
                     @empty
-                        <span class="wb-dropdown-item" aria-disabled="true">No slots available</span>
+                        <span class="wb-dropdown-item" aria-disabled="true">{{ $adminText('no_slots_available') }}</span>
                     @endforelse
                 </div>
             </div>
         @else
-            <span class="wb-text-sm wb-text-muted">Locked by workflow</span>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('locked_by_workflow') }}</span>
         @endif
     </div>
 
@@ -64,18 +69,18 @@
 
         @if ($pageSlots->isEmpty())
             <div class="wb-empty">
-                <div class="wb-empty-title">No slots yet</div>
-                <div class="wb-empty-text">Add Header, Main, Sidebar, or Footer to start defining the page structure.</div>
+                <div class="wb-empty-title">{{ $adminText('no_slots_title') }}</div>
+                <div class="wb-empty-text">{{ $adminText('no_slots_help') }}</div>
             </div>
         @else
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
-                            <th>Slot</th>
-                            <th>Source</th>
-                            <th title="Top-level page-owned blocks in this slot">Top-level Blocks</th>
-                            <th>Actions</th>
+                            <th>{{ $adminText('slot') }}</th>
+                            <th>{{ $adminText('source') }}</th>
+                            <th title="{{ $adminText('top_level_blocks_title') }}">{{ $adminText('top_level_blocks') }}</th>
+                            <th>{{ $adminText('actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -101,11 +106,11 @@
                                 $showSourceModal = $isOldSlot && ($errors->has('source_type') || $errors->has('shared_slot_id'));
                                 $pageBlockCount = $preview['is_empty'] ? 0 : $preview['items']->count() + $preview['remaining'];
                                 $sourceModalId = 'slot-source-modal-'.$pageSlot->id;
-                                $slotName = $pageSlot->slotType?->name ?? 'Slot';
-                                $topLevelLabel = $pageBlockCount === 1 ? 'top-level block' : 'top-level blocks';
+                                $slotName = $pageSlot->slotType?->name ?? $adminText('fallback_slot');
+                                $topLevelLabel = $pageBlockCount === 1 ? $adminText('top_level_block') : $adminText('top_level_blocks_count');
                                 $pageBlockCountLabel = $sourceType === PageSlot::SOURCE_TYPE_PAGE
-                                    ? $pageBlockCount.' '.$topLevelLabel
-                                    : $pageBlockCount.' page-owned '.$topLevelLabel;
+                                    ? $adminText('count_label', ['count' => $pageBlockCount, 'label' => $topLevelLabel])
+                                    : $adminText('page_owned_count', ['count' => $pageBlockCount, 'label' => $topLevelLabel]);
                             @endphp
                             <tr>
                                 <td>
@@ -119,20 +124,20 @@
                                 <td>
                                     <div class="wb-stack wb-gap-1">
                                         @if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot)
-                                            <strong>Shared Slot: {{ $sharedSlot->name }}</strong>
+                                            <strong>{{ $adminText('shared_slot_source', ['name' => $sharedSlot->name]) }}</strong>
                                             <span class="wb-text-sm wb-text-muted"><code>{{ $sharedSlot->handle }}</code></span>
                                         @elseif ($sourceType === PageSlot::SOURCE_TYPE_DISABLED)
-                                            <strong>Disabled</strong>
+                                            <strong>{{ $adminText('disabled') }}</strong>
                                         @else
-                                            <strong>Page Content</strong>
+                                            <strong>{{ $adminText('page_content') }}</strong>
                                         @endif
 
                                         @if ($warning)
                                             <div class="wb-alert wb-alert-warning wb-text-sm">{{ $warning }}</div>
                                         @elseif ($canEditContent && $sharedSlotSourcesAvailable && $showSourceModal)
-                                            <div class="wb-alert wb-alert-danger wb-text-sm">This slot source update needs attention.</div>
+                                            <div class="wb-alert wb-alert-danger wb-text-sm">{{ $adminText('source_update_attention') }}</div>
                                         @elseif (! $sharedSlotSourcesAvailable)
-                                            <span class="wb-text-sm wb-text-muted">Shared Slot source controls will appear after the Shared Slots migration is available.</span>
+                                            <span class="wb-text-sm wb-text-muted">{{ $adminText('shared_slot_migration_pending') }}</span>
                                         @endif
                                     </div>
                                 </td>
@@ -140,7 +145,7 @@
                                     <div class="wb-stack wb-gap-1">
                                         <strong>{{ $pageBlockCountLabel }}</strong>
                                         @if ($sourceType !== PageSlot::SOURCE_TYPE_PAGE && $pageBlockCount > 0)
-                                            <span class="wb-text-sm wb-text-muted">Preserved</span>
+                                            <span class="wb-text-sm wb-text-muted">{{ $adminText('preserved') }}</span>
                                         @endif
                                     </div>
                                 </td>
@@ -155,20 +160,20 @@
                                                     data-wb-page-slot-source-target="#{{ $sourceModalId }}"
                                                     aria-controls="{{ $sourceModalId }}"
                                                 >
-                                                    Manage Source
+                                                    {{ $adminText('manage_source') }}
                                                 </button>
                                             @endif
 
                                             @if ($sourceType === PageSlot::SOURCE_TYPE_PAGE)
-                                                <a href="{{ route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>
+                                                <a href="{{ route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-primary wb-btn-sm">{{ $adminText('edit_blocks') }}</a>
                                             @else
                                                 <a
                                                     href="{{ route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]) }}"
                                                     class="wb-btn wb-btn-secondary wb-btn-sm"
-                                                    title="Preserved page-owned blocks, not currently rendered"
-                                                    aria-label="Edit preserved page-owned blocks"
+                                                    title="{{ $adminText('preserved_blocks_title') }}"
+                                                    aria-label="{{ $adminText('edit_preserved_blocks') }}"
                                                 >
-                                                    Page Blocks
+                                                    {{ $adminText('page_blocks') }}
                                                 </a>
                                             @endif
 
@@ -176,18 +181,18 @@
                                                 <form method="POST" action="{{ route('admin.pages.slots.move-up', [$page, $pageSlot]) }}">
                                                     @csrf
                                                     <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                                                    <button type="submit" class="wb-action-btn" title="Move slot up" aria-label="Move slot up" @disabled($loop->first)><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+                                                    <button type="submit" class="wb-action-btn" title="{{ $adminText('move_slot_up') }}" aria-label="{{ $adminText('move_slot_up') }}" @disabled($loop->first)><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
                                                 </form>
                                                 <form method="POST" action="{{ route('admin.pages.slots.move-down', [$page, $pageSlot]) }}">
                                                     @csrf
                                                     <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                                                    <button type="submit" class="wb-action-btn" title="Move slot down" aria-label="Move slot down" @disabled($loop->last)><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+                                                    <button type="submit" class="wb-action-btn" title="{{ $adminText('move_slot_down') }}" aria-label="{{ $adminText('move_slot_down') }}" @disabled($loop->last)><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                                                 </form>
                                                 <a
                                                     href="{{ route('admin.pages.edit', ['page' => $page, 'modal' => 'delete-page-slot', 'slot' => $pageSlot->id, 'return_url' => $pageReturnUrl]) }}"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="Delete slot"
-                                                    aria-label="Delete slot"
+                                                    title="{{ $adminText('delete_slot') }}"
+                                                    aria-label="{{ $adminText('delete_slot') }}"
                                                     aria-haspopup="dialog"
                                                 >
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
@@ -195,7 +200,7 @@
                                             </div>
                                         </div>
                                     @else
-                                        <span class="wb-text-sm wb-text-muted">Workflow locks slot editing for this page.</span>
+                                        <span class="wb-text-sm wb-text-muted">{{ $adminText('workflow_locks_slot_editing') }}</span>
                                     @endif
                                 </td>
                             </tr>
@@ -226,16 +231,16 @@
                 $showSourceModal = $isOldSlot && ($errors->has('source_type') || $errors->has('shared_slot_id'));
                 $sourceModalId = 'slot-source-modal-'.$pageSlot->id;
                 $sourceModalTitleId = $sourceModalId.'-title';
-                $slotName = $pageSlot->slotType?->name ?? 'Slot';
+                $slotName = $pageSlot->slotType?->name ?? $adminText('fallback_slot');
                 $currentSourceSummary = match (true) {
-                    $sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot => 'Shared Slot - '.$sharedSlot->name,
-                    $sourceType === PageSlot::SOURCE_TYPE_DISABLED => 'Disabled',
-                    default => 'Page Content',
+                    $sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot => $adminText('shared_slot_source', ['name' => $sharedSlot->name]),
+                    $sourceType === PageSlot::SOURCE_TYPE_DISABLED => $adminText('disabled'),
+                    default => $adminText('page_content'),
                 };
                 $selectedSourceHelper = match ($selectedSourceType) {
-                    PageSlot::SOURCE_TYPE_SHARED_SLOT => 'This slot renders reusable Shared Slot content.',
-                    PageSlot::SOURCE_TYPE_DISABLED => 'This slot renders nothing publicly.',
-                    default => 'This slot renders this page\'s own blocks.',
+                    PageSlot::SOURCE_TYPE_SHARED_SLOT => $adminText('source_shared_slot_helper'),
+                    PageSlot::SOURCE_TYPE_DISABLED => $adminText('source_disabled_helper'),
+                    default => $adminText('source_page_helper'),
                 };
             @endphp
             <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-page-slot-source-modal @if (! $showSourceModal) hidden @endif>
@@ -243,16 +248,16 @@
                     <div class="wb-modal-dialog">
                         <div class="wb-modal-header">
                             <div class="wb-stack wb-gap-1">
-                                <h2 class="wb-modal-title" id="{{ $sourceModalTitleId }}">Manage Source: {{ $slotName }}</h2>
-                                <span class="wb-text-sm wb-text-muted">Choose what this slot should render.</span>
+                                <h2 class="wb-modal-title" id="{{ $sourceModalTitleId }}">{{ $adminText('manage_source_title', ['slot' => $slotName]) }}</h2>
+                                <span class="wb-text-sm wb-text-muted">{{ $adminText('manage_source_help') }}</span>
                             </div>
 
-                            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" data-wb-page-slot-source-modal-close aria-label="Close slot source settings">
+                            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" data-wb-page-slot-source-modal-close aria-label="{{ $adminText('close_source_settings') }}">
                                 <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                             </button>
                         </div>
 
-                        <form method="POST" action="{{ route('admin.pages.slots.source.update', [$page, $pageSlot]) }}" class="wb-stack wb-gap-0" data-wb-page-slot-source-form data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard slot source changes?">
+                        <form method="POST" action="{{ route('admin.pages.slots.source.update', [$page, $pageSlot]) }}" class="wb-stack wb-gap-0" data-wb-page-slot-source-form data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $adminText('discard_source_changes') }}">
                             @csrf
                             @method('PUT')
                             <input type="hidden" name="slot_id" value="{{ $pageSlot->id }}">
@@ -260,7 +265,7 @@
 
                             <div class="wb-modal-body wb-stack wb-gap-4">
                                 <div class="wb-stack wb-gap-1">
-                                    <span class="wb-text-sm wb-text-muted">Current: {{ $currentSourceSummary }}</span>
+                                    <span class="wb-text-sm wb-text-muted">{{ $adminText('current_source_summary', ['source' => $currentSourceSummary]) }}</span>
 
                                     @if ($warning)
                                         <div class="wb-alert wb-alert-warning wb-text-sm">{{ $warning }}</div>
@@ -268,9 +273,9 @@
                                 </div>
 
                                 <div class="wb-stack wb-gap-2">
-                                    <label class="wb-text-sm" for="slot-source-type-page-{{ $pageSlot->id }}">Source</label>
+                                    <label class="wb-text-sm" for="slot-source-type-page-{{ $pageSlot->id }}">{{ $adminText('source') }}</label>
 
-                                    <div class="wb-cluster wb-cluster-2 wb-admin-slot-source-picker" role="radiogroup" aria-label="Source" data-wb-slot-source-picker>
+                                    <div class="wb-cluster wb-cluster-2 wb-admin-slot-source-picker" role="radiogroup" aria-label="{{ $adminText('source') }}" data-wb-slot-source-picker>
                                         <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_PAGE ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-page-{{ $pageSlot->id }}" data-wb-slot-source-option>
                                             <input
                                                 id="slot-source-type-page-{{ $pageSlot->id }}"
@@ -280,7 +285,7 @@
                                                 data-wb-slot-source-type
                                                 @checked($selectedSourceType === PageSlot::SOURCE_TYPE_PAGE)
                                             >
-                                            <span>Page Content</span>
+                                            <span>{{ $adminText('page_content') }}</span>
                                         </label>
 
                                         <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-shared-slot-{{ $pageSlot->id }}" data-wb-slot-source-option>
@@ -292,7 +297,7 @@
                                                 data-wb-slot-source-type
                                                 @checked($selectedSourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT)
                                             >
-                                            <span>Shared Slot</span>
+                                            <span>{{ $adminText('shared_slot') }}</span>
                                         </label>
 
                                         <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_DISABLED ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-disabled-{{ $pageSlot->id }}" data-wb-slot-source-option>
@@ -304,7 +309,7 @@
                                                 data-wb-slot-source-type
                                                 @checked($selectedSourceType === PageSlot::SOURCE_TYPE_DISABLED)
                                             >
-                                            <span>Disabled</span>
+                                            <span>{{ $adminText('disabled') }}</span>
                                         </label>
                                     </div>
 
@@ -318,9 +323,9 @@
                                 </div>
 
                                 <div class="wb-stack wb-gap-1" data-wb-shared-slot-field @if ($selectedSourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT) hidden @endif>
-                                    <label for="slot-shared-slot-{{ $pageSlot->id }}">Shared Slot</label>
+                                    <label for="slot-shared-slot-{{ $pageSlot->id }}">{{ $adminText('shared_slot') }}</label>
                                     <select id="slot-shared-slot-{{ $pageSlot->id }}" name="shared_slot_id" class="wb-select" data-wb-shared-slot-select @disabled($selectedSourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT)>
-                                        <option value="">Select Shared Slot</option>
+                                        <option value="">{{ $adminText('select_shared_slot') }}</option>
                                         @foreach ($compatibleSharedSlots as $compatibleSharedSlot)
                                             <option value="{{ $compatibleSharedSlot->id }}" @selected($selectedSharedSlotId === (int) $compatibleSharedSlot->id)>
                                                 {{ $compatibleSharedSlot->name }} ({{ $compatibleSharedSlot->handle }})
@@ -330,9 +335,9 @@
 
                                     @if ($compatibleSharedSlots->isEmpty())
                                         <div class="wb-text-sm wb-text-muted">
-                                            No compatible Shared Slots are available.
+                                            {{ $adminText('no_compatible_shared_slots') }}
                                             @if ($canCreateSharedSlots)
-                                                <a href="{{ route('admin.shared-slots.create', ['site' => $page->site_id]) }}">Create Shared Slot</a>
+                                                <a href="{{ route('admin.shared-slots.create', ['site' => $page->site_id]) }}">{{ $adminText('create_shared_slot') }}</a>
                                             @endif
                                         </div>
                                     @endif
@@ -344,15 +349,15 @@
                                     @endif
                                 </div>
 
-                                <div class="wb-text-sm wb-text-muted">Page-owned blocks are preserved when switching sources.</div>
+                                <div class="wb-text-sm wb-text-muted">{{ $adminText('page_owned_preserved_help') }}</div>
                             </div>
 
                             <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                                 <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                                    <button type="submit" class="wb-btn wb-btn-primary">Save Source</button>
-                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-page-slot-source-modal-close>Cancel</button>
+                                    <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('save_source') }}</button>
+                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-page-slot-source-modal-close>{{ $adminText('cancel') }}</button>
                                 </div>
-                                <span class="wb-text-sm wb-text-muted">Slot key: <code>{{ $pageSlot->slotSlug() }}</code></span>
+                                <span class="wb-text-sm wb-text-muted">{{ $adminText('slot_key') }} <code>{{ $pageSlot->slotSlug() }}</code></span>
                             </div>
                         </form>
                     </div>
@@ -365,7 +370,7 @@
 @if ($canEditContent && $selectedDeleteSlot)
     @push('overlays')
         @php
-            $deleteSlotName = $selectedDeleteSlot->slotType?->name ?? 'Slot';
+            $deleteSlotName = $selectedDeleteSlot->slotType?->name ?? $adminText('fallback_slot');
             $deleteSlotKey = $selectedDeleteSlot->slotSlug();
             $deleteSlotPreview = $slotBlockPreviews->get($selectedDeleteSlot->id, [
                 'items' => collect(),
@@ -386,11 +391,11 @@
                 <div class="wb-modal-dialog">
                     <div class="wb-modal-header">
                         <div>
-                            <h2 class="wb-modal-title" id="{{ $deleteSlotTitleId }}">Delete Page Slot</h2>
-                            <p class="wb-text-sm wb-text-muted" id="{{ $deleteSlotDescriptionId }}">Confirm whether this page slot should be removed.</p>
+                            <h2 class="wb-modal-title" id="{{ $deleteSlotTitleId }}">{{ $adminText('delete_page_slot') }}</h2>
+                            <p class="wb-text-sm wb-text-muted" id="{{ $deleteSlotDescriptionId }}">{{ $adminText('delete_page_slot_description') }}</p>
                         </div>
 
-                        <a href="{{ $deleteSlotCloseUrl }}" class="wb-modal-close" aria-label="Close delete page slot dialog">
+                        <a href="{{ $deleteSlotCloseUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_delete_dialog') }}">
                             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                         </a>
                     </div>
@@ -403,7 +408,7 @@
 
                         <div class="wb-modal-body wb-stack wb-gap-4">
                             <div class="wb-alert wb-alert-warning">
-                                Deleting a Page Slot removes only this page's slot assignment. It does not delete the Slot Type or blocks in other slots.
+                                {{ $adminText('delete_warning') }}
                             </div>
 
                             <div class="wb-stack wb-gap-2">
@@ -411,22 +416,22 @@
                                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                                     <span class="wb-status-pill wb-status-info">{{ $deleteSlotKey }}</span>
                                     <span class="wb-status-pill {{ $deleteSlotBlockCount > 0 ? 'wb-status-pending' : 'wb-status-active' }}">
-                                        {{ $deleteSlotBlockCount }} {{ \Illuminate\Support\Str::plural('block', $deleteSlotBlockCount) }}
+                                        {{ $deleteSlotBlockCount }} {{ $deleteSlotBlockCount === 1 ? $adminText('block') : $adminText('blocks') }}
                                     </span>
                                 </div>
                             </div>
 
                             @if ($deleteSlotBlockCount > 0)
                                 <div class="wb-alert wb-alert-danger">
-                                    This slot still contains blocks. Move or delete those blocks before deleting the slot.
+                                    {{ $adminText('delete_blocked') }}
                                 </div>
                             @endif
                         </div>
 
                         <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                             <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                                <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteSlotBlockCount > 0)>Delete slot</button>
-                                <a href="{{ $deleteSlotCloseUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                                <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteSlotBlockCount > 0)>{{ $adminText('delete_slot') }}</button>
+                                <a href="{{ $deleteSlotCloseUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('cancel') }}</a>
                             </div>
                         </div>
                     </form>
