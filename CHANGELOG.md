@@ -9,6 +9,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add the documented `cms_trans()` helper and plugin translation loading so first-party plugins can ship locale-aware `resources/lang` catalogs.
+- Move visible WebBlocks Commerce and WebBlocks UI Manager admin surface copy onto plugin translation keys for English, German, and Turkish.
+- Let the Internal Content API existing-block update endpoint write Image block `alt_text` and `caption` translation rows.
+
 ## 1.34.11
 
 - Bumped CMS to `1.34.11`.

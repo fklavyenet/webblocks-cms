@@ -804,6 +804,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public function register(): void
   {
+    require_once __DIR__.'/Support/helpers.php';
+
     $this->registerClassAliases();
     $this->registerConfig();
     $this->registerNativeLocalDoctor();
@@ -1074,12 +1076,30 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   protected function bootViews(): void
   {
     $this->loadTranslationsFrom($this->langPath(), self::VIEW_NAMESPACE);
+    $this->bootPluginTranslations();
 
     if (! is_dir($this->viewsPath())) {
       return;
     }
 
     $this->loadViewsFrom($this->viewsPath(), self::VIEW_NAMESPACE);
+  }
+
+  protected function bootPluginTranslations(): void
+  {
+    foreach (app(PluginRegistry::class)->all() as $plugin) {
+      $installPath = $plugin->installPathValue();
+
+      if ($installPath === null) {
+        continue;
+      }
+
+      $langPath = $installPath.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'lang';
+
+      if (is_dir($langPath)) {
+        $this->loadTranslationsFrom($langPath, $plugin->handle());
+      }
+    }
   }
 
   protected function bootMigrations(): void

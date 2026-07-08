@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockImageTranslation;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
@@ -1038,7 +1039,7 @@ class InternalContentResourceController extends Controller
       ], 403);
     }
 
-    $block->loadMissing(['blockType', 'textTranslations']);
+    $block->loadMissing(['blockType', 'textTranslations', 'imageTranslations']);
     $type = (string) $block->typeSlug();
     $mediaId = $request->has('media_id') ? $request->input('media_id') : $request->input('asset_id');
     $mediaChanged = $request->has('media_id') || $request->has('asset_id');
@@ -1069,9 +1070,15 @@ class InternalContentResourceController extends Controller
     }
 
     $textTranslations = $this->normalizeTextTranslations($translations);
+    $imageTranslations = $this->normalizeImageTranslations($translations);
+
+    if ($imageTranslations !== [] && $type !== 'image') {
+      return $this->validationError('translations.image', 'Image translation fields are only supported for image blocks.');
+    }
+
     $settings = $this->mergeSettings($block, $request);
 
-    DB::transaction(function () use ($block, $request, $mediaChanged, $mediaId, $settings, $textTranslations, $locale): void {
+    DB::transaction(function () use ($block, $request, $mediaChanged, $mediaId, $settings, $textTranslations, $imageTranslations, $locale): void {
       $updates = [];
 
       if ($mediaChanged) {
@@ -1099,6 +1106,13 @@ class InternalContentResourceController extends Controller
         BlockTextTranslation::query()->updateOrCreate(
           ['block_id' => $block->id, 'locale_id' => $locale->id],
           $textTranslations,
+        );
+      }
+
+      if ($imageTranslations !== []) {
+        BlockImageTranslation::query()->updateOrCreate(
+          ['block_id' => $block->id, 'locale_id' => $locale->id],
+          $imageTranslations,
         );
       }
     });
@@ -1255,6 +1269,21 @@ class InternalContentResourceController extends Controller
         $payload[$field] = is_array($text[$field])
           ? json_encode($text[$field], JSON_UNESCAPED_SLASHES)
           : trim((string) $text[$field]);
+      }
+    }
+
+    return $payload;
+  }
+
+  private function normalizeImageTranslations(array $translations): array
+  {
+    $image = is_array($translations['image'] ?? null) ? $translations['image'] : $translations;
+    $allowed = ['caption', 'alt_text'];
+    $payload = [];
+
+    foreach ($allowed as $field) {
+      if (array_key_exists($field, $image)) {
+        $payload[$field] = trim((string) $image[$field]) ?: null;
       }
     }
 

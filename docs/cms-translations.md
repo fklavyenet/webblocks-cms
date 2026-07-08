@@ -50,6 +50,8 @@ packages/webblocks-cms/resources/lang/
 
 Files are the source of truth for product defaults because they are versioned, reviewable, safe to package, and available before database schema is guaranteed ready.
 
+First-party and manually installed plugins may ship their own file catalogs under `resources/lang/{locale}` inside the plugin root. When an installed plugin has that directory, CMS registers it under the plugin handle namespace, such as `webblocks-commerce::admin.settings.title`. Plugin UI should resolve those keys through `CmsTranslator::plugin()` so it keeps the same explicit locale fallback model as core CMS copy and does not require `App::setLocale()`.
+
 The current accepted admin translation audit debt is tracked separately in `packages/webblocks-cms/resources/translation-quality/admin-translation-audit-baseline.json`. That file is a quality-gate baseline, not a translation source. Do not add new records to it for new UI work; move the UI copy to structured translation keys instead.
 
 ## Resolver Contract
@@ -124,9 +126,10 @@ Every migrated surface should have a regression test for locale resolution and f
 The first file-based implementation includes:
 
 - `CmsTranslator` with `admin()`, `public()`, and generic `get()` helpers.
+- `cms_trans()` as a thin helper around `CmsTranslator::get()` for CMS-owned file keys.
+- `CmsTranslator::plugin()` for plugin-owned file keys loaded from installed plugin `resources/lang` directories.
 - `AdminLocaleResolver`, backed by user-level `users.admin_locale` preferences with install-wide `admin.locale` fallback.
 - Admin shell/sidebar/topbar translation for high-visibility navigation and account/theme actions.
-- Admin HTML localization fallback for broad resource, system, media, user, locale, and report screens while deeper Blade migrations continue.
 - Admin translation coverage audit command for finding low-coverage admin screens and common missing UI phrases.
 - Dashboard and Engagement admin screens for high-visibility operator workflows.
 - Auth and password reset screens, auth validation feedback, and CMS password reset email copy.

@@ -9,10 +9,16 @@ class CmsTranslator
 {
   public function get(string $key, ?string $locale = null, array $replace = []): string
   {
-    foreach ($this->candidateLocales($locale) as $candidateLocale) {
-      $value = trans(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$key, $replace, $candidateLocale);
+    $translationKey = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$key;
 
-      if (is_string($value) && $value !== WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$key) {
+    foreach ($this->candidateLocales($locale) as $candidateLocale) {
+      if (! app('translator')->hasForLocale($translationKey, $candidateLocale)) {
+        continue;
+      }
+
+      $value = trans($translationKey, $replace, $candidateLocale);
+
+      if (is_string($value)) {
         return $value;
       }
     }
@@ -28,6 +34,25 @@ class CmsTranslator
   public function admin(string $key, ?string $locale = null, array $replace = []): string
   {
     return $this->get('admin.'.$key, $locale, $replace);
+  }
+
+  public function plugin(string $handle, string $key, ?string $locale = null, array $replace = [], ?string $fallback = null): string
+  {
+    $translationKey = $handle.'::'.$key;
+
+    foreach ($this->candidateLocales($locale) as $candidateLocale) {
+      if (! app('translator')->hasForLocale($translationKey, $candidateLocale)) {
+        continue;
+      }
+
+      $value = trans($translationKey, $replace, $candidateLocale);
+
+      if (is_string($value)) {
+        return $value;
+      }
+    }
+
+    return $this->replace($fallback ?? $key, $replace);
   }
 
   private function candidateLocales(?string $locale): array

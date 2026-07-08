@@ -15,10 +15,13 @@ class InstalledPluginDefinitionFactory
   public function make(array $manifest, string $path, bool $enabled): PluginDefinition
   {
     $provider = (string) ($manifest['provider'] ?? '');
+    $handle = (string) ($manifest['handle'] ?? '');
 
     if ($enabled) {
       $this->loadPluginSource($path, $provider);
     }
+
+    $this->loadPluginTranslations($path, $handle);
 
     if ($enabled && class_exists($provider) && method_exists($provider, 'definition') && $this->providerUsableForPath($provider, $path)) {
       $definition = $provider::definition();
@@ -89,6 +92,19 @@ class InstalledPluginDefinitionFactory
     }
 
     return $definition;
+  }
+
+  private function loadPluginTranslations(string $path, string $handle): void
+  {
+    if ($handle === '' || ! PluginDefinition::isValidHandle($handle)) {
+      return;
+    }
+
+    $langPath = $path.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'lang';
+
+    if (is_dir($langPath)) {
+      app('translator')->addNamespace($handle, $langPath);
+    }
   }
 
   /**

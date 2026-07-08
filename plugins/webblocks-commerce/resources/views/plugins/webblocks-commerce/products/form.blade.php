@@ -1,9 +1,15 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $title, 'heading' => $title])
 
+@php
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $commerceText = fn (string $key, array $replace = [], ?string $fallback = null): string => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+        ->plugin('webblocks-commerce', 'admin.'.$key, $adminLocale, $replace, $fallback);
+@endphp
+
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $title,
-        'description' => 'Create and maintain simple commerce products.',
+        'description' => $commerceText('products.description'),
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -16,7 +22,7 @@
             @endif
 
             <div class="wb-card-header">
-                <strong>Product Details</strong>
+                <strong>{{ $commerceText('products.details') }}</strong>
             </div>
 
             <div class="wb-card-body">

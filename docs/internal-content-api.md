@@ -285,6 +285,7 @@ Supported fields are intentionally narrow:
 - `settings.show_mode_toggle` for `header-actions`
 - `settings.show_accent_toggle` for `header-actions`
 - text translations such as `title` and `subtitle`
+- image block translations through `translations.image.alt_text`, `translations.image.caption`, or the shorthand `translations.alt_text` and `translations.caption`
 - `url`
 - `variant`
 
@@ -304,6 +305,20 @@ Example:
   "translations": {
     "title": "WebBlocks CMS",
     "subtitle": "Composable content operations"
+  }
+}
+```
+
+For an existing Image block, update the locale-owned image translation row with:
+
+```json
+{
+  "locale": "en",
+  "translations": {
+    "image": {
+      "alt_text": "Dashboard-style ecosystem panel",
+      "caption": "Homepage ecosystem panel"
+    }
   }
 }
 ```

@@ -2934,6 +2934,125 @@ class InternalContentApiTest extends TestCase
   }
 
   #[Test]
+  public function existing_image_block_update_can_write_image_translation_alt_text_and_caption(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $locale = $this->defaultLocale();
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'main')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'image')->firstOrFail();
+    $media = Media::query()->create([
+      'disk' => 'public',
+      'path' => 'media/dashboard.png',
+      'filename' => 'dashboard.png',
+      'original_name' => 'dashboard.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 2048,
+      'kind' => Media::KIND_IMAGE,
+      'visibility' => 'public',
+      'title' => 'Dashboard',
+      'alt_text' => 'Fallback dashboard alt',
+      'width' => 790,
+      'height' => 450,
+    ]);
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Home',
+      'slug' => 'home',
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'main',
+      'type' => 'image',
+      'media_id' => $media->id,
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+    $block->imageTranslations()->create([
+      'locale_id' => $locale->id,
+      'alt_text' => 'Old image alt',
+      'caption' => 'Old image caption',
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'locale' => $locale->code,
+        'translations' => [
+          'image' => [
+            'alt_text' => 'Dashboard-style ecosystem panel with CMS Docs',
+            'caption' => 'Homepage ecosystem panel',
+          ],
+        ],
+      ])
+      ->assertOk()
+      ->assertJsonPath('block.translations.image.0.alt_text', 'Dashboard-style ecosystem panel with CMS Docs')
+      ->assertJsonPath('block.translations.image.0.caption', 'Homepage ecosystem panel');
+
+    $this->assertDatabaseHas('wbcms_block_image_translations', [
+      'block_id' => $block->id,
+      'locale_id' => $locale->id,
+      'alt_text' => 'Dashboard-style ecosystem panel with CMS Docs',
+      'caption' => 'Homepage ecosystem panel',
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'locale' => $locale->code,
+        'translations' => [
+          'alt_text' => 'Updated through shorthand alt',
+          'caption' => null,
+        ],
+      ])
+      ->assertOk()
+      ->assertJsonPath('block.translations.image.0.alt_text', 'Updated through shorthand alt')
+      ->assertJsonPath('block.translations.image.0.caption', null);
+
+    $this->assertDatabaseHas('wbcms_block_image_translations', [
+      'block_id' => $block->id,
+      'locale_id' => $locale->id,
+      'alt_text' => 'Updated through shorthand alt',
+      'caption' => null,
+    ]);
+  }
+
+  #[Test]
+  public function existing_non_image_block_update_rejects_image_translation_fields(): void
+  {
+    $this->createInternalApiToken('secret-token');
+    $site = $this->defaultSite();
+    $slotType = SlotType::query()->where('slug', 'main')->firstOrFail();
+    $blockType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Home',
+      'slug' => 'home',
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    $block = Block::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $blockType->id,
+      'slot' => 'main',
+      'type' => 'hero',
+      'status' => 'draft',
+      'sort_order' => 0,
+    ]);
+
+    $this->withInternalToken()
+      ->patchJson('/webadmin/api/blocks/'.$block->id, [
+        'translations' => [
+          'image' => ['alt_text' => 'Not valid for hero'],
+        ],
+      ])
+      ->assertStatus(422)
+      ->assertJsonPath('errors.0.path', 'translations.image');
+  }
+
+  #[Test]
   public function media_api_uses_media_capabilities_and_updates_safe_metadata_only(): void
   {
     $media = Media::query()->create([
