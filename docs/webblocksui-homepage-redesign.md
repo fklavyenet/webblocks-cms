@@ -125,13 +125,25 @@ The header brand was corrected in a ninth July 8 pass:
 
 Current design alignment estimate after the ecosystem brand correction: **80/100**.
 
+The hero visual was corrected in a tenth July 8 pass:
+
+- Replaced the dashboard-like bitmap with a deterministic ecosystem map image at `docs/design-assets/webblocksui-hero-ecosystem-map-2026-07-08.png`.
+- Uploaded the ecosystem map to the CMS Media Library as Media `id=6`.
+- Updated hero image block `id=9904` to use Media `id=6`.
+- Removed dashboard-like signals that could imply a real CMS admin screen or real product telemetry, including status indicators, activity feed, site counts, entry counts, and asset counts.
+- The replacement image now presents only product-map concepts: `CMS`, `UI Docs`, `CMS Docs`, `Blocks`, `Shared slots`, `Media`, `Staged updates`, `Design tokens`, and `Publishing`.
+- Updated image alt text to describe the visual as a product map rather than a dashboard screenshot.
+- Public HTML smoke check found the new `webblocksui-hero-ecosystem-map` asset, zero old dashboard image URLs, zero fake dashboard metric/activity text, and the new product-map alt text.
+
+Current design alignment estimate after the truthful ecosystem-map correction: **80/100**.
+
 ## Why The Live Result Is Only Partially Aligned
 
 The mockup relies on a richer first-viewport composition than the current native public block renderers produce by default.
 
 Remaining gaps:
 
-- Hero split layout now carries the mockup's dashboard panel as a bitmap asset, and the left hero is closer to the reference, but the first viewport still depends on CSS overrides around native block markup.
+- Hero split layout now carries a truthful ecosystem map as a bitmap asset, and the left hero is closer to the reference, but the first viewport still depends on CSS overrides around native block markup.
 - Lower sections are more compact and product-like, and the footer/CTA no longer creates a stack of competing primary buttons. The "built with blocks" area still reads more like native CMS content than the reference mockup's bespoke landing-page composition.
 - `card_header` with `plain_text` is usable but does not create strong product-card headings by itself.
 - `button_link` variants were accepted by the API, but public rendering did not preserve the expected outline visual in the first implementation.
