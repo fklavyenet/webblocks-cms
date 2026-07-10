@@ -824,7 +824,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootMigrations();
     $this->bootPublishing();
 
-    app(PluginRouteRegistrar::class)->protectCorePublicRoutesFromPluginCatchAlls();
+    // Run after the whole application has booted so every route (including the
+    // host app's own routes such as login/register) is registered and can be
+    // reserved from plugin catch-all routes.
+    $this->app->booted(function (): void {
+      app(PluginRouteRegistrar::class)->protectCorePublicRoutesFromPluginCatchAlls();
+    });
   }
 
   protected function bootRateLimiters(): void

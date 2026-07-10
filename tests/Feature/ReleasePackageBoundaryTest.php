@@ -26,10 +26,27 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
-  public function github_release_workflows_are_intentionally_absent(): void
+  public function github_workflows_never_publish_releases_or_ship_in_artifacts(): void
   {
-    $this->assertDirectoryDoesNotExist(base_path('.github'));
-    $this->assertSame([], glob(base_path('.github/workflows/*')) ?: []);
+    // A .github directory is allowed for contributor CI (running the test suite),
+    // but WebBlocks CMS releases are prepared natively via scripts/release. No
+    // GitHub workflow may publish releases, and .github must stay export-ignored
+    // so it never lands inside a release artifact or source export.
+    $this->assertStringContainsString('/.github export-ignore', (string) file_get_contents(base_path('.gitattributes')));
+
+    foreach (glob(base_path('.github/workflows/*')) ?: [] as $workflow) {
+      $contents = (string) file_get_contents($workflow);
+
+      foreach ([
+        'gh release',
+        'softprops/action-gh-release',
+        'actions/create-release',
+        'publish-update',
+        'release:publish',
+      ] as $forbidden) {
+        $this->assertStringNotContainsString($forbidden, $contents, $workflow.' must not publish releases.');
+      }
+    }
   }
 
   #[Test]

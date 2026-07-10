@@ -206,6 +206,27 @@ class PluginRouteRegistrar
       Locale::routePattern(),
     ];
 
+    // Reserve the first segment of every real registered route (for example
+    // login, register, forgot-password, install, up) so the redirect-manager
+    // catch-all never hijacks a genuine route and returns a 404 for it. Public
+    // CMS pages are served by dynamic `{slug}` routes, which are skipped here,
+    // so redirect handling for non-route paths keeps working.
+    foreach (Route::getRoutes()->getRoutes() as $registeredRoute) {
+      if ($registeredRoute->getName() === 'webblocks.redirect-manager.public') {
+        continue;
+      }
+
+      $firstSegment = explode('/', ltrim($registeredRoute->uri(), '/'))[0];
+
+      if ($firstSegment === '' || str_starts_with($firstSegment, '{')) {
+        continue;
+      }
+
+      $reservedPrefixes[] = preg_quote($firstSegment, '/');
+    }
+
+    $reservedPrefixes = array_values(array_unique($reservedPrefixes));
+
     $redirectManagerRoute->where(
       'webblocksRedirectManagerPath',
       '^(?!(?:'.implode('|', $reservedPrefixes).')(?:/|$)).+',

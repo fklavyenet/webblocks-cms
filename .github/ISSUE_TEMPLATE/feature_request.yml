@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest an idea or improvement for WebBlocks CMS
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and discussions for a similar request.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or pain point. Focus on the "why", not just the "what".
+      placeholder: As an agency building client sites, I need ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like WebBlocks CMS to do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches or workarounds you have thought about.
+    validations:
+      required: false

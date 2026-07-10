@@ -15,8 +15,30 @@ abstract class TestCase extends BaseTestCase
   protected function tearDown(): void
   {
     $this->cleanupTrackedPublicSitePaths();
+    $this->restoreTestDatabaseEnvironment();
 
     parent::tearDown();
+  }
+
+  /**
+   * Restore the suite's canonical file-based SQLite database.
+   *
+   * Some flows under test (the install wizard in particular) reconfigure the
+   * live database connection and call putenv('DB_DATABASE=...'), which would
+   * otherwise leak into every following test and cause "no such table"
+   * cascades. Resetting the environment here keeps each test isolated.
+   */
+  private function restoreTestDatabaseEnvironment(): void
+  {
+    if (! defined('WEBBLOCKS_TEST_DATABASE')) {
+      return;
+    }
+
+    foreach (['DB_CONNECTION' => 'sqlite', 'DB_DATABASE' => WEBBLOCKS_TEST_DATABASE] as $key => $value) {
+      putenv($key.'='.$value);
+      $_ENV[$key] = $value;
+      $_SERVER[$key] = $value;
+    }
   }
 
   protected function putTrackedPublicSiteFile(string $relativePath, string $contents): string

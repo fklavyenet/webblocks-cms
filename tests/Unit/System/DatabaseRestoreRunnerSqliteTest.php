@@ -20,7 +20,7 @@ class DatabaseRestoreRunnerSqliteTest extends TestCase
     File::ensureDirectoryExists(dirname($path));
     File::put($path, implode(PHP_EOL, [
       'BEGIN TRANSACTION;',
-      "INSERT INTO system_settings (key, value, created_at, updated_at) VALUES ('restore.probe', 'ok', '2026-05-20 00:00:00', '2026-05-20 00:00:00');",
+      "INSERT INTO wbcms_system_settings (key, value, created_at, updated_at) VALUES ('restore.probe', 'ok', '2026-05-20 00:00:00', '2026-05-20 00:00:00');",
       'COMMIT;',
     ]));
 

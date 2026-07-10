@@ -4,6 +4,9 @@
 # DDEV
 .ddev/
 
+# Test database
+/database/testing.sqlite
+
 # Env
 .env
 .env.*

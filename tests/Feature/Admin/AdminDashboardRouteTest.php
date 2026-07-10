@@ -148,9 +148,9 @@ class AdminDashboardRouteTest extends TestCase
       ->get('/webadmin')
       ->assertOk()
       ->assertSee('Pano')
-      ->assertSee('Aksiyonlar ve Kisayollar')
+      ->assertSee('Aksiyonlar ve Kısayollar')
       ->assertSee('Son Sayfalar')
-      ->assertSee('Ziyaretci Ozeti');
+      ->assertSee('Ziyaretçi Özeti');
   }
 
   #[Test]
