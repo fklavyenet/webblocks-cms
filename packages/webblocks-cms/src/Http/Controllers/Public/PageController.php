@@ -24,15 +24,28 @@ class PageController extends Controller
   {
     $homePage = $this->routeResolver->findPublishedPage($request);
 
-    if (! $homePage) {
-      if ($request->route('locale')) {
-        abort(404);
-      }
-
-      return view('welcome');
+    if ($homePage) {
+      return $this->renderPage($request, $homePage);
     }
 
-    return $this->renderPage($request, $homePage);
+    $localeSegment = (string) $request->route('locale');
+
+    if ($localeSegment !== '') {
+      // The {locale} route pattern also matches slug-like segments such as
+      // "odd-slug", so a single-segment page whose slug resembles a locale code
+      // lands on this /{locale} route instead of the /{slug} page route. When
+      // the segment is not a real localized home, resolve it as a top-level
+      // page path under the default locale before giving up.
+      $request->route()->forgetParameter('locale');
+
+      $page = $this->routeResolver->findPublishedPageByPath($request, '/'.$localeSegment);
+
+      abort_unless($page, 404);
+
+      return $this->renderPage($request, $page);
+    }
+
+    return view('welcome');
   }
 
   public function show(Request $request, string $localeOrPath, ?string $path = null): View

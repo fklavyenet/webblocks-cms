@@ -21,8 +21,13 @@ $autoloader = require __DIR__.'/../vendor/autoload.php';
 
 $databasePath = __DIR__.'/../database/testing.sqlite';
 
-if (file_exists($databasePath)) {
-    @unlink($databasePath);
+// Remove the database and any leftover WAL/SHM/journal side-files so a crashed
+// or interrupted previous run cannot leave a stale lock that makes SQLite report
+// "attempt to write a readonly database" on the next run.
+foreach ([$databasePath, $databasePath.'-wal', $databasePath.'-shm', $databasePath.'-journal'] as $staleFile) {
+    if (file_exists($staleFile)) {
+        @unlink($staleFile);
+    }
 }
 
 touch($databasePath);

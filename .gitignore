@@ -5,7 +5,7 @@
 .ddev/
 
 # Test database
-/database/testing.sqlite
+/database/testing.sqlite*
 
 # Env
 .env
