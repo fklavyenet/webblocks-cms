@@ -451,8 +451,12 @@ BLADE);
     $this->assertStringContainsString("'webblocks-cms::admin.blocks.types.fallback-inline'", $inlineFields);
     $this->assertStringNotContainsString("@include(view()->exists(\$inlineView) ? \$inlineView : 'admin.blocks.types.fallback-inline'", $inlineFields);
     $this->assertStringContainsString("@include('webblocks-cms::admin.media.asset-picker-panel'", $fallbackView);
-    $this->assertStringContainsString('Generic Block Form', $fallbackView);
-    $this->assertStringContainsString('Generic Block Form', $fallbackInlineView);
+    // The "Generic Block Form" heading moved into translations; the fallback
+    // views now render it through $adminText('title').
+    $this->assertStringContainsString("{{ \$adminText('title') }}", $fallbackView);
+    $this->assertStringContainsString("{{ \$adminText('title') }}", $fallbackInlineView);
+    $enAdmin = (string) file_get_contents(base_path('packages/webblocks-cms/resources/lang/en/admin.php'));
+    $this->assertStringContainsString("'title' => 'Generic Block Form'", $enAdmin);
   }
 
   #[Test]
