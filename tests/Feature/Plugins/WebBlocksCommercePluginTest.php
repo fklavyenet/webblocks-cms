@@ -54,7 +54,7 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.7.0', $plugin->versionText());
+    $this->assertSame('0.7.1', $plugin->versionText());
     $this->assertSame('^1.32', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
@@ -973,10 +973,10 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $response->assertOk();
     // Plugin menu item + group labels resolve through the plugin's Turkish catalog.
-    $response->assertSee('Commerce Ürünleri', false);
-    $response->assertSee('Commerce Siparişleri', false);
-    $response->assertSee('İçerik', false);
-    // The hardcoded English labels must not leak into a Turkish admin panel.
+    $response->assertSee('Ürünler', false);
+    $response->assertSee('Siparişler', false);
+    $response->assertSee('Ticaret', false);
+    // The English literals must not leak into a Turkish admin panel.
     $response->assertDontSee('Commerce Products');
     $response->assertDontSee('Commerce Orders');
   }
@@ -1081,8 +1081,8 @@ class WebBlocksCommercePluginTest extends TestCase
     $root = storage_path('framework/testing/plugins/'.str()->uuid());
     config()->set('webblocks-plugins.install.root', $root);
 
-    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.0');
-    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.0');
+    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.1');
+    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.1');
 
     $this->app->forgetInstance(PluginRegistry::class);
   }

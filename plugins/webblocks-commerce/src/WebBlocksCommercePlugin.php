@@ -18,7 +18,7 @@ class WebBlocksCommercePlugin
   {
     return PluginDefinition::make(self::HANDLE)
       ->label('WebBlocks Commerce')
-      ->version('0.7.0')
+      ->version('0.7.1')
       ->provider(self::class)
       ->description('Simple product sales and hosted checkout foundations for WebBlocks CMS sites.')
       ->requiresCms('^1.32')
@@ -43,25 +43,25 @@ class WebBlocksCommercePlugin
       ])
       ->menu([
         PluginMenuItem::make('commerce-products')
-          ->label('Commerce Products')
+          ->label('Products')
           ->route('webblocks.plugins.webblocks_commerce.products.index')
           ->icon('wb-icon-package')
           ->permission('webblocks-commerce.view')
-          ->group('Content')
+          ->group('Commerce')
           ->sort(70),
         PluginMenuItem::make('commerce-orders')
-          ->label('Commerce Orders')
+          ->label('Orders')
           ->route('webblocks.plugins.webblocks_commerce.orders.index')
           ->icon('wb-icon-receipt')
           ->permission('webblocks-commerce.manage-orders')
-          ->group('Content')
+          ->group('Commerce')
           ->sort(71),
         PluginMenuItem::make('commerce-settings')
-          ->label('Commerce Settings')
+          ->label('Settings')
           ->route('webblocks.plugins.webblocks_commerce.settings.edit')
           ->icon('wb-icon-settings')
           ->permission('webblocks-commerce.manage-settings')
-          ->group('Content')
+          ->group('Commerce')
           ->sort(72),
       ])
       ->blockTypes([

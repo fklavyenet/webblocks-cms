@@ -2,7 +2,7 @@
 
 First-party simple commerce plugin for WebBlocks CMS.
 
-Current artifact version: `0.7.0`.
+Current artifact version: `0.7.1`.
 
 ## Order state & inventory
 

@@ -36,8 +36,8 @@ class WebBlocksCommerceI18nTest extends TestCase
     config()->set('webblocks-plugins.install.root', $root);
     config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
 
-    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.0');
-    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.0');
+    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.1');
+    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.1');
 
     $this->app->forgetInstance(PluginRegistry::class);
     app(PluginRegistry::class)->get('webblocks-commerce');

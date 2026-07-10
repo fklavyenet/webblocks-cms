@@ -32,11 +32,11 @@ return [
     'run_plugin_migrations' => 'Run Plugin Migrations',
   ],
   'menu' => [
-    'commerce-products' => 'Commerce Products',
-    'commerce-orders' => 'Commerce Orders',
-    'commerce-settings' => 'Commerce Settings',
+    'commerce-products' => 'Products',
+    'commerce-orders' => 'Orders',
+    'commerce-settings' => 'Settings',
   ],
   'menu_group' => [
-    'content' => 'Content',
+    'commerce' => 'Commerce',
   ],
 ];
