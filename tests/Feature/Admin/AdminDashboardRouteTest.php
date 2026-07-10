@@ -523,7 +523,9 @@ class AdminDashboardRouteTest extends TestCase
 
     $response = $this->actingAs($user)->get('/dashboard');
 
-    $response->assertNotFound();
+    // /dashboard is the host convenience route that redirects to the CMS admin,
+    // not a CMS public page. The redirect-manager catch-all must not shadow it.
+    $response->assertRedirect('/webadmin');
   }
 
   private function assertRouteUsesPackageController(string $routeName, string $controllerClass): void

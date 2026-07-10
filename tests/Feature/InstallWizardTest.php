@@ -49,6 +49,32 @@ class InstallWizardTest extends TestCase
     }
 
     parent::tearDown();
+
+    // The installer reconnects the DB connection and commits install evidence
+    // (super admin, seed data, install marker) outside the RefreshDatabase
+    // transaction, so it survives the rollback and would leak into later test
+    // classes. Wipe it from the throwaway test database directly, after the
+    // rollback has released its locks.
+    $this->purgeCommittedTestDatabase();
+  }
+
+  private function purgeCommittedTestDatabase(): void
+  {
+    if (! defined('WEBBLOCKS_TEST_DATABASE') || ! is_file(WEBBLOCKS_TEST_DATABASE)) {
+      return;
+    }
+
+    $pdo = new \PDO('sqlite:'.WEBBLOCKS_TEST_DATABASE);
+    $pdo->exec('PRAGMA foreign_keys = OFF');
+
+    // Only the install evidence needs removing: the super admin the installer
+    // created and the stored version / install-completed markers. The catalog
+    // baseline that migrations seed (locales, block types, ...) must stay.
+    foreach (['users', 'wbcms_system_settings'] as $table) {
+      $pdo->exec('DELETE FROM "'.$table.'"');
+    }
+
+    $pdo->exec('PRAGMA foreign_keys = ON');
   }
 
   #[Test]
@@ -174,7 +200,7 @@ class InstallWizardTest extends TestCase
     $this->assertSame(User::ROLE_SUPER_ADMIN, $user->role);
     $this->assertTrue($user->is_active);
     $this->assertTrue($user->is_admin);
-    $this->assertDatabaseHas('system_settings', ['key' => InstallState::INSTALL_COMPLETED_AT]);
+    $this->assertDatabaseHas('wbcms_system_settings', ['key' => InstallState::INSTALL_COMPLETED_AT]);
   }
 
   #[Test]

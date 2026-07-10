@@ -60,7 +60,9 @@ class PublicPageCanonicalRoutingTest extends TestCase
     $this->get('/cms/css/missing.css')->assertNotFound();
     $this->get('/search')->assertOk()->assertDontSee('Search Collision');
     $this->getJson('/search.json')->assertOk();
-    $this->get('/contact-messages')->assertNotFound();
+    // /contact-messages is a real POST-only route, so a GET resolves to it
+    // (405) instead of being captured as the colliding public page.
+    $this->get('/contact-messages')->assertStatus(405);
   }
 
   #[Test]

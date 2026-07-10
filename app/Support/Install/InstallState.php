@@ -228,7 +228,7 @@ class InstallState
   private function requiredTablesExist(): bool
   {
     try {
-      foreach (['users', 'sites', 'locales', 'site_locales', 'system_settings'] as $table) {
+      foreach (['users', 'wbcms_sites', 'wbcms_locales', 'wbcms_site_locales', 'wbcms_system_settings'] as $table) {
         if (! Schema::hasTable($table)) {
           return false;
         }
@@ -267,7 +267,7 @@ class InstallState
   private function systemSettingsTableExists(): bool
   {
     try {
-      return Schema::hasTable('system_settings');
+      return Schema::hasTable('wbcms_system_settings');
     } catch (Throwable) {
       return false;
     }
