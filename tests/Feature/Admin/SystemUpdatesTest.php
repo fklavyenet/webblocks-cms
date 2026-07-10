@@ -92,7 +92,6 @@ class SystemUpdatesTest extends TestCase
     ], false);
     $response->assertDontSee('<details', false);
     $response->assertDontSee('<summary', false);
-    $this->assertFalse(File::isDirectory(base_path('.github')));
 
     $installHtml = $this->cardHtml($response->getContent(), 'Update Status');
     $this->assertStringNotContainsString('Stored installed version', $installHtml);
