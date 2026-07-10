@@ -961,6 +961,26 @@ class WebBlocksCommercePluginTest extends TestCase
   /**
    * @return array<string, string>
    */
+  #[Test]
+  public function plugin_menu_labels_and_group_are_localized_in_the_admin_sidebar(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('app.locale', 'tr');
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $this->migrateWebBlocksCommercePlugin();
+
+    $response = $this->actingAs(User::factory()->superAdmin()->create())->get(route('admin.dashboard'));
+
+    $response->assertOk();
+    // Plugin menu item + group labels resolve through the plugin's Turkish catalog.
+    $response->assertSee('Commerce Ürünleri', false);
+    $response->assertSee('Commerce Siparişleri', false);
+    $response->assertSee('İçerik', false);
+    // The hardcoded English labels must not leak into a Turkish admin panel.
+    $response->assertDontSee('Commerce Products');
+    $response->assertDontSee('Commerce Orders');
+  }
+
   private function paypalWebhookHeaders(): array
   {
     return [

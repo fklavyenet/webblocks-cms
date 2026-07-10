@@ -110,15 +110,18 @@
                     continue;
                 }
 
+                $pluginHandle = $pluginMenuItem['plugin']->handle();
                 $groupName = $item->groupName() ?: 'System';
-                $groupKey = $groupName === 'System' ? 'system' : null;
+                $groupKey = $groupName === 'System' ? 'system' : 'plugin-'.\Illuminate\Support\Str::slug($groupName);
                 $groupIndex = collect($sidebarGroups)->search(
-                    fn ($group) => ($groupKey !== null && ($group['key'] ?? null) === $groupKey) || $group['label'] === $groupName
+                    fn ($group) => ($group['key'] ?? null) === $groupKey || $group['label'] === $groupName
                 );
 
                 if ($groupIndex === false) {
                     $sidebarGroups[] = [
-                        'label' => $groupName,
+                        'key' => $groupKey,
+                        // Plugin-provided group label, localized via the plugin's lang catalog (falls back to the literal).
+                        'label' => $adminTranslator->plugin($pluginHandle, 'admin.menu_group.'.\Illuminate\Support\Str::slug($groupName), $adminLocale, [], $groupName),
                         'icon' => 'wb-icon-plug',
                         'items' => [],
                     ];
@@ -126,7 +129,8 @@
                 }
 
                 $sidebarGroups[$groupIndex]['items'][] = [
-                    'label' => $item->labelText(),
+                    // Plugin-provided menu label, localized via the plugin's lang catalog (falls back to the literal).
+                    'label' => $adminTranslator->plugin($pluginHandle, 'admin.menu.'.$item->key(), $adminLocale, [], $item->labelText()),
                     'route' => $item->routeName(),
                     'url' => route($item->routeName(), [], false),
                     'active' => [$pluginMenuItem['plugin']->routeNamePrefix().'.*'],

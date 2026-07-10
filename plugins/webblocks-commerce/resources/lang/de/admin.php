@@ -31,4 +31,12 @@ return [
     'plugin_detail' => 'Plugin-Details',
     'run_plugin_migrations' => 'Plugin-Migrationen ausfuehren',
   ],
+  'menu' => [
+    'commerce-products' => 'Commerce-Produkte',
+    'commerce-orders' => 'Commerce-Bestellungen',
+    'commerce-settings' => 'Commerce-Einstellungen',
+  ],
+  'menu_group' => [
+    'content' => 'Inhalt',
+  ],
 ];

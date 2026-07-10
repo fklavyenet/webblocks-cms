@@ -31,4 +31,12 @@ return [
     'plugin_detail' => 'Plugin Detayi',
     'run_plugin_migrations' => 'Plugin Migrationlarini Calistir',
   ],
+  'menu' => [
+    'commerce-products' => 'Commerce Ürünleri',
+    'commerce-orders' => 'Commerce Siparişleri',
+    'commerce-settings' => 'Commerce Ayarları',
+  ],
+  'menu_group' => [
+    'content' => 'İçerik',
+  ],
 ];
