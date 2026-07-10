@@ -28,6 +28,7 @@ use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
+use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
@@ -53,7 +54,7 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.1.1', $plugin->versionText());
+    $this->assertSame('0.7.0', $plugin->versionText());
     $this->assertSame('^1.32', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
@@ -272,9 +273,10 @@ class WebBlocksCommercePluginTest extends TestCase
     config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
     $this->app->forgetInstance(PluginRegistry::class);
     $this->migrateWebBlocksCommercePlugin();
+    app(PluginApiRouteRegistrar::class)->registerEnabledApiRoutes();
     $this->createInternalApiToken('secret-token', [
-      CmsApiTokenCapabilities::COMMERCE_READ,
-      CmsApiTokenCapabilities::COMMERCE_PRODUCTS_WRITE,
+      'commerce.read',
+      'commerce.products.write',
       CmsApiTokenCapabilities::CONTENT_VALIDATE,
       CmsApiTokenCapabilities::CONTENT_APPLY,
     ]);
@@ -327,7 +329,8 @@ class WebBlocksCommercePluginTest extends TestCase
     config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
     $this->app->forgetInstance(PluginRegistry::class);
     $this->migrateWebBlocksCommercePlugin();
-    $this->createInternalApiToken('secret-token', [CmsApiTokenCapabilities::COMMERCE_READ]);
+    app(PluginApiRouteRegistrar::class)->registerEnabledApiRoutes();
+    $this->createInternalApiToken('secret-token', ['commerce.read']);
 
     $this->withInternalToken()
       ->postJson('/webadmin/api/commerce/products', [
@@ -1058,8 +1061,8 @@ class WebBlocksCommercePluginTest extends TestCase
     $root = storage_path('framework/testing/plugins/'.str()->uuid());
     config()->set('webblocks-plugins.install.root', $root);
 
-    File::ensureDirectoryExists($root.'/webblocks-commerce/0.1.1');
-    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.1.1');
+    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.0');
+    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.0');
 
     $this->app->forgetInstance(PluginRegistry::class);
   }

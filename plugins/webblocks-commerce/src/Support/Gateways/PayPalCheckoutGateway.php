@@ -5,7 +5,6 @@ namespace WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceOrder;
-use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
 
 class PayPalCheckoutGateway implements PaymentGatewayInterface
@@ -15,8 +14,11 @@ class PayPalCheckoutGateway implements PaymentGatewayInterface
     private readonly PayPalConfig $config,
   ) {}
 
-  public function createCheckoutSession(CommerceOrder $order, CommerceProduct $product): GatewayCheckoutSession
+  public function createCheckoutSession(CommerceOrder $order): GatewayCheckoutSession
   {
+    // Derive the charge from the order's authoritative totals. The breakdown
+    // balances by construction — item_total (net) + tax_total == amount (gross) —
+    // because the order aggregates its line net/tax/gross consistently.
     $payload = [
       'intent' => 'CAPTURE',
       'purchase_units' => [[
@@ -31,16 +33,12 @@ class PayPalCheckoutGateway implements PaymentGatewayInterface
               'currency_code' => $order->currency,
               'value' => $this->money($order->subtotal_amount),
             ],
+            'tax_total' => [
+              'currency_code' => $order->currency,
+              'value' => $this->money((int) $order->tax_amount),
+            ],
           ],
         ],
-        'items' => [[
-          'name' => Str::limit($product->title, 127, ''),
-          'quantity' => '1',
-          'unit_amount' => [
-            'currency_code' => $product->currency,
-            'value' => $this->money($product->price_amount),
-          ],
-        ]],
       ]],
       'application_context' => [
         'brand_name' => Str::limit((string) config('app.name', 'WebBlocks Commerce'), 127, ''),

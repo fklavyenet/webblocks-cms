@@ -40,6 +40,11 @@ class CommerceProductRequest extends FormRequest
       ])],
       'price_amount' => ['required', 'integer', 'min:1'],
       'currency' => ['required', 'string', 'size:3', 'regex:/^[A-Z]{3}$/'],
+      'tax_class' => ['required', Rule::in([
+        CommerceProduct::TAX_CLASS_STANDARD,
+        CommerceProduct::TAX_CLASS_REDUCED,
+        CommerceProduct::TAX_CLASS_ZERO,
+      ])],
       'inventory_quantity' => ['nullable', 'integer', 'min:0'],
       'sku' => ['nullable', 'string', 'max:255'],
     ];
@@ -63,11 +68,13 @@ class CommerceProductRequest extends FormRequest
     $slug = trim((string) $this->input('slug'));
     $currency = strtoupper(trim((string) $this->input('currency')));
     $inventory = $this->input('inventory_quantity');
+    $taxClass = trim((string) $this->input('tax_class'));
 
     $this->merge([
       'title' => $title,
       'slug' => $slug !== '' ? Str::slug($slug) : Str::slug($title),
       'currency' => $currency,
+      'tax_class' => $taxClass !== '' ? $taxClass : CommerceProduct::TAX_CLASS_STANDARD,
       'inventory_quantity' => $inventory === '' ? null : $inventory,
       'sku' => trim((string) $this->input('sku')) ?: null,
     ]);

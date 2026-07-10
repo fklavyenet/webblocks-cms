@@ -3,9 +3,14 @@
 namespace WebBlocks\Cms\Support\InternalApiTokens;
 
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
 
 class CmsApiTokenCapabilities
 {
+  public function __construct(
+    private readonly PluginApiCapabilityRegistrar $pluginCapabilities,
+  ) {}
+
   public const CONTENT_READ = 'content.read';
 
   public const CONTENT_VALIDATE = 'content.validate';
@@ -56,12 +61,6 @@ class CmsApiTokenCapabilities
 
   public const PLUGINS_UNINSTALL = 'plugins.uninstall';
 
-  public const COMMERCE_READ = 'commerce.read';
-
-  public const COMMERCE_PRODUCTS_WRITE = 'commerce.products.write';
-
-  public const COMMERCE_ORDERS_READ = 'commerce.orders.read';
-
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
@@ -93,9 +92,6 @@ class CmsApiTokenCapabilities
     self::PLUGINS_MANAGE,
     self::PLUGINS_SETUP,
     self::PLUGINS_UNINSTALL,
-    self::COMMERCE_READ,
-    self::COMMERCE_PRODUCTS_WRITE,
-    self::COMMERCE_ORDERS_READ,
     self::MEDIA_WRITE,
     self::MEDIA_UPLOAD,
     self::MEDIA_REPLACE,
@@ -144,9 +140,6 @@ class CmsApiTokenCapabilities
     self::PLUGINS_MANAGE,
     self::PLUGINS_SETUP,
     self::PLUGINS_UNINSTALL,
-    self::COMMERCE_READ,
-    self::COMMERCE_PRODUCTS_WRITE,
-    self::COMMERCE_ORDERS_READ,
   ];
 
   public const LABELS = [
@@ -168,9 +161,6 @@ class CmsApiTokenCapabilities
     self::PLUGINS_MANAGE => 'Enable or disable installed plugins',
     self::PLUGINS_SETUP => 'Run plugin setup migrations',
     self::PLUGINS_UNINSTALL => 'Uninstall disabled manually uploaded plugins',
-    self::COMMERCE_READ => 'Read commerce product catalog records',
-    self::COMMERCE_PRODUCTS_WRITE => 'Create or update commerce products',
-    self::COMMERCE_ORDERS_READ => 'Read commerce order records',
     self::MEDIA_WRITE => 'Write safe Media Library metadata',
     self::MEDIA_UPLOAD => 'Upload Media Library files',
     self::MEDIA_REPLACE => 'Replace Media Library files',
@@ -179,6 +169,37 @@ class CmsApiTokenCapabilities
     self::CONTENT_PUBLISH => 'Publish content',
     self::PAGES_DELETE => 'Delete pages',
   ];
+
+  /**
+   * All grantable capabilities: CMS core plus capabilities contributed by
+   * currently-enabled plugins. Used to validate token grants and drive the UI.
+   *
+   * @return list<string>
+   */
+  public function grantable(): array
+  {
+    return array_values(array_unique([...self::ALL, ...$this->pluginCapabilities->names()]));
+  }
+
+  /**
+   * Advanced (opt-in) grantable capabilities, core plus enabled-plugin ones.
+   *
+   * @return list<string>
+   */
+  public function advancedGrantable(): array
+  {
+    return array_values(array_unique([...self::ADVANCED, ...$this->pluginCapabilities->names()]));
+  }
+
+  /**
+   * Capability => label for every grantable capability, core plus plugin.
+   *
+   * @return array<string, string>
+   */
+  public function labelsAll(): array
+  {
+    return [...self::LABELS, ...$this->pluginCapabilities->labels()];
+  }
 
   public function capabilitiesFor(?CmsApiToken $token): array
   {
@@ -246,9 +267,6 @@ class CmsApiTokenCapabilities
         'manage_plugins' => $this->has($token, self::PLUGINS_MANAGE),
         'setup_plugins' => $this->has($token, self::PLUGINS_SETUP),
         'uninstall_plugins' => $this->has($token, self::PLUGINS_UNINSTALL),
-        'read_commerce_products' => $this->has($token, self::COMMERCE_READ),
-        'write_commerce_products' => $this->has($token, self::COMMERCE_PRODUCTS_WRITE),
-        'read_commerce_orders' => $this->has($token, self::COMMERCE_ORDERS_READ),
       ],
     ];
   }

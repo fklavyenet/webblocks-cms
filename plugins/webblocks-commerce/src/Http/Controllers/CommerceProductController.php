@@ -6,9 +6,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use Illuminate\Support\Collection;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Requests\CommerceProductRequest;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProductTranslation;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -68,9 +71,13 @@ class CommerceProductController extends Controller
       'product' => new CommerceProduct([
         'status' => CommerceProduct::STATUS_DRAFT,
         'currency' => strtoupper((string) config('webblocks-commerce.default_currency', 'USD')),
+        'tax_class' => CommerceProduct::TAX_CLASS_STANDARD,
       ]),
       'siteOptions' => $this->siteOptions(),
       'statusOptions' => $this->statusOptions(),
+      'taxClassOptions' => $this->taxClassOptions(),
+      'translationLocales' => $this->translatableLocales(),
+      'existingTranslations' => collect(),
       'formAction' => route('webblocks.plugins.webblocks_commerce.products.store'),
       'method' => 'POST',
       'submitLabel' => 'Create Product',
@@ -86,6 +93,7 @@ class CommerceProductController extends Controller
     }
 
     $product = CommerceProduct::query()->create($request->productPayload());
+    $this->saveTranslations($product, $request);
 
     return redirect()
       ->route('webblocks.plugins.webblocks_commerce.products.show', $product)
@@ -114,11 +122,15 @@ class CommerceProductController extends Controller
     }
 
     $product = $this->product($product);
+    $product->load('translations');
 
     return view($this->view('form'), $this->viewData('Edit Commerce Product', [
       'product' => $product,
       'siteOptions' => $this->siteOptions(),
       'statusOptions' => $this->statusOptions(),
+      'taxClassOptions' => $this->taxClassOptions(),
+      'translationLocales' => $this->translatableLocales(),
+      'existingTranslations' => $product->translations->keyBy('locale_id'),
       'formAction' => route('webblocks.plugins.webblocks_commerce.products.update', $product),
       'method' => 'PUT',
       'submitLabel' => 'Save Product',
@@ -135,6 +147,7 @@ class CommerceProductController extends Controller
 
     $product = $this->product($product);
     $product->update($request->productPayload());
+    $this->saveTranslations($product, $request);
 
     return redirect()
       ->route('webblocks.plugins.webblocks_commerce.products.show', $product)
@@ -221,5 +234,68 @@ class CommerceProductController extends Controller
   private function statusValues(): array
   {
     return array_keys($this->statusOptions());
+  }
+
+  /**
+   * @return array<string, string>
+   */
+  private function taxClassOptions(): array
+  {
+    return [
+      CommerceProduct::TAX_CLASS_STANDARD => 'Standard rate',
+      CommerceProduct::TAX_CLASS_REDUCED => 'Reduced rate',
+      CommerceProduct::TAX_CLASS_ZERO => 'Zero / exempt',
+    ];
+  }
+
+  /**
+   * Non-default enabled locales a product can be translated into. The base
+   * product row is the default-locale/fallback content, so it is not listed.
+   *
+   * @return Collection<int, Locale>
+   */
+  private function translatableLocales(): Collection
+  {
+    return Locale::query()
+      ->where('is_enabled', true)
+      ->where('is_default', false)
+      ->orderBy('code')
+      ->get();
+  }
+
+  private function saveTranslations(CommerceProduct $product, Request $request): void
+  {
+    $input = $request->input('translations', []);
+
+    if (! is_array($input)) {
+      return;
+    }
+
+    $allowed = $this->translatableLocales()->pluck('id')->all();
+
+    foreach ($input as $localeId => $fields) {
+      $localeId = (int) $localeId;
+
+      if (! in_array($localeId, $allowed, true) || ! is_array($fields)) {
+        continue;
+      }
+
+      $title = trim((string) ($fields['title'] ?? '')) ?: null;
+      $description = trim((string) ($fields['description'] ?? '')) ?: null;
+
+      if ($title === null && $description === null) {
+        CommerceProductTranslation::query()
+          ->where('product_id', $product->getKey())
+          ->where('locale_id', $localeId)
+          ->delete();
+
+        continue;
+      }
+
+      CommerceProductTranslation::query()->updateOrCreate(
+        ['product_id' => $product->getKey(), 'locale_id' => $localeId],
+        ['title' => $title, 'description' => $description],
+      );
+    }
   }
 }

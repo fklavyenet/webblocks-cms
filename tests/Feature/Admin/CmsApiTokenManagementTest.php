@@ -38,11 +38,11 @@ class CmsApiTokenManagementTest extends TestCase
     $response->assertSee('Page building');
     $response->assertSee('Site assets and feedback');
     $response->assertSee('Plugin lifecycle');
-    $response->assertSee('Commerce');
+    // The Commerce capability group is contributed by the (here disabled) commerce plugin.
+    $response->assertDontSee('Create products, place buy buttons, and read Commerce orders.');
     $response->assertSee('Media management');
     $response->assertSee('Publishing and destructive actions');
     $response->assertSee('Install, enable, setup, disable, or uninstall manually uploaded plugins.');
-    $response->assertSee('Create products, place buy buttons, and read Commerce orders.');
     $response->assertSee('content.read');
     $response->assertSee('content.validate');
     $response->assertSee('content.apply');
@@ -113,7 +113,7 @@ class CmsApiTokenManagementTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('Broad Operator');
-    $response->assertSee('27/27 selected');
+    $response->assertSee('24/24 selected');
     $response->assertSee('data-wb-target="#edit-cms-api-token-'.$broadToken->id.'"', false);
   }
 

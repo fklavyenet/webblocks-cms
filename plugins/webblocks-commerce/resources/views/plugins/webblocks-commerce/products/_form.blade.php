@@ -69,8 +69,51 @@
         </div>
     </div>
 
+    <div class="wb-grid wb-grid-3 wb-gap-4">
+        <div class="wb-stack wb-gap-1">
+            @php($selectedTaxClass = old('tax_class', $product->tax_class ?: 'standard'))
+            <label for="product_tax_class">Tax class</label>
+            <select id="product_tax_class" name="tax_class" class="wb-select" required>
+                @foreach ($taxClassOptions as $value => $label)
+                    <option value="{{ $value }}" @selected($selectedTaxClass === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <div class="wb-text-sm wb-text-muted">VAT rate is resolved from the store country and this class at checkout.</div>
+        </div>
+    </div>
+
     <div class="wb-stack wb-gap-1">
         <label for="product_description">Description</label>
         <textarea id="product_description" name="description" class="wb-textarea" rows="5">{{ old('description', $product->description) }}</textarea>
+        <div class="wb-text-sm wb-text-muted">Default language content. Add per-language versions below.</div>
     </div>
+
+    @if (($translationLocales ?? collect())->isNotEmpty())
+        <div class="wb-stack wb-gap-3">
+            <strong>Translations</strong>
+            <div class="wb-text-sm wb-text-muted">Leave a language blank to fall back to the default content above.</div>
+
+            @foreach ($translationLocales as $locale)
+                @php($existing = ($existingTranslations ?? collect())->get($locale->id))
+                <fieldset class="wb-stack wb-gap-2">
+                    <legend>{{ $locale->name }} ({{ $locale->code }})</legend>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="product_translation_{{ $locale->id }}_title">Title</label>
+                        <input id="product_translation_{{ $locale->id }}_title"
+                            name="translations[{{ $locale->id }}][title]"
+                            class="wb-input" type="text" maxlength="255"
+                            value="{{ old('translations.'.$locale->id.'.title', $existing?->title) }}">
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="product_translation_{{ $locale->id }}_description">Description</label>
+                        <textarea id="product_translation_{{ $locale->id }}_description"
+                            name="translations[{{ $locale->id }}][description]"
+                            class="wb-textarea" rows="3">{{ old('translations.'.$locale->id.'.description', $existing?->description) }}</textarea>
+                    </div>
+                </fieldset>
+            @endforeach
+        </div>
+    @endif
 </div>

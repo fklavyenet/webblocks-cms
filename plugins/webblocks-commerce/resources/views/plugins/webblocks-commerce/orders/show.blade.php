@@ -43,8 +43,12 @@
                         <div>{{ number_format($order->total_amount / 100, 2) }} {{ $order->currency }}</div>
                     </div>
                     <div>
-                        <strong>Subtotal</strong>
+                        <strong>Subtotal (net)</strong>
                         <div>{{ number_format($order->subtotal_amount / 100, 2) }} {{ $order->currency }}</div>
+                    </div>
+                    <div>
+                        <strong>VAT{{ $order->tax_rate ? ' ('.number_format($order->tax_rate / 100, $order->tax_rate % 100 === 0 ? 0 : 2).'%'.($order->tax_country ? ' '.$order->tax_country : '').')' : '' }}</strong>
+                        <div>{{ number_format($order->tax_amount / 100, 2) }} {{ $order->currency }}</div>
                     </div>
                     <div>
                         <strong>Customer</strong>

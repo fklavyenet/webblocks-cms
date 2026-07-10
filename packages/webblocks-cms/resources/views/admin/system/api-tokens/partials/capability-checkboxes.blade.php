@@ -2,6 +2,10 @@
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.api_tokens.capabilities.'.$key, $adminLocale, $replace);
+    // Falls back to a plugin-provided label when the CMS has no translation key
+    // (plugin capability groups ship their own labels via apiCapabilities()).
+    $adminTextOr = fn (string $key, string $default, array $replace = []) => $adminTranslator->getOrDefault('admin.api_tokens.capabilities.'.$key, $default, $adminLocale, $replace);
+    $capabilityLabels = $capabilityLabels ?? [];
     $fieldPrefix = $fieldPrefix ?? 'api_token_capability';
     $selectedCapabilities = $selectedCapabilities ?? [];
     $showErrors = $showErrors ?? false;
@@ -40,8 +44,8 @@
                     $groupSelectedCount = count(array_intersect($selectedCapabilities, $groupCapabilities));
                     $groupId = $fieldPrefix.'_group_'.Str::slug($group['key'] ?? $group['label']);
                     $groupLocaleKey = str_replace('-', '_', (string) ($group['key'] ?? 'default'));
-                    $groupLabel = $adminText('groups.'.$groupLocaleKey.'.label');
-                    $groupDescription = $adminText('groups.'.$groupLocaleKey.'.description');
+                    $groupLabel = $adminTextOr('groups.'.$groupLocaleKey.'.label', (string) ($group['label'] ?? $group['key'] ?? ''));
+                    $groupDescription = $adminTextOr('groups.'.$groupLocaleKey.'.description', (string) ($group['description'] ?? ''));
                 @endphp
 
                 <details class="wb-api-token-capability-group" @if (($group['key'] ?? null) === 'page-building') open @endif>
@@ -66,7 +70,7 @@
                                 >
                                 <span class="wb-api-token-capability-copy">
                                     <strong>{{ $capability }}</strong>
-                                    <span class="wb-text-sm wb-text-muted">{{ $adminText('labels.'.$capabilityLocaleKey) }}</span>
+                                    <span class="wb-text-sm wb-text-muted">{{ $adminTextOr('labels.'.$capabilityLocaleKey, $capabilityLabels[$capability] ?? '') }}</span>
                                 </span>
                             </label>
                         @endforeach

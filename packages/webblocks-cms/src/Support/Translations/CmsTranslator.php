@@ -26,6 +26,28 @@ class CmsTranslator
     return $this->replace($key, $replace);
   }
 
+  /**
+   * Return the translation for a key, or the given default when no translation
+   * exists. Used for plugin-contributed strings (e.g. token capability groups)
+   * that have no CMS lang entry but ship their own labels.
+   */
+  public function getOrDefault(string $key, string $default, ?string $locale = null, array $replace = []): string
+  {
+    $translationKey = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$key;
+
+    foreach ($this->candidateLocales($locale) as $candidateLocale) {
+      if (app('translator')->hasForLocale($translationKey, $candidateLocale)) {
+        $value = trans($translationKey, $replace, $candidateLocale);
+
+        if (is_string($value)) {
+          return $value;
+        }
+      }
+    }
+
+    return $this->replace($default, $replace);
+  }
+
   public function public(string $key, ?string $locale = null, array $replace = []): string
   {
     return $this->get('public.'.$key, $locale, $replace);

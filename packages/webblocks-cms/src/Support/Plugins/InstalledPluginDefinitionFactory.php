@@ -81,6 +81,12 @@ class InstalledPluginDefinitionFactory
         $definition->adminRoutes($path.DIRECTORY_SEPARATOR.$routes);
       }
 
+      $apiRoutes = $manifest['routes']['api'] ?? null;
+
+      if (is_string($apiRoutes) && $apiRoutes !== '') {
+        $definition->apiRoutes($path.DIRECTORY_SEPARATOR.$apiRoutes);
+      }
+
       $commands = array_values(array_filter($manifest['commands'] ?? [], function (mixed $command): bool {
         return is_string($command) && class_exists($command) && is_subclass_of($command, Command::class);
       }));

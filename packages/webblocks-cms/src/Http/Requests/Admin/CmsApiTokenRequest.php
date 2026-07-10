@@ -18,7 +18,8 @@ class CmsApiTokenRequest extends FormRequest
     return [
       'name' => ['required', 'string', 'max:120'],
       'capabilities' => ['required', 'array', 'min:1'],
-      'capabilities.*' => ['required', 'string', Rule::in(CmsApiTokenCapabilities::ALL)],
+      // Core capabilities plus those contributed by enabled plugins.
+      'capabilities.*' => ['required', 'string', Rule::in(app(CmsApiTokenCapabilities::class)->grantable())],
     ];
   }
 

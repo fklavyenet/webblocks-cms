@@ -10,12 +10,14 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceWebhookEvent;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\PayPalApiClient;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\PayPalConfig;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Orders\OrderStateMachine;
 
 class HandlePayPalWebhook
 {
   public function __construct(
     private readonly PayPalApiClient $client,
     private readonly PayPalConfig $config,
+    private readonly OrderStateMachine $orders,
   ) {}
 
   /**
@@ -167,12 +169,12 @@ class HandlePayPalWebhook
     $payerEmail = data_get($capture, 'payer.email_address');
     $payerId = data_get($capture, 'payer.payer_id');
 
-    $order->update([
+    // Route the status change through the guarded state machine (validates the
+    // transition, is idempotent for re-delivered webhooks, keeps stock consumed).
+    $this->orders->markPaid($order, [
       'customer_email' => is_string($payerEmail) ? $payerEmail : $order->customer_email,
-      'status' => CommerceOrder::STATUS_PAID,
       'gateway_payment_id' => is_string($captureId) ? $captureId : $order->gateway_payment_id,
       'gateway_customer_id' => is_string($payerId) ? $payerId : $order->gateway_customer_id,
-      'paid_at' => $order->paid_at ?? now(),
     ]);
 
     $payment = $order->payments()

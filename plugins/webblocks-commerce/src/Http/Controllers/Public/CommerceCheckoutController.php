@@ -11,6 +11,8 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\StartCheckout;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\I18n\ProductLocalizer;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Tax\TaxCalculator;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -20,16 +22,22 @@ class CommerceCheckoutController extends Controller
     private readonly WebBlocksCommerceSchema $schema,
     private readonly CommerceGatewayManager $gateways,
     private readonly StartCheckout $checkout,
+    private readonly TaxCalculator $tax,
+    private readonly ProductLocalizer $localizer,
   ) {}
 
   public function buy(Request $request, string $product): View
   {
     $product = $this->publicProduct($product);
+    $localized = $this->localizer->localize($product, $request->query('locale'));
 
     return view($this->view('buy'), [
-      'title' => 'Buy '.$product->title,
+      'title' => 'Buy '.$localized['title'],
       'product' => $product,
+      'displayTitle' => $localized['title'],
+      'displayDescription' => $localized['description'],
       'site' => $product->site,
+      'taxLine' => $this->tax->calculate($product->price_amount, $product->taxClass()),
       'checkoutReady' => $product->isAvailableForCheckout() && $this->gateways->supportsCheckout(),
       'checkoutUnavailableMessage' => $this->checkoutUnavailableMessage($product),
     ]);

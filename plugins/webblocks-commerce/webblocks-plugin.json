@@ -2,7 +2,7 @@
   "handle": "webblocks-commerce",
   "label": "WebBlocks Commerce",
   "description": "Simple product sales and hosted checkout foundations for WebBlocks CMS sites.",
-  "version": "0.1.1",
+  "version": "0.7.0",
   "provider": "WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\WebBlocksCommercePlugin",
   "required_cms_version": "^1.32",
   "permissions": [
@@ -80,8 +80,12 @@
     }
   ],
   "routes": {
-    "admin": "routes/webblocks-commerce.php"
+    "admin": "routes/webblocks-commerce.php",
+    "api": "routes/api.php"
   },
+  "commands": [
+    "WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Console\\ExpireStalePendingOrders"
+  ],
   "migrations": [
     "database/migrations"
   ],

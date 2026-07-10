@@ -20,9 +20,10 @@
                 <div class="wb-card-body wb-stack wb-gap-4">
                     <div class="wb-stack wb-gap-2">
                         <p class="wb-text-sm wb-text-muted">WebBlocks Commerce</p>
-                        <h1>{{ $product->title }}</h1>
-                        @if ($product->description)
-                            <p>{{ $product->description }}</p>
+                        <h1>{{ $displayTitle ?? $product->title }}</h1>
+                        @php($buyDescription = $displayDescription ?? $product->description)
+                        @if ($buyDescription)
+                            <p>{{ $buyDescription }}</p>
                         @endif
                     </div>
 
@@ -30,6 +31,16 @@
                         <div>
                             <strong>Price</strong>
                             <div>{{ number_format($product->price_amount / 100, 2) }} {{ $product->currency }}</div>
+                            @if (($taxLine->rateBps ?? 0) > 0)
+                                @php($ratePercent = number_format($taxLine->rateBps / 100, $taxLine->rateBps % 100 === 0 ? 0 : 2))
+                                <div class="wb-text-sm wb-text-muted">
+                                    @if ($taxLine->pricesIncludeTax)
+                                        incl. {{ $ratePercent }}% VAT ({{ number_format($taxLine->tax / 100, 2) }} {{ $product->currency }})
+                                    @else
+                                        plus {{ $ratePercent }}% VAT — total {{ number_format($taxLine->gross / 100, 2) }} {{ $product->currency }}
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                         <div>
                             <strong>Availability</strong>

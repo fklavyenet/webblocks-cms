@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -58,9 +59,9 @@ class CmsApiTokenController extends Controller
       'totalCount' => $totalCount,
       'apiBaseUrl' => url('/webadmin/api'),
       'defaultCapabilities' => CmsApiTokenCapabilities::DEFAULT,
-      'advancedCapabilities' => CmsApiTokenCapabilities::ADVANCED,
+      'advancedCapabilities' => app(CmsApiTokenCapabilities::class)->advancedGrantable(),
       'capabilityGroups' => $this->capabilityGroups(),
-      'capabilityLabels' => CmsApiTokenCapabilities::LABELS,
+      'capabilityLabels' => app(CmsApiTokenCapabilities::class)->labelsAll(),
       'capabilitiesPresenter' => app(CmsApiTokenCapabilities::class),
       'createdToken' => session('created_cms_api_token'),
       'createdTokenName' => session('created_cms_api_token_name'),
@@ -145,6 +146,7 @@ class CmsApiTokenController extends Controller
         'description' => 'Default draft content, navigation, Shared Slots, media discovery, and site presentation permissions.',
         'capabilities' => CmsApiTokenCapabilities::DEFAULT,
       ],
+      // Enabled plugins (e.g. WebBlocks Commerce) contribute their own groups below.
       [
         'key' => 'site-feedback',
         'label' => 'Site assets and feedback',
@@ -169,16 +171,6 @@ class CmsApiTokenController extends Controller
         ],
       ],
       [
-        'key' => 'commerce',
-        'label' => 'Commerce',
-        'description' => 'Create products, place buy buttons, and read Commerce orders.',
-        'capabilities' => [
-          CmsApiTokenCapabilities::COMMERCE_READ,
-          CmsApiTokenCapabilities::COMMERCE_PRODUCTS_WRITE,
-          CmsApiTokenCapabilities::COMMERCE_ORDERS_READ,
-        ],
-      ],
-      [
         'key' => 'media',
         'label' => 'Media management',
         'description' => 'Upload, edit metadata, replace, move, and delete Media Library records.',
@@ -200,6 +192,7 @@ class CmsApiTokenController extends Controller
           CmsApiTokenCapabilities::PAGES_DELETE,
         ],
       ],
+      ...app(PluginApiCapabilityRegistrar::class)->groups(),
     ];
   }
 

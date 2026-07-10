@@ -45,7 +45,6 @@ use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalAdminRenderController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
-use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalCommerceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
@@ -101,11 +100,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/plugins/{plugin}/setup', [InternalPluginController::class, 'setup'])->middleware('internal-api.capability:plugins.setup')->name('plugins.setup');
     Route::post('/plugins/{plugin}/disable', [InternalPluginController::class, 'disable'])->middleware('internal-api.capability:plugins.manage')->name('plugins.disable');
     Route::delete('/plugins/{plugin}', [InternalPluginController::class, 'uninstall'])->middleware('internal-api.capability:plugins.uninstall')->name('plugins.uninstall');
-    Route::get('/commerce/products', [InternalCommerceController::class, 'products'])->middleware('internal-api.capability:commerce.read')->name('commerce.products.index');
-    Route::post('/commerce/products', [InternalCommerceController::class, 'storeProduct'])->middleware('internal-api.capability:commerce.products.write')->name('commerce.products.store');
-    Route::patch('/commerce/products/{product}', [InternalCommerceController::class, 'updateProduct'])->middleware('internal-api.capability:commerce.products.write')->name('commerce.products.update');
-    Route::get('/commerce/orders', [InternalCommerceController::class, 'orders'])->middleware('internal-api.capability:commerce.orders.read')->name('commerce.orders.index');
-    Route::get('/commerce/orders/{order}', [InternalCommerceController::class, 'order'])->middleware('internal-api.capability:commerce.orders.read')->name('commerce.orders.show');
+    // Commerce product & order API routes are now owned by the WebBlocks Commerce
+    // plugin itself (registered via PluginDefinition::apiRoutes()), so they are
+    // only present when the plugin is enabled.
     Route::get('/pages', [InternalContentResourceController::class, 'pages'])->name('pages.index');
     Route::get('/pages/{page}', [InternalContentResourceController::class, 'page'])->name('pages.show');
     Route::post('/pages/{page}/sync-layout-slots', [InternalSiteController::class, 'syncPageLayoutSlots'])->middleware('internal-api.capability:content.apply')->name('pages.layout-slots.sync');

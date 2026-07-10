@@ -27,6 +27,15 @@ class PluginDefinition
   /** @var array<int, string|callable> */
   private array $adminRoutes = [];
 
+  /** @var array<int, string|callable> */
+  private array $apiRoutes = [];
+
+  /** @var array<string, mixed> */
+  private array $apiDiscovery = [];
+
+  /** @var array<string, mixed> */
+  private array $apiCapabilities = [];
+
   /** @var array<int, class-string> */
   private array $commands = [];
 
@@ -387,6 +396,81 @@ class PluginDefinition
   }
 
   /**
+   * Register a plugin-owned internal API route file (or callable). These are
+   * mounted under the CMS internal API group (`/webadmin/api`, token auth) so a
+   * plugin can expose the same capabilities to AI agents that its admin panel
+   * exposes to humans, without the CMS hardcoding the plugin's endpoints.
+   */
+  public function apiRoutes(string|callable $routes): self
+  {
+    if (is_string($routes) && trim($routes) === '') {
+      throw new PluginException("Plugin [{$this->handle}] api route file cannot be empty.");
+    }
+
+    $this->apiRoutes[] = is_string($routes) ? trim($routes) : $routes;
+
+    return $this;
+  }
+
+  /**
+   * @return array<int, string|callable>
+   */
+  public function apiRouteDefinitions(): array
+  {
+    return $this->apiRoutes;
+  }
+
+  /**
+   * Describe the plugin's internal API to the discovery endpoint so AI agents
+   * can self-discover plugin-owned endpoints. Recognized keys:
+   *   - resources: array<string, string> name => path (merged into `_links`)
+   *   - openapi_paths: array<string, mixed> OpenAPI path items (merged into the schema)
+   *   - guidance: list<string> usage hints (appended to recommended_next_steps)
+   * Only enabled plugins contribute, so discovery reflects enabled state.
+   *
+   * @param  array<string, mixed>  $discovery
+   */
+  public function apiDiscovery(array $discovery): self
+  {
+    $this->apiDiscovery = $discovery;
+
+    return $this;
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  public function apiDiscoveryDefinition(): array
+  {
+    return $this->apiDiscovery;
+  }
+
+  /**
+   * Declare the internal API capabilities this plugin's endpoints require, so a
+   * shared CMS API token can be granted them without the CMS core hardcoding
+   * plugin capabilities. Only enabled plugins contribute. Shape:
+   *   - capabilities: array<string, string> name => human label
+   *   - group: array{key: string, label: string, description?: string} optional
+   *     token-UI preset grouping for these capabilities
+   *
+   * @param  array<string, mixed>  $capabilities
+   */
+  public function apiCapabilities(array $capabilities): self
+  {
+    $this->apiCapabilities = $capabilities;
+
+    return $this;
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  public function apiCapabilityDefinition(): array
+  {
+    return $this->apiCapabilities;
+  }
+
+  /**
    * @param  array<int, class-string>  $commands
    */
   public function commands(array $commands): self
@@ -666,6 +750,7 @@ class PluginDefinition
       'menu_items_count' => count($this->menuItems),
       'permissions_count' => count($this->permissions),
       'admin_routes_count' => count($this->adminRoutes),
+      'api_routes_count' => count($this->apiRoutes),
       'commands_count' => count($this->commands),
       'migrations_count' => count($this->migrations),
       'dashboard_widgets_count' => count($this->dashboardWidgets),

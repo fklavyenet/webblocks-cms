@@ -16,6 +16,12 @@ class CommerceProduct extends Model
 
   public const STATUS_ARCHIVED = 'archived';
 
+  public const TAX_CLASS_STANDARD = 'standard';
+
+  public const TAX_CLASS_REDUCED = 'reduced';
+
+  public const TAX_CLASS_ZERO = 'zero';
+
   protected $table = 'webblocks_commerce_products';
 
   protected $fillable = [
@@ -27,6 +33,7 @@ class CommerceProduct extends Model
     'status',
     'price_amount',
     'currency',
+    'tax_class',
     'inventory_quantity',
     'sku',
     'metadata',
@@ -56,9 +63,21 @@ class CommerceProduct extends Model
     return $this->hasMany(CommerceOrderItem::class, 'product_id');
   }
 
+  public function translations(): HasMany
+  {
+    return $this->hasMany(CommerceProductTranslation::class, 'product_id');
+  }
+
   public function isActive(): bool
   {
     return $this->status === self::STATUS_ACTIVE;
+  }
+
+  public function taxClass(): string
+  {
+    $taxClass = $this->tax_class;
+
+    return is_string($taxClass) && $taxClass !== '' ? $taxClass : self::TAX_CLASS_STANDARD;
   }
 
   public function tracksInventory(): bool

@@ -17,6 +17,9 @@ class CommerceOrderItem extends Model
     'quantity',
     'unit_amount',
     'total_amount',
+    'tax_amount',
+    'tax_rate',
+    'tax_class',
     'currency',
     'metadata',
   ];
@@ -27,6 +30,8 @@ class CommerceOrderItem extends Model
       'quantity' => 'integer',
       'unit_amount' => 'integer',
       'total_amount' => 'integer',
+      'tax_amount' => 'integer',
+      'tax_rate' => 'integer',
       'metadata' => 'array',
     ];
   }

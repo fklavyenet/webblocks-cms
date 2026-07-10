@@ -53,6 +53,7 @@ use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
@@ -986,6 +987,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     );
 
     app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    app(PluginApiRouteRegistrar::class)->registerEnabledApiRoutes();
   }
 
   protected function diagnosticRoutesShouldLoad(): bool

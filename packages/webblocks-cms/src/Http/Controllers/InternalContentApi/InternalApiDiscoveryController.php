@@ -9,6 +9,7 @@ use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenAuthenticator;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
+use WebBlocks\Cms\Support\Plugins\PluginApiDiscoveryRegistrar;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class InternalApiDiscoveryController extends Controller
@@ -16,6 +17,7 @@ class InternalApiDiscoveryController extends Controller
   public function __construct(
     private readonly CmsApiTokenAuthenticator $authenticator,
     private readonly CmsApiTokenCapabilities $capabilities,
+    private readonly PluginApiDiscoveryRegistrar $pluginDiscovery,
   ) {}
 
   public function index(Request $request): JsonResponse
@@ -59,7 +61,7 @@ class InternalApiDiscoveryController extends Controller
         'Use PATCH /webadmin/api/blocks/{block} for supported existing block fields such as brand logo media; Shared Slot source blocks also require shared-slots.write.',
         'Use GET /webadmin/api/engagement/comments and GET /webadmin/api/engagement/ratings with engagement.read to analyze public feedback. Use PATCH /webadmin/api/engagement/comments/{comment} with engagement.moderate to approve, reject, hide, or mark comments as spam.',
         'Use plugin lifecycle endpoints only with explicit plugin capabilities: plugins.install uploads a plugin ZIP, plugins.manage enables/disables, plugins.setup runs plugin migrations, and plugins.uninstall removes disabled manually uploaded plugins without dropping plugin-owned tables.',
-        'For WebBlocks Commerce automation, enable and setup the plugin, create products with POST /webadmin/api/commerce/products, then add a `webblocks-commerce-buy-button` block through the content API using settings.commerce_product_id from the product response.',
+        ...$this->pluginDiscovery->guidance(),
         'Use JSON requests with Authorization, Accept, and Content-Type headers.',
       ],
       'workflows' => $this->workflows($token),
@@ -241,10 +243,8 @@ class InternalApiDiscoveryController extends Controller
       'plugin_setup' => '/webadmin/api/plugins/{plugin}/setup',
       'plugin_disable' => '/webadmin/api/plugins/{plugin}/disable',
       'plugin_uninstall' => '/webadmin/api/plugins/{plugin}',
-      'commerce_products' => '/webadmin/api/commerce/products',
-      'commerce_product' => '/webadmin/api/commerce/products/{product}',
-      'commerce_orders' => '/webadmin/api/commerce/orders',
-      'commerce_order' => '/webadmin/api/commerce/orders/{order}',
+      // Enabled plugins advertise their own endpoints (e.g. WebBlocks Commerce).
+      ...$this->pluginDiscovery->resources(),
     ];
   }
 
@@ -268,13 +268,8 @@ class InternalApiDiscoveryController extends Controller
       '/plugins/{plugin}/setup' => ['post' => ['summary' => 'Run plugin setup migrations', 'x-required-capability' => 'plugins.setup', 'responses' => ['200' => ['description' => 'Plugin setup JSON', 'content' => $json], '403' => ['description' => 'Requires plugins.setup capability', 'content' => $json], '409' => ['description' => 'Plugin must be enabled first', 'content' => $json]]]],
       '/plugins/{plugin}/disable' => ['post' => ['summary' => 'Disable a plugin', 'x-required-capability' => 'plugins.manage', 'responses' => ['200' => ['description' => 'Disabled plugin JSON', 'content' => $json], '403' => ['description' => 'Requires plugins.manage capability', 'content' => $json]]]],
       '/plugins/{plugin}' => ['delete' => ['summary' => 'Uninstall a disabled manually uploaded plugin without dropping plugin-owned tables', 'x-required-capability' => 'plugins.uninstall', 'responses' => ['200' => ['description' => 'Uninstalled plugin JSON', 'content' => $json], '403' => ['description' => 'Requires plugins.uninstall capability', 'content' => $json], '409' => ['description' => 'Plugin must be disabled and manually uploaded', 'content' => $json]]]],
-      '/commerce/products' => [
-        'get' => ['summary' => 'List Commerce products for buy button placement', 'x-required-capability' => 'commerce.read', 'responses' => ['200' => ['description' => 'Commerce products JSON', 'content' => $json], '403' => ['description' => 'Requires commerce.read capability', 'content' => $json], '409' => ['description' => 'Commerce plugin disabled or setup pending', 'content' => $json]]],
-        'post' => ['summary' => 'Create a Commerce product', 'x-required-capability' => 'commerce.products.write', 'x-required-fields' => ['title', 'slug', 'status', 'price_amount', 'currency'], 'responses' => ['201' => ['description' => 'Created Commerce product JSON', 'content' => $json], '403' => ['description' => 'Requires commerce.products.write capability', 'content' => $json], '409' => ['description' => 'Commerce plugin disabled or setup pending', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
-      ],
-      '/commerce/products/{product}' => ['patch' => ['summary' => 'Update a Commerce product', 'x-required-capability' => 'commerce.products.write', 'responses' => ['200' => ['description' => 'Updated Commerce product JSON', 'content' => $json], '403' => ['description' => 'Requires commerce.products.write capability', 'content' => $json], '404' => ['description' => 'Product not found JSON', 'content' => $json]]]],
-      '/commerce/orders' => ['get' => ['summary' => 'List Commerce orders', 'x-required-capability' => 'commerce.orders.read', 'responses' => ['200' => ['description' => 'Commerce orders JSON', 'content' => $json], '403' => ['description' => 'Requires commerce.orders.read capability', 'content' => $json], '409' => ['description' => 'Commerce plugin disabled or setup pending', 'content' => $json]]]],
-      '/commerce/orders/{order}' => ['get' => ['summary' => 'Read a Commerce order', 'x-required-capability' => 'commerce.orders.read', 'responses' => ['200' => ['description' => 'Commerce order JSON', 'content' => $json], '403' => ['description' => 'Requires commerce.orders.read capability', 'content' => $json], '404' => ['description' => 'Order not found JSON', 'content' => $json]]]],
+      // Enabled plugins advertise their own OpenAPI paths (e.g. WebBlocks Commerce).
+      ...$this->pluginDiscovery->openApiPaths(),
       '/pages' => ['get' => ['summary' => 'List pages', 'responses' => ['200' => ['description' => 'Pages JSON', 'content' => $json]]]],
       '/pages/{page}' => [
         'get' => ['summary' => 'Read page', 'parameters' => [['name' => 'page', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]], 'responses' => ['200' => ['description' => 'Page JSON', 'content' => $json]]],
@@ -503,7 +498,7 @@ class InternalApiDiscoveryController extends Controller
             CmsApiTokenCapabilities::PLUGINS_MANAGE,
             CmsApiTokenCapabilities::PLUGINS_SETUP,
           ],
-          'create_product' => [CmsApiTokenCapabilities::COMMERCE_PRODUCTS_WRITE],
+          'create_product' => ['commerce.products.write'],
           'place_button' => [
             CmsApiTokenCapabilities::CONTENT_VALIDATE,
             CmsApiTokenCapabilities::CONTENT_APPLY,
@@ -514,7 +509,7 @@ class InternalApiDiscoveryController extends Controller
           'install_plugins' => $this->capabilities->has($token, CmsApiTokenCapabilities::PLUGINS_INSTALL),
           'manage_plugins' => $this->capabilities->has($token, CmsApiTokenCapabilities::PLUGINS_MANAGE),
           'setup_plugins' => $this->capabilities->has($token, CmsApiTokenCapabilities::PLUGINS_SETUP),
-          'create_product' => $this->capabilities->has($token, CmsApiTokenCapabilities::COMMERCE_PRODUCTS_WRITE),
+          'create_product' => $this->capabilities->has($token, 'commerce.products.write'),
           'place_button' => $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_VALIDATE)
             && $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_APPLY),
         ],
