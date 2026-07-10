@@ -164,6 +164,20 @@ class AdminSidebarNavigationTest extends TestCase
       $response->assertSee($thirdExpected);
       $response->assertSee('WebBlocks CMS');
       $response->assertDontSee('WebBlöcke CMS');
+
+      if ($url === route('admin.system.updates.index')) {
+        // The System Updates screen renders release notes straight from the
+        // update server, and those notes legitimately quote English source
+        // copy such as "in-app System Updates ...". Only the localized chrome
+        // must avoid the English fallback label, not the release-note body.
+        $response->assertSee('<title>'.$firstExpected.' - WebBlocks CMS', false);
+        $response->assertSee('<h1 class="wb-page-header-title">'.$firstExpected.'</h1>', false);
+        $response->assertDontSee('<title>'.$unexpected.' - WebBlocks CMS', false);
+        $response->assertDontSee('<h1 class="wb-page-header-title">'.$unexpected.'</h1>', false);
+
+        continue;
+      }
+
       $response->assertDontSeeText($unexpected);
     }
   }
