@@ -18,10 +18,10 @@ class WebBlocksCommercePlugin
   {
     return PluginDefinition::make(self::HANDLE)
       ->label('WebBlocks Commerce')
-      ->version('0.7.1')
+      ->version('0.7.2')
       ->provider(self::class)
       ->description('Simple product sales and hosted checkout foundations for WebBlocks CMS sites.')
-      ->requiresCms('^1.32')
+      ->requiresCms('^1.35')
       ->settingsNamespace('webblocks_commerce')
       ->databasePrefix('webblocks_commerce_')
       ->permissions([
