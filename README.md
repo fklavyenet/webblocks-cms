@@ -45,6 +45,22 @@ See the [Feature Inventory](docs/feature-inventory.md) for the complete list.
 
 ## Quick start
 
+### Try it in 60 seconds (Docker)
+
+The fastest way to explore the CMS — no PHP, Composer, or database setup:
+
+```bash
+git clone https://github.com/fklavyenet/webblocks-cms.git
+cd webblocks-cms
+docker compose up --build
+```
+
+Then open **http://localhost:8080** and sign in at **/webadmin** with
+`admin@example.com` / `password`. It installs itself (SQLite) on first boot.
+This is a demo, not a production setup.
+
+### Install locally with the browser wizard
+
 Try it locally with the browser install wizard:
 
 ```bash
