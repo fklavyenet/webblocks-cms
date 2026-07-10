@@ -21,6 +21,7 @@ class SystemUpdater
     private readonly UpdateWorkspaceManager $workspaceManager,
     private readonly UpdatePackageDownloader $packageDownloader,
     private readonly UpdatePackageExtractor $packageExtractor,
+    private readonly UpdateSignatureVerifier $signatureVerifier,
     private readonly UpdateInstaller $updateInstaller,
     private readonly SystemBackupManager $systemBackupManager,
     private readonly SystemUpdateRunRetention $runRetention,
@@ -222,6 +223,7 @@ class SystemUpdater
       $output[] = 'Package downloaded to '.$workspace['archive'];
 
       $warningCount += $this->verifyChecksum($workspace['archive'], $release, $output);
+      $this->signatureVerifier->verify((string) ($release['checksum_sha256'] ?? ''), $release, $output);
       $packageRoot = $this->packageExtractor->extract($workspace['archive'], $workspace['extract']);
       $output[] = 'Package extracted to '.$packageRoot;
 

@@ -89,13 +89,30 @@ boundary**. WebBlocks CMS mitigates this as follows:
   must not push to the upstream repository. Publishing is done only from the
   maintenance checkout with a `WEBBLOCKS_PUBLISHER_TOKEN`.
 
-### Recommended hardening (roadmap)
+### Signature verification (Ed25519)
 
-For defense-in-depth against a compromised update service, add **cryptographic
-signature verification**: sign the release checksum/artifact at publish time
-(e.g. minisign/GPG/`sodium_crypto_sign`) and pin the publisher's public key in
-CMS product code, so an install rejects any release not signed by the real key.
-This is the recommended next step beyond checksum verification.
+For defense-in-depth against a compromised update service — where the checksum
+travels alongside the artifact — releases can be **cryptographically signed**.
+The publisher signs the release checksum with an Ed25519 secret key, and installs
+verify the signature against a pinned public key (`sodium_crypto_sign`), so an
+install rejects any release not signed by the real key.
+
+To enable it:
+
+1. Generate a key pair once, on the maintenance/publisher machine:
+   `php artisan webblocks:updates:keygen`.
+2. Keep the printed `WEBBLOCKS_PUBLISHER_SIGNING_KEY` (secret) private — set it
+   only where you publish releases. Never commit it or set it on an install.
+3. Pin the printed public key so installs verify signed releases: set
+   `WEBBLOCKS_UPDATE_PUBLIC_KEY`, or set `ReleaseDefaults::UPDATE_PUBLIC_KEY` so
+   the key ships in the CMS code (recommended — a code-pinned key cannot be
+   swapped through a compromised `.env`).
+4. Publish as usual; the publisher signs each release automatically.
+
+Rollout is safe: while no public key is pinned, signature verification is not
+enforced (checksum verification still applies). Once a public key is pinned and
+installs receive that code, every future release must carry a valid Ed25519
+signature over its checksum, or the update is refused.
 
 ## Content and input safety
 

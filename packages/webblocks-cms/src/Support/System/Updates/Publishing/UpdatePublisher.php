@@ -208,6 +208,28 @@ final class UpdatePublisher
     return $actual;
   }
 
+  /**
+   * Sign the release checksum with the maintainer's Ed25519 secret key so
+   * installs can verify the release against the pinned public key. Returns null
+   * when no signing key is configured (releases stay unsigned until it is set).
+   */
+  private function signChecksum(string $checksum): ?string
+  {
+    $signingKey = trim((string) config('webblocks-updates.signature.signing_key', ''));
+
+    if ($signingKey === '') {
+      return null;
+    }
+
+    $secret = base64_decode($signingKey, true);
+
+    if ($secret === false || strlen($secret) !== SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
+      throw new RuntimeException('WEBBLOCKS_PUBLISHER_SIGNING_KEY is not a valid base64 Ed25519 secret key.');
+    }
+
+    return base64_encode(sodium_crypto_sign_detached(strtolower($checksum), $secret));
+  }
+
   private function sendPublishRequest(string $publisherUrl, string $token, string $artifactPath, array $payload, string $product, string $channel, string $version, string $checksum): array
   {
     $fields = array_filter([
@@ -215,6 +237,7 @@ final class UpdatePublisher
       'channel' => $channel,
       'version' => $version,
       'checksum_sha256' => $checksum,
+      'signature' => $this->signChecksum($checksum),
       'artifact_filename' => $this->payloadString($payload, 'artifact_filename') ?? basename($artifactPath),
       'minimum_client_version' => $this->payloadString($payload, 'minimum_client_version'),
       'source_reference' => $this->payloadString($payload, 'source_reference') ?? 'v'.$version,

@@ -17,6 +17,7 @@ use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
 use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
+use WebBlocks\Cms\Console\GenerateUpdateSigningKeyCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
@@ -50,10 +51,10 @@ use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
-use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
@@ -736,6 +737,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const PACKAGE_CONSOLE_COMMANDS = [
     PackageStatusCommand::class,
     PublishUpdateCommand::class,
+    GenerateUpdateSigningKeyCommand::class,
     ContactMailDiagnoseCommand::class,
     DoctorNativeLocalCommand::class,
     SmokeNativeLocalCommand::class,

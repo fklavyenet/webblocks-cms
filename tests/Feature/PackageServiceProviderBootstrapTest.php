@@ -17,6 +17,7 @@ use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
 use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
+use WebBlocks\Cms\Console\GenerateUpdateSigningKeyCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\PackageStatusCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
@@ -292,6 +293,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertSame([
       PackageStatusCommand::class,
       PublishUpdateCommand::class,
+      GenerateUpdateSigningKeyCommand::class,
       ContactMailDiagnoseCommand::class,
       DoctorNativeLocalCommand::class,
       SmokeNativeLocalCommand::class,

@@ -268,6 +268,7 @@ class UpdateServerClient
       'release_details' => $releaseDetails,
       'download_url' => Arr::get($release, 'artifact_url') ?: Arr::get($release, 'download.url'),
       'checksum_sha256' => Arr::get($release, 'checksum_sha256') ?: Arr::get($release, 'checksum'),
+      'signature' => Arr::get($release, 'signature'),
       'published_at' => Arr::get($release, 'published_at'),
       'is_critical' => (bool) Arr::get($release, 'required', false),
       'is_security' => false,
