@@ -169,6 +169,8 @@ class SystemUpdater
     $fromVersion = (string) ($prepared['from_version'] ?? $this->installedVersionStore->currentVersion());
     $toVersion = (string) ($prepared['to_version'] ?? $fromVersion);
 
+    $this->preloadSelfHandledClasses();
+
     try {
       $release = $prepared['release'] ?? null;
 
@@ -368,6 +370,12 @@ class SystemUpdater
       'finished_at' => $finishedAt,
       'duration_ms' => $durationMs,
     ])->save();
+  }
+
+  private function preloadSelfHandledClasses(): void
+  {
+    class_exists(UpdateException::class);
+    class_exists(UpdateResult::class);
   }
 
   private function lockName(): string
