@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![PHP](https://img.shields.io/badge/PHP-8.3%2B-777bb4.svg)
+![PHP](https://img.shields.io/badge/PHP-8.4%2B-777bb4.svg)
 ![Laravel](https://img.shields.io/badge/Laravel-13-ff2d20.svg)
 
 WebBlocks CMS lets you build pages from reusable blocks and manage sites, media,
@@ -38,7 +38,7 @@ See the [Feature Inventory](docs/feature-inventory.md) for the complete list.
 
 ## Requirements
 
-- PHP **8.3+**
+- PHP **8.4+**
 - Composer 2
 - A database: SQLite, MySQL, or MariaDB
 - A web server with the document root pointing at `public/`

@@ -16,7 +16,7 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 
 Requirements:
 
-- PHP **8.3+**
+- PHP **8.4+**
 - Composer 2
 - SQLite (used by the test suite; no external database required for tests)
 
