@@ -335,9 +335,14 @@ class SystemUpdater
     $expectedChecksum = strtolower(trim((string) ($release['checksum_sha256'] ?? '')));
 
     if ($expectedChecksum === '') {
-      $output[] = 'Package checksum was not provided by the release metadata.';
-
-      return 1;
+      // Applying an update overwrites the CMS package code on the live site, so
+      // an unverifiable package is a remote-code-execution risk. Refuse to apply
+      // a release whose metadata does not include a SHA-256 checksum instead of
+      // continuing with only a warning.
+      throw new UpdateException(
+        'The update was blocked because the release did not include a package checksum to verify against.',
+        'Release metadata is missing checksum_sha256; refusing to apply an unverifiable package.'
+      );
     }
 
     $actualChecksum = hash_file('sha256', $archivePath);
