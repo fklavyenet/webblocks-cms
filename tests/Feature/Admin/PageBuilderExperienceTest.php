@@ -4671,10 +4671,10 @@ class PageBuilderExperienceTest extends TestCase
     $response->assertSee('Saved caption', false);
     $content = $response->getContent();
     $this->assertNotFalse($content);
-    $this->assertStringContainsString('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', $content);
-    $this->assertSame(1, substr_count($content, 'id="gallery_media_ids_picker_panel"'));
+    $this->assertStringContainsString('data-wb-picker-owner-id="wb-picker-owner-b'.$block->id.'-gallery_media_ids"', $content);
+    $this->assertSame(1, substr_count($content, 'id="gallery_media_ids_b'.$block->id.'-gallery_media_ids_picker_panel"'));
     $this->assertSame(1, substr_count($content, 'id="slot-block-editor-modal"'));
-    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay"/s', $content);
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_b'.$block->id.'-gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay"/s', $content);
     $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
   }
 

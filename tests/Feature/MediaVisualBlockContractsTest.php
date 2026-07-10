@@ -241,7 +241,7 @@ class MediaVisualBlockContractsTest extends TestCase
     $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
     $this->assertStringNotContainsString('data-wb-picker-preview-grid', $html);
     $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$image->id.'"', $html);
-    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_block-'.$block->id.'-asset_id_picker_panel"/s', $html);
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_b'.$block->id.'-asset_id_picker_panel"/s', $html);
 
     $xpath = $this->htmlXPath($html);
     $selectorCard = $xpath->query('//*[@data-wb-picker-selector-card]')->item(0);
@@ -380,7 +380,7 @@ class MediaVisualBlockContractsTest extends TestCase
       $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
       $this->assertStringNotContainsString('data-wb-picker-preview-grid', $html);
       $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$config['asset']->id.'"', $html);
-      $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_block-'.$block->id.'-asset_id_picker_panel"/s', $html);
+      $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_b'.$block->id.'-asset_id_picker_panel"/s', $html);
 
       $xpath = $this->htmlXPath($html);
       $selectorCard = $xpath->query('//*[@data-wb-picker-selector-card]')->item(0);
@@ -448,7 +448,7 @@ class MediaVisualBlockContractsTest extends TestCase
 
     $html = $response->getContent();
     $this->assertNotFalse($html);
-    $pickerPanelId = 'gallery_media_ids_block-'.$block->id.'-gallery_media_ids_picker_panel';
+    $pickerPanelId = 'gallery_media_ids_b'.$block->id.'-gallery_media_ids_picker_panel';
 
     $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="'.$pickerPanelId.'".*Add Selected/s', $html);
     $this->assertStringNotContainsString('data-wb-picker-upload-submit', $html);
@@ -928,8 +928,8 @@ class MediaVisualBlockContractsTest extends TestCase
       'assetPickerAssets' => collect([$image]),
     ])->render();
 
-    $firstOwner = 'wb-picker-owner-block-'.$firstSlide->id.'-media_id';
-    $secondOwner = 'wb-picker-owner-block-'.$secondSlide->id.'-media_id';
+    $firstOwner = 'wb-picker-owner-b'.$firstSlide->id.'-media_id';
+    $secondOwner = 'wb-picker-owner-b'.$secondSlide->id.'-media_id';
 
     $this->assertStringContainsString('id="'.$firstOwner.'"', $firstHtml);
     $this->assertStringContainsString('data-wb-picker-owner-id="'.$firstOwner.'"', $firstHtml);

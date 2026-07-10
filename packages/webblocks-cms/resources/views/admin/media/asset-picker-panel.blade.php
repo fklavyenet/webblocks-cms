@@ -24,7 +24,9 @@
   $pickerBlock = $block ?? null;
   $pickerInstanceKey = $instanceKey
     ?? ($pickerInputId === $pickerFieldName
-      ? $pickerInputId
+      ? ($pickerBlock && $pickerBlock->getKey()
+        ? 'b'.$pickerBlock->getKey().'-'.$pickerFieldName
+        : $pickerInputId)
       : $pickerName.'-'.$pickerInputId.'-'.str_replace('.', '-', uniqid('', true)));
   $pickerInstanceId = preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInstanceKey);
   $pickerPanelId = $pickerInstanceId === $pickerInputId
