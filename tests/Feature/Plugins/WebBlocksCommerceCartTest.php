@@ -17,6 +17,7 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Cart\CartService;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\StartCheckout;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
@@ -219,7 +220,7 @@ class WebBlocksCommerceCartTest extends TestCase
     $this->assertContains('commerce.cart.write', $caps->advancedGrantable());
     $this->assertArrayHasKey('commerce.cart.write', $caps->labelsAll());
 
-    $groupKeys = array_column(app(\WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar::class)->groups(), 'key');
+    $groupKeys = array_column(app(PluginApiCapabilityRegistrar::class)->groups(), 'key');
     $this->assertContains('commerce', $groupKeys);
 
     config()->set('webblocks-plugins.enabled.webblocks-commerce', false);

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\Mime\MimeTypes;
+use WebBlocks\Cms\Models\Media;
 
 class RemoteMediaFetcher
 {
@@ -37,7 +38,7 @@ class RemoteMediaFetcher
 
   public function __construct(private readonly MediaUploader $mediaUploader) {}
 
-  public function fetch(string $url, array $data = [], ?int $uploadedBy = null): \WebBlocks\Cms\Models\Media
+  public function fetch(string $url, array $data = [], ?int $uploadedBy = null): Media
   {
     $maxBytes = $this->maxBytes();
     [$response, $effectiveUrl] = $this->download($url, $maxBytes);

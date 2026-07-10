@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 

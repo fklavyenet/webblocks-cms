@@ -10,17 +10,16 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceCart;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceOrder;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProductTranslation;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Cart\CartService;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\StartCheckout;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\I18n\ProductLocalizer;
-use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 
 class WebBlocksCommerceI18nTest extends TestCase
 {
@@ -224,7 +223,7 @@ class WebBlocksCommerceI18nTest extends TestCase
 
   private function migratePluginRoutes(): void
   {
-    app(\WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
   }
 
   private function translate(CommerceProduct $product, string $code, ?string $title, ?string $description = null): void

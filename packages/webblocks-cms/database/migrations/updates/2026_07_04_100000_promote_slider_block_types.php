@@ -54,7 +54,7 @@ return new class extends Migration
   }
 
   /**
-   * @param array<string, mixed> $definition
+   * @param  array<string, mixed>  $definition
    * @return array<string, mixed>
    */
   private function syncDefinition(array $definition): void

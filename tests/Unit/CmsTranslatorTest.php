@@ -23,7 +23,7 @@ class CmsTranslatorTest extends TestCase
     $translator = app(CmsTranslator::class);
 
     $this->assertSame(
-      'Checkout Hazirligi',
+      'Checkout Hazırlığı',
       $translator->plugin('webblocks-commerce', 'admin.settings.checkout_readiness', 'tr-TR')
     );
 
