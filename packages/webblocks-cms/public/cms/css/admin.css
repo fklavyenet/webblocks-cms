@@ -661,6 +661,41 @@ svg.wb-sidebar-brand-logo {
     flex-wrap: nowrap;
 }
 
+.wb-plugins-table th,
+.wb-plugins-table td {
+    vertical-align: top;
+}
+
+/* Keep the narrow meta columns on a single line so values such as the
+   "Enabled" status or the "manual upload" source never break mid-word. */
+.wb-plugins-table .wb-plugins-cell-tight {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.wb-plugins-table .wb-plugins-cell-tight .wb-status {
+    white-space: nowrap;
+}
+
+/* Give the plugin name column real room and wrap only at word boundaries
+   so the label never breaks mid-word; the handle stays on one line. */
+.wb-plugins-table .wb-plugins-cell-name {
+    min-width: 12rem;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+.wb-plugins-table .wb-plugins-cell-name code {
+    white-space: nowrap;
+}
+
+/* Let the health column take the remaining space and wrap its long
+   message normally instead of squeezing the neighbouring columns. */
+.wb-plugins-table .wb-plugins-cell-health {
+    min-width: 18rem;
+    white-space: normal;
+}
+
 .wb-media-preview-box {
     width: 88px;
     height: 64px;

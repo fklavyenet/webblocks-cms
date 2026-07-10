@@ -55,15 +55,15 @@
                 </div>
             @else
                 <div class="wb-table-wrap">
-                    <table class="wb-table">
+                    <table class="wb-table wb-plugins-table">
                         <thead>
                             <tr>
-                                <th>{{ $systemPluginsIndexText('plugin') }}</th>
-                                <th>{{ $systemPluginsIndexText('version') }}</th>
-                                <th>{{ $systemPluginsIndexText('source') }}</th>
-                                <th>{{ $systemPluginsIndexText('status') }}</th>
-                                <th>{{ $systemPluginsIndexText('health') }}</th>
-                                <th>{{ $systemPluginsIndexText('actions') }}</th>
+                                <th class="wb-plugins-cell-name">{{ $systemPluginsIndexText('plugin') }}</th>
+                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('version') }}</th>
+                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('source') }}</th>
+                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('status') }}</th>
+                                <th class="wb-plugins-cell-health">{{ $systemPluginsIndexText('health') }}</th>
+                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -81,18 +81,18 @@
                                     $updateModalId = 'plugin-update-'.$plugin['handle'];
                                 @endphp
                                 <tr>
-                                    <td>
+                                    <td class="wb-plugins-cell-name">
                                         <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}"><strong>{{ $plugin['label'] }}</strong></a>
                                         <div class="wb-text-sm wb-text-muted"><code>{{ $plugin['handle'] }}</code></div>
                                     </td>
-                                    <td>
+                                    <td class="wb-plugins-cell-tight">
                                         {{ $plugin['version'] ?? $systemPluginsIndexText('not_declared') }}
                                         @if ($plugin['catalog_update'])
                                             <div class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('update_available', ['version' => $plugin['catalog_update']['version']]) }}</div>
                                         @endif
                                     </td>
-                                    <td>{{ $plugin['source'] }}</td>
-                                    <td>
+                                    <td class="wb-plugins-cell-tight">{{ $plugin['source'] }}</td>
+                                    <td class="wb-plugins-cell-tight">
                                         <span class="wb-status {{ $statusClass }}">
                                             {{ $plugin['lifecycle_label'] }}
                                         </span>
@@ -100,7 +100,7 @@
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="wb-plugins-cell-health">
                                         <span class="wb-status {{ $healthClass }}">
                                             {{ $plugin['health']['status'] === 'inactive' ? $systemPluginsIndexText('inactive') : ucfirst($plugin['health']['status']) }}
                                         </span>
