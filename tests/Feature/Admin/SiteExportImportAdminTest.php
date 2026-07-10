@@ -43,7 +43,7 @@ class SiteExportImportAdminTest extends TestCase
     $indexResponse->assertSee('<html lang="de">', false);
     $indexResponse->assertSee('Website-Exporte');
     $indexResponse->assertSee('Noch keine Website-Exporte');
-    $indexResponse->assertSee('Export ausfuehren');
+    $indexResponse->assertSee('Export ausführen');
     $indexResponse->assertSee('Website-Importe');
     $indexResponse->assertDontSeeText('Run portable site exports');
     $indexResponse->assertDontSeeText('No site exports yet');
@@ -52,7 +52,7 @@ class SiteExportImportAdminTest extends TestCase
     $createResponse = $this->actingAs($user)->get(route('admin.site-transfers.imports.create'));
 
     $createResponse->assertOk();
-    $createResponse->assertSee('Import ausfuehren');
+    $createResponse->assertSee('Import ausführen');
     $createResponse->assertSee('Importpaket (.zip)');
     $createResponse->assertSee('Paket validieren');
     $createResponse->assertDontSeeText('Run Import');

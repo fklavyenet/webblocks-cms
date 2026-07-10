@@ -77,7 +77,7 @@ class SystemBackupsTest extends TestCase
     $indexResponse->assertOk();
     $indexResponse->assertSee('<html lang="tr">', false);
     $indexResponse->assertSee('Son Yedek Durumu');
-    $indexResponse->assertSee('Yedek Onerisi');
+    $indexResponse->assertSee('Yedek Önerisi');
     $indexResponse->assertSee('Yedek oluştur');
     $indexResponse->assertDontSeeText('Latest Backup Status');
     $indexResponse->assertDontSeeText('Backup Recommendation');
@@ -86,17 +86,17 @@ class SystemBackupsTest extends TestCase
     $uploadResponse = $this->actingAs($user)->get(route('admin.system.backups.upload'));
 
     $uploadResponse->assertOk();
-    $uploadResponse->assertSee('Yedek yukle');
-    $uploadResponse->assertSee('Yalnizca tam sistem restore');
+    $uploadResponse->assertSee('Yedek yükle');
+    $uploadResponse->assertSee('Yalnızca tam sistem restore');
     $uploadResponse->assertDontSeeText('Upload Backup');
     $uploadResponse->assertDontSeeText('Full system restore only');
 
     $detailResponse = $this->actingAs($user)->get(route('admin.system.backups.show', $backup));
 
     $detailResponse->assertOk();
-    $detailResponse->assertSee('Calistirma durumu');
-    $detailResponse->assertSee('Arsiv Metadata');
-    $detailResponse->assertSee('Tehlikeli Bolge');
+    $detailResponse->assertSee('Çalıştırma durumu');
+    $detailResponse->assertSee('Arşiv Metadata');
+    $detailResponse->assertSee('Tehlikeli Bölge');
     $detailResponse->assertDontSeeText('Run Status');
     $detailResponse->assertDontSeeText('Archive Metadata');
     $detailResponse->assertDontSeeText('Danger Zone');

@@ -74,28 +74,28 @@ class CmsAuthLinkTest extends TestCase
 
     $this->get('/webadmin/login')
       ->assertOk()
-      ->assertSee('Tekrar hos geldiniz')
+      ->assertSee('Tekrar hoş geldiniz')
       ->assertSee('E-posta adresi')
-      ->assertSee('Sifremi unuttum')
-      ->assertSee('aria-label="Sifreyi goster"', false)
-      ->assertSee('data-password-hide-label="Sifreyi gizle"', false);
+      ->assertSee('Şifremi unuttum')
+      ->assertSee('aria-label="Şifreyi göster"', false)
+      ->assertSee('data-password-hide-label="Şifreyi gizle"', false);
 
     $this->get('/webadmin/forgot-password')
       ->assertOk()
-      ->assertSee('Sifreyi sifirla')
-      ->assertSee('Sifirlama baglantisi gonder')
-      ->assertSee('Girise don');
+      ->assertSee('Şifreyi sıfırla')
+      ->assertSee('Sıfırlama bağlantısı gönder')
+      ->assertSee('Girişe dön');
 
     $this->get('/webadmin/reset-password/test-token?email=editor%40example.com')
       ->assertOk()
-      ->assertSee('Yeni sifre belirle')
-      ->assertSee('Sifreyi onayla')
-      ->assertSee('Sifreyi guncelle');
+      ->assertSee('Yeni şifre belirle')
+      ->assertSee('Şifreyi onayla')
+      ->assertSee('Şifreyi güncelle');
 
     $mail = (new CmsResetPassword('test-token', $user->email))->toMail($user);
 
-    $this->assertSame('Sifre Sifirlama Bildirimi', $mail->subject);
-    $this->assertSame('Sifreyi Sifirla', $mail->actionText);
+    $this->assertSame('Şifre Sıfırlama Bildirimi', $mail->subject);
+    $this->assertSame('Şifreyi Sıfırla', $mail->actionText);
   }
 
   public function test_cms_forgot_password_sends_prefixed_reset_link(): void
