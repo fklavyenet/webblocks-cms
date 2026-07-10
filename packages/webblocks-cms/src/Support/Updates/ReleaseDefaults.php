@@ -21,7 +21,7 @@ final class ReleaseDefaults
    * verification still applies). Run `php artisan webblocks:updates:keygen`,
    * then pin the printed public key here or set WEBBLOCKS_UPDATE_PUBLIC_KEY.
    */
-  public const UPDATE_PUBLIC_KEY = '';
+  public const UPDATE_PUBLIC_KEY = 'iUYAXjEXDcdJDIQdfWW04gZHVvUf8tPfPSjS4uKHXFk=';
 
   public static function latestUrl(): string
   {
