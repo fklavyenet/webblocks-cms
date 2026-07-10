@@ -21,6 +21,7 @@ services:
       APP_DEBUG: "false"
       APP_URL: https://${DEMO_DOMAIN}
       TRUSTED_PROXIES: "*"
+      FORCE_HTTPS: "true"
       LOG_CHANNEL: stderr
       DB_CONNECTION: sqlite
       DB_DATABASE: /app/database/database.sqlite

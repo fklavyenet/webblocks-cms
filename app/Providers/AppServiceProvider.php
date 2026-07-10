@@ -5,10 +5,12 @@ namespace App\Providers;
 use App\Support\Install\InstallState;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -46,6 +48,24 @@ class AppServiceProvider extends ServiceProvider
      */
   public function boot(): void
   {
+    // Reverse-proxy support (opt-in; no effect when the env vars are unset, so
+    // direct deployments are unaffected). Configured here rather than in
+    // bootstrap/app.php because env() is reliably available during boot.
+    $trustedProxies = trim((string) env('TRUSTED_PROXIES', ''));
+
+    if ($trustedProxies !== '') {
+      TrustProxies::at(
+        $trustedProxies === '*' ? '*' : array_map('trim', explode(',', $trustedProxies)),
+      );
+    }
+
+    // Behind a TLS-terminating proxy, force HTTPS URL generation so assets and
+    // links are not emitted as http (which browsers block as mixed content).
+    if (filter_var(env('FORCE_HTTPS', false), FILTER_VALIDATE_BOOLEAN)) {
+      URL::forceScheme('https');
+      $this->app['request']->server->set('HTTPS', 'on');
+    }
+
     try {
       $systemSettings = app(SystemSettings::class);
 

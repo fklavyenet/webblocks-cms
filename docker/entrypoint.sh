@@ -18,6 +18,24 @@ if ! grep -q '^APP_KEY=base64:' .env; then
   php artisan key:generate --force --ansi
 fi
 
+# Persist runtime container environment into .env. `php artisan serve` handles
+# each request in a subprocess that does not inherit arbitrary container env
+# vars, so values only present in the environment (not the .env file) are
+# invisible to web requests. Baking them into .env makes env() consistent for
+# both console (migrate/seed) and web (URL generation, proxy trust) contexts.
+for key in APP_ENV APP_DEBUG APP_URL ASSET_URL FORCE_HTTPS TRUSTED_PROXIES \
+  DB_CONNECTION DB_DATABASE CACHE_STORE SESSION_DRIVER QUEUE_CONNECTION \
+  MAIL_MAILER LOG_CHANNEL; do
+  eval "val=\${$key:-}"
+  if [ -n "$val" ]; then
+    if grep -q "^${key}=" .env; then
+      sed -i "s|^${key}=.*|${key}=${val}|" .env
+    else
+      printf '%s=%s\n' "$key" "$val" >> .env
+    fi
+  fi
+done
+
 # SQLite database file.
 mkdir -p database
 touch "${DB_DATABASE:-/app/database/database.sqlite}"
