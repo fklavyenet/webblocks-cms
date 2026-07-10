@@ -20,7 +20,7 @@
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
                     <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $adminText('remove_domain_title', ['domain' => $domain->domain]) }}</h2>
-                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $adminText('remove_domain_description', ['role' => $domain->is_primary ? $adminText('primary') : $adminText('alias')]) }}</span>
+                    <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $adminText('remove_domain_description', ['role' => \Illuminate\Support\Str::lower($domain->is_primary ? $adminText('primary') : $adminText('alias'))]) }}</span>
                 </div>
 
                 <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="{{ $adminText('close_remove_domain_modal') }}">

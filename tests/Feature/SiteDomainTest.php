@@ -218,7 +218,7 @@ class SiteDomainTest extends TestCase
     $response->assertSee('Redirect alias to primary');
     $response->assertSee('Make primary domain');
     $response->assertSee('Active domains participate in host resolution.');
-    $response->assertSee('Primary domain is used for canonical public URLs.');
+    $response->assertSee('The primary domain is used for canonical public URLs.');
   }
 
   #[Test]
