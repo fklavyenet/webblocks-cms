@@ -16,6 +16,8 @@
         'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-search" aria-hidden="true"></i> '.$systemPluginsIndexText('browse_plugin_catalog').'</a>',
     ])
 
+    @include('webblocks-cms::admin.partials.flash')
+
     @if ($canInstallPlugins)
         <div class="wb-card wb-mb-4">
             <div class="wb-card-header">
@@ -76,6 +78,7 @@
                                         default => 'wb-status-pending',
                                     };
                                     $uninstallModalId = 'plugin-uninstall-'.$plugin['handle'];
+                                    $updateModalId = 'plugin-update-'.$plugin['handle'];
                                 @endphp
                                 <tr>
                                     <td>
@@ -112,12 +115,9 @@
                                             </a>
 
                                             @if ($plugin['can_update_from_catalog'])
-                                                <form method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}">
-                                                    @csrf
-                                                    <button type="submit" class="wb-action-btn" title="{{ $systemPluginsIndexText('update_from_catalog') }}" aria-label="{{ $systemPluginsIndexText('update_from_catalog') }}">
-                                                        <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="wb-action-btn" title="{{ $systemPluginsIndexText('update_from_catalog') }}" aria-label="{{ $systemPluginsIndexText('update_from_catalog') }}" data-wb-toggle="modal" data-wb-target="#{{ $updateModalId }}">
+                                                    <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
+                                                </button>
                                             @endif
 
                                             @if ($plugin['can_enable'])
@@ -144,6 +144,36 @@
                                                 </button>
                                             @endif
                                         </div>
+
+                                        @if ($plugin['can_update_from_catalog'])
+                                            <div class="wb-modal wb-modal-lg" id="{{ $updateModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $updateModalId }}-title" aria-describedby="{{ $updateModalId }}-body">
+                                                <div class="wb-modal-dialog">
+                                                    <div class="wb-modal-header">
+                                                        <h2 class="wb-modal-title" id="{{ $updateModalId }}-title">{{ $systemPluginsIndexText('update_confirm_title', ['label' => $plugin['label']]) }}</h2>
+                                                        <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $systemPluginsIndexText('update_confirm_cancel') }}">
+                                                            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                                                        </button>
+                                                    </div>
+
+                                                    <form method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}">
+                                                        @csrf
+
+                                                        <div class="wb-modal-body wb-stack wb-gap-4">
+                                                            <p id="{{ $updateModalId }}-body">{{ $systemPluginsIndexText('update_confirm_body', ['label' => $plugin['label'], 'current' => $plugin['version'] ?? $systemPluginsIndexText('unknown'), 'version' => $plugin['catalog_update']['version']]) }}</p>
+                                                        </div>
+
+                                                        <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                                                            <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
+                                                                <button type="submit" class="wb-btn wb-btn-primary" data-wb-busy data-wb-busy-label="{{ $systemPluginsIndexText('update_in_progress') }}">
+                                                                    <span data-wb-busy-text>{{ $systemPluginsIndexText('update_confirm_submit') }}</span>
+                                                                </button>
+                                                                <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $systemPluginsIndexText('update_confirm_cancel') }}</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        @endif
 
                                         @if ($plugin['can_uninstall'])
                                             @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [

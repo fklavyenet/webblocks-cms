@@ -27,6 +27,8 @@
         'description' => $plugin['description'] ?? $adminText('description'),
     ])
 
+    @include('webblocks-cms::admin.partials.flash')
+
     <p><a href="{{ route('admin.system.plugins.index') }}">{{ $adminText('back_to_plugins') }}</a></p>
 
     <div class="wb-grid wb-grid-2 wb-gap-4">

@@ -484,12 +484,44 @@
         });
     }
 
+    function bindBusySubmitButtons() {
+        document.querySelectorAll('[data-wb-busy]').forEach(function (button) {
+            var form = button.closest('form');
+
+            if (!form || button.getAttribute('data-wb-busy-bound') === 'true') {
+                return;
+            }
+
+            button.setAttribute('data-wb-busy-bound', 'true');
+
+            form.addEventListener('submit', function () {
+                var busyLabel = button.getAttribute('data-wb-busy-label');
+                var textNode = button.querySelector('[data-wb-busy-text]');
+
+                // The submit event has already fired, so disabling here does not
+                // cancel submission but does block a second click and signals work.
+                button.classList.add('is-busy');
+                button.setAttribute('aria-busy', 'true');
+                button.disabled = true;
+
+                if (busyLabel) {
+                    if (textNode) {
+                        textNode.textContent = busyLabel;
+                    }
+
+                    button.setAttribute('aria-label', busyLabel);
+                }
+            });
+        });
+    }
+
     admin.escapeHtml = escapeHtml;
     admin.resetAdminTransientUiState = resetAdminTransientUiState;
     admin.bindAdminTransientUiReset = bindAdminTransientUiReset;
     admin.redirectToLoginFromAdmin = redirectToLoginFromAdmin;
     admin.normalizeSiteHandle = normalizeSiteHandle;
     admin.bindUpdateIndicator = bindUpdateIndicator;
+    admin.bindBusySubmitButtons = bindBusySubmitButtons;
 
     bindAdminTransientUiReset();
     bindNavGroupToggles();
@@ -498,4 +530,5 @@
     bindDirtyCloseConfirmationActions();
     bindDirtyOverlayGuards();
     bindUpdateIndicator();
+    bindBusySubmitButtons();
 }());
