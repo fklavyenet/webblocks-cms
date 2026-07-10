@@ -27,6 +27,8 @@
 !/docs/*.md
 !/docs/releases/
 !/docs/releases/*.md
+!/docs/images/
+!/docs/images/*
 /public/storage
 
 # Laravel
