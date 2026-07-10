@@ -379,8 +379,18 @@ class FullShowcaseSeeder extends Seeder
   {
     return [
       [
-        'type' => 'navigation-auto',
-        'menu_key' => NavigationItem::MENU_PRIMARY,
+        'type' => 'sticky-navbar',
+        'settings' => ['sticky_mode' => 'static'],
+        'children' => [
+          [
+            'type' => 'navbar-brand',
+            'title' => 'Northstar Labs',
+          ],
+          [
+            'type' => 'navbar-navigation',
+            'settings' => ['menu_key' => NavigationItem::MENU_PRIMARY],
+          ],
+        ],
       ],
     ];
   }
@@ -413,25 +423,11 @@ class FullShowcaseSeeder extends Seeder
         'slots' => [
           'main' => [
             [
-              'type' => 'section',
+              'type' => 'hero',
+              'subtitle' => 'WebBlocks CMS showcase',
               'title' => 'Structured publishing for teams that cannot afford chaos',
               'content' => 'Northstar Labs is a demo company showing how WebBlocks CMS can power services, documentation, marketing, and operational content from one editorial foundation.',
-              'children' => [
-                ['type' => 'button', 'title' => 'Explore services', 'url' => $this->pageUrl('services'), 'variant' => 'primary'],
-                ['type' => 'button', 'title' => 'Read the guide', 'url' => $this->pageUrl('documentation-guide'), 'variant' => 'ghost'],
-              ],
-            ],
-            [
-              'type' => 'image',
-              'title' => 'Editorial command center',
-              'subtitle' => 'Modern workspace with laptop and desk',
-              'asset_key' => $this->preferredAssetKey('home-hero-01', 'hero-home'),
-            ],
-            [
-              'type' => 'slider',
-              'title' => 'A quick tour of the working environment',
-              'subtitle' => 'Curated workspace and collaboration scenes from the local demo media library.',
-              'gallery_asset_keys' => $this->preferredGalleryAssetKeys(['gallery-01', 'gallery-02', 'gallery-03', 'gallery-04'], ['gallery-ops-wall', 'gallery-dashboard', 'gallery-workshop']),
+              'variant' => 'accent',
             ],
             [
               'type' => 'stats',
@@ -449,12 +445,10 @@ class FullShowcaseSeeder extends Seeder
               'type' => 'feature-grid',
               'title' => 'What this demo highlights',
               'content' => 'Use the pages below to inspect real editorial combinations rather than isolated samples.',
-              'settings' => [
-                'items' => [
-                  ['title' => 'Reusable page patterns', 'content' => 'Compare archive pages, detail pages, legal content, and utility flows.'],
-                  ['title' => 'Media-backed components', 'content' => 'Images, galleries, downloads, audio, and file assets are wired into the CMS library.'],
-                  ['title' => 'System-aware blocks', 'content' => 'Navigation, related content, auth, page metadata, and legal outputs all render meaningful demo data.'],
-                ],
+              'children' => [
+                ['type' => 'feature-item', 'title' => 'Reusable page patterns', 'content' => 'Compare archive pages, detail pages, legal content, and utility flows.'],
+                ['type' => 'feature-item', 'title' => 'Media-backed components', 'content' => 'Images, galleries, downloads, audio, and file assets are wired into the CMS library.'],
+                ['type' => 'feature-item', 'title' => 'System-aware blocks', 'content' => 'Navigation, related content, auth, page metadata, and legal outputs all render meaningful demo data.'],
               ],
             ],
             [
@@ -1312,25 +1306,44 @@ class FullShowcaseSeeder extends Seeder
   private function buildSvg(string $title, string $accent, string $surface, int $width, int $height, bool $logoMode): string
   {
     $safeTitle = e($title);
-    $titleSize = $logoMode ? 64 : 60;
-    $subtitle = $logoMode ? 'Demo partner asset' : 'WebBlocks CMS showcase asset';
-    $heightMinus = max(220, $height - 320);
-    $widthMinus = max(320, $width - 240);
-    $widthMinusSmall = max(260, $width - 420);
-    $titleY = $logoMode ? 210 : 400;
-    $subtitleY = $logoMode ? 280 : 460;
+
+    if ($logoMode) {
+      $cx = intdiv($width, 2);
+      $cy = intdiv($height, 2);
+      $r = (int) (min($width, $height) * 0.3);
+      $initial = e(mb_strtoupper(mb_substr(trim($title) ?: 'W', 0, 1)));
+      $fontSize = (int) ($r * 1.05);
+
+      return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" width="{$width}" height="{$height}" viewBox="0 0 {$width} {$height}" role="img" aria-label="{$safeTitle}">
+  <rect width="{$width}" height="{$height}" fill="{$surface}" rx="36" />
+  <circle cx="{$cx}" cy="{$cy}" r="{$r}" fill="{$accent}" />
+  <text x="{$cx}" y="{$cy}" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="{$fontSize}" font-weight="700" text-anchor="middle" dominant-baseline="central">{$initial}</text>
+</svg>
+SVG;
+    }
+
+    // Abstract gradient scene so demo imagery reads as intentional art
+    // instead of a skeleton placeholder.
+    $r1 = (int) ($width * 0.42);
+    $r2 = (int) ($width * 0.32);
 
     return <<<SVG
-<svg xmlns="http://www.w3.org/2000/svg" width="{$width}" height="{$height}" viewBox="0 0 {$width} {$height}" role="img" aria-labelledby="title desc">
-  <title id="title">{$safeTitle}</title>
-  <desc id="desc">{$subtitle}</desc>
-  <rect width="{$width}" height="{$height}" fill="{$surface}" rx="36" />
-  <circle cx="140" cy="140" r="84" fill="{$accent}" opacity="0.95" />
-  <rect x="120" y="{$heightMinus}" width="{$widthMinus}" height="120" rx="24" fill="{$accent}" opacity="0.18" />
-  <rect x="120" y="220" width="{$widthMinus}" height="18" rx="9" fill="#ffffff" opacity="0.16" />
-  <rect x="120" y="260" width="{$widthMinusSmall}" height="18" rx="9" fill="#ffffff" opacity="0.12" />
-  <text x="120" y="{$titleY}" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="{$titleSize}" font-weight="700">{$safeTitle}</text>
-  <text x="120" y="{$subtitleY}" fill="#e2e8f0" font-family="Arial, Helvetica, sans-serif" font-size="28">{$subtitle}</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="{$width}" height="{$height}" viewBox="0 0 {$width} {$height}" role="img" aria-label="{$safeTitle}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="{$accent}" />
+      <stop offset="1" stop-color="{$surface}" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.28" cy="0.22" r="0.85">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.30" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="{$width}" height="{$height}" fill="url(#bg)" rx="36" />
+  <circle cx="{$width}" cy="0" r="{$r1}" fill="#ffffff" opacity="0.08" />
+  <circle cx="0" cy="{$height}" r="{$r2}" fill="#000000" opacity="0.14" />
+  <rect width="{$width}" height="{$height}" fill="url(#glow)" rx="36" />
 </svg>
 SVG;
   }

@@ -23,6 +23,10 @@ deployment stays simple on ordinary PHP hosting.
 
 ## Screenshots
 
+![A public site built with WebBlocks CMS](docs/images/public-home.png)
+
+*A public page rendered from blocks — navigation, hero, and a feature grid, all editable in the admin.*
+
 ![WebBlocks CMS operator dashboard](docs/images/admin-dashboard.png)
 
 *The operator dashboard — publishing state, quick actions, and recent content at a glance.*
@@ -31,7 +35,7 @@ deployment stays simple on ordinary PHP hosting.
 
 *Multisite page management with search, filters, block counts, and per-page actions.*
 
-<!-- TODO: add a public-site screenshot and a live demo link once the public demo theme is polished. -->
+<!-- TODO: add a live demo link once the public demo is deployed to a host. -->
 
 ## Highlights
 
