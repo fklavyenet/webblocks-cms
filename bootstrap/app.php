@@ -52,6 +52,17 @@ return Application::configure(basePath: dirname(__DIR__))
       'install.complete' => RedirectIfInstalled::class,
       'install.required' => RedirectIfNotInstalled::class,
     ]);
+
+    // Opt-in reverse-proxy support: only trust forwarded headers when
+    // TRUSTED_PROXIES is set (e.g. "*" behind Caddy/Nginx). Default is no
+    // trust, so direct deployments are unaffected.
+    $trustedProxies = trim((string) env('TRUSTED_PROXIES', ''));
+
+    if ($trustedProxies !== '') {
+      $middleware->trustProxies(
+        at: $trustedProxies === '*' ? '*' : array_map('trim', explode(',', $trustedProxies)),
+      );
+    }
   })
   ->withExceptions(function (Exceptions $exceptions): void {
     //

@@ -1,0 +1,7 @@
+# Automatic HTTPS (Let's Encrypt) for the demo domain, reverse-proxied to the
+# CMS container on the internal Docker network. DEMO_DOMAIN comes from the
+# environment (see docker-compose.yml).
+{$DEMO_DOMAIN} {
+	encode gzip
+	reverse_proxy webblocks:8080
+}

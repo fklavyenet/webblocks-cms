@@ -1,0 +1,53 @@
+# WebBlocks CMS — public live demo behind Caddy with automatic HTTPS.
+#
+# On a VPS with Docker:
+#   cd deploy
+#   cp .env.example .env          # then edit DEMO_DOMAIN + admin password
+#   docker compose up -d --build
+#
+# The CMS container is NOT published to the host — only Caddy is. Caddy
+# terminates TLS and reverse-proxies to the CMS on the internal network, which
+# is why TRUSTED_PROXIES="*" below is safe (nothing else can reach the app).
+name: webblocks-demo
+
+services:
+  webblocks:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "false"
+      APP_URL: https://${DEMO_DOMAIN}
+      TRUSTED_PROXIES: "*"
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /app/database/database.sqlite
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: log
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@example.com}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-password}
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - webblocks
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DEMO_DOMAIN: ${DEMO_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
