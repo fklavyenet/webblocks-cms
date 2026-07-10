@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\GuardsInitializedSites;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
@@ -20,6 +21,8 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 
 class FullShowcaseSeeder extends Seeder
 {
+  use GuardsInitializedSites;
+
   private Collection $blockTypes;
 
   private Collection $slotTypes;
@@ -36,9 +39,34 @@ class FullShowcaseSeeder extends Seeder
 
   public function __construct(private readonly BlockTranslationWriter $blockTranslationWriter) {}
 
+  /**
+   * Legacy showcase block-type slugs mapped onto their current foundation
+   * equivalent. Types with no current equivalent are skipped (see createBlock).
+   */
+  private const BLOCK_TYPE_ALIASES = [
+    'button' => 'button_link',
+    'card-group' => 'card-grid',
+    'metric-card' => 'stat-card',
+    'stack' => 'cluster',
+    'split' => 'columns',
+    'faq' => 'faq-list',
+  ];
+
   public function run(): void
   {
-    throw new \RuntimeException('FullShowcaseSeeder is quarantined while the CMS foundation is limited to header and plain_text blocks. Rebuild showcase content deliberately before re-enabling this seeder.');
+    $this->ensureSiteIsNotInitialized(class_basename($this));
+
+    $this->blockTypes = BlockType::query()->get()->keyBy('slug');
+    $this->slotTypes = SlotType::query()->get()->keyBy('slug');
+    $this->pages = collect();
+    $this->folders = collect();
+    $this->assets = collect();
+
+    $this->seedFolders();
+    $this->seedAssets();
+    $this->seedPages();
+    $this->seedPageContent();
+    $this->seedNavigation();
   }
 
   private function seedFolders(): void
@@ -251,12 +279,20 @@ class FullShowcaseSeeder extends Seeder
     }
   }
 
-  private function createBlock(Page $page, string $slotSlug, array $definition, ?Block $parent, int $sortOrder): Block
+  private function createBlock(Page $page, string $slotSlug, array $definition, ?Block $parent, int $sortOrder): ?Block
   {
-    /** @var BlockType $blockType */
+    $definition['type'] = self::BLOCK_TYPE_ALIASES[$definition['type']] ?? $definition['type'];
+
+    /** @var BlockType|null $blockType */
     $blockType = $this->blockTypes->get($definition['type']);
-    /** @var SlotType $slotType */
+    /** @var SlotType|null $slotType */
     $slotType = $this->slotTypes->get($slotSlug);
+
+    // Skip blocks whose type is no longer part of the foundation catalog
+    // (and their subtree); the showcase renders with the supported blocks.
+    if (! $blockType || ! $slotType) {
+      return null;
+    }
 
     $settings = $definition['settings'] ?? null;
     $contactTranslation = null;

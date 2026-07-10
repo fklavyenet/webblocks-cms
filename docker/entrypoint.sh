@@ -30,6 +30,8 @@ php artisan migrate --force
 # refuses to run again on an already-installed site, so guard it with a marker.
 if [ ! -f /app/storage/.demo-installed ]; then
   php artisan db:seed --force
+  # Ship example pages, media, and navigation so the demo is not an empty install.
+  php artisan db:seed --class='Database\Seeders\FullShowcaseSeeder' --force
   # Create the first active super admin (the runtime install guard requires one).
   php artisan tinker --execute="\App\Models\User::query()->updateOrCreate(['email' => getenv('DEMO_ADMIN_EMAIL') ?: 'admin@example.com'], ['name' => 'Demo Admin', 'password' => \Illuminate\Support\Facades\Hash::make(getenv('DEMO_ADMIN_PASSWORD') ?: 'password'), 'role' => 'super_admin', 'is_admin' => true, 'is_active' => true, 'email_verified_at' => now()]);"
   touch /app/storage/.demo-installed

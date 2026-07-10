@@ -21,7 +21,17 @@ deployment stays simple on ordinary PHP hosting.
 > AI-assisted page workflows — not a WordPress replacement or a headless
 > delivery platform. See the [Product Maturity Assessment](docs/product-maturity-assessment.md).
 
-<!-- TODO: add screenshots of the admin + a public page here, and a live demo link once available. -->
+## Screenshots
+
+![WebBlocks CMS operator dashboard](docs/images/admin-dashboard.png)
+
+*The operator dashboard — publishing state, quick actions, and recent content at a glance.*
+
+![WebBlocks CMS page management](docs/images/admin-pages.png)
+
+*Multisite page management with search, filters, block counts, and per-page actions.*
+
+<!-- TODO: add a public-site screenshot and a live demo link once the public demo theme is polished. -->
 
 ## Highlights
 
