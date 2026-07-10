@@ -75,6 +75,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Operations (Backup, Restore, Updates)
 
 - [Operations](operations.md)
+- [Security](security.md)
 - [Contact Forms And Messages](contact-forms-and-messages.md)
 - [Search](search.md)
 - [Updates](updates.md)

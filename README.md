@@ -82,7 +82,7 @@ Start here:
 - [Feature Inventory](docs/feature-inventory.md) · [Multisite](docs/multisite.md) · [Localization](docs/localization.md)
 - [Editorial Workflow](docs/editorial-workflow.md) · [Revisions](docs/revisions.md) · [Users & Permissions](docs/users-and-permissions.md)
 - [Page Layouts](docs/page-layouts.md) · [Block Type Contracts](docs/block-type-contracts.md) · [Public Assets](docs/public-assets.md)
-- [Search](docs/search.md) · [Contact Forms & Messages](docs/contact-forms-and-messages.md) · [Operations](docs/operations.md) · [Updates](docs/updates.md)
+- [Search](docs/search.md) · [Contact Forms & Messages](docs/contact-forms-and-messages.md) · [Operations](docs/operations.md) · [Updates](docs/updates.md) · [Security](docs/security.md)
 
 For AI / operator tooling:
 
@@ -112,8 +112,10 @@ Contributions are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)** and the
 
 ## Security
 
-Please report vulnerabilities privately — see **[SECURITY.md](SECURITY.md)**. Do
-not open public issues for security reports.
+Read the [Security guide](docs/security.md) for the security model and production
+hardening (web-root, update integrity, tokens, deployment). Please report
+vulnerabilities privately — see **[SECURITY.md](SECURITY.md)**. Do not open public
+issues for security reports.
 
 ## License
 
