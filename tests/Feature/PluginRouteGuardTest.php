@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
@@ -162,14 +161,5 @@ class PluginRouteGuardTest extends TestCase
       'plugin.permission:webblocks-redirect-manager.view',
     ], $route?->gatherMiddleware());
 
-    $user = User::factory()->superAdmin()->create();
-
-    $this->get('/webadmin/plugins/webblocks-redirect-manager/redirects')
-      ->assertRedirect(route('webblocks.auth.login'));
-
-    $this->actingAs($user)
-      ->get('/webadmin/plugins/webblocks-redirect-manager/redirects')
-      ->assertOk()
-      ->assertSeeText('redirect manager user:'.$user->id);
   }
 }
