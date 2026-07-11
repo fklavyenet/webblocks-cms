@@ -26,6 +26,13 @@ Reusable task playbooks live under `ai/skills/`.
 
 Use these skills for matching tasks instead of repeating long instructions in prompts. Keep secrets, tokens, local absolute paths, live logs, temporary deployment details, and environment values out of committed skill files.
 
+## Audit and Review Notes
+
+- Internal audit/review notes (engineering, security-posture, or refactor audits) live under `ai/audits/` or `docs/audits/`, which are git-ignored and stay local. Do not commit them.
+- Never commit a document that enumerates concrete, unfixed security weaknesses; a public commit is publication and cannot be undone by a later delete. Draft such findings locally or as a private GitHub security advisory.
+- The only intentionally public product-posture document is `docs/product-maturity-assessment.md`; it must never contain exploitable vulnerability detail.
+- When committing a fix for a not-yet-released security issue, keep the commit message neutral (describe the hardening, not the exploit) until the fix ships.
+
 ## Operator-Owned Live Steps
 
 Do not include live installed-site operations in implementation or release commands unless the user explicitly asks for that exact live operation in the same prompt.

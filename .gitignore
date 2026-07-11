@@ -57,6 +57,10 @@ Thumbs.db
 /storage/app/releases/*
 /storage/project/block-render-snapshots/
 
+# Internal engineering audit notes — kept local, not published (see AGENTS.md)
+/ai/audits/
+/docs/audits/
+
 # Keep public repo files
 !README.md
 !LICENSE
