@@ -1,0 +1,9 @@
+/.gitignore export-ignore
+/.phpunit.cache export-ignore
+/.phpunit.result.cache export-ignore
+/composer.lock export-ignore
+/coverage export-ignore
+/phpunit.xml.dist export-ignore
+/pint.json export-ignore
+/tests export-ignore
+/vendor export-ignore

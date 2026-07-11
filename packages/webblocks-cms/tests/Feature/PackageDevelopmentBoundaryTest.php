@@ -8,6 +8,18 @@ use PHPUnit\Framework\TestCase;
 class PackageDevelopmentBoundaryTest extends TestCase
 {
   #[Test]
+  public function package_archive_excludes_development_only_files(): void
+  {
+    $attributes = file_get_contents(dirname(__DIR__, 2).'/.gitattributes');
+
+    $this->assertIsString($attributes);
+
+    foreach (['/.gitignore', '/composer.lock', '/coverage', '/phpunit.xml.dist', '/pint.json', '/tests', '/vendor'] as $path) {
+      $this->assertStringContainsString($path.' export-ignore', $attributes);
+    }
+  }
+
+  #[Test]
   public function package_development_files_do_not_depend_on_outer_application_paths(): void
   {
     $packageRoot = dirname(__DIR__, 2);
