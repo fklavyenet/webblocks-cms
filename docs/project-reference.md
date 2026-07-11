@@ -3,7 +3,7 @@
 > This is the long-form reference that previously lived in the root `README.md`.
 > The README is now a concise overview; this file preserves the full feature
 > summary, maintainer developer notes, conventions, and release/build details.
-> Content here may overlap with `AGENTS.md`, `DEVELOPMENT.md`, and the focused
+> Content here may overlap with `DEVELOPMENT.md` and the focused
 > guides under `docs/`, and should be migrated into those over time.
 
 > A modern block-based CMS
@@ -297,7 +297,6 @@ php artisan site-promotion:apply storage/app/site-promotions/example.zip --targe
 ## Documentation
 
 - See the full documentation in the `docs/` directory:
-- `AGENTS.md` is the compact AI and project working contract for repository-specific implementation rules.
 - `DEVELOPMENT.md` defines the development and release workflow.
 - `docs/updates.md` keeps the retired `1.31.53` root-managed bridge history for reference, but current update validation focuses on package-rooted release artifacts and package-native updater behavior.
 - `php artisan webblocks:package-status` reports the current package-transition resource boundary in a strictly read-only way and does not publish, migrate, clear cache, or mutate install state. `php artisan webblocks:package-status --view-check` additionally renders the internal package diagnostic Blade view through the `webblocks-cms::` namespace to verify package view loading without changing runtime ownership. The command now reports package source authority, the deliberately minimal root app shell, root Blade/seeder/runtime asset compatibility paths, root migration/update/install/auth blockers, and package-owned CMS source authority.

@@ -122,7 +122,7 @@ For AI / operator tooling:
 
 For maintainers and contributors:
 
-- [Development Workflow](DEVELOPMENT.md) · [Architecture Decisions](ARCHITECTURE_DECISIONS.md) · [AGENTS.md](AGENTS.md)
+- [Development Workflow](DEVELOPMENT.md) · [Architecture Decisions](ARCHITECTURE_DECISIONS.md)
 - [Detailed Project Reference](docs/project-reference.md) — the former long-form README (feature notes, conventions, release details).
 
 The full docs index lives in [`docs/`](docs/).

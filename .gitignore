@@ -57,9 +57,10 @@ Thumbs.db
 /storage/app/releases/*
 /storage/project/block-render-snapshots/
 
-# Internal AI development notes (skills, standards, audits) — kept local, not
-# published (see AGENTS.md). docs/audits stays local too.
+# Internal AI development notes and maintainer working docs — kept local, not
+# published as repo content. docs/audits stays local too.
 /ai/
+/AGENTS.md
 /docs/audits/
 
 # Keep public repo files

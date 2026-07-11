@@ -148,7 +148,7 @@ Release package creation and update publishing are native/local maintainer steps
 
 ## Coding Standards
 
-Use `AGENTS.md` as the compact AI and project working contract for routine implementation work.
+Follow the repository conventions and the formatting sources below for routine implementation work.
 
 Formatting sources of truth:
 
@@ -224,7 +224,7 @@ Never reintroduce `APP_VERSION` into `.env` or `.env.example`.
 
 Agents working in this repository should follow these rules:
 
-- use `AGENTS.md` as the compact working contract before adding task-specific prompt detail
+- follow this document and the repository conventions as the working contract before adding task-specific prompt detail
 - treat local development as source-first, not updater-first
 - assume unreleased code may exist in the working tree
 - do not use the admin updater to apply local work
