@@ -17,5 +17,9 @@ composer config --working-dir="${TEMP_DIR}" --json repositories.webblocks "{\"ty
 # This historical-floor probe validates declared dependency resolution only.
 # Its scoped --no-audit does not weaken or replace the blocking audit of the
 # current dependency graph.
-COMPOSER_MIRROR_PATH_REPOS=1 composer require --working-dir="${TEMP_DIR}" 'laravel/framework:13.0.*' 'fklavyenet/webblocks-cms:@dev' --no-interaction --prefer-dist --no-progress --no-audit -W
+if composer require --help | grep -q -- '--no-security-blocking'; then
+  COMPOSER_MIRROR_PATH_REPOS=1 composer require --working-dir="${TEMP_DIR}" 'laravel/framework:13.0.*' 'fklavyenet/webblocks-cms:@dev' --no-interaction --prefer-dist --no-progress --no-audit --no-security-blocking -W
+else
+  COMPOSER_MIRROR_PATH_REPOS=1 composer require --working-dir="${TEMP_DIR}" 'laravel/framework:13.0.*' 'fklavyenet/webblocks-cms:@dev' --no-interaction --prefer-dist --no-progress --no-audit -W
+fi
 composer show --working-dir="${TEMP_DIR}" laravel/framework --locked
