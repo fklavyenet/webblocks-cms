@@ -2387,6 +2387,7 @@ return [
     'different_account' => 'Farkli bir hesap mi kullanacaksiniz?',
     'inactive_account' => 'Bu hesap aktif değil. Lütfen bir yöneticiyle iletişime geçin.',
     'invalid_credentials' => 'Girilen bilgiler kayıtlarımizla eşleşmiyor.',
+    'throttled' => 'Çok fazla giriş denemesi. Lütfen :seconds saniye sonra tekrar deneyin.',
     'reset_link_sent' => 'Şifre sıfırlama bağlantınızı e-posta ile gönderdik.',
     'password_reset' => 'Şifreniz sıfırlandi.',
     'reset_failed' => 'Şifre sıfırlama e-postası gönderilemedi. Lütfen CMS Mail ayarlarını kontrol edin veya bir yöneticiyle iletişime geçin.',

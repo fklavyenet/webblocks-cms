@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Support\Media\MediaMimeTypes;
 
 class MediaUploadRequest extends FormRequest
 {
@@ -19,7 +20,7 @@ class MediaUploadRequest extends FormRequest
         'required',
         'file',
         'max:51200',
-        'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,application/pdf,text/plain,text/csv,application/msword,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/rtf,application/zip',
+        'mimetypes:'.MediaMimeTypes::rule(),
       ],
       'title' => ['nullable', 'string', 'max:255'],
       'alt_text' => ['nullable', 'string', 'max:255'],

@@ -2389,6 +2389,7 @@ return [
     'different_account' => 'Möchten Sie ein anderes Konto verwenden?',
     'inactive_account' => 'Dieses Konto ist inaktiv. Bitte kontaktieren Sie einen Administrator.',
     'invalid_credentials' => 'Die angegebenen Zugangsdaten stimmen nicht mit unseren Datensätzen überein.',
+    'throttled' => 'Zu viele Anmeldeversuche. Bitte versuchen Sie es in :seconds Sekunden erneut.',
     'reset_link_sent' => 'Wir haben Ihnen den Link zum Zurücksetzen des Passworts per E-Mail gesendet.',
     'password_reset' => 'Ihr Passwort wurde zurückgesetzt.',
     'reset_failed' => 'Die Passwort-Reset-E-Mail konnte nicht gesendet werden. Bitte prüfen Sie die CMS-Mail-Einstellungen oder kontaktieren Sie einen Administrator.',

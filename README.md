@@ -45,7 +45,7 @@ deployment stays simple on ordinary PHP hosting.
 - 🖼️ **Media & navigation** — media library with responsive image variants and focal-point-aware crops, site-scoped navigation menus, shared slots for reusable block trees.
 - ✉️ **Native content blocks** — spam-aware contact forms, site search, ratings and comments — no third-party embeds.
 - 💾 **Operations built in** — backups & restore, export/import, site clone, site promotion, and in-app package-native updates.
-- 🔌 **Plugins** — install signed plugin ZIPs (disabled by default), browse a plugin catalog, plus a first-party **WebBlocks Commerce** plugin.
+- 🔌 **Plugins** — install plugin ZIPs (disabled by default, validated on upload), browse a plugin catalog with checksum-verified releases, plus a first-party **WebBlocks Commerce** plugin.
 - 🤖 **AI/operator API** — a token-protected Internal Content API to discover contracts and validate/apply draft-first content plans.
 - ⚡ **Simple to run** — Laravel 13, static assets, no frontend build chain.
 

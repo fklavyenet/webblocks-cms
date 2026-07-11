@@ -50,6 +50,12 @@ These are the most important controls for a production install:
 - The `/webadmin` admin tree is protected by the CMS web + auth + admin-access
   middleware stack. Public routes never render draft content; draft/preview
   access requires an authenticated admin or a trusted token with `content.read`.
+- **Sign-in and password-reset requests are rate-limited.** Failed logins are
+  throttled per email+IP (default 5 attempts, then a short lockout that a
+  successful sign-in clears; tune with `WEBBLOCKS_CMS_MAX_LOGIN_ATTEMPTS` and
+  `WEBBLOCKS_CMS_LOGIN_DECAY_SECONDS`). A per-IP backstop additionally caps the
+  login, forgot-password, and reset-password endpoints against floods and
+  email-rotation attempts.
 
 ## Internal Content API tokens
 
@@ -125,6 +131,12 @@ signature over its checksum, or the update is refused.
 - **Trusted HTML** is limited to wrapper-adjacent layout markup and must not be
   used to inject scripts; prefer the native block contracts, which the Internal
   Content API validates draft-first.
+- **Media uploads are restricted to an allowlist of image, video, and document
+  types** (content-sniffed, not extension-trusted). **SVG uploads are disabled
+  by default**, because an SVG can carry inline script and media is served from
+  the same origin as the admin. Enable it only on installs where every account
+  that can upload media is trusted, via `WEBBLOCKS_CMS_ALLOW_SVG_UPLOADS=true`.
+  The same allowlist governs server-side remote media fetches.
 
 ## Telemetry and privacy
 

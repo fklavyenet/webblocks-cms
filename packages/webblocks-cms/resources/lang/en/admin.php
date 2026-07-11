@@ -2389,6 +2389,7 @@ return [
     'different_account' => 'Need to use a different account?',
     'inactive_account' => 'This account is inactive. Please contact an administrator.',
     'invalid_credentials' => 'The provided credentials do not match our records.',
+    'throttled' => 'Too many sign-in attempts. Please try again in :seconds seconds.',
     'reset_link_sent' => 'We have emailed your password reset link.',
     'password_reset' => 'Your password has been reset.',
     'reset_failed' => 'The password reset email could not be sent. Please check CMS Mail settings or contact an administrator.',

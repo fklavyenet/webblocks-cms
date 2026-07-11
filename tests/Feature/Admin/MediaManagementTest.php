@@ -933,6 +933,46 @@ class MediaManagementTest extends TestCase
   }
 
   #[Test]
+  public function svg_uploads_are_rejected_by_default(): void
+  {
+    Storage::fake('public');
+    config()->set('webblocks-cms.media.allow_svg_uploads', false);
+
+    $user = $this->editor();
+
+    $response = $this->actingAs($user)->post(route('admin.media.store'), [
+      'file' => UploadedFile::fake()->createWithContent(
+        'logo.svg',
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><script>alert(1)</script></svg>',
+      ),
+      '_media_modal' => 'upload-asset',
+    ]);
+
+    $response->assertSessionHasErrors('file');
+    $this->assertDatabaseCount('wbcms_media', 0);
+  }
+
+  #[Test]
+  public function svg_uploads_are_accepted_when_explicitly_enabled(): void
+  {
+    Storage::fake('public');
+    config()->set('webblocks-cms.media.allow_svg_uploads', true);
+
+    $user = $this->editor();
+
+    $response = $this->actingAs($user)->post(route('admin.media.store'), [
+      'file' => UploadedFile::fake()->createWithContent(
+        'logo.svg',
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>',
+      ),
+      '_media_modal' => 'upload-asset',
+    ]);
+
+    $response->assertSessionDoesntHaveErrors('file');
+    $this->assertDatabaseCount('wbcms_media', 1);
+  }
+
+  #[Test]
   public function media_library_can_fetch_public_remote_media_urls(): void
   {
     Storage::fake('public');

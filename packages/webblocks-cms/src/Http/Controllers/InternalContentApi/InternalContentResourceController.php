@@ -27,6 +27,7 @@ use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
+use WebBlocks\Cms\Support\Media\MediaMimeTypes;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
@@ -1231,7 +1232,7 @@ class InternalContentResourceController extends Controller
       'required',
       'file',
       'max:51200',
-      'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,application/pdf,text/plain,text/csv,application/msword,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/rtf,application/zip',
+      'mimetypes:'.MediaMimeTypes::rule(),
     ];
   }
 

@@ -838,6 +838,13 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function bootRateLimiters(): void
   {
+    RateLimiter::for('webblocks-auth', function (Request $request) {
+      // Per-IP backstop across all admin auth endpoints. The precise
+      // per-email+IP lockout lives in LoginController; this caps floods and
+      // email-rotation attempts from a single source.
+      return Limit::perMinute(30)->by($request->ip());
+    });
+
     RateLimiter::for('contact-form-submissions', function (Request $request) {
       return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))
         ->by($request->ip().'|'.((string) $request->input('block_id')));

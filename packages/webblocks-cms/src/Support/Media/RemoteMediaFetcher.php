@@ -14,28 +14,6 @@ use WebBlocks\Cms\Models\Media;
 
 class RemoteMediaFetcher
 {
-  private const ALLOWED_MIME_TYPES = [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'image/svg+xml',
-    'video/mp4',
-    'video/webm',
-    'video/quicktime',
-    'application/pdf',
-    'text/plain',
-    'text/csv',
-    'application/msword',
-    'application/vnd.ms-excel',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'application/rtf',
-    'application/zip',
-  ];
-
   public function __construct(private readonly MediaUploader $mediaUploader) {}
 
   public function fetch(string $url, array $data = [], ?int $uploadedBy = null): Media
@@ -44,7 +22,7 @@ class RemoteMediaFetcher
     [$response, $effectiveUrl] = $this->download($url, $maxBytes);
     $mimeType = $this->mimeType($response);
 
-    if (! in_array($mimeType, self::ALLOWED_MIME_TYPES, true)) {
+    if (! in_array($mimeType, MediaMimeTypes::allowed(), true)) {
       throw new RuntimeException('Remote media type is not allowed: '.$mimeType.'.');
     }
 

@@ -73,6 +73,29 @@ class CmsAuthenticationTest extends TestCase
     $this->assertNull($user->fresh()->last_login_at);
   }
 
+  public function test_cms_login_is_rate_limited_after_repeated_failures(): void
+  {
+    config()->set('webblocks-cms.auth.max_login_attempts', 3);
+
+    $user = User::factory()->editor()->create();
+
+    for ($attempt = 0; $attempt < 3; $attempt++) {
+      $this->post('/webadmin/login', [
+        'email' => $user->email,
+        'password' => 'wrong-password',
+      ])->assertSessionHasErrors('email');
+    }
+
+    // Once locked out, even the correct password is refused until the window clears.
+    $response = $this->post('/webadmin/login', [
+      'email' => $user->email,
+      'password' => 'password',
+    ]);
+
+    $response->assertSessionHasErrors('email');
+    $this->assertGuest();
+  }
+
   public function test_cms_users_can_logout(): void
   {
     $user = User::factory()->editor()->create();
