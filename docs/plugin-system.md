@@ -243,9 +243,7 @@ Catalog installs register the plugin disabled by default, the same as manual upl
 
 The update POST re-reads catalog detail/latest metadata server-side, requires the same compatible published complete artifact metadata, downloads the controlled ZIP, verifies SHA-256, validates the ZIP through the same plugin package validator, and replaces the installed plugin package version. The plugin-owned database tables are preserved, enabled or disabled lifecycle state is preserved by moving enabled state to the new version only when the old version was enabled, and plugin migrations are not run automatically. If the updated plugin declares new migrations or its tables are missing, the existing setup-required guidance and explicit `Run Plugin Migrations` flow remain responsible for schema setup.
 
-See [WebBlocks Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md) for the product-level direction and phase plan.
-
-Planning for the proposed `plugins.webblocksui.com` product surface, MVP scope, candidate implementation models, public catalog pages, operator surfaces, and possible read-only API shape lives in [Plugin Catalog Product Architecture](plugin-catalog-product-architecture.md).
+Future marketplace and catalog planning is outside this package repository's documented runtime contract.
 
 ## Minimal Plugin Example
 

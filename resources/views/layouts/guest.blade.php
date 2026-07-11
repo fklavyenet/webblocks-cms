@@ -1,8 +1,16 @@
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
+    $guestLocaleCode = $guestLocaleCode ?? app(AdminLocaleResolver::class)->locale();
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', $guestLocaleCode) }}">
     @php
         use WebBlocks\Cms\Support\WebBlocks;
 
+        $guestTranslator = app(CmsTranslator::class);
+        $guestText = static fn (string $key, array $replace = []) => $guestTranslator->admin($key, $guestLocaleCode, $replace);
         $guestCssPath = public_path('cms/css/guest.css');
     @endphp
 
@@ -11,7 +19,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        @include('partials.head-meta', [
+        @include('webblocks-cms::partials.head-meta', [
             'title' => $title ?? config('app.name'),
             'metaDescription' => $metaDescription ?? config('app.slogan'),
         ])
@@ -24,7 +32,7 @@
     </head>
     <body>
         <main>
-            {{ $slot }}
+            @yield('content')
         </main>
 
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
@@ -49,10 +57,14 @@
 
                 input.type = isHidden ? 'text' : 'password';
                 button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
-                button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                var showLabel = button.getAttribute('data-password-show-label') || 'Show password';
+                var hideLabel = button.getAttribute('data-password-hide-label') || 'Hide password';
+                var nextLabel = isHidden ? hideLabel : showLabel;
+
+                button.setAttribute('aria-label', nextLabel);
 
                 if (label) {
-                    label.textContent = isHidden ? 'Hide password' : 'Show password';
+                    label.textContent = nextLabel;
                 }
 
                 if (icon) {

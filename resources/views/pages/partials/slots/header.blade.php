@@ -28,7 +28,7 @@
       $label = e($item->resolvedTitle());
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
       $isCurrent = $branchHasCurrent($item);
-      $isAction = $item->link_type === \App\Models\NavigationItem::LINK_CUSTOM_URL && $children->isEmpty();
+      $isAction = $item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_CUSTOM_URL && $children->isEmpty();
 
       if ($isMobile) {
         $html .= '<li class="wb-stack wb-gap-2">';
@@ -105,23 +105,23 @@
           </button>
 
           @foreach ($breadcrumbBlocks as $block)
-            @include('pages.partials.block', ['block' => $block])
+            @include('webblocks-cms::pages.partials.block', ['block' => $block])
           @endforeach
         </div>
 
         <div class="wb-cluster wb-cluster-2 wb-cluster-end wb-items-center">
           @foreach ($actionBlocks as $block)
-            @include('pages.partials.block', ['block' => $block])
+            @include('webblocks-cms::pages.partials.block', ['block' => $block])
           @endforeach
         </div>
       </div>
 
       @foreach ($otherBlocks as $block)
-        @include('pages.partials.block', ['block' => $block])
+        @include('webblocks-cms::pages.partials.block', ['block' => $block])
       @endforeach
     @else
       @foreach ($slot['blocks'] as $block)
-        @include('pages.partials.block', ['block' => $block])
+        @include('webblocks-cms::pages.partials.block', ['block' => $block])
       @endforeach
     @endif
   @endif
@@ -167,7 +167,7 @@
           <div class="wb-public-header-actions">
             <div class="wb-cluster wb-cluster-2">
               @foreach ($actionBlocks as $block)
-                @include('pages.partials.block', ['block' => $block])
+                @include('webblocks-cms::pages.partials.block', ['block' => $block])
               @endforeach
             </div>
           </div>

@@ -7,13 +7,13 @@
         <div class="wb-container wb-container-lg">
             <div class="wb-stack wb-gap-4">
                 @foreach ($slot['blocks'] as $block)
-                    @include('pages.partials.block', ['block' => $block])
+                    @include('webblocks-cms::pages.partials.block', ['block' => $block])
                 @endforeach
             </div>
         </div>
     </aside>
 @else
     @foreach ($slot['blocks'] as $block)
-        @include('pages.partials.block', ['block' => $block])
+        @include('webblocks-cms::pages.partials.block', ['block' => $block])
     @endforeach
 @endif

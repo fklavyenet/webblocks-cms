@@ -1,162 +1,70 @@
 # WebBlocks CMS
 
-> A Laravel-native, block-based CMS for building and operating multiple sites from one admin.
+WebBlocks CMS is a Laravel-native, block-based CMS distributed as a Composer package. It adds multisite content, block-based pages, media, navigation, editorial workflows, and an operator admin under `/webadmin` to a host Laravel application.
 
-[![CI](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![PHP](https://img.shields.io/badge/PHP-8.4%2B-777bb4.svg)
-![Laravel](https://img.shields.io/badge/Laravel-13-ff2d20.svg)
-
-WebBlocks CMS lets you build pages from reusable blocks and manage sites, media,
-navigation, and editorial publishing from a single admin. It ships with
-install-level tools for users, updates, backups, and site transfer — and an
-Internal Content API designed for AI and operator tooling.
-
-It runs standalone, or alongside an existing Laravel app as an optional content
-layer. There is **no Node/npm/Vite build step** — CMS assets are static, so
-deployment stays simple on ordinary PHP hosting.
-
-> **Positioning:** WebBlocks CMS is best described as a *Laravel-native operator
-> CMS* for multisite content operations, controlled public rendering, and
-> AI-assisted page workflows — not a WordPress replacement or a headless
-> delivery platform. See the [Product Maturity Assessment](docs/product-maturity-assessment.md).
-
-## Screenshots
-
-![A public site built with WebBlocks CMS](docs/images/public-home.png)
-
-*A public page rendered from blocks — navigation, hero, and a feature grid, all editable in the admin.*
-
-![WebBlocks CMS operator dashboard](docs/images/admin-dashboard.png)
-
-*The operator dashboard — publishing state, quick actions, and recent content at a glance.*
-
-![WebBlocks CMS page management](docs/images/admin-pages.png)
-
-*Multisite page management with search, filters, block counts, and per-page actions.*
-
-<!-- TODO: add a live demo link once the public demo is deployed to a host. -->
-
-## Highlights
-
-- 🧱 **Block-based pages** — reusable layouts, slots, and blocks; draft → review → publish workflow with page revisions and restore.
-- 🌐 **Multisite & multi-domain** — locale-aware pages, per-site domains/aliases, themes, and site-scoped CSS/JS.
-- 🌍 **Localized operator UI** — switch the authenticated admin interface between English, German, and Turkish directly from the topbar.
-- 🖼️ **Media & navigation** — media library with responsive image variants and focal-point-aware crops, site-scoped navigation menus, shared slots for reusable block trees.
-- ✉️ **Native content blocks** — spam-aware contact forms, site search, ratings and comments — no third-party embeds.
-- 💾 **Operations built in** — backups & restore, export/import, site clone, site promotion, and in-app package-native updates.
-- 🔌 **Plugins** — install plugin ZIPs (disabled by default, validated on upload), browse a plugin catalog with checksum-verified releases, plus a first-party **WebBlocks Commerce** plugin.
-- 🤖 **AI/operator API** — a token-protected Internal Content API to discover contracts and validate/apply draft-first content plans.
-- ⚡ **Simple to run** — Laravel 13, static assets, no frontend build chain.
-
-See the [Feature Inventory](docs/feature-inventory.md) for the complete list.
+This repository is package source. It is not a complete deployable Laravel application and does not include a host `.env`, application bootstrap, or web server configuration.
 
 ## Requirements
 
-- PHP **8.4+**
+- PHP `^8.4`
+- Laravel Framework `^13.0`
 - Composer 2
-- A database: SQLite, MySQL, or MariaDB
-- A web server with the document root pointing at `public/`
+- PHP extensions: `mbstring`, `sodium`, and `zip`
+- A database supported by the host Laravel application
+- Optional: GD for CMS image and media transformations
 
-## Quick start
+## Install
 
-### Try it in 60 seconds (Docker)
-
-The fastest way to explore the CMS — no PHP, Composer, or database setup:
-
-```bash
-git clone https://github.com/fklavyenet/webblocks-cms.git
-cd webblocks-cms
-docker compose up --build
-```
-
-Then open **http://localhost:8080** and sign in at **/webadmin** with
-`admin@example.com` / `password`. It installs itself (SQLite) on first boot.
-This is a demo, not a production setup.
-
-### Install locally with the browser wizard
-
-Try it locally with the browser install wizard:
-
-```bash
-git clone https://github.com/fklavyenet/webblocks-cms.git
-cd webblocks-cms
-git remote set-url --push origin DISABLED   # installs are update consumers, not publishers
-
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan serve
-```
-
-Then open **http://127.0.0.1:8000/install** and follow the wizard. When it
-finishes, sign in at **/webadmin**.
-
-### Install into an existing Laravel app
+Start with a fresh or existing Laravel 13 application whose database and application key are configured. The normal host `App\Models\User` model must exist and be writable during installation.
 
 ```bash
 composer require fklavyenet/webblocks-cms
-php artisan webblocks:install --name="Admin User" --email="admin@example.com" --password="secret-password"
+php artisan webblocks:install \
+  --name="Admin User" \
+  --email="admin@example.com" \
+  --password="use-a-strong-password"
 ```
 
-Both paths — and production notes — are covered in **[Installation](docs/installation.md)**.
+Laravel discovers `WebBlocks\Cms\WebBlocksCmsServiceProvider` through the package manifest. The install command publishes missing CMS configuration, patches the host User model with CMS access behavior, removes only Laravel's untouched welcome route, runs the package-owned fresh schema, creates Laravel support tables when needed, installs static assets under `public/cms`, prepares storage, seeds the core catalog, and creates the first site and super administrator. Repeating the command is safe; existing schema and administrator state are preserved.
 
-> **Security:** serve only `public/` as the web root. `.git` and `.github` must
-> never be web-reachable (a request to `/.git/config` should return 404). Prefer
-> deploying a release artifact over a raw git clone in production.
+The host remains responsible for its application bootstrap, `.env`, database, mail/queue configuration, deployment, backups, and public document root.
 
-## Documentation
+## Publishing
 
-Start here:
+The package supports these tags:
 
-- [Getting Started](docs/getting-started.md) · [Installation](docs/installation.md) · [Core Concepts](docs/core-concepts.md)
-- [Feature Inventory](docs/feature-inventory.md) · [Multisite](docs/multisite.md) · [Localization](docs/localization.md)
-- [Editorial Workflow](docs/editorial-workflow.md) · [Revisions](docs/revisions.md) · [Users & Permissions](docs/users-and-permissions.md)
-- [Page Layouts](docs/page-layouts.md) · [Block Type Contracts](docs/block-type-contracts.md) · [Public Assets](docs/public-assets.md)
-- [Media Image Variants](docs/media-image-variants.md)
-- [Search](docs/search.md) · [Contact Forms & Messages](docs/contact-forms-and-messages.md) · [Operations](docs/operations.md) · [Updates](docs/updates.md) · [Security](docs/security.md)
+```bash
+php artisan vendor:publish --tag=webblocks-cms-config
+php artisan vendor:publish --tag=webblocks-cms-assets
+php artisan vendor:publish --tag=webblocks-cms-stubs
+```
 
-For AI / operator tooling:
+Views, translations, and migrations load from the installed package and do not have separate publish tags. Avoid `--force` unless you intentionally want to replace package-owned published files in a controlled environment.
 
-- [Internal Content API](docs/internal-content-api.md) · [API Discovery](docs/api-discovery.md) · [AI Page Building Guide](docs/ai-page-building-guide.md)
+## Upgrades
 
-For maintainers and contributors:
+Read [UPGRADING.md](UPGRADING.md) before changing installation topology. Existing full-repository clones must not pull across a future package-only repository transition. Composer/package-native updates and Publisher/System Updates are distinct workflows.
 
-- [Development Workflow](DEVELOPMENT.md) · [Architecture Decisions](ARCHITECTURE_DECISIONS.md)
-- [Detailed Project Reference](docs/project-reference.md) — the former long-form README (feature notes, conventions, release details).
+## Compatibility evidence
 
-The full docs index lives in [`docs/`](docs/).
+The package targets Laravel 13. CI performs a complete install/runtime smoke against the currently resolved Laravel 13 graph. The declared `13.0.*` floor has a separate dependency-resolution check; that check is not presented as a complete Laravel 13.0 application installation and is not a recommendation to pin production applications to an old patch release.
 
-## Project status
+## Development
 
-WebBlocks CMS is actively developed and used in production on the maintainer's
-own sites. It is open source and free. See the
-[Product Maturity Assessment](docs/product-maturity-assessment.md) for an honest,
-dated view of where it is strong (Laravel-native install/update, multisite,
-operator/AI workflows) and where it is still maturing (editor onboarding,
-ecosystem, buyer-facing docs).
+```bash
+composer install --no-interaction --prefer-dist
+composer validate --strict
+composer check-platform-reqs
+composer format:test
+composer test
+```
 
-## Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md). Package CI also validates a temporary current-Laravel consumer, the Laravel `13.0.*` dependency floor, documentation, and the exported distribution boundary.
 
-Contributions are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)** and the
-[Code of Conduct](CODE_OF_CONDUCT.md). Run `composer test` and
-`composer format:test` before opening a pull request.
+## Support and security
 
-## Security
-
-Read the [Security guide](docs/security.md) for the security model and production
-hardening (web-root, update integrity, tokens, deployment). Please report
-vulnerabilities privately — see **[SECURITY.md](SECURITY.md)**. Do not open public
-issues for security reports.
+Use the [issue tracker](https://github.com/fklavyenet/webblocks-cms/issues) for reproducible bugs and feature requests. See [SUPPORT.md](SUPPORT.md) for support boundaries. Do not disclose vulnerabilities publicly; follow [SECURITY.md](SECURITY.md).
 
 ## License
 
-WebBlocks CMS is open-source software licensed under the [MIT license](LICENSE).
-
-## Trademark
-
-"WebBlocks CMS" and its logos are the property of Fklavyenet, which operates
-<https://fklavye.net>. You may use, modify, and distribute the code under the MIT
-license, but you may not use the "WebBlocks CMS" name or logos for derived
-products without permission. If you fork or redistribute this project, remove or
-replace all branding.
+WebBlocks CMS is licensed under the [MIT License](LICENSE).

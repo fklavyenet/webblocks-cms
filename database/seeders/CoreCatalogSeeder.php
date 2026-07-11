@@ -1,7 +1,20 @@
 <?php
 
-namespace Database\Seeders;
+namespace WebBlocks\Cms\Database\Seeders;
 
-use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder as PackageCoreCatalogSeeder;
+use Illuminate\Database\Seeder;
 
-class CoreCatalogSeeder extends PackageCoreCatalogSeeder {}
+class CoreCatalogSeeder extends Seeder
+{
+  public function run(): void
+  {
+    $this->call([
+      IconCatalogSeeder::class,
+      PageTypeSeeder::class,
+      LayoutTypeSeeder::class,
+      PageLayoutSeeder::class,
+      SlotTypeSeeder::class,
+      BlockTypeSeeder::class,
+    ]);
+  }
+}

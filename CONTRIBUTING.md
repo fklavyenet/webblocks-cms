@@ -1,78 +1,27 @@
-# Contributing to WebBlocks CMS
+# Contributing
 
-Thanks for your interest in improving WebBlocks CMS! This guide explains how to set up
-a development environment, the standards we hold code to, and how to propose changes.
+Contributions to the WebBlocks CMS package are welcome. By participating, you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
+Search [existing issues](https://github.com/fklavyenet/webblocks-cms/issues) before reporting a bug or proposing a feature. Security reports must follow [SECURITY.md](SECURITY.md), never a public issue.
 
-## Reporting Bugs & Requesting Features
+## Setup
 
-- Search [existing issues](https://github.com/fklavyenet/webblocks-cms/issues) first.
-- Open a **Bug report** or **Feature request** using the issue templates.
-- For security vulnerabilities, **do not** open a public issue — follow
-  [SECURITY.md](SECURITY.md) instead.
-
-## Development Setup
-
-Requirements:
-
-- PHP **8.4+**
-- Composer 2
-- SQLite (used by the test suite; no external database required for tests)
+Requirements are PHP 8.4, Composer 2, and SQLite support for tests.
 
 ```bash
 git clone https://github.com/fklavyenet/webblocks-cms.git
 cd webblocks-cms
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan serve
+composer install --no-interaction --prefer-dist
+composer validate --strict
+composer check-platform-reqs
+composer format:test
+composer test
 ```
 
-See [docs/installation.md](docs/installation.md) and
-[DEVELOPMENT.md](DEVELOPMENT.md) for the full setup and architecture notes, and
-[docs/testing-strategy.md](docs/testing-strategy.md) for how the test suite is organized.
+This checkout is a reusable package, not a runnable Laravel application. Use a separate temporary Laravel host when a change needs full consumer verification. Do not add Node, Vite, Tailwind, npm, host application files, project-specific code, plugins, secrets, or generated dependencies to package source.
 
-## Making Changes
+Keep changes focused, follow the existing two-space PHP style, add tests for behavior changes, and update user documentation when installation or supported behavior changes.
 
-1. **Create a branch** off `main` (e.g. `fix/contact-form-validation`). Do not commit
-   directly to `main`.
-2. Keep pull requests **focused** — one logical change per PR is much easier to review.
-3. Match the surrounding code style, naming, and structure. This project has no
-   frontend build step (no Vite/Tailwind/npm) — do not introduce one.
-4. Add or update **tests** for any behavior change.
-5. Update relevant **docs** under `docs/` and the `CHANGELOG.md` when appropriate.
+Runtime code lives in `src/`; package configuration, migrations, assets, views, translations, routes, and stubs live in their matching root directories. Package-owned assets ship under `public/cms`. Do not introduce an outer `artisan`, `app/`, `project/`, `plugins/`, nested package path, Node build chain, or dependency on the private maintenance harness. Schema needed by runtime code must support fresh installs and package-native update migrations.
 
-## Before You Submit
-
-Run these locally and make sure they pass — CI runs the same checks:
-
-```bash
-composer format      # auto-fix code style with Pint
-composer format:test # verify code style (what CI checks)
-composer test        # run the test suite
-```
-
-## Pull Requests
-
-- Fill out the PR template describing **what** changed and **why**.
-- Link any related issues (e.g. `Closes #123`).
-- Ensure CI is green. PRs with failing tests or style checks will not be merged.
-- Be responsive to review feedback; maintainers may request changes before merging.
-
-## Commit Messages
-
-Write clear, imperative-mood commit subjects (e.g. "Fix contact form recipient
-fallback"). Explain the reasoning in the body when the change is non-trivial.
-
-## Trademark Note
-
-The code is MIT licensed, but the "WebBlocks CMS" name and logos are not (see the
-Trademark section in the [README](README.md)). Contributions are accepted under the
-MIT license; forks and derived products must remove or replace the branding.
-
-## Questions
-
-Open a [Discussion](https://github.com/fklavyenet/webblocks-cms/discussions) or a
-regular issue if you are unsure about anything before investing time in a change.
+The package CI exercises the source tree, exported distribution, current Laravel consumer, and Laravel `13.0.*` resolution floor. Its reusable checks live under `tests/Support/` and clean their temporary directories.

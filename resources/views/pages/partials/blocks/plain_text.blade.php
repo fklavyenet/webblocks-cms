@@ -1,1 +1,6 @@
-@include('webblocks-cms::pages.partials.blocks.plain_text', get_defined_vars())
+@php
+    $class = $block->plainTextAlignmentClass();
+    $classAttribute = $class ? ' class="'.$class.'"' : '';
+@endphp
+
+<p{!! $classAttribute !!}>{{ (string) ($block->content ?? '') }}</p>

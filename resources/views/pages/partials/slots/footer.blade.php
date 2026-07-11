@@ -31,7 +31,7 @@
   @if ($slot['blocks']->isNotEmpty())
     <div class="wb-stack">
       @foreach ($slot['blocks'] as $block)
-        @include('pages.partials.block', ['block' => $block])
+        @include('webblocks-cms::pages.partials.block', ['block' => $block])
       @endforeach
     </div>
   @endif
@@ -41,7 +41,7 @@
       <div class="wb-grid wb-grid-3 wb-gap-6">
         <div class="wb-stack wb-gap-3">
           @foreach ($supportingBlocks as $block)
-            @include('pages.partials.block', ['block' => $block])
+            @include('webblocks-cms::pages.partials.block', ['block' => $block])
           @endforeach
         </div>
 

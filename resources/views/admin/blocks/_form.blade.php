@@ -1,1 +1,132 @@
-@include('webblocks-cms::admin.blocks._form', get_defined_vars())
+@php
+    $selectedPageId = (int) old('page_id', $block->page_id);
+    $availableParents = $parentBlocks ?? collect();
+    $selectedBlockTypeId = old('block_type_id', $selectedBlockType?->id ?? $block->block_type_id ?: $blockTypes->firstWhere('slug', $block->type)?->id);
+    $selectedSlotTypeId = old('slot_type_id', $block->slot_type_id ?: $slotTypes->firstWhere('slug', $block->slot)?->id);
+    $lockPage = $lockPage ?? false;
+    $lockSlot = $lockSlot ?? false;
+    $cancelUrl = $cancelUrl ?? (($selectedPageId && $selectedSlotTypeId) ? route('admin.pages.slots.blocks', ['page' => $selectedPageId, 'slot' => $selectedSlotTypeId]) : ($selectedPageId ? route('admin.pages.edit', $selectedPageId) : route('admin.blocks.index')));
+    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
+    $submitLabel = $submitLabel ?? $blockFormText('save');
+    $modeLabel = $modeLabel ?? ($block->exists ? $blockFormText('edit') : $blockFormText('create'));
+    $actionsContainerClass = $actionsContainerClass ?? null;
+    $activeTab = $activeTab ?? old('_slot_block_tab', 'block-fields');
+    $assetPickerAssets = $assetPickerAssets ?? collect();
+    $assetPickerFolders = $assetPickerFolders ?? collect();
+    $columnItemBlockType = $columnItemBlockType ?? null;
+    $featureItemBlockType = $featureItemBlockType ?? null;
+    $linkListItemBlockType = $linkListItemBlockType ?? null;
+    $activeLocale = $activeLocale ?? null;
+    $isDefaultLocale = $isDefaultLocale ?? (! $activeLocale || $activeLocale->is_default);
+    $statusValue = old('status', $block->exists ? $block->status : ($block->status ?: 'published'));
+@endphp
+
+<div class="wb-stack wb-gap-4">
+    <input type="hidden" name="block_type_id" value="{{ $selectedBlockTypeId }}">
+    <input type="hidden" name="source_type" value="{{ $selectedBlockType?->source_type ?? $block->source_type ?? 'static' }}">
+    <input type="hidden" name="_slot_block_tab" value="{{ $activeTab }}" data-wb-slot-block-tab-input>
+
+    <div class="wb-tabs" data-wb-tabs data-wb-slot-block-tabs>
+        <div class="wb-tabs-nav" role="tablist" aria-label="{{ $blockFormText('tabs_label') }}">
+            <button type="button" class="wb-tabs-btn {{ $activeTab === 'block-info' ? 'is-active' : '' }}" data-wb-tab="slot-block-info-panel" aria-selected="{{ $activeTab === 'block-info' ? 'true' : 'false' }}" @if ($activeTab !== 'block-info') tabindex="-1" @endif>{{ $blockFormText('block_info') }}</button>
+            <button type="button" class="wb-tabs-btn {{ $activeTab === 'block-fields' ? 'is-active' : '' }}" data-wb-tab="slot-block-fields-panel" aria-selected="{{ $activeTab === 'block-fields' ? 'true' : 'false' }}" @if ($activeTab !== 'block-fields') tabindex="-1" @endif>{{ $blockFormText('block_fields') }}</button>
+            <button type="button" class="wb-tabs-btn {{ $activeTab === 'settings' ? 'is-active' : '' }}" data-wb-tab="slot-block-settings-panel" aria-selected="{{ $activeTab === 'settings' ? 'true' : 'false' }}" @if ($activeTab !== 'settings') tabindex="-1" @endif>{{ $blockFormText('settings') }}</button>
+        </div>
+
+        <div class="wb-tabs-panels">
+            <div class="wb-tabs-panel {{ $activeTab === 'block-info' ? 'is-active' : '' }}" id="slot-block-info-panel">
+                <input type="hidden" name="page_id" value="{{ $selectedPageId }}">
+                <input type="hidden" name="slot_type_id" value="{{ $selectedSlotTypeId }}">
+
+                <div class="wb-grid wb-grid-3">
+                    <div class="wb-stack wb-gap-1">
+                        <label for="parent_id">{{ $blockFormText('parent_block') }}</label>
+                        <select id="parent_id" name="parent_id" class="wb-select">
+                            <option value="">{{ $blockFormText('no_parent') }}</option>
+                            @foreach ($availableParents as $parent)
+                                <option value="{{ $parent['id'] }}" @selected((string) old('parent_id', $block->parent_id) === (string) $parent['id'])>
+                                    {{ $parent['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="sort_order">{{ $blockFormText('sort_order') }}</label>
+                        <input id="sort_order" name="sort_order" class="wb-input" type="number" min="0" value="{{ old('sort_order', $block->sort_order ?? 0) }}" required>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="status">{{ $blockFormText('status') }}</label>
+                        <select id="status" name="status" class="wb-select">
+                            <option value="draft" @selected($statusValue === 'draft')>{{ $blockFormText('draft') }}</option>
+                            <option value="published" @selected($statusValue === 'published')>{{ $blockFormText('published') }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wb-tabs-panel {{ $activeTab === 'block-fields' ? 'is-active' : '' }}" id="slot-block-fields-panel">
+                @if (($selectedBlockType?->slug ?? $block->typeSlug()) === 'gallery')
+                    @include($block->adminFormView(), [
+                        'block' => $block,
+                        'selectedBlockType' => $selectedBlockType,
+                        'assetPickerAssets' => $assetPickerAssets,
+                        'assetPickerFolders' => $assetPickerFolders,
+                        'columnItemBlockType' => $columnItemBlockType,
+                        'featureItemBlockType' => $featureItemBlockType,
+                        'linkListItemBlockType' => $linkListItemBlockType,
+                        'activeLocale' => $activeLocale,
+                        'isDefaultLocale' => $isDefaultLocale,
+                        'renderOwnCard' => true,
+                    ])
+                @else
+                    <div class="wb-card wb-card-accent">
+                        <div class="wb-card-header">
+                            <strong>{{ ($selectedBlockType?->is_system ?? $block->is_system) ? $blockFormText('system_config_for', ['name' => $selectedBlockType?->name ?? $block->typeName()]) : $blockFormText('content_fields_for', ['name' => $selectedBlockType?->name ?? $block->typeName()]) }}</strong>
+                        </div>
+                        <div class="wb-card-body">
+                            @include($block->adminFormView(), [
+                                'block' => $block,
+                                'selectedBlockType' => $selectedBlockType,
+                                'assetPickerAssets' => $assetPickerAssets,
+                                'assetPickerFolders' => $assetPickerFolders,
+                                'columnItemBlockType' => $columnItemBlockType,
+                                'featureItemBlockType' => $featureItemBlockType,
+                                'linkListItemBlockType' => $linkListItemBlockType,
+                                'activeLocale' => $activeLocale,
+                                'isDefaultLocale' => $isDefaultLocale,
+                            ])
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <div class="wb-tabs-panel {{ $activeTab === 'settings' ? 'is-active' : '' }}" id="slot-block-settings-panel">
+                <div class="wb-card wb-card-accent">
+                    <div class="wb-card-header">
+                        <strong>{{ $blockFormText('settings_for', ['name' => $selectedBlockType?->name ?? $block->typeName()]) }}</strong>
+                    </div>
+                    <div class="wb-card-body">
+                        @includeIf('webblocks-cms::admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug()), [
+                            'block' => $block,
+                            'selectedBlockType' => $selectedBlockType,
+                        ])
+
+                        @unless (view()->exists('admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug())))
+                            @include('webblocks-cms::admin.blocks.settings.fallback')
+                        @endunless
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if ($actionsContainerClass)
+        <x-webblocks-cms::admin.form-actions
+            :cancel-url="$cancelUrl"
+            :submit-label="$submitLabel"
+            :container-class="$actionsContainerClass"
+        />
+    @endif
+</div>

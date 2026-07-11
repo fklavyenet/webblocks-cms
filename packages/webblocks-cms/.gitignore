@@ -1,7 +1,0 @@
-/vendor/
-/composer.lock
-/.phpunit.cache/
-/.phpunit.result.cache
-/coverage/
-.DS_Store
-**/.DS_Store

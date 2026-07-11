@@ -1,1 +1,5 @@
-@include('webblocks-cms::admin.blocks.types.rich-text-inline', get_defined_vars())
+@include('webblocks-cms::admin.blocks.types.partials.rich-text-editor', [
+    'inputName' => "{$prefix}[content]",
+    'inputId' => "block_{$index}_content",
+    'value' => old("{$prefix}.content", $block->content),
+])

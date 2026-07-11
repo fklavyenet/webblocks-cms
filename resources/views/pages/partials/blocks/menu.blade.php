@@ -1,1 +1,1 @@
-@include('webblocks-cms::pages.partials.blocks.menu', get_defined_vars())
+@include('webblocks-cms::pages.partials.blocks.navigation-auto', ['block' => $block])

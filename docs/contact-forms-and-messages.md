@@ -252,4 +252,3 @@ Content apply remains draft-first and does not publish by default. Operators sho
 - [Internal Content API](internal-content-api.md)
 - [API Discovery](api-discovery.md)
 - [AI Page Building Guide](ai-page-building-guide.md)
-- [Feature Inventory](feature-inventory.md)

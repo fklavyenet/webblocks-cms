@@ -10,10 +10,10 @@
 @endif
                 @foreach ($slot['blocks'] as $block)
                     @if ($block->ownsPublicRoot())
-                        @include('pages.partials.block', ['block' => $block])
+                        @include('webblocks-cms::pages.partials.block', ['block' => $block])
                     @else
                         <div class="wb-public-block" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
-                            @include('pages.partials.block', ['block' => $block])
+                            @include('webblocks-cms::pages.partials.block', ['block' => $block])
                         </div>
                     @endif
                 @endforeach

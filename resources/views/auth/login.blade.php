@@ -1,52 +1,109 @@
-<x-guest-layout title="Sign In" meta-description="Sign in to WebBlocks CMS and manage your content workspace.">
-    <x-auth-shell
-        :panel-title="config('app.name')"
-        :panel-text="config('app.slogan')"
-        :show-panel-logo="true"
-        :show-header-logo="true"
-        heading="Welcome back"
-        :description="'Sign in to ' . config('app.name') . ' to access your content workspace.'"
-    >
-        <x-auth-feedback />
+@php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+    use WebBlocks\Cms\Support\WebBlocks;
 
-        <form method="POST" action="{{ route('login') }}" class="wb-stack-4">
-            @csrf
+    $authLocaleCode = app(AdminLocaleResolver::class)->locale();
+    $authTranslator = app(CmsTranslator::class);
+    $authText = static fn (string $key, array $replace = []) => $authTranslator->admin($key, $authLocaleCode, $replace);
+@endphp
 
-            <div class="wb-field">
-                <x-input-label for="email" :value="__('Email address')" />
-                <x-text-input id="email" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-                <x-input-error :messages="$errors->get('email')" />
-            </div>
+@extends('webblocks-cms::layouts.guest', [
+    'title' => $authText('auth.login_title'),
+    'metaDescription' => $authText('auth.login_meta'),
+    'guestLocaleCode' => $authLocaleCode,
+])
 
-            <x-auth-password-field
-                id="password"
-                name="password"
-                :label="__('Password')"
-                :messages="$errors->get('password')"
-                required
-                autocomplete="current-password"
-            />
+@section('content')
+    <div class="wb-auth-shell wb-auth-split">
+        <div class="wb-auth-panel wb-bg-primary">
+            <h1 class="wb-auth-panel-title wb-auth-brand">
+                <x-webblocks-cms::brand-mark class="wb-auth-brand-mark wb-auth-brand-mark-on-accent" decorative="true" />
+                <span>{{ WebBlocks::name() }}</span>
+            </h1>
 
-            <div class="wb-split">
-                <label class="wb-check" for="remember">
-                    <input id="remember" type="checkbox" name="remember">
-                    <span>Remember this device</span>
-                </label>
+            <p class="wb-auth-panel-text">{{ WebBlocks::slogan() }}</p>
+        </div>
 
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="wb-action-link">Forgot password</a>
+        <div class="wb-auth-form-area">
+            <div class="wb-auth-card">
+                <div class="wb-auth-header">
+                    <h1 class="wb-auth-header-title wb-auth-brand">
+                        <x-webblocks-cms::brand-mark class="wb-auth-brand-mark wb-auth-brand-mark-sm wb-auth-brand-mark-on-surface" decorative="true" />
+                        <span>{{ $authText('auth.welcome_back') }}</span>
+                    </h1>
+                    <p class="wb-auth-header-subtitle">{{ $authText('auth.login_subtitle', ['product' => WebBlocks::name()]) }}</p>
+                </div>
+
+                <div class="wb-auth-body wb-stack-4">
+                    @if (session('status'))
+                        <div class="wb-alert wb-alert-success">
+                            <div>{{ session('status') }}</div>
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="wb-alert wb-alert-danger">
+                            <div>{{ $errors->first() }}</div>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('webblocks.auth.login') }}" class="wb-stack-4">
+                        @csrf
+
+                        <div class="wb-field">
+                            <label for="email" class="wb-label">{{ $authText('auth.email') }}</label>
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="wb-input" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
+                            @error('email')
+                                <div id="email_error" class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="wb-field">
+                            <label for="password" class="wb-label">{{ $authText('auth.password') }}</label>
+                            <div class="wb-input-group wb-password-field" data-password-field>
+                                <input id="password" type="password" name="password" required autocomplete="current-password" class="wb-input" @error('password') aria-invalid="true" aria-describedby="password_error" @enderror data-password-input>
+                                <button
+                                    id="password_toggle"
+                                    type="button"
+                                    class="wb-btn wb-btn-secondary wb-btn-icon wb-input-addon-btn wb-password-field-toggle"
+                                    data-password-toggle
+                                    data-password-show-label="{{ $authText('auth.show_password') }}"
+                                    data-password-hide-label="{{ $authText('auth.hide_password') }}"
+                                    aria-label="{{ $authText('auth.show_password') }}"
+                                    aria-controls="password"
+                                    aria-pressed="false"
+                                >
+                                    <i class="wb-icon wb-icon-eye" aria-hidden="true" data-password-toggle-icon></i>
+                                    <span class="wb-sr-only" data-password-toggle-label>{{ $authText('auth.show_password') }}</span>
+                                </button>
+                            </div>
+                            @error('password')
+                                <div id="password_error" class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="wb-split">
+                            <label class="wb-check" for="remember">
+                                <input id="remember" type="checkbox" name="remember" value="1">
+                                <span>{{ $authText('auth.remember') }}</span>
+                            </label>
+
+                            @if (Route::has('webblocks.auth.password.request'))
+                                <a href="{{ route('webblocks.auth.password.request') }}" class="wb-action-link">{{ $authText('auth.forgot_password') }}</a>
+                            @endif
+                        </div>
+
+                        <button type="submit" class="wb-btn wb-btn-primary wb-w-full">{{ $authText('auth.continue') }}</button>
+                    </form>
+                </div>
+
+                @if (Route::has('webblocks.auth.register'))
+                    <div class="wb-auth-footer">
+                        <p>{{ $authText('auth.need_account') }} <a href="{{ route('webblocks.auth.register') }}">{{ $authText('auth.create_account') }}</a>.</p>
+                    </div>
                 @endif
             </div>
-
-            <x-primary-button class="wb-w-full">{{ __('Continue') }}</x-primary-button>
-        </form>
-
-        <x-slot:footer>
-            <p>
-                @if (Route::has('register'))
-                    Need an account? <a href="{{ route('register') }}">Create one</a>.
-                @endif
-            </p>
-        </x-slot:footer>
-    </x-auth-shell>
-</x-guest-layout>
+        </div>
+    </div>
+@endsection

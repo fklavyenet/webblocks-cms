@@ -1,68 +1,7 @@
-*.log
-.DS_Store
-
-# DDEV
-.ddev/
-
-# Test database
-/database/testing.sqlite*
-
-# Env
-.env
-.env.*
-!.env.example
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
-/dist/
-/docs/*
-!/docs/*.md
-!/docs/releases/
-!/docs/releases/*.md
-!/docs/images/
-!/docs/images/*
-/public/storage
-
-# Laravel
-/storage/*.key
-/storage/logs/
-/storage/logs/**
-/storage/logs/*
-/storage/pail
-/storage/framework/**
-/storage/framework/views/*
-/storage/framework/sessions/*
-/storage/framework/testing/*
-/bootstrap/cache/*
 /vendor/
-_ide_helper.php
-Homestead.json
-Homestead.yaml
-Thumbs.db
-
-# Local runtime media
-/config/webblocks-cms.php
-/public/cms/package-boundary.json
-/storage/app/public/assets/*
-/storage/app/public/media/*
-/storage/app/public/releases/*
-/storage/app/releases/*
-/storage/project/block-render-snapshots/
-
-# Internal AI development notes and maintainer working docs — kept local, not
-# published as repo content. docs/audits stays local too.
-/ai/
-/AGENTS.md
-/docs/audits/
-
-# Keep public repo files
-!README.md
-!LICENSE
+/composer.lock
+/.phpunit.cache/
+/.phpunit.result.cache
+/coverage/
+.DS_Store
+**/.DS_Store

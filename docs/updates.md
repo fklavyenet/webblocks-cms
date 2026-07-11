@@ -172,4 +172,4 @@ When the updater runs inside a git-backed installation clone that still points a
 
 - [Operations](operations.md)
 - [Installation](installation.md)
-- [Development Workflow](../DEVELOPMENT.md)
+- [Contributing](../CONTRIBUTING.md)

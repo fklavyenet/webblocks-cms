@@ -33,6 +33,14 @@ return [
         'timeout_seconds' => 120,
         'connect_timeout_seconds' => 5,
     ],
+    'signature' => [
+        // Base64 Ed25519 public key that installs use to verify signed releases.
+        // Empty disables enforcement (checksum verification still applies).
+        'public_key' => env('WEBBLOCKS_UPDATE_PUBLIC_KEY', ReleaseDefaults::UPDATE_PUBLIC_KEY),
+        // Base64 Ed25519 secret key used only by the maintainer's publisher to
+        // sign a release. Never set this on an installed site.
+        'signing_key' => env('WEBBLOCKS_PUBLISHER_SIGNING_KEY'),
+    ],
     'installer' => [
         'target_path' => base_path(),
         'workspace_root' => 'app/system-updates',

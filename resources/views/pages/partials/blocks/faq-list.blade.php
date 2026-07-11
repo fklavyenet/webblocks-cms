@@ -1,1 +1,1 @@
-@include('webblocks-cms::pages.partials.blocks.faq-list', get_defined_vars())
+@include('webblocks-cms::pages.partials.blocks.accordion', ['block' => $block])

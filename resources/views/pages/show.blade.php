@@ -1,1 +1,4 @@
-@extends('webblocks-cms::pages.show')
+@extends('webblocks-cms::layouts.public', [
+    'title' => $publicMeta['title'] ?? $page->title,
+    'publicMeta' => $publicMeta,
+])
