@@ -1,0 +1,81 @@
+name: Package CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: package-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sodium, zip, sqlite3, pdo_sqlite, fileinfo
+          coverage: none
+          tools: composer:v2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-php84-${{ hashFiles('composer.json') }}
+      - run: composer validate --strict
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer check-platform-reqs
+      - run: composer audit
+      - run: composer format:test
+      - run: composer test
+
+  current-laravel-consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sodium, zip, sqlite3, pdo_sqlite, fileinfo
+          coverage: none
+          tools: composer:v2
+      - run: scripts/ci/check-current-consumer.sh
+
+  laravel-floor-resolution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sodium, zip, fileinfo
+          coverage: none
+          tools: composer:v2
+      - run: scripts/ci/check-laravel-floor.sh
+
+  distribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+      - run: scripts/ci/check-dist.sh
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php scripts/ci/check-docs.php
