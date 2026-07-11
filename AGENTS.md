@@ -28,7 +28,7 @@ Use these skills for matching tasks instead of repeating long instructions in pr
 
 ## Audit and Review Notes
 
-- Internal audit/review notes (engineering, security-posture, or refactor audits) live under `ai/audits/` or `docs/audits/`, which are git-ignored and stay local. Do not commit them.
+- The internal AI development notes — the whole `ai/` tree (skills, standards, audits) and `docs/audits/` — are git-ignored and stay local. Do not commit them; they are maintainer working notes, not published repo content.
 - Never commit a document that enumerates concrete, unfixed security weaknesses; a public commit is publication and cannot be undone by a later delete. Draft such findings locally or as a private GitHub security advisory.
 - The only intentionally public product-posture document is `docs/product-maturity-assessment.md`; it must never contain exploitable vulnerability detail.
 - When committing a fix for a not-yet-released security issue, keep the commit message neutral (describe the hardening, not the exploit) until the fix ships.
