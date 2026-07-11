@@ -1,23 +1,69 @@
 {
-    "name": "fklavyenet/webblocks-cms",
-    "description": "WebBlocks CMS core package during the ongoing architecture transition.",
-    "type": "library",
-    "license": "MIT",
-    "require": {
-        "php": "^8.3",
-        "illuminate/support": "^13.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "WebBlocks\\Cms\\": "src/",
-            "WebBlocks\\Cms\\Database\\Seeders\\": "database/seeders/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "WebBlocks\\Cms\\WebBlocksCmsServiceProvider"
-            ]
-        }
+  "$schema": "https://getcomposer.org/schema.json",
+  "name": "fklavyenet/webblocks-cms",
+  "description": "A Laravel-native, block-based CMS for multisite content operations.",
+  "keywords": [
+    "blocks",
+    "cms",
+    "laravel",
+    "webblocks"
+  ],
+  "homepage": "https://github.com/fklavyenet/webblocks-cms",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Fklavyenet"
     }
+  ],
+  "support": {
+    "docs": "https://github.com/fklavyenet/webblocks-cms/tree/main/docs",
+    "issues": "https://github.com/fklavyenet/webblocks-cms/issues",
+    "source": "https://github.com/fklavyenet/webblocks-cms"
+  },
+  "require": {
+    "php": "^8.4",
+    "ext-mbstring": "*",
+    "ext-sodium": "*",
+    "ext-zip": "*",
+    "laravel/framework": "^13.0"
+  },
+  "require-dev": {
+    "laravel/pint": "^1.29",
+    "orchestra/testbench": "^11.1",
+    "phpunit/phpunit": "^12.5.12"
+  },
+  "suggest": {
+    "ext-gd": "Enables CMS image and media transformation capabilities."
+  },
+  "autoload": {
+    "psr-4": {
+      "WebBlocks\\Cms\\": "src/",
+      "WebBlocks\\Cms\\Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "WebBlocks\\Cms\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "check:composer": "composer validate --strict",
+    "test": "vendor/bin/phpunit -c phpunit.xml.dist",
+    "format": "vendor/bin/pint --config pint.json",
+    "format:test": "vendor/bin/pint --config pint.json --test"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "WebBlocks\\Cms\\WebBlocksCmsServiceProvider"
+      ]
+    }
+  },
+  "config": {
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }
