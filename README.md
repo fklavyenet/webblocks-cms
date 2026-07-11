@@ -42,7 +42,7 @@ deployment stays simple on ordinary PHP hosting.
 - 🧱 **Block-based pages** — reusable layouts, slots, and blocks; draft → review → publish workflow with page revisions and restore.
 - 🌐 **Multisite & multi-domain** — locale-aware pages, per-site domains/aliases, themes, and site-scoped CSS/JS.
 - 🌍 **Localized operator UI** — switch the authenticated admin interface between English, German, and Turkish directly from the topbar.
-- 🖼️ **Media & navigation** — media library, site-scoped navigation menus, shared slots for reusable block trees.
+- 🖼️ **Media & navigation** — media library with responsive image variants and focal-point-aware crops, site-scoped navigation menus, shared slots for reusable block trees.
 - ✉️ **Native content blocks** — spam-aware contact forms, site search, ratings and comments — no third-party embeds.
 - 💾 **Operations built in** — backups & restore, export/import, site clone, site promotion, and in-app package-native updates.
 - 🔌 **Plugins** — install signed plugin ZIPs (disabled by default), browse a plugin catalog, plus a first-party **WebBlocks Commerce** plugin.
@@ -113,6 +113,7 @@ Start here:
 - [Feature Inventory](docs/feature-inventory.md) · [Multisite](docs/multisite.md) · [Localization](docs/localization.md)
 - [Editorial Workflow](docs/editorial-workflow.md) · [Revisions](docs/revisions.md) · [Users & Permissions](docs/users-and-permissions.md)
 - [Page Layouts](docs/page-layouts.md) · [Block Type Contracts](docs/block-type-contracts.md) · [Public Assets](docs/public-assets.md)
+- [Media Image Variants](docs/media-image-variants.md)
 - [Search](docs/search.md) · [Contact Forms & Messages](docs/contact-forms-and-messages.md) · [Operations](docs/operations.md) · [Updates](docs/updates.md) · [Security](docs/security.md)
 
 For AI / operator tooling:

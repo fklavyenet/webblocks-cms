@@ -119,6 +119,19 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        @if ($asset->isImage() && $publicUrl && $focalPointReady)
+                            <div class="wb-stack wb-gap-2" data-wb-focal-point>
+                                <label>{{ $adminText('focal_point') }}</label>
+                                <span class="wb-text-sm wb-text-muted">{{ $adminText('focal_point_help') }}</span>
+                                <button type="button" class="wb-media-focal-picker" data-wb-focal-image aria-label="{{ $adminText('choose_focal_point') }}">
+                                    <img src="{{ $asset->transformUrl('content') }}" alt="{{ $asset->thumbnailLabel() }}">
+                                    <span class="wb-media-focal-marker" data-wb-focal-marker style="left: {{ old('focal_point_x', $asset->focal_point_x ?? 0.5) * 100 }}%; top: {{ old('focal_point_y', $asset->focal_point_y ?? 0.5) * 100 }}%;"></span>
+                                </button>
+                                <input type="hidden" name="focal_point_x" value="{{ old('focal_point_x', $asset->focal_point_x ?? 0.5) }}" data-wb-focal-x>
+                                <input type="hidden" name="focal_point_y" value="{{ old('focal_point_y', $asset->focal_point_y ?? 0.5) }}" data-wb-focal-y>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="wb-stack wb-gap-4">
@@ -141,6 +154,31 @@
                 </div>
             </div>
         </form>
+
+        @if ($asset->isImage())
+            <section class="wb-card">
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                    <div class="wb-stack wb-gap-1">
+                        <strong>{{ $adminText('image_variants') }}</strong>
+                        <span class="wb-text-sm wb-text-muted">{{ $adminText('image_variants_help') }}</span>
+                    </div>
+                    <form method="POST" action="{{ route('admin.media.transforms.regenerate', $asset) }}">
+                        @csrf
+                        <input type="hidden" name="return_url" value="{{ $mediaReturnUrl }}">
+                        <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('regenerate_variants') }}</button>
+                    </form>
+                </div>
+                <div class="wb-card-body wb-grid wb-grid-auto wb-gap-3">
+                    @foreach ($transformVariants as $variant)
+                        <div class="wb-stack wb-gap-2">
+                            <img src="{{ $variant['url'] }}" alt="{{ $asset->thumbnailLabel() }}" loading="lazy">
+                            <strong>{{ ucfirst($variant['name']) }}</strong>
+                            <span class="wb-text-sm wb-text-muted">{{ $variant['width'] }}@if($variant['height']) × {{ $variant['height'] }}@endif · {{ ucfirst($variant['fit']) }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </div>
 
     <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback aria-live="polite"></div>
@@ -272,4 +310,5 @@
 
 @push('admin-scripts')
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/media-copy.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/media-focal-point.js'])
 @endpush

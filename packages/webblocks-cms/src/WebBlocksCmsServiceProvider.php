@@ -110,6 +110,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms.php',
     'contact.php',
     'demo_media.php',
+    'media_transforms.php',
     'webblocks-plugins.php',
     'webblocks-updates.php',
   ];

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteMediaRequest;
@@ -20,6 +21,7 @@ use WebBlocks\Cms\Support\Media\MediaBulkDeleter;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaIndexState;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
+use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\MediaUsageFilter;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
@@ -51,6 +53,7 @@ class MediaController extends Controller
     private readonly MediaBulkDeleter $mediaBulkDeleter,
     private readonly MediaUploader $mediaUploader,
     private readonly RemoteMediaFetcher $remoteMediaFetcher,
+    private readonly MediaTransformService $mediaTransformService,
   ) {}
 
   public function index(): View
@@ -154,17 +157,38 @@ class MediaController extends Controller
       'mediaReturnUrl' => $this->mediaIndexState->returnUrl(request()),
       'showDeleteModal' => request()->string('modal')->toString() === 'delete-media',
       'showFileDetailsModal' => request()->string('modal')->toString() === 'file-details',
+      'transformVariants' => $media->isImage() ? $this->mediaTransformService->variants($media) : [],
+      'focalPointReady' => Schema::hasColumns($media->getTable(), ['focal_point_x', 'focal_point_y']),
     ]);
   }
 
   public function update(MediaUpdateRequest $request, Media $media): RedirectResponse
   {
     $this->authorization->abortUnlessMediaAccess($request->user(), $media);
-    $media->update($request->validated());
+    $data = $request->validated();
+
+    if (! Schema::hasColumns($media->getTable(), ['focal_point_x', 'focal_point_y'])) {
+      unset($data['focal_point_x'], $data['focal_point_y']);
+    }
+
+    $media->update($data);
 
     return redirect()
       ->to($request->safeReturnUrl() ?: route('admin.media.index'))
       ->with('status', 'Media updated successfully.');
+  }
+
+  public function regenerateTransforms(Media $media): RedirectResponse
+  {
+    $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
+
+    if ($media->isImage()) {
+      $this->mediaTransformService->regenerate($media);
+    }
+
+    return redirect()
+      ->route('admin.media.edit', ['media' => $media, 'return_url' => $this->mediaIndexState->safeReturnUrlFromRequest(request())])
+      ->with('status', 'Image variants regenerated successfully.');
   }
 
   public function destroy(Media $media): RedirectResponse

@@ -133,7 +133,7 @@
       data-wb-picker-selected-filename="{{ $pickerSelectedAsset?->filename ?? '' }}"
       data-wb-picker-selected-original-name="{{ $pickerSelectedAsset?->original_name ?? '' }}"
       data-wb-picker-selected-kind="{{ $pickerSelectedAsset?->kind ?? '' }}"
-      data-wb-picker-selected-url="{{ $pickerSelectedAsset?->url() ?? '' }}"
+      data-wb-picker-selected-url="{{ $pickerSelectedAsset?->isImage() ? $pickerSelectedAsset->transformUrl('thumbnail') : ($pickerSelectedAsset?->url() ?? '') }}"
       data-wb-picker-selected-alt="{{ $pickerSelectedAsset?->alt_text ?: $pickerSelectedAsset?->title ?: $pickerSelectedAsset?->filename ?? '' }}"
       data-wb-picker-selected-previewable="{{ $pickerSelectedAsset?->canPreview() ? 'true' : 'false' }}"
     >
@@ -175,7 +175,7 @@
           @endif
         @elseif ($pickerSelectedAsset)
           @if ($pickerSelectedAsset->canPreview())
-            <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="96" height="64">
+            <img src="{{ $pickerSelectedAsset->transformUrl('thumbnail') }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="96" height="64">
           @endif
           <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
           <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>

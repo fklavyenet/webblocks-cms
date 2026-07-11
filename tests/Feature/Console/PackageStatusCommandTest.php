@@ -23,7 +23,7 @@ class PackageStatusCommandTest extends TestCase
       ->expectsOutputToContain('Package base path:')
       ->expectsOutputToContain('Package src path present: yes')
       ->expectsOutputToContain('Package config path present: yes')
-      ->expectsOutputToContain('Package config files present: cms.php, contact.php, demo_media.php, webblocks-cms.php, webblocks-plugins.php, webblocks-updates.php')
+      ->expectsOutputToContain('Package config files present: cms.php, contact.php, demo_media.php, media_transforms.php, webblocks-cms.php, webblocks-plugins.php, webblocks-updates.php')
       ->expectsOutputToContain('Expected package config defaults:')
       ->expectsOutputToContain('- webblocks-cms.php: package default=yes, root override='.$webblocksCmsRootOverride)
       ->expectsOutputToContain('- cms.php: package default=yes, root override=yes')

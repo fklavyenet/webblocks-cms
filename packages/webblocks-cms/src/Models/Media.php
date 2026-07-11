@@ -10,6 +10,7 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 
 class Media extends CmsModel
@@ -44,6 +45,8 @@ class Media extends CmsModel
     'width',
     'height',
     'duration',
+    'focal_point_x',
+    'focal_point_y',
     'uploaded_by',
   ];
 
@@ -102,6 +105,11 @@ class Media extends CmsModel
   public function isImage(): bool
   {
     return $this->kind === self::KIND_IMAGE;
+  }
+
+  public function transformUrl(string $variant): ?string
+  {
+    return app(MediaTransformService::class)->url($this, $variant);
   }
 
   public function isVideo(): bool
@@ -196,7 +204,7 @@ class Media extends CmsModel
       'kind' => $this->kind,
       'folder_name' => $this->folder?->name,
       'meta_label' => $this->compactMetaLabel(),
-      'url' => $this->url(),
+      'url' => $this->isImage() ? $this->transformUrl('thumbnail') : $this->url(),
       'previewable' => $this->canPreview(),
     ];
   }

@@ -8,7 +8,7 @@
         <div class="wb-card-body wb-picker-asset-row__body">
             <div class="wb-picker-asset-row__thumb" aria-hidden="true">
                 @if ($asset->canPreview())
-                    <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $assetLabel }}" width="56" height="40">
+                    <img src="{{ $asset->transformUrl('thumbnail') }}" alt="{{ $asset->alt_text ?: $assetLabel }}" width="56" height="40">
                 @else
                     <span class="wb-action-btn"><i class="wb-icon {{ $asset->kind === \WebBlocks\Cms\Models\Media::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}"></i></span>
                 @endif
@@ -38,7 +38,7 @@
         <div class="wb-card-body wb-stack wb-gap-2">
             <div class="wb-stack wb-gap-1">
                 @if ($asset->canPreview())
-                    <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $assetLabel }}" width="160" height="112">
+                    <img src="{{ $asset->transformUrl('thumbnail') }}" alt="{{ $asset->alt_text ?: $assetLabel }}" width="160" height="112">
                 @else
                     <div class="wb-cluster wb-cluster-2">
                         <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon {{ $asset->kind === \WebBlocks\Cms\Models\Media::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}"></i></span>

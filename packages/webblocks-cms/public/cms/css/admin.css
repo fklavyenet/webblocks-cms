@@ -1441,3 +1441,28 @@ svg.wb-sidebar-brand-logo {
     border-radius: 50%;
     animation: wb-btn-busy-spin 0.6s linear infinite;
 }
+.wb-media-focal-picker {
+  position: relative;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  cursor: crosshair;
+  background: transparent;
+  border: 0;
+}
+
+.wb-media-focal-picker img {
+  display: block;
+  max-height: 24rem;
+}
+
+.wb-media-focal-marker {
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 3px solid white;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 70%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

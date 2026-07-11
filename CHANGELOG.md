@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.36.0
+
+- Add CMS-managed image variants with responsive public image output, cached focal-point-aware crops, optimized media-picker thumbnails, and safe original-image fallbacks.
+- Add focal-point editing and variant previews/regeneration to the Media edit screen in English, German, and Turkish.
+
 ## 1.35.5
 
 - Render public Column Item icons beside their copy with the shipped WebBlocks UI `wb-icon-card` composition, reducing unnecessary card height without CMS-specific layout CSS.

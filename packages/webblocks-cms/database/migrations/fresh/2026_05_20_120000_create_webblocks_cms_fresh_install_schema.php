@@ -441,6 +441,8 @@ return new class extends Migration
       $table->text('description')->nullable();
       $table->unsignedInteger('width')->nullable();
       $table->unsignedInteger('height')->nullable();
+      $table->decimal('focal_point_x', 5, 4)->nullable();
+      $table->decimal('focal_point_y', 5, 4)->nullable();
       $table->unsignedInteger('duration')->nullable();
       $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
       $table->timestamps();
