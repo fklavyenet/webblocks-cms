@@ -8,13 +8,14 @@ use PHPUnit\Framework\TestCase;
 class PackageDevelopmentBoundaryTest extends TestCase
 {
   #[Test]
-  public function upgrading_guide_warns_clone_users_before_the_package_only_transition(): void
+  public function upgrading_guide_warns_clone_users_about_the_package_only_transition(): void
   {
     $guide = (string) file_get_contents(dirname(__DIR__, 2).'/UPGRADING.md');
 
+    $this->assertStringContainsString('1.37.0', $guide);
     $this->assertStringContainsString('1.36.1', $guide);
-    $this->assertStringContainsString('does not perform the repository transition', $guide);
-    $this->assertStringContainsString('Do not assume `git pull` across that transition is safe', $guide);
+    $this->assertStringContainsString('first release tagged directly from the package-only repository root', $guide);
+    $this->assertStringContainsString('Do not assume `git pull` across this transition is safe', $guide);
     $this->assertStringContainsString('`.env`', $guide);
     $this->assertStringContainsString('database', $guide);
     $this->assertStringContainsString('storage/uploads', $guide);

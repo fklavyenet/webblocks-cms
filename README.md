@@ -4,6 +4,8 @@ WebBlocks CMS is a Laravel-native, block-based CMS distributed as a Composer pac
 
 This repository is package source. It is not a complete deployable Laravel application and does not include a host `.env`, application bootstrap, or web server configuration.
 
+Starting with WebBlocks CMS `1.37.0`, release tags point directly to this package-only root. Historical full-application clones must preserve their host-owned state and follow [UPGRADING.md](UPGRADING.md) rather than pulling across the repository transition.
+
 ## Requirements
 
 - PHP `^8.4`

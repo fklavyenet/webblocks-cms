@@ -2,9 +2,9 @@
 
 Back up the application files, database, environment configuration, storage, and uploads before changing CMS versions or installation topology. Validate the result in a non-production environment. Do not delete host-owned files or data as a blanket migration step.
 
-## Package-only transition compatibility release
+## Package-only repository transition
 
-Install WebBlocks CMS `1.36.1` through the installation's documented Composer or Publisher/System Updates path before the public repository moves to its package-only layout. This release does not perform the repository transition. It prepares the package/update boundary and delivers the warning required for a later staged cutover.
+WebBlocks CMS `1.37.0` is the first release tagged directly from the package-only repository root. Installations on the `1.36.1` compatibility release may upgrade through their documented Composer or Publisher/System Updates path. The repository transition changes source distribution topology; it does not replace host-owned application state or introduce a CMS schema or WebBlocks UI version change.
 
 ## Composer/package-native installations
 
@@ -12,7 +12,7 @@ Keep the same Composer package identity, `fklavyenet/webblocks-cms`, and use Com
 
 ## Existing full-repository clones
 
-The historical WebBlocks CMS repository was a complete Laravel application. A future package-only repository will not contain that host application. Do not assume `git pull` across that transition is safe: it can remove or conflict with the host shell.
+The historical WebBlocks CMS repository was a complete Laravel application. The package-only repository no longer contains that host application. Do not assume `git pull` across this transition is safe: it can remove or conflict with the host shell.
 
 Plan a staged conversion instead. Inventory and back up the existing `.env`, database, storage/uploads, project content, plugins, public overrides, and installed-version state. Prepare a normal Laravel 13 host separately, require the same Composer package identity, verify configuration and database connectivity, and test package installation/update behavior before redirecting traffic or retiring the old clone. Preserve the old installation until the replacement is verified.
 
