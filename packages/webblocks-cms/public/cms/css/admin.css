@@ -139,29 +139,6 @@ svg.wb-sidebar-brand-logo {
     text-decoration: none;
 }
 
-.wb-navbar-avatar-trigger {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--wb-s2);
-    color: var(--wb-text);
-    text-decoration: none;
-}
-
-.wb-navbar-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px;
-    background: var(--wb-accent-soft);
-    color: var(--wb-accent-text);
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
 .wb-admin-rich-text-editor {
     border: 1px solid var(--wb-border);
     border-radius: var(--wb-r-lg);

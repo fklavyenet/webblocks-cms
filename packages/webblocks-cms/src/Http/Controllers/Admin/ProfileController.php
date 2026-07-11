@@ -4,11 +4,14 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\ProfilePasswordUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ProfileUpdateRequest;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 class ProfileController extends Controller
@@ -51,5 +54,24 @@ class ProfileController extends Controller
     $request->session()->regenerate();
 
     return redirect()->route('admin.profile.edit')->with('status_key', 'profile.password_updated');
+  }
+
+  public function updateLocale(Request $request, AdminLocaleResolver $adminLocaleResolver): RedirectResponse
+  {
+    abort_unless($adminLocaleResolver->userPreferencesAvailable(), 404);
+
+    $locale = Locale::normalizeCode($request->input('admin_locale'));
+
+    validator(
+      ['admin_locale' => $locale],
+      ['admin_locale' => ['required', 'string', Rule::in(AdminLocaleResolver::SUPPORTED_LOCALES)]],
+    )->validate();
+
+    /** @var User $user */
+    $user = $request->user();
+    $user->admin_locale = $locale;
+    $user->save();
+
+    return back();
   }
 }

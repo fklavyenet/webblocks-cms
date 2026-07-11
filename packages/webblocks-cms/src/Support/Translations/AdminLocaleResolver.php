@@ -43,7 +43,7 @@ class AdminLocaleResolver
     return [
       'en' => 'EN - English',
       'de' => 'DE - Deutsch',
-      'tr' => 'TR - Turkce',
+      'tr' => 'TR - Türkçe',
     ];
   }
 

@@ -189,6 +189,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::match(['put', 'patch'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale.update');
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::get('/pages/converter', [PageConverterController::class, 'index'])->name('pages.converter.index');
     Route::post('/pages/converter/analyze', [PageConverterController::class, 'analyze'])->name('pages.converter.analyze');

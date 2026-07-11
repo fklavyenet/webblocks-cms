@@ -41,6 +41,7 @@ deployment stays simple on ordinary PHP hosting.
 
 - 🧱 **Block-based pages** — reusable layouts, slots, and blocks; draft → review → publish workflow with page revisions and restore.
 - 🌐 **Multisite & multi-domain** — locale-aware pages, per-site domains/aliases, themes, and site-scoped CSS/JS.
+- 🌍 **Localized operator UI** — switch the authenticated admin interface between English, German, and Turkish directly from the topbar.
 - 🖼️ **Media & navigation** — media library, site-scoped navigation menus, shared slots for reusable block trees.
 - ✉️ **Native content blocks** — spam-aware contact forms, site search, ratings and comments — no third-party embeds.
 - 💾 **Operations built in** — backups & restore, export/import, site clone, site promotion, and in-app package-native updates.

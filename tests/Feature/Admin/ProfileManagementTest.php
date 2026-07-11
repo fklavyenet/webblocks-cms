@@ -32,6 +32,60 @@ class ProfileManagementTest extends TestCase
   }
 
   #[Test]
+  public function topbar_uses_canonical_language_switcher_and_user_menu_compositions(): void
+  {
+    $user = User::factory()->superAdmin()->create([
+      'name' => 'Topbar User',
+      'email' => 'topbar@example.com',
+      'admin_locale' => 'en',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('wb-language-switcher wb-language-switcher--code', false);
+    $response->assertSee('action="'.route('admin.profile.locale.update').'"', false);
+    $response->assertSee('name="admin_locale" value="en"', false);
+    $response->assertSee('name="admin_locale" value="de"', false);
+    $response->assertSee('name="admin_locale" value="tr"', false);
+    $response->assertSee('Türkçe');
+    $response->assertDontSee('Turkce');
+    $response->assertSee('wb-user-menu wb-user-menu--full wb-user-menu--responsive', false);
+    $response->assertSee('wb-user-menu-name">Topbar User', false);
+    $response->assertSee('wb-user-menu-context">topbar@example.com', false);
+    $response->assertDontSee('wb-navbar-avatar-trigger', false);
+  }
+
+  #[Test]
+  public function topbar_language_switcher_updates_only_the_authenticated_users_locale(): void
+  {
+    $user = User::factory()->superAdmin()->create(['admin_locale' => 'en']);
+    $otherUser = User::factory()->superAdmin()->create(['admin_locale' => 'tr']);
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.dashboard'))
+      ->patch(route('admin.profile.locale.update'), ['admin_locale' => 'de']);
+
+    $response->assertRedirect(route('admin.dashboard'));
+    $this->assertSame('de', $user->fresh()->admin_locale);
+    $this->assertSame('tr', $otherUser->fresh()->admin_locale);
+  }
+
+  #[Test]
+  public function topbar_language_switcher_rejects_unsupported_locales(): void
+  {
+    $user = User::factory()->superAdmin()->create(['admin_locale' => 'en']);
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.dashboard'))
+      ->patch(route('admin.profile.locale.update'), ['admin_locale' => 'xx']);
+
+    $response->assertRedirect(route('admin.dashboard'));
+    $response->assertSessionHasErrors('admin_locale');
+    $this->assertSame('en', $user->fresh()->admin_locale);
+  }
+
+  #[Test]
   public function profile_page_renders_for_authenticated_cms_admin_users(): void
   {
     $site = Site::query()->where('is_primary', true)->firstOrFail();

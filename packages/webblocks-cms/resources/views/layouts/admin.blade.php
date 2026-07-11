@@ -327,22 +327,62 @@
                                 </div>
                             </div>
 
+                            @if (app(AdminLocaleResolver::class)->userPreferencesAvailable())
+                                <div class="wb-language-switcher wb-language-switcher--code wb-dropdown wb-dropdown-end">
+                                    <button
+                                        class="wb-navbar-icon-trigger wb-language-switcher-trigger"
+                                        type="button"
+                                        data-wb-toggle="dropdown"
+                                        data-wb-target="#admin-language-menu"
+                                        aria-label="{{ $adminText('topbar.choose_language') }}"
+                                        aria-expanded="false"
+                                    >
+                                        <i class="wb-icon wb-icon-languages wb-language-switcher-icon" aria-hidden="true"></i>
+                                        <span class="wb-language-switcher-code" lang="{{ $adminLocale }}" aria-hidden="true">{{ strtoupper($adminLocale) }}</span>
+                                        <i class="wb-icon wb-icon-chevron-down wb-language-switcher-chevron" aria-hidden="true"></i>
+                                    </button>
+
+                                    <div class="wb-dropdown-menu" id="admin-language-menu">
+                                        @foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $localeCode)
+                                            <form method="POST" action="{{ route('admin.profile.locale.update') }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="admin_locale" value="{{ $localeCode }}">
+                                                <button
+                                                    type="submit"
+                                                    class="wb-dropdown-item @if ($adminLocale === $localeCode) is-active @endif"
+                                                    lang="{{ $localeCode }}"
+                                                    @if ($adminLocale === $localeCode) aria-current="true" @endif
+                                                >
+                                                    <span class="wb-language-switcher-item-code">{{ strtoupper($localeCode) }}</span>
+                                                    {{ $adminText('topbar.language_'.$localeCode) }}
+                                                </button>
+                                            </form>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
                         </div>
 
-                        <div class="wb-dropdown wb-dropdown-end">
-                            <button class="wb-navbar-avatar-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}" title="{{ $user?->name }}">
-                                <span class="wb-navbar-avatar" aria-hidden="true">{{ $userInitials }}</span>
-                                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
+                        <div class="wb-user-menu wb-user-menu--full wb-user-menu--responsive wb-dropdown wb-dropdown-end">
+                            <button class="wb-topbar-user wb-user-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
+                                <span class="wb-avatar wb-avatar-sm" aria-hidden="true">{{ $userInitials }}</span>
+                                <span class="wb-user-menu-copy">
+                                    <span class="wb-user-menu-name">{{ $user?->name }}</span>
+                                    <span class="wb-user-menu-context">{{ $user?->email }}</span>
+                                </span>
+                                <i class="wb-icon wb-icon-chevron-down wb-user-menu-chevron" aria-hidden="true"></i>
                             </button>
 
                             <div class="wb-dropdown-menu" id="admin-user-menu">
                                 @if (Route::has('admin.profile.edit'))
-                                    <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item">{{ $adminText('topbar.profile') }}</a>
+                                    <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item"><i class="wb-icon wb-icon-user" aria-hidden="true"></i>{{ $adminText('topbar.profile') }}</a>
                                     <hr class="wb-dropdown-divider">
                                 @endif
-                                <form method="POST" action="{{ route('webblocks.auth.logout') }}">
+                                <form class="wb-user-menu-form" method="POST" action="{{ route('webblocks.auth.logout') }}">
                                     @csrf
-                                    <button type="submit" class="wb-dropdown-item wb-dropdown-item-danger">{{ $adminText('topbar.logout') }}</button>
+                                    <button type="submit" class="wb-dropdown-item wb-dropdown-item-danger"><i class="wb-icon wb-icon-log-out" aria-hidden="true"></i>{{ $adminText('topbar.logout') }}</button>
                                 </form>
                             </div>
                         </div>
