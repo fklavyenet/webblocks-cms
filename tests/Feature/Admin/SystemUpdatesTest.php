@@ -42,6 +42,13 @@ class SystemUpdatesTest extends TestCase
 
   private ?FakeUpdateCommandRunner $fakeCommandRunner = null;
 
+  protected function setUp(): void
+  {
+    parent::setUp();
+
+    config()->set('webblocks-updates.signature.public_key', '');
+  }
+
   #[Test]
   public function system_updates_page_renders(): void
   {
@@ -971,6 +978,73 @@ class SystemUpdatesTest extends TestCase
     $this->assertStringContainsString('Command failed: php artisan config:clear', (string) $run->output);
     $this->assertStringNotContainsString('php-fpm', (string) $run->output);
     $this->assertContains('php artisan up', $runner->commands);
+  }
+
+  #[Test]
+  public function signed_release_passes_signature_verification_and_update_succeeds(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('0.1.0');
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.2.0');
+
+    $keyPair = sodium_crypto_sign_keypair();
+    config()->set('webblocks-updates.signature.public_key', base64_encode(sodium_crypto_sign_publickey($keyPair)));
+    $signature = base64_encode(sodium_crypto_sign_detached(strtolower($checksum), sodium_crypto_sign_secretkey($keyPair)));
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $this->bindFakeCommandRunner();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum, ['signature' => $signature]);
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $response = $this->actingAs($user)->post(route('admin.system.updates.store'));
+
+    $response->assertRedirect(route('admin.system.updates.index'));
+    $response->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+    $this->assertSame(SystemUpdateRun::STATUS_SUCCESS, $run->status);
+    $this->assertStringContainsString('Release signature verified.', (string) $run->output);
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+  }
+
+  #[Test]
+  public function unsigned_release_is_blocked_before_apply_when_a_signing_key_is_pinned(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('0.1.0');
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario('0.2.0');
+
+    config()->set('webblocks-updates.signature.public_key', base64_encode(sodium_crypto_sign_publickey(sodium_crypto_sign_keypair())));
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $runner = $this->bindFakeCommandRunner();
+    // The release payload carries no signature, so a pinned key must block the install.
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'));
+
+    $response->assertRedirect(route('admin.system.updates.index'));
+    $response->assertSessionHasErrors(['system_update']);
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+    $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
+    $this->assertStringContainsString('A signing public key is configured but the release metadata has no valid signature.', (string) $run->output);
+    $this->assertStringNotContainsString('Release signature verified.', (string) $run->output);
+    $this->assertStringNotContainsString('Installed version persisted as', (string) $run->output);
+    // Verification runs before the package is applied, so no post-apply command should have executed.
+    $this->assertNotContains('php artisan config:clear', $runner->commands);
   }
 
   #[Test]
