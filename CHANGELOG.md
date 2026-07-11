@@ -13,6 +13,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - Keep SVG out of the default media upload and remote-fetch allowlist; operators who trust every media-uploading account can opt back in with `WEBBLOCKS_CMS_ALLOW_SVG_UPLOADS=true`. Consolidate the accepted MIME allowlist into one place so uploads, the Internal Content API, and remote fetch stay in sync.
 - Clarify plugin install wording in the README: catalog releases are checksum-verified and manual ZIPs are validated on upload and disabled by default.
 
+## 1.36.1
+
+- Prepare existing installations for the future package-only repository layout with stricter update-archive safety checks and standalone Composer package readiness.
+- Before the repository transition, install this compatibility release through the documented update path. A future repository checkout will no longer be a complete deployable Laravel application, so clone-based installations must not assume that a normal `git pull` across the cutover is safe.
+- Preserve application-owned `.env`, database, storage, uploads, plugins, project content, and host files during any staged clone-to-Composer migration. Composer/package-native installs remain the supported source-consumption model, while Publisher/System Updates users should continue using the checksum/signature-verified update flow.
+
 ## 1.36.0
 
 - Add CMS-managed image variants with responsive public image output, cached focal-point-aware crops, optimized media-picker thumbnails, and safe original-image fallbacks.

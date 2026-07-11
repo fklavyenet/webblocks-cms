@@ -8,6 +8,12 @@ use ZipArchive;
 
 class UpdatePackageExtractor
 {
+  private const MAX_ARCHIVE_ENTRIES = 10000;
+
+  private const MAX_ENTRY_UNCOMPRESSED_BYTES = 10 * 1024 * 1024;
+
+  private const MAX_TOTAL_UNCOMPRESSED_BYTES = 250 * 1024 * 1024;
+
   public function extract(string $archivePath, string $destinationDirectory): string
   {
     if (! class_exists(ZipArchive::class)) {
@@ -23,12 +29,52 @@ class UpdatePackageExtractor
 
     File::ensureDirectoryExists($destinationDirectory);
 
+    if ($archive->numFiles > self::MAX_ARCHIVE_ENTRIES) {
+      $archive->close();
+
+      throw new UpdateException('The downloaded update package exceeds the safe archive entry limit.');
+    }
+
+    $normalizedEntries = [];
+    $totalUncompressedBytes = 0;
+
     for ($index = 0; $index < $archive->numFiles; $index++) {
       $entryName = (string) $archive->getNameIndex($index);
       $normalizedPath = $this->normalizeEntryPath($entryName);
 
       if ($normalizedPath === null) {
         continue;
+      }
+
+      if (isset($normalizedEntries[$normalizedPath])) {
+        $archive->close();
+
+        throw new UpdateException('The downloaded update package contains duplicate or ambiguous paths.', 'Duplicate archive path: '.$normalizedPath.'.');
+      }
+
+      $normalizedEntries[$normalizedPath] = true;
+
+      if ($this->entryIsSymlink($archive, $index)) {
+        $archive->close();
+
+        throw new UpdateException('The downloaded update package contains unsupported symbolic links.', 'Symlink archive entry: '.$entryName.'.');
+      }
+
+      $entry = $archive->statIndex($index);
+      $entrySize = is_array($entry) ? (int) ($entry['size'] ?? 0) : 0;
+
+      if ($entrySize > self::MAX_ENTRY_UNCOMPRESSED_BYTES) {
+        $archive->close();
+
+        throw new UpdateException('The downloaded update package contains an unexpectedly large file.', 'Oversized archive entry: '.$entryName.'.');
+      }
+
+      $totalUncompressedBytes += $entrySize;
+
+      if ($totalUncompressedBytes > self::MAX_TOTAL_UNCOMPRESSED_BYTES) {
+        $archive->close();
+
+        throw new UpdateException('The downloaded update package exceeds the safe extracted-size limit.');
       }
 
       $targetPath = $destinationDirectory.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $normalizedPath);
@@ -66,6 +112,19 @@ class UpdatePackageExtractor
     $archive->close();
 
     return $this->detectPackageRoot($destinationDirectory);
+  }
+
+  private function entryIsSymlink(ZipArchive $archive, int $index): bool
+  {
+    $operatingSystem = 0;
+    $attributes = 0;
+
+    if (! $archive->getExternalAttributesIndex($index, $operatingSystem, $attributes)) {
+      return false;
+    }
+
+    return $operatingSystem === ZipArchive::OPSYS_UNIX
+      && (($attributes >> 16) & 0170000) === 0120000;
   }
 
   private function normalizeEntryPath(string $entryName): ?string

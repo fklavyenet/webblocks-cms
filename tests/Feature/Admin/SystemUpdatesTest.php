@@ -1013,6 +1013,54 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
+  public function checksum_mismatch_blocks_update_before_package_replacement(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('0.1.0');
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath] = $this->prepareSuccessfulUpdateScenario('0.2.0');
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $this->bindFakeCommandRunner();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', str_repeat('0', 64));
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $response = $this->actingAs($user)->post(route('admin.system.updates.store'));
+
+    $response->assertSessionHasErrors(['system_update' => 'The downloaded package failed checksum verification.']);
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+    $this->assertSame('old package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+  }
+
+  #[Test]
+  public function missing_checksum_blocks_update_before_package_replacement(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('0.1.0');
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath] = $this->prepareSuccessfulUpdateScenario('0.2.0');
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $this->bindFakeCommandRunner();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', null);
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $response = $this->actingAs($user)->post(route('admin.system.updates.store'));
+
+    $response->assertSessionHasErrors(['system_update' => 'The update was blocked because the release did not include a package checksum to verify against.']);
+    $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
+    $this->assertSame('old package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+  }
+
+  #[Test]
   public function unsigned_release_is_blocked_before_apply_when_a_signing_key_is_pinned(): void
   {
     $user = User::factory()->superAdmin()->create();

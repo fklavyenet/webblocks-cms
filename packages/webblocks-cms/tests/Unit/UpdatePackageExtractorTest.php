@@ -64,6 +64,86 @@ class UpdatePackageExtractorTest extends TestCase
     $this->expectPackageRejection($this->packageArchive(null, includeSrc: false));
   }
 
+  #[Test]
+  public function multiple_wrapper_directories_are_rejected(): void
+  {
+    $this->expectPackageRejection($this->packageArchive('outer/inner'));
+  }
+
+  #[Test]
+  public function path_traversal_entries_are_rejected(): void
+  {
+    $archive = $this->packageArchive(null);
+    $zip = new ZipArchive;
+    $this->assertTrue($zip->open($archive) === true);
+    $zip->addFromString('../outside.php', 'unsafe');
+    $zip->close();
+
+    $this->expectException(UpdateException::class);
+    $this->expectExceptionMessage('Path traversal detected');
+
+    app(UpdatePackageExtractor::class)->extract($archive, $this->temporaryDirectory('extract'));
+  }
+
+  #[Test]
+  public function duplicate_normalized_paths_are_rejected(): void
+  {
+    $archive = $this->packageArchive(null);
+    $zip = new ZipArchive;
+    $this->assertTrue($zip->open($archive) === true);
+    $zip->addFromString('./composer.json', '{}');
+    $zip->close();
+
+    $this->expectException(UpdateException::class);
+    $this->expectExceptionMessage('Duplicate archive path');
+
+    app(UpdatePackageExtractor::class)->extract($archive, $this->temporaryDirectory('extract'));
+  }
+
+  #[Test]
+  public function symbolic_link_entries_are_rejected(): void
+  {
+    $archive = $this->packageArchive(null);
+    $zip = new ZipArchive;
+    $this->assertTrue($zip->open($archive) === true);
+    $zip->addFromString('src/unsafe-link', 'target.php');
+    $this->assertTrue($zip->setExternalAttributesName('src/unsafe-link', ZipArchive::OPSYS_UNIX, 0120777 << 16));
+    $zip->close();
+
+    $this->expectException(UpdateException::class);
+    $this->expectExceptionMessage('Symlink archive entry');
+
+    app(UpdatePackageExtractor::class)->extract($archive, $this->temporaryDirectory('extract'));
+  }
+
+  #[Test]
+  public function unexpectedly_large_entries_are_rejected(): void
+  {
+    $archive = $this->packageArchive(null);
+    $zip = new ZipArchive;
+    $this->assertTrue($zip->open($archive) === true);
+    $zip->addFromString('src/oversized.bin', str_repeat('x', (10 * 1024 * 1024) + 1));
+    $zip->close();
+
+    $this->expectException(UpdateException::class);
+    $this->expectExceptionMessage('Oversized archive entry');
+
+    app(UpdatePackageExtractor::class)->extract($archive, $this->temporaryDirectory('extract'));
+  }
+
+  #[Test]
+  public function archive_containing_only_development_files_is_rejected(): void
+  {
+    $archivePath = $this->temporaryDirectory('archive').'/development-only.zip';
+    $zip = new ZipArchive;
+    $this->assertTrue($zip->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true);
+    $zip->addFromString('phpunit.xml.dist', '<phpunit/>');
+    $zip->addFromString('tests/ExampleTest.php', "<?php\n");
+    $zip->close();
+
+    $this->expectPackageRejection($archivePath);
+  }
+
   private function expectPackageRejection(string $archive): void
   {
     try {

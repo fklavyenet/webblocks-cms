@@ -9,9 +9,9 @@ use WebBlocks\Cms\Support\WebBlocks;
 class CanonicalVersionTest extends TestCase
 {
   #[Test]
-  public function canonical_version_remains_the_existing_source_value(): void
+  public function canonical_version_matches_the_compatibility_release(): void
   {
-    $this->assertSame('1.36.0', WebBlocks::VERSION);
+    $this->assertSame('1.36.1', WebBlocks::VERSION);
     $this->assertSame(WebBlocks::VERSION, WebBlocks::version());
   }
 }
