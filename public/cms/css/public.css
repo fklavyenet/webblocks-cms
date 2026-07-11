@@ -374,16 +374,6 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     align-items: stretch !important;
 }
 
-.wb-cms-public-kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--wb-s2);
-}
-
-.wb-cms-public-kicker .wb-icon {
-    flex: 0 0 auto;
-}
-
 .wb-icon-tone-soft {
     background-color: var(--wb-public-tone-soft, var(--wb-muted, var(--wb-color-muted, #64748b)));
     color: var(--wb-public-tone-soft, var(--wb-muted, var(--wb-color-muted, #64748b)));

@@ -13,7 +13,7 @@
 
 <header class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
     @if ($iconClass !== null || $badgeLabel !== null)
-        <div class="wb-cms-public-kicker">
+        <div class="wb-cluster wb-gap-2">
             @if ($iconClass !== null)
                 <i class="{{ $iconClass }}" aria-hidden="true"></i>
             @endif

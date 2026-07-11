@@ -128,6 +128,27 @@ class PublicColumnsRenderingTest extends TestCase
   }
 
   #[Test]
+  public function column_item_cards_variant_uses_webblocks_icon_card_composition(): void
+  {
+    $block = new Block([
+      'type' => 'column_item',
+      'title' => 'Preview exactly what students see',
+      'content' => 'Review the learner experience before publishing.',
+      'settings' => json_encode(['icon_slug' => 'quote'], JSON_UNESCAPED_SLASHES),
+    ]);
+    $block->setRelation('children', collect());
+
+    $html = view('pages.partials.blocks.column_item', [
+      'block' => $block,
+      'columnsVariant' => 'cards',
+    ])->render();
+
+    $this->assertStringContainsString('class="wb-icon-card wb-items-start"', $html);
+    $this->assertStringContainsString('class="wb-stack wb-gap-2"', $html);
+    $this->assertStringNotContainsString('wb-cms-public-kicker', $html);
+  }
+
+  #[Test]
   public function column_item_stats_variant_still_falls_back_for_empty_or_null_values(): void
   {
     $block = new Block([

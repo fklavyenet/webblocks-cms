@@ -12,43 +12,43 @@
 @endphp
 
 @php
-    $renderKicker = function () use ($iconClass, $badgeLabel, $badgeClass): string {
-        if ($iconClass === null && $badgeLabel === null) {
-            return '';
-        }
-
-        $html = '<div class="wb-cms-public-kicker">';
-
-        if ($iconClass !== null) {
-            $html .= '<i class="'.e($iconClass).'" aria-hidden="true"></i>';
-        }
-
-        if ($badgeLabel !== null) {
-            $html .= '<span class="'.e($badgeClass).'">'.e($badgeLabel).'</span>';
-        }
-
-        return $html.'</div>';
-    };
+    $renderIcon = fn (): string => $iconClass === null
+        ? ''
+        : '<i class="'.e($iconClass).'" aria-hidden="true"></i>';
 @endphp
 
 @switch($columnsVariant)
     @case('plain')
-        <div class="wb-stack wb-gap-2">
-            {!! $renderKicker() !!}
+        <div class="wb-icon-card wb-items-start">
+            {!! $renderIcon() !!}
 
-            @if ($title !== null)
-                <strong>{{ $title }}</strong>
-            @endif
+            <div class="wb-stack wb-gap-2">
+                @if ($badgeLabel !== null)
+                    <span class="{{ $badgeClass }}">{{ $badgeLabel }}</span>
+                @endif
 
-            @if ($content !== null)
-                <p class="wb-m-0">{{ $content }}</p>
-            @endif
+                @if ($title !== null)
+                    <strong>{{ $title }}</strong>
+                @endif
+
+                @if ($content !== null)
+                    <p class="wb-m-0">{{ $content }}</p>
+                @endif
+            </div>
         </div>
         @break
 
     @case('stats')
         <div class="wb-stat">
-            {!! $renderKicker() !!}
+            @if ($iconClass !== null || $badgeLabel !== null)
+                <div class="wb-cluster wb-gap-2">
+                    {!! $renderIcon() !!}
+
+                    @if ($badgeLabel !== null)
+                        <span class="{{ $badgeClass }}">{{ $badgeLabel }}</span>
+                    @endif
+                </div>
+            @endif
 
             @if ($title !== null)
                 <div class="wb-stat-label">{{ $title }}</div>
@@ -70,8 +70,32 @@
             <div class="wb-card-body wb-stack wb-gap-2">
                 @if ($block->url)
                     <a href="{{ $block->url }}" class="wb-no-decoration">
+                        <div class="wb-icon-card wb-items-start">
+                            {!! $renderIcon() !!}
+
+                            <div class="wb-stack wb-gap-2">
+                                @if ($badgeLabel !== null)
+                                    <span class="{{ $badgeClass }}">{{ $badgeLabel }}</span>
+                                @endif
+
+                                @if ($title !== null)
+                                    <strong>{{ $title }}</strong>
+                                @endif
+
+                                @if ($content !== null)
+                                    <p class="wb-m-0">{{ $content }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    </a>
+                @else
+                    <div class="wb-icon-card wb-items-start">
+                        {!! $renderIcon() !!}
+
                         <div class="wb-stack wb-gap-2">
-                            {!! $renderKicker() !!}
+                            @if ($badgeLabel !== null)
+                                <span class="{{ $badgeClass }}">{{ $badgeLabel }}</span>
+                            @endif
 
                             @if ($title !== null)
                                 <strong>{{ $title }}</strong>
@@ -81,18 +105,6 @@
                                 <p class="wb-m-0">{{ $content }}</p>
                             @endif
                         </div>
-                    </a>
-                @else
-                    <div class="wb-stack wb-gap-2">
-                        {!! $renderKicker() !!}
-
-                        @if ($title !== null)
-                            <strong>{{ $title }}</strong>
-                        @endif
-
-                        @if ($content !== null)
-                            <p class="wb-m-0">{{ $content }}</p>
-                        @endif
                     </div>
                 @endif
             </div>
