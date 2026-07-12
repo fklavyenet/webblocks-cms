@@ -112,6 +112,11 @@ class Media extends CmsModel
     return app(MediaTransformService::class)->url($this, $variant);
   }
 
+  public function responsiveCandidates(array $variants = ['content-small', 'content', 'content-large']): array
+  {
+    return app(MediaTransformService::class)->responsiveCandidates($this, $variants);
+  }
+
   public function isVideo(): bool
   {
     return $this->kind === self::KIND_VIDEO;

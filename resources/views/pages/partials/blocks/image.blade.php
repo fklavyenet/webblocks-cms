@@ -1,8 +1,10 @@
 @php
   $image = $block->media;
   $imageSource = $image?->transformUrl('content');
-  $imageSmallSource = $image?->transformUrl('content-small');
-  $imageLargeSource = $image?->transformUrl('content-large');
+  $responsiveCandidates = $image?->responsiveCandidates() ?? [];
+  $srcset = count($responsiveCandidates) >= 2
+    ? collect($responsiveCandidates)->map(fn ($candidate) => $candidate->url.' '.$candidate->width.'w')->implode(', ')
+    : null;
   $caption = trim((string) ($block->title ?? ''));
   $altText = trim((string) ($block->subtitle ?? ''));
   $fallbackAltText = trim((string) ($image?->alt_text ?: $image?->title ?: $caption ?: 'Image'));
@@ -24,8 +26,7 @@
     @endif
     <img
       src="{{ $imageSource }}"
-      srcset="{{ $imageSmallSource }} 640w, {{ $imageSource }} 1280w, {{ $imageLargeSource }} 1920w"
-      sizes="(max-width: 800px) 100vw, 1280px"
+      @if ($srcset) srcset="{{ $srcset }}" sizes="(max-width: 800px) 100vw, 1280px" @endif
       alt="{{ $resolvedAltText }}"
       loading="lazy"
       decoding="async"

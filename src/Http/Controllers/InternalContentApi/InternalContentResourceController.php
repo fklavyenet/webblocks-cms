@@ -28,6 +28,7 @@ use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
 use WebBlocks\Cms\Support\Media\MediaMimeTypes;
+use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
@@ -918,6 +919,8 @@ class InternalContentResourceController extends Controller
         $metadata[$field] = $this->normalizeNullableString($request->input($field), $field === 'title' || $field === 'alt_text' ? 255 : 2000);
       }
     }
+
+    app(MediaTransformService::class)->clear($media);
 
     $media->forceFill([
       ...$stored,

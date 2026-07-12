@@ -51,6 +51,10 @@
             $fallbackUrl = is_array($legacyItem) ? ($legacyItem['media_url'] ?? $legacyItem['url'] ?? null) : null;
             $thumbnailUrl = $assetUrl ?: $fallbackUrl;
             $fullUrl = $assetUrl ?: $fallbackUrl;
+            $responsiveCandidates = $asset->isImage() ? $asset->responsiveCandidates() : [];
+            $srcset = count($responsiveCandidates) >= 2
+                ? collect($responsiveCandidates)->map(fn ($candidate) => $candidate->url.' '.$candidate->width.'w')->implode(', ')
+                : null;
 
             if (! $thumbnailUrl || ! $fullUrl) {
                 return null;
@@ -72,6 +76,7 @@
                 'overlay_text' => $overlayText,
                 'width' => $asset->width,
                 'height' => $asset->height,
+                'srcset' => $srcset,
             ];
         })
         ->when($assetSource->isEmpty(), function ($items) use ($legacyItems, $block, $firstGalleryText) {
@@ -140,8 +145,14 @@
                     >
                         <img
                             src="{{ $item['thumbnail_url'] }}"
+                            @if ($item['srcset'] ?? null)
+                                srcset="{{ $item['srcset'] }}"
+                                sizes="(max-width: 640px) 100vw, calc(100vw / {{ max(1, $block->galleryColumns()) }})"
+                            @endif
                             alt="{{ $item['alt'] }}"
                             class="wb-gallery-media"
+                            loading="lazy"
+                            decoding="async"
                             @if ($item['width']) width="{{ $item['width'] }}" @endif
                             @if ($item['height']) height="{{ $item['height'] }}" @endif
                         >

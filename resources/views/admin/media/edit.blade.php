@@ -171,7 +171,11 @@
                 <div class="wb-card-body wb-grid wb-grid-auto wb-gap-3">
                     @foreach ($transformVariants as $variant)
                         <div class="wb-stack wb-gap-2">
-                            <img src="{{ $variant['url'] }}" alt="{{ $asset->thumbnailLabel() }}" loading="lazy">
+                            @if ($variant['available'])
+                                <img src="{{ $variant['url'] }}" alt="{{ $asset->thumbnailLabel() }}" loading="lazy">
+                            @else
+                                <span class="wb-alert wb-alert-info">Not generated yet</span>
+                            @endif
                             <strong>{{ ucfirst($variant['name']) }}</strong>
                             <span class="wb-text-sm wb-text-muted">{{ $variant['width'] }}@if($variant['height']) × {{ $variant['height'] }}@endif · {{ ucfirst($variant['fit']) }}</span>
                         </div>

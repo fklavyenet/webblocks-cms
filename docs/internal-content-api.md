@@ -656,6 +656,7 @@ This endpoint updates only the safe site public theme preset used by public rend
 - `tagline`
 - `favicon_media_id`
 - `social_image_media_id`
+- Media replacement preserves the Media id and editorial references, clears obsolete image transforms, and derives future variants from the replacement binary.
 
 The favicon and social image fields must reference image records from the CMS Media Library, and `null` clears the selected media. Public site favicon changes should use this endpoint so the result remains admin-editable. Do not overwrite `/cms/brand/*`; those files are CMS product/admin shell assets, not site-level public branding.
 

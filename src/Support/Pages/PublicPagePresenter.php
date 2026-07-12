@@ -120,8 +120,8 @@ class PublicPagePresenter
     $seoKeywords = $this->trimmed($translation?->seo_keywords);
     $ogTitle = $this->trimmed($translation?->og_title);
     $ogDescription = $this->trimmed($translation?->og_description);
-    $ogImage = $this->trimmed($translation?->ogImage?->url())
-      ?? $this->trimmed($site?->socialImageAsset?->url());
+    $ogImageMedia = $translation?->ogImage ?? $site?->socialImageAsset;
+    $ogImage = $this->trimmed($ogImageMedia?->transformUrl('social'));
     $title = $this->composeSiteFirstTitle($siteLabel, $pageLabel)
       ?? config('app.name');
     $resolvedOgTitle = $ogTitle

@@ -171,6 +171,13 @@ class MediaController extends Controller
       unset($data['focal_point_x'], $data['focal_point_y']);
     }
 
+    $focalPointChanged = collect(['focal_point_x', 'focal_point_y'])
+      ->contains(fn (string $field) => array_key_exists($field, $data) && (string) $media->{$field} !== (string) $data[$field]);
+
+    if ($focalPointChanged) {
+      $this->mediaTransformService->clear($media);
+    }
+
     $media->update($data);
 
     return redirect()
@@ -182,8 +189,17 @@ class MediaController extends Controller
   {
     $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
 
-    if ($media->isImage()) {
-      $this->mediaTransformService->regenerate($media);
+    if (! $media->isImage()) {
+      return redirect()->route('admin.media.edit', $media)->withErrors(['asset' => 'Only image media has variants.']);
+    }
+
+    $counts = $this->mediaTransformService->regenerate($media);
+    $successful = $counts['generated'] + $counts['reused'] + $counts['skipped'];
+
+    if ($successful === 0) {
+      return redirect()
+        ->route('admin.media.edit', ['media' => $media, 'return_url' => $this->mediaIndexState->safeReturnUrlFromRequest(request())])
+        ->withErrors(['asset' => 'Image variants could not be generated; original-image fallbacks remain active.']);
     }
 
     return redirect()
