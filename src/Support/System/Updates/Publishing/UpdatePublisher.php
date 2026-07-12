@@ -16,6 +16,7 @@ final class UpdatePublisher
 {
   private const PUBLISHER_ENV_KEYS = [
     'token' => 'WEBBLOCKS_PUBLISHER_TOKEN',
+    'signing_key' => 'WEBBLOCKS_PUBLISHER_SIGNING_KEY',
   ];
 
   private const DETAIL_FIELDS = [
@@ -47,6 +48,7 @@ final class UpdatePublisher
     $token = $configuration['token'];
     $publisherUrl = $configuration['url'];
     $configuredKeys = $this->configuredKeyStatuses($configuration);
+    $this->signChecksum($checksum);
 
     if (($options['dry_run'] ?? false) === true) {
       return new UpdatePublishResult(
@@ -363,6 +365,7 @@ final class UpdatePublisher
     return [
       'url' => $url,
       'token' => $this->publisherConfigValue('token'),
+      'signing_key' => $this->publisherConfigValue('signing_key'),
       'product' => ReleaseDefaults::PRODUCT_KEY,
       'channel' => ReleaseDefaults::CHANNEL,
     ];
@@ -430,6 +433,7 @@ final class UpdatePublisher
   {
     return [
       self::PUBLISHER_ENV_KEYS['token'] => $configuration['token'] !== '',
+      self::PUBLISHER_ENV_KEYS['signing_key'] => $configuration['signing_key'] !== '',
     ];
   }
 
