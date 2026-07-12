@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## 1.37.1
 
+- Make the package-only Composer publishing wrapper load `WEBBLOCKS_PUBLISHER_TOKEN` from the project `.env` into its isolated Testbench process without sourcing or exposing unrelated environment values.
 - Expose bearer-authenticated Plugin Catalog list, detail, and checksum-verified install endpoints through the Internal Content API, using existing `plugins.read` and `plugins.install` capabilities and installing catalog packages disabled.
 - Add one-click copy controls for the one-time CMS API token and local `.env` example, with localized accessible feedback and a legacy clipboard fallback.
 - Repair package-native Engagement schema readiness during System Updates by idempotently renaming legacy unprefixed tables or creating the required `wbcms_comment_entries` and `wbcms_content_ratings` tables automatically.

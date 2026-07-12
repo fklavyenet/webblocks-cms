@@ -59,7 +59,7 @@ composer release:publish-update -- --dry-run
 composer release:publish-update
 ```
 
-Maintainer publishing normally only needs `WEBBLOCKS_PUBLISHER_TOKEN`. Installed CMS update checks use product defaults for `https://publisher.webblocksui.com`, product `webblocks-cms`, channel `stable`, and read path `/api/updates/latest`; maintainer publishing uses the same product-owned identity and publish path `/api/updates/publish`. Cached-config publish runs refresh only the publisher token from the project `.env` so a locally configured token is detected without requiring shell exports. Dry-run validates inputs without uploading. A real publish without a token reports a controlled non-published state, exits unsuccessfully, and must not be treated as a release publication.
+Maintainer publishing normally only needs `WEBBLOCKS_PUBLISHER_TOKEN`. Installed CMS update checks use product defaults for `https://publisher.webblocksui.com`, product `webblocks-cms`, channel `stable`, and read path `/api/updates/latest`; maintainer publishing uses the same product-owned identity and publish path `/api/updates/publish`. The Composer publishing wrapper reads only the publisher token from the package project's `.env` and exports it to the isolated Testbench publishing process, while cached-config publish runs also refresh the same key from the project `.env`; no manual shell export is required. Dry-run validates inputs without uploading. A real publish without a token reports a controlled non-published state, exits unsuccessfully, and must not be treated as a release publication.
 
 ## Anonymous Adoption Telemetry
 
