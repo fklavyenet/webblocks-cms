@@ -217,7 +217,7 @@ final class UpdatePublisher
    */
   private function signChecksum(string $checksum): ?string
   {
-    $signingKey = trim((string) config('webblocks-updates.signature.signing_key', ''));
+    $signingKey = $this->signingKey();
 
     if ($signingKey === '') {
       return null;
@@ -365,7 +365,7 @@ final class UpdatePublisher
     return [
       'url' => $url,
       'token' => $this->publisherConfigValue('token'),
-      'signing_key' => $this->publisherConfigValue('signing_key'),
+      'signing_key' => $this->signingKey(),
       'product' => ReleaseDefaults::PRODUCT_KEY,
       'channel' => ReleaseDefaults::CHANNEL,
     ];
@@ -386,6 +386,23 @@ final class UpdatePublisher
     }
 
     return $default ?? '';
+  }
+
+  private function signingKey(): string
+  {
+    $processValue = getenv(self::PUBLISHER_ENV_KEYS['signing_key']);
+
+    if (is_string($processValue) && trim($processValue) !== '') {
+      return trim($processValue);
+    }
+
+    $envValue = $this->projectEnvironment()[self::PUBLISHER_ENV_KEYS['signing_key']] ?? null;
+
+    if (is_string($envValue) && trim($envValue) !== '') {
+      return trim($envValue);
+    }
+
+    return trim((string) config('webblocks-updates.signature.signing_key', ''));
   }
 
   private function cachedConfigProjectEnvValue(string $key): ?string
