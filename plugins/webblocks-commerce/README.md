@@ -2,7 +2,10 @@
 
 First-party simple commerce plugin for WebBlocks CMS.
 
-Current artifact version: `0.7.2`.
+Current artifact version: `0.7.3`.
+
+Version `0.7.3` uses an explicit MySQL-compatible name for the product-locale
+translation uniqueness index.
 
 ## Order state & inventory
 

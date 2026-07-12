@@ -54,7 +54,7 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.7.2', $plugin->versionText());
+    $this->assertSame('0.7.3', $plugin->versionText());
     $this->assertSame('^1.35', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
@@ -1081,8 +1081,8 @@ class WebBlocksCommercePluginTest extends TestCase
     $root = storage_path('framework/testing/plugins/'.str()->uuid());
     config()->set('webblocks-plugins.install.root', $root);
 
-    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.2');
-    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.2');
+    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.3');
+    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.3');
 
     $this->app->forgetInstance(PluginRegistry::class);
   }

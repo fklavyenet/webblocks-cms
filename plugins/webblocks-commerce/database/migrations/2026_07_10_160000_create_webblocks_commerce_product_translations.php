@@ -24,7 +24,7 @@ return new class extends Migration
 
       // One translation row per product per locale; the base product row holds
       // the default/fallback content, so the site is implied by the product.
-      $table->unique(['product_id', 'locale_id']);
+      $table->unique(['product_id', 'locale_id'], 'wb_commerce_product_locale_unique');
     });
   }
 

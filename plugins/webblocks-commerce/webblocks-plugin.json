@@ -2,7 +2,7 @@
   "handle": "webblocks-commerce",
   "label": "WebBlocks Commerce",
   "description": "Simple product sales and hosted checkout foundations for WebBlocks CMS sites.",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "provider": "WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\WebBlocksCommercePlugin",
   "required_cms_version": "^1.35",
   "permissions": [
