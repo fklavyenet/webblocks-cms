@@ -52,7 +52,7 @@ class ComposerManifestTest extends TestCase
   {
     $encoded = json_encode($this->composer, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
-    foreach (['App\\\\', 'Project\\\\', 'plugins/', 'packages/webblocks-cms', 'scripts/', 'artisan'] as $forbidden) {
+    foreach (['App\\\\', 'Project\\\\', 'plugins/', 'packages/webblocks-cms', 'artisan'] as $forbidden) {
       $this->assertStringNotContainsString($forbidden, $encoded);
     }
   }

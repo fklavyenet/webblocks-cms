@@ -31,7 +31,7 @@ class PackageDevelopmentBoundaryTest extends TestCase
 
     $this->assertIsString($attributes);
 
-    foreach (['/.editorconfig', '/.github', '/.gitignore', '/CODE_OF_CONDUCT.md', '/CONTRIBUTING.md', '/SECURITY.md', '/SUPPORT.md', '/composer.lock', '/coverage', '/phpunit.xml.dist', '/pint.json', '/tests', '/vendor'] as $path) {
+    foreach (['/.editorconfig', '/.github', '/.gitignore', '/CODE_OF_CONDUCT.md', '/CONTRIBUTING.md', '/SECURITY.md', '/SUPPORT.md', '/composer.lock', '/coverage', '/phpunit.xml.dist', '/pint.json', '/scripts', '/tests', '/vendor'] as $path) {
       $this->assertStringContainsString($path.' export-ignore', $attributes);
     }
   }
@@ -70,14 +70,14 @@ class PackageDevelopmentBoundaryTest extends TestCase
   public function repository_has_the_exact_reviewed_top_level_tree(): void
   {
     $root = dirname(__DIR__, 2);
-    $expected = ['.editorconfig', '.gitattributes', '.github', '.gitignore', 'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'SECURITY.md', 'SUPPORT.md', 'UPGRADING.md', 'composer.json', 'config', 'database', 'docs', 'phpunit.xml.dist', 'pint.json', 'public', 'resources', 'routes', 'src', 'stubs', 'tests'];
+    $expected = ['.editorconfig', '.gitattributes', '.github', '.gitignore', 'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'SECURITY.md', 'SUPPORT.md', 'UPGRADING.md', 'composer.json', 'config', 'database', 'docs', 'phpunit.xml.dist', 'pint.json', 'public', 'resources', 'routes', 'scripts', 'src', 'stubs', 'tests'];
     $actual = array_values(array_filter(scandir($root) ?: [], fn (string $entry): bool => ! in_array($entry, ['.', '..', '.git', 'vendor', 'composer.lock', '.phpunit.cache', '.phpunit.result.cache'], true)));
 
     sort($expected);
     sort($actual);
     $this->assertSame($expected, $actual);
 
-    foreach (['packages', 'scripts', 'artisan', 'app', 'bootstrap', 'project', 'plugins', '.env', '.env.example'] as $forbidden) {
+    foreach (['packages', 'artisan', 'app', 'bootstrap', 'project', 'plugins', '.env', '.env.example'] as $forbidden) {
       $this->assertFileDoesNotExist($root.'/'.$forbidden);
     }
   }

@@ -3,5 +3,6 @@
 /.phpunit.cache/
 /.phpunit.result.cache
 /coverage/
+/storage/
 .DS_Store
 **/.DS_Store
