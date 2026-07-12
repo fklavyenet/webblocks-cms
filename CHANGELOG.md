@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.37.3
+
+- Report site CSS and JavaScript assets as writable when `public/site` does not exist yet but CMS can create it through a writable parent directory, matching the first-write behavior of the asset API.
+
 ## 1.37.2
 
 - Restore OpenAPI schema generation for Plugin Catalog endpoints.

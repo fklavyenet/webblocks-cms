@@ -52,7 +52,7 @@ class SitePublicDirectoryManager
       $problem = 'Site handle is required before site assets can be managed.';
     } elseif (! $siteDirectoryExists) {
       $publicSitePath = public_path('site');
-      $problem = is_dir($publicSitePath) && is_writable($publicSitePath)
+      $problem = $this->directoryCanBeCreated($publicSitePath)
         ? null
         : 'The public/site directory is not writable, so CMS cannot create the site asset directory.';
       $writable = $problem === null;
@@ -84,5 +84,22 @@ class SitePublicDirectoryManager
   private function handle(Site $site): string
   {
     return SiteHandle::normalize((string) $site->handle);
+  }
+
+  private function directoryCanBeCreated(string $path): bool
+  {
+    $candidate = $path;
+
+    while (! file_exists($candidate)) {
+      $parent = dirname($candidate);
+
+      if ($parent === $candidate) {
+        return false;
+      }
+
+      $candidate = $parent;
+    }
+
+    return is_dir($candidate) && is_writable($candidate);
   }
 }
