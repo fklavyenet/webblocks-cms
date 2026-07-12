@@ -251,6 +251,13 @@ class InternalApiDiscoveryController extends Controller
   private function openApiPaths(): array
   {
     $json = ['application/json' => ['schema' => ['type' => 'object']]];
+    $pathParameter = static fn (string $name, string $description): array => [
+      'name' => $name,
+      'in' => 'path',
+      'required' => true,
+      'description' => $description,
+      'schema' => ['type' => 'string'],
+    ];
 
     return [
       '/' => ['get' => ['summary' => 'API discovery', 'responses' => ['200' => ['description' => 'Discovery JSON', 'content' => $json]]]],
