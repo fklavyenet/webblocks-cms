@@ -121,6 +121,13 @@ Do not disclose vulnerabilities in public issues. Follow [SECURITY.md](SECURITY.
 
 Contributions are welcome through [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Use the [issue tracker](https://github.com/fklavyenet/webblocks-cms/issues) for reproducible bugs and feature requests. [SUPPORT.md](SUPPORT.md) explains support boundaries and the distinction between public support and private security reports.
 
+## Acknowledgements
+
+WebBlocks CMS is designed, directed, and maintained by Osman Bozdağ.
+
+Development has been supported with AI-assisted engineering, primarily
+through OpenAI ChatGPT, with limited contributions from Anthropic Claude.
+
 ## License
 
 WebBlocks CMS is open-source software licensed under the [MIT License](LICENSE).
