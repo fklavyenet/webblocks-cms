@@ -113,6 +113,8 @@ Fresh schema alone is not enough. If new runtime code expects a table or column,
 
 A successful package-native System Update means the applied code, required schema, cache clears, and post-apply version/schema readiness are aligned. Admin, API, and runtime pages that depend on newly added schema should show controlled setup/update guidance for missing schema instead of exposing raw framework/database errors. The 1.32.146 to 1.32.147 API token incident is the reference failure mode: `cms_api_tokens` existed only in the normal migration path, package-native QuizTem updated the code, and `System -> API Tokens` raw-500ed until 1.32.147 added a package update migration and graceful readiness handling.
 
+Engagement schema follows the same contract. Package-native updates must automatically ensure the runtime-owned `wbcms_comment_entries` and `wbcms_content_ratings` tables; administrators must not need to run host `artisan migrate` commands. The repair migration is idempotent: it preserves and renames legacy unprefixed engagement tables when present, creates missing prefixed tables otherwise, and intentionally preserves engagement data on rollback.
+
 Schema-change release reports must explicitly answer:
 
 - fresh schema path updated: yes/no

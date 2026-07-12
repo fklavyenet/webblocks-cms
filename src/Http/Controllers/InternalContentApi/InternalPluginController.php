@@ -6,6 +6,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use RuntimeException;
+use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
+use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
+use WebBlocks\Cms\Support\Plugins\Catalog\CatalogRelease;
+use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -21,6 +25,8 @@ class InternalPluginController extends Controller
     private readonly PluginZipInstaller $installer,
     private readonly PluginMigrationRunner $migrations,
     private readonly PluginRuntimeRefresher $runtime,
+    private readonly PluginCatalogClient $catalog,
+    private readonly CatalogPluginInstallBridge $catalogInstaller,
   ) {}
 
   public function index(): JsonResponse
@@ -57,6 +63,74 @@ class InternalPluginController extends Controller
       'installed' => [
         'handle' => $result['handle'],
         'version' => $result['version'],
+      ],
+      'warnings' => [],
+      'errors' => [],
+    ], 201);
+  }
+
+  public function catalog(): JsonResponse
+  {
+    $result = $this->catalog->browse();
+
+    if (! $result->available) {
+      return $this->apiError('plugin_catalog_unavailable', $result->message ?? 'Plugin Catalog is not available right now.', 503);
+    }
+
+    return $this->ok([
+      'plugins' => array_map($this->publicCatalogPlugin(...), $result->plugins),
+      'cms_version' => $result->cmsVersion,
+      '_links' => ['self' => '/webadmin/api/plugins/catalog'],
+    ]);
+  }
+
+  public function catalogShow(string $plugin): JsonResponse
+  {
+    $result = $this->catalog->show($plugin);
+
+    if (! $result->available || $result->plugin === null) {
+      $status = str_contains(strtolower((string) $result->message), 'not found') ? 404 : 503;
+
+      return $this->apiError(
+        $status === 404 ? 'catalog_plugin_not_found' : 'plugin_catalog_unavailable',
+        $result->message ?? 'The requested catalog plugin could not be loaded.',
+        $status,
+      );
+    }
+
+    return $this->ok([
+      'plugin' => $this->publicCatalogPlugin($result->plugin),
+    ]);
+  }
+
+  public function catalogInstall(string $plugin): JsonResponse
+  {
+    $result = $this->catalog->show($plugin);
+
+    if (! $result->available || $result->plugin === null) {
+      $status = str_contains(strtolower((string) $result->message), 'not found') ? 404 : 503;
+
+      return $this->apiError(
+        $status === 404 ? 'catalog_plugin_not_found' : 'plugin_catalog_unavailable',
+        $result->message ?? 'The requested catalog plugin could not be loaded for installation.',
+        $status,
+      );
+    }
+
+    try {
+      $installed = $this->catalogInstaller->install($result->plugin);
+      $this->runtime->refresh(registerRoutes: true);
+    } catch (RuntimeException $exception) {
+      return $this->apiError('catalog_plugin_install_failed', $exception->getMessage(), 422);
+    }
+
+    return response()->json([
+      'ok' => true,
+      'plugin' => $this->freshPluginSummary((string) $installed['handle']),
+      'installed' => [
+        'handle' => $installed['handle'],
+        'version' => $installed['version'],
+        'enabled' => false,
       ],
       'warnings' => [],
       'errors' => [],
@@ -216,6 +290,67 @@ class InternalPluginController extends Controller
     unset($plugin['install_path']);
 
     return $plugin;
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function publicCatalogPlugin(CatalogPlugin $plugin): array
+  {
+    return [
+      'handle' => $plugin->handle,
+      'label' => $plugin->label,
+      'summary' => $plugin->summary,
+      'description' => $plugin->description,
+      'vendor' => $plugin->vendor,
+      'author' => $plugin->author,
+      'compatibility_status' => $plugin->compatibilityStatus,
+      'required_cms_version' => $plugin->displayRequiredCmsVersion(),
+      'channel' => $plugin->displayChannel(),
+      'status' => $plugin->displayStatus(),
+      'installable' => $plugin->hasInstallableArtifact(),
+      'permissions' => $plugin->declaredPermissions,
+      'routes' => $plugin->declaredRoutes,
+      'migrations' => $plugin->declaredMigrations,
+      'providers' => $plugin->declaredProviders,
+      'commands' => $plugin->declaredCommands,
+      'urls' => [
+        'website' => $plugin->firstWebsiteUrl(),
+        'documentation' => $plugin->firstDocumentationUrl(),
+        'support' => $plugin->firstSupportUrl(),
+        'details' => $plugin->firstDetailsUrl(),
+      ],
+      'latest_compatible_release' => $this->publicCatalogRelease($plugin->latestCompatibleRelease),
+      '_links' => [
+        'self' => '/webadmin/api/plugins/catalog/'.rawurlencode($plugin->handle),
+        'install' => '/webadmin/api/plugins/catalog/'.rawurlencode($plugin->handle).'/install',
+      ],
+    ];
+  }
+
+  /**
+   * @return array<string, mixed>|null
+   */
+  private function publicCatalogRelease(?CatalogRelease $release): ?array
+  {
+    if ($release === null) {
+      return null;
+    }
+
+    return [
+      'version' => $release->version,
+      'required_cms_version' => $release->requiredCmsVersion,
+      'channel' => $release->channel,
+      'status' => $release->status,
+      'summary' => $release->displaySummary(),
+      'highlights' => $release->highlights,
+      'artifact' => [
+        'filename' => $release->artifactFilename,
+        'size' => $release->artifactSize,
+        'validation_status' => $release->artifactStatus,
+        'scan_status' => $release->scanStatus,
+      ],
+    ];
   }
 
   /**

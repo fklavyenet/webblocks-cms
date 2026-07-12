@@ -73,6 +73,8 @@ Authorization: Bearer <token>
 
 CMS API tokens are created by a CMS super admin from `System -> API Tokens`. The CMS stores only a SHA-256 hash plus a safe preview in the `cms_api_tokens` database table. The plain token is shown once immediately after creation and is never shown again.
 
+The one-time token panel provides copy controls for both the full token and the generated local `.env` example. Copy feedback is announced accessibly, and the browser implementation includes a fallback for environments without the modern Clipboard API.
+
 Tokens created with the older default page-building capability set are treated as eligible for the read-only `admin.render` capability at runtime, so trusted operator tools can use allowlisted admin visual QA snapshots after updating without rotating the token. Narrow custom tokens that do not include the former default set remain restricted.
 
 The Tokens list includes a history action for each token. It opens a WebBlocks UI modal with the latest 10 API activity records for that token. Activity records are intentionally small: request time, status, method, path without query string, route name, required capability when a capability guard was evaluated, IP, and a short user-agent value. The CMS does not store request bodies, query strings, response bodies, bearer token values, token hashes, or token previews in activity rows. Older activity rows are pruned automatically so each token keeps only the latest 10 records.
@@ -243,9 +245,12 @@ POST /webadmin/api/plugins/{plugin}/enable
 POST /webadmin/api/plugins/{plugin}/setup
 POST /webadmin/api/plugins/{plugin}/disable
 DELETE /webadmin/api/plugins/{plugin}
+GET /webadmin/api/plugins/catalog
+GET /webadmin/api/plugins/catalog/{plugin}
+POST /webadmin/api/plugins/catalog/{plugin}/install
 ```
 
-These endpoints require `plugins.read`, `plugins.install`, `plugins.manage`, `plugins.setup`, or `plugins.uninstall` respectively. The install endpoint accepts a validated plugin ZIP artifact and keeps the plugin disabled by default. Setup runs the plugin-declared migrations. Uninstall is limited to disabled manually uploaded plugins and preserves plugin-owned tables.
+These endpoints require `plugins.read`, `plugins.install`, `plugins.manage`, `plugins.setup`, or `plugins.uninstall` respectively. They work with bearer authentication and do not require an authenticated browser session. The manual install endpoint accepts a validated plugin ZIP artifact. Catalog list/detail requests require `plugins.read`; catalog installation requires `plugins.install` and reuses the CMS catalog client, compatibility checks, artifact size/ZIP validation, and SHA-256 verification. Both installation paths keep the plugin disabled by default. Setup runs the plugin-declared migrations. Uninstall is limited to disabled manually uploaded plugins and preserves plugin-owned tables.
 
 When WebBlocks Commerce is enabled and setup-ready, trusted tools can create/list products and read orders:
 

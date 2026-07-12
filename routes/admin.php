@@ -96,6 +96,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/plugins', [InternalPluginController::class, 'index'])->middleware('internal-api.capability:plugins.read')->name('plugins.index');
     Route::post('/plugins/install', [InternalPluginController::class, 'install'])->middleware('internal-api.capability:plugins.install')->name('plugins.install');
+    Route::get('/plugins/catalog', [InternalPluginController::class, 'catalog'])->middleware('internal-api.capability:plugins.read')->name('plugins.catalog.index');
+    Route::get('/plugins/catalog/{plugin}', [InternalPluginController::class, 'catalogShow'])->middleware('internal-api.capability:plugins.read')->name('plugins.catalog.show');
+    Route::post('/plugins/catalog/{plugin}/install', [InternalPluginController::class, 'catalogInstall'])->middleware('internal-api.capability:plugins.install')->name('plugins.catalog.install');
     Route::post('/plugins/{plugin}/enable', [InternalPluginController::class, 'enable'])->middleware('internal-api.capability:plugins.manage')->name('plugins.enable');
     Route::post('/plugins/{plugin}/setup', [InternalPluginController::class, 'setup'])->middleware('internal-api.capability:plugins.setup')->name('plugins.setup');
     Route::post('/plugins/{plugin}/disable', [InternalPluginController::class, 'disable'])->middleware('internal-api.capability:plugins.manage')->name('plugins.disable');

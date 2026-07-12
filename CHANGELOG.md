@@ -9,6 +9,9 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## 1.37.1
 
+- Expose bearer-authenticated Plugin Catalog list, detail, and checksum-verified install endpoints through the Internal Content API, using existing `plugins.read` and `plugins.install` capabilities and installing catalog packages disabled.
+- Add one-click copy controls for the one-time CMS API token and local `.env` example, with localized accessible feedback and a legacy clipboard fallback.
+- Repair package-native Engagement schema readiness during System Updates by idempotently renaming legacy unprefixed tables or creating the required `wbcms_comment_entries` and `wbcms_content_ratings` tables automatically.
 - Harden image variants with accurate responsive widths, safe small-source cropping and codec fallback, focused cache invalidation, Gallery and social-image integration, and operational regeneration/pruning.
 - Rate-limit admin sign-in and password-reset requests: failed logins lock per email+IP after a configurable threshold (cleared on success), with a per-IP backstop across the login, forgot-password, and reset-password endpoints. Tunable via `WEBBLOCKS_CMS_MAX_LOGIN_ATTEMPTS` and `WEBBLOCKS_CMS_LOGIN_DECAY_SECONDS`.
 - Keep SVG out of the default media upload and remote-fetch allowlist; operators who trust every media-uploading account can opt back in with `WEBBLOCKS_CMS_ALLOW_SVG_UPLOADS=true`. Consolidate the accepted MIME allowlist into one place so uploads, the Internal Content API, and remote fetch stay in sync.
