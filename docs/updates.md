@@ -89,10 +89,13 @@ When an in-app System Update is applied successfully, WebBlocks CMS runs the pos
 
 - migration handling for the current install strategy
 - cache clear steps
+- shipped catalog sync (`webblocks:catalog-repair --all`)
 - update run recording
 - installed version persistence
 
-Normal System Updates apply published release packages. They do not automatically run core catalog seeding, `block-types:sync-core`, icon sync, slot type repair, page layout slot repair, or broad catalog repair. If a release requires a schema or data transformation, it must be handled as an explicit update migration for that release.
+Normal System Updates apply published release packages and, after the cache clear steps, run `webblocks:catalog-repair --all` as a subprocess against the freshly installed code. This keeps the database-backed block type, slot type, page layout, and icon catalogs aligned with the shipped catalog so a release can add catalog rows (for example the engagement Rating and Comments block types) without an operator having to run a manual command afterward. The sync runs after cache clears so the subprocess boots with a rebuilt service manifest and can discover newly registered package commands. It is idempotent and preserves install-specific/custom catalog rows.
+
+The catalog sync is best-effort: because it runs after files and migrations have already succeeded, a catalog sync failure does not fail the update run. Instead the update log records that the sync did not complete and that `php artisan webblocks:catalog-repair --all` can be re-run manually. Schema changes still belong in explicit update migrations for the release; the catalog sync only repairs shipped catalog data rows, not schema.
 
 The cache clear steps include Laravel config, view, application cache, and route clears so updated package-owned Blade layouts and helpers are recompiled after file replacement. On live PHP-FPM installs with OPcache configured not to validate timestamps, reload the relevant PHP-FPM service after a successful update so PHP cannot keep serving pre-update package classes from memory.
 
@@ -144,7 +147,7 @@ The completed historical path was `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package
 
 ## Catalog Repair
 
-Catalog repair and synchronization are explicit maintenance actions, separate from System Updates. Use:
+System Updates run `webblocks:catalog-repair --all` automatically as part of the post-install flow (see [Update Apply Flow](#update-apply-flow)). The same commands remain available as manual maintenance actions for repairing catalog rows between releases or after a best-effort update sync did not complete. Use:
 
 ```bash
 php artisan webblocks:catalog-repair --dry-run --all

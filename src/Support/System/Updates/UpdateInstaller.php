@@ -181,7 +181,33 @@ class UpdateInstaller
       );
     }
 
+    $this->syncShippedCatalog($output);
+
     $this->installationGitRemoteGuard->protectCurrentInstall($this->targetPath(), $output);
+  }
+
+  /**
+   * Re-sync the shipped block type, slot type, page layout, and icon catalog
+   * rows against the freshly installed package.
+   *
+   * This runs as a subprocess so it boots the newly applied code and repairs
+   * catalog rows (for example engagement Rating/Comments block types) that a
+   * release adds without a schema migration. It preserves custom catalog rows
+   * and is best-effort: a catalog hiccup must not fail an update whose files
+   * and migrations already succeeded, since it is idempotent and can be re-run
+   * with `php artisan webblocks:catalog-repair --all`.
+   */
+  private function syncShippedCatalog(array &$output): void
+  {
+    try {
+      $this->commandRunner->run(
+        $this->commandRunner->artisanCommand(['webblocks:catalog-repair', '--all']),
+        $this->targetPath(),
+        $output,
+      );
+    } catch (UpdateException $exception) {
+      $output[] = 'Shipped catalog sync did not complete; run "php artisan webblocks:catalog-repair --all" manually. Reason: '.$exception->getMessage();
+    }
   }
 
   public function verifyAppliedVersion(string $expectedVersion, array &$output): void
