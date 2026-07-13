@@ -21,6 +21,31 @@ class CommercePublicBridgeController extends Controller
     return $this->dispatch('buy', [$request, $product]);
   }
 
+  public function cart(Request $request): Response|View
+  {
+    return $this->dispatch('show', [$request], 'cart');
+  }
+
+  public function cartAdd(Request $request, string $product): RedirectResponse
+  {
+    return $this->dispatch('add', [$request, $product], 'cart');
+  }
+
+  public function cartUpdate(Request $request, string $product): RedirectResponse
+  {
+    return $this->dispatch('update', [$request, $product], 'cart');
+  }
+
+  public function cartRemove(Request $request, string $product): RedirectResponse
+  {
+    return $this->dispatch('remove', [$request, $product], 'cart');
+  }
+
+  public function cartCheckout(Request $request): RedirectResponse
+  {
+    return $this->dispatch('checkout', [$request], 'cart');
+  }
+
   public function checkout(Request $request, string $product): RedirectResponse
   {
     return $this->dispatch('checkout', [$request, $product]);
@@ -41,19 +66,31 @@ class CommercePublicBridgeController extends Controller
     return $this->dispatch('paypalWebhook', [$request]);
   }
 
+  public function sumUpWebhook(Request $request): JsonResponse
+  {
+    return $this->dispatch('sumUpWebhook', [$request]);
+  }
+
   /**
    * @param  array<int, mixed>  $parameters
    */
-  private function dispatch(string $method, array $parameters): mixed
+  private function dispatch(string $method, array $parameters, ?string $surface = null): mixed
   {
     abort_unless($this->plugins->isEnabled('webblocks-commerce'), 404);
 
-    $controller = $method === 'paypalWebhook'
-      ? 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\Public\\CommerceWebhookController'
-      : 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\Public\\CommerceCheckoutController';
+    $webhookMethods = ['paypalWebhook', 'sumUpWebhook'];
+    $controller = match (true) {
+      in_array($method, $webhookMethods, true) => 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\Public\\CommerceWebhookController',
+      $surface === 'cart' => 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\Public\\CommerceCartController',
+      default => 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Controllers\\Public\\CommerceCheckoutController',
+    };
     abort_unless(class_exists($controller), 404);
 
-    $dispatchMethod = $method === 'paypalWebhook' ? 'paypal' : $method;
+    $dispatchMethod = match ($method) {
+      'paypalWebhook' => 'paypal',
+      'sumUpWebhook' => 'sumup',
+      default => $method,
+    };
 
     return app($controller)->{$dispatchMethod}(...$parameters);
   }

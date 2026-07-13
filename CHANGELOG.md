@@ -10,6 +10,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 ## 1.37.3
 
 - Report site CSS and JavaScript assets as writable when `public/site` does not exist yet but CMS can create it through a writable parent directory, matching the first-write behavior of the asset API.
+- Add the public session-cart bridge and SumUp webhook endpoint required by WebBlocks Commerce 0.8.0, while keeping every route inert unless the plugin is enabled.
 
 ## 1.37.2
 

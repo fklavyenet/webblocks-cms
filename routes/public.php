@@ -60,6 +60,11 @@ Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name(
 });
 
 Route::middleware(['web', 'install.required'])->prefix('commerce')->name('webblocks.commerce.')->group(function (): void {
+  Route::get('/cart', [CommercePublicBridgeController::class, 'cart'])->name('cart.show');
+  Route::post('/cart/items/{product}', [CommercePublicBridgeController::class, 'cartAdd'])->name('cart.items.add');
+  Route::patch('/cart/items/{product}', [CommercePublicBridgeController::class, 'cartUpdate'])->name('cart.items.update');
+  Route::delete('/cart/items/{product}', [CommercePublicBridgeController::class, 'cartRemove'])->name('cart.items.remove');
+  Route::post('/cart/checkout', [CommercePublicBridgeController::class, 'cartCheckout'])->name('cart.checkout');
   Route::get('/products/{product}/buy', [CommercePublicBridgeController::class, 'buy'])->name('products.buy');
   Route::post('/products/{product}/checkout', [CommercePublicBridgeController::class, 'checkout'])->name('products.checkout');
   Route::get('/checkout/{order}/success', [CommercePublicBridgeController::class, 'success'])
@@ -70,6 +75,8 @@ Route::middleware(['web', 'install.required'])->prefix('commerce')->name('webblo
     ->name('checkout.cancel');
   Route::post('/webhooks/paypal', [CommercePublicBridgeController::class, 'paypalWebhook'])
     ->name('webhooks.paypal');
+  Route::post('/webhooks/sumup', [CommercePublicBridgeController::class, 'sumUpWebhook'])
+    ->name('webhooks.sumup');
 });
 
 Route::middleware(['web', 'install.required'])->get('/p/{path}', [PageController::class, 'legacy'])
