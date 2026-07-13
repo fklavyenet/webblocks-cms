@@ -18,10 +18,10 @@ class WebBlocksCommercePlugin
   {
     return PluginDefinition::make(self::HANDLE)
       ->label('WebBlocks Commerce')
-      ->version('0.7.3')
+      ->version('0.8.0')
       ->provider(self::class)
       ->description('Simple product sales and hosted checkout foundations for WebBlocks CMS sites.')
-      ->requiresCms('^1.35')
+      ->requiresCms('^1.37.3')
       ->settingsNamespace('webblocks_commerce')
       ->databasePrefix('webblocks_commerce_')
       ->permissions([
@@ -67,7 +67,7 @@ class WebBlocksCommercePlugin
       ->blockTypes([
         PluginBlockTypeDefinition::make('webblocks-commerce::buy-button')
           ->label('Commerce Buy Button')
-          ->description('Links visitors to a WebBlocks Commerce product buy page.')
+          ->description('Adds a selected WebBlocks Commerce product to the public shopping cart.')
           ->adminView('webblocks-cms::admin.blocks.types.webblocks-commerce-buy-button')
           ->publicView('webblocks-cms::pages.partials.blocks.webblocks-commerce-buy-button')
           ->metadata([

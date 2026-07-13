@@ -11,7 +11,7 @@
         ? CommerceProduct::query()->where('status', CommerceProduct::STATUS_ACTIVE)->orderBy('title')->get()
         : collect();
     $selectedProductId = (string) old('plugin_settings.commerce_product_id', $settings['commerce_product_id'] ?? '');
-    $buttonLabel = old('plugin_settings.label', $settings['label'] ?? 'Buy Now');
+    $buttonLabel = old('plugin_settings.label', $settings['label'] ?? 'Add to Cart');
     $showPrice = (string) old('plugin_settings.show_price', $settings['show_price'] ?? '1') === '1';
     $alignment = old('plugin_settings.alignment', $settings['alignment'] ?? 'start');
 @endphp
@@ -43,7 +43,7 @@
 
     <div class="wb-stack wb-gap-1">
         <label for="commerce_button_label">Button Label</label>
-        <input id="commerce_button_label" name="plugin_settings[label]" class="wb-input" type="text" value="{{ $buttonLabel }}" maxlength="80" placeholder="Buy Now">
+        <input id="commerce_button_label" name="plugin_settings[label]" class="wb-input" type="text" value="{{ $buttonLabel }}" maxlength="80" placeholder="Add to Cart">
     </div>
 
     <div class="wb-stack wb-gap-1">

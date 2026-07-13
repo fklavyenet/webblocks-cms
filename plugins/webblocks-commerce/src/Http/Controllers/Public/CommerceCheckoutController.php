@@ -14,6 +14,8 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayMana
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\I18n\ProductLocalizer;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Tax\TaxCalculator;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class CommerceCheckoutController extends Controller
@@ -24,12 +26,19 @@ class CommerceCheckoutController extends Controller
     private readonly StartCheckout $checkout,
     private readonly TaxCalculator $tax,
     private readonly ProductLocalizer $localizer,
+    private readonly LocaleResolver $locales,
+    private readonly CmsTranslator $translator,
   ) {}
 
   public function buy(Request $request, string $product): View
   {
     $product = $this->publicProduct($product);
-    $localized = $this->localizer->localize($product, $request->query('locale'));
+    $requestedLocale = $request->query('locale');
+    $locale = is_string($requestedLocale)
+      ? $this->locales->enabled($requestedLocale, $product->site)
+      : null;
+    $localeCode = $locale?->code ?? $this->locales->current($request, $product->site)->code;
+    $localized = $this->localizer->localize($product, $localeCode);
 
     return view($this->view('buy'), [
       'title' => 'Buy '.$localized['title'],
@@ -37,6 +46,7 @@ class CommerceCheckoutController extends Controller
       'displayTitle' => $localized['title'],
       'displayDescription' => $localized['description'],
       'site' => $product->site,
+      'publicLocaleCode' => $localeCode,
       'taxLine' => $this->tax->calculate($product->price_amount, $product->taxClass()),
       'checkoutReady' => $product->isAvailableForCheckout() && $this->gateways->supportsCheckout(),
       'checkoutUnavailableMessage' => $this->checkoutUnavailableMessage($product),

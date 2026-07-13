@@ -19,7 +19,7 @@ return new class extends Migration
       ['slug' => 'webblocks-commerce-buy-button'],
       [
         'name' => 'Commerce Buy Button',
-        'description' => 'Links visitors to a WebBlocks Commerce product buy page.',
+        'description' => 'Adds a selected WebBlocks Commerce product to the public shopping cart.',
         'category' => 'commerce',
         'source_type' => 'static',
         'is_system' => false,

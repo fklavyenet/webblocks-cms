@@ -54,8 +54,8 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.7.3', $plugin->versionText());
-    $this->assertSame('^1.35', $plugin->requiredCmsVersion());
+    $this->assertSame('0.8.0', $plugin->versionText());
+    $this->assertSame('^1.37.3', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
     $this->assertSame(['database/migrations'], $plugin->migrationPaths());
@@ -371,7 +371,8 @@ class WebBlocksCommercePluginTest extends TestCase
       'block' => $block,
     ])->render();
 
-    $this->assertStringContainsString(route('webblocks.commerce.products.buy', $product->slug), $html);
+    $this->assertStringContainsString(route('webblocks.commerce.cart.items.add', $product->id), $html);
+    $this->assertStringContainsString('method="POST"', $html);
     $this->assertStringContainsString('Buy This Work', $html);
     $this->assertStringContainsString('1,250.00 USD', $html);
     $this->assertStringContainsString('wb-justify-center', $html);
@@ -663,6 +664,27 @@ class WebBlocksCommercePluginTest extends TestCase
   }
 
   #[Test]
+  public function commerce_settings_reports_sumup_readiness_without_rendering_the_api_key(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', 'sumup');
+    config()->set('webblocks-commerce.sumup.mode', 'sandbox');
+    config()->set('webblocks-commerce.sumup.api_key', 'sk_test_private-sumup-key');
+    config()->set('webblocks-commerce.sumup.merchant_code', 'MTEST123');
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
+    $user = User::factory()->superAdmin()->create();
+    $response = $this->actingAs($user)->get(route('webblocks.plugins.webblocks_commerce.settings.edit'));
+
+    $response->assertOk();
+    $response->assertSee('SumUp Configuration');
+    $response->assertSee('WEBBLOCKS_COMMERCE_SUMUP_API_KEY');
+    $response->assertSee('WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE');
+    $response->assertSee('/commerce/webhooks/sumup');
+    $response->assertDontSee('sk_test_private-sumup-key');
+  }
+
+  #[Test]
   public function public_commerce_routes_are_inert_when_plugin_is_disabled(): void
   {
     $this->get('/commerce/products/original-painting/buy')
@@ -692,7 +714,8 @@ class WebBlocksCommercePluginTest extends TestCase
     $buy = $this->get(route('webblocks.commerce.products.buy', $product->slug));
     $buy->assertOk();
     $buy->assertSee('Original Painting');
-    $buy->assertSee('Start Checkout');
+    $buy->assertSee('Add to cart');
+    $buy->assertSee('Buy now');
 
     $checkout = $this->post(route('webblocks.commerce.products.checkout', $product->slug));
     $checkout->assertRedirect();
@@ -750,7 +773,8 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $buy = $this->get(route('webblocks.commerce.products.buy', $product->slug));
     $buy->assertOk();
-    $buy->assertSee('Start Checkout');
+    $buy->assertSee('Add to cart');
+    $buy->assertSee('Buy now');
 
     $checkout = $this->post(route('webblocks.commerce.products.checkout', $product->slug));
     $checkout->assertRedirect('https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-123');
@@ -767,6 +791,195 @@ class WebBlocksCommercePluginTest extends TestCase
     Http::assertSent(fn ($request): bool => $request->url() === 'https://api-m.sandbox.paypal.com/v2/checkout/orders'
       && $request['intent'] === 'CAPTURE'
       && $request['purchase_units'][0]['amount']['value'] === '1250.00');
+  }
+
+  #[Test]
+  public function public_buy_page_starts_sumup_hosted_checkout_when_configured(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', 'sumup');
+    config()->set('webblocks-commerce.sumup.mode', 'sandbox');
+    config()->set('webblocks-commerce.sumup.api_key', 'sk_test_sumup-secret');
+    config()->set('webblocks-commerce.sumup.merchant_code', 'MTEST123');
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $this->migrateWebBlocksCommercePlugin();
+
+    Http::fake([
+      'https://api.sumup.com/v0.1/checkouts' => Http::response([
+        'id' => 'SUMUP-CHECKOUT-123',
+        'status' => 'PENDING',
+        'hosted_checkout_url' => 'https://checkout.sumup.com/pay/SUMUP-CHECKOUT-123',
+      ], 201),
+    ]);
+
+    $site = Site::query()->firstOrFail();
+    $product = CommerceProduct::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Paracord',
+      'slug' => 'paracord',
+      'status' => CommerceProduct::STATUS_ACTIVE,
+      'price_amount' => 500,
+      'currency' => 'EUR',
+      'inventory_quantity' => 10,
+    ]);
+
+    $checkout = $this->post(route('webblocks.commerce.products.checkout', $product->slug));
+    $checkout->assertRedirect('https://checkout.sumup.com/pay/SUMUP-CHECKOUT-123');
+
+    $order = CommerceOrder::query()->with('payments')->firstOrFail();
+    $this->assertSame('sumup', $order->gateway);
+    $this->assertSame('SUMUP-CHECKOUT-123', $order->gateway_checkout_id);
+    $this->assertSame(500, $order->total_amount);
+    $this->assertSame(CommercePayment::STATUS_PENDING, $order->payments->first()->status);
+
+    Http::assertSent(fn ($request): bool => $request->url() === 'https://api.sumup.com/v0.1/checkouts'
+      && $request->hasHeader('Authorization', 'Bearer sk_test_sumup-secret')
+      && $request['amount'] === 5
+      && $request['currency'] === 'EUR'
+      && $request['merchant_code'] === 'MTEST123'
+      && $request['checkout_reference'] === $order->order_number
+      && $request['hosted_checkout']['enabled'] === true
+      && $request['return_url'] === route('webblocks.commerce.webhooks.sumup'));
+  }
+
+  #[Test]
+  public function sumup_webhook_retrieves_checkout_and_marks_matching_order_paid_idempotently(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', 'sumup');
+    config()->set('webblocks-commerce.sumup.mode', 'sandbox');
+    config()->set('webblocks-commerce.sumup.api_key', 'sk_test_sumup-secret');
+    config()->set('webblocks-commerce.sumup.merchant_code', 'MTEST123');
+    $this->migrateWebBlocksCommercePlugin();
+
+    Http::fake([
+      'https://api.sumup.com/v0.1/checkouts/SUMUP-CHECKOUT-PAID' => Http::response([
+        'id' => 'SUMUP-CHECKOUT-PAID',
+        'checkout_reference' => 'WB-SUMUP-1001',
+        'amount' => 5,
+        'currency' => 'EUR',
+        'merchant_code' => 'MTEST123',
+        'status' => 'PAID',
+        'transaction_id' => 'SUMUP-TRANSACTION-123',
+        'transaction_code' => 'TESTRX123',
+        'transactions' => [[
+          'id' => 'SUMUP-TRANSACTION-123',
+          'transaction_code' => 'TESTRX123',
+          'status' => 'SUCCESSFUL',
+          'amount' => 5,
+          'currency' => 'EUR',
+        ]],
+      ]),
+    ]);
+
+    $order = CommerceOrder::query()->create([
+      'order_number' => 'WB-SUMUP-1001',
+      'status' => CommerceOrder::STATUS_PENDING,
+      'subtotal_amount' => 420,
+      'tax_amount' => 80,
+      'total_amount' => 500,
+      'currency' => 'EUR',
+      'gateway' => 'sumup',
+      'gateway_checkout_id' => 'SUMUP-CHECKOUT-PAID',
+    ]);
+    $order->payments()->create([
+      'gateway' => 'sumup',
+      'gateway_checkout_id' => 'SUMUP-CHECKOUT-PAID',
+      'status' => CommercePayment::STATUS_PENDING,
+      'amount' => 500,
+      'currency' => 'EUR',
+    ]);
+
+    $payload = [
+      'event_type' => 'CHECKOUT_STATUS_CHANGED',
+      'id' => 'SUMUP-CHECKOUT-PAID',
+    ];
+
+    $first = $this->postJson('/commerce/webhooks/sumup', $payload);
+    $first->assertOk()->assertJson([
+      'status' => CommerceWebhookEvent::STATUS_PROCESSED,
+      'event_id' => 'SUMUP-CHECKOUT-PAID:paid',
+    ]);
+
+    $freshOrder = $order->fresh();
+    $this->assertSame(CommerceOrder::STATUS_PAID, $freshOrder->status);
+    $this->assertSame('SUMUP-TRANSACTION-123', $freshOrder->gateway_payment_id);
+    $this->assertNotNull($freshOrder->paid_at);
+    $this->assertDatabaseHas('webblocks_commerce_payments', [
+      'order_id' => $order->id,
+      'gateway' => 'sumup',
+      'gateway_payment_id' => 'SUMUP-TRANSACTION-123',
+      'status' => CommercePayment::STATUS_SUCCEEDED,
+      'raw_event_id' => 'SUMUP-CHECKOUT-PAID:paid',
+    ]);
+
+    $second = $this->postJson('/commerce/webhooks/sumup', $payload);
+    $second->assertOk()->assertJson([
+      'status' => CommerceWebhookEvent::STATUS_PROCESSED,
+      'event_id' => 'SUMUP-CHECKOUT-PAID:paid',
+    ]);
+
+    $this->assertSame(1, CommerceWebhookEvent::query()->where('gateway', 'sumup')->count());
+    $this->assertSame(1, CommercePayment::query()->where('order_id', $order->id)->count());
+  }
+
+  #[Test]
+  public function sumup_webhook_does_not_trust_a_checkout_with_mismatched_totals(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', 'sumup');
+    config()->set('webblocks-commerce.sumup.api_key', 'sk_test_sumup-secret');
+    config()->set('webblocks-commerce.sumup.merchant_code', 'MTEST123');
+    $this->migrateWebBlocksCommercePlugin();
+
+    Http::fake([
+      'https://api.sumup.com/v0.1/checkouts/SUMUP-CHECKOUT-MISMATCH' => Http::response([
+        'id' => 'SUMUP-CHECKOUT-MISMATCH',
+        'checkout_reference' => 'WB-SUMUP-1002',
+        'amount' => 6,
+        'currency' => 'EUR',
+        'merchant_code' => 'MTEST123',
+        'status' => 'PAID',
+        'transactions' => [[
+          'id' => 'SUMUP-TRANSACTION-MISMATCH',
+          'status' => 'SUCCESSFUL',
+          'amount' => 6,
+          'currency' => 'EUR',
+        ]],
+      ]),
+    ]);
+
+    $order = CommerceOrder::query()->create([
+      'order_number' => 'WB-SUMUP-1002',
+      'status' => CommerceOrder::STATUS_PENDING,
+      'subtotal_amount' => 420,
+      'tax_amount' => 80,
+      'total_amount' => 500,
+      'currency' => 'EUR',
+      'gateway' => 'sumup',
+      'gateway_checkout_id' => 'SUMUP-CHECKOUT-MISMATCH',
+    ]);
+    $order->payments()->create([
+      'gateway' => 'sumup',
+      'gateway_checkout_id' => 'SUMUP-CHECKOUT-MISMATCH',
+      'status' => CommercePayment::STATUS_PENDING,
+      'amount' => 500,
+      'currency' => 'EUR',
+    ]);
+
+    $response = $this->postJson('/commerce/webhooks/sumup', [
+      'event_type' => 'CHECKOUT_STATUS_CHANGED',
+      'id' => 'SUMUP-CHECKOUT-MISMATCH',
+    ]);
+
+    $response->assertOk()->assertJson(['status' => CommerceWebhookEvent::STATUS_FAILED]);
+    $this->assertSame(CommerceOrder::STATUS_PENDING, $order->fresh()->status);
+    $this->assertSame(CommercePayment::STATUS_PENDING, $order->payments()->firstOrFail()->status);
+    $this->assertDatabaseHas('webblocks_commerce_webhook_events', [
+      'gateway' => 'sumup',
+      'event_id' => 'SUMUP-CHECKOUT-MISMATCH:paid',
+      'status' => CommerceWebhookEvent::STATUS_FAILED,
+    ]);
   }
 
   #[Test]
@@ -1081,8 +1294,8 @@ class WebBlocksCommercePluginTest extends TestCase
     $root = storage_path('framework/testing/plugins/'.str()->uuid());
     config()->set('webblocks-plugins.install.root', $root);
 
-    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.3');
-    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.3');
+    File::ensureDirectoryExists($root.'/webblocks-commerce/0.8.0');
+    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.8.0');
 
     $this->app->forgetInstance(PluginRegistry::class);
   }

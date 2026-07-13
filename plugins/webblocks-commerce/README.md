@@ -2,10 +2,24 @@
 
 First-party simple commerce plugin for WebBlocks CMS.
 
-Current artifact version: `0.7.3`.
+Current artifact version: `0.8.0`.
 
-Version `0.7.3` uses an explicit MySQL-compatible name for the product-locale
-translation uniqueness index.
+Version `0.8.0` adds SumUp Hosted Checkout, API-verified status notifications, the public
+session-backed cart, localized public checkout copy, native add-to-cart block behavior, and
+store-owner setup guides. It requires WebBlocks CMS `1.37.3` or newer for the public cart and
+SumUp callback bridge routes.
+
+Store-owner setup guides:
+
+- [Connect SumUp to WebBlocks Commerce](../../docs/webblocks-commerce-sumup-quickstart.md)
+- [SumUp mit WebBlocks Commerce verbinden](../../docs/webblocks-commerce-sumup-quickstart.de.md)
+- [SumUp'ı WebBlocks Commerce'a bağlama](../../docs/webblocks-commerce-sumup-quickstart.tr.md)
+
+The quick start covers sandbox account creation, the exact Dashboard paths for Merchant ID and API
+keys, protected server configuration, a current test card, the native Commerce block, the full
+cart-to-order test, live-mode transition, and troubleshooting. The
+[operator guide](../../docs/webblocks-commerce-operator-guide.md) remains the technical reference. The
+build script includes these canonical repository documents in the distributable plugin ZIP.
 
 ## Order state & inventory
 
@@ -31,6 +45,17 @@ references + quantities; prices and VAT are resolved live from the current catal
 frozen onto the order at checkout (`StartCheckout::forCart`), which builds one multi-line order,
 reserves stock atomically for every line, and marks the cart `converted`. Adding the same
 product merges quantities; adding a different currency, or more than tracked stock, is rejected.
+
+Visitors use the session-backed public cart without an API token:
+
+- `GET /commerce/cart` — review cart lines, VAT, and total
+- `POST /commerce/cart/items/{product}` — add a product from a Commerce block or buy page
+- `PATCH|DELETE /commerce/cart/items/{product}` — change quantity or remove a line
+- `POST /commerce/cart/checkout` — create the order and redirect to the configured hosted gateway
+
+The public cart, buy page, and checkout status pages extend the CMS public layout, so the active
+site header and footer slots remain consistent with the rest of the site. The Commerce Buy Button
+is a native plugin block and posts to the cart; it does not require a Trusted HTML block.
 
 Everything the cart does is available over the **plugin-owned internal API** — mounted into the
 CMS internal API group (`/webadmin/api`, bearer-token auth) via the plugin's `apiRoutes()` hook,
@@ -109,9 +134,16 @@ IT, ES out of the box):
 6. Manage products from `/webadmin/plugins/webblocks-commerce/products`.
 7. Review orders from `/webadmin/plugins/webblocks-commerce/orders`.
 8. Review checkout readiness from `/webadmin/plugins/webblocks-commerce/settings`.
-9. Configure PayPal sandbox or live credentials with `WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_ID`, `WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_SECRET`, and `WEBBLOCKS_COMMERCE_PAYPAL_WEBHOOK_ID`.
-10. Add the `Commerce Buy Button` block to a page and select an active product, or review the generated public buy URL on product detail screens for manual links. The no-network `fake` gateway is available for local foundation tests, while the default `paypal` gateway starts hosted PayPal checkout when configured.
-11. Configure the PayPal webhook endpoint as `/commerce/webhooks/paypal`.
-12. Disable before uninstalling. Uninstall removes the uploaded package and enabled state, but preserves `webblocks_commerce_*` tables.
+9. Choose `WEBBLOCKS_COMMERCE_GATEWAY=paypal` or `sumup` (the no-network `fake` gateway remains available for local tests).
+10. For PayPal, configure `WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_ID`, `WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_SECRET`, and `WEBBLOCKS_COMMERCE_PAYPAL_WEBHOOK_ID`; the webhook endpoint is `/commerce/webhooks/paypal`.
+11. For SumUp Hosted Checkout, configure `WEBBLOCKS_COMMERCE_SUMUP_MODE`, `WEBBLOCKS_COMMERCE_SUMUP_API_KEY`, and `WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE`; SumUp receives `/commerce/webhooks/sumup` as the checkout `return_url`.
+12. Add the `Commerce Buy Button` block to a page and select an active product. The block adds the product to the public cart; the generated public buy URL remains available for product-detail links and direct buy-now checkout.
+13. Disable before uninstalling. Uninstall removes the uploaded package and enabled state, but preserves `webblocks_commerce_*` tables.
 
-The current implementation provides the plugin package foundation, manifest, settings metadata, schema readiness health checks, database models, product admin screens, read-only order admin screens, secret-safe settings diagnostics, public buy pages, a plugin-owned Commerce Buy Button block, a no-network fake checkout foundation that creates pending orders, PayPal hosted checkout, and PayPal webhook capture handling for approved orders.
+SumUp uses `https://api.sumup.com/v0.1/checkouts` with `hosted_checkout.enabled=true`. Its webhook is
+a notification, not trusted payment proof: the handler retrieves the checkout from SumUp and
+matches checkout ID, merchant code, order reference, currency, amount, terminal status, and the
+successful transaction before changing order or payment state. Repeated status notifications are
+idempotent. Failed or expired checkouts release reserved inventory through the order state machine.
+
+The current implementation provides the plugin package foundation, manifest, settings metadata, schema readiness health checks, database models, product admin screens, read-only order admin screens, secret-safe settings diagnostics, public product and cart pages, a plugin-owned add-to-cart block, a no-network fake checkout foundation, PayPal hosted checkout and signed webhook capture, plus SumUp Hosted Checkout with API-verified status webhooks.

@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/webblocks-commerce-plugin-mvp.md
 
 # WebBlocks Commerce Plugin MVP
 
-This document records the implementation plan and progress log for a simple WebBlocks Commerce plugin. The package foundation, plugin-owned schema/models, setup-required health checks, product admin screens, order admin screens, secret-safe settings diagnostics, public buy URL bridge, plugin-owned Commerce Buy Button block, no-network fake checkout gateway, pending order creation, signed checkout status pages, PayPal hosted checkout, PayPal webhook capture handling, operator guide, and trusted CMS API automation path are now implemented. Release tags, version bumps, and live PayPal sandbox verification are still pending.
+This document records the implementation plan and progress log for a simple WebBlocks Commerce plugin. The package foundation, plugin-owned schema/models, setup-required health checks, product admin screens, order admin screens, secret-safe settings diagnostics, public buy and cart bridges, plugin-owned Commerce Buy Button block, no-network fake checkout gateway, pending order creation, signed checkout status pages, PayPal hosted checkout, SumUp Hosted Checkout, provider-specific webhook verification, operator guide, and trusted CMS API automation path are now implemented. Release tags, version bumps, and live gateway sandbox verification are still pending.
 
 ## Current Progress
 
@@ -28,18 +28,22 @@ Implemented:
 - No-network fake checkout gateway for tests and local foundation work.
 - PayPal hosted checkout adapter using OAuth access tokens and PayPal Orders.
 - PayPal webhook endpoint at `/commerce/webhooks/paypal` with signature verification and idempotent event storage.
-- Plugin-owned `Commerce Buy Button` page-builder block with an active product picker and public renderer that links to the selected product buy page.
+- SumUp Hosted Checkout adapter using server-side API keys, merchant codes, hosted checkout URLs, and API-verified status notifications at `/commerce/webhooks/sumup`.
+- Session-backed public cart at `/commerce/cart` with add, update, remove, and hosted checkout actions.
+- Plugin-owned `Commerce Buy Button` page-builder block with an active product picker and public renderer that adds the selected product to the cart.
 - Checkout start creates a pending order, order item, pending payment attempt, and signed checkout status redirect without marking the order paid.
 - PayPal `CHECKOUT.ORDER.APPROVED` webhooks capture the PayPal order and mark matching WebBlocks Commerce orders paid after capture completion.
-- Operator guide with PayPal setup, Commerce Buy Button workflow, buy URL fallback, and sandbox/live verification checklists.
+- Operator guide plus English, German, and Turkish SumUp quick starts with account onboarding,
+  protected credential configuration, current sandbox card data, native Commerce block usage,
+  sandbox/live verification, and troubleshooting.
 - Trusted CMS API endpoints for plugin lifecycle actions, Commerce product/order access, plugin block discovery, and content validate/apply placement of `webblocks-commerce-buy-button`.
 - `commerce` is reserved away from public page and redirect-manager catch-alls.
 - Setup-required product route guidance before plugin migrations are run.
-- Focused tests for plugin lifecycle, API install/enable/setup, route namespace, schema readiness, Commerce Buy Button discovery/rendering/API placement, product CRUD/API creation, order review, settings diagnostics, permissions, public route inertness, fake checkout start, PayPal checkout start, webhook signature rejection, webhook idempotency, and paid order transitions.
+- Focused tests for plugin lifecycle, API install/enable/setup, route namespace, schema readiness, Commerce Buy Button discovery/rendering/API placement, product CRUD/API creation, order review, settings diagnostics, permissions, public route inertness, public cart checkout, fake checkout start, PayPal checkout, SumUp checkout creation, provider webhook verification, webhook idempotency, and paid order transitions.
 
 Next planned step:
 
-- Package and manually verify the current MVP on an installed CMS through both browser admin and CMS API flows, including PayPal sandbox checkout and webhook confirmation.
+- Package and manually verify the current MVP on an installed CMS through browser, admin, and CMS API flows, including SumUp sandbox checkout and webhook confirmation.
 
 ## Purpose
 
@@ -53,7 +57,9 @@ The first useful scenario is:
 4. Payment completion records an order in CMS admin.
 5. The operator can review products, orders, and payment status.
 
-The MVP should prove this flow with the smallest secure surface. Cart, coupons, tax engines, shipping-rate engines, subscriptions, customer accounts, and marketplace behavior are intentionally deferred.
+The MVP proves this flow with a secure hosted-payment surface. It now includes a server-side cart,
+rate-driven VAT, inventory reservation, and localized product content. Coupons, shipping-rate
+engines, subscriptions, customer accounts, fulfillment, and marketplace behavior remain deferred.
 
 ## Current CMS Findings
 
@@ -110,7 +116,8 @@ The package must remain manually installed/enabled. It must not be bundled or au
 
 ## MVP Scope
 
-The MVP is "single-product hosted checkout".
+The MVP started as single-product hosted checkout and now supports a multi-line, single-currency
+server-side cart while keeping payment collection on the provider's hosted page.
 
 Included:
 
@@ -119,7 +126,10 @@ Included:
 - Payment status recorded from gateway webhook events; redirect success pages only show pending/processing status.
 - One public buy URL per product.
 - One plugin-owned Commerce Buy Button block that lets editors select an active product in the page builder.
-- Hosted checkout through a gateway adapter, starting with PayPal Checkout.
+- Session-backed cart with quantity update, remove, live VAT totals, and multi-line checkout.
+- Atomic tracked-stock reservation and release through the order state machine.
+- Localized product titles and descriptions using the CMS Site+Locale system.
+- Hosted checkout through PayPal or SumUp adapters.
 - Test mode support through environment config.
 - Setup-required health check for plugin-owned tables.
 - Secret-safe diagnostics that show only configured/not configured states.
@@ -127,14 +137,11 @@ Included:
 
 Deferred:
 
-- Cart.
 - Product variants.
 - Coupons.
-- Tax calculation.
 - Shipping calculation and labels.
 - Refund initiation from CMS.
 - Customer accounts.
-- Inventory reservation.
 - Multi-currency catalog pricing.
 - Digital downloads.
 - Native card collection inside CMS.

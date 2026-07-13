@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\PayPalConfig;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\SumUpConfig;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -17,6 +18,7 @@ class CommerceSettingsController extends Controller
     private readonly WebBlocksCommerceSchema $schema,
     private readonly CommerceGatewayManager $gateways,
     private readonly PayPalConfig $paypal,
+    private readonly SumUpConfig $sumUp,
   ) {}
 
   public function edit(): View
@@ -35,6 +37,14 @@ class CommerceSettingsController extends Controller
         'checkout_ready' => $this->paypal->isCheckoutReady(),
         'webhook_ready' => $this->paypal->isWebhookReady(),
         'webhook_url' => url('/commerce/webhooks/paypal'),
+      ],
+      'sumup' => [
+        'mode' => $this->sumUp->mode(),
+        'api_key_configured' => $this->sumUp->apiKey() !== null,
+        'merchant_code_configured' => $this->sumUp->merchantCode() !== null,
+        'checkout_ready' => $this->sumUp->isCheckoutReady(),
+        'webhook_ready' => $this->sumUp->isWebhookReady(),
+        'webhook_url' => url('/commerce/webhooks/sumup'),
       ],
       'pluginDetailUrl' => route('admin.system.plugins.show', 'webblocks-commerce'),
       'pluginSetupUrl' => route('admin.system.plugins.setup', 'webblocks-commerce'),

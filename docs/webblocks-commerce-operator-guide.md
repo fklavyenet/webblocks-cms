@@ -10,7 +10,13 @@ cms_source_id: webblocks-cms:docs/webblocks-commerce-operator-guide.md
 
 # WebBlocks Commerce Operator Guide
 
-This guide explains how to install, configure, and test the first WebBlocks Commerce MVP plugin. The current plugin supports single-product hosted checkout through PayPal. It is intentionally small: product admin, read-only order admin, secret-safe readiness diagnostics, public buy URLs, a plugin-owned Commerce Buy Button block, PayPal checkout redirects, and PayPal webhook capture confirmation.
+This guide explains how to install, configure, and test WebBlocks Commerce. The plugin supports a session-backed public cart, multi-line hosted checkout through PayPal or SumUp, product and read-only order admin, secret-safe provider diagnostics, public product pages, and a plugin-owned Commerce Buy Button block. Payment-card data stays on the selected provider's hosted payment surface.
+
+Store owners who want to connect SumUp should start with the task-focused
+[SumUp Quick Start](webblocks-commerce-sumup-quickstart.md), also available in
+[German](webblocks-commerce-sumup-quickstart.de.md) and
+[Turkish](webblocks-commerce-sumup-quickstart.tr.md). This operator guide is the technical
+reference for architecture, APIs, verification, and advanced troubleshooting.
 
 The plugin is developed under `plugins/webblocks-commerce`. It remains a manually installed plugin package and must not be moved into CMS core.
 
@@ -18,14 +24,15 @@ The plugin is developed under `plugins/webblocks-commerce`. It remains a manuall
 
 1. A CMS operator installs and enables WebBlocks Commerce.
 2. The operator runs plugin migrations from the plugin detail screen.
-3. The operator configures PayPal credentials in the install environment.
+3. The operator selects PayPal or SumUp and configures credentials in the install environment.
 4. The operator opens `Commerce Settings` to confirm checkout and webhook readiness.
 5. The operator creates a commerce product.
 6. The product detail screen shows a public buy URL.
 7. The operator adds a `Commerce Buy Button` block to a page and selects the product.
-8. A visitor starts checkout, approves payment in PayPal, and returns to the site.
-9. The order remains pending until the PayPal webhook verifies and captures the payment.
-10. The operator reviews the paid order under `Commerce Orders`.
+8. The block adds the product to `/commerce/cart`; the visitor can update quantities and start checkout.
+9. The visitor approves payment on the selected provider's hosted page and returns to the site.
+10. The order remains pending until a provider-verified webhook confirms payment.
+11. The operator reviews the paid order under `Commerce Orders`.
 
 ## Install The Plugin
 
@@ -86,7 +93,7 @@ The API flow for adding a buy button is:
 4. Add a `webblocks-commerce-buy-button` block through content validate/apply.
 5. Set `settings.commerce_product_id` to the product id returned by the Commerce API.
 
-The Commerce Buy Button block is plugin-owned. It is hidden from block discovery while the plugin is disabled, and content validate/apply rejects missing, unknown, or inactive product ids. The API does not collect card data; visitors still complete checkout through the public Commerce/PayPal flow.
+The Commerce Buy Button block is plugin-owned. It is hidden from block discovery while the plugin is disabled, and content validate/apply rejects missing, unknown, or inactive product ids. Its public renderer posts to the plugin-owned cart; no Trusted HTML block is required. The API does not collect card data; visitors complete payment on the configured PayPal or SumUp hosted checkout.
 
 ## PayPal Configuration
 
@@ -136,6 +143,56 @@ PAYMENT.CAPTURE.COMPLETED
 
 For local HTTPS tunnels, use the tunnel HTTPS URL as the webhook URL. For production, use the final public HTTPS site URL.
 
+## SumUp Hosted Checkout Configuration
+
+SumUp Hosted Checkout keeps card entry and supported wallet UI on a SumUp-hosted page. The
+integration creates the checkout server-side and never exposes the API key to the browser.
+
+For a screen-by-screen store-owner workflow, use the
+[SumUp Quick Start](webblocks-commerce-sumup-quickstart.md). The short setup sequence is:
+
+1. Create and select a sandbox merchant under SumUp Dashboard **Developer Settings → Sandboxes**.
+2. Copy the sandbox **Merchant ID** shown in the top-left Dashboard account area.
+3. Create a secret test API key under **Settings → For Developers → Toolkit → API Keys**.
+4. Configure the four server variables below and confirm readiness in Commerce Settings.
+5. Test with SumUp's documented sandbox card before using live credentials.
+
+Official SumUp references:
+
+- [Hosted Checkout](https://developer.sumup.com/online-payments/checkouts/hosted-checkout)
+- [Create and retrieve checkouts](https://developer.sumup.com/api/checkouts/create)
+- [Checkout status webhooks](https://developer.sumup.com/online-payments/webhooks)
+- [API keys](https://developer.sumup.com/tools/authorization/api-keys)
+- [Testing online payments](https://developer.sumup.com/online-payments/testing)
+
+Set these environment variables in the CMS install:
+
+```env
+WEBBLOCKS_COMMERCE_GATEWAY=sumup
+WEBBLOCKS_COMMERCE_SUMUP_MODE=sandbox
+WEBBLOCKS_COMMERCE_SUMUP_API_KEY=your-sumup-test-api-key
+WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE=your-sandbox-merchant-code
+```
+
+Use the secret API key created for the selected sandbox merchant; do not use the SumUp Public Key.
+A test secret key normally starts with `sk_test_`. Do not paste it into CMS blocks, site settings,
+screenshots, support logs, or normal chat. WebBlocks Commerce sends this callback automatically
+when it creates each checkout:
+
+```text
+https://your-site.example/commerce/webhooks/sumup
+```
+
+No manual webhook registration in the SumUp Dashboard is required for this adapter. The public
+HTTPS endpoint must nevertheless be reachable by SumUp and must not be blocked by a firewall,
+maintenance page, HTTP password, or proxy rule.
+
+SumUp calls the configured `return_url` with `CHECKOUT_STATUS_CHANGED` and a checkout ID. That
+payload is not accepted as proof of payment. WebBlocks Commerce retrieves the checkout from
+SumUp, then matches the ID, merchant code, order reference, amount, currency, terminal status,
+and successful transaction before marking an order paid. Failed and expired status transitions
+release reserved inventory. Unknown event types are safely ignored.
+
 ## Readiness Diagnostics
 
 Open:
@@ -148,15 +205,17 @@ The settings screen intentionally shows only safe diagnostics:
 
 - active gateway
 - PayPal mode
+- SumUp mode
 - client ID configured or missing
 - client secret configured or missing
 - webhook ID configured or missing
 - checkout readiness
 - webhook readiness
 - expected webhook URL
+- SumUp API key and merchant code configured or missing
 - plugin schema readiness
 
-It must not display raw PayPal client secrets, tokens, webhook payload signatures, or payment credentials.
+It must not display raw PayPal secrets, SumUp API keys, access tokens, webhook payload signatures, or payment credentials.
 
 ## Create A Product
 
@@ -198,31 +257,30 @@ Recommended workflow:
 4. Optionally change the button label, alignment, and price display.
 5. Publish the page when the surrounding content is ready.
 
-The block renders a public button that links to:
+The block renders a native public form that adds the selected product to:
 
 ```text
-/commerce/products/{slug}/buy
+/commerce/cart
 ```
 
-The product buy URL remains useful as a fallback for manual navigation items or existing link fields.
+The product buy URL remains useful for product-detail links and exposes both add-to-cart and
+direct buy-now actions. The cart, product page, and checkout status views all extend the CMS
+public layout, preserving the active site's header and footer slots.
 
-Do not paste PayPal hosted checkout URLs into CMS content. PayPal approval URLs are generated per order and should come only from the checkout start flow.
+Do not paste provider-hosted checkout URLs into CMS content. They are generated per order and should come only from the checkout start flow.
 
 ## Checkout Behavior
 
-When a visitor clicks the buy URL:
+When a visitor uses a Commerce block or product page:
 
-1. The buy page checks that the plugin is enabled, setup is ready, the product is active, and the gateway is configured.
-2. The visitor starts checkout.
-3. WebBlocks Commerce creates a pending order, order item, and pending payment attempt.
-4. The PayPal adapter creates a PayPal Order.
-5. The visitor is redirected to PayPal approval.
-6. The visitor returns to a signed success or cancel page.
-7. The success page does not mark the order paid.
-8. PayPal sends a webhook to `/commerce/webhooks/paypal`.
-9. WebBlocks Commerce verifies the webhook signature with PayPal.
-10. For `CHECKOUT.ORDER.APPROVED`, WebBlocks Commerce captures the PayPal order.
-11. If capture is completed, the order is marked `paid` and the payment attempt is marked `succeeded`.
+1. The plugin checks setup, product status, tracked stock, and cart currency.
+2. The product is stored in the session-backed server-side cart; no payment data is collected.
+3. At checkout, WebBlocks Commerce freezes localized line titles, prices, VAT, and totals onto a pending order and reserves stock atomically.
+4. The active provider adapter creates a hosted checkout and the visitor is redirected away.
+5. A signed return page can report that processing continues, but it never marks the order paid.
+6. PayPal webhooks are signature-verified and approved PayPal Orders are captured.
+7. SumUp status notifications trigger a fresh checkout API retrieval and full order/transaction match.
+8. Only the verified provider result moves the order and payment attempt to `paid`/`succeeded`.
 
 Webhook events are stored by gateway and event ID so repeated delivery is idempotent.
 
@@ -237,7 +295,7 @@ Open:
 Orders are read-only in the MVP. The order detail screen shows:
 
 - order number
-- customer email when PayPal returns one
+- customer email when supplied or returned by a provider
 - order status
 - line items
 - payment attempts
@@ -246,7 +304,7 @@ Orders are read-only in the MVP. The order detail screen shows:
 
 Manual status editing, refunds, shipping, taxes, and fulfillment workflows are intentionally deferred.
 
-## Sandbox Verification Checklist
+## PayPal Sandbox Verification Checklist
 
 Use this checklist before switching to live mode:
 
@@ -259,7 +317,7 @@ Use this checklist before switching to live mode:
 - Webhook URL uses HTTPS and points to `/commerce/webhooks/paypal`.
 - A product is active and has the expected price/currency.
 - The product buy URL opens publicly.
-- A page with a `Commerce Buy Button` renders the expected product label and buy link.
+- A page with a `Commerce Buy Button` adds the expected product to `/commerce/cart`.
 - Starting checkout redirects to PayPal.
 - A sandbox buyer can approve the payment.
 - The visitor returns to the signed success page.
@@ -272,6 +330,25 @@ Use this checklist before switching to live mode:
 - Re-sending the same webhook does not duplicate payment attempts.
 - Invalid webhook signatures are rejected and do not mark orders paid.
 - No PayPal secret appears in admin screens, public pages, logs, screenshots, or docs.
+
+## SumUp Sandbox Verification Checklist
+
+- The sandbox merchant is selected in SumUp Dashboard.
+- The Merchant ID and `sk_test_` secret key belong to that same sandbox account.
+- `Commerce Settings` shows gateway `sumup`, sandbox mode, and checkout ready.
+- The test API key and sandbox merchant code are configured, but the key value is not rendered.
+- A Commerce block adds the active EUR product to `/commerce/cart`.
+- Quantity, VAT, and the final amount are correct before checkout.
+- Starting checkout creates one pending order and redirects to `checkout.sumup.com`.
+- The SumUp checkout reference matches the CMS order number.
+- Completing a sandbox payment produces `CHECKOUT_STATUS_CHANGED` at `/commerce/webhooks/sumup`.
+- The handler retrieves the checkout from SumUp and confirms a successful transaction.
+- The CMS order becomes `paid` and its payment attempt becomes `succeeded`.
+- Re-sending the same paid notification does not create another payment attempt.
+- A mismatched merchant code, reference, amount, or currency never marks an order paid.
+- Failed or expired SumUp checkouts release reserved inventory.
+- The documented successful test card `4200 0000 0000 0091` completes with any future expiry date
+  and any three-digit CVV.
 
 ## Live Mode Checklist
 
@@ -287,13 +364,19 @@ Before switching to `WEBBLOCKS_COMMERCE_PAYPAL_MODE=live`:
 
 Keep sandbox and live credentials separate. Do not reuse sandbox webhook IDs in live mode.
 
+For SumUp live mode, select the verified real merchant account, create a separate `sk_live_`
+secret API key, use that account's live Merchant ID, set `WEBBLOCKS_COMMERCE_SUMUP_MODE=live`,
+refresh the application configuration, and run one acceptable low-value payment. Never reuse or
+mix a sandbox merchant, test key, live merchant, or live key.
+
 ## Troubleshooting
 
 If the buy page says checkout is not ready:
 
 - Open `Commerce Settings`.
-- Confirm gateway is `paypal`.
-- Confirm client ID and client secret are configured.
+- Confirm the selected gateway is `paypal` or `sumup`.
+- For PayPal, confirm client ID and client secret are configured.
+- For SumUp, confirm API key and merchant code are configured.
 - Confirm the product is active and has a valid price.
 - Confirm plugin migrations have run.
 
@@ -311,19 +394,27 @@ If a webhook is rejected:
 - Check that sandbox credentials are not mixed with live webhook IDs.
 - Check that the webhook ID belongs to the same PayPal REST app as the client credentials.
 
+If a SumUp order stays pending:
+
+- Confirm the public HTTPS URL `/commerce/webhooks/sumup` is reachable.
+- Confirm the API key can read the checkout and belongs to the configured merchant code.
+- Confirm the checkout reference, amount, and currency still match the CMS order.
+- Confirm SumUp reports `PAID` and includes a `SUCCESSFUL` transaction.
+
+If the SumUp hosted page reports an expired or missing checkout, start a new checkout from the
+cart. Hosted Checkout sessions expire after about 30 minutes and their URLs must not be bookmarked
+or reused.
+
 ## Current Limitations
 
-The MVP does not yet include:
+The current plugin does not yet include:
 
-- cart or multi-product checkout
-- taxes
 - shipping
 - coupons
 - subscriptions
 - refunds from CMS
 - customer accounts
-- inventory reservation
 - fulfillment workflows
-- PayPal live onboarding UI inside CMS
+- provider onboarding or secret editing inside CMS
 
-These are intentionally deferred so the first plugin slice remains small, secure, and reviewable.
+These remain separate features rather than being hidden inside provider integrations.

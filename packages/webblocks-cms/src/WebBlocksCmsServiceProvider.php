@@ -883,6 +883,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       'webadmin/api',
       'webadmin/api/*',
       'commerce/webhooks/paypal',
+      'commerce/webhooks/sumup',
     ];
 
     foreach ($this->internalApiCsrfMiddlewareClasses() as $middleware) {

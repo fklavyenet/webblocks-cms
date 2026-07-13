@@ -54,6 +54,42 @@
                 <div class="wb-settings-row-label"><strong>{{ $commerceText('settings.paypal_mode') }}</strong></div>
                 <div class="wb-settings-row-control"><code>{{ $paypal['mode'] }}</code></div>
             </div>
+            <div class="wb-settings-row">
+                <div class="wb-settings-row-label"><strong>{{ $commerceText('settings.sumup_mode') }}</strong></div>
+                <div class="wb-settings-row-control"><code>{{ $sumup['mode'] }}</code></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="wb-card">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+            <div class="wb-stack wb-stack-1">
+                <strong>{{ $commerceText('settings.sumup_configuration') }}</strong>
+                <span class="wb-text-sm wb-text-muted">{{ $commerceText('settings.sumup_help') }}</span>
+            </div>
+            <span class="wb-status-pill {{ $statusClass($sumup['webhook_ready']) }}">{{ $sumup['webhook_ready'] ? $commerceText('settings.webhook_ready') : $commerceText('settings.needs_config') }}</span>
+        </div>
+        <div class="wb-card-body wb-stack wb-gap-3">
+            <div class="wb-settings-row">
+                <div class="wb-settings-row-label"><strong>{{ $commerceText('settings.api_key') }}</strong></div>
+                <div class="wb-settings-row-control">
+                    <span class="wb-status-pill {{ $statusClass($sumup['api_key_configured']) }}">{{ $configured($sumup['api_key_configured']) }}</span>
+                    <code>WEBBLOCKS_COMMERCE_SUMUP_API_KEY</code>
+                </div>
+            </div>
+            <div class="wb-settings-row">
+                <div class="wb-settings-row-label"><strong>{{ $commerceText('settings.merchant_code') }}</strong></div>
+                <div class="wb-settings-row-control">
+                    <span class="wb-status-pill {{ $statusClass($sumup['merchant_code_configured']) }}">{{ $configured($sumup['merchant_code_configured']) }}</span>
+                    <code>WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE</code>
+                </div>
+            </div>
+            <div class="wb-settings-row">
+                <div class="wb-settings-row-label"><strong>{{ $commerceText('settings.webhook_url') }}</strong></div>
+                <div class="wb-settings-row-control">
+                    <code>{{ $sumup['webhook_url'] }}</code>
+                </div>
+            </div>
         </div>
     </section>
 

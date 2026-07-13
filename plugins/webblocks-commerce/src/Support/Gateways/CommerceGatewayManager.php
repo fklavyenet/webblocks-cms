@@ -8,6 +8,7 @@ class CommerceGatewayManager
 {
   public function __construct(
     private readonly PayPalConfig $paypalConfig,
+    private readonly SumUpConfig $sumUpConfig,
   ) {}
 
   public function gatewayKey(): string
@@ -26,6 +27,7 @@ class CommerceGatewayManager
     return match ($this->gatewayKey()) {
       'fake' => true,
       'paypal' => $this->paypalConfig->isCheckoutReady(),
+      'sumup' => $this->sumUpConfig->isCheckoutReady(),
       default => false,
     };
   }
@@ -34,6 +36,7 @@ class CommerceGatewayManager
   {
     return match ($this->gatewayKey()) {
       'paypal' => 'PayPal checkout is not configured yet. Add the PayPal client ID, client secret, and webhook ID before accepting payments.',
+      'sumup' => 'SumUp checkout is not configured yet. Add the SumUp API key and merchant code before accepting payments.',
       default => 'Checkout gateway configuration is not active yet.',
     };
   }
@@ -44,6 +47,9 @@ class CommerceGatewayManager
       'fake' => app(FakeCheckoutGateway::class),
       'paypal' => $this->paypalConfig->isCheckoutReady()
         ? app(PayPalCheckoutGateway::class)
+        : throw new CheckoutUnavailableException($this->unavailableMessage()),
+      'sumup' => $this->sumUpConfig->isCheckoutReady()
+        ? app(SumUpCheckoutGateway::class)
         : throw new CheckoutUnavailableException($this->unavailableMessage()),
       default => throw new CheckoutUnavailableException($this->unavailableMessage()),
     };

@@ -163,6 +163,7 @@ class CartService
 
       $lines[] = [
         'product_id' => $product->getKey(),
+        'slug' => $product->slug,
         'title' => $this->localizer->title($product, $cart->locale),
         'sku' => $product->sku,
         'quantity' => $quantity,

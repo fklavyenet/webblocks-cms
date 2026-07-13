@@ -106,6 +106,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md) - ecosystem-wide plugin identity, manifest, catalog/store, and future `plugins.webblocksui.com` direction
 - [Plugin Catalog Product Architecture](plugin-catalog-product-architecture.md) - product positioning, MVP scope, domain model, and implementation options for the proposed `plugins.webblocksui.com` Plugin Catalog
 - [WebBlocks Commerce Operator Guide](webblocks-commerce-operator-guide.md) - install, PayPal setup, product publishing, Commerce Buy Button usage, buy URL fallback, and sandbox verification checklist for the first-party Commerce plugin
+- [Connect SumUp to WebBlocks Commerce](webblocks-commerce-sumup-quickstart.md) - store-owner quick start for sandbox account creation, secure configuration, a test payment, and the live-mode switch; also available in [German](webblocks-commerce-sumup-quickstart.de.md) and [Turkish](webblocks-commerce-sumup-quickstart.tr.md)
 - [WebBlocks Commerce Plugin MVP](webblocks-commerce-plugin-mvp.md) - progress-tracked MVP plan for the first-party product admin and hosted checkout plugin
 
 ## Project Boundary
@@ -118,4 +119,5 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md)
 - [Plugin Catalog Product Architecture](plugin-catalog-product-architecture.md)
 - [WebBlocks Commerce Operator Guide](webblocks-commerce-operator-guide.md)
+- [Connect SumUp to WebBlocks Commerce](webblocks-commerce-sumup-quickstart.md)
 - [WebBlocks Commerce Plugin MVP](webblocks-commerce-plugin-mvp.md)

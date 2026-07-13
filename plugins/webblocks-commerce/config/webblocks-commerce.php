@@ -12,6 +12,12 @@ return [
     'webhook_id' => env('WEBBLOCKS_COMMERCE_PAYPAL_WEBHOOK_ID'),
   ],
 
+  'sumup' => [
+    'mode' => env('WEBBLOCKS_COMMERCE_SUMUP_MODE', 'sandbox'),
+    'api_key' => env('WEBBLOCKS_COMMERCE_SUMUP_API_KEY'),
+    'merchant_code' => env('WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE'),
+  ],
+
   /*
   |----------------------------------------------------------------------------
   | VAT / tax

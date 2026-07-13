@@ -2,9 +2,9 @@
   "handle": "webblocks-commerce",
   "label": "WebBlocks Commerce",
   "description": "Simple product sales and hosted checkout foundations for WebBlocks CMS sites.",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "provider": "WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\WebBlocksCommercePlugin",
-  "required_cms_version": "^1.35",
+  "required_cms_version": "^1.37.3",
   "permissions": [
     {
       "name": "webblocks-commerce.view",
@@ -71,7 +71,7 @@
     {
       "handle": "webblocks-commerce::buy-button",
       "label": "Commerce Buy Button",
-      "description": "Links visitors to a WebBlocks Commerce product buy page.",
+      "description": "Adds a selected WebBlocks Commerce product to the public shopping cart.",
       "admin_view": "webblocks-cms::admin.blocks.types.webblocks-commerce-buy-button",
       "public_view": "webblocks-cms::pages.partials.blocks.webblocks-commerce-buy-button",
       "metadata": {

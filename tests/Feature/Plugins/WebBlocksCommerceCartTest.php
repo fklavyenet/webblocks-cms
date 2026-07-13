@@ -36,8 +36,8 @@ class WebBlocksCommerceCartTest extends TestCase
     config()->set('webblocks-plugins.install.root', $root);
     config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
 
-    File::ensureDirectoryExists($root.'/webblocks-commerce/0.7.3');
-    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.7.3');
+    File::ensureDirectoryExists($root.'/webblocks-commerce/0.8.0');
+    File::copyDirectory(base_path('plugins/webblocks-commerce'), $root.'/webblocks-commerce/0.8.0');
 
     $this->app->forgetInstance(PluginRegistry::class);
     app(PluginRegistry::class)->get('webblocks-commerce');
@@ -52,6 +52,46 @@ class WebBlocksCommerceCartTest extends TestCase
   }
 
   // ---- Domain: CartService --------------------------------------------------
+
+  #[Test]
+  public function public_storefront_cart_adds_updates_and_checks_out_with_the_configured_gateway(): void
+  {
+    $product = $this->product([
+      'title' => 'Paracord',
+      'slug' => 'paracord',
+      'price_amount' => 500,
+      'currency' => 'EUR',
+      'inventory_quantity' => 10,
+    ]);
+
+    $this->post(route('webblocks.commerce.cart.items.add', $product->id), ['quantity' => 2])
+      ->assertRedirect(route('webblocks.commerce.cart.show'));
+
+    $cartPage = $this->get(route('webblocks.commerce.cart.show'));
+    $cartPage->assertOk();
+    $cartPage->assertSee('Shopping Cart');
+    $cartPage->assertSee('Paracord');
+    $cartPage->assertSee('10.00 EUR');
+    $cartPage->assertSee('Continue to secure payment');
+
+    $this->patch(route('webblocks.commerce.cart.items.update', $product->id), ['quantity' => 3])
+      ->assertRedirect(route('webblocks.commerce.cart.show'));
+
+    $checkout = $this->post(route('webblocks.commerce.cart.checkout'), [
+      'customer_email' => 'buyer@example.test',
+    ]);
+    $checkout->assertRedirect();
+
+    $order = CommerceOrder::query()->with('items')->firstOrFail();
+    $this->assertSame('buyer@example.test', $order->customer_email);
+    $this->assertSame(1500, $order->total_amount);
+    $this->assertSame(3, $order->items->first()->quantity);
+    $this->assertSame('fake', $order->gateway);
+
+    $this->get(route('webblocks.commerce.cart.show'))
+      ->assertOk()
+      ->assertSee('Your cart is empty');
+  }
 
   #[Test]
   public function adding_the_same_product_twice_merges_quantity(): void

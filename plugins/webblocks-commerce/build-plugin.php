@@ -41,9 +41,44 @@ foreach ($files as $file) {
     continue;
   }
 
+  if ($relative === 'README.md') {
+    $readme = (string) file_get_contents($file->getPathname());
+    $zip->addFromString($relative, str_replace('(../../docs/', '(docs/', $readme));
+
+    continue;
+  }
+
   $zip->addFile($file->getPathname(), $relative);
 }
 
-$zip->close();
+$documentationRoot = dirname(__DIR__, 2).'/docs';
+$documentationFiles = [
+  'webblocks-commerce-sumup-quickstart.md',
+  'webblocks-commerce-sumup-quickstart.de.md',
+  'webblocks-commerce-sumup-quickstart.tr.md',
+  'webblocks-commerce-operator-guide.md',
+];
+
+foreach ($documentationFiles as $documentationFile) {
+  $path = $documentationRoot.'/'.$documentationFile;
+
+  if (! is_file($path)) {
+    $zip->close();
+    unlink($output);
+    fwrite(STDERR, "Missing plugin documentation: {$path}\n");
+    exit(1);
+  }
+
+  $zip->addFile($path, 'docs/'.$documentationFile);
+}
+
+if (! $zip->close()) {
+  if (is_file($output)) {
+    unlink($output);
+  }
+
+  fwrite(STDERR, "Unable to finalize {$output}\n");
+  exit(1);
+}
 
 fwrite(STDOUT, "Built {$output}\n");
