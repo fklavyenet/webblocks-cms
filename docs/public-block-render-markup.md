@@ -39,7 +39,7 @@ Section
     └── Comments
 ```
 
-`rating` stores lightweight 1-5 star feedback without creating comment rows. `comments` stores visitor text for moderation and only renders approved comments publicly. Both blocks own their public `section.wb-card` root, but they intentionally do not own visible section headings.
+`rating` stores lightweight 1-5 star feedback without creating comment rows and renders WebBlocks UI `wb-rating` stars (a read-only average plus a no-JS star input); it supports an optional `settings.title` heading but otherwise composes visible copy with neighboring content blocks. `comments` stores visitor text for moderation and only renders approved comments publicly. Both blocks own their public `section.wb-card` root, and `comments` intentionally does not own a visible section heading.
 
 ## Common page trees
 

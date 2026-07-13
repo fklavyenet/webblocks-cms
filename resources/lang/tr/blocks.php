@@ -34,5 +34,6 @@ return [
     'summary' => ':count puandan ortalama :average / 5.',
     'summary_plural' => ':count puandan ortalama :average / 5.',
     'none' => 'Henuz puan yok.',
+    'average_aria' => 'Ortalama puan :average / 5',
   ],
 ];

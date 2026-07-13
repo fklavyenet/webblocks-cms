@@ -34,5 +34,6 @@ return [
     'summary' => 'Average :average / 5 from :count rating.',
     'summary_plural' => 'Average :average / 5 from :count ratings.',
     'none' => 'No ratings yet.',
+    'average_aria' => 'Average rating :average out of 5',
   ],
 ];

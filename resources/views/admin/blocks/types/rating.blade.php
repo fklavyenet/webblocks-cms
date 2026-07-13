@@ -16,6 +16,12 @@
 
     <input type="hidden" name="rating_scale" value="5">
 
+    <div class="wb-stack wb-gap-1">
+        <label for="rating_title">{{ $adminText('title_label') }}</label>
+        <input type="text" id="rating_title" name="rating_title" class="wb-input" maxlength="120" value="{{ old('rating_title', $settings['title'] ?? '') }}" placeholder="{{ $adminText('title_placeholder') }}">
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('title_help') }}</div>
+    </div>
+
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="rating_allow_change">{{ $adminText('changes_label') }}</label>

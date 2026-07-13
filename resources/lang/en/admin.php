@@ -3886,6 +3886,9 @@ return [
     'rating' => [
       'system_title' => 'System Rating',
       'system_help' => 'Rating collects lightweight 1-5 star feedback. Visible headings should be built with normal content blocks before this block.',
+      'title_label' => 'Heading',
+      'title_placeholder' => 'Rate this page',
+      'title_help' => 'Optional heading shown above the stars. Leave empty to use a separate Header block instead.',
       'changes_label' => 'Vote changes',
       'allow_change' => 'Allow visitors to update their rating',
       'keep_first' => 'Keep the first rating',

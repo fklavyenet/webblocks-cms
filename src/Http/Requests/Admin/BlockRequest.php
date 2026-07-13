@@ -198,6 +198,7 @@ class BlockRequest extends FormRequest
       'rating_scale' => [$isRating ? 'required' : 'prohibited', Rule::in(['5'])],
       'rating_allow_change' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
       'rating_show_summary' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
+      'rating_title' => [$isRating ? 'nullable' : 'prohibited', 'string', 'max:120'],
       'comments_form_enabled' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
       'comments_show_approved' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
       'comments_show_author_name' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
@@ -1438,10 +1439,12 @@ class BlockRequest extends FormRequest
       }
 
       if ($blockType?->slug === 'rating') {
+        $ratingTitle = trim((string) ($data['rating_title'] ?? ''));
         $settings = [
           'scale' => 5,
           'allow_change' => (bool) ($data['rating_allow_change'] ?? true),
           'show_summary' => (bool) ($data['rating_show_summary'] ?? true),
+          'title' => $ratingTitle !== '' ? $ratingTitle : null,
         ];
 
         $data['title'] = null;
@@ -2096,7 +2099,7 @@ class BlockRequest extends FormRequest
     unset($data['language']);
     unset($data['navigation_menu_key']);
     unset($data['text'], $data['level'], $data['anchor']);
-    unset($data['rating_scale'], $data['rating_allow_change'], $data['rating_show_summary']);
+    unset($data['rating_scale'], $data['rating_allow_change'], $data['rating_show_summary'], $data['rating_title']);
     unset($data['comments_form_enabled'], $data['comments_show_approved'], $data['comments_show_author_name'], $data['comments_sort_order']);
     unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['alert_variant']);
     unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);

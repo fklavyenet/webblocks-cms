@@ -3884,6 +3884,9 @@ return [
     'rating' => [
       'system_title' => 'Sistem Puanlaması',
       'system_help' => 'Rating, hafif 1-5 yildiz geri bildirimi toplar. Görünen başlıklar bu bloktan önce normal içerik bloklarıyla kurulmalidir.',
+      'title_label' => 'Başlık',
+      'title_placeholder' => 'Bu sayfayı puanla',
+      'title_help' => 'Yıldızların üstünde gösterilecek isteğe bağlı başlık. Boş bırakırsan ayrı bir Header bloğu kullanabilirsin.',
       'changes_label' => 'Oy değişiklikleri',
       'allow_change' => 'Ziyaretçiler puanlarını güncelleyebilsin',
       'keep_first' => 'İlk puani koru',

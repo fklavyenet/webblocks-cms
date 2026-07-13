@@ -34,5 +34,6 @@ return [
     'summary' => 'Durchschnitt :average / 5 aus :count Bewertung.',
     'summary_plural' => 'Durchschnitt :average / 5 aus :count Bewertungen.',
     'none' => 'Noch keine Bewertungen.',
+    'average_aria' => 'Durchschnittliche Bewertung :average von 5',
   ],
 ];

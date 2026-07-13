@@ -3886,6 +3886,9 @@ return [
     'rating' => [
       'system_title' => 'Systembewertung',
       'system_help' => 'Rating sammelt leichtes 1-5-Sterne-Feedback. Sichtbare Überschriften sollten mit normalen Content-Blöcken vor diesem Block aufgebaut werden.',
+      'title_label' => 'Überschrift',
+      'title_placeholder' => 'Diese Seite bewerten',
+      'title_help' => 'Optionale Überschrift über den Sternen. Leer lassen, um stattdessen einen separaten Header-Block zu verwenden.',
       'changes_label' => 'Bewertungsänderungen',
       'allow_change' => 'Besucher können ihre Bewertung aktualisieren',
       'keep_first' => 'Erste Bewertung behalten',
