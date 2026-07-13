@@ -9,6 +9,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Unreleased
 
+- Add a permission-guarded Commerce Settings form for PayPal and SumUp. Provider credentials are encrypted at rest, remain write-only in the admin UI, preserve existing values when fields are left blank, support explicit clearing, and continue to honor environment configuration as a non-editable runtime override.
 - Add SumUp Hosted Checkout to WebBlocks Commerce with secret-safe readiness diagnostics and API-verified, idempotent status webhooks. Add the session-backed public cart so native Commerce blocks can add products and visitors can update quantities and continue through multi-line hosted checkout without Trusted HTML. Document SumUp onboarding, secure server configuration, current sandbox payment testing, live transition, and troubleshooting in task-focused English, German, and Turkish quick starts.
 - Rate-limit admin sign-in and password-reset requests: failed logins lock per email+IP after a configurable threshold (cleared on success), with a per-IP backstop across the login, forgot-password, and reset-password endpoints. Tunable via `WEBBLOCKS_CMS_MAX_LOGIN_ATTEMPTS` and `WEBBLOCKS_CMS_LOGIN_DECAY_SECONDS`.
 - Keep SVG out of the default media upload and remote-fetch allowlist; operators who trust every media-uploading account can opt back in with `WEBBLOCKS_CMS_ALLOW_SVG_UPLOADS=true`. Consolidate the accepted MIME allowlist into one place so uploads, the Internal Content API, and remote fetch stay in sync.

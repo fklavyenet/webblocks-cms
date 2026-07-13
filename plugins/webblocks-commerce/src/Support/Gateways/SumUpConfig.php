@@ -2,23 +2,29 @@
 
 namespace WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways;
 
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+
 class SumUpConfig
 {
+  public function __construct(
+    private readonly CommerceSettingsStore $settings,
+  ) {}
+
   public function mode(): string
   {
-    $configured = $this->stringValue('mode', env('WEBBLOCKS_COMMERCE_SUMUP_MODE', 'sandbox'));
+    $configured = $this->settings->value(CommerceSettingsStore::SUMUP_MODE);
 
-    return $configured === 'live' ? 'live' : 'sandbox';
+    return strtolower((string) $configured) === 'live' ? 'live' : 'sandbox';
   }
 
   public function apiKey(): ?string
   {
-    return $this->nullableStringValue('api_key', env('WEBBLOCKS_COMMERCE_SUMUP_API_KEY'));
+    return $this->settings->value(CommerceSettingsStore::SUMUP_API_KEY);
   }
 
   public function merchantCode(): ?string
   {
-    return $this->nullableStringValue('merchant_code', env('WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE'));
+    return $this->settings->value(CommerceSettingsStore::SUMUP_MERCHANT_CODE);
   }
 
   public function apiBaseUrl(): string
@@ -34,23 +40,5 @@ class SumUpConfig
   public function isWebhookReady(): bool
   {
     return $this->isCheckoutReady();
-  }
-
-  private function stringValue(string $key, mixed $fallback): string
-  {
-    $value = config('webblocks-commerce.sumup.'.$key, $fallback);
-
-    return strtolower(trim((string) $value));
-  }
-
-  private function nullableStringValue(string $key, mixed $fallback): ?string
-  {
-    $value = config('webblocks-commerce.sumup.'.$key, $fallback);
-
-    if (! is_string($value) || trim($value) === '') {
-      return null;
-    }
-
-    return trim($value);
   }
 }

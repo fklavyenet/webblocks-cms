@@ -3,17 +3,17 @@
 return [
   'enabled' => env('WEBBLOCKS_COMMERCE_ENABLED', false),
   'default_currency' => env('WEBBLOCKS_COMMERCE_DEFAULT_CURRENCY', 'USD'),
-  'gateway' => env('WEBBLOCKS_COMMERCE_GATEWAY', 'paypal'),
+  'gateway' => env('WEBBLOCKS_COMMERCE_GATEWAY'),
 
   'paypal' => [
-    'mode' => env('WEBBLOCKS_COMMERCE_PAYPAL_MODE', 'sandbox'),
+    'mode' => env('WEBBLOCKS_COMMERCE_PAYPAL_MODE'),
     'client_id' => env('WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_ID'),
     'client_secret' => env('WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_SECRET'),
     'webhook_id' => env('WEBBLOCKS_COMMERCE_PAYPAL_WEBHOOK_ID'),
   ],
 
   'sumup' => [
-    'mode' => env('WEBBLOCKS_COMMERCE_SUMUP_MODE', 'sandbox'),
+    'mode' => env('WEBBLOCKS_COMMERCE_SUMUP_MODE'),
     'api_key' => env('WEBBLOCKS_COMMERCE_SUMUP_API_KEY'),
     'merchant_code' => env('WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE'),
   ],

@@ -17,6 +17,7 @@ class WebBlocksCommerceSchema
       'webblocks_commerce_order_items',
       'webblocks_commerce_payments',
       'webblocks_commerce_webhook_events',
+      'webblocks_commerce_settings',
     ];
   }
 

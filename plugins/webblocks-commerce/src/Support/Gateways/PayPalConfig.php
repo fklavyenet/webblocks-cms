@@ -2,28 +2,34 @@
 
 namespace WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways;
 
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+
 class PayPalConfig
 {
+  public function __construct(
+    private readonly CommerceSettingsStore $settings,
+  ) {}
+
   public function mode(): string
   {
-    $configured = $this->stringValue('mode', env('WEBBLOCKS_COMMERCE_PAYPAL_MODE', 'sandbox'));
+    $configured = $this->settings->value(CommerceSettingsStore::PAYPAL_MODE);
 
-    return $configured === 'live' ? 'live' : 'sandbox';
+    return strtolower((string) $configured) === 'live' ? 'live' : 'sandbox';
   }
 
   public function clientId(): ?string
   {
-    return $this->nullableStringValue('client_id', env('WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_ID'));
+    return $this->settings->value(CommerceSettingsStore::PAYPAL_CLIENT_ID);
   }
 
   public function clientSecret(): ?string
   {
-    return $this->nullableStringValue('client_secret', env('WEBBLOCKS_COMMERCE_PAYPAL_CLIENT_SECRET'));
+    return $this->settings->value(CommerceSettingsStore::PAYPAL_CLIENT_SECRET);
   }
 
   public function webhookId(): ?string
   {
-    return $this->nullableStringValue('webhook_id', env('WEBBLOCKS_COMMERCE_PAYPAL_WEBHOOK_ID'));
+    return $this->settings->value(CommerceSettingsStore::PAYPAL_WEBHOOK_ID);
   }
 
   public function apiBaseUrl(): string
@@ -41,23 +47,5 @@ class PayPalConfig
   public function isWebhookReady(): bool
   {
     return $this->isCheckoutReady() && $this->webhookId() !== null;
-  }
-
-  private function stringValue(string $key, mixed $fallback): string
-  {
-    $value = config('webblocks-commerce.paypal.'.$key, $fallback);
-
-    return strtolower(trim((string) $value));
-  }
-
-  private function nullableStringValue(string $key, mixed $fallback): ?string
-  {
-    $value = config('webblocks-commerce.paypal.'.$key, $fallback);
-
-    if (! is_string($value) || trim($value) === '') {
-      return null;
-    }
-
-    return trim($value);
   }
 }

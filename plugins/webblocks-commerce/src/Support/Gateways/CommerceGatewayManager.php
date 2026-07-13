@@ -3,21 +3,19 @@
 namespace WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways;
 
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
 
 class CommerceGatewayManager
 {
   public function __construct(
     private readonly PayPalConfig $paypalConfig,
     private readonly SumUpConfig $sumUpConfig,
+    private readonly CommerceSettingsStore $settings,
   ) {}
 
   public function gatewayKey(): string
   {
-    $configured = config('webblocks-commerce.gateway');
-
-    if (! is_string($configured) || trim($configured) === '') {
-      $configured = env('WEBBLOCKS_COMMERCE_GATEWAY', 'paypal');
-    }
+    $configured = $this->settings->value(CommerceSettingsStore::GATEWAY) ?? 'paypal';
 
     return strtolower(trim((string) $configured));
   }

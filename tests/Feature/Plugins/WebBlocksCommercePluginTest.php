@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -21,7 +22,10 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceOrder;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceOrderItem;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommercePayment;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceSetting;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceWebhookEvent;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\PayPalConfig;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
@@ -54,7 +58,7 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.8.0', $plugin->versionText());
+    $this->assertSame('0.8.1', $plugin->versionText());
     $this->assertSame('^1.37.3', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
@@ -102,6 +106,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $productRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_commerce.products.index');
     $orderRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_commerce.orders.index');
     $settingsRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_commerce.settings.edit');
+    $settingsUpdateRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_commerce.settings.update');
 
     $this->assertNotNull($productRoute);
     $this->assertSame('webadmin/plugins/webblocks-commerce/products', $productRoute?->uri());
@@ -109,6 +114,8 @@ class WebBlocksCommercePluginTest extends TestCase
     $this->assertSame('webadmin/plugins/webblocks-commerce/orders', $orderRoute?->uri());
     $this->assertNotNull($settingsRoute);
     $this->assertSame('webadmin/plugins/webblocks-commerce/settings', $settingsRoute?->uri());
+    $this->assertSame(['PUT'], $settingsUpdateRoute?->methods());
+    $this->assertSame('webadmin/plugins/webblocks-commerce/settings', $settingsUpdateRoute?->uri());
     $this->assertNull(Route::getRoutes()->getByName('admin.commerce.products.index'));
     $this->assertNull(Route::getRoutes()->getByName('admin.commerce.orders.index'));
     $this->assertNull(Route::getRoutes()->getByName('admin.commerce.settings.edit'));
@@ -139,6 +146,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $this->assertTrue(Schema::hasTable('webblocks_commerce_order_items'));
     $this->assertTrue(Schema::hasTable('webblocks_commerce_payments'));
     $this->assertTrue(Schema::hasTable('webblocks_commerce_webhook_events'));
+    $this->assertTrue(Schema::hasTable('webblocks_commerce_settings'));
 
     $this->assertTrue(Schema::hasColumns('webblocks_commerce_products', [
       'site_id',
@@ -170,6 +178,10 @@ class WebBlocksCommercePluginTest extends TestCase
       'processed_at',
       'payload_digest',
       'status',
+    ]));
+    $this->assertTrue(Schema::hasColumns('webblocks_commerce_settings', [
+      'key',
+      'value',
     ]));
     $this->assertDatabaseHas(CmsTable::name('block_types'), [
       'slug' => 'webblocks-commerce-buy-button',
@@ -682,6 +694,192 @@ class WebBlocksCommercePluginTest extends TestCase
     $response->assertSee('WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE');
     $response->assertSee('/commerce/webhooks/sumup');
     $response->assertDontSee('sk_test_private-sumup-key');
+  }
+
+  #[Test]
+  public function permitted_admin_can_save_write_only_encrypted_commerce_credentials(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', null);
+    config()->set('webblocks-commerce.paypal.mode', null);
+    config()->set('webblocks-commerce.paypal.client_id', null);
+    config()->set('webblocks-commerce.paypal.client_secret', null);
+    config()->set('webblocks-commerce.paypal.webhook_id', null);
+    config()->set('webblocks-commerce.sumup.mode', null);
+    config()->set('webblocks-commerce.sumup.api_key', null);
+    config()->set('webblocks-commerce.sumup.merchant_code', null);
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $this->migrateWebBlocksCommercePlugin();
+
+    $user = User::factory()->superAdmin()->create();
+    $response = $this->actingAs($user)->put(route('webblocks.plugins.webblocks_commerce.settings.update'), [
+      'gateway' => 'paypal',
+      'paypal_mode' => 'sandbox',
+      'paypal_client_id' => 'stored-paypal-client-id',
+      'paypal_client_secret' => 'stored-paypal-client-secret',
+      'paypal_webhook_id' => 'stored-paypal-webhook-id',
+      'sumup_mode' => 'sandbox',
+      'sumup_api_key' => 'stored-sumup-api-key',
+      'sumup_merchant_code' => 'MSTORE123',
+    ]);
+
+    $response->assertRedirect(route('webblocks.plugins.webblocks_commerce.settings.edit'));
+    $response->assertSessionHas('success', 'Commerce settings saved.');
+
+    $rawSecret = DB::table('webblocks_commerce_settings')
+      ->where('key', CommerceSettingsStore::PAYPAL_CLIENT_SECRET)
+      ->value('value');
+    $this->assertIsString($rawSecret);
+    $this->assertNotSame('stored-paypal-client-secret', $rawSecret);
+    $this->assertSame(
+      'stored-paypal-client-secret',
+      CommerceSetting::query()->where('key', CommerceSettingsStore::PAYPAL_CLIENT_SECRET)->firstOrFail()->value,
+    );
+    $this->assertSame('stored-paypal-client-id', app(PayPalConfig::class)->clientId());
+    $this->assertSame('stored-paypal-client-secret', app(PayPalConfig::class)->clientSecret());
+
+    $settings = $this->actingAs($user)->get(route('webblocks.plugins.webblocks_commerce.settings.edit'));
+    $settings->assertOk();
+    $settings->assertSee('name="paypal_client_secret"', false);
+    $settings->assertSee('type="password"', false);
+    $settings->assertSee('Encrypted admin setting');
+    $settings->assertDontSee('stored-paypal-client-secret');
+    $settings->assertDontSee('stored-sumup-api-key');
+  }
+
+  #[Test]
+  public function environment_credentials_override_encrypted_admin_settings_and_cannot_be_replaced_by_the_form(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', null);
+    config()->set('webblocks-commerce.paypal.mode', null);
+    config()->set('webblocks-commerce.paypal.client_id', null);
+    config()->set('webblocks-commerce.paypal.client_secret', null);
+    config()->set('webblocks-commerce.paypal.webhook_id', null);
+    config()->set('webblocks-commerce.sumup.mode', null);
+    config()->set('webblocks-commerce.sumup.api_key', null);
+    config()->set('webblocks-commerce.sumup.merchant_code', null);
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $this->migrateWebBlocksCommercePlugin();
+
+    app(CommerceSettingsStore::class)->save([
+      CommerceSettingsStore::PAYPAL_CLIENT_ID => 'stored-client-id',
+    ]);
+    config()->set('webblocks-commerce.paypal.client_id', 'environment-client-id');
+
+    $user = User::factory()->superAdmin()->create();
+    $this->actingAs($user)->put(route('webblocks.plugins.webblocks_commerce.settings.update'), [
+      'gateway' => 'paypal',
+      'paypal_mode' => 'sandbox',
+      'paypal_client_id' => 'attempted-replacement',
+      'paypal_client_secret' => '',
+      'paypal_webhook_id' => '',
+      'sumup_mode' => 'sandbox',
+      'sumup_api_key' => '',
+      'sumup_merchant_code' => '',
+    ])->assertRedirect(route('webblocks.plugins.webblocks_commerce.settings.edit'));
+
+    $this->assertSame('environment-client-id', app(PayPalConfig::class)->clientId());
+    $this->assertSame(
+      'stored-client-id',
+      CommerceSetting::query()->where('key', CommerceSettingsStore::PAYPAL_CLIENT_ID)->firstOrFail()->value,
+    );
+
+    $settings = $this->actingAs($user)->get(route('webblocks.plugins.webblocks_commerce.settings.edit'));
+    $settings->assertSee('Managed by environment');
+    $settings->assertDontSee('environment-client-id');
+    $settings->assertDontSee('stored-client-id');
+  }
+
+  #[Test]
+  public function blank_secret_fields_preserve_saved_values_and_explicit_clear_removes_them(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', null);
+    config()->set('webblocks-commerce.paypal.mode', null);
+    config()->set('webblocks-commerce.paypal.client_id', null);
+    config()->set('webblocks-commerce.paypal.client_secret', null);
+    config()->set('webblocks-commerce.paypal.webhook_id', null);
+    config()->set('webblocks-commerce.sumup.mode', null);
+    config()->set('webblocks-commerce.sumup.api_key', null);
+    config()->set('webblocks-commerce.sumup.merchant_code', null);
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $this->migrateWebBlocksCommercePlugin();
+    app(CommerceSettingsStore::class)->save([
+      CommerceSettingsStore::PAYPAL_CLIENT_SECRET => 'preserved-secret',
+    ]);
+
+    $user = User::factory()->superAdmin()->create();
+    $base = [
+      'gateway' => 'paypal',
+      'paypal_mode' => 'sandbox',
+      'paypal_client_id' => '',
+      'paypal_client_secret' => '',
+      'paypal_webhook_id' => '',
+      'sumup_mode' => 'sandbox',
+      'sumup_api_key' => '',
+      'sumup_merchant_code' => '',
+    ];
+
+    $this->actingAs($user)
+      ->put(route('webblocks.plugins.webblocks_commerce.settings.update'), $base)
+      ->assertSessionHasNoErrors();
+    $this->assertSame('preserved-secret', app(PayPalConfig::class)->clientSecret());
+
+    $this->actingAs($user)
+      ->put(route('webblocks.plugins.webblocks_commerce.settings.update'), array_merge($base, [
+        'clear_paypal_client_secret' => '1',
+      ]))
+      ->assertSessionHasNoErrors();
+    $this->assertNull(CommerceSetting::query()->where('key', CommerceSettingsStore::PAYPAL_CLIENT_SECRET)->first());
+    $this->assertNull(app(PayPalConfig::class)->clientSecret());
+  }
+
+  #[Test]
+  public function commerce_settings_update_requires_settings_permission(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
+    $this->actingAs(User::factory()->siteAdmin()->create())
+      ->put(route('webblocks.plugins.webblocks_commerce.settings.update'), [])
+      ->assertForbidden();
+  }
+
+  #[Test]
+  public function invalid_commerce_settings_never_flash_credentials_to_the_session(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $this->migrateWebBlocksCommercePlugin();
+
+    $response = $this->actingAs(User::factory()->superAdmin()->create())
+      ->from(route('webblocks.plugins.webblocks_commerce.settings.edit'))
+      ->put(route('webblocks.plugins.webblocks_commerce.settings.update'), [
+        'gateway' => 'invalid-gateway',
+        'paypal_mode' => 'sandbox',
+        'paypal_client_id' => 'must-not-be-flashed-client-id',
+        'paypal_client_secret' => 'must-not-be-flashed-client-secret',
+        'paypal_webhook_id' => 'must-not-be-flashed-webhook-id',
+        'sumup_mode' => 'sandbox',
+        'sumup_api_key' => 'must-not-be-flashed-api-key',
+        'sumup_merchant_code' => 'must-not-be-flashed-merchant-code',
+      ]);
+
+    $response->assertRedirect(route('webblocks.plugins.webblocks_commerce.settings.edit'));
+    $response->assertSessionHasErrors('gateway');
+    foreach ([
+      'paypal_client_id',
+      'paypal_client_secret',
+      'paypal_webhook_id',
+      'sumup_api_key',
+      'sumup_merchant_code',
+    ] as $credential) {
+      $this->assertFalse(
+        session()->hasOldInput($credential),
+        "Credential field [{$credential}] was flashed to the session.",
+      );
+    }
   }
 
   #[Test]

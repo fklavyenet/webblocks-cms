@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/webblocks-commerce-operator-guide.md
 
 # WebBlocks Commerce Operator Guide
 
-This guide explains how to install, configure, and test WebBlocks Commerce. The plugin supports a session-backed public cart, multi-line hosted checkout through PayPal or SumUp, product and read-only order admin, secret-safe provider diagnostics, public product pages, and a plugin-owned Commerce Buy Button block. Payment-card data stays on the selected provider's hosted payment surface.
+This guide explains how to install, configure, and test WebBlocks Commerce. The plugin supports a session-backed public cart, multi-line hosted checkout through PayPal or SumUp, product and read-only order admin, write-only encrypted provider settings, secret-safe diagnostics, public product pages, and a plugin-owned Commerce Buy Button block. Payment-card data stays on the selected provider's hosted payment surface.
 
 Store owners who want to connect SumUp should start with the task-focused
 [SumUp Quick Start](webblocks-commerce-sumup-quickstart.md), also available in
@@ -24,7 +24,7 @@ The plugin is developed under `plugins/webblocks-commerce`. It remains a manuall
 
 1. A CMS operator installs and enables WebBlocks Commerce.
 2. The operator runs plugin migrations from the plugin detail screen.
-3. The operator selects PayPal or SumUp and configures credentials in the install environment.
+3. The operator selects PayPal or SumUp in `Commerce Settings` and saves the provider credentials. Hosting-managed environment values may be used as overrides instead.
 4. The operator opens `Commerce Settings` to confirm checkout and webhook readiness.
 5. The operator creates a commerce product.
 6. The product detail screen shows a public buy URL.
@@ -105,7 +105,13 @@ Official PayPal references:
 - [PayPal Webhooks API](https://developer.paypal.com/docs/api/webhooks/v1/)
 - [Verify webhook signature](https://developer.paypal.com/docs/api/webhooks/v1/#verify-webhook-signature_post)
 
-Set these environment variables in the CMS install:
+Open `Commerce Settings`, select `PayPal`, select `Sandbox`, and enter the client ID, client secret,
+and webhook ID. The fields are write-only: saved values are encrypted in the plugin settings table
+and are never rendered back into the browser. Leaving a field blank preserves its current value;
+use the explicit clear checkbox to remove it.
+
+For hosting-managed configuration, the following environment variables remain supported and take
+precedence over encrypted admin settings:
 
 ```env
 WEBBLOCKS_COMMERCE_GATEWAY=paypal
@@ -123,7 +129,7 @@ In PayPal Developer Dashboard:
 
 1. Open `Apps & Credentials`.
 2. Use the default REST API app or create a new app.
-3. Copy the sandbox client ID and client secret into the install environment.
+3. Copy the sandbox client ID and client secret into the secure Commerce Settings form (or the install environment when using hosting-managed overrides).
 4. Create or open the app webhook settings.
 5. Add this webhook URL:
 
@@ -138,7 +144,7 @@ CHECKOUT.ORDER.APPROVED
 PAYMENT.CAPTURE.COMPLETED
 ```
 
-7. Copy the PayPal webhook ID into `WEBBLOCKS_COMMERCE_PAYPAL_WEBHOOK_ID`.
+7. Copy the PayPal webhook ID into the Commerce Settings form (or `WEBBLOCKS_COMMERCE_PAYPAL_WEBHOOK_ID` when using an environment override).
 8. Use PayPal sandbox buyer and seller accounts for checkout testing.
 
 For local HTTPS tunnels, use the tunnel HTTPS URL as the webhook URL. For production, use the final public HTTPS site URL.
@@ -154,7 +160,7 @@ For a screen-by-screen store-owner workflow, use the
 1. Create and select a sandbox merchant under SumUp Dashboard **Developer Settings → Sandboxes**.
 2. Copy the sandbox **Merchant ID** shown in the top-left Dashboard account area.
 3. Create a secret test API key under **Settings → For Developers → Toolkit → API Keys**.
-4. Configure the four server variables below and confirm readiness in Commerce Settings.
+4. Enter the gateway, mode, API key, and merchant code in Commerce Settings and confirm readiness.
 5. Test with SumUp's documented sandbox card before using live credentials.
 
 Official SumUp references:
@@ -165,7 +171,10 @@ Official SumUp references:
 - [API keys](https://developer.sumup.com/tools/authorization/api-keys)
 - [Testing online payments](https://developer.sumup.com/online-payments/testing)
 
-Set these environment variables in the CMS install:
+In `Commerce Settings`, select `SumUp`, select `Sandbox`, and enter the API key and merchant code.
+Saved credentials are encrypted at rest and remain write-only. Hosting-managed deployments may
+instead set these environment variables; they take precedence and make the matching form fields
+read-only:
 
 ```env
 WEBBLOCKS_COMMERCE_GATEWAY=sumup
@@ -201,7 +210,7 @@ Open:
 /webadmin/plugins/webblocks-commerce/settings
 ```
 
-The settings screen intentionally shows only safe diagnostics:
+The settings screen provides write-only credential fields and intentionally shows only safe diagnostics:
 
 - active gateway
 - PayPal mode
@@ -215,7 +224,7 @@ The settings screen intentionally shows only safe diagnostics:
 - SumUp API key and merchant code configured or missing
 - plugin schema readiness
 
-It must not display raw PayPal secrets, SumUp API keys, access tokens, webhook payload signatures, or payment credentials.
+It must not display raw PayPal secrets, SumUp API keys, access tokens, webhook payload signatures, or payment credentials. Blank credential fields preserve existing encrypted values. Explicit clear controls remove stored values, while environment-managed values cannot be edited or cleared from the CMS.
 
 ## Create A Product
 

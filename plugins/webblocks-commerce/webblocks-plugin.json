@@ -2,7 +2,7 @@
   "handle": "webblocks-commerce",
   "label": "WebBlocks Commerce",
   "description": "Simple product sales and hosted checkout foundations for WebBlocks CMS sites.",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "provider": "WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\WebBlocksCommercePlugin",
   "required_cms_version": "^1.37.3",
   "permissions": [
@@ -36,7 +36,7 @@
     "namespace": "webblocks_commerce",
     "route_name": "webblocks.plugins.webblocks_commerce.settings.edit",
     "label": "Commerce Settings",
-    "description": "Review checkout mode, currency, gateway configuration, and webhook readiness. Payment secrets are read from environment config and are never displayed."
+    "description": "Configure PayPal or SumUp with write-only encrypted credentials, and review checkout and webhook readiness. Environment configuration remains an optional override."
   },
   "menu": [
     {

@@ -11,7 +11,7 @@ Dil: [English](webblocks-commerce-sumup-quickstart.md) ·
 
 - kurulmuş ve etkinleştirilmiş WebBlocks Commerce eklentisi
 - SumUp Dashboard erişimi
-- CMS sunucusuna gizli ortam değişkeni ekleme yetkisi veya bunu yapabilecek hosting yöneticisi
+- Commerce Settings yönetme yetkisi veya güvenli ortam değişkeni override'larını yönetebilecek hosting yöneticisi
 - mağaza için dışarıdan erişilebilen bir HTTPS adresi
 - ilk sandbox kurulumu için yaklaşık on dakika
 
@@ -19,12 +19,13 @@ Sandbox ödemeleri simülasyondur; gerçek para hareketi oluşturmaz.
 
 ## Başlamadan önce
 
-WebBlocks Commerce ödeme bilgilerini korumalı sunucu ortam değişkenlerinden okur. API anahtarını
-CMS sayfasına, bloğa, ürüne veya herkese açık bir ayar alanına girmeyin.
+Ödeme bilgilerini korumalı **Commerce Settings** formundan kaydedebilirsiniz. Değerler şifrelenmiş
+olarak saklanır, alanlar yalnızca yazma amaçlıdır ve kaydedilmiş gizli bilgiler tekrar gösterilmez.
+API anahtarını CMS sayfasına, bloğa, ürüne veya herkese açık bir ayar alanına girmeyin.
 
-Sunucuyu siz yönetmiyorsanız 4. adımdaki dört değişken adını hosting yöneticinize iletin. API
-anahtarını normal e-posta, sohbet, ekran görüntüsü veya destek talebiyle göndermeyin; hosting'in
-secret manager alanını ya da kurumunuzun onaylı güvenli kanalını kullanın.
+Ortam değişkenleri isteğe bağlı hosting override'ları olarak desteklenmeye devam eder. API
+anahtarını normal e-posta, sohbet, ekran görüntüsü veya destek talebiyle göndermeyin; korumalı
+formu, hosting'in secret manager alanını ya da kurumunuzun onaylı güvenli kanalını kullanın.
 
 ## 1. Adım — SumUp sandbox satıcı hesabı oluşturun
 
@@ -60,7 +61,17 @@ Sandbox hesabı seçili kalsın ve şu adımları uygulayın:
 duyar. Test anahtarı normalde `sk_test_` ile başlar. SumUp anahtarın tamamını daha sonra yeniden
 göstermediğinden hemen güvenli bir secret manager içine kaydedin.
 
-## 4. Adım — CMS sunucusunu yapılandırın
+## 4. Adım — WebBlocks Commerce'ı yapılandırın
+
+1. CMS yönetimine giriş yapın.
+2. **Commerce → Commerce Settings** bölümünü açın.
+3. Gateway olarak `SumUp`, mod olarak `Sandbox` seçin.
+4. Gizli API anahtarını ve Merchant ID'yi girip kaydedin.
+
+Bilgi alanları yalnızca yazma amaçlıdır. Alanı boş bırakmak kayıtlı değeri korur; değeri gerçekten
+kaldırmak istediğinizde açık silme seçeneğini kullanın.
+
+Hosting tarafından yönetilen kurulumlar bunun yerine şu isteğe bağlı override'ları tanımlayabilir:
 
 Hosting'in ortam değişkenleri veya secrets alanına şunları ekleyin:
 
@@ -71,8 +82,8 @@ WEBBLOCKS_COMMERCE_SUMUP_API_KEY=sk_test-anahtarinizi-buraya-yazin
 WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE=sandbox-merchant-id-buraya-yazin
 ```
 
-Kurulum Laravel `.env` dosyası kullanıyorsa değerleri bu dosyaya ekleyip yapılandırma önbelleğini
-temizleyin:
+Ortam değerleri önceliklidir ve ilgili form alanlarını salt okunur yapar. Kurulum Laravel `.env`
+dosyası kullanıyorsa değerleri bu dosyaya ekleyip yapılandırma önbelleğini temizleyin:
 
 ```bash
 php artisan config:clear
@@ -99,7 +110,7 @@ anahtarıyla Merchant ID'nin gerçekten aynı sandbox hesabına ait olması gere
    - eklenti şeması: hazır
 
 Ayar ekranı güvenlik nedeniyle yalnızca “yapılandırıldı” veya “eksik” bilgisini gösterir; API
-anahtarını göstermez. Şema hazır değilse **System → Plugins → WebBlocks Commerce** üzerinden
+anahtarını kayıttan sonra da göstermez. Şema hazır değilse **System → Plugins → WebBlocks Commerce** üzerinden
 eklenti kurulumunu veya migration işlemlerini çalıştırın.
 
 ## 6. Adım — Test ürünü oluşturun
@@ -174,8 +185,8 @@ Yalnızca sandbox akışının tamamı başarılı olduktan sonra:
 2. SumUp'ın istediği işletme doğrulaması ve ödeme hesabı adımlarını tamamlayın.
 3. Canlı Merchant ID'yi kopyalayın.
 4. Ayrı bir canlı API anahtarı oluşturun; normalde `sk_live_` ile başlar.
-5. Sunucu değerlerini canlı bilgilerle değiştirip `WEBBLOCKS_COMMERCE_SUMUP_MODE=live` yapın.
-6. Standart dağıtım prosedürünüzle uygulama yapılandırmasını yenileyin.
+5. **Commerce Settings** içindeki sandbox değerlerini canlı bilgilerle değiştirin, modu `Live` yapıp kaydedin. Hosting override'ı kullanıyorsanız ortam değerlerini değiştirin.
+6. Ortam override'ı kullanıyorsanız standart dağıtım prosedürünüzle uygulama yapılandırmasını yenileyin.
 7. **Commerce Settings** ekranını yeniden kontrol edin.
 8. Kabul edilebilir düşük tutarlı gerçek bir ödeme yapıp siparişi ve ödemeyi iki sistemde de
    doğrulayın.
@@ -184,7 +195,7 @@ Test anahtarıyla canlı Merchant ID'yi karıştırmayın ve sandbox anahtarın�
 
 ## Sorun giderme
 
-- **API anahtarı eksik:** Değişken adını ve config cache yenilemesini kontrol edin.
+- **API anahtarı eksik:** Anahtarı yalnızca yazma alanına yeniden girip kaydedin. Ortam override'ı görünüyorsa değişken adını ve config cache yenilemesini kontrol edin.
 - **Hazır görünüyor ama checkout açılmıyor:** Anahtar ve Merchant ID aynı sandbox hesabına ait
   olmalı; Public Key kullanılmamalı.
 - **Sipariş pending kalıyor:** `/commerce/webhooks/sumup` adresinin dışarıdan HTTPS ve POST ile

@@ -11,8 +11,8 @@ Sprache: [English](webblocks-commerce-sumup-quickstart.md) · **Deutsch** ·
 
 - ein installiertes und aktiviertes WebBlocks-Commerce-Plugin
 - Zugang zum SumUp Dashboard
-- Zugriff auf die geschützten Umgebungsvariablen des CMS-Servers oder Unterstützung durch deine
-  Hosting-Administration
+- Berechtigung für Commerce Settings oder Unterstützung durch eine Hosting-Administration, die
+  geschützte Umgebungsvariablen verwalten kann
 - eine öffentlich erreichbare HTTPS-Adresse für den Shop
 - ungefähr zehn Minuten Zeit
 
@@ -20,12 +20,14 @@ Sandbox-Zahlungen sind Simulationen. Es wird kein echtes Geld bewegt.
 
 ## Bevor du beginnst
 
-Die Zugangsdaten werden derzeit als geschützte Server-Variablen hinterlegt. Trage den API-Schlüssel
-niemals in eine CMS-Seite, einen Block, ein Produkt oder ein öffentliches Einstellungsfeld ein.
+Zugangsdaten können über das geschützte Formular **Commerce Settings** gespeichert werden. Die
+Werte werden verschlüsselt abgelegt, die Felder sind schreibgeschützt im Sinne von „write-only“,
+und gespeicherte Secrets werden nie erneut angezeigt. Trage den API-Schlüssel niemals in eine
+CMS-Seite, einen Block, ein Produkt oder ein öffentliches Einstellungsfeld ein.
 
-Wenn du den Server nicht selbst verwaltest, gib deiner Hosting-Administration die vier Namen aus
-Schritt 4. Übermittle den API-Schlüssel nur über den Secret Manager des Hostings oder einen anderen
-freigegebenen sicheren Kanal — nicht per normaler E-Mail, Chat, Screenshot oder Support-Ticket.
+Umgebungsvariablen bleiben als optionale Hosting-Overrides verfügbar. Übermittle den API-Schlüssel
+nur über das geschützte Formular, den Secret Manager des Hostings oder einen anderen freigegebenen
+sicheren Kanal — nicht per normaler E-Mail, Chat, Screenshot oder Support-Ticket.
 
 ## Schritt 1 — SumUp-Sandbox-Händlerkonto erstellen
 
@@ -62,7 +64,17 @@ Verwende nicht den **SumUp Public Key**. Benötigt wird der geheime serverseitig
 Testschlüssel beginnt normalerweise mit `sk_test_`. SumUp zeigt das vollständige Secret später
 nicht erneut an; speichere es deshalb sofort in einem sicheren Secret Manager.
 
-## Schritt 4 — CMS-Server konfigurieren
+## Schritt 4 — WebBlocks Commerce konfigurieren
+
+1. Melde dich in der CMS-Administration an.
+2. Öffne **Commerce → Commerce Settings**.
+3. Wähle Gateway `SumUp` und Modus `Sandbox`.
+4. Trage den geheimen API-Schlüssel und die Merchant ID ein und speichere.
+
+Die Zugangsdatenfelder sind write-only. Ein leeres Feld behält den gespeicherten Wert; verwende
+die explizite Löschoption nur, wenn der Wert wirklich entfernt werden soll.
+
+Hosting-verwaltete Installationen können stattdessen diese optionalen Overrides setzen:
 
 Lege im Hosting unter Umgebungsvariablen oder Secrets diese Werte an:
 
@@ -73,8 +85,9 @@ WEBBLOCKS_COMMERCE_SUMUP_API_KEY=hier-den-sk_test-schluessel-eintragen
 WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE=hier-die-sandbox-merchant-id-eintragen
 ```
 
-Verwendet die Installation eine Laravel-`.env`-Datei, trage die Werte dort ein und leere danach
-den Konfigurations-Cache:
+Umgebungswerte haben Vorrang und machen die entsprechenden Formularfelder schreibgeschützt.
+Verwendet die Installation eine Laravel-`.env`-Datei, trage die Werte dort ein und leere danach den
+Konfigurations-Cache:
 
 ```bash
 php artisan config:clear
@@ -102,7 +115,7 @@ gehören.
    - Plugin-Schema: bereit
 
 Die Einstellungsseite zeigt absichtlich nur „konfiguriert“ oder „fehlt“ und niemals den
-API-Schlüssel. Ist das Schema nicht bereit, öffne **System → Plugins → WebBlocks Commerce** und
+API-Schlüssel — auch nicht nach dem Speichern. Ist das Schema nicht bereit, öffne **System → Plugins → WebBlocks Commerce** und
 führe zuerst das Plugin-Setup beziehungsweise die Migrationen aus.
 
 ## Schritt 6 — Testprodukt erstellen
@@ -178,8 +191,8 @@ Erst nach einem vollständigen erfolgreichen Sandbox-Test:
 2. Schließe die von SumUp verlangte Unternehmens- und Auszahlungskontrolle ab.
 3. Kopiere die Live Merchant ID.
 4. Erstelle einen separaten Live-API-Schlüssel; er beginnt normalerweise mit `sk_live_`.
-5. Ersetze die Serverwerte und setze `WEBBLOCKS_COMMERCE_SUMUP_MODE=live`.
-6. Aktualisiere die Anwendungskonfiguration über den normalen Deployment-Ablauf.
+5. Ersetze die gespeicherten Sandbox-Werte in **Commerce Settings**, wähle `Live` und speichere. Bei Hosting-Overrides ersetzt du stattdessen die Umgebungswerte.
+6. Aktualisiere bei Umgebungs-Overrides die Anwendungskonfiguration über den normalen Deployment-Ablauf.
 7. Prüfe erneut **Commerce Settings**.
 8. Führe eine vertretbare Kleinbetragszahlung aus und prüfe Bestellung sowie Auszahlung.
 
@@ -188,8 +201,7 @@ nicht in Produktion.
 
 ## Wenn etwas nicht funktioniert
 
-- **API-Schlüssel fehlt:** Schreibweise der Variablen und Aktualisierung des Konfigurations-Caches
-  prüfen.
+- **API-Schlüssel fehlt:** Schlüssel erneut in das write-only Feld eintragen und speichern. Wird ein Umgebungs-Override angezeigt, Schreibweise und Konfigurations-Cache prüfen.
 - **Checkout schlägt trotz „bereit“ fehl:** Schlüssel und Merchant ID müssen zum selben
   Sandbox-Konto gehören; nicht den Public Key verwenden.
 - **Bestellung bleibt pending:** Prüfen, ob `/commerce/webhooks/sumup` öffentlich per HTTPS und POST

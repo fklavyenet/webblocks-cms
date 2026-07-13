@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Controllers\CommerceOrderController;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Controllers\CommerceProductController;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Controllers\CommerceSettingsController;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Middleware\ProtectCommerceCredentialInput;
 
 Route::middleware('plugin.permission:webblocks-commerce.view')->group(function (): void {
   Route::get('/products', [CommerceProductController::class, 'index'])->name('products.index');
@@ -27,6 +28,10 @@ Route::middleware('plugin.permission:webblocks-commerce.manage-orders')->group(f
   Route::get('/orders/{order}', [CommerceOrderController::class, 'show'])->name('orders.show');
 });
 
-Route::middleware('plugin.permission:webblocks-commerce.manage-settings')->group(function (): void {
+Route::middleware([
+  ProtectCommerceCredentialInput::class,
+  'plugin.permission:webblocks-commerce.manage-settings',
+])->group(function (): void {
   Route::get('/settings', [CommerceSettingsController::class, 'edit'])->name('settings.edit');
+  Route::put('/settings', [CommerceSettingsController::class, 'update'])->name('settings.update');
 });

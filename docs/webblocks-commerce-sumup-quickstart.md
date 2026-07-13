@@ -21,8 +21,8 @@ Language: **English** · [Deutsch](webblocks-commerce-sumup-quickstart.de.md) ·
 
 - an installed and enabled WebBlocks Commerce plugin
 - access to the SumUp Dashboard
-- permission to add secret environment variables to the CMS server, or a hosting administrator
-  who can do that for you
+- permission to manage Commerce Settings, or a hosting administrator who can add protected
+  environment-variable overrides
 - a public HTTPS address for the shop
 - about ten minutes for the initial sandbox setup
 
@@ -30,12 +30,13 @@ Sandbox payments are simulations. They do not move real money.
 
 ## Before You Start
 
-WebBlocks Commerce currently reads payment credentials from protected server environment
-variables. They are not entered into a CMS page, block, product, or public settings field.
+WebBlocks Commerce accepts payment credentials through its protected Commerce Settings form. The
+values are encrypted at rest, fields are write-only, and saved secrets are never displayed again.
+They must never be entered into a CMS page, block, product, or public settings field.
 
-If you do not manage the server yourself, securely send your hosting administrator the four
-variable names shown in Step 4. Do not send the API key in normal email, chat, a screenshot, or a
-support ticket. Use the hosting platform's secret manager or another approved secure channel.
+Hosting-managed environment variables remain available as optional overrides. Do not send the API
+key in normal email, chat, a screenshot, or a support ticket. Enter it directly in the protected
+form or use the hosting platform's secret manager or another approved secure channel.
 
 ## Step 1 — Create a SumUp Sandbox Merchant
 
@@ -77,7 +78,17 @@ store it immediately in an approved secret manager.
 The current direct integration is for one merchant account controlled by the site owner. OAuth is
 not required for this setup.
 
-## Step 4 — Configure the CMS Server
+## Step 4 — Configure WebBlocks Commerce
+
+1. Sign in to CMS admin.
+2. Open **Commerce → Commerce Settings**.
+3. Select gateway `SumUp` and mode `Sandbox`.
+4. Enter the secret API key and Merchant ID, then save.
+
+The credential fields are write-only. Leaving a field blank preserves the saved value; use the
+explicit clear control only when you intend to remove it.
+
+Hosting-managed deployments may instead add these optional environment overrides:
 
 Add these values to the hosting platform's environment-variable or secret settings:
 
@@ -88,7 +99,8 @@ WEBBLOCKS_COMMERCE_SUMUP_API_KEY=replace-with-your-sk_test-key
 WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE=replace-with-your-sandbox-merchant-id
 ```
 
-If the installation uses a Laravel `.env` file, add the values there. Then clear the cached
+Environment values take precedence and make the corresponding form controls read-only. If the
+installation uses a Laravel `.env` file, add the values there. Then clear the cached
 configuration:
 
 ```bash
@@ -114,8 +126,8 @@ hostname, so the API key and merchant code must themselves belong to the sandbox
    - checkout: ready
    - plugin schema: ready
 
-The settings screen deliberately says only “configured” or “missing”. It must never display the
-API key itself.
+The settings screen deliberately says only “configured” or “missing”. It never displays the API
+key itself, including after a successful save.
 
 If the schema is not ready, open **System → Plugins → WebBlocks Commerce** and run plugin setup or
 migrations first.
@@ -195,7 +207,8 @@ Switch only after the complete sandbox flow succeeds:
 2. Complete any business verification and payout setup required by SumUp.
 3. Copy the live Merchant ID.
 4. Create a separate live secret API key. A live key normally starts with `sk_live_`.
-5. Replace the sandbox values on the CMS server:
+5. Replace the saved sandbox values in **Commerce Settings**, switch the mode to `Live`, and save.
+   Hosting-managed deployments may replace their environment overrides instead:
 
 ```env
 WEBBLOCKS_COMMERCE_GATEWAY=sumup
@@ -204,7 +217,7 @@ WEBBLOCKS_COMMERCE_SUMUP_API_KEY=replace-with-your-sk_live-key
 WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE=replace-with-your-live-merchant-id
 ```
 
-6. Refresh the application configuration using the normal deployment procedure.
+6. If environment overrides are used, refresh the application configuration using the normal deployment procedure.
 7. Recheck **Commerce Settings**.
 8. Make one acceptable low-value real purchase and verify the order and payout in both systems.
 
@@ -214,8 +227,8 @@ Never combine a test key with a live merchant ID or reuse the sandbox key in pro
 
 ### Commerce Settings says “API key missing”
 
-- Check the environment-variable spelling.
-- Confirm the deployment or PHP process was refreshed after the change.
+- Re-enter the API key in the write-only field and save.
+- If an environment override is shown, check its spelling and confirm the deployment or PHP process was refreshed.
 - If configuration is cached, clear and rebuild it using the normal deployment procedure.
 
 ### Commerce Settings says ready, but checkout fails

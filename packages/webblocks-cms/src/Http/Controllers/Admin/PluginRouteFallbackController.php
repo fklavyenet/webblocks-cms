@@ -224,6 +224,26 @@ class PluginRouteFallbackController extends Controller
       return app($settingsController)->edit();
     }
 
+    if ($request->isMethod('PUT') && $this->matches($routeName, $path, 'settings.update', 'settings')) {
+      abort_unless($request->user()?->can('webblocks-commerce.manage-settings'), 403);
+      abort_unless(class_exists($settingsController), 404);
+
+      if ($this->webBlocksCommerceTablesMissing()) {
+        return $this->commerceSettingsMissingRedirect();
+      }
+
+      $credentialProtection = 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Http\\Middleware\\ProtectCommerceCredentialInput';
+
+      if (class_exists($credentialProtection)) {
+        return app($credentialProtection)->handle(
+          $request,
+          fn (): Response => app()->call([app($settingsController), 'update']),
+        );
+      }
+
+      return app()->call([app($settingsController), 'update']);
+    }
+
     abort(404);
   }
 
@@ -267,6 +287,18 @@ class PluginRouteFallbackController extends Controller
 
     return redirect()
       ->route('webblocks.plugins.webblocks_commerce.products.index')
+      ->withErrors(['plugin' => $message]);
+  }
+
+  private function commerceSettingsMissingRedirect(): Response
+  {
+    $schema = 'WebBlocks\\Cms\\Plugins\\WebBlocksCommerce\\Support\\WebBlocksCommerceSchema';
+    $message = class_exists($schema)
+      ? app($schema)->message()
+      : 'Setup required. Plugin migrations pending. Commerce tables are missing.';
+
+    return redirect()
+      ->route('webblocks.plugins.webblocks_commerce.settings.edit')
       ->withErrors(['plugin' => $message]);
   }
 
