@@ -372,6 +372,51 @@ class InternalContentApiOperations
     return $block;
   }
 
+  /**
+   * Create a single draft page-owned block (with any normalized children) in a
+   * page slot. Mirrors createSharedSlotBlock for page-owned slot content and
+   * reuses the shared BlockPayloadWriter so resource writes stay consistent
+   * with content apply and the admin editor.
+   */
+  public function createPageSlotBlock(Page $page, SlotType $slotType, array $payload, string $localeCode, ?Block $parent, int $sortOrder): Block
+  {
+    $blockType = BlockType::query()->where('slug', $payload['type'])->where('status', 'published')->firstOrFail();
+    $translations = $payload['translations'];
+    $settings = $payload['settings'] === [] ? null : json_encode($payload['settings'], JSON_UNESCAPED_SLASHES);
+
+    $block = $this->blockPayloadWriter->save(new Block, $page, [
+      'page_id' => $page->id,
+      'parent_id' => $parent?->id,
+      'block_type_id' => $blockType->id,
+      'type' => $blockType->slug,
+      'source_type' => $blockType->source_type ?: 'static',
+      'slot_type_id' => $slotType->id,
+      'slot' => $slotType->slug,
+      'sort_order' => $sortOrder,
+      'status' => 'draft',
+      'is_system' => (bool) $blockType->is_system,
+      'settings' => $settings,
+      'variant' => $payload['variant'] ?? ($payload['settings']['variant'] ?? null),
+      'url' => $payload['settings']['url'] ?? null,
+      'media_id' => $payload['media_id'] ?? null,
+      '_block_media' => $payload['_block_media'] ?? [],
+      '_gallery_items' => $payload['_gallery_items'] ?? [],
+      'title' => $translations['title'] ?? null,
+      'eyebrow' => $translations['eyebrow'] ?? null,
+      'subtitle' => $translations['subtitle'] ?? null,
+      'content' => $translations['content'] ?? null,
+      'meta' => $translations['meta'] ?? null,
+      'submit_label' => $translations['submit_label'] ?? null,
+      'success_message' => $translations['success_message'] ?? null,
+    ], $localeCode);
+
+    foreach (array_values($payload['children']) as $index => $childPayload) {
+      $this->createPageSlotBlock($page, $slotType, $childPayload, $localeCode, $block, $index);
+    }
+
+    return $block;
+  }
+
   public function normalizeBlock(mixed $block, string $path, ?BlockType $parentType, array &$errors, array &$warnings): ?array
   {
     if (! is_array($block)) {

@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Support\ServiceProvider;
 use PHPUnit\Framework\Attributes\Test;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Tests\TestCase;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -48,5 +49,14 @@ class PackageServiceProviderSmokeTest extends TestCase
 
     $publishGroups = ServiceProvider::publishableGroups();
     $this->assertContains(WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG, $publishGroups);
+  }
+
+  #[Test]
+  public function internal_content_resource_controller_resolves_from_the_container(): void
+  {
+    $this->assertInstanceOf(
+      InternalContentResourceController::class,
+      $this->app->make(InternalContentResourceController::class),
+    );
   }
 }

@@ -145,6 +145,7 @@ Advanced capabilities are separate options and are not selected by default:
 - `media.delete`
 - `content.publish`
 - `pages.delete`
+- `content.blocks.delete`
 
 Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, plugin install/manage/setup/uninstall, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`. Plugin lifecycle automation requires explicit plugin capabilities, and WebBlocks Commerce product/order API access requires explicit commerce capabilities.
 
@@ -186,6 +187,9 @@ POST /webadmin/api/media/fetch
 GET /webadmin/api/blocks
 GET /webadmin/api/blocks/{block}
 PATCH /webadmin/api/blocks/{block}
+POST /webadmin/api/pages/{page}/slots/{slot}/blocks
+PATCH /webadmin/api/pages/{page}/slots/{slot}/blocks/reorder
+DELETE /webadmin/api/pages/{page}/slots/{slot}/blocks/{block}
 GET /webadmin/api/navigation-menus
 GET /webadmin/api/navigation-menus/{navigationMenu}
 POST /webadmin/api/navigation-menus
@@ -268,7 +272,7 @@ The plugin-owned `webblocks-commerce-buy-button` block is discoverable from `GET
 
 ### Existing Block Native Field Updates
 
-Use content validate/apply for creating, replacing, nesting, or reordering block trees. Use the existing-block update endpoint only when the block already exists and the change maps to a safe native field:
+Use content validate/apply to build a full page in one transaction. For incremental draft edits, use the [Page Block Topology API](#page-block-topology-api) to add, reorder, or delete individual page-owned blocks. Use the existing-block update endpoint only when the block already exists and the change maps to a safe native field:
 
 ```text
 GET /webadmin/api/media?kind=image
@@ -327,6 +331,30 @@ For an existing Image block, update the locale-owned image translation row with:
   }
 }
 ```
+
+### Page Block Topology API
+
+For incremental draft page editing, page-owned block topology can be changed one operation at a time without sending a full content plan:
+
+```text
+POST /webadmin/api/pages/{page}/slots/{slot}/blocks
+PATCH /webadmin/api/pages/{page}/slots/{slot}/blocks/reorder
+DELETE /webadmin/api/pages/{page}/slots/{slot}/blocks/{block}
+```
+
+`{slot}` is a page-owned slot slug. These endpoints are intentionally draft-safe and narrow:
+
+- they operate only on draft pages; a non-draft page returns JSON `409` with code `page_not_draft`. Use content apply staged updates for published pages.
+- they operate only on page-owned slots; a Shared Slot-backed slot returns JSON `422`. Use the Shared Slot endpoints for Shared Slot content.
+- an unknown page slot returns JSON `404`.
+
+`POST .../blocks` adds one block using the same normalized block payload as content apply (`type`, `settings`, `translations`, and nested `children`). New blocks are created with `draft` status and appended to the end of the slot. Pass `parent_id` to append under an existing container block in the same slot; the parent must accept children. Creating and reordering require `content.apply`.
+
+`PATCH .../blocks/reorder` renumbers one sibling group. The `blocks` array must contain every sibling id for a single parent group exactly once, in the desired order; the parent is derived from the submitted blocks. Submitting a partial group returns JSON `422`.
+
+`DELETE .../blocks/{block}` removes the block and its whole subtree and returns `deleted_blocks_count`. Deletion requires the dedicated `content.blocks.delete` capability, which is not part of the default page-building capability set. Shared Slot source blocks cannot be deleted through this endpoint.
+
+Every write captures a page revision so draft edits stay reversible.
 
 ### Media Library API
 
@@ -1061,8 +1089,13 @@ Content plans may include `navigation_menus`, `shared_slots`, and `page_slot_sha
 
 ### Phase 3
 
-- resource endpoints for draft-safe direct page/block edits where needed
-- controlled draft updates or draft content replacement
+Delivered:
+
+- draft-safe page-owned block topology endpoints: add a single block, reorder a slot sibling group, and delete a block subtree (see [Page Block Topology API](#page-block-topology-api))
+
+Remaining:
+
+- controlled draft updates or draft content replacement beyond the existing block PATCH
 - page assets
 - media by existing media ID only
 

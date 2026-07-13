@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.38.0
+
+- Add draft-safe page block topology endpoints to the Internal Content API so trusted AI/operator tools can edit a draft page incrementally without sending a full content plan: `POST /webadmin/api/pages/{page}/slots/{slot}/blocks` adds a single block (with optional children), `PATCH .../blocks/reorder` renumbers a slot sibling group, and `DELETE .../blocks/{block}` removes a block subtree. Create and reorder require `content.apply`; deletion requires the new opt-in `content.blocks.delete` capability that is not part of the default page-building set. The endpoints operate only on draft pages and page-owned slots, reject Shared Slot-backed slots and Shared Slot source blocks, and capture a page revision on every write.
+
 ## 1.37.4
 
 - Sync the shipped block type, slot type, page layout, and icon catalog automatically during System Updates by running `webblocks:catalog-repair --all` in the post-install flow, so a release can add catalog rows such as the engagement Rating and Comments block types without an operator running a manual command. The sync runs after cache clears, preserves custom catalog rows, and is best-effort so it cannot fail an otherwise successful update.

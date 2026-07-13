@@ -23,6 +23,8 @@ class CmsApiTokenCapabilities
 
   public const PAGES_DELETE = 'pages.delete';
 
+  public const CONTENT_BLOCKS_DELETE = 'content.blocks.delete';
+
   public const NAVIGATION_WRITE = 'navigation.write';
 
   public const NAVIGATION_DELETE = 'navigation.delete';
@@ -100,6 +102,7 @@ class CmsApiTokenCapabilities
     self::NAVIGATION_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
+    self::CONTENT_BLOCKS_DELETE,
     self::PLUGINS_INSTALL,
     self::PLUGINS_MANAGE,
     self::PLUGINS_SETUP,
@@ -112,6 +115,7 @@ class CmsApiTokenCapabilities
     self::NAVIGATION_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
+    self::CONTENT_BLOCKS_DELETE,
   ];
 
   public const ALL = [
@@ -131,6 +135,7 @@ class CmsApiTokenCapabilities
     self::MEDIA_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
+    self::CONTENT_BLOCKS_DELETE,
     self::SITE_ASSETS_READ,
     self::SITE_ASSETS_WRITE,
     self::ENGAGEMENT_READ,
@@ -168,6 +173,7 @@ class CmsApiTokenCapabilities
     self::MEDIA_DELETE => 'Delete unused Media Library files',
     self::CONTENT_PUBLISH => 'Publish content',
     self::PAGES_DELETE => 'Delete pages',
+    self::CONTENT_BLOCKS_DELETE => 'Delete page-owned blocks',
   ];
 
   /**

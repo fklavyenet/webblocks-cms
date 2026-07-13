@@ -113,6 +113,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/pages/{page}/publish-page-owned-blocks', [InternalPagePublishController::class, 'publishPageOwnedBlocks'])->middleware('internal-api.capability:content.publish')->name('pages.publish-page-owned-blocks');
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
     Route::post('/pages/{page}/slots/{slot}/shared-slot', [InternalSharedSlotController::class, 'assignToPageSlot'])->middleware('internal-api.capability:shared-slots.write')->name('pages.slots.shared-slot');
+    Route::post('/pages/{page}/slots/{slot}/blocks', [InternalContentResourceController::class, 'storeSlotBlock'])->middleware('internal-api.capability:content.apply')->name('pages.slots.blocks.store');
+    Route::patch('/pages/{page}/slots/{slot}/blocks/reorder', [InternalContentResourceController::class, 'reorderSlotBlocks'])->middleware('internal-api.capability:content.apply')->name('pages.slots.blocks.reorder');
+    Route::delete('/pages/{page}/slots/{slot}/blocks/{block}', [InternalContentResourceController::class, 'deleteSlotBlock'])->middleware('internal-api.capability:content.blocks.delete')->name('pages.slots.blocks.delete');
     Route::get('/navigation-menus', [InternalNavigationController::class, 'index'])->name('navigation-menus.index');
     Route::post('/navigation-menus', [InternalNavigationController::class, 'store'])->middleware('internal-api.capability:navigation.write')->name('navigation-menus.store');
     Route::get('/navigation-menus/{navigationMenu}', [InternalNavigationController::class, 'show'])->name('navigation-menus.show');

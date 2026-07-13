@@ -19,10 +19,14 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
+use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
@@ -32,6 +36,7 @@ use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
+use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 
 class InternalContentResourceController extends Controller
@@ -45,6 +50,9 @@ class InternalContentResourceController extends Controller
     private readonly MediaDeleter $mediaDeleter,
     private readonly PluginBlockCatalog $pluginBlockCatalog,
     private readonly LocaleOptionCatalog $localeOptionCatalog,
+    private readonly InternalContentApiOperations $operations,
+    private readonly PageRevisionManager $revisionManager,
+    private readonly BlockDeletionManager $blockDeletionManager,
   ) {}
 
   public function sites(): JsonResponse
@@ -1143,6 +1151,302 @@ class InternalContentResourceController extends Controller
         'handle' => $sharedSlotBlock->sharedSlot->handle,
       ] : null,
     ]);
+  }
+
+  public function storeSlotBlock(Request $request, Page $page, string $slot): JsonResponse
+  {
+    $resolved = $this->resolvePageOwnedSlot($page, $slot);
+
+    if ($resolved instanceof JsonResponse) {
+      return $resolved;
+    }
+
+    [, $slotType] = $resolved;
+
+    $errors = [];
+    $warnings = [];
+    $locale = $this->resolveLocale($request);
+    $parent = $this->parentBlockForPageSlot($request, $page, $slotType, $errors);
+    $blockPayload = $request->json()->all();
+    unset($blockPayload['parent_id'], $blockPayload['parent_block_id']);
+    $normalized = $this->operations->normalizeBlock($blockPayload, 'block', $parent?->blockType, $errors, $warnings);
+
+    if ($errors !== [] || ! $normalized) {
+      return $this->blockValidationError($errors);
+    }
+
+    $block = DB::transaction(function () use ($page, $slotType, $normalized, $locale, $parent) {
+      $sortOrder = (int) Block::query()
+        ->where('page_id', $page->id)
+        ->where('slot_type_id', $slotType->id)
+        ->where('parent_id', $parent?->id)
+        ->max('sort_order') + 1;
+
+      $block = $this->operations->createPageSlotBlock($page, $slotType, $normalized, $locale->code, $parent, $sortOrder);
+
+      $page->forceFill(['updated_by_user_id' => null])->save();
+      $this->revisionManager->capture(
+        $page->fresh(),
+        null,
+        'Block added',
+        'A block was added to a page slot through the Internal Content API.',
+        event: 'block_created',
+        source: 'internal-content-api',
+      );
+
+      return $block;
+    });
+
+    $block->refresh()->load([
+      'blockType', 'slotType', 'media',
+      'textTranslations', 'buttonTranslations', 'imageTranslations',
+      'children.blockType', 'children.slotType', 'children.media',
+      'children.textTranslations', 'children.buttonTranslations', 'children.imageTranslations',
+    ]);
+
+    return response()->json([
+      'ok' => true,
+      'block' => $this->presenter->block($block),
+      'writes' => [['type' => 'page_slot_block', 'id' => $block->id]],
+      'warnings' => $warnings,
+      'errors' => [],
+    ], 201);
+  }
+
+  public function reorderSlotBlocks(Request $request, Page $page, string $slot): JsonResponse
+  {
+    $resolved = $this->resolvePageOwnedSlot($page, $slot);
+
+    if ($resolved instanceof JsonResponse) {
+      return $resolved;
+    }
+
+    [, $slotType] = $resolved;
+
+    $blockIds = collect($request->input('blocks', []));
+
+    if ($blockIds->isEmpty() || $blockIds->count() !== $blockIds->unique()->count()
+      || $blockIds->contains(fn ($id) => ! is_numeric($id))) {
+      return $this->blockValidationError([
+        ['path' => 'blocks', 'message' => 'Provide a non-empty list of distinct block ids in the desired order.'],
+      ]);
+    }
+
+    $blockIds = $blockIds->map(fn ($id) => (int) $id)->values();
+
+    $blocks = Block::query()
+      ->whereIn('id', $blockIds)
+      ->where('page_id', $page->id)
+      ->where('slot_type_id', $slotType->id)
+      ->get(['id', 'parent_id']);
+
+    if ($blocks->count() !== $blockIds->count()) {
+      return $this->blockValidationError([
+        ['path' => 'blocks', 'message' => 'Submitted blocks must belong to the current page and slot.'],
+      ]);
+    }
+
+    $parentIds = $blocks->map(fn (Block $block) => $block->parent_id)->uniqueStrict();
+
+    if ($parentIds->count() !== 1) {
+      return $this->blockValidationError([
+        ['path' => 'blocks', 'message' => 'Submitted blocks must belong to the same parent group.'],
+      ]);
+    }
+
+    $parentId = $parentIds->first();
+
+    $siblingIds = Block::query()
+      ->where('page_id', $page->id)
+      ->where('slot_type_id', $slotType->id)
+      ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
+      ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+      ->pluck('id')
+      ->map(fn ($id) => (int) $id);
+
+    if ($siblingIds->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
+      return $this->blockValidationError([
+        ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
+      ]);
+    }
+
+    DB::transaction(function () use ($page, $slotType, $blockIds, $parentId): void {
+      $siblings = Block::query()
+        ->where('page_id', $page->id)
+        ->where('slot_type_id', $slotType->id)
+        ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
+        ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+        ->lockForUpdate()
+        ->get(['id', 'sort_order']);
+
+      $positionMap = $blockIds->flip();
+
+      $siblings
+        ->sortBy(fn (Block $block) => $positionMap->get($block->id))
+        ->values()
+        ->each(function (Block $block, int $index): void {
+          if ($block->sort_order !== $index) {
+            $block->update(['sort_order' => $index]);
+          }
+        });
+
+      $this->revisionManager->capture(
+        $page->fresh(),
+        null,
+        'Block order updated',
+        'Page block order was changed through the Internal Content API.',
+        event: 'block_reordered',
+        source: 'internal-content-api',
+      );
+    });
+
+    return $this->ok(['message' => 'Saved']);
+  }
+
+  public function deleteSlotBlock(Request $request, Page $page, string $slot, Block $block): JsonResponse
+  {
+    if (! $this->hasCapability($request, CmsApiTokenCapabilities::CONTENT_BLOCKS_DELETE)) {
+      return $this->capabilityError(
+        CmsApiTokenCapabilities::CONTENT_BLOCKS_DELETE,
+        'Deleting a page-owned block requires content.blocks.delete.',
+      );
+    }
+
+    $resolved = $this->resolvePageOwnedSlot($page, $slot);
+
+    if ($resolved instanceof JsonResponse) {
+      return $resolved;
+    }
+
+    [, $slotType] = $resolved;
+
+    if ($block->page_id !== $page->id || $block->slot_type_id !== $slotType->id) {
+      return $this->validationError('block', 'The block does not belong to this page slot.', 'block_not_in_slot');
+    }
+
+    if (SharedSlotBlock::query()->where('block_id', $block->id)->exists()) {
+      return $this->validationError('block', 'Shared Slot source blocks cannot be deleted through this endpoint. Use the Shared Slot endpoints.', 'shared_slot_block');
+    }
+
+    $deletedCount = DB::transaction(function () use ($block, $page): int {
+      $order = $this->blockDeletionManager->recursiveDeleteOrder($block);
+      $order->each(fn (Block $candidate) => $candidate->delete());
+
+      $page->forceFill(['updated_by_user_id' => null])->save();
+      $this->revisionManager->capture(
+        $page->fresh(),
+        null,
+        'Block deleted',
+        'A block was deleted from a page slot through the Internal Content API.',
+        event: 'block_deleted',
+        source: 'internal-content-api',
+      );
+
+      return $order->count();
+    });
+
+    return $this->ok([
+      'message' => 'Deleted',
+      'deleted_blocks_count' => $deletedCount,
+    ]);
+  }
+
+  /**
+   * @return array{0: PageSlot, 1: SlotType}|JsonResponse
+   */
+  private function resolvePageOwnedSlot(Page $page, string $slot): array|JsonResponse
+  {
+    if ($page->status !== Page::STATUS_DRAFT) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'page_not_draft',
+        'message' => 'Direct block edits are draft-only. Use content/apply staged updates for published pages.',
+        'warnings' => [],
+        'errors' => [
+          ['path' => 'page.status', 'message' => 'Only draft pages accept direct block topology changes.'],
+        ],
+      ], 409);
+    }
+
+    $slotType = SlotType::query()->where('slug', $slot)->first();
+    $pageSlot = $slotType
+      ? PageSlot::query()->where('page_id', $page->id)->where('slot_type_id', $slotType->id)->first()
+      : null;
+
+    if (! $slotType || ! $pageSlot) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'page_slot_not_found',
+        'message' => 'The requested slot does not exist on this page.',
+        'warnings' => [],
+        'errors' => [
+          ['path' => 'slot', 'message' => 'Slot must be an existing page-owned slot.'],
+        ],
+      ], 404);
+    }
+
+    if ($pageSlot->source_type === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'shared_slot_backed_slot',
+        'message' => 'This slot is backed by a Shared Slot. Use the Shared Slot endpoints instead.',
+        'warnings' => [],
+        'errors' => [
+          ['path' => 'slot', 'message' => 'Shared Slot-backed slots are not editable through page block endpoints.'],
+        ],
+      ], 422);
+    }
+
+    return [$pageSlot, $slotType];
+  }
+
+  private function parentBlockForPageSlot(Request $request, Page $page, SlotType $slotType, array &$errors): ?Block
+  {
+    $parentId = $request->input('parent_id', $request->input('parent_block_id'));
+
+    if ($parentId === null || $parentId === '') {
+      return null;
+    }
+
+    if (! is_numeric($parentId) || (int) $parentId < 1) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block id must be a positive integer.'];
+
+      return null;
+    }
+
+    $parent = Block::query()
+      ->with('blockType')
+      ->whereKey((int) $parentId)
+      ->where('page_id', $page->id)
+      ->where('slot_type_id', $slotType->id)
+      ->first();
+
+    if (! $parent) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block must belong to this page slot.'];
+
+      return null;
+    }
+
+    if (! $parent->canAcceptChildren()) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block cannot accept child blocks.'];
+
+      return null;
+    }
+
+    return $parent;
+  }
+
+  private function blockValidationError(array $errors, string $code = 'invalid_block'): JsonResponse
+  {
+    return response()->json([
+      'ok' => false,
+      'code' => $code,
+      'message' => 'The block request could not be validated.',
+      'warnings' => [],
+      'errors' => $errors === []
+        ? [['path' => 'block', 'message' => 'Invalid block payload.']]
+        : array_values($errors),
+    ], 422);
   }
 
   private function hasCapability(Request $request, string $capability): bool
