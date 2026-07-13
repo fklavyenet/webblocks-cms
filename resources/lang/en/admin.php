@@ -1336,6 +1336,7 @@ return [
         'media_delete' => 'Delete unused Media Library files',
         'content_publish' => 'Publish content',
         'pages_delete' => 'Delete pages',
+        'content_blocks_delete' => 'Delete page-owned blocks',
       ],
     ],
     'index' => [
@@ -2790,6 +2791,14 @@ return [
     'comments_pagination' => 'Comments pagination',
     'comment_status_updated' => 'Comment status updated.',
     'comment_deleted' => 'Comment deleted.',
+    'overview' => 'Engagement',
+    'overview_description' => 'Review public feedback across your sites from one place.',
+    'view_comments' => 'View comments',
+    'view_ratings' => 'View ratings',
+    'pending_comments' => ':count pending review',
+    'average_rating' => 'Average rating: :value',
+    'search_ratings' => 'Search ratings by page',
+    'all_ratings' => 'All ratings',
   ],
   'contact_messages_show' => [
     'description' => 'Inspect the saved submission record, spam signals, and notification delivery without mixing editorial status with SMTP state.',

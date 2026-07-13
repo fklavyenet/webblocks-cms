@@ -23,8 +23,9 @@
             'capabilities' => $advancedCapabilities,
         ],
     ];
-    $selectedCount = count(array_intersect($selectedCapabilities, collect($capabilityGroups)->pluck('capabilities')->flatten()->all()));
-    $selectedTotal = max($selectedCount, count(array_unique($selectedCapabilities)));
+    $allGroupCapabilities = collect($capabilityGroups)->pluck('capabilities')->flatten()->unique()->values()->all();
+    $selectedCount = count(array_intersect($selectedCapabilities, $allGroupCapabilities));
+    $selectedTotal = count($allGroupCapabilities);
 @endphp
 
 <div class="wb-field wb-api-token-capabilities">
@@ -48,7 +49,7 @@
                     $groupDescription = $adminTextOr('groups.'.$groupLocaleKey.'.description', (string) ($group['description'] ?? ''));
                 @endphp
 
-                <details class="wb-api-token-capability-group" @if (($group['key'] ?? null) === 'page-building') open @endif>
+                <details class="wb-api-token-capability-group">
                     <summary class="wb-api-token-capability-summary" id="{{ $groupId }}">
                         <span class="wb-api-token-capability-summary-copy">
                             <strong>{{ $groupLabel }}</strong>

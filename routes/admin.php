@@ -254,6 +254,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
     Route::patch('contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');
     Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+    Route::get('engagement', [EngagementController::class, 'index'])->name('engagement.index');
     Route::get('engagement/comments', [EngagementController::class, 'comments'])->name('engagement.comments.index');
     Route::patch('engagement/comments/{commentEntry}/status', [EngagementController::class, 'updateCommentStatus'])->name('engagement.comments.status');
     Route::delete('engagement/comments/{commentEntry}', [EngagementController::class, 'destroyComment'])->name('engagement.comments.destroy');

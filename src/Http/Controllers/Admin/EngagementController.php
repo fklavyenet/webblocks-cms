@@ -24,6 +24,33 @@ class EngagementController extends Controller
     private readonly CmsTranslator $translator,
   ) {}
 
+  public function index(Request $request): View
+  {
+    $commentsReady = Schema::hasTable('wbcms_comment_entries');
+    $ratingsReady = Schema::hasTable('wbcms_content_ratings');
+
+    $commentsCount = $commentsReady
+      ? (clone $this->scopeCommentsForUser(CommentEntry::query(), $request->user()))->count()
+      : 0;
+    $pendingCommentsCount = $commentsReady
+      ? (clone $this->scopeCommentsForUser(CommentEntry::query(), $request->user()))->where('status', 'pending')->count()
+      : 0;
+    $ratingsCount = $ratingsReady
+      ? (clone $this->scopeRatingsForUser(ContentRating::query(), $request->user()))->count()
+      : 0;
+    $averageRating = $ratingsReady && $ratingsCount > 0
+      ? round((float) $this->scopeRatingsForUser(ContentRating::query(), $request->user())->avg('rating_value'), 1)
+      : null;
+
+    return view('webblocks-cms::admin.engagement.index', [
+      'tableReady' => $commentsReady && $ratingsReady,
+      'commentsCount' => $commentsCount,
+      'pendingCommentsCount' => $pendingCommentsCount,
+      'ratingsCount' => $ratingsCount,
+      'averageRating' => $averageRating,
+    ]);
+  }
+
   public function comments(Request $request): View
   {
     if (! Schema::hasTable('wbcms_comment_entries')) {
@@ -83,21 +110,42 @@ class EngagementController extends Controller
     if (! Schema::hasTable('wbcms_content_ratings')) {
       return view('webblocks-cms::admin.engagement.ratings', [
         'ratings' => new LengthAwarePaginator([], 0, AdminPagination::perPage()),
+        'filters' => ['search' => '', 'rating' => ''],
+        'ratingOptions' => [],
         'totalCount' => 0,
+        'filteredCount' => 0,
         'tableReady' => false,
       ]);
     }
 
+    $search = trim((string) $request->string('search'));
+    $rating = $request->string('rating')->toString();
+
+    if ($rating !== '' && ! ctype_digit($rating)) {
+      $rating = '';
+    }
+
     $baseQuery = $this->scopeRatingsForUser(ContentRating::query(), $request->user());
-    $ratings = $this->scopeRatingsForUser(ContentRating::query(), $request->user())
-      ->with(['page.site', 'page.translations', 'block.blockType'])
-      ->latest()
-      ->paginate(AdminPagination::perPage())
-      ->withQueryString();
+    $maxRating = (int) (clone $baseQuery)->max('rating_max') ?: 5;
+    $ratingOptions = range(1, max($maxRating, 1));
+
+    $filteredQuery = $this->scopeRatingsForUser(ContentRating::query(), $request->user())
+      ->when($search !== '', fn (Builder $query) => $query->whereHas('page.translations', fn (Builder $translationQuery) => $translationQuery
+        ->where('name', 'like', "%{$search}%")
+        ->orWhere('slug', 'like', "%{$search}%")
+        ->orWhere('path', 'like', "%{$search}%")))
+      ->when($rating !== '', fn (Builder $query) => $query->where('rating_value', (int) $rating));
 
     return view('webblocks-cms::admin.engagement.ratings', [
-      'ratings' => $ratings,
+      'ratings' => (clone $filteredQuery)
+        ->with(['page.site', 'page.translations', 'block.blockType'])
+        ->latest()
+        ->paginate(AdminPagination::perPage())
+        ->withQueryString(),
+      'filters' => ['search' => $search, 'rating' => $rating],
+      'ratingOptions' => $ratingOptions,
       'totalCount' => (clone $baseQuery)->count(),
+      'filteredCount' => (clone $filteredQuery)->count(),
       'tableReady' => true,
     ]);
   }

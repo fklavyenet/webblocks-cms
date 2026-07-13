@@ -7,6 +7,13 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.38.1
+
+- Fix the API token capabilities counter so it shows selected-of-total instead of selected-of-selected, and register the `content.blocks.delete` capability in the "Publishing and destructive actions" group so it is selectable in the token editor and counted in group and header totals.
+- Collapse all API token capability groups by default on the Create Token form; previously the "Page building" group was always expanded and stretched the page.
+- Add an Engagement overview landing page with Comments and Ratings summary cards (counts, pending review, average rating) and links to each list, and point the Engagement navigation item at it instead of opening Comments directly.
+- Add search and rating-value filters to the Engagement Ratings page.
+
 ## 1.38.0
 
 - Add draft-safe page block topology endpoints to the Internal Content API so trusted AI/operator tools can edit a draft page incrementally without sending a full content plan: `POST /webadmin/api/pages/{page}/slots/{slot}/blocks` adds a single block (with optional children), `PATCH .../blocks/reorder` renumbers a slot sibling group, and `DELETE .../blocks/{block}` removes a block subtree. Create and reorder require `content.apply`; deletion requires the new opt-in `content.blocks.delete` capability that is not part of the default page-building set. The endpoints operate only on draft pages and page-owned slots, reject Shared Slot-backed slots and Shared Slot source blocks, and capture a page revision on every write.

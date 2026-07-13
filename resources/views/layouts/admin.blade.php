@@ -52,7 +52,7 @@
                 ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
                 ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
-                ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.comments.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
+                ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
             ];
 
             if (! $user?->can('access-system')) {

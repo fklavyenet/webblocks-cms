@@ -190,6 +190,7 @@ class CmsApiTokenController extends Controller
           CmsApiTokenCapabilities::NAVIGATION_DELETE,
           CmsApiTokenCapabilities::CONTENT_PUBLISH,
           CmsApiTokenCapabilities::PAGES_DELETE,
+          CmsApiTokenCapabilities::CONTENT_BLOCKS_DELETE,
         ],
       ],
       ...app(PluginApiCapabilityRegistrar::class)->groups(),

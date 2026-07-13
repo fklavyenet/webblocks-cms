@@ -26,9 +26,42 @@
             </div>
         @endif
 
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-body">
+                @include('webblocks-cms::admin.partials.listing-filters', [
+                    'action' => route('admin.engagement.ratings.index'),
+                    'search' => [
+                        'id' => 'engagement_ratings_search',
+                        'name' => 'search',
+                        'label' => $adminText('engagement.search'),
+                        'value' => $filters['search'] ?? '',
+                        'placeholder' => $adminText('engagement.search_ratings'),
+                    ],
+                    'selects' => [
+                        [
+                            'id' => 'engagement_ratings_rating',
+                            'name' => 'rating',
+                            'label' => $adminText('engagement.rating'),
+                            'selected' => $filters['rating'] ?? '',
+                            'placeholder' => $adminText('engagement.all_ratings'),
+                            'options' => collect($ratingOptions ?? [])
+                                ->mapWithKeys(fn (int $value): array => [$value => (string) $value])
+                                ->all(),
+                        ],
+                    ],
+                    'showReset' => ($filters['search'] ?? '') !== '' || ($filters['rating'] ?? '') !== '',
+                    'resetUrl' => route('admin.engagement.ratings.index'),
+                    'applyLabel' => $adminText('engagement.apply'),
+                ])
+            </div>
+        </div>
+
         <section class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $adminText('engagement.ratings') }}</strong>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $adminText('engagement.ratings') }}</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $filteredCount ?? $totalCount }}</span>
+                </div>
                 <span class="wb-text-sm wb-text-muted">{{ $adminText('engagement.total', ['count' => $totalCount]) }}</span>
             </div>
             <div class="wb-card-body">
