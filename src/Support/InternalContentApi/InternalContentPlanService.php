@@ -87,21 +87,6 @@ class InternalContentPlanService
     'sidebar-navigation',
   ];
 
-  private const DIRECT_MEDIA_KIND_RULES = [
-    'image' => [Media::KIND_IMAGE],
-    'navbar-brand' => [Media::KIND_IMAGE],
-    'sidebar-brand' => [Media::KIND_IMAGE],
-    'hero' => [Media::KIND_IMAGE],
-    'section' => [Media::KIND_IMAGE],
-    'slide' => [Media::KIND_IMAGE],
-    'card' => [Media::KIND_IMAGE],
-    'cta' => [Media::KIND_IMAGE],
-    'content_header' => [Media::KIND_IMAGE],
-    'download' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
-    'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
-    'video' => [Media::KIND_VIDEO],
-  ];
-
   private const TRANSLATABLE_FIELDS = [
     'title',
     'eyebrow',
@@ -2098,14 +2083,14 @@ class InternalContentPlanService
     ];
 
     if ($mediaId !== null && $mediaId !== '') {
-      if (! array_key_exists($blockType->slug, self::DIRECT_MEDIA_KIND_RULES)) {
+      if (! array_key_exists($blockType->slug, InternalContentApiOperations::DIRECT_MEDIA_KIND_RULES)) {
         $errors[] = $this->error($path.'.media_id', 'This block type does not support direct Media Library assignment through media_id.');
       } else {
         $media = Media::query()->find((int) $mediaId);
 
         if (! $media) {
           $errors[] = $this->error($path.'.media_id', 'Media Library record must exist.');
-        } elseif (! in_array($media->kind, self::DIRECT_MEDIA_KIND_RULES[$blockType->slug], true)) {
+        } elseif (! in_array($media->kind, InternalContentApiOperations::DIRECT_MEDIA_KIND_RULES[$blockType->slug], true)) {
           $errors[] = $this->error($path.'.media_id', 'Media Library record kind is not compatible with this block type.');
         } else {
           $payload['media_id'] = (int) $media->id;

@@ -947,7 +947,14 @@ class BlockRequest extends FormRequest
         }
 
         $data['url'] = null;
-        $data['asset_id'] = null;
+
+        // The background image is shared across locales, so a translated edit
+        // keeps the stored media. Never re-add asset_id here: its setter writes
+        // media_id, and fill() would apply it last and wipe the background.
+        if ($isTranslatedCtaEdit) {
+          $data['media_id'] = $this->route('block')?->getRawOriginal('media_id');
+        }
+
         $data['variant'] = $isTranslatedCtaEdit
           ? ($this->route('block')?->getRawOriginal('variant'))
           : (trim((string) ($data['variant'] ?? '')) ?: null);
@@ -1123,7 +1130,14 @@ class BlockRequest extends FormRequest
           ? null
           : json_encode($metaItems, JSON_UNESCAPED_SLASHES);
         $data['url'] = null;
-        $data['asset_id'] = null;
+
+        // The background image is shared across locales, so a translated edit
+        // keeps the stored media. Never re-add asset_id here: its setter writes
+        // media_id, and fill() would apply it last and wipe the background.
+        if ($isTranslatedContentHeaderEdit) {
+          $data['media_id'] = $this->route('block')?->getRawOriginal('media_id');
+        }
+
         $data['settings'] = $settings === []
           ? null
           : json_encode($settings, JSON_UNESCAPED_SLASHES);
@@ -1317,7 +1331,15 @@ class BlockRequest extends FormRequest
         $data['url'] = $isTranslatedLinkListItemEdit
           ? ($this->route('block')?->getRawOriginal('url'))
           : (trim((string) ($data['url'] ?? '')) ?: null);
-        $data['asset_id'] = null;
+
+        // The thumbnail is shared across locales, so a translated edit keeps the
+        // stored media instead of the locale form's copy. Never re-add asset_id
+        // here: its setter writes media_id, and fill() would apply it last and
+        // wipe the resolved thumbnail.
+        if ($isTranslatedLinkListItemEdit) {
+          $data['media_id'] = $this->route('block')?->getRawOriginal('media_id');
+        }
+
         $data['variant'] = null;
         $data['meta'] = null;
         $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');

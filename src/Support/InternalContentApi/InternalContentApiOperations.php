@@ -90,7 +90,14 @@ class InternalContentApiOperations
     'link-list-item',
   ];
 
-  private const DIRECT_MEDIA_KIND_RULES = [
+  /**
+   * Block types that accept a direct Media Library assignment through media_id,
+   * mapped to the media kinds each one allows. Single source of truth for both
+   * the full content plan and the incremental block endpoints.
+   *
+   * @var array<string, list<string>>
+   */
+  public const DIRECT_MEDIA_KIND_RULES = [
     'image' => [Media::KIND_IMAGE],
     'navbar-brand' => [Media::KIND_IMAGE],
     'sidebar-brand' => [Media::KIND_IMAGE],

@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.9
+
+- Fix media pickers that silently discarded the chosen asset on save. `link-list-item` (the thumbnail added in 1.40.8), `cta`, and `content_header` all resolved `media_id` correctly and then re-added `asset_id => null` at the end of the admin request payload. `asset_id` is fillable and its setter writes `media_id`, so the trailing null was applied last and wiped the selection: the picker showed the image, the save reported success, and the block came back with no media. CTA and Content Header background images had been affected since before the thumbnail work; `hero`, `section`, `card`, and `image` were never affected. The three block branches no longer re-add `asset_id`, and a shared media assignment is now preserved rather than re-read from the locale form on a translated edit.
+- Fix `link-list-item` media assignment through the Internal Content API, which still failed after 1.40.8 added the block type to the media rules. `InternalContentPlanService` kept its own hand-written copy of the direct media kind rules, so the plan path went on rejecting the thumbnail with "this block type does not support direct Media Library assignment". `InternalContentApiOperations` now owns the canonical rules and the plan service delegates to them, closing the same drift the icon list had in 1.40.7.
+
 ## 1.40.8
 
 - Add an optional thumbnail to the Link List Item block, so a link row can lead with an image instead of an icon. The item editor gains a Media picker restricted to images, the thumbnail is stored on the canonical block `media_id` column, and the public renderer emits it as a `wb-link-list-thumb` image in the row's leading column. A thumbnail and an icon both claim that single column, so an uploaded thumbnail wins and the icon is skipped. The Internal Content API can assign the thumbnail through the existing `media_id` field, which previously rejected `link-list-item` outright.

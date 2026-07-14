@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionClass;
+use WebBlocks\Cms\Http\Requests\Admin\BlockRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\IconCatalogItem;
@@ -12,7 +14,10 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
+use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -144,6 +149,112 @@ class LinkListThumbnailTest extends TestCase
     ], 'block', null, $errors, $warnings);
 
     $this->assertContains('block.media_id', array_column($errors, 'path'));
+  }
+
+  #[Test]
+  public function saving_the_admin_form_persists_the_chosen_thumbnail(): void
+  {
+    // Regression: the item branch of validatedData() re-added asset_id => null
+    // after media_id was already resolved. asset_id's setter writes media_id and
+    // fill() applies it last, so every save wiped the thumbnail back to null and
+    // the picker looked like it did nothing.
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+    $media = $this->seedImage();
+    $itemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+    $data = $this->validatedDataFor([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $itemType->id,
+      'sort_order' => 0,
+      'title' => 'Guide',
+      'url' => '/guide',
+      'asset_id' => $media->id,
+      'status' => 'published',
+    ]);
+
+    $this->assertArrayNotHasKey('asset_id', $data, 'asset_id must not survive into the fill payload.');
+    $this->assertSame($media->id, $data['media_id']);
+
+    $block = app(BlockPayloadWriter::class)->save(new Block, $page, $data, null);
+
+    $this->assertSame($media->id, $block->fresh()->media_id, 'The saved block must keep the chosen thumbnail.');
+  }
+
+  #[Test]
+  public function saving_the_admin_form_can_clear_the_thumbnail(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+    $media = $this->seedImage();
+    $itemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+    $block = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'link-list-item', 'block_type_id' => $itemType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published', 'title' => 'Guide', 'url' => '/guide',
+      'media_id' => $media->id,
+    ]);
+
+    // An empty picker posts asset_id back as an empty string.
+    $data = $this->validatedDataFor([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $itemType->id,
+      'sort_order' => 0,
+      'title' => 'Guide',
+      'url' => '/guide',
+      'asset_id' => '',
+      'status' => 'published',
+    ]);
+
+    app(BlockPayloadWriter::class)->save($block, $page, $data, null);
+
+    $this->assertNull($block->fresh()->media_id, 'Clearing the picker must clear the thumbnail.');
+  }
+
+  #[Test]
+  public function the_media_assignment_rules_have_one_owner(): void
+  {
+    // Regression: InternalContentPlanService kept a hand-written copy of this
+    // list, so adding link-list-item to the operations copy alone still left the
+    // plan path rejecting the thumbnail. Same drift the icon list had in 1.40.7.
+    $this->assertArrayHasKey('link-list-item', InternalContentApiOperations::DIRECT_MEDIA_KIND_RULES);
+    $this->assertSame([Media::KIND_IMAGE], InternalContentApiOperations::DIRECT_MEDIA_KIND_RULES['link-list-item']);
+    $this->assertFalse(
+      (new ReflectionClass(InternalContentPlanService::class))->hasConstant('DIRECT_MEDIA_KIND_RULES'),
+      'InternalContentPlanService must delegate to the canonical media rules instead of keeping a copy.',
+    );
+  }
+
+  /**
+   * Runs the real admin BlockRequest so the media handling in validatedData() is
+   * exercised. Media authorization is faked because scoping media to a user
+   * needs the host application's App\Models\User, which a package-only test
+   * suite has no access to.
+   */
+  private function validatedDataFor(array $payload): array
+  {
+    $this->app->instance(AdminAuthorization::class, new class extends AdminAuthorization
+    {
+      public function normalizeAllowedMediaId($user, ?int $mediaId): ?int
+      {
+        return $mediaId > 0 ? $mediaId : null;
+      }
+
+      public function filterAllowedMediaIds($user, array $mediaIds): array
+      {
+        return array_values(array_filter(array_map('intval', $mediaIds), fn (int $id): bool => $id > 0));
+      }
+    });
+
+    $request = BlockRequest::create('/webadmin/blocks', 'POST', $payload);
+    $request->setContainer($this->app);
+    $request->setRouteResolver(fn () => null);
+    $request->validateResolved();
+
+    return $request->validatedData();
   }
 
   private function renderItem(array $attributes = []): string
