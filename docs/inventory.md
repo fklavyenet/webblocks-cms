@@ -966,7 +966,7 @@ These are implementation findings, not permissions to invent behavior:
 5. Resolved: Hero and CTA actions are authored through the API with the `primary_cta` and `secondary_cta` fields, which create the same managed `button_link` children the admin editor maintains. Free-form `button` children remain unsupported by design, so the unpublished `button` catalog row is no longer an authoring blocker.
 6. Resolved: the Column Item editor now exposes the subtitle field that the Columns `stats` variant renders as the stat value.
 7. Audio has a normal admin media picker and public media renderer, but the content-plan direct-media allowlist omits Audio.
-8. Full-plan and incremental-block normalizers have drift in icon handling: full plans normalize icon slug/tone for the complete public icon block set, while incremental operations do not expose the same logic for every supported type.
+8. Resolved: icon normalization has one owner. `InternalContentApiOperations` holds the canonical `PUBLIC_ICON_BLOCK_TYPES` list plus the shared slug/tone normalizers, and the full content plan delegates to them, so plans and incremental block endpoints validate icons identically.
 9. API block settings are not yet governed by one per-block machine-readable settings schema. Unknown settings can survive normalization even when no renderer or admin field uses them.
 10. Resolved: `navigation-auto` now has a documented contract in `BlockTypeContractRegistry` and is discoverable through block-types and content-contract.
 11. The repository has dashboard and page-management screenshots, but no canonical per-block/per-variant visual fixture gallery. The “Example appearance” descriptions in this inventory are therefore source-derived, not screenshot-backed golden references.

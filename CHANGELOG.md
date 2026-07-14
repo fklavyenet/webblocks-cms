@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.7
+
+- Fix public icon handling on the incremental block endpoints, which drifted from content apply. Adding a single block through `POST /webadmin/api/pages/{page}/slots/{slot}/blocks` or `POST /webadmin/api/shared-slots/{sharedSlot}/blocks` did not normalize or validate `settings.icon_slug` at all, so an unknown icon survived normalization and the public renderer silently skipped it, and `settings.icon_tone` was wrongly rejected on `feature-item` because the incremental block-type list omitted it. Icon normalization now has one owner: `InternalContentApiOperations` holds the canonical icon-enabled block type list plus the shared slug and tone normalizers, and the full content plan delegates to them instead of keeping a duplicate copy.
+
 ## 1.40.6
 
 - Add a split Hero layout so a marketing intro can place its image beside the copy instead of behind it. Selecting the new Split layout renders the hero media as a `wb-promo-media` foreground image using the new WebBlocks UI `wb-promo--split` modifier, and skips the background image and overlay for that layout. The left and centered layouts keep using the same media as a background, so no new media field, relation, or migration was needed and the Internal Content API can select the layout through `settings.layout` with the existing `media_id`. Upgrades the bundled WebBlocks UI to v2.9.0.

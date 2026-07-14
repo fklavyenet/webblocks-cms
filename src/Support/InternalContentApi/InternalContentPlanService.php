@@ -28,12 +28,10 @@ use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
-use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
-use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 
 class InternalContentPlanService
 {
@@ -87,14 +85,6 @@ class InternalContentPlanService
     'card_footer',
     'sticky-navbar',
     'sidebar-navigation',
-  ];
-
-  private const PUBLIC_ICON_BLOCK_TYPES = [
-    'content_header',
-    'card_header',
-    'column_item',
-    'feature-item',
-    'link-list-item',
   ];
 
   private const DIRECT_MEDIA_KIND_RULES = [
@@ -1881,8 +1871,8 @@ class InternalContentPlanService
     }
 
     $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
-    $settings = $this->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
-    $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
+    $settings = $this->operations->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
+    $settings = $this->operations->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {
       if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {
@@ -2090,70 +2080,6 @@ class InternalContentPlanService
     }
 
     return false;
-  }
-
-  private function normalizePublicIconToneSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
-  {
-    if (! array_key_exists('icon_tone', $settings)) {
-      return $settings;
-    }
-
-    if (! in_array($blockType->slug, self::PUBLIC_ICON_BLOCK_TYPES, true)) {
-      $errors[] = $this->error($path.'.settings.icon_tone', 'icon_tone is only supported by public icon-enabled block types.');
-      unset($settings['icon_tone']);
-
-      return $settings;
-    }
-
-    $tone = app(PublicIconPresenter::class)->visualTone($settings['icon_tone']);
-
-    if ($tone === null) {
-      $errors[] = $this->error($path.'.settings.icon_tone', 'icon_tone must be one of: default, soft, brand, accent, highlight, bold, quiet.');
-      unset($settings['icon_tone']);
-
-      return $settings;
-    }
-
-    if ($tone === 'default') {
-      unset($settings['icon_tone']);
-    } else {
-      $settings['icon_tone'] = $tone;
-    }
-
-    return $settings;
-  }
-
-  private function normalizePublicIconSlugSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
-  {
-    if (! array_key_exists('icon_slug', $settings)) {
-      return $settings;
-    }
-
-    if (! in_array($blockType->slug, self::PUBLIC_ICON_BLOCK_TYPES, true)) {
-      $errors[] = $this->error($path.'.settings.icon_slug', 'icon_slug is only supported by public icon-enabled block types.');
-      unset($settings['icon_slug']);
-
-      return $settings;
-    }
-
-    $slug = app(IconCatalog::class)->normalizeSlug(is_string($settings['icon_slug']) ? $settings['icon_slug'] : null);
-
-    if ($slug === null) {
-      unset($settings['icon_slug']);
-
-      return $settings;
-    }
-
-    if (! app(IconCatalog::class)->isValidSelection($slug, 'content')) {
-      $errors[] = $this->error($path.'.settings.icon_slug', 'icon_slug must be an active content icon catalog slug.');
-      unset($settings['icon_slug']);
-
-      return $settings;
-    }
-
-    $settings['icon_slug'] = $slug;
-
-    return $settings;
   }
 
   private function normalizeMediaAssignment(array $block, array &$settings, BlockType $blockType, string $path, array &$errors): array
