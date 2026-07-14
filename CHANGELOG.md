@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.16
+
+- Upgrade the bundled WebBlocks UI to 2.10.3, so titles in a card-framed Link List use the stronger card-heading typography while the existing `span` markup and standard Link List typography stay unchanged. Structured CMS Link Lists such as the **Try next** card now match the visual emphasis of the older hand-written card links without requiring site-specific CSS or HTML blocks.
+
 ## 1.40.15
 
 - Let a Link List show landscape artwork instead of only a small square. The row thumbnail was a fixed 4rem square, so 4:3 artwork was cropped by `object-fit: cover` and wide rows looked sparse next to their copy. A new **Thumbnail Size** setting on the Link List block adds `wb-link-list--thumb-wide` (WebBlocks UI 2.10.2), which gives the leading column a share of the row width and renders the image at a 4:3 ratio, so it grows with the list instead of staying pinned to a fixed size. The default stays square, so existing lists keep their current look, and the setting composes with the Row Layout and List Frame styles added in 1.40.10. Rows that show an icon rather than a thumbnail are deliberately left on the narrow column, because a wide track would strand the icon in empty space.
