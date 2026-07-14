@@ -3180,6 +3180,8 @@ return [
       'empty_description' => 'Add the first item to build the visible columns for this section.',
       'new_item' => 'New Column Item',
       'item_title_label' => 'Column Title',
+      'item_subtitle_label' => 'Stat Value',
+      'item_subtitle_placeholder' => 'Shown as the large value in the Stats variant',
       'item_url_label' => 'Optional Link',
       'item_content_label' => 'Column Text',
       'item_content_placeholder' => 'Add a title and short description for this column.',

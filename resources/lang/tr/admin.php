@@ -3178,6 +3178,8 @@ return [
       'empty_description' => 'Bu bölümün görünür sütunlarını oluşturmak için ilk öğeyi ekle.',
       'new_item' => 'Yeni Sütun Öğesi',
       'item_title_label' => 'Sütun Başlığı',
+      'item_subtitle_label' => 'İstatistik Değeri',
+      'item_subtitle_placeholder' => 'Stats varyantında büyük değer olarak gösterilir',
       'item_url_label' => 'Opsiyonel Link',
       'item_content_label' => 'Sütun Metni',
       'item_content_placeholder' => 'Bu sütun için bir başlık ve kısa açıklama ekle.',

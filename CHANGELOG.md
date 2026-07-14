@@ -7,6 +7,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.4
+
+- Let the Internal Content API author Hero and CTA actions. `hero` and `cta` block payloads now accept optional `primary_cta` and `secondary_cta` objects (`{label, url}`, or `null` to clear), validated for a safe internal path or http(s) URL. They create the same managed `button_link` children the admin Page editor maintains, so an AI-built hero keeps its buttons editable in the normal block editor. Previously the API could not add a call to action to a Hero at all, because Hero only accepts managed `button` children and that type is not published in the catalog. The managed CTA logic moved out of the admin block controller into a shared `ManagedCtaSynchronizer` so the admin and every API create path share one behavior.
+- Expose the Column Item subtitle field in the Columns editor. The Columns `stats` variant renders the child subtitle as the large stat value, but the editor never offered the field, so stat values silently fell back to the title.
+- Document the `navigation-auto` block in the shared contract registry so it is discoverable through `GET /webadmin/api/block-types` and `GET /webadmin/api/content-contract`. It was a published catalog row with an admin form and public renderer but no documented contract.
+
 ## 1.40.3
 
 - Ship `docs/inventory.md`, the AI-facing per-block design and authoring contract, and serve it to trusted tools through the new `GET /webadmin/api/inventory` endpoint as Markdown. API discovery links to it, recommends reading it first, and documents it in the AI guide and OpenAPI schema; the docs check now fails if the document goes missing.

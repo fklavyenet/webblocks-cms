@@ -3180,6 +3180,8 @@ return [
       'empty_description' => 'Füge das erste Element hinzu, um die sichtbaren Spalten für diesen Abschnitt aufzubauen.',
       'new_item' => 'Neues Spaltenelement',
       'item_title_label' => 'Spalten-Titel',
+      'item_subtitle_label' => 'Statistik-Wert',
+      'item_subtitle_placeholder' => 'Wird in der Stats-Variante als großer Wert angezeigt',
       'item_url_label' => 'Optionaler Link',
       'item_content_label' => 'Spaltentext',
       'item_content_placeholder' => 'Füge einen Titel und eine kurze Beschreibung für diese Spalte hinzu.',

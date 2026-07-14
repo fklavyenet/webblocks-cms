@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
@@ -93,6 +94,7 @@ class InternalContentApiOperations
     private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
+    private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
   ) {}
 
   public function resolveSite(mixed $value, string $path, array &$errors): ?Site
@@ -365,6 +367,8 @@ class InternalContentApiOperations
       'meta' => $translations['meta'] ?? null,
     ], $localeCode);
 
+    $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);
+
     foreach (array_values($payload['children']) as $index => $childPayload) {
       $this->createSharedSlotBlock($sharedSlot, $childPayload, $localeCode, $block, $index);
     }
@@ -411,6 +415,8 @@ class InternalContentApiOperations
       'submit_label' => $translations['submit_label'] ?? null,
       'success_message' => $translations['success_message'] ?? null,
     ], $localeCode);
+
+    $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);
 
     foreach (array_values($payload['children']) as $index => $childPayload) {
       $this->createPageSlotBlock($page, $slotType, $childPayload, $localeCode, $block, $index);
@@ -510,6 +516,7 @@ class InternalContentApiOperations
       'media_id' => $mediaAssignment['media_id'],
       '_block_media' => $mediaAssignment['_block_media'],
       '_gallery_items' => $mediaAssignment['_gallery_items'],
+      '_managed_ctas' => $this->managedCtaSynchronizer->normalizeApiPayload($block, $blockType->slug, $path, $errors),
       'children' => $normalizedChildren,
     ];
   }

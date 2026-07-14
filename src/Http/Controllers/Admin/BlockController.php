@@ -23,6 +23,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -44,6 +45,7 @@ class BlockController extends Controller
     private readonly SharedSlotRevisionManager $sharedSlotRevisionManager,
     private readonly AdminAuthorization $authorization,
     private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
+    private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
   ) {}
 
   public function moveUp(Block $block): RedirectResponse
@@ -183,7 +185,7 @@ class BlockController extends Controller
   {
     $data = $request->validatedData();
     $localeCode = $data['locale'] ?? null;
-    $columnItems = $this->builderChildItemsFrom($request, 'column_items');
+    $columnItems = $this->builderChildItemsFrom($request, 'column_items', true);
     $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
     $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
     $managedCtas = $this->managedCtasFrom($request);
@@ -327,7 +329,7 @@ class BlockController extends Controller
     $this->authorization->abortUnlessSiteAccess($request->user(), $contextSharedSlot ?? $block);
     $data = $request->validatedData();
     $localeCode = $data['locale'] ?? null;
-    $columnItems = $this->builderChildItemsFrom($request, 'column_items');
+    $columnItems = $this->builderChildItemsFrom($request, 'column_items', true);
     $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
     $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
     $managedCtas = $this->managedCtasFrom($request);
@@ -974,73 +976,7 @@ class BlockController extends Controller
 
   private function syncManagedCtas(Block $block, array $managedCtas, ?string $localeCode = null): void
   {
-    if (! in_array($block->typeSlug(), ['hero', 'cta'], true)) {
-      return;
-    }
-
-    $buttonType = BlockType::query()
-      ->whereIn('slug', ['button_link', 'button'])
-      ->orderByRaw("CASE WHEN slug = 'button_link' THEN 0 ELSE 1 END")
-      ->first();
-
-    if (! $buttonType) {
-      return;
-    }
-
-    $resolvedLocale = $localeCode
-      ? Locale::query()->whereRaw('LOWER(code) = ?', [strtolower($localeCode)])->first()
-      : null;
-    $isDefaultLocaleEdit = ! $resolvedLocale || $resolvedLocale->is_default;
-
-    $managedButtons = $block->children()
-      ->whereIn('type', ['button_link', 'button'])
-      ->orderBy('sort_order')
-      ->limit(2)
-      ->get()
-      ->values();
-
-    foreach ($managedCtas as $index => $cta) {
-      $existing = $managedButtons->get($index);
-      $hasSharedPayload = filled($cta['url']) || ($isDefaultLocaleEdit && filled($cta['label']));
-      $hasTranslatedPayload = ! $isDefaultLocaleEdit && filled($cta['label']);
-
-      if (! $existing && ! $hasSharedPayload && ! $hasTranslatedPayload) {
-        continue;
-      }
-
-      if (! $existing && ! $isDefaultLocaleEdit) {
-        continue;
-      }
-
-      if ($existing && blank($cta['label']) && blank($cta['url']) && $isDefaultLocaleEdit) {
-        $existing->delete();
-
-        continue;
-      }
-
-      if ($existing && blank($cta['label']) && ! $isDefaultLocaleEdit) {
-        continue;
-      }
-
-      $payload = [
-        'page_id' => $block->page_id,
-        'parent_id' => $block->id,
-        'block_type_id' => $buttonType->id,
-        'type' => $buttonType->slug,
-        'source_type' => $buttonType->source_type ?? 'static',
-        'slot_type_id' => $block->slot_type_id,
-        'slot' => $block->slot,
-        'sort_order' => $cta['sort_order'],
-        'title' => $cta['label'],
-        'url' => $isDefaultLocaleEdit ? $cta['url'] : ($existing?->url),
-        'subtitle' => $existing?->subtitle ?: '_self',
-        'variant' => $cta['variant'],
-        'status' => $existing?->status ?: 'published',
-        'is_system' => false,
-      ];
-
-      $this->blockPayloadWriter->save($existing ?? new Block, $block->page, $payload, $localeCode);
-    }
+    $this->managedCtaSynchronizer->sync($block, $managedCtas, $localeCode);
   }
 
   private function pageSlotRouteId(?int $pageId, ?int $slotTypeId): ?int

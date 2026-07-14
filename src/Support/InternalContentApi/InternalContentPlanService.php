@@ -26,6 +26,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
@@ -131,6 +132,7 @@ class InternalContentPlanService
     private readonly InternalContentApiPresenter $presenter,
     private readonly InternalContentApiOperations $operations,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
+    private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
   ) {}
 
   public function validate(array $payload): InternalContentPlanResult
@@ -533,6 +535,8 @@ class InternalContentPlanService
     ];
 
     $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
+
+    $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);
 
     foreach (array_values($payload['children']) as $index => $childPayload) {
       $this->createBlock($page, $slotType, $childPayload, $localeCode, $block, $index);
@@ -1932,6 +1936,7 @@ class InternalContentPlanService
       'media_id' => $mediaAssignment['media_id'],
       '_block_media' => $mediaAssignment['_block_media'],
       '_gallery_items' => $mediaAssignment['_gallery_items'],
+      '_managed_ctas' => $this->managedCtaSynchronizer->normalizeApiPayload($block, $blockType->slug, $path, $errors),
       'children' => $normalizedChildren,
     ];
   }

@@ -388,6 +388,23 @@ DELETE /webadmin/api/pages/{page}/slots/{slot}/blocks/{block}
 
 Every write captures a page revision so draft edits stay reversible.
 
+### Hero And CTA Managed Actions
+
+`hero` and `cta` do not accept free-form button children. Their actions are *managed* child buttons that the admin editor owns, so API callers set them with two optional block fields instead:
+
+```json
+{
+  "type": "hero",
+  "translations": { "title": "Welcome" },
+  "primary_cta": { "label": "Get started", "url": "/signup" },
+  "secondary_cta": { "label": "Docs", "url": "https://example.com/docs" }
+}
+```
+
+Both fields accept an object with a required `label` and a required `url`, or `null` to leave the action unset. URLs must be a safe internal path or an `http(s)` URL. The CMS turns them into the same managed `button_link` children the Page editor maintains, so an AI-created hero stays fully editable from the normal block editor. Sending `primary_cta` or `secondary_cta` on any other block type is rejected.
+
+The fields work everywhere a block payload is accepted: content validate/apply plans, `POST /pages/{page}/slots/{slot}/blocks`, and `POST /shared-slots/{sharedSlot}/blocks`.
+
 ### Page Assets API
 
 Pages can load their own `/site/...` CSS and JS files in addition to the site-wide assets:
