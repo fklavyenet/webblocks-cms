@@ -18,6 +18,8 @@ class SystemBackup extends CmsModel
 
   public const TYPE_PRE_UPDATE = 'pre_update';
 
+  public const TYPE_CONTENT_APPLY = 'content_apply';
+
   public const STATUS_RUNNING = 'running';
 
   public const STATUS_COMPLETED = 'completed';

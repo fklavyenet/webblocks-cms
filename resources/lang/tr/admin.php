@@ -1807,6 +1807,7 @@ return [
       'uploaded' => 'Yüklenmis',
       'restore_safety' => 'Restore güvenligi',
       'pre_update' => 'Update öncesi',
+      'content_apply' => 'İçerik apply geri dönüş noktası',
     ],
     'statuses' => [
       'completed' => 'tamamlandi',

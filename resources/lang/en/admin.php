@@ -1809,6 +1809,7 @@ return [
       'uploaded' => 'Uploaded',
       'restore_safety' => 'Restore safety',
       'pre_update' => 'Pre update',
+      'content_apply' => 'Content apply restore point',
     ],
     'statuses' => [
       'completed' => 'completed',

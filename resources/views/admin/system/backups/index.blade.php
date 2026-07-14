@@ -125,6 +125,7 @@
                                 SystemBackup::TYPE_UPLOADED => $adminText('backups.types.uploaded'),
                                 SystemBackup::TYPE_RESTORE_SAFETY => $adminText('backups.types.restore_safety'),
                                 SystemBackup::TYPE_PRE_UPDATE => $adminText('backups.types.pre_update'),
+                                SystemBackup::TYPE_CONTENT_APPLY => $adminText('backups.types.content_apply'),
                             ],
                         ],
                         [

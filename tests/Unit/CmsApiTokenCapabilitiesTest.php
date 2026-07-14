@@ -24,4 +24,19 @@ class CmsApiTokenCapabilitiesTest extends TestCase
     $this->assertContains($capability, $capabilities->grantable());
     $this->assertContains($capability, $capabilities->advancedGrantable());
   }
+
+  #[Test]
+  public function backups_create_is_a_grantable_advanced_capability_outside_the_default_set(): void
+  {
+    $capability = CmsApiTokenCapabilities::BACKUPS_CREATE;
+
+    $this->assertSame('backups.create', $capability);
+    $this->assertContains($capability, CmsApiTokenCapabilities::ALL);
+    $this->assertContains($capability, CmsApiTokenCapabilities::ADVANCED);
+    $this->assertNotContains($capability, CmsApiTokenCapabilities::DEFAULT);
+    $this->assertNotContains($capability, CmsApiTokenCapabilities::DESTRUCTIVE);
+    $this->assertArrayHasKey($capability, CmsApiTokenCapabilities::LABELS);
+
+    $this->assertContains($capability, app(CmsApiTokenCapabilities::class)->grantable());
+  }
 }

@@ -46,6 +46,11 @@ class SystemBackupManager
     return $this->createBackup(SystemBackup::TYPE_PRE_UPDATE, $triggeredByUserId, $label);
   }
 
+  public function createContentApplyRestorePoint(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
+  {
+    return $this->createBackup(SystemBackup::TYPE_CONTENT_APPLY, $triggeredByUserId, $label);
+  }
+
   public function assertValidArchiveRelativePath(string $path): void
   {
     $this->backupArchiveResolver()->assertValidArchivePath($path);

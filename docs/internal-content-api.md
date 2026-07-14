@@ -146,6 +146,7 @@ Advanced capabilities are separate options and are not selected by default:
 - `content.publish`
 - `pages.delete`
 - `content.blocks.delete`
+- `backups.create`
 
 Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, plugin install/manage/setup/uninstall, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`. Plugin lifecycle automation requires explicit plugin capabilities, and WebBlocks Commerce product/order API access requires explicit commerce capabilities.
 
@@ -240,6 +241,27 @@ Both modes are needed:
 
 - the Resource API exposes the existing CMS content model and contracts to internal tools
 - the Content Validate / Apply API avoids partial writes during larger page builds
+
+#### Apply Restore Point
+
+`POST /content/apply` accepts an optional top-level `create_restore_point: true` flag. When set, the CMS takes a full system backup (database plus uploads) as a restore point **before** applying the plan, so an operator can roll back from `System -> Backups` if an AI-generated apply goes wrong.
+
+```json
+{
+  "create_restore_point": true,
+  "plan": { "mode": "create_draft_page", "page": { "...": "..." } }
+}
+```
+
+Rules:
+
+- it requires the dedicated `backups.create` capability, which is not part of the default page-building set; without it the request returns JSON `403`
+- the plan is validated first, so an invalid plan returns `422` without creating a wasted backup
+- if the backup cannot be created the apply is aborted and returns JSON `409`; content is never applied without the requested safety net
+- on success the apply response includes a `restore_point` object with the backup `id`, `type` (`content_apply`), `label`, `status`, and `created_at`
+- the backup is full and synchronous, so it adds noticeable latency; use it for large or destructive applies, not high-frequency automation
+
+The API intentionally exposes only restore-point creation. Restoring, downloading, and deleting backups stay in the operator admin UI and are not part of the token API.
 
 ### Plugin And Commerce API
 

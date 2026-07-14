@@ -54,4 +54,16 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $this->assertArrayHasKey('delete', $paths['/shared-slots/{sharedSlot}/blocks']);
     $this->assertSame('shared-slots.write plus content.blocks.delete', $paths['/shared-slots/{sharedSlot}/blocks']['delete']['x-required-capability']);
   }
+
+  #[Test]
+  public function openapi_schema_documents_the_apply_restore_point_option(): void
+  {
+    $response = $this->app->make(InternalApiDiscoveryController::class)->openapi();
+    $schema = $response->getData(true);
+    $apply = $schema['paths']['/content/apply']['post'];
+
+    $this->assertArrayHasKey('x-optional-fields', $apply);
+    $this->assertStringContainsString('create_restore_point', implode(' ', $apply['x-optional-fields']));
+    $this->assertArrayHasKey('409', $apply['responses']);
+  }
 }

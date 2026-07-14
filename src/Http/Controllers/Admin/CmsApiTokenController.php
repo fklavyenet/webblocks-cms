@@ -193,6 +193,14 @@ class CmsApiTokenController extends Controller
           CmsApiTokenCapabilities::CONTENT_BLOCKS_DELETE,
         ],
       ],
+      [
+        'key' => 'system-safety',
+        'label' => 'System safety',
+        'description' => 'Create a full system backup restore point before a large or destructive content apply. Grant only when explicitly needed.',
+        'capabilities' => [
+          CmsApiTokenCapabilities::BACKUPS_CREATE,
+        ],
+      ],
       ...app(PluginApiCapabilityRegistrar::class)->groups(),
     ];
   }

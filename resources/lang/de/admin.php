@@ -1809,6 +1809,7 @@ return [
       'uploaded' => 'Hochgeladen',
       'restore_safety' => 'Restore-Sicherheit',
       'pre_update' => 'Vor Update',
+      'content_apply' => 'Content-Apply-Wiederherstellungspunkt',
     ],
     'statuses' => [
       'completed' => 'abgeschlossen',

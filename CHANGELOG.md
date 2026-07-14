@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.1
+
+- Add an optional `create_restore_point` flag to `POST /webadmin/api/content/apply`. When set, the Internal Content API takes a full system backup (database plus uploads) restore point before applying the plan, so an operator can roll back from System -> Backups if an AI-generated apply goes wrong. It requires the new opt-in `backups.create` capability, validates the plan first so an invalid plan does not create a wasted backup, and aborts the apply with JSON 409 if the backup fails so content is never applied without the requested safety net. Successful responses include a `restore_point` summary, and the backup is recorded with a dedicated `content_apply` type. The API intentionally exposes only restore-point creation; restoring, downloading, and deleting backups stay in the operator admin UI.
+
 ## 1.40.0
 
 - Add Shared Slot block topology endpoints to the Internal Content API (Phase 2B): `PATCH /webadmin/api/shared-slots/{sharedSlot}/blocks/reorder` reorders a sibling group (requires `shared-slots.write`), `DELETE .../blocks/{block}` removes one block subtree, and `DELETE .../blocks` clears every block for clear-and-replace (both deletes require `shared-slots.write` plus `content.blocks.delete`). Existing Shared Slot block content edits keep using `PATCH /blocks/{block}`. Every write rebuilds the slot's page assignments and captures a Shared Slot revision. Because Shared Slots have no draft-page concept, changes to already-published Shared Slot blocks affect every assigned page immediately, which is why deletion is gated behind the destructive `content.blocks.delete` capability.

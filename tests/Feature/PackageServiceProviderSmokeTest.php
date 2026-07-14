@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Support\ServiceProvider;
 use PHPUnit\Framework\Attributes\Test;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Tests\TestCase;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -57,6 +58,11 @@ class PackageServiceProviderSmokeTest extends TestCase
     $this->assertInstanceOf(
       InternalContentResourceController::class,
       $this->app->make(InternalContentResourceController::class),
+    );
+
+    $this->assertInstanceOf(
+      InternalContentPlanController::class,
+      $this->app->make(InternalContentPlanController::class),
     );
   }
 }
