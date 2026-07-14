@@ -8,8 +8,16 @@
   $headingTag = in_array($settings['title_tag'] ?? null, ['h1', 'h2', 'h3'], true) ? $settings['title_tag'] : 'h1';
   $heroClasses = ['wb-card', 'wb-promo'];
   $copyClasses = ['wb-card-body', 'wb-promo-copy', 'wb-stack', 'wb-gap-3'];
-  $backgroundClass = $block->publicBackgroundMediaClass();
-  $backgroundStyle = $block->publicBackgroundMediaStyle();
+  $mediaUrl = $block->publicBackgroundMediaUrl();
+  // The split layout renders the hero media as a foreground image beside the
+  // copy, so the same media is never also painted as a background.
+  $isSplit = $layout === 'split' && $mediaUrl !== null;
+  $backgroundClass = $isSplit ? null : $block->publicBackgroundMediaClass();
+  $backgroundStyle = $isSplit ? null : $block->publicBackgroundMediaStyle();
+
+  if ($isSplit) {
+    $heroClasses[] = 'wb-promo--split';
+  }
 
   if (in_array($variant, ['muted', 'soft'], true)) {
     $heroClasses[] = 'wb-card-muted';
@@ -53,4 +61,10 @@
       'wrapperClass' => 'wb-promo-actions wb-cluster wb-cluster-2',
     ])
   </div>
+
+  @if ($isSplit)
+    <figure class="wb-promo-media">
+      <img src="{{ $mediaUrl }}" alt="" loading="lazy" decoding="async">
+    </figure>
+  @endif
 </section>

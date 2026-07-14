@@ -3354,6 +3354,7 @@ return [
       'layout_label' => 'Layout',
       'layout_left' => 'Sol',
       'layout_centered' => 'Ortalı',
+      'layout_split' => 'Split (görsel metnin yanında)',
       'presentation_help' => 'Ortak sunum kontrolleri diller ve siteler arasında sabit kalır.',
       'title_tag_label' => 'Başlık Tag',
       'title_tag_help' => 'Sayfa lideri herolar için <code>h1</code>, iç içe section herolari için <code>h2</code> veya <code>h3</code> kullanın.',

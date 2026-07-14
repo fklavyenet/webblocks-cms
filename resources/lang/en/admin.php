@@ -3356,6 +3356,7 @@ return [
       'layout_label' => 'Layout',
       'layout_left' => 'Left',
       'layout_centered' => 'Centered',
+      'layout_split' => 'Split (image beside copy)',
       'presentation_help' => 'Shared presentation controls stay stable across locales and sites.',
       'title_tag_label' => 'Title Tag',
       'title_tag_help' => 'Use <code>h1</code> for page-leading heroes and <code>h2</code> or <code>h3</code> for nested section heroes.',

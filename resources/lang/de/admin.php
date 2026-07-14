@@ -3356,6 +3356,7 @@ return [
       'layout_label' => 'Layout',
       'layout_left' => 'Links',
       'layout_centered' => 'Zentriert',
+      'layout_split' => 'Split (Bild neben Text)',
       'presentation_help' => 'Gemeinsame Darstellungssteuerungen bleiben über Sprachen und Websites hinweg stabil.',
       'title_tag_label' => 'Titel-Tag',
       'title_tag_help' => '<code>h1</code> für seitenführende Heroes und <code>h2</code> oder <code>h3</code> für verschachtelte Section-Heroes verwenden.',

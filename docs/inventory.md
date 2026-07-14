@@ -111,7 +111,7 @@ A renderer may recognize a legacy or internal value that the normal admin form d
 | Horizontal actions or compact items | `cluster` | Do not use Grid for a single button row. |
 | Responsive repeated cells | `grid` with structured children | Do not use Grid to fake a semantic table. |
 | Page title, intro, badge, icon, metadata | `content_header` | It always owns an H1; do not use it for ordinary nested headings. |
-| Marketing intro | `hero` | Current Hero is a promo card, not a split foreground-media hero. Report a gap when the design requires separate editable foreground media or arbitrary nested content. |
+| Marketing intro | `hero` | Hero supports left, centered, and split layouts; split renders the hero media as a foreground image beside the copy. Report a gap when the design requires a second editable foreground image or arbitrary nested content. |
 | Conversion band | `cta` | Current CTA does not accept normal structured children other than managed legacy button children. |
 | Repeated feature or stat items | `columns` and `column_item` | Prefer `grid` and composable `card` when arbitrary nested content is needed. |
 | Composable card | `card` plus Card regions | There is no supported Card visual variant setting; report a gap if stable semantic card variants are required. |

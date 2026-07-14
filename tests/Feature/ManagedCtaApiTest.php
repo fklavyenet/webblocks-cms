@@ -6,6 +6,7 @@ use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
@@ -211,6 +212,63 @@ class ManagedCtaApiTest extends TestCase
     // set the legacy url column rendered as an empty action.
     $this->assertSame('/signup', $button->buttonLinkUrl());
     $this->assertSame('_self', $button->buttonLinkTarget());
+  }
+
+  #[Test]
+  public function hero_split_layout_renders_the_media_beside_the_copy(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+
+    $media = Media::query()->create([
+      'disk' => 'public', 'path' => 'media/hero.jpg', 'filename' => 'hero.jpg',
+      'mime_type' => 'image/jpeg', 'kind' => Media::KIND_IMAGE, 'visibility' => 'public',
+    ]);
+
+    $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+    $hero = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'hero', 'block_type_id' => $heroType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published', 'title' => 'Welcome',
+      'media_id' => $media->id, 'settings' => json_encode(['layout' => 'split']),
+    ]);
+
+    $html = view('webblocks-cms::pages.partials.blocks.hero', [
+      'block' => $hero->fresh(['children.blockType', 'blockType', 'media']),
+    ])->render();
+
+    $this->assertStringContainsString('wb-promo--split', $html);
+    $this->assertStringContainsString('wb-promo-media', $html);
+    $this->assertStringContainsString('hero.jpg', $html);
+    // The split layout must not also paint the same media as a background.
+    $this->assertStringNotContainsString('background-image', $html);
+  }
+
+  #[Test]
+  public function hero_default_layout_still_uses_the_media_as_a_background(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+
+    $media = Media::query()->create([
+      'disk' => 'public', 'path' => 'media/hero.jpg', 'filename' => 'hero.jpg',
+      'mime_type' => 'image/jpeg', 'kind' => Media::KIND_IMAGE, 'visibility' => 'public',
+    ]);
+
+    $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+    $hero = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'hero', 'block_type_id' => $heroType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published', 'title' => 'Welcome',
+      'media_id' => $media->id,
+    ]);
+
+    $html = view('webblocks-cms::pages.partials.blocks.hero', [
+      'block' => $hero->fresh(['children.blockType', 'blockType', 'media']),
+    ])->render();
+
+    $this->assertStringNotContainsString('wb-promo--split', $html);
+    $this->assertStringNotContainsString('wb-promo-media', $html);
   }
 
   private function seedBlockTypes(): void
