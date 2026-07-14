@@ -145,6 +145,75 @@ class BlockPatchSettingsContractTest extends TestCase
   }
 
   #[Test]
+  public function patching_a_hero_stores_the_layout(): void
+  {
+    // The split layout shipped in 1.40.6 but could not be selected on an
+    // existing hero through the API.
+    $block = $this->seedBlock('hero');
+
+    $settings = $this->mergeSettings($block, ['layout' => 'split', 'title_tag' => 'h2']);
+
+    $this->assertSame('split', $settings['layout'] ?? null);
+    $this->assertSame('h2', $settings['title_tag'] ?? null);
+  }
+
+  #[Test]
+  public function patching_a_hero_drops_a_layout_the_renderer_does_not_know(): void
+  {
+    $block = $this->seedBlock('hero', ['layout' => 'split']);
+
+    $settings = $this->mergeSettings($block, ['layout' => 'diagonal', 'title_tag' => 'h7']);
+
+    $this->assertArrayNotHasKey('layout', $settings);
+    $this->assertArrayNotHasKey('title_tag', $settings);
+  }
+
+  #[Test]
+  public function patching_a_grid_stores_the_layout_settings(): void
+  {
+    $block = $this->seedBlock('grid');
+
+    $settings = $this->mergeSettings($block, [
+      'columns' => '3',
+      'gap' => '6',
+      'layout_name' => 'Feature row',
+      'alternate_media_text_sections' => true,
+      'alternate_start' => 'media_left',
+    ]);
+
+    $this->assertSame('3', $settings['columns'] ?? null);
+    $this->assertSame('6', $settings['gap'] ?? null);
+    $this->assertSame('Feature row', $settings['layout_name'] ?? null);
+    $this->assertTrue($settings['alternate_media_text_sections'] ?? false);
+    $this->assertSame('media_left', $settings['alternate_start'] ?? null);
+  }
+
+  #[Test]
+  public function patching_a_grid_drops_values_the_admin_form_cannot_produce(): void
+  {
+    $block = $this->seedBlock('grid');
+
+    $settings = $this->mergeSettings($block, ['columns' => '7', 'gap' => '99', 'alternate_start' => 'sideways']);
+
+    $this->assertArrayNotHasKey('columns', $settings);
+    $this->assertArrayNotHasKey('gap', $settings);
+    $this->assertArrayNotHasKey('alternate_start', $settings);
+  }
+
+  #[Test]
+  public function patching_a_grid_clears_the_alternating_start_when_alternating_is_off(): void
+  {
+    // The admin drops both together, so an API write must not leave a start
+    // behind that nothing reads.
+    $block = $this->seedBlock('grid', ['alternate_media_text_sections' => true, 'alternate_start' => 'media_left']);
+
+    $settings = $this->mergeSettings($block, ['alternate_media_text_sections' => false]);
+
+    $this->assertArrayNotHasKey('alternate_media_text_sections', $settings);
+    $this->assertArrayNotHasKey('alternate_start', $settings);
+  }
+
+  #[Test]
   public function every_contract_settings_field_is_either_patchable_or_explicitly_closed(): void
   {
     // The gate and the published contract are separate hand-written lists, and

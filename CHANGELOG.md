@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.13
+
+- Let the API change Hero layout and Grid layout settings on an existing block. `settings.layout` and `settings.title_tag` on `hero`, and `settings.layout_name`, `settings.columns`, `settings.gap`, `settings.alternate_media_text_sections`, and `settings.alternate_start` on `grid`, were declared by the published contract and refused by `PATCH /webadmin/api/blocks/{block}`. The split Hero layout added in 1.40.6 could be chosen when a hero was created and never afterwards. Each field takes the values the admin form already allows, and anything else clears the setting rather than storing a value no renderer reads. Turning Grid alternating off drops the alternating start with it, matching the admin.
+
 ## 1.40.12
 
 - Let the API change an existing block's icon and badge. `PATCH /webadmin/api/blocks/{block}` refused `settings.icon_slug`, `settings.icon_tone`, and `settings.badge_tone` on all five icon-enabled block types, so an icon could be set when a block was created and never changed afterwards, even though the published contract advertised the fields. The endpoint now delegates to the icon normalizers `InternalContentApiOperations` has owned since 1.40.7 rather than growing a second set of icon rules, so an unknown slug is still refused and `icon_tone: default` still clears the tone.

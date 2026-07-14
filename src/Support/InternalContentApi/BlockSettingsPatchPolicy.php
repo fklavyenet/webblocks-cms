@@ -75,15 +75,7 @@ final class BlockSettingsPatchPolicy
       'flow' => self::CLOSED_PENDING,
     ],
     'content_header' => ['alignment' => self::CLOSED_PENDING],
-    'grid' => [
-      'layout_name' => self::CLOSED_PENDING,
-      'columns' => self::CLOSED_PENDING,
-      'gap' => self::CLOSED_PENDING,
-      'alternate_media_text_sections' => self::CLOSED_PENDING,
-      'alternate_start' => self::CLOSED_PENDING,
-    ],
     'header' => ['alignment' => self::CLOSED_PENDING, 'anchor' => self::CLOSED_PENDING],
-    'hero' => ['layout' => self::CLOSED_PENDING, 'title_tag' => self::CLOSED_PENDING],
     'navbar-navigation' => [
       'menu_key' => self::CLOSED_PENDING,
       'active_indicator' => self::CLOSED_PENDING,

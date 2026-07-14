@@ -1710,6 +1710,25 @@ class InternalContentResourceController extends Controller
       ];
     }
 
+    if ($type === 'hero') {
+      $allowedSettings = [
+        ...$allowedSettings,
+        'layout',
+        'title_tag',
+      ];
+    }
+
+    if ($type === 'grid') {
+      $allowedSettings = [
+        ...$allowedSettings,
+        'layout_name',
+        'columns',
+        'gap',
+        'alternate_media_text_sections',
+        'alternate_start',
+      ];
+    }
+
     $unsupported = array_values(array_diff(array_keys($incoming), $allowedSettings));
 
     if ($unsupported !== []) {
@@ -1865,10 +1884,60 @@ class InternalContentResourceController extends Controller
       }
     }
 
-    return array_filter([
+    if ($type === 'hero') {
+      if (array_key_exists('layout', $incoming)) {
+        $layout = trim((string) $incoming['layout']);
+        $safeIncoming['layout'] = in_array($layout, ['left', 'centered', 'split'], true) ? $layout : null;
+      }
+
+      if (array_key_exists('title_tag', $incoming)) {
+        $titleTag = trim((string) $incoming['title_tag']);
+        $safeIncoming['title_tag'] = in_array($titleTag, ['h1', 'h2', 'h3'], true) ? $titleTag : null;
+      }
+    }
+
+    if ($type === 'grid') {
+      if (array_key_exists('columns', $incoming)) {
+        $columns = trim((string) $incoming['columns']);
+        $safeIncoming['columns'] = in_array($columns, ['2', '3', '4'], true) ? $columns : null;
+      }
+
+      if (array_key_exists('gap', $incoming)) {
+        $gap = trim((string) $incoming['gap']);
+        $safeIncoming['gap'] = in_array($gap, ['3', '4', '6'], true) ? $gap : null;
+      }
+
+      if (array_key_exists('alternate_media_text_sections', $incoming)) {
+        $safeIncoming['alternate_media_text_sections'] = filter_var(
+          $incoming['alternate_media_text_sections'],
+          FILTER_VALIDATE_BOOL,
+          FILTER_NULL_ON_FAILURE,
+        ) ?? false;
+      }
+
+      if (array_key_exists('alternate_start', $incoming)) {
+        $alternateStart = trim((string) $incoming['alternate_start']);
+        $safeIncoming['alternate_start'] = in_array($alternateStart, ['media_left', 'text_left'], true) ? $alternateStart : null;
+      }
+    }
+
+    if (in_array($type, ['grid'], true) && array_key_exists('layout_name', $incoming)) {
+      // Editor-only label rather than a reference to a stored layout.
+      $safeIncoming['layout_name'] = mb_substr(trim((string) $incoming['layout_name']), 0, 255) ?: null;
+    }
+
+    $merged = array_filter([
       ...$settings,
       ...$safeIncoming,
     ], fn ($value) => $value !== null && $value !== '');
+
+    if ($type === 'grid' && ($merged['alternate_media_text_sections'] ?? false) !== true) {
+      // The admin drops the alternating start whenever alternating is off, so an
+      // API write cannot leave a start behind that nothing reads.
+      unset($merged['alternate_media_text_sections'], $merged['alternate_start']);
+    }
+
+    return $merged;
   }
 
   private function supportsBackgroundMediaBlockType(string $type): bool
