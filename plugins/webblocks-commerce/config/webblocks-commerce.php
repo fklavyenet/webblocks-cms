@@ -2,7 +2,7 @@
 
 return [
   'enabled' => env('WEBBLOCKS_COMMERCE_ENABLED', false),
-  'default_currency' => env('WEBBLOCKS_COMMERCE_DEFAULT_CURRENCY', 'USD'),
+  'default_currency' => env('WEBBLOCKS_COMMERCE_DEFAULT_CURRENCY'),
   'gateway' => env('WEBBLOCKS_COMMERCE_GATEWAY'),
 
   'paypal' => [

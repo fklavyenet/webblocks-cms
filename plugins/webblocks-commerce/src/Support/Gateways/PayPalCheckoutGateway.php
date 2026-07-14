@@ -6,12 +6,14 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceOrder;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter;
 
 class PayPalCheckoutGateway implements PaymentGatewayInterface
 {
   public function __construct(
     private readonly PayPalApiClient $client,
     private readonly PayPalConfig $config,
+    private readonly MoneyFormatter $money,
   ) {}
 
   public function createCheckoutSession(CommerceOrder $order): GatewayCheckoutSession
@@ -27,15 +29,15 @@ class PayPalCheckoutGateway implements PaymentGatewayInterface
         'invoice_id' => $order->order_number,
         'amount' => [
           'currency_code' => $order->currency,
-          'value' => $this->money($order->total_amount),
+          'value' => $this->money->majorUnits($order->total_amount, $order->currency),
           'breakdown' => [
             'item_total' => [
               'currency_code' => $order->currency,
-              'value' => $this->money($order->subtotal_amount),
+              'value' => $this->money->majorUnits($order->subtotal_amount, $order->currency),
             ],
             'tax_total' => [
               'currency_code' => $order->currency,
-              'value' => $this->money((int) $order->tax_amount),
+              'value' => $this->money->majorUnits((int) $order->tax_amount, $order->currency),
             ],
           ],
         ],
@@ -89,10 +91,5 @@ class PayPalCheckoutGateway implements PaymentGatewayInterface
     }
 
     return null;
-  }
-
-  private function money(int $minorUnits): string
-  {
-    return number_format($minorUnits / 100, 2, '.', '');
   }
 }

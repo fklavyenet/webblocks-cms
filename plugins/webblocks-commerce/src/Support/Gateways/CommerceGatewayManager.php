@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways;
 
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
 
 class CommerceGatewayManager
 {
@@ -11,6 +12,7 @@ class CommerceGatewayManager
     private readonly PayPalConfig $paypalConfig,
     private readonly SumUpConfig $sumUpConfig,
     private readonly CommerceSettingsStore $settings,
+    private readonly CurrencyCatalog $currencies,
   ) {}
 
   public function gatewayKey(): string
@@ -28,6 +30,16 @@ class CommerceGatewayManager
       'sumup' => $this->sumUpConfig->isCheckoutReady(),
       default => false,
     };
+  }
+
+  public function supportsCurrency(string $currency): bool
+  {
+    return $this->currencies->supports($this->gatewayKey(), $currency);
+  }
+
+  public function currencyUnavailableMessage(string $currency): string
+  {
+    return strtoupper($currency).' is not supported by the active '.ucfirst($this->gatewayKey()).' gateway.';
   }
 
   public function unavailableMessage(): string

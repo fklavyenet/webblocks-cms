@@ -48,7 +48,9 @@ class CommerceCheckoutController extends Controller
       'site' => $product->site,
       'publicLocaleCode' => $localeCode,
       'taxLine' => $this->tax->calculate($product->price_amount, $product->taxClass()),
-      'checkoutReady' => $product->isAvailableForCheckout() && $this->gateways->supportsCheckout(),
+      'checkoutReady' => $product->isAvailableForCheckout()
+        && $this->gateways->supportsCheckout()
+        && $this->gateways->supportsCurrency($product->currency),
       'checkoutUnavailableMessage' => $this->checkoutUnavailableMessage($product),
     ]);
   }
@@ -77,14 +79,14 @@ class CommerceCheckoutController extends Controller
       abort(404);
     }
 
-    return $this->statusView($order, 'Payment Processing', 'The hosted checkout returned successfully. The order stays pending until a signed gateway webhook confirms payment.');
+    return $this->statusView($request, $order, 'Payment Processing', 'The hosted checkout returned successfully. The order stays pending until a signed gateway webhook confirms payment.');
   }
 
   public function cancel(Request $request, string $order): View
   {
     $order = $this->publicOrder($order);
 
-    return $this->statusView($order, 'Checkout Cancelled', 'No payment was recorded. You can return to the product and start checkout again.');
+    return $this->statusView($request, $order, 'Checkout Cancelled', 'No payment was recorded. You can return to the product and start checkout again.');
   }
 
   private function publicProduct(string $slug): CommerceProduct
@@ -117,17 +119,26 @@ class CommerceCheckoutController extends Controller
       return $this->gateways->unavailableMessage();
     }
 
+    if (! $this->gateways->supportsCurrency($product->currency)) {
+      return $this->gateways->currencyUnavailableMessage($product->currency);
+    }
+
     return null;
   }
 
-  private function statusView(CommerceOrder $order, string $heading, string $message): View
+  private function statusView(Request $request, CommerceOrder $order, string $heading, string $message): View
   {
+    $storedLocale = $order->metadata['locale'] ?? null;
+    $locale = is_string($storedLocale) ? $this->locales->enabled($storedLocale, $order->site) : null;
+    $localeCode = $locale?->code ?? $this->locales->current($request, $order->site)->code;
+
     return view($this->view('checkout-status'), [
       'title' => $heading,
       'heading' => $heading,
       'message' => $message,
       'order' => $order,
       'site' => $order->site,
+      'publicLocaleCode' => $localeCode,
     ]);
   }
 

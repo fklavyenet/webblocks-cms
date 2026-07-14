@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Controllers\Api\Concerns\RespondsWithCommerceApiEnvelope;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
 use WebBlocks\Cms\Support\Database\CmsTable;
 
 /**
@@ -170,7 +172,11 @@ class CommerceProductApiController extends Controller
         CommerceProduct::STATUS_ARCHIVED,
       ])],
       'price_amount' => [$required, 'integer', 'min:1'],
-      'currency' => [$required, 'string', 'size:3'],
+      'currency' => [
+        $required,
+        'string',
+        Rule::in(app(CurrencyCatalog::class)->codesForGateway(app(CommerceGatewayManager::class)->gatewayKey())),
+      ],
       'tax_class' => [$partial ? 'sometimes' : 'nullable', Rule::in([
         CommerceProduct::TAX_CLASS_STANDARD,
         CommerceProduct::TAX_CLASS_REDUCED,

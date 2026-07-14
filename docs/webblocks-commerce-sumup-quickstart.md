@@ -94,6 +94,7 @@ Add these values to the hosting platform's environment-variable or secret settin
 
 ```env
 WEBBLOCKS_COMMERCE_GATEWAY=sumup
+WEBBLOCKS_COMMERCE_DEFAULT_CURRENCY=EUR
 WEBBLOCKS_COMMERCE_SUMUP_MODE=sandbox
 WEBBLOCKS_COMMERCE_SUMUP_API_KEY=replace-with-your-sk_test-key
 WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE=replace-with-your-sandbox-merchant-id
@@ -120,6 +121,7 @@ hostname, so the API key and merchant code must themselves belong to the sandbox
    `/webadmin/plugins/webblocks-commerce/settings`.
 3. Confirm all of the following:
    - active gateway: `sumup`
+   - default currency: `EUR` (or another SumUp-supported currency)
    - SumUp mode: `sandbox`
    - API key: configured
    - merchant code: configured
@@ -137,7 +139,7 @@ migrations first.
 1. Open **Commerce → Products**.
 2. Create or edit a product.
 3. Set a title, slug, price, currency, and tax class.
-4. Use `EUR` for the first SumUp test unless the sandbox merchant uses another supported currency.
+4. Choose `EUR` for the first SumUp test unless the sandbox merchant uses another option shown in the currency selector.
 5. Set the product status to **Active**.
 6. Save the product.
 

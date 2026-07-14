@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Requests\CommerceSettingsRequest;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\PayPalConfig;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\SumUpConfig;
@@ -25,6 +26,7 @@ class CommerceSettingsController extends Controller
     private readonly PayPalConfig $paypal,
     private readonly SumUpConfig $sumUp,
     private readonly CommerceSettingsStore $settings,
+    private readonly CurrencyCatalog $currencies,
   ) {}
 
   public function edit(): View
@@ -34,6 +36,9 @@ class CommerceSettingsController extends Controller
       'schemaMessage' => $this->schema->message(),
       'gateway' => $this->gateways->gatewayKey(),
       'gateway_source' => $this->settings->source(CommerceSettingsStore::GATEWAY),
+      'defaultCurrency' => strtoupper((string) ($this->settings->value(CommerceSettingsStore::DEFAULT_CURRENCY) ?? 'USD')),
+      'defaultCurrencySource' => $this->settings->source(CommerceSettingsStore::DEFAULT_CURRENCY),
+      'currencyOptions' => $this->currencies->options(includeGatewaySupport: true),
       'checkoutReady' => $this->gateways->supportsCheckout(),
       'checkoutMessage' => $this->gateways->supportsCheckout() ? 'Checkout can be started.' : $this->gateways->unavailableMessage(),
       'paypal' => [

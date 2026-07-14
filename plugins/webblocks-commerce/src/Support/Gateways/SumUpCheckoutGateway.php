@@ -6,12 +6,14 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceOrder;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter;
 
 class SumUpCheckoutGateway implements PaymentGatewayInterface
 {
   public function __construct(
     private readonly SumUpApiClient $client,
     private readonly SumUpConfig $config,
+    private readonly MoneyFormatter $money,
   ) {}
 
   public function createCheckoutSession(CommerceOrder $order): GatewayCheckoutSession
@@ -23,7 +25,7 @@ class SumUpCheckoutGateway implements PaymentGatewayInterface
     }
 
     $response = $this->client->createCheckout([
-      'amount' => $order->total_amount / 100,
+      'amount' => $this->money->majorUnitsNumber($order->total_amount, $order->currency),
       'checkout_reference' => $order->order_number,
       'currency' => $order->currency,
       'description' => Str::limit(

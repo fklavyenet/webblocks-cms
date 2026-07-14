@@ -11,6 +11,8 @@ class CommerceSettingsStore
 {
   public const GATEWAY = 'gateway';
 
+  public const DEFAULT_CURRENCY = 'default_currency';
+
   public const PAYPAL_MODE = 'paypal.mode';
 
   public const PAYPAL_CLIENT_ID = 'paypal.client_id';
@@ -28,6 +30,7 @@ class CommerceSettingsStore
   /** @var array<string, string> */
   private const CONFIG_PATHS = [
     self::GATEWAY => 'webblocks-commerce.gateway',
+    self::DEFAULT_CURRENCY => 'webblocks-commerce.default_currency',
     self::PAYPAL_MODE => 'webblocks-commerce.paypal.mode',
     self::PAYPAL_CLIENT_ID => 'webblocks-commerce.paypal.client_id',
     self::PAYPAL_CLIENT_SECRET => 'webblocks-commerce.paypal.client_secret',
@@ -40,6 +43,7 @@ class CommerceSettingsStore
   /** @var array<string, string> */
   private const DEFAULTS = [
     self::GATEWAY => 'paypal',
+    self::DEFAULT_CURRENCY => 'USD',
     self::PAYPAL_MODE => 'sandbox',
     self::SUMUP_MODE => 'sandbox',
   ];

@@ -108,6 +108,7 @@ gehören.
    `/webadmin/plugins/webblocks-commerce/settings`.
 3. Prüfe:
    - Gateway: `sumup`
+   - Standardwährung: `EUR` (oder eine andere von SumUp unterstützte Währung)
    - SumUp-Modus: `sandbox`
    - API-Schlüssel: konfiguriert
    - Merchant Code: konfiguriert
@@ -123,7 +124,7 @@ führe zuerst das Plugin-Setup beziehungsweise die Migrationen aus.
 1. Öffne **Commerce → Products**.
 2. Erstelle oder bearbeite ein Produkt.
 3. Trage Titel, Slug, Preis, Währung und Steuerklasse ein.
-4. Verwende für den ersten Test `EUR`, sofern das Sandbox-Konto keine andere Währung nutzt.
+4. Wähle für den ersten Test `EUR`, sofern das Sandbox-Konto keine andere im Währungsfeld angebotene Währung nutzt.
 5. Setze den Status auf **Active**.
 6. Speichere das Produkt.
 

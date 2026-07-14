@@ -53,10 +53,10 @@ class CommerceCartController extends Controller
       'publicLocaleCode' => $localeCode,
       'checkoutReady' => $summary['items'] !== []
         && collect($summary['items'])->every(fn (array $line): bool => (bool) ($line['available'] ?? false))
-        && $this->gateways->supportsCheckout(),
-      'checkoutUnavailableMessage' => $this->gateways->supportsCheckout()
-        ? null
-        : $this->gateways->unavailableMessage(),
+        && $this->gateways->supportsCheckout()
+        && is_string($summary['currency'])
+        && $this->gateways->supportsCurrency($summary['currency']),
+      'checkoutUnavailableMessage' => $this->checkoutUnavailableMessage($summary['currency']),
     ]);
   }
 
@@ -228,6 +228,19 @@ class CommerceCartController extends Controller
       'tax_amount' => 0,
       'total_amount' => 0,
     ];
+  }
+
+  private function checkoutUnavailableMessage(mixed $currency): ?string
+  {
+    if (! $this->gateways->supportsCheckout()) {
+      return $this->gateways->unavailableMessage();
+    }
+
+    if (is_string($currency) && ! $this->gateways->supportsCurrency($currency)) {
+      return $this->gateways->currencyUnavailableMessage($currency);
+    }
+
+    return null;
   }
 
   private function view(string $name): string

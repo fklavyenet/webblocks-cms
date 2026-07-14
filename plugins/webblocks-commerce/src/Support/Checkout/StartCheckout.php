@@ -29,6 +29,8 @@ class StartCheckout
       throw new CheckoutUnavailableException('This product is not available for checkout.');
     }
 
+    $this->assertCurrencySupported($product->currency);
+
     return DB::transaction(function () use ($product): GatewayCheckoutSession {
       $order = $this->newOrder($product->site_id, $product->currency, null, [
         'checkout_source' => 'single_product_buy_url',
@@ -61,6 +63,8 @@ class StartCheckout
         throw new CheckoutUnavailableException('The cart mixes currencies and cannot be checked out.');
       }
     }
+
+    $this->assertCurrencySupported($currency);
 
     return DB::transaction(function () use ($cart, $lines, $currency): GatewayCheckoutSession {
       $order = $this->newOrder($cart->site_id, $currency, $cart->customer_email, [
@@ -174,5 +178,12 @@ class StartCheckout
     ]);
 
     return $session;
+  }
+
+  private function assertCurrencySupported(string $currency): void
+  {
+    if (! $this->gateways->supportsCurrency($currency)) {
+      throw new CheckoutUnavailableException($this->gateways->currencyUnavailableMessage($currency));
+    }
   }
 }

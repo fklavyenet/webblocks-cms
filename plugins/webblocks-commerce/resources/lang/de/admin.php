@@ -19,6 +19,8 @@ return [
     'checkout_help' => 'Zugangsdaten sind nur beschreibbar. Umgebungswerte überschreiben verschlüsselte Admin-Einstellungen.',
     'schema' => 'Schema',
     'gateway' => 'Gateway',
+    'default_currency' => 'Standardwährung',
+    'default_currency_help' => 'Wird für neue Produkte verwendet. Die gespeicherte Währung muss vom ausgewählten Gateway unterstützt werden.',
     'provider_configuration' => 'Checkout-Anbieter',
     'provider_help' => 'Aktives Gateway und Sandbox- oder Live-Modus wählen. Durch das Deployment verwaltete Werte bleiben schreibgeschützt.',
     'paypal_mode' => 'PayPal-Modus',

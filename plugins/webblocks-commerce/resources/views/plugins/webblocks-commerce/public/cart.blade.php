@@ -11,7 +11,10 @@
 ])
 
 @section('content')
-    @php($commerceText = fn (string $key, array $replace = [], ?string $fallback = null): string => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->plugin('webblocks-commerce', 'public.'.$key, $publicLocaleCode, $replace, $fallback))
+    @php
+        $commerceText = fn (string $key, array $replace = [], ?string $fallback = null): string => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->plugin('webblocks-commerce', 'public.'.$key, $publicLocaleCode, $replace, $fallback);
+        $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    @endphp
     <main class="wb-content-shell wb-py-8">
         <div class="wb-stack wb-gap-5 wb-container">
             <div class="wb-cluster wb-cluster-between wb-gap-3 wb-flex-wrap">
@@ -59,7 +62,7 @@
                                             <strong>{{ $line['title'] ?? $commerceText('cart.unavailable_product', fallback: 'Unavailable product') }}</strong>
                                             @if ($line['available'])
                                                 <span class="wb-text-sm wb-text-muted">
-                                                    {{ number_format($line['unit_amount'] / 100, 2) }} {{ $line['currency'] }} {{ $commerceText('cart.each', fallback: 'each') }}
+                                                    {{ $money->format($line['unit_amount'], $line['currency'], $publicLocaleCode) }} {{ $commerceText('cart.each', fallback: 'each') }}
                                                 </span>
                                             @else
                                                 <span class="wb-status-pill wb-status-danger">{{ $commerceText('cart.unavailable', fallback: 'Unavailable') }}</span>
@@ -67,7 +70,7 @@
                                         </div>
 
                                         @if ($line['available'])
-                                            <strong>{{ number_format($line['line_total'] / 100, 2) }} {{ $line['currency'] }}</strong>
+                                            <strong>{{ $money->format($line['line_total'], $line['currency'], $publicLocaleCode) }}</strong>
                                         @endif
                                     </div>
 
@@ -100,15 +103,15 @@
                             <div class="wb-stack wb-gap-2">
                                 <div class="wb-cluster wb-cluster-between wb-gap-3">
                                     <span>{{ $commerceText('cart.subtotal', fallback: 'Subtotal') }}</span>
-                                    <span>{{ number_format($summary['subtotal_amount'] / 100, 2) }} {{ $summary['currency'] }}</span>
+                                    <span>{{ $money->format($summary['subtotal_amount'], $summary['currency'], $publicLocaleCode) }}</span>
                                 </div>
                                 <div class="wb-cluster wb-cluster-between wb-gap-3">
                                     <span>{{ $commerceText('cart.vat', fallback: 'VAT') }}</span>
-                                    <span>{{ number_format($summary['tax_amount'] / 100, 2) }} {{ $summary['currency'] }}</span>
+                                    <span>{{ $money->format($summary['tax_amount'], $summary['currency'], $publicLocaleCode) }}</span>
                                 </div>
                                 <div class="wb-cluster wb-cluster-between wb-gap-3">
                                     <strong>{{ $commerceText('cart.total', fallback: 'Total') }}</strong>
-                                    <strong>{{ number_format($summary['total_amount'] / 100, 2) }} {{ $summary['currency'] }}</strong>
+                                    <strong>{{ $money->format($summary['total_amount'], $summary['currency'], $publicLocaleCode) }}</strong>
                                 </div>
                                 @if ($summary['prices_include_tax'])
                                     <p class="wb-text-sm wb-text-muted">{{ $commerceText('cart.vat_included', fallback: 'VAT is included in the shown total.') }}</p>

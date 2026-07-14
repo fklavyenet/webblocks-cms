@@ -1,6 +1,7 @@
 @extends('webblocks-cms::layouts.public', [
     'title' => $title,
     'site' => $site,
+    'publicLocaleCode' => $publicLocaleCode,
     'publicMeta' => [
         'title' => $title,
         'site_name' => $site?->publicDisplayName() ?? config('app.name'),
@@ -12,6 +13,7 @@
 ])
 
 @section('content')
+    @php($money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class))
     <main class="wb-content-shell wb-py-8">
         <div class="wb-stack wb-gap-4 wb-container">
             <section class="wb-card">
@@ -29,7 +31,7 @@
                         </div>
                         <div>
                             <strong>Total</strong>
-                            <div>{{ number_format($order->total_amount / 100, 2) }} {{ $order->currency }}</div>
+                            <div>{{ $money->format($order->total_amount, $order->currency, $publicLocaleCode) }}</div>
                         </div>
                     </div>
 

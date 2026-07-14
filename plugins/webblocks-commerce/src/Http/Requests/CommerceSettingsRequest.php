@@ -3,8 +3,12 @@
 namespace WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
 
 class CommerceSettingsRequest extends FormRequest
 {
@@ -20,6 +24,10 @@ class CommerceSettingsRequest extends FormRequest
   {
     return [
       'gateway' => ['required', Rule::in(['paypal', 'sumup'])],
+      'default_currency' => [
+        'required',
+        Rule::in(app(CurrencyCatalog::class)->codesForGateway((string) $this->input('gateway'))),
+      ],
       'paypal_mode' => ['required', Rule::in(['sandbox', 'live'])],
       'paypal_client_id' => ['nullable', 'string', 'max:1024'],
       'paypal_client_secret' => ['nullable', 'string', 'max:4096'],
@@ -44,6 +52,7 @@ class CommerceSettingsRequest extends FormRequest
 
     return [
       CommerceSettingsStore::GATEWAY => $validated['gateway'],
+      CommerceSettingsStore::DEFAULT_CURRENCY => $validated['default_currency'],
       CommerceSettingsStore::PAYPAL_MODE => $validated['paypal_mode'],
       CommerceSettingsStore::PAYPAL_CLIENT_ID => $validated['paypal_client_id'] ?? null,
       CommerceSettingsStore::PAYPAL_CLIENT_SECRET => $validated['paypal_client_secret'] ?? null,
@@ -73,10 +82,37 @@ class CommerceSettingsRequest extends FormRequest
       ->all();
   }
 
+  public function withValidator(Validator $validator): void
+  {
+    $validator->after(function (Validator $validator): void {
+      if ($validator->errors()->has('gateway') || ! Schema::hasTable('webblocks_commerce_products')) {
+        return;
+      }
+
+      $gateway = strtolower((string) $this->input('gateway'));
+      $supported = app(CurrencyCatalog::class)->codesForGateway($gateway);
+      $unsupported = CommerceProduct::query()
+        ->where('status', '!=', CommerceProduct::STATUS_ARCHIVED)
+        ->whereNotIn('currency', $supported)
+        ->distinct()
+        ->orderBy('currency')
+        ->pluck('currency')
+        ->all();
+
+      if ($unsupported !== []) {
+        $validator->errors()->add(
+          'gateway',
+          'The active catalog contains currencies unsupported by '.ucfirst($gateway).': '.implode(', ', $unsupported).'. Update or archive those products first.',
+        );
+      }
+    });
+  }
+
   protected function prepareForValidation(): void
   {
     $fields = [
       'gateway',
+      'default_currency',
       'paypal_mode',
       'paypal_client_id',
       'paypal_client_secret',
@@ -86,10 +122,18 @@ class CommerceSettingsRequest extends FormRequest
       'sumup_merchant_code',
     ];
 
-    $this->merge(collect($fields)->mapWithKeys(function (string $field): array {
+    $normalized = collect($fields)->mapWithKeys(function (string $field): array {
       $value = $this->input($field);
 
       return [$field => is_string($value) ? trim($value) : $value];
-    })->all());
+    })->all();
+
+    if (! $this->exists('default_currency')) {
+      $normalized['default_currency'] = app(CommerceSettingsStore::class)->value(CommerceSettingsStore::DEFAULT_CURRENCY) ?? 'USD';
+    }
+
+    $normalized['default_currency'] = strtoupper((string) ($normalized['default_currency'] ?? ''));
+
+    $this->merge($normalized);
   }
 }

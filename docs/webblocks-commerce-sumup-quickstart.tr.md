@@ -103,6 +103,7 @@ anahtarıyla Merchant ID'nin gerçekten aynı sandbox hesabına ait olması gere
    `/webadmin/plugins/webblocks-commerce/settings` adresini açın.
 3. Şunları doğrulayın:
    - gateway: `sumup`
+   - varsayılan para birimi: `EUR` (veya SumUp tarafından desteklenen başka bir para birimi)
    - SumUp modu: `sandbox`
    - API anahtarı: yapılandırıldı
    - merchant code: yapılandırıldı
@@ -118,7 +119,7 @@ eklenti kurulumunu veya migration işlemlerini çalıştırın.
 1. **Commerce → Products** bölümünü açın.
 2. Bir ürün oluşturun veya düzenleyin.
 3. Başlık, slug, fiyat, para birimi ve vergi sınıfını belirleyin.
-4. Sandbox hesabınız başka bir para birimi kullanmıyorsa ilk test için `EUR` seçin.
+4. Sandbox hesabınız başka bir para birimi kullanmıyorsa seçim alanından ilk test için `EUR` seçin.
 5. Ürün durumunu **Active** yapın.
 6. Ürünü kaydedin.
 

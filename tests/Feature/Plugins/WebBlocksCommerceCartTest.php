@@ -71,7 +71,7 @@ class WebBlocksCommerceCartTest extends TestCase
     $cartPage->assertOk();
     $cartPage->assertSee('Shopping Cart');
     $cartPage->assertSee('Paracord');
-    $cartPage->assertSee('10.00 EUR');
+    $cartPage->assertSee('€10.00');
     $cartPage->assertSee('Continue to secure payment');
 
     $this->patch(route('webblocks.commerce.cart.items.update', $product->id), ['quantity' => 3])

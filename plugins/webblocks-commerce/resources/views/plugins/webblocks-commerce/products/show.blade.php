@@ -6,6 +6,8 @@
         'archived' => 'wb-status-pending',
         default => 'wb-status-info',
     };
+    $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    $moneyLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
 @endphp
 
 @section('content')
@@ -39,7 +41,7 @@
                 <div class="wb-grid wb-grid-2">
                     <div>
                         <strong>Price</strong>
-                        <div>{{ number_format($product->price_amount / 100, 2) }} {{ $product->currency }}</div>
+                        <div>{{ $money->format($product->price_amount, $product->currency, $moneyLocale) }}</div>
                     </div>
                     <div>
                         <strong>Inventory</strong>

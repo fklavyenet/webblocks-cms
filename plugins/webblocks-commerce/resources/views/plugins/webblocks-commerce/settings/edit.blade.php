@@ -90,6 +90,19 @@
                             @error('gateway')<div class="wb-field-error">{{ $message }}</div>@enderror
                         </div>
                         <div class="wb-stack-2 wb-field">
+                            <label for="commerce_default_currency" class="wb-label">{{ $commerceText('settings.default_currency') }}</label>
+                            @if ($defaultCurrencySource === 'environment')
+                                <input type="hidden" name="default_currency" value="{{ $defaultCurrency }}">
+                            @endif
+                            <select id="commerce_default_currency" name="default_currency" class="wb-select" @disabled($defaultCurrencySource === 'environment')>
+                                @foreach ($currencyOptions as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('default_currency', $defaultCurrency) === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <span class="wb-text-sm wb-text-muted">{{ $commerceText('settings.default_currency_help') }} · {{ $sourceLabel($defaultCurrencySource) }} · <code>WEBBLOCKS_COMMERCE_DEFAULT_CURRENCY</code></span>
+                            @error('default_currency')<div class="wb-field-error">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="wb-stack-2 wb-field">
                             <label for="commerce_paypal_mode" class="wb-label">{{ $commerceText('settings.paypal_mode') }}</label>
                             @if ($paypal['mode_source'] === 'environment')
                                 <input type="hidden" name="paypal_mode" value="{{ $paypal['mode'] }}">

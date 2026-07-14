@@ -2,6 +2,8 @@
 
 @php
     $hasActiveFilters = $filters['search'] !== '' || $filters['status'] !== '' || $filters['gateway'] !== '';
+    $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    $moneyLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
 @endphp
 
 @section('content')
@@ -101,7 +103,7 @@
                                         </div>
                                     </td>
                                     <td><span class="wb-status-pill {{ $statusClass }}">{{ ucfirst($order->status) }}</span></td>
-                                    <td class="wb-nowrap">{{ number_format($order->total_amount / 100, 2) }} {{ $order->currency }}</td>
+                                    <td class="wb-nowrap">{{ $money->format($order->total_amount, $order->currency, $moneyLocale) }}</td>
                                     <td class="wb-nowrap">{{ $order->customer_email ?: '-' }}</td>
                                     <td class="wb-nowrap">{{ $order->gateway }}</td>
                                     <td class="wb-nowrap">{{ $order->created_at?->format('Y-m-d H:i') ?? '-' }}</td>

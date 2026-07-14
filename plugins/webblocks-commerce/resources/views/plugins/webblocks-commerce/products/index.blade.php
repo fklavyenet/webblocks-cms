@@ -2,6 +2,8 @@
 
 @php
     $hasActiveFilters = $filters['search'] !== '' || $filters['status'] !== '';
+    $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    $moneyLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
 @endphp
 
 @section('content')
@@ -95,7 +97,7 @@
                                         </div>
                                     </td>
                                     <td><span class="wb-status-pill {{ $statusClass }}">{{ ucfirst($product->status) }}</span></td>
-                                    <td class="wb-nowrap">{{ number_format($product->price_amount / 100, 2) }} {{ $product->currency }}</td>
+                                    <td class="wb-nowrap">{{ $money->format($product->price_amount, $product->currency, $moneyLocale) }}</td>
                                     <td class="wb-nowrap">{{ $product->inventory_quantity === null ? 'Not tracked' : $product->inventory_quantity }}</td>
                                     <td class="wb-nowrap">{{ $product->site?->name ?? 'Install-wide' }}</td>
                                     <td class="wb-table-actions">

@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
 use WebBlocks\Cms\Support\Database\CmsTable;
 
 class CommerceProductRequest extends FormRequest
@@ -39,7 +41,11 @@ class CommerceProductRequest extends FormRequest
         CommerceProduct::STATUS_ARCHIVED,
       ])],
       'price_amount' => ['required', 'integer', 'min:1'],
-      'currency' => ['required', 'string', 'size:3', 'regex:/^[A-Z]{3}$/'],
+      'currency' => [
+        'required',
+        'string',
+        Rule::in(app(CurrencyCatalog::class)->codesForGateway(app(CommerceGatewayManager::class)->gatewayKey())),
+      ],
       'tax_class' => ['required', Rule::in([
         CommerceProduct::TAX_CLASS_STANDARD,
         CommerceProduct::TAX_CLASS_REDUCED,

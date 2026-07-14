@@ -12,6 +12,9 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Http\Requests\CommerceProductRequest;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProductTranslation;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -21,6 +24,9 @@ class CommerceProductController extends Controller
   public function __construct(
     private readonly SystemSettings $systemSettings,
     private readonly WebBlocksCommerceSchema $schema,
+    private readonly CommerceSettingsStore $settings,
+    private readonly CurrencyCatalog $currencies,
+    private readonly CommerceGatewayManager $gateways,
   ) {}
 
   public function index(Request $request): View
@@ -70,12 +76,14 @@ class CommerceProductController extends Controller
     return view($this->view('form'), $this->viewData('New Commerce Product', [
       'product' => new CommerceProduct([
         'status' => CommerceProduct::STATUS_DRAFT,
-        'currency' => strtoupper((string) config('webblocks-commerce.default_currency', 'USD')),
+        'currency' => strtoupper((string) ($this->settings->value(CommerceSettingsStore::DEFAULT_CURRENCY) ?? 'USD')),
         'tax_class' => CommerceProduct::TAX_CLASS_STANDARD,
       ]),
       'siteOptions' => $this->siteOptions(),
       'statusOptions' => $this->statusOptions(),
       'taxClassOptions' => $this->taxClassOptions(),
+      'currencyOptions' => $this->currencies->optionsForGateway($this->gateways->gatewayKey()),
+      'gatewayLabel' => ucfirst($this->gateways->gatewayKey()),
       'translationLocales' => $this->translatableLocales(),
       'existingTranslations' => collect(),
       'formAction' => route('webblocks.plugins.webblocks_commerce.products.store'),
@@ -129,6 +137,8 @@ class CommerceProductController extends Controller
       'siteOptions' => $this->siteOptions(),
       'statusOptions' => $this->statusOptions(),
       'taxClassOptions' => $this->taxClassOptions(),
+      'currencyOptions' => $this->currencies->optionsForGateway($this->gateways->gatewayKey()),
+      'gatewayLabel' => ucfirst($this->gateways->gatewayKey()),
       'translationLocales' => $this->translatableLocales(),
       'existingTranslations' => $product->translations->keyBy('locale_id'),
       'formAction' => route('webblocks.plugins.webblocks_commerce.products.update', $product),

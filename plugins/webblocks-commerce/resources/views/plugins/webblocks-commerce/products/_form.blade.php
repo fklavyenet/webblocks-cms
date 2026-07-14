@@ -1,6 +1,7 @@
 @php
     $selectedSiteId = (string) old('site_id', $product->site_id ?? '');
     $selectedStatus = old('status', $product->status ?: 'draft');
+    $selectedCurrency = old('currency', $product->currency ?: 'USD');
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -60,7 +61,13 @@
 
         <div class="wb-stack wb-gap-1">
             <label for="product_currency">Currency</label>
-            <input id="product_currency" name="currency" class="wb-input" type="text" maxlength="3" value="{{ old('currency', $product->currency ?: 'USD') }}" required>
+            <select id="product_currency" name="currency" class="wb-select" required>
+                @foreach ($currencyOptions as $value => $label)
+                    <option value="{{ $value }}" @selected($selectedCurrency === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <div class="wb-text-sm wb-text-muted">Currencies supported by the active {{ $gatewayLabel }} gateway.</div>
+            @error('currency')<div class="wb-field-error">{{ $message }}</div>@enderror
         </div>
 
         <div class="wb-stack wb-gap-1">

@@ -15,6 +15,8 @@
 
         return strlen($value) > 16 ? substr($value, 0, 8).'...'.substr($value, -6) : $value;
     };
+    $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    $moneyLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
 @endphp
 
 @section('content')
@@ -40,15 +42,15 @@
                 <div class="wb-grid wb-grid-2">
                     <div>
                         <strong>Total</strong>
-                        <div>{{ number_format($order->total_amount / 100, 2) }} {{ $order->currency }}</div>
+                        <div>{{ $money->format($order->total_amount, $order->currency, $moneyLocale) }}</div>
                     </div>
                     <div>
                         <strong>Subtotal (net)</strong>
-                        <div>{{ number_format($order->subtotal_amount / 100, 2) }} {{ $order->currency }}</div>
+                        <div>{{ $money->format($order->subtotal_amount, $order->currency, $moneyLocale) }}</div>
                     </div>
                     <div>
                         <strong>VAT{{ $order->tax_rate ? ' ('.number_format($order->tax_rate / 100, $order->tax_rate % 100 === 0 ? 0 : 2).'%'.($order->tax_country ? ' '.$order->tax_country : '').')' : '' }}</strong>
-                        <div>{{ number_format($order->tax_amount / 100, 2) }} {{ $order->currency }}</div>
+                        <div>{{ $money->format($order->tax_amount, $order->currency, $moneyLocale) }}</div>
                     </div>
                     <div>
                         <strong>Customer</strong>
@@ -133,8 +135,8 @@
                                 </td>
                                 <td>{{ $item->sku ?: '-' }}</td>
                                 <td>{{ $item->quantity }}</td>
-                                <td class="wb-nowrap">{{ number_format($item->unit_amount / 100, 2) }} {{ $item->currency }}</td>
-                                <td class="wb-nowrap">{{ number_format($item->total_amount / 100, 2) }} {{ $item->currency }}</td>
+                                <td class="wb-nowrap">{{ $money->format($item->unit_amount, $item->currency, $moneyLocale) }}</td>
+                                <td class="wb-nowrap">{{ $money->format($item->total_amount, $item->currency, $moneyLocale) }}</td>
                             </tr>
                         @endforeach
                     </tbody>

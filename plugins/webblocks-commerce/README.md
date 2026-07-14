@@ -2,12 +2,16 @@
 
 First-party simple commerce plugin for WebBlocks CMS.
 
-Current artifact version: `0.8.1`.
+Current artifact version: `0.8.2`.
 
-Version `0.8.1` adds the permission-guarded Commerce Settings form with write-only encrypted
-PayPal and SumUp credentials. Blank fields preserve stored values, explicit controls remove them,
-and hosting-managed environment values remain read-only overrides. It requires WebBlocks CMS
-`1.37.3` or newer.
+Version `0.8.2` adds locale-aware currency rendering, a default-currency setting, product currency
+selection, gateway compatibility validation, and gateway-correct decimal precision. Euro, dollar,
+yen, and every other selectable currency use their locale-appropriate symbol, separators, and
+fraction digits. It requires WebBlocks CMS `1.37.3` or newer.
+
+The plugin adds no Composer package. Currency formatting uses PHP's `intl` extension
+(`NumberFormatter`), which must be enabled on the web and CLI runtimes. Plugin health reports a
+warning when it is missing.
 
 Store-owner setup guides:
 
@@ -85,6 +89,23 @@ There is no separate commerce token: the plugin uses the **shared CMS API token*
 (they appear as a "Commerce" group in the token admin UI while the plugin is enabled), so a
 single least-privilege token can be scoped to just the commerce capabilities.
 
+## Currency selection and formatting
+
+`Commerce Settings` contains a default-currency selector. New products inherit that currency,
+and the product form lists only currencies supported by the active gateway. The product API
+applies the same validation. A gateway change is rejected while any non-archived product uses an
+unsupported currency, and checkout rechecks compatibility before reserving inventory.
+
+Amounts remain stored as integer minor units. Rendering is locale-aware: for example `125000 EUR`
+is shown as `1.250,00 €` in German and `€1,250.00` in English, while `1250 JPY` has no decimal
+fraction. PayPal and SumUp payloads use the same per-currency precision instead of assuming two
+decimal places.
+
+Provider support follows the official
+[PayPal currency list](https://developer.paypal.com/api/rest/reference/currency-codes/) and
+[SumUp Checkout currency enum](https://developer.sumup.com/api/checkouts/create). A provider may
+still reject a listed currency when the merchant account or country does not enable it.
+
 ## Multilingual product content (i18n)
 
 Storefront product content shares the CMS Site+Locale system rather than a parallel one. The
@@ -133,7 +154,7 @@ IT, ES out of the box):
 5. If health reports `Setup required` or `Plugin migrations pending`, run `Run Plugin Migrations` from the plugin detail screen.
 6. Manage products from `/webadmin/plugins/webblocks-commerce/products`.
 7. Review orders from `/webadmin/plugins/webblocks-commerce/orders`.
-8. Open `/webadmin/plugins/webblocks-commerce/settings`, select PayPal or SumUp, enter the provider credentials, and save. Values are encrypted at rest and never rendered back into the page.
+8. Open `/webadmin/plugins/webblocks-commerce/settings`, select PayPal or SumUp, choose a compatible default currency, enter the provider credentials, and save. Values are encrypted at rest and never rendered back into the page.
 9. For PayPal, enter the client ID, client secret, and webhook ID; the webhook endpoint is `/commerce/webhooks/paypal`.
 10. For SumUp Hosted Checkout, enter the API key and merchant code; SumUp receives `/commerce/webhooks/sumup` as the checkout `return_url`.
 11. Hosting-managed `WEBBLOCKS_COMMERCE_*` environment values remain supported as optional overrides. An overridden field is read-only in the admin form and its raw value is never displayed.

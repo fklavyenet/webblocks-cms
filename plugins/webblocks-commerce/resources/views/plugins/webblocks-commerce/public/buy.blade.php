@@ -13,7 +13,10 @@
 ])
 
 @section('content')
-    @php($commerceText = fn (string $key, array $replace = [], ?string $fallback = null): string => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->plugin('webblocks-commerce', 'public.'.$key, $publicLocaleCode, $replace, $fallback))
+    @php
+        $commerceText = fn (string $key, array $replace = [], ?string $fallback = null): string => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->plugin('webblocks-commerce', 'public.'.$key, $publicLocaleCode, $replace, $fallback);
+        $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    @endphp
     <main class="wb-content-shell wb-py-8">
         <div class="wb-stack wb-gap-4 wb-container">
             <div class="wb-cluster wb-cluster-between wb-gap-3 wb-flex-wrap">
@@ -35,14 +38,14 @@
                     <div class="wb-grid wb-grid-2">
                         <div>
                             <strong>{{ $commerceText('buy.price', fallback: 'Price') }}</strong>
-                            <div>{{ number_format($product->price_amount / 100, 2) }} {{ $product->currency }}</div>
+                            <div>{{ $money->format($product->price_amount, $product->currency, $publicLocaleCode) }}</div>
                             @if (($taxLine->rateBps ?? 0) > 0)
                                 @php($ratePercent = number_format($taxLine->rateBps / 100, $taxLine->rateBps % 100 === 0 ? 0 : 2))
                                 <div class="wb-text-sm wb-text-muted">
                                     @if ($taxLine->pricesIncludeTax)
-                                        {{ $commerceText('buy.vat_included', ['rate' => $ratePercent, 'amount' => number_format($taxLine->tax / 100, 2), 'currency' => $product->currency], 'incl. :rate% VAT (:amount :currency)') }}
+                                        {{ $commerceText('buy.vat_included', ['rate' => $ratePercent, 'amount' => $money->format($taxLine->tax, $product->currency, $publicLocaleCode)], 'incl. :rate% VAT (:amount)') }}
                                     @else
-                                        {{ $commerceText('buy.vat_added', ['rate' => $ratePercent, 'amount' => number_format($taxLine->gross / 100, 2), 'currency' => $product->currency], 'plus :rate% VAT — total :amount :currency') }}
+                                        {{ $commerceText('buy.vat_added', ['rate' => $ratePercent, 'amount' => $money->format($taxLine->gross, $product->currency, $publicLocaleCode)], 'plus :rate% VAT — total :amount') }}
                                     @endif
                                 </div>
                             @endif

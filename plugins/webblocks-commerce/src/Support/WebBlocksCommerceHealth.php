@@ -12,6 +12,10 @@ class WebBlocksCommerceHealth
 
   public function health(): PluginHealthResult
   {
+    if (! class_exists(\NumberFormatter::class)) {
+      return PluginHealthResult::warning('WebBlocks Commerce requires the PHP intl extension for locale-aware currency formatting.');
+    }
+
     if (! $this->schema->isReady()) {
       return PluginHealthResult::warning($this->schema->message());
     }

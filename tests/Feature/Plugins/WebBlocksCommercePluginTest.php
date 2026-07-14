@@ -25,6 +25,8 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceProduct;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceSetting;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceWebhookEvent;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\PayPalConfig;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\Support\Database\CmsTable;
@@ -58,7 +60,7 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.8.1', $plugin->versionText());
+    $this->assertSame('0.8.2', $plugin->versionText());
     $this->assertSame('^1.37.3', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
@@ -386,7 +388,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $this->assertStringContainsString(route('webblocks.commerce.cart.items.add', $product->id), $html);
     $this->assertStringContainsString('method="POST"', $html);
     $this->assertStringContainsString('Buy This Work', $html);
-    $this->assertStringContainsString('1,250.00 USD', $html);
+    $this->assertStringContainsString('$1,250.00', $html);
     $this->assertStringContainsString('wb-justify-center', $html);
   }
 
@@ -404,6 +406,44 @@ class WebBlocksCommercePluginTest extends TestCase
     $this->assertSame([], $schema->missingTables());
     $this->assertSame('healthy', $health->status);
     $this->assertStringContainsString('Commerce tables are ready.', $health->message);
+  }
+
+  #[Test]
+  public function commerce_formats_money_by_locale_and_gateway_currency_precision(): void
+  {
+    $money = app(MoneyFormatter::class);
+    $currencies = app(CurrencyCatalog::class);
+
+    $this->assertSame('$1,250.00', $money->format(125000, 'USD', 'en'));
+    $this->assertSame("1.250,00\u{00A0}€", $money->format(125000, 'EUR', 'de'));
+    $this->assertSame('¥1,250', $money->format(1250, 'JPY', 'en'));
+    $this->assertSame('1250', $money->majorUnits(1250, 'JPY'));
+    $this->assertSame('1250.00', $money->majorUnits(125000, 'USD'));
+    $this->assertSame(1250, $money->majorUnitsNumber(125000, 'USD'));
+    $this->assertSame(1250.5, $money->majorUnitsNumber(125050, 'USD'));
+    $this->assertTrue($currencies->supports('sumup', 'USD'));
+    $this->assertFalse($currencies->supports('sumup', 'JPY'));
+    $this->assertTrue($currencies->supports('paypal', 'JPY'));
+  }
+
+  #[Test]
+  public function commerce_settings_store_persists_a_gateway_compatible_default_currency(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', null);
+    config()->set('webblocks-commerce.default_currency', null);
+    app(PluginRegistry::class);
+    $this->migrateWebBlocksCommercePlugin();
+    $settings = app(CommerceSettingsStore::class);
+    $settings->save([
+      CommerceSettingsStore::GATEWAY => 'sumup',
+      CommerceSettingsStore::DEFAULT_CURRENCY => 'EUR',
+    ]);
+
+    $this->assertSame('EUR', $settings->value(CommerceSettingsStore::DEFAULT_CURRENCY));
+    $this->assertSame('stored', $settings->source(CommerceSettingsStore::DEFAULT_CURRENCY));
+    $this->assertTrue(app(CurrencyCatalog::class)->supports('sumup', 'EUR'));
+    $this->assertFalse(app(CurrencyCatalog::class)->supports('sumup', 'JPY'));
   }
 
   #[Test]
@@ -513,7 +553,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $show = $this->actingAs($user)->get(route('webblocks.plugins.webblocks_commerce.products.show', $product));
     $show->assertOk();
     $show->assertSee('Original Painting');
-    $show->assertSee('1,250.00 USD');
+    $show->assertSee('$1,250.00');
 
     $update = $this->actingAs($user)->put(route('webblocks.plugins.webblocks_commerce.products.update', $product), [
       'site_id' => '',
@@ -612,7 +652,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $index->assertSee('Commerce Orders');
     $index->assertSee('WB-1002');
     $index->assertSee('collector@example.test');
-    $index->assertSee('1,250.00 USD');
+    $index->assertSee('$1,250.00');
 
     $show = $this->actingAs($user)->get(route('webblocks.plugins.webblocks_commerce.orders.show', $order));
     $show->assertOk();

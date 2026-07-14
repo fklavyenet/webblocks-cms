@@ -19,6 +19,8 @@ return [
     'checkout_help' => 'Kimlik bilgileri yalnızca yazılabilir. Ortam değerleri şifreli yönetici ayarlarının önüne geçer.',
     'schema' => 'Şema',
     'gateway' => 'Gateway',
+    'default_currency' => 'Varsayılan Para Birimi',
+    'default_currency_help' => 'Yeni ürünlerde kullanılır. Kaydedilen para birimi seçili gateway tarafından desteklenmelidir.',
     'provider_configuration' => 'Checkout Sağlayıcısı',
     'provider_help' => 'Etkin gateway ile sandbox veya live modunu seç. Dağıtım tarafından yönetilen değerler salt okunur kalır.',
     'paypal_mode' => 'PayPal Modu',

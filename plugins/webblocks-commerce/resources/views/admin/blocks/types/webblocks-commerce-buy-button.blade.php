@@ -14,6 +14,8 @@
     $buttonLabel = old('plugin_settings.label', $settings['label'] ?? 'Add to Cart');
     $showPrice = (string) old('plugin_settings.show_price', $settings['show_price'] ?? '1') === '1';
     $alignment = old('plugin_settings.alignment', $settings['alignment'] ?? 'start');
+    $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    $moneyLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -35,7 +37,7 @@
             <option value="">Select product</option>
             @foreach ($products as $product)
                 <option value="{{ $product->id }}" @selected($selectedProductId === (string) $product->id)>
-                    {{ $product->title }} · {{ number_format($product->price_amount / 100, 2) }} {{ $product->currency }}
+                    {{ $product->title }} · {{ $money->format($product->price_amount, $product->currency, $moneyLocale) }}
                 </option>
             @endforeach
         </select>

@@ -24,7 +24,7 @@ The plugin is developed under `plugins/webblocks-commerce`. It remains a manuall
 
 1. A CMS operator installs and enables WebBlocks Commerce.
 2. The operator runs plugin migrations from the plugin detail screen.
-3. The operator selects PayPal or SumUp in `Commerce Settings` and saves the provider credentials. Hosting-managed environment values may be used as overrides instead.
+3. The operator selects PayPal or SumUp and a compatible default currency in `Commerce Settings`, then saves the provider credentials. Hosting-managed environment values may be used as overrides instead.
 4. The operator opens `Commerce Settings` to confirm checkout and webhook readiness.
 5. The operator creates a commerce product.
 6. The product detail screen shows a public buy URL.
@@ -102,6 +102,7 @@ WebBlocks Commerce uses PayPal REST APIs. PayPal documents that REST APIs use OA
 Official PayPal references:
 
 - [Get Started with PayPal REST APIs](https://developer.paypal.com/api/rest/)
+- [PayPal supported currency codes and precision](https://developer.paypal.com/api/rest/reference/currency-codes/)
 - [PayPal Webhooks API](https://developer.paypal.com/docs/api/webhooks/v1/)
 - [Verify webhook signature](https://developer.paypal.com/docs/api/webhooks/v1/#verify-webhook-signature_post)
 
@@ -178,6 +179,7 @@ read-only:
 
 ```env
 WEBBLOCKS_COMMERCE_GATEWAY=sumup
+WEBBLOCKS_COMMERCE_DEFAULT_CURRENCY=EUR
 WEBBLOCKS_COMMERCE_SUMUP_MODE=sandbox
 WEBBLOCKS_COMMERCE_SUMUP_API_KEY=your-sumup-test-api-key
 WEBBLOCKS_COMMERCE_SUMUP_MERCHANT_CODE=your-sandbox-merchant-code
@@ -213,6 +215,7 @@ Open:
 The settings screen provides write-only credential fields and intentionally shows only safe diagnostics:
 
 - active gateway
+- default currency and its configuration source
 - PayPal mode
 - SumUp mode
 - client ID configured or missing
@@ -247,6 +250,30 @@ Create a product with:
 - optional site scope
 
 Set the product status to `Active` when it should be available for checkout. Draft and archived products do not start public checkout.
+
+## Currency Behavior
+
+The default currency is stored with the other Commerce settings and is used for new products.
+`WEBBLOCKS_COMMERCE_DEFAULT_CURRENCY` remains an optional environment override; when present, the
+selector is read-only. Product currency is selected from the active gateway's supported list, and
+the internal product API enforces the same rule.
+
+Switching gateways is blocked if a non-archived product uses a currency unsupported by the target
+gateway. Mixed-currency carts remain rejected. Checkout performs a final gateway compatibility
+check before it creates an order or reserves inventory.
+
+Prices are integer minor units, but minor-unit precision is currency-specific rather than always
+two digits. Public and admin views use the current CMS locale through PHP `intl`
+`NumberFormatter`, so symbols and separators are localized for EUR, USD, GBP, JPY, and every
+selectable currency. Gateway requests use the same precision. PayPal-specific zero-decimal
+requirements for HUF and TWD are honored.
+
+There is no additional Composer dependency. PHP `ext-intl` is a platform requirement and must be
+enabled for both the web server and CLI. The plugin health result warns when it is unavailable.
+Supported codes are based on the official
+[PayPal currency reference](https://developer.paypal.com/api/rest/reference/currency-codes/) and
+[SumUp Checkout API enum](https://developer.sumup.com/api/checkouts/create); merchant-country and
+account restrictions can still narrow those provider lists.
 
 The product detail screen shows the product's public buy URL:
 

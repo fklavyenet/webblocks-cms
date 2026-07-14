@@ -20,6 +20,8 @@
     };
     $label = trim((string) ($settings['label'] ?? '')) ?: 'Add to Cart';
     $showPrice = (string) ($settings['show_price'] ?? '1') === '1';
+    $money = app(\WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter::class);
+    $moneyLocale = $publicLocaleCode ?? app()->getLocale();
 @endphp
 
 @if ($product?->isAvailableForCheckout())
@@ -31,7 +33,7 @@
         </form>
 
         @if ($showPrice)
-            <span class="wb-text-sm wb-text-muted">{{ number_format($product->price_amount / 100, 2) }} {{ $product->currency }}</span>
+            <span class="wb-text-sm wb-text-muted">{{ $money->format($product->price_amount, $product->currency, $moneyLocale) }}</span>
         @endif
     </div>
 @elseif (! app()->environment('production'))
