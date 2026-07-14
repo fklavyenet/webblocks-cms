@@ -5,24 +5,28 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PHP_BIN="${PHP_BIN:-php}"
 
-if [ -f "${ROOT_DIR}/.env" ]; then
-  if [ -z "${WEBBLOCKS_PUBLISHER_TOKEN:-}" ]; then
-    WEBBLOCKS_PUBLISHER_TOKEN="$("${PHP_BIN}" -r '
-    require $argv[1]."/vendor/autoload.php";
-    $environment = Dotenv\Dotenv::parse((string) file_get_contents($argv[1]."/.env"));
-    echo trim((string) ($environment["WEBBLOCKS_PUBLISHER_TOKEN"] ?? ""));
-    ' "${ROOT_DIR}")"
-    export WEBBLOCKS_PUBLISHER_TOKEN
-  fi
+# Publisher credentials live outside the package. A .env at the repository root
+# is a package boundary violation, so the default is a maintainer-local sibling
+# directory; WEBBLOCKS_RELEASE_ENV_FILE overrides it, and a root .env still wins
+# if one is present so existing checkouts keep working. This file never ships:
+# scripts/ is export-ignore.
+ENV_FILE="${WEBBLOCKS_RELEASE_ENV_FILE:-${ROOT_DIR}/../webblocks-cms-release-config/.env}"
 
-  if [ -z "${WEBBLOCKS_PUBLISHER_SIGNING_KEY:-}" ]; then
-    WEBBLOCKS_PUBLISHER_SIGNING_KEY="$("${PHP_BIN}" -r '
-      require $argv[1]."/vendor/autoload.php";
-      $environment = Dotenv\Dotenv::parse((string) file_get_contents($argv[1]."/.env"));
-      echo trim((string) ($environment["WEBBLOCKS_PUBLISHER_SIGNING_KEY"] ?? ""));
-    ' "${ROOT_DIR}")"
-    export WEBBLOCKS_PUBLISHER_SIGNING_KEY
-  fi
+if [ -f "${ROOT_DIR}/.env" ]; then
+  ENV_FILE="${ROOT_DIR}/.env"
+fi
+
+if [ -f "${ENV_FILE}" ]; then
+  for credential in WEBBLOCKS_PUBLISHER_TOKEN WEBBLOCKS_PUBLISHER_SIGNING_KEY; do
+    if [ -z "$(eval "printf '%s' \"\${${credential}:-}\"")" ]; then
+      value="$("${PHP_BIN}" -r '
+        require $argv[1]."/vendor/autoload.php";
+        $environment = Dotenv\Dotenv::parse((string) file_get_contents($argv[2]));
+        echo trim((string) ($environment[$argv[3]] ?? ""));
+      ' "${ROOT_DIR}" "${ENV_FILE}" "${credential}")"
+      export "${credential}=${value}"
+    fi
+  done
 fi
 
 VERSION="$("${PHP_BIN}" -r '$source = file_get_contents($argv[1]); if (! preg_match("/VERSION = '\''([^'\'']+)'\''/", $source, $matches)) { fwrite(STDERR, "Unable to read WebBlocks CMS version.\n"); exit(1); } echo $matches[1];' "${ROOT_DIR}/src/Support/WebBlocks.php")"
