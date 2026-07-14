@@ -147,6 +147,7 @@ Advanced capabilities are separate options and are not selected by default:
 - `pages.delete`
 - `content.blocks.delete`
 - `backups.create`
+- `page-assets.write`
 
 Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, plugin install/manage/setup/uninstall, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`. Plugin lifecycle automation requires explicit plugin capabilities, and WebBlocks Commerce product/order API access requires explicit commerce capabilities.
 
@@ -183,6 +184,10 @@ GET /webadmin/api/pages/{page}
 POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
+GET /webadmin/api/pages/{page}/assets
+POST /webadmin/api/pages/{page}/assets/{type}
+PATCH /webadmin/api/pages/{page}/assets/{pageAsset}
+DELETE /webadmin/api/pages/{page}/assets/{pageAsset}
 GET /webadmin/api/media
 POST /webadmin/api/media/fetch
 GET /webadmin/api/blocks
@@ -380,6 +385,31 @@ DELETE /webadmin/api/pages/{page}/slots/{slot}/blocks/{block}
 `DELETE .../blocks/{block}` removes the block and its whole subtree and returns `deleted_blocks_count`. Deletion requires the dedicated `content.blocks.delete` capability, which is not part of the default page-building capability set. Shared Slot source blocks cannot be deleted through this endpoint.
 
 Every write captures a page revision so draft edits stay reversible.
+
+### Page Assets API
+
+Pages can load their own `/site/...` CSS and JS files in addition to the site-wide assets:
+
+```text
+GET    /webadmin/api/pages/{page}/assets
+POST   /webadmin/api/pages/{page}/assets/{type}
+PATCH  /webadmin/api/pages/{page}/assets/{pageAsset}
+DELETE /webadmin/api/pages/{page}/assets/{pageAsset}
+```
+
+`{type}` is `css` or `js`. Listing is available to any valid token; the write endpoints require the dedicated opt-in `page-assets.write` capability, which is not part of the default page-building set.
+
+The `path` contract is deliberately narrow and is the security boundary for this API:
+
+- it must be a local path starting with `/site/` and ending in `.css` or `.js` matching the asset type
+- external URLs (`http://`, `https://`), protocol-relative (`//`), `javascript:`, and `data:` paths are rejected
+- directory traversal, backslashes, query strings, and fragments are rejected
+
+This endpoint only *attaches* an existing file to a page; it never writes file contents. Write the file itself with the site assets API (`PUT /webadmin/api/sites/{site}/assets/{type}`, which requires `site-assets.write`) or from the admin UI.
+
+Supported fields are `path` (required on create), `sort_order`, `is_enabled`, and — for JS assets only — `is_defer`, `is_async`, and `is_module`. `load_position` is derived from the type (`head` for CSS, `body_end` for JS), matching the admin editor. The `css`/`js` type is immutable on update; delete and re-add to change it.
+
+Unlike the page block topology endpoints, page assets are not draft-only: they can be changed on any page, matching the admin Page Assets tab. Every write captures a page revision.
 
 ### Shared Slot Block Topology API
 
@@ -1140,12 +1170,12 @@ Remaining:
 Delivered:
 
 - draft-safe page-owned block topology endpoints: add a single block, reorder a slot sibling group, and delete a block subtree (see [Page Block Topology API](#page-block-topology-api))
+- page assets: list, attach, update, and detach per-page `/site` CSS and JS files with `page-assets.write` (see [Page Assets API](#page-assets-api))
+- media by existing media ID only: content plans and block payloads accept `media_id`/`asset_id` (and Gallery `gallery_media_ids`/`gallery_items`), validated for record existence and block-type kind compatibility, while remote fetch inside plans stays rejected
 
 Remaining:
 
 - controlled draft updates or draft content replacement beyond the existing block PATCH
-- page assets
-- media by existing media ID only
 
 ### Phase 4
 

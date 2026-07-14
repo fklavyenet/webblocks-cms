@@ -66,4 +66,21 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $this->assertStringContainsString('create_restore_point', implode(' ', $apply['x-optional-fields']));
     $this->assertArrayHasKey('409', $apply['responses']);
   }
+
+  #[Test]
+  public function openapi_schema_documents_page_asset_endpoints(): void
+  {
+    $response = $this->app->make(InternalApiDiscoveryController::class)->openapi();
+    $schema = $response->getData(true);
+    $paths = $schema['paths'];
+
+    $this->assertArrayHasKey('/pages/{page}/assets', $paths);
+    $this->assertArrayHasKey('get', $paths['/pages/{page}/assets']);
+
+    $this->assertSame('page-assets.write', $paths['/pages/{page}/assets/{type}']['post']['x-required-capability']);
+    $this->assertStringContainsString('/site/', $paths['/pages/{page}/assets/{type}']['post']['x-path-contract']);
+
+    $this->assertSame('page-assets.write', $paths['/pages/{page}/assets/{pageAsset}']['patch']['x-required-capability']);
+    $this->assertSame('page-assets.write', $paths['/pages/{page}/assets/{pageAsset}']['delete']['x-required-capability']);
+  }
 }

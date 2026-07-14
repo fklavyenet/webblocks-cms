@@ -27,6 +27,8 @@ class CmsApiTokenCapabilities
 
   public const BACKUPS_CREATE = 'backups.create';
 
+  public const PAGE_ASSETS_WRITE = 'page-assets.write';
+
   public const NAVIGATION_WRITE = 'navigation.write';
 
   public const NAVIGATION_DELETE = 'navigation.delete';
@@ -106,6 +108,7 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
     self::BACKUPS_CREATE,
+    self::PAGE_ASSETS_WRITE,
     self::PLUGINS_INSTALL,
     self::PLUGINS_MANAGE,
     self::PLUGINS_SETUP,
@@ -140,6 +143,7 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
     self::BACKUPS_CREATE,
+    self::PAGE_ASSETS_WRITE,
     self::SITE_ASSETS_READ,
     self::SITE_ASSETS_WRITE,
     self::ENGAGEMENT_READ,
@@ -179,6 +183,7 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE => 'Delete pages',
     self::CONTENT_BLOCKS_DELETE => 'Delete page-owned blocks',
     self::BACKUPS_CREATE => 'Create a system backup restore point before content apply',
+    self::PAGE_ASSETS_WRITE => 'Attach page-specific /site CSS and JS assets to pages',
   ];
 
   /**

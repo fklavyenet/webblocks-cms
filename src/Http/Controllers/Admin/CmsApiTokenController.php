@@ -150,10 +150,11 @@ class CmsApiTokenController extends Controller
       [
         'key' => 'site-feedback',
         'label' => 'Site assets and feedback',
-        'description' => 'Physical site CSS/JS edits and public engagement review permissions.',
+        'description' => 'Physical site CSS/JS edits, per-page asset attachment, and public engagement review permissions.',
         'capabilities' => [
           CmsApiTokenCapabilities::SITE_ASSETS_READ,
           CmsApiTokenCapabilities::SITE_ASSETS_WRITE,
+          CmsApiTokenCapabilities::PAGE_ASSETS_WRITE,
           CmsApiTokenCapabilities::ENGAGEMENT_READ,
           CmsApiTokenCapabilities::ENGAGEMENT_MODERATE,
         ],

@@ -39,4 +39,18 @@ class CmsApiTokenCapabilitiesTest extends TestCase
 
     $this->assertContains($capability, app(CmsApiTokenCapabilities::class)->grantable());
   }
+
+  #[Test]
+  public function page_assets_write_is_a_grantable_advanced_capability_outside_the_default_set(): void
+  {
+    $capability = CmsApiTokenCapabilities::PAGE_ASSETS_WRITE;
+
+    $this->assertSame('page-assets.write', $capability);
+    $this->assertContains($capability, CmsApiTokenCapabilities::ALL);
+    $this->assertContains($capability, CmsApiTokenCapabilities::ADVANCED);
+    $this->assertNotContains($capability, CmsApiTokenCapabilities::DEFAULT);
+    $this->assertArrayHasKey($capability, CmsApiTokenCapabilities::LABELS);
+
+    $this->assertContains($capability, app(CmsApiTokenCapabilities::class)->grantable());
+  }
 }

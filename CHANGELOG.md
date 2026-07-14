@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.2
+
+- Add Page Assets endpoints to the Internal Content API so trusted tools can list, attach, update, and detach a page's own `/site` CSS and JS files: `GET /webadmin/api/pages/{page}/assets`, `POST .../assets/{type}` (css or js), `PATCH .../assets/{pageAsset}`, and `DELETE .../assets/{pageAsset}`. Writes require the new opt-in `page-assets.write` capability. Paths reuse the existing page asset path validator, so only local `/site/...` paths with a matching `.css`/`.js` extension are accepted and external URLs, `javascript:`/`data:` paths, traversal, query strings, and fragments are rejected; the endpoint only attaches an existing file and never writes file contents. Every write captures a page revision.
+- Document that content plans already support media by existing Media Library ID (`media_id`/`asset_id` plus Gallery `gallery_media_ids`/`gallery_items`, validated for existence and block-type kind compatibility), and mark the corresponding Phase 3 roadmap items delivered.
+
 ## 1.40.1
 
 - Add an optional `create_restore_point` flag to `POST /webadmin/api/content/apply`. When set, the Internal Content API takes a full system backup (database plus uploads) restore point before applying the plan, so an operator can roll back from System -> Backups if an AI-generated apply goes wrong. It requires the new opt-in `backups.create` capability, validates the plan first so an invalid plan does not create a wasted backup, and aborts the apply with JSON 409 if the backup fails so content is never applied without the requested safety net. Successful responses include a `restore_point` summary, and the backup is recorded with a dedicated `content_apply` type. The API intentionally exposes only restore-point creation; restoring, downloading, and deleting backups stay in the operator admin UI.
