@@ -2,7 +2,13 @@
 
 First-party simple commerce plugin for WebBlocks CMS.
 
-Current artifact version: `0.8.2`.
+Current artifact version: `0.8.3`.
+
+Version `0.8.3` adds required customer and delivery-address collection to the public cart, copies
+those details onto the pending order for admin review, and exposes the built-in fake adapter as an
+explicit **Test order (no payment)** gateway. Test orders reserve stock and remain pending without
+contacting PayPal or SumUp. The public buy page now sends visitors through the cart so delivery
+details cannot be skipped.
 
 Version `0.8.2` adds locale-aware currency rendering, a default-currency setting, product currency
 selection, gateway compatibility validation, and gateway-correct decimal precision. Euro, dollar,
@@ -50,12 +56,17 @@ frozen onto the order at checkout (`StartCheckout::forCart`), which builds one m
 reserves stock atomically for every line, and marks the cart `converted`. Adding the same
 product merges quantities; adding a different currency, or more than tracked stock, is rejected.
 
-Visitors use the session-backed public cart without an API token:
+Visitors use the session-backed public cart without an API token. Before checkout, the public form
+requires the customer's name, email, street, postal code, city, and two-letter country code; phone
+and a second address line remain optional. The details are stored in cart/order metadata and shown
+on the order status and admin order detail screens.
+
+Public routes:
 
 - `GET /commerce/cart` — review cart lines, VAT, and total
 - `POST /commerce/cart/items/{product}` — add a product from a Commerce block or buy page
 - `PATCH|DELETE /commerce/cart/items/{product}` — change quantity or remove a line
-- `POST /commerce/cart/checkout` — create the order and redirect to the configured hosted gateway
+- `POST /commerce/cart/checkout` — save customer/delivery details, create the order, and continue to the configured gateway
 
 The public cart, buy page, and checkout status pages extend the CMS public layout, so the active
 site header and footer slots remain consistent with the rest of the site. The Commerce Buy Button

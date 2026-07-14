@@ -54,7 +54,11 @@
                     </div>
                     <div>
                         <strong>Customer</strong>
+                        <div>{{ data_get($order->metadata, 'customer.name') ?: '-' }}</div>
                         <div>{{ $order->customer_email ?: '-' }}</div>
+                        @if (data_get($order->metadata, 'customer.phone'))
+                            <div>{{ data_get($order->metadata, 'customer.phone') }}</div>
+                        @endif
                     </div>
                     <div>
                         <strong>Site</strong>
@@ -102,6 +106,25 @@
                         <div>Payment confirmation will be handled by the gateway webhook slice.</div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <section class="wb-card">
+            <div class="wb-card-header">
+                <strong>Delivery</strong>
+            </div>
+            <div class="wb-card-body wb-stack wb-gap-1">
+                @if (data_get($order->metadata, 'shipping_address.line_1'))
+                    <div>{{ data_get($order->metadata, 'customer.name') }}</div>
+                    <div>{{ data_get($order->metadata, 'shipping_address.line_1') }}</div>
+                    @if (data_get($order->metadata, 'shipping_address.line_2'))
+                        <div>{{ data_get($order->metadata, 'shipping_address.line_2') }}</div>
+                    @endif
+                    <div>{{ data_get($order->metadata, 'shipping_address.postal_code') }} {{ data_get($order->metadata, 'shipping_address.city') }}</div>
+                    <div>{{ data_get($order->metadata, 'shipping_address.country_code') }}</div>
+                @else
+                    <div class="wb-text-muted">No delivery address was captured.</div>
+                @endif
             </div>
         </section>
     </div>

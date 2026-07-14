@@ -72,10 +72,6 @@
                                 <input type="hidden" name="quantity" value="1">
                                 <button type="submit" class="wb-btn wb-btn-primary">{{ $commerceText('buy.add_to_cart', fallback: 'Add to cart') }}</button>
                             </form>
-                            <form method="POST" action="{{ route('webblocks.commerce.products.checkout', $product->slug) }}">
-                                @csrf
-                                <button type="submit" class="wb-btn wb-btn-secondary">{{ $commerceText('buy.buy_now', fallback: 'Buy now') }}</button>
-                            </form>
                         </div>
                     @else
                         <div class="wb-alert wb-alert-warning">

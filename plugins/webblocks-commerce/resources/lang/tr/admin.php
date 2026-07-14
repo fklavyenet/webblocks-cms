@@ -19,6 +19,7 @@ return [
     'checkout_help' => 'Kimlik bilgileri yalnızca yazılabilir. Ortam değerleri şifreli yönetici ayarlarının önüne geçer.',
     'schema' => 'Şema',
     'gateway' => 'Gateway',
+    'test_order_gateway' => 'Test siparişi (ödeme alınmaz)',
     'default_currency' => 'Varsayılan Para Birimi',
     'default_currency_help' => 'Yeni ürünlerde kullanılır. Kaydedilen para birimi seçili gateway tarafından desteklenmelidir.',
     'provider_configuration' => 'Checkout Sağlayıcısı',

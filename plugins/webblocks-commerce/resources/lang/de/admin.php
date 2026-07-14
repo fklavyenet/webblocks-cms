@@ -19,6 +19,7 @@ return [
     'checkout_help' => 'Zugangsdaten sind nur beschreibbar. Umgebungswerte überschreiben verschlüsselte Admin-Einstellungen.',
     'schema' => 'Schema',
     'gateway' => 'Gateway',
+    'test_order_gateway' => 'Testbestellung (keine Zahlung)',
     'default_currency' => 'Standardwährung',
     'default_currency_help' => 'Wird für neue Produkte verwendet. Die gespeicherte Währung muss vom ausgewählten Gateway unterstützt werden.',
     'provider_configuration' => 'Checkout-Anbieter',

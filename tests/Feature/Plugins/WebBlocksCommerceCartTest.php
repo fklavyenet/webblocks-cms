@@ -72,13 +72,21 @@ class WebBlocksCommerceCartTest extends TestCase
     $cartPage->assertSee('Shopping Cart');
     $cartPage->assertSee('Paracord');
     $cartPage->assertSee('€10.00');
-    $cartPage->assertSee('Continue to secure payment');
+    $cartPage->assertSee('Test order — no payment');
+    $cartPage->assertSee('Place test order');
 
     $this->patch(route('webblocks.commerce.cart.items.update', $product->id), ['quantity' => 3])
       ->assertRedirect(route('webblocks.commerce.cart.show'));
 
     $checkout = $this->post(route('webblocks.commerce.cart.checkout'), [
+      'customer_name' => 'Test Buyer',
       'customer_email' => 'buyer@example.test',
+      'customer_phone' => '+49 2323 123456',
+      'shipping_address_line_1' => 'Bahnhofstr. 1',
+      'shipping_address_line_2' => 'Hinterhaus',
+      'shipping_postal_code' => '44623',
+      'shipping_city' => 'Herne',
+      'shipping_country_code' => 'de',
     ]);
     $checkout->assertRedirect();
 
@@ -87,6 +95,13 @@ class WebBlocksCommerceCartTest extends TestCase
     $this->assertSame(1500, $order->total_amount);
     $this->assertSame(3, $order->items->first()->quantity);
     $this->assertSame('fake', $order->gateway);
+    $this->assertSame('Test Buyer', data_get($order->metadata, 'customer.name'));
+    $this->assertSame('+49 2323 123456', data_get($order->metadata, 'customer.phone'));
+    $this->assertSame('Bahnhofstr. 1', data_get($order->metadata, 'shipping_address.line_1'));
+    $this->assertSame('Hinterhaus', data_get($order->metadata, 'shipping_address.line_2'));
+    $this->assertSame('44623', data_get($order->metadata, 'shipping_address.postal_code'));
+    $this->assertSame('Herne', data_get($order->metadata, 'shipping_address.city'));
+    $this->assertSame('DE', data_get($order->metadata, 'shipping_address.country_code'));
 
     $this->get(route('webblocks.commerce.cart.show'))
       ->assertOk()

@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/webblocks-commerce-operator-guide.md
 
 # WebBlocks Commerce Operator Guide
 
-This guide explains how to install, configure, and test WebBlocks Commerce. The plugin supports a session-backed public cart, multi-line hosted checkout through PayPal or SumUp, product and read-only order admin, write-only encrypted provider settings, secret-safe diagnostics, public product pages, and a plugin-owned Commerce Buy Button block. Payment-card data stays on the selected provider's hosted payment surface.
+This guide explains how to install, configure, and test WebBlocks Commerce. The plugin supports a session-backed public cart, customer and delivery-address collection, a no-payment test-order mode, multi-line hosted checkout through PayPal or SumUp, product and read-only order admin, write-only encrypted provider settings, secret-safe diagnostics, public product pages, and a plugin-owned Commerce Buy Button block. Payment-card data stays on the selected provider's hosted payment surface.
 
 Store owners who want to connect SumUp should start with the task-focused
 [SumUp Quick Start](webblocks-commerce-sumup-quickstart.md), also available in
@@ -24,15 +24,16 @@ The plugin is developed under `plugins/webblocks-commerce`. It remains a manuall
 
 1. A CMS operator installs and enables WebBlocks Commerce.
 2. The operator runs plugin migrations from the plugin detail screen.
-3. The operator selects PayPal or SumUp and a compatible default currency in `Commerce Settings`, then saves the provider credentials. Hosting-managed environment values may be used as overrides instead.
+3. The operator selects PayPal, SumUp, or `Test order (no payment)` and a compatible default currency in `Commerce Settings`. Real providers require credentials; hosting-managed environment values may be used as overrides instead.
 4. The operator opens `Commerce Settings` to confirm checkout and webhook readiness.
 5. The operator creates a commerce product.
 6. The product detail screen shows a public buy URL.
 7. The operator adds a `Commerce Buy Button` block to a page and selects the product.
-8. The block adds the product to `/commerce/cart`; the visitor can update quantities and start checkout.
-9. The visitor approves payment on the selected provider's hosted page and returns to the site.
-10. The order remains pending until a provider-verified webhook confirms payment.
-11. The operator reviews the paid order under `Commerce Orders`.
+8. The block adds the product to `/commerce/cart`; the visitor updates quantities and enters required contact and delivery details.
+9. In test-order mode, Commerce records a pending unpaid order and returns directly to the order status page without contacting a provider.
+10. With PayPal or SumUp, the visitor approves payment on the selected provider's hosted page and returns to the site.
+11. Real-provider orders remain pending until a provider-verified webhook confirms payment.
+12. The operator reviews customer, delivery, item, tax, and payment details under `Commerce Orders`.
 
 ## Install The Plugin
 
@@ -299,8 +300,9 @@ The block renders a native public form that adds the selected product to:
 /commerce/cart
 ```
 
-The product buy URL remains useful for product-detail links and exposes both add-to-cart and
-direct buy-now actions. The cart, product page, and checkout status views all extend the CMS
+The product buy URL remains useful for product-detail links and exposes an add-to-cart action.
+Checkout is completed from the cart so required customer and delivery fields cannot be skipped.
+The cart, product page, and checkout status views all extend the CMS
 public layout, preserving the active site's header and footer slots.
 
 Do not paste provider-hosted checkout URLs into CMS content. They are generated per order and should come only from the checkout start flow.
@@ -311,12 +313,13 @@ When a visitor uses a Commerce block or product page:
 
 1. The plugin checks setup, product status, tracked stock, and cart currency.
 2. The product is stored in the session-backed server-side cart; no payment data is collected.
-3. At checkout, WebBlocks Commerce freezes localized line titles, prices, VAT, and totals onto a pending order and reserves stock atomically.
-4. The active provider adapter creates a hosted checkout and the visitor is redirected away.
-5. A signed return page can report that processing continues, but it never marks the order paid.
-6. PayPal webhooks are signature-verified and approved PayPal Orders are captured.
-7. SumUp status notifications trigger a fresh checkout API retrieval and full order/transaction match.
-8. Only the verified provider result moves the order and payment attempt to `paid`/`succeeded`.
+3. The visitor supplies name, email, delivery address, and optional phone/address addition.
+4. At checkout, WebBlocks Commerce freezes customer/delivery metadata, localized line titles, prices, VAT, and totals onto a pending order and reserves stock atomically.
+5. In test-order mode, the visitor returns directly to a signed status page and no payment provider is contacted. With PayPal or SumUp, the active adapter creates a hosted checkout and redirects the visitor away.
+6. A signed return page can report that processing continues, but it never marks the order paid.
+7. PayPal webhooks are signature-verified and approved PayPal Orders are captured.
+8. SumUp status notifications trigger a fresh checkout API retrieval and full order/transaction match.
+9. Only the verified provider result moves the order and payment attempt to `paid`/`succeeded`.
 
 Webhook events are stored by gateway and event ID so repeated delivery is idempotent.
 
@@ -331,14 +334,23 @@ Open:
 Orders are read-only in the MVP. The order detail screen shows:
 
 - order number
-- customer email when supplied or returned by a provider
+- customer name, required email, optional phone, and delivery address captured by the public cart
 - order status
 - line items
 - payment attempts
 - gateway checkout and payment references
 - timestamps
 
-Manual status editing, refunds, shipping, taxes, and fulfillment workflows are intentionally deferred.
+Manual status editing, refunds, shipping-rate calculation, and fulfillment workflows are intentionally deferred. Customer and delivery-address capture, VAT snapshots, and inventory reservation are implemented.
+
+## No-Payment Test Orders
+
+Select `Test order (no payment)` in `Commerce Settings` when a store owner wants to verify the
+complete storefront form and order-recording flow without contacting PayPal or SumUp. The public
+cart clearly labels the mode, requires customer and delivery details, creates a pending order,
+reserves tracked stock, records a pending fake payment attempt for audit continuity, and redirects
+to a signed confirmation page stating that no payment was collected. Switch back to a configured
+real provider before accepting paid customer orders.
 
 ## PayPal Sandbox Verification Checklist
 

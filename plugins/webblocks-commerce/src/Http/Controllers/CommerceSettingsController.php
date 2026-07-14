@@ -40,7 +40,9 @@ class CommerceSettingsController extends Controller
       'defaultCurrencySource' => $this->settings->source(CommerceSettingsStore::DEFAULT_CURRENCY),
       'currencyOptions' => $this->currencies->options(includeGatewaySupport: true),
       'checkoutReady' => $this->gateways->supportsCheckout(),
-      'checkoutMessage' => $this->gateways->supportsCheckout() ? 'Checkout can be started.' : $this->gateways->unavailableMessage(),
+      'checkoutMessage' => $this->gateways->gatewayKey() === 'fake'
+        ? 'Test orders can be placed without contacting a payment provider.'
+        : ($this->gateways->supportsCheckout() ? 'Checkout can be started.' : $this->gateways->unavailableMessage()),
       'paypal' => [
         'mode' => $this->paypal->mode(),
         'mode_source' => $this->settings->source(CommerceSettingsStore::PAYPAL_MODE),

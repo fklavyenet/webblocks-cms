@@ -47,6 +47,7 @@ class CommerceGatewayManager
     return match ($this->gatewayKey()) {
       'paypal' => 'PayPal checkout is not configured yet. Add the PayPal client ID, client secret, and webhook ID before accepting payments.',
       'sumup' => 'SumUp checkout is not configured yet. Add the SumUp API key and merchant code before accepting payments.',
+      'fake' => 'Test orders are enabled. No payment will be collected.',
       default => 'Checkout gateway configuration is not active yet.',
     };
   }

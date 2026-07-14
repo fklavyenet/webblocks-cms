@@ -79,14 +79,39 @@ class CommerceCheckoutController extends Controller
       abort(404);
     }
 
-    return $this->statusView($request, $order, 'Payment Processing', 'The hosted checkout returned successfully. The order stays pending until a signed gateway webhook confirms payment.');
+    if ($order->gateway === 'fake') {
+      return $this->statusView(
+        $request,
+        $order,
+        'status.test_order_heading',
+        'status.test_order_message',
+        'Test Order Received',
+        'Your order and delivery details were saved. No payment was collected, and this test order remains pending.',
+      );
+    }
+
+    return $this->statusView(
+      $request,
+      $order,
+      'status.payment_processing_heading',
+      'status.payment_processing_message',
+      'Payment Processing',
+      'The hosted checkout returned successfully. The order stays pending until a signed gateway webhook confirms payment.',
+    );
   }
 
   public function cancel(Request $request, string $order): View
   {
     $order = $this->publicOrder($order);
 
-    return $this->statusView($request, $order, 'Checkout Cancelled', 'No payment was recorded. You can return to the product and start checkout again.');
+    return $this->statusView(
+      $request,
+      $order,
+      'status.checkout_cancelled_heading',
+      'status.checkout_cancelled_message',
+      'Checkout Cancelled',
+      'No payment was recorded. You can return to the product and start checkout again.',
+    );
   }
 
   private function publicProduct(string $slug): CommerceProduct
@@ -126,11 +151,19 @@ class CommerceCheckoutController extends Controller
     return null;
   }
 
-  private function statusView(Request $request, CommerceOrder $order, string $heading, string $message): View
-  {
+  private function statusView(
+    Request $request,
+    CommerceOrder $order,
+    string $headingKey,
+    string $messageKey,
+    string $headingFallback,
+    string $messageFallback,
+  ): View {
     $storedLocale = $order->metadata['locale'] ?? null;
     $locale = is_string($storedLocale) ? $this->locales->enabled($storedLocale, $order->site) : null;
     $localeCode = $locale?->code ?? $this->locales->current($request, $order->site)->code;
+    $heading = $this->translator->plugin('webblocks-commerce', 'public.'.$headingKey, $localeCode, fallback: $headingFallback);
+    $message = $this->translator->plugin('webblocks-commerce', 'public.'.$messageKey, $localeCode, fallback: $messageFallback);
 
     return view($this->view('checkout-status'), [
       'title' => $heading,

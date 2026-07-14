@@ -14,6 +14,7 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Cart\CartService;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\CheckoutUnavailableException;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Checkout\StartCheckout;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Tax\TaxCalculator;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
@@ -28,6 +29,7 @@ class CommerceCartController extends Controller
     private readonly CartService $carts,
     private readonly StartCheckout $checkout,
     private readonly CommerceGatewayManager $gateways,
+    private readonly TaxCalculator $tax,
     private readonly LocaleResolver $locales,
     private readonly CmsTranslator $translator,
   ) {}
@@ -57,6 +59,8 @@ class CommerceCartController extends Controller
         && is_string($summary['currency'])
         && $this->gateways->supportsCurrency($summary['currency']),
       'checkoutUnavailableMessage' => $this->checkoutUnavailableMessage($summary['currency']),
+      'testOrderMode' => $this->gateways->gatewayKey() === 'fake',
+      'defaultShippingCountry' => $this->tax->storeCountry() ?? 'DE',
     ]);
   }
 
@@ -137,7 +141,14 @@ class CommerceCartController extends Controller
     abort_unless($this->schema->isReady(), 404);
 
     $validator = Validator::make($request->all(), [
-      'customer_email' => ['nullable', 'email', 'max:254'],
+      'customer_name' => ['required', 'string', 'max:160'],
+      'customer_email' => ['required', 'email', 'max:254'],
+      'customer_phone' => ['nullable', 'string', 'max:40'],
+      'shipping_address_line_1' => ['required', 'string', 'max:255'],
+      'shipping_address_line_2' => ['nullable', 'string', 'max:255'],
+      'shipping_postal_code' => ['required', 'string', 'max:32'],
+      'shipping_city' => ['required', 'string', 'max:120'],
+      'shipping_country_code' => ['required', 'alpha', 'size:2'],
     ]);
 
     if ($validator->fails()) {
@@ -150,9 +161,25 @@ class CommerceCartController extends Controller
       return redirect()->route('webblocks.commerce.cart.show')->withErrors(['checkout' => 'Your cart is empty.']);
     }
 
-    if ($request->filled('customer_email')) {
-      $cart->update(['customer_email' => (string) $request->input('customer_email')]);
-    }
+    $validated = $validator->validated();
+    $metadata = $cart->metadata ?? [];
+    $metadata['customer'] = [
+      'name' => (string) $validated['customer_name'],
+      'email' => (string) $validated['customer_email'],
+      'phone' => $this->nullableString($validated['customer_phone'] ?? null),
+    ];
+    $metadata['shipping_address'] = [
+      'line_1' => (string) $validated['shipping_address_line_1'],
+      'line_2' => $this->nullableString($validated['shipping_address_line_2'] ?? null),
+      'postal_code' => (string) $validated['shipping_postal_code'],
+      'city' => (string) $validated['shipping_city'],
+      'country_code' => strtoupper((string) $validated['shipping_country_code']),
+    ];
+
+    $cart->update([
+      'customer_email' => (string) $validated['customer_email'],
+      'metadata' => $metadata,
+    ]);
 
     try {
       $session = $this->checkout->forCart($cart);
@@ -246,5 +273,16 @@ class CommerceCartController extends Controller
   private function view(string $name): string
   {
     return WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::plugins.webblocks-commerce.public.'.$name;
+  }
+
+  private function nullableString(mixed $value): ?string
+  {
+    if (! is_string($value)) {
+      return null;
+    }
+
+    $value = trim($value);
+
+    return $value === '' ? null : $value;
   }
 }

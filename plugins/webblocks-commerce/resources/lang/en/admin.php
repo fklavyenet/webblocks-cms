@@ -19,6 +19,7 @@ return [
     'checkout_help' => 'Credentials are write-only. Environment values override encrypted admin settings.',
     'schema' => 'Schema',
     'gateway' => 'Gateway',
+    'test_order_gateway' => 'Test order (no payment)',
     'default_currency' => 'Default Currency',
     'default_currency_help' => 'Used for newly created products. The saved currency must be supported by the selected gateway.',
     'provider_configuration' => 'Checkout Provider',

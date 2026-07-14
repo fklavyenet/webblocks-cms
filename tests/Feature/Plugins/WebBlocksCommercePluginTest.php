@@ -27,6 +27,7 @@ use WebBlocks\Cms\Plugins\WebBlocksCommerce\Models\CommerceWebhookEvent;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\CommerceSettingsStore;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\CurrencyCatalog;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Currency\MoneyFormatter;
+use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\CommerceGatewayManager;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\Gateways\PayPalConfig;
 use WebBlocks\Cms\Plugins\WebBlocksCommerce\Support\WebBlocksCommerceSchema;
 use WebBlocks\Cms\Support\Database\CmsTable;
@@ -60,7 +61,7 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks Commerce', $plugin->labelText());
-    $this->assertSame('0.8.2', $plugin->versionText());
+    $this->assertSame('0.8.3', $plugin->versionText());
     $this->assertSame('^1.37.3', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_commerce', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_commerce_', $plugin->databasePrefixValue());
@@ -737,6 +738,38 @@ class WebBlocksCommercePluginTest extends TestCase
   }
 
   #[Test]
+  public function permitted_admin_can_enable_no_payment_test_orders(): void
+  {
+    config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
+    config()->set('webblocks-commerce.gateway', null);
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    $this->migrateWebBlocksCommercePlugin();
+
+    $user = User::factory()->superAdmin()->create();
+    $response = $this->actingAs($user)->put(route('webblocks.plugins.webblocks_commerce.settings.update'), [
+      'gateway' => 'fake',
+      'default_currency' => 'EUR',
+      'paypal_mode' => 'sandbox',
+      'paypal_client_id' => '',
+      'paypal_client_secret' => '',
+      'paypal_webhook_id' => '',
+      'sumup_mode' => 'sandbox',
+      'sumup_api_key' => '',
+      'sumup_merchant_code' => '',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $this->assertSame('fake', app(CommerceGatewayManager::class)->gatewayKey());
+    $this->assertTrue(app(CommerceGatewayManager::class)->supportsCheckout());
+
+    $this->actingAs($user)
+      ->get(route('webblocks.plugins.webblocks_commerce.settings.edit'))
+      ->assertOk()
+      ->assertSee('Test order (no payment)')
+      ->assertSee('Test orders can be placed without contacting a payment provider.');
+  }
+
+  #[Test]
   public function permitted_admin_can_save_write_only_encrypted_commerce_credentials(): void
   {
     config()->set('webblocks-plugins.enabled.webblocks-commerce', true);
@@ -953,7 +986,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $buy->assertOk();
     $buy->assertSee('Original Painting');
     $buy->assertSee('Add to cart');
-    $buy->assertSee('Buy now');
+    $buy->assertDontSee('Buy now');
 
     $checkout = $this->post(route('webblocks.commerce.products.checkout', $product->slug));
     $checkout->assertRedirect();
@@ -968,7 +1001,8 @@ class WebBlocksCommercePluginTest extends TestCase
 
     $success = $this->get($checkout->headers->get('Location'));
     $success->assertOk();
-    $success->assertSee('Payment Processing');
+    $success->assertSee('Test Order Received');
+    $success->assertSee('No payment was collected');
     $success->assertSee($order->order_number);
     $this->assertSame(CommerceOrder::STATUS_PENDING, $order->fresh()->status);
   }
@@ -1012,7 +1046,7 @@ class WebBlocksCommercePluginTest extends TestCase
     $buy = $this->get(route('webblocks.commerce.products.buy', $product->slug));
     $buy->assertOk();
     $buy->assertSee('Add to cart');
-    $buy->assertSee('Buy now');
+    $buy->assertDontSee('Buy now');
 
     $checkout = $this->post(route('webblocks.commerce.products.checkout', $product->slug));
     $checkout->assertRedirect('https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-123');

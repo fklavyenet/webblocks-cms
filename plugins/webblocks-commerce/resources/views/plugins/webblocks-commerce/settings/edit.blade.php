@@ -85,6 +85,7 @@
                             <select id="commerce_gateway" name="gateway" class="wb-select" @disabled($gateway_source === 'environment')>
                                 <option value="paypal" @selected(old('gateway', $gateway) === 'paypal')>PayPal</option>
                                 <option value="sumup" @selected(old('gateway', $gateway) === 'sumup')>SumUp</option>
+                                <option value="fake" @selected(old('gateway', $gateway) === 'fake')>{{ $commerceText('settings.test_order_gateway') }}</option>
                             </select>
                             <span class="wb-text-sm wb-text-muted">{{ $sourceLabel($gateway_source) }} · <code>WEBBLOCKS_COMMERCE_GATEWAY</code></span>
                             @error('gateway')<div class="wb-field-error">{{ $message }}</div>@enderror

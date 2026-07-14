@@ -18,7 +18,7 @@ class WebBlocksCommercePlugin
   {
     return PluginDefinition::make(self::HANDLE)
       ->label('WebBlocks Commerce')
-      ->version('0.8.2')
+      ->version('0.8.3')
       ->provider(self::class)
       ->description('Simple product sales and hosted checkout foundations for WebBlocks CMS sites.')
       ->requiresCms('^1.37.3')
@@ -100,7 +100,7 @@ class WebBlocksCommercePlugin
       ->settings(
         PluginSettingsDefinition::make('webblocks.plugins.webblocks_commerce.settings.edit')
           ->label('Commerce Settings')
-          ->description('Configure PayPal or SumUp, choose the default currency, and review checkout and webhook readiness. Environment configuration remains an optional override.')
+          ->description('Choose no-payment test orders, PayPal, or SumUp; set the default currency; and review checkout readiness. Environment configuration remains an optional override.')
       )
       ->health(WebBlocksCommerceHealth::class);
   }

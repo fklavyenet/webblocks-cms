@@ -23,7 +23,7 @@ class CommerceSettingsRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'gateway' => ['required', Rule::in(['paypal', 'sumup'])],
+      'gateway' => ['required', Rule::in(['paypal', 'sumup', 'fake'])],
       'default_currency' => [
         'required',
         Rule::in(app(CurrencyCatalog::class)->codesForGateway((string) $this->input('gateway'))),

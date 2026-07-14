@@ -6,7 +6,7 @@
         'title' => $title,
         'site_name' => $site?->publicDisplayName() ?? config('app.name'),
         'site_label' => $site?->display_name ?? $site?->name ?? config('app.name'),
-        'meta_description' => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->plugin('webblocks-commerce', 'public.cart.meta_description', $publicLocaleCode, fallback: 'Review your cart and continue to secure hosted checkout.'),
+        'meta_description' => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->plugin('webblocks-commerce', 'public.cart.meta_description', $publicLocaleCode, fallback: 'Review your cart, enter delivery details, and place your order.'),
     ],
 ])
 
@@ -121,11 +121,61 @@
                             @if ($checkoutReady)
                                 <form method="POST" action="{{ route('webblocks.commerce.cart.checkout') }}" class="wb-stack wb-gap-3">
                                     @csrf
-                                    <div class="wb-stack wb-gap-1">
-                                        <label for="commerce-customer-email">{{ $commerceText('cart.email', fallback: 'Email for the order') }} <span class="wb-text-muted">({{ $commerceText('cart.optional', fallback: 'optional') }})</span></label>
-                                        <input id="commerce-customer-email" class="wb-input" type="email" name="customer_email" value="{{ old('customer_email', $cart?->customer_email) }}" autocomplete="email">
+                                    @if ($testOrderMode)
+                                        <div class="wb-alert wb-alert-info">
+                                            <div>
+                                                <div class="wb-alert-title">{{ $commerceText('cart.test_order_title', fallback: 'Test order — no payment') }}</div>
+                                                <div>{{ $commerceText('cart.test_order_description', fallback: 'Your order and delivery details will be saved, but no payment provider will be contacted.') }}</div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <div class="wb-stack wb-gap-2">
+                                        <strong>{{ $commerceText('cart.customer_details', fallback: 'Customer details') }}</strong>
+                                        <div class="wb-grid wb-grid-2 wb-gap-3">
+                                            <div class="wb-stack wb-gap-1">
+                                                <label for="commerce-customer-name">{{ $commerceText('cart.name', fallback: 'Full name') }}</label>
+                                                <input id="commerce-customer-name" class="wb-input" type="text" name="customer_name" value="{{ old('customer_name', data_get($cart?->metadata, 'customer.name')) }}" autocomplete="name" required>
+                                            </div>
+                                            <div class="wb-stack wb-gap-1">
+                                                <label for="commerce-customer-email">{{ $commerceText('cart.email', fallback: 'Email for the order') }}</label>
+                                                <input id="commerce-customer-email" class="wb-input" type="email" name="customer_email" value="{{ old('customer_email', $cart?->customer_email) }}" autocomplete="email" required>
+                                            </div>
+                                        </div>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="commerce-customer-phone">{{ $commerceText('cart.phone', fallback: 'Phone') }} <span class="wb-text-muted">({{ $commerceText('cart.optional', fallback: 'optional') }})</span></label>
+                                            <input id="commerce-customer-phone" class="wb-input" type="tel" name="customer_phone" value="{{ old('customer_phone', data_get($cart?->metadata, 'customer.phone')) }}" autocomplete="tel">
+                                        </div>
                                     </div>
-                                    <button type="submit" class="wb-btn wb-btn-primary">{{ $commerceText('cart.secure_payment', fallback: 'Continue to secure payment') }}</button>
+
+                                    <div class="wb-stack wb-gap-2">
+                                        <strong>{{ $commerceText('cart.delivery_address', fallback: 'Delivery address') }}</strong>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="commerce-shipping-address-line-1">{{ $commerceText('cart.address_line_1', fallback: 'Street and house number') }}</label>
+                                            <input id="commerce-shipping-address-line-1" class="wb-input" type="text" name="shipping_address_line_1" value="{{ old('shipping_address_line_1', data_get($cart?->metadata, 'shipping_address.line_1')) }}" autocomplete="address-line1" required>
+                                        </div>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="commerce-shipping-address-line-2">{{ $commerceText('cart.address_line_2', fallback: 'Address addition') }} <span class="wb-text-muted">({{ $commerceText('cart.optional', fallback: 'optional') }})</span></label>
+                                            <input id="commerce-shipping-address-line-2" class="wb-input" type="text" name="shipping_address_line_2" value="{{ old('shipping_address_line_2', data_get($cart?->metadata, 'shipping_address.line_2')) }}" autocomplete="address-line2">
+                                        </div>
+                                        <div class="wb-grid wb-grid-2 wb-gap-3">
+                                            <div class="wb-stack wb-gap-1">
+                                                <label for="commerce-shipping-postal-code">{{ $commerceText('cart.postal_code', fallback: 'Postal code') }}</label>
+                                                <input id="commerce-shipping-postal-code" class="wb-input" type="text" name="shipping_postal_code" value="{{ old('shipping_postal_code', data_get($cart?->metadata, 'shipping_address.postal_code')) }}" autocomplete="postal-code" required>
+                                            </div>
+                                            <div class="wb-stack wb-gap-1">
+                                                <label for="commerce-shipping-city">{{ $commerceText('cart.city', fallback: 'City') }}</label>
+                                                <input id="commerce-shipping-city" class="wb-input" type="text" name="shipping_city" value="{{ old('shipping_city', data_get($cart?->metadata, 'shipping_address.city')) }}" autocomplete="address-level2" required>
+                                            </div>
+                                        </div>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="commerce-shipping-country-code">{{ $commerceText('cart.country_code', fallback: 'Country code') }}</label>
+                                            <input id="commerce-shipping-country-code" class="wb-input" type="text" name="shipping_country_code" value="{{ old('shipping_country_code', data_get($cart?->metadata, 'shipping_address.country_code', $defaultShippingCountry)) }}" minlength="2" maxlength="2" autocomplete="country" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="wb-btn wb-btn-primary">
+                                        {{ $testOrderMode ? $commerceText('cart.place_test_order', fallback: 'Place test order') : $commerceText('cart.secure_payment', fallback: 'Continue to secure payment') }}
+                                    </button>
                                 </form>
                             @else
                                 <div class="wb-alert wb-alert-warning">

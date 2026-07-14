@@ -71,6 +71,8 @@ class StartCheckout
         'checkout_source' => 'cart',
         'cart_token' => $cart->token,
         'locale' => $cart->locale,
+        'customer' => $cart->metadata['customer'] ?? null,
+        'shipping_address' => $cart->metadata['shipping_address'] ?? null,
       ]);
 
       foreach ($lines as $line) {
