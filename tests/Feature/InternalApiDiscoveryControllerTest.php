@@ -37,4 +37,21 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $this->assertArrayHasKey('/pages/{page}/slots/{slot}/blocks/{block}', $paths);
     $this->assertSame('content.blocks.delete', $paths['/pages/{page}/slots/{slot}/blocks/{block}']['delete']['x-required-capability']);
   }
+
+  #[Test]
+  public function openapi_schema_documents_shared_slot_block_topology_endpoints(): void
+  {
+    $response = $this->app->make(InternalApiDiscoveryController::class)->openapi();
+    $schema = $response->getData(true);
+    $paths = $schema['paths'];
+
+    $this->assertArrayHasKey('/shared-slots/{sharedSlot}/blocks/reorder', $paths);
+    $this->assertSame('shared-slots.write', $paths['/shared-slots/{sharedSlot}/blocks/reorder']['patch']['x-required-capability']);
+
+    $this->assertArrayHasKey('/shared-slots/{sharedSlot}/blocks/{block}', $paths);
+    $this->assertSame('shared-slots.write plus content.blocks.delete', $paths['/shared-slots/{sharedSlot}/blocks/{block}']['delete']['x-required-capability']);
+
+    $this->assertArrayHasKey('delete', $paths['/shared-slots/{sharedSlot}/blocks']);
+    $this->assertSame('shared-slots.write plus content.blocks.delete', $paths['/shared-slots/{sharedSlot}/blocks']['delete']['x-required-capability']);
+  }
 }

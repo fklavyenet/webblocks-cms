@@ -128,6 +128,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'show'])->name('shared-slots.show');
     Route::post('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'storeBlock'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.blocks.store');
     Route::post('/shared-slots/{sharedSlot}/publish-blocks', [InternalSharedSlotController::class, 'publishBlocks'])->middleware(['internal-api.capability:shared-slots.write', 'internal-api.capability:content.publish'])->name('shared-slots.blocks.publish');
+    Route::patch('/shared-slots/{sharedSlot}/blocks/reorder', [InternalSharedSlotController::class, 'reorderBlocks'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.blocks.reorder');
+    Route::delete('/shared-slots/{sharedSlot}/blocks/{block}', [InternalSharedSlotController::class, 'deleteBlock'])->middleware(['internal-api.capability:shared-slots.write', 'internal-api.capability:content.blocks.delete'])->name('shared-slots.blocks.delete');
+    Route::delete('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'clearBlocks'])->middleware(['internal-api.capability:shared-slots.write', 'internal-api.capability:content.blocks.delete'])->name('shared-slots.blocks.clear');
     Route::get('/media', [InternalContentResourceController::class, 'media'])->name('media.index');
     Route::post('/media', [InternalContentResourceController::class, 'storeMedia'])->middleware('internal-api.capability:media.upload')->name('media.store');
     Route::post('/media/fetch', [InternalContentResourceController::class, 'fetchRemoteMedia'])->middleware('internal-api.capability:media.upload')->name('media.fetch');

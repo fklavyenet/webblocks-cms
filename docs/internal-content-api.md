@@ -201,6 +201,9 @@ GET /webadmin/api/shared-slots
 GET /webadmin/api/shared-slots/{sharedSlot}
 POST /webadmin/api/shared-slots
 POST /webadmin/api/shared-slots/{sharedSlot}/blocks
+PATCH /webadmin/api/shared-slots/{sharedSlot}/blocks/reorder
+DELETE /webadmin/api/shared-slots/{sharedSlot}/blocks/{block}
+DELETE /webadmin/api/shared-slots/{sharedSlot}/blocks
 GET /webadmin/api/plugins
 POST /webadmin/api/plugins/install
 POST /webadmin/api/plugins/{plugin}/enable
@@ -355,6 +358,25 @@ DELETE /webadmin/api/pages/{page}/slots/{slot}/blocks/{block}
 `DELETE .../blocks/{block}` removes the block and its whole subtree and returns `deleted_blocks_count`. Deletion requires the dedicated `content.blocks.delete` capability, which is not part of the default page-building capability set. Shared Slot source blocks cannot be deleted through this endpoint.
 
 Every write captures a page revision so draft edits stay reversible.
+
+### Shared Slot Block Topology API
+
+Shared Slot block trees have their own topology endpoints because they are shared across every page the slot is assigned to:
+
+```text
+PATCH  /webadmin/api/shared-slots/{sharedSlot}/blocks/reorder
+DELETE /webadmin/api/shared-slots/{sharedSlot}/blocks/{block}
+DELETE /webadmin/api/shared-slots/{sharedSlot}/blocks
+```
+
+Adding blocks stays at `POST /shared-slots/{sharedSlot}/blocks`, and editing a single block's safe content fields stays at `PATCH /blocks/{block}` (which already accepts Shared Slot source blocks with `shared-slots.write`). The new endpoints add the missing topology operations:
+
+- `PATCH .../blocks/reorder` renumbers one sibling group; the `blocks` array must contain every sibling id for a single parent group exactly once, in the desired order. It requires `shared-slots.write`.
+- `DELETE .../blocks/{block}` removes one block and its subtree and returns `deleted_blocks_count`.
+- `DELETE .../blocks` clears every block in the slot so a tool can clear-and-replace a Shared Slot; it returns `deleted_blocks_count`.
+- Both deletes require `shared-slots.write` plus the dedicated `content.blocks.delete` capability.
+
+Unlike page block edits, these are not draft-only: Shared Slots have no draft-page concept. Reordering or deleting an already-published Shared Slot block therefore affects every assigned page immediately, which is why deletion is gated behind the destructive `content.blocks.delete` capability. Every write rebuilds the slot's page assignments and captures a Shared Slot revision so changes stay reversible.
 
 ### Media Library API
 
@@ -1083,8 +1105,12 @@ Content plans may include `navigation_menus`, `shared_slots`, and `page_slot_sha
 
 ### Phase 2B
 
-- optional draft-safe update/move endpoints for navigation and Shared Slot blocks
-- explicit safe clearing/replacement contracts where needed
+Delivered:
+
+- Shared Slot block topology endpoints: reorder a sibling group (`PATCH /shared-slots/{sharedSlot}/blocks/reorder`, requires `shared-slots.write`), delete a single block subtree (`DELETE /shared-slots/{sharedSlot}/blocks/{block}`), and clear every block for clear-and-replace (`DELETE /shared-slots/{sharedSlot}/blocks`); the two deletes require `shared-slots.write` plus `content.blocks.delete`. Existing Shared Slot block content edits continue to use `PATCH /blocks/{block}` with `shared-slots.write`. Every write rebuilds assignments on pages using the slot and captures a Shared Slot revision.
+
+Remaining:
+
 - deeper header/navbar construction helpers only if they stay generic CMS behavior
 
 ### Phase 3

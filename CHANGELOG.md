@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.0
+
+- Add Shared Slot block topology endpoints to the Internal Content API (Phase 2B): `PATCH /webadmin/api/shared-slots/{sharedSlot}/blocks/reorder` reorders a sibling group (requires `shared-slots.write`), `DELETE .../blocks/{block}` removes one block subtree, and `DELETE .../blocks` clears every block for clear-and-replace (both deletes require `shared-slots.write` plus `content.blocks.delete`). Existing Shared Slot block content edits keep using `PATCH /blocks/{block}`. Every write rebuilds the slot's page assignments and captures a Shared Slot revision. Because Shared Slots have no draft-page concept, changes to already-published Shared Slot blocks affect every assigned page immediately, which is why deletion is gated behind the destructive `content.blocks.delete` capability.
+
 ## 1.39.0
 
 - Redesign the public Rating block to use the new WebBlocks UI `wb-rating` star component: a read-only average shown as partially filled stars plus count, and a no-JS interactive star input that fills on hover up to the pointed star (each star still submits its own value, so the safe no-JavaScript flow is preserved). Upgrades the bundled WebBlocks UI to v2.8.0.

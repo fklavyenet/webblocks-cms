@@ -10,8 +10,10 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class InternalSharedSlotController extends Controller
@@ -20,6 +22,8 @@ class InternalSharedSlotController extends Controller
     private readonly InternalContentApiOperations $operations,
     private readonly InternalContentApiPresenter $presenter,
     private readonly SharedSlotSourcePageManager $sourcePages,
+    private readonly BlockDeletionManager $blockDeletionManager,
+    private readonly SharedSlotRevisionManager $revisionManager,
   ) {}
 
   public function index(Request $request): JsonResponse
@@ -190,6 +194,142 @@ class InternalSharedSlotController extends Controller
       'warnings' => [],
       'errors' => [],
     ]);
+  }
+
+  public function reorderBlocks(Request $request, SharedSlot $sharedSlot): JsonResponse
+  {
+    $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
+    $slotType = $this->sourcePages->editorSlotTypeFor($sharedSlot);
+
+    $blockIds = collect($request->input('blocks', []));
+
+    if ($blockIds->isEmpty() || $blockIds->count() !== $blockIds->unique()->count()
+      || $blockIds->contains(fn ($id) => ! is_numeric($id))) {
+      return $this->validationError([
+        ['path' => 'blocks', 'message' => 'Provide a non-empty list of distinct block ids in the desired order.'],
+      ]);
+    }
+
+    $blockIds = $blockIds->map(fn ($id) => (int) $id)->values();
+
+    $blocks = Block::query()
+      ->whereIn('id', $blockIds)
+      ->where('page_id', $sourcePage->id)
+      ->where('slot_type_id', $slotType->id)
+      ->get(['id', 'parent_id']);
+
+    if ($blocks->count() !== $blockIds->count()) {
+      return $this->validationError([
+        ['path' => 'blocks', 'message' => 'Submitted blocks must belong to this Shared Slot.'],
+      ]);
+    }
+
+    $parentIds = $blocks->map(fn (Block $block) => $block->parent_id)->uniqueStrict();
+
+    if ($parentIds->count() !== 1) {
+      return $this->validationError([
+        ['path' => 'blocks', 'message' => 'Submitted blocks must belong to the same parent group.'],
+      ]);
+    }
+
+    $parentId = $parentIds->first();
+
+    $siblingIds = Block::query()
+      ->where('page_id', $sourcePage->id)
+      ->where('slot_type_id', $slotType->id)
+      ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
+      ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+      ->pluck('id')
+      ->map(fn ($id) => (int) $id);
+
+    if ($siblingIds->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
+      return $this->validationError([
+        ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
+      ]);
+    }
+
+    DB::transaction(function () use ($sharedSlot, $sourcePage, $slotType, $blockIds, $parentId, $request): void {
+      $siblings = Block::query()
+        ->where('page_id', $sourcePage->id)
+        ->where('slot_type_id', $slotType->id)
+        ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
+        ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+        ->lockForUpdate()
+        ->get(['id', 'sort_order']);
+
+      $positionMap = $blockIds->flip();
+
+      $siblings
+        ->sortBy(fn (Block $block) => $positionMap->get($block->id))
+        ->values()
+        ->each(function (Block $block, int $index): void {
+          if ($block->sort_order !== $index) {
+            $block->update(['sort_order' => $index]);
+          }
+        });
+
+      $this->sourcePages->rebuildAssignments($sharedSlot);
+      $this->captureRevision($sharedSlot, $request, 'block_reordered', 'Shared Slot block order updated', 'Shared Slot block order was changed through the Internal Content API.');
+    });
+
+    return $this->ok(['message' => 'Saved']);
+  }
+
+  public function deleteBlock(Request $request, SharedSlot $sharedSlot, Block $block): JsonResponse
+  {
+    $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
+
+    if ($block->page_id !== $sourcePage->id) {
+      return $this->validationError([
+        ['path' => 'block', 'message' => 'The block does not belong to this Shared Slot.'],
+      ]);
+    }
+
+    $deletedCount = DB::transaction(function () use ($sharedSlot, $block, $request): int {
+      $order = $this->blockDeletionManager->recursiveDeleteOrder($block);
+      $order->each(fn (Block $candidate) => $candidate->delete());
+
+      $this->sourcePages->rebuildAssignments($sharedSlot);
+      $this->captureRevision($sharedSlot, $request, 'block_deleted', 'Shared Slot block deleted', 'A Shared Slot block was deleted through the Internal Content API.');
+
+      return $order->count();
+    });
+
+    return $this->ok(['message' => 'Deleted', 'deleted_blocks_count' => $deletedCount]);
+  }
+
+  public function clearBlocks(Request $request, SharedSlot $sharedSlot): JsonResponse
+  {
+    $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
+    $slotType = $this->sourcePages->editorSlotTypeFor($sharedSlot);
+
+    $deletedCount = DB::transaction(function () use ($sharedSlot, $sourcePage, $slotType, $request): int {
+      $order = $this->blockDeletionManager
+        ->scopedBlocksForSlot($sourcePage->id, $slotType->id)
+        ->whereNull('parent_id')
+        ->values()
+        ->flatMap(fn (Block $block) => $this->blockDeletionManager->recursiveDeleteOrder($block))
+        ->unique('id');
+
+      $order->each(fn (Block $block) => $block->delete());
+
+      $this->sourcePages->rebuildAssignments($sharedSlot);
+      $this->captureRevision($sharedSlot, $request, 'block_deleted', 'Shared Slot blocks cleared', 'Every Shared Slot block was removed through the Internal Content API.');
+
+      return $order->count();
+    });
+
+    return $this->ok(['message' => 'Cleared', 'deleted_blocks_count' => $deletedCount]);
+  }
+
+  private function captureRevision(SharedSlot $sharedSlot, Request $request, string $event, string $label, string $summary): void
+  {
+    if (! $this->revisionManager->revisionsTableExists()) {
+      return;
+    }
+
+    $sharedSlot->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
+    $this->revisionManager->capture($sharedSlot->fresh(), $request->user(), $event, $label, $summary);
   }
 
   private function siteFromRequest(Request $request): ?Site
