@@ -2,6 +2,11 @@
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.link_list.'.$key, $adminLocale);
+    $linkListSettings = is_array($block->settings ?? null)
+        ? $block->settings
+        : (json_decode((string) ($block->getRawOriginal('settings') ?? ''), true) ?: []);
+    $selectedRowLayout = old('row_layout', $linkListSettings['row_layout'] ?? 'index');
+    $selectedListFrame = old('list_frame', $linkListSettings['list_frame'] ?? 'joined');
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -30,6 +35,28 @@
     <div class="wb-stack wb-gap-1">
         <label for="content">{{ $adminText('description_label') }}</label>
         <textarea id="content" name="content" class="wb-textarea" rows="5" placeholder="{{ $adminText('description_placeholder') }}">{{ old('content', $block->content) }}</textarea>
+    </div>
+
+    <div class="wb-grid wb-grid-2">
+        <div class="wb-stack wb-gap-1">
+            <label for="row_layout">{{ $adminText('row_layout_label') }}</label>
+            <select id="row_layout" name="row_layout" class="wb-select">
+                @foreach (['index' => $adminText('row_layout_index'), 'stacked' => $adminText('row_layout_stacked')] as $value => $label)
+                    <option value="{{ $value }}" @selected($selectedRowLayout === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('row_layout_help') }}</span>
+        </div>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="list_frame">{{ $adminText('list_frame_label') }}</label>
+            <select id="list_frame" name="list_frame" class="wb-select">
+                @foreach (['joined' => $adminText('list_frame_joined'), 'cards' => $adminText('list_frame_cards')] as $value => $label)
+                    <option value="{{ $value }}" @selected($selectedListFrame === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('list_frame_help') }}</span>
+        </div>
     </div>
 
     @include('webblocks-cms::admin.blocks.partials.column-items-editor', [

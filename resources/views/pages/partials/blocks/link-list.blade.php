@@ -3,6 +3,8 @@
     $introMeta = $block->stringValueOrNull($block->subtitle) ?? $block->translatedTextFieldValue('subtitle');
     $introTitle = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title');
     $introDescription = $block->stringValueOrNull($block->content) ?? $block->translatedTextFieldValue('content');
+    $isStacked = trim((string) $block->setting('row_layout', '')) === 'stacked';
+    $isCards = trim((string) $block->setting('list_frame', '')) === 'cards';
 @endphp
 
 @if ($items->isNotEmpty())
@@ -23,7 +25,11 @@
             </div>
         @endif
 
-        <div class="wb-link-list">
+        <div @class([
+            'wb-link-list',
+            'wb-link-list--stacked' => $isStacked,
+            'wb-link-list--cards' => $isCards,
+        ])>
         @foreach ($items as $item)
             @include('webblocks-cms::pages.partials.blocks.link-list-item', ['block' => $item])
         @endforeach

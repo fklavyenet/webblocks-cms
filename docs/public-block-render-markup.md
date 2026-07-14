@@ -1715,13 +1715,15 @@ The renderer itself does not add `data-wb-public-block-type`; top-level slot ren
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-stack`, `wb-gap-3`, `wb-gap-1`, `wb-link-list`, `wb-link-list-meta`.
+`wb-stack`, `wb-gap-3`, `wb-gap-1`, `wb-link-list`, optional `wb-link-list--stacked`, optional `wb-link-list--cards`, `wb-link-list-meta`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | title/subtitle/content | text | Renders optional intro stack above links. |
+| settings.row_layout | index (default) / stacked | `stacked` adds `wb-link-list--stacked`, moving each row description under its title beside any leading visual. `index` and unknown values add no class and keep the default description column. |
+| settings.list_frame | joined (default) / cards | `cards` adds `wb-link-list--cards`, giving each row its own card frame with spacing. `joined` and unknown values add no class and keep the single shared frame. |
 | child link-list-item | published children | Renders children inside `.wb-link-list`. |
 | no children | n/a | Renderer has no link rows to display. |
 

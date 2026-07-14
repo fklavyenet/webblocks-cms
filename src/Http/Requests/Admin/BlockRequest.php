@@ -258,6 +258,8 @@ class BlockRequest extends FormRequest
       'feature_items.*.is_system' => ['nullable', 'boolean'],
       'feature_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
       'feature_items.*._delete' => ['nullable', 'boolean'],
+      'row_layout' => [$isLinkList ? 'nullable' : 'prohibited', Rule::in(['', 'index', 'stacked'])],
+      'list_frame' => [$isLinkList ? 'nullable' : 'prohibited', Rule::in(['', 'joined', 'cards'])],
       'link_list_items' => ['nullable', 'array'],
       'link_list_items.*.id' => ['nullable', 'integer', 'exists:wbcms_blocks,id'],
       'link_list_items.*.block_type_id' => ['nullable', 'integer', 'exists:wbcms_block_types,id'],
@@ -1526,14 +1528,36 @@ class BlockRequest extends FormRequest
       }
 
       if ($blockType?->slug === 'link-list') {
+        $isTranslatedLinkListEdit = $data['locale'] !== null;
+        $existingSettings = $this->route('block') instanceof Block
+          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          : [];
+        $settings = is_array($existingSettings) ? $existingSettings : [];
+
+        // List presentation is shared across locales, so a translated edit keeps
+        // the stored styles instead of the locale form's copy.
+        if (! $isTranslatedLinkListEdit) {
+          $rowLayout = trim((string) ($data['row_layout'] ?? ''));
+          $listFrame = trim((string) ($data['list_frame'] ?? ''));
+
+          $settings['row_layout'] = $rowLayout === 'stacked' ? 'stacked' : null;
+          $settings['list_frame'] = $listFrame === 'cards' ? 'cards' : null;
+        }
+
         $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
         $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
         $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
         $data['url'] = null;
-        $data['asset_id'] = null;
+        // The list itself carries no media; only its child rows do. Cleared as
+        // media_id rather than by re-adding asset_id, whose setter writes
+        // media_id last and wipes media on the types that do support it.
+        $data['media_id'] = null;
         $data['variant'] = null;
         $data['meta'] = null;
-        $data['settings'] = null;
+        $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+        $data['settings'] = $settings === []
+          ? null
+          : json_encode($settings, JSON_UNESCAPED_SLASHES);
       }
 
       if ($blockType?->slug === 'header-actions') {

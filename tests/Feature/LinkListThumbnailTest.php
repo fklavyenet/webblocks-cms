@@ -257,6 +257,117 @@ class LinkListThumbnailTest extends TestCase
     return $request->validatedData();
   }
 
+  #[Test]
+  public function the_list_renders_the_selected_style_modifiers(): void
+  {
+    $html = $this->renderList(['row_layout' => 'stacked', 'list_frame' => 'cards']);
+
+    $this->assertStringContainsString('wb-link-list--stacked', $html);
+    $this->assertStringContainsString('wb-link-list--cards', $html);
+  }
+
+  #[Test]
+  public function the_list_styles_are_independent(): void
+  {
+    $stackedOnly = $this->renderList(['row_layout' => 'stacked']);
+    $this->assertStringContainsString('wb-link-list--stacked', $stackedOnly);
+    $this->assertStringNotContainsString('wb-link-list--cards', $stackedOnly);
+
+    $cardsOnly = $this->renderList(['list_frame' => 'cards']);
+    $this->assertStringContainsString('wb-link-list--cards', $cardsOnly);
+    $this->assertStringNotContainsString('wb-link-list--stacked', $cardsOnly);
+  }
+
+  #[Test]
+  public function the_default_list_stays_unstyled(): void
+  {
+    // The modifiers are additive: an existing list must keep its current look.
+    $html = $this->renderList();
+
+    $this->assertStringContainsString('wb-link-list', $html);
+    $this->assertStringNotContainsString('wb-link-list--', $html);
+  }
+
+  #[Test]
+  public function an_admin_save_persists_the_list_styles(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+    $listType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+
+    $data = $this->validatedDataFor([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $listType->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'row_layout' => 'stacked',
+      'list_frame' => 'cards',
+    ]);
+
+    $block = app(BlockPayloadWriter::class)->save(new Block, $page, $data, null);
+    $settings = json_decode((string) $block->fresh()->getRawOriginal('settings'), true);
+
+    $this->assertSame('stacked', $settings['row_layout'] ?? null);
+    $this->assertSame('cards', $settings['list_frame'] ?? null);
+  }
+
+  #[Test]
+  public function an_admin_save_can_return_the_list_to_the_default_style(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+    $listType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+
+    $block = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'link-list', 'block_type_id' => $listType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published',
+      'settings' => json_encode(['row_layout' => 'stacked', 'list_frame' => 'cards']),
+    ]);
+
+    $data = $this->validatedDataFor([
+      'page_id' => $page->id,
+      'slot_type_id' => $slotType->id,
+      'block_type_id' => $listType->id,
+      'sort_order' => 0,
+      'status' => 'published',
+      'row_layout' => 'index',
+      'list_frame' => 'joined',
+    ]);
+
+    app(BlockPayloadWriter::class)->save($block, $page, $data, null);
+
+    $this->assertNull($block->fresh()->getRawOriginal('settings'));
+  }
+
+  private function renderList(array $settings = []): string
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+
+    $listType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+    $itemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+    $list = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'link-list', 'block_type_id' => $listType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published',
+      'settings' => $settings === [] ? null : json_encode($settings),
+    ]);
+
+    Block::query()->create([
+      'page_id' => $page->id, 'type' => 'link-list-item', 'block_type_id' => $itemType->id,
+      'parent_id' => $list->id, 'source_type' => 'static', 'slot' => $slotType->slug,
+      'slot_type_id' => $slotType->id, 'sort_order' => 0, 'status' => 'published',
+      'title' => 'Guide', 'url' => '/guide',
+    ]);
+
+    return view('webblocks-cms::pages.partials.blocks.link-list', [
+      'block' => $list->fresh(['children.blockType', 'blockType']),
+    ])->render();
+  }
+
   private function renderItem(array $attributes = []): string
   {
     $this->seedBlockTypes();
@@ -311,15 +422,17 @@ class LinkListThumbnailTest extends TestCase
   }
 
   /**
+   * Idempotent so a test can render more than one list in the same case.
+   *
    * @return array{0: Page, 1: SlotType}
    */
   private function seedPage(): array
   {
-    $site = Site::query()->create(['name' => 'Test', 'handle' => 'test', 'is_primary' => true]);
-    Locale::query()->create(['code' => 'en', 'name' => 'English', 'is_default' => true, 'is_enabled' => true]);
-    $slotType = SlotType::query()->create(['name' => 'Main', 'slug' => 'main', 'status' => 'published', 'sort_order' => 0]);
-    $page = Page::query()->create(['site_id' => $site->id, 'slug' => 'home', 'status' => Page::STATUS_DRAFT]);
-    PageSlot::query()->create(['page_id' => $page->id, 'slot_type_id' => $slotType->id, 'sort_order' => 0]);
+    $site = Site::query()->firstOrCreate(['handle' => 'test'], ['name' => 'Test', 'is_primary' => true]);
+    Locale::query()->firstOrCreate(['code' => 'en'], ['name' => 'English', 'is_default' => true, 'is_enabled' => true]);
+    $slotType = SlotType::query()->firstOrCreate(['slug' => 'main'], ['name' => 'Main', 'status' => 'published', 'sort_order' => 0]);
+    $page = Page::query()->firstOrCreate(['site_id' => $site->id, 'slug' => 'home'], ['status' => Page::STATUS_DRAFT]);
+    PageSlot::query()->firstOrCreate(['page_id' => $page->id, 'slot_type_id' => $slotType->id], ['sort_order' => 0]);
 
     return [$page, $slotType];
   }
