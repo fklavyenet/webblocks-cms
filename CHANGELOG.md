@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.12
+
+- Let the API change an existing block's icon and badge. `PATCH /webadmin/api/blocks/{block}` refused `settings.icon_slug`, `settings.icon_tone`, and `settings.badge_tone` on all five icon-enabled block types, so an icon could be set when a block was created and never changed afterwards, even though the published contract advertised the fields. The endpoint now delegates to the icon normalizers `InternalContentApiOperations` has owned since 1.40.7 rather than growing a second set of icon rules, so an unknown slug is still refused and `icon_tone: default` still clears the tone.
+- Record which block settings the API may write, and why the rest are refused. The PATCH allowlist and the published contract are separate hand-written lists that had drifted far apart: the contract declared 125 settings fields across 37 block types while the endpoint accepted a fraction of them, with no record of which gaps were deliberate. `BlockSettingsPatchPolicy` now names every refused field with a reason, separating the three `contact_form` delivery settings, which stay closed because an API token should not change where form submissions are sent or whether they are retained, from the fields that are only closed for want of a value rule. A contract sweep asserts every declared field is either patchable or recorded as closed, so a new setting can no longer ship advertised-but-unwritable the way the Link List styles did in 1.40.10.
+
 ## 1.40.11
 
 - Fix the Link List styles being unwritable through the API. `PATCH /webadmin/api/blocks/{block}` keeps its own hand-written allowlist of settings fields, separate from the contract registry the published contract is built from, so the styles added in 1.40.10 were advertised by `content-contract` and then refused with `unsupported_block_settings_fields`. An API client was told to use fields the API rejected, and could only get the design by hand-writing a raw `html` block. The endpoint now accepts and sanitizes `settings.row_layout` and `settings.list_frame` for `link-list`; unknown values clear the style rather than store it, and fields the block type does not support are still refused.
