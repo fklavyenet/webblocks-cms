@@ -2,7 +2,7 @@
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.cta.'.$key, $adminLocale);
-    $ctaButtons = $block->children->filter(fn ($child) => $child->typeSlug() === 'button')->values();
+    $ctaButtons = $block->children->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link'], true))->values();
     $primaryButton = $ctaButtons->get(0);
     $secondaryButton = $ctaButtons->get(1);
     $isNonDefaultLocale = isset($activeLocale) && ! $isDefaultLocale;

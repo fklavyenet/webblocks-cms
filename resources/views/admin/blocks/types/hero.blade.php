@@ -3,7 +3,7 @@
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.blocks.hero.'.$key, $adminLocale, $replace);
     $settings = is_array($block->settings) ? $block->settings : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
-    $heroButtons = $block->children->filter(fn ($child) => $child->typeSlug() === 'button')->values();
+    $heroButtons = $block->children->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link'], true))->values();
     $primaryButton = $heroButtons->get(0);
     $secondaryButton = $heroButtons->get(1);
     $isNonDefaultLocale = isset($activeLocale) && ! $isDefaultLocale;

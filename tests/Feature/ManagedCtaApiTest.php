@@ -147,6 +147,72 @@ class ManagedCtaApiTest extends TestCase
     $this->assertStringContainsString('data-wb-menu-key', $contract['renderer_root_contract']);
   }
 
+  #[Test]
+  public function card_variant_is_part_of_the_documented_contract(): void
+  {
+    $contract = app(BlockTypeContractRegistry::class)->resolve('card')->toAuditArray();
+
+    $this->assertContains('variant', $contract['shared_settings_fields']);
+    $this->assertContains('Card style', $contract['admin_form_fields']);
+  }
+
+  #[Test]
+  public function hero_renders_managed_button_link_actions(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+
+    $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+    $buttonType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
+
+    $hero = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'hero', 'block_type_id' => $heroType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published', 'title' => 'Welcome',
+    ]);
+
+    Block::query()->create([
+      'page_id' => $page->id, 'parent_id' => $hero->id, 'type' => 'button_link',
+      'block_type_id' => $buttonType->id, 'source_type' => 'static',
+      'slot' => $slotType->slug, 'slot_type_id' => $slotType->id, 'sort_order' => 0,
+      'status' => 'published', 'title' => 'Get started', 'url' => '/signup', 'variant' => 'primary',
+      'settings' => json_encode(['url' => '/signup', 'target' => '_self']),
+    ]);
+
+    $html = view('webblocks-cms::pages.partials.blocks.hero', [
+      'block' => $hero->fresh(['children.blockType', 'blockType']),
+    ])->render();
+
+    // Regression: hero, cta, and the shared _actions partial used to accept only
+    // the unpublished `button` type, so managed `button_link` CTAs never rendered.
+    $this->assertStringContainsString('Get started', $html);
+    $this->assertStringContainsString('/signup', $html);
+  }
+
+  #[Test]
+  public function managed_cta_is_written_in_the_button_link_shape_its_renderer_reads(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+
+    $errors = [];
+    $warnings = [];
+    $normalized = app(InternalContentApiOperations::class)->normalizeBlock([
+      'type' => 'hero',
+      'primary_cta' => ['label' => 'Get started', 'url' => '/signup'],
+    ], 'block', null, $errors, $warnings);
+
+    $hero = app(InternalContentApiOperations::class)
+      ->createPageSlotBlock($page, $slotType, $normalized, 'en', null, 0);
+
+    $button = Block::query()->where('parent_id', $hero->id)->firstOrFail();
+
+    // button_link resolves its href from settings, so a managed CTA that only
+    // set the legacy url column rendered as an empty action.
+    $this->assertSame('/signup', $button->buttonLinkUrl());
+    $this->assertSame('_self', $button->buttonLinkTarget());
+  }
+
   private function seedBlockTypes(): void
   {
     foreach ([

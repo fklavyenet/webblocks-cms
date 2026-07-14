@@ -246,11 +246,12 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'card' => [
-        'admin_form_fields' => ['Admin label', 'Background media', 'Background position', 'Background overlay'],
+        'admin_form_fields' => ['Admin label', 'Card style', 'Background media', 'Background position', 'Background overlay'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['media_id', 'settings.layout_name', 'settings.background_position', 'settings.background_overlay'],
+        'shared_settings_fields' => ['media_id', 'variant', 'settings.layout_name', 'settings.background_position', 'settings.background_overlay'],
         'storage_fields' => [
           'Card shell settings stay in block settings.',
+          'The optional visual style lives on the shared block variant column and renders WebBlocks UI card variant classes: flat, muted, highlight, or accent. An empty variant renders the default card.',
           'Optional background image ownership stays on the canonical block media_id column.',
           'Older saved card rows may still carry translated copy, media, and action data for legacy fallback rendering when the card has no region children.',
         ],

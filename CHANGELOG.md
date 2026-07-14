@@ -7,6 +7,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.5
+
+- Fix Hero and CTA managed actions, which never rendered. The managed CTA buttons are created as `button_link` blocks, but the Hero renderer, the CTA renderer, the shared actions partial, and both admin editors filtered children for the unpublished `button` type, so every managed call to action was dropped before rendering and the admin CTA fields never prefilled from existing buttons. All five filters now accept `button` and `button_link`.
+- Fix managed CTA storage shape. `button_link` resolves its href and target from block settings, but managed CTAs only wrote the legacy `button` columns, so an action that survived the filter still rendered without a URL. The shared `ManagedCtaSynchronizer` now writes `settings.url` and `settings.target` when the resolved button type is `button_link`, which also makes the Hero/CTA actions added through the Internal Content API in 1.40.4 render and stay editable.
+- Add a visual style setting to the Card block. Cards now expose a Card style select (default, flat, muted, highlighted, accent) that renders the matching WebBlocks UI card variant class, mirroring how the Hero renderer already maps variants. The variant column was already accepted by validation and the API but was ignored by the card renderer and missing from the editor.
+
 ## 1.40.4
 
 - Let the Internal Content API author Hero and CTA actions. `hero` and `cta` block payloads now accept optional `primary_cta` and `secondary_cta` objects (`{label, url}`, or `null` to clear), validated for a safe internal path or http(s) URL. They create the same managed `button_link` children the admin Page editor maintains, so an AI-built hero keeps its buttons editable in the normal block editor. Previously the API could not add a call to action to a Hero at all, because Hero only accepts managed `button` children and that type is not published in the catalog. The managed CTA logic moved out of the admin block controller into a shared `ManagedCtaSynchronizer` so the admin and every API create path share one behavior.

@@ -3021,6 +3021,13 @@ return [
       'media_asset_id' => 'Media Asset ID',
     ],
     'layout_shell' => [
+      'variant_label' => 'Card style',
+      'variant_default' => 'Default',
+      'variant_flat' => 'Flat (no shadow)',
+      'variant_muted' => 'Muted background',
+      'variant_highlight' => 'Highlighted',
+      'variant_accent' => 'Accent',
+      'variant_help' => 'Visual style for this card. Content stays the same.',
       'name' => 'Name',
       'admin_name_help' => 'Admin-only label used in the block tree and parent selector.',
       'no_public_fields' => 'This layout block has no public content fields.',

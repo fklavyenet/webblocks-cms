@@ -1,7 +1,15 @@
 @php
     $regionChildren = $block->children;
     $hasRegionChildren = $regionChildren->contains(fn ($child) => in_array($child->typeSlug(), ['card_header', 'card_body', 'card_footer'], true));
-    $cardClass = collect(['wb-card', $block->publicBackgroundMediaClass()])->filter()->implode(' ');
+    $cardVariant = trim((string) ($block->variant ?? ''));
+    $cardVariantClass = match ($cardVariant) {
+        'flat' => 'wb-card-flat',
+        'muted' => 'wb-card-muted',
+        'highlight' => 'wb-card-highlight',
+        'accent' => 'wb-card-accent',
+        default => null,
+    };
+    $cardClass = collect(['wb-card', $cardVariantClass, $block->publicBackgroundMediaClass()])->filter()->implode(' ');
     $backgroundStyle = $block->publicBackgroundMediaStyle();
 @endphp
 

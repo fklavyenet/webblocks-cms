@@ -3021,6 +3021,13 @@ return [
       'media_asset_id' => 'Medien-Asset-ID',
     ],
     'layout_shell' => [
+      'variant_label' => 'Kartenstil',
+      'variant_default' => 'Standard',
+      'variant_flat' => 'Flach (ohne Schatten)',
+      'variant_muted' => 'Gedämpfter Hintergrund',
+      'variant_highlight' => 'Hervorgehoben',
+      'variant_accent' => 'Akzent',
+      'variant_help' => 'Visueller Stil dieser Karte. Der Inhalt bleibt gleich.',
       'name' => 'Name',
       'admin_name_help' => 'Nur im Admin verwendetes Label für Blockbaum und Parent-Auswahl.',
       'no_public_fields' => 'Dieser Layout-Block hat keine öffentlichen Inhaltsfelder.',

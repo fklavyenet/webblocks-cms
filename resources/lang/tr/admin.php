@@ -3019,6 +3019,13 @@ return [
       'media_asset_id' => 'Medya Varlığı ID',
     ],
     'layout_shell' => [
+      'variant_label' => 'Kart stili',
+      'variant_default' => 'Varsayılan',
+      'variant_flat' => 'Düz (gölgesiz)',
+      'variant_muted' => 'Soluk arka plan',
+      'variant_highlight' => 'Vurgulu',
+      'variant_accent' => 'Aksan',
+      'variant_help' => 'Bu kartın görsel stili. İçerik aynı kalır.',
       'name' => 'Ad',
       'admin_name_help' => 'Blok ağacında ve parent seçicide kullanılan yalnızca admin etiketi.',
       'no_public_fields' => 'Bu layout bloğunun public içerik alanı yok.',

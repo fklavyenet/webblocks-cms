@@ -17,7 +17,7 @@
   }
 
   $actionBlocks = $block->children
-    ->filter(fn ($child) => $child->typeSlug() === 'button')
+    ->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link'], true))
     ->filter(fn ($child) => filled($child->url) && filled($child->title))
     ->take(2)
     ->values();

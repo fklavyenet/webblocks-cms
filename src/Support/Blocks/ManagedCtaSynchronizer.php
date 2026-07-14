@@ -160,6 +160,10 @@ class ManagedCtaSynchronizer
         continue;
       }
 
+      $resolvedUrl = $isDefaultLocaleEdit
+        ? $cta['url']
+        : ($existing?->buttonLinkUrl() ?: $existing?->url);
+
       $payload = [
         'page_id' => $block->page_id,
         'parent_id' => $block->id,
@@ -170,12 +174,23 @@ class ManagedCtaSynchronizer
         'slot' => $block->slot,
         'sort_order' => $cta['sort_order'],
         'title' => $cta['label'],
-        'url' => $isDefaultLocaleEdit ? $cta['url'] : ($existing?->url),
+        'url' => $resolvedUrl,
         'subtitle' => $existing?->subtitle ?: '_self',
         'variant' => $cta['variant'],
         'status' => $existing?->status ?: 'published',
         'is_system' => false,
       ];
+
+      // button_link reads its link from settings, not from the legacy button
+      // columns, so a managed CTA must be written in the shape its own renderer
+      // and admin form expect. Otherwise the action renders without a URL.
+      if ($buttonType->slug === 'button_link') {
+        $existingSettings = is_array($existing?->settings) ? $existing->settings : [];
+        $payload['settings'] = json_encode([
+          'url' => $resolvedUrl,
+          'target' => $existingSettings['target'] ?? '_self',
+        ], JSON_UNESCAPED_SLASHES);
+      }
 
       $this->blockPayloadWriter->save($existing ?? new Block, $block->page, $payload, $localeCode);
     }
