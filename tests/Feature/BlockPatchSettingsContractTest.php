@@ -41,21 +41,23 @@ class BlockPatchSettingsContractTest extends TestCase
   {
     $block = $this->seedBlock('link-list');
 
-    $settings = $this->mergeSettings($block, ['row_layout' => 'stacked', 'list_frame' => 'cards']);
+    $settings = $this->mergeSettings($block, ['row_layout' => 'stacked', 'list_frame' => 'cards', 'thumb_size' => 'wide']);
 
     $this->assertSame('stacked', $settings['row_layout'] ?? null);
     $this->assertSame('cards', $settings['list_frame'] ?? null);
+    $this->assertSame('wide', $settings['thumb_size'] ?? null);
   }
 
   #[Test]
   public function patching_a_link_list_can_return_it_to_the_default_style(): void
   {
-    $block = $this->seedBlock('link-list', ['row_layout' => 'stacked', 'list_frame' => 'cards']);
+    $block = $this->seedBlock('link-list', ['row_layout' => 'stacked', 'list_frame' => 'cards', 'thumb_size' => 'wide']);
 
-    $settings = $this->mergeSettings($block, ['row_layout' => 'index', 'list_frame' => 'joined']);
+    $settings = $this->mergeSettings($block, ['row_layout' => 'index', 'list_frame' => 'joined', 'thumb_size' => 'square']);
 
     $this->assertArrayNotHasKey('row_layout', $settings);
     $this->assertArrayNotHasKey('list_frame', $settings);
+    $this->assertArrayNotHasKey('thumb_size', $settings);
   }
 
   #[Test]
@@ -63,16 +65,17 @@ class BlockPatchSettingsContractTest extends TestCase
   {
     $block = $this->seedBlock('link-list');
 
-    $settings = $this->mergeSettings($block, ['row_layout' => 'sideways', 'list_frame' => 'bubbles']);
+    $settings = $this->mergeSettings($block, ['row_layout' => 'sideways', 'list_frame' => 'bubbles', 'thumb_size' => 'enormous']);
 
     $this->assertArrayNotHasKey('row_layout', $settings);
     $this->assertArrayNotHasKey('list_frame', $settings);
+    $this->assertArrayNotHasKey('thumb_size', $settings);
   }
 
   #[Test]
   public function patching_still_rejects_a_field_the_block_type_does_not_support(): void
   {
-    // Opening the two Link List styles must not open the gate generally: a
+    // Opening the Link List styles must not open the gate generally: a
     // Contact Form recipient is exactly what this allowlist exists to refuse.
     $block = $this->seedBlock('link-list');
 
@@ -92,7 +95,7 @@ class BlockPatchSettingsContractTest extends TestCase
   #[Test]
   public function the_link_list_styles_the_contract_advertises_are_patchable(): void
   {
-    // Regression: the published contract listed these two fields while the PATCH
+    // Regression: the published contract listed these fields while the PATCH
     // allowlist rejected them with unsupported_block_settings_fields, so an API
     // client was told to use a field the API refused.
     $block = $this->seedBlock('link-list');
@@ -102,8 +105,8 @@ class BlockPatchSettingsContractTest extends TestCase
       ->values()
       ->all();
 
-    $this->assertSame(['row_layout', 'list_frame'], $advertised);
-    $settings = $this->mergeSettings($block, ['row_layout' => 'stacked', 'list_frame' => 'cards']);
+    $this->assertSame(['row_layout', 'list_frame', 'thumb_size'], $advertised);
+    $settings = $this->mergeSettings($block, ['row_layout' => 'stacked', 'list_frame' => 'cards', 'thumb_size' => 'wide']);
 
     foreach ($advertised as $field) {
       $this->assertArrayHasKey($field, $settings, 'The contract advertises settings.'.$field.', so PATCH must accept it.');

@@ -5,6 +5,7 @@
     $introDescription = $block->stringValueOrNull($block->content) ?? $block->translatedTextFieldValue('content');
     $isStacked = trim((string) $block->setting('row_layout', '')) === 'stacked';
     $isCards = trim((string) $block->setting('list_frame', '')) === 'cards';
+    $isWideThumb = trim((string) $block->setting('thumb_size', '')) === 'wide';
 @endphp
 
 @if ($items->isNotEmpty())
@@ -29,6 +30,7 @@
             'wb-link-list',
             'wb-link-list--stacked' => $isStacked,
             'wb-link-list--cards' => $isCards,
+            'wb-link-list--thumb-wide' => $isWideThumb,
         ])>
         @foreach ($items as $item)
             @include('webblocks-cms::pages.partials.blocks.link-list-item', ['block' => $item])

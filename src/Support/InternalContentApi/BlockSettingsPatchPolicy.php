@@ -128,6 +128,7 @@ final class BlockSettingsPatchPolicy
     'link-list' => [
       'row_layout' => ['enum', ['stacked']],
       'list_frame' => ['enum', ['cards']],
+      'thumb_size' => ['enum', ['wide']],
     ],
     'navbar-navigation' => [
       'menu_key' => ['menu_key'],

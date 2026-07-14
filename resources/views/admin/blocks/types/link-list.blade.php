@@ -7,6 +7,7 @@
         : (json_decode((string) ($block->getRawOriginal('settings') ?? ''), true) ?: []);
     $selectedRowLayout = old('row_layout', $linkListSettings['row_layout'] ?? 'index');
     $selectedListFrame = old('list_frame', $linkListSettings['list_frame'] ?? 'joined');
+    $selectedThumbSize = old('thumb_size', $linkListSettings['thumb_size'] ?? 'square');
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -37,7 +38,7 @@
         <textarea id="content" name="content" class="wb-textarea" rows="5" placeholder="{{ $adminText('description_placeholder') }}">{{ old('content', $block->content) }}</textarea>
     </div>
 
-    <div class="wb-grid wb-grid-2">
+    <div class="wb-grid wb-grid-3">
         <div class="wb-stack wb-gap-1">
             <label for="row_layout">{{ $adminText('row_layout_label') }}</label>
             <select id="row_layout" name="row_layout" class="wb-select">
@@ -56,6 +57,16 @@
                 @endforeach
             </select>
             <span class="wb-text-sm wb-text-muted">{{ $adminText('list_frame_help') }}</span>
+        </div>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="thumb_size">{{ $adminText('thumb_size_label') }}</label>
+            <select id="thumb_size" name="thumb_size" class="wb-select">
+                @foreach (['square' => $adminText('thumb_size_square'), 'wide' => $adminText('thumb_size_wide')] as $value => $label)
+                    <option value="{{ $value }}" @selected($selectedThumbSize === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('thumb_size_help') }}</span>
         </div>
     </div>
 

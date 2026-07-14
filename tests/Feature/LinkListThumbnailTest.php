@@ -260,10 +260,11 @@ class LinkListThumbnailTest extends TestCase
   #[Test]
   public function the_list_renders_the_selected_style_modifiers(): void
   {
-    $html = $this->renderList(['row_layout' => 'stacked', 'list_frame' => 'cards']);
+    $html = $this->renderList(['row_layout' => 'stacked', 'list_frame' => 'cards', 'thumb_size' => 'wide']);
 
     $this->assertStringContainsString('wb-link-list--stacked', $html);
     $this->assertStringContainsString('wb-link-list--cards', $html);
+    $this->assertStringContainsString('wb-link-list--thumb-wide', $html);
   }
 
   #[Test]
@@ -272,10 +273,17 @@ class LinkListThumbnailTest extends TestCase
     $stackedOnly = $this->renderList(['row_layout' => 'stacked']);
     $this->assertStringContainsString('wb-link-list--stacked', $stackedOnly);
     $this->assertStringNotContainsString('wb-link-list--cards', $stackedOnly);
+    $this->assertStringNotContainsString('wb-link-list--thumb-wide', $stackedOnly);
 
     $cardsOnly = $this->renderList(['list_frame' => 'cards']);
     $this->assertStringContainsString('wb-link-list--cards', $cardsOnly);
     $this->assertStringNotContainsString('wb-link-list--stacked', $cardsOnly);
+    $this->assertStringNotContainsString('wb-link-list--thumb-wide', $cardsOnly);
+
+    $wideThumbOnly = $this->renderList(['thumb_size' => 'wide']);
+    $this->assertStringContainsString('wb-link-list--thumb-wide', $wideThumbOnly);
+    $this->assertStringNotContainsString('wb-link-list--stacked', $wideThumbOnly);
+    $this->assertStringNotContainsString('wb-link-list--cards', $wideThumbOnly);
   }
 
   #[Test]
@@ -303,6 +311,7 @@ class LinkListThumbnailTest extends TestCase
       'status' => 'published',
       'row_layout' => 'stacked',
       'list_frame' => 'cards',
+      'thumb_size' => 'wide',
     ]);
 
     $block = app(BlockPayloadWriter::class)->save(new Block, $page, $data, null);
@@ -310,6 +319,7 @@ class LinkListThumbnailTest extends TestCase
 
     $this->assertSame('stacked', $settings['row_layout'] ?? null);
     $this->assertSame('cards', $settings['list_frame'] ?? null);
+    $this->assertSame('wide', $settings['thumb_size'] ?? null);
   }
 
   #[Test]
@@ -323,7 +333,7 @@ class LinkListThumbnailTest extends TestCase
       'page_id' => $page->id, 'type' => 'link-list', 'block_type_id' => $listType->id,
       'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
       'sort_order' => 0, 'status' => 'published',
-      'settings' => json_encode(['row_layout' => 'stacked', 'list_frame' => 'cards']),
+      'settings' => json_encode(['row_layout' => 'stacked', 'list_frame' => 'cards', 'thumb_size' => 'wide']),
     ]);
 
     $data = $this->validatedDataFor([
@@ -334,6 +344,7 @@ class LinkListThumbnailTest extends TestCase
       'status' => 'published',
       'row_layout' => 'index',
       'list_frame' => 'joined',
+      'thumb_size' => 'square',
     ]);
 
     app(BlockPayloadWriter::class)->save($block, $page, $data, null);

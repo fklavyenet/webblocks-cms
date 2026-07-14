@@ -260,6 +260,7 @@ class BlockRequest extends FormRequest
       'feature_items.*._delete' => ['nullable', 'boolean'],
       'row_layout' => [$isLinkList ? 'nullable' : 'prohibited', Rule::in(['', 'index', 'stacked'])],
       'list_frame' => [$isLinkList ? 'nullable' : 'prohibited', Rule::in(['', 'joined', 'cards'])],
+      'thumb_size' => [$isLinkList ? 'nullable' : 'prohibited', Rule::in(['', 'square', 'wide'])],
       'link_list_items' => ['nullable', 'array'],
       'link_list_items.*.id' => ['nullable', 'integer', 'exists:wbcms_blocks,id'],
       'link_list_items.*.block_type_id' => ['nullable', 'integer', 'exists:wbcms_block_types,id'],
@@ -1539,9 +1540,11 @@ class BlockRequest extends FormRequest
         if (! $isTranslatedLinkListEdit) {
           $rowLayout = trim((string) ($data['row_layout'] ?? ''));
           $listFrame = trim((string) ($data['list_frame'] ?? ''));
+          $thumbSize = trim((string) ($data['thumb_size'] ?? ''));
 
           $settings['row_layout'] = $rowLayout === 'stacked' ? 'stacked' : null;
           $settings['list_frame'] = $listFrame === 'cards' ? 'cards' : null;
+          $settings['thumb_size'] = $thumbSize === 'wide' ? 'wide' : null;
         }
 
         $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;

@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.15
+
+- Let a Link List show landscape artwork instead of only a small square. The row thumbnail was a fixed 4rem square, so 4:3 artwork was cropped by `object-fit: cover` and wide rows looked sparse next to their copy. A new **Thumbnail Size** setting on the Link List block adds `wb-link-list--thumb-wide` (WebBlocks UI 2.10.2), which gives the leading column a share of the row width and renders the image at a 4:3 ratio, so it grows with the list instead of staying pinned to a fixed size. The default stays square, so existing lists keep their current look, and the setting composes with the Row Layout and List Frame styles added in 1.40.10. Rows that show an icon rather than a thumbnail are deliberately left on the narrow column, because a wide track would strand the icon in empty space.
+- `settings.thumb_size` is writable through `PATCH /webadmin/api/blocks/{block}` from the start, taking `wide` or clearing to the square default, so it ships advertised-and-writable rather than repeating the contract drift 1.40.12 was written to prevent.
+
 ## 1.40.14
 
 - Open the remaining block settings to the API, and derive the endpoint's gate from the value rules instead of a hand-written list. `PATCH /webadmin/api/blocks/{block}` now accepts 58 settings fields across the block catalog, including Alert and Sidebar Footer variants, Cluster, Container, Section and Card layout settings, Header alignment and anchor, Code language, navigation `menu_key` and active matching, Rating title and controls, and Comments form settings. Each field takes exactly the values the admin form allows, and anything else clears the setting rather than storing a value no renderer reads. `BlockSettingsPatchPolicy` is now the single owner of both which fields are writable and what values they accept, so the gate cannot drift from the sanitizer the way it did in 1.40.10.
