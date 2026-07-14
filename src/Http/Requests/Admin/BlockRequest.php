@@ -457,6 +457,14 @@ class BlockRequest extends FormRequest
         }
       }
 
+      if ($selectedBlockType?->slug === 'link-list-item' && ($this->filled('media_id') || $this->filled('asset_id'))) {
+        $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
+
+        if (! $asset?->isImage()) {
+          $validator->errors()->add('media_id', 'Link list item thumbnail must be an image from Media.');
+        }
+      }
+
       if ($selectedBlockType?->slug === 'gallery') {
         $galleryMediaIds = collect($this->input('gallery_items', []))
           ->pluck('media_id')

@@ -32,6 +32,25 @@
         <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
     </div>
 
+    @include('webblocks-cms::admin.media.asset-picker-panel', [
+        'name' => 'link-list-item-thumbnail',
+        'inputId' => 'asset_id',
+        'fieldName' => 'asset_id',
+        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+        'buttonLabel' => $adminText('choose_thumbnail'),
+        'replaceLabel' => $adminText('replace_thumbnail'),
+        'clearLabel' => $adminText('remove_thumbnail'),
+        'accept' => 'image',
+        'panelMode' => 'overlay',
+        'panelTitle' => $adminText('choose_thumbnail'),
+        'compactControls' => true,
+        'resultsVariant' => 'compact-list',
+        'showUpload' => false,
+        'selectorCard' => true,
+        'selectorCardTitle' => $adminText('thumbnail_title'),
+        'selectorHelperText' => $adminText('thumbnail_help'),
+    ])
+
     @include('webblocks-cms::admin.blocks.types.partials.icon-badge-fields')
 
     <div class="wb-stack wb-gap-1">

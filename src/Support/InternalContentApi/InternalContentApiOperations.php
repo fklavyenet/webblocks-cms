@@ -100,6 +100,7 @@ class InternalContentApiOperations
     'card' => [Media::KIND_IMAGE],
     'cta' => [Media::KIND_IMAGE],
     'content_header' => [Media::KIND_IMAGE],
+    'link-list-item' => [Media::KIND_IMAGE],
     'download' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
     'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
     'video' => [Media::KIND_VIDEO],

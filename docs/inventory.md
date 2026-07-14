@@ -571,8 +571,8 @@ The current published core catalog contains 51 rows:
 | --- | --- |
 | Editable content | Required `translations.title`, optional `subtitle`, `content`, and `eyebrow` badge; shared required URL. |
 | Settings and variants | `icon_slug`, `icon_tone`, `badge_tone`. |
-| Children/media | None; intended under Link List. |
-| HTML | `<a class="wb-link-list-item">` with optional icon, title/meta/badge, and optional description. |
+| Children/media | Optional image `media_id` thumbnail; intended under Link List. |
+| HTML | `<a class="wb-link-list-item">` with an optional leading thumbnail or icon (adding `wb-link-list-item--media`), title/meta/badge, and optional description. |
 | Example appearance | Documentation/resource row marked “New”. |
 | Render guard | Emits only with both a safe URL and title. |
 

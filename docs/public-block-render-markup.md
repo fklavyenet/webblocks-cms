@@ -1744,8 +1744,8 @@ The block renders published `link-list-item` children only. It does not own the 
 ### Rendered HTML
 
 ```html
-<a href="/item" class="wb-link-list-item">
-  <i class="wb-icon wb-icon-book-open wb-icon-tone-brand" aria-hidden="true"></i>
+<a href="/item" class="wb-link-list-item wb-link-list-item--media">
+  <i class="wb-icon wb-icon-book-open wb-icon-tone-brand wb-link-list-icon" aria-hidden="true"></i>
   <div class="wb-link-list-main">
     <span class="wb-link-list-title">Title</span>
     <span class="wb-link-list-meta">Meta</span>
@@ -1755,16 +1755,28 @@ The block renders published `link-list-item` children only. It does not own the 
 </a>
 ```
 
+A row that leads with a thumbnail instead of an icon:
+
+```html
+<a href="/item" class="wb-link-list-item wb-link-list-item--media">
+  <img src="/storage/media/guide.jpg" alt="" class="wb-link-list-thumb" loading="lazy" decoding="async">
+  <div class="wb-link-list-main">
+    <span class="wb-link-list-title">Title</span>
+  </div>
+</a>
+```
+
 ### Main CSS / WebBlocks UI classes
 
-`wb-link-list-item`, `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-meta`, `wb-badge`, `wb-link-list-desc`.
+`wb-link-list-item`, optional `wb-link-list-item--media`, `wb-link-list-thumb`, `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, `wb-link-list-icon`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-meta`, `wb-badge`, `wb-link-list-desc`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | url | safe URL | Required for output; becomes anchor `href`. |
-| settings.icon_slug | active content icon catalog slug | Renders a decorative icon before the row body; inactive or unknown slugs render nothing. |
+| media_id | image Media record | Renders a `wb-link-list-thumb` image in the row's leading column and adds `wb-link-list-item--media`; non-image records render nothing. Wins over `settings.icon_slug` when both are set. |
+| settings.icon_slug | active content icon catalog slug | Renders a decorative icon before the row body and adds `wb-link-list-item--media`; inactive or unknown slugs render nothing. Skipped when a thumbnail renders. |
 | settings.icon_tone | default/soft/brand/accent/highlight/bold/quiet | Adds `wb-icon-tone-{tone}` for non-default visual tones when an active icon renders; unknown tones and missing icons produce no tone class. |
 | settings.badge_tone | neutral/info/success/warning/danger | Adds an allowlisted badge tone class when a badge label is present. |
 | eyebrow / badge label | translated text | Renders escaped badge text. |
