@@ -256,9 +256,9 @@ class BlockPatchSettingsContractTest extends TestCase
   }
 
   #[Test]
-  public function the_deliberately_closed_fields_are_the_contact_form_delivery_settings(): void
+  public function the_deliberately_closed_fields_are_about_other_peoples_data(): void
   {
-    // Everything else is closed only for want of a sanitizer. These three decide
+    // Everything else is closed only for want of a sanitizer. These decide
     // where form submissions are delivered and whether they are retained, which
     // is an operator decision rather than a content one.
     $deliberate = [];
@@ -271,7 +271,11 @@ class BlockPatchSettingsContractTest extends TestCase
       }
     }
 
+    sort($deliberate);
+
     $this->assertSame([
+      // Shows commenter names publicly: other people's data, not presentation.
+      'comments.show_author_name',
       'contact_form.recipient_email',
       'contact_form.send_email_notification',
       'contact_form.store_submissions',

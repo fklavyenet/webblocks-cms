@@ -48,69 +48,127 @@ final class BlockSettingsPatchPolicy
       'send_email_notification' => self::CLOSED_DELIBERATE,
       'store_submissions' => self::CLOSED_DELIBERATE,
     ],
-    'alert' => ['variant' => self::CLOSED_PENDING],
-    'breadcrumb' => ['home_label' => self::CLOSED_PENDING, 'include_current' => self::CLOSED_PENDING],
-    'card' => ['layout_name' => self::CLOSED_PENDING],
-    'card_body' => ['layout_name' => self::CLOSED_PENDING],
-    'card_footer' => ['layout_name' => self::CLOSED_PENDING],
-    'card_header' => ['layout_name' => self::CLOSED_PENDING],
-    'cluster' => [
-      'layout_name' => self::CLOSED_PENDING,
-      'gap' => self::CLOSED_PENDING,
-      'alignment' => self::CLOSED_PENDING,
-      'items_alignment' => self::CLOSED_PENDING,
-      'wrap' => self::CLOSED_PENDING,
-      'width' => self::CLOSED_PENDING,
-    ],
-    'code' => ['language' => self::CLOSED_PENDING],
     'comments' => [
-      'form_enabled' => self::CLOSED_PENDING,
-      'show_approved' => self::CLOSED_PENDING,
-      'show_author_name' => self::CLOSED_PENDING,
-      'sort_order' => self::CLOSED_PENDING,
+      // Whether commenter names are shown publicly is a privacy decision about
+      // other people's data, not a presentation one, so it stays with the admin.
+      'show_author_name' => self::CLOSED_DELIBERATE,
+    ],
+    'rating' => [
+      // The admin form hard-codes scale to 5 and offers no control. Opening it
+      // here would let the API store a scale the admin cannot produce or show.
+      'scale' => self::CLOSED_PENDING,
+    ],
+  ];
+
+  /**
+   * Value rules for the settings fields PATCH accepts, mapped from block type to
+   * field to rule. This is the gate and the sanitizer at once: a field absent
+   * here is refused, and a field present here is written only if its value
+   * satisfies the rule, otherwise the setting is cleared.
+   *
+   * Rules mirror what the admin form already allows, because a value the admin
+   * cannot produce is one no renderer reads.
+   *
+   *   ['enum', [...]]  one of the listed values, anything else clears
+   *   ['bool']         truthy/falsy, unparseable clears
+   *   ['text', max]    trimmed free text capped at max, empty clears
+   *   ['menu_key']     one of the navigation menu keys
+   *   ['anchor']       same-page anchor ID, admin's format
+   *
+   * icon_slug, icon_tone, and badge_tone are deliberately absent: they are
+   * handled by the normalizers InternalContentApiOperations already owns.
+   *
+   * @var array<string, array<string, array{0: string, 1?: mixed}>>
+   */
+  public const PATCHABLE = [
+    'alert' => ['variant' => ['enum', ['info', 'success', 'warning', 'danger']]],
+    'breadcrumb' => [
+      'home_label' => ['text', 255],
+      'include_current' => ['bool'],
+    ],
+    'card' => ['layout_name' => ['text', 255]],
+    'card_body' => ['layout_name' => ['text', 255]],
+    'card_footer' => ['layout_name' => ['text', 255]],
+    'card_header' => ['layout_name' => ['text', 255]],
+    'cluster' => [
+      'layout_name' => ['text', 255],
+      'gap' => ['enum', ['none', 'xs', 'sm', 'md', 'lg']],
+      'alignment' => ['enum', ['start', 'center', 'end', 'between']],
+      'items_alignment' => ['enum', ['start', 'center', 'end', 'stretch']],
+      'wrap' => ['enum', ['wrap', 'nowrap']],
+      'width' => ['enum', ['auto', 'full']],
+    ],
+    'code' => ['language' => ['text', 255]],
+    'comments' => [
+      'form_enabled' => ['bool'],
+      'show_approved' => ['bool'],
+      'sort_order' => ['enum', ['newest', 'oldest']],
     ],
     'container' => [
-      'layout_name' => self::CLOSED_PENDING,
-      'width' => self::CLOSED_PENDING,
-      'flow' => self::CLOSED_PENDING,
+      'layout_name' => ['text', 255],
+      'width' => ['enum', ['sm', 'md', 'lg', 'xl', 'full']],
+      'flow' => ['enum', ['none', 'stack']],
     ],
-    'content_header' => ['alignment' => self::CLOSED_PENDING],
-    'header' => ['alignment' => self::CLOSED_PENDING, 'anchor' => self::CLOSED_PENDING],
+    'content_header' => ['alignment' => ['enum', ['left', 'center', 'right']]],
+    'grid' => [
+      'layout_name' => ['text', 255],
+      'columns' => ['enum', ['2', '3', '4']],
+      'gap' => ['enum', ['3', '4', '6']],
+      'alternate_media_text_sections' => ['bool'],
+      'alternate_start' => ['enum', ['media_left', 'text_left']],
+    ],
+    'header' => [
+      'alignment' => ['enum', ['left', 'center', 'right']],
+      'anchor' => ['anchor'],
+    ],
+    'hero' => [
+      'layout' => ['enum', ['left', 'centered', 'split']],
+      'title_tag' => ['enum', ['h1', 'h2', 'h3']],
+    ],
+    'link-list' => [
+      'row_layout' => ['enum', ['stacked']],
+      'list_frame' => ['enum', ['cards']],
+    ],
     'navbar-navigation' => [
-      'menu_key' => self::CLOSED_PENDING,
-      'active_indicator' => self::CLOSED_PENDING,
-      'active_matching' => self::CLOSED_PENDING,
+      'menu_key' => ['menu_key'],
+      'active_indicator' => ['enum', ['underline', 'pill', 'dot', 'background', 'none']],
+      'active_matching' => ['enum', ['path', 'section', 'current-page', 'exact', 'off']],
     ],
-    'navigation-auto' => ['menu_key' => self::CLOSED_PENDING],
-    'plain_text' => ['alignment' => self::CLOSED_PENDING],
+    'navigation-auto' => ['menu_key' => ['menu_key']],
+    'plain_text' => ['alignment' => ['enum', ['left', 'center', 'right']]],
     'rating' => [
-      'scale' => self::CLOSED_PENDING,
-      'allow_change' => self::CLOSED_PENDING,
-      'show_summary' => self::CLOSED_PENDING,
-      'title' => self::CLOSED_PENDING,
+      'allow_change' => ['bool'],
+      'show_summary' => ['bool'],
+      'title' => ['text', 120],
     ],
-    'search-form' => ['show_button' => self::CLOSED_PENDING],
-    'section' => ['layout_name' => self::CLOSED_PENDING, 'spacing' => self::CLOSED_PENDING],
-    'sidebar-footer' => ['variant' => self::CLOSED_PENDING],
+    'search-form' => ['show_button' => ['bool']],
+    'section' => [
+      'layout_name' => ['text', 255],
+      'spacing' => ['enum', ['sm', 'lg']],
+    ],
+    'sidebar-footer' => ['variant' => ['enum', ['info', 'success', 'warning', 'danger']]],
     'sidebar-nav-group' => [
-      'icon' => self::CLOSED_PENDING,
-      'initially_open' => self::CLOSED_PENDING,
-      'layout_name' => self::CLOSED_PENDING,
+      'layout_name' => ['text', 255],
+      'icon' => ['text', 255],
+      'initially_open' => ['bool'],
     ],
     'sidebar-nav-item' => [
-      'icon' => self::CLOSED_PENDING,
-      'active_mode' => self::CLOSED_PENDING,
-      'manual_active' => self::CLOSED_PENDING,
+      'icon' => ['text', 255],
+      'active_mode' => ['enum', ['exact', 'path', 'current-page', 'manual']],
+      'manual_active' => ['bool'],
     ],
     'sidebar-navigation' => [
-      'menu_key' => self::CLOSED_PENDING,
-      'layout_name' => self::CLOSED_PENDING,
-      'show_icons' => self::CLOSED_PENDING,
-      'active_matching' => self::CLOSED_PENDING,
+      'layout_name' => ['text', 255],
+      'menu_key' => ['menu_key'],
+      'show_icons' => ['bool'],
+      'active_matching' => ['enum', ['path', 'current-page', 'exact']],
     ],
-    'slide' => ['layout_name' => self::CLOSED_PENDING],
-    'slider' => ['layout_name' => self::CLOSED_PENDING],
-    'sticky-navbar' => ['layout_name' => self::CLOSED_PENDING, 'sticky_mode' => self::CLOSED_PENDING],
+    'slide' => ['layout_name' => ['text', 255]],
+    'slider' => ['layout_name' => ['text', 255]],
+    'sticky-navbar' => [
+      'layout_name' => ['text', 255],
+      'sticky_mode' => ['enum', ['sticky', 'fixed', 'static']],
+    ],
   ];
 
   /**
@@ -124,5 +182,13 @@ final class BlockSettingsPatchPolicy
   public static function isClosed(string $type, string $field): bool
   {
     return array_key_exists($field, self::closedFor($type));
+  }
+
+  /**
+   * @return array<string, array{0: string, 1?: mixed}>
+   */
+  public static function rulesFor(string $type): array
+  {
+    return self::PATCHABLE[$type] ?? [];
   }
 }

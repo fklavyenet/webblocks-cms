@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
@@ -27,6 +28,7 @@ use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
+use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
@@ -1693,13 +1695,12 @@ class InternalContentResourceController extends Controller
       ];
     }
 
-    if ($type === 'link-list') {
-      $allowedSettings = [
-        ...$allowedSettings,
-        'row_layout',
-        'list_frame',
-      ];
-    }
+    // The gate comes from the value rules, so a field cannot be accepted without
+    // one and cannot be refused while the contract advertises it.
+    $allowedSettings = [
+      ...$allowedSettings,
+      ...array_keys(BlockSettingsPatchPolicy::rulesFor($type)),
+    ];
 
     if (in_array($type, InternalContentApiOperations::PUBLIC_ICON_BLOCK_TYPES, true)) {
       $allowedSettings = [
@@ -1707,25 +1708,6 @@ class InternalContentResourceController extends Controller
         'icon_slug',
         'icon_tone',
         'badge_tone',
-      ];
-    }
-
-    if ($type === 'hero') {
-      $allowedSettings = [
-        ...$allowedSettings,
-        'layout',
-        'title_tag',
-      ];
-    }
-
-    if ($type === 'grid') {
-      $allowedSettings = [
-        ...$allowedSettings,
-        'layout_name',
-        'columns',
-        'gap',
-        'alternate_media_text_sections',
-        'alternate_start',
       ];
     }
 
@@ -1842,16 +1824,6 @@ class InternalContentResourceController extends Controller
       }
     }
 
-    if ($type === 'link-list') {
-      if (array_key_exists('row_layout', $incoming)) {
-        $safeIncoming['row_layout'] = trim((string) $incoming['row_layout']) === 'stacked' ? 'stacked' : null;
-      }
-
-      if (array_key_exists('list_frame', $incoming)) {
-        $safeIncoming['list_frame'] = trim((string) $incoming['list_frame']) === 'cards' ? 'cards' : null;
-      }
-    }
-
     if (in_array($type, InternalContentApiOperations::PUBLIC_ICON_BLOCK_TYPES, true) && $block->blockType) {
       // Delegate to the normalizers that already own icon handling for the
       // create path, so PATCH cannot drift into a second set of icon rules.
@@ -1884,46 +1856,10 @@ class InternalContentResourceController extends Controller
       }
     }
 
-    if ($type === 'hero') {
-      if (array_key_exists('layout', $incoming)) {
-        $layout = trim((string) $incoming['layout']);
-        $safeIncoming['layout'] = in_array($layout, ['left', 'centered', 'split'], true) ? $layout : null;
+    foreach (BlockSettingsPatchPolicy::rulesFor($type) as $field => $rule) {
+      if (array_key_exists($field, $incoming)) {
+        $safeIncoming[$field] = $this->sanitizeSettingValue($incoming[$field], $rule);
       }
-
-      if (array_key_exists('title_tag', $incoming)) {
-        $titleTag = trim((string) $incoming['title_tag']);
-        $safeIncoming['title_tag'] = in_array($titleTag, ['h1', 'h2', 'h3'], true) ? $titleTag : null;
-      }
-    }
-
-    if ($type === 'grid') {
-      if (array_key_exists('columns', $incoming)) {
-        $columns = trim((string) $incoming['columns']);
-        $safeIncoming['columns'] = in_array($columns, ['2', '3', '4'], true) ? $columns : null;
-      }
-
-      if (array_key_exists('gap', $incoming)) {
-        $gap = trim((string) $incoming['gap']);
-        $safeIncoming['gap'] = in_array($gap, ['3', '4', '6'], true) ? $gap : null;
-      }
-
-      if (array_key_exists('alternate_media_text_sections', $incoming)) {
-        $safeIncoming['alternate_media_text_sections'] = filter_var(
-          $incoming['alternate_media_text_sections'],
-          FILTER_VALIDATE_BOOL,
-          FILTER_NULL_ON_FAILURE,
-        ) ?? false;
-      }
-
-      if (array_key_exists('alternate_start', $incoming)) {
-        $alternateStart = trim((string) $incoming['alternate_start']);
-        $safeIncoming['alternate_start'] = in_array($alternateStart, ['media_left', 'text_left'], true) ? $alternateStart : null;
-      }
-    }
-
-    if (in_array($type, ['grid'], true) && array_key_exists('layout_name', $incoming)) {
-      // Editor-only label rather than a reference to a stored layout.
-      $safeIncoming['layout_name'] = mb_substr(trim((string) $incoming['layout_name']), 0, 255) ?: null;
     }
 
     $merged = array_filter([
@@ -1938,6 +1874,27 @@ class InternalContentResourceController extends Controller
     }
 
     return $merged;
+  }
+
+  /**
+   * Applies one BlockSettingsPatchPolicy rule. A value the rule rejects clears
+   * the setting rather than storing something no renderer reads, which is how
+   * the admin form behaves when a select is left empty.
+   *
+   * @param  array{0: string, 1?: mixed}  $rule
+   */
+  private function sanitizeSettingValue(mixed $value, array $rule): mixed
+  {
+    return match ($rule[0]) {
+      'enum' => in_array(trim((string) $value), $rule[1], true) ? trim((string) $value) : null,
+      'bool' => filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false,
+      'text' => mb_substr(trim((string) $value), 0, $rule[1]) ?: null,
+      'menu_key' => in_array(trim((string) $value), NavigationItem::menuKeys(), true) ? trim((string) $value) : null,
+      'anchor' => preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', trim((string) $value)) === 1
+        ? trim((string) $value)
+        : null,
+      default => null,
+    };
   }
 
   private function supportsBackgroundMediaBlockType(string $type): bool
