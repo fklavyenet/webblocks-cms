@@ -37,6 +37,18 @@ This document summarizes source-backed behavior. Live API discovery remains auth
 - AI-writable structured core rows after the policy below is enforced: `50`
 - AI-writable raw HTML rows after the policy below is enforced: `0`
 
+### Amendments since the audit
+
+The baseline above is still the last full audit. These entries were corrected
+against source afterwards rather than re-auditing every block, so treat anything
+outside this list as `1.40.2`-era and confirm it through live API discovery.
+
+- `card` (`1.40.5`): the Card style `variant` exists. This document previously
+  stated that no supported Card visual variant field existed, which was wrong
+  from `1.40.5` onward.
+- `link-list` (`1.40.10`): `settings.row_layout` and `settings.list_frame`.
+- `link-list-item` (`1.40.8`): optional `media_id` thumbnail.
+
 Historical repository note: the pre-package-only tree contained `docs/feature-inventory.md`, a broad product-feature discoverability matrix. It was removed when the package-only repository tree was constructed and was not a per-block AI authoring inventory. No `inventory.md` exists in the current tree or reachable repository history.
 
 Source families inspected:
@@ -253,7 +265,7 @@ The current published core catalog contains 51 rows:
 | --- | --- |
 | Purpose | Composable framed surface. |
 | Admin-editable content | No normal visible parent copy; optional editor-only `layout_name`. Legacy no-region Card rows may still render old copy. |
-| Settings | Optional background image `media_id`, `background_position`, `background_overlay`. No supported Card visual variant field exists. |
+| Settings | Optional Card style on the shared `variant` column: `flat`, `muted`, `highlight`, `accent`; an empty variant renders the default card. Optional background image `media_id`, `background_position`, `background_overlay`. |
 | Children | Direct children restricted to `card_header`, `card_body`, `card_footer`; at least one child required by API plans. |
 | HTML | Root-owning `<article class="wb-card" data-wb-public-block-type="card">…</article>`. |
 | Example appearance | Image or icon header, editable body content, and action footer inside one native Card shell. |
@@ -560,9 +572,9 @@ The current published core catalog contains 51 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle`, `translations.content`; child link copy. |
-| Settings and variants | None. |
+| Settings and variants | `settings.row_layout`: `index` (default), `stacked` puts each row description under its title. `settings.list_frame`: `joined` (default), `cards` gives each row its own card. Independent; both are writable through the API. |
 | Children/media | Only `link-list-item`. |
-| HTML | Generic wrapper with optional intro stack and `.wb-link-list`. |
+| HTML | Generic wrapper with optional intro stack and `.wb-link-list`, plus `wb-link-list--stacked` / `wb-link-list--cards` for the selected styles. |
 | Example appearance | Resource index with title, metadata, description, icons, and badges. |
 
 ### `link-list-item` — Link List Item

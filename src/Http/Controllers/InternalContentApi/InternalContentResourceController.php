@@ -1692,6 +1692,14 @@ class InternalContentResourceController extends Controller
       ];
     }
 
+    if ($type === 'link-list') {
+      $allowedSettings = [
+        ...$allowedSettings,
+        'row_layout',
+        'list_frame',
+      ];
+    }
+
     $unsupported = array_values(array_diff(array_keys($incoming), $allowedSettings));
 
     if ($unsupported !== []) {
@@ -1802,6 +1810,16 @@ class InternalContentResourceController extends Controller
         if (array_key_exists($booleanSetting, $incoming)) {
           $safeIncoming[$booleanSetting] = filter_var($incoming[$booleanSetting], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
         }
+      }
+    }
+
+    if ($type === 'link-list') {
+      if (array_key_exists('row_layout', $incoming)) {
+        $safeIncoming['row_layout'] = trim((string) $incoming['row_layout']) === 'stacked' ? 'stacked' : null;
+      }
+
+      if (array_key_exists('list_frame', $incoming)) {
+        $safeIncoming['list_frame'] = trim((string) $incoming['list_frame']) === 'cards' ? 'cards' : null;
       }
     }
 

@@ -7,6 +7,11 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.11
+
+- Fix the Link List styles being unwritable through the API. `PATCH /webadmin/api/blocks/{block}` keeps its own hand-written allowlist of settings fields, separate from the contract registry the published contract is built from, so the styles added in 1.40.10 were advertised by `content-contract` and then refused with `unsupported_block_settings_fields`. An API client was told to use fields the API rejected, and could only get the design by hand-writing a raw `html` block. The endpoint now accepts and sanitizes `settings.row_layout` and `settings.list_frame` for `link-list`; unknown values clear the style rather than store it, and fields the block type does not support are still refused.
+- Fix two `docs/inventory.md` entries that had been wrong since the audit was taken at 1.40.2. It stated that no supported Card visual variant field existed, which stopped being true in 1.40.5 when the Card style select was added, and it predated both the Link List Item thumbnail and the Link List styles. The corrected entries are listed under a new Amendments section, so the audit baseline stays honest about what has and has not been re-checked.
+
 ## 1.40.10
 
 - Add Row layout and List frame styles to the Link List block, so a structured link list can render as a compact card list instead of only as a directory index. Row layout `stacked` moves each row description under its title, beside any thumbnail or icon, replacing the wide description column. List frame `cards` gives each row its own card with spacing instead of one shared frame with separators. The two are independent and both default to the current look, so existing lists are unchanged. Previously this design could only be built by hand-writing a raw `html` block, which put the content outside the Media Library, translations, and the Internal Content API; the styles are settings, so the API can select them through `settings.row_layout` and `settings.list_frame`. Upgrades the bundled WebBlocks UI to v2.10.1, which adds the matching `wb-link-list--stacked` and `wb-link-list--cards` modifiers.
