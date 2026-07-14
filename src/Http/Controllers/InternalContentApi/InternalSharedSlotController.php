@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -24,6 +25,7 @@ class InternalSharedSlotController extends Controller
     private readonly SharedSlotSourcePageManager $sourcePages,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly SharedSlotRevisionManager $revisionManager,
+    private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
   ) {}
 
   public function index(Request $request): JsonResponse
@@ -153,6 +155,10 @@ class InternalSharedSlotController extends Controller
       ]);
     }
 
+    if ($this->apiAuthoringPolicy->scopeHasHumanOnlyBlock($this->sourcePages->sourceBlocks($sharedSlot))) {
+      return $this->apiAuthoringPolicy->rejectionResponse('page_slot.shared_slot');
+    }
+
     $pageSlot = $this->operations->assignSharedSlot($page, $slot, $sharedSlot, 'page_slot', $errors);
 
     if ($errors !== [] || ! $pageSlot) {
@@ -170,6 +176,10 @@ class InternalSharedSlotController extends Controller
 
   public function publishBlocks(SharedSlot $sharedSlot): JsonResponse
   {
+    if ($this->apiAuthoringPolicy->scopeHasHumanOnlyBlock($this->sourcePages->sourceBlocks($sharedSlot))) {
+      return $this->apiAuthoringPolicy->rejectionResponse('shared_slot.blocks');
+    }
+
     $publishedCount = DB::transaction(function () use ($sharedSlot): int {
       $blockIds = $sharedSlot->slotBlocks()
         ->pluck('block_id')
@@ -248,6 +258,10 @@ class InternalSharedSlotController extends Controller
       ]);
     }
 
+    if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
+      return $this->apiAuthoringPolicy->rejectionResponse('blocks');
+    }
+
     DB::transaction(function () use ($sharedSlot, $sourcePage, $slotType, $blockIds, $parentId, $request): void {
       $siblings = Block::query()
         ->where('page_id', $sourcePage->id)
@@ -285,6 +299,10 @@ class InternalSharedSlotController extends Controller
       ]);
     }
 
+    if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock([$block->id])) {
+      return $this->apiAuthoringPolicy->rejectionResponse('block');
+    }
+
     $deletedCount = DB::transaction(function () use ($sharedSlot, $block, $request): int {
       $order = $this->blockDeletionManager->recursiveDeleteOrder($block);
       $order->each(fn (Block $candidate) => $candidate->delete());
@@ -302,6 +320,10 @@ class InternalSharedSlotController extends Controller
   {
     $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
     $slotType = $this->sourcePages->editorSlotTypeFor($sharedSlot);
+
+    if ($this->apiAuthoringPolicy->scopeHasHumanOnlyBlock($this->sourcePages->sourceBlocks($sharedSlot))) {
+      return $this->apiAuthoringPolicy->rejectionResponse('shared_slot.blocks');
+    }
 
     $deletedCount = DB::transaction(function () use ($sharedSlot, $sourcePage, $slotType, $request): int {
       $order = $this->blockDeletionManager

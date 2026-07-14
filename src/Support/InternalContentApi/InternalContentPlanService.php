@@ -26,6 +26,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
@@ -129,6 +130,7 @@ class InternalContentPlanService
     private readonly PageLayoutSlotSyncer $slotSyncer,
     private readonly InternalContentApiPresenter $presenter,
     private readonly InternalContentApiOperations $operations,
+    private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
   ) {}
 
   public function validate(array $payload): InternalContentPlanResult
@@ -915,6 +917,38 @@ class InternalContentPlanService
     );
   }
 
+  /**
+   * Resolves the page referenced by a staged-update plan so the human-only
+   * block policy can inspect the scope before any write happens.
+   */
+  private function stagedSourcePageFrom(array $input): ?Page
+  {
+    $pageId = data_get($input, 'page.id', data_get($input, 'page_id'));
+
+    return is_numeric($pageId) ? Page::query()->find((int) $pageId) : null;
+  }
+
+  /**
+   * True when the page owns a block the API may not author, such as Trusted
+   * HTML. Staged copies of the page are included because promoting or
+   * replacing them would move that block through the API.
+   */
+  private function pageHasHumanOnlyBlock(Page $page): bool
+  {
+    $pageIds = Page::query()
+      ->where('settings->staged_update->source_page_id', $page->id)
+      ->pluck('id')
+      ->map(fn ($id): int => (int) $id)
+      ->push($page->id)
+      ->unique()
+      ->values()
+      ->all();
+
+    return $this->apiAuthoringPolicy->scopeHasHumanOnlyBlock(
+      Block::query()->whereIn('page_id', $pageIds)->get(['id', 'type', 'block_type_id'])
+    );
+  }
+
   private function normalizeDraftPageReplacement(array $input, array &$errors, array &$warnings): InternalContentPlanResult
   {
     $this->rejectForbiddenKeys($input, 'plan', $errors, [
@@ -933,6 +967,10 @@ class InternalContentPlanService
 
     if ($page && $page->status !== Page::STATUS_DRAFT) {
       $errors[] = $this->error('plan.page.status', 'Existing page replacement is draft-only. Published pages are not supported.');
+    }
+
+    if ($page && $this->pageHasHumanOnlyBlock($page)) {
+      $errors[] = $this->apiAuthoringPolicy->error('plan.page.blocks');
     }
 
     $site = null;
@@ -1017,6 +1055,12 @@ class InternalContentPlanService
 
   private function normalizeCreateStagedUpdate(array $input, array &$errors, array &$warnings): InternalContentPlanResult
   {
+    $stagedSourcePage = $this->stagedSourcePageFrom($input);
+
+    if ($stagedSourcePage && $this->pageHasHumanOnlyBlock($stagedSourcePage)) {
+      $errors[] = $this->apiAuthoringPolicy->error('plan.page.blocks');
+    }
+
     $this->rejectForbiddenKeys($input, 'plan', $errors, [
       'mode',
     ]);
@@ -1102,6 +1146,12 @@ class InternalContentPlanService
 
   private function normalizePromoteStagedUpdate(array $input, array &$errors, array &$warnings): InternalContentPlanResult
   {
+    $promoteSourcePage = $this->stagedSourcePageFrom($input);
+
+    if ($promoteSourcePage && $this->pageHasHumanOnlyBlock($promoteSourcePage)) {
+      $errors[] = $this->apiAuthoringPolicy->error('plan.page.blocks');
+    }
+
     $this->rejectForbiddenKeys($input, 'plan', $errors, [
       'mode',
     ]);
@@ -1805,6 +1855,12 @@ class InternalContentPlanService
 
     if (! $blockType || $this->pluginBlockUnavailable($blockType)) {
       $errors[] = $this->error($path.'.type', 'Block type must be published and usable.');
+
+      return null;
+    }
+
+    if (! $this->apiAuthoringPolicy->isApiWritable($blockType->slug)) {
+      $errors[] = $this->apiAuthoringPolicy->error($path.'.type', $blockType->slug);
 
       return null;
     }

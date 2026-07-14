@@ -12,6 +12,10 @@ cms_source_id: webblocks-cms:docs/ai-page-building-guide.md
 
 This guide defines the safe workflow for trusted AI/operator tools that build WebBlocks CMS pages through the Internal Content API. It is generic CMS product guidance. Do not add site-specific import, sync, or scraping behavior to CMS core.
 
+Before proposing or applying a design, read the [CMS Inventory](inventory.md). It is the per-block authoring contract: what each shipped block renders, which fields stay CMS-editable, which child and media relationships are valid, and which visual results are not expressible yet. Tools can fetch the same document over the API with `GET /webadmin/api/inventory`.
+
+The `html` block is a human-only escape hatch and is never a fallback. The API cannot create, change, move, publish, or delete it; such requests are rejected with `422` and code `block_type_not_api_writable`. When a design cannot be expressed with structured blocks, settings, and site CSS, report a capability gap instead of generating raw HTML.
+
 External AI/operator tools do not need local filesystem access to the CMS repository or installed package docs. Start with the live API discovery endpoint:
 
 ```text

@@ -4,11 +4,22 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
 $required = ['README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md', 'CODE_OF_CONDUCT.md', 'UPGRADING.md', 'CHANGELOG.md'];
+
+// Documentation that the product depends on at runtime or contractually.
+// docs/inventory.md is served by GET /webadmin/api/inventory and is the
+// AI-facing authoring contract, so losing it must fail the docs check.
+$requiredDocs = ['docs/inventory.md'];
 $errors = [];
 
 foreach ($required as $file) {
   if (! is_file($root.'/'.$file)) {
     $errors[] = 'Missing required public file: '.$file;
+  }
+}
+
+foreach ($requiredDocs as $file) {
+  if (! is_file($root.'/'.$file)) {
+    $errors[] = 'Missing required documentation file: '.$file;
   }
 }
 

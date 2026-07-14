@@ -7,6 +7,12 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.3
+
+- Ship `docs/inventory.md`, the AI-facing per-block design and authoring contract, and serve it to trusted tools through the new `GET /webadmin/api/inventory` endpoint as Markdown. API discovery links to it, recommends reading it first, and documents it in the AI guide and OpenAPI schema; the docs check now fails if the document goes missing.
+- Make the `html` block human-only for the Internal Content API through one central product policy (`BlockTypeApiAuthoringPolicy`). Operators keep creating and editing Trusted HTML in the CMS admin and existing published blocks keep rendering, but no API mutation can create, update, replace, move, reorder, publish, or delete an HTML block, and no token capability overrides it. Rejections happen before any write, return HTTP 422 with the stable code `block_type_not_api_writable`, and leave no partial changes. The policy guards both block normalizers, existing-block PATCH, page and Shared Slot incremental create, reorder, subtree delete, Shared Slot clear-all, page and Shared Slot publish, draft slot replacement, staged update creation and promotion, Shared Slot assignment, and API page delete.
+- Report `api_readable`, `api_writable`, and `authoring` for every block type in `GET /webadmin/api/block-types` and `GET /webadmin/api/content-contract` from the central policy, including the stable rejection code and restriction for `html`, and stop publishing writable examples for human-only blocks.
+
 ## 1.40.2
 
 - Add Page Assets endpoints to the Internal Content API so trusted tools can list, attach, update, and detach a page's own `/site` CSS and JS files: `GET /webadmin/api/pages/{page}/assets`, `POST .../assets/{type}` (css or js), `PATCH .../assets/{pageAsset}`, and `DELETE .../assets/{pageAsset}`. Writes require the new opt-in `page-assets.write` capability. Paths reuse the existing page asset path validator, so only local `/site/...` paths with a matching `.css`/`.js` extension are accepted and external URLs, `javascript:`/`data:` paths, traversal, query strings, and fragments are rejected; the endpoint only attaches an existing file and never writes file contents. Every write captures a page revision.

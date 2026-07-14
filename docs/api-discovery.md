@@ -12,6 +12,8 @@ cms_source_id: webblocks-cms:docs/api-discovery.md
 
 WebBlocks CMS exposes a discovery-first Content API for trusted AI and operator tools. An external tool should need only the CMS API base URL and a CMS API token to learn the available endpoints, schemas, examples, and safe content workflow.
 
+Discovery links to `GET /webadmin/api/inventory`, which returns the packaged [CMS Inventory](inventory.md) as Markdown. Read it before planning content: it documents what each shipped block can render and which fields stay CMS-editable, so tools choose a structured block instead of falling back to raw HTML. The `html` block is reported as `api_readable: true`, `api_writable: false`, `authoring: human_only`.
+
 ## Base URL
 
 ```text

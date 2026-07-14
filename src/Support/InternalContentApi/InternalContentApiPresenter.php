@@ -13,12 +13,14 @@ use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 
 class InternalContentApiPresenter
 {
   public function __construct(
     private readonly BlockTypeContractRegistry $contracts,
+    private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
   ) {}
 
   public function site(Site $site): array
@@ -94,7 +96,7 @@ class InternalContentApiPresenter
       'is_container' => (bool) $blockType->is_container,
       'sort_order' => (int) $blockType->sort_order,
       'contract' => $contract,
-    ];
+    ] + $this->apiAuthoringPolicy->contractFor($blockType->slug);
   }
 
   public function page(Page $page, bool $includeBlocks = false): array

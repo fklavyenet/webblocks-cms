@@ -24,6 +24,7 @@ use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
@@ -53,6 +54,7 @@ class InternalContentResourceController extends Controller
     private readonly InternalContentApiOperations $operations,
     private readonly PageRevisionManager $revisionManager,
     private readonly BlockDeletionManager $blockDeletionManager,
+    private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
   ) {}
 
   public function sites(): JsonResponse
@@ -640,6 +642,10 @@ class InternalContentResourceController extends Controller
 
   public function deletePage(Page $page): JsonResponse
   {
+    if ($this->apiAuthoringPolicy->scopeHasHumanOnlyBlock($page->blocks()->get(['id', 'type', 'block_type_id']))) {
+      return $this->apiAuthoringPolicy->rejectionResponse('page.blocks');
+    }
+
     $pageId = $page->id;
 
     $this->pageDeleter->delete($page);
@@ -998,6 +1004,10 @@ class InternalContentResourceController extends Controller
 
   public function updateBlock(Request $request, Block $block): JsonResponse
   {
+    if (! $this->apiAuthoringPolicy->isApiWritable($block->typeSlug())) {
+      return $this->apiAuthoringPolicy->rejectionResponse('block.type', $block->typeSlug());
+    }
+
     $blockedFields = array_values(array_intersect(array_keys($request->all()), [
       'id',
       'page_id',
@@ -1270,6 +1280,10 @@ class InternalContentResourceController extends Controller
       ]);
     }
 
+    if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
+      return $this->apiAuthoringPolicy->rejectionResponse('blocks');
+    }
+
     DB::transaction(function () use ($page, $slotType, $blockIds, $parentId): void {
       $siblings = Block::query()
         ->where('page_id', $page->id)
@@ -1326,6 +1340,10 @@ class InternalContentResourceController extends Controller
 
     if (SharedSlotBlock::query()->where('block_id', $block->id)->exists()) {
       return $this->validationError('block', 'Shared Slot source blocks cannot be deleted through this endpoint. Use the Shared Slot endpoints.', 'shared_slot_block');
+    }
+
+    if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock([$block->id])) {
+      return $this->apiAuthoringPolicy->rejectionResponse('block');
     }
 
     $deletedCount = DB::transaction(function () use ($block, $page): int {
@@ -1935,6 +1953,14 @@ class InternalContentResourceController extends Controller
         'settings.show_price' => 'nullable boolean; default true',
         'settings.alignment' => 'nullable one of start, center, end',
       ];
+    }
+
+    // Authoring reach comes from the central policy, never from per-block
+    // copies of the rule. Human-only types also drop any writable example.
+    $payload += $this->apiAuthoringPolicy->contractFor($blockType->slug);
+
+    if (! $this->apiAuthoringPolicy->isApiWritable($blockType->slug)) {
+      unset($payload['example'], $payload['example_payload'], $payload['validation_rules'], $payload['settings_schema']);
     }
 
     return $payload;

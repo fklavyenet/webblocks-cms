@@ -44,6 +44,7 @@ class InternalApiDiscoveryController extends Controller
       'authenticated' => true,
       'token' => $this->capabilities->publicDescription($token),
       'recommended_next_steps' => [
+        'Read GET /webadmin/api/inventory first. It is the per-block design and authoring contract: what each shipped block can look like, which fields stay CMS-editable, and which visual results need a capability-gap report instead of raw HTML.',
         'Read the OpenAPI schema, AI guide, content contract, and examples.',
         'Validate content plans with POST /webadmin/api/content/validate before apply.',
         'Apply only after explicit user approval.',
@@ -103,6 +104,8 @@ class InternalApiDiscoveryController extends Controller
       'content' => implode("\n\n", [
         '# WebBlocks CMS AI/API Guide',
         'Use the CMS API base URL `/webadmin/api` with a CMS API Bearer token. The first call should be `GET /webadmin/api`.',
+        'Read `GET /webadmin/api/inventory` before proposing or applying any page design. It is the per-block authoring contract: what each shipped block renders, which fields stay CMS-editable, and which visual results are not expressible yet.',
+        'The `html` block is a human-only escape hatch and is never API-writable. It is not a fallback: no capability unlocks it, and every API mutation that would create, change, move, publish, or delete an HTML block is rejected with `422` and code `block_type_not_api_writable`. Existing HTML blocks stay readable through the API and keep rendering publicly. When a design cannot be expressed with structured blocks, settings, and site CSS, report a capability gap instead of generating raw HTML or approximating it with unrelated blocks.',
         "Send every request with:\n\n```http\nAuthorization: Bearer <token>\nAccept: application/json\nContent-Type: application/json\n```",
         'Do not use browser automation or admin UI clicks for content API work. Follow discovery, then OpenAPI/content-contract/examples, then validate, then apply after explicit user approval.',
         'Content writes use JSON-only API responses. Missing, invalid, or insufficient tokens return JSON `401` or `403`; invalid payloads return JSON `422` with discovery and documentation links.',
@@ -202,6 +205,7 @@ class InternalApiDiscoveryController extends Controller
       'self' => '/webadmin/api',
       'openapi' => '/webadmin/api/openapi.json',
       'ai_guide' => '/webadmin/api/ai-guide',
+      'inventory' => '/webadmin/api/inventory',
       'content_contract' => '/webadmin/api/content-contract',
       'icon_catalog' => '/webadmin/api/icon-catalog?context=content',
       'examples' => '/webadmin/api/examples',
@@ -263,6 +267,7 @@ class InternalApiDiscoveryController extends Controller
       '/' => ['get' => ['summary' => 'API discovery', 'responses' => ['200' => ['description' => 'Discovery JSON', 'content' => $json]]]],
       '/openapi.json' => ['get' => ['summary' => 'OpenAPI schema', 'responses' => ['200' => ['description' => 'OpenAPI JSON', 'content' => $json]]]],
       '/ai-guide' => ['get' => ['summary' => 'AI usage guide', 'responses' => ['200' => ['description' => 'AI guide JSON', 'content' => $json]]]],
+      '/inventory' => ['get' => ['summary' => 'Read the packaged per-block AI authoring inventory as Markdown', 'x-note' => 'Read this before proposing or applying a page design. It documents what each shipped block can render, which fields stay CMS-editable, and when to report a capability gap instead of using raw HTML. The html block is never API-writable.', 'responses' => ['200' => ['description' => 'Inventory JSON with format=markdown and content', 'content' => $json], '404' => ['description' => 'Inventory document unavailable in this installation', 'content' => $json]]]],
       '/content-contract' => ['get' => ['summary' => 'Content contract', 'responses' => ['200' => ['description' => 'Content contract JSON', 'content' => $json]]]],
       '/icon-catalog' => ['get' => ['summary' => 'List active safe icon slugs for content or navigation fields', 'x-supported-contexts' => ['content', 'navigation'], 'parameters' => [['name' => 'context', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['content', 'navigation'], 'default' => 'content']]], 'responses' => ['200' => ['description' => 'Icon catalog JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]]],
       '/examples' => ['get' => ['summary' => 'Example index', 'responses' => ['200' => ['description' => 'Examples JSON', 'content' => $json]]]],

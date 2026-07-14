@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageOwnedBlockPublisher;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -21,10 +22,15 @@ class InternalPagePublishController extends Controller
     private readonly InternalContentApiPresenter $presenter,
     private readonly PageOwnedBlockPublisher $pageOwnedBlockPublisher,
     private readonly PageRevisionManager $revisionManager,
+    private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
   ) {}
 
   public function publish(Request $request, Page $page): JsonResponse
   {
+    if ($this->pageScopeHasHumanOnlyBlock($page)) {
+      return $this->apiAuthoringPolicy->rejectionResponse('page.blocks');
+    }
+
     $this->rejectSharedSlotCascade($request);
     $this->rejectStagedUpdatePagePublish($page);
 
@@ -97,6 +103,10 @@ class InternalPagePublishController extends Controller
 
   public function publishPageOwnedBlocks(Request $request, Page $page): JsonResponse
   {
+    if ($this->pageScopeHasHumanOnlyBlock($page)) {
+      return $this->apiAuthoringPolicy->rejectionResponse('page.blocks');
+    }
+
     $this->rejectSharedSlotCascade($request);
     $this->rejectStagedUpdatePagePublish($page);
 
@@ -172,5 +182,16 @@ class InternalPagePublishController extends Controller
         ]);
       }
     }
+  }
+
+  /**
+   * True when the page-owned scope that would be published contains a
+   * human-only block such as Trusted HTML.
+   */
+  private function pageScopeHasHumanOnlyBlock(Page $page): bool
+  {
+    return $this->apiAuthoringPolicy->scopeHasHumanOnlyBlock(
+      $page->blocks()->get(['id', 'type', 'block_type_id'])
+    );
   }
 }

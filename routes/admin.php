@@ -48,6 +48,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryContro
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalInventoryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
@@ -79,6 +80,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
   ->group(function () {
     Route::get('/openapi.json', [InternalApiDiscoveryController::class, 'openapi'])->name('openapi');
     Route::get('/ai-guide', [InternalApiDiscoveryController::class, 'aiGuide'])->name('ai-guide');
+    Route::get('/inventory', [InternalInventoryController::class, 'show'])->name('inventory.show');
     Route::get('/examples', [InternalApiDiscoveryController::class, 'examples'])->name('examples.index');
     Route::get('/examples/contact-page', [InternalApiDiscoveryController::class, 'contactPageExample'])->name('examples.contact-page');
     Route::get('/examples/landing-page', [InternalApiDiscoveryController::class, 'landingPageExample'])->name('examples.landing-page');

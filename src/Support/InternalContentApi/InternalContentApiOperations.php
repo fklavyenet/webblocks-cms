@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
@@ -91,6 +92,7 @@ class InternalContentApiOperations
   public function __construct(
     private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
+    private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
   ) {}
 
   public function resolveSite(mixed $value, string $path, array &$errors): ?Site
@@ -433,6 +435,12 @@ class InternalContentApiOperations
 
     if (! $blockType || $this->pluginBlockUnavailable($blockType)) {
       $errors[] = $this->error($path.'.type', 'Block type must be published and usable.');
+
+      return null;
+    }
+
+    if (! $this->apiAuthoringPolicy->isApiWritable($blockType->slug)) {
+      $errors[] = $this->apiAuthoringPolicy->error($path.'.type', $blockType->slug);
 
       return null;
     }
