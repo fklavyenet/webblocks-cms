@@ -2,7 +2,9 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
 use WebBlocks\Cms\Models\Site;
@@ -104,5 +106,27 @@ class SiteCustomHeadApiTest extends TestCase
     $headClose = strpos($layout, '</head>');
     $this->assertNotFalse($headClose);
     $this->assertLessThan($headClose, strpos($layout, '{!! $customHeadHtml !!}'));
+  }
+
+  #[Test]
+  public function the_package_update_migration_adds_the_column_to_an_existing_install(): void
+  {
+    // Existing installs never run `database/migrations` (historical) or `fresh`; System Update
+    // only runs `database/migrations/updates`. A column that ships without an ensure-migration
+    // there reaches consumer installs as code-without-schema, which is exactly how the endpoint
+    // 500'd/422'd on the live site. Prove the upgrade path, not just the fresh schema.
+    Schema::table('wbcms_sites', function (Blueprint $table): void {
+      $table->dropColumn('custom_head_html');
+    });
+    $this->assertFalse(Schema::hasColumn('wbcms_sites', 'custom_head_html'));
+
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_07_13_120000_ensure_site_custom_head_html.php';
+    $migration->up();
+
+    $this->assertTrue(Schema::hasColumn('wbcms_sites', 'custom_head_html'));
+
+    // Idempotent: re-running is a no-op rather than a duplicate-column error.
+    $migration->up();
+    $this->assertTrue(Schema::hasColumn('wbcms_sites', 'custom_head_html'));
   }
 }
