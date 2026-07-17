@@ -204,6 +204,7 @@ return new class extends Migration
       $table->foreignId('social_image_media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();
       $table->string('contact_recipient_email')->nullable();
       $table->string('public_theme_preset')->nullable();
+      $table->text('custom_head_html')->nullable();
       $table->string('seo_title')->nullable();
       $table->text('seo_description')->nullable();
       $table->text('seo_keywords')->nullable();

@@ -147,6 +147,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/media/{media}/move', [InternalContentResourceController::class, 'moveMedia'])->middleware('internal-api.capability:media.move')->name('media.move');
     Route::delete('/media/{media}', [InternalContentResourceController::class, 'deleteMedia'])->middleware('internal-api.capability:media.delete')->name('media.delete');
     Route::patch('/sites/{site}/branding', [InternalSiteController::class, 'updateBranding'])->middleware('internal-api.capability:site-settings.write')->name('sites.branding.update');
+    Route::patch('/sites/{site}/head', [InternalSiteController::class, 'updateCustomHead'])->middleware('internal-api.capability:site-settings.write')->name('sites.head.update');
     Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
     Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');
     Route::patch('/blocks/{block}', [InternalContentResourceController::class, 'updateBlock'])->middleware('internal-api.capability:content.apply')->name('blocks.update');

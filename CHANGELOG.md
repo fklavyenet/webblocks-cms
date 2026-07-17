@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.17
+
+- Add per-site **custom head HTML**, so operator-authored markup can be injected into the public `<head>` of every page on a site. Until now there was no way to place a raw head tag — an ownership/verification `<meta>`, an SEO tag, or an analytics/tag-manager snippet — through the CMS: branding covered only favicon and social image, and site assets covered only CSS/JS files, neither of which reaches `<head>` as markup. A new `custom_head_html` column on the site is emitted verbatim just before `</head>`, after the site CSS/JS, and is written through `PATCH /webadmin/api/sites/{site}/head` with `custom_head_html` under the existing `site-settings.write` capability. Sending an empty value clears it. The markup is raw and unescaped by design (that is the point of a verification tag or a script snippet), so it is trusted operator input and must never be populated from untrusted or visitor sources; it is capped at ~64 KB. The API discovery catalog, OpenAPI paths, and AI guide advertise the endpoint as the single supported way to inject head markup, so a client is not pushed toward hand-written content blocks or site CSS/JS that cannot carry a `<head>` tag.
+
 ## 1.40.16
 
 - Upgrade the bundled WebBlocks UI to 2.10.3, so titles in a card-framed Link List use the stronger card-heading typography while the existing `span` markup and standard Link List typography stay unchanged. Structured CMS Link Lists such as the **Try next** card now match the visual emphasis of the older hand-written card links without requiring site-specific CSS or HTML blocks.

@@ -38,6 +38,7 @@ class InternalContentApiPresenter
       'social_image_media_id' => $site->social_image_media_id,
       'social_image_media' => $site->relationLoaded('socialImageMedia') && $site->socialImageMedia ? $this->media($site->socialImageMedia) : null,
       'public_theme_preset' => $site->resolvedPublicThemePreset(),
+      'custom_head_html' => $site->custom_head_html,
       'locales' => $site->relationLoaded('locales')
         ? $site->locales->map(fn (Locale $locale) => $this->locale($locale))->values()->all()
         : [],

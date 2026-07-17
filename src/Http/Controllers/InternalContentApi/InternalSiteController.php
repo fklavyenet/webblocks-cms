@@ -53,6 +53,47 @@ class InternalSiteController extends Controller
     ]);
   }
 
+  public function updateCustomHead(Request $request, Site $site): JsonResponse
+  {
+    if (! Schema::hasColumn('wbcms_sites', 'custom_head_html')) {
+      return $this->validationError([
+        ['path' => 'site.custom_head_html', 'message' => 'Custom head HTML is not available until the latest site schema has been applied.'],
+      ]);
+    }
+
+    if (! $request->has('custom_head_html')) {
+      return $this->validationError([
+        ['path' => 'custom_head_html', 'message' => 'Provide custom_head_html (send an empty value to clear it).'],
+      ]);
+    }
+
+    $validator = Validator::make($request->all(), [
+      // Raw operator-authored markup for the public <head> (verification meta, SEO,
+      // analytics). Nullable/empty clears it. Capped so a single site cannot store an
+      // unbounded blob; TEXT holds ~64 KB.
+      'custom_head_html' => ['nullable', 'string', 'max:65000'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationError([
+        ['path' => 'custom_head_html', 'message' => $validator->errors()->first('custom_head_html')],
+      ]);
+    }
+
+    $value = $validator->validated()['custom_head_html'] ?? null;
+    $value = is_string($value) && trim($value) === '' ? null : $value;
+
+    $site->forceFill(['custom_head_html' => $value])->save();
+
+    return response()->json([
+      'ok' => true,
+      'site' => $this->presenter->site($site->fresh(['locales'])),
+      'writes' => [['type' => 'site_custom_head_html', 'id' => $site->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
   public function updateBranding(Request $request, Site $site): JsonResponse
   {
     if (! Schema::hasColumn('wbcms_sites', 'favicon_media_id') || ! Schema::hasColumn('wbcms_sites', 'social_image_media_id')) {

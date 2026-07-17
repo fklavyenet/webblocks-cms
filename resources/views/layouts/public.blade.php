@@ -48,6 +48,10 @@
             'og_url' => trim((string) ($ogUrl ?? ($canonicalUrl ?? ''))),
             'og_site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
         ];
+        // Operator-authored raw markup for the <head> (verification meta, SEO, analytics),
+        // written through the internal content API. Emitted verbatim below, so it is trusted
+        // operator input by design — never populate this from untrusted/visitor sources.
+        $customHeadHtml = trim((string) ($resolvedSite?->custom_head_html ?? ''));
     @endphp
 
     <head>
@@ -107,6 +111,11 @@
         @foreach ($headJsPluginAssets as $pluginAsset)
             <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
         @endforeach
+
+        {{-- Operator-authored custom head markup (verification meta, SEO, analytics). Trusted, raw. --}}
+        @if ($customHeadHtml !== '')
+            {!! $customHeadHtml !!}
+        @endif
     </head>
     <body class="{{ $publicBodyClass ?? 'wb-public-body' }}" data-wb-public-theme="{{ $publicThemePreset }}">
         @if ($previewMode ?? false)

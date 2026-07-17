@@ -45,6 +45,7 @@ class Site extends CmsModel
     'social_image_asset_id',
     'contact_recipient_email',
     'public_theme_preset',
+    'custom_head_html',
   ];
 
   protected function casts(): array
