@@ -3509,7 +3509,7 @@ return [
       'full' => 'Tam',
       'width_help' => 'Yalnızca gelen `wb-container-*` genişlik classlarına eşlenir.',
       'flow_label' => 'Flow',
-      'legacy_stack' => 'Legacy varsayılan (Stack)',
+      'default_none' => 'Varsayılan (Akış yok)',
       'none' => 'Yok',
       'stack' => 'Stack',
       'flow_help' => 'Container yalnızca genişliği sahiplenir. Layout-nötr kompozisyon için `Yok`, dikey flow için `Stack` seç.',

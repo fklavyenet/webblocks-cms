@@ -685,19 +685,12 @@ class Block extends CmsModel
 
   public function containerFlow(): string
   {
-    $flow = trim((string) $this->setting('flow', ''));
-
-    if (in_array($flow, ['none', 'stack'], true)) {
-      return $flow;
-    }
-
-    // Legacy containers rendered stacked before flow became configurable.
-    return 'stack';
+    return $this->setting('flow') === 'stack' ? 'stack' : 'none';
   }
 
   public function containerFlowClass(): ?string
   {
-    return $this->containerFlow() === 'none' ? null : 'wb-stack';
+    return $this->containerFlow() === 'stack' ? 'wb-stack' : null;
   }
 
   public function clusterGapClass(): ?string

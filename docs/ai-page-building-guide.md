@@ -212,7 +212,7 @@ Header/navbar:
 
 ```text
 shared_slot header
-sticky-navbar -> container(flow:none) -> cluster -> navbar-brand + cluster -> navbar-navigation + header-actions
+sticky-navbar -> container -> cluster -> navbar-brand + cluster -> navbar-navigation + header-actions
 ```
 
 Use the CMS Navigation API for navbar links. Navigation item URLs must be safe paths or `http`/`https` URLs; for same-page anchors, use a path plus fragment such as `/#platform`, not a raw `#platform` value. If `GET /webadmin/api/sites` shows the target site rendering with the wrong `public_theme_preset`, update it with `POST /webadmin/api/sites/{site}/public-theme` instead of trying to force theme mode with page content.

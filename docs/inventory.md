@@ -231,8 +231,8 @@ The current published core catalog contains 51 rows:
 | Admin-editable content | No visible copy; optional editor-only `layout_name`. |
 | Settings | `width`: empty, sm, md, lg, xl, full; `flow`: stack or none. |
 | Children | Any supported published child type; at least one child required by API plans. |
-| HTML | Root-owning `<div class="wb-container [wb-container-*] [wb-stack]" data-wb-public-block-type="container">…</div>`. |
-| Example appearance | Centered page content with a maximum width; `flow:none` is useful inside Navbar before a Cluster. |
+| HTML | Root-owning `<div class="wb-container [wb-container-*] [optional wb-stack]" data-wb-public-block-type="container">…</div>`; `wb-stack` requires explicit `flow: stack`. |
+| Example appearance | Centered page content with a maximum width; the neutral default composes directly with a Cluster inside Navbar. |
 | Avoid | Treating width as a surface, card, or theme role. |
 
 ### `cluster` — Cluster
@@ -640,7 +640,7 @@ The current published core catalog contains 51 rows:
 | Settings and variants | `sticky_mode`: sticky/default, static, fixed. |
 | Children/media | Allowed children: container, cluster, header, plain_text, rich-text, button_link, navbar-brand, navbar-navigation, header-actions, search-form. At least one child required by API plans. |
 | HTML | Root-owning `<nav class="wb-navbar …" data-wb-public-block-type="sticky-navbar">…</nav>`. |
-| Example appearance | Shared header: Navbar → Container(flow:none) → Cluster(between) → Brand + navigation/actions. |
+| Example appearance | Shared header: Navbar → Container → Cluster(between) → Brand + navigation/actions. |
 | Avoid | A second custom header shell. |
 
 ### `navbar-brand` — Navbar Brand
@@ -879,7 +879,7 @@ Use Image for foreground media. Use a background-capable block only when the ima
 
 ```text
 sticky-navbar(sticky)
-└── container(flow:none, width:lg)
+└── container(width:lg)
     └── cluster(alignment:between, width:full)
         ├── navbar-brand
         └── cluster

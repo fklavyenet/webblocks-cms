@@ -136,7 +136,7 @@ System navigation blocks follow the same relational rule. `Navbar` keeps the per
 Navbar composition is relational rather than JSON-driven:
 
 - `Navbar` owns only wrapper semantics and a shared `Position` setting.
-- `Container` owns width constraint. Legacy containers still default to stacked flow for compatibility, but `Flow = None` makes Container layout-neutral so child layout blocks control composition.
+- `Container` owns width constraint and is layout-neutral by default so child Stack, Grid, or Cluster blocks control composition. `Flow = Stack` remains an explicit opt-in for simple vertical child flow.
 - `Cluster` is the horizontal or grouped layout primitive. Its settings control width, justification, cross-axis alignment, wrapping, and gap.
 - `Stack` remains the vertical flow primitive.
 - `Navbar Brand` owns logo and brand text.
@@ -148,7 +148,7 @@ Navbar composition is relational rather than JSON-driven:
 Recommended composition:
 
 - `Navbar`
-- `Container (Flow: None)`
+- `Container`
 - `Cluster (Width: Full, Justify: Between, Align: Center, Wrap: Nowrap)`
 - `Navbar Brand`
 - `Cluster (Justify: End, Align: Center, Wrap: Nowrap)`

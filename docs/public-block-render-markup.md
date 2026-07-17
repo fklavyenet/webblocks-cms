@@ -152,7 +152,7 @@ The block owns its root `<section>`. It renders all child blocks through the nor
 ### Rendered HTML
 
 ```html
-<div class="wb-container wb-container-lg wb-stack" data-wb-public-block-type="container">
+<div class="wb-container wb-container-lg" data-wb-public-block-type="container">
   <!-- child blocks -->
 </div>
 ```
@@ -167,8 +167,8 @@ The block owns its root `<section>`. It renders all child blocks through the nor
 | --- | --- | --- |
 | settings.width | sm/md/lg/xl/full | `containerWidthClass()` adds `wb-container-sm`, `wb-container-md`, `wb-container-lg`, `wb-container-xl`, or `wb-container-full`. |
 | settings.width | default/empty | Uses base `wb-container`. |
-| settings.flow | stack/default | `containerFlowClass()` adds `wb-stack`. |
-| settings.flow | none | No flow class is added. |
+| settings.flow | stack | `containerFlowClass()` adds `wb-stack`. |
+| settings.flow | none/default/empty/unknown | No flow class is added; child layout blocks own composition. |
 
 ### Use for / Avoid for
 

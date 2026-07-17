@@ -448,7 +448,7 @@ class BlockTypeContractRegistry
         'child_container_behavior' => ['Container-capable. Child types are not explicitly restricted in the current helper.'],
         'renderer_root_contract' => 'Owns its public container `<div>` root.',
         'current_contract_status' => 'clear',
-        'known_gaps' => ['Legacy default flow still falls back to stacked rendering when unset.'],
+        'known_gaps' => [],
       ],
       'cluster' => [
         'admin_form_fields' => ['Admin label', 'Gap', 'Justify', 'Align', 'Wrap', 'Width'],

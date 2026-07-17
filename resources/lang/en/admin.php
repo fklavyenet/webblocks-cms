@@ -3511,7 +3511,7 @@ return [
       'full' => 'Full',
       'width_help' => 'Maps to shipped `wb-container-*` width classes only.',
       'flow_label' => 'Flow',
-      'legacy_stack' => 'Legacy default (Stack)',
+      'default_none' => 'Default (None)',
       'none' => 'None',
       'stack' => 'Stack',
       'flow_help' => 'Container owns width only. Choose `None` for layout-neutral composition, or `Stack` for vertical flow.',

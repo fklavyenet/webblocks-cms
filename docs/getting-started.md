@@ -109,11 +109,11 @@ For reusable public headers, the recommended pattern is:
 
 `Navbar` renders only `nav.wb-navbar` and its child blocks. It does not automatically add a `Container`, brand wrapper, menu wrapper, or generated actions area. When constrained width is needed, place a `Container` block inside the Navbar.
 
-`Container` is primarily a width primitive. Legacy containers still render stacked flow by default, but for navbar composition set Container `Flow` to `None` so it renders only `div.wb-container`, then place `Cluster` inside it for horizontal composition.
+`Container` is a width primitive and renders layout-neutral `div.wb-container` markup by default. Add a Stack, Grid, or Cluster child to own composition; use Container `Flow = Stack` only as an explicit shortcut for simple vertical child flow.
 
 `Cluster` is the horizontal or grouped layout primitive. Use its settings to control `Width`, `Justify`, `Align`, `Wrap`, and `Gap` without custom CSS.
 
-`Navbar Brand` and `Navbar Navigation` must be inside the Navbar tree, but they do not need to be direct children of `Navbar`. A recommended pattern is `Navbar -> Container (Flow: None) -> Cluster (Width: Full, Justify: Between, Align: Center, Wrap: Nowrap)`, then place `Navbar Brand` plus an inner `Cluster (Justify: End, Align: Center, Wrap: Nowrap)` that holds `Navbar Navigation` and `Header Actions`.
+`Navbar Brand` and `Navbar Navigation` must be inside the Navbar tree, but they do not need to be direct children of `Navbar`. A recommended pattern is `Navbar -> Container -> Cluster (Width: Full, Justify: Between, Align: Center, Wrap: Nowrap)`, then place `Navbar Brand` plus an inner `Cluster (Justify: End, Align: Center, Wrap: Nowrap)` that holds `Navbar Navigation` and `Header Actions`. Container is already layout-neutral, so no flow override is needed.
 
 When a `Navbar Navigation` block has visible items, CMS now renders a mobile burger toggle automatically. On mobile the inline desktop links collapse behind that toggle, the brand stays visible, header actions remain available, and the opened menu is rendered below the row through the existing WebBlocks UI dropdown behavior.
 

@@ -3511,7 +3511,7 @@ return [
       'full' => 'Voll',
       'width_help' => 'Verweist nur auf ausgelieferte `wb-container-*` Breitenklassen.',
       'flow_label' => 'Flow',
-      'legacy_stack' => 'Legacy-Standard (Stack)',
+      'default_none' => 'Standard (Kein Flow)',
       'none' => 'Keine',
       'stack' => 'Stack',
       'flow_help' => 'Container besitzt nur die Breite. Wähle `Keine` für layout-neutrale Komposition oder `Stack` für vertikalen Flow.',

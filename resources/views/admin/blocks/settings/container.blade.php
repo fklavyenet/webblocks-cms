@@ -21,7 +21,7 @@
     <div class="wb-stack wb-gap-1">
         <label for="container_flow">{{ $adminText('flow_label') }}</label>
         <select id="container_flow" name="container_flow" class="wb-select">
-            <option value="" @selected(old('container_flow', $block->setting('flow')) === null)>{{ $adminText('legacy_stack') }}</option>
+            <option value="" @selected(old('container_flow', $block->setting('flow')) === null)>{{ $adminText('default_none') }}</option>
             <option value="none" @selected(old('container_flow', $block->setting('flow')) === 'none')>{{ $adminText('none') }}</option>
             <option value="stack" @selected(old('container_flow', $block->setting('flow')) === 'stack')>{{ $adminText('stack') }}</option>
         </select>
