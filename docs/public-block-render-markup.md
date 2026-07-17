@@ -118,7 +118,7 @@ Root-owning blocks instead put `data-wb-public-block-type` on their own public r
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-section`, spacing class from `sectionSpacingClass()`, `wb-stack`.
+`wb-section`, spacing class from `sectionSpacingClass()`, `wb-stack`, and optional native WebBlocks UI `wb-background-media` plus an overlay modifier.
 
 ### Settings -> class / markup map
 
@@ -127,6 +127,10 @@ Root-owning blocks instead put `data-wb-public-block-type` on their own public r
 | settings.spacing | sm | `sectionSpacingClass()` adds `wb-section-sm`. |
 | settings.spacing | lg | `sectionSpacingClass()` adds `wb-section-lg`. |
 | settings.spacing | default/empty | Uses only `wb-section wb-stack`. |
+| media_id | image Media record | Adds `wb-background-media` and emits `--wb-background-media-image` with the safe Media Library URL. |
+| settings.background_position | center/top/bottom/left/right | Emits `--wb-background-media-position`; unknown values fall back to `center`. |
+| settings.background_overlay | soft/default | Uses the primitive's default soft overlay. |
+| settings.background_overlay | none/medium/strong | Adds `wb-background-media--overlay-{value}`. |
 | status | unpublished | Block is not included by normal public block tree queries. |
 
 ### Use for / Avoid for

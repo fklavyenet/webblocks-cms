@@ -255,26 +255,6 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     border-color: var(--wb-public-accent-border);
 }
 
-.wb-has-background-media {
-    --wb-block-bg-overlay: linear-gradient(color-mix(in srgb, var(--wb-public-surface, #ffffff) 48%, transparent), color-mix(in srgb, var(--wb-public-surface, #ffffff) 48%, transparent));
-    background-image: var(--wb-block-bg-overlay), var(--wb-block-bg-image);
-    background-position: center, var(--wb-block-bg-position, center);
-    background-repeat: no-repeat;
-    background-size: cover;
-}
-
-.wb-bg-overlay-none {
-    --wb-block-bg-overlay: linear-gradient(transparent, transparent);
-}
-
-.wb-bg-overlay-medium {
-    --wb-block-bg-overlay: linear-gradient(color-mix(in srgb, var(--wb-public-surface, #ffffff) 64%, transparent), color-mix(in srgb, var(--wb-public-surface, #ffffff) 64%, transparent));
-}
-
-.wb-bg-overlay-strong {
-    --wb-block-bg-overlay: linear-gradient(color-mix(in srgb, var(--wb-public-surface, #ffffff) 78%, transparent), color-mix(in srgb, var(--wb-public-surface, #ffffff) 78%, transparent));
-}
-
 :is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-btn-primary {
     background: var(--wb-public-accent);
     border-color: var(--wb-public-accent);

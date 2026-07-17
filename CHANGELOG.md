@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.20
+
+- Upgrade WebBlocks UI to 2.11.0 and render block background images through its native opt-in `wb-background-media` primitive. Hero, Section, Card, CTA, Content Header, and Slide keep their existing Media Library, position, and overlay settings, while WebBlocks UI now owns cover and overlay presentation. Remove the duplicate CMS background-media CSS; CMS remains responsible only for safe media URLs and allowlisted settings.
+
 ## 1.40.19
 
 - Add a **Head Code** tab to Site Settings, so the custom head HTML added in 1.40.17 can be read and edited in the admin instead of only through the API. It shipped API-only, which left the markup on a site invisible to anyone working in the panel — a setting that renders on every public page should not be editable exclusively by a token. The tab carries the same field, the same ~64 KB cap, and the same blank-clears behaviour as `PATCH /webadmin/api/sites/{site}/head`, and it is gated by the existing site-settings permission, so the API and the panel stay two doors to one setting rather than two behaviours. The panel states plainly that the markup is inserted verbatim and can run scripts on every page, because that is the point of the field and also its risk. English, German, and Turkish strings included.

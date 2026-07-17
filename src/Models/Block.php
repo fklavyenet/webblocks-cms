@@ -1325,7 +1325,9 @@ class Block extends CmsModel
 
     $overlay = $this->backgroundOverlay();
 
-    return trim('wb-has-background-media wb-bg-overlay-'.$overlay);
+    return $overlay === 'soft'
+      ? 'wb-background-media'
+      : 'wb-background-media wb-background-media--overlay-'.$overlay;
   }
 
   public function publicBackgroundMediaStyle(): ?string
@@ -1338,7 +1340,7 @@ class Block extends CmsModel
 
     $escapedUrl = str_replace(['\\', '\''], ['\\\\', '\\\''], $url);
 
-    return "--wb-block-bg-image: url('".$escapedUrl."'); --wb-block-bg-position: ".$this->backgroundPosition().';';
+    return "--wb-background-media-image: url('".$escapedUrl."'); --wb-background-media-position: ".$this->backgroundPosition().';';
   }
 
   public function setting(string $key, mixed $default = null): mixed
