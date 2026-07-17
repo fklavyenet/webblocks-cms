@@ -8,7 +8,7 @@
   $localizedPageTitle = $site->exists ? $adminText('edit_title', ['name' => $site->name]) : $adminText('create_title');
   $canManageSiteSettings = $canManageSiteSettings ?? true;
   $canManageDomains = $canManageDomains ?? false;
-  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme', 'assets'], true)
+  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'head', 'contact', 'variables', 'theme', 'assets'], true)
     ? ($siteTab ?? old('_site_tab', 'site'))
     : 'site';
   $isReadOnly = ! $canManageSiteSettings;
@@ -91,6 +91,7 @@
               'locales' => $adminText('locales'),
               'branding' => $adminText('branding'),
               'seo-defaults' => $adminText('seo_defaults'),
+              'head' => $adminText('head_code'),
               'contact' => $adminText('contact'),
               'variables' => $adminText('variables'),
               'theme' => $adminText('theme'),
@@ -265,6 +266,24 @@
                   <div class="wb-stack-2 wb-field">
                     <label for="site_seo_keywords">{{ $adminText('meta_keywords') }}</label>
                     <input id="site_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $site->seo_keywords) }}" @disabled($isReadOnly)>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="wb-tabs-panel {{ $siteTab === 'head' ? 'is-active' : '' }}">
+              <div class="wb-card wb-card-muted">
+                <div class="wb-card-header"><strong>{{ $adminText('head_code') }}</strong></div>
+
+                <div class="wb-card-body wb-stack wb-gap-3">
+                  <div class="wb-text-sm wb-text-muted">{{ $adminText('head_code_help') }}</div>
+                  <div class="wb-alert wb-alert-warning" role="note">
+                    <div>{{ $adminText('head_code_warning') }}</div>
+                  </div>
+
+                  <div class="wb-stack-2 wb-field">
+                    <label for="site_custom_head_html">{{ $adminText('custom_head_html') }}</label>
+                    <textarea id="site_custom_head_html" name="custom_head_html" class="wb-input" rows="10" spellcheck="false" placeholder="{{ $adminText('custom_head_html_placeholder') }}" @disabled($isReadOnly)>{{ old('custom_head_html', $site->custom_head_html) }}</textarea>
                   </div>
                 </div>
               </div>

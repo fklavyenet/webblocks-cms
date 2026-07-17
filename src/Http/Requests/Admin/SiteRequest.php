@@ -75,6 +75,8 @@ class SiteRequest extends FormRequest
       'seo_description' => ['nullable', 'string', 'max:1000'],
       'seo_keywords' => ['nullable', 'string', 'max:500'],
       'public_theme_preset' => ['required', 'string', Rule::in(Site::PUBLIC_THEME_PRESETS)],
+      // Raw operator-authored markup for the public <head>. Same cap as the API endpoint.
+      'custom_head_html' => ['nullable', 'string', 'max:65000'],
       'social_image_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
       'locale_ids' => ['required', 'array', 'min:1'],
       'locale_ids.*' => ['integer', Rule::exists(Locale::class, 'id')->where(fn ($query) => $query

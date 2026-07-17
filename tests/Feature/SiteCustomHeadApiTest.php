@@ -109,6 +109,25 @@ class SiteCustomHeadApiTest extends TestCase
   }
 
   #[Test]
+  public function the_admin_site_form_exposes_a_head_code_tab_bound_to_the_column(): void
+  {
+    $form = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/sites/form.blade.php');
+
+    // The tab must be selectable and the textarea must post the column's own field name,
+    // or the panel silently edits nothing.
+    $this->assertStringContainsString("'head' => \$adminText('head_code')", $form);
+    $this->assertStringContainsString('name="custom_head_html"', $form);
+    $this->assertStringContainsString("\$siteTab === 'head'", $form);
+
+    foreach (['en', 'de', 'tr'] as $locale) {
+      $strings = require dirname(__DIR__, 2)."/resources/lang/{$locale}/admin.php";
+      foreach (['head_code', 'head_code_help', 'head_code_warning', 'custom_head_html'] as $key) {
+        $this->assertArrayHasKey($key, $strings['site_form'], "{$locale}.site_form.{$key} is missing.");
+      }
+    }
+  }
+
+  #[Test]
   public function the_package_update_migration_adds_the_column_to_an_existing_install(): void
   {
     // Existing installs never run `database/migrations` (historical) or `fresh`; System Update

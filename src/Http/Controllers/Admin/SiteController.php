@@ -132,7 +132,7 @@ class SiteController extends Controller
     $canManageDomains = request()->user()?->isSuperAdmin() ?? false;
 
     $requestedTab = trim((string) request()->query('tab', old('_site_tab', 'site')));
-    $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables', 'theme', 'assets'], true)
+    $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'head', 'contact', 'variables', 'theme', 'assets'], true)
           ? $requestedTab
           : 'site';
     $requestedModal = trim((string) request()->query('modal', old('_site_variable_modal', '')));
@@ -283,6 +283,13 @@ class SiteController extends Controller
   {
     if (! Schema::hasColumn('wbcms_sites', 'public_theme_preset')) {
       unset($data['public_theme_preset']);
+    }
+
+    if (! Schema::hasColumn('wbcms_sites', 'custom_head_html')) {
+      unset($data['custom_head_html']);
+    } elseif (array_key_exists('custom_head_html', $data)) {
+      // Blank clears it, matching the API endpoint rather than storing an empty string.
+      $data['custom_head_html'] = trim((string) $data['custom_head_html']) === '' ? null : $data['custom_head_html'];
     }
 
     return $data;

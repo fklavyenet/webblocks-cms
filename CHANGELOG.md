@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.19
+
+- Add a **Head Code** tab to Site Settings, so the custom head HTML added in 1.40.17 can be read and edited in the admin instead of only through the API. It shipped API-only, which left the markup on a site invisible to anyone working in the panel — a setting that renders on every public page should not be editable exclusively by a token. The tab carries the same field, the same ~64 KB cap, and the same blank-clears behaviour as `PATCH /webadmin/api/sites/{site}/head`, and it is gated by the existing site-settings permission, so the API and the panel stay two doors to one setting rather than two behaviours. The panel states plainly that the markup is inserted verbatim and can run scripts on every page, because that is the point of the field and also its risk. English, German, and Turkish strings included.
+
 ## 1.40.18
 
 - Fix the 1.40.17 custom head HTML column never reaching existing installs. The `custom_head_html` column shipped in `database/migrations` and `database/migrations/fresh`, but a package consumer install runs neither: System Update only runs `database/migrations/updates`. So 1.40.17 delivered the endpoint and the renderer with no column behind them, and `PATCH /webadmin/api/sites/{site}/head` answered every request with its "not available until the latest site schema has been applied" guard — code without schema, which is the failure the three-directory split exists to prevent. Adds the missing idempotent ensure-migration under `database/migrations/updates`, so the column arrives on upgrade. A test now drops the column and drives that update migration directly, asserting the upgrade path adds it and that re-running is a no-op, because a fresh-schema test can only ever prove the clean-install half.
