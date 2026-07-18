@@ -6,3 +6,6 @@
 /storage/
 .DS_Store
 **/.DS_Store
+
+# Local AI agent contract — never tracked or pushed
+AGENTS.md
