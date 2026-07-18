@@ -71,7 +71,12 @@ class PackageDevelopmentBoundaryTest extends TestCase
   {
     $root = dirname(__DIR__, 2);
     $expected = ['.editorconfig', '.gitattributes', '.github', '.gitignore', 'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'SECURITY.md', 'SUPPORT.md', 'UPGRADING.md', 'composer.json', 'config', 'database', 'docs', 'phpunit.xml.dist', 'pint.json', 'public', 'resources', 'routes', 'scripts', 'src', 'stubs', 'tests'];
-    $actual = array_values(array_filter(scandir($root) ?: [], fn (string $entry): bool => ! in_array($entry, ['.', '..', '.git', 'vendor', 'composer.lock', '.phpunit.cache', '.phpunit.result.cache'], true)));
+    // Exclude gitignored local/runtime artifacts so the assertion reflects the
+    // committed tree, not whatever a developer's checkout happens to contain
+    // (e.g. a stray storage/ from a local artisan run, coverage/, .DS_Store, or
+    // the local-only AGENTS.md). Keep this in sync with .gitignore.
+    $ignored = ['.', '..', '.git', 'vendor', 'composer.lock', '.phpunit.cache', '.phpunit.result.cache', 'storage', 'coverage', '.DS_Store', 'AGENTS.md'];
+    $actual = array_values(array_filter(scandir($root) ?: [], fn (string $entry): bool => ! in_array($entry, $ignored, true)));
 
     sort($expected);
     sort($actual);
