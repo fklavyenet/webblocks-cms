@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Workspace pre-push hook — see standards/README.md §9.
+#
+# Canonical source: standards/templates/pre-push. Copied verbatim into each
+# repo's scripts/pre-push and wired with:  git config core.hooksPath scripts
+#
+# Runs three gates before any push. Any failure aborts the push.
+# Runner-agnostic: uses Pest if installed, otherwise PHPUnit.
+# Skippable with `git push --no-verify` (accepted, see §9).
+
+set -e
+
+# Move to repo root so the hook works regardless of where git invokes it.
+cd "$(git rev-parse --show-toplevel)"
+
+# Plain `validate` (not --strict): --strict escalates the "version field is
+# present" recommendation to an error, but standard §11 mandates that field
+# (version is single-sourced from composer.json). Plain validate still fails on
+# lock-file drift and schema errors, which are the checks that matter here.
+echo "pre-push: composer validate"
+composer validate
+
+if [ -x vendor/bin/pint ]; then
+    echo "pre-push: pint --test"
+    vendor/bin/pint --test
+else
+    echo "pre-push: pint not installed, skipping"
+fi
+
+if [ -x vendor/bin/pest ]; then
+    echo "pre-push: pest"
+    vendor/bin/pest
+elif [ -x vendor/bin/phpunit ]; then
+    echo "pre-push: phpunit"
+    vendor/bin/phpunit
+else
+    echo "pre-push: no test runner installed, skipping"
+fi
+
+echo "pre-push: all gates passed"
