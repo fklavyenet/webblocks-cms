@@ -18,6 +18,12 @@ return [
     'unavailable' => 'Arama gecici olarak kullanilamiyor. Arama sayfasini kullanmaya devam edebilirsiniz.',
     'untitled' => 'Basliksiz',
   ],
+  'theme' => [
+    'mode_light' => 'Açık tema',
+    'mode_dark' => 'Koyu tema',
+    'mode_auto' => 'Otomatik tema',
+  ],
+
   'preview' => [
     'title' => 'Onizleme modu',
     'body' => 'bu sayfa yayinlanmadikca herkese acik degildir.',

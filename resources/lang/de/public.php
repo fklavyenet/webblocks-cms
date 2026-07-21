@@ -18,6 +18,12 @@ return [
     'unavailable' => 'Die Suche ist voruebergehend nicht verfuegbar. Sie koennen weiterhin die Suchseite verwenden.',
     'untitled' => 'Ohne Titel',
   ],
+  'theme' => [
+    'mode_light' => 'Heller Modus',
+    'mode_dark' => 'Dunkler Modus',
+    'mode_auto' => 'Automatischer Modus',
+  ],
+
   'preview' => [
     'title' => 'Vorschaumodus',
     'body' => 'diese Seite ist erst oeffentlich, wenn sie veroeffentlicht ist.',

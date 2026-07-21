@@ -73,12 +73,6 @@ svg.wb-sidebar-brand-logo {
     background: color-mix(in srgb, #ea580c 10%, white);
 }
 
-.wb-navbar-iconbar {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--wb-s2);
-}
-
 .wb-navbar-breadcrumb-wrap {
     min-width: 0;
 }
@@ -97,47 +91,6 @@ svg.wb-sidebar-brand-logo {
     overflow-wrap: anywhere;
 }
 
-.wb-navbar-update-indicator {
-    position: relative;
-    color: var(--wb-muted);
-}
-
-.wb-navbar-update-indicator[data-wb-update-indicator-state="update_available"] {
-    color: var(--wb-accent);
-}
-
-.wb-navbar-update-dot {
-    display: none;
-    position: absolute;
-    inset-block-start: 0.35rem;
-    inset-inline-end: 0.35rem;
-    inline-size: 0.65rem;
-    block-size: 0.65rem;
-    border: 2px solid var(--wb-surface);
-    border-radius: 9999px;
-    background: var(--wb-danger);
-}
-
-.wb-navbar-update-indicator[data-wb-update-indicator-state="update_available"] .wb-navbar-update-dot {
-    display: block;
-}
-
-.wb-navbar-icon-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px;
-    color: var(--wb-text);
-    transition: background var(--wb-t), color var(--wb-t);
-}
-
-.wb-navbar-icon-trigger:hover,
-.wb-navbar-icon-trigger[aria-expanded="true"] {
-    background: var(--wb-surface-2);
-    text-decoration: none;
-}
 
 .wb-admin-rich-text-editor {
     border: 1px solid var(--wb-border);

@@ -280,11 +280,11 @@
                     </div>
 
                     <div class="wb-navbar-end wb-ms-auto">
-                        <div class="wb-navbar-iconbar">
+                        <div class="wb-cluster">
                             @if ($user?->can('access-system') && Route::has('admin.system.updates.indicator'))
                                 <a
                                     href="{{ route('admin.system.updates.index') }}"
-                                    class="wb-navbar-icon-trigger wb-navbar-update-indicator"
+                                    class="wb-btn wb-btn-ghost wb-btn-icon"
                                     data-wb-update-indicator
                                     data-wb-update-indicator-url="{{ route('admin.system.updates.indicator') }}"
                                     data-wb-update-indicator-state="unknown"
@@ -293,17 +293,21 @@
                                     hidden
                                 >
                                     <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
-                                    <span class="wb-navbar-update-dot" aria-hidden="true"></span>
+                                    <span class="wb-btn-dot" aria-hidden="true"></span>
                                     <span class="wb-sr-only" data-wb-update-indicator-label>{{ $adminText('topbar.system_updates') }}</span>
                                 </a>
                             @endif
 
-                            <button type="button" class="wb-navbar-icon-trigger" data-wb-mode-cycle aria-label="{{ $adminText('topbar.color_mode') }}" title="{{ $adminText('topbar.color_mode') }}">
+                            <button type="button" class="wb-btn wb-btn-ghost wb-btn-icon" data-wb-mode-cycle
+                                data-wb-mode-label-light="{{ $adminText('topbar.mode_light') }}"
+                                data-wb-mode-label-dark="{{ $adminText('topbar.mode_dark') }}"
+                                data-wb-mode-label-auto="{{ $adminText('topbar.mode_auto') }}"
+                                aria-label="{{ $adminText('topbar.color_mode') }}" title="{{ $adminText('topbar.color_mode') }}">
                                 <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
                             </button>
 
                             <div class="wb-dropdown wb-dropdown-end">
-                                <button class="wb-navbar-icon-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-theme-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.theme_settings') }}" title="{{ $adminText('topbar.theme_settings') }}">
+                                <button class="wb-btn wb-btn-ghost wb-btn-icon" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-theme-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.theme_settings') }}" title="{{ $adminText('topbar.theme_settings') }}">
                                     <i class="wb-icon wb-icon-palette" aria-hidden="true"></i>
                                 </button>
 
@@ -330,7 +334,7 @@
                             @if (app(AdminLocaleResolver::class)->userPreferencesAvailable())
                                 <div class="wb-language-switcher wb-language-switcher--code wb-dropdown wb-dropdown-end">
                                     <button
-                                        class="wb-navbar-icon-trigger wb-language-switcher-trigger"
+                                        class="wb-btn wb-btn-ghost wb-language-switcher-trigger"
                                         type="button"
                                         data-wb-toggle="dropdown"
                                         data-wb-target="#admin-language-menu"
@@ -366,7 +370,7 @@
                         </div>
 
                         <div class="wb-user-menu wb-user-menu--full wb-user-menu--responsive wb-dropdown wb-dropdown-end">
-                            <button class="wb-topbar-user wb-user-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
+                            <button class="wb-btn wb-btn-ghost wb-user-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
                                 <span class="wb-avatar wb-avatar-sm" aria-hidden="true">{{ $userInitials }}</span>
                                 <span class="wb-user-menu-copy">
                                     <span class="wb-user-menu-name">{{ $user?->name }}</span>

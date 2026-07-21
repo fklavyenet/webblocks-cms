@@ -12,11 +12,11 @@
 
 @if ($showModeToggle || $showAccentToggle || ($showSearch && $searchPath))
     <div class="wb-navbar-end wb-ms-auto" data-wb-header-actions>
-        <div class="wb-navbar-iconbar">
+        <div class="wb-cluster">
             @if ($showSearch && $searchPath)
                 <a
                     href="{{ $searchPath }}"
-                    class="wb-navbar-icon-trigger"
+                    class="wb-btn wb-btn-ghost wb-btn-icon"
                     data-wb-public-search-open
                     aria-label="{{ $searchLabel }}"
                     title="{{ $searchLabel }}"
@@ -27,14 +27,16 @@
             @endif
 
             @if ($showModeToggle)
+                @php $modeAutoLabel = $translator->public('theme.mode_auto', $block->renderLocaleCode()); @endphp
                 <button
                     type="button"
-                    class="wb-navbar-icon-trigger"
+                    class="wb-btn wb-btn-ghost wb-btn-icon"
                     data-wb-mode-cycle
-                    data-wb-header-actions-mode-toggle
-                    aria-label="Auto mode"
-                    aria-pressed="false"
-                    title="Auto mode"
+                    data-wb-mode-label-light="{{ $translator->public('theme.mode_light', $block->renderLocaleCode()) }}"
+                    data-wb-mode-label-dark="{{ $translator->public('theme.mode_dark', $block->renderLocaleCode()) }}"
+                    data-wb-mode-label-auto="{{ $modeAutoLabel }}"
+                    aria-label="{{ $modeAutoLabel }}"
+                    title="{{ $modeAutoLabel }}"
                 >
                     <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
                 </button>

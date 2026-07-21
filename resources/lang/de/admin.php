@@ -156,6 +156,9 @@ return [
   'topbar' => [
     'system_updates' => 'System-Updates',
     'color_mode' => 'Farbmodus',
+    'mode_light' => 'Heller Modus',
+    'mode_dark' => 'Dunkler Modus',
+    'mode_auto' => 'Automatischer Modus',
     'theme_settings' => 'Theme-Einstellungen',
     'presets' => 'Vorlagen',
     'modern' => 'Modern',

@@ -273,29 +273,6 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     color: var(--wb-public-text);
 }
 
-.wb-navbar-iconbar {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--wb-s2);
-}
-
-.wb-navbar-icon-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px;
-    color: var(--wb-public-text, var(--wb-text));
-    transition: background var(--wb-t), color var(--wb-t);
-}
-
-.wb-navbar-icon-trigger:hover,
-.wb-navbar-icon-trigger[aria-expanded="true"] {
-    background: var(--wb-public-surface-2, var(--wb-surface-2));
-    text-decoration: none;
-}
-
 :is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-text-muted,
 :is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-muted {
     color: var(--wb-public-muted) !important;

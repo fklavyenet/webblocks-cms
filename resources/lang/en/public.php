@@ -18,6 +18,12 @@ return [
     'unavailable' => 'Search is temporarily unavailable. You can still use the search page.',
     'untitled' => 'Untitled',
   ],
+  'theme' => [
+    'mode_light' => 'Light mode',
+    'mode_dark' => 'Dark mode',
+    'mode_auto' => 'Auto mode',
+  ],
+
   'preview' => [
     'title' => 'Preview mode',
     'body' => 'this page is not public unless it is published.',

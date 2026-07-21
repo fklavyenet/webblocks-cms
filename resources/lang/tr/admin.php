@@ -156,6 +156,9 @@ return [
   'topbar' => [
     'system_updates' => 'Sistem Güncellemeleri',
     'color_mode' => 'Renk modu',
+    'mode_light' => 'Açık tema',
+    'mode_dark' => 'Koyu tema',
+    'mode_auto' => 'Otomatik tema',
     'theme_settings' => 'Tema ayarları',
     'presets' => 'Hazır stiller',
     'modern' => 'Modern',
