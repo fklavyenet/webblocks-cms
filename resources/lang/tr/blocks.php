@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'stat_card' => [
+    'learn_more' => 'Daha fazla bilgi',
+  ],
   'search_form' => [
     'label' => 'Arama',
     'placeholder' => 'Bu sitede ara',

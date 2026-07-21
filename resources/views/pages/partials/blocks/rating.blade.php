@@ -17,10 +17,10 @@
     $success = session('rating_success_block_id') === $block->id ? session('rating_success_message') : null;
 @endphp
 
-<section class="wb-card wb-public-rating wb-rating" id="rating-{{ $block->id }}" data-wb-public-block-type="rating">
+<section class="wb-card" id="rating-{{ $block->id }}" data-wb-public-block-type="rating">
     <div class="wb-card-body wb-stack wb-gap-3">
         @if ($title !== '')
-            <h3 class="wb-public-rating-title">{{ $title }}</h3>
+            <h3>{{ $title }}</h3>
         @endif
 
         @if ($success)
@@ -30,7 +30,7 @@
         @endif
 
         @if ($tableReady && $showSummary && $ratingCount > 0)
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap" style="align-items: center; gap: var(--wb-s3);">
+            <div class="wb-cluster">
                 <span class="wb-rating-stars" style="--wb-rating-value: {{ $averagePercent }}%; --wb-rating-size: 1.35rem;" role="img" aria-label="{{ $translator->get('blocks.rating.average_aria', $localeCode, ['average' => $ratingAverage]) }}"></span>
                 <span class="wb-text-sm wb-text-muted">
                     {{ $translator->get($ratingCount === 1 ? 'blocks.rating.summary' : 'blocks.rating.summary_plural', $localeCode, ['average' => $ratingAverage, 'count' => $ratingCount]) }}

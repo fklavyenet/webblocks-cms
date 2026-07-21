@@ -4,7 +4,16 @@
     $title = $hasRenderableText($block->title) ? (string) $block->title : null;
     $subtitle = $hasRenderableText($block->subtitle) ? (string) $block->subtitle : null;
     $content = $hasRenderableText($block->content) ? (string) $block->content : null;
-    $statValue = $subtitle ?? $title;
+    // stats mapping: subtitle is the prominent value when present, and title
+    // becomes the descriptor label; otherwise title itself is the value so the
+    // stat never renders the same text as both label and value.
+    if ($subtitle !== null) {
+        $statLabel = $title;
+        $statValue = $subtitle;
+    } else {
+        $statLabel = null;
+        $statValue = $title;
+    }
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
     $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();
@@ -50,8 +59,8 @@
                 </div>
             @endif
 
-            @if ($title !== null)
-                <div class="wb-stat-label">{{ $title }}</div>
+            @if ($statLabel !== null)
+                <div class="wb-stat-label">{{ $statLabel }}</div>
             @endif
 
             @if ($statValue !== null)

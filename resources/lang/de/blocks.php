@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'stat_card' => [
+    'learn_more' => 'Mehr erfahren',
+  ],
   'search_form' => [
     'label' => 'Suche',
     'placeholder' => 'Diese Website durchsuchen',

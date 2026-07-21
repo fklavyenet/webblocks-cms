@@ -2,10 +2,6 @@
   $children = (bool) $block->getAttribute('render_preview')
     ? $block->children->sortBy('sort_order')->values()
     : $block->children->where('status', 'published')->sortBy('sort_order')->values();
-  $childSlugs = $children->map(fn ($child) => $child->typeSlug())->values();
-  $isContactColumns = $childSlugs->count() === 2
-    && $childSlugs->contains('contact-info')
-    && $childSlugs->contains('contact_form');
   $columnsVariant = $block->variant ?: 'cards';
   $preferredColumns = isset($preferredColumns) && in_array((string) $preferredColumns, ['2', '3', '4'], true)
     ? (string) $preferredColumns
@@ -41,7 +37,7 @@
     @endif
 
     @if ($children->isNotEmpty())
-      <div class="{{ $layoutClass }}{{ $isContactColumns ? ' wb-public-contact-columns' : '' }}">
+      <div class="{{ $layoutClass }}">
         @foreach ($children as $child)
           @if ($child->isColumnItem() || $child->isFeatureItem())
             @include($child->publicRenderView(), ['block' => $child, 'columnsVariant' => $columnsVariant])

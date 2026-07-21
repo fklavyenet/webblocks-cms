@@ -5,5 +5,5 @@
 @endphp
 
 @if ($rendered !== '')
-    <div class="wb-rich-text wb-rich-text-readable">{!! $rendered !!}</div>
+    <div class="wb-rich-text">{!! $rendered !!}</div>
 @endif

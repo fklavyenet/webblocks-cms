@@ -5,15 +5,18 @@
     'danger' => 'danger',
     default => 'info',
   };
+  $title = trim((string) ($block->title ?? ''));
+  $content = trim((string) ($block->content ?? ''));
 @endphp
 
 <div class="wb-alert wb-alert-{{ $tone }}">
-  <div>
-    @if ($block->title)
-      <div class="wb-alert-title">{{ $block->title }}</div>
-    @endif
-    <div>{{ $block->content }}</div>
-  </div>
+  @if ($title !== '')
+    <h3 class="wb-alert-title">{{ $title }}</h3>
+  @endif
+
+  @if ($content !== '')
+    <p>{{ $content }}</p>
+  @endif
 </div>
 
 @if ($block->children->isNotEmpty())

@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.22
+
+- Align public block renderers with shipped WebBlocks UI 2.11.0 primitives and remove dead CSS classes, with no visual regressions. Stat Card now uses the real `wb-stat-meta` slot instead of the non-existent `wb-stat-detail`, drops the dead `wb-link` class, and shows a translatable "Learn more" label (English, German, Turkish) instead of hardcoded English. Rating stops putting the `wb-rating` primitive on its `wb-card` shell — a primitive-boundary violation that forced a flex column onto the card — and removes the unused `wb-public-rating` and `wb-public-rating-title` classes; the star display and input keep working through their own custom-property defaults. Rich Text drops the retired `wb-rich-text-readable` modifier and keeps the base `wb-rich-text` readable typography. Columns removes the dead `wb-public-contact-columns` class and its detection logic. Column Item's stats variant no longer renders the same text as both the label and the value when a subtitle is not set. Callout and Testimonial now match the shipped alert and card anatomy: alert title and body are direct `wb-alert` children, and the testimonial renders `wb-card` on its `blockquote` with a muted attribution footer.
+
 ## 1.40.21
 
 - Make Container a width-only, layout-neutral primitive by default. Unset, legacy, `none`, and unknown flow values no longer add `wb-stack`; editors and API clients must select `Flow: Stack` explicitly when the Container itself should own vertical child rhythm. Existing explicit stack choices remain unchanged, while Grid, Cluster, and Stack children can now compose inside old Containers without an inherited flex-column layout fighting them.

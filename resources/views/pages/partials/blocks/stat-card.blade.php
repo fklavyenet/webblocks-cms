@@ -5,6 +5,10 @@ $detail = $block->content;
 $url = $block->stringValueOrNull($block->url);
 
 $hasValue = $value !== null && trim((string) $value) !== '';
+
+$translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+$resolvedLocaleCode = strtolower((string) ($block->getAttribute('resolved_locale_code') ?? app()->getLocale()));
+$learnMoreLabel = $translator->get('blocks.stat_card.learn_more', $resolvedLocaleCode);
 @endphp
 
 <div class="wb-stat">
@@ -17,10 +21,10 @@ $hasValue = $value !== null && trim((string) $value) !== '';
   @endif
 
   @if(!blank($detail))
-    <div class="wb-stat-detail">{{ $detail }}</div>
+    <div class="wb-stat-meta">{{ $detail }}</div>
   @endif
 
   @if($url !== null)
-    <div class="wb-stat-detail"><a href="{{ $url }}" class="wb-link">Learn more</a></div>
+    <div class="wb-stat-meta"><a href="{{ $url }}">{{ $learnMoreLabel }}</a></div>
   @endif
 </div>
