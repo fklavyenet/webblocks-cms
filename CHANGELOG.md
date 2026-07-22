@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.25
+
+- Migrate the Gallery block onto the shipped WebBlocks UI `wb-gallery` pattern (UI 2.14.0) and delete the local gallery CSS layer (~170 lines) from `public/cms/css/public.css`. The editor-facing options are unchanged — column count, gap, media ratio, masonry/collage variants, and below/overlay/on-hover captions now render through the shipped modifiers (`wb-gallery--cols-*`, `--gap-*`, `--aspect-*`, `--masonry`/`--collage`, `--captions-overlay`/`--captions-hover` with `--overlay-solid`/`--overlay-none`) instead of a parallel `wb-*` reimplementation. Overlay captions use the shipped `wb-gallery-caption` scrim with a nested `wb-gallery-meta`; both lightbox and direct-link items now share the styled `wb-gallery-trigger`. Bump the pinned UI version to v2.14.1.
+
 ## 1.40.24
 
 - Finish the WebBlocks UI conformance follow-ups from the block-renderer review. Remove the dead `wb-link` class from the remaining public renderers (Contact Info, Card Grid, Showcase List, and the fallback renderer) — plain anchors are already styled by the UI foundation, so output is unchanged. Delete the now-unused `public/cms/js/public/header-actions.js` and its package asset manifest entries; the shipped WebBlocks UI theme behavior owns the mode toggle. Refresh the block documentation (`public-block-render-markup.md`, `block-ui-renderer-contract.md`, `inventory.md`, `public-assets.md`) to match the shipped UI 2.13.0 vocabulary and the current renderers: real `wb-stat-meta` and `wb-cluster` kicker classes instead of retired `wb-stat-detail` / `wb-cms-public-kicker`, base `wb-rich-text` instead of the retired readable modifier, the direct-child Callout alert anatomy, and the neutral `wb-btn wb-btn-ghost wb-btn-icon` Header Actions markup with host-localized mode labels.
