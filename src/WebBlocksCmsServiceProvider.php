@@ -159,6 +159,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const PUBLIC_RENDERING_RUNTIME_FILES = [
     'Support/Blocks/PublicBodyEndRegistry.php',
+    'Support/Blocks/PublicNavbarDrawerRegistry.php',
     'Support/Blocks/PublicOverlayRegistry.php',
     'Support/Blocks/TrustedHtmlOverlayExtractor.php',
     'Support/Pages/PageRouteResolver.php',
@@ -202,6 +203,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const ROOT_PUBLIC_RENDERING_RUNTIME_WRAPPER_FILES = [
     'Support/Blocks/PublicBodyEndRegistry.php',
+    'Support/Blocks/PublicNavbarDrawerRegistry.php',
     'Support/Blocks/PublicOverlayRegistry.php',
     'Support/Blocks/TrustedHtmlOverlayExtractor.php',
     'Support/Pages/PageRouteResolver.php',

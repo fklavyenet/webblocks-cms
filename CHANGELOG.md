@@ -7,6 +7,15 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.26
+
+- Finish the `public.css` drift cleanup: the stylesheet now holds only the public theme palettes plus a handful of deliberate host-glue rules (~250 lines, down from ~650 before the gallery round).
+  - Public navbar mobile menu moves onto the shipped `wb-navbar-drawer` contract (UI 2.15.0): the navigation block renders a shipped `wb-navbar-toggle` wired through the generic `data-wb-collapse` runtime, pushes its drawer through the new `PublicNavbarDrawerRegistry`, and the navbar container renders it directly after its own `</nav>`. The dropdown-based `wb-cms-navbar-mobile-*` layer and its media queries are deleted. Mobile menus now open as a full-width drawer under the navbar.
+  - Icon tones consume the shipped `wb-icon-tone-*` axis: the theme token block feeds `--wb-icon-tone-*` from the public tone palette and the six local tone classes are deleted; rendered markup is unchanged.
+  - Theme component overrides (`.wb-card`, `.wb-badge`, `.wb-btn-primary`, `.wb-navbar`/`.wb-sidebar`, `.wb-text-muted`) are deleted — the token remap already cascades the same values — after adding the missing `--wb-primary`/`--wb-primary-dark`/`--wb-primary-soft` remaps (these aliases resolve at `:root`, which is why the button override had been load-bearing). The body-link `accent-text` rule stays as a documented, deliberate contrast choice.
+  - Small helpers land on shipped equivalents: honeypot wrappers use `wb-sr-only`, cluster gap "none" uses the new `wb-gap-0`, items "stretch" uses the new `wb-items-stretch`, the card header icon row uses `wb-icon-card`, and the card-footer cluster span plus the vestigial link-list icon rule move to (or are covered by) the shipped source. Dead `.wb-public-footer-fallback` removed.
+  - New `NavbarDrawerRenderingTest` covers the drawer contract (toggle wiring, drawer after `</nav>`, menu content in both lists, group label rows). Bump the pinned UI version to v2.15.0.
+
 ## 1.40.25
 
 - Migrate the Gallery block onto the shipped WebBlocks UI `wb-gallery` pattern (UI 2.14.0) and delete the local gallery CSS layer (~170 lines) from `public/cms/css/public.css`. The editor-facing options are unchanged — column count, gap, media ratio, masonry/collage variants, and below/overlay/on-hover captions now render through the shipped modifiers (`wb-gallery--cols-*`, `--gap-*`, `--aspect-*`, `--masonry`/`--collage`, `--captions-overlay`/`--captions-hover` with `--overlay-solid`/`--overlay-none`) instead of a parallel `wb-*` reimplementation. Overlay captions use the shipped `wb-gallery-caption` scrim with a nested `wb-gallery-meta`; both lightbox and direct-link items now share the styled `wb-gallery-trigger`. Bump the pinned UI version to v2.14.1.

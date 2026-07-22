@@ -696,7 +696,7 @@ class Block extends CmsModel
   public function clusterGapClass(): ?string
   {
     return match ($this->clusterGap()) {
-      'none' => 'wb-cms-cluster-gap-none',
+      'none' => 'wb-gap-0',
       'xs' => 'wb-gap-1',
       'sm', '2' => 'wb-cluster-2',
       'md', '4' => 'wb-cluster-4',
@@ -739,7 +739,7 @@ class Block extends CmsModel
     return match ($this->clusterAlign()) {
       'start' => 'wb-items-start',
       'end' => 'wb-items-end',
-      'stretch' => 'wb-cms-items-stretch',
+      'stretch' => 'wb-items-stretch',
       default => null,
     };
   }

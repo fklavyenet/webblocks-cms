@@ -66,7 +66,7 @@
                 <input type="hidden" name="submitted_at" value="{{ now()->timestamp }}">
                 <input type="hidden" name="_form_check_name" value="{{ $formCheck->signedFieldName($block) }}">
 
-                <div class="wb-form-check" inert aria-hidden="true">
+                <div class="wb-sr-only" inert aria-hidden="true">
                     <label for="comment-form-check-{{ $block->id }}">{{ $translator->get('blocks.comments.honeypot_label', $localeCode) }}</label>
                     <input id="comment-form-check-{{ $block->id }}" type="text" name="{{ $formCheckName }}" tabindex="-1" autocomplete="off">
                 </div>

@@ -1,7 +1,7 @@
 @php
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
     $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
-    $headerClass = trim('wb-card-header'.($iconClass !== null ? ' wb-cms-public-card-header-with-icon' : ''));
+    $headerClass = trim('wb-card-header'.($iconClass !== null ? ' wb-icon-card' : ''));
 @endphp
 
 <div class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">

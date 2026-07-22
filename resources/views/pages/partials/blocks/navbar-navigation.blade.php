@@ -87,9 +87,9 @@
         || ($normalized !== null && $normalized === $currentPath),
     };
   };
-  $mobileMenuId = 'wb-navbar-navigation-mobile-menu-'.$block->id;
+  $drawerId = 'wb-navbar-drawer-'.$block->id;
 
-  $renderItems = function ($items, bool $isMobile = false) use (&$renderItems, $block, $isItemActive) {
+  $renderDrawerItems = function ($items) use (&$renderDrawerItems, $isItemActive) {
     $html = '';
 
     foreach ($items as $item) {
@@ -98,15 +98,32 @@
       $children = $item->children;
 
       if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
-        if ($isMobile) {
-          $html .= '<li class="wb-stack wb-gap-1">';
-          $html .= '<span class="wb-cms-navbar-mobile-group-label'.($isActive ? ' is-active' : '').'">'.e($item->resolvedTitle()).'</span>';
-          $html .= '<ul class="wb-stack wb-gap-1">'.$renderItems($children, true).'</ul>';
-          $html .= '</li>';
+        $html .= '<span class="wb-text-sm wb-text-muted">'.e($item->resolvedTitle()).'</span>';
+        $html .= $renderDrawerItems($children);
 
-          continue;
-        }
+        continue;
+      }
 
+      if (! $url) {
+        continue;
+      }
+
+      $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
+      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.e($item->resolvedTitle()).'</a>';
+    }
+
+    return $html;
+  };
+
+  $renderItems = function ($items) use (&$renderItems, $block, $isItemActive) {
+    $html = '';
+
+    foreach ($items as $item) {
+      $isActive = $isItemActive($item);
+      $url = $item->resolvedUrl();
+      $children = $item->children;
+
+      if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
         $groupMenuId = 'navbar-navigation-group-'.$block->id.'-'.$item->id;
         $html .= '<li class="wb-navbar-nav-item wb-dropdown">';
         $html .= '<button type="button" class="wb-navbar-link'.($isActive ? ' is-active' : '').'" data-wb-toggle="dropdown" data-wb-target="#'.$groupMenuId.'" aria-expanded="false">';
@@ -135,10 +152,8 @@
       }
 
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
-      $linkClass = $isMobile ? 'wb-dropdown-item' : 'wb-navbar-link';
-      $itemClass = $isMobile ? '' : ' class="wb-navbar-nav-item"';
-      $html .= '<li'.$itemClass.'>';
-      $html .= '<a href="'.e($url).'" class="'.$linkClass.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.e($item->resolvedTitle()).'</a>';
+      $html .= '<li class="wb-navbar-nav-item">';
+      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.e($item->resolvedTitle()).'</a>';
       $html .= '</li>';
     }
 
@@ -147,32 +162,31 @@
 @endphp
 
 @if ($items->isNotEmpty())
-  <div class="wb-cms-navbar-navigation" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
-    <div class="wb-dropdown wb-dropdown-end wb-cms-navbar-mobile-toggle">
-      <button
-        type="button"
-        class="wb-navbar-toggle wb-cms-navbar-mobile-toggle-button"
-        data-wb-toggle="dropdown"
-        data-wb-target="#{{ $mobileMenuId }}"
-        aria-expanded="false"
-        aria-haspopup="menu"
-        aria-controls="{{ $mobileMenuId }}"
-        aria-label="Toggle navigation"
-      >
-        <i class="wb-icon wb-icon-menu" aria-hidden="true"></i>
-      </button>
+  @php
+    // Mobile menu: the shipped wb-navbar-drawer contract. The drawer must sit
+    // directly after the navbar element, so it is pushed to the navbar drawer
+    // registry and rendered by the navbar container after its own </nav>.
+    $drawerHtml = '<div class="wb-navbar-drawer" id="'.e($drawerId).'" aria-label="'.e($label).'">'
+      .$renderDrawerItems($items)
+      .'</div>';
+    app(\WebBlocks\Cms\Support\Blocks\PublicNavbarDrawerRegistry::class)->push($drawerHtml);
+  @endphp
 
-      <div class="wb-dropdown-menu wb-cms-navbar-mobile-menu" id="{{ $mobileMenuId }}" role="menu" aria-label="{{ $label }}">
-        <ul class="wb-navbar-nav wb-cms-navbar-mobile-nav {{ $activeIndicatorClass }}">
-          {!! $renderItems($items, true) !!}
-        </ul>
-      </div>
-    </div>
+  <button
+    type="button"
+    class="wb-navbar-toggle"
+    data-wb-collapse="{{ $drawerId }}"
+    aria-expanded="false"
+    aria-controls="{{ $drawerId }}"
+    aria-label="Toggle navigation"
+    data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"
+  >
+    <span></span><span></span><span></span>
+  </button>
 
-    <div class="wb-navbar-links">
-      <ul class="wb-navbar-nav {{ $activeIndicatorClass }}" aria-label="{{ $label }}">
-        {!! $renderItems($items) !!}
-      </ul>
-    </div>
+  <div class="wb-navbar-links">
+    <ul class="wb-navbar-nav {{ $activeIndicatorClass }}" aria-label="{{ $label }}">
+      {!! $renderItems($items) !!}
+    </ul>
   </div>
 @endif

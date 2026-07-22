@@ -1,7 +1,3 @@
-.wb-public-footer-fallback {
-    padding-top: 0;
-}
-
 .wb-public-site-header {
     margin-bottom: var(--wb-s6);
 }
@@ -23,6 +19,10 @@
     --wb-accent: var(--wb-public-accent);
     --wb-accent-hover: var(--wb-public-accent-hover);
     --wb-accent-active: var(--wb-public-accent-active);
+    /* --wb-primary aliases resolve at :root, so remap them here too. */
+    --wb-primary: var(--wb-public-accent);
+    --wb-primary-dark: var(--wb-public-accent-hover);
+    --wb-primary-soft: var(--wb-public-accent-soft);
     --wb-accent-soft: var(--wb-public-accent-soft);
     --wb-accent-softer: var(--wb-public-accent-softer);
     --wb-accent-border: var(--wb-public-accent-border);
@@ -38,6 +38,13 @@
     --wb-public-tone-highlight: var(--wb-public-tone-highlight-value);
     --wb-public-tone-bold: var(--wb-public-tone-bold-value);
     --wb-public-tone-quiet: var(--wb-public-muted);
+    /* Feed the shipped wb-icon-tone-* axis from the public tone palette. */
+    --wb-icon-tone-soft: var(--wb-public-tone-soft);
+    --wb-icon-tone-brand: var(--wb-public-tone-brand);
+    --wb-icon-tone-accent: var(--wb-public-tone-accent);
+    --wb-icon-tone-highlight: var(--wb-public-tone-highlight);
+    --wb-icon-tone-bold: var(--wb-public-tone-bold);
+    --wb-icon-tone-quiet: var(--wb-public-tone-quiet);
 }
 
 body[data-wb-public-theme="canvas"],
@@ -234,84 +241,10 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     }
 }
 
+/* Deliberate host theming choice: body text links use the contrast-safe
+   accent-text tone instead of the raw accent that shipped `a` rules use. */
 :is(body[data-wb-public-theme], [data-wb-public-theme-preview]) a:not(.wb-btn):not(.wb-navbar-link):not(.wb-dropdown-item):not(.wb-sidebar-link) {
     color: var(--wb-public-accent-text);
-}
-
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-card {
-    background: var(--wb-public-surface);
-    border-color: var(--wb-public-border);
-}
-
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-card-muted,
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-badge {
-    background: var(--wb-public-surface-muted);
-    border-color: var(--wb-public-border);
-}
-
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-card-accent,
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-callout-accent {
-    background: var(--wb-public-accent-softer);
-    border-color: var(--wb-public-accent-border);
-}
-
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-btn-primary {
-    background: var(--wb-public-accent);
-    border-color: var(--wb-public-accent);
-    color: var(--wb-public-accent-on);
-}
-
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-btn-primary:hover {
-    background: var(--wb-public-accent-hover);
-    border-color: var(--wb-public-accent-hover);
-}
-
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-navbar,
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-sidebar {
-    background: var(--wb-public-surface);
-    border-color: var(--wb-public-border);
-    color: var(--wb-public-text);
-}
-
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-text-muted,
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) .wb-muted {
-    color: var(--wb-public-muted) !important;
-}
-
-.wb-cms-navbar-navigation {
-    display: contents;
-}
-
-.wb-cms-navbar-mobile-toggle {
-    display: none;
-}
-
-.wb-cms-navbar-mobile-menu {
-    min-width: min(20rem, calc(100vw - 2rem));
-    max-width: calc(100vw - 2rem);
-    margin-top: var(--wb-s2);
-}
-
-.wb-cms-navbar-mobile-nav {
-    display: grid;
-    gap: var(--wb-s1);
-    padding: 0;
-    margin: 0;
-    list-style: none;
-}
-
-.wb-cms-navbar-mobile-nav .wb-dropdown-item {
-    width: 100%;
-}
-
-.wb-cms-navbar-mobile-group-label {
-    display: block;
-    padding: 0.5rem 0.75rem;
-    font-weight: 600;
-}
-
-.wb-cms-navbar-mobile-group-label.is-active {
-    color: inherit;
 }
 
 .wb-public-footer .wb-footer-cookie-settings-link {
@@ -319,81 +252,3 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     min-height: auto;
 }
 
-.wb-card-footer > .wb-cluster {
-    width: 100%;
-}
-
-.wb-cms-cluster-gap-none {
-    gap: 0;
-}
-
-.wb-cms-items-stretch {
-    align-items: stretch !important;
-}
-
-.wb-icon-tone-soft {
-    background-color: var(--wb-public-tone-soft, var(--wb-muted, var(--wb-color-muted, #64748b)));
-    color: var(--wb-public-tone-soft, var(--wb-muted, var(--wb-color-muted, #64748b)));
-}
-
-.wb-icon-tone-brand {
-    background-color: var(--wb-public-tone-brand, var(--wb-accent, var(--wb-color-primary, #2563eb)));
-    color: var(--wb-public-tone-brand, var(--wb-accent, var(--wb-color-primary, #2563eb)));
-}
-
-.wb-icon-tone-accent {
-    background-color: var(--wb-public-tone-accent, var(--wb-accent, var(--wb-color-accent, #2563eb)));
-    color: var(--wb-public-tone-accent, var(--wb-accent, var(--wb-color-accent, #2563eb)));
-}
-
-.wb-icon-tone-highlight {
-    background-color: var(--wb-public-tone-highlight, #7c3aed);
-    color: var(--wb-public-tone-highlight, #7c3aed);
-}
-
-.wb-icon-tone-bold {
-    background-color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));
-    color: var(--wb-public-tone-bold, var(--wb-color-heading, #0f172a));
-}
-
-.wb-icon-tone-quiet {
-    background-color: var(--wb-public-tone-quiet, var(--wb-muted, var(--wb-color-muted, #64748b)));
-    color: var(--wb-public-tone-quiet, var(--wb-muted, var(--wb-color-muted, #64748b)));
-    opacity: 0.72;
-}
-
-.wb-cms-public-card-header-with-icon {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--wb-s3);
-}
-
-.wb-cms-public-card-header-with-icon > .wb-icon {
-    flex: 0 0 auto;
-    margin-top: 0.125rem;
-}
-
-.wb-link-list-item > .wb-icon {
-    flex: 0 0 auto;
-    margin-top: 0.125rem;
-}
-
-.wb-form-check {
-    position: absolute;
-    inset-inline-start: -10000px;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-}
-
-@media (max-width: 767px) {
-    .wb-cms-navbar-mobile-toggle {
-        display: inline-flex;
-    }
-
-    .wb-cms-navbar-navigation > .wb-navbar-links {
-        display: none;
-    }
-}
