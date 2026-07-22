@@ -242,13 +242,13 @@ The block owns its root `<div>`. It renders child blocks directly. Column and ga
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
-| settings.gap | none | `clusterGapClass()` adds `wb-cms-cluster-gap-none`. |
+| settings.gap | none | `clusterGapClass()` adds `wb-gap-0` (shipped utility). |
 | settings.gap | xs | `clusterGapClass()` adds `wb-gap-1`. |
 | settings.gap | sm or 2 | `clusterGapClass()` adds `wb-cluster-2`. |
 | settings.gap | md or 4 | `clusterGapClass()` adds `wb-cluster-4`. |
 | settings.gap | lg or 6 | `clusterGapClass()` adds `wb-cluster-6`. |
 | settings.alignment | center/end/between | `clusterAlignmentClass()` adds `wb-cluster-center`, `wb-cluster-end`, or `wb-cluster-between`. |
-| settings.items_alignment | start/end/stretch | `clusterAlignClass()` adds `wb-items-start`, `wb-items-end`, or `wb-cms-items-stretch`; `center` adds no class. |
+| settings.items_alignment | start/end/stretch | `clusterAlignClass()` adds `wb-items-start`, `wb-items-end`, or `wb-items-stretch` (all shipped utilities); `center` adds no class. |
 | settings.wrap | nowrap | `clusterWrapClass()` adds `wb-flex-nowrap`. |
 | settings.width | full | `clusterWidthClass()` adds `wb-w-full`. |
 
@@ -474,14 +474,14 @@ The block owns its root `<article>`. Normal structure is child `card_header`, `c
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-card-header`, optional `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`.
+`wb-card-header`, optional `wb-icon-card` (shipped icon-row layout, added when an icon renders), optional `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}` (shipped tone axis since UI 2.15.0, fed by the public theme's `--wb-icon-tone-*` tokens).
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | settings.layout_name | any stored value | Admin/layout metadata only; no public class effect in the current renderer. |
-| settings.icon_slug | active content icon catalog slug | Renders a decorative icon before child content; inactive or unknown slugs render nothing. |
+| settings.icon_slug | active content icon catalog slug | Renders a decorative icon before child content and adds `wb-icon-card` to the header root; inactive or unknown slugs render nothing. |
 | settings.icon_tone | default/soft/brand/accent/highlight/bold/quiet | Adds `wb-icon-tone-{tone}` for non-default visual tones when an active icon renders; unknown tones and missing icons produce no tone class. |
 | child blocks | published children | Rendered inside the card or region root. |
 | legacy card fields | older Card rows without region children | Card parent can render a minimal legacy header/body/footer fallback. |
@@ -763,7 +763,7 @@ The block owns its `<figure>` root and emits nothing without media. Optional lin
 ### Rendered HTML
 
 ```html
-<div class="wb-gallery wb-gallery--grid wb-gallery--cols-3 wb-gallery--gap-4 wb-gallery--aspect-16-9"
+<div class="wb-gallery wb-gallery--cols-3 wb-gallery--gap-md wb-gallery--aspect-16-9"
   data-wb-public-block-type="gallery"
   data-wb-gallery-variant="grid"
   data-wb-gallery-captions="below"
@@ -779,23 +779,32 @@ The block owns its `<figure>` root and emits nothing without media. Optional lin
 </div>
 ```
 
+Overlay caption modes move the caption *inside* the trigger, with meta nested inside the caption scrim (shipped UI 2.14+ contract):
+
+```html
+<a href="/media/full.jpg" class="wb-gallery-trigger" data-wb-gallery-target="#wb-gallery-viewer-10">
+  <img src="/media/thumb.jpg" alt="Alt" class="wb-gallery-media">
+  <div class="wb-gallery-caption">Overlay title<span class="wb-gallery-meta">Overlay text</span></div>
+</a>
+```
+
 ### Main CSS / WebBlocks UI classes
 
-`wb-gallery`, `wb-gallery--{variant}`, `wb-gallery--cols-{n}`, `wb-gallery--gap-{n}`, `wb-gallery--aspect-{ratio}`, `wb-gallery-grid`, `wb-gallery-item`, `wb-gallery-trigger` or `wb-gallery-link`, `wb-gallery-media`, `wb-gallery-caption`, `wb-gallery-caption-title`, `wb-gallery-caption-meta`.
+All shipped by WebBlocks UI (no CMS-local gallery CSS since 1.40.25): `wb-gallery`, `wb-gallery--masonry`/`wb-gallery--collage`, `wb-gallery--cols-{n}`, `wb-gallery--gap-{value}`, `wb-gallery--aspect-{ratio}`, `wb-gallery--captions-overlay`/`wb-gallery--captions-hover`, `wb-gallery--overlay-solid`/`wb-gallery--overlay-none`, `wb-gallery-grid`, `wb-gallery-item`, `wb-gallery-trigger`, `wb-gallery-media`, `wb-gallery-caption`, `wb-gallery-meta`, `wb-gallery-viewer-title`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
-| settings.variant | grid/masonry/masonary/collage | `galleryVariant()` adds `wb-gallery--grid`, `wb-gallery--masonry`, or `wb-gallery--collage`; `masonary` normalizes to `masonry`. |
+| settings.variant | grid/masonry/masonary/collage | `galleryVariant()` adds `wb-gallery--masonry` or `wb-gallery--collage`; `grid` (default) adds no variant class; `masonary` normalizes to `masonry`. |
 | settings.columns | 2/3/4/5 | `galleryColumns()` adds `wb-gallery--cols-{n}`; default is `3`. |
 | settings.gap | none/sm/md/lg | `galleryGap()` adds `wb-gallery--gap-{value}`; default is `md`. |
-| settings.aspect_ratio | auto/square/4:3/16:9/portrait | `galleryAspectRatio()` adds `wb-gallery--aspect-{value}` with `:` rendered as `-`. |
-| settings.captions_mode | hidden/below/overlay/on-hover | Controls below captions or overlay caption markup; default is `below`. |
-| settings.overlay_mode | none/gradient/solid | Controls overlay caption modifier; default is `gradient`. |
-| settings.lightbox_enabled | true/default | Uses `.wb-gallery-trigger` and registers `gallery-viewer` in `PublicOverlayRegistry`. |
-| settings.lightbox_enabled | false | Uses `.wb-gallery-link` and no viewer modal. |
-| settings.viewer_title | text/null | Renders a lightbox-only `.wb-gallery-viewer-title` above the viewer toolbar when present. |
+| settings.aspect_ratio | auto/square/4:3/16:9/portrait | `galleryAspectRatio()` adds `wb-gallery--aspect-{value}` with `:` rendered as `-`; default is `auto`. |
+| settings.captions_mode | hidden/below/overlay/on-hover | `below` (default) renders a `figcaption.wb-gallery-caption` sibling; `overlay`/`on-hover` add `wb-gallery--captions-overlay`/`wb-gallery--captions-hover` and move the caption (with nested `wb-gallery-meta`) inside the trigger; `hidden` renders no captions. |
+| settings.overlay_mode | none/gradient/solid | With overlay/on-hover captions: `gradient` (default) adds no class; `solid`/`none` add `wb-gallery--overlay-solid`/`wb-gallery--overlay-none`. |
+| settings.lightbox_enabled | true/default | Adds `data-wb-gallery-*` viewer attributes to the trigger and registers `gallery-viewer` in `PublicOverlayRegistry`. |
+| settings.lightbox_enabled | false | Same `.wb-gallery-trigger` class, plain `href` navigation, no viewer attributes and no modal (the shipped runtime ignores triggers without a modal target). |
+| settings.viewer_title | text/null | Renders a lightbox-only `.wb-gallery-viewer-title` (shipped class) above the viewer toolbar when present. |
 
 ### Use for / Avoid for
 
@@ -805,7 +814,7 @@ Avoid for: section intro copy; place Content Header/Rich Text before Gallery.
 
 ### Notes
 
-The block owns its gallery root and registers `gallery-viewer` HTML in `PublicOverlayRegistry` when lightbox is enabled. Variants, columns, gap, aspect ratio, captions, overlay mode, and lightbox settings change attributes/classes. Grid uses equal CSS grid columns, Masonry uses CSS columns with natural image heights, and Collage enlarges the first item in each visual group. Grid and Masonry can look similar when the selected images have similar aspect ratios. Legacy settings-based items remain readable. Technical migration notes such as `Imported from ... during ... migration` are ignored when public Gallery output falls back to media or legacy item captions, overlay meta, and lightbox metadata.
+The block owns its gallery root and registers `gallery-viewer` HTML in `PublicOverlayRegistry` when lightbox is enabled. Variants, columns, gap, aspect ratio, captions, overlay mode, and lightbox settings change attributes/classes — all resolved by the shipped `wb-gallery` pattern (UI 2.14+). Grid uses equal CSS grid columns, Masonry uses CSS columns with natural image heights, and Collage spans every 5th item across two tracks and rows. Grid and Masonry can look similar when the selected images have similar aspect ratios. Legacy settings-based items remain readable. Technical migration notes such as `Imported from ... during ... migration` are ignored when public Gallery output falls back to media or legacy item captions, overlay meta, and lightbox metadata.
 
 ## Columns (`columns`)
 
@@ -1185,28 +1194,33 @@ The block does not own the outer navbar shell. Saved URL wins, then site home pa
 ### Rendered HTML
 
 ```html
-<div class="wb-public-block" data-wb-public-block-type="navbar-navigation">
-  <div class="wb-cms-navbar-navigation">
-    <div class="wb-dropdown wb-dropdown-end wb-cms-navbar-mobile-toggle">
-      <button class="wb-navbar-toggle wb-cms-navbar-mobile-toggle-button" data-wb-toggle="dropdown">
-        <i class="wb-icon wb-icon-menu" aria-hidden="true"></i>
-      </button>
-      <div class="wb-dropdown-menu wb-cms-navbar-mobile-menu">
-        <ul class="wb-navbar-nav wb-cms-navbar-mobile-nav wb-navbar-nav--active-underline">...</ul>
-      </div>
-    </div>
-    <div class="wb-navbar-links">
-      <ul class="wb-navbar-nav wb-navbar-nav--active-underline">
-        <li class="wb-navbar-nav-item">
-          <a href="/" class="wb-navbar-link is-active" aria-current="page">Home</a>
-        </li>
-      </ul>
-    </div>
-  </div>
+<button type="button" class="wb-navbar-toggle" data-wb-collapse="wb-navbar-drawer-12"
+  aria-expanded="false" aria-controls="wb-navbar-drawer-12" aria-label="Toggle navigation"
+  data-wb-public-block-type="navbar-navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<div class="wb-navbar-links">
+  <ul class="wb-navbar-nav wb-navbar-nav--active-underline">
+    <li class="wb-navbar-nav-item">
+      <a href="/" class="wb-navbar-link is-active" aria-current="page">Home</a>
+    </li>
+  </ul>
 </div>
 ```
 
-Dropdown group variant:
+Mobile menu (shipped `wb-navbar-drawer` contract, UI 2.15+): the block pushes the drawer through `PublicNavbarDrawerRegistry`, and the Navbar container renders it directly after its own `</nav>`:
+
+```html
+</nav>
+<div class="wb-navbar-drawer" id="wb-navbar-drawer-12" aria-label="Primary navigation">
+  <a href="/" class="wb-navbar-link is-active" aria-current="page">Home</a>
+  <span class="wb-text-sm wb-text-muted">Group label</span>
+  <a href="/child" class="wb-navbar-link">Child</a>
+</div>
+```
+
+Desktop dropdown group variant:
 
 ```html
 <li class="wb-navbar-nav-item wb-dropdown">
@@ -1221,14 +1235,14 @@ Dropdown group variant:
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-cms-navbar-navigation`, `wb-dropdown`, `wb-dropdown-end`, `wb-cms-navbar-mobile-toggle`, `wb-navbar-toggle`, `wb-cms-navbar-mobile-toggle-button`, `wb-icon`, `wb-icon-menu`, `wb-dropdown-menu`, `wb-cms-navbar-mobile-menu`, `wb-navbar-nav`, `wb-cms-navbar-mobile-nav`, `wb-navbar-links`, `wb-navbar-nav-item`, `wb-navbar-link`, `wb-dropdown-item`, `wb-navbar-nav--active-underline`, `wb-navbar-nav--active-pill`, `wb-navbar-nav--active-dot`, `wb-navbar-nav--active-background`, `wb-navbar-nav--active-none`, `is-active`.
+All shipped by WebBlocks UI (the `wb-cms-navbar-*` layer was deleted in 1.40.26): `wb-navbar-toggle`, `wb-navbar-drawer`, `wb-navbar-links`, `wb-navbar-nav`, `wb-navbar-nav-item`, `wb-navbar-link`, `wb-dropdown`, `wb-dropdown-menu`, `wb-dropdown-item`, `wb-icon`, `wb-icon-chevron-down`, `wb-text-sm`, `wb-text-muted`, `wb-navbar-nav--active-underline`, `wb-navbar-nav--active-pill`, `wb-navbar-nav--active-dot`, `wb-navbar-nav--active-background`, `wb-navbar-nav--active-none`, `is-active`. The toggle is wired through the generic `data-wb-collapse` runtime; the shipped stylesheet hides `wb-navbar-links` and shows the toggle below 769px and force-hides the drawer above 768px.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | settings.menu_key | known NavigationItem menu key | Selects the CMS navigation tree to render. |
-| settings.active_indicator | underline/default | Adds `wb-navbar-nav--active-underline` to desktop and mobile navbar nav lists. |
+| settings.active_indicator | underline/default | Adds `wb-navbar-nav--active-underline` to the desktop navbar nav list; drawer links carry only `is-active`. |
 | settings.active_indicator | pill | Adds `wb-navbar-nav--active-pill`. |
 | settings.active_indicator | dot | Adds `wb-navbar-nav--active-dot`. |
 | settings.active_indicator | background | Adds `wb-navbar-nav--active-background`. |
@@ -1250,7 +1264,7 @@ Avoid for: manual button rows; use Button Link or Cluster.
 
 ### Notes
 
-The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees from the selected menu key. It does not own the outer navbar shell. It uses WebBlocks UI dropdown hooks for group menus and the mobile menu.
+The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees from the selected menu key. It does not own the outer navbar shell. Desktop group menus use WebBlocks UI dropdown hooks; the mobile menu follows the shipped `wb-navbar-drawer` contract — the block pushes the drawer via `PublicNavbarDrawerRegistry` and the Navbar container renders it after `</nav>`, with the toggle wired through the generic `data-wb-collapse` runtime. Drawer group items flatten to a muted label row followed by their child links.
 
 ## Header Actions (`header-actions`)
 
@@ -1964,7 +1978,7 @@ The block does not own the slot-level root. The shared variant controls the aler
         <input type="hidden" name="source_url" value="/contact">
         <input type="hidden" name="submitted_at" value="1770000000">
         <input type="hidden" name="_form_check_name" value="signed-generated-field-name">
-        <div class="wb-form-check" inert aria-hidden="true">
+        <div class="wb-sr-only" inert aria-hidden="true">
           <label for="contact-form-check-1">Leave this field empty</label>
           <input id="contact-form-check-1" type="text" name="form_check_generatedtoken" tabindex="-1" autocomplete="off">
         </div>
@@ -2011,7 +2025,7 @@ Avoid for: raw HTML forms or third-party embeds unless reviewed as Trusted HTML.
 
 ### Notes
 
-The renderer includes hidden fields, CSRF, `.wb-form-check` anti-spam markup with `inert` and `aria-hidden="true"`, targeted validation errors, and posts to `contact-messages.store`. The old `website` field is no longer the public renderer contract.
+The renderer includes hidden fields, CSRF, visually-hidden (`wb-sr-only`) anti-spam markup with `inert` and `aria-hidden="true"`, targeted validation errors, and posts to `contact-messages.store`. The old `website` field is no longer the public renderer contract.
 
 ## Breadcrumb (`breadcrumb`)
 
