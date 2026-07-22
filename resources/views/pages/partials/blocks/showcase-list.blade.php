@@ -101,7 +101,7 @@
                 @endphp
 
                 @if ($itemUrl)
-                    <a href="{{ $itemUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $item['url_label'] ?? $itemUrl }}</a>
+                    <a href="{{ $itemUrl }}" target="_blank" rel="noopener noreferrer">{{ $item['url_label'] ?? $itemUrl }}</a>
                 @endif
             </div>
         </article>

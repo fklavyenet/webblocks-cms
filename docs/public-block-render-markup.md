@@ -272,7 +272,7 @@ The block owns its root `<div>`. It renders child blocks directly. This is the n
 
 ```html
 <header class="wb-content-header wb-text-center" data-wb-public-block-type="content-header">
-  <div class="wb-cms-public-kicker">
+  <div class="wb-cluster wb-gap-2">
     <i class="wb-icon wb-icon-sparkles" aria-hidden="true"></i>
     <span class="wb-badge wb-badge-info">Beta</span>
   </div>
@@ -288,7 +288,7 @@ The block owns its root `<div>`. It renders child blocks directly. This is the n
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-content-header`, optional alignment class, `wb-cms-public-kicker`, `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, `wb-badge`, `wb-content-title`, `wb-content-subtitle`, `wb-content-meta`, `wb-content-meta-divider`.
+`wb-content-header`, optional alignment class, `wb-cluster` with `wb-gap-2`, `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, `wb-badge`, `wb-content-title`, `wb-content-subtitle`, `wb-content-meta`, `wb-content-meta-divider`.
 
 ### Settings -> class / markup map
 
@@ -649,7 +649,7 @@ The block does not own its public root according to `Block::ownsPublicRoot()`, s
 
 ```html
 <div class="wb-public-block" data-wb-public-block-type="rich-text">
-  <div class="wb-rich-text wb-rich-text-readable">
+  <div class="wb-rich-text">
     <p>Safe <strong>formatted</strong> copy.</p>
   </div>
 </div>
@@ -657,13 +657,13 @@ The block does not own its public root according to `Block::ownsPublicRoot()`, s
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-rich-text`, `wb-rich-text-readable`, plus generic `wb-public-block`.
+`wb-rich-text`, plus generic `wb-public-block`.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
-| content | safe rich HTML | `SafeRichTextRenderer` outputs sanitized content inside `wb-rich-text wb-rich-text-readable`. |
+| content | safe rich HTML | `SafeRichTextRenderer` outputs sanitized content inside `wb-rich-text`. |
 | content | empty after sanitization | Renderer emits nothing. |
 | unsupported HTML/classes | present in content | Stripped by the safe renderer rather than mapped to public classes. |
 
@@ -969,19 +969,21 @@ The renderer replicates the block, filters children to `feature-item` and legacy
 ```html
 <div class="wb-card">
   <div class="wb-card-body wb-stack wb-gap-2">
-    <div class="wb-cms-public-kicker">
+    <div class="wb-icon-card wb-items-start">
       <i class="wb-icon wb-icon-sparkles wb-icon-tone-brand" aria-hidden="true"></i>
-      <span class="wb-badge wb-badge-info">Badge</span>
+      <div class="wb-stack wb-gap-2">
+        <span class="wb-badge wb-badge-info">Badge</span>
+        <strong>Feature title</strong>
+        <p class="wb-m-0">Feature copy.</p>
+      </div>
     </div>
-    <strong>Feature title</strong>
-    <p class="wb-m-0">Feature copy.</p>
   </div>
 </div>
 ```
 
 ### Main CSS / WebBlocks UI classes
 
-Delegates to Column Item cards variant: `wb-card`, `wb-card-body`, `wb-stack`, `wb-gap-2`, `wb-cms-public-kicker`, optional `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, optional `wb-badge`, `wb-m-0`.
+Delegates to Column Item cards variant: `wb-card`, `wb-card-body`, `wb-stack`, `wb-gap-2`, `wb-icon-card`, `wb-items-start`, optional `wb-icon wb-icon-{slug}`, optional `wb-icon-tone-{tone}`, optional `wb-badge`, `wb-m-0`.
 
 ### Settings -> class / markup map
 
@@ -1260,12 +1262,13 @@ The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees
 
 ```html
 <div class="wb-public-block" data-wb-public-block-type="header-actions">
-  <div class="wb-cluster wb-cluster-2 wb-cluster-end" data-wb-header-actions>
-    <div class="wb-topbar-actions">
-      <a class="wb-topbar-action" data-wb-public-search-open>
+  <div class="wb-navbar-end wb-ms-auto" data-wb-header-actions>
+    <div class="wb-cluster">
+      <a href="/search" class="wb-btn wb-btn-ghost wb-btn-icon" data-wb-public-search-open>
         <i class="wb-icon wb-icon-search" aria-hidden="true"></i>
       </a>
-      <button class="wb-topbar-action" data-wb-mode-cycle>
+      <button type="button" class="wb-btn wb-btn-ghost wb-btn-icon" data-wb-mode-cycle
+              data-wb-mode-label-light="Light mode" data-wb-mode-label-dark="Dark mode" data-wb-mode-label-auto="Auto mode">
         <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
       </button>
     </div>
@@ -1275,7 +1278,7 @@ The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-cluster`, `wb-cluster-2`, `wb-cluster-end`, `wb-topbar-actions`, `wb-topbar-action`, `wb-icon`, `wb-icon-search`, `wb-icon-sun-moon`.
+`wb-navbar-end`, `wb-ms-auto`, `wb-cluster`, `wb-btn`, `wb-btn-ghost`, `wb-btn-icon`, `wb-icon`, `wb-icon-search`, `wb-icon-sun-moon`. The mode toggle carries host-localized `data-wb-mode-label-light|dark|auto` labels.
 
 ### Settings -> class / markup map
 
@@ -1354,15 +1357,15 @@ The renderer emits nothing if the route resolver cannot produce a search path. `
   <div class="wb-stat">
     <div class="wb-stat-label">Label</div>
     <div class="wb-stat-value">Value</div>
-    <div class="wb-stat-detail">Detail</div>
-    <div class="wb-stat-detail"><a href="/more" class="wb-link">Learn more</a></div>
+    <div class="wb-stat-meta">Detail</div>
+    <div class="wb-stat-meta"><a href="/more">Learn more</a></div>
   </div>
 </div>
 ```
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-stat`, `wb-stat-label`, `wb-stat-value`, `wb-stat-detail`, `wb-link`, plus generic `wb-public-block`.
+`wb-stat`, `wb-stat-label`, `wb-stat-value`, `wb-stat-meta`, plus generic `wb-public-block`.
 
 ### Settings -> class / markup map
 
@@ -1370,7 +1373,7 @@ The renderer emits nothing if the route resolver cannot produce a search path. `
 | --- | --- | --- |
 | subtitle | text | Renders `.wb-stat-label`. |
 | title | text | Renders `.wb-stat-value`. |
-| content | text | Renders `.wb-stat-detail`. |
+| content | text | Renders `.wb-stat-meta`. |
 | url | safe URL | Adds `Learn more` link with `.wb-link`. |
 
 ### Use for / Avoid for
@@ -1824,7 +1827,7 @@ Footer/legal menu variant:
 
 ```html
 <ul class="wb-stack wb-gap-1">
-  <li class="wb-stack wb-gap-1"><a href="/privacy" class="wb-link">Privacy</a></li>
+  <li class="wb-stack wb-gap-1"><a href="/privacy">Privacy</a></li>
 </ul>
 ```
 
@@ -2368,10 +2371,8 @@ This is a managed child action block for Hero/CTA. It is not in the current publ
 
 ```html
 <div class="wb-alert wb-alert-info">
-  <div>
-    <div class="wb-alert-title">Title</div>
-    <div>Content</div>
-  </div>
+  <h3 class="wb-alert-title">Title</h3>
+  <p>Content</p>
 </div>
 ```
 
@@ -2532,7 +2533,7 @@ This is an internal helper partial, not a standalone published block. It filters
         <img src="/media/card.jpg" alt="Card image">
         <strong>Card title</strong>
         <p class="wb-m-0">Card content.</p>
-        <a href="/target" class="wb-link">Read more</a>
+        <a href="/target">Read more</a>
       </div>
     </div>
   </div>
@@ -2579,7 +2580,7 @@ This is a legacy/compatibility renderer backed by `settings.items`. The grid cla
     </div>
     <div class="wb-stack wb-gap-1 wb-public-contact-meta">
       <strong>Email</strong>
-      <a href="mailto:hello@example.test" class="wb-link">hello@example.test</a>
+      <a href="mailto:hello@example.test">hello@example.test</a>
     </div>
   </div>
 </section>
@@ -2844,7 +2845,7 @@ This is a legacy/compatibility metric renderer. The current published catalog us
           </figure>
         </div>
       </section>
-      <a href="/project" class="wb-link">View project</a>
+      <a href="/project">View project</a>
     </div>
   </article>
 </section>

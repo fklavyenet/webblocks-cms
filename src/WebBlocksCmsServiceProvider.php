@@ -468,7 +468,6 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms/js/admin/slot-block-tree.js',
     'cms/js/admin-sortable-list.js',
     'cms/js/public/public-search-modal.js',
-    'cms/js/public/header-actions.js',
     'cms/js/public/sidebar-navigation.js',
     'cms/js/privacy-consent-sync.js',
     'cms/package-boundary.json',
@@ -503,7 +502,6 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms/js/admin/slot-block-tree.js',
     'cms/js/admin-sortable-list.js',
     'cms/js/public/public-search-modal.js',
-    'cms/js/public/header-actions.js',
     'cms/js/public/sidebar-navigation.js',
     'cms/js/privacy-consent-sync.js',
   ];

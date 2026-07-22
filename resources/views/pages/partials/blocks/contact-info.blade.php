@@ -27,7 +27,7 @@
                 <strong>{{ $item['label'] ?? '' }}</strong>
 
                 @if ($itemUrl)
-                    <a href="{{ $itemUrl }}" @if (($item['target'] ?? null) === '_blank') target="_blank" rel="noopener noreferrer" @endif class="wb-link">
+                    <a href="{{ $itemUrl }}" @if (($item['target'] ?? null) === '_blank') target="_blank" rel="noopener noreferrer" @endif>
                         {{ $item['value'] ?? $itemUrl }}
                     </a>
                 @else

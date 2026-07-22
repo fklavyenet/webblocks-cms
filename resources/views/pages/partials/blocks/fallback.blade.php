@@ -137,7 +137,7 @@
                                         <p>{{ $item['content'] }}</p>
                                     @endif
                                     @if (! empty($item['url']) && ! empty($item['url_label']))
-                                        <a href="{{ $item['url'] }}" class="wb-link">{{ $item['url_label'] }}</a>
+                                        <a href="{{ $item['url'] }}">{{ $item['url_label'] }}</a>
                                     @endif
                                 </div>
                             </div>
@@ -249,7 +249,7 @@
     @case('breadcrumb')
         <nav aria-label="Breadcrumb">
             <ol class="wb-cluster wb-cluster-2 wb-text-sm">
-                <li><a href="{{ $homePath }}" class="wb-link">Home</a></li>
+                <li><a href="{{ $homePath }}">Home</a></li>
                 <li>/</li>
                 <li>{{ $page?->title }}</li>
             </ol>
@@ -340,7 +340,7 @@
     @case('social-links')
         <div class="wb-cluster wb-cluster-2">
             @foreach ($items as $item)
-                <a href="{{ $item['url'] ?? '#' }}" class="wb-link" target="_blank" rel="noopener noreferrer">{{ $item['title'] ?? 'Link' }}</a>
+                <a href="{{ $item['url'] ?? '#' }}" target="_blank" rel="noopener noreferrer">{{ $item['title'] ?? 'Link' }}</a>
             @endforeach
         </div>
         @break
@@ -420,10 +420,10 @@
                     <p>{{ $block->content }}</p>
                 @endif
                 @if ($block->url)
-                    <a href="{{ $block->url }}" class="wb-link">{{ $block->url }}</a>
+                    <a href="{{ $block->url }}">{{ $block->url }}</a>
                 @endif
                 @if ($assetUrl)
-                    <a href="{{ $assetUrl }}" class="wb-link">{{ $asset->title ?: $asset->filename }}</a>
+                    <a href="{{ $assetUrl }}">{{ $asset->title ?: $asset->filename }}</a>
                 @endif
             </div>
         </div>

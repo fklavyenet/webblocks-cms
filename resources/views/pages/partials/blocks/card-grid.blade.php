@@ -50,7 +50,7 @@
             @endif
 
             @if (! empty($item['url']) && ! empty($item['url_label']))
-              <a href="{{ $item['url'] }}" class="wb-link">{{ $item['url_label'] }}</a>
+              <a href="{{ $item['url'] }}">{{ $item['url_label'] }}</a>
             @endif
           </div>
         </div>

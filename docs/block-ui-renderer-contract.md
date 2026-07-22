@@ -16,9 +16,9 @@ Phase 1 defines the intended public rendering contract between CMS layouts, slot
 
 Verified against the actual shipped assets used by CMS:
 
-- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.11.0/packages/webblocks/dist/webblocks-ui.css`
-- Icons CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.11.0/packages/webblocks/dist/webblocks-icons.css`
-- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.11.0/packages/webblocks/dist/webblocks-ui.js`
+- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.13.0/packages/webblocks/dist/webblocks-ui.css`
+- Icons CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.13.0/packages/webblocks/dist/webblocks-icons.css`
+- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.13.0/packages/webblocks/dist/webblocks-ui.js`
 
 Confirmed primitives and patterns:
 
@@ -33,7 +33,6 @@ Confirmed primitives and patterns:
 - `wb-gallery`
 - `wb-alert`
 - `wb-rich-text`
-- `wb-rich-text-readable`
 - `wb-rich-text-compact`
 - `wb-rich-text-loose`
 - `wb-btn`
@@ -83,7 +82,7 @@ Public pages now use explicit layout composition modes:
 | footer slot | `wb-section`, `wb-container`, `wb-grid`, link-list/nav primitives | acceptable | P0 shell/layout | keep footer on shipped layout primitives and avoid extra custom classes |
 | `heading` | legacy removed | retired | P0 removed | do not reintroduce; `header` is the canonical heading/title block |
 | `text` | body copy in `wb-stack` rhythm | acceptable | P2 content quality | keep simple output and avoid bespoke typography wrappers |
-| `rich-text` | `wb-rich-text wb-rich-text-readable` | acceptable | P2 content quality | keep safe body copy scoped to the shipped rich text primitive |
+| `rich-text` | `wb-rich-text` | acceptable | P2 content quality | keep safe body copy scoped to the shipped rich text primitive |
 | `html` | trusted raw HTML in public block wrapper | acceptable | P3 later/custom | keep restricted to trusted editorial/admin usage and hoist any shipped overlay content into the shared page overlay root |
 | `section` | `wb-section`, optional `wb-promo` | acceptable | P1 public marketing/docs | keep default section stable and reserve promo semantics for explicit variants |
 | `columns` | `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4`, `wb-link-list` | acceptable | P1 public marketing/docs | keep parent-driven variants explicit and avoid reintroducing forced wrapper cards |
@@ -222,7 +221,7 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `content`
 - Translatable fields: `content`
 - Shared fields: none
-- Intended WebBlocks UI output: sanitized body copy wrapped in `wb-rich-text wb-rich-text-readable` using the shipped WebBlocks UI rich text primitive.
+- Intended WebBlocks UI output: sanitized body copy wrapped in `wb-rich-text` using the shipped WebBlocks UI rich text primitive.
 - Current implementation: acceptable
 - Storage model: Rich Text stores a restricted safe HTML fragment, not Markdown markers. Allowed tags are `p`, `strong`, `em`, `code`, `a[href]`, `ul`, `ol`, `li`, and `br` when needed. Classes, styles, event attributes, headings, media, tables, buttons, and unsupported HTML are stripped during sanitization.
 - Admin behavior: the admin editor is a dependency-free `contenteditable` surface synchronized to a hidden form field. It is intentionally limited to body-copy formatting and does not replace Header, Button, Media, Table, Layout, HTML, or other dedicated block types.

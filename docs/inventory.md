@@ -362,7 +362,7 @@ The current published core catalog contains 51 rows:
 | Editable content | `translations.content` through the safe Rich Text editor and sanitizer. |
 | Settings and variants | None. Unsupported tags, attributes, and classes are stripped. |
 | Children/media | None. |
-| HTML | Generic wrapper plus `<div class="wb-rich-text wb-rich-text-readable">[sanitized editorial markup]</div>`. |
+| HTML | Generic wrapper plus `<div class="wb-rich-text">[sanitized editorial markup]</div>`. |
 | Example appearance | Several paragraphs with safe inline emphasis, links, and simple lists. |
 | Avoid | Layout markup, `<style>`, scripts, iframes, forms, buttons, tables, or a complete page. |
 
@@ -451,7 +451,7 @@ The current published core catalog contains 51 rows:
 | Editable content | `translations.subtitle` label, `translations.title` value, `translations.content` detail; shared URL. |
 | Settings and variants | None. |
 | Children/media | None. |
-| HTML | Generic wrapper plus `.wb-stat`, `.wb-stat-label`, `.wb-stat-value`, `.wb-stat-detail`, and optional Learn more link. |
+| HTML | Generic wrapper plus `.wb-stat`, `.wb-stat-label`, `.wb-stat-value`, `.wb-stat-meta`, and optional Learn more link. |
 | Example appearance | “24h” value with “Dispatch” label and supporting detail. |
 | Avoid | Decorative marketing card where arbitrary nested content is needed. |
 
@@ -754,7 +754,7 @@ The current published core catalog contains 51 rows:
 | Editable content | Optional shared single-language `settings.title`; normal visitor copy is product-translated. |
 | Settings and variants | `scale`: fixed 5; `allow_change`: boolean; `show_summary`: boolean. |
 | Children/media | Uses `content_ratings`; no children. |
-| HTML | Root-owning `<section class="wb-card wb-public-rating wb-rating">` with optional H3, partially filled `.wb-rating-stars`, summary, and no-JS `.wb-rating-input` submit buttons. |
+| HTML | Root-owning `<section class="wb-card">` with optional H3, partially filled `.wb-rating-stars`, summary, and no-JS `.wb-rating-input` submit buttons. |
 | Example appearance | Five-star page rating with average and response count. |
 | Note | `allow_change` is enforced by the submission controller rather than by hiding the form. |
 
