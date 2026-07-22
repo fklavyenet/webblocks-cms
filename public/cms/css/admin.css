@@ -9,28 +9,16 @@
     --wb-cms-brand-primary-hover: #0B6482;
     --wb-cms-brand-soft: #D9F0F7;
     --wb-primary: var(--wb-cms-brand-primary);
-    --wb-primary-hover: var(--wb-cms-brand-primary-hover);
     --wb-accent: var(--wb-cms-brand-primary);
     --wb-accent-hover: var(--wb-cms-brand-primary-hover);
     --wb-accent-soft: var(--wb-cms-brand-soft);
     --wb-accent-text: var(--wb-cms-brand-primary-hover);
-    --wb-accent-contrast: #fff;
 }
 
-#wb-overlay-root .wb-drawer {
-    display: none;
-}
-
-#wb-overlay-root .wb-drawer.is-open {
-    display: flex;
-}
-
-#wb-overlay-root .wb-overlay-layer,
+/* CMS overlay policy on top of the shipped overlay stack: backdrops are
+   inert unless the runtime flags them interactive. (The shipped layer
+   pointer-events chain and closed-drawer hiding live in WebBlocks UI.) */
 #wb-overlay-root .wb-overlay-layer > .wb-overlay-backdrop {
-    pointer-events: none;
-}
-
-#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="false"] {
     pointer-events: none;
 }
 
@@ -71,24 +59,6 @@ svg.wb-sidebar-brand-logo {
 
 .wb-slot-visual-footer {
     background: color-mix(in srgb, #ea580c 10%, white);
-}
-
-.wb-navbar-breadcrumb-wrap {
-    min-width: 0;
-}
-
-.wb-navbar-breadcrumb {
-    min-width: 0;
-}
-
-.wb-navbar-breadcrumb .wb-breadcrumb-list {
-    flex-wrap: wrap;
-    row-gap: var(--wb-s1);
-}
-
-.wb-navbar-breadcrumb .wb-breadcrumb-current,
-.wb-navbar-breadcrumb .wb-breadcrumb-link {
-    overflow-wrap: anywhere;
 }
 
 
@@ -564,32 +534,9 @@ svg.wb-sidebar-brand-logo {
 .wb-media-view-toggle .wb-btn[aria-current="page"] {
     background: var(--wb-accent);
     border-color: var(--wb-accent);
-    color: var(--wb-accent-contrast, #fff);
+    color: var(--wb-accent-on, #fff);
 }
 
-.wb-action-group {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: var(--wb-s1);
-    flex-wrap: wrap;
-}
-
-.wb-action-group form {
-    display: inline-flex;
-    margin: 0;
-}
-
-.wb-table-actions {
-    width: 1%;
-    text-align: left;
-    white-space: nowrap;
-}
-
-.wb-table-actions .wb-action-group {
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-}
 
 .wb-plugins-table th,
 .wb-plugins-table td {
@@ -1367,33 +1314,6 @@ svg.wb-sidebar-brand-logo {
     }
 }
 
-/* Busy submit buttons (data-wb-busy): show a spinner and lock the control while the request is in flight. */
-@keyframes wb-btn-busy-spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.wb-btn.is-busy {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: progress;
-    pointer-events: none;
-    opacity: 0.85;
-}
-
-.wb-btn.is-busy::before {
-    content: "";
-    flex: 0 0 auto;
-    inline-size: 0.85em;
-    block-size: 0.85em;
-    margin-inline-end: 0.5em;
-    border: 2px solid currentColor;
-    border-block-start-color: transparent;
-    border-radius: 50%;
-    animation: wb-btn-busy-spin 0.6s linear infinite;
-}
 .wb-media-focal-picker {
   position: relative;
   display: block;

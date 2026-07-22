@@ -7,6 +7,15 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.40.27
+
+- Clean the drift out of `admin.css` (and `guest.css`) the same way `public.css` was cleaned, against WebBlocks UI 2.16.x:
+  - Delete the local `.wb-action-group`/`.wb-table-actions` copies (shipped since 2.15/2.16.2, including the new inline-form rule) and the local `.wb-btn.is-busy` spinner block — the busy state plus its `data-wb-busy` submit-lock behavior now ship in UI (`WBBusySubmit`); the admin binder delegates to it for dynamic rebinds.
+  - Delete the `wb-navbar-breadcrumb`/`-wrap` glue and its markup classes — the shipped breadcrumb base already handles shrink/wrap, and UI 2.16.0 added the missing long-word breaking on `wb-breadcrumb-link`.
+  - Reduce the `#wb-overlay-root` patch block to the deliberate CMS backdrop policy only; the duplicated shipped pointer-events rules are gone, and the drawer `display:none` deviation is replaced by UI 2.16.1's accessible closed-drawer hiding (restoring the slide animation in admin).
+  - Drop the dead `--wb-primary-hover`/`--wb-accent-contrast` tokens from the brand remaps; the one consumer now reads the shipped `--wb-accent-on`.
+  - Bump the pinned UI version to v2.16.2.
+
 ## 1.40.26
 
 - Finish the `public.css` drift cleanup: the stylesheet now holds only the public theme palettes plus a handful of deliberate host-glue rules (~250 lines, down from ~650 before the gallery round).

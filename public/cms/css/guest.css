@@ -9,13 +9,11 @@
     --wb-cms-brand-primary-hover: #0B6482;
     --wb-cms-brand-soft: #D9F0F7;
     --wb-primary: var(--wb-cms-brand-primary);
-    --wb-primary-hover: var(--wb-cms-brand-primary-hover);
     --wb-accent: var(--wb-cms-brand-primary);
     --wb-accent-hover: var(--wb-cms-brand-primary-hover);
     --wb-accent-soft: var(--wb-cms-brand-soft);
     --wb-accent-text: var(--wb-cms-brand-primary-hover);
     --wb-accent-on: #fff;
-    --wb-accent-contrast: #fff;
 }
 
 .wb-auth-brand {

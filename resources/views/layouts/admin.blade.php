@@ -185,7 +185,7 @@
 
                 $breadcrumbItems[] = ['label' => $currentTitle, 'url' => null];
 
-                $adminNavbarBreadcrumb = '<nav class="wb-breadcrumb wb-navbar-breadcrumb" aria-label="'.e(__('webblocks-cms::admin.page_layouts.breadcrumb')).'"><ol class="wb-breadcrumb-list">';
+                $adminNavbarBreadcrumb = '<nav class="wb-breadcrumb" aria-label="'.e(__('webblocks-cms::admin.page_layouts.breadcrumb')).'"><ol class="wb-breadcrumb-list">';
 
                 foreach ($breadcrumbItems as $index => $item) {
                     $isLast = $index === array_key_last($breadcrumbItems);
@@ -275,7 +275,7 @@
                         <span></span><span></span><span></span>
                     </button>
 
-                    <div class="wb-navbar-identity wb-navbar-breadcrumb-wrap">
+                    <div class="wb-navbar-identity">
                         {!! $adminNavbarBreadcrumb !!}
                     </div>
 
