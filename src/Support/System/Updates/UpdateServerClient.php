@@ -203,6 +203,7 @@ class UpdateServerClient
     }
 
     $normalizedRelease = $this->normalizeReleasePayload($data);
+    $normalizedRelease['changelog_entries'] = $this->buildChangelogEntries($data, $installedVersion);
     $compatibility = $this->determineCompatibility($installedVersion, $normalizedRelease);
     $updateAvailable = version_compare($latestVersion, $installedVersion, '>');
 
@@ -282,6 +283,84 @@ class UpdateServerClient
       'source_reference' => Arr::get($release, 'source_reference'),
       'release_date' => Arr::get($release, 'release_date'),
     ];
+  }
+
+  /**
+   * Cumulative changelog for the per-version accordion (fleet contract §7.4,
+   * ported from webblocks/publisher-client). Prefer an explicit list of
+   * intermediate releases from the Publisher (`data.changelog`, `data.releases`,
+   * or `data.changelog_entries`); otherwise degrade to a single entry built
+   * from the target release. Entries are kept only when strictly newer than
+   * the installed version, newest first.
+   *
+   * @return list<array<string, mixed>>
+   */
+  private function buildChangelogEntries(array $data, string $installedVersion): array
+  {
+    $rawEntries = null;
+
+    foreach (['changelog', 'releases', 'changelog_entries'] as $key) {
+      $candidate = Arr::get($data, $key);
+
+      if (is_array($candidate) && array_is_list($candidate) && $candidate !== []) {
+        $rawEntries = $candidate;
+        break;
+      }
+    }
+
+    if ($rawEntries === null) {
+      // Degraded single-entry case: the payload only describes the target release.
+      $rawEntries = [$data];
+    }
+
+    $installedNormalized = $this->normalizeVersion($installedVersion);
+
+    $entries = collect($rawEntries)
+      ->filter(fn ($entry): bool => is_array($entry))
+      ->map(function (array $entry): array {
+        $version = (string) Arr::get($entry, 'version', '');
+        $details = $this->normalizeReleaseDetails($entry);
+
+        return [
+          'version' => $version,
+          'name' => $details['title'] ?? ($version !== '' ? 'WebBlocks CMS '.$version : null),
+          'summary' => $details['summary'],
+          'groups' => $details['groups'],
+          'fallback_notes' => $details['fallback_notes'],
+          'released_at' => Arr::get($entry, 'published_at') ?? Arr::get($entry, 'release_date'),
+        ];
+      })
+      ->filter(function (array $entry) use ($installedNormalized): bool {
+        if ($entry['version'] === '') {
+          return true;
+        }
+
+        return version_compare($this->normalizeVersion($entry['version']), $installedNormalized, '>');
+      })
+      ->values()
+      ->all();
+
+    usort($entries, function (array $a, array $b): int {
+      return version_compare($this->normalizeVersion((string) $b['version']), $this->normalizeVersion((string) $a['version']));
+    });
+
+    return $entries;
+  }
+
+  /**
+   * Lenient semver normalization: trim and strip a leading "v" so "v1.2.3"
+   * and "1.2.3" compare equal. Deliberately not strict — it does not reject
+   * non-semver, it just canonicalizes the common prefix.
+   */
+  private function normalizeVersion(string $version): string
+  {
+    $version = trim($version);
+
+    if ($version !== '' && ($version[0] === 'v' || $version[0] === 'V')) {
+      $version = substr($version, 1);
+    }
+
+    return $version;
   }
 
   private function normalizeReleaseDetails(array $release): array

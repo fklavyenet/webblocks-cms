@@ -1,4 +1,19 @@
+{{--
+  The fleet-standard System Updates screen (design v3, owner-approved).
+  ONE card, TWO states (up to date / update available); Update history is a
+  permanent collapsed accordion; run logs open in wb-modal via the eye action.
+  Pressing "Update to X" submits directly (no confirm) and shows a progress
+  modal that polls the indicator route until the app answers again.
+  WebBlocks UI classes only; CMS-owned $adminText i18n.
+
+  Contract (SystemUpdateController@index / InternalAdminRenderController):
+    'report'    => SystemUpdateInspector::report()
+    'runs'      => SystemUpdateRunRetention::retainedRuns()
+    'checkedAt' => Carbon instance of the last update check
+    'preflight' => $report['checks'] (pass|fail entries with badge_class)
+--}}
 @php
+  use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunOutputSanitizer;
   use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
   use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
@@ -11,130 +26,30 @@
 
 @section('content')
   @php
-    $updateStatus = $report['version'];
-    $diagnostics = $report['checks'] ?? [];
-    $release = $updateStatus['release'] ?? null;
-    $installedVersion = $report['installed_version'] ?? $updateStatus['installed_version'];
-    $storedInstalledVersion = $report['stored_installed_version'] ?? null;
-    $latestUpdateRun = $latestUpdateRun ?? null;
-    $retainedUpdateRuns = $retainedUpdateRuns ?? collect();
-    $autoUpdate = ['allowed' => ($report['can_update'] ?? false) === true, 'blockers' => [], 'busy' => false];
-    $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
-    $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
-      && (string) $installedVersion !== (string) $updateStatus['latest_version'];
-    $currentCodeIsNewerThanPublished = is_string($updateStatus['latest_version'] ?? null)
-      && version_compare((string) $installedVersion, (string) $updateStatus['latest_version'], '>');
-    $publishedAt = $release['published_at'] ?? null;
-    $latestPublishedAt = $publishedAt
-      ? \Carbon\Carbon::parse($publishedAt)->format('Y-m-d H:i')
-      : null;
-    $compatibilityBadgeClass = match ($compatibilityStatus) {
-      'compatible' => 'wb-status-active',
-      'incompatible' => 'wb-status-danger',
-      default => 'wb-status-pending',
-    };
-    $state = (string) ($updateStatus['state'] ?? 'unknown');
-    $summaryTitle = match ($state) {
-      'update_available' => $adminText('updates.states.update_available'),
-      'incompatible' => $adminText('updates.states.incompatible'),
-      'up_to_date' => $currentCodeIsNewerThanPublished ? $adminText('updates.states.local_newer') : $adminText('updates.states.up_to_date'),
-      'server_unreachable', 'server_error', 'invalid_configuration', 'invalid_response', 'client_disabled' => $adminText('updates.states.server_unavailable'),
-      default => $updateStatus['label'] ?? $adminText('updates.states.status'),
-    };
-    $summaryMessage = match ($state) {
-      'update_available' => $adminText('updates.messages.update_available'),
-      'incompatible' => $adminText('updates.messages.incompatible'),
-      'up_to_date' => $currentCodeIsNewerThanPublished
-        ? $adminText('updates.messages.local_newer')
-        : $adminText('updates.messages.up_to_date'),
-      'server_unreachable', 'server_error', 'invalid_configuration', 'invalid_response', 'client_disabled' => $adminText('updates.messages.server_unavailable'),
-      default => $updateStatus['message'] ?? $adminText('updates.messages.status'),
-    };
-    $publisherUnavailable = in_array($state, ['server_unreachable', 'server_error', 'invalid_configuration', 'invalid_response', 'client_disabled'], true);
-    $statusAlertClass = match (true) {
-      $state === 'update_available' => 'wb-alert-info',
-      $state === 'incompatible' || $publisherUnavailable => 'wb-alert-warning',
-      default => 'wb-alert-success',
-    };
-    $statusIconClass = match (true) {
-      $state === 'update_available' => 'wb-icon-download',
-      $state === 'incompatible' || $publisherUnavailable => 'wb-icon-triangle-alert',
-      default => 'wb-icon-check',
-    };
-    $versionPath = $showLatestVersion
-      ? $installedVersion.' → '.$updateStatus['latest_version']
-      : $installedVersion;
-
-    $releaseDetails = $release['release_details'] ?? null;
-
-    if (! is_array($releaseDetails)) {
-      $fallbackText = trim((string) (($release['description'] ?? '') ?: ($release['changelog'] ?? '')));
-      $fallbackNotes = collect(preg_split('/\r\n|\r|\n/', $fallbackText ?: ''))
-        ->map(fn ($line) => trim($line))
-        ->filter()
-        ->values();
-      $releaseDetails = [
-        'title' => null,
-        'summary' => $fallbackNotes->shift(),
-        'groups' => [],
-        'fallback_notes' => $fallbackNotes->all(),
-        'has_notes' => $fallbackText !== '',
-      ];
-    }
-
-    $releaseDetailGroups = collect($releaseDetails['groups'] ?? [])
-      ->filter(fn ($group) => is_array($group) && collect($group['items'] ?? [])->filter()->isNotEmpty())
-      ->values();
-    $technicalReleaseNotes = $releaseDetailGroups
-      ->filter(fn ($group) => ($group['key'] ?? '') === 'technical_notes')
-      ->flatMap(fn ($group) => collect($group['items'] ?? [])->filter())
-      ->values();
-    $visibleReleaseDetailGroups = $releaseDetailGroups
-      ->reject(fn ($group) => ($group['key'] ?? '') === 'technical_notes')
-      ->values();
-    $fallbackReleaseNotes = collect($releaseDetails['fallback_notes'] ?? [])->filter()->values();
-    $knownReleaseNoteLines = collect([
-      $releaseDetails['title'] ?? null,
-      $releaseDetails['summary'] ?? null,
-    ])
-      ->merge($releaseDetailGroups->flatMap(fn ($group) => collect($group['items'] ?? [])))
-      ->filter()
-      ->map(fn ($line) => strtolower(trim((string) preg_replace('/\s+/', ' ', (string) $line))))
-      ->values();
-    $fallbackReleaseNotes = $fallbackReleaseNotes
-      ->reject(function ($line) use ($knownReleaseNoteLines) {
-        $normalized = strtolower(trim((string) preg_replace('/\s+/', ' ', (string) $line)));
-
-        return $knownReleaseNoteLines->contains($normalized)
-          || preg_match('/^webblocks cms\s+\d+\.\d+\.\d+$/i', $normalized) === 1;
-      })
-      ->values();
-    $hasReleaseDetails = (bool) ($releaseDetails['has_notes'] ?? false)
-      || trim((string) ($releaseDetails['title'] ?? '')) !== ''
-      || trim((string) ($releaseDetails['summary'] ?? '')) !== ''
-      || $visibleReleaseDetailGroups->isNotEmpty()
-      || $fallbackReleaseNotes->isNotEmpty();
-    $artifactFilename = $release['artifact_filename'] ?? null;
-    if (! is_string($artifactFilename) || $artifactFilename === '') {
-      $downloadPath = parse_url((string) ($release['download_url'] ?? ''), PHP_URL_PATH);
-      $artifactFilename = is_string($downloadPath) && $downloadPath !== ''
-        ? basename($downloadPath)
-        : $adminText('updates.release_package');
-    }
-    $showUpdateAction = ($autoUpdate['allowed'] ?? false) === true;
-    $diagnosticItems = collect($diagnostics)->prepend([
-        'label' => $adminText('updates.compatibility'),
-        'status' => $compatibilityStatus,
-        'message' => ($updateStatus['compatibility']['reasons'] ?? []) === []
-        ? $adminText('updates.no_compatibility_issues')
-        : implode(' ', $updateStatus['compatibility']['reasons']),
-      'badge_class' => $compatibilityBadgeClass,
-    ]);
-    $readinessNeedsAttention = $diagnosticItems->contains(fn ($item) => ! in_array((string) ($item['status'] ?? ''), ['ok', 'pass', 'compatible'], true))
-      || ! empty($updateStatus['error_message'])
-      || ($autoUpdate['allowed'] ?? false) !== true && $state === 'update_available';
-    $latestRunModalId = $latestUpdateRun ? 'updateRunDetailsModal-'.$latestUpdateRun->id : null;
-    $updateProgressModalId = 'systemUpdateProgressModal';
+    $check = $report['version'] ?? [];
+    $installedVersion = $report['installed_version'] ?? ($check['installed_version'] ?? '');
+    $runs = $runs ?? collect();
+    $preflight = collect($preflight ?? ($report['checks'] ?? []));
+    $failingChecks = $preflight->filter(fn ($item) => ($item['status'] ?? '') !== 'pass')->values();
+    $canUpdate = ($report['can_update'] ?? false) === true;
+    $state = (string) ($check['state'] ?? 'unknown');
+    $latestVersion = $check['latest_version'] ?? null;
+    $updateAvailable = $state === 'update_available' && ! empty($latestVersion);
+    $localNewer = $state === 'up_to_date'
+      && is_string($latestVersion) && $latestVersion !== ''
+      && version_compare((string) $installedVersion, $latestVersion, '>');
+    $stateKey = $localNewer ? 'local_newer' : $state;
+    $stateLabel = $adminTranslator->admin('updates.states.'.$stateKey, $adminLocale);
+    $stateLabel = $stateLabel === 'admin.updates.states.'.$stateKey ? (string) ($check['label'] ?? $stateKey) : $stateLabel;
+    $stateMessage = $adminTranslator->admin('updates.messages.'.$stateKey, $adminLocale);
+    $stateMessage = $stateMessage === 'admin.updates.messages.'.$stateKey ? (string) ($check['message'] ?? '') : $stateMessage;
+    $calloutTone = $updateAvailable
+      ? 'wb-callout-info'
+      : (in_array($stateKey, ['up_to_date', 'local_newer'], true) ? 'wb-callout-success' : 'wb-callout-warning');
+    $changelog = $check['release']['changelog_entries'] ?? [];
+    $currentNotes = $check['release']['release_details'] ?? null;
+    $checkedAtText = ($checkedAt ?? null) instanceof \DateTimeInterface ? $checkedAt->format('Y-m-d H:i') : null;
+    $sanitizer = app(SystemUpdateRunOutputSanitizer::class);
   @endphp
 
   @include('webblocks-cms::admin.partials.page-header', [
@@ -142,546 +57,338 @@
     'description' => $adminText('updates.description'),
   ])
 
-  <div class="wb-stack wb-stack-4" data-webblocks-updates-layout="designed">
-    <div data-webblocks-updates-flash>
-      @include('webblocks-cms::admin.partials.flash')
+  <div class="wb-stack wb-stack-4" data-webblocks-updates-flash>
+    @include('webblocks-cms::admin.partials.flash')
+  </div>
+
+  <section class="wb-card">
+    <div class="wb-card-header wb-cluster wb-cluster-between">
+      <h2 class="wb-card-title">{{ $adminText('updates.title') }}</h2>
+      <a href="{{ route('admin.system.updates.check') }}" class="wb-btn wb-btn-secondary">{{ $adminText('updates.check_button') }}</a>
     </div>
 
-    <section class="wb-card" data-webblocks-updates-card="summary" data-webblocks-updates-state="{{ $state }}">
-      <div class="wb-card-header">
-        <div>
-          <h2 class="wb-card-title">{{ $adminText('updates.update_status') }}</h2>
-          <p class="wb-card-description">{{ $showLatestVersion ? $adminText('updates.published_package_ready') : $adminText('updates.quiet_until_available') }}</p>
-        </div>
-        <div class="wb-action-group">
-          <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $summaryTitle }}</span>
-          <a href="{{ route('admin.system.updates.check') }}" class="wb-btn wb-btn-secondary">{{ $adminText('updates.check_again') }}</a>
-        </div>
-      </div>
-
-      <div class="wb-card-body wb-stack wb-stack-4">
-        <div data-webblocks-updates-hero>
-          <div data-webblocks-updates-hero-main>
-            <span data-webblocks-updates-hero-icon aria-hidden="true">
-              <i class="wb-icon {{ $statusIconClass }}"></i>
+    <div class="wb-card-body wb-stack wb-stack-4">
+      @if ($updateAvailable)
+        <div class="wb-callout {{ $calloutTone }} wb-cluster wb-cluster-4 wb-cluster-between">
+          <div class="wb-cluster wb-cluster-4">
+            <span class="wb-avatar wb-avatar-lg wb-avatar-info" aria-hidden="true">
+              <i class="wb-icon wb-icon-lg wb-icon-arrow-up-circle" aria-hidden="true"></i>
             </span>
-            <div class="wb-stack wb-gap-2">
-              <div>
-                <div class="wb-alert-title">{{ $summaryTitle }}</div>
-                <p>{{ $summaryMessage }}</p>
-              </div>
-              <div data-webblocks-updates-version-path>
-                <span class="wb-meta-label">{{ $showLatestVersion ? $adminText('updates.version_path') : $adminText('updates.installed_version') }}</span>
-                <strong>{{ $versionPath }}</strong>
-              </div>
+            <div class="wb-stack wb-stack-1">
+              <strong class="wb-callout-title">{{ $stateLabel }}</strong>
+              <span class="wb-text-sm wb-text-muted">{{ $adminText('updates.available_help') }}</span>
+              <h3 class="wb-mt-2">{{ $installedVersion ?: '—' }} → {{ $latestVersion }}</h3>
             </div>
           </div>
-
-          <div data-webblocks-updates-hero-aside>
-            <div>
-              @if ($showLatestVersion)
-                <span class="wb-meta-label">{{ $adminText('updates.latest_published') }}</span>
-                <strong>{{ $updateStatus['latest_version'] }}</strong>
-              @else
-                <span class="wb-meta-label">{{ $adminText('updates.last_checked') }}</span>
-                <strong>{{ optional($checkedAt ?? null)->format('Y-m-d H:i') ?? $adminText('common.not_available') }}</strong>
-              @endif
-              @if ($showLatestVersion && $latestPublishedAt)
-                <span class="wb-text-muted wb-text-sm">{{ $adminText('updates.published_at', ['date' => $latestPublishedAt]) }}</span>
-              @endif
-            </div>
-            <div class="wb-action-group">
-              @if ($showUpdateAction)
-                <button
-                  type="submit"
-                  form="webblocks-update-install-form"
-                  class="wb-btn wb-btn-primary"
-                  data-wb-update-submit
-                  data-default-label="{{ $adminText('updates.update_now') }}"
-                  data-busy-label="{{ $adminText('updates.updating') }}"
-                >
-                  {{ $autoUpdate['busy'] ? $adminText('updates.updating') : $adminText('updates.update_now') }}
+          <div class="wb-stack wb-stack-2">
+            @if ($canUpdate)
+              <form method="POST" action="{{ route('admin.system.updates.store') }}" data-wb-update-form>
+                @csrf
+                <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit>
+                  {{ $adminText('updates.update_button', ['version' => $latestVersion]) }}
                 </button>
-              @endif
-            </div>
+              </form>
+            @endif
+            <span class="wb-text-xs wb-text-muted">{{ $adminText('updates.backup_note') }}</span>
+            <span class="wb-text-xs wb-text-muted">
+              {{ $adminText('updates.server_backup_advisory') }}
+              <a href="{{ route('admin.system.backups.index') }}" class="wb-link">{{ $adminText('updates.server_backup_advisory_link') }}</a>
+            </span>
           </div>
         </div>
 
-        @if ($updateStatus['error_message'])
-          <div class="wb-alert wb-alert-warning">
-            <div>
-              <div class="wb-alert-title">{{ $adminText('updates.server_detail') }}</div>
-              <div>{{ $updateStatus['error_message'] }}</div>
-            </div>
-          </div>
-        @endif
-
-        @if ($showUpdateAction)
-          <div class="wb-alert wb-alert-success">
-            <div>
-              <div class="wb-alert-title">{{ $installedVersion }} → {{ $updateStatus['latest_version'] }}</div>
-              <div>{{ $adminText('updates.pre_update_backup_notice') }}</div>
-            </div>
-          </div>
-
-          <form id="webblocks-update-install-form" method="POST" action="{{ route('admin.system.updates.store') }}" data-wb-update-form>
-            @csrf
-          </form>
-        @else
-          <p class="wb-text-muted">{{ $adminText('updates.blockers.no_newer_release_ready') }}</p>
-        @endif
-
-      </div>
-    </section>
-
-    @if ($showUpdateAction || $readinessNeedsAttention || $state === 'incompatible')
-    <div class="wb-grid wb-grid-3" data-webblocks-updates-card="safety-summary">
-      <section class="wb-card">
-        <div class="wb-card-body">
-          <div data-webblocks-updates-safety-card>
-            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-cloud"></i></span>
-            <div>
-              <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <strong>{{ $adminText('updates.publisher') }}</strong>
-                <span class="wb-status-pill {{ $publisherUnavailable ? 'wb-status-danger' : 'wb-status-active' }}">{{ $publisherUnavailable ? $adminText('updates.needs_attention') : $adminText('updates.online') }}</span>
-              </div>
-              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $updateStatus['server_url'] ?: $adminText('updates.server_not_configured') }}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="wb-card">
-        <div class="wb-card-body">
-          <div data-webblocks-updates-safety-card>
-            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-list"></i></span>
-            <div>
-              <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <strong>{{ $adminText('updates.preflight') }}</strong>
-                <span class="wb-status-pill {{ $readinessNeedsAttention ? 'wb-status-danger' : 'wb-status-active' }}">{{ $readinessNeedsAttention ? $adminText('updates.needs_attention') : $adminText('updates.ready') }}</span>
-              </div>
-              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $readinessNeedsAttention ? $adminText('updates.review_readiness') : $adminText('updates.required_checks_passing') }}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="wb-card">
-        <div class="wb-card-body">
-          <div data-webblocks-updates-safety-card>
-            <span data-webblocks-updates-card-icon aria-hidden="true"><i class="wb-icon wb-icon-file-archive"></i></span>
-            <div>
-              <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <strong>{{ $adminText('updates.backup') }}</strong>
-                <span class="wb-status-pill wb-status-active">{{ $adminText('updates.will_be_created') }}</span>
-              </div>
-              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $adminText('updates.pre_update_backup_created') }}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-    @endif
-
-    <section class="wb-card" data-webblocks-updates-card="maintenance-details">
-      <div class="wb-card-header">
-        <div>
-          <h2 class="wb-card-title">{{ $adminText('updates.technical_details_history') }}</h2>
-          <p class="wb-card-description">{{ $adminText('updates.technical_details_history_help') }}</p>
-        </div>
-      </div>
-
-      <div class="wb-card-body">
-        <div class="wb-accordion" data-wb-accordion data-webblocks-updates-accordion="maintenance-details">
-          <div class="wb-accordion-item">
-            <button
-              class="wb-accordion-trigger"
-              type="button"
-              data-wb-accordion-trigger
-              aria-expanded="false"
-              aria-controls="webblocks-update-maintenance-details"
-            >
-              <span>{{ $adminText('updates.show_technical_details') }}</span>
-              <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-            </button>
-            <div class="wb-accordion-content" id="webblocks-update-maintenance-details">
-              <div class="wb-accordion-body wb-stack wb-stack-4">
-                <div data-webblocks-updates-metrics>
-                  <div>
-                    <span class="wb-meta-label">{{ $adminText('updates.current_cms_version') }}</span>
-                    <strong>{{ $installedVersion }}</strong>
-                  </div>
-
-                  @if ($showLatestVersion)
-                    <div>
-                      <span class="wb-meta-label">{{ $adminText('updates.latest_published_version') }}</span>
-                      <strong>{{ $updateStatus['latest_version'] }}</strong>
-                      @if ($latestPublishedAt)
-                        <span class="wb-text-muted wb-text-sm">{{ $adminText('updates.published_date', ['date' => $latestPublishedAt]) }}</span>
+        @if (! empty($changelog))
+          <div class="wb-stack wb-stack-2">
+            <h3 class="wb-card-title">{{ $adminText('updates.whats_new', ['version' => $installedVersion]) }}</h3>
+            <div class="wb-accordion" data-wb-accordion>
+              @foreach ($changelog as $entry)
+                @php
+                  $hasBody = ! empty($entry['groups']) || ! empty($entry['fallback_notes']);
+                  $open = $loop->first && $hasBody;
+                @endphp
+                <div class="wb-accordion-item{{ $open ? ' is-open' : '' }}">
+                  @if ($hasBody)
+                    <button class="wb-accordion-trigger{{ $open ? ' is-open' : '' }}" type="button" aria-expanded="{{ $open ? 'true' : 'false' }}" aria-controls="wb-release-{{ $loop->iteration }}">
+                      <span class="wb-cluster wb-cluster-2">
+                        <strong>{{ $entry['version'] }}</strong>
+                        @if (! empty($entry['summary']))
+                          <span class="wb-text-sm wb-text-muted">{{ $entry['summary'] }}</span>
+                        @endif
+                      </span>
+                      <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
+                    </button>
+                    <div class="wb-accordion-content{{ $open ? ' is-open' : '' }}" id="wb-release-{{ $loop->iteration }}">
+                      <div class="wb-accordion-body wb-stack wb-stack-2 wb-mt-3">
+                        @foreach (($entry['groups'] ?? []) as $group)
+                          <p class="wb-text-xs wb-text-muted">{{ $group['label'] }}</p>
+                          <ul class="wb-text-sm">
+                            @foreach ($group['items'] as $item)
+                              <li>{{ $item }}</li>
+                            @endforeach
+                          </ul>
+                        @endforeach
+                        @foreach (($entry['fallback_notes'] ?? []) as $note)
+                          <p class="wb-text-sm">{{ $note }}</p>
+                        @endforeach
+                      </div>
+                    </div>
+                  @else
+                    {{-- Version-only entry: a plain padded row, not a clickable trigger. --}}
+                    <div class="wb-list-item wb-cluster wb-cluster-2">
+                      <strong>{{ $entry['version'] }}</strong>
+                      @if (! empty($entry['summary']))
+                        <span class="wb-text-sm wb-text-muted">{{ $entry['summary'] }}</span>
                       @endif
                     </div>
                   @endif
-
-                  <div>
-                    <span class="wb-meta-label">{{ $adminText('updates.compatibility') }}</span>
-                    <strong>{{ $compatibilityStatus }}</strong>
-                  </div>
-
-                  <div>
-                    <span class="wb-meta-label">{{ $adminText('updates.channel') }}</span>
-                    <strong>{{ $updateStatus['channel'] ?? 'stable' }}</strong>
-                  </div>
-
-                  <div>
-                    <span class="wb-meta-label">{{ $adminText('updates.update_server') }}</span>
-                    <strong>{{ $updateStatus['server_url'] ?: $adminText('updates.not_configured') }}</strong>
-                  </div>
                 </div>
-
-                <div class="wb-grid wb-grid-2" data-webblocks-updates-card="details">
-      <section class="wb-card" data-webblocks-updates-panel="release">
-        <div class="wb-card-header">
-          <div class="wb-cluster wb-cluster-2 wb-items-center">
-            <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon wb-icon-package"></i></span>
-            <div>
-              <h2 class="wb-card-title">{{ $adminText('updates.release') }}</h2>
-              <p class="wb-card-description">{{ $adminText('updates.release_help') }}</p>
+              @endforeach
             </div>
           </div>
-          @if ($release)
-            <span class="wb-status-pill wb-status-info">{{ $updateStatus['latest_version'] ?? $adminText('updates.published') }}</span>
-          @endif
+        @elseif (! empty($check['release']['changelog']))
+          <p class="wb-text-sm">{{ $check['release']['changelog'] }}</p>
+        @endif
+      @else
+        @php
+          $stateIcon = $calloutTone === 'wb-callout-success' ? 'wb-icon-check' : 'wb-icon-triangle-alert';
+          $avatarTone = $calloutTone === 'wb-callout-success' ? 'wb-avatar-success' : 'wb-avatar-warning';
+        @endphp
+        <div class="wb-callout {{ $calloutTone }}">
+          <div class="wb-cluster wb-cluster-4">
+            <span class="wb-avatar wb-avatar-lg {{ $avatarTone }}" aria-hidden="true">
+              <i class="wb-icon wb-icon-lg {{ $stateIcon }}" aria-hidden="true"></i>
+            </span>
+            <div class="wb-stack wb-stack-1">
+              <strong class="wb-callout-title">{{ $stateLabel }}</strong>
+              <span class="wb-text-sm wb-text-muted">{{ $stateMessage }}</span>
+              <span class="wb-text-sm wb-text-muted">
+                {{ $adminText('updates.installed_version') }} <strong>{{ $installedVersion ?: '—' }}</strong>@if ($checkedAtText) · {{ $adminText('updates.last_checked') }} <strong>{{ $checkedAtText }}</strong>@endif
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div class="wb-card-body wb-stack wb-stack-4">
-          @if ($release)
-            <div data-webblocks-updates-release-meta>
-              <div>
-                <span class="wb-meta-label">{{ $adminText('updates.product') }}</span>
-                <strong>{{ $updateStatus['product'] ?? 'webblocks-cms' }}</strong>
-              </div>
-              <div>
-                <span class="wb-meta-label">{{ $adminText('updates.checksum') }}</span>
-                <strong>{{ ($release['checksum_sha256'] ?? $release['checksum'] ?? null) ? $adminText('updates.sha256_provided') : $adminText('common.not_available') }}</strong>
-              </div>
-              <div>
-                <span class="wb-meta-label">{{ $adminText('updates.artifact') }}</span>
-                <code>{{ $artifactFilename }}</code>
-              </div>
+        @if (! empty($check['error_message']))
+          <div class="wb-callout wb-callout-warning">
+            <div class="wb-stack wb-stack-1">
+              <strong class="wb-callout-title">{{ $adminText('updates.server_detail') }}</strong>
+              <span class="wb-text-sm">{{ $check['error_message'] }}</span>
             </div>
+          </div>
+        @endif
 
-            @if ($hasReleaseDetails)
-              <div class="wb-stack wb-stack-3" data-webblocks-updates-release-notes>
-                @if (trim((string) ($releaseDetails['title'] ?? '')) !== '')
-                  <strong>{{ $releaseDetails['title'] }}</strong>
-                @endif
-
-                @if (trim((string) ($releaseDetails['summary'] ?? '')) !== '')
-                  <p>{{ $releaseDetails['summary'] }}</p>
-                @endif
-
-                @foreach ($visibleReleaseDetailGroups as $group)
-                  <div class="wb-stack wb-gap-1" data-webblocks-updates-release-group>
-                    <strong class="wb-text-sm">{{ in_array(($group['key'] ?? ''), ['fixes', 'changes'], true) ? $adminText('updates.fixes_and_changes') : ($group['label'] ?? $adminText('updates.release_details')) }}</strong>
-                    <ul class="wb-m-0 wb-text-sm wb-text-muted">
-                      @foreach (collect($group['items'] ?? [])->filter() as $item)
+        @if (! empty($currentNotes['has_notes']) && (! empty($currentNotes['groups']) || ! empty($currentNotes['summary'])))
+          <div class="wb-accordion" data-wb-accordion>
+            <div class="wb-accordion-item">
+              <button class="wb-accordion-trigger" type="button" aria-expanded="false" aria-controls="wb-current-notes">
+                <span>{{ $adminText('updates.whats_in_this', ['version' => $installedVersion]) }}</span>
+                <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
+              </button>
+              <div class="wb-accordion-content" id="wb-current-notes">
+                <div class="wb-accordion-body wb-stack wb-stack-2 wb-mt-3">
+                  @if (! empty($currentNotes['summary']))
+                    <p class="wb-text-sm">{{ $currentNotes['summary'] }}</p>
+                  @endif
+                  @foreach (($currentNotes['groups'] ?? []) as $group)
+                    <p class="wb-text-xs wb-text-muted">{{ $group['label'] }}</p>
+                    <ul class="wb-text-sm">
+                      @foreach ($group['items'] as $item)
                         <li>{{ $item }}</li>
                       @endforeach
                     </ul>
-                  </div>
-                @endforeach
-
-                @if ($fallbackReleaseNotes->isNotEmpty())
-                  <ul class="wb-m-0 wb-text-sm wb-text-muted">
-                    @foreach ($fallbackReleaseNotes as $note)
-                      <li>{{ $note }}</li>
-                    @endforeach
-                  </ul>
-                @endif
-              </div>
-
-              @if ($technicalReleaseNotes->isNotEmpty())
-                <div class="wb-accordion" data-wb-accordion data-webblocks-updates-accordion="release-technical">
-                  <div class="wb-accordion-item">
-                    <button
-                      class="wb-accordion-trigger"
-                      type="button"
-                      data-wb-accordion-trigger
-                      aria-expanded="false"
-                      aria-controls="webblocks-release-technical-notes"
-                    >
-                      <span>{{ $adminText('updates.technical_package_metadata') }}</span>
-                      <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-                    </button>
-                    <div class="wb-accordion-content" id="webblocks-release-technical-notes">
-                      <div class="wb-accordion-body">
-                        <ul class="wb-m-0 wb-text-sm wb-text-muted">
-                          @foreach ($technicalReleaseNotes as $note)
-                            <li>{{ $note }}</li>
-                          @endforeach
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              @endif
-            @else
-              <p class="wb-text-muted">{{ $adminText('updates.no_release_notes') }}</p>
-            @endif
-          @else
-            <p class="wb-text-muted">{{ $adminText('updates.no_published_release_details') }}</p>
-          @endif
-        </div>
-      </section>
-
-      <section class="wb-card" data-webblocks-updates-panel="readiness">
-        <div class="wb-card-header">
-          <div class="wb-cluster wb-cluster-2 wb-items-center">
-            <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon wb-icon-shield-check"></i></span>
-            <div>
-              <h2 class="wb-card-title">{{ $adminText('updates.readiness') }}</h2>
-              <p class="wb-card-description">{{ $adminText('updates.readiness_help') }}</p>
-            </div>
-          </div>
-          <span class="wb-status-pill {{ $readinessNeedsAttention ? 'wb-status-danger' : 'wb-status-active' }}">{{ $readinessNeedsAttention ? $adminText('updates.needs_attention') : $adminText('updates.ready') }}</span>
-        </div>
-
-        <div class="wb-card-body wb-stack wb-stack-4">
-          <div data-webblocks-updates-readiness-summary>
-            <div>
-              <span class="wb-meta-label">{{ $adminText('updates.stored_installed_version') }}</span>
-              <strong>{{ is_string($storedInstalledVersion) && $storedInstalledVersion !== '' ? $storedInstalledVersion : $adminText('common.na') }}</strong>
-            </div>
-            <div>
-              <span class="wb-meta-label">{{ $adminText('updates.product') }}</span>
-              <strong>{{ $updateStatus['product'] ?? 'webblocks-cms' }}</strong>
-            </div>
-          </div>
-
-          <div class="wb-stack wb-stack-2" data-webblocks-updates-checklist>
-            @foreach ($diagnosticItems as $diagnostic)
-              <div data-webblocks-updates-check>
-                <span data-webblocks-updates-check-icon aria-hidden="true">
-                  <i class="wb-icon {{ in_array((string) ($diagnostic['status'] ?? ''), ['ok', 'pass', 'compatible'], true) ? 'wb-icon-check' : 'wb-icon-triangle-alert' }}"></i>
-                </span>
-                <div>
-                  <div class="wb-list-item-title">{{ $diagnostic['label'] }}</div>
-                  <div class="wb-list-item-sub">{{ $diagnostic['message'] }}</div>
-                </div>
-                <span class="wb-status-pill {{ $diagnostic['badge_class'] }}">{{ $diagnostic['status'] }}</span>
-              </div>
-            @endforeach
-          </div>
-
-          @if ($showUpdateAction)
-            <div class="wb-accordion" data-wb-accordion data-webblocks-updates-accordion="package-safety">
-              <div class="wb-accordion-item">
-                <button
-                  class="wb-accordion-trigger"
-                  type="button"
-                  data-wb-accordion-trigger
-                  aria-expanded="false"
-                  aria-controls="webblocks-update-package-safety"
-                >
-                  <span>{{ $adminText('updates.package_safety_details') }}</span>
-                  <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-                </button>
-                <div class="wb-accordion-content" id="webblocks-update-package-safety">
-                  <div class="wb-accordion-body wb-stack wb-stack-4">
-                    <p class="wb-card-description">{{ $adminText('updates.package_safety_help') }}</p>
-                    <div class="wb-code-block">{{ $adminText('updates.package_safety_checks') }}</div>
-                  </div>
+                  @endforeach
                 </div>
               </div>
             </div>
-          @endif
+          </div>
+        @endif
+      @endif
+
+      @if ($failingChecks->isNotEmpty())
+        <div class="wb-callout wb-callout-warning wb-stack wb-stack-2" data-webblocks-updates-preflight>
+          <strong class="wb-callout-title">{{ $adminText('updates.preflight_title') }}</strong>
+          <span class="wb-text-sm">{{ $adminText('updates.preflight_help') }}</span>
+          @foreach ($failingChecks as $failingCheck)
+            <div class="wb-list-item wb-cluster wb-cluster-2">
+              <span class="wb-status-pill {{ $failingCheck['badge_class'] ?? 'wb-status-danger' }}">{{ $failingCheck['status'] ?? 'fail' }}</span>
+              <div class="wb-stack wb-stack-1">
+                <strong class="wb-text-sm">{{ $failingCheck['label'] ?? '' }}</strong>
+                <span class="wb-text-sm wb-text-muted">{{ $failingCheck['message'] ?? '' }}</span>
+              </div>
+            </div>
+          @endforeach
         </div>
-      </section>
+      @endif
     </div>
+  </section>
 
-    <section class="wb-card" data-webblocks-updates-card="history">
-      <div class="wb-card-header">
-        <div>
-          <h2 class="wb-card-title">{{ $adminText('updates.history') }}</h2>
-          <p class="wb-card-description">{{ $adminText('updates.history_help') }}</p>
-        </div>
-      </div>
-
-      <div class="wb-card-body wb-stack wb-stack-4">
-        @if ($latestUpdateRun)
-          <div class="wb-alert wb-alert-info">
-            <div>
-              <div class="wb-alert-title">{{ $adminText('updates.last_update_run') }}</div>
-              <div>{{ $latestUpdateRun->from_version ?: $adminText('common.na') }} → {{ $latestUpdateRun->to_version ?: $adminText('common.na') }} / {{ $latestUpdateRun->summary ?? $adminText('updates.no_summary_recorded') }}</div>
-            </div>
-          </div>
-        @endif
-
-        @if ($retainedUpdateRuns->isNotEmpty())
-          <div class="wb-table-wrap">
-            <table class="wb-table wb-table-striped wb-table-hover">
-              <thead>
-                <tr>
-                  <th>{{ $adminText('updates.version') }}</th>
-                  <th>{{ $adminText('common.status') }}</th>
-                  <th>{{ $adminText('updates.started') }}</th>
-                  <th>{{ $adminText('updates.duration') }}</th>
-                  <th>{{ $adminText('updates.details') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach ($retainedUpdateRuns as $run)
+  <div class="wb-accordion wb-mt-4" data-wb-accordion>
+    <div class="wb-accordion-item">
+      <button class="wb-accordion-trigger" type="button" aria-expanded="false" aria-controls="wb-update-history">
+        <span>{{ $adminText('updates.history_title') }} ({{ $runs->count() }})</span>
+        <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
+      </button>
+      <div class="wb-accordion-content" id="wb-update-history">
+        <div class="wb-accordion-body">
+          @if ($runs->isNotEmpty())
+            <div class="wb-table-wrap wb-mt-3">
+              <table class="wb-table">
+                <thead>
                   <tr>
-                    <td>{{ $run->from_version ?: $adminText('common.na') }} → {{ $run->to_version ?: $adminText('common.na') }}</td>
-                    <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $adminText('updates.statuses.'.$run->status) }}</span></td>
-                    <td>{{ optional($run->started_at)->format('Y-m-d H:i') ?? optional($run->created_at)->format('Y-m-d H:i') ?? $adminText('common.not_available') }}</td>
-                    <td>{{ $run->durationLabel() }}</td>
-                    <td>{{ $run->summary ?? $adminText('updates.no_summary_recorded') }}</td>
+                    <th>{{ $adminText('updates.history.from') }}</th>
+                    <th>{{ $adminText('updates.history.to') }}</th>
+                    <th>{{ $adminText('updates.history.status') }}</th>
+                    <th>{{ $adminText('updates.history.when') }}</th>
+                    <th class="wb-table-actions">{{ $adminText('updates.history.actions') }}</th>
                   </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
-        @else
-          <p class="wb-text-muted">{{ $adminText('updates.no_update_runs') }}</p>
-        @endif
-
-        @if ($latestUpdateRun)
-          <button
-            class="wb-btn wb-btn-secondary"
-            type="button"
-            data-wb-toggle="modal"
-            data-wb-target="#{{ $latestRunModalId }}"
-            aria-controls="{{ $latestRunModalId }}"
-            aria-expanded="false"
-          >
-            {{ $adminText('updates.view_run_details') }}
-          </button>
-        @endif
-      </div>
-    </section>
-              </div>
+                </thead>
+                <tbody>
+                  @foreach ($runs as $run)
+                    <tr>
+                      <td><strong>{{ $run->from_version ?: '—' }}</strong></td>
+                      <td><strong>{{ $run->to_version ?: '—' }}</strong></td>
+                      <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $adminText('updates.statuses.'.$run->status) }}</span></td>
+                      <td class="wb-text-sm">{{ optional($run->finished_at)->format('Y-m-d H:i') ?? optional($run->started_at)->format('Y-m-d H:i') ?? '—' }}</td>
+                      <td class="wb-table-actions">
+                        @if ($run->output)
+                          <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#wb-run-log-{{ $run->id }}" aria-label="{{ $adminText('updates.view_log') }}">
+                            <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                          </button>
+                        @endif
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
             </div>
-          </div>
+          @else
+            <p class="wb-text-muted wb-mt-3">{{ $adminText('updates.no_update_runs') }}</p>
+          @endif
         </div>
       </div>
-    </section>
+    </div>
   </div>
 
-  @if ($showUpdateAction)
+  @foreach ($runs as $run)
+    @if ($run->output)
+      <div id="wb-run-log-{{ $run->id }}" class="wb-modal" role="dialog" aria-modal="true" aria-labelledby="wb-run-log-{{ $run->id }}-title">
+        <div class="wb-modal-dialog">
+          <div class="wb-modal-header">
+            <div>
+              <h3 class="wb-modal-title" id="wb-run-log-{{ $run->id }}-title">{{ $adminText('updates.log_title') }}</h3>
+              <p class="wb-card-description">{{ $run->from_version ?: '—' }} → {{ $run->to_version ?: '—' }} · {{ $adminText('updates.statuses.'.$run->status) }}</p>
+            </div>
+            <button type="button" class="wb-icon-btn wb-modal-close wb-ms-auto" data-wb-dismiss="modal" aria-label="{{ $adminText('updates.close') }}">
+              <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="wb-modal-body">
+            <pre class="wb-text-xs">{{ $sanitizer->sanitize($run->output) }}</pre>
+          </div>
+        </div>
+      </div>
+    @endif
+  @endforeach
+
+  @if ($updateAvailable && $canUpdate)
+    {{-- Progress modal: shown while the update runs. No dismiss — a live update cannot be cancelled. --}}
     <div
       class="wb-modal"
-      id="{{ $updateProgressModalId }}"
+      id="wb-update-progress"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="{{ $updateProgressModalId }}Title"
-      aria-describedby="{{ $updateProgressModalId }}Description"
+      aria-labelledby="wb-update-progress-title"
       data-webblocks-update-progress-modal
+      data-wb-health-url="{{ route('admin.system.updates.indicator') }}"
+      data-wb-return-url="{{ route('admin.system.updates.index') }}"
+      data-wb-waiting-label="{{ $adminText('updates.waiting_body') }}"
       hidden
     >
       <div class="wb-modal-dialog">
         <div class="wb-modal-header">
-          <div>
-            <h3 class="wb-modal-title" id="{{ $updateProgressModalId }}Title">{{ $adminText('updates.updating_title') }}</h3>
-            <p class="wb-card-description">
-              {{ $installedVersion ?: $adminText('updates.current_version') }} → {{ $updateStatus['latest_version'] ?? $adminText('updates.latest_release') }}
-            </p>
-          </div>
+          <h3 class="wb-modal-title" id="wb-update-progress-title">{{ $adminText('updates.updating_title', ['version' => $latestVersion]) }}</h3>
         </div>
-
         <div class="wb-modal-body">
           <div class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
             <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
-            <div class="wb-stack wb-gap-1">
-              <strong id="{{ $updateProgressModalId }}Description">{{ $adminText('updates.applying_package') }}</strong>
-              <span class="wb-text-sm wb-text-muted">{{ $adminText('updates.keep_tab_open') }}</span>
+            <div class="wb-stack wb-stack-1">
+              <strong id="wb-update-progress-status">{{ $adminText('updates.updating_body') }}</strong>
+              <span class="wb-text-sm wb-text-muted">{{ $adminText('updates.keep_open') }}</span>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  @endif
-
-  @if ($latestUpdateRun)
-    <div class="wb-modal" id="{{ $latestRunModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $latestRunModalId }}Title">
-      <div class="wb-modal-dialog">
-        <div class="wb-modal-header">
-          <div>
-            <h3 class="wb-modal-title" id="{{ $latestRunModalId }}Title">{{ $adminText('updates.run_details') }}</h3>
-            <p class="wb-card-description">{{ $latestUpdateRun->from_version ?: $adminText('common.na') }} → {{ $latestUpdateRun->to_version ?: $adminText('common.na') }} / {{ $adminText('updates.statuses.'.$latestUpdateRun->status) }}</p>
-          </div>
-          <button
-            class="wb-modal-close"
-            type="button"
-            data-wb-dismiss="modal"
-            aria-label="{{ $adminText('updates.close_run_details') }}"
-            title="{{ $adminText('common.close') }}"
-          >&times;</button>
-        </div>
-
-        <div class="wb-modal-body wb-stack wb-stack-4">
-          <p>{{ $latestUpdateRun->summary ?? $adminText('updates.no_summary_recorded') }}</p>
-          <div class="wb-meta-grid">
-            <div>
-              <span class="wb-meta-label">{{ $adminText('updates.started') }}</span>
-              <strong>{{ optional($latestUpdateRun->started_at)->format('Y-m-d H:i') ?? $adminText('common.not_available') }}</strong>
-            </div>
-            <div>
-              <span class="wb-meta-label">{{ $adminText('updates.finished') }}</span>
-              <strong>{{ optional($latestUpdateRun->finished_at)->format('Y-m-d H:i') ?? $adminText('common.not_available') }}</strong>
-            </div>
-            <div>
-              <span class="wb-meta-label">{{ $adminText('updates.duration') }}</span>
-              <strong>{{ $latestUpdateRun->durationLabel() }}</strong>
-            </div>
-          </div>
-
-          @if ($latestUpdateRun->output)
-            <div class="wb-stack wb-stack-2">
-              <strong>{{ $adminText('updates.safe_output_log') }}</strong>
-              <pre class="wb-code-block">{{ app(\WebBlocks\Cms\Support\System\Updates\SystemUpdateRunOutputSanitizer::class)->sanitize($latestUpdateRun->output) }}</pre>
-            </div>
-          @endif
-        </div>
-
-        <div class="wb-modal-footer">
-          <button class="wb-btn wb-btn-secondary" type="button" data-wb-dismiss="modal">{{ $adminText('common.close') }}</button>
         </div>
       </div>
     </div>
   @endif
 @endsection
 
+@if ($updateAvailable && $canUpdate)
 @push('scripts')
   <script>
-    document.addEventListener('submit', function (event) {
-      var form = event.target.closest('[data-wb-update-form]');
-
-      if (!form) {
-        return;
-      }
-
-      var button = form.querySelector('[data-wb-update-submit]');
-
-      if (!button && form.id) {
-        button = document.querySelector('[data-wb-update-submit][form="' + form.id + '"]');
-      }
-
-      if (!button || button.disabled) {
-        return;
-      }
-
-      button.disabled = true;
-      button.textContent = button.getAttribute('data-busy-label') || @json($adminText('updates.updating'));
-
+    (function () {
+      var form = document.querySelector('[data-wb-update-form]');
       var modal = document.querySelector('[data-webblocks-update-progress-modal]');
 
-      if (modal && window.WBModal && typeof window.WBModal.open === 'function') {
+      if (!form || !modal) { return; }
+
+      function openModal(trigger) {
         modal.addEventListener('wb:overlay:close-request', function (closeEvent) {
           closeEvent.preventDefault();
         });
-        window.WBModal.open(modal, button);
+
+        if (window.WBModal && typeof window.WBModal.open === 'function') {
+          window.WBModal.open(modal, trigger);
+        } else {
+          modal.hidden = false;
+          modal.classList.add('is-open');
+        }
       }
-    });
+
+      // No fetch (very old browser): fall back to a plain submit + spinner.
+      if (!window.fetch) {
+        form.addEventListener('submit', function () { openModal(null); });
+        return;
+      }
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        var button = form.querySelector('[data-wb-update-submit]');
+        if (button) { button.disabled = true; }
+        openModal(button);
+
+        var body = new FormData(form);
+        var health = modal.getAttribute('data-wb-health-url') || window.location.href;
+        var returnUrl = modal.getAttribute('data-wb-return-url') || window.location.href;
+        var waiting = modal.getAttribute('data-wb-waiting-label');
+        var status = document.getElementById('wb-update-progress-status');
+        var started = Date.now();
+        var done = false;
+
+        function goHome() { if (done) { return; } done = true; window.location.assign(returnUrl); }
+
+        // A successful self-update swaps the app's own code and restarts
+        // php-fpm, so the triggering request (and the next few) can drop with
+        // a 502 while fresh workers spin up. Fire the update, then poll the
+        // lightweight indicator endpoint (which does not consume the flash)
+        // until the app answers again, and only then navigate — the reload
+        // window stays hidden behind the overlay instead of surfacing as a 502.
+        function poll() {
+          if (done) { return; }
+          if (Date.now() - started > 180000) { goHome(); return; } // 3-min safety net
+          fetch(health, { method: 'GET', cache: 'no-store', credentials: 'same-origin' })
+            .then(function (res) {
+              if (res && res.status >= 200 && res.status < 500) { goHome(); } else { setTimeout(poll, 1500); }
+            })
+            .catch(function () { setTimeout(poll, 1500); });
+        }
+
+        fetch(form.getAttribute('action'), { method: 'POST', body: body, redirect: 'manual', credentials: 'same-origin' })
+          .then(function () { if (waiting && status) { status.textContent = waiting; } })
+          .catch(function () { if (waiting && status) { status.textContent = waiting; } })
+          .then(poll);
+      });
+    }());
   </script>
 @endpush
+@endif

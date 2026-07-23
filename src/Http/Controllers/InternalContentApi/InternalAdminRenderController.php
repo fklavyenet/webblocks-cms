@@ -6,10 +6,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Models\CmsApiToken;
-use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -36,16 +34,11 @@ class InternalAdminRenderController extends Controller
     Auth::guard()->setUser($user);
 
     $report = $this->systemUpdateInspector->report();
-    $latestUpdateRun = $this->latestUpdateRun();
-    $mainLatestUpdateRun = $this->mainLatestUpdateRun($latestUpdateRun, $report);
     $checkedAt = $report['checked_at'] ?? now();
     $html = view('webblocks-cms::admin.system.updates', [
       'report' => $report,
-      'latestUpdateRun' => $mainLatestUpdateRun,
-      'retainedUpdateRuns' => $this->runRetention->retainedRuns(),
-      'historicalUpdateRuns' => $latestUpdateRun && $mainLatestUpdateRun === null
-        ? collect([$latestUpdateRun])
-        : collect(),
+      'runs' => $this->runRetention->retainedRuns(),
+      'preflight' => $report['checks'] ?? [],
       'checkedAt' => $checkedAt,
     ])->render();
 
@@ -82,41 +75,5 @@ class InternalAdminRenderController extends Controller
     }
 
     return $token->creator;
-  }
-
-  private function latestUpdateRun(): ?SystemUpdateRun
-  {
-    if (! Schema::hasTable('wbcms_system_update_runs')) {
-      return null;
-    }
-
-    return SystemUpdateRun::query()->with('triggeredBy')->latest()->first();
-  }
-
-  private function mainLatestUpdateRun(?SystemUpdateRun $run, array $report): ?SystemUpdateRun
-  {
-    if (! $run || $run->status !== SystemUpdateRun::STATUS_FAILED) {
-      return $run;
-    }
-
-    $installedVersion = (string) ($report['installed_version'] ?? $report['version']['installed_version'] ?? '');
-    $latestVersion = $report['version']['latest_version'] ?? null;
-    $hasCurrentActionableTarget = ($report['can_update'] ?? false) === true
-      && is_string($latestVersion)
-      && $latestVersion !== '';
-
-    if (is_string($run->to_version) && $run->to_version !== '' && $installedVersion !== '' && version_compare($run->to_version, $installedVersion, '<=')) {
-      return null;
-    }
-
-    if (! $hasCurrentActionableTarget) {
-      return null;
-    }
-
-    if ((string) $run->to_version !== (string) $latestVersion) {
-      return null;
-    }
-
-    return $run;
   }
 }
