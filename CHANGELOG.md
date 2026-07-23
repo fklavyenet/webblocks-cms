@@ -7,6 +7,15 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.41.0
+
+- Make in-app System Updates a one-click flow: a single `Update to X` action now downloads, backs up, applies, migrates, and verifies the release in one run. The old two-phase prepare/continue/cancel flow and its separate pre-update backup download step are retired, along with the `system/updates/{continue,cancel,support-report}` admin endpoints and the super-admin support-report download.
+- Take an automatic pre-update backup before every apply and automatically restore it when the apply fails. A failed-then-restored run is recorded with the new `restored` run status (`Failed, backup restored`); if the restore itself fails, the run stays `failed` with both error trails in the run log. Pre-update backups remain available on the Backups screen for manual download and restore.
+- Redesign the System Updates screen to the fleet-standard v3 layout: a single status card, a folded "What's new" area with a per-version changelog accordion built from cumulative update-server changelog entries, one-click update with a backup note, and a non-dismissible interstitial that polls the update indicator until the updated app answers again.
+- Add a server-backup advisory line next to the update action that links to the Backups screen, so operators are nudged to take a fresh full backup before a major update.
+- Retire the source-maintained apply mode: `WEBBLOCKS_UPDATES_MIGRATION_STRATEGY` is ignored, in-app updates always target the canonical Composer package root `vendor/fklavyenet/webblocks-cms`, and package update migrations under `database/migrations/updates` always run when present. Source-maintained maintenance checkouts update through git/Composer, not the in-app updater.
+- Reduce preflight to the checks that matter and surface them on the screen: database connection, ZIP and sodium extensions, PHP/Composer/process execution, application-root and workspace write access, and free disk space. The update action is available only when every check passes; the old blocker state machine is gone.
+
 ## 1.40.27
 
 - Clean the drift out of `admin.css` (and `guest.css`) the same way `public.css` was cleaned, against WebBlocks UI 2.16.x:

@@ -81,7 +81,7 @@ Source families inspected:
 7. Site CSS may refine typography, spacing, color, borders, shadows, and responsive presentation through stable public hooks. It must not become a hidden content store or reconstruct missing semantic markup.
 8. Do not target database IDs, generated block IDs, sibling position selectors, or `:nth-child()` for essential design behavior. Prefer block-type attributes, native `wb-*` classes, page body classes, and documented settings.
 9. Keep every visible title, paragraph, label, button, badge, image, caption, menu, and form setting editable through its native CMS field or related record.
-10. Validate first, apply only after explicit user approval, create drafts first, and leave live Update Now and live visual testing to the human operator unless separately authorized.
+10. Validate first, apply only after explicit user approval, create drafts first, and leave live system-update actions and live visual testing to the human operator unless separately authorized.
 
 ## HTML Block API Policy
 

@@ -25,6 +25,21 @@ class PackageDevelopmentBoundaryTest extends TestCase
   }
 
   #[Test]
+  public function upgrading_guide_documents_the_one_click_update_transition(): void
+  {
+    $guide = (string) file_get_contents(dirname(__DIR__, 2).'/UPGRADING.md');
+
+    $this->assertStringContainsString('1.41.0', $guide);
+    $this->assertStringContainsString('one-click flow', $guide);
+    $this->assertStringContainsString('`restored` run status', $guide);
+    $this->assertStringContainsString('system/updates/continue', $guide);
+    $this->assertStringContainsString('Source-maintained apply mode retired', $guide);
+    $this->assertStringContainsString('vendor/fklavyenet/webblocks-cms', $guide);
+    $this->assertStringContainsString('server_backup_advisory', $guide);
+    $this->assertStringContainsString('statuses.restored', $guide);
+  }
+
+  #[Test]
   public function package_archive_excludes_development_only_files(): void
   {
     $attributes = file_get_contents(dirname(__DIR__, 2).'/.gitattributes');
