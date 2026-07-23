@@ -21,7 +21,6 @@ return [
     'retry_sleep_milliseconds' => 150,
     'indicator_cache_ttl_seconds' => 3600,
     'indicator_inactive_cache_ttl_seconds' => 60,
-    'pending_cache_ttl_seconds' => 3600,
     'runs' => [
         'keep' => env('WEBBLOCKS_UPDATES_RUNS_KEEP', 5),
     ],
@@ -46,7 +45,6 @@ return [
         'workspace_root' => 'app/system-updates',
         'download_timeout_seconds' => 120,
         'command_timeout_seconds' => 600,
-        'migration_strategy' => env('WEBBLOCKS_UPDATES_MIGRATION_STRATEGY', 'auto'),
         'package_update_migrations_path' => 'vendor/fklavyenet/webblocks-cms/database/migrations/updates',
         'lock_name' => 'system-updates:run',
         'lock_ttl_seconds' => 900,

@@ -13,8 +13,6 @@ class RunSystemUpdateRequest extends FormRequest
 
   public function rules(): array
   {
-    return [
-      'download_pre_update_backup' => ['nullable', 'boolean'],
-    ];
+    return [];
   }
 }

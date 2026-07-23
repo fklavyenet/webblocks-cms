@@ -7,18 +7,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\PhpExecutableFinder;
 use Throwable;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use ZipArchive;
 
+/**
+ * Preflight inspector for the one-click self-update flow. Runs the environment
+ * checks the updater depends on and reports a single `can_update` verdict:
+ * an update is offered when a newer release with a package URL is available,
+ * every preflight check passes, and no other update run holds the lock.
+ */
 class SystemUpdateInspector
 {
-  public const BLOCKER_BUSY = 'Another update run is already in progress.';
-
-  public const BLOCKER_NO_NEWER_RELEASE_READY = 'No newer release is ready for this install.';
-
-  public const BLOCKER_MISSING_PACKAGE_URL = 'The latest release does not provide an installable package URL.';
+  private const MINIMUM_FREE_DISK_BYTES = 500 * 1024 * 1024;
 
   public function __construct(
     private readonly UpdateServerClient $updateServerClient,
@@ -56,27 +59,43 @@ class SystemUpdateInspector
       $version['update_available'] = false;
     }
 
-    $diagnostics = [
-      $this->databaseDiagnostic(),
-      $this->installedVersionStore->diagnostic(),
-      $this->updateServerDiagnostic($version),
-      $this->updateRunLoggingDiagnostic(),
-      $this->archiveSupportDiagnostic(),
-      $this->commandExecutionDiagnostic(),
-      $this->composerDiagnostic(),
-      $this->targetPathDiagnostic(),
-      $this->workspaceDiagnostic(),
+    $checks = [
+      $this->databaseCheck(),
+      $this->archiveSupportCheck(),
+      $this->signatureSupportCheck(),
+      $this->commandExecutionCheck(),
+      $this->writablePathCheck(
+        label: 'Application root write access',
+        path: (string) config('webblocks-updates.installer.target_path', base_path()),
+        missingMessage: 'The configured application root for updates does not exist.',
+      ),
+      $this->writablePathCheck(
+        label: 'Update workspace',
+        path: storage_path(trim((string) config('webblocks-updates.installer.workspace_root', 'app/system-updates'), '/')),
+        missingMessage: 'The update workspace directory could not be created.',
+        createIfMissing: true,
+      ),
+      $this->freeDiskSpaceCheck(),
     ];
 
-    $autoUpdate = $this->autoUpdateState($version, $diagnostics);
+    $checksPass = collect($checks)->every(fn (array $check): bool => $check['status'] === 'pass');
+
+    $updateAvailable = ($version['update_available'] ?? false) === true
+      && ($version['compatibility']['status'] ?? 'unknown') !== 'incompatible';
+    $downloadUrl = trim((string) ($version['release']['download_url'] ?? ''));
+
+    $canUpdate = $updateAvailable
+      && $downloadUrl !== ''
+      && $checksPass
+      && ! $this->systemUpdater->isLocked();
 
     return [
       'checked_at' => $version['checked_at'] ?? now(),
       'installed_version' => $installedVersion,
       'stored_installed_version' => $this->installedVersionStore->storedVersion(),
       'version' => $version,
-      'diagnostics' => $diagnostics,
-      'auto_update' => $autoUpdate,
+      'checks' => $checks,
+      'can_update' => $canUpdate,
       'environment' => [
         'server_url' => $version['server_url'] ?? '',
         'product' => $version['product'] ?? config('webblocks-updates.product', 'webblocks-cms'),
@@ -88,98 +107,98 @@ class SystemUpdateInspector
     ];
   }
 
-  private function databaseDiagnostic(): array
+  private function databaseCheck(): array
   {
     try {
       DB::connection()->getPdo();
-
-      return $this->check('Database connection', 'pass', 'The database is reachable and ready for update commands.');
     } catch (Throwable $throwable) {
-      return $this->check('Database connection', 'blocked', 'The database connection failed: '.$throwable->getMessage(), true);
-    }
-  }
-
-  private function updateServerDiagnostic(array $version): array
-  {
-    if (($version['server_reachable'] ?? false) === true) {
-      return $this->check('Update server connectivity', 'pass', 'The configured update server responded to the latest check.');
+      return $this->check('Database connection', 'fail', 'The database connection failed: '.$throwable->getMessage());
     }
 
-    return $this->check('Update server connectivity', 'warning', $version['message'] ?? 'The update server could not be reached.');
-  }
-
-  private function updateRunLoggingDiagnostic(): array
-  {
     if (! Schema::hasTable('wbcms_system_update_runs')) {
-      return $this->check('Update run logging', 'blocked', 'The system update runs table is missing. Run the latest migrations before updating.', true);
+      return $this->check('Database connection', 'fail', 'The system update runs table is missing. Run the latest migrations before updating.');
     }
 
-    return $this->check('Update run logging', 'pass', 'Automatic update runs can be recorded in the database.');
+    return $this->check('Database connection', 'pass', 'The database is reachable and update runs can be recorded.');
   }
 
-  private function archiveSupportDiagnostic(): array
+  private function archiveSupportCheck(): array
   {
     if (! class_exists(ZipArchive::class)) {
-      return $this->check('Archive extraction', 'blocked', 'The PHP ZIP extension is missing, so update packages cannot be extracted.', true);
+      return $this->check('Archive extraction', 'fail', 'The PHP ZIP extension is missing, so update packages cannot be extracted.');
     }
 
     return $this->check('Archive extraction', 'pass', 'The PHP ZIP extension is available for package extraction.');
   }
 
-  private function commandExecutionDiagnostic(): array
+  private function signatureSupportCheck(): array
+  {
+    if (! function_exists('sodium_crypto_sign_verify_detached')) {
+      return $this->check('Release signature verification', 'fail', 'The PHP sodium extension is missing, so signed releases cannot be verified.');
+    }
+
+    return $this->check('Release signature verification', 'pass', 'The PHP sodium extension is available for Ed25519 release verification.');
+  }
+
+  private function commandExecutionCheck(): array
   {
     if (! function_exists('proc_open')) {
-      return $this->check('Command execution', 'blocked', 'PHP process execution is disabled, so maintenance and migration commands cannot run.', true);
+      return $this->check('Command execution', 'fail', 'PHP process execution is disabled, so maintenance and migration commands cannot run.');
     }
 
-    return $this->check('Command execution', 'pass', 'PHP process execution is available for maintenance and migration commands.');
-  }
+    $phpBinary = (new PhpExecutableFinder)->find(false);
 
-  private function composerDiagnostic(): array
-  {
-    $composer = (new ExecutableFinder)->find('composer');
-
-    if (! is_string($composer) || $composer === '') {
-      return $this->check('Composer availability', 'blocked', 'Composer is not available on the server, so source package dependencies cannot be installed.', true);
+    if (! is_string($phpBinary) || $phpBinary === '') {
+      return $this->check('Command execution', 'fail', 'The PHP CLI binary could not be resolved, so update commands cannot run.');
     }
 
-    return $this->check('Composer availability', 'pass', 'Composer is available for post-package dependency installation.');
+    $composerBinary = (new ExecutableFinder)->find('composer');
+
+    if (! is_string($composerBinary) || $composerBinary === '') {
+      return $this->check('Command execution', 'fail', 'Composer is not available on the server, so package autoload metadata cannot be rebuilt.');
+    }
+
+    return $this->check('Command execution', 'pass', 'PHP, Composer, and process execution are available for update commands.');
   }
 
-  private function targetPathDiagnostic(): array
+  private function freeDiskSpaceCheck(): array
   {
-    return $this->writablePathDiagnostic(
-      label: 'Application root write access',
-      path: (string) config('webblocks-updates.installer.target_path', base_path()),
-      missingMessage: 'The configured application root for updates does not exist.',
-    );
+    $workspaceRoot = storage_path();
+
+    try {
+      $freeBytes = @disk_free_space($workspaceRoot);
+    } catch (Throwable) {
+      $freeBytes = false;
+    }
+
+    if (! is_float($freeBytes) && ! is_int($freeBytes)) {
+      return $this->check('Free disk space', 'fail', 'Free disk space could not be determined for '.$workspaceRoot.'.');
+    }
+
+    if ($freeBytes < self::MINIMUM_FREE_DISK_BYTES) {
+      return $this->check(
+        'Free disk space',
+        'fail',
+        sprintf('Only %.0f MB free under %s; at least %d MB is required for backup and update workspaces.', $freeBytes / 1048576, $workspaceRoot, self::MINIMUM_FREE_DISK_BYTES / 1048576),
+      );
+    }
+
+    return $this->check('Free disk space', 'pass', sprintf('%.0f MB free for backup and update workspaces.', $freeBytes / 1048576));
   }
 
-  private function workspaceDiagnostic(): array
-  {
-    $workspacePath = storage_path(trim((string) config('webblocks-updates.installer.workspace_root', 'app/system-updates'), '/'));
-
-    return $this->writablePathDiagnostic(
-      label: 'Update workspace',
-      path: $workspacePath,
-      missingMessage: 'The update workspace directory could not be created.',
-      createIfMissing: true,
-    );
-  }
-
-  private function writablePathDiagnostic(string $label, string $path, string $missingMessage, bool $createIfMissing = false): array
+  private function writablePathCheck(string $label, string $path, string $missingMessage, bool $createIfMissing = false): array
   {
     try {
       if (! File::exists($path)) {
         if (! $createIfMissing) {
-          return $this->check($label, 'blocked', $missingMessage, true);
+          return $this->check($label, 'fail', $missingMessage);
         }
 
         File::ensureDirectoryExists($path);
       }
 
       if (! File::isDirectory($path)) {
-        return $this->check($label, 'blocked', 'The configured path is not a directory: '.$path, true);
+        return $this->check($label, 'fail', 'The configured path is not a directory: '.$path);
       }
 
       $probeDirectory = $path.'/.wb-update-probe-'.str()->uuid();
@@ -188,59 +207,17 @@ class SystemUpdateInspector
 
       return $this->check($label, 'pass', 'Write access to '.$path.' is available for automatic updates.');
     } catch (Throwable $throwable) {
-      return $this->check($label, 'blocked', 'Write access check failed: '.$throwable->getMessage(), true);
+      return $this->check($label, 'fail', 'Write access check failed: '.$throwable->getMessage());
     }
   }
 
-  private function autoUpdateState(array $version, array $diagnostics): array
-  {
-    $blockers = [];
-
-    foreach ($diagnostics as $diagnostic) {
-      if (($diagnostic['blocks_update'] ?? false) === true) {
-        $blockers[] = $diagnostic['message'];
-      }
-    }
-
-    if ($this->systemUpdater->isLocked()) {
-      $blockers[] = self::BLOCKER_BUSY;
-    }
-
-    if (($version['state'] ?? null) === 'incompatible') {
-      foreach (($version['compatibility']['reasons'] ?? []) as $reason) {
-        $blockers[] = $reason;
-      }
-    }
-
-    if (($version['update_available'] ?? false) !== true) {
-      $blockers[] = self::BLOCKER_NO_NEWER_RELEASE_READY;
-    }
-
-    if (! is_string($version['release']['download_url'] ?? null) || trim((string) $version['release']['download_url']) === '') {
-      $blockers[] = self::BLOCKER_MISSING_PACKAGE_URL;
-    }
-
-    $blockers = array_values(array_unique(array_filter($blockers, static fn ($message): bool => is_string($message) && $message !== '')));
-
-    return [
-      'allowed' => $blockers === [] && ($version['state'] ?? null) === 'update_available',
-      'blockers' => $blockers,
-      'busy' => in_array(self::BLOCKER_BUSY, $blockers, true),
-    ];
-  }
-
-  private function check(string $label, string $status, string $message, bool $blocksUpdate = false): array
+  private function check(string $label, string $status, string $message): array
   {
     return [
       'label' => $label,
       'status' => $status,
       'message' => $message,
-      'blocks_update' => $blocksUpdate,
-      'badge_class' => match ($status) {
-        'pass' => 'wb-status-active',
-        'warning' => 'wb-status-pending',
-        default => 'wb-status-danger',
-      },
+      'badge_class' => $status === 'pass' ? 'wb-status-active' : 'wb-status-danger',
     ];
   }
 }

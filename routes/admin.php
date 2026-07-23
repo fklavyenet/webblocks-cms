@@ -358,9 +358,6 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/updates/indicator', [SystemUpdateController::class, 'indicator'])->name('system.updates.indicator');
       Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
       Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
-      Route::post('system/updates/continue', [SystemUpdateController::class, 'continue'])->name('system.updates.continue');
-      Route::post('system/updates/cancel', [SystemUpdateController::class, 'cancel'])->name('system.updates.cancel');
-      Route::get('system/updates/support-report', [SystemUpdateController::class, 'supportReport'])->name('system.updates.support-report');
       Route::get('system/icons', [IconCatalogController::class, 'index'])->name('system.icons.index');
       Route::post('system/icons/sync-webblocks-ui', [IconCatalogController::class, 'sync'])->name('system.icons.sync-webblocks-ui');
       Route::put('system/icons/{iconCatalogItem}', [IconCatalogController::class, 'update'])->name('system.icons.update');

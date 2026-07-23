@@ -7,8 +7,6 @@ use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 
 class UpdateInstaller
 {
-  private const PACKAGE_RUNTIME_PATH = 'packages/webblocks-cms';
-
   private const COMPOSER_VENDOR_PACKAGE_PATH = 'vendor/fklavyenet/webblocks-cms';
 
   public function __construct(
@@ -138,18 +136,6 @@ class UpdateInstaller
   {
     $targetPath = $this->targetPath();
 
-    if ($this->isSourceMaintainedTarget($targetPath)) {
-      $this->commandRunner->run([
-        'composer',
-        'install',
-        '--no-interaction',
-        '--prefer-dist',
-        '--optimize-autoloader',
-      ], $targetPath, $output);
-
-      return;
-    }
-
     $this->normalizeComposerPackageMetadata($targetPath, $output);
 
     $this->commandRunner->run([
@@ -265,52 +251,12 @@ class UpdateInstaller
 
   private function packageRuntimePaths(string $targetPath): array
   {
-    if ($this->isSourceMaintainedTarget($targetPath)) {
-      return [$this->rootPackageRuntimePath($targetPath)];
-    }
-
     return [$this->canonicalComposerPackageRuntimePath($targetPath)];
-  }
-
-  private function rootPackageRuntimePath(string $targetPath): string
-  {
-    return rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::PACKAGE_RUNTIME_PATH);
   }
 
   private function canonicalComposerPackageRuntimePath(string $targetPath): string
   {
     return rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::COMPOSER_VENDOR_PACKAGE_PATH);
-  }
-
-  private function isSourceMaintainedTarget(string $targetPath): bool
-  {
-    $composerPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'composer.json';
-
-    if (! File::isFile($composerPath)) {
-      return false;
-    }
-
-    try {
-      $composer = json_decode((string) File::get($composerPath), true, 512, JSON_THROW_ON_ERROR);
-    } catch (\JsonException) {
-      return false;
-    }
-
-    $autoload = $composer['autoload']['psr-4'] ?? [];
-
-    if (($composer['name'] ?? null) !== 'fklavyenet/webblocks-cms') {
-      return false;
-    }
-
-    if (($autoload['WebBlocks\\Cms\\'] ?? null) !== 'packages/webblocks-cms/src/') {
-      return false;
-    }
-
-    if (($autoload['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) !== 'packages/webblocks-cms/database/seeders/') {
-      return false;
-    }
-
-    return File::isDirectory($this->rootPackageRuntimePath($targetPath));
   }
 
   private function isRepoShapedVendorPackageRoot(string $targetPath, string $packageRuntimePath): bool
@@ -465,12 +411,7 @@ class UpdateInstaller
   {
     $normalizedTargetPath = rtrim(str_replace('\\', '/', $targetPath), '/');
     $normalizedPackageRuntimePath = rtrim(str_replace('\\', '/', $packageRuntimePath), '/');
-    $rootRuntimePath = $normalizedTargetPath.'/'.self::PACKAGE_RUNTIME_PATH;
     $vendorRuntimePath = $normalizedTargetPath.'/'.self::COMPOSER_VENDOR_PACKAGE_PATH;
-
-    if ($normalizedPackageRuntimePath === $rootRuntimePath) {
-      return;
-    }
 
     if ($normalizedPackageRuntimePath === $vendorRuntimePath) {
       return;
@@ -517,7 +458,7 @@ class UpdateInstaller
       }
 
       if (preg_match('/(^|\/)\.\.(\/|$)/', $relativePath) === 1 || str_starts_with($relativePath, '/')) {
-        throw new UpdateException('The downloaded update package contains invalid paths.', 'Refusing to apply package file outside '.self::PACKAGE_RUNTIME_PATH.': '.$relativePath);
+        throw new UpdateException('The downloaded update package contains invalid paths.', 'Refusing to apply package file outside the package root: '.$relativePath);
       }
     }
   }

@@ -16,6 +16,10 @@ class SystemUpdateRun extends CmsModel
 
   public const STATUS_FAILED = 'failed';
 
+  public const STATUS_RESTORED = 'restored';
+
+  // Historic-only statuses: no code writes these anymore, but retained rows
+  // from the retired two-phase flow must keep rendering.
   public const STATUS_PENDING = 'pending';
 
   public const STATUS_RUNNING = 'running';
@@ -47,7 +51,10 @@ class SystemUpdateRun extends CmsModel
 
   public function statusLabel(): string
   {
-    return str_replace('_', ' ', $this->status);
+    return match ($this->status) {
+      self::STATUS_RESTORED => 'Failed, backup restored',
+      default => str_replace('_', ' ', $this->status),
+    };
   }
 
   public function statusBadgeClass(): string
@@ -57,6 +64,7 @@ class SystemUpdateRun extends CmsModel
       self::STATUS_SUCCESS_WITH_WARNINGS => 'wb-status-pending',
       self::STATUS_PENDING => 'wb-status-pending',
       self::STATUS_RUNNING => 'wb-status-pending',
+      self::STATUS_RESTORED => 'wb-status-danger',
       default => 'wb-status-danger',
     };
   }

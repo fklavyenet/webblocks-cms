@@ -6,11 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Models\CmsApiToken;
-use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
@@ -38,7 +36,6 @@ class InternalAdminRenderController extends Controller
     Auth::guard()->setUser($user);
 
     $report = $this->systemUpdateInspector->report();
-    $pendingUpdate = $this->pendingUpdate();
     $latestUpdateRun = $this->latestUpdateRun();
     $mainLatestUpdateRun = $this->mainLatestUpdateRun($latestUpdateRun, $report);
     $checkedAt = $report['checked_at'] ?? now();
@@ -49,8 +46,6 @@ class InternalAdminRenderController extends Controller
       'historicalUpdateRuns' => $latestUpdateRun && $mainLatestUpdateRun === null
         ? collect([$latestUpdateRun])
         : collect(),
-      'pendingUpdate' => $pendingUpdate,
-      'pendingBackup' => $pendingUpdate ? SystemBackup::query()->find($pendingUpdate['backup_id'] ?? null) : null,
       'checkedAt' => $checkedAt,
     ])->render();
 
@@ -89,17 +84,6 @@ class InternalAdminRenderController extends Controller
     return $token->creator;
   }
 
-  private function pendingUpdate(): ?array
-  {
-    $pending = Cache::get('system-updates:pending');
-
-    if (! is_array($pending)) {
-      $pending = session('system_updates.pending');
-    }
-
-    return is_array($pending) ? $pending : null;
-  }
-
   private function latestUpdateRun(): ?SystemUpdateRun
   {
     if (! Schema::hasTable('wbcms_system_update_runs')) {
@@ -117,7 +101,7 @@ class InternalAdminRenderController extends Controller
 
     $installedVersion = (string) ($report['installed_version'] ?? $report['version']['installed_version'] ?? '');
     $latestVersion = $report['version']['latest_version'] ?? null;
-    $hasCurrentActionableTarget = ($report['auto_update']['allowed'] ?? false) === true
+    $hasCurrentActionableTarget = ($report['can_update'] ?? false) === true
       && is_string($latestVersion)
       && $latestVersion !== '';
 

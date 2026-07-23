@@ -1,7 +1,6 @@
 @php
   use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
   use WebBlocks\Cms\Support\Translations\CmsTranslator;
-  use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 
   $adminLocale = app(AdminLocaleResolver::class)->locale();
   $adminTranslator = app(CmsTranslator::class);
@@ -13,22 +12,13 @@
 @section('content')
   @php
     $updateStatus = $report['version'];
-    $diagnostics = $report['diagnostics'];
+    $diagnostics = $report['checks'] ?? [];
     $release = $updateStatus['release'] ?? null;
     $installedVersion = $report['installed_version'] ?? $updateStatus['installed_version'];
     $storedInstalledVersion = $report['stored_installed_version'] ?? null;
-    $pendingUpdate = $pendingUpdate ?? null;
-    $pendingBackup = $pendingBackup ?? null;
     $latestUpdateRun = $latestUpdateRun ?? null;
     $retainedUpdateRuns = $retainedUpdateRuns ?? collect();
-    $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
-    $updateBlockerText = static fn (?string $message) => match ($message) {
-      SystemUpdateInspector::BLOCKER_BUSY => $adminText('updates.blockers.busy'),
-      SystemUpdateInspector::BLOCKER_NO_NEWER_RELEASE_READY => $adminText('updates.blockers.no_newer_release_ready'),
-      SystemUpdateInspector::BLOCKER_MISSING_PACKAGE_URL => $adminText('updates.blockers.missing_package_url'),
-      null, '' => null,
-      default => $message,
-    };
+    $autoUpdate = ['allowed' => ($report['can_update'] ?? false) === true, 'blockers' => [], 'busy' => false];
     $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
     $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
       && (string) $installedVersion !== (string) $updateStatus['latest_version'];
@@ -131,8 +121,7 @@
         ? basename($downloadPath)
         : $adminText('updates.release_package');
     }
-    $showUpdateAction = ($pendingUpdate && $pendingBackup)
-      || ($autoUpdate['allowed'] ?? false) === true;
+    $showUpdateAction = ($autoUpdate['allowed'] ?? false) === true;
     $diagnosticItems = collect($diagnostics)->prepend([
         'label' => $adminText('updates.compatibility'),
         'status' => $compatibilityStatus,
@@ -202,12 +191,7 @@
               @endif
             </div>
             <div class="wb-action-group">
-              @if ($pendingUpdate && $pendingBackup)
-                <form method="POST" action="{{ route('admin.system.updates.continue') }}" data-wb-update-form>
-                  @csrf
-                  <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit data-default-label="{{ $adminText('updates.continue_update') }}" data-busy-label="{{ $adminText('updates.updating') }}">{{ $adminText('updates.continue_update') }}</button>
-                </form>
-              @elseif ($showUpdateAction)
+              @if ($showUpdateAction)
                 <button
                   type="submit"
                   form="webblocks-update-install-form"
@@ -232,35 +216,7 @@
           </div>
         @endif
 
-        @if ($pendingUpdate && $pendingBackup)
-          <div class="wb-alert wb-alert-info">
-            <div>
-              <div class="wb-alert-title">{{ $adminText('updates.backup_protection') }}</div>
-              <div>{{ $adminText('updates.backup_protection_help') }}</div>
-            </div>
-          </div>
-
-          <div class="wb-meta-grid">
-            <div>
-              <span class="wb-meta-label">{{ $adminText('updates.backup_name') }}</span>
-              <strong>{{ $pendingBackup->archive_filename ?? ($adminText('backups.backup_number', ['id' => $pendingBackup->id])) }}</strong>
-            </div>
-
-            <div>
-              <span class="wb-meta-label">{{ $adminText('updates.backup_size') }}</span>
-              <strong>{{ $pendingBackup->humanArchiveSize() }}</strong>
-            </div>
-          </div>
-
-          <div class="wb-action-group">
-            <a href="{{ route('admin.system.backups.download', $pendingBackup) }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.download_backup') }}</a>
-
-            <form method="POST" action="{{ route('admin.system.updates.cancel') }}">
-              @csrf
-              <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('common.cancel') }}</button>
-            </form>
-          </div>
-        @elseif ($showUpdateAction)
+        @if ($showUpdateAction)
           <div class="wb-alert wb-alert-success">
             <div>
               <div class="wb-alert-title">{{ $installedVersion }} → {{ $updateStatus['latest_version'] }}</div>
@@ -270,20 +226,15 @@
 
           <form id="webblocks-update-install-form" method="POST" action="{{ route('admin.system.updates.store') }}" data-wb-update-form>
             @csrf
-
-            <label class="wb-checkbox">
-              <input type="checkbox" name="download_pre_update_backup" value="1" @checked(old('download_pre_update_backup'))>
-              <span>{{ $adminText('updates.download_backup_before_install') }}</span>
-            </label>
           </form>
         @else
-          <p class="wb-text-muted">{{ $updateBlockerText($autoUpdate['blockers'][0] ?? null) ?? $adminText('updates.blockers.no_newer_release_ready') }}</p>
+          <p class="wb-text-muted">{{ $adminText('updates.blockers.no_newer_release_ready') }}</p>
         @endif
 
       </div>
     </section>
 
-    @if ($showUpdateAction || $pendingUpdate || $readinessNeedsAttention || $state === 'incompatible')
+    @if ($showUpdateAction || $readinessNeedsAttention || $state === 'incompatible')
     <div class="wb-grid wb-grid-3" data-webblocks-updates-card="safety-summary">
       <section class="wb-card">
         <div class="wb-card-body">
@@ -322,9 +273,9 @@
             <div>
               <div class="wb-cluster wb-cluster-between wb-cluster-2">
                 <strong>{{ $adminText('updates.backup') }}</strong>
-                <span class="wb-status-pill {{ $pendingBackup ? 'wb-status-info' : 'wb-status-active' }}">{{ $pendingBackup ? $adminText('updates.created') : $adminText('updates.will_be_created') }}</span>
+                <span class="wb-status-pill wb-status-active">{{ $adminText('updates.will_be_created') }}</span>
               </div>
-              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $pendingBackup ? $adminText('updates.download_prepared_backup') : $adminText('updates.pre_update_backup_created') }}</p>
+              <p class="wb-text-sm wb-text-muted wb-m-0">{{ $adminText('updates.pre_update_backup_created') }}</p>
             </div>
           </div>
         </div>
@@ -553,9 +504,6 @@
         <div>
           <h2 class="wb-card-title">{{ $adminText('updates.history') }}</h2>
           <p class="wb-card-description">{{ $adminText('updates.history_help') }}</p>
-        </div>
-        <div class="wb-action-group">
-          <a href="{{ route('admin.system.updates.support-report') }}" class="wb-btn wb-btn-secondary">{{ $adminText('updates.download_support_report') }}</a>
         </div>
       </div>
 

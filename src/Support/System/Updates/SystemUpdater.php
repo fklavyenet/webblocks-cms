@@ -9,10 +9,36 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferPackage;
+use WebBlocks\Cms\Support\System\BackupRestoreArchiveExtractor;
+use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
+use WebBlocks\Cms\Support\System\BackupRestoreInspection;
+use WebBlocks\Cms\Support\System\BackupRestoreResult;
+use WebBlocks\Cms\Support\System\DatabaseExecutionStrategyResolver;
+use WebBlocks\Cms\Support\System\DatabaseRestoreRunner;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SqlDumpContentValidator;
+use WebBlocks\Cms\Support\System\SystemBackupArchiveResolution;
+use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\System\SystemBackupRestoreMaintenanceRunner;
+use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
 
+/**
+ * One-click self-update pipeline. A single lock is held across the whole flow:
+ *
+ *   lock → check → validate → backup → download → verify(checksum + signature)
+ *        → extract → [maintenance down] → apply → deps → post-install
+ *        → verify applied version → [maintenance up] → persist → record → prune
+ *
+ * On failure it recovers maintenance mode and, when the failure happened after
+ * package apply began, best-effort restores the pre-update backup. A successful
+ * restore records the run as `restored`; a failed restore keeps the run `failed`
+ * with both sanitized error trails in the run log.
+ */
 class SystemUpdater
 {
   public function __construct(
@@ -24,25 +50,32 @@ class SystemUpdater
     private readonly UpdateSignatureVerifier $signatureVerifier,
     private readonly UpdateInstaller $updateInstaller,
     private readonly SystemBackupManager $systemBackupManager,
+    private readonly SystemBackupRestoreManager $backupRestoreManager,
     private readonly SystemUpdateRunRetention $runRetention,
   ) {}
 
   public function run(User $user): UpdateResult
   {
-    $prepared = $this->prepareForUpdate($user, false);
-
-    return $this->runPreparedUpdate($user, $prepared);
-  }
-
-  public function prepareForUpdate(User $user, bool $downloadBeforeInstall = false): array
-  {
     $lock = Cache::lock($this->lockName(), (int) config('webblocks-updates.installer.lock_ttl_seconds', 900));
-    $fromVersion = $this->installedVersionStore->currentVersion();
-    $toVersion = null;
 
     if (! $lock->get()) {
       throw new UpdateException('Another update is already running. Wait for it to finish before starting a new run.');
     }
+
+    $workspace = null;
+    $maintenanceEnabled = false;
+    $applyStarted = false;
+    $backup = null;
+    $run = null;
+    $output = [];
+    $warningCount = 0;
+    $startedAt = CarbonImmutable::now();
+    $fromVersion = $this->installedVersionStore->currentVersion();
+    $toVersion = $fromVersion;
+
+    // Applying the package replaces this very class tree on disk, so everything
+    // the failure path may need must be resident in memory before apply starts.
+    $this->preloadSelfHandledClasses();
 
     try {
       if (! Schema::hasTable('wbcms_system_update_runs')) {
@@ -98,123 +131,15 @@ class SystemUpdater
       $run = new SystemUpdateRun([
         'from_version' => $fromVersion,
         'to_version' => $toVersion,
-        'status' => $downloadBeforeInstall ? SystemUpdateRun::STATUS_PENDING : SystemUpdateRun::STATUS_FAILED,
-        'summary' => $downloadBeforeInstall ? 'Waiting for backup download confirmation.' : 'Update started.',
-        'started_at' => CarbonImmutable::now(),
-        'triggered_by_user_id' => $user->getKey(),
-        'output' => implode(PHP_EOL, [
-          'Pre-update backup created.',
-          'Backup #'.$backup->id.' '.$backup->archive_filename,
-        ]),
-      ]);
-      $run->save();
-
-      return [
-        'run_id' => $run->id,
-        'from_version' => $fromVersion,
-        'to_version' => $toVersion,
-        'download_url' => $downloadUrl,
-        'checksum_sha256' => (string) ($release['checksum_sha256'] ?? ''),
-        'release' => $release,
-        'backup_id' => $backup->id,
-        'download_before_install' => $downloadBeforeInstall,
-        'prepared_at' => CarbonImmutable::now()->toIso8601String(),
-      ];
-    } finally {
-      $this->releaseLock($lock);
-    }
-  }
-
-  public function continuePreparedUpdate(User $user, array $prepared): UpdateResult
-  {
-    return $this->runPreparedUpdate($user, $prepared, true);
-  }
-
-  public function cancelPreparedUpdate(User $user, array $prepared): void
-  {
-    $run = SystemUpdateRun::query()->find($prepared['run_id'] ?? null);
-
-    if (! $run) {
-      return;
-    }
-
-    $output = trim((string) $run->output);
-    $lines = $output === '' ? [] : [$output];
-    $lines[] = 'Pending update cancelled before installation.';
-
-    $run->forceFill([
-      'status' => SystemUpdateRun::STATUS_CANCELLED,
-      'summary' => 'Pending update cancelled.',
-      'output' => implode(PHP_EOL, $lines),
-      'finished_at' => CarbonImmutable::now(),
-      'duration_ms' => $run->started_at ? $run->started_at->diffInMilliseconds(CarbonImmutable::now()) : null,
-    ])->save();
-
-    $this->runRetention->prune();
-  }
-
-  private function runPreparedUpdate(User $user, array $prepared, bool $expectPreparedState = false): UpdateResult
-  {
-    $lock = Cache::lock($this->lockName(), (int) config('webblocks-updates.installer.lock_ttl_seconds', 900));
-
-    if (! $lock->get()) {
-      throw new UpdateException('Another update is already running. Wait for it to finish before starting a new run.');
-    }
-
-    $workspace = null;
-    $maintenanceEnabled = false;
-    $run = null;
-    $output = [];
-    $warningCount = 0;
-    $startedAt = CarbonImmutable::now();
-    $fromVersion = (string) ($prepared['from_version'] ?? $this->installedVersionStore->currentVersion());
-    $toVersion = (string) ($prepared['to_version'] ?? $fromVersion);
-
-    $this->preloadSelfHandledClasses();
-
-    try {
-      $release = $prepared['release'] ?? null;
-
-      if (! is_array($release)) {
-        throw new UpdateException('The pending update is no longer valid. Start the update again.');
-      }
-
-      $run = SystemUpdateRun::query()->find($prepared['run_id'] ?? null);
-
-      if (! $run instanceof SystemUpdateRun) {
-        throw new UpdateException('The pending update is no longer valid. Start the update again.');
-      }
-
-      if ($expectPreparedState && $run->status !== SystemUpdateRun::STATUS_PENDING) {
-        throw new UpdateException('The pending update no longer matches the selected target version. Start the update again.');
-      }
-
-      if ($run->to_version !== $toVersion) {
-        throw new UpdateException('The pending update no longer matches the selected target version. Start the update again.');
-      }
-
-      $downloadUrl = trim((string) ($prepared['download_url'] ?? ''));
-
-      if ($downloadUrl === '') {
-        throw new UpdateException('The pending update is missing its package URL. Start the update again.');
-      }
-
-      $run->forceFill([
         'status' => SystemUpdateRun::STATUS_FAILED,
         'summary' => 'Update started.',
         'started_at' => $startedAt,
         'triggered_by_user_id' => $user->getKey(),
-      ])->save();
+      ]);
+      $run->save();
 
       $output[] = 'Starting update from '.$fromVersion.' to '.$toVersion.'.';
-      $backupId = $prepared['backup_id'] ?? null;
-
-      if ($backupId) {
-        $backup = $this->systemBackupManager->latestSuccessful()?->newQuery()->find($backupId);
-        if ($backup) {
-          $output[] = 'Pre-update backup created: #'.$backup->id.' '.$backup->archive_filename;
-        }
-      }
+      $output[] = 'Pre-update backup created: #'.$backup->id.' '.$backup->archive_filename;
 
       $workspace = $this->workspaceManager->create();
       $output[] = 'Workspace ready at '.$workspace['root'];
@@ -230,6 +155,7 @@ class SystemUpdater
       $this->updateInstaller->enterMaintenance($output);
       $maintenanceEnabled = true;
 
+      $applyStarted = true;
       $this->updateInstaller->applyPackage($packageRoot, $output);
       $this->updateInstaller->installDependencies($output);
       $this->updateInstaller->runPostInstallCommands($output);
@@ -268,7 +194,7 @@ class SystemUpdater
         startedAt: $startedAt,
         finishedAt: $finishedAt,
         durationMs: $durationMs,
-        preUpdateBackup: isset($backup) ? $backup : null,
+        preUpdateBackup: $backup,
       );
     } catch (Throwable $throwable) {
       if ($maintenanceEnabled) {
@@ -280,8 +206,6 @@ class SystemUpdater
         }
       }
 
-      $finishedAt = CarbonImmutable::now();
-      $durationMs = $this->normalizeDurationMs($startedAt->diffInMilliseconds($finishedAt));
       $failure = $throwable instanceof UpdateException
         ? $throwable
         : new UpdateException(
@@ -290,25 +214,38 @@ class SystemUpdater
           previous: $throwable,
         );
 
-      $output[] = 'Update failed: '.$failure->getMessage();
+      $output[] = 'Update failed: '.$this->sanitizeFailureDetail($failure->getMessage());
 
-      if ($run instanceof SystemUpdateRun) {
-        $this->persistRun(
-          $run,
-          SystemUpdateRun::STATUS_FAILED,
-          $failure->userMessage(),
-          $output,
-          $warningCount,
-          $finishedAt,
-          $durationMs,
-        );
+      $status = SystemUpdateRun::STATUS_FAILED;
+      $summary = $failure->userMessage();
+
+      if ($applyStarted && $backup instanceof SystemBackup) {
+        // The live code may already be partially overwritten; best-effort roll
+        // back to the pre-update backup that was created moments ago.
+        try {
+          $this->backupRestoreManager->restoreFromBackup($backup, $user->getKey());
+          $status = SystemUpdateRun::STATUS_RESTORED;
+          $summary = $failure->userMessage().' The pre-update backup was restored automatically.';
+          $output[] = 'Pre-update backup #'.$backup->id.' restored after failure.';
+        } catch (Throwable $restoreException) {
+          $output[] = 'Automatic restore of pre-update backup #'.$backup->id.' failed: '
+            .$this->sanitizeFailureDetail($restoreException->getMessage());
+          $output[] = 'Restore the pre-update backup manually from the Backups screen.';
+        }
       }
 
-      $this->runRetention->prune();
+      $finishedAt = CarbonImmutable::now();
+      $durationMs = $this->normalizeDurationMs($startedAt->diffInMilliseconds($finishedAt));
+
+      if ($run instanceof SystemUpdateRun) {
+        $this->persistRun($run, $status, $summary, $output, $warningCount, $finishedAt, $durationMs);
+        $this->runRetention->prune();
+      }
 
       Log::error('System update failed.', [
         'from_version' => $fromVersion,
         'to_version' => $toVersion,
+        'status' => $status,
         'error' => $failure->getMessage(),
       ]);
 
@@ -379,10 +316,36 @@ class SystemUpdater
     ])->save();
   }
 
+  /**
+   * Eagerly load every class the failure path can touch after applyPackage has
+   * replaced the package code on disk. A future self-update must never fatal
+   * because a restore collaborator would be autoloaded from the new (possibly
+   * incompatible or half-written) tree mid-failure.
+   */
   private function preloadSelfHandledClasses(): void
   {
-    class_exists(UpdateException::class);
-    class_exists(UpdateResult::class);
+    foreach ([
+      UpdateException::class,
+      UpdateResult::class,
+      SystemUpdateRun::class,
+      SystemBackup::class,
+      SystemBackupRestore::class,
+      SystemBackupRestoreManager::class,
+      BackupRestoreArchiveExtractor::class,
+      BackupRestoreArchiveInspector::class,
+      BackupRestoreInspection::class,
+      BackupRestoreResult::class,
+      DatabaseRestoreRunner::class,
+      DatabaseExecutionStrategyResolver::class,
+      SqlDumpContentValidator::class,
+      SystemBackupRestoreMaintenanceRunner::class,
+      SystemBackupArchiveResolver::class,
+      SystemBackupArchiveResolution::class,
+      SystemBackupManager::class,
+      SiteTransferPackage::class,
+    ] as $class) {
+      class_exists($class);
+    }
   }
 
   private function lockName(): string

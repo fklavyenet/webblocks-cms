@@ -41,7 +41,9 @@ class PackageStatusCommand extends Command
     $packageBlockViewFiles = $this->resourceFiles($packageRoot.'/resources/views/pages/partials/blocks');
     $rootBlockViewFiles = $this->resourceFiles(resource_path('views/pages/partials/blocks'));
     $migrationFiles = $this->resourceFiles($packageRoot.'/database/migrations');
-    $updateMigrationStrategy = app(UpdateMigrationRunner::class)->strategyReport(base_path());
+    $updateMigrationRunner = app(UpdateMigrationRunner::class);
+    $packageUpdateMigrationsPath = $updateMigrationRunner->packageUpdateMigrationsPath(base_path());
+    $hasPackageUpdateMigrations = $updateMigrationRunner->hasMigrationFiles($packageUpdateMigrationsPath);
     $seederFiles = $this->resourceFiles($packageRoot.'/database/seeders');
     $publicFiles = $this->resourceFiles($packageRoot.'/public');
     $stubFiles = $this->resourceFiles($packageRoot.'/stubs');
@@ -160,7 +162,7 @@ class PackageStatusCommand extends Command
     $this->line('Package migrations loaded in active runtime: no');
     $this->line('Legacy root migration compatibility state: yes (root database/migrations remains authoritative for source-maintained installs).');
     $this->line('Package update migration readiness: package consumer System Updates use vendor/fklavyenet/webblocks-cms/database/migrations/updates when PHP migrations are present and skip host application migrations otherwise.');
-    $this->line('Detected System Update migration strategy: '.$updateMigrationStrategy['strategy'].' ('.$updateMigrationStrategy['reason'].')');
+    $this->line('Package update migrations present: '.$this->yesNo($hasPackageUpdateMigrations).' ('.$packageUpdateMigrationsPath.')');
     $this->line('Package database/seeders path present: '.$this->yesNo(is_dir($packageRoot.'/database/seeders')));
     $this->line('Package seeder boundary status: '.$this->resourceBoundaryStatus($seederFiles));
     $this->line('Package seeder files status: '.$this->resourceStatus($seederFiles));
