@@ -107,7 +107,12 @@ $payloadPath = $argv[3];
 $changelogPath = $argv[4];
 $checksum = trim(file_get_contents($archivePath.".sha256"));
 $minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18";
-$highlights = releaseNoteItemsForVersion($changelogPath, $version);
+$notes = releaseNoteItemsForVersion($changelogPath, $version);
+// The first note is the headline (rendered as the summary/trigger); the rest
+// are the supporting highlights. Splitting here keeps the summary out of the
+// highlights list so a single-note release never repeats itself.
+$summary = $notes[0] ?? "";
+$highlights = array_slice($notes, 1);
 
 $payload = [
   "product" => "webblocks-cms",
@@ -118,10 +123,10 @@ $payload = [
   "artifact_filename" => basename($archivePath),
   "artifact_path" => $archivePath,
   "checksum_sha256" => $checksum,
-  "release_notes" => "WebBlocks CMS ".$version.PHP_EOL.PHP_EOL."- ".implode(PHP_EOL."- ", $highlights),
+  "release_notes" => "WebBlocks CMS ".$version.PHP_EOL.PHP_EOL."- ".implode(PHP_EOL."- ", $notes),
   "details" => [
     "title" => "WebBlocks CMS ".$version,
-    "summary" => $highlights[0],
+    "summary" => $summary,
     "highlights" => $highlights,
     "compatibility_notes" => [],
     "operator_notes" => [],
