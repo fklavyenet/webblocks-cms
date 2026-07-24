@@ -369,14 +369,9 @@
 
                         </div>
 
-                        <div class="wb-user-menu wb-user-menu--full wb-user-menu--responsive wb-dropdown wb-dropdown-end">
-                            <button class="wb-btn wb-btn-ghost wb-user-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
+                        <div class="wb-user-menu wb-user-menu--avatar wb-dropdown wb-dropdown-end">
+                            <button class="wb-btn wb-btn-ghost wb-btn-icon wb-user-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
                                 <span class="wb-avatar wb-avatar-sm" aria-hidden="true">{{ $userInitials }}</span>
-                                <span class="wb-user-menu-copy">
-                                    <span class="wb-user-menu-name">{{ $user?->name }}</span>
-                                    <span class="wb-user-menu-context">{{ $user?->email }}</span>
-                                </span>
-                                <i class="wb-icon wb-icon-chevron-down wb-user-menu-chevron" aria-hidden="true"></i>
                             </button>
 
                             <div class="wb-dropdown-menu" id="admin-user-menu">

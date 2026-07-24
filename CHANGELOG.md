@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.41.1
+
+- Simplify the admin topbar user menu to an avatar-only trigger: the operator's name and email no longer render inline in the bar; clicking the avatar opens the same dropdown with profile (when available) and logout. Aligns the CMS operator admin with the fleet-standard topbar contract; no functional change.
+
 ## 1.41.0
 
 - Make in-app System Updates a one-click flow: a single `Update to X` action now downloads, backs up, applies, migrates, and verifies the release in one run. The old two-phase prepare/continue/cancel flow and its separate pre-update backup download step are retired, along with the `system/updates/{continue,cancel,support-report}` admin endpoints and the super-admin support-report download.
