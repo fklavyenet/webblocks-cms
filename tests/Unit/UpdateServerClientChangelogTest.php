@@ -102,6 +102,38 @@ class UpdateServerClientChangelogTest extends TestCase
     $this->assertSame('No version, kept.', $entries[1]['summary']);
   }
 
+  #[Test]
+  public function a_single_bullet_release_does_not_repeat_its_summary_as_highlights_or_raw_notes(): void
+  {
+    $line = 'Simplify the admin topbar user menu to an avatar-only trigger.';
+
+    $this->fakeLatestResponse([
+      'version' => '1.41.1',
+      'artifact_url' => 'https://updates.example.test/webblocks-cms-1.41.1.zip',
+      // The payload builder fills summary AND highlights from the same single
+      // changelog line, and ships release_notes as the raw duplicate.
+      'release_notes' => "WebBlocks CMS 1.41.1\n\n- {$line}",
+      'release_details' => [
+        'title' => 'WebBlocks CMS 1.41.1',
+        'summary' => $line,
+        'highlights' => [$line],
+        'technical_notes' => ['Source reference: v1.41.1', 'Artifact checksum: abc123'],
+      ],
+    ]);
+
+    $entry = $this->client('1.41.0')->check()->release['changelog_entries'][0];
+
+    // Shown once, in the trigger.
+    $this->assertSame($line, $entry['summary']);
+    // Highlights that merely repeat the summary are dropped; technical notes stay.
+    $this->assertSame(
+      [['key' => 'technical_notes', 'label' => 'Technical notes', 'items' => ['Source reference: v1.41.1', 'Artifact checksum: abc123']]],
+      $entry['groups']
+    );
+    // The raw release_notes duplicate is not rendered a second time.
+    $this->assertSame([], $entry['fallback_notes']);
+  }
+
   private function fakeLatestResponse(array $data): void
   {
     Http::fake(['*' => Http::response(['api_version' => '1', 'data' => $data])]);

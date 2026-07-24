@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.41.2
+
+- Fix the System Updates "What's new" panel repeating a release's description up to three times. A single-bullet release no longer re-renders its summary as a "Highlights" item, and the raw release-notes text is no longer shown in addition to the structured summary and groups. Rendering only; once installed it also cleans up how earlier releases display.
+
 ## 1.41.1
 
 - Simplify the admin topbar user menu to an avatar-only trigger: the operator's name and email no longer render inline in the bar; clicking the avatar opens the same dropdown with profile (when available) and logout. Aligns the CMS operator admin with the fleet-standard topbar contract; no functional change.

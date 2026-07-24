@@ -373,6 +373,16 @@ class UpdateServerClient
     foreach (self::RELEASE_DETAIL_GROUPS as $key => $label) {
       $items = $this->releaseNoteItems($this->releaseValue($release, $key));
 
+      // A single-bullet release sets summary and highlights from the same
+      // changelog line. The summary already shows in the trigger, so drop any
+      // group item that merely repeats it — otherwise it renders twice.
+      if ($summary !== null) {
+        $items = array_values(array_filter(
+          $items,
+          fn (string $item): bool => ! $this->sameText($item, $summary)
+        ));
+      }
+
       if ($items !== []) {
         $groups[] = [
           'key' => $key,
@@ -382,7 +392,13 @@ class UpdateServerClient
       }
     }
 
-    if ($summary === null && $groups === [] && $fallbackNotes !== []) {
+    if ($summary !== null || $groups !== []) {
+      // Structured details are present; `release_notes` is the raw, unstructured
+      // duplicate of the same content, so it must not render a second time.
+      $fallbackNotes = [];
+    } elseif ($fallbackNotes !== []) {
+      // Degraded payload with only raw notes: promote the first line to the
+      // summary and keep the remainder as fallback body copy.
       $summary = array_shift($fallbackNotes);
     }
 
@@ -444,6 +460,11 @@ class UpdateServerClient
   private function cleanReleaseNoteLine(string $line): string
   {
     return trim((string) preg_replace('/^\s*(?:[-*]|\d+[.)])\s+/', '', trim($line)));
+  }
+
+  private function sameText(string $a, string $b): bool
+  {
+    return mb_strtolower(trim($a)) === mb_strtolower(trim($b));
   }
 
   private function determineCompatibility(string $installedVersion, array $release): array
