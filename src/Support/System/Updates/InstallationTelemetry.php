@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
@@ -63,6 +64,8 @@ final class InstallationTelemetry
       'installed_version' => $installedVersion,
       'channel' => $channel,
       'installation_id' => $installationId,
+      'php_version' => PHP_VERSION,
+      'laravel_version' => Application::VERSION,
       'telemetry_schema_version' => (string) config('webblocks-updates.telemetry.schema_version', '1'),
     ];
   }
