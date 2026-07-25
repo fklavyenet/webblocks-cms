@@ -7,6 +7,10 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - [1.32.x archive](docs/releases/changelog-1.32.md)
 - [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
 
+## 1.41.4
+
+- Align the auth screens with the fleet-standard §5b contract: password visibility on the login and reset screens now rides the WebBlocks UI runtime toggle (`data-wb-password-toggle`) instead of a hand-rolled inline script in the guest layout (script removed — the guest layout ships no JS of its own), the reset screen's two password fields gain the toggle, and failed inputs now carry the `wb-input-error` class alongside `aria-invalid`, so they actually render the error border. Markup only; no behavioral change to authentication.
+
 ## 1.41.3
 
 - System update checks now include the runtime PHP and Laravel versions in the existing anonymous telemetry ping, so the Publisher's fleet analytics can chart the PHP distribution across installs. Runtime versions only — no domains, paths, or user data are sent, and telemetry can still be disabled with WEBBLOCKS_TELEMETRY=false.
