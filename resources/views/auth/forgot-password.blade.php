@@ -53,7 +53,7 @@
 
                         <div class="wb-field">
                             <label for="email" class="wb-label">{{ $authText('auth.email') }}</label>
-                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="wb-input" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="wb-input @error('email') wb-input-error @enderror" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
                             @error('email')
                                 <div id="email_error" class="wb-field-error">{{ $message }}</div>
                             @enderror

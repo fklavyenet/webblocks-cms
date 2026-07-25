@@ -36,42 +36,5 @@
         </main>
 
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
-        <script>
-            document.addEventListener('click', function (event) {
-                var button = event.target.closest('[data-password-toggle]');
-
-                if (! button) {
-                    return;
-                }
-
-                var wrapper = button.closest('[data-password-field]');
-                var input = wrapper ? wrapper.querySelector('[data-password-input]') : null;
-
-                if (! input) {
-                    return;
-                }
-
-                var isHidden = input.type === 'password';
-                var label = button.querySelector('[data-password-toggle-label]');
-                var icon = button.querySelector('[data-password-toggle-icon]');
-
-                input.type = isHidden ? 'text' : 'password';
-                button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
-                var showLabel = button.getAttribute('data-password-show-label') || 'Show password';
-                var hideLabel = button.getAttribute('data-password-hide-label') || 'Hide password';
-                var nextLabel = isHidden ? hideLabel : showLabel;
-
-                button.setAttribute('aria-label', nextLabel);
-
-                if (label) {
-                    label.textContent = nextLabel;
-                }
-
-                if (icon) {
-                    icon.classList.remove('wb-icon-eye', 'wb-icon-eye-off');
-                    icon.classList.add(isHidden ? 'wb-icon-eye-off' : 'wb-icon-eye');
-                }
-            });
-        </script>
     </body>
 </html>

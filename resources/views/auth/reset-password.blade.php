@@ -49,7 +49,7 @@
 
                         <div class="wb-field">
                             <label for="email" class="wb-label">{{ $authText('auth.email') }}</label>
-                            <input id="email" type="email" name="email" value="{{ old('email', $request->email) }}" required autofocus autocomplete="username" class="wb-input" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
+                            <input id="email" type="email" name="email" value="{{ old('email', $request->email) }}" required autofocus autocomplete="username" class="wb-input @error('email') wb-input-error @enderror" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
                             @error('email')
                                 <div id="email_error" class="wb-field-error">{{ $message }}</div>
                             @enderror
@@ -57,7 +57,19 @@
 
                         <div class="wb-field">
                             <label for="password" class="wb-label">{{ $authText('auth.password') }}</label>
-                            <input id="password" type="password" name="password" required autocomplete="new-password" class="wb-input" @error('password') aria-invalid="true" aria-describedby="password_error" @enderror>
+                            <div class="wb-input-group">
+                                <input id="password" type="password" name="password" required autocomplete="new-password" class="wb-input @error('password') wb-input-error @enderror" @error('password') aria-invalid="true" aria-describedby="password_error" @enderror>
+                                <button type="button"
+                                        class="wb-btn wb-btn-secondary wb-btn-icon wb-input-addon-btn"
+                                        data-wb-password-toggle
+                                        data-wb-target="#password"
+                                        data-wb-password-label-show="{{ $authText('auth.show_password') }}"
+                                        data-wb-password-label-hide="{{ $authText('auth.hide_password') }}"
+                                        aria-label="{{ $authText('auth.show_password') }}"
+                                        aria-pressed="false">
+                                    <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
                             @error('password')
                                 <div id="password_error" class="wb-field-error">{{ $message }}</div>
                             @enderror
@@ -65,7 +77,19 @@
 
                         <div class="wb-field">
                             <label for="password_confirmation" class="wb-label">{{ $authText('auth.confirm_password') }}</label>
-                            <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="wb-input" @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation_error" @enderror>
+                            <div class="wb-input-group">
+                                <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="wb-input @error('password_confirmation') wb-input-error @enderror" @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation_error" @enderror>
+                                <button type="button"
+                                        class="wb-btn wb-btn-secondary wb-btn-icon wb-input-addon-btn"
+                                        data-wb-password-toggle
+                                        data-wb-target="#password_confirmation"
+                                        data-wb-password-label-show="{{ $authText('auth.show_password') }}"
+                                        data-wb-password-label-hide="{{ $authText('auth.hide_password') }}"
+                                        aria-label="{{ $authText('auth.show_password') }}"
+                                        aria-pressed="false">
+                                    <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
                             @error('password_confirmation')
                                 <div id="password_confirmation_error" class="wb-field-error">{{ $message }}</div>
                             @enderror

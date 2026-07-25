@@ -53,7 +53,7 @@
 
                         <div class="wb-field">
                             <label for="email" class="wb-label">{{ $authText('auth.email') }}</label>
-                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="wb-input" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="wb-input @error('email') wb-input-error @enderror" @error('email') aria-invalid="true" aria-describedby="email_error" @enderror>
                             @error('email')
                                 <div id="email_error" class="wb-field-error">{{ $message }}</div>
                             @enderror
@@ -61,21 +61,17 @@
 
                         <div class="wb-field">
                             <label for="password" class="wb-label">{{ $authText('auth.password') }}</label>
-                            <div class="wb-input-group wb-password-field" data-password-field>
-                                <input id="password" type="password" name="password" required autocomplete="current-password" class="wb-input" @error('password') aria-invalid="true" aria-describedby="password_error" @enderror data-password-input>
-                                <button
-                                    id="password_toggle"
-                                    type="button"
-                                    class="wb-btn wb-btn-secondary wb-btn-icon wb-input-addon-btn wb-password-field-toggle"
-                                    data-password-toggle
-                                    data-password-show-label="{{ $authText('auth.show_password') }}"
-                                    data-password-hide-label="{{ $authText('auth.hide_password') }}"
-                                    aria-label="{{ $authText('auth.show_password') }}"
-                                    aria-controls="password"
-                                    aria-pressed="false"
-                                >
-                                    <i class="wb-icon wb-icon-eye" aria-hidden="true" data-password-toggle-icon></i>
-                                    <span class="wb-sr-only" data-password-toggle-label>{{ $authText('auth.show_password') }}</span>
+                            <div class="wb-input-group">
+                                <input id="password" type="password" name="password" required autocomplete="current-password" class="wb-input @error('password') wb-input-error @enderror" @error('password') aria-invalid="true" aria-describedby="password_error" @enderror>
+                                <button type="button"
+                                        class="wb-btn wb-btn-secondary wb-btn-icon wb-input-addon-btn"
+                                        data-wb-password-toggle
+                                        data-wb-target="#password"
+                                        data-wb-password-label-show="{{ $authText('auth.show_password') }}"
+                                        data-wb-password-label-hide="{{ $authText('auth.hide_password') }}"
+                                        aria-label="{{ $authText('auth.show_password') }}"
+                                        aria-pressed="false">
+                                    <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                 </button>
                             </div>
                             @error('password')
