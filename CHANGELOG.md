@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.2
+
+- Give the brand palette its own `Brand palette` tab in `Sites -> Edit Site`, next to Branding. It shipped as a second card inside the Branding tab, where operators looked for it in the tab strip and did not find it. Branding keeps the site's name, tagline, favicon and social image; the palette tab owns the four brand colours and two font stacks. The tab is labelled in full rather than "Brand" so the two cannot be confused.
+
 ## 1.42.1
 
 - Keep the brand palette card inside the branding tab of `Sites -> Edit Site`. It shipped in a second `wb-tabs-panel` carrying the branding tab key, leaving ten panels for nine tab buttons; the tab strip owns one panel per key, so a duplicate is a structural defect even where the browser renders both. Installs that still show the old form after updating are serving compiled Blade views from cache — clear them with `php artisan view:clear`.
