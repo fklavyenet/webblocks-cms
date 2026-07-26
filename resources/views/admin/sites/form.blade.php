@@ -373,11 +373,9 @@
                         {{ $adminText('brand_contrast_warning', ['ratio' => number_format($brandContrast, 2)]) }}
                       </div>
                     @endif
-                    @php
-                      $siteCssContents = collect($siteAssets ?? [])->firstWhere('type', 'css')['contents'] ?? null;
-                      $fontOptions = \WebBlocks\Cms\Support\Theme\InstalledFonts::options($siteCssContents);
-                      $installedFontCount = count(\WebBlocks\Cms\Support\Theme\InstalledFonts::fromCss($siteCssContents));
-                    @endphp
+                    @php($siteCssContents = collect($siteAssets ?? [])->firstWhere('type', 'css')['contents'] ?? null)
+                    @php($fontOptions = \WebBlocks\Cms\Support\Theme\InstalledFonts::options($siteCssContents))
+                    @php($installedFontCount = count(\WebBlocks\Cms\Support\Theme\InstalledFonts::fromCss($siteCssContents)))
                     @if ($installedFontCount === 0)
                       <div class="wb-alert wb-alert-info">{{ $adminText('brand_fonts_none') }}</div>
                     @endif
