@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.1
+
+- Keep the brand palette card inside the branding tab of `Sites -> Edit Site`. It shipped in a second `wb-tabs-panel` carrying the branding tab key, leaving ten panels for nine tab buttons; the tab strip owns one panel per key, so a duplicate is a structural defect even where the browser renders both. Installs that still show the old form after updating are serving compiled Blade views from cache — clear them with `php artisan view:clear`.
+- Ship the fifteen brand palette strings in Turkish and German; 1.42.0 added them in English only, so non-English admins fell back to English labels.
+- Add `SiteFormStructureTest`: tab buttons and panels must line up one to one, the palette fields must live inside the branding panel, and every shipped locale must carry the palette strings.
+
 ## 1.42.0
 
 - Add the site brand palette: `Sites -> Edit Site -> Branding` now takes four brand colours (accent, secondary accent, page background, text) and two font stacks (heading, body), and derives the rest of the public theme from them — hover/active states, soft tints, borders, muted text, surface layers, a readable foreground for every filled surface, and the complete dark-mode palette. Derivation is a pure function (`WebBlocks\Cms\Support\Theme\BrandPalette`) using sRGB mixing and WCAG relative luminance, so operators no longer hand-write `--wb-public-*` overrides into the site CSS asset or maintain a second palette for dark mode. Empty fields keep the selected public theme preset, so presets and partial palettes both keep working.
