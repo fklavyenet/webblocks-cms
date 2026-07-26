@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.0
+
+- Add the site brand palette: `Sites -> Edit Site -> Branding` now takes four brand colours (accent, secondary accent, page background, text) and two font stacks (heading, body), and derives the rest of the public theme from them — hover/active states, soft tints, borders, muted text, surface layers, a readable foreground for every filled surface, and the complete dark-mode palette. Derivation is a pure function (`WebBlocks\Cms\Support\Theme\BrandPalette`) using sRGB mixing and WCAG relative luminance, so operators no longer hand-write `--wb-public-*` overrides into the site CSS asset or maintain a second palette for dark mode. Empty fields keep the selected public theme preset, so presets and partial palettes both keep working.
+- Emit the resolved palette as one `<style id="wb-public-brand">` block in the public head, after `cms/css/public.css` and before the site CSS asset, so presets stay the base layer and hand-written site CSS can still override. The block also introduces `--wb-public-inverse-surface` / `--wb-public-inverse-text` for filled bands.
+- Accept the six brand fields on `PATCH /webadmin/api/sites/{site}/branding` under the existing `site-settings.write` capability, and return a `brand_palette` object with the derived light/dark/font tokens plus the accent contrast ratio so operator tools can preview values without reimplementing the maths. Colours must be hex; font stacks are restricted to font names, quotes and commas so a stack cannot escape its declaration.
+- Warn in the admin when the accent colour falls below a 4.5:1 contrast ratio against the page background instead of blocking the save, matching the existing site CSS mode-awareness warning model.
+
 ## 1.41.5
 
 - Align the auth screens with the fleet's binding canonical string set (§5b pixel parity, 2026-07-26) in all three locales: subtitle becomes "Sign in to your :product account.", "Remember me" replaces "Remember this device", the forgot link gains its question mark, "Create an account" replaces "Create one", the forgot screen reads "Forgot your password?" and the reset screen "Choose a new password" with a dedicated "New password" label and a "Reset password" submit. Turkish strings also lose several long-standing i/ı typos. `guest.css` drops its wb-auth brand/mark sizing rules (geometry is owned by WebBlocks UI) and keeps only the temporary `wb-auth-brand-mark-on-surface` color rule until the UI ships that class.
