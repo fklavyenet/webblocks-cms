@@ -38,8 +38,8 @@ class Site extends CmsModel
     'head',
     'contact',
     'variables',
-    'theme',
     'assets',
+    'theme',
   ];
 
   public const PUBLIC_THEME_PRESETS = [

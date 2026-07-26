@@ -13,6 +13,7 @@
     @php
         $resolvedAdminBrowserTitle = app(SystemSettings::class)->adminBrowserTitle($adminBrowserTitle ?? $title ?? null);
         $adminCssPath = public_path('cms/css/admin.css');
+        $publicCssPath = public_path('cms/css/public.css');
         $adminJsAssets = [
             'core' => public_path('cms/js/admin/core.js'),
         ];
@@ -32,6 +33,12 @@
         <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($adminCssPath))
             <link rel="stylesheet" href="{{ asset('cms/css/admin.css') }}?v={{ filemtime($adminCssPath) }}">
+        @endif
+        {{-- Public theme tokens, scoped to [data-wb-public-theme-preview] so the
+             Appearance preview shows the real preset colours. Nothing here
+             matches admin chrome. --}}
+        @if (is_file($publicCssPath))
+            <link rel="stylesheet" href="{{ asset('cms/css/public.css') }}?v={{ filemtime($publicCssPath) }}">
         @endif
         @stack('styles')
     </head>

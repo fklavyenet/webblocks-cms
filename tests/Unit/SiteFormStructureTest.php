@@ -62,10 +62,9 @@ class SiteFormStructureTest extends TestCase
     $form = $this->form();
 
     $brandStart = strpos($form, "wb-tabs-panel {{ \$siteTab === 'theme'");
-    $nextPanel = strpos($form, "wb-tabs-panel {{ \$siteTab === 'assets'");
+    $nextPanel = strlen($form);
 
     $this->assertNotFalse($brandStart);
-    $this->assertNotFalse($nextPanel);
     $this->assertLessThan($nextPanel, $brandStart);
 
     $brandingPanel = substr($form, $brandStart, $nextPanel - $brandStart);

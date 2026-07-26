@@ -107,11 +107,17 @@ main :is(h1, h2, h3, h4), .wb-promo-title, .wb-content-title {
 ```
 
 Font *files* remain a site-asset concern: the palette assigns families, it does
-not host webfonts. Operators who need a webfont upload it and declare
-`@font-face` in the site CSS asset. When the family is a variable font, declare
-one `@font-face` with a weight range (`font-weight: 100 900`) rather than one
-declaration per weight — repeating the same file under several fixed weights
-downloads it multiple times and pins each rule to a single instance.
+not host webfonts. The two typeface fields are pickers, not free text — they
+list the families the site actually ships, read from the `@font-face` rules in
+its CSS asset, plus the system stacks that need no download. A hand-written
+stack is still available behind a "Custom" option. When a site loads no
+webfonts the tab says so and points at Assets, which is why Assets sits before
+Appearance in the tab strip: declare the faces, then choose them.
+
+When the family is a variable font, declare one `@font-face` with a weight
+range (`font-weight: 100 900`) rather than one declaration per weight —
+repeating the same file under several fixed weights downloads it multiple times
+and pins each rule to a single instance.
 
 ## Validation
 

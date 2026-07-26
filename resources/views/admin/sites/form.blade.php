@@ -310,6 +310,14 @@
               ])
             </div>
 
+            <div class="wb-tabs-panel {{ $siteTab === 'assets' ? 'is-active' : '' }}">
+              @include('webblocks-cms::admin.sites.partials.assets-tab', [
+                'site' => $site,
+                'canManageSiteSettings' => $canManageSiteSettings,
+                'siteAssets' => $siteAssets ?? collect(),
+              ])
+            </div>
+
             <div class="wb-tabs-panel {{ $siteTab === 'theme' ? 'is-active' : '' }}">
               <div class="wb-text-sm wb-text-muted wb-mb-4">{{ $adminText('appearance_help') }}</div>
 
@@ -333,10 +341,10 @@
                       ] as $brandField => $brandLabelKey)
                         <div class="wb-stack wb-gap-2 wb-field">
                           <label for="site_{{ $brandField }}">{{ $adminText($brandLabelKey) }}</label>
-                          <div class="wb-cluster wb-gap-2">
+                          <div class="wb-brand-colour">
                             <input
                               id="site_{{ $brandField }}_picker"
-                              class="wb-input"
+                              class="wb-brand-colour-swatch"
                               type="color"
                               value="{{ old($brandField, $site->{$brandField}) ?: '#ffffff' }}"
                               data-wb-brand-picker="site_{{ $brandField }}"
@@ -346,9 +354,10 @@
                             <input
                               id="site_{{ $brandField }}"
                               name="{{ $brandField }}"
-                              class="wb-input"
+                              class="wb-input wb-brand-colour-hex"
                               type="text"
                               inputmode="text"
+                              spellcheck="false"
                               placeholder="#6a0f25"
                               value="{{ old($brandField, $site->{$brandField}) }}"
                               @disabled($isReadOnly)
@@ -364,33 +373,51 @@
                         {{ $adminText('brand_contrast_warning', ['ratio' => number_format($brandContrast, 2)]) }}
                       </div>
                     @endif
+                    @php
+                      $siteCssContents = collect($siteAssets ?? [])->firstWhere('type', 'css')['contents'] ?? null;
+                      $fontOptions = \WebBlocks\Cms\Support\Theme\InstalledFonts::options($siteCssContents);
+                      $installedFontCount = count(\WebBlocks\Cms\Support\Theme\InstalledFonts::fromCss($siteCssContents));
+                    @endphp
+                    @if ($installedFontCount === 0)
+                      <div class="wb-alert wb-alert-info">{{ $adminText('brand_fonts_none') }}</div>
+                    @endif
                     <div class="wb-grid wb-grid-2 wb-gap-4">
-                      <div class="wb-stack wb-gap-2 wb-field">
-                        <label for="site_brand_font_heading">{{ $adminText('brand_font_heading') }}</label>
-                        <input id="site_brand_font_heading" name="brand_font_heading" class="wb-input" type="text"
-                          placeholder="Libre Baskerville, Georgia, serif"
-                          value="{{ old('brand_font_heading', $site->brand_font_heading) }}" @disabled($isReadOnly)>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_font_heading_help') }}</div>
-                      </div>
-                      <div class="wb-stack wb-gap-2 wb-field">
-                        <label for="site_brand_font_body">{{ $adminText('brand_font_body') }}</label>
-                        <input id="site_brand_font_body" name="brand_font_body" class="wb-input" type="text"
-                          placeholder="IBM Plex Sans, system-ui, sans-serif"
-                          value="{{ old('brand_font_body', $site->brand_font_body) }}" @disabled($isReadOnly)>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_font_body_help') }}</div>
-                      </div>
+                      @foreach (['brand_font_heading', 'brand_font_body'] as $fontField)
+                        @php($fontValue = (string) old($fontField, $site->{$fontField}))
+                        @php($isCustomFont = $fontValue !== '' && ! array_key_exists($fontValue, $fontOptions))
+                        <div class="wb-stack wb-gap-2 wb-field">
+                          <label for="site_{{ $fontField }}_choice">{{ $adminText($fontField) }}</label>
+                          <select
+                            id="site_{{ $fontField }}_choice"
+                            class="wb-input"
+                            data-wb-font-choice="site_{{ $fontField }}"
+                            @disabled($isReadOnly)
+                          >
+                            <option value="">{{ $adminText('brand_font_inherit') }}</option>
+                            @foreach ($fontOptions as $stack => $label)
+                              <option value="{{ $stack }}" @selected($fontValue === $stack)>{{ $label }}</option>
+                            @endforeach
+                            <option value="__custom" @selected($isCustomFont)>{{ $adminText('brand_font_custom') }}</option>
+                          </select>
+                          <input
+                            id="site_{{ $fontField }}"
+                            name="{{ $fontField }}"
+                            class="wb-input @unless ($isCustomFont) wb-hidden @endunless"
+                            type="text"
+                            spellcheck="false"
+                            placeholder="Libre Baskerville, Georgia, serif"
+                            value="{{ $fontValue }}"
+                            data-wb-font-stack
+                            @disabled($isReadOnly)
+                          >
+                          <div class="wb-text-sm wb-text-muted">{{ $adminText($fontField.'_help') }}</div>
+                        </div>
+                      @endforeach
                     </div>
                   </div>
                 </div>
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'assets' ? 'is-active' : '' }}">
-              @include('webblocks-cms::admin.sites.partials.assets-tab', [
-                'site' => $site,
-                'canManageSiteSettings' => $canManageSiteSettings,
-                'siteAssets' => $siteAssets ?? collect(),
-              ])
-            </div>
           </div>
         </div>
       </div>

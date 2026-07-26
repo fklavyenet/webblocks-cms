@@ -1339,3 +1339,44 @@ svg.wb-sidebar-brand-logo {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+/* ── Brand palette fields (Sites → Appearance) ─────────────── */
+.wb-brand-colour {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-s2);
+}
+
+/* A native colour input styled as a swatch: fixed square, no full-width
+   stretch, and no default chrome padding around the well. */
+.wb-brand-colour-swatch {
+  flex: 0 0 auto;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--wb-border);
+  border-radius: var(--wb-r-md);
+  background: var(--wb-surface);
+  cursor: pointer;
+}
+
+.wb-brand-colour-swatch::-webkit-color-swatch-wrapper {
+  padding: 3px;
+}
+
+.wb-brand-colour-swatch::-webkit-color-swatch,
+.wb-brand-colour-swatch::-moz-color-swatch {
+  border: none;
+  border-radius: calc(var(--wb-r-md) - 3px);
+}
+
+.wb-brand-colour-swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.wb-brand-colour-hex {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}

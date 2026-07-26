@@ -41,7 +41,7 @@
   <div class="wb-card wb-card-muted">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
       <strong>{{ $adminText('theme_preview') }}</strong>
-      <span class="wb-badge">{{ $publicThemePresets[$selectedPublicThemePreset] ?? $adminText('canvas') }}</span>
+      <span class="wb-badge" data-wb-theme-preview-label>{{ $publicThemePresets[$selectedPublicThemePreset] ?? $adminText('canvas') }}</span>
     </div>
 
     <div class="wb-card-body wb-stack wb-gap-3" data-wb-public-theme-preview="{{ $selectedPublicThemePreset }}">
@@ -59,7 +59,7 @@
           </div>
         </div>
         <div class="wb-card-footer">
-          <span class="wb-text-sm wb-text-muted">{{ $adminText('body_hook') }} <code>data-wb-public-theme="{{ $selectedPublicThemePreset }}"</code></span>
+          <span class="wb-text-sm wb-text-muted">{{ $adminText('body_hook') }} <code data-wb-theme-preview-hook>data-wb-public-theme="{{ $selectedPublicThemePreset }}"</code></span>
         </div>
       </div>
     </div>
