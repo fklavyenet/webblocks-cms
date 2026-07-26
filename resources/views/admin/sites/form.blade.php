@@ -8,7 +8,7 @@
   $localizedPageTitle = $site->exists ? $adminText('edit_title', ['name' => $site->name]) : $adminText('create_title');
   $canManageSiteSettings = $canManageSiteSettings ?? true;
   $canManageDomains = $canManageDomains ?? false;
-  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'brand', 'seo-defaults', 'head', 'contact', 'variables', 'theme', 'assets'], true)
+  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), \WebBlocks\Cms\Models\Site::ADMIN_FORM_TABS, true)
     ? ($siteTab ?? old('_site_tab', 'site'))
     : 'site';
   $isReadOnly = ! $canManageSiteSettings;
@@ -86,18 +86,13 @@
 
         <div class="wb-tabs">
           <div class="wb-tabs-nav" role="tablist" aria-label="{{ $adminText('site_settings_sections') }}">
-            @foreach ([
-              'site' => $adminText('site'),
-              'locales' => $adminText('locales'),
-              'branding' => $adminText('branding'),
-              'brand' => $adminText('brand_palette'),
-              'seo-defaults' => $adminText('seo_defaults'),
-              'head' => $adminText('head_code'),
-              'contact' => $adminText('contact'),
-              'variables' => $adminText('variables'),
-              'theme' => $adminText('theme'),
-              'assets' => $adminText('assets'),
-            ] as $tabKey => $tabLabel)
+            @foreach (collect(\WebBlocks\Cms\Models\Site::ADMIN_FORM_TABS)
+              ->mapWithKeys(fn (string $tab) => [$tab => $adminText(match ($tab) {
+                'seo-defaults' => 'seo_defaults',
+                'head' => 'head_code',
+                'theme' => 'appearance',
+                default => $tab,
+              })]) as $tabKey => $tabLabel)
               <a
                 href="{{ $tabUrl($tabKey) }}"
                 class="wb-tabs-btn {{ $siteTab === $tabKey ? 'is-active' : '' }}"
@@ -248,75 +243,6 @@
 
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'brand' ? 'is-active' : '' }}">
-              <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>{{ $adminText('brand_palette') }}</strong></div>
-
-                <div class="wb-card-body wb-stack wb-gap-3">
-                  <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_palette_help') }}</div>
-
-                  <div class="wb-grid wb-grid-2 wb-gap-4">
-                    @foreach ([
-                      'brand_accent' => 'brand_accent',
-                      'brand_accent_secondary' => 'brand_accent_secondary',
-                      'brand_surface' => 'brand_surface',
-                      'brand_text' => 'brand_text',
-                    ] as $brandField => $brandLabelKey)
-                      <div class="wb-stack wb-gap-2 wb-field">
-                        <label for="site_{{ $brandField }}">{{ $adminText($brandLabelKey) }}</label>
-                        <div class="wb-cluster wb-gap-2">
-                          <input
-                            id="site_{{ $brandField }}_picker"
-                            class="wb-input"
-                            type="color"
-                            value="{{ old($brandField, $site->{$brandField}) ?: '#ffffff' }}"
-                            data-wb-brand-picker="site_{{ $brandField }}"
-                            aria-label="{{ $adminText($brandLabelKey) }}"
-                            @disabled($isReadOnly)
-                          >
-                          <input
-                            id="site_{{ $brandField }}"
-                            name="{{ $brandField }}"
-                            class="wb-input"
-                            type="text"
-                            inputmode="text"
-                            placeholder="#6a0f25"
-                            value="{{ old($brandField, $site->{$brandField}) }}"
-                            @disabled($isReadOnly)
-                          >
-                        </div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText($brandLabelKey.'_help') }}</div>
-                      </div>
-                    @endforeach
-                  </div>
-
-                  @php($brandContrast = $site->brandPalette()->accentContrast())
-                  @if ($brandContrast !== null && $brandContrast < 4.5)
-                    <div class="wb-alert wb-alert-warning">
-                      {{ $adminText('brand_contrast_warning', ['ratio' => number_format($brandContrast, 2)]) }}
-                    </div>
-                  @endif
-
-                  <div class="wb-grid wb-grid-2 wb-gap-4">
-                    <div class="wb-stack wb-gap-2 wb-field">
-                      <label for="site_brand_font_heading">{{ $adminText('brand_font_heading') }}</label>
-                      <input id="site_brand_font_heading" name="brand_font_heading" class="wb-input" type="text"
-                        placeholder="Libre Baskerville, Georgia, serif"
-                        value="{{ old('brand_font_heading', $site->brand_font_heading) }}" @disabled($isReadOnly)>
-                      <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_font_heading_help') }}</div>
-                    </div>
-
-                    <div class="wb-stack wb-gap-2 wb-field">
-                      <label for="site_brand_font_body">{{ $adminText('brand_font_body') }}</label>
-                      <input id="site_brand_font_body" name="brand_font_body" class="wb-input" type="text"
-                        placeholder="IBM Plex Sans, system-ui, sans-serif"
-                        value="{{ old('brand_font_body', $site->brand_font_body) }}" @disabled($isReadOnly)>
-                      <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_font_body_help') }}</div>
-                    </div>
-                  </div>
-                </div>
-            </div>
-
             <div class="wb-tabs-panel {{ $siteTab === 'seo-defaults' ? 'is-active' : '' }}">
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('seo_defaults') }}</strong></div>
@@ -385,12 +311,77 @@
             </div>
 
             <div class="wb-tabs-panel {{ $siteTab === 'theme' ? 'is-active' : '' }}">
+              <div class="wb-text-sm wb-text-muted wb-mb-4">{{ $adminText('appearance_help') }}</div>
+
               @include('webblocks-cms::admin.sites.partials.theme-tab', [
                 'site' => $site,
                 'canManageSiteSettings' => $canManageSiteSettings,
                 'publicThemePresets' => $publicThemePresets,
                 'selectedPublicThemePreset' => $selectedPublicThemePreset,
               ])
+
+                <div class="wb-card wb-card-muted">
+                  <div class="wb-card-header"><strong>{{ $adminText('brand_palette') }}</strong></div>
+                  <div class="wb-card-body wb-stack wb-gap-3">
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_palette_help') }}</div>
+                    <div class="wb-grid wb-grid-2 wb-gap-4">
+                      @foreach ([
+                        'brand_accent' => 'brand_accent',
+                        'brand_accent_secondary' => 'brand_accent_secondary',
+                        'brand_surface' => 'brand_surface',
+                        'brand_text' => 'brand_text',
+                      ] as $brandField => $brandLabelKey)
+                        <div class="wb-stack wb-gap-2 wb-field">
+                          <label for="site_{{ $brandField }}">{{ $adminText($brandLabelKey) }}</label>
+                          <div class="wb-cluster wb-gap-2">
+                            <input
+                              id="site_{{ $brandField }}_picker"
+                              class="wb-input"
+                              type="color"
+                              value="{{ old($brandField, $site->{$brandField}) ?: '#ffffff' }}"
+                              data-wb-brand-picker="site_{{ $brandField }}"
+                              aria-label="{{ $adminText($brandLabelKey) }}"
+                              @disabled($isReadOnly)
+                            >
+                            <input
+                              id="site_{{ $brandField }}"
+                              name="{{ $brandField }}"
+                              class="wb-input"
+                              type="text"
+                              inputmode="text"
+                              placeholder="#6a0f25"
+                              value="{{ old($brandField, $site->{$brandField}) }}"
+                              @disabled($isReadOnly)
+                            >
+                          </div>
+                          <div class="wb-text-sm wb-text-muted">{{ $adminText($brandLabelKey.'_help') }}</div>
+                        </div>
+                      @endforeach
+                    </div>
+                    @php($brandContrast = $site->brandPalette()->accentContrast())
+                    @if ($brandContrast !== null && $brandContrast < 4.5)
+                      <div class="wb-alert wb-alert-warning">
+                        {{ $adminText('brand_contrast_warning', ['ratio' => number_format($brandContrast, 2)]) }}
+                      </div>
+                    @endif
+                    <div class="wb-grid wb-grid-2 wb-gap-4">
+                      <div class="wb-stack wb-gap-2 wb-field">
+                        <label for="site_brand_font_heading">{{ $adminText('brand_font_heading') }}</label>
+                        <input id="site_brand_font_heading" name="brand_font_heading" class="wb-input" type="text"
+                          placeholder="Libre Baskerville, Georgia, serif"
+                          value="{{ old('brand_font_heading', $site->brand_font_heading) }}" @disabled($isReadOnly)>
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_font_heading_help') }}</div>
+                      </div>
+                      <div class="wb-stack wb-gap-2 wb-field">
+                        <label for="site_brand_font_body">{{ $adminText('brand_font_body') }}</label>
+                        <input id="site_brand_font_body" name="brand_font_body" class="wb-input" type="text"
+                          placeholder="IBM Plex Sans, system-ui, sans-serif"
+                          value="{{ old('brand_font_body', $site->brand_font_body) }}" @disabled($isReadOnly)>
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_font_body_help') }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
             </div>
 
             <div class="wb-tabs-panel {{ $siteTab === 'assets' ? 'is-active' : '' }}">

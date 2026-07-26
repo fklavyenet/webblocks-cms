@@ -2053,6 +2053,8 @@ return [
     'remove_social_image' => 'Remove social image',
     'no_social_image_selected' => 'No social image selected.',
     'social_image_help' => 'Used as fallback sharing artwork for the public site.',
+    'appearance' => 'Appearance',
+    'appearance_help' => 'Start from a preset, then override its colours and typefaces with your own brand palette. Fields you leave empty keep the preset value.',
     'brand_palette' => 'Brand palette',
     'brand_palette_help' => 'Choose the few colours and typefaces that define this brand. Hover states, tints, borders, muted text and the whole dark mode palette are derived from them.',
     'brand_accent' => 'Accent colour',

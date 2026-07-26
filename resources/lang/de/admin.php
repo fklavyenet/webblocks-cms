@@ -2053,6 +2053,8 @@ return [
     'remove_social_image' => 'Social Image entfernen',
     'no_social_image_selected' => 'Kein Social Image ausgewählt.',
     'social_image_help' => 'Wird als Fallback-Sharing-Bild für die öffentliche Site verwendet.',
+    'appearance' => 'Darstellung',
+    'appearance_help' => 'Beginnen Sie mit einem Preset und überschreiben Sie dessen Farben und Schriften mit Ihrer Markenpalette. Leer gelassene Felder behalten den Preset-Wert.',
     'brand_palette' => 'Markenpalette',
     'brand_palette_help' => 'Wählen Sie die wenigen Farben und Schriften, die diese Marke ausmachen. Hover-Zustände, Tönungen, Rahmen, gedämpfter Text und die gesamte Dark-Mode-Palette werden daraus abgeleitet.',
     'brand_accent' => 'Akzentfarbe',

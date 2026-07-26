@@ -21,6 +21,27 @@ class Site extends CmsModel
 
   public const PUBLIC_THEME_CANVAS = 'canvas';
 
+  /**
+   * Tab keys of the admin Edit Site form, in strip order.
+   *
+   * The controller and the form Blade both read this list. Keeping the keys in
+   * one place is what stops a new tab from rendering a panel the controller
+   * refuses to select.
+   *
+   * @var list<string>
+   */
+  public const ADMIN_FORM_TABS = [
+    'site',
+    'locales',
+    'branding',
+    'seo-defaults',
+    'head',
+    'contact',
+    'variables',
+    'theme',
+    'assets',
+  ];
+
   public const PUBLIC_THEME_PRESETS = [
     self::PUBLIC_THEME_CANVAS,
     'atlas',

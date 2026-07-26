@@ -2051,6 +2051,8 @@ return [
     'remove_social_image' => 'Sosyal görseli kaldır',
     'no_social_image_selected' => 'Sosyal görsel seçilmedi.',
     'social_image_help' => 'Public site için fallback paylaşım görseli olarak kullanılır.',
+    'appearance' => 'Görünüm',
+    'appearance_help' => 'Bir ön ayarla başlayın, ardından renklerini ve yazı tiplerini kendi marka paletinizle geçersiz kılın. Boş bıraktığınız alanlarda ön ayar geçerli kalır.',
     'brand_palette' => 'Marka paleti',
     'brand_palette_help' => 'Bu markayı tanımlayan birkaç rengi ve yazı tipini seçin. Hover durumları, tonlar, kenarlıklar, soluk metin ve tüm koyu mod paleti bunlardan türetilir.',
     'brand_accent' => 'Vurgu rengi',

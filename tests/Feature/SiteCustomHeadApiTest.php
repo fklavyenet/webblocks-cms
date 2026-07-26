@@ -114,8 +114,10 @@ class SiteCustomHeadApiTest extends TestCase
     $form = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/sites/form.blade.php');
 
     // The tab must be selectable and the textarea must post the column's own field name,
-    // or the panel silently edits nothing.
-    $this->assertStringContainsString("'head' => \$adminText('head_code')", $form);
+    // or the panel silently edits nothing. The strip is built from
+    // Site::ADMIN_FORM_TABS, so membership there is what makes the tab reachable.
+    $this->assertContains('head', Site::ADMIN_FORM_TABS);
+    $this->assertStringContainsString("'head' => 'head_code'", $form);
     $this->assertStringContainsString('name="custom_head_html"', $form);
     $this->assertStringContainsString("\$siteTab === 'head'", $form);
 

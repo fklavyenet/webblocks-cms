@@ -132,7 +132,7 @@ class SiteController extends Controller
     $canManageDomains = request()->user()?->isSuperAdmin() ?? false;
 
     $requestedTab = trim((string) request()->query('tab', old('_site_tab', 'site')));
-    $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'head', 'contact', 'variables', 'theme', 'assets'], true)
+    $siteTab = in_array($requestedTab, Site::ADMIN_FORM_TABS, true)
           ? $requestedTab
           : 'site';
     $requestedModal = trim((string) request()->query('modal', old('_site_variable_modal', '')));

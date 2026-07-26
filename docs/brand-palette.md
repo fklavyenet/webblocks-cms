@@ -14,8 +14,16 @@ identity in a stylesheet instead of the panel, duplicated every value for dark
 mode, and left contrast correctness to the author.
 
 Brand Palette moves the small set of decisions into `Sites -> Edit Site ->
-Brand palette` — its own tab, kept separate from Branding, which stays about
-the site's name, tagline and shared images — and derives everything else.
+Appearance` and derives everything else.
+
+Appearance holds both halves of how a public site looks, in the order they
+apply: the theme **preset** at the top, the **brand palette** below it. The
+preset is a complete product-owned token set; palette fields override the
+preset for the roles they cover and leave the rest of it in place. Keeping them
+on one tab is deliberate — two separate tabs hid that override relationship,
+and operators changed a preset expecting a change that the palette was quietly
+overriding. Branding stays a different concern: the site's name, tagline,
+favicon and social image.
 
 ## Contract
 

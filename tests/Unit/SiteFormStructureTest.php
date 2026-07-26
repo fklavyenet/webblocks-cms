@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use WebBlocks\Cms\Models\Site;
 
 /**
  * Structural guards for the Edit Site form.
@@ -26,10 +27,7 @@ class SiteFormStructureTest extends TestCase
    */
   private function tabKeys(string $form): array
   {
-    preg_match('/role="tablist".*?@endforeach/s', $form, $navMatch);
-    preg_match_all("/'([a-z-]+)' => \\\$adminText\\(/", $navMatch[0] ?? '', $matches);
-
-    return $matches[1] ?? [];
+    return Site::ADMIN_FORM_TABS;
   }
 
   /**
@@ -59,12 +57,12 @@ class SiteFormStructureTest extends TestCase
   }
 
   #[Test]
-  public function the_brand_palette_fields_live_in_the_brand_tab(): void
+  public function the_brand_palette_fields_live_in_the_appearance_tab(): void
   {
     $form = $this->form();
 
-    $brandStart = strpos($form, "wb-tabs-panel {{ \$siteTab === 'brand'");
-    $nextPanel = strpos($form, "wb-tabs-panel {{ \$siteTab === 'seo-defaults'");
+    $brandStart = strpos($form, "wb-tabs-panel {{ \$siteTab === 'theme'");
+    $nextPanel = strpos($form, "wb-tabs-panel {{ \$siteTab === 'assets'");
 
     $this->assertNotFalse($brandStart);
     $this->assertNotFalse($nextPanel);
@@ -118,5 +116,52 @@ class SiteFormStructureTest extends TestCase
         $this->assertNotSame('', trim((string) $lang['site_form'][$key]));
       }
     }
+  }
+
+  #[Test]
+  public function each_panel_closes_its_own_markup(): void
+  {
+    $form = $this->form();
+    preg_match_all(
+      '/wb-tabs-panel \{\{ \$siteTab === \'([a-z-]+)\'/',
+      $form,
+      $matches,
+      PREG_OFFSET_CAPTURE
+    );
+
+    $panels = $matches[0];
+    $keys = $matches[1];
+
+    // Every panel except the last is bounded by the next one. An unbalanced
+    // panel swallows the panels after it, which then never render.
+    for ($index = 0; $index < count($panels) - 1; $index++) {
+      $segment = substr(
+        $form,
+        (int) $panels[$index][1],
+        (int) $panels[$index + 1][1] - (int) $panels[$index][1]
+      );
+
+      $this->assertSame(
+        preg_match_all('/<div\b/', $segment),
+        preg_match_all('/<\/div>/', $segment),
+        sprintf('The %s panel does not close its own markup.', $keys[$index][0])
+      );
+    }
+  }
+
+  #[Test]
+  public function the_controller_and_the_form_share_one_tab_list(): void
+  {
+    $controller = (string) file_get_contents(
+      dirname(__DIR__, 2).'/src/Http/Controllers/Admin/SiteController.php'
+    );
+
+    $this->assertStringContainsString('Site::ADMIN_FORM_TABS', $controller);
+    $this->assertStringContainsString('Site::ADMIN_FORM_TABS', $this->form());
+    $this->assertDoesNotMatchRegularExpression(
+      "/in_array\(\\\$requestedTab, \['site'/",
+      $controller,
+      'The tab list belongs to Site::ADMIN_FORM_TABS, not a second literal array.'
+    );
   }
 }
