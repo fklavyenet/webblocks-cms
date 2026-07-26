@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.5
+
+- Fix the Appearance tab, which 1.42.4 shipped broken: the font-picker setup used a block `@php`, Blade left the opening directive in the compiled view as text, and the tab rendered with `$fontOptions` and `$installedFontCount` undefined. The assignments use the inline `@php(...)` form now.
+- Add `SiteFormCompilesTest`, which compiles the site form, the theme tab and the admin layout and fails if any directive survives compilation. The structure tests read the Blade as text, so nothing in the suite had ever compiled it.
+
 ## 1.42.4
 
 - Render the brand colour fields as a fixed swatch beside a hex field. They carried `wb-input`, which stretched the native colour well to full width and made it read as a rule above the box rather than a colour control.
