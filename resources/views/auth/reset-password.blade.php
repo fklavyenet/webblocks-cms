@@ -56,7 +56,7 @@
                         </div>
 
                         <div class="wb-field">
-                            <label for="password" class="wb-label">{{ $authText('auth.password') }}</label>
+                            <label for="password" class="wb-label">{{ $authText('auth.new_password') }}</label>
                             <div class="wb-input-group">
                                 <input id="password" type="password" name="password" required autocomplete="new-password" class="wb-input @error('password') wb-input-error @enderror" @error('password') aria-invalid="true" aria-describedby="password_error" @enderror>
                                 <button type="button"

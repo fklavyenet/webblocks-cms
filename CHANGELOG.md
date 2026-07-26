@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.41.5
+
+- Align the auth screens with the fleet's binding canonical string set (§5b pixel parity, 2026-07-26) in all three locales: subtitle becomes "Sign in to your :product account.", "Remember me" replaces "Remember this device", the forgot link gains its question mark, "Create an account" replaces "Create one", the forgot screen reads "Forgot your password?" and the reset screen "Choose a new password" with a dedicated "New password" label and a "Reset password" submit. Turkish strings also lose several long-standing i/ı typos. `guest.css` drops its wb-auth brand/mark sizing rules (geometry is owned by WebBlocks UI) and keeps only the temporary `wb-auth-brand-mark-on-surface` color rule until the UI ships that class.
+
 ## Archived releases
 
 - [1.32.x archive](docs/releases/changelog-1.32.md)

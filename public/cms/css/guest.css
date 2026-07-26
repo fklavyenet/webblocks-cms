@@ -16,44 +16,11 @@
     --wb-accent-on: #fff;
 }
 
-.wb-auth-brand {
-    align-items: center;
-    display: inline-flex;
-    gap: var(--wb-space-3, 0.75rem);
-}
-
-.wb-auth-brand-mark,
-svg.wb-auth-brand-mark {
-    block-size: 3rem;
-    display: block;
-    flex: 0 0 auto;
-    inline-size: 3rem;
-}
-
-.wb-auth-brand-mark svg {
-    block-size: 100%;
-    display: block;
-    inline-size: 100%;
-}
-
-.wb-auth-brand-mark-sm,
-svg.wb-auth-brand-mark-sm {
-    block-size: 2rem;
-    inline-size: 2rem;
-}
-
-.wb-auth-brand-mark-on-accent {
-    color: var(--wb-accent-on);
-}
-
+/*
+ * §5b pixel parity: geometry/sizing on wb-auth-* is owned by WebBlocks UI.
+ * The single rule below is a TEMPORARY exception — the class is not shipped
+ * in webblocks-ui v2.16.2 yet (tracked upstream); remove once the UI defines it.
+ */
 .wb-auth-brand-mark-on-surface {
     color: var(--wb-accent);
-}
-
-.wb-password-field {
-    align-items: stretch;
-}
-
-.wb-password-field-toggle {
-    min-width: 2.75rem;
 }
