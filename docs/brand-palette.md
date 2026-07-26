@@ -14,7 +14,8 @@ identity in a stylesheet instead of the panel, duplicated every value for dark
 mode, and left contrast correctness to the author.
 
 Brand Palette moves the small set of decisions into `Sites -> Edit Site ->
-Branding` and derives everything else.
+Brand palette` — its own tab, kept separate from Branding, which stays about
+the site's name, tagline and shared images — and derives everything else.
 
 ## Contract
 

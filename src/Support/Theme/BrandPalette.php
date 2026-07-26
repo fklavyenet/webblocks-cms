@@ -4,7 +4,7 @@ namespace WebBlocks\Cms\Support\Theme;
 
 /**
  * Derives the full set of public theme tokens from the four brand colours an
- * operator chooses in Sites -> Edit Site -> Branding.
+ * operator chooses in Sites -> Edit Site -> Brand palette.
  *
  * The class is a pure function of its inputs: same colours in, same tokens out.
  * All mixing happens in sRGB and foreground choices use WCAG relative

@@ -59,17 +59,18 @@ class SiteFormStructureTest extends TestCase
   }
 
   #[Test]
-  public function the_brand_palette_fields_live_in_the_branding_tab(): void
+  public function the_brand_palette_fields_live_in_the_brand_tab(): void
   {
     $form = $this->form();
 
-    $brandingStart = strpos($form, "wb-tabs-panel {{ \$siteTab === 'branding'");
+    $brandStart = strpos($form, "wb-tabs-panel {{ \$siteTab === 'brand'");
     $nextPanel = strpos($form, "wb-tabs-panel {{ \$siteTab === 'seo-defaults'");
 
-    $this->assertNotFalse($brandingStart);
+    $this->assertNotFalse($brandStart);
     $this->assertNotFalse($nextPanel);
+    $this->assertLessThan($nextPanel, $brandStart);
 
-    $brandingPanel = substr($form, $brandingStart, $nextPanel - $brandingStart);
+    $brandingPanel = substr($form, $brandStart, $nextPanel - $brandStart);
 
     foreach ([
       'brand_palette',
