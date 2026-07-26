@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.4
+
+- Render the brand colour fields as a fixed swatch beside a hex field. They carried `wb-input`, which stretched the native colour well to full width and made it read as a rule above the box rather than a colour control.
+- Turn the typeface fields into pickers. `InstalledFonts` reads the `@font-face` families out of the site CSS asset and offers those alongside the system stacks that need no download; a hand-written stack stays available behind a Custom option. A site that loads no webfonts now says so and points at Assets instead of expecting the operator to type a family from memory.
+- Move Assets before Appearance in the Edit Site tab strip, matching the order the two are used in: declare the faces, then choose them.
+- Make the theme preview follow the preset select. The admin layout did not load `cms/css/public.css`, so the `[data-wb-public-theme-preview]` blocks that colour the preview never applied and changing the preset showed nothing. The layout loads it now — every rule in it is scoped to `[data-wb-public-theme]`, `[data-wb-public-theme-preview]` or `.wb-public-site-header`, none of which exist in admin chrome — and the preview island, its badge and its body-hook line update on change.
+
 ## 1.42.3
 
 - Fix the Edit Site tab strip: 1.42.2 left the brand palette panel without its closing `</div>`, so every panel to its right nested inside it and never appeared, and `SiteController` kept a second literal tab list that never learned the new key, so the tab itself fell back to Site. Both are gone.
