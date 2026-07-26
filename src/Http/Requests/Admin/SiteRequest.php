@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
+use WebBlocks\Cms\Support\Theme\BrandPalette;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class SiteRequest extends FormRequest
@@ -52,6 +53,12 @@ class SiteRequest extends FormRequest
       'public_theme_preset' => strtolower(trim((string) $this->input('public_theme_preset', Site::PUBLIC_THEME_CANVAS))) ?: Site::PUBLIC_THEME_CANVAS,
       'favicon_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('favicon_media_id') ?: $this->integer('favicon_asset_id') ?: null) : null,
       'social_image_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('social_image_media_id') ?: $this->integer('social_image_asset_id') ?: null) : null,
+      'brand_accent' => BrandPalette::normalizeColour($this->input('brand_accent')),
+      'brand_accent_secondary' => BrandPalette::normalizeColour($this->input('brand_accent_secondary')),
+      'brand_surface' => BrandPalette::normalizeColour($this->input('brand_surface')),
+      'brand_text' => BrandPalette::normalizeColour($this->input('brand_text')),
+      'brand_font_heading' => BrandPalette::normalizeFontStack($this->input('brand_font_heading')),
+      'brand_font_body' => BrandPalette::normalizeFontStack($this->input('brand_font_body')),
       '_site_tab' => trim((string) $this->input('_site_tab', 'site')),
     ]);
   }
@@ -83,6 +90,14 @@ class SiteRequest extends FormRequest
         ->where(fn ($enabled) => $enabled
           ->where('is_enabled', true)
           ->when($preservedLocaleIds !== [], fn ($preserved) => $preserved->orWhereIn('id', $preservedLocaleIds))))],
+      // Brand palette: normalizeColour/normalizeFontStack above turn anything
+      // malformed into null, so the rules only guard shape and length.
+      'brand_accent' => ['nullable', 'string', 'regex:/^#[0-9a-f]{6}$/'],
+      'brand_accent_secondary' => ['nullable', 'string', 'regex:/^#[0-9a-f]{6}$/'],
+      'brand_surface' => ['nullable', 'string', 'regex:/^#[0-9a-f]{6}$/'],
+      'brand_text' => ['nullable', 'string', 'regex:/^#[0-9a-f]{6}$/'],
+      'brand_font_heading' => ['nullable', 'string', 'max:180'],
+      'brand_font_body' => ['nullable', 'string', 'max:180'],
       '_site_tab' => ['nullable', 'string', 'max:255'],
     ];
   }

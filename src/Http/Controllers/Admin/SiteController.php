@@ -292,6 +292,19 @@ class SiteController extends Controller
       $data['custom_head_html'] = trim((string) $data['custom_head_html']) === '' ? null : $data['custom_head_html'];
     }
 
+    foreach ([
+      'brand_accent',
+      'brand_accent_secondary',
+      'brand_surface',
+      'brand_text',
+      'brand_font_heading',
+      'brand_font_body',
+    ] as $brandColumn) {
+      if (! Schema::hasColumn('wbcms_sites', $brandColumn)) {
+        unset($data[$brandColumn]);
+      }
+    }
+
     return $data;
   }
 

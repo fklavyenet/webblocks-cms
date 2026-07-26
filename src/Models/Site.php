@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
+use WebBlocks\Cms\Support\Theme\BrandPalette;
 
 class Site extends CmsModel
 {
@@ -46,6 +47,12 @@ class Site extends CmsModel
     'contact_recipient_email',
     'public_theme_preset',
     'custom_head_html',
+    'brand_accent',
+    'brand_accent_secondary',
+    'brand_surface',
+    'brand_text',
+    'brand_font_heading',
+    'brand_font_body',
   ];
 
   protected function casts(): array
@@ -53,6 +60,23 @@ class Site extends CmsModel
     return [
       'is_primary' => 'boolean',
     ];
+  }
+
+  /**
+   * Resolved brand palette for this site. Empty when the operator has not
+   * chosen any brand colour or typeface, in which case the selected public
+   * theme preset stays fully in charge.
+   */
+  public function brandPalette(): BrandPalette
+  {
+    return BrandPalette::fromFields([
+      'brand_accent' => $this->brand_accent ?? null,
+      'brand_accent_secondary' => $this->brand_accent_secondary ?? null,
+      'brand_surface' => $this->brand_surface ?? null,
+      'brand_text' => $this->brand_text ?? null,
+      'brand_font_heading' => $this->brand_font_heading ?? null,
+      'brand_font_body' => $this->brand_font_body ?? null,
+    ]);
   }
 
   protected function faviconMediaId(): Attribute

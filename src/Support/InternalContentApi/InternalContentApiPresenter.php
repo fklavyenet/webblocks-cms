@@ -39,9 +39,38 @@ class InternalContentApiPresenter
       'social_image_media' => $site->relationLoaded('socialImageMedia') && $site->socialImageMedia ? $this->media($site->socialImageMedia) : null,
       'public_theme_preset' => $site->resolvedPublicThemePreset(),
       'custom_head_html' => $site->custom_head_html,
+      'brand_accent' => $site->brand_accent ?? null,
+      'brand_accent_secondary' => $site->brand_accent_secondary ?? null,
+      'brand_surface' => $site->brand_surface ?? null,
+      'brand_text' => $site->brand_text ?? null,
+      'brand_font_heading' => $site->brand_font_heading ?? null,
+      'brand_font_body' => $site->brand_font_body ?? null,
+      'brand_palette' => $this->brandPalette($site),
       'locales' => $site->relationLoaded('locales')
         ? $site->locales->map(fn (Locale $locale) => $this->locale($locale))->values()->all()
         : [],
+    ];
+  }
+
+  /**
+   * Resolved brand palette tokens so operator tools can preview derived values
+   * without reimplementing the derivation.
+   *
+   * @return array<string, mixed>|null
+   */
+  private function brandPalette(Site $site): ?array
+  {
+    $palette = $site->brandPalette();
+
+    if ($palette->isEmpty()) {
+      return null;
+    }
+
+    return [
+      'light' => $palette->lightTokens(),
+      'dark' => $palette->darkTokens(),
+      'fonts' => $palette->fontTokens(),
+      'accent_contrast' => $palette->accentContrast(),
     ];
   }
 

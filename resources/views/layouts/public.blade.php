@@ -52,6 +52,7 @@
         // written through the internal content API. Emitted verbatim below, so it is trusted
         // operator input by design — never populate this from untrusted/visitor sources.
         $customHeadHtml = trim((string) ($resolvedSite?->custom_head_html ?? ''));
+        $brandPaletteCss = app(\WebBlocks\Cms\Support\Theme\BrandPaletteRenderer::class)->render($resolvedSite);
     @endphp
 
     <head>
@@ -83,6 +84,11 @@
         <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($cmsPublicCssPath))
             <link rel="stylesheet" href="{{ asset('cms/css/public.css') }}?v={{ filemtime($cmsPublicCssPath) }}">
+        @endif
+        {{-- Site brand palette: derived public theme tokens. Overrides the preset,
+             stays overridable by the site CSS asset below. --}}
+        @if ($brandPaletteCss !== '')
+            <style id="wb-public-brand">{!! $brandPaletteCss !!}</style>
         @endif
         @if ($siteCssPath)
             <link rel="stylesheet" href="{{ $siteCssPath }}">

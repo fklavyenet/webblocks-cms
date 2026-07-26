@@ -17,6 +17,7 @@ use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Sites\SiteAssetStore;
 use WebBlocks\Cms\Support\Sites\SiteAssetWriteException;
+use WebBlocks\Cms\Support\Theme\BrandPalette;
 
 class InternalSiteController extends Controller
 {
@@ -107,6 +108,12 @@ class InternalSiteController extends Controller
       'tagline' => ['sometimes', 'nullable', 'string', 'max:255'],
       'favicon_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Media::class, 'id')],
       'social_image_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Media::class, 'id')],
+      'brand_accent' => ['sometimes', 'nullable', 'string', 'max:7'],
+      'brand_accent_secondary' => ['sometimes', 'nullable', 'string', 'max:7'],
+      'brand_surface' => ['sometimes', 'nullable', 'string', 'max:7'],
+      'brand_text' => ['sometimes', 'nullable', 'string', 'max:7'],
+      'brand_font_heading' => ['sometimes', 'nullable', 'string', 'max:180'],
+      'brand_font_body' => ['sometimes', 'nullable', 'string', 'max:180'],
     ]);
 
     if ($validator->fails()) {
@@ -133,6 +140,38 @@ class InternalSiteController extends Controller
           ['path' => $field, 'message' => $label.' media must be an image from Media.'],
         ]);
       }
+    }
+
+    foreach (['brand_accent', 'brand_accent_secondary', 'brand_surface', 'brand_text'] as $field) {
+      if (! array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') {
+        continue;
+      }
+
+      $colour = BrandPalette::normalizeColour($data[$field]);
+
+      if ($colour === null) {
+        return $this->validationError([
+          ['path' => $field, 'message' => 'Brand colour must be a hex value such as #6a0f25.'],
+        ]);
+      }
+
+      $data[$field] = $colour;
+    }
+
+    foreach (['brand_font_heading', 'brand_font_body'] as $field) {
+      if (! array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') {
+        continue;
+      }
+
+      $stack = BrandPalette::normalizeFontStack($data[$field]);
+
+      if ($stack === null) {
+        return $this->validationError([
+          ['path' => $field, 'message' => 'Font stack may only contain font names, quotes and commas.'],
+        ]);
+      }
+
+      $data[$field] = $stack;
     }
 
     if ($data === []) {
