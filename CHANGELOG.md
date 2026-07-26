@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.3
+
+- Fix the Edit Site tab strip: 1.42.2 left the brand palette panel without its closing `</div>`, so every panel to its right nested inside it and never appeared, and `SiteController` kept a second literal tab list that never learned the new key, so the tab itself fell back to Site. Both are gone.
+- Merge the brand palette and the theme preset into one `Appearance` tab, in the order the layers apply: preset first, palette below it overriding the roles it covers. Two separate tabs hid that relationship — a preset change looked like it did nothing when the palette was quietly overriding it. Branding keeps the site's name, tagline, favicon and social image.
+- Make `Site::ADMIN_FORM_TABS` the single source for the strip; the controller whitelists against it and the form renders from it, so a new tab can no longer render a panel the controller refuses to select.
+- Extend `SiteFormStructureTest` with the two guards that would have caught the regression: every panel must close its own markup, and the controller must not carry a second literal tab list.
+
 ## 1.42.2
 
 - Give the brand palette its own `Brand palette` tab in `Sites -> Edit Site`, next to Branding. It shipped as a second card inside the Branding tab, where operators looked for it in the tab strip and did not find it. Branding keeps the site's name, tagline, favicon and social image; the palette tab owns the four brand colours and two font stacks. The tab is labelled in full rather than "Brand" so the two cannot be confused.
