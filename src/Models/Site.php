@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Theme\BrandPalette;
 
 class Site extends CmsModel
@@ -66,6 +67,7 @@ class Site extends CmsModel
     'social_image_media_id',
     'social_image_asset_id',
     'contact_recipient_email',
+    'timezone',
     'public_theme_preset',
     'custom_head_html',
     'brand_accent',
@@ -81,6 +83,21 @@ class Site extends CmsModel
     return [
       'is_primary' => 'boolean',
     ];
+  }
+
+  /**
+   * The clock this site's business hours run on.
+   *
+   * Named apart from the `timezone` column so `$site->timezone` stays the raw
+   * operator choice — null meaning "follow the install" — while callers that
+   * need a usable identifier get the resolved one. Anything time-bound and
+   * site-scoped should read this rather than `config('app.timezone')`.
+   */
+  public function resolvedTimezone(): string
+  {
+    $timezone = trim((string) ($this->timezone ?? ''));
+
+    return $timezone !== '' ? $timezone : app(SystemSettings::class)->timezone();
   }
 
   /**

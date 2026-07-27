@@ -185,6 +185,17 @@
                     <input id="site_tagline" name="tagline" class="wb-input" type="text" value="{{ old('tagline', $site->tagline) }}" @disabled($isReadOnly)>
                   </div>
 
+                  <div class="wb-stack-2 wb-field">
+                    <label for="site_timezone">{{ $adminText('site_timezone') }}</label>
+                    <select id="site_timezone" name="timezone" class="wb-input" @disabled($isReadOnly)>
+                      <option value="">{{ $adminText('site_timezone_system_default', ['timezone' => $systemTimezone]) }}</option>
+                      @foreach ($timezoneOptions as $timezoneValue => $timezoneLabel)
+                        <option value="{{ $timezoneValue }}" @selected(old('timezone', $site->timezone) === $timezoneValue)>{{ $timezoneLabel }}</option>
+                      @endforeach
+                    </select>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('site_timezone_help') }}</div>
+                  </div>
+
                   <div class="wb-grid wb-grid-2 wb-gap-4">
                     <div class="wb-stack wb-gap-2 wb-field">
                       <label for="favicon_media_id">{{ $adminText('favicon') }}</label>

@@ -21,6 +21,7 @@ use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use WebBlocks\Cms\Support\Sites\SiteDeleteService;
 use WebBlocks\Cms\Support\Sites\SitePublicDirectoryManager;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class SiteController extends Controller
@@ -31,6 +32,7 @@ class SiteController extends Controller
     private readonly AdminAuthorization $authorization,
     private readonly SiteAssetStore $siteAssetStore,
     private readonly SitePublicDirectoryManager $sitePublicDirectories,
+    private readonly SystemSettings $systemSettings,
   ) {}
 
   public function index(): View
@@ -90,6 +92,8 @@ class SiteController extends Controller
       'canManageSiteSettings' => true,
       'canManageDomains' => false,
       'siteTab' => trim((string) request()->query('tab', old('_site_tab', 'site'))),
+      'timezoneOptions' => $this->systemSettings->timezoneOptions(),
+      'systemTimezone' => $this->systemSettings->timezone(),
       'siteVariablesUi' => [
         'requestedModal' => '',
         'selectedVariable' => null,
@@ -158,6 +162,8 @@ class SiteController extends Controller
       'canManageSiteSettings' => $canManageSiteSettings,
       'canManageDomains' => $canManageDomains,
       'siteTab' => $siteTab,
+      'timezoneOptions' => $this->systemSettings->timezoneOptions(),
+      'systemTimezone' => $this->systemSettings->timezone(),
       'siteVariablesUi' => [
         'requestedModal' => $requestedModal,
         'selectedVariable' => $selectedVariable,
@@ -283,6 +289,13 @@ class SiteController extends Controller
   {
     if (! Schema::hasColumn('wbcms_sites', 'public_theme_preset')) {
       unset($data['public_theme_preset']);
+    }
+
+    if (! Schema::hasColumn('wbcms_sites', 'timezone')) {
+      unset($data['timezone']);
+    } elseif (array_key_exists('timezone', $data)) {
+      // Blank stores null, which reads as "follow the system timezone".
+      $data['timezone'] = trim((string) $data['timezone']) === '' ? null : $data['timezone'];
     }
 
     if (! Schema::hasColumn('wbcms_sites', 'custom_head_html')) {

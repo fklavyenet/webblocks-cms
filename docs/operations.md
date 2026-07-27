@@ -392,7 +392,7 @@ It keeps:
 
 - Project Name and Project Tagline for admin-only install context
 - default locale
-- timezone
+- timezone, which is the install-wide default and the fallback for any site that does not set its own
 - admin listing rows per page for paginated admin listing screens
 - CMS Mail mode and custom mail settings for CMS-owned notifications
 - cookie or privacy banner settings

@@ -46,6 +46,7 @@ Each site also owns its own public identity fallback layer:
 - To create a copy of one page inside the same site or another accessible site, use the dedicated `Duplicate page` action instead of move.
 - Page moves require a different target site, matching locale support, no conflicting translated paths on the target site, and compatible Shared Slot remaps when the page uses Shared Slots.
 - Page duplicates require target-site access, locale compatibility, unique translated target paths, and Shared Slot-safe handling for cross-site Shared Slot usage.
+- Each site may set its own timezone on the Edit Site form. Leaving it unset means the site follows the install-wide System Settings timezone, which stays the default and is what admin chrome uses. Set it when a site's business hours run on a different clock from the install — an install with sites in more than one region needs this before anything time-bound can be correct.
 - Shared Slots are site-scoped and cannot be referenced across sites directly.
 - Same-site duplicate keeps existing Shared Slot references.
 - Cross-site duplicate remaps only compatible same-handle Shared Slots from the target site.

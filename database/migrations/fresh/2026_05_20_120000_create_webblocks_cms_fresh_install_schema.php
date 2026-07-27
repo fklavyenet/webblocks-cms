@@ -203,6 +203,7 @@ return new class extends Migration
       $table->foreignId('favicon_media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();
       $table->foreignId('social_image_media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();
       $table->string('contact_recipient_email')->nullable();
+      $table->string('timezone')->nullable();
       $table->string('public_theme_preset')->nullable();
       $table->text('custom_head_html')->nullable();
       $table->string('brand_accent', 7)->nullable();

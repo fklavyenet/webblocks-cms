@@ -34,13 +34,13 @@ Five gaps in CMS core block the plugin. All five are core work, all five are tes
 
 **0.2 Plugins cannot declare public routes.** *(Shipped in 1.43.0.)* `PluginDefinition` accepted `adminRoutes()` and `apiRoutes()` only. A booking form needs a visitor-facing slot query and a submit endpoint, so `publicRoutes()` was added, mounted under the reserved `/plugins/{handle}` prefix with `web`, `install.required`, and a mandatory group throttle applied by the registrar rather than left to the plugin. [The plugin system document](plugin-system.md) describes the shipped contract.
 
-**0.3 Timezone is system-wide.** `SystemSettings::TIMEZONE` holds one value for the whole install. In a multisite install each business runs on its own clock, and a booking system that cannot say which clock it means is wrong by construction. Sites need a nullable `timezone` column that falls back to the system value.
+**0.3 Timezone is system-wide.** *(Shipped in 1.43.1.)* `SystemSettings::TIMEZONE` held one value for the whole install. In a multisite install each business runs on its own clock, and a booking system that cannot say which clock it means is wrong by construction. Sites now carry a nullable `timezone` column with an Edit Site field; `Site::resolvedTimezone()` returns it or falls back to the system value. The raw attribute stays null when unset, so "follow the install" remains distinguishable from an explicit choice that happens to match.
 
 **0.4 Plugin blocks cannot own translatable fields.** `BlockTranslationRegistry` is a fixed `match` over core slugs, so a plugin block has no translation family and no translated field map. The MVP works around this: visitor-facing copy comes from the plugin's own translation namespace, which is already supported — `InstalledPluginDefinitionFactory` registers `resources/lang` under the plugin handle — with per-block overrides held in block settings. Real per-block translation for plugin blocks is a later core change, not an MVP dependency.
 
 **0.5 There is no queue or scheduler contract.** Core contains no queued jobs. Reminder delivery, expiry of unconfirmed holds, and no-show marking all need work that runs on a clock. The plugin ships an Artisan command driven by the host's cron rather than introducing a queue dependency; adopting queues is a core decision and is out of scope here.
 
-Phases 0.1 and 0.2 shipped in `1.43.0`. The remaining three — site timezone, plugin block translations, and the scheduler contract — target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
+Phases 0.1 and 0.2 shipped in `1.43.0`, and 0.3 in `1.43.1`. The remaining two — plugin block translations and the scheduler contract — target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
 
 ## Plugin Identity And Conventions
 
@@ -120,4 +120,4 @@ Unit tests cover the slot engine, and they are the thickest part of the suite. F
 
 ## Delivery Order
 
-Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 is next. The plugin phases — skeleton, domain and slot engine, public surface, admin surface, notifications, reminders — build on top in that order.
+Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. The plugin phases — skeleton, domain and slot engine, public surface, admin surface, notifications, reminders — build on top in that order.

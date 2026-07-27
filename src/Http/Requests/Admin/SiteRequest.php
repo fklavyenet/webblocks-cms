@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Theme\BrandPalette;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -47,6 +48,7 @@ class SiteRequest extends FormRequest
       'display_name' => trim((string) $this->input('display_name')),
       'tagline' => trim((string) $this->input('tagline')),
       'contact_recipient_email' => trim((string) $this->input('contact_recipient_email')),
+      'timezone' => trim((string) $this->input('timezone')),
       'seo_title' => trim((string) $this->input('seo_title')),
       'seo_description' => trim((string) $this->input('seo_description')),
       'seo_keywords' => trim((string) $this->input('seo_keywords')),
@@ -78,6 +80,9 @@ class SiteRequest extends FormRequest
       'tagline' => ['nullable', 'string', 'max:255'],
       'favicon_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
       'contact_recipient_email' => ['nullable', 'email:rfc', 'max:255'],
+      // Blank means "follow the install-wide system timezone", so this stays
+      // optional; anything present must be a timezone the system offers.
+      'timezone' => ['nullable', 'string', Rule::in(array_keys(app(SystemSettings::class)->timezoneOptions()))],
       'seo_title' => ['nullable', 'string', 'max:255'],
       'seo_description' => ['nullable', 'string', 'max:1000'],
       'seo_keywords' => ['nullable', 'string', 'max:500'],

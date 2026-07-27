@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.43.1
+
+- Give each site its own timezone. `System Settings` held one timezone for the whole install, which is wrong for a multisite install whose sites run in different regions and blocks anything time-bound from being correct. Sites now carry a nullable `timezone` column with a picker on the Edit Site form; blank keeps following the install.
+- Read it through `Site::resolvedTimezone()`, which returns the site value or falls back to the system setting. The raw `timezone` attribute stays null when unset, so "follow the install" remains distinguishable from an explicit choice that happens to match the install default — a distinction that matters when the install timezone later changes.
+- Ship the column in all three migration paths: the alter migration for source-maintained installs, the `updates/` ensure migration for System Updates consumers, and the fresh-install schema.
+
 ## 1.43.0
 
 - Let a plugin own a visitor-facing surface. `PluginDefinition::publicRoutes()` (manifest key `routes.public`) mounts a plugin's public route file under `/plugins/{handle}`, with names under `webblocks.plugins.{plugin_handle}.public.*`. The prefix is one reserved first segment shared by all plugins, so a plugin endpoint cannot shadow a page slug — public pages are served by dynamic `{slug}` routes, and an unprefixed plugin route would compete with real content. Until now the only way to ship a public plugin endpoint was to hardcode it in core `routes/public.php`, which is how the commerce bridge got there.
