@@ -4,6 +4,13 @@ namespace WebBlocks\Cms\Support\Plugins;
 
 class PluginDefinition
 {
+  /**
+   * Reserved first URI segment for every plugin-owned public route. Reserving
+   * one segment for all plugins keeps visitor endpoints from colliding with
+   * page slugs, and mirrors `/webadmin/plugins/{handle}` on the admin side.
+   */
+  public const PUBLIC_ROUTE_SEGMENT = 'plugins';
+
   private string $label = '';
 
   private ?string $version = null;
@@ -29,6 +36,9 @@ class PluginDefinition
 
   /** @var array<int, string|callable> */
   private array $apiRoutes = [];
+
+  /** @var array<int, string|callable> */
+  private array $publicRoutes = [];
 
   /** @var array<string, mixed> */
   private array $apiDiscovery = [];
@@ -141,6 +151,16 @@ class PluginDefinition
   public function adminRoutePrefix(): string
   {
     return '/webadmin/plugins/'.$this->handle;
+  }
+
+  public function publicRoutePrefix(): string
+  {
+    return '/'.self::PUBLIC_ROUTE_SEGMENT.'/'.$this->handle;
+  }
+
+  public function publicRouteNamePrefix(): string
+  {
+    return $this->routeNamePrefix().'.public';
   }
 
   public function label(string $label): self
@@ -418,6 +438,36 @@ class PluginDefinition
   public function apiRouteDefinitions(): array
   {
     return $this->apiRoutes;
+  }
+
+  /**
+   * Register a plugin-owned public route file (or callable). These are mounted
+   * under `/plugins/{handle}` on the public site so a plugin can own a visitor
+   * surface — a form submit, a JSON lookup a block's script calls — without the
+   * CMS hardcoding the endpoint the way the commerce bridge is hardcoded today.
+   *
+   * The prefix is a reserved first segment, so plugin endpoints never shadow a
+   * page slug, and the registrar forces `web`, `install.required` and a rate
+   * limiter onto the group. CSRF stays on: these are browser forms, not the
+   * bearer-token clients `apiRoutes()` serves.
+   */
+  public function publicRoutes(string|callable $routes): self
+  {
+    if (is_string($routes) && trim($routes) === '') {
+      throw new PluginException("Plugin [{$this->handle}] public route file cannot be empty.");
+    }
+
+    $this->publicRoutes[] = is_string($routes) ? trim($routes) : $routes;
+
+    return $this;
+  }
+
+  /**
+   * @return array<int, string|callable>
+   */
+  public function publicRouteDefinitions(): array
+  {
+    return $this->publicRoutes;
   }
 
   /**
@@ -746,11 +796,13 @@ class PluginDefinition
       'database_prefix' => $this->databasePrefixValue(),
       'route_name_prefix' => $this->routeNamePrefix(),
       'admin_route_prefix' => $this->adminRoutePrefix(),
+      'public_route_prefix' => $this->publicRoutePrefix(),
       'enabled' => $enabled,
       'menu_items_count' => count($this->menuItems),
       'permissions_count' => count($this->permissions),
       'admin_routes_count' => count($this->adminRoutes),
       'api_routes_count' => count($this->apiRoutes),
+      'public_routes_count' => count($this->publicRoutes),
       'commands_count' => count($this->commands),
       'migrations_count' => count($this->migrations),
       'dashboard_widgets_count' => count($this->dashboardWidgets),

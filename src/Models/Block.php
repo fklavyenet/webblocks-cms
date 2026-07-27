@@ -15,6 +15,8 @@ use Illuminate\Support\Stringable;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
+use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -1165,6 +1167,12 @@ class Block extends CmsModel
 
   public function adminFormView(): string
   {
+    $pluginView = $this->pluginBlockView(fn (PluginBlockTypeDefinition $definition): ?string => $definition->adminViewName());
+
+    if ($pluginView !== null) {
+      return $pluginView;
+    }
+
     $packageView = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.'.$this->typeSlug();
 
     if (View::exists($packageView)) {
@@ -1182,6 +1190,12 @@ class Block extends CmsModel
 
   public function publicRenderView(): string
   {
+    $pluginView = $this->pluginBlockView(fn (PluginBlockTypeDefinition $definition): ?string => $definition->publicViewName());
+
+    if ($pluginView !== null) {
+      return $pluginView;
+    }
+
     $view = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$this->typeSlug();
 
     if (View::exists($view)) {
@@ -1750,6 +1764,37 @@ class Block extends CmsModel
       || View::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.fallback')
       || View::exists('admin.blocks.types.fallback')
     );
+  }
+
+  /**
+   * Resolve the view an enabled plugin declared for this block type.
+   *
+   * Plugin block views already resolve by convention, because installed plugin
+   * view paths are appended to the CMS view namespace and the catalog slug for
+   * `appointments::form` is `appointments-form`. That only works if the plugin
+   * mirrors the CMS directory layout and guesses the filename, and it leaves
+   * the `admin_view`/`public_view` a plugin declares in its manifest dead. A
+   * declared view wins here; everything else falls through to the convention.
+   *
+   * @param  callable(PluginBlockTypeDefinition): ?string  $viewName
+   */
+  private function pluginBlockView(callable $viewName): ?string
+  {
+    $slug = $this->typeSlug();
+
+    if ($slug === null) {
+      return null;
+    }
+
+    $definition = app(PluginBlockCatalog::class)->enabledDefinitionForCatalogSlug($slug);
+
+    if ($definition === null) {
+      return null;
+    }
+
+    $view = $viewName($definition);
+
+    return is_string($view) && $view !== '' && View::exists($view) ? $view : null;
   }
 
   private function fallbackAdminFormView(string $slug): string

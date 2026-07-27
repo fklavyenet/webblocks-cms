@@ -13,4 +13,8 @@ return [
     'install' => [
         'root' => env('WEBBLOCKS_PLUGIN_INSTALL_ROOT'),
     ],
+
+    'public_routes' => [
+        'rate_limit_per_minute' => env('WEBBLOCKS_PLUGIN_PUBLIC_ROUTE_RATE_LIMIT', 60),
+    ],
 ];

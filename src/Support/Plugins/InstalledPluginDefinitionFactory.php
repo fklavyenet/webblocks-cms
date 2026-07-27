@@ -87,6 +87,12 @@ class InstalledPluginDefinitionFactory
         $definition->apiRoutes($path.DIRECTORY_SEPARATOR.$apiRoutes);
       }
 
+      $publicRoutes = $manifest['routes']['public'] ?? null;
+
+      if (is_string($publicRoutes) && $publicRoutes !== '') {
+        $definition->publicRoutes($path.DIRECTORY_SEPARATOR.$publicRoutes);
+      }
+
       $commands = array_values(array_filter($manifest['commands'] ?? [], function (mixed $command): bool {
         return is_string($command) && class_exists($command) && is_subclass_of($command, Command::class);
       }));

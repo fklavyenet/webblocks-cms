@@ -60,6 +60,7 @@ use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginPublicRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
@@ -865,6 +866,18 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     RateLimiter::for('internal-content-api', function (Request $request) {
       return Limit::perMinute(120)->by($request->ip().'|'.((string) $request->bearerToken()));
     });
+
+    // Group backstop for every plugin-owned public route. It is deliberately
+    // loose enough not to break a read endpoint a block polls, and a plugin
+    // that writes is expected to add its own stricter per-route throttle. The
+    // key includes the plugin prefix so one noisy plugin cannot exhaust the
+    // budget of another.
+    RateLimiter::for('plugin-public-routes', function (Request $request) {
+      $segments = $request->segments();
+
+      return Limit::perMinute((int) config('webblocks-plugins.public_routes.rate_limit_per_minute', 60))
+        ->by($request->ip().'|'.((string) ($segments[1] ?? '')));
+    });
   }
 
   protected function bootCommands(): void
@@ -1003,6 +1016,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
     app(PluginApiRouteRegistrar::class)->registerEnabledApiRoutes();
+    app(PluginPublicRouteRegistrar::class)->registerEnabledPublicRoutes();
   }
 
   protected function diagnosticRoutesShouldLoad(): bool

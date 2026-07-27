@@ -61,7 +61,7 @@ Plugin capabilities:
 - plugin-owned migrations
 - plugin-owned dashboard widgets
 - plugin-owned blocks or block packs
-- plugin-owned public routes, only when explicitly declared
+- plugin-owned public routes, only when explicitly declared through `routes.public`
 
 Core view override is forbidden by default. Plugins extend CMS only through documented extension slots and registry contracts. A plugin must not replace package views, monkey patch core services, add hidden route files, or rely on arbitrary include side effects.
 
@@ -188,6 +188,26 @@ The exact API may change during implementation, but the contract must preserve t
 - menu, route, permission, command, migration, block, asset, and setting ownership is attributable to a plugin handle
 - conflicts fail during build, test, boot diagnostics, or plugin enablement before users see mixed ownership
 
+## Plugin Public Routes
+
+A plugin can own a visitor-facing surface. `PluginDefinition::publicRoutes()` accepts a route file or callable, and the installed-plugin manifest accepts the same declaration under `routes.public` alongside the existing `routes.admin` and `routes.api` keys.
+
+Every plugin public route is mounted under `/plugins/{plugin-handle}`, with names under `webblocks.plugins.{plugin_handle}.public.*`. The prefix is a single reserved first URI segment shared by all plugins, which is what keeps a plugin endpoint from shadowing a page slug: public CMS pages are served by dynamic `{slug}` routes, so an unprefixed plugin route would compete with real content. The existing catch-all protection reserves the segment from the redirect manager automatically once a route is registered.
+
+The registrar owns the middleware stack rather than trusting the plugin to assemble it. Every route in the group runs `web`, `install.required`, and the `plugin-public-routes` throttle, so an unthrottled public write surface is not something a plugin can ship by omission. A plugin remains free to add a stricter per-route throttle, and both limits apply. The group throttle defaults to 60 requests per minute per IP and plugin, configurable through `webblocks-plugins.public_routes.rate_limit_per_minute` or `WEBBLOCKS_PLUGIN_PUBLIC_ROUTE_RATE_LIMIT`.
+
+Unlike the internal API group, CSRF protection stays on. Plugin public routes serve browser forms and same-origin fetches from block scripts, not bearer-token clients; a plugin needing token authentication should declare `routes.api` instead.
+
+Public routes follow the same inertness rule as every other contribution: only enabled, compatible plugins register them. A disabled plugin's public endpoints do not exist.
+
+## Plugin Block Views
+
+A plugin block type may declare the views it renders through, using `adminView()` and `publicView()` on the block type definition, or `admin_view` and `public_view` in the manifest's block declarations. A declared view that resolves is used for that block's admin form and public render.
+
+Without a declaration the previous convention still applies: installed plugin view paths are appended to the CMS view namespace, and a plugin block's catalog slug is its handle with `::` replaced by `-`, so `appointments::form` resolves `webblocks-cms::pages.partials.blocks.appointments-form` when the plugin mirrors the CMS directory layout. Declaring the view is preferred, because it does not require the plugin to guess a core directory structure it does not own. A declared view that does not resolve falls back to the convention and then to the standard missing-renderer fallback, so a bad declaration degrades rather than throwing during a page render.
+
+Only enabled plugins contribute block views, and core block slugs are never affected by the lookup.
+
 ## Package Convention Rules
 
 Plugin package conventions are separate from CMS core conventions. CMS core owns host contracts; plugins own their domain behavior.
@@ -195,7 +215,7 @@ Plugin package conventions are separate from CMS core conventions. CMS core owns
 - Handle naming: use stable kebab-case such as `analytics-tools`; never rename a handle after release because it anchors routes, permissions, settings, tables, assets, and upgrade history.
 - Service provider registration: a plugin package should expose one Laravel service provider and register its `PluginDefinition` there or through the CMS registry integration point. First-party in-package pilots may register directly from the CMS package provider until split into their own Composer packages.
 - Definition or manifest structure: declare `handle`, `label`, `version`, `provider`, `description`, `requiresCms`, settings namespace, database prefix, permissions, routes, commands, extension slots, assets, blocks, and health reporter explicitly.
-- Route namespace: admin routes live under `/webadmin/plugins/{plugin-handle}/...` with names under `webblocks.plugins.{plugin_handle}.*`.
+- Route namespace: admin routes live under `/webadmin/plugins/{plugin-handle}/...` with names under `webblocks.plugins.{plugin_handle}.*`. Public routes live under `/plugins/{plugin-handle}/...` with names under `webblocks.plugins.{plugin_handle}.public.*`.
 - Permission naming: every plugin permission starts with `{plugin-handle}.`, for example `analytics-tools.view`.
 - Settings conventions: settings namespaces are snake_case and default to the handle with dashes converted to underscores.
 - Command naming: resolvable Artisan command names must start with `{plugin-handle}:`, for example `analytics-tools:sync`.

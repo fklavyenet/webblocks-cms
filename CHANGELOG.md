@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.43.0
+
+- Let a plugin own a visitor-facing surface. `PluginDefinition::publicRoutes()` (manifest key `routes.public`) mounts a plugin's public route file under `/plugins/{handle}`, with names under `webblocks.plugins.{plugin_handle}.public.*`. The prefix is one reserved first segment shared by all plugins, so a plugin endpoint cannot shadow a page slug — public pages are served by dynamic `{slug}` routes, and an unprefixed plugin route would compete with real content. Until now the only way to ship a public plugin endpoint was to hardcode it in core `routes/public.php`, which is how the commerce bridge got there.
+- Apply the public middleware stack in the registrar rather than trusting each plugin to assemble it: `web`, `install.required`, and a `plugin-public-routes` throttle default of 60/minute per IP and plugin, configurable through `webblocks-plugins.public_routes.rate_limit_per_minute`. A plugin can add a stricter per-route throttle and both apply. CSRF stays on — these serve browser forms, not the bearer-token clients `routes.api` serves.
+- Honor the `admin_view` and `public_view` a plugin block type declares. Both were already parsed off the manifest and then ignored, so a plugin block could only render by mirroring the core view directory layout and guessing the filename that matches its catalog slug. `Block::publicRenderView()` and `Block::adminFormView()` now consult the plugin block registry first; a declared view that does not resolve falls back to the old convention instead of throwing mid-render.
+- Memoize the enabled plugin block lookup in `PluginBlockCatalog`. `PluginRegistry::enabled()` deep-clones every definition it returns, which is affordable on an admin screen and not on a per-block render path. `PluginRuntimeRefresher` already forgets this singleton, so the memo cannot outlive a plugin install, enable, or update.
+- Document the appointments plugin design in `docs/appointments-plugin-plan.md`. Booking ships as a plugin, not core: scheduling is a business domain, and the plugin boundary already forbids domain capabilities in core. The two extension points above are the first two phases of that plan.
+
 ## 1.42.8
 
 - Fold the Update history accordion into the System Updates card. It used to render outside `section.wb-card` as an unframed strip orphaned below the card; it is now the last element of the card body, so the screen reads as one card in order: preflight → state → release notes → Update history. Run-log `wb-modal`s stay outside the card so overlays keep their own stacking context.

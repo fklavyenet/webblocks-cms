@@ -30,9 +30,9 @@ Contact Form living in core is not an argument for appointments living in core. 
 
 Five gaps in CMS core block the plugin. All five are core work, all five are testable without the plugin existing, and every one of them is needed by any future plugin that wants a public surface — so this phase is not overhead specific to appointments.
 
-**0.1 Plugin blocks cannot render on the public site.** `Block::publicRenderView()` resolves a view by type slug only, trying `webblocks-cms::pages.partials.blocks.{slug}` and then the host's `pages.partials.blocks.{slug}`. `PluginBlockTypeDefinition::publicView()` is accepted and parsed by `InstalledPluginDefinitionFactory`, but nothing in the render path consumes it. Plugin block handles are also namespaced with `::` (`appointments::form`), which cannot appear in a view name as-is. Core must resolve plugin block views through the plugin block registry, in both `publicRenderView()` and `adminFormView()`. This is the primary blocker.
+**0.1 Plugin blocks cannot declare the views they render through.** *(Shipped in 1.43.0.)* The original reading of this gap was too strong. Plugin block views did already resolve: installed plugin view paths are appended to the CMS view namespace, and `PluginBlockCatalog` normalizes the handle `appointments::form` to the catalog slug `appointments-form`, so `Block::publicRenderView()` found `webblocks-cms::pages.partials.blocks.appointments-form` by convention. What did not work is that the `admin_view` and `public_view` a plugin declares were parsed and then ignored, leaving the plugin to mirror a core directory layout it does not own and guess the filename. Core now consults the plugin block registry first in both `publicRenderView()` and `adminFormView()`, honors a declared view that resolves, and falls back to the convention otherwise.
 
-**0.2 Plugins cannot declare public routes.** `PluginDefinition` accepts `adminRoutes()` and `apiRoutes()`. A booking form needs a visitor-facing slot query and a submit endpoint, so a `publicRoutes()` declaration is required. It must reuse the existing core-route protection that `PluginRouteRegistrar::protectCorePublicRoutesFromPluginCatchAlls()` already applies, and rate limiting must be mandatory rather than left to the plugin.
+**0.2 Plugins cannot declare public routes.** *(Shipped in 1.43.0.)* `PluginDefinition` accepted `adminRoutes()` and `apiRoutes()` only. A booking form needs a visitor-facing slot query and a submit endpoint, so `publicRoutes()` was added, mounted under the reserved `/plugins/{handle}` prefix with `web`, `install.required`, and a mandatory group throttle applied by the registrar rather than left to the plugin. [The plugin system document](plugin-system.md) describes the shipped contract.
 
 **0.3 Timezone is system-wide.** `SystemSettings::TIMEZONE` holds one value for the whole install. In a multisite install each business runs on its own clock, and a booking system that cannot say which clock it means is wrong by construction. Sites need a nullable `timezone` column that falls back to the system value.
 
@@ -40,7 +40,7 @@ Five gaps in CMS core block the plugin. All five are core work, all five are tes
 
 **0.5 There is no queue or scheduler contract.** Core contains no queued jobs. Reminder delivery, expiry of unconfirmed holds, and no-show marking all need work that runs on a clock. The plugin ships an Artisan command driven by the host's cron rather than introducing a queue dependency; adopting queues is a core decision and is out of scope here.
 
-Phase 0 targets a `1.43.x` CMS release. The plugin's `requiresCms()` constraint is pinned to that release once it ships; the installed version at the time of writing is `1.42.8`.
+Phases 0.1 and 0.2 shipped in `1.43.0`. The remaining three — site timezone, plugin block translations, and the scheduler contract — target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
 
 ## Plugin Identity And Conventions
 
@@ -120,4 +120,4 @@ Unit tests cover the slot engine, and they are the thickest part of the suite. F
 
 ## Delivery Order
 
-Phase 0.1 and 0.2 land together, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 follows. The plugin phases — skeleton, domain and slot engine, public surface, admin surface, notifications, reminders — build on top in that order.
+Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 is next. The plugin phases — skeleton, domain and slot engine, public surface, admin surface, notifications, reminders — build on top in that order.
