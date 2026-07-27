@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.8
+
+- Fold the Update history accordion into the System Updates card. It used to render outside `section.wb-card` as an unframed strip orphaned below the card; it is now the last element of the card body, so the screen reads as one card in order: preflight → state → release notes → Update history. Run-log `wb-modal`s stay outside the card so overlays keep their own stacking context.
+- Move the failing-preflight callout to the top of the card body, matching the order the shared `webblocks-publisher-client` view already used — the two System Updates surfaces in the fleet no longer disagree about where the pre-run warning goes.
+- Stop rendering the history accordion when no runs are recorded. A fresh install used to show an empty `Update history (0)` accordion whose only content was "No update runs have been recorded yet."; the accordion is now omitted entirely and the `updates.no_update_runs` string is retired from all three locales.
+
 ## 1.42.7
 
 - Move the pinned WebBlocks UI runtime from `v2.16.2` to `v2.16.3`, where `WBUpdateIndicator` reports a failed status fetch — `console.warn` naming the endpoint, plus `data-wb-update-indicator-state="error"` on the element — instead of swallowing it in an empty `catch`. A 404, a redirect to a login page (which arrives as 200 HTML and throws on parse) and a genuine "no update available" used to be indistinguishable: the navbar badge simply never appeared.

@@ -1,7 +1,9 @@
 {{--
   The fleet-standard System Updates screen (design v3, owner-approved).
-  ONE card, TWO states (up to date / update available); Update history is a
-  permanent collapsed accordion; run logs open in wb-modal via the eye action.
+  ONE card, TWO states (up to date / update available); the card body reads
+  preflight → state → release notes → Update history (a collapsed accordion at
+  its foot, rendered only when runs exist); run logs open in wb-modal via the
+  eye action.
   Pressing "Update to X" submits directly (no confirm) and shows a progress
   modal that polls the indicator route until the app answers again.
   WebBlocks UI classes only; CMS-owned $adminText i18n.
@@ -68,6 +70,22 @@
     </div>
 
     <div class="wb-card-body wb-stack wb-stack-4">
+      @if ($failingChecks->isNotEmpty())
+        <div class="wb-callout wb-callout-warning wb-stack wb-stack-2" data-webblocks-updates-preflight>
+          <strong class="wb-callout-title">{{ $adminText('updates.preflight_title') }}</strong>
+          <span class="wb-text-sm">{{ $adminText('updates.preflight_help') }}</span>
+          @foreach ($failingChecks as $failingCheck)
+            <div class="wb-list-item wb-cluster wb-cluster-2">
+              <span class="wb-status-pill {{ $failingCheck['badge_class'] ?? 'wb-status-danger' }}">{{ $failingCheck['status'] ?? 'fail' }}</span>
+              <div class="wb-stack wb-stack-1">
+                <strong class="wb-text-sm">{{ $failingCheck['label'] ?? '' }}</strong>
+                <span class="wb-text-sm wb-text-muted">{{ $failingCheck['message'] ?? '' }}</span>
+              </div>
+            </div>
+          @endforeach
+        </div>
+      @endif
+
       @if ($updateAvailable)
         <div class="wb-callout {{ $calloutTone }} wb-cluster wb-cluster-4 wb-cluster-between">
           <div class="wb-cluster wb-cluster-4">
@@ -204,71 +222,54 @@
         @endif
       @endif
 
-      @if ($failingChecks->isNotEmpty())
-        <div class="wb-callout wb-callout-warning wb-stack wb-stack-2" data-webblocks-updates-preflight>
-          <strong class="wb-callout-title">{{ $adminText('updates.preflight_title') }}</strong>
-          <span class="wb-text-sm">{{ $adminText('updates.preflight_help') }}</span>
-          @foreach ($failingChecks as $failingCheck)
-            <div class="wb-list-item wb-cluster wb-cluster-2">
-              <span class="wb-status-pill {{ $failingCheck['badge_class'] ?? 'wb-status-danger' }}">{{ $failingCheck['status'] ?? 'fail' }}</span>
-              <div class="wb-stack wb-stack-1">
-                <strong class="wb-text-sm">{{ $failingCheck['label'] ?? '' }}</strong>
-                <span class="wb-text-sm wb-text-muted">{{ $failingCheck['message'] ?? '' }}</span>
+      @if ($runs->isNotEmpty())
+        <div class="wb-accordion" data-wb-accordion>
+          <div class="wb-accordion-item">
+            <button class="wb-accordion-trigger" type="button" aria-expanded="false" aria-controls="wb-update-history">
+              <span>{{ $adminText('updates.history_title') }} ({{ $runs->count() }})</span>
+              <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
+            </button>
+            <div class="wb-accordion-content" id="wb-update-history">
+              <div class="wb-accordion-body">
+                <div class="wb-table-wrap wb-mt-3">
+                  <table class="wb-table">
+                    <thead>
+                      <tr>
+                        <th>{{ $adminText('updates.history.from') }}</th>
+                        <th>{{ $adminText('updates.history.to') }}</th>
+                        <th>{{ $adminText('updates.history.status') }}</th>
+                        <th>{{ $adminText('updates.history.when') }}</th>
+                        <th class="wb-table-actions">{{ $adminText('updates.history.actions') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach ($runs as $run)
+                        <tr>
+                          <td><strong>{{ $run->from_version ?: '—' }}</strong></td>
+                          <td><strong>{{ $run->to_version ?: '—' }}</strong></td>
+                          <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $adminText('updates.statuses.'.$run->status) }}</span></td>
+                          <td class="wb-text-sm">{{ optional($run->finished_at)->format('Y-m-d H:i') ?? optional($run->started_at)->format('Y-m-d H:i') ?? '—' }}</td>
+                          <td class="wb-table-actions">
+                            @if ($run->output)
+                              <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#wb-run-log-{{ $run->id }}" aria-label="{{ $adminText('updates.view_log') }}">
+                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                              </button>
+                            @endif
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          @endforeach
+          </div>
         </div>
       @endif
     </div>
   </section>
 
-  <div class="wb-accordion wb-mt-4" data-wb-accordion>
-    <div class="wb-accordion-item">
-      <button class="wb-accordion-trigger" type="button" aria-expanded="false" aria-controls="wb-update-history">
-        <span>{{ $adminText('updates.history_title') }} ({{ $runs->count() }})</span>
-        <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-      </button>
-      <div class="wb-accordion-content" id="wb-update-history">
-        <div class="wb-accordion-body">
-          @if ($runs->isNotEmpty())
-            <div class="wb-table-wrap wb-mt-3">
-              <table class="wb-table">
-                <thead>
-                  <tr>
-                    <th>{{ $adminText('updates.history.from') }}</th>
-                    <th>{{ $adminText('updates.history.to') }}</th>
-                    <th>{{ $adminText('updates.history.status') }}</th>
-                    <th>{{ $adminText('updates.history.when') }}</th>
-                    <th class="wb-table-actions">{{ $adminText('updates.history.actions') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @foreach ($runs as $run)
-                    <tr>
-                      <td><strong>{{ $run->from_version ?: '—' }}</strong></td>
-                      <td><strong>{{ $run->to_version ?: '—' }}</strong></td>
-                      <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $adminText('updates.statuses.'.$run->status) }}</span></td>
-                      <td class="wb-text-sm">{{ optional($run->finished_at)->format('Y-m-d H:i') ?? optional($run->started_at)->format('Y-m-d H:i') ?? '—' }}</td>
-                      <td class="wb-table-actions">
-                        @if ($run->output)
-                          <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#wb-run-log-{{ $run->id }}" aria-label="{{ $adminText('updates.view_log') }}">
-                            <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
-                          </button>
-                        @endif
-                      </td>
-                    </tr>
-                  @endforeach
-                </tbody>
-              </table>
-            </div>
-          @else
-            <p class="wb-text-muted wb-mt-3">{{ $adminText('updates.no_update_runs') }}</p>
-          @endif
-        </div>
-      </div>
-    </div>
-  </div>
-
+  {{-- Run logs for the history rows above; modals live outside the card. --}}
   @foreach ($runs as $run)
     @if ($run->output)
       <div id="wb-run-log-{{ $run->id }}" class="wb-modal" role="dialog" aria-modal="true" aria-labelledby="wb-run-log-{{ $run->id }}-title">

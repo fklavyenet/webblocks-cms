@@ -1583,7 +1583,6 @@ return [
     'preflight_title' => 'Ön kontroller ilgi bekliyor',
     'preflight_help' => 'Güncelleme başlayabilmesi için aşağıdaki başarısız kontrolleri giderin.',
     'history_title' => 'Güncelleme geçmişi',
-    'no_update_runs' => 'Henüz kaydedilmiş bir güncelleme çalışması yok.',
     'history' => [
       'from' => 'Kaynak',
       'to' => 'Hedef',

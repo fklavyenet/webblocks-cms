@@ -86,9 +86,9 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertStringNotContainsString('data-wb-update-form', $html);
     $this->assertStringNotContainsString('data-webblocks-update-progress-modal', $html);
 
-    // History accordion is always present, with the empty state inside.
-    $this->assertStringContainsString('Update history', $html);
-    $this->assertStringContainsString('No update runs have been recorded yet.', $html);
+    // No recorded runs → the history accordion is not rendered at all.
+    $this->assertStringNotContainsString('Update history', $html);
+    $this->assertStringNotContainsString('wb-update-history', $html);
 
     $this->assertRetiredSurfaceAbsent($html);
   }

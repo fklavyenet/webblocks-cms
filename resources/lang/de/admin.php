@@ -1585,7 +1585,6 @@ return [
     'preflight_title' => 'Preflight-Prüfungen erfordern Aufmerksamkeit',
     'preflight_help' => 'Beheben Sie die unten aufgeführten fehlgeschlagenen Prüfungen, bevor das Update starten kann.',
     'history_title' => 'Update-Verlauf',
-    'no_update_runs' => 'Es wurden noch keine Update-Läufe aufgezeichnet.',
     'history' => [
       'from' => 'Von',
       'to' => 'Auf',

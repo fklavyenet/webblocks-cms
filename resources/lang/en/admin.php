@@ -1585,7 +1585,6 @@ return [
     'preflight_title' => 'Preflight checks need attention',
     'preflight_help' => 'Resolve the failing checks below before the update can start.',
     'history_title' => 'Update history',
-    'no_update_runs' => 'No update runs have been recorded yet.',
     'history' => [
       'from' => 'From',
       'to' => 'To',
