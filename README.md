@@ -112,6 +112,7 @@ Existing full-repository clones must preserve host-owned `.env`, database, stora
 - Operate sites with [Multisite](docs/multisite.md), [Localization](docs/localization.md), [Users and Permissions](docs/users-and-permissions.md), [Media Image Variants](docs/media-image-variants.md), and [Operations](docs/operations.md).
 - Integrate trusted tools through the [Internal Content API](docs/internal-content-api.md), [API Discovery](docs/api-discovery.md), and [AI Page Building Guide](docs/ai-page-building-guide.md).
 - Understand runtime boundaries in [Package Architecture](docs/package-architecture.md), [Laravel Coexistence](docs/coexistence.md), [Plugin System](docs/plugin-system.md), and [Updates](docs/updates.md).
+- Read planned work in the [Appointments Plugin Plan](docs/appointments-plugin-plan.md), which is a design record rather than shipped behavior.
 
 ## Security
 

@@ -37,6 +37,9 @@ Expected plugin areas include:
 - media optimizer
 - update server manager
 - custom block packs
+- appointments/booking
+
+Appointments is the first planned plugin to require a visitor-facing surface, and its design record — including the core extension points it depends on — is kept in [the appointments plugin plan](appointments-plugin-plan.md).
 
 ## Core Vs Plugin Boundary
 
