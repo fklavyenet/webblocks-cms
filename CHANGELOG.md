@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.6
+
+- Fix the navbar "update available" badge outliving the update it advertised. The badge is cached for an hour, and while the update controller already cleared it on a successful run, a request served between the apply and the worker recycling still runs the pre-update code: it re-checks, still reports itself as the old version, and re-caches the finished update for another hour. `AdminUpdateIndicator` now drops and recomputes a cached `update_available` whose version is not newer than the installed one, using the same lenient normalization as the update check (`v1.2.3` == `1.2.3`). This is the port of the guard shipped in `webblocks-publisher-client` 1.0.4 — the CMS runs its own engine and does not consume that package, so it needed the fix separately.
+
 ## 1.42.5
 
 - Fix the Appearance tab, which 1.42.4 shipped broken: the font-picker setup used a block `@php`, Blade left the opening directive in the compiled view as text, and the tab rendered with `$fontOptions` and `$installedFontCount` undefined. The assignments use the inline `@php(...)` form now.

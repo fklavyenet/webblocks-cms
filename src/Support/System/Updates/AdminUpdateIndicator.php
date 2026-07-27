@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Support\Facades\Cache;
 use Throwable;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
 class AdminUpdateIndicator
 {
@@ -11,6 +12,7 @@ class AdminUpdateIndicator
 
   public function __construct(
     private readonly UpdateServerClient $updateServerClient,
+    private readonly InstalledVersionStore $installedVersionStore,
   ) {}
 
   public function payload(bool $refresh = false): array
@@ -20,6 +22,17 @@ class AdminUpdateIndicator
     }
 
     $status = $refresh ? null : Cache::get(self::CACHE_KEY);
+
+    // Never advertise a version that is already installed. The badge is cached
+    // for an hour, and while the update controller does clear it on a successful
+    // run, a request served between the apply and the worker recycling still
+    // holds the pre-update code — it re-checks, still sees itself as the old
+    // version, and re-caches the finished update for another hour. Recompute
+    // instead of showing a badge for the release you are running.
+    if (is_array($status) && $this->advertisesInstalledVersion($status)) {
+      $this->clear();
+      $status = null;
+    }
 
     if (! is_array($status)) {
       $status = $this->safeStatus();
@@ -37,6 +50,51 @@ class AdminUpdateIndicator
   public function clear(): void
   {
     Cache::forget(self::CACHE_KEY);
+  }
+
+  /**
+   * True when a cached status announces an update to a version that is not
+   * actually newer than what is installed right now. Uses the same lenient
+   * normalization as the update check ("v1.2.3" == "1.2.3").
+   */
+  private function advertisesInstalledVersion(array $status): bool
+  {
+    if (($status['state'] ?? null) !== 'update_available') {
+      return false;
+    }
+
+    $latestVersion = $status['latest_version'] ?? null;
+
+    if (! is_string($latestVersion) || $latestVersion === '') {
+      return false;
+    }
+
+    try {
+      $installedVersion = $this->installedVersionStore->currentVersion();
+    } catch (Throwable) {
+      return false;
+    }
+
+    if ($installedVersion === '') {
+      return false;
+    }
+
+    return version_compare(
+      $this->normalizeVersion($latestVersion),
+      $this->normalizeVersion($installedVersion),
+      '<=',
+    );
+  }
+
+  private function normalizeVersion(string $version): string
+  {
+    $version = trim($version);
+
+    if ($version !== '' && ($version[0] === 'v' || $version[0] === 'V')) {
+      $version = substr($version, 1);
+    }
+
+    return $version;
   }
 
   private function safeStatus(): array
