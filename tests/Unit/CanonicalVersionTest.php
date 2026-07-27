@@ -11,9 +11,9 @@ class CanonicalVersionTest extends TestCase
   #[Test]
   public function canonical_version_matches_the_current_package_release(): void
   {
-    $this->assertSame('1.42.6', WebBlocks::VERSION);
+    $this->assertSame('1.42.7', WebBlocks::VERSION);
     $this->assertSame(WebBlocks::VERSION, WebBlocks::version());
-    $this->assertSame('v2.16.2', WebBlocks::UI_VERSION);
+    $this->assertSame('v2.16.3', WebBlocks::UI_VERSION);
     $this->assertSame(WebBlocks::UI_VERSION, WebBlocks::uiVersion());
   }
 }

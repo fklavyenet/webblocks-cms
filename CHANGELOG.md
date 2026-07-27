@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.42.7
+
+- Move the pinned WebBlocks UI runtime from `v2.16.2` to `v2.16.3`, where `WBUpdateIndicator` reports a failed status fetch — `console.warn` naming the endpoint, plus `data-wb-update-indicator-state="error"` on the element — instead of swallowing it in an empty `catch`. A 404, a redirect to a login page (which arrives as 200 HTML and throws on parse) and a genuine "no update available" used to be indistinguishable: the navbar badge simply never appeared.
+
 ## 1.42.6
 
 - Fix the navbar "update available" badge outliving the update it advertised. The badge is cached for an hour, and while the update controller already cleared it on a successful run, a request served between the apply and the worker recycling still runs the pre-update code: it re-checks, still reports itself as the old version, and re-caches the finished update for another hour. `AdminUpdateIndicator` now drops and recomputes a cached `update_available` whose version is not newer than the installed one, using the same lenient normalization as the update check (`v1.2.3` == `1.2.3`). This is the port of the guard shipped in `webblocks-publisher-client` 1.0.4 — the CMS runs its own engine and does not consume that package, so it needed the fix separately.
