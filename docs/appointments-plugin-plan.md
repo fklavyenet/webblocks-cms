@@ -38,6 +38,8 @@ Five gaps in CMS core block the plugin. All five are core work, all five are tes
 
 **0.4 Plugin blocks cannot own translatable fields.** `BlockTranslationRegistry` is a fixed `match` over core slugs, so a plugin block has no translation family and no translated field map. The MVP works around this: visitor-facing copy comes from the plugin's own translation namespace, which is already supported — `InstalledPluginDefinitionFactory` registers `resources/lang` under the plugin handle — with per-block overrides held in block settings. Real per-block translation for plugin blocks is a later core change, not an MVP dependency.
 
+**0.6 Plugin static assets are declarable but not servable.** Found while building phase 3. `PluginPublicAsset` emits a `<script>` or `<link>` tag for an enabled plugin, and the manifest documents an `assets` key, but nothing parses that key and nothing copies a plugin's files into the document root — so the emitted tag points at a 404. Until this is closed, a plugin cannot ship CSS or JavaScript, which is why the booking form is entirely server-rendered. Needed before any plugin wants a progressive enhancement, not just this one.
+
 **0.5 There is no queue or scheduler contract.** Core contains no queued jobs. Reminder delivery, expiry of unconfirmed holds, and no-show marking all need work that runs on a clock. The plugin ships an Artisan command driven by the host's cron rather than introducing a queue dependency; adopting queues is a core decision and is out of scope here.
 
 Phases 0.1 and 0.2 shipped in `1.43.0`, and 0.3 in `1.43.1`. The remaining two — plugin block translations and the scheduler contract — target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
@@ -107,11 +109,15 @@ Writing those tests found a schema bug that SQLite had hidden. MySQL enforces a 
 
 ## Public Surface
 
-The `appointments::form` block renders the booking flow: choose a service, choose a date, choose from the free slots, enter name, email, and phone, submit. Two public routes back it — a throttled JSON slot query and a throttled CSRF-protected submit.
+*(Shipped in plugin `0.3.0`.)*
+
+The `webblocks-appointments::form` block renders the booking flow: choose a service, choose a date, choose from the free slots, enter name, email, and phone, submit. Two public routes back it — a throttled JSON slot query and a throttled CSRF-protected submit.
 
 Anti-spam reuses the Contact Form model rather than inventing a second one: the renderer generates the signed check field, filled check fields and implausibly fast submissions receive the same generic success response as a real booking without being stored, and no scoring detail reaches the visitor.
 
-The interface is vanilla JS over WebBlocks UI components, shipped as a plugin-owned public asset. No new frontend dependency and no build step.
+The plan assumed vanilla JS shipped as a plugin-owned public asset. That is not available: `PluginPublicAsset` emits a script tag and the manifest documents an `assets` key, but nothing parses that key and nothing publishes a plugin's static files into the document root, so the tag would point at a 404. This is the same shape of gap as the declared block views that 0.1 fixed — declarable but not wired. The form therefore renders entirely on the server in a stepped GET then POST, which needs no new machinery, makes the chosen day a shareable URL, and degrades perfectly. Closing the asset gap is a later core phase; a progressive enhancement can then replace the step-one reload without changing the server contract.
+
+Two protections are not visible in the markup and are easy to lose in a rewrite. Submitted instants are re-derived against the slot engine rather than trusted, because the booker enforces conflicts but not the rules that decide what should have been offered at all — without the recheck a crafted post can book 03:00 on a closed Sunday, since nothing about that collides with an existing appointment. And `source_url` is honoured only as a same-site path, so the form cannot be turned into an open redirect.
 
 ## Admin Surface
 
@@ -137,4 +143,6 @@ Unit tests cover the slot engine, and they are the thickest part of the suite. F
 
 ## Delivery Order
 
-Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`, and the plugin skeleton as plugin `0.1.0`. The remaining plugin phases — domain and slot engine, public surface, admin surface, notifications, reminders — build on top in that order. Core phases 0.4 and 0.5 are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.5 before reminders.
+Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. Plugin phases 1, 2 and 3 shipped as `0.1.0`, `0.2.0` and `0.3.0`; the remaining ones — admin surface, notifications, reminders — build on top in that order.
+
+The three open core phases are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.5 before reminders, 0.6 before any progressive enhancement of the booking form. None of them blocks the admin surface, which is what the plugin needs next: services, staff and opening hours currently have no screens.
