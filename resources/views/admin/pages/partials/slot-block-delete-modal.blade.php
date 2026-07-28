@@ -94,7 +94,7 @@
 
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-3">
-                                <label class="wb-checkbox" for="delete_descendants">
+                                <label class="wb-check" for="delete_descendants">
                                     <input id="delete_descendants" type="checkbox" name="delete_descendants" value="1" @checked(old('delete_descendants')) data-wb-delete-descendants-toggle>
                                     <span>{{ $slotBlockDeleteText('also_delete_nested') }}</span>
                                 </label>
@@ -164,7 +164,7 @@
                             </div>
                         </div>
 
-                        <label class="wb-checkbox" for="confirm_delete_all_blocks">
+                        <label class="wb-check" for="confirm_delete_all_blocks">
                             <input id="confirm_delete_all_blocks" type="checkbox" name="confirm_delete_all_blocks" value="1" @checked(old('confirm_delete_all_blocks')) required>
                             <span>{{ $slotBlockDeleteText('confirm_delete_all') }}</span>
                         </label>

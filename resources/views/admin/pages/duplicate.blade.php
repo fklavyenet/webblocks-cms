@@ -118,7 +118,7 @@
 
                     @if ($canDisableIncompatibleSharedSlots)
                         <div class="wb-field wb-stack-2">
-                            <label class="wb-checkbox" for="disable_incompatible_shared_slots">
+                            <label class="wb-check" for="disable_incompatible_shared_slots">
                                 <input type="hidden" name="disable_incompatible_shared_slots" value="0">
                                 <input id="disable_incompatible_shared_slots" type="checkbox" name="disable_incompatible_shared_slots" value="1" @checked(old('disable_incompatible_shared_slots'))>
                                 <span>{{ $pageDuplicateText('disable_incompatible_shared_slots') }}</span>

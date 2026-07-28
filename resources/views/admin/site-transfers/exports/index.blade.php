@@ -52,7 +52,7 @@
                             <thead>
                                 <tr>
                                     <th>
-                                        <label class="wb-checkbox" for="select_all_visible_site_exports">
+                                        <label class="wb-check" for="select_all_visible_site_exports">
                                             <input id="select_all_visible_site_exports" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('site_transfers.select_all_exports') }}">
                                             <span class="wb-sr-only">{{ $adminText('site_transfers.select_all_exports') }}</span>
                                         </label>
@@ -69,7 +69,7 @@
                                 @foreach ($exports as $siteExport)
                                     <tr>
                                         <td>
-                                            <label class="wb-checkbox" for="site_export_select_{{ $siteExport->id }}">
+                                            <label class="wb-check" for="site_export_select_{{ $siteExport->id }}">
                                                 <input id="site_export_select_{{ $siteExport->id }}" type="checkbox" value="{{ $siteExport->id }}" data-wb-admin-row-select aria-label="{{ $adminText('site_transfers.select_export', ['name' => $siteExport->archive_name ?? '#'.$siteExport->id]) }}">
                                                 <span class="wb-sr-only">{{ $adminText('site_transfers.select_export', ['name' => $siteExport->archive_name ?? '#'.$siteExport->id]) }}</span>
                                             </label>
@@ -195,7 +195,7 @@
                             <thead>
                                 <tr>
                                     <th>
-                                        <label class="wb-checkbox" for="select_all_visible_site_imports">
+                                        <label class="wb-check" for="select_all_visible_site_imports">
                                             <input id="select_all_visible_site_imports" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('site_transfers.select_all_imports') }}">
                                             <span class="wb-sr-only">{{ $adminText('site_transfers.select_all_imports') }}</span>
                                         </label>
@@ -211,7 +211,7 @@
                                 @foreach ($imports as $siteImport)
                                     <tr>
                                         <td>
-                                            <label class="wb-checkbox" for="site_import_select_{{ $siteImport->id }}">
+                                            <label class="wb-check" for="site_import_select_{{ $siteImport->id }}">
                                                 <input id="site_import_select_{{ $siteImport->id }}" type="checkbox" value="{{ $siteImport->id }}" data-wb-admin-row-select aria-label="{{ $adminText('site_transfers.select_import', ['name' => $siteImport->source_archive_name ?? '#'.$siteImport->id]) }}">
                                                 <span class="wb-sr-only">{{ $adminText('site_transfers.select_import', ['name' => $siteImport->source_archive_name ?? '#'.$siteImport->id]) }}</span>
                                             </label>

@@ -134,7 +134,7 @@
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-media-view-toggle">
-                    <label class="wb-checkbox" for="select_all_visible_media_toolbar">
+                    <label class="wb-check" for="select_all_visible_media_toolbar">
                         <input id="select_all_visible_media_toolbar" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('select_all_visible_media') }}">
                         <span>{{ $adminText('select_visible') }}</span>
                     </label>
@@ -173,7 +173,7 @@
                         @php($assetUsages = $asset->resolvedUsages)
                         <div class="wb-card wb-card-muted wb-media-grid-card">
                             <div class="wb-card-body wb-stack wb-gap-3">
-                                <label class="wb-checkbox" for="media_grid_select_{{ $asset->id }}">
+                                <label class="wb-check" for="media_grid_select_{{ $asset->id }}">
                                     <input id="media_grid_select_{{ $asset->id }}" type="checkbox" value="{{ $asset->id }}" data-wb-admin-row-select aria-label="{{ $adminText('select_media', ['title' => $asset->displayTitle()]) }}">
                                     <span class="wb-sr-only">{{ $adminText('select_media', ['title' => $asset->displayTitle()]) }}</span>
                                 </label>
@@ -222,7 +222,7 @@
                         <thead>
                             <tr>
                                 <th>
-                                    <label class="wb-checkbox" for="select_all_visible_media_table">
+                                    <label class="wb-check" for="select_all_visible_media_table">
                                         <input id="select_all_visible_media_table" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('select_all_visible_media') }}">
                                         <span class="wb-sr-only">{{ $adminText('select_all_visible_media') }}</span>
                                     </label>
@@ -240,7 +240,7 @@
                                 @php($assetUsages = $asset->resolvedUsages)
                                 <tr>
                                     <td>
-                                        <label class="wb-checkbox" for="media_select_{{ $asset->id }}">
+                                        <label class="wb-check" for="media_select_{{ $asset->id }}">
                                             <input id="media_select_{{ $asset->id }}" type="checkbox" value="{{ $asset->id }}" data-wb-admin-row-select aria-label="{{ $adminText('select_media', ['title' => $asset->displayTitle()]) }}">
                                             <span class="wb-sr-only">{{ $adminText('select_media', ['title' => $asset->displayTitle()]) }}</span>
                                         </label>

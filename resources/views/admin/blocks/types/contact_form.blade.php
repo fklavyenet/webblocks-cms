@@ -58,7 +58,7 @@
         <div class="wb-stack wb-gap-2">
             <label>{{ $adminText('delivery_label') }}</label>
 
-            <label class="wb-checkbox">
+            <label class="wb-check">
                 <input type="hidden" name="send_email_notification" value="0">
                 <input type="checkbox" name="send_email_notification" value="1" @checked($sendEmailNotification) @disabled(isset($activeLocale) && ! $isDefaultLocale)>
                 <span>{{ $adminText('send_notification') }}</span>

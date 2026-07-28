@@ -80,7 +80,7 @@
                         <input id="icon_keywords_{{ $icon->id }}" name="keywords" class="wb-input" type="text" value="{{ old('keywords', implode(', ', $icon->keywords ?? [])) }}" placeholder="{{ $adminText('keywords_placeholder') }}">
                     </div>
 
-                    <label class="wb-checkbox" for="icon_is_active_{{ $icon->id }}">
+                    <label class="wb-check" for="icon_is_active_{{ $icon->id }}">
                         <input id="icon_is_active_{{ $icon->id }}" name="is_active" type="checkbox" value="1" @checked(old('is_active', $icon->is_active))>
                         <span>{{ $adminText('active') }}</span>
                     </label>

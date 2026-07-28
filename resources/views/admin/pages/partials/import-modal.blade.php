@@ -57,7 +57,7 @@
                     </div>
 
                     <div class="wb-field wb-stack-2">
-                        <label class="wb-checkbox" for="page_import_as_draft">
+                        <label class="wb-check" for="page_import_as_draft">
                             <input id="page_import_as_draft" type="checkbox" name="import_as_draft" value="1" checked disabled>
                             <span>{{ $pageImportText('import_as_draft') }}</span>
                         </label>

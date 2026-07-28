@@ -66,7 +66,7 @@
                                 </div>
                             </div>
 
-                            <label class="wb-checkbox" for="apply_assets">
+                            <label class="wb-check" for="apply_assets">
                                 <input id="apply_assets" type="checkbox" name="apply_assets" value="1" @checked(old('apply_assets', $plan?->applyAssets()))>
                                 <span>{{ $adminText('apply_assets_help') }}</span>
                             </label>

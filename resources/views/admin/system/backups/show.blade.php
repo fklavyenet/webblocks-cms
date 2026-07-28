@@ -114,7 +114,7 @@
                     <form method="POST" action="{{ route('admin.system.backups.restore', $backup) }}" class="wb-stack wb-gap-3" onsubmit="return confirm(@json($adminText('backups.restore_confirm')));" data-wb-restore-form>
                         @csrf
 
-                        <label class="wb-checkbox" for="acknowledge_restore_risk">
+                        <label class="wb-check" for="acknowledge_restore_risk">
                             <input id="acknowledge_restore_risk" type="checkbox" name="acknowledge_restore_risk" value="1" required {{ old('acknowledge_restore_risk') ? 'checked' : '' }} data-wb-restore-ack>
                             <span>{{ $adminText('backups.acknowledge_restore_risk') }}</span>
                         </label>

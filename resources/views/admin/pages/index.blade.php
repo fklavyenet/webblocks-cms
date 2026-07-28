@@ -155,7 +155,7 @@
                         <thead>
                             <tr>
                                 <th>
-                                    <label class="wb-checkbox" for="select_all_visible_pages">
+                                    <label class="wb-check" for="select_all_visible_pages">
                                         <input id="select_all_visible_pages" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('pages.select_all_visible') }}">
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
@@ -180,7 +180,7 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <label class="wb-checkbox" for="page_select_{{ $page->id }}">
+                                        <label class="wb-check" for="page_select_{{ $page->id }}">
                                             <input id="page_select_{{ $page->id }}" type="checkbox" value="{{ $page->id }}" data-wb-admin-row-select aria-label="{{ $adminText('pages.select_page', ['title' => $page->title]) }}">
                                             <span class="wb-sr-only">{{ $adminText('pages.select_page', ['title' => $page->title]) }}</span>
                                         </label>

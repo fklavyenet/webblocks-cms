@@ -93,7 +93,7 @@
                         <thead>
                             <tr>
                                 <th>
-                                    <label class="wb-checkbox" for="select_all_visible_contact_messages">
+                                    <label class="wb-check" for="select_all_visible_contact_messages">
                                         <input id="select_all_visible_contact_messages" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('select_all_visible') }}">
                                         <span class="wb-sr-only">{{ $adminText('select_all_visible') }}</span>
                                     </label>
@@ -111,7 +111,7 @@
                             @foreach ($messages as $message)
                                 <tr>
                                     <td>
-                                        <label class="wb-checkbox" for="contact_message_select_{{ $message->id }}">
+                                        <label class="wb-check" for="contact_message_select_{{ $message->id }}">
                                             <input id="contact_message_select_{{ $message->id }}" type="checkbox" value="{{ $message->id }}" data-wb-admin-row-select aria-label="{{ $adminText('select_message_from', ['name' => $message->name]) }}">
                                             <span class="wb-sr-only">{{ $adminText('select_message_from', ['name' => $message->name]) }}</span>
                                         </label>

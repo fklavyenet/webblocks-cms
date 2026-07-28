@@ -206,7 +206,7 @@ class SiteTransferCompletenessTest extends TestCase
 
     $this->assertStringContainsString('wb-table-wrap', $picker);
     $this->assertStringContainsString('<table class="wb-table', $picker);
-    $this->assertStringNotContainsString('wb-checkbox', $picker);
+    $this->assertStringNotContainsString('wb-checkbox', $picker, 'wb-checkbox is not a class the UI defines; the primitive is wb-check.');
     $this->assertStringNotContainsString('wb-scroll-y', $modal, 'wb-scroll-y is not a class the UI defines.');
 
     // One picker, two screens. Two screens showing different pickers is the

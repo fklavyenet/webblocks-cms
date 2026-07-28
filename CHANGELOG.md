@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.3
+
+- **Every checkbox in the admin had been unstyled.** The views wrote `wb-checkbox` in 17 files; the UI's primitive is `wb-check`, one of `wb-check` / `wb-radio` / `wb-switch`, and `wb-checkbox` matches no rule anywhere. A class name that matches nothing fails silently — the markup renders and the page looks nearly right — so it took a table of seventy of them collapsing into wrapped text for anyone to notice. Renamed, and the CMS is no longer inconsistent with itself: it already used `wb-check` correctly in two places, and Herne Panel has used it in 17 all along.
+- `UiClassContractTest` now fails on any `wb-` class in an admin view that no stylesheet defines. The admin loads the UI from a CDN, so it compares against `tests/fixtures/webblocks-ui-classes.txt`, a snapshot of the pinned runtime's class names; moving `Herne::UI_VERSION`'s counterpart `WebBlocks::UI_VERSION` without regenerating the snapshot fails too, so the check can never silently drift from the stylesheet the admin actually loads.
+- The 56 class names still matching nothing are frozen in `tests/fixtures/known-unstyled-classes.txt` as a baseline that may only shrink — a name that becomes defined, or stops being used, fails the test rather than lingering. Some are probably JS hooks rather than style hooks; each needs its own look, which is not this release.
+
 ## 1.45.2
 
 - The export page picker gives its list the room. The selected count moved up beside the heading, the standing paragraph under the table is gone — the archived-pages rule is visible in the table as unticked rows — and the media hint is a field hint rather than a paragraph. Eight rows are in view instead of five.

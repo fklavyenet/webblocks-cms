@@ -71,7 +71,7 @@
                         </div>
 
                         <div class="wb-stack wb-gap-2 wb-justify-center">
-                            <label class="wb-checkbox" for="site_variable_enabled_{{ $siteVariable->id ?? 'new' }}">
+                            <label class="wb-check" for="site_variable_enabled_{{ $siteVariable->id ?? 'new' }}">
                                 <input type="hidden" name="is_enabled" value="0">
                                 <input id="site_variable_enabled_{{ $siteVariable->id ?? 'new' }}" type="checkbox" name="is_enabled" value="1" @checked($siteVariable->is_enabled)>
                                 <span>{{ $adminText('enabled') }}</span>

@@ -1,0 +1,64 @@
+# Classes the admin uses that no stylesheet defines.
+#
+# A frozen baseline, not a target. Most are leftovers from earlier
+# markup and some may be JS hooks rather than style hooks; each needs
+# its own look. What matters here is that the list only ever shrinks:
+# UiClassContractTest fails on a class that is not already on it, which
+# is how wb-checkbox went unnoticed in seventeen files.
+#
+wb-action-btn-download
+wb-admin-pages-table-wrap
+wb-api-token-activity-item
+wb-api-token-capabilities
+wb-auth-shell-centered
+wb-auth-shell-panel
+wb-block-row
+wb-button
+wb-button-secondary
+wb-code-block
+wb-dropdown-end
+wb-empty-state
+wb-font-mono
+wb-gallery-picker-modal
+wb-grid-1
+wb-link
+wb-list-unstyled
+wb-overlay-layer--dialog
+wb-picker-results
+wb-public-banner
+wb-public-banner-accent
+wb-public-banner-copy
+wb-public-banner-inner
+wb-public-banner-text
+wb-public-banner-title
+wb-public-block
+wb-public-comments
+wb-public-contact-card
+wb-public-contact-form-card
+wb-public-contact-meta
+wb-public-header
+wb-public-header-actions
+wb-public-header-bar
+wb-public-header-brand
+wb-public-header-brand-image
+wb-public-header-context
+wb-public-header-identity
+wb-public-header-menu-trigger
+wb-public-header-mobile
+wb-public-header-mobile-menu
+wb-public-header-nav
+wb-public-header-spacer
+wb-public-main
+wb-public-nav-link
+wb-public-nav-list
+wb-public-search-results
+wb-public-showcase-item
+wb-public-sidebar
+wb-section-muted
+wb-sidebar-brand-logo-inline
+wb-slider-next
+wb-slider-prev
+wb-slot-block-picker-body
+wb-slot-block-picker-dialog
+wb-tabs-panels
+wb-text-break

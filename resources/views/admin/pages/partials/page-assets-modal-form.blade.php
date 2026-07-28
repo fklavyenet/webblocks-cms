@@ -65,7 +65,7 @@
                         </div>
 
                         <div class="wb-stack wb-gap-2 wb-justify-center">
-                            <label class="wb-checkbox" for="page_asset_enabled_{{ $asset->id ?? $asset->type }}">
+                            <label class="wb-check" for="page_asset_enabled_{{ $asset->id ?? $asset->type }}">
                                 <input id="page_asset_enabled_{{ $asset->id ?? $asset->type }}" type="hidden" name="is_enabled" value="0">
                                 <input id="page_asset_enabled_{{ $asset->id ?? $asset->type }}" type="checkbox" name="is_enabled" value="1" @checked($asset->is_enabled)>
                                 <span>{{ $pageAssetsText('enabled') }}</span>
@@ -78,19 +78,19 @@
                             <div class="wb-card-body wb-stack wb-gap-3">
                                 <strong>{{ $pageAssetsText('javascript_options') }}</strong>
                                 <div class="wb-grid wb-grid-3 wb-gap-3">
-                                    <label class="wb-checkbox" for="page_asset_defer_{{ $asset->id ?? $asset->type }}">
+                                    <label class="wb-check" for="page_asset_defer_{{ $asset->id ?? $asset->type }}">
                                         <input type="hidden" name="is_defer" value="0">
                                         <input id="page_asset_defer_{{ $asset->id ?? $asset->type }}" type="checkbox" name="is_defer" value="1" @checked($asset->is_defer)>
                                         <span>{{ $pageAssetsText('defer') }}</span>
                                     </label>
 
-                                    <label class="wb-checkbox" for="page_asset_async_{{ $asset->id ?? $asset->type }}">
+                                    <label class="wb-check" for="page_asset_async_{{ $asset->id ?? $asset->type }}">
                                         <input type="hidden" name="is_async" value="0">
                                         <input id="page_asset_async_{{ $asset->id ?? $asset->type }}" type="checkbox" name="is_async" value="1" @checked($asset->is_async)>
                                         <span>{{ $pageAssetsText('async') }}</span>
                                     </label>
 
-                                    <label class="wb-checkbox" for="page_asset_module_{{ $asset->id ?? $asset->type }}">
+                                    <label class="wb-check" for="page_asset_module_{{ $asset->id ?? $asset->type }}">
                                         <input type="hidden" name="is_module" value="0">
                                         <input id="page_asset_module_{{ $asset->id ?? $asset->type }}" type="checkbox" name="is_module" value="1" @checked($asset->is_module)>
                                         <span>{{ $pageAssetsText('module') }}</span>

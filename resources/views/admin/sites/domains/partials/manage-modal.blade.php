@@ -80,12 +80,12 @@
                     @else
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-3 wb-text-sm">
-                                <label class="wb-checkbox" for="manage_domain_redirect_to_primary_{{ $domain->id }}">
+                                <label class="wb-check" for="manage_domain_redirect_to_primary_{{ $domain->id }}">
                                     <input id="manage_domain_redirect_to_primary_{{ $domain->id }}" type="checkbox" name="redirect_to_primary" value="1" @checked($draftRedirectToPrimary)>
                                     <span>{{ $adminText('redirect_alias_to_primary') }}</span>
                                 </label>
 
-                                <label class="wb-checkbox" for="manage_domain_is_primary_{{ $domain->id }}">
+                                <label class="wb-check" for="manage_domain_is_primary_{{ $domain->id }}">
                                     <input id="manage_domain_is_primary_{{ $domain->id }}" type="checkbox" name="is_primary" value="1" @checked($draftIsPrimary)>
                                     <span>{{ $adminText('make_primary_domain') }}</span>
                                 </label>

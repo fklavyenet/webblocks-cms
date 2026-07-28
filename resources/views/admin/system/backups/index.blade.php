@@ -201,7 +201,7 @@
                             <thead>
                                 <tr>
                                     <th>
-                                        <label class="wb-checkbox" for="select_all_visible_backups">
+                                        <label class="wb-check" for="select_all_visible_backups">
                                             <input id="select_all_visible_backups" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('backups.select_all_visible') }}">
                                             <span class="wb-sr-only">{{ $adminText('backups.select_all_visible') }}</span>
                                         </label>
@@ -220,7 +220,7 @@
                                     @php($archiveResolution = $backupArchiveStatuses[$backup->id] ?? null)
                                     <tr>
                                         <td>
-                                            <label class="wb-checkbox" for="backup_select_{{ $backup->id }}">
+                                            <label class="wb-check" for="backup_select_{{ $backup->id }}">
                                                 <input id="backup_select_{{ $backup->id }}" type="checkbox" value="{{ $backup->id }}" data-wb-admin-row-select aria-label="{{ $adminText('backups.select_backup', ['name' => $backup->archive_filename ?? '#'.$backup->id]) }}">
                                                 <span class="wb-sr-only">{{ $adminText('backups.select_backup', ['name' => $backup->archive_filename ?? '#'.$backup->id]) }}</span>
                                             </label>

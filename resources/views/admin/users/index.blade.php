@@ -111,7 +111,7 @@
                         <thead>
                             <tr>
                                 <th>
-                                    <label class="wb-checkbox" for="select_all_visible_users">
+                                    <label class="wb-check" for="select_all_visible_users">
                                         <input id="select_all_visible_users" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('select_all_visible') }}">
                                         <span class="wb-sr-only">{{ $adminText('select_all_visible') }}</span>
                                     </label>
@@ -130,7 +130,7 @@
                                 @php($deleteBlockedMessage = $userLifecycleGuard->deletionBlocker($managedUser, auth()->user()))
                                 <tr>
                                     <td>
-                                        <label class="wb-checkbox" for="user_select_{{ $managedUser->id }}">
+                                        <label class="wb-check" for="user_select_{{ $managedUser->id }}">
                                             <input
                                                 id="user_select_{{ $managedUser->id }}"
                                                 type="checkbox"

@@ -81,7 +81,7 @@
                     @endif
 
                     {{-- Page picker. A table rather than a stack of labels:
-                         wb-checkbox has no styles anywhere in the product, so
+                         wb-check has no styles anywhere in the product, so
                          seventy of them in a row collapsed into wrapped inline
                          text that ran over the fields below it. wb-table gives
                          each page a row and each fact its own column. --}}
@@ -148,7 +148,7 @@
                     @endif
 
                     <div class="wb-stack wb-gap-2 wb-field">
-                        <label class="wb-checkbox" for="{{ $modalId }}IncludesMedia">
+                        <label class="wb-check" for="{{ $modalId }}IncludesMedia">
                             <input id="{{ $modalId }}IncludesMedia" type="checkbox" name="includes_media" value="1" @checked(old('includes_media', true))>
                             <span>{{ $adminText('site_transfers.include_media_files') }}</span>
                         </label>
