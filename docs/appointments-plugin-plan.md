@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/appointments-plugin-plan.md
 
 # Appointments Plugin Plan
 
-This document records the agreed design for booking/appointment support in WebBlocks CMS. It is a plan, not a description of shipped runtime behavior: nothing described below exists yet, and every section is subject to revision as the phases land. When a phase ships, its behavior moves into the normal product documentation and this file keeps only the forward-looking remainder.
+This document records the agreed design for booking/appointment support in WebBlocks CMS, and what has been built against it. Sections marked as shipped describe real behavior; the rest is still a plan and subject to revision. Where the plan turned out to be wrong, the correction is recorded rather than the original quietly replaced — the reasoning is usually the useful part.
 
 ## Decision
 
@@ -28,7 +28,7 @@ Contact Form living in core is not an argument for appointments living in core. 
 
 ## Phase 0 — Core Extension Points
 
-Five gaps in CMS core block the plugin. All five are core work, all five are testable without the plugin existing, and every one of them is needed by any future plugin that wants a public surface — so this phase is not overhead specific to appointments.
+Six gaps in CMS core block the plugin — five identified up front, one found while building phase 3. All are core work, all are testable without the plugin existing, and every one is needed by any future plugin that wants a public surface, so this phase is not overhead specific to appointments.
 
 **0.1 Plugin blocks cannot declare the views they render through.** *(Shipped in 1.43.0.)* The original reading of this gap was too strong. Plugin block views did already resolve: installed plugin view paths are appended to the CMS view namespace, and `PluginBlockCatalog` normalizes the handle `appointments::form` to the catalog slug `appointments-form`, so `Block::publicRenderView()` found `webblocks-cms::pages.partials.blocks.appointments-form` by convention. What did not work is that the `admin_view` and `public_view` a plugin declares were parsed and then ignored, leaving the plugin to mirror a core directory layout it does not own and guess the filename. Core now consults the plugin block registry first in both `publicRenderView()` and `adminFormView()`, honors a declared view that resolves, and falls back to the convention otherwise.
 
@@ -38,11 +38,11 @@ Five gaps in CMS core block the plugin. All five are core work, all five are tes
 
 **0.4 Plugin blocks cannot own translatable fields.** `BlockTranslationRegistry` is a fixed `match` over core slugs, so a plugin block has no translation family and no translated field map. The MVP works around this: visitor-facing copy comes from the plugin's own translation namespace, which is already supported — `InstalledPluginDefinitionFactory` registers `resources/lang` under the plugin handle — with per-block overrides held in block settings. Real per-block translation for plugin blocks is a later core change, not an MVP dependency.
 
-**0.6 Plugin static assets are declarable but not servable.** Found while building phase 3. `PluginPublicAsset` emits a `<script>` or `<link>` tag for an enabled plugin, and the manifest documents an `assets` key, but nothing parses that key and nothing copies a plugin's files into the document root — so the emitted tag points at a 404. Until this is closed, a plugin cannot ship CSS or JavaScript, which is why the booking form is entirely server-rendered. Needed before any plugin wants a progressive enhancement, not just this one.
-
 **0.5 There is no queue or scheduler contract.** Core contains no queued jobs. Reminder delivery, expiry of unconfirmed holds, and no-show marking all need work that runs on a clock. The plugin ships an Artisan command driven by the host's cron rather than introducing a queue dependency; adopting queues is a core decision and is out of scope here.
 
-Phases 0.1 and 0.2 shipped in `1.43.0`, and 0.3 in `1.43.1`. The remaining two — plugin block translations and the scheduler contract — target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
+**0.6 Plugin static assets are declarable but not servable.** Found while building phase 3. `PluginPublicAsset` emits a `<script>` or `<link>` tag for an enabled plugin, and the manifest documents an `assets` key, but nothing parses that key and nothing copies a plugin's files into the document root — so the emitted tag points at a 404. Until this is closed, a plugin cannot ship CSS or JavaScript, which is why the booking form is entirely server-rendered. Needed before any plugin wants a progressive enhancement, not just this one.
+
+Phases 0.1 and 0.2 shipped in `1.43.0`, and 0.3 in `1.43.1`. The remaining three — plugin block translations, the scheduler contract, and plugin asset publishing — target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
 
 ## Plugin Identity And Conventions
 
@@ -66,16 +66,17 @@ Phase 1 shipped as plugin `0.1.0`: manifest, provider, permissions, menu entry, 
 
 ## Domain Model
 
-Six tables, all under the `appointments_` prefix and all site-scoped.
+Seven tables, all under the `webblocks_appointments_` prefix and all site-scoped. The settings table was not in the original plan; it arrived in phase 4 when per-site booking rules replaced global config.
 
 | Table | Purpose |
 | --- | --- |
-| `appointments_services` | Bookable service: name, slug, duration, buffer before/after, active flag, sort order |
-| `appointments_resources` | Staff member or room. Optional — an install with no resources books against a single implicit resource |
-| `appointments_service_resource` | Which resources can deliver which services |
-| `appointments_availability_rules` | Recurring weekly opening hours per resource |
-| `appointments_availability_exceptions` | Dated overrides: closures, holidays, one-off hours. A null resource means the whole site |
-| `appointments_appointments` | The booking: service, resource, `starts_at`/`ends_at` in UTC, status, customer name/email/phone, note, source, cancel token |
+| `webblocks_appointments_services` | Bookable service: name, slug, duration, buffer before/after, active flag, sort order |
+| `webblocks_appointments_resources` | Staff member or room — whatever can only handle one appointment at a time. Required: availability and conflict detection are meaningless without something to be busy, so a site needs at least one |
+| `webblocks_appointments_service_resource` | Which resources can deliver which services |
+| `webblocks_appointments_availability_rules` | Recurring weekly opening hours per resource |
+| `webblocks_appointments_availability_exceptions` | Dated overrides: closures, holidays, one-off hours. A null resource means the whole site |
+| `webblocks_appointments_appointments` | The booking: service, resource, `starts_at`/`ends_at` in UTC, status, customer name/email/phone, note, source, cancel token |
+| `webblocks_appointments_settings` | Per-site booking rules: slot interval, lead time, horizon, confirmation mode, notification recipient |
 
 Status is `pending`, `confirmed`, `cancelled`, `completed`, or `no_show`. Source is `public` or `admin`, so an operator-entered booking is distinguishable from a visitor one.
 
@@ -121,7 +122,17 @@ Two protections are not visible in the markup and are easy to lose in a rewrite.
 
 ## Admin Surface
 
-`System → Plugins → Appointments` opens a day and week view of bookings with status transitions, manual entry, and CRUD for services, resources, and opening hours. Settings cover automatic versus manual confirmation, minimum lead time, booking horizon, and notification recipient. The existing Contact Messages admin screen is the layout and interaction template.
+*(Shipped in plugin `0.4.0`.)*
+
+The plugin contributes four menu entries: a day view of bookings with status transitions and manual entry, plus CRUD for services, for staff and rooms, and for opening hours with their dated exceptions. Settings cover slot interval, automatic versus manual confirmation, minimum lead time, booking horizon, and notification recipient.
+
+Settings are stored per site rather than in config. The plan did not say this and the first implementation read global config, which is wrong the moment an install has two sites: lead time and confirmation mode are decisions a business makes, not an install.
+
+Screens are site-scoped the way the CMS pages admin is — query parameter, then session, then primary site — with one deliberate difference: there is no "all sites" option, because a service belongs to one business with one set of opening hours and a combined list would be one nobody can act on. Route-level plugin permissions say what an operator may do and nothing about which sites they may do it to, so every site-scoped write calls `AdminAuthorization::abortUnlessSiteAccess` separately.
+
+Two behaviours are worth recording because they look like omissions. A service or resource that already has appointments is deactivated rather than deleted, since the appointments foreign key restricts deletion precisely so history cannot vanish silently. And manual entry deliberately skips the availability recheck the public form performs: it still goes through the booker, so it cannot double-book, but an operator booking outside opening hours is making a decision rather than evading a rule.
+
+The plugin's settings definition must name its own route. Left to the default, the CMS registers a read-only `/settings` scaffold under the same name and URI, and because it is registered before the plugin's route file it wins the match — any plugin shipping an editable settings screen has to name the route or its screen is unreachable.
 
 ## Notifications
 
@@ -143,6 +154,6 @@ Unit tests cover the slot engine, and they are the thickest part of the suite. F
 
 ## Delivery Order
 
-Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. Plugin phases 1, 2 and 3 shipped as `0.1.0`, `0.2.0` and `0.3.0`; the remaining ones — admin surface, notifications, reminders — build on top in that order.
+Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. Plugin phases 1 through 4 shipped as `0.1.0` through `0.4.0`; the remaining ones — notifications, then reminders — build on top in that order.
 
-The three open core phases are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.5 before reminders, 0.6 before any progressive enhancement of the booking form. None of them blocks the admin surface, which is what the plugin needs next: services, staff and opening hours currently have no screens.
+The three open core phases are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.5 before reminders, 0.6 before any progressive enhancement of the booking form. Only 0.5 blocks anything on the critical path, and only for reminders — notifications themselves send inline, the way Contact Form already does.
