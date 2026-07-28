@@ -36,6 +36,7 @@ use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
+use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Sites\SiteDomainManager;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
@@ -63,7 +64,10 @@ class ImportDataMapper
     $copiedFiles = [];
 
     try {
-      $site = $this->db->transaction(function () use ($siteImport, $options, $archive, $payload, &$output, &$copiedFiles): Site {
+      // Deferred, not disabled: every block and translation save would otherwise
+      // reindex its whole page, so an import walks each page's block tree once
+      // per row it writes. One rebuild after the commit produces the same index.
+      $site = PublicSearchIndexer::deferring(fn (): Site => $this->db->transaction(function () use ($siteImport, $options, $archive, $payload, &$output, &$copiedFiles): Site {
         $this->ensureCatalogsForPayload($payload, $output);
         $localeMap = $this->importLocales($payload, $output);
         $site = $this->createSite($payload['site'], $options, $output);
@@ -94,9 +98,7 @@ class ImportDataMapper
         ])->save();
 
         return $site;
-      });
-
-      return $site;
+      }));
     } catch (Throwable $throwable) {
       foreach ($copiedFiles as [$disk, $path]) {
         if ($disk === 'public-root') {
@@ -110,6 +112,14 @@ class ImportDataMapper
 
       throw $throwable;
     }
+
+    // Outside the try on purpose: the transaction is committed and the site
+    // exists, so a failure here must not run the rollback cleanup and delete a
+    // live site's media. An unindexed site is recoverable from Search Settings.
+    $indexed = app(PublicSearchIndexer::class)->rebuild($site);
+    $output[] = 'Rebuilt the public search index ('.$indexed->indexed.' entries).';
+
+    return $site;
   }
 
   private function importLocales(array $payload, array &$output): array

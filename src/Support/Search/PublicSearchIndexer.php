@@ -15,6 +15,16 @@ use WebBlocks\Cms\Support\Pages\PublicSharedSlotResolver;
 
 class PublicSearchIndexer
 {
+  /**
+   * Depth of nested deferrals; the reactive refresh path is off while above 0.
+   *
+   * Every block, translation and slot save reindexes the whole page it belongs
+   * to. That is right for an editor changing one block, and quadratic for a
+   * bulk writer: an import of N blocks spread over P pages walks every page's
+   * full block tree N times. Bulk writers defer instead and rebuild once.
+   */
+  private static int $deferred = 0;
+
   public function __construct(
     private readonly PublicSearchSchema $schema,
     private readonly SearchablePageResolver $searchablePages,
@@ -102,8 +112,40 @@ class PublicSearchIndexer
     return $result;
   }
 
+  /**
+   * Run a bulk write with the save-hook reindex path switched off.
+   *
+   * Only the reactive refresh* methods are suspended. An explicit rebuild()
+   * still indexes, so the caller can — and must — rebuild once when it is done;
+   * otherwise the pages it wrote stay out of the index.
+   *
+   * @template TReturn
+   *
+   * @param  callable():TReturn  $callback
+   * @return TReturn
+   */
+  public static function deferring(callable $callback): mixed
+  {
+    self::$deferred++;
+
+    try {
+      return $callback();
+    } finally {
+      self::$deferred--;
+    }
+  }
+
+  public static function isDeferred(): bool
+  {
+    return self::$deferred > 0;
+  }
+
   public function refreshPage(Page|int $page, ?Locale $locale = null): void
   {
+    if (self::$deferred > 0) {
+      return;
+    }
+
     $this->rebuildPage($page, $locale);
   }
 
@@ -123,7 +165,7 @@ class PublicSearchIndexer
 
   public function refreshSharedSlot(SharedSlot|int $sharedSlot): void
   {
-    if (! $this->schema->tableExists()) {
+    if (self::$deferred > 0 || ! $this->schema->tableExists()) {
       return;
     }
 
