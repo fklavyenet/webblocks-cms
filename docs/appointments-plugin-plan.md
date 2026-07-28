@@ -60,7 +60,7 @@ commands            webblocks-appointments:dispatch-reminders
 block handles       webblocks-appointments::form
 ```
 
-Phase 1 shipped as plugin `0.1.0`: manifest, provider, permissions, menu entry, settings surface, a permission-guarded admin screen that reports setup state, and the public route surface. No booking domain yet, so no migrations — the manifest declares only what the artifact contains.
+Phase 1 shipped as plugin `0.1.0`: manifest, provider, permissions, menu entry, settings surface, a permission-guarded admin screen that reports setup state, and the public route surface. Phase 2 shipped as `0.2.0`: the domain tables, the slot engine, and the booker.
 
 ## Domain Model
 
@@ -81,17 +81,27 @@ Times are stored in UTC and converted to the site timezone for display and for e
 
 ## Slot Engine
 
+*(Shipped in plugin `0.2.0`.)*
+
 The slot engine is the core of the product and the part most likely to be quietly wrong. It is a pure service that takes a service, a resource, a date, and a timezone, and returns the bookable slots. It reads weekly rules, applies dated exceptions, subtracts existing appointments plus their buffers, and enforces minimum lead time and maximum booking horizon.
 
-It must be deterministic and testable without touching the database. Its unit tests carry the weight of the plugin: daylight-saving transitions in both directions, buffers on both sides of an appointment, exceptions that shorten a day rather than closing it, lead time crossing midnight, and horizon boundaries.
+It is deterministic and testable without touching the database: no Eloquent, no container, and `now` is passed in rather than read. Its tests carry the weight of the plugin — daylight-saving transitions in both directions, buffers on both sides of an appointment, exceptions that shorten a day rather than closing it, and horizon boundaries.
+
+Slots are walked in local wall-clock time rather than UTC, so they land on the marks a visitor expects instead of drifting off them for the rest of a transition day. Two consequences follow and both are deliberate: wall-clock times inside a spring-forward gap do not exist and are not offered, and times in a fall-back repeated hour resolve to the earlier instant. PHP's own default for the ambiguous case is the later instant, so the earlier one is an explicit choice rather than inherited behaviour.
+
+Buffers belong to the occupying service, not to the booking being attempted: each existing appointment blocks time according to its own service's buffers, and the candidate according to its own.
 
 ## Concurrency
 
-Two visitors submitting the same slot must not both succeed.
+*(Shipped in plugin `0.2.0`.)*
 
-A unique constraint on `(resource_id, starts_at)` catches exact collisions and is the backstop. It is not sufficient on its own: a booking that overlaps another because of buffers has a different `starts_at` and passes the constraint. The write path therefore runs inside a transaction that takes a locking overlap query on the resource's appointments for the day before inserting, and translates both the lock result and a unique-constraint violation into the same "slot no longer available" response.
+Two visitors submitting the same slot must not both succeed. Three things close the gap between checking and writing, each covering what the one before it cannot: a transaction with a locking overlap read, the unique index, and translation of the resulting integrity violation into an unavailable-slot response rather than a 500.
 
-The behavior is verified against both MySQL and SQLite, because the test suite runs on SQLite in memory and production runs on MySQL 8.
+The locking read is the real guard, and the only one that understands buffers and differing durations — an overlap is not the same thing as an equal start instant. It scans by the longest service on the site plus the widest buffer pair, because the scan is by start time and a long neighbouring booking can begin well before the candidate and still run into it.
+
+The unique index is on `(resource_id, slot_lock)`, not `(resource_id, starts_at)`. `slot_lock` mirrors `starts_at` only while the appointment occupies its slot and is NULL once it does not, which is what lets a cancelled appointment's time be rebooked; a unique index on `starts_at` itself would reject that. Both MySQL and SQLite allow many NULLs in a unique index, so this works on the production and test engines alike.
+
+The concurrency behaviour is not yet covered by an automated test: it needs a database and a CMS host, so verifying it means an integration test against an installed CMS. That is worth doing before the public booking form ships, since that is when concurrent submissions become real.
 
 ## Public Surface
 
