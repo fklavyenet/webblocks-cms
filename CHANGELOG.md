@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.4
+
+- **Every export failed validation.** The page picker always submits one empty `page_ids[]`, so that ticking nothing arrives as an explicit empty selection rather than as no selection at all — which means the whole site. That marker is not an id, and it hit `page_ids.*|integer`: "The page_ids.0 field must be an integer", on every export, whatever was ticked. The marker is filtered before validation now, and an empty selection still reaches the exporter as an empty selection.
+- The tests around the picker read source strings and never submitted the form, which is exactly why they stayed green. `SiteExportRequestTest` validates the payload the form actually sends, including the marker, a real id, and rubbish that must still be rejected.
+
 ## 1.45.3
 
 - **Every checkbox in the admin had been unstyled.** The views wrote `wb-checkbox` in 17 files; the UI's primitive is `wb-check`, one of `wb-check` / `wb-radio` / `wb-switch`, and `wb-checkbox` matches no rule anywhere. A class name that matches nothing fails silently — the markup renders and the page looks nearly right — so it took a table of seventy of them collapsing into wrapped text for anyone to notice. Renamed, and the CMS is no longer inconsistent with itself: it already used `wb-check` correctly in two places, and Herne Panel has used it in 17 all along.

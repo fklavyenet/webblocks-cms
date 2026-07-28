@@ -19,6 +19,19 @@ class SiteExportRequest extends FormRequest
       'site_id' => $routeSite?->id ?? $this->input('site_id'),
       'includes_media' => $this->boolean('includes_media'),
     ]);
+
+    // The picker always submits one empty value, so that ticking nothing
+    // arrives as an explicit empty selection rather than as no selection at
+    // all — which would mean the whole site. That marker is not an id, and
+    // leaving it in the array failed validation on every export.
+    if ($this->has('page_ids')) {
+      $this->merge([
+        'page_ids' => array_values(array_filter(
+          (array) $this->input('page_ids', []),
+          static fn ($id) => $id !== '' && $id !== null,
+        )),
+      ]);
+    }
   }
 
   public function rules(): array
