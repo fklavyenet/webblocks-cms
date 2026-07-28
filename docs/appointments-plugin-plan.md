@@ -14,11 +14,11 @@ This document records the agreed design for booking/appointment support in WebBl
 
 ## Decision
 
-Appointments ship as a plugin with the handle `appointments`, not as a CMS core feature.
+Appointments ship as a plugin with the handle `webblocks-appointments`, not as a CMS core feature.
 
 The motivating problem is real: most small businesses running a WebBlocks site have no way to take a booking on their own domain, so they link out to a third-party scheduling service and lose the visitor. Closing that gap is worth doing. But scheduling is a business domain — services, staff, working hours, capacity, cancellation, reminders — and [the plugin system boundary](plugin-system.md) is explicit that domain capabilities do not belong in core. A documentation site or a corporate brochure site must not inherit an appointments menu, six database tables, and a reminder command.
 
-The plugin starts as a first-party in-package pilot registered by the CMS package provider, the same path `webblocks-ui-manager` took, and splits into its own Composer package once the contract settles.
+The plugin is developed as its own repository under the workspace's `plugins-catalog/`, alongside the redirect manager, and is installed into a CMS through the normal ZIP upload flow. It is not bundled into CMS core, even as a pilot: `PluginRegistry` only registers ZIP-installed plugins, and bundling would repeat the coupling that `webblocks-ui-manager` was deliberately moved out of core to escape. An independent repository is also what catalog distribution needs, since the catalog serves per-plugin versions and checksums.
 
 ## Why Contact Form Is The Template, Not The Precedent
 
@@ -46,16 +46,21 @@ Phases 0.1 and 0.2 shipped in `1.43.0`, and 0.3 in `1.43.1`. The remaining two �
 
 The plugin follows the package convention rules in [the plugin system document](plugin-system.md) without exception.
 
+The handle carries the `webblocks-` prefix the other catalog plugins already use, so the earlier bare `appointments` naming in this plan is superseded.
+
 ```text
-handle              appointments
-settings namespace  appointments
-database prefix     appointments_
-admin routes        /webadmin/plugins/appointments
-route names         webblocks.plugins.appointments.*
-permissions         appointments.view, appointments.manage, appointments.settings
-commands            appointments:dispatch-reminders, appointments:close-past
-block handles       appointments::form
+handle              webblocks-appointments
+settings namespace  webblocks_appointments
+database prefix     webblocks_appointments_
+admin routes        /webadmin/plugins/webblocks-appointments
+public routes       /plugins/webblocks-appointments
+route names         webblocks.plugins.webblocks_appointments.*
+permissions         webblocks-appointments.view, .manage, .settings
+commands            webblocks-appointments:dispatch-reminders
+block handles       webblocks-appointments::form
 ```
+
+Phase 1 shipped as plugin `0.1.0`: manifest, provider, permissions, menu entry, settings surface, a permission-guarded admin screen that reports setup state, and the public route surface. No booking domain yet, so no migrations — the manifest declares only what the artifact contains.
 
 ## Domain Model
 
@@ -120,4 +125,4 @@ Unit tests cover the slot engine, and they are the thickest part of the suite. F
 
 ## Delivery Order
 
-Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. The plugin phases — skeleton, domain and slot engine, public surface, admin surface, notifications, reminders — build on top in that order.
+Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`, and the plugin skeleton as plugin `0.1.0`. The remaining plugin phases — domain and slot engine, public surface, admin surface, notifications, reminders — build on top in that order. Core phases 0.4 and 0.5 are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.5 before reminders.
