@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.2
+
+- The export page picker gives its list the room. The selected count moved up beside the heading, the standing paragraph under the table is gone — the archived-pages rule is visible in the table as unticked rows — and the media hint is a field hint rather than a paragraph. Eight rows are in view instead of five.
+
 ## 1.45.1
 
 - **The export page picker was unreadable.** It stacked `wb-checkbox` labels, and that class has no styles anywhere in the product — seventy of them collapsed into wrapped inline text that ran over the fields below. The picker is a `wb-table` now: a row per page, a column each for the tick, the title, the status badge and the path, in a scrolling card. `wb-scroll-y` and `wb-badge-sm`, also used and also undefined, are gone with it.

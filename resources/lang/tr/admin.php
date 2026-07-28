@@ -1893,7 +1893,6 @@ return [
     'status_column' => 'Durum',
     'path_column' => 'Yol',
     'pages_to_include' => 'Dahil edilecek sayfalar',
-    'pages_to_include_help' => 'İşaretlenmeyen sayfalar ve üzerlerindeki her şey pakete girmez. Arşivlenmiş sayfalar işaretsiz başlar; staged update ile kurulmuş bir sitede bunlar bir kenara bırakılmış taslaklardır.',
     'select_all_pages' => 'Tümü',
     'select_published_pages' => 'Yalnız yayındakiler',
     'select_no_pages' => 'Hiçbiri',

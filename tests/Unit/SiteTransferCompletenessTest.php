@@ -182,7 +182,6 @@ class SiteTransferCompletenessTest extends TestCase
 
       foreach ([
         'pages_to_include',
-        'pages_to_include_help',
         'select_all_pages',
         'select_published_pages',
         'select_no_pages',

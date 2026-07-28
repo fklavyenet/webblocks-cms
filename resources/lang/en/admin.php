@@ -1895,7 +1895,6 @@ return [
     'status_column' => 'Status',
     'path_column' => 'Path',
     'pages_to_include' => 'Pages to include',
-    'pages_to_include_help' => 'Unticked pages and everything on them stay out of the package. Archived pages start unticked because on a site built through staged updates they are discarded drafts.',
     'select_all_pages' => 'All',
     'select_published_pages' => 'Published only',
     'select_no_pages' => 'None',

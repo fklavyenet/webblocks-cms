@@ -1895,7 +1895,6 @@ return [
     'status_column' => 'Status',
     'path_column' => 'Pfad',
     'pages_to_include' => 'Einzuschließende Seiten',
-    'pages_to_include_help' => 'Nicht angehakte Seiten und alles darauf bleiben außerhalb des Pakets. Archivierte Seiten sind zunächst nicht angehakt, da sie auf einer über Staged Updates gebauten Website verworfene Entwürfe sind.',
     'select_all_pages' => 'Alle',
     'select_published_pages' => 'Nur veröffentlichte',
     'select_no_pages' => 'Keine',

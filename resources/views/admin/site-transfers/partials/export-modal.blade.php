@@ -88,7 +88,10 @@
                     @if (! empty($exportablePages ?? []))
                         <div class="wb-card wb-card-muted wb-field" data-wb-export-pages>
                             <div class="wb-card-header wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                                <strong>{{ $adminText('site_transfers.pages_to_include') }}</strong>
+                                <div class="wb-cluster wb-cluster-2">
+                                    <strong>{{ $adminText('site_transfers.pages_to_include') }}</strong>
+                                    <span class="wb-text-sm wb-text-muted" data-wb-export-pages-count></span>
+                                </div>
 
                                 <div class="wb-cluster wb-cluster-2">
                                     <button type="button" class="wb-btn wb-btn-secondary wb-btn-sm" data-wb-export-pages-all>{{ $adminText('site_transfers.select_all_pages') }}</button>
@@ -105,7 +108,7 @@
 
                                 @foreach ($exportablePages as $pagesSiteId => $sitePages)
                                     <div data-wb-export-page-group="{{ $pagesSiteId }}" hidden>
-                                        <div class="wb-table-wrap" style="max-height: 16rem; overflow-y: auto;">
+                                        <div class="wb-table-wrap" style="max-height: 26rem; overflow-y: auto;">
                                             <table class="wb-table wb-table-sm wb-table-striped wb-table-hover">
                                                 <thead>
                                                     <tr>
@@ -138,11 +141,8 @@
                                             </table>
                                         </div>
 
-                                        <div class="wb-text-sm wb-text-muted wb-mt-2" data-wb-export-pages-count></div>
                                     </div>
                                 @endforeach
-
-                                <div class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.pages_to_include_help') }}</div>
                             </div>
                         </div>
                     @endif
@@ -153,7 +153,7 @@
                             <span>{{ $adminText('site_transfers.include_media_files') }}</span>
                         </label>
 
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.include_media_help') }}</div>
+                        <div class="wb-field-hint">{{ $adminText('site_transfers.include_media_help') }}</div>
                     </div>
                 </div>
 
@@ -194,13 +194,18 @@
         return group ? group.querySelectorAll('input[type="checkbox"]') : [];
       }
 
+      // The counter lives in the card header, outside the per-site group, so
+      // it is looked up from the card rather than from the group it counts.
       function updateCount(group) {
-        if (!group) { return; }
+        var label = root.querySelector('[data-wb-export-pages-count]');
+        if (!label) { return; }
+
+        if (!group) { label.textContent = ''; return; }
+
         var all = boxes(group);
         var on = 0;
         all.forEach(function (b) { if (b.checked) { on++; } });
-        var label = group.querySelector('[data-wb-export-pages-count]');
-        if (label) { label.textContent = on + ' / ' + all.length; }
+        label.textContent = on + ' / ' + all.length;
       }
 
       // Only the selected site's boxes are enabled, so a hidden group can never
@@ -210,8 +215,9 @@
           var isActive = group === activeGroup();
           group.hidden = !isActive;
           boxes(group).forEach(function (box) { box.disabled = !isActive; });
-          if (isActive) { updateCount(group); }
         });
+
+        updateCount(activeGroup());
       }
 
       function setAll(predicate) {
