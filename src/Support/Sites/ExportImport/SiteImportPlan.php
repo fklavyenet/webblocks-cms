@@ -29,6 +29,9 @@ class SiteImportPlan
    * - `search_index` runs after all content and before domains. Every write
    *   before it happens with indexing deferred, so this is the one pass that
    *   builds the index.
+   * - `site_branding` runs after `assets`. The site row is written long before
+   *   the media it points at exists, so favicon and social image can only be
+   *   rebound once the asset map is populated.
    */
   public const PHASES = [
     'catalogs' => null,
@@ -38,6 +41,7 @@ class SiteImportPlan
     'site_variables' => null,
     'asset_folders' => null,
     'assets' => 'media',
+    'site_branding' => null,
     'pages' => 'pages',
     'page_assets' => 'page_assets',
     'site_public_assets' => null,

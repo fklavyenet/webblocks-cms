@@ -70,13 +70,69 @@
                     @else
                         <div class="wb-stack wb-gap-2 wb-field">
                             <label for="{{ $modalId }}SiteId">{{ $adminText('site_transfers.site') }}</label>
-                            <select id="{{ $modalId }}SiteId" name="{{ $siteFieldName }}" class="wb-select" required>
+                            <select id="{{ $modalId }}SiteId" name="{{ $siteFieldName }}" class="wb-select" required data-wb-export-site-select>
                                 <option value="">{{ $adminText('site_transfers.select_site') }}</option>
 
                                 @foreach ($sites as $site)
                                     <option value="{{ $site->id }}" @selected((int) $selectedSiteId === $site->id)>{{ $site->name }} ({{ $site->handle }})</option>
                                 @endforeach
                             </select>
+                        </div>
+                    @endif
+
+                    {{-- Page picker. Rendered per site and revealed by the select
+                         above, so the choice and the pages it applies to stay in
+                         one form. Archived pages start unticked: on a site built
+                         through staged updates they are discarded drafts, and
+                         they can easily outweigh the live content. --}}
+                    @if (! empty($exportablePages ?? []))
+                        <div class="wb-stack wb-gap-2 wb-field" data-wb-export-pages>
+                            <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                                <label class="wb-label">{{ $adminText('site_transfers.pages_to_include') }}</label>
+
+                                <div class="wb-cluster wb-cluster-2">
+                                    <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm" data-wb-export-pages-all>{{ $adminText('site_transfers.select_all_pages') }}</button>
+                                    <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm" data-wb-export-pages-published>{{ $adminText('site_transfers.select_published_pages') }}</button>
+                                    <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm" data-wb-export-pages-none>{{ $adminText('site_transfers.select_no_pages') }}</button>
+                                </div>
+                            </div>
+
+                            {{-- Always submitted, so an all-unticked list reaches the
+                                 server as an explicit empty selection instead of
+                                 looking like no selection at all, which means
+                                 "every page". --}}
+                            <input type="hidden" name="page_ids[]" value="" data-wb-export-pages-empty>
+
+                            @foreach ($exportablePages as $pagesSiteId => $sitePages)
+                                <div class="wb-stack wb-gap-1" data-wb-export-page-group="{{ $pagesSiteId }}" hidden>
+                                    <div class="wb-scroll-y" style="max-height: 15rem;">
+                                        @foreach ($sitePages as $exportPage)
+                                            <label class="wb-checkbox" for="{{ $modalId }}Page{{ $exportPage['id'] }}">
+                                                <input
+                                                    id="{{ $modalId }}Page{{ $exportPage['id'] }}"
+                                                    type="checkbox"
+                                                    name="page_ids[]"
+                                                    value="{{ $exportPage['id'] }}"
+                                                    data-wb-export-page-status="{{ $exportPage['status'] }}"
+                                                    @checked($exportPage['checked'])
+                                                    disabled
+                                                >
+                                                <span>
+                                                    {{ $exportPage['title'] }}
+                                                    <span class="wb-badge wb-badge-sm">{{ $exportPage['status'] }}</span>
+                                                    @if ($exportPage['path'])
+                                                        <span class="wb-text-sm wb-text-muted">{{ $exportPage['path'] }}</span>
+                                                    @endif
+                                                </span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+
+                                    <div class="wb-text-sm wb-text-muted" data-wb-export-pages-count></div>
+                                </div>
+                            @endforeach
+
+                            <div class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.pages_to_include_help') }}</div>
                         </div>
                     @endif
 
@@ -99,3 +155,73 @@
         </div>
     </div>
 </div>
+
+@if (! empty($exportablePages ?? []))
+@push('scripts')
+  <script>
+    (function () {
+      var root = document.querySelector('[data-wb-export-pages]');
+      var select = document.querySelector('[data-wb-export-site-select]');
+
+      if (!root) { return; }
+
+      function groups() { return root.querySelectorAll('[data-wb-export-page-group]'); }
+
+      // The same modal is opened from the Sites screen with the site already
+      // fixed and no select to read. Bailing out there would leave every box
+      // disabled while the empty hidden input still submitted, which reads on
+      // the server as "no pages selected" — an empty package, silently.
+      function activeGroup() {
+        if (!select) {
+          return groups().length === 1 ? groups()[0] : null;
+        }
+
+        return root.querySelector('[data-wb-export-page-group="' + select.value + '"]');
+      }
+
+      function boxes(group) {
+        return group ? group.querySelectorAll('input[type="checkbox"]') : [];
+      }
+
+      function updateCount(group) {
+        if (!group) { return; }
+        var all = boxes(group);
+        var on = 0;
+        all.forEach(function (b) { if (b.checked) { on++; } });
+        var label = group.querySelector('[data-wb-export-pages-count]');
+        if (label) { label.textContent = on + ' / ' + all.length; }
+      }
+
+      // Only the selected site's boxes are enabled, so a hidden group can never
+      // smuggle its pages into the submitted selection.
+      function sync() {
+        groups().forEach(function (group) {
+          var isActive = group === activeGroup();
+          group.hidden = !isActive;
+          boxes(group).forEach(function (box) { box.disabled = !isActive; });
+          if (isActive) { updateCount(group); }
+        });
+      }
+
+      function setAll(predicate) {
+        var group = activeGroup();
+        boxes(group).forEach(function (box) {
+          box.checked = predicate(box.getAttribute('data-wb-export-page-status'));
+        });
+        updateCount(group);
+      }
+
+      if (select) { select.addEventListener('change', sync); }
+      root.addEventListener('change', function (event) {
+        if (event.target.matches('input[type="checkbox"]')) { updateCount(activeGroup()); }
+      });
+
+      root.querySelector('[data-wb-export-pages-all]').addEventListener('click', function () { setAll(function () { return true; }); });
+      root.querySelector('[data-wb-export-pages-none]').addEventListener('click', function () { setAll(function () { return false; }); });
+      root.querySelector('[data-wb-export-pages-published]').addEventListener('click', function () { setAll(function (status) { return status === 'published'; }); });
+
+      sync();
+    }());
+  </script>
+@endpush
+@endif

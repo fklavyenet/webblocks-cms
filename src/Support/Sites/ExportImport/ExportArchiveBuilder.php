@@ -114,10 +114,16 @@ class ExportArchiveBuilder
 
     $this->pathGuard->assertSafeRelativePath($relativePath, 'Site public asset path');
 
-    if (! preg_match('#^site/[a-z0-9]+(?:-[a-z0-9]+)*/(css/site\.css|js/site\.js)$#', $relativePath)) {
+    // Any file under the site's own directory travels; the path-safety check
+    // above is what keeps an entry from escaping it. This used to name the two
+    // canonical filenames, which is the third place that list was written down
+    // and the one that rejected a site's fonts outright.
+    if (! preg_match('#^site/[a-z0-9]+(?:-[a-z0-9]+)*/.+$#', $relativePath)) {
       throw new RuntimeException('Site public asset path is invalid.');
     }
 
+    // `type` is only set on the two canonical entries, and when it is set it
+    // still has to agree with the path it claims to describe.
     if (($type === 'css' && ! str_ends_with($relativePath, '/css/site.css'))
       || ($type === 'js' && ! str_ends_with($relativePath, '/js/site.js'))) {
       throw new RuntimeException('Site public asset type does not match its path.');

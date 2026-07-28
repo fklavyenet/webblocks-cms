@@ -302,6 +302,9 @@ class ImportDataMapper
       case 'asset_folders':
         $state['maps']['folder'] = $this->importAssetFolders($payload, $log);
         break;
+      case 'site_branding':
+        $this->importSiteBranding($this->stateSite($state), $payload['site'] ?? [], $state['maps']['asset'], $log);
+        break;
       case 'site_public_assets':
         $this->importSitePublicAssets($this->stateSite($state), $archive, $payload, $state['copied_files'], $log);
         break;
@@ -567,12 +570,58 @@ class ImportDataMapper
       throw new RuntimeException('Selected site domain already exists locally. Choose a different domain or leave it blank.');
     }
 
+    // The operator's answers win over the package for identity; everything
+    // else is the site's own configuration and travels as it was. Media
+    // references are deliberately absent here — the assets they point at do
+    // not exist yet, so the branding phase rebinds them after the copy.
     return Site::query()->create([
       'name' => $options->siteName,
       'handle' => $handle,
       'domain' => $domain,
       'is_primary' => false,
+      'display_name' => $siteData['display_name'] ?? null,
+      'tagline' => $siteData['tagline'] ?? null,
+      'seo_title' => $siteData['seo_title'] ?? null,
+      'seo_description' => $siteData['seo_description'] ?? null,
+      'seo_keywords' => $siteData['seo_keywords'] ?? null,
+      'contact_recipient_email' => $siteData['contact_recipient_email'] ?? null,
+      'timezone' => $siteData['timezone'] ?? null,
+      'public_theme_preset' => $siteData['public_theme_preset'] ?? null,
+      'custom_head_html' => $siteData['custom_head_html'] ?? null,
+      'brand_accent' => $siteData['brand_accent'] ?? null,
+      'brand_accent_secondary' => $siteData['brand_accent_secondary'] ?? null,
+      'brand_surface' => $siteData['brand_surface'] ?? null,
+      'brand_text' => $siteData['brand_text'] ?? null,
+      'brand_font_heading' => $siteData['brand_font_heading'] ?? null,
+      'brand_font_body' => $siteData['brand_font_body'] ?? null,
     ]);
+  }
+
+  /**
+   * Rebind the site's media references once the media exists.
+   *
+   * Favicon and social image are ids in the source install; the site row is
+   * written before the assets are copied, so they can only be resolved here.
+   *
+   * @param  array<string, mixed>  $siteData
+   * @param  array<int, int>  $assetMap
+   * @param  list<string>  $output
+   */
+  private function importSiteBranding(Site $site, array $siteData, array $assetMap, array &$output): void
+  {
+    $favicon = $assetMap[(int) ($siteData['favicon_media_id'] ?? 0)] ?? null;
+    $social = $assetMap[(int) ($siteData['social_image_media_id'] ?? 0)] ?? null;
+
+    if ($favicon === null && $social === null) {
+      return;
+    }
+
+    $site->forceFill(array_filter([
+      'favicon_media_id' => $favicon,
+      'social_image_media_id' => $social,
+    ], static fn ($value) => $value !== null))->save();
+
+    $output[] = 'Rebound the site favicon and social image to the imported media.';
   }
 
   private function importSiteDomains(Site $site, array $payload, SiteImportOptions $options, array &$output): void
@@ -892,11 +941,17 @@ class ImportDataMapper
     foreach (($payload['site_public_assets'] ?? []) as $sitePublicAsset) {
       $sourceRelativePath = $this->canonicalSourceSitePublicAssetPath($sitePublicAsset);
 
+      // Skipping silently is how a site arrives without its stylesheet while
+      // the import still reports success. A package that names a file the
+      // importer cannot place is a broken package, and says so.
       if ($sourceRelativePath === null) {
-        continue;
+        throw new RuntimeException(
+          'Import package lists a site asset with no usable path: '
+          .(string) ($sitePublicAsset['relative_path'] ?? $sitePublicAsset['path'] ?? 'unknown').'.'
+        );
       }
 
-      $targetRelativePath = $this->targetSitePublicAssetPath($site, (string) ($sitePublicAsset['type'] ?? ''));
+      $targetRelativePath = $this->targetSitePublicAssetPath($site, $sitePublicAsset);
       $archiveEntry = 'files/public/'.$sourceRelativePath;
 
       $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive site public asset path');
@@ -920,12 +975,28 @@ class ImportDataMapper
         throw new RuntimeException('Site public asset file path is invalid.');
       }
 
-      if (! is_dir($targetDirectory)) {
-        mkdir($targetDirectory, 0775, true);
+      if (! is_dir($targetDirectory) && ! mkdir($targetDirectory, 0775, true) && ! is_dir($targetDirectory)) {
+        fclose($stream);
+
+        throw new RuntimeException('Could not create the site asset directory '.$targetDirectory.'. Check that the web user may write public/site.');
       }
 
-      file_put_contents($targetPath, stream_get_contents($stream));
+      $contents = $this->rebaseSiteAssetReferences(
+        (string) stream_get_contents($stream),
+        $targetRelativePath,
+        (string) ($payload['site']['handle'] ?? ''),
+        $site->handle,
+      );
+      $written = file_put_contents($targetPath, $contents);
       fclose($stream);
+
+      // Both of the writes above used to have their result discarded, so a
+      // site could import "successfully" with none of its assets on disk and
+      // nothing anywhere saying so.
+      if ($written === false || $written !== strlen((string) $contents)) {
+        throw new RuntimeException('Could not write the site asset file '.$targetRelativePath.'.');
+      }
+
       $copiedFiles[] = ['public-root', $targetRelativePath];
       $count++;
     }
@@ -961,34 +1032,79 @@ class ImportDataMapper
     $copiedFiles[] = ['public-root', $relativePath];
   }
 
+  /**
+   * The package path of a site asset, or null when it is not one.
+   *
+   * This used to accept exactly two filenames, which was fine while the export
+   * shipped exactly two files and became a silent gate the moment it shipped a
+   * font directory. Any file under `site/{handle}/` is a site asset now; the
+   * guard that matters is the path-safety one, which keeps an entry from
+   * escaping the directory it claims to be in.
+   */
+  /**
+   * Point a copied stylesheet at its own site's directory.
+   *
+   * Site assets reference each other by absolute public path — site.css
+   * declares `url('/site/default/fonts/x.woff2')` — and the imported site
+   * rarely keeps the source handle. Copying the files without rewriting those
+   * references gives a site whose fonts are all present on disk and all 404
+   * in the browser, which is indistinguishable from not shipping them at all.
+   *
+   * Only text assets are touched, and only when the handle actually changed;
+   * a woff2 is never rewritten.
+   */
+  private function rebaseSiteAssetReferences(string $contents, string $targetRelativePath, string $sourceHandle, string $targetHandle): string
+  {
+    if ($sourceHandle === '' || $sourceHandle === $targetHandle) {
+      return $contents;
+    }
+
+    if (! preg_match('/\.(css|js)$/i', $targetRelativePath)) {
+      return $contents;
+    }
+
+    return str_replace('/site/'.$sourceHandle.'/', '/site/'.$targetHandle.'/', $contents);
+  }
+
   private function canonicalSourceSitePublicAssetPath(array $sitePublicAsset): ?string
   {
     $relativePath = ltrim((string) ($sitePublicAsset['relative_path'] ?? $sitePublicAsset['path'] ?? ''), '/');
-    $type = (string) ($sitePublicAsset['type'] ?? '');
 
     if (! $this->pathGuard->isSafeRelativePath($relativePath)) {
       return null;
     }
 
-    if (! preg_match('#^site/[a-z0-9]+(?:-[a-z0-9]+)*/(css/site\.css|js/site\.js)$#', $relativePath)) {
+    if (! preg_match('#^site/[a-z0-9]+(?:-[a-z0-9]+)*/.+$#', $relativePath)) {
       return null;
     }
 
-    if (($type === 'css' && str_ends_with($relativePath, '/css/site.css'))
-      || ($type === 'js' && str_ends_with($relativePath, '/js/site.js'))) {
-      return $relativePath;
-    }
-
-    return null;
+    return $relativePath;
   }
 
-  private function targetSitePublicAssetPath(Site $site, string $type): string
+  /**
+   * Where that asset belongs under the imported site's own handle.
+   *
+   * The sub-path is preserved exactly, so a stylesheet that references
+   * `../fonts/x.woff2` still resolves after the handle changes.
+   *
+   * @param  array<string, mixed>  $sitePublicAsset
+   */
+  private function targetSitePublicAssetPath(Site $site, array $sitePublicAsset): string
   {
-    return match ($type) {
-      'css' => 'site/'.$site->handle.'/css/site.css',
-      'js' => 'site/'.$site->handle.'/js/site.js',
-      default => throw new RuntimeException('Site public asset type is invalid.'),
-    };
+    $subPath = (string) ($sitePublicAsset['sub_path'] ?? '');
+
+    if ($subPath === '') {
+      $source = ltrim((string) ($sitePublicAsset['relative_path'] ?? $sitePublicAsset['path'] ?? ''), '/');
+      $subPath = (string) preg_replace('#^site/[^/]+/#', '', $source);
+    }
+
+    $subPath = ltrim(str_replace('\\', '/', $subPath), '/');
+
+    if ($subPath === '' || ! $this->pathGuard->isSafeRelativePath($subPath)) {
+      throw new RuntimeException('Site asset path is invalid.');
+    }
+
+    return 'site/'.$site->handle.'/'.$subPath;
   }
 
   private function importSharedSlots(Site $site, array $payload, array &$output): array

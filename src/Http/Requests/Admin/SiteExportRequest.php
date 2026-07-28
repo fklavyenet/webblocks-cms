@@ -26,6 +26,11 @@ class SiteExportRequest extends FormRequest
     return [
       'site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
       'includes_media' => ['nullable', 'boolean'],
+      // Absent means the whole site. An empty array is a package with no
+      // pages, which is a legitimate thing to ask for and a confusing thing
+      // to get by accident, so the form always submits something.
+      'page_ids' => ['nullable', 'array'],
+      'page_ids.*' => ['integer', 'exists:wbcms_pages,id'],
     ];
   }
 }

@@ -1,6 +1,19 @@
 <?php
 
 return [
+
+  /*
+   * Ceiling on the site override directory an export will package.
+   *
+   * The whole of public/site/{handle} travels with a site, which is right for
+   * stylesheets and fonts and wrong for whatever else ends up in there. Past
+   * this the export stops with a message naming the directory rather than
+   * quietly producing a package nobody can upload.
+   */
+  'export' => [
+    'site_asset_max_bytes' => (int) env('WEBBLOCKS_CMS_EXPORT_SITE_ASSET_MAX_BYTES', 52428800),
+  ],
+
     'auth' => [
         'guard' => env('WEBBLOCKS_CMS_AUTH_GUARD', config('auth.defaults.guard', 'web')),
         'provider' => env('WEBBLOCKS_CMS_AUTH_PROVIDER', 'users'),

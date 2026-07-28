@@ -22,7 +22,10 @@ class SiteExportManager
     private readonly SiteTransferDisk $siteTransferDisk,
   ) {}
 
-  public function export(Site $site, bool $includesMedia, ?int $userId = null): SiteExport
+  /**
+   * @param  list<int>|null  $pageIds  Only these pages, or null for all of them.
+   */
+  public function export(Site $site, bool $includesMedia, ?int $userId = null, ?array $pageIds = null): SiteExport
   {
     $export = SiteExport::query()->create([
       'site_id' => $site->id,
@@ -35,7 +38,7 @@ class SiteExportManager
     $output = [];
 
     try {
-      $payload = $this->dataBuilder->build($site, $includesMedia);
+      $payload = $this->dataBuilder->build($site, $includesMedia, $pageIds);
       $timestamp = now();
       $archiveName = sprintf('webblocks-cms-site-export-%s-%s.zip', $site->handle, $timestamp->format('Y-m-d-His'));
       $archivePath = $archiveName;

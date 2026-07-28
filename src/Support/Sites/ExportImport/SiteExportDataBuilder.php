@@ -3,6 +3,9 @@
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
+use RuntimeException;
+use Symfony\Component\Finder\SplFileInfo;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
 use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
@@ -27,7 +30,10 @@ class SiteExportDataBuilder
     private readonly PageAssetPathValidator $pageAssetPathValidator,
   ) {}
 
-  public function build(Site $site, bool $includesMedia): array
+  /**
+   * @param  list<int>|null  $pageIds  Only these pages, or null for all of them.
+   */
+  public function build(Site $site, bool $includesMedia, ?array $pageIds = null): array
   {
     $site = $site->loadMissing(['siteLocales', 'locales', 'siteDomains', 'siteVariables']);
     $sharedSlots = SharedSlot::query()
@@ -37,9 +43,14 @@ class SiteExportDataBuilder
     $sharedSlotSourcePages = $sharedSlots
       ->mapWithKeys(fn (SharedSlot $sharedSlot) => [$sharedSlot->id => $this->sharedSlotSourcePageManager->findFor($sharedSlot)])
       ->filter(fn (?Page $page) => $page instanceof Page);
+    // A null selection means the whole site, which keeps the CLI and the API
+    // exporting exactly what they did before the picker existed. Everything
+    // downstream keys off these ids, so blocks, translations and slots follow
+    // the selection without any further filtering.
     $pages = Page::query()
       ->where('site_id', $site->id)
       ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      ->when($pageIds !== null, fn ($query) => $query->whereIn('id', $pageIds))
       ->with(['translations', 'slots.slotType', 'pageType', 'layout'])
       ->orderBy('id')
       ->get();
@@ -90,12 +101,35 @@ class SiteExportDataBuilder
       ->get();
 
     return [
+      // Everything the Edit Site form owns travels with the site. Carrying only
+      // name/handle/domain silently dropped five of its nine tabs, so an
+      // imported site lost its brand palette and fell back to the product
+      // default theme while looking, in the admin, like a complete import.
+      // Media references are ids in the source install: they are exported as
+      // given and remapped on import through the asset map.
       'site' => [
         'id' => $site->id,
         'name' => $site->name,
         'handle' => $site->handle,
         'domain' => $site->domain,
         'is_primary' => (bool) $site->is_primary,
+        'display_name' => $site->display_name,
+        'tagline' => $site->tagline,
+        'favicon_media_id' => $site->favicon_media_id,
+        'social_image_media_id' => $site->social_image_media_id,
+        'seo_title' => $site->seo_title,
+        'seo_description' => $site->seo_description,
+        'seo_keywords' => $site->seo_keywords,
+        'contact_recipient_email' => $site->contact_recipient_email,
+        'timezone' => $site->timezone,
+        'public_theme_preset' => $site->public_theme_preset,
+        'custom_head_html' => $site->custom_head_html,
+        'brand_accent' => $site->brand_accent,
+        'brand_accent_secondary' => $site->brand_accent_secondary,
+        'brand_surface' => $site->brand_surface,
+        'brand_text' => $site->brand_text,
+        'brand_font_heading' => $site->brand_font_heading,
+        'brand_font_body' => $site->brand_font_body,
         'created_at' => $site->created_at?->toDateTimeString(),
         'updated_at' => $site->updated_at?->toDateTimeString(),
       ],
@@ -382,20 +416,62 @@ class SiteExportDataBuilder
     ];
   }
 
+  /**
+   * Every file under the site's public override directory.
+   *
+   * This used to name site.css and site.js and nothing else, which meant a
+   * site whose CSS declared @font-face rules arrived without a single font
+   * file — the stylesheet transferred, the faces it pointed at did not. The
+   * directory is the unit the site owns, so the directory is what travels.
+   *
+   * `type` stays on the two canonical entries for older importers; the
+   * relative path is what the current importer rebuilds the target from.
+   */
   private function sitePublicAssetsFor(Site $site): Collection
   {
-    return collect([
-      [
-        'type' => 'css',
-        'path' => '/site/'.$site->handle.'/css/site.css',
-        'relative_path' => 'site/'.$site->handle.'/css/site.css',
-      ],
-      [
-        'type' => 'js',
-        'path' => '/site/'.$site->handle.'/js/site.js',
-        'relative_path' => 'site/'.$site->handle.'/js/site.js',
-      ],
-    ])->filter(fn (array $asset): bool => is_file(public_path($asset['relative_path'])))->values();
+    $root = public_path('site'.DIRECTORY_SEPARATOR.$site->handle);
+
+    if (! is_dir($root)) {
+      return collect();
+    }
+
+    $files = collect(File::allFiles($root))
+      ->sortBy(fn (SplFileInfo $file) => $file->getRelativePathname())
+      ->values();
+
+    $budget = (int) config('webblocks-cms.export.site_asset_max_bytes', 52428800);
+    $total = $files->sum(fn (SplFileInfo $file) => $file->getSize());
+
+    if ($total > $budget) {
+      throw new RuntimeException(sprintf(
+        'The site override directory is %s, over the %s export limit. Move large files out of public/site/%s or raise webblocks-cms.export.site_asset_max_bytes.',
+        $this->humanBytes($total),
+        $this->humanBytes($budget),
+        $site->handle,
+      ));
+    }
+
+    return $files->map(function (SplFileInfo $file) use ($site): array {
+      $subPath = str_replace(DIRECTORY_SEPARATOR, '/', $file->getRelativePathname());
+
+      return [
+        'type' => match ($subPath) {
+          'css/site.css' => 'css',
+          'js/site.js' => 'js',
+          default => null,
+        },
+        'sub_path' => $subPath,
+        'path' => '/site/'.$site->handle.'/'.$subPath,
+        'relative_path' => 'site/'.$site->handle.'/'.$subPath,
+      ];
+    })->values();
+  }
+
+  private function humanBytes(int $bytes): string
+  {
+    return $bytes >= 1048576
+      ? round($bytes / 1048576, 1).' MB'
+      : round($bytes / 1024).' KB';
   }
 
   private function mediaFoldersFor(Collection $assets): Collection

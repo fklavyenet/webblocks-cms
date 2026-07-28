@@ -312,6 +312,7 @@
         'modalTitle' => $adminText('site_transfers.export_site'),
         'modalDescription' => $adminText('site_transfers.export_site_description'),
         'sites' => $sites,
+        'exportablePages' => $exportablePages ?? [],
         'show' => $showExportModal,
         'closeUrl' => route('admin.site-transfers.exports.index'),
         'formAction' => route('admin.site-transfers.exports.store'),
