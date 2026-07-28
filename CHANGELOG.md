@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.1
+
+- **The export page picker was unreadable.** It stacked `wb-checkbox` labels, and that class has no styles anywhere in the product — seventy of them collapsed into wrapped inline text that ran over the fields below. The picker is a `wb-table` now: a row per page, a column each for the tick, the title, the status badge and the path, in a scrolling card. `wb-scroll-y` and `wb-badge-sm`, also used and also undefined, are gone with it.
+- Both export screens show the same picker. Export / Import had it and Sites did not, which is the kind of difference nobody notices until an export from one of them quietly contains something the other would have excluded. The page list moved into `ExportablePages` so there is one source for both.
+
 ## 1.45.0
 
 - **A site transfer carried the site's content and almost none of the site.** The export wrote seven fields for the site row — id, name, handle, domain, is_primary and timestamps — so five of the nine Edit Site tabs never travelled. An imported site arrived with no brand palette, no theme preset, no SEO defaults, no head code, no contact address and no branding, then rendered in the product default theme while the admin showed a complete import. All of those fields are exported now, and the importer applies them.
