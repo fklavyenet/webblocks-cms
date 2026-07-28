@@ -2,6 +2,16 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.0
+
+- **A site transfer carried the site's content and almost none of the site.** The export wrote seven fields for the site row — id, name, handle, domain, is_primary and timestamps — so five of the nine Edit Site tabs never travelled. An imported site arrived with no brand palette, no theme preset, no SEO defaults, no head code, no contact address and no branding, then rendered in the product default theme while the admin showed a complete import. All of those fields are exported now, and the importer applies them.
+- Favicon and social image are media ids in the source install, and the site row is written before its media exists, so they are rebound in their own `site_branding` phase once the asset map is populated.
+- **The export shipped `site.css` and `site.js` and nothing else under the site's directory.** A stylesheet declaring `@font-face` therefore arrived without a single font file. The whole of `public/site/{handle}` travels now, bounded by `webblocks-cms.export.site_asset_max_bytes` (50 MB by default) so an oversized directory stops the export with a message instead of producing a package nobody can upload.
+- Copied stylesheets are rebased onto the importing site's handle. Site assets reference each other by absolute public path, so a site imported under a new handle previously had every font present on disk and 404 in the browser — indistinguishable from not shipping them. Only `.css` and `.js` are rewritten, and only when the handle actually changed.
+- The two-filename allowlist behind that restriction existed in **three** places — the export builder, the archive builder and the importer. Generalising two of them was not enough; a test now asserts none of the three restricts site assets by filename.
+- **A failed site-asset write no longer reports success.** `mkdir()` and `file_put_contents()` had their results discarded and the file was counted as copied either way, so a site could import with none of its assets on disk and nothing anywhere saying so. Both are checked, and an entry whose path the importer cannot resolve raises instead of being skipped.
+- **The export screen lets you choose which pages go into the package.** Archived pages start unticked, with All / Published only / None shortcuts. On a site built through staged updates the discarded drafts are the bulk of the package: on this project's own site, 49 of 74 pages carried 73% of the blocks and translations, and excluding them took the import from 28.8s to 11.3s. Omitting the selection entirely still exports the whole site, so the CLI and the API are unchanged.
+
 ## 1.44.0
 
 - **A site import now runs as resumable steps with a progress modal, instead of one transaction inside one request.** The old shape had no way to report progress even in principle: all fifteen phases ran inside a single `DB::transaction`, so nothing was visible to another connection until it committed and the import record read `validated` from start to finish. Working and hung looked identical, and behind Nginx a long import ended as a bare 504 with the transaction rolled back and the copied media left orphaned.
