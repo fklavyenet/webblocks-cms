@@ -62,7 +62,7 @@ commands            webblocks-appointments:dispatch-reminders
 block handles       webblocks-appointments::form
 ```
 
-Phase 1 shipped as plugin `0.1.0`: manifest, provider, permissions, menu entry, settings surface, a permission-guarded admin screen that reports setup state, and the public route surface. Phase 2 shipped as `0.2.0`: the domain tables, the slot engine, and the booker.
+Phases 1 through 5 shipped as plugin `0.1.0` through `0.5.0`: the skeleton, the domain and slot engine, the public booking block, the operator screens, and notifications. Each phase's section below records what it actually built, including where it departed from this plan.
 
 ## Domain Model
 
@@ -136,9 +136,15 @@ The plugin's settings definition must name its own route. Left to the default, t
 
 ## Notifications
 
-Storage and notification stay separate concerns, exactly as Contact Form treats them: an accepted booking is stored before notification is attempted, and a delivery failure never retracts the booking. Notification status reports as sent, failed, skipped, or not configured, with sanitized failure detail — no credentials, tokens, or stack traces.
+*(Shipped in plugin `0.5.0`.)*
+
+Storage and notification stay separate concerns, exactly as Contact Form treats them: the booking is committed before notification is attempted, and a delivery failure never retracts it. Notification status reports as sent, failed, skipped, or not configured, with sanitized failure detail — no credentials, tokens, or stack traces.
 
 Both the visitor and the business receive mail. The visitor's confirmation carries an `.ics` attachment, which lands the appointment in the visitor's own calendar with no external service, no OAuth, and no dependency.
+
+Two details the plan did not anticipate, both worth carrying to any other plugin that sends mail. The two sides are recorded separately rather than under one status: a mistyped business recipient must not suppress the visitor's confirmation, and a combined status would make the admin screen lie in exactly the case an operator needs it honest. And the iCalendar file is written by hand rather than taken from a package — the format is small, and the parts that actually break, escaping and folding at 75 octets without splitting a multi-byte character, are the parts a wrapper would hide.
+
+The send itself is not covered by an automated test in the plugin repository: it needs a mailer, a view factory and a CMS host. What is covered is the part that decides whether to send and what to record.
 
 ## Reminders And Visitor-Initiated Changes
 
@@ -154,6 +160,6 @@ Unit tests cover the slot engine, and they are the thickest part of the suite. F
 
 ## Delivery Order
 
-Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. Plugin phases 1 through 4 shipped as `0.1.0` through `0.4.0`; the remaining ones — notifications, then reminders — build on top in that order.
+Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. Plugin phases 1 through 5 shipped as `0.1.0` through `0.5.0`. Only reminders remain.
 
-The three open core phases are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.5 before reminders, 0.6 before any progressive enhancement of the booking form. Only 0.5 blocks anything on the critical path, and only for reminders — notifications themselves send inline, the way Contact Form already does.
+The three open core phases are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.6 before any progressive enhancement of the booking form, and 0.5 before reminders — which is now the only thing on the critical path, since notifications send inline the way Contact Form already does.
