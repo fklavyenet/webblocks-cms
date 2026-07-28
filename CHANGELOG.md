@@ -2,6 +2,16 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.44.0
+
+- **A site import now runs as resumable steps with a progress modal, instead of one transaction inside one request.** The old shape had no way to report progress even in principle: all fifteen phases ran inside a single `DB::transaction`, so nothing was visible to another connection until it committed and the import record read `validated` from start to finish. Working and hung looked identical, and behind Nginx a long import ended as a bare 504 with the transaction rolled back and the copied media left orphaned.
+- Run import opens a modal that drives the import a step at a time and reports the phase it is on with real row counts — "Importing blocks, 12480 / 28607 (43%)". It uses the `wb-progress-bar` primitive from WebBlocks UI, so it adds no CSS of its own.
+- Every step commits. Closing the tab pauses the import where it is rather than destroying it: the import record carries its own cursor (`resume_phase`, `resume_offset`, `resume_state`) and the screen offers **Resume import** or **Discard the partial site**. `site:import --resume={id}` does the same from the CLI.
+- `SiteImportPlan` holds the phase order, and two positions in it are load-bearing. `domains` runs **last**: a site is only reachable through a `SiteDomain` row and `Site` has no published flag, so an interrupted import is never addressable on its real hostname. `search_index` runs after all content and before domains, as the one pass that builds the index now that writes defer it.
+- The fifteen phase methods are unchanged; the step runner calls them with a sliced payload. Two passes had to be split out because they are whole-map work that a slice must not repeat: linking block parents (`wireBlockParents`), and normalising canonical translation storage. The second one was a real defect found in testing — run per slice, it gives every block still awaiting its translation a placeholder canonical row, and the next slice then collides with that placeholder on the `(block_id, locale_id)` unique index.
+- Discarding a partial import deletes its site through `SiteDeleteService` — the one audited deletion path, blockers included — plus the media rows and copied files, which are install-scoped and would otherwise be collected by nothing. The package stays and can be imported again.
+- Verified against this project's own 22-page site (7726 blocks, 4526 text translations): 28.8s uninterrupted, and an import killed at `blocks` offset 4000 and resumed in a fresh process produced an identical result — same block, translation, navigation and search-index counts, with all 22 index rows matching the hand-built site byte for byte.
+
 ## 1.43.2
 
 - **Importing a site was quadratic, and the cost was the search index.** Every block, translation and slot save reindexes the whole page it belongs to — correct for an editor changing one block, ruinous for a bulk writer. Importing this project's own site (7726 blocks and 4526 text translations over 72 pages) therefore walked each page's full block tree once per row it wrote, and took **7m54s of pure CPU**. Behind a web request that is a 504 with a rolled-back transaction and orphaned media files; the import never had a chance to finish.
