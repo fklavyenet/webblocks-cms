@@ -9,11 +9,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteSiteExportsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SiteExportRequest;
-use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportBulkDeleter;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
 
@@ -42,7 +42,7 @@ class SiteExportController extends Controller
       'exports' => $exports,
       'imports' => $imports,
       'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
-      'exportablePages' => $this->exportablePages(),
+      'exportablePages' => app(ExportablePages::class)->grouped(),
       'totalExportsCount' => SiteExport::query()->count(),
       'filteredExportsCount' => $exports->total(),
       'totalImportsCount' => SiteImport::query()->count(),
@@ -119,36 +119,6 @@ class SiteExportController extends Controller
     }
 
     return $redirect;
-  }
-
-  /**
-   * Pages the export picker offers, grouped by site.
-   *
-   * Shared-slot source pages are left out for the same reason the exporter
-   * skips them: they are machinery behind a shared slot, not content anyone
-   * chooses. Archived pages are offered but start unticked — on a site built
-   * through staged updates they are the discarded drafts, and on this
-   * project's own site they were three quarters of the package.
-   *
-   * @return array<int, list<array<string, mixed>>>
-   */
-  private function exportablePages(): array
-  {
-    return Page::query()
-      ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
-      ->with('translations')
-      ->orderBy('site_id')
-      ->orderBy('id')
-      ->get()
-      ->groupBy('site_id')
-      ->map(fn ($pages) => $pages->map(fn (Page $page) => [
-        'id' => $page->id,
-        'title' => $page->defaultTranslation()?->name ?: ('#'.$page->id),
-        'path' => $page->defaultTranslation()?->path,
-        'status' => $page->status,
-        'checked' => $page->status !== 'archived',
-      ])->values()->all())
-      ->all();
   }
 
   private function createExport(Site $site, SiteExportRequest $request): SiteExport

@@ -194,6 +194,35 @@ class SiteTransferCompletenessTest extends TestCase
   }
 
   #[Test]
+  public function the_page_picker_is_a_table_and_both_screens_get_it(): void
+  {
+    $modal = (string) file_get_contents(
+      dirname(__DIR__, 2).'/resources/views/admin/site-transfers/partials/export-modal.blade.php'
+    );
+
+    // wb-checkbox has no styles anywhere in the product, so a stack of them
+    // rendered as wrapped inline text that ran over the fields below. The
+    // picker uses wb-table, which does exist, and gives each fact a column.
+    $picker = substr($modal, (int) strpos($modal, 'data-wb-export-pages'), 4000);
+
+    $this->assertStringContainsString('wb-table-wrap', $picker);
+    $this->assertStringContainsString('<table class="wb-table', $picker);
+    $this->assertStringNotContainsString('wb-checkbox', $picker);
+    $this->assertStringNotContainsString('wb-scroll-y', $modal, 'wb-scroll-y is not a class the UI defines.');
+
+    // One picker, two screens. Two screens showing different pickers is the
+    // kind of difference nobody notices until an export from one of them
+    // quietly contains something the other would have excluded.
+    foreach (['site-transfers/exports/index', 'sites/index'] as $view) {
+      $this->assertStringContainsString(
+        "'exportablePages' =>",
+        (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/'.$view.'.blade.php'),
+        $view.' opens the export modal without the page picker.'
+      );
+    }
+  }
+
+  #[Test]
   public function the_site_model_can_hold_everything_the_import_writes(): void
   {
     // A field the export carries and the model does not fill is dropped

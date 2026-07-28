@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
 use WebBlocks\Cms\Support\Sites\SiteAssetStore;
 use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
@@ -53,6 +54,7 @@ class SiteController extends Controller
           : null;
 
     return view('webblocks-cms::admin.sites.index', [
+      'exportablePages' => app(ExportablePages::class)->grouped(),
       'sites' => Site::query()
         ->with(['locales' => fn ($query) => $query->orderBy('name')])
         ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])

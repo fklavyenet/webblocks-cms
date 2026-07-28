@@ -128,6 +128,7 @@
             'modalTitle' => $adminText('sites.export_modal_title'),
             'modalDescription' => $adminText('sites.export_modal_description'),
             'selectedSite' => $siteExportUi['selectedSite'],
+            'exportablePages' => $exportablePages ?? [],
             'show' => $showExportModal,
             'closeUrl' => $siteExportUi['closeUrl'],
             'formAction' => $siteExportUi['selectedSite'] ? route('admin.sites.export', $siteExportUi['selectedSite']) : route('admin.sites.index'),

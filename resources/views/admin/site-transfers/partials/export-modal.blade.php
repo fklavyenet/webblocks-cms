@@ -80,59 +80,70 @@
                         </div>
                     @endif
 
-                    {{-- Page picker. Rendered per site and revealed by the select
-                         above, so the choice and the pages it applies to stay in
-                         one form. Archived pages start unticked: on a site built
-                         through staged updates they are discarded drafts, and
-                         they can easily outweigh the live content. --}}
+                    {{-- Page picker. A table rather than a stack of labels:
+                         wb-checkbox has no styles anywhere in the product, so
+                         seventy of them in a row collapsed into wrapped inline
+                         text that ran over the fields below it. wb-table gives
+                         each page a row and each fact its own column. --}}
                     @if (! empty($exportablePages ?? []))
-                        <div class="wb-stack wb-gap-2 wb-field" data-wb-export-pages>
-                            <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                                <label class="wb-label">{{ $adminText('site_transfers.pages_to_include') }}</label>
+                        <div class="wb-card wb-card-muted wb-field" data-wb-export-pages>
+                            <div class="wb-card-header wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                                <strong>{{ $adminText('site_transfers.pages_to_include') }}</strong>
 
                                 <div class="wb-cluster wb-cluster-2">
-                                    <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm" data-wb-export-pages-all>{{ $adminText('site_transfers.select_all_pages') }}</button>
-                                    <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm" data-wb-export-pages-published>{{ $adminText('site_transfers.select_published_pages') }}</button>
-                                    <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm" data-wb-export-pages-none>{{ $adminText('site_transfers.select_no_pages') }}</button>
+                                    <button type="button" class="wb-btn wb-btn-secondary wb-btn-sm" data-wb-export-pages-all>{{ $adminText('site_transfers.select_all_pages') }}</button>
+                                    <button type="button" class="wb-btn wb-btn-secondary wb-btn-sm" data-wb-export-pages-published>{{ $adminText('site_transfers.select_published_pages') }}</button>
+                                    <button type="button" class="wb-btn wb-btn-secondary wb-btn-sm" data-wb-export-pages-none>{{ $adminText('site_transfers.select_no_pages') }}</button>
                                 </div>
                             </div>
 
-                            {{-- Always submitted, so an all-unticked list reaches the
-                                 server as an explicit empty selection instead of
-                                 looking like no selection at all, which means
-                                 "every page". --}}
-                            <input type="hidden" name="page_ids[]" value="" data-wb-export-pages-empty>
+                            <div class="wb-card-body wb-stack wb-gap-2">
+                                {{-- Always submitted, so an all-unticked list reaches
+                                     the server as an explicit empty selection rather
+                                     than as no selection, which means every page. --}}
+                                <input type="hidden" name="page_ids[]" value="" data-wb-export-pages-empty>
 
-                            @foreach ($exportablePages as $pagesSiteId => $sitePages)
-                                <div class="wb-stack wb-gap-1" data-wb-export-page-group="{{ $pagesSiteId }}" hidden>
-                                    <div class="wb-scroll-y" style="max-height: 15rem;">
-                                        @foreach ($sitePages as $exportPage)
-                                            <label class="wb-checkbox" for="{{ $modalId }}Page{{ $exportPage['id'] }}">
-                                                <input
-                                                    id="{{ $modalId }}Page{{ $exportPage['id'] }}"
-                                                    type="checkbox"
-                                                    name="page_ids[]"
-                                                    value="{{ $exportPage['id'] }}"
-                                                    data-wb-export-page-status="{{ $exportPage['status'] }}"
-                                                    @checked($exportPage['checked'])
-                                                    disabled
-                                                >
-                                                <span>
-                                                    {{ $exportPage['title'] }}
-                                                    <span class="wb-badge wb-badge-sm">{{ $exportPage['status'] }}</span>
-                                                    @if ($exportPage['path'])
-                                                        <span class="wb-text-sm wb-text-muted">{{ $exportPage['path'] }}</span>
-                                                    @endif
-                                                </span>
-                                            </label>
-                                        @endforeach
+                                @foreach ($exportablePages as $pagesSiteId => $sitePages)
+                                    <div data-wb-export-page-group="{{ $pagesSiteId }}" hidden>
+                                        <div class="wb-table-wrap" style="max-height: 16rem; overflow-y: auto;">
+                                            <table class="wb-table wb-table-sm wb-table-striped wb-table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 2.5rem;"><span class="wb-sr-only">{{ $adminText('site_transfers.pages_to_include') }}</span></th>
+                                                        <th>{{ $adminText('site_transfers.page_column') }}</th>
+                                                        <th>{{ $adminText('site_transfers.status_column') }}</th>
+                                                        <th>{{ $adminText('site_transfers.path_column') }}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($sitePages as $exportPage)
+                                                        <tr>
+                                                            <td>
+                                                                <input
+                                                                    id="{{ $modalId }}Page{{ $exportPage['id'] }}"
+                                                                    type="checkbox"
+                                                                    name="page_ids[]"
+                                                                    value="{{ $exportPage['id'] }}"
+                                                                    data-wb-export-page-status="{{ $exportPage['status'] }}"
+                                                                    @checked($exportPage['checked'])
+                                                                    disabled
+                                                                >
+                                                            </td>
+                                                            <td><label for="{{ $modalId }}Page{{ $exportPage['id'] }}">{{ $exportPage['title'] }}</label></td>
+                                                            <td><span class="wb-badge {{ $exportPage['status'] === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">{{ $exportPage['status'] }}</span></td>
+                                                            <td class="wb-text-sm wb-text-muted">{{ $exportPage['path'] ?? '-' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="wb-text-sm wb-text-muted wb-mt-2" data-wb-export-pages-count></div>
                                     </div>
+                                @endforeach
 
-                                    <div class="wb-text-sm wb-text-muted" data-wb-export-pages-count></div>
-                                </div>
-                            @endforeach
-
-                            <div class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.pages_to_include_help') }}</div>
+                                <div class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.pages_to_include_help') }}</div>
+                            </div>
                         </div>
                     @endif
 
