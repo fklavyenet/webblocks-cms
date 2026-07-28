@@ -3,7 +3,6 @@
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
 use Illuminate\Database\DatabaseManager;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -58,68 +57,374 @@ class ImportDataMapper
     private readonly CoreLayoutCatalogSyncer $coreLayoutCatalogSyncer,
   ) {}
 
+  /**
+   * Import the whole package, running steps until it finishes.
+   *
+   * Kept as the entry point every caller already uses — the CLI command, the
+   * API — so they inherit resumability without knowing about steps. Callers
+   * that want to show progress drive step() themselves instead.
+   */
   public function import(SiteImport $siteImport, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$output = []): Site
   {
-    $payload = $this->legacyAssetPayloadNormalizer->normalizePayload($payload);
-    $copiedFiles = [];
+    do {
+      // No HTTP request to keep alive here, so take a long budget and let the
+      // loop run; the per-slice commits still make it resumable if it is killed.
+      $result = $this->step($siteImport, $options, $archive, $payload, 30.0);
+      $output = array_merge($output, $result->log);
 
-    try {
-      // Deferred, not disabled: every block and translation save would otherwise
-      // reindex its whole page, so an import walks each page's block tree once
-      // per row it writes. One rebuild after the commit produces the same index.
-      $site = PublicSearchIndexer::deferring(fn (): Site => $this->db->transaction(function () use ($siteImport, $options, $archive, $payload, &$output, &$copiedFiles): Site {
-        $this->ensureCatalogsForPayload($payload, $output);
-        $localeMap = $this->importLocales($payload, $output);
-        $site = $this->createSite($payload['site'], $options, $output);
-        $this->importSiteDomains($site, $payload, $options, $output);
-        $this->syncSiteLocales($site, $payload, $localeMap, $output);
-        $this->importSiteVariables($site, $payload, $output);
-
-        $folderMap = $this->importAssetFolders($payload, $output);
-        $assetMap = $this->importAssets($archive, $payload, $folderMap, $copiedFiles, $output);
-        $pageMap = $this->importPages($site, $payload, $localeMap, $assetMap, $output);
-        $this->importPageAssets($archive, $payload, $pageMap, $copiedFiles, $output);
-        $this->importSitePublicAssets($site, $archive, $payload, $copiedFiles, $output);
-        ['shared_slots' => $sharedSlots, 'handle_map' => $sharedSlotHandleMap, 'source_page_map' => $sharedSlotSourcePageMap] = $this->importSharedSlots($site, $payload, $output);
-        $allPageMap = array_replace($pageMap, $sharedSlotSourcePageMap);
-        $this->importPageSlots($payload, $allPageMap, $sharedSlotHandleMap, array_keys($sharedSlotSourcePageMap), $output);
-        $blockMap = $this->importBlocks($payload, $allPageMap, $assetMap, $output);
-        $this->importBlockTranslations($payload, $blockMap, $localeMap, $output);
-        $blockMediaMap = $this->importBlockAssets($payload, $blockMap, $assetMap, $output);
-        $this->importBlockGalleryItemTranslations($payload, $blockMediaMap, $localeMap, $output);
-        $this->rebuildSharedSlotAssignments($sharedSlots, $output);
-        $this->importNavigation($site, $payload, $pageMap, $output);
-
-        $siteImport->forceFill([
-          'status' => SiteImport::STATUS_COMPLETED,
-          'target_site_id' => $site->id,
-          'imported_site_handle' => $site->handle,
-          'imported_site_domain' => $site->domain,
-        ])->save();
-
-        return $site;
-      }));
-    } catch (Throwable $throwable) {
-      foreach ($copiedFiles as [$disk, $path]) {
-        if ($disk === 'public-root') {
-          File::delete(public_path($path));
-
-          continue;
-        }
-
-        Storage::disk($disk)->delete($path);
+      if ($result->isFailed()) {
+        throw new RuntimeException((string) $result->failureMessage);
       }
+    } while (! $result->isFinished());
 
-      throw $throwable;
+    return Site::query()->findOrFail($siteImport->fresh()->target_site_id);
+  }
+
+  /**
+   * Run one bounded step and commit whatever it completed.
+   *
+   * The budget bounds how long the step keeps starting new slices; it cannot
+   * interrupt one, which is why the slice sizes in SiteImportPlan matter. Every
+   * slice commits on its own, so a step that dies loses at most the slice that
+   * was in flight and the next call picks up from the stored cursor.
+   *
+   * @param  array<string, mixed>  $payload
+   */
+  public function step(
+    SiteImport $siteImport,
+    SiteImportOptions $options,
+    ZipArchive $archive,
+    array $payload,
+    float $budgetSeconds = 5.0,
+  ): SiteImportStepResult {
+    $payload = $this->legacyAssetPayloadNormalizer->normalizePayload($payload);
+    $state = $this->loadState($siteImport);
+    $log = [];
+
+    if ($state['phase'] === null) {
+      return SiteImportStepResult::fromImport($siteImport);
     }
 
-    // Outside the try on purpose: the transaction is committed and the site
-    // exists, so a failure here must not run the rollback cleanup and delete a
-    // live site's media. An unindexed site is recoverable from Search Settings.
-    $indexed = app(PublicSearchIndexer::class)->rebuild($site);
-    $output[] = 'Rebuilt the public search index ('.$indexed->indexed.' entries).';
+    $deadline = microtime(true) + max(0.5, $budgetSeconds);
 
-    return $site;
+    try {
+      // Indexing stays deferred for the content phases; the search_index phase
+      // calls rebuild(), which is never deferred, and produces the same index
+      // for a fraction of the work.
+      PublicSearchIndexer::deferring(function () use (&$state, &$log, $siteImport, $options, $archive, $payload, $deadline): void {
+        do {
+          $sliceLog = [];
+          $this->runSlice($state, $options, $archive, $payload, $sliceLog);
+          $this->saveState($siteImport, $state, $payload, $sliceLog);
+          $log = array_merge($log, $sliceLog);
+        } while ($state['phase'] !== null && microtime(true) < $deadline);
+      });
+    } catch (Throwable $throwable) {
+      // The cursor is left where it was so the failed phase is what a resume
+      // retries. Files copied so far are deliberately kept: they are the work
+      // a resume would otherwise repeat, and removing them belongs to the
+      // explicit teardown, not to a step that may well be retried.
+      $failure = 'Import failed during '.(string) $state['phase'].': '.$throwable->getMessage();
+      $this->saveState($siteImport, $state, $payload, [$failure], SiteImport::STATUS_FAILED, $throwable->getMessage());
+      $log[] = $failure;
+    }
+
+    return SiteImportStepResult::fromImport($siteImport->fresh(), $log);
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function loadState(SiteImport $siteImport): array
+  {
+    $stored = $siteImport->resume_state ?? [];
+    $resuming = SiteImportPlan::isKnown($siteImport->resume_phase);
+
+    $phase = match (true) {
+      $resuming => $siteImport->resume_phase,
+      $siteImport->isCompleted() => null,
+      default => SiteImportPlan::first(),
+    };
+
+    $maps = $stored['maps'] ?? [];
+
+    return [
+      'phase' => $phase,
+      'offset' => $resuming ? (int) $siteImport->resume_offset : 0,
+      'site_id' => $stored['site_id'] ?? null,
+      'site_handle' => $stored['site_handle'] ?? null,
+      'site_domain' => $stored['site_domain'] ?? null,
+      'copied_files' => $stored['copied_files'] ?? [],
+      'maps' => [
+        'locale' => $maps['locale'] ?? [],
+        'folder' => $maps['folder'] ?? [],
+        'asset' => $maps['asset'] ?? [],
+        'page' => $maps['page'] ?? [],
+        'shared_slot_handle' => $maps['shared_slot_handle'] ?? [],
+        'shared_slot_source_page' => $maps['shared_slot_source_page'] ?? [],
+        'block' => $maps['block'] ?? [],
+        'block_media' => $maps['block_media'] ?? [],
+      ],
+    ];
+  }
+
+  /**
+   * @param  array<string, mixed>  $state
+   * @param  array<string, mixed>  $payload
+   * @param  list<string>  $log
+   */
+  private function saveState(
+    SiteImport $siteImport,
+    array $state,
+    array $payload,
+    array $log,
+    ?string $status = null,
+    ?string $failureMessage = null,
+  ): void {
+    $finished = $state['phase'] === null;
+    $total = SiteImportPlan::total($payload);
+    $existing = array_filter(explode(PHP_EOL, (string) $siteImport->output_log));
+
+    $siteImport->forceFill([
+      'status' => $status ?? ($finished ? SiteImport::STATUS_COMPLETED : SiteImport::STATUS_PARTIAL),
+      'resume_phase' => $state['phase'],
+      'resume_offset' => $state['offset'],
+      'resume_state' => [
+        'site_id' => $state['site_id'],
+        'site_handle' => $state['site_handle'],
+        'site_domain' => $state['site_domain'],
+        'copied_files' => $state['copied_files'],
+        'maps' => $state['maps'],
+      ],
+      'progress_total' => $total,
+      'progress_done' => $finished
+        ? $total
+        : SiteImportPlan::completedUnits((string) $state['phase'], (int) $state['offset'], $payload),
+      'heartbeat_at' => now(),
+      'target_site_id' => $state['site_id'],
+      'imported_site_handle' => $state['site_handle'],
+      'imported_site_domain' => $state['site_domain'],
+      'output_log' => implode(PHP_EOL, array_merge($existing, $log)),
+      'failure_message' => $failureMessage,
+    ])->save();
+  }
+
+  /**
+   * @param  array<string, mixed>  $state
+   * @param  array<string, mixed>  $payload
+   * @param  list<string>  $log
+   */
+  private function runSlice(array &$state, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$log): void
+  {
+    $phase = (string) $state['phase'];
+
+    $run = function () use (&$state, $phase, $options, $archive, $payload, &$log): void {
+      $this->runPhaseSlice($state, $phase, $options, $archive, $payload, $log);
+    };
+
+    if (SiteImportPlan::needsTransaction($phase)) {
+      $this->db->transaction($run);
+
+      return;
+    }
+
+    $run();
+  }
+
+  /**
+   * @param  array<string, mixed>  $state
+   * @param  array<string, mixed>  $payload
+   * @param  list<string>  $log
+   */
+  private function runPhaseSlice(array &$state, string $phase, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$log): void
+  {
+    $listKey = SiteImportPlan::listKey($phase);
+
+    if ($listKey === null) {
+      $this->runUnitPhase($state, $phase, $options, $archive, $payload, $log);
+      $this->advance($state);
+
+      return;
+    }
+
+    $rows = $payload[$listKey] ?? [];
+    $offset = (int) $state['offset'];
+    $slice = array_slice($rows, $offset, SiteImportPlan::chunkSize($phase));
+
+    if ($slice === []) {
+      $this->advance($state);
+
+      return;
+    }
+
+    $this->runListPhase($state, $phase, $listKey, $slice, $archive, $payload, $log);
+    $state['offset'] = $offset + count($slice);
+
+    if ($state['offset'] >= count($rows)) {
+      $this->advance($state);
+    }
+  }
+
+  /**
+   * @param  array<string, mixed>  $state
+   */
+  private function advance(array &$state): void
+  {
+    $state['phase'] = SiteImportPlan::next((string) $state['phase']);
+    $state['offset'] = 0;
+  }
+
+  /**
+   * @param  array<string, mixed>  $state
+   * @param  array<string, mixed>  $payload
+   * @param  list<string>  $log
+   */
+  private function runUnitPhase(array &$state, string $phase, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$log): void
+  {
+    switch ($phase) {
+      case 'catalogs':
+        $this->ensureCatalogsForPayload($payload, $log);
+        break;
+      case 'locales':
+        $state['maps']['locale'] = $this->importLocales($payload, $log);
+        break;
+      case 'site':
+        $site = $this->createSite($payload['site'], $options, $log);
+        $state['site_id'] = $site->id;
+        $state['site_handle'] = $site->handle;
+        break;
+      case 'site_locales':
+        $this->syncSiteLocales($this->stateSite($state), $payload, $state['maps']['locale'], $log);
+        break;
+      case 'site_variables':
+        $this->importSiteVariables($this->stateSite($state), $payload, $log);
+        break;
+      case 'asset_folders':
+        $state['maps']['folder'] = $this->importAssetFolders($payload, $log);
+        break;
+      case 'site_public_assets':
+        $this->importSitePublicAssets($this->stateSite($state), $archive, $payload, $state['copied_files'], $log);
+        break;
+      case 'shared_slots':
+        $result = $this->importSharedSlots($this->stateSite($state), $payload, $log);
+        // The models themselves cannot cross a step boundary; the handle map
+        // carries their ids and the assignments phase reloads them.
+        $state['maps']['shared_slot_handle'] = $result['handle_map'];
+        $state['maps']['shared_slot_source_page'] = $result['source_page_map'];
+        break;
+      case 'shared_slot_assignments':
+        $ids = array_values($state['maps']['shared_slot_handle']);
+        $this->rebuildSharedSlotAssignments(
+          $ids === [] ? [] : SharedSlot::query()->whereKey($ids)->get()->all(),
+          $log
+        );
+        break;
+      case 'navigation':
+        $this->importNavigation($this->stateSite($state), $payload, $state['maps']['page'], $log);
+        break;
+      case 'search_index':
+        $indexed = app(PublicSearchIndexer::class)->rebuild($this->stateSite($state));
+        $log[] = 'Rebuilt the public search index ('.$indexed->indexed.' entries).';
+        break;
+      case 'domains':
+        $site = $this->stateSite($state);
+        $this->importSiteDomains($site, $payload, $options, $log);
+        $state['site_domain'] = $site->fresh()?->domain;
+        break;
+      default:
+        throw new RuntimeException('Unknown site import phase: '.$phase.'.');
+    }
+  }
+
+  /**
+   * @param  array<string, mixed>  $state
+   * @param  list<array<string, mixed>>  $slice
+   * @param  array<string, mixed>  $payload
+   * @param  list<string>  $log
+   */
+  private function runListPhase(array &$state, string $phase, string $listKey, array $slice, ZipArchive $archive, array $payload, array &$log): void
+  {
+    switch ($phase) {
+      case 'assets':
+        $state['maps']['asset'] += $this->importAssets($archive, ['media' => $slice], $state['maps']['folder'], $state['copied_files'], $log);
+        break;
+      case 'pages':
+        // The translation loop skips rows whose page is not in the map it was
+        // given, so every slice sees the whole translation list and creates
+        // exactly the translations belonging to the pages it just made.
+        $state['maps']['page'] += $this->importPages(
+          $this->stateSite($state),
+          ['pages' => $slice, 'page_translations' => $payload['page_translations'] ?? []],
+          $state['maps']['locale'],
+          $state['maps']['asset'],
+          $log
+        );
+        break;
+      case 'page_assets':
+        $this->importPageAssets($archive, ['page_assets' => $slice], $state['maps']['page'], $state['copied_files'], $log);
+        break;
+      case 'page_slots':
+        $this->importPageSlots(
+          ['page_slots' => $slice],
+          $this->allPageMap($state),
+          $state['maps']['shared_slot_handle'],
+          array_keys($state['maps']['shared_slot_source_page']),
+          $log
+        );
+        break;
+      case 'blocks':
+        $state['maps']['block'] += $this->importBlocks(['blocks' => $slice], $this->allPageMap($state), $state['maps']['asset'], $log);
+        break;
+      case 'block_parents':
+        $this->wireBlockParents(['blocks' => $slice], $state['maps']['block']);
+        break;
+      case 'block_text_translations':
+      case 'block_button_translations':
+      case 'block_image_translations':
+      case 'block_contact_form_translations':
+        // Each of the four lists is its own phase; the method reads whichever
+        // keys are present and no-ops on the rest.
+        $this->importBlockTranslations([$listKey => $slice], $state['maps']['block'], $state['maps']['locale'], $log);
+        break;
+      case 'block_translation_storage':
+        $this->normalizeBlockTranslationStorage(array_values(array_intersect_key(
+          $state['maps']['block'],
+          array_flip(array_map(static fn (array $row): int => (int) ($row['id'] ?? 0), $slice))
+        )));
+        break;
+      case 'block_assets':
+        $state['maps']['block_media'] += $this->importBlockAssets(['block_media' => $slice], $state['maps']['block'], $state['maps']['asset'], $log);
+        break;
+      case 'gallery_translations':
+        $this->importBlockGalleryItemTranslations(['block_gallery_item_translations' => $slice], $state['maps']['block_media'], $state['maps']['locale'], $log);
+        break;
+      default:
+        throw new RuntimeException('Unknown site import phase: '.$phase.'.');
+    }
+  }
+
+  /**
+   * Pages plus the synthetic pages behind shared slots, which blocks and slots
+   * both reference through the same id space.
+   *
+   * @param  array<string, mixed>  $state
+   * @return array<int, int>
+   */
+  private function allPageMap(array $state): array
+  {
+    return array_replace($state['maps']['page'], $state['maps']['shared_slot_source_page']);
+  }
+
+  /**
+   * @param  array<string, mixed>  $state
+   */
+  private function stateSite(array $state): Site
+  {
+    if (! $state['site_id']) {
+      throw new RuntimeException('Site import reached a content phase before the site was created.');
+    }
+
+    return Site::query()->findOrFail($state['site_id']);
   }
 
   private function importLocales(array $payload, array &$output): array
@@ -866,7 +1171,29 @@ class ImportDataMapper
       $map[(int) $blockData['id']] = $block->id;
     }
 
-    foreach ($payload['blocks'] as $blockData) {
+    $this->wireBlockParents($payload, $map);
+
+    $output[] = 'Imported '.count($map).' block(s).';
+
+    return $map;
+  }
+
+  /**
+   * Point imported blocks at their imported parents.
+   *
+   * Separate from the create loop because a chunked import creates blocks a
+   * slice at a time: within one slice the map only holds that slice's blocks,
+   * so a child whose parent landed in an earlier or later slice would keep a
+   * null parent. The step runner replays this over the whole package once the
+   * full map exists. The update is idempotent, so running it per slice as well
+   * costs a redundant write and changes nothing.
+   *
+   * @param  array<string, mixed>  $payload
+   * @param  array<int, int>  $map
+   */
+  private function wireBlockParents(array $payload, array $map): void
+  {
+    foreach (($payload['blocks'] ?? []) as $blockData) {
       $newBlockId = $map[(int) ($blockData['id'] ?? 0)] ?? null;
       $newParentId = $map[(int) ($blockData['parent_id'] ?? 0)] ?? null;
 
@@ -874,10 +1201,6 @@ class ImportDataMapper
         Block::query()->whereKey($newBlockId)->update(['parent_id' => $newParentId]);
       }
     }
-
-    $output[] = 'Imported '.count($map).' block(s).';
-
-    return $map;
   }
 
   private function importBlockTranslations(array $payload, array $blockMap, array $localeMap, array &$output): void
@@ -958,9 +1281,28 @@ class ImportDataMapper
     }
 
     $output[] = 'Imported '.$count.' block translation row(s).';
+  }
+
+  /**
+   * Give every imported block its canonical translation row.
+   *
+   * Split out of the translation import, and it has to stay split. The writer
+   * creates a canonical row for any block that lacks one, so running it while
+   * translations are still being written fills in blocks whose real rows have
+   * not landed yet — and the next batch then collides with the placeholder on
+   * the (block, locale) unique index. It belongs after every translation list,
+   * once.
+   *
+   * @param  list<int>  $blockIds
+   */
+  private function normalizeBlockTranslationStorage(array $blockIds): void
+  {
+    if ($blockIds === []) {
+      return;
+    }
 
     Block::query()
-      ->whereIn('id', array_values($blockMap))
+      ->whereIn('id', $blockIds)
       ->with(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
       ->orderBy('id')
       ->get()

@@ -12,6 +12,15 @@ class SiteImport extends CmsModel
 
   public const STATUS_RUNNING = 'running';
 
+  /**
+   * Started, committed some of its work, and not finished.
+   *
+   * Chunked importing trades all-or-nothing for a run that survives a dropped
+   * request. The price is this state: real rows exist for a site that is not
+   * complete. It stays unaddressable because the domain phase runs last.
+   */
+  public const STATUS_PARTIAL = 'partial';
+
   public const STATUS_VALIDATED = 'validated';
 
   public const STATUS_COMPLETED = 'completed';
@@ -31,6 +40,12 @@ class SiteImport extends CmsModel
     'manifest_json',
     'output_log',
     'failure_message',
+    'resume_phase',
+    'resume_offset',
+    'resume_state',
+    'progress_done',
+    'progress_total',
+    'heartbeat_at',
   ];
 
   protected function casts(): array
@@ -38,6 +53,11 @@ class SiteImport extends CmsModel
     return [
       'summary_json' => 'array',
       'manifest_json' => 'array',
+      'resume_state' => 'array',
+      'resume_offset' => 'integer',
+      'progress_done' => 'integer',
+      'progress_total' => 'integer',
+      'heartbeat_at' => 'datetime',
     ];
   }
 
@@ -66,6 +86,32 @@ class SiteImport extends CmsModel
     return $this->status === self::STATUS_FAILED;
   }
 
+  public function isPartial(): bool
+  {
+    return $this->status === self::STATUS_PARTIAL;
+  }
+
+  /**
+   * Has work left that a step can pick up.
+   *
+   * A failed run is resumable too: the failure is recorded against the phase
+   * that raised it, and the committed phases before it stay done.
+   */
+  public function isResumable(): bool
+  {
+    return in_array($this->status, [self::STATUS_PARTIAL, self::STATUS_FAILED], true)
+      && $this->resume_phase !== null;
+  }
+
+  public function progressPercent(): int
+  {
+    if ($this->progress_total < 1) {
+      return $this->isCompleted() ? 100 : 0;
+    }
+
+    return (int) min(100, floor(($this->progress_done / $this->progress_total) * 100));
+  }
+
   public function statusLabel(): string
   {
     return str($this->status)->replace('_', ' ')->title()->toString();
@@ -75,7 +121,7 @@ class SiteImport extends CmsModel
   {
     return match ($this->status) {
       self::STATUS_COMPLETED => 'wb-status-active',
-      self::STATUS_VALIDATED, self::STATUS_RUNNING => 'wb-status-pending',
+      self::STATUS_VALIDATED, self::STATUS_RUNNING, self::STATUS_PARTIAL => 'wb-status-pending',
       default => 'wb-status-danger',
     };
   }

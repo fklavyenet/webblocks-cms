@@ -322,6 +322,8 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::delete('site-transfers/imports/bulk', [SiteImportController::class, 'bulkDestroy'])->name('site-transfers.imports.bulk-destroy');
       Route::get('site-transfers/imports/{siteImport}', [SiteImportController::class, 'show'])->name('site-transfers.imports.show');
       Route::post('site-transfers/imports/{siteImport}/run', [SiteImportController::class, 'run'])->name('site-transfers.imports.run');
+      Route::post('site-transfers/imports/{siteImport}/steps', [SiteImportController::class, 'step'])->name('site-transfers.imports.step');
+      Route::delete('site-transfers/imports/{siteImport}/imported-site', [SiteImportController::class, 'discard'])->name('site-transfers.imports.discard');
       Route::delete('site-transfers/imports/{siteImport}', [SiteImportController::class, 'destroy'])->name('site-transfers.imports.destroy');
       Route::get('system/backups', [SystemBackupController::class, 'index'])->name('system.backups.index');
       Route::post('system/backups', [SystemBackupController::class, 'store'])->name('system.backups.store');

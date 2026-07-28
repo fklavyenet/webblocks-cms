@@ -631,6 +631,12 @@ return new class extends Migration
       $table->id();
       $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->string('status')->default('running');
+      $table->string('resume_phase')->nullable();
+      $table->unsignedInteger('resume_offset')->default(0);
+      $table->longText('resume_state')->nullable();
+      $table->unsignedInteger('progress_done')->default(0);
+      $table->unsignedInteger('progress_total')->default(0);
+      $table->timestamp('heartbeat_at')->nullable();
       $table->string('source_archive_name')->nullable();
       $table->string('archive_disk')->nullable();
       $table->string('archive_path')->nullable();

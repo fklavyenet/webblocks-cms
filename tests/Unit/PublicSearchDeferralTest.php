@@ -126,14 +126,22 @@ class PublicSearchDeferralTest extends TestCase
       substr_count($mapper, 'app(PublicSearchIndexer::class)->rebuild('),
       'One rebuild per import; a second one repeats the whole cost it just saved.'
     );
+  }
 
-    // The catch block deletes every media file the import copied. Once the
-    // transaction has committed the site is live, so a failing rebuild must not
-    // reach that cleanup.
-    $this->assertGreaterThan(
-      strpos($mapper, 'throw $throwable;'),
-      (int) $rebuildStart,
-      'The rebuild must sit outside the rollback try, or an index error deletes a live site\'s media.'
+  #[Test]
+  public function a_failed_step_keeps_the_files_it_copied(): void
+  {
+    $mapper = (string) file_get_contents(
+      dirname(__DIR__, 2).'/src/Support/Sites/ExportImport/ImportDataMapper.php'
     );
+
+    // The one-shot import deleted every copied file when it threw, because its
+    // single transaction rolled back and the files would have been orphans.
+    // A chunked import is resumable, so those files are the work a resume would
+    // otherwise repeat — deleting them belongs to the explicit teardown in
+    // SiteImportManager::discardImportedSite(), not to a step that may retry.
+    $this->assertStringNotContainsString('File::delete(public_path(', $mapper);
+    $this->assertStringNotContainsString('Storage::disk($disk)->delete($path)', $mapper);
+    $this->assertStringContainsString('$this->saveState($siteImport, $state, $payload, [$failure], SiteImport::STATUS_FAILED', $mapper);
   }
 }

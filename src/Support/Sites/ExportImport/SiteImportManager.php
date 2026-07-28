@@ -3,11 +3,16 @@
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Support\Sites\SiteDeleteResult;
+use WebBlocks\Cms\Support\Sites\SiteDeleteService;
 use ZipArchive;
 
 class SiteImportManager
@@ -19,6 +24,7 @@ class SiteImportManager
     private readonly ImportDataMapper $dataMapper,
     private readonly SiteTransferPathGuard $pathGuard,
     private readonly SiteTransferDisk $siteTransferDisk,
+    private readonly SiteDeleteService $siteDeleteService,
   ) {}
 
   public function inspectUpload(UploadedFile $file, ?int $userId = null): SiteImport
@@ -63,7 +69,36 @@ class SiteImportManager
     }
   }
 
+  /**
+   * Run the import to completion, one step at a time.
+   *
+   * The loop is the whole implementation: everything a caller used to get from
+   * a single transaction it now gets from a sequence of committed steps, so a
+   * CLI or API caller keeps the same contract and picks up resumability with
+   * it.
+   */
   public function import(SiteImport $siteImport, SiteImportOptions $options): SiteImport
+  {
+    do {
+      // No request to hold open here, so take a long budget per step.
+      $result = $this->step($siteImport, $options, 30.0);
+
+      if ($result->isFailed()) {
+        throw new RuntimeException((string) $result->failureMessage);
+      }
+    } while (! $result->isFinished());
+
+    return $siteImport->fresh(['targetSite', 'user']);
+  }
+
+  /**
+   * Run one bounded step and report where the import got to.
+   *
+   * Safe to call on a finished import: the mapper reports the stored progress
+   * without touching anything, so a modal that polls one time too many gets a
+   * finished result rather than a second import.
+   */
+  public function step(SiteImport $siteImport, SiteImportOptions $options, float $budgetSeconds = 5.0): SiteImportStepResult
   {
     if (! $siteImport->archive_path) {
       throw new RuntimeException('Import package archive is missing.');
@@ -74,8 +109,6 @@ class SiteImportManager
       ? $this->siteTransferDisk->ensureReady()
       : Storage::disk($siteImport->archive_disk);
     $archivePath = $disk->path($siteImport->archive_path);
-    $inspection = $this->archiveInspector->inspect($archivePath);
-    $output = array_filter(explode(PHP_EOL, (string) $siteImport->output_log));
     $archive = new ZipArchive;
 
     if ($archive->open($archivePath) !== true) {
@@ -83,33 +116,112 @@ class SiteImportManager
     }
 
     try {
-      $payload = $this->loadPayload($archive);
-      $site = $this->dataMapper->import($siteImport, $options, $archive, $payload, $output);
+      $result = $this->dataMapper->step(
+        $siteImport,
+        $options,
+        $archive,
+        $this->loadPayload($archive),
+        $budgetSeconds
+      );
 
-      $siteImport->forceFill([
-        'status' => SiteImport::STATUS_COMPLETED,
-        'target_site_id' => $site->id,
-        'imported_site_handle' => $site->handle,
-        'imported_site_domain' => $site->domain,
-        'manifest_json' => $inspection->manifest,
-        'summary_json' => $inspection->counts(),
-        'output_log' => implode(PHP_EOL, $output),
-        'failure_message' => null,
-      ])->save();
+      if ($result->isFinished()) {
+        $inspection = $this->archiveInspector->inspect($archivePath);
+        $siteImport->forceFill([
+          'manifest_json' => $inspection->manifest,
+          'summary_json' => $inspection->counts(),
+        ])->save();
+      }
 
-      return $siteImport->fresh(['targetSite', 'user']);
-    } catch (Throwable $throwable) {
-      $output[] = 'Import failed: '.$throwable->getMessage();
-      $siteImport->forceFill([
-        'status' => SiteImport::STATUS_FAILED,
-        'output_log' => implode(PHP_EOL, $output),
-        'failure_message' => $throwable->getMessage(),
-      ])->save();
-
-      throw new RuntimeException($throwable->getMessage(), previous: $throwable);
+      return $result;
     } finally {
       $archive->close();
     }
+  }
+
+  /**
+   * Options an interrupted import must be resumed with.
+   *
+   * A resume arrives without the form that started the run, so the naming
+   * choices the operator made are read back from what the first step already
+   * wrote. Passing different options mid-import would rename the site under
+   * rows that already reference it.
+   */
+  public function resumeOptions(SiteImport $siteImport): SiteImportOptions
+  {
+    $manifest = $siteImport->manifest_json ?? [];
+
+    return SiteImportOptions::fromArray([
+      'site_name' => $siteImport->targetSite?->name ?? ($manifest['source_site_name'] ?? 'Imported Site'),
+      'site_handle' => $siteImport->imported_site_handle ?? ($manifest['source_site_handle'] ?? null),
+      'site_domain' => $siteImport->imported_site_domain,
+    ]);
+  }
+
+  /**
+   * Throw away what an unfinished import wrote, keeping the package.
+   *
+   * The counterpart to resuming. Chunked importing means a run that stops
+   * halfway leaves real rows and real files behind, so the operator needs a
+   * way to say "not this one" that actually cleans up — the old all-or-nothing
+   * import got this from its transaction rollback for free.
+   *
+   * Site rows go through SiteDeleteService so this shares the one audited
+   * deletion path, including its blockers. Media and copied files are removed
+   * separately because they are not site-owned: the import created them at
+   * install scope, and nothing else would ever collect them.
+   */
+  public function discardImportedSite(SiteImport $siteImport): SiteDeleteResult|bool
+  {
+    $state = $siteImport->resume_state ?? [];
+    $result = null;
+
+    if ($siteImport->target_site_id && $site = Site::query()->find($siteImport->target_site_id)) {
+      $result = $this->siteDeleteService->delete($site);
+
+      if (! $result->deleted) {
+        return $result;
+      }
+    }
+
+    foreach (array_values($state['maps']['asset'] ?? []) as $mediaId) {
+      Media::query()->whereKey($mediaId)->delete();
+    }
+
+    foreach (($state['copied_files'] ?? []) as $copied) {
+      [$disk, $path] = array_pad((array) $copied, 2, null);
+
+      if (! $path) {
+        continue;
+      }
+
+      if ($disk === 'public-root') {
+        File::delete(public_path($path));
+
+        continue;
+      }
+
+      Storage::disk((string) $disk)->delete($path);
+    }
+
+    // Back to the state the package was in right after it was inspected, so
+    // Run import starts a clean attempt rather than resuming into the rows
+    // that were just deleted.
+    $siteImport->forceFill([
+      'status' => SiteImport::STATUS_VALIDATED,
+      'resume_phase' => null,
+      'resume_offset' => 0,
+      'resume_state' => null,
+      'progress_done' => 0,
+      'progress_total' => 0,
+      'heartbeat_at' => null,
+      'target_site_id' => null,
+      'imported_site_handle' => null,
+      'imported_site_domain' => null,
+      'failure_message' => null,
+      'output_log' => null,
+    ])->save();
+
+    return $result ?? true;
   }
 
   public function delete(SiteImport $siteImport): void
