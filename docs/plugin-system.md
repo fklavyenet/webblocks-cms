@@ -208,6 +208,16 @@ Without a declaration the previous convention still applies: installed plugin vi
 
 Only enabled plugins contribute block views, and core block slugs are never affected by the lookup.
 
+## Plugin Block Type Catalog Rows
+
+Declaring a block type is not enough to make it placeable. Block pickers read the database catalog (`wbcms_block_types`), and `PluginBlockCatalog` only filters that list — it hides a plugin's blocks while the plugin is disabled but cannot add rows. `PluginBlockTypeCatalogSyncer` writes them, and `PluginRuntimeRefresher` runs it, so every plugin install, enable, disable, setup, and update ends with a catalog row for each declared block. `webblocks:catalog-repair --plugin-block-types` (included in `--all`) is the repair path for installs that predate this.
+
+Rows are written for every installed plugin, enabled or not: placement is already gated by the catalog filter, and blocks already on a page still need their type row to resolve. The row's `name`, `description`, `source_type`, `is_system`, and `is_container` describe what the block is and are re-synced from the plugin; `category`, `sort_order`, and `status` are written once at creation and then left to the operator, so retabbing, reordering, or drafting a block to hide it is not undone by a repair. A block's `category` defaults to `content` — picker tabs are keyed by category, and an unrecognized one leaves the block reachable only from the All tab — and a plugin that wants a different tab, sort order, container flag, or catalog slug says so in the block type's metadata (`category`, `sort_order`, `is_container`, `catalog_slug`).
+
+A plugin block handle is always namespaced, so its catalog slug cannot collide with a core slug by accident; the syncer refuses to write over a shipped core slug anyway, rather than letting a malformed plugin rewrite a core block type.
+
+Plugin block copy posts under `plugin_settings[...]`, never `settings[...]`. `BlockRequest` prohibits `settings` for a plugin block because that column is written by core from the sanitized plugin input; a plugin block editor that posts `settings` fails validation on every save rather than degrading.
+
 ## Package Convention Rules
 
 Plugin package conventions are separate from CMS core conventions. CMS core owns host contracts; plugins own their domain behavior.

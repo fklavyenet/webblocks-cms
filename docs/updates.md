@@ -95,7 +95,7 @@ An in-app System Update is a single one-click run: download and verify the relea
 
 If the apply or its verification fails, the updater automatically restores the pre-update backup. A failed-then-restored run is recorded with the `restored` status; when the automatic restore also fails, the run is recorded as `failed` with both error trails in the run log, and the pre-update backup remains available on the Backups screen for manual restore (or `php artisan system:backup:restore` on the CLI).
 
-Normal System Updates apply published release packages and, after the cache clear steps, run `webblocks:catalog-repair --all` as a subprocess against the freshly installed code. This keeps the database-backed block type, slot type, page layout, and icon catalogs aligned with the shipped catalog so a release can add catalog rows (for example the engagement Rating and Comments block types) without an operator having to run a manual command afterward. The sync runs after cache clears so the subprocess boots with a rebuilt service manifest and can discover newly registered package commands. It is idempotent and preserves install-specific/custom catalog rows.
+Normal System Updates apply published release packages and, after the cache clear steps, run `webblocks:catalog-repair --all` as a subprocess against the freshly installed code. This keeps the database-backed block type, plugin block type, slot type, page layout, and icon catalogs aligned with the shipped catalog so a release can add catalog rows (for example the engagement Rating and Comments block types) without an operator having to run a manual command afterward. The sync runs after cache clears so the subprocess boots with a rebuilt service manifest and can discover newly registered package commands. It is idempotent and preserves install-specific/custom catalog rows.
 
 The catalog sync is best-effort: because it runs after files and migrations have already succeeded, a catalog sync failure does not fail the update run. Instead the update log records that the sync did not complete and that `php artisan webblocks:catalog-repair --all` can be re-run manually. Schema changes still belong in explicit update migrations for the release; the catalog sync only repairs shipped catalog data rows, not schema.
 
@@ -154,7 +154,7 @@ php artisan webblocks:catalog-repair --dry-run --all
 php artisan webblocks:catalog-repair --all
 ```
 
-The command supports scoped maintenance with `--block-types`, `--slot-types`, `--page-layouts`, and `--icons`. Run with `--dry-run` first to report rows that would be created, updated, left unchanged, or skipped. The command is idempotent, preserves install-specific/custom catalog rows, and does not delete custom rows.
+The command supports scoped maintenance with `--block-types`, `--plugin-block-types`, `--slot-types`, `--page-layouts`, and `--icons`. Run with `--dry-run` first to report rows that would be created, updated, left unchanged, or skipped. The command is idempotent, preserves install-specific/custom catalog rows, and does not delete custom rows.
 
 The lower-level block type sync remains available for compatibility:
 

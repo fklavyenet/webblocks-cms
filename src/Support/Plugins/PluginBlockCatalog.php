@@ -110,7 +110,7 @@ class PluginBlockCatalog
   /**
    * @return array<int, PluginBlockTypeDefinition>
    */
-  private function blockTypeDefinitionsFor(PluginDefinition $plugin): array
+  public function blockTypeDefinitionsFor(PluginDefinition $plugin): array
   {
     $definitions = array_values($plugin->blockTypeDefinitions());
 
@@ -121,7 +121,7 @@ class PluginBlockCatalog
     return $definitions;
   }
 
-  private function catalogSlugForDefinition(PluginBlockTypeDefinition $blockType): string
+  public function catalogSlugForDefinition(PluginBlockTypeDefinition $blockType): string
   {
     $metadata = $blockType->metadataValues();
     $catalogSlug = $metadata['catalog_slug'] ?? null;

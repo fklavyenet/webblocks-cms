@@ -79,7 +79,9 @@ php artisan webblocks:catalog-repair --all
 php artisan block-types:sync-core
 ```
 
-`webblocks:catalog-repair` supports `--block-types`, `--slot-types`, `--page-layouts`, `--icons`, and `--all`. It reports created, updated, unchanged, and skipped rows, preserves install-specific custom catalog rows, and can be run repeatedly. `block-types:sync-core` remains as a lower-level compatibility command for the block type catalog.
+`webblocks:catalog-repair` supports `--block-types`, `--plugin-block-types`, `--slot-types`, `--page-layouts`, `--icons`, and `--all`. It reports created, updated, unchanged, and skipped rows, preserves install-specific custom catalog rows, and can be run repeatedly. `block-types:sync-core` remains as a lower-level compatibility command for the block type catalog.
+
+`--plugin-block-types` writes a catalog row for every block type declared by an installed plugin, enabled or not, so the block is placeable in the editor; a disabled plugin's blocks are still filtered out of pickers by `PluginBlockCatalog`. Plugin lifecycle actions (install, enable, disable, setup, update) already run this sync through `PluginRuntimeRefresher`, so the scope is a repair path rather than the normal one. A re-sync corrects the plugin-owned columns (`name`, `description`, `source_type`, `is_system`, `is_container`) and deliberately leaves `category`, `sort_order`, and `status` alone, so operator curation — retabbing a block, reordering it, or setting it to draft to hide it — survives repair.
 
 Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
 

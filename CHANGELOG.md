@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.5
+
+- **A plugin could declare a block type and still have no way to place it.** Block pickers read the `wbcms_block_types` catalog, and `PluginBlockCatalog` only ever filtered that list — it hid a plugin's blocks while the plugin was disabled, but nothing anywhere wrote the row in the first place. A plugin could ship a block, both its views, and its render path, and the block simply never appeared in any picker. `PluginBlockTypeCatalogSyncer` writes the rows now, and `PluginRuntimeRefresher` runs it, so install, enable, disable, setup, and update all end with the catalog matching what the installed plugins declare.
+- Rows are written for every installed plugin, enabled or not. Placement is already gated by the catalog filter, so a disabled plugin's block still stays out of pickers — and a block already placed on a page keeps a type row to resolve through instead of losing it the moment its plugin is switched off.
+- A re-sync corrects what the plugin owns (`name`, `description`, `source_type`, `is_system`, `is_container`) and leaves `category`, `sort_order`, and `status` as the operator left them. Repairing a catalog should not silently republish a block someone set to draft to hide, or drag it back out of the tab they moved it to.
+- `webblocks:catalog-repair --plugin-block-types`, included in `--all`, repairs installs that predate this — which is every install with a plugin block on it today. Updates already run `--all`, so the rows appear without an operator doing anything.
+- The syncer refuses to write over a shipped core slug. A namespaced plugin handle cannot collide with one by accident, but "cannot happen" is a poor reason to let a malformed plugin rewrite the Hero block.
+
 ## 1.45.4
 
 - **Every export failed validation.** The page picker always submits one empty `page_ids[]`, so that ticking nothing arrives as an explicit empty selection rather than as no selection at all — which means the whole site. That marker is not an id, and it hit `page_ids.*|integer`: "The page_ids.0 field must be an integer", on every export, whatever was ticked. The marker is filtered before validation now, and an empty selection still reaches the exporter as an empty selection.

@@ -46,6 +46,7 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
@@ -56,6 +57,7 @@ use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
@@ -975,6 +977,17 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     $this->app->singleton(PluginBlockCatalog::class, fn ($app): PluginBlockCatalog => new PluginBlockCatalog(
       $app->make(PluginRegistry::class)
+    ));
+
+    /*
+     * Deliberately not a singleton: it is resolved right after a plugin
+     * lifecycle change forgets the registry, and a memoized instance would
+     * sync the plugin set that the change replaced.
+     */
+    $this->app->bind(PluginBlockTypeCatalogSyncer::class, fn ($app): PluginBlockTypeCatalogSyncer => new PluginBlockTypeCatalogSyncer(
+      $app->make(PluginRegistry::class),
+      $app->make(PluginBlockCatalog::class),
+      $app->make(CoreBlockTypeCatalogSyncer::class)
     ));
 
     $this->app->singleton(PluginPublicAssetRegistry::class, fn ($app): PluginPublicAssetRegistry => new PluginPublicAssetRegistry(

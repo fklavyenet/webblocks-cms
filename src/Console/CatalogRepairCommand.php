@@ -10,6 +10,7 @@ class CatalogRepairCommand extends Command
   protected $signature = 'webblocks:catalog-repair
     {--dry-run : Report changes without writing catalog rows}
     {--block-types : Repair shipped block type catalog rows}
+    {--plugin-block-types : Repair catalog rows for block types declared by installed plugins}
     {--slot-types : Repair shipped slot type catalog rows}
     {--page-layouts : Repair shipped page layouts and managed layout slots}
     {--icons : Repair fallback WebBlocks UI icon catalog rows}
@@ -29,7 +30,7 @@ class CatalogRepairCommand extends Command
 
     if ($scopes === []) {
       $this->warn('No catalog scope selected. Re-run with --dry-run and one or more scopes, or use --all.');
-      $this->line('Available scopes: --block-types, --slot-types, --page-layouts, --icons, --all');
+      $this->line('Available scopes: --block-types, --plugin-block-types, --slot-types, --page-layouts, --icons, --all');
 
       return self::SUCCESS;
     }
@@ -54,10 +55,10 @@ class CatalogRepairCommand extends Command
   private function scopes(): array
   {
     if ($this->option('all')) {
-      return ['block-types', 'slot-types', 'page-layouts', 'icons'];
+      return ['block-types', 'plugin-block-types', 'slot-types', 'page-layouts', 'icons'];
     }
 
-    return collect(['block-types', 'slot-types', 'page-layouts', 'icons'])
+    return collect(['block-types', 'plugin-block-types', 'slot-types', 'page-layouts', 'icons'])
       ->filter(fn (string $scope) => (bool) $this->option($scope))
       ->values()
       ->all();

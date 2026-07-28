@@ -13,11 +13,13 @@ use WebBlocks\Cms\Models\PageLayoutSlot;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
+use WebBlocks\Cms\Support\Plugins\PluginBlockTypeCatalogSyncer;
 
 class CatalogRepairer
 {
   public function __construct(
     private readonly CoreBlockTypeCatalogSyncer $blockTypeSyncer,
+    private readonly PluginBlockTypeCatalogSyncer $pluginBlockTypeSyncer,
   ) {}
 
   public function repair(array $scopes, bool $dryRun = true): array
@@ -30,6 +32,7 @@ class CatalogRepairer
       foreach ($scopes as $scope) {
         $summary[$scope] = match ($scope) {
           'block-types' => $this->repairBlockTypes($dryRun),
+          'plugin-block-types' => $this->pluginBlockTypeSyncer->sync($dryRun),
           'slot-types' => $this->repairSlotTypes($dryRun),
           'page-layouts' => $this->repairPageLayouts($dryRun),
           'icons' => $this->repairIcons($dryRun),
