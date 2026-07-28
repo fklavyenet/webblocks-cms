@@ -101,7 +101,9 @@ The locking read is the real guard, and the only one that understands buffers an
 
 The unique index is on `(resource_id, slot_lock)`, not `(resource_id, starts_at)`. `slot_lock` mirrors `starts_at` only while the appointment occupies its slot and is NULL once it does not, which is what lets a cancelled appointment's time be rebooked; a unique index on `starts_at` itself would reject that. Both MySQL and SQLite allow many NULLs in a unique index, so this works on the production and test engines alike.
 
-The concurrency behaviour is not yet covered by an automated test: it needs a database and a CMS host, so verifying it means an integration test against an installed CMS. That is worth doing before the public booking form ships, since that is when concurrent submissions become real.
+The concurrency behaviour is covered by integration tests in the plugin repository, which run the real booker against the shipped migrations. The SQLite suite proves the overlap logic, the unique-index backstop, the exception translation, and cancel-then-rebook; the genuinely parallel race runs against MySQL behind an environment variable, because `lockForUpdate` compiles to nothing on SQLite. Two worker processes hold at a shared barrier so their transactions contend, and one round races on overlapping-but-different start instants — the only round that isolates the lock, since the unique index alone already covers an identical instant. Mutation-verified: removing the lock makes that round fail.
+
+Writing those tests found a schema bug that SQLite had hidden. MySQL enforces a 64-character limit on identifier names; the registry-reserved table prefix plus Laravel's generated index names exceeded it, so plugin setup would have failed on every MySQL install. Any plugin using the reserved prefix should name its indexes explicitly and test its migrations against MySQL rather than only SQLite.
 
 ## Public Surface
 

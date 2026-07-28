@@ -219,7 +219,7 @@ Plugin package conventions are separate from CMS core conventions. CMS core owns
 - Permission naming: every plugin permission starts with `{plugin-handle}.`, for example `analytics-tools.view`.
 - Settings conventions: settings namespaces are snake_case and default to the handle with dashes converted to underscores.
 - Command naming: resolvable Artisan command names must start with `{plugin-handle}:`, for example `analytics-tools:sync`.
-- Migration and table naming: tables use a registry-reserved snake_case prefix ending in `_`, defaulting to the handle converted to snake_case plus `_`.
+- Migration and table naming: tables use a registry-reserved snake_case prefix ending in `_`, defaulting to the handle converted to snake_case plus `_`. Name indexes and foreign keys explicitly, and keep them short. The reserved prefix consumes most of MySQL's 64-character identifier limit before a table name is spelled, and a generated name such as `webblocks_appointments_service_resource_service_id_resource_id_unique` overruns it. SQLite does not enforce the limit, so a plugin tested only against SQLite can ship migrations that fail on every real install.
 - Asset contributions: public asset handles are dot-namespaced with the plugin handle, and static files must publish under a plugin-owned path.
 - Dashboard and system card contributions: keys are dot-namespaced with the plugin handle and remain read-only unless a later extension contract adds editable behavior.
 
