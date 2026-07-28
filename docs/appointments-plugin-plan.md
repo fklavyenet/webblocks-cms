@@ -28,7 +28,7 @@ Contact Form living in core is not an argument for appointments living in core. 
 
 ## Phase 0 — Core Extension Points
 
-Six gaps in CMS core block the plugin — five identified up front, one found while building phase 3. All are core work, all are testable without the plugin existing, and every one is needed by any future plugin that wants a public surface, so this phase is not overhead specific to appointments.
+Six gaps were identified as blocking the plugin — five up front, one found while building phase 3. Five turned out to be real core work; 0.5 did not, and the correction is kept below rather than the entry quietly deleted. Every real one is needed by any future plugin that wants a public surface, so this phase is not overhead specific to appointments.
 
 **0.1 Plugin blocks cannot declare the views they render through.** *(Shipped in 1.43.0.)* The original reading of this gap was too strong. Plugin block views did already resolve: installed plugin view paths are appended to the CMS view namespace, and `PluginBlockCatalog` normalizes the handle `appointments::form` to the catalog slug `appointments-form`, so `Block::publicRenderView()` found `webblocks-cms::pages.partials.blocks.appointments-form` by convention. What did not work is that the `admin_view` and `public_view` a plugin declares were parsed and then ignored, leaving the plugin to mirror a core directory layout it does not own and guess the filename. Core now consults the plugin block registry first in both `publicRenderView()` and `adminFormView()`, honors a declared view that resolves, and falls back to the convention otherwise.
 
@@ -38,11 +38,11 @@ Six gaps in CMS core block the plugin — five identified up front, one found wh
 
 **0.4 Plugin blocks cannot own translatable fields.** `BlockTranslationRegistry` is a fixed `match` over core slugs, so a plugin block has no translation family and no translated field map. The MVP works around this: visitor-facing copy comes from the plugin's own translation namespace, which is already supported — `InstalledPluginDefinitionFactory` registers `resources/lang` under the plugin handle — with per-block overrides held in block settings. Real per-block translation for plugin blocks is a later core change, not an MVP dependency.
 
-**0.5 There is no queue or scheduler contract.** Core contains no queued jobs. Reminder delivery, expiry of unconfirmed holds, and no-show marking all need work that runs on a clock. The plugin ships an Artisan command driven by the host's cron rather than introducing a queue dependency; adopting queues is a core decision and is out of scope here.
+**0.5 There is no queue or scheduler contract.** *(Resolved without core work.)* Core contains no queued jobs, and reminder delivery needs work that runs on a clock. This was recorded as blocking reminders, which turned out to be too strong: core already registers plugin-declared commands through `PluginCommandRegistrar` and enforces the `{handle}:` prefix, so the plugin ships `webblocks-appointments:dispatch-reminders` and the host's cron runs it. What core genuinely lacks is a *scheduler* — something to run such a command automatically — which is a deployment step an operator supplies, not a code gap. Adopting queues remains a core decision and is still out of scope.
 
 **0.6 Plugin static assets are declarable but not servable.** Found while building phase 3. `PluginPublicAsset` emits a `<script>` or `<link>` tag for an enabled plugin, and the manifest documents an `assets` key, but nothing parses that key and nothing copies a plugin's files into the document root — so the emitted tag points at a 404. Until this is closed, a plugin cannot ship CSS or JavaScript, which is why the booking form is entirely server-rendered. Needed before any plugin wants a progressive enhancement, not just this one.
 
-Phases 0.1 and 0.2 shipped in `1.43.0`, and 0.3 in `1.43.1`. The remaining three — plugin block translations, the scheduler contract, and plugin asset publishing — target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
+Phases 0.1 and 0.2 shipped in `1.43.0`, and 0.3 in `1.43.1`. Phase 0.5 turned out to need no core work. The remaining two — plugin block translations and plugin asset publishing — are quality-of-life for future plugins rather than blockers, and target later `1.43.x` releases. The plugin declares `requiresCms('^1.43')`.
 
 ## Plugin Identity And Conventions
 
@@ -62,7 +62,7 @@ commands            webblocks-appointments:dispatch-reminders
 block handles       webblocks-appointments::form
 ```
 
-Phases 1 through 5 shipped as plugin `0.1.0` through `0.5.0`: the skeleton, the domain and slot engine, the public booking block, the operator screens, and notifications. Each phase's section below records what it actually built, including where it departed from this plan.
+All six phases shipped, as plugin `0.1.0` through `0.6.0`: the skeleton, the domain and slot engine, the public booking block, the operator screens, notifications, and reminders with visitor cancellation. Each phase's section below records what it actually built, including where it departed from this plan.
 
 ## Domain Model
 
@@ -152,7 +152,7 @@ The send itself is not covered by an automated test in the plugin repository: it
 
 ## Out Of Scope For v1
 
-Payments, two-way Google or Outlook calendar sync, staff logins, SMS, and recurring appointments are all excluded. Each one adds an external dependency and a permanent support burden, and none is needed for the problem this plugin exists to solve. Group capacity — more than one booking per slot — is the first candidate for v0.2.
+Payments, two-way Google or Outlook calendar sync, staff logins, SMS, and recurring appointments are all excluded. Each one adds an external dependency and a permanent support burden, and none is needed for the problem this plugin exists to solve. Group capacity — more than one booking per slot — is the first candidate for the next release, and rescheduling stays out because cancel-then-rebook already produces it through correct paths.
 
 ## Testing
 
@@ -160,6 +160,6 @@ Unit tests cover the slot engine, and they are the thickest part of the suite. F
 
 ## Delivery Order
 
-Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. Plugin phases 1 through 5 shipped as `0.1.0` through `0.5.0`. Only reminders remain.
+Phase 0.1 and 0.2 landed together in `1.43.0`, because they are the two halves of "a plugin can own a public surface" and neither is independently useful. Phase 0.3 followed in `1.43.1`. Plugin phases 1 through 6 shipped as `0.1.0` through `0.6.0`. The planned scope is complete.
 
-The three open core phases are pulled in when the phase that needs them arrives: 0.4 before per-block translated copy, 0.6 before any progressive enhancement of the booking form, and 0.5 before reminders — which is now the only thing on the critical path, since notifications send inline the way Contact Form already does.
+Two core phases remain open and neither blocks anything shipped: 0.4 before per-block translated copy, and 0.6 before any progressive enhancement of the booking form. Both are worth doing for the next plugin as much as for this one.
