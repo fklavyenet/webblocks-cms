@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.43.2
+
+- **Importing a site was quadratic, and the cost was the search index.** Every block, translation and slot save reindexes the whole page it belongs to — correct for an editor changing one block, ruinous for a bulk writer. Importing this project's own site (7726 blocks and 4526 text translations over 72 pages) therefore walked each page's full block tree once per row it wrote, and took **7m54s of pure CPU**. Behind a web request that is a 504 with a rolled-back transaction and orphaned media files; the import never had a chance to finish.
+- `PublicSearchIndexer::deferring()` runs a bulk write with the reactive path switched off. It is a nesting-safe counter released in a `finally`, so a failed import resumes indexing. Only `refreshPage()` and `refreshSharedSlot()` — the entry points the ten model save hooks call — honour it. `rebuild()` and `rebuildPage()` never do: they are what the bulk writer calls when it is finished, and gating them would leave the imported pages out of the index permanently.
+- The site import now defers its transaction and rebuilds the index **once after the commit**, so the work reads committed rows and stays outside the transaction. Same import: **28s**, 16.6x faster, with an index that is byte-identical to the incrementally built one (22 rows, same 215592 characters of content, zero rows differing in either direction).
+- The gate lives in the indexer rather than in the models, so no save hook changed and any future bulk writer gets the same escape.
+
 ## 1.43.1
 
 - Give each site its own timezone. `System Settings` held one timezone for the whole install, which is wrong for a multisite install whose sites run in different regions and blocks anything time-bound from being correct. Sites now carry a nullable `timezone` column with a picker on the Edit Site form; blank keeps following the install.
