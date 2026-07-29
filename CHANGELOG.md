@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.7
+
+- **Deleting a Shared Slot asked through the browser's own dialog.** "Delete this Shared Slot?" — no name, no handle, and no hint that the server refuses the delete while a page slot still references it, which you found out by pressing OK and landing on a validation error. Ten destructive actions now open the CMS confirmation modal and name the record they are about to act on: Shared Slot delete and revision restore, block delete from the list and from the page outline, locale delete, navigation item delete, page revision restore, backup restore, and restore-history delete.
+- The Shared Slot delete modal reports how many page slots still reference the slot and disables its own submit when there are any, so the block the controller already enforces is visible before the click rather than after it.
+- The backup restore acknowledgement moved into the modal. It is the checkbox the server actually validates, so it belongs in the form that posts rather than sitting on the page behind a `confirm()` that duplicated the same question.
+- `form-actions` dropped its `deleteConfirm` prop. Nothing in the package passed it, and leaving it in place would keep a supported route back to `window.confirm`.
+- `DestructiveConfirmationModalTest` sweeps every Blade view for a `confirm(` call — that is what caught the two Shared Slot revision screens after the delete itself was already done — and asserts each converted screen registers the modal id its trigger targets, since a trigger whose modal is never pushed is a dead button.
+
 ## 1.45.6
 
 - **The capability badges on CMS API Tokens were server-rendered and then never updated.** Ticking every box in a group left its badge reading `0/5`, and the `8/28 selected` total beside the Capabilities heading stayed at whatever the page loaded with — so the only way to know what a token was about to get was to open all six accordions and count. `api-token-capabilities.js` recomputes each group badge and the total on every change, in the Create Token card and in each Edit API Token modal, through one delegated listener so modals in the overlay root are covered too.
