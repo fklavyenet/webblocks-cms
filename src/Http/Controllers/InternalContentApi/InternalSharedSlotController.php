@@ -7,11 +7,14 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -26,6 +29,7 @@ class InternalSharedSlotController extends Controller
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly SharedSlotRevisionManager $revisionManager,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
+    private readonly CmsApiTokenCapabilities $capabilities,
   ) {}
 
   public function index(Request $request): JsonResponse
@@ -169,6 +173,71 @@ class InternalSharedSlotController extends Controller
       'ok' => true,
       'page_slot' => $this->presenter->pageSlot($pageSlot),
       'writes' => [['type' => 'page_slot_shared_slot', 'id' => $pageSlot->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  /**
+   * Writes a page slot's content source.
+   *
+   * assignToPageSlot() could bind a slot to a Shared Slot but nothing could
+   * unbind it: setting the source back to page-owned or disabled lived only on
+   * the session-authenticated admin route, so an API client could create a
+   * reference it had no way to undo. This closes that, and handles all three
+   * source types so the field has one endpoint rather than a write path per
+   * value.
+   */
+  public function updatePageSlotSource(Request $request, Page $page, string $slot): JsonResponse
+  {
+    $sourceType = PageSlot::normalizeSourceType($request->input('source_type'));
+
+    if (! in_array($sourceType, PageSlot::sourceTypes(), true)) {
+      return $this->validationError([[
+        'path' => 'page_slot.source_type',
+        'message' => 'Source type must be one of: '.implode(', ', PageSlot::sourceTypes()).'.',
+      ]]);
+    }
+
+    if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+      // Binding stays gated on shared-slots.write, exactly as the dedicated
+      // assign endpoint is. Unbinding is a content-structure change and needs
+      // only content.apply, which the route already requires.
+      if (! $this->hasCapability($request, CmsApiTokenCapabilities::SHARED_SLOTS_WRITE)) {
+        return $this->capabilityError(
+          CmsApiTokenCapabilities::SHARED_SLOTS_WRITE,
+          'Pointing a page slot at a Shared Slot requires shared-slots.write.',
+        );
+      }
+
+      return $this->assignToPageSlot($request, $page, $slot);
+    }
+
+    $pageSlot = $page->slots()->with('slotType')->get()
+      ->first(fn (PageSlot $candidate) => $candidate->slotSlug() === $slot);
+
+    if (! $pageSlot) {
+      return $this->validationError([[
+        'path' => 'page_slot.slot',
+        'message' => 'Page slot must exist before changing its source.',
+      ]]);
+    }
+
+    DB::transaction(function () use ($page, $pageSlot, $sourceType): void {
+      $pageSlot->update([
+        'source_type' => $sourceType,
+        'shared_slot_id' => null,
+      ]);
+
+      // Blocks the page already owns are untouched either way: page-owned
+      // renders them again, disabled keeps the wrapper and renders nothing.
+      $page->forceFill(['updated_by_user_id' => null])->save();
+    });
+
+    return response()->json([
+      'ok' => true,
+      'page_slot' => $this->presenter->pageSlot($pageSlot->fresh(['slotType'])),
+      'writes' => [['type' => 'page_slot_source', 'id' => $pageSlot->id]],
       'warnings' => [],
       'errors' => [],
     ]);
@@ -365,6 +434,25 @@ class InternalSharedSlotController extends Controller
     return Site::query()
       ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
       ->first();
+  }
+
+  private function hasCapability(Request $request, string $capability): bool
+  {
+    $token = $request->attributes->get('cms_api_token');
+
+    return $token instanceof CmsApiToken && $this->capabilities->has($token, $capability);
+  }
+
+  private function capabilityError(string $capability, string $message): JsonResponse
+  {
+    return response()->json([
+      'ok' => false,
+      'code' => 'missing_internal_api_capability',
+      'message' => $message,
+      'required_capability' => $capability,
+      'warnings' => [],
+      'errors' => [['path' => 'Authorization', 'message' => $message]],
+    ], 403);
   }
 
   private function ok(array $data): JsonResponse

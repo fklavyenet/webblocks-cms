@@ -186,6 +186,7 @@ GET /webadmin/api/pages/{page}
 POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
+PUT /webadmin/api/pages/{page}/slots/{slot}/source
 GET /webadmin/api/pages/{page}/assets
 POST /webadmin/api/pages/{page}/assets/{type}
 PATCH /webadmin/api/pages/{page}/assets/{pageAsset}
@@ -723,6 +724,7 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 - `GET /webadmin/api/pages/{page}`
 - `POST /webadmin/api/pages/{page}/sync-layout-slots`
 - `POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot`
+- `PUT /webadmin/api/pages/{page}/slots/{slot}/source`
 
 ### Block Endpoints
 
@@ -759,9 +761,12 @@ Shared Slot creation is site-scoped and refuses duplicate handles for the same s
 
 ```text
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
+PUT  /webadmin/api/pages/{page}/slots/{slot}/source
 ```
 
-The endpoint assigns an existing compatible same-site active Shared Slot to an existing page slot. It does not publish the page. It refuses cross-site, inactive, and incompatible Shared Slots. It also refuses to switch a slot that still has page-owned blocks, because Phase 2A does not delete or replace those blocks automatically.
+The `shared-slot` endpoint assigns an existing compatible same-site active Shared Slot to an existing page slot. It does not publish the page. It refuses cross-site, inactive, and incompatible Shared Slots. It also refuses to switch a slot that still has page-owned blocks, because Phase 2A does not delete or replace those blocks automatically.
+
+`PUT .../source` writes the slot's content source and is the way back out: `source_type` accepts `page`, `shared_slot`, or `disabled`. It requires `content.apply`, and `shared_slot` additionally requires `shared-slots.write` and the same compatibility rules as the assign endpoint, which it delegates to. Detaching clears `shared_slot_id` and leaves page-owned blocks untouched, so `page` renders them again and `disabled` keeps the slot wrapper with nothing inside. Before this endpoint existed the API could create a Shared Slot reference it had no way to remove — the only exit was the session-authenticated admin screen.
 
 If the page layout contains a slot such as `header` but the page record was created before that Page Slot existed, call `POST /webadmin/api/pages/{page}/sync-layout-slots` first. Slot sync is idempotent and only creates missing Page Slots from the selected Page Layout; it never deletes existing slots, blocks, disabled states, Shared Slot assignments, translations, or revisions. For a new Shared Slot header, publish the Shared Slot blocks explicitly before expecting public output.
 
