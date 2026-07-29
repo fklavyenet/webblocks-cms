@@ -12,10 +12,13 @@
 <div class="wb-cluster wb-cluster-2">
     <a href="{{ $historyUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('back_to_revision_history') }}</a>
     @if ($canRestoreRevisions)
-        <form method="POST" action="{{ route('admin.shared-slots.revisions.restore', [$sharedSlot, $revision]) }}" onsubmit="return confirm('{{ $adminText('restore_confirm') }}');">
-            @csrf
-            <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('restore_revision') }}</button>
-        </form>
+        <button
+            type="button"
+            class="wb-btn wb-btn-secondary"
+            data-wb-toggle="modal"
+            data-wb-target="#restore-shared-slot-revision-{{ $revision->id }}"
+            aria-haspopup="dialog"
+        >{{ $adminText('restore_revision') }}</button>
     @endif
 </div>
 @php
@@ -102,3 +105,12 @@
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    @if ($canRestoreRevisions)
+        @include('webblocks-cms::admin.shared-slots.partials.restore-revision-modal', [
+            'sharedSlot' => $sharedSlot,
+            'revision' => $revision,
+        ])
+    @endif
+@endpush

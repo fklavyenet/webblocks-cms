@@ -80,10 +80,13 @@
                                     </td>
                                     <td>
                                         @if ($canRestoreRevisions)
-                                            <form method="POST" action="{{ route('admin.shared-slots.revisions.restore', [$sharedSlot, $revision]) }}" onsubmit="return confirm('{{ $adminText('restore_confirm') }}');">
-                                                @csrf
-                                                <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('restore') }}</button>
-                                            </form>
+                                            <button
+                                                type="button"
+                                                class="wb-btn wb-btn-secondary"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#restore-shared-slot-revision-{{ $revision->id }}"
+                                                aria-haspopup="dialog"
+                                            >{{ $adminText('restore') }}</button>
                                         @else
                                             <span class="wb-text-sm wb-text-muted">{{ $adminText('view_only') }}</span>
                                         @endif
@@ -97,3 +100,14 @@
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    @if ($canRestoreRevisions)
+        @foreach ($revisions as $revision)
+            @include('webblocks-cms::admin.shared-slots.partials.restore-revision-modal', [
+                'sharedSlot' => $sharedSlot,
+                'revision' => $revision,
+            ])
+        @endforeach
+    @endif
+@endpush

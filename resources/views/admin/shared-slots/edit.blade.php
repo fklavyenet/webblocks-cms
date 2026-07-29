@@ -52,17 +52,27 @@
 
             <div class="wb-card">
                 <div class="wb-card-header"><strong>{{ $adminText('danger_zone') }}</strong></div>
-                <form method="POST" action="{{ route('admin.shared-slots.destroy', $sharedSlot) }}" class="wb-stack wb-gap-0" onsubmit="return confirm('{{ $adminText('delete_confirm') }}');">
-                    @csrf
-                    @method('DELETE')
-                    <div class="wb-card-body wb-stack wb-gap-3">
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('delete_blocked_help') }}</div>
-                    </div>
-                    <div class="wb-card-footer">
-                        <x-webblocks-cms::admin.form-actions :cancel-url="$indexUrl" :show-submit="false" :delete-submit="true" :delete-label="$adminText('delete_shared_slot')" />
-                    </div>
-                </form>
+                <div class="wb-card-body wb-stack wb-gap-3">
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('delete_blocked_help') }}</div>
+                </div>
+                <div class="wb-card-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
+                    <button
+                        type="button"
+                        class="wb-btn wb-btn-danger"
+                        data-wb-toggle="modal"
+                        data-wb-target="#delete-shared-slot-{{ $sharedSlot->id }}"
+                        aria-haspopup="dialog"
+                    >{{ $adminText('delete_shared_slot') }}</button>
+                    <a href="{{ $indexUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('cancel') }}</a>
+                </div>
             </div>
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    @include('webblocks-cms::admin.shared-slots.partials.delete-modal', [
+        'sharedSlot' => $sharedSlot,
+        'referenceCount' => (int) ($sharedSlot->page_slots_count ?? 0),
+    ])
+@endpush

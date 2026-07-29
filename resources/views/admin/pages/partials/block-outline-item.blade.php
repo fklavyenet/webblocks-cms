@@ -46,15 +46,39 @@
                         <i class="wb-icon wb-icon-plus" aria-hidden="true"></i>
                     </a>
 
-                    <form method="POST" action="{{ route('admin.blocks.destroy', $item['block']) }}" onsubmit="return confirm(@js($inlineBlocksText('delete_confirm')));">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $inlineBlocksText('delete') }}" aria-label="{{ $inlineBlocksText('delete') }}">
-                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                        </button>
-                    </form>
+                    <button
+                        type="button"
+                        class="wb-action-btn wb-action-btn-delete"
+                        data-wb-toggle="modal"
+                        data-wb-target="#delete-outline-block-{{ $item['block']->id }}"
+                        title="{{ $inlineBlocksText('delete') }}"
+                        aria-label="{{ $inlineBlocksText('delete') }}"
+                        aria-haspopup="dialog"
+                    >
+                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
+
+            {{-- The outline recurses, so each level registers its own confirmation. --}}
+            @push('overlays')
+                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                    'id' => 'delete-outline-block-'.$item['block']->id,
+                    'title' => $inlineBlocksText('delete_title'),
+                    'description' => $inlineBlocksText('delete_description'),
+                    'action' => route('admin.blocks.destroy', $item['block']),
+                    'method' => 'DELETE',
+                    'submitLabel' => $inlineBlocksText('delete'),
+                ])
+                    <p>{{ $inlineBlocksText('delete_confirm_prefix') }} <strong>{{ $item['block']->title ?: ($item['block']->blockType?->name ?? ucfirst($item['block']->type)) }}</strong> (#{{ $item['block']->id }})? {{ $inlineBlocksText('cannot_be_undone') }}</p>
+
+                    @if ($item['children']->isNotEmpty())
+                        <div class="wb-alert wb-alert-warning">
+                            {{ $inlineBlocksText('delete_children_warning', ['count' => $item['children']->count()]) }}
+                        </div>
+                    @endif
+                @endcomponent
+            @endpush
 
             @if ($item['children']->isNotEmpty())
                 <div class="wb-stack wb-stack-2">

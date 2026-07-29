@@ -173,7 +173,9 @@ class SharedSlotController extends Controller
     $this->authorization->abortUnlessSiteAccess(request()->user(), $sharedSlot);
 
     return view('webblocks-cms::admin.shared-slots.edit', [
-      'sharedSlot' => $sharedSlot->load('site'),
+      // page_slots_count drives the delete modal, which reports how many page slots
+      // still reference this Shared Slot rather than letting the guarded delete fail.
+      'sharedSlot' => $sharedSlot->load('site')->loadCount('pageSlots'),
       'sites' => $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), request()->user())->get(),
       'canManageSharedSlots' => $this->canManageSharedSlots(request()->user()),
       'canDeleteSharedSlot' => $this->canManageSharedSlots(request()->user()),

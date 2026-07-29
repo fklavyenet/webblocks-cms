@@ -111,23 +111,22 @@
                 <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.selected_backup') }}: <strong>{{ $backup->archive_filename ?? $adminText('backups.backup_number', ['id' => $backup->id]) }}</strong> {{ $adminText('backups.at') }} <code>{{ $displayArchivePath !== '-' ? $displayArchivePath : $adminText('backups.archive_unavailable') }}</code></div>
 
                 @if ($canRestore)
-                    <form method="POST" action="{{ route('admin.system.backups.restore', $backup) }}" class="wb-stack wb-gap-3" onsubmit="return confirm(@json($adminText('backups.restore_confirm')));" data-wb-restore-form>
-                        @csrf
-
-                        <label class="wb-check" for="acknowledge_restore_risk">
-                            <input id="acknowledge_restore_risk" type="checkbox" name="acknowledge_restore_risk" value="1" required {{ old('acknowledge_restore_risk') ? 'checked' : '' }} data-wb-restore-ack>
-                            <span>{{ $adminText('backups.acknowledge_restore_risk') }}</span>
-                        </label>
-
+                    <div class="wb-stack wb-gap-3">
                         <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.restore_process_help') }}</div>
 
                         <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                             <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
                                 <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('common.cancel') }}</a>
-                                <button type="submit" class="wb-btn wb-btn-danger" data-wb-restore-submit @disabled(! old('acknowledge_restore_risk'))>{{ $adminText('backups.restore_backup') }}</button>
+                                <button
+                                    type="button"
+                                    class="wb-btn wb-btn-danger"
+                                    data-wb-toggle="modal"
+                                    data-wb-target="#restore-backup-{{ $backup->id }}"
+                                    aria-haspopup="dialog"
+                                >{{ $adminText('backups.restore_backup') }}</button>
                             </div>
                         </div>
-                    </form>
+                    </div>
                 @else
                     <div class="wb-alert wb-alert-warning">
                         <div>
@@ -181,13 +180,17 @@
                                         <td>{{ $restoreRun->durationLabel() }}</td>
                                         <td>
                                             <div class="wb-action-group">
-                                                <form method="POST" action="{{ route('admin.system.backups.restores.destroy', [$backup, $restoreRun]) }}" onsubmit="return confirm(@json($adminText('backups.delete_restore_history_confirm')));">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('backups.delete_restore_history') }}" aria-label="{{ $adminText('backups.delete_restore_history') }}">
-                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                    </button>
-                                                </form>
+                                                <button
+                                                    type="button"
+                                                    class="wb-action-btn wb-action-btn-delete"
+                                                    data-wb-toggle="modal"
+                                                    data-wb-target="#delete-restore-run-{{ $restoreRun->id }}"
+                                                    title="{{ $adminText('backups.delete_restore_history') }}"
+                                                    aria-label="{{ $adminText('backups.delete_restore_history') }}"
+                                                    aria-haspopup="dialog"
+                                                >
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -214,6 +217,47 @@
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    @if ($canRestore)
+        {{-- The acknowledgement moved into the modal so it stays the real guard the
+             server checks, instead of a checkbox on the page plus a browser confirm. --}}
+        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+            'id' => 'restore-backup-'.$backup->id,
+            'title' => $adminText('backups.restore_title'),
+            'description' => $adminText('backups.restore_description'),
+            'action' => route('admin.system.backups.restore', $backup),
+            'method' => 'POST',
+            'submitLabel' => $adminText('backups.restore_backup'),
+            'formAttributes' => ['data-wb-restore-form' => true],
+            'submitAttributes' => ['data-wb-restore-submit' => true, 'disabled' => true],
+        ])
+            <p>{{ $adminText('backups.restore_confirm_prefix') }} <strong>{{ $backup->archive_filename ?? $adminText('backups.backup_number', ['id' => $backup->id]) }}</strong>?</p>
+
+            <div class="wb-alert wb-alert-danger">
+                {{ $adminText('backups.restore_backup_warning') }}
+            </div>
+
+            <label class="wb-check" for="acknowledge_restore_risk">
+                <input id="acknowledge_restore_risk" type="checkbox" name="acknowledge_restore_risk" value="1" required data-wb-restore-ack>
+                <span>{{ $adminText('backups.acknowledge_restore_risk') }}</span>
+            </label>
+        @endcomponent
+    @endif
+
+    @foreach ($restoreRuns as $restoreRun)
+        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+            'id' => 'delete-restore-run-'.$restoreRun->id,
+            'title' => $adminText('backups.delete_restore_history_title'),
+            'description' => $adminText('backups.delete_restore_history_description'),
+            'action' => route('admin.system.backups.restores.destroy', [$backup, $restoreRun]),
+            'method' => 'DELETE',
+            'submitLabel' => $adminText('backups.delete_restore_history'),
+        ])
+            <p>{{ $adminText('backups.delete_restore_history_confirm_prefix') }} <strong>#{{ $restoreRun->id }}</strong> ({{ $restoreRun->started_at?->format('Y-m-d H:i:s') ?? '-' }})? {{ $adminText('backups.delete_restore_history_note') }}</p>
+        @endcomponent
+    @endforeach
+@endpush
 
 @push('scripts')
     <script>

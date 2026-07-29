@@ -13,7 +13,6 @@
   'deleteSubmit' => false,
   'deleteLabel' => 'Delete',
   'deleteMethod' => 'DELETE',
-  'deleteConfirm' => null,
   'deleteDisabled' => false,
   'deleteAttributes' => [],
   'containerClass' => 'wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
@@ -55,7 +54,7 @@
       <button type="{{ $submitType }}" class="wb-btn wb-btn-primary" @disabled($submitDisabled){!! $submitAttributesString ? ' '.$submitAttributesString : '' !!}>{{ $submitLabel }}</button>
     @elseif ($hasDeleteAction)
       @if ($deleteFormAction)
-        <form method="POST" action="{{ $deleteFormAction }}" @if ($deleteConfirm) onsubmit="return confirm({{ \Illuminate\Support\Js::from($deleteConfirm) }});" @endif>
+        <form method="POST" action="{{ $deleteFormAction }}">
           @csrf
           @if (strtoupper($deleteMethod) !== 'POST')
             @method($deleteMethod)
@@ -63,14 +62,13 @@
           <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
         </form>
       @elseif ($deleteSubmit)
-        <button type="submit" class="wb-btn wb-btn-danger" @if ($deleteConfirm) onclick="return confirm({{ \Illuminate\Support\Js::from($deleteConfirm) }});" @endif @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
+        <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref && $deleteDisabled)
         <button type="button" class="wb-btn wb-btn-danger" disabled{!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref)
         <a
           href="{{ $deleteHref }}"
           class="wb-btn wb-btn-danger"
-          @if ($deleteConfirm) onclick="return confirm({{ \Illuminate\Support\Js::from($deleteConfirm) }});" @endif
           {!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}
         >{{ $deleteLabel }}</a>
       @endif
@@ -86,7 +84,7 @@
   @if ($showSubmit && $hasDeleteAction)
     <div class="{{ $dangerGroupClass }}" data-admin-form-actions-danger>
       @if ($deleteFormAction)
-        <form method="POST" action="{{ $deleteFormAction }}" @if ($deleteConfirm) onsubmit="return confirm({{ \Illuminate\Support\Js::from($deleteConfirm) }});" @endif>
+        <form method="POST" action="{{ $deleteFormAction }}">
           @csrf
           @if (strtoupper($deleteMethod) !== 'POST')
             @method($deleteMethod)
@@ -94,14 +92,13 @@
           <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
         </form>
       @elseif ($deleteSubmit)
-        <button type="submit" class="wb-btn wb-btn-danger" @if ($deleteConfirm) onclick="return confirm({{ \Illuminate\Support\Js::from($deleteConfirm) }});" @endif @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
+        <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref && $deleteDisabled)
         <button type="button" class="wb-btn wb-btn-danger" disabled{!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref)
         <a
           href="{{ $deleteHref }}"
           class="wb-btn wb-btn-danger"
-          @if ($deleteConfirm) onclick="return confirm({{ \Illuminate\Support\Js::from($deleteConfirm) }});" @endif
           {!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}
         >{{ $deleteLabel }}</a>
       @endif

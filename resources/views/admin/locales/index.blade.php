@@ -102,13 +102,17 @@
                                         @endif
 
                                         @if ($report?->canDelete())
-                                            <form method="POST" action="{{ route('admin.locales.destroy', $locale) }}" onsubmit="return confirm(@js($localesIndexText('delete_confirm')));">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $localesIndexText('delete_locale') }}" aria-label="{{ $localesIndexText('delete_locale') }}">
-                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                </button>
-                                            </form>
+                                            <button
+                                                type="button"
+                                                class="wb-action-btn wb-action-btn-delete"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#delete-locale-{{ $locale->id }}"
+                                                title="{{ $localesIndexText('delete_locale') }}"
+                                                aria-label="{{ $localesIndexText('delete_locale') }}"
+                                                aria-haspopup="dialog"
+                                            >
+                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                            </button>
                                         @else
                                             <span class="wb-action-btn wb-action-btn-delete" aria-disabled="true" title="{{ $report?->deleteBlockedReason() ?? $localesIndexText('delete_blocked') }}">
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
@@ -126,3 +130,26 @@
         @include('webblocks-cms::admin.partials.pagination', ['paginator' => $locales])
     </div>
 @endsection
+
+@push('overlays')
+    @foreach ($locales as $locale)
+        @php($report = $reports->get($locale->id))
+
+        @if ($report?->canDelete())
+            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                'id' => 'delete-locale-'.$locale->id,
+                'title' => $localesIndexText('delete_title'),
+                'description' => $localesIndexText('delete_description'),
+                'action' => route('admin.locales.destroy', $locale),
+                'method' => 'DELETE',
+                'submitLabel' => $localesIndexText('delete_locale'),
+            ])
+                <p>{{ $localesIndexText('delete_confirm_prefix') }} <strong>{{ $locale->name }}</strong> (<code>{{ $locale->code }}</code>)? {{ $localesIndexText('cannot_be_undone') }}</p>
+
+                <div class="wb-alert wb-alert-warning">
+                    {{ $localesIndexText('delete_unused_warning') }}
+                </div>
+            @endcomponent
+        @endif
+    @endforeach
+@endpush

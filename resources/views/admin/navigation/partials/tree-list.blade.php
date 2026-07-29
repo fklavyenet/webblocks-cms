@@ -42,13 +42,38 @@
                         <button type="submit" class="wb-action-btn" title="{{ $item->isVisible() ? $navigationItemsText('hide_item') : $navigationItemsText('show_item') }}" aria-label="{{ $item->isVisible() ? $navigationItemsText('hide_item') : $navigationItemsText('show_item') }}"><i class="wb-icon {{ $item->isVisible() ? 'wb-icon-eye-off' : 'wb-icon-eye' }}" aria-hidden="true"></i></button>
                     </form>
 
-                    <form method="POST" action="{{ route('admin.navigation.destroy', $item) }}" onsubmit="return confirm(@js($navigationItemsText('delete_confirm')));">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $navigationItemsText('delete_item') }}" aria-label="{{ $navigationItemsText('delete_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                    </form>
+                    <button
+                        type="button"
+                        class="wb-action-btn wb-action-btn-delete"
+                        data-wb-toggle="modal"
+                        data-wb-target="#delete-navigation-item-{{ $item->id }}"
+                        title="{{ $navigationItemsText('delete_item') }}"
+                        aria-label="{{ $navigationItemsText('delete_item') }}"
+                        aria-haspopup="dialog"
+                    ><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                 </div>
             </div>
+
+            {{-- The tree recurses, so each level pushes its own confirmations and a
+                 nested item's modal is registered exactly once. --}}
+            @push('overlays')
+                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                    'id' => 'delete-navigation-item-'.$item->id,
+                    'title' => $navigationItemsText('delete_title'),
+                    'description' => $navigationItemsText('delete_description'),
+                    'action' => route('admin.navigation.destroy', $item),
+                    'method' => 'DELETE',
+                    'submitLabel' => $navigationItemsText('delete_item'),
+                ])
+                    <p>{{ $navigationItemsText('delete_confirm_prefix') }} <strong>{{ $item->resolvedTitle() }}</strong>? {{ $navigationItemsText('cannot_be_undone') }}</p>
+
+                    @if ($item->children->isNotEmpty())
+                        <div class="wb-alert wb-alert-warning">
+                            {{ $navigationItemsText('delete_children_warning', ['count' => $item->children->count()]) }}
+                        </div>
+                    @endif
+                @endcomponent
+            @endpush
 
             @if ($item->children->isNotEmpty())
                 @include('webblocks-cms::admin.navigation.partials.tree-list', ['items' => $item->children, 'depth' => $depth + 1])

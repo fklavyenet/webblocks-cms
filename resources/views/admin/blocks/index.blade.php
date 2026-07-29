@@ -126,7 +126,7 @@
                                      <td>
                                          <div class="wb-action-group">
                                              <a href="{{ route('admin.blocks.edit', $block) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blocksIndexText('edit_block') }}" aria-label="{{ $blocksIndexText('edit_block') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                              <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('{{ $blocksIndexText('delete_confirm') }}');">@csrf @method('DELETE')<button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $blocksIndexText('delete_block') }}" aria-label="{{ $blocksIndexText('delete_block') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button></form>
+                                              <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-block-{{ $block->id }}" title="{{ $blocksIndexText('delete_block') }}" aria-label="{{ $blocksIndexText('delete_block') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                           </div>
                                       </td>
                                 </tr>
@@ -140,3 +140,24 @@
         </div>
     @endif
 @endsection
+
+@push('overlays')
+    @foreach ($blocks as $block)
+        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+            'id' => 'delete-block-'.$block->id,
+            'title' => $blocksIndexText('delete_title'),
+            'description' => $blocksIndexText('delete_description'),
+            'action' => route('admin.blocks.destroy', $block),
+            'method' => 'DELETE',
+            'submitLabel' => $blocksIndexText('delete_block'),
+        ])
+            <p>{{ $blocksIndexText('delete_confirm_prefix') }} <strong>{{ str($block->type)->replace('-', ' ')->headline() }}</strong> (#{{ $block->id }})? {{ $blocksIndexText('cannot_be_undone') }}</p>
+
+            @if ($block->children->isNotEmpty())
+                <div class="wb-alert wb-alert-warning">
+                    {{ $blocksIndexText('delete_children_warning', ['count' => $block->children->count()]) }}
+                </div>
+            @endif
+        @endcomponent
+    @endforeach
+@endpush

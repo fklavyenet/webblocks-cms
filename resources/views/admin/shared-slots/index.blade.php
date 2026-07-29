@@ -166,11 +166,17 @@
                                         <div class="wb-action-group">
                                             <a href="{{ route('admin.shared-slots.edit', $sharedSlot) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout" aria-hidden="true"></i></a>
-                                            <form method="POST" action="{{ route('admin.shared-slots.destroy', $sharedSlot) }}" onsubmit="return confirm('{{ $adminText('delete_confirm') }}');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('delete_shared_slot') }}" aria-label="{{ $adminText('delete_shared_slot') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                                            </form>
+                                            <button
+                                                type="button"
+                                                class="wb-action-btn wb-action-btn-delete"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#delete-shared-slot-{{ $sharedSlot->id }}"
+                                                title="{{ $adminText('delete_shared_slot') }}"
+                                                aria-label="{{ $adminText('delete_shared_slot') }}"
+                                                aria-haspopup="dialog"
+                                            >
+                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -185,3 +191,14 @@
     @endif
     @endif
 @endsection
+
+@push('overlays')
+    @if ($sharedSlotsReady && $sharedSlots)
+        @foreach ($sharedSlots as $sharedSlot)
+            @include('webblocks-cms::admin.shared-slots.partials.delete-modal', [
+                'sharedSlot' => $sharedSlot,
+                'referenceCount' => (int) ($sharedSlot->page_slots_count ?? 0),
+            ])
+        @endforeach
+    @endif
+@endpush

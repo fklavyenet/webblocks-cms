@@ -75,10 +75,13 @@
                                     </td>
                                     <td>
                                         @if ($canRestoreRevisions)
-                                            <form method="POST" action="{{ route('admin.pages.revisions.restore', [$page, $revision]) }}" onsubmit="return confirm('{{ $adminText('restore_confirm') }}');">
-                                                @csrf
-                                                <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('restore') }}</button>
-                                            </form>
+                                            <button
+                                                type="button"
+                                                class="wb-btn wb-btn-secondary"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#restore-page-revision-{{ $revision->id }}"
+                                                aria-haspopup="dialog"
+                                            >{{ $adminText('restore') }}</button>
                                         @else
                                             <span class="wb-text-sm wb-text-muted">{{ $adminText('view_only') }}</span>
                                         @endif
@@ -92,3 +95,31 @@
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    @if ($canRestoreRevisions)
+        @foreach ($revisions as $revision)
+            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                'id' => 'restore-page-revision-'.$revision->id,
+                'title' => $adminText('restore_title'),
+                'description' => $adminText('restore_description'),
+                'action' => route('admin.pages.revisions.restore', [$page, $revision]),
+                'method' => 'POST',
+                'submitLabel' => $adminText('restore'),
+            ])
+                <p>{{ $adminText('restore_confirm_prefix') }} <strong>{{ $adminText('revision') }} #{{ $revision->id }}</strong>? {{ $adminText('restore_warning') }}</p>
+
+                <dl class="wb-stack wb-gap-2 wb-text-sm">
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <dt class="wb-text-muted">{{ $adminText('created') }}</dt>
+                        <dd>{{ $revision->created_at?->format('Y-m-d H:i') }}</dd>
+                    </div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <dt class="wb-text-muted">{{ $adminText('event') }}</dt>
+                        <dd>{{ $revision->eventText() }}</dd>
+                    </div>
+                </dl>
+            @endcomponent
+        @endforeach
+    @endif
+@endpush
