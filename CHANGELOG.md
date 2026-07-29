@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.1
+
+- **The Internal Content API could bind a page slot to a Shared Slot and never release it.** `source_type` was writable only on the session-authenticated admin route, so a token client could create a reference that nothing in its own API could remove: the slot stayed bound and the Shared Slot stayed undeletable until someone opened every consuming page by hand. `PUT /webadmin/api/pages/{page}/slots/{slot}/source` writes all three source types — `page`, `shared_slot`, `disabled` — so the field has one endpoint rather than a write path per value.
+- `content.apply` covers it; `source_type=shared_slot` additionally requires `shared-slots.write` and delegates to the existing assign endpoint, so the compatibility rules, the human-only block guard, and the capability gate stay in one place instead of being restated.
+- Detaching clears `shared_slot_id` and leaves page-owned blocks untouched: `page` renders them again and `disabled` keeps the slot wrapper with nothing inside. Discovery and the OpenAPI schema advertise the endpoint, and the assign endpoint gained the `x-required-capability` it had been missing.
+
 ## 1.46.0
 
 - **CMS core no longer knows the name of any plugin.** Two first-party plugins were wired into core by handle: `PluginRouteRegistrar` registered nine WebBlocks UI Manager admin routes itself instead of loading the plugin's route file, `PluginRouteFallbackController` carried a method per plugin naming its controller classes and restating each route's permission check, and `routes/public.php` hardcoded the whole WebBlocks Commerce storefront. Every one of them named a class in the plugin's package, so a plugin that renamed its own namespace — as both have now done — turned its own pages into 404s with nothing in core to say why.
