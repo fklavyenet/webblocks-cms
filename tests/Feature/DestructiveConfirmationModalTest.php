@@ -221,6 +221,40 @@ class DestructiveConfirmationModalTest extends TestCase
   }
 
   #[Test]
+  public function the_list_reports_usage_and_can_show_which_pages(): void
+  {
+    $index = $this->viewSource('index.blade.php');
+
+    $this->assertStringContainsString("\$adminText('usage_count', ['count' => \$usageCount])", $index);
+    $this->assertStringContainsString('data-wb-target="#usage-shared-slot-{{ $sharedSlot->id }}"', $index);
+    // Nothing to show at zero, so the action is inert rather than opening an
+    // empty modal from the list.
+    $this->assertStringContainsString('@disabled($usageCount === 0)', $index);
+    $this->assertStringContainsString('webblocks-cms::admin.shared-slots.partials.usage-modal', $index);
+
+    $modal = $this->viewSource('partials/usage-modal.blade.php');
+
+    $this->assertStringContainsString("'usage-shared-slot-'.\$sharedSlot->id", $modal);
+    $this->assertStringContainsString("route('admin.pages.edit', \$pageSlot->page)", $modal);
+    // A Shared Slot's own hidden source page is internal plumbing and has no
+    // slot source an operator could change, so it must not be offered as a link.
+    $this->assertStringContainsString('isSharedSlotSourcePage()', $modal);
+  }
+
+  #[Test]
+  public function the_usage_list_does_not_query_once_per_row(): void
+  {
+    $controller = (string) file_get_contents(
+      dirname(__DIR__, 2).'/src/Http/Controllers/Admin/SharedSlotController.php'
+    );
+
+    // Every row renders its own usage modal, so the page slots and their pages
+    // have to travel with the paginated collection.
+    $this->assertStringContainsString("'pageSlots.slotType'", $controller);
+    $this->assertStringContainsString("'pageSlots.page.translations.locale'", $controller);
+  }
+
+  #[Test]
   public function every_admin_locale_carries_the_new_confirmation_copy(): void
   {
     $keys = [
@@ -236,6 +270,17 @@ class DestructiveConfirmationModalTest extends TestCase
       'restore_confirm_prefix',
       'restore_confirm_infix',
       'restore_warning',
+      'usage_count',
+      'view_usage',
+      'usage_title',
+      'usage_description',
+      'usage_page',
+      'usage_path',
+      'usage_help',
+      'usage_empty_title',
+      'usage_empty_text',
+      'close_usage',
+      'close',
     ];
 
     foreach (['en', 'de', 'tr'] as $locale) {

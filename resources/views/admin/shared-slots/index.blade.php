@@ -148,6 +148,7 @@
                                 <th>{{ $adminText('slot') }}</th>
                                 <th>{{ $adminText('page_layout') }}</th>
                                 <th>{{ $adminText('status') }}</th>
+                                <th>{{ $adminText('usage') }}</th>
                                 <th>{{ $adminText('updated') }}</th>
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
@@ -161,11 +162,27 @@
                                     <td>{{ $sharedSlot->slotLabel() }}</td>
                                     <td>{{ $sharedSlot->publicShellLabel() }}</td>
                                     <td><span class="wb-status-pill {{ $sharedSlot->statusBadgeClass() }}">{{ $sharedSlot->statusLabel() }}</span></td>
+                                    @php($usageCount = (int) ($sharedSlot->page_slots_count ?? 0))
+                                    <td>
+                                        <span class="wb-status-pill {{ $usageCount > 0 ? 'wb-status-active' : 'wb-status-info' }}">{{ $adminText('usage_count', ['count' => $usageCount]) }}</span>
+                                    </td>
                                     <td>{{ $sharedSlot->updated_at?->format('Y-m-d H:i') }}</td>
                                     <td>
                                         <div class="wb-action-group">
                                             <a href="{{ route('admin.shared-slots.edit', $sharedSlot) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout" aria-hidden="true"></i></a>
+                                            <button
+                                                type="button"
+                                                class="wb-action-btn"
+                                                data-wb-toggle="modal"
+                                                data-wb-target="#usage-shared-slot-{{ $sharedSlot->id }}"
+                                                title="{{ $adminText('view_usage') }}"
+                                                aria-label="{{ $adminText('view_usage') }}"
+                                                aria-haspopup="dialog"
+                                                @disabled($usageCount === 0)
+                                            >
+                                                <i class="wb-icon wb-icon-files" aria-hidden="true"></i>
+                                            </button>
                                             <button
                                                 type="button"
                                                 class="wb-action-btn wb-action-btn-delete"
@@ -199,6 +216,8 @@
                 'sharedSlot' => $sharedSlot,
                 'referenceCount' => (int) ($sharedSlot->page_slots_count ?? 0),
             ])
+
+            @include('webblocks-cms::admin.shared-slots.partials.usage-modal', ['sharedSlot' => $sharedSlot])
         @endforeach
     @endif
 @endpush
