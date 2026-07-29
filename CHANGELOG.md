@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.45.6
+
+- **The capability badges on CMS API Tokens were server-rendered and then never updated.** Ticking every box in a group left its badge reading `0/5`, and the `8/28 selected` total beside the Capabilities heading stayed at whatever the page loaded with — so the only way to know what a token was about to get was to open all six accordions and count. `api-token-capabilities.js` recomputes each group badge and the total on every change, in the Create Token card and in each Edit API Token modal, through one delegated listener so modals in the overlay root are covered too.
+- Create Token now starts with every grantable capability ticked instead of just the eight in Page building. Building a token meant opening each accordion and ticking its boxes one at a time; unticking what a token must not have is the shorter path. Publishing / destructive actions and System safety start ticked as well — they carry their "grant only when explicitly needed" copy, and that is now a prompt to untick rather than to tick.
+
 ## 1.45.5
 
 - **A plugin could declare a block type and still have no way to place it.** Block pickers read the `wbcms_block_types` catalog, and `PluginBlockCatalog` only ever filtered that list — it hid a plugin's blocks while the plugin was disabled, but nothing anywhere wrote the row in the first place. A plugin could ship a block, both its views, and its render path, and the block simply never appeared in any picker. `PluginBlockTypeCatalogSyncer` writes the rows now, and `PluginRuntimeRefresher` runs it, so install, enable, disable, setup, and update all end with the catalog matching what the installed plugins declare.
