@@ -28,14 +28,18 @@
     $selectedTotal = count($allGroupCapabilities);
 @endphp
 
-<div class="wb-field wb-api-token-capabilities">
+<div class="wb-field wb-api-token-capabilities" data-wb-capability-scope>
     <div class="wb-stack wb-gap-3">
         <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-stack wb-gap-1">
                 <div class="wb-label">{{ $adminText('title') }}</div>
                 <div class="wb-text-sm wb-text-muted">{{ $adminText('description') }}</div>
             </div>
-            <span class="wb-status-pill wb-status-info">{{ $adminText('selected_count', ['selected' => $selectedCount, 'total' => $selectedTotal]) }}</span>
+            <span
+                class="wb-status-pill wb-status-info"
+                data-wb-capability-total
+                data-wb-capability-total-template="{{ $adminText('selected_count', ['selected' => '__SELECTED__', 'total' => '__TOTAL__']) }}"
+            >{{ $adminText('selected_count', ['selected' => $selectedCount, 'total' => $selectedTotal]) }}</span>
         </div>
 
         <div class="wb-api-token-capability-groups">
@@ -49,13 +53,13 @@
                     $groupDescription = $adminTextOr('groups.'.$groupLocaleKey.'.description', (string) ($group['description'] ?? ''));
                 @endphp
 
-                <details class="wb-api-token-capability-group">
+                <details class="wb-api-token-capability-group" data-wb-capability-group>
                     <summary class="wb-api-token-capability-summary" id="{{ $groupId }}">
                         <span class="wb-api-token-capability-summary-copy">
                             <strong>{{ $groupLabel }}</strong>
                             <span class="wb-text-sm wb-text-muted">{{ $groupDescription }}</span>
                         </span>
-                        <span class="wb-status-pill {{ $groupSelectedCount > 0 ? 'wb-status-active' : 'wb-status-info' }}">{{ $groupSelectedCount }}/{{ count($groupCapabilities) }}</span>
+                        <span class="wb-status-pill {{ $groupSelectedCount > 0 ? 'wb-status-active' : 'wb-status-info' }}" data-wb-capability-group-count>{{ $groupSelectedCount }}/{{ count($groupCapabilities) }}</span>
                     </summary>
 
                     <div class="wb-api-token-capability-list" aria-labelledby="{{ $groupId }}">

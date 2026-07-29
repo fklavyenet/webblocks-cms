@@ -113,7 +113,10 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
             <strong>{{ $adminText('create_token') }}</strong>
         </div>
 
-        @php($selectedCapabilities = old('capabilities', $defaultCapabilities))
+        {{-- New tokens start with every grantable capability checked so operators can
+             uncheck what a token must not have instead of hunting through each group. --}}
+        @php($grantableCapabilities = collect($capabilityGroups)->pluck('capabilities')->flatten()->unique()->values()->all())
+        @php($selectedCapabilities = old('capabilities', $grantableCapabilities))
 
         <form method="POST" action="{{ route('admin.system.api-tokens.store') }}">
             @csrf
@@ -412,4 +415,5 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
 
 @push('scripts')
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/api-token-copy.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/api-token-capabilities.js'])
 @endpush
