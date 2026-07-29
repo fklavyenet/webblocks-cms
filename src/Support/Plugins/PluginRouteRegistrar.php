@@ -35,11 +35,7 @@ class PluginRouteRegistrar
   {
     if (! app()->routesAreCached()) {
       foreach ($this->plugins->enabled() as $plugin) {
-        $this->registerPluginAdminBridgeRoutes($plugin);
-
-        if ($plugin->handle() !== 'webblocks-ui-manager') {
-          $this->registerPluginAdminRoutes($plugin);
-        }
+        $this->registerPluginAdminRoutes($plugin);
       }
     }
 
@@ -51,11 +47,7 @@ class PluginRouteRegistrar
 
   public function registerAdminRoutesFor(PluginDefinition $plugin): void
   {
-    if ($plugin->handle() === 'webblocks-ui-manager') {
-      $this->registerPluginAdminBridgeRoutes($plugin);
-    } else {
-      $this->registerPluginAdminRoutes($plugin);
-    }
+    $this->registerPluginAdminRoutes($plugin);
 
     Route::getRoutes()->refreshNameLookups();
   }
@@ -84,92 +76,6 @@ class PluginRouteRegistrar
     $this->normalizePluginAdminRouteMiddleware($plugin);
   }
 
-  private function registerPluginAdminBridgeRoutes(PluginDefinition $plugin): void
-  {
-    $base = trim($plugin->adminRoutePrefix(), '/');
-
-    if ($plugin->handle() === 'webblocks-ui-manager') {
-      if ($this->pluginBridgeRoutesRegistered($plugin)) {
-        return;
-      }
-
-      Route::get($base.'/releases', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.view'))
-        ->name($plugin->routeNamePrefix().'.releases.index');
-
-      Route::get($base.'/releases/create', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases/create')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.manage'))
-        ->name($plugin->routeNamePrefix().'.releases.create');
-
-      Route::post($base.'/releases', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.manage'))
-        ->name($plugin->routeNamePrefix().'.releases.store');
-
-      Route::get($base.'/releases/{release}', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases/{release}')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.view'))
-        ->name($plugin->routeNamePrefix().'.releases.show');
-
-      Route::get($base.'/releases/{release}/edit', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases/{release}/edit')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.manage'))
-        ->name($plugin->routeNamePrefix().'.releases.edit');
-
-      Route::put($base.'/releases/{release}', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases/{release}')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.manage'))
-        ->name($plugin->routeNamePrefix().'.releases.update');
-
-      Route::post($base.'/releases/{release}/publish-dry-run', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases/{release}/publish-dry-run')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.publish'))
-        ->name($plugin->routeNamePrefix().'.releases.publish.dry-run');
-
-      Route::post($base.'/releases/{release}/publish', PluginRouteFallbackController::class)
-        ->defaults('plugin', $plugin->handle())
-        ->defaults('pluginPath', 'releases/{release}/publish')
-        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.publish'))
-        ->name($plugin->routeNamePrefix().'.releases.publish');
-
-      if ($plugin->settingsDefinition()?->usesDefaultRoute()) {
-        Route::get($base.'/settings', PluginRouteFallbackController::class)
-          ->defaults('plugin', $plugin->handle())
-          ->defaults('pluginPath', 'settings')
-          ->middleware($this->pluginBridgeMiddleware($plugin, $this->settingsPermission($plugin)))
-          ->name($this->defaultSettingsRouteName($plugin));
-      }
-    }
-  }
-
-  private function pluginBridgeRoutesRegistered(PluginDefinition $plugin): bool
-  {
-    $route = Route::getRoutes()->getByName($plugin->routeNamePrefix().'.releases.index');
-
-    return $route?->getActionName() === PluginRouteFallbackController::class;
-  }
-
-  /**
-   * @return array<int, string>
-   */
-  private function pluginBridgeMiddleware(PluginDefinition $plugin, string $permission): array
-  {
-    return [
-      ...self::ADMIN_MIDDLEWARE,
-      GuardPluginSetup::class.':'.$plugin->handle(),
-      'plugin.permission:'.$permission,
-    ];
-  }
-
   private function registerPluginFallbackRoute(): void
   {
     if (Route::has('webblocks.plugins.fallback')) {
@@ -193,7 +99,6 @@ class PluginRouteRegistrar
     $reservedPrefixes = [
       'webadmin',
       'cms',
-      'commerce',
       'storage',
       'assets',
       'static',

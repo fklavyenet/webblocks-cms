@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\AdminApi\SiteDomainApiController;
 use WebBlocks\Cms\Http\Controllers\Public\CommentEntryController;
-use WebBlocks\Cms\Http\Controllers\Public\CommercePublicBridgeController;
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Public\ContentRatingController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
@@ -57,26 +56,6 @@ Route::middleware(['web', 'install.required'])->post('/comment-entries', [Commen
 
 Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
-});
-
-Route::middleware(['web', 'install.required'])->prefix('commerce')->name('webblocks.commerce.')->group(function (): void {
-  Route::get('/cart', [CommercePublicBridgeController::class, 'cart'])->name('cart.show');
-  Route::post('/cart/items/{product}', [CommercePublicBridgeController::class, 'cartAdd'])->name('cart.items.add');
-  Route::patch('/cart/items/{product}', [CommercePublicBridgeController::class, 'cartUpdate'])->name('cart.items.update');
-  Route::delete('/cart/items/{product}', [CommercePublicBridgeController::class, 'cartRemove'])->name('cart.items.remove');
-  Route::post('/cart/checkout', [CommercePublicBridgeController::class, 'cartCheckout'])->name('cart.checkout');
-  Route::get('/products/{product}/buy', [CommercePublicBridgeController::class, 'buy'])->name('products.buy');
-  Route::post('/products/{product}/checkout', [CommercePublicBridgeController::class, 'checkout'])->name('products.checkout');
-  Route::get('/checkout/{order}/success', [CommercePublicBridgeController::class, 'success'])
-    ->middleware('signed')
-    ->name('checkout.success');
-  Route::get('/checkout/{order}/cancel', [CommercePublicBridgeController::class, 'cancel'])
-    ->middleware('signed')
-    ->name('checkout.cancel');
-  Route::post('/webhooks/paypal', [CommercePublicBridgeController::class, 'paypalWebhook'])
-    ->name('webhooks.paypal');
-  Route::post('/webhooks/sumup', [CommercePublicBridgeController::class, 'sumUpWebhook'])
-    ->name('webhooks.sumup');
 });
 
 Route::middleware(['web', 'install.required'])->get('/p/{path}', [PageController::class, 'legacy'])

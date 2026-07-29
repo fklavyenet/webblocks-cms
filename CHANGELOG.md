@@ -2,6 +2,15 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.0
+
+- **CMS core no longer knows the name of any plugin.** Two first-party plugins were wired into core by handle: `PluginRouteRegistrar` registered nine WebBlocks UI Manager admin routes itself instead of loading the plugin's route file, `PluginRouteFallbackController` carried a method per plugin naming its controller classes and restating each route's permission check, and `routes/public.php` hardcoded the whole WebBlocks Commerce storefront. Every one of them named a class in the plugin's package, so a plugin that renamed its own namespace — as both have now done — turned its own pages into 404s with nothing in core to say why.
+- The plugin route fallback is generic. It still exists for the two cases that need it, a cached route table and a provider left over from the version an update replaced, but it now rehydrates the plugin's own routes and runs whichever one matches, under that route's own middleware. An authorization rule is enforced where it is declared instead of being copied into core, and the fallback serves every plugin rather than the two it had been taught.
+- **`routes.webhooks`: a plugin can own a third-party callback.** A payment gateway calling back after a customer pays carries no session, so it cannot carry a CSRF token, and it is not a bearer-token client either — it fits neither `routes.public` nor `routes.api`. Previously the only way to a working callback was for core to hardcode the endpoint and add its path to a global CSRF exemption list. A plugin now declares the file, and the registrar drops the check from that group alone: same prefix, same throttle, same `install.required`, CSRF and nothing else relaxed.
+- The exemption is attributable. It is applied by removing the middleware from one route group rather than by adding paths to a list, so it covers the routes the plugin declared and cannot widen to a path that merely resembles them.
+- Verifying the caller stays with the plugin. A webhook is a notification, not proof of payment, and core is not in a position to check a signature it has no key for.
+- Removed the `commerce` reserved prefix from the redirect-manager catch-all protection. Reserving a first segment for a plugin that no longer has one there would shadow a page anyone could legitimately publish at `/commerce`.
+
 ## 1.45.7
 
 - **Deleting a Shared Slot asked through the browser's own dialog.** "Delete this Shared Slot?" — no name, no handle, and no hint that the server refuses the delete while a page slot still references it, which you found out by pressing OK and landing on a validation error. Ten destructive actions now open the CMS confirmation modal and name the record they are about to act on: Shared Slot delete and revision restore, block delete from the list and from the page outline, locale delete, navigation item delete, page revision restore, backup restore, and restore-history delete.

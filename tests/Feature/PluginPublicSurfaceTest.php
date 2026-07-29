@@ -128,6 +128,109 @@ class PluginPublicSurfaceTest extends TestCase
     $this->assertNotNull($limiter);
   }
 
+  public function test_webhook_routes_mount_beside_the_public_ones(): void
+  {
+    $plugin = $this->pluginDefinition()->webhookRoutes(function (): void {
+      Route::post('/webhooks/provider', fn () => 'ok')->name('webhooks.provider');
+    });
+
+    (new PluginPublicRouteRegistrar($this->registryWith($plugin)))->registerEnabledPublicRoutes();
+
+    $route = Route::getRoutes()->getByName('webblocks.plugins.appointments.public.webhooks.provider');
+
+    $this->assertNotNull($route);
+    $this->assertSame('plugins/appointments/webhooks/provider', $route->uri());
+  }
+
+  /**
+   * The reason the group exists. A gateway calling back after a customer pays
+   * carries no session and so cannot carry a CSRF token; with the check in place
+   * every callback is a 419 that nobody sees, because the caller is a machine.
+   */
+  public function test_a_webhook_route_is_exempt_from_csrf(): void
+  {
+    $plugin = $this->pluginDefinition()->webhookRoutes(function (): void {
+      Route::post('/webhooks/provider', fn () => 'ok')->name('webhooks.provider');
+    });
+
+    (new PluginPublicRouteRegistrar($this->registryWith($plugin)))->registerEnabledPublicRoutes();
+
+    $excluded = Route::getRoutes()
+      ->getByName('webblocks.plugins.appointments.public.webhooks.provider')
+      ->excludedMiddleware();
+
+    $this->assertContains('Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken', $excluded);
+    $this->assertContains('App\\Http\\Middleware\\VerifyCsrfToken', $excluded);
+  }
+
+  /**
+   * Only that. A webhook is still public, still throttled, and still has to
+   * verify for itself that the caller is who it claims to be.
+   */
+  public function test_a_webhook_route_keeps_the_rest_of_the_public_stack(): void
+  {
+    $plugin = $this->pluginDefinition()->webhookRoutes(function (): void {
+      Route::post('/webhooks/provider', fn () => 'ok')->name('webhooks.provider');
+    });
+
+    (new PluginPublicRouteRegistrar($this->registryWith($plugin)))->registerEnabledPublicRoutes();
+
+    $middleware = Route::getRoutes()
+      ->getByName('webblocks.plugins.appointments.public.webhooks.provider')
+      ->gatherMiddleware();
+
+    $this->assertContains('web', $middleware);
+    $this->assertContains('install.required', $middleware);
+    $this->assertContains('throttle:plugin-public-routes', $middleware);
+  }
+
+  public function test_the_csrf_exemption_does_not_reach_ordinary_public_routes(): void
+  {
+    $plugin = $this->pluginDefinition()
+      ->publicRoutes(function (): void {
+        Route::post('/bookings', fn () => 'ok')->name('bookings.store');
+      })
+      ->webhookRoutes(function (): void {
+        Route::post('/webhooks/provider', fn () => 'ok')->name('webhooks.provider');
+      });
+
+    (new PluginPublicRouteRegistrar($this->registryWith($plugin)))->registerEnabledPublicRoutes();
+
+    $excluded = Route::getRoutes()
+      ->getByName('webblocks.plugins.appointments.public.bookings.store')
+      ->excludedMiddleware();
+
+    $this->assertNotContains('Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken', $excluded);
+  }
+
+  public function test_a_disabled_plugin_contributes_no_webhook_routes(): void
+  {
+    $plugin = $this->pluginDefinition()->webhookRoutes(function (): void {
+      Route::post('/webhooks/provider', fn () => 'ok')->name('webhooks.provider');
+    });
+
+    $registry = new PluginRegistry(['appointments' => false]);
+    $registry->register($plugin);
+
+    (new PluginPublicRouteRegistrar($registry))->registerEnabledPublicRoutes();
+
+    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.appointments.public.webhooks.provider'));
+  }
+
+  public function test_an_empty_webhook_route_file_is_rejected(): void
+  {
+    $this->expectException(PluginException::class);
+
+    $this->pluginDefinition()->webhookRoutes('   ');
+  }
+
+  public function test_describe_reports_the_declared_webhook_route_count(): void
+  {
+    $described = $this->pluginDefinition()->webhookRoutes(fn () => null)->toArray(true);
+
+    $this->assertSame(1, $described['webhook_routes_count']);
+  }
+
   public function test_a_declared_public_view_wins_over_the_directory_convention(): void
   {
     $this->registerBlockTypePlugin(

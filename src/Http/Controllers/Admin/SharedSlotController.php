@@ -92,6 +92,13 @@ class SharedSlotController extends Controller
         ->when($sort !== 'updated_at', fn ($query) => $query->orderByDesc('updated_at'))
         ->paginate(AdminPagination::perPage())
         ->withQueryString();
+
+      // The usage modal lists the consuming pages, so the page slots travel with
+      // the paginated rows rather than being fetched once per open row.
+      $sharedSlots->getCollection()->load([
+        'pageSlots.slotType',
+        'pageSlots.page.translations.locale',
+      ]);
     }
 
     return view('webblocks-cms::admin.shared-slots.index', [

@@ -93,6 +93,12 @@ class InstalledPluginDefinitionFactory
         $definition->publicRoutes($path.DIRECTORY_SEPARATOR.$publicRoutes);
       }
 
+      $webhookRoutes = $manifest['routes']['webhooks'] ?? null;
+
+      if (is_string($webhookRoutes) && $webhookRoutes !== '') {
+        $definition->webhookRoutes($path.DIRECTORY_SEPARATOR.$webhookRoutes);
+      }
+
       $commands = array_values(array_filter($manifest['commands'] ?? [], function (mixed $command): bool {
         return is_string($command) && class_exists($command) && is_subclass_of($command, Command::class);
       }));

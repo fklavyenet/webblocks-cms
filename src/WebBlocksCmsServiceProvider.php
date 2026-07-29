@@ -900,11 +900,16 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function bootInternalApiCsrfExclusions(): void
   {
+    /*
+     * The internal API only. Plugin webhook endpoints used to be listed here by
+     * path, one hardcoded pair per plugin core happened to know about; they now
+     * declare `routes.webhooks` and the public route registrar drops the check
+     * from that group alone, so the exemption belongs to the routes it covers
+     * instead of to a list nothing keeps in step with them.
+     */
     $paths = [
       'webadmin/api',
       'webadmin/api/*',
-      'commerce/webhooks/paypal',
-      'commerce/webhooks/sumup',
     ];
 
     foreach ($this->internalApiCsrfMiddlewareClasses() as $middleware) {

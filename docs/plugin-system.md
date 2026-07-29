@@ -75,7 +75,7 @@ Manual uninstall is available only for manually uploaded plugins and requires su
 
 Trusted operator tools can use `/webadmin/api/plugins` lifecycle endpoints with explicit CMS API token capabilities. These endpoints mirror the same safety model as the browser admin: uploaded ZIPs are validated and installed disabled, enable/disable is explicit, setup migrations are explicit, uninstall requires a disabled manually uploaded plugin, and plugin-owned tables are preserved.
 
-Supported manifest fields include `handle`, `label`, `description`, `version`, `provider`, `required_cms_version`, `permissions`, `commands`, `routes`, `settings`, `migrations`, `assets`, and `health`. Migrations are installed as plugin-owned files and are never run automatically on upload or enable. Super admins can run the explicit plugin setup action from the plugin detail screen; the runner scopes execution to the installed plugin path and the manifest-declared migration directories, records setup results in enabled state, and can repair a setup-required plugin whose migration records exist but required plugin tables are missing.
+Supported manifest fields include `handle`, `label`, `description`, `version`, `provider`, `required_cms_version`, `permissions`, `commands`, `routes` (`admin`, `api`, `public`, `webhooks`), `settings`, `migrations`, `assets`, and `health`. Migrations are installed as plugin-owned files and are never run automatically on upload or enable. Super admins can run the explicit plugin setup action from the plugin detail screen; the runner scopes execution to the installed plugin path and the manifest-declared migration directories, records setup results in enabled state, and can repair a setup-required plugin whose migration records exist but required plugin tables are missing.
 
 Manual plugin lifecycle is:
 
@@ -190,13 +190,21 @@ The exact API may change during implementation, but the contract must preserve t
 
 ## Plugin Public Routes
 
-A plugin can own a visitor-facing surface. `PluginDefinition::publicRoutes()` accepts a route file or callable, and the installed-plugin manifest accepts the same declaration under `routes.public` alongside the existing `routes.admin` and `routes.api` keys.
+A plugin can own a visitor-facing surface. `PluginDefinition::publicRoutes()` accepts a route file or callable, and the installed-plugin manifest accepts the same declaration under `routes.public` alongside the existing `routes.admin`, `routes.api` and `routes.webhooks` keys.
 
 Every plugin public route is mounted under `/plugins/{plugin-handle}`, with names under `webblocks.plugins.{plugin_handle}.public.*`. The prefix is a single reserved first URI segment shared by all plugins, which is what keeps a plugin endpoint from shadowing a page slug: public CMS pages are served by dynamic `{slug}` routes, so an unprefixed plugin route would compete with real content. The existing catch-all protection reserves the segment from the redirect manager automatically once a route is registered.
 
 The registrar owns the middleware stack rather than trusting the plugin to assemble it. Every route in the group runs `web`, `install.required`, and the `plugin-public-routes` throttle, so an unthrottled public write surface is not something a plugin can ship by omission. A plugin remains free to add a stricter per-route throttle, and both limits apply. The group throttle defaults to 60 requests per minute per IP and plugin, configurable through `webblocks-plugins.public_routes.rate_limit_per_minute` or `WEBBLOCKS_PLUGIN_PUBLIC_ROUTE_RATE_LIMIT`.
 
 Unlike the internal API group, CSRF protection stays on. Plugin public routes serve browser forms and same-origin fetches from block scripts, not bearer-token clients; a plugin needing token authentication should declare `routes.api` instead.
+
+## Plugin Webhook Routes
+
+A third-party callback fits neither group. A payment gateway calling back after a customer pays carries no session, so it cannot carry a CSRF token, and it is not a bearer-token client either. `PluginDefinition::webhookRoutes()` and the manifest's `routes.webhooks` mount a second file under the same `/plugins/{plugin-handle}` prefix and the same `webblocks.plugins.{plugin_handle}.public.*` name namespace, with the CSRF check dropped from that group and nothing else changed: `web`, `install.required` and the group throttle still apply.
+
+The exemption is scoped to the routes in that file. It is applied by removing the middleware from the group rather than by adding paths to a global exemption list, so it stays attributable to the plugin that asked for it and cannot widen to a path that merely looks similar.
+
+Authenticating the caller is the plugin's responsibility and cannot be delegated to the host. A webhook is a notification, not proof: a plugin should verify a signature, or read the transaction back from the provider's API, before it changes any state.
 
 Public routes follow the same inertness rule as every other contribution: only enabled, compatible plugins register them. A disabled plugin's public endpoints do not exist.
 
@@ -356,7 +364,7 @@ Plugins must not pollute:
 
 Disabled and incompatible plugins must not register admin routes. The active-only registrar is intentionally conservative: if a plugin is disabled through `config/webblocks-plugins.php` or does not satisfy its CMS version constraint, its routes are absent rather than present-but-forbidden.
 
-Public routes are opt-in. A plugin that declares public routes must declare ownership clearly enough that route ownership can be tested. Public plugin routes must avoid collisions with site pages, CMS public routes, and host product routes. WebBlocks Commerce currently uses a tightly scoped first-party public bridge under `/commerce/...` while generic public plugin route registration remains a future extension point.
+Public routes are opt-in. A plugin that declares public routes must declare ownership clearly enough that route ownership can be tested. Public plugin routes must avoid collisions with site pages, CMS public routes, and host product routes. Every plugin public surface goes through `routes.public` and `routes.webhooks`; core no longer carries a first-party bridge for any plugin's public URLs.
 
 ## Permission Rules
 
@@ -585,7 +593,7 @@ When enabled, the pilot contributes:
 - a controlled `webblocks-ui-manager:publish-release {version} --dry-run` and `webblocks-ui-manager:publish-release {version}` workflow that records publish runs and writes only after validation passes
 - first-party CDN target conventions under `public/cdn/webblocks-ui/{version}/...`
 
-Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection. Enabled-but-not-set-up state remains safe: the menu may be visible, but the Releases route checks schema readiness before querying and renders setup-required guidance when release tables are missing. Enabled compatible manual plugin admin URLs must not dashboard-fallback when dynamic route hydration is stale or route caching is in play; the plugin route fallback keeps known plugin admin pages on their `/webadmin/plugins/{plugin-handle}/...` URL and rehydrates plugin-owned routes/source before rendering controlled setup or operational screens. First-party WebBlocks UI Manager Releases, release create/store/show/edit/update/dry-run/publish actions, and Settings URLs are additionally bridged through CMS core before plugin route files execute so stale installed artifact source cannot send those actions back to the dashboard. First-party WebBlocks Commerce admin product, order, and settings URLs are plugin-owned under `/webadmin/plugins/webblocks-commerce/...`; public buy, checkout-start, signed status, and PayPal webhook URLs are bridged through CMS core under `/commerce/...` and remain inert when the plugin is disabled, incompatible, or missing setup.
+Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection. Enabled-but-not-set-up state remains safe: the menu may be visible, but a plugin screen checks schema readiness before querying and renders setup-required guidance when its tables are missing. Enabled compatible manual plugin admin URLs must not dashboard-fallback when dynamic route hydration is stale or route caching is in play; the plugin route fallback keeps plugin admin pages on their `/webadmin/plugins/{plugin-handle}/...` URL by rehydrating the plugin's own routes and then running the one that matches. It is generic: it dispatches whatever route the plugin declares, under that route's own permission middleware, rather than naming controllers and repeating authorization checks per plugin. Plugin admin and public URLs alike are plugin-owned; core bridges none of them by handle.
 
 Phase 4 intentionally does not add external production CDN deployment automation, marketplace behavior, generic third-party plugin install/update flows, generic plugin migration runners, public plugin routes, core view overrides, update-server publishing, or changes to CMS core WebBlocks UI consumption URLs.
 

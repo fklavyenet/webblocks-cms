@@ -40,6 +40,9 @@ class PluginDefinition
   /** @var array<int, string|callable> */
   private array $publicRoutes = [];
 
+  /** @var array<int, string|callable> */
+  private array $webhookRoutes = [];
+
   /** @var array<string, mixed> */
   private array $apiDiscovery = [];
 
@@ -471,6 +474,44 @@ class PluginDefinition
   }
 
   /**
+   * Register a plugin-owned webhook route file (or callable).
+   *
+   * These mount beside the public routes, under the same reserved
+   * `/plugins/{handle}` prefix, and differ in exactly one respect: CSRF is off.
+   *
+   * That is not a convenience. A payment gateway calling back after a customer
+   * pays is neither a browser form — it carries no session and so cannot carry a
+   * token — nor a bearer-token client, so neither `publicRoutes()` nor
+   * `apiRoutes()` can serve it. Without this a plugin's only route to a working
+   * callback was for the CMS to hardcode its endpoints and add them to a global
+   * CSRF exemption list, which is what the commerce bridge did.
+   *
+   * The exemption is the whole of what is relaxed: the group keeps `web`,
+   * `install.required` and the public rate limiter, and the route is public and
+   * unauthenticated. Verifying that a request really came from the third party —
+   * a signature, or a read-back against the provider's API — is the plugin's
+   * responsibility and cannot be delegated to the host.
+   */
+  public function webhookRoutes(string|callable $routes): self
+  {
+    if (is_string($routes) && trim($routes) === '') {
+      throw new PluginException("Plugin [{$this->handle}] webhook route file cannot be empty.");
+    }
+
+    $this->webhookRoutes[] = is_string($routes) ? trim($routes) : $routes;
+
+    return $this;
+  }
+
+  /**
+   * @return array<int, string|callable>
+   */
+  public function webhookRouteDefinitions(): array
+  {
+    return $this->webhookRoutes;
+  }
+
+  /**
    * Describe the plugin's internal API to the discovery endpoint so AI agents
    * can self-discover plugin-owned endpoints. Recognized keys:
    *   - resources: array<string, string> name => path (merged into `_links`)
@@ -803,6 +844,7 @@ class PluginDefinition
       'admin_routes_count' => count($this->adminRoutes),
       'api_routes_count' => count($this->apiRoutes),
       'public_routes_count' => count($this->publicRoutes),
+      'webhook_routes_count' => count($this->webhookRoutes),
       'commands_count' => count($this->commands),
       'migrations_count' => count($this->migrations),
       'dashboard_widgets_count' => count($this->dashboardWidgets),
