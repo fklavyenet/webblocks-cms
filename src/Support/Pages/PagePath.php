@@ -10,7 +10,6 @@ class PagePath
   private const RESERVED_FIRST_SEGMENTS = [
     'admin-api',
     'cms',
-    'commerce',
     'contact-messages',
     'confirm-password',
     'dashboard',
@@ -20,6 +19,19 @@ class PagePath
     'login',
     'logout',
     'password',
+    /*
+     * The prefix every plugin public route is mounted under. Reserving it is
+     * what keeps a plugin endpoint and a page slug from competing for the same
+     * URL — public pages are served by a dynamic `{slug}` route, so without this
+     * a page published at `/plugins/anything` and a plugin's own endpoint are
+     * two routes for one path.
+     *
+     * It replaced `commerce`, which reserved a first segment for one plugin's
+     * storefront back when core registered those URLs itself. Nothing serves
+     * `/commerce` now, so holding it back would only stop someone publishing a
+     * page there.
+     */
+    'plugins',
     'privacy-consent',
     'profile',
     'register',
