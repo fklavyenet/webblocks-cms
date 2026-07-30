@@ -182,7 +182,8 @@ Public page structure is controlled at the page and slot layer.
 - The stored compatibility field remains `public_shell` in this phase so existing page data and handles stay valid.
 - `default` is the standard public shell.
 - `docs` is the documentation-oriented shell for layouts with header, sidebar, and main content regions.
-- Built-in `Default Layout` and `Docs Layout` are seeded system layouts with stable handles `default` and `docs`.
+- `article` reuses the `default` shell (header, main, footer — no sidebar slot). Its only difference lives in the `main` slot's shell partial: when `main` has a top-level `toc` block, that one block is pulled out of the normal document flow into a narrow sticky rail beside the rest of the content, reusing the shipped `wb-settings-shell wb-docs-layout` grid — no new CSS. A page on this layout without a `main`-level `toc` block renders identically to `default`.
+- Built-in `Default Layout`, `Docs Layout`, and `Article Layout` are seeded system layouts with stable handles `default`, `docs`, and `article`.
 - Pages store the selected Page Layout handle, not a separate resolved shell mode.
 - Page Layout now owns optional validated public `body_class` tokens.
 - Page Layout Slots are relational install-level records attached to a Page Layout and define slot order plus wrapper metadata.
@@ -207,6 +208,8 @@ Public page structure is controlled at the page and slot layer.
 - Page Layout validation allows trusted wrapper snippets for structural gaps, but rejects scripts, event attributes, `javascript:` URLs, `iframe`, `object`, and `embed` content.
 
 For docs-style pages, use the page layout instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Page Layout = Docs Layout` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
+
+For a long article that wants a sticky "on this page" rail without a docs-style left sidebar, use `Page Layout = Article Layout` and place one `TOC` block as a direct child of `Main`, alongside the rest of the article's blocks — not nested inside another container. TOC keeps scanning only its own slot (`Main`), in document order, exactly as it does on any other layout; Article Layout only changes where that one block visually ends up.
 
 In V1, Page Layout owns the outer public shell choice, slot names own region wrapper semantics, and blocks own content inside those wrappers.
 

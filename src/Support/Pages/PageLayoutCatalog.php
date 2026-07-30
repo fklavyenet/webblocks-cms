@@ -128,6 +128,60 @@ class PageLayoutCatalog
           ],
         ],
       ],
+      [
+        'handle' => 'article',
+        'name' => 'Article Layout',
+        'description' => 'Default layout, plus a narrow sticky TOC rail beside main when a TOC block is present there.',
+        'is_system' => true,
+        'is_active' => true,
+        'sort_order' => 2,
+        'body_class' => 'layout-article',
+        // Reuses the default single-column shell: header/main/footer stack the
+        // same way default does. The rail is not a slot region — it only
+        // exists when pages.partials.slots.main finds a top-level toc block,
+        // and pulls that one block into a second grid column. A page using
+        // this layout without a TOC renders exactly like Default Layout.
+        'shell_type' => 'default',
+        'slot_schema' => ['header', 'main', 'footer'],
+        'wrapper_schema' => [
+          'mode' => 'default',
+          'regions' => ['header', 'main', 'footer'],
+        ],
+        'managed_slots' => [
+          [
+            'slot_type_slug' => 'header',
+            'slot_name' => 'header',
+            'label' => 'Header',
+            'html_element' => 'header',
+            'html_classes' => 'wb-public-site-header',
+            'is_required' => false,
+            'is_active' => true,
+            'is_system' => true,
+            'sort_order' => 10,
+          ],
+          [
+            'slot_type_slug' => 'main',
+            'slot_name' => 'main',
+            'label' => 'Main',
+            'html_element' => 'main',
+            'html_id' => 'main-content',
+            'is_required' => true,
+            'is_active' => true,
+            'is_system' => true,
+            'sort_order' => 20,
+          ],
+          [
+            'slot_type_slug' => 'footer',
+            'slot_name' => 'footer',
+            'label' => 'Footer',
+            'html_element' => 'footer',
+            'is_required' => false,
+            'is_active' => true,
+            'is_system' => true,
+            'sort_order' => 30,
+          ],
+        ],
+      ],
     ];
   }
 

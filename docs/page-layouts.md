@@ -27,6 +27,7 @@ Page Layouts are install-level definitions that manage the outer public shell ch
 
 - `default` / `Default Layout`: standard public page shell
 - `docs` / `Docs Layout`: docs shell with header, sidebar, main, and footer region mapping
+- `article` / `Article Layout`: same single-column shell as `default` (header, main, footer — no sidebar slot), but `main` pulls a top-level `toc` block out of the normal flow into a narrow sticky rail beside the rest of the content, reusing the shipped `wb-settings-shell wb-docs-layout` grid. The split only activates when `main` actually has a `toc` block as a direct child; a page on this layout without one renders exactly like Default Layout. See [Core Concepts](core-concepts.md) and [Inventory](inventory.md) for the `toc` block contract.
 
 These built-in layouts remain backward compatible with older pages, imports, exports, and public rendering.
 
@@ -34,6 +35,7 @@ Each built-in layout now also seeds managed Page Layout Slots:
 
 - `default`: `header`, `main`, `sidebar`, `footer`
 - `docs`: `header`, `sidebar`, `main`, `footer`
+- `article`: `header`, `main`, `footer`
 
 ## How Rendering Works
 
@@ -109,7 +111,7 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 ## Body Class
 
 - `Body Class` is an optional whitespace-separated token list added to the public `<body>`
-- Built-in seeded values are currently `layout-default` and `layout-docs`
+- Built-in seeded values are currently `layout-default`, `layout-docs`, and `layout-article`
 - Public rendering keeps the base `wb-public-body` class, appends a stable `wb-page-{slug}` class from the resolved Page Translation slug, and appends Page Layout body classes when available
 - The root homepage uses `wb-page-home`; for example `/contact` with slug `contact` renders `wb-page-contact`, and `/docs/internal-content-api` uses the translation slug `internal-content-api` rather than the full path
 - The page slug class is normalized to lowercase `a-z`, `0-9`, and hyphen tokens so site-level CSS can target one page without content-only hooks or broad global selectors
