@@ -723,6 +723,7 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 - `GET /webadmin/api/pages`
 - `GET /webadmin/api/pages/{page}`
 - `POST /webadmin/api/pages/{page}/sync-layout-slots`
+- `PATCH /webadmin/api/pages/{page}/layout`
 - `POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot`
 - `PUT /webadmin/api/pages/{page}/slots/{slot}/source`
 
@@ -769,6 +770,14 @@ The `shared-slot` endpoint assigns an existing compatible same-site active Share
 `PUT .../source` writes the slot's content source and is the way back out: `source_type` accepts `page`, `shared_slot`, or `disabled`. It requires `content.apply`, and `shared_slot` additionally requires `shared-slots.write` and the same compatibility rules as the assign endpoint, which it delegates to. Detaching clears `shared_slot_id` and leaves page-owned blocks untouched, so `page` renders them again and `disabled` keeps the slot wrapper with nothing inside. Before this endpoint existed the API could create a Shared Slot reference it had no way to remove — the only exit was the session-authenticated admin screen.
 
 If the page layout contains a slot such as `header` but the page record was created before that Page Slot existed, call `POST /webadmin/api/pages/{page}/sync-layout-slots` first. Slot sync is idempotent and only creates missing Page Slots from the selected Page Layout; it never deletes existing slots, blocks, disabled states, Shared Slot assignments, translations, or revisions. For a new Shared Slot header, publish the Shared Slot blocks explicitly before expecting public output.
+
+### Page Layout Assignment
+
+```text
+PATCH /webadmin/api/pages/{page}/layout
+```
+
+Writes an existing page's Page Layout (`public_shell`). The admin edit form could always change this; the API could previously only set it when creating a page. `content.apply` covers it. `layout` (or `handle`) must be one of `GET /webadmin/api/page-layouts`' active handles — the legacy `dashboard` alias still normalizes to `docs`. Matches `PageController::update()`'s own contract: it does not mutate Page Slots on a plain layout change, so this endpoint doesn't either. Call `sync-layout-slots` separately if the new layout defines slots the page does not have yet.
 
 ### Site Presentation Endpoint
 

@@ -39,6 +39,7 @@ use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
+use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
@@ -664,6 +665,55 @@ class InternalContentResourceController extends Controller
         'type' => 'page',
         'id' => $pageId,
       ],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  /**
+   * Writes a page's Page Layout (public_shell).
+   *
+   * The admin edit form could always change this; the Internal Content API
+   * could only set it at page creation. Changing an existing page's layout
+   * requires this exact write once the layout itself needs no other content
+   * change, matching PageController::update()'s own contract: it does not
+   * mutate Page Slots on a plain layout change, so this doesn't either --
+   * call POST /pages/{page}/sync-layout-slots separately if the new layout
+   * defines slots the page does not have yet.
+   */
+  public function updatePageLayout(Request $request, Page $page): JsonResponse
+  {
+    $allowedHandles = app(PageLayoutManager::class)->activeHandles();
+    $handle = Page::normalizePublicShellHandle($request->input('layout', $request->input('handle')));
+
+    if (! in_array($handle, $allowedHandles, true)) {
+      return $this->validationError(
+        'page.layout',
+        'Layout must be one of: '.implode(', ', $allowedHandles).'.',
+        'invalid_page_layout',
+      );
+    }
+
+    $settings = is_array($page->settings) ? $page->settings : [];
+    $settings['public_shell'] = $handle;
+
+    DB::transaction(function () use ($page, $settings): void {
+      $page->forceFill(['settings' => $settings, 'updated_by_user_id' => null])->save();
+
+      $this->revisionManager->capture(
+        $page->fresh(),
+        null,
+        'Layout changed',
+        'The page Page Layout was updated through the Internal Content API.',
+        event: 'layout_changed',
+        source: 'internal-content-api',
+      );
+    });
+
+    return response()->json([
+      'ok' => true,
+      'page' => $this->presenter->page($page->fresh()),
+      'writes' => [['type' => 'page_layout', 'id' => $page->id]],
       'warnings' => [],
       'errors' => [],
     ]);

@@ -115,6 +115,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/pages/{page}/publish', [InternalPagePublishController::class, 'publish'])->middleware('internal-api.capability:content.publish')->name('pages.publish');
     Route::post('/pages/{page}/publish-page-owned-blocks', [InternalPagePublishController::class, 'publishPageOwnedBlocks'])->middleware('internal-api.capability:content.publish')->name('pages.publish-page-owned-blocks');
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
+    Route::patch('/pages/{page}/layout', [InternalContentResourceController::class, 'updatePageLayout'])->middleware('internal-api.capability:content.apply')->name('pages.layout.update');
     Route::get('/pages/{page}/assets', [InternalPageAssetController::class, 'index'])->name('pages.assets.index');
     Route::post('/pages/{page}/assets/{type}', [InternalPageAssetController::class, 'store'])->middleware('internal-api.capability:page-assets.write')->name('pages.assets.store');
     Route::patch('/pages/{page}/assets/{pageAsset}', [InternalPageAssetController::class, 'update'])->middleware('internal-api.capability:page-assets.write')->name('pages.assets.update');
