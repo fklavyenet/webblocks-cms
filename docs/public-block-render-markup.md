@@ -1878,31 +1878,32 @@ The renderer resolves a CMS Navigation menu by key. Footer and legal menus rende
 
 ```html
 <div class="wb-public-block" data-wb-public-block-type="toc">
-  <div class="wb-stack wb-gap-2">
-    <strong>Contents</strong>
-    <div class="wb-link-list">
-      <a class="wb-link-list-item" href="#intro">
-        <div class="wb-link-list-main">
-          <span class="wb-link-list-title">Intro</span>
-        </div>
-        <div class="wb-link-list-desc">Jump to section</div>
-      </a>
-    </div>
-  </div>
+  <nav class="wb-section-nav" aria-label="Contents">
+    <div class="wb-section-nav-title">Contents</div>
+    <ul class="wb-section-nav-list">
+      <li class="wb-section-nav-item">
+        <a class="wb-section-nav-link" href="#intro">Intro</a>
+      </li>
+    </ul>
+  </nav>
 </div>
 ```
 
 ### Main CSS / WebBlocks UI classes
 
-`wb-stack`, `wb-gap-2`, `wb-link-list`, `wb-link-list-item`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-meta`, `wb-link-list-desc`.
+`wb-section-nav`, `wb-section-nav-title`, `wb-section-nav-list`, `wb-section-nav-item`, `wb-section-nav-link`.
+
+`wb-section-nav` is a self-contained WebBlocks UI primitive: its border, radius, background, and padding are defined directly on the class, with no dependency on the Settings Shell docs pattern (`wb-settings-shell`, `wb-docs-layout`) it is normally seen inside. The `wb-docs-rail`/`wb-settings-nav` modifier classes are deliberately not added — they pin the element into a two-column grid and cap it to viewport height with an internal scrollbar, both wrong for a block sitting inline in a normal content flow.
+
+The exact webblocks-ui.js bundle the public layout already loads (`WebBlocks::uiJsUrl()`) ships a `WBSectionNav` scrollspy module that self-initializes on any `.wb-section-nav` it finds and live-updates `.is-active`/`aria-current="location"` on the matching `.wb-section-nav-link` as the reader scrolls, purely by matching `href="#id"` against `document.getElementById(id)`. No renderer-owned JavaScript is involved.
 
 ### Settings -> class / markup map
 
 | Setting | Value | Output effect |
 | --- | --- | --- |
-| title | text | Renders heading label; default visible label is current renderer behavior. |
-| same-slot Header blocks | published with anchors | Generates `.wb-link-list-item` links, in document order. |
-| header variant | h3 | Description says `Jump to subsection`; others say `Jump to section`. |
+| title | text | Renders as the nav's accessible label and a visible `.wb-section-nav-title`; omitted entirely when blank. |
+| same-slot Header blocks | published with anchors | Generates `.wb-section-nav-item` / `.wb-section-nav-link` entries, in document order. |
+| header variant | h2 or h3 | No visual distinction; the primitive is a flat single-level list. |
 | no eligible headings | n/a | Renderer emits nothing. |
 
 ### Use for / Avoid for
@@ -1913,7 +1914,7 @@ Avoid for: manual link lists; use Link List.
 
 ### Notes
 
-The renderer reads anchored published Header blocks from the same slot tree, in document order. It emits nothing when no eligible headings exist.
+The renderer reads anchored published Header blocks from the same slot tree, in document order. It emits nothing when no eligible headings exist. Scroll-position highlighting is not owned by this renderer at all — it comes free from the shipped WebBlocks UI runtime the public layout already loads.
 
 ## Alert (`alert`)
 

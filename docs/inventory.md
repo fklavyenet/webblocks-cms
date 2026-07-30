@@ -607,7 +607,8 @@ The current published core catalog contains 51 rows:
 | Editable content | Optional shared title. |
 | Settings and variants | None. |
 | Children/media | Reads published Header blocks in the same slot with valid anchors and H2/H3 variants, in document order. |
-| HTML | Generic wrapper with a generated `.wb-link-list` of anchor links. |
+| HTML | Generic wrapper with a generated `nav.wb-section-nav` link list — a self-contained WebBlocks UI primitive, not `wb-link-list`. |
+| Live behavior | Scroll-position highlighting comes free from the shipped `WBSectionNav` module in the same webblocks-ui.js the public layout already loads; the renderer owns no JavaScript of its own. |
 | Example appearance | “Contents” list for a long documentation page. |
 | Render guard | Emits nothing when no eligible headings exist. |
 

@@ -533,7 +533,7 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `title`
 - Translatable fields: `title`
 - Shared fields: none
-- Intended WebBlocks UI output: `wb-link-list` built from existing anchored `header` blocks in the same slot.
+- Intended WebBlocks UI output: `wb-section-nav` built from existing anchored `header` blocks in the same slot — a self-contained primitive, not `wb-link-list`, so it also picks up the shipped `WBSectionNav` scrollspy for free.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: TOC is a system block type. It only renders when `Header` blocks already expose explicit anchor IDs and does not attempt complex heading parsing or auto-generated anchors.
 
