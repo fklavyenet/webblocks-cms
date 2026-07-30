@@ -385,39 +385,65 @@ class Block extends CmsModel
       ?? $this->translatedTextFieldValue('content');
   }
 
+  /**
+   * A table of contents describes the slot it lives in, not the page. Scoping
+   * to $this->slot_type_id keeps a TOC in `sidebar` from listing headings that
+   * are actually in `main`, and the reverse.
+   *
+   * Blocks in the same slot can be nested under different section/container
+   * parents, whose sort_order values are independently numbered from each
+   * other (see PageSlotBlockRequest-style creation: sort_order is scoped per
+   * page+slot+parent). A flat sort by (sort_order, id) across those parents
+   * does not reconstruct reading order, so headings are collected by walking
+   * the slot's block tree in document order instead: each parent's own
+   * children first, each level sorted by (sort_order, id).
+   *
+   * Shared-Slot-hosted content is out of scope: its block tree lives on a
+   * separate hidden source page, never on $this->renderPage()->blocks, so a
+   * TOC placed inside a Shared Slot finds nothing here rather than the wrong
+   * page's headings.
+   */
   public function publicTocHeadingBlocks(?string $localeCode = null): Collection
   {
     $page = $this->renderPage();
 
-    if (! $page) {
+    if (! $page || $this->slot_type_id === null) {
       return collect();
     }
 
-    $pageBlocks = $page->relationLoaded('blocks')
+    $slotBlocks = $page->relationLoaded('blocks')
       ? $page->blocks
-      : $page->blocks()->where('status', 'published')->with('children')->orderBy('sort_order')->orderBy('id')->get();
+      : $page->blocks()->where('status', 'published')->orderBy('sort_order')->orderBy('id')->get();
+
+    $slotBlocks = $slotBlocks->where('slot_type_id', $this->slot_type_id)->values();
 
     $resolver = app(BlockTranslationResolver::class);
-    $translatedBlocks = $resolver->resolveCollection($pageBlocks, $localeCode ?? $this->renderLocaleCode());
+    $translatedBlocks = $resolver->resolveCollection($slotBlocks, $localeCode ?? $this->renderLocaleCode());
 
-    return $translatedBlocks
-      ->filter(function (Block $candidate): bool {
-        if ($candidate->id === $this->id) {
-          return false;
+    $childrenByParent = $translatedBlocks->groupBy(fn (Block $block) => $block->parent_id ?? 0);
+    $sortKey = fn (Block $block) => sprintf('%010d-%010d', (int) $block->sort_order, (int) $block->id);
+
+    $headings = collect();
+
+    $walk = function (?int $parentId) use (&$walk, $childrenByParent, $sortKey, &$headings): void {
+      $children = ($childrenByParent->get($parentId ?? 0) ?? collect())->sortBy($sortKey)->values();
+
+      foreach ($children as $child) {
+        if ($child->id !== $this->id
+          && $child->typeSlug() === 'header'
+          && in_array($child->variant, ['h2', 'h3'], true)
+          && $child->headerAnchor() !== null
+        ) {
+          $headings->push($child);
         }
 
-        if ($candidate->typeSlug() !== 'header') {
-          return false;
-        }
+        $walk($child->id);
+      }
+    };
 
-        if (! in_array($candidate->variant, ['h2', 'h3'], true)) {
-          return false;
-        }
+    $walk(null);
 
-        return $candidate->headerAnchor() !== null;
-      })
-      ->sortBy(fn (Block $heading) => sprintf('%010d-%010d', (int) $heading->sort_order, (int) $heading->id))
-      ->values();
+    return $headings->values();
   }
 
   public function translatedTextFieldValue(string $field, bool $stripTags = false): ?string

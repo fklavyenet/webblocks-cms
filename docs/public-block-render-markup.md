@@ -1901,19 +1901,19 @@ The renderer resolves a CMS Navigation menu by key. Footer and legal menus rende
 | Setting | Value | Output effect |
 | --- | --- | --- |
 | title | text | Renders heading label; default visible label is current renderer behavior. |
-| same-page Header blocks | published with anchors | Generates `.wb-link-list-item` links. |
+| same-slot Header blocks | published with anchors | Generates `.wb-link-list-item` links, in document order. |
 | header variant | h3 | Description says `Jump to subsection`; others say `Jump to section`. |
 | no eligible headings | n/a | Renderer emits nothing. |
 
 ### Use for / Avoid for
 
-Use for: same-page contents lists from anchored Header blocks.
+Use for: same-slot contents lists from anchored Header blocks.
 
 Avoid for: manual link lists; use Link List.
 
 ### Notes
 
-The renderer reads anchored published Header blocks from the same page tree. It emits nothing when no eligible headings exist.
+The renderer reads anchored published Header blocks from the same slot tree, in document order. It emits nothing when no eligible headings exist.
 
 ## Alert (`alert`)
 

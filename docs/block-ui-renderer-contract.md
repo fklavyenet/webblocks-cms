@@ -112,7 +112,7 @@ Public pages now use explicit layout composition modes:
 | `testimonial` | delegated quote testimonial pattern | weak | P2 content quality | keep alias behavior honest unless a standalone testimonial contract becomes product-owned |
 | `timeline` | timeline pattern | weak | P2 content quality | promote only if timeline content is a real recurring use case |
 | `pricing` | pricing card/grid pattern | weak | P1 public marketing/docs | make first-class only with structured plans/features |
-| `toc` | table-of-contents navigation | acceptable | P1 public marketing/docs | keep same-page TOC collection on explicit anchored `header` blocks only |
+| `toc` | table-of-contents navigation | acceptable | P1 public marketing/docs | keep same-slot TOC collection on explicit anchored `header` blocks only |
 | `breadcrumb` | breadcrumb navigation | missing | P2 content quality | defer until the public page shell truly needs it and a shipped pattern is confirmed |
 | `cookie-notice` | shared privacy banner/modal pattern | missing | P3 later/custom | keep consent UI in the public layout rather than block renderers |
 
@@ -201,7 +201,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `variant`/level, alignment setting, anchor
 - Intended WebBlocks UI output: semantic `<h1>`-`<h6>` based on `level`; optional `id` from the shared anchor; no invented wrapper beyond the heading element.
 - Current implementation: acceptable
-- TOC contract: explicit shared anchors are the only supported TOC source, and the public TOC collects anchored `header` blocks from the same rendered page tree, including nested layout descendants.
+- TOC contract: explicit shared anchors are the only supported TOC source, and the public TOC collects anchored `header` blocks from the same rendered slot tree, including nested layout descendants.
 - Notes for later renderer/admin improvements: keep anchor behavior explicit, preserve wrapper-free output, and keep heading semantics owned by `Header` rather than a parallel legacy block.
 
 ### `text`
@@ -533,9 +533,9 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `title`
 - Translatable fields: `title`
 - Shared fields: none
-- Intended WebBlocks UI output: `wb-link-list` built from existing anchored `header` blocks on the same page.
+- Intended WebBlocks UI output: `wb-link-list` built from existing anchored `header` blocks in the same slot.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: the Phase 3 implementation stays intentionally minimal. It only renders when `Header` blocks already expose explicit anchor IDs and does not attempt complex heading parsing or auto-generated anchors.
+- Notes for later renderer/admin improvements: TOC is a system block type. It only renders when `Header` blocks already expose explicit anchor IDs and does not attempt complex heading parsing or auto-generated anchors.
 
 ### `navigation-auto`
 
