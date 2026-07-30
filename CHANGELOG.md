@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.2
+
+- **TOC scanned the whole page instead of the slot it was placed in.** A TOC in `sidebar` happily listed headings that actually live in `main` — the block described the page, not the slot it was in, which is why a TOC placed in `sidebar` on a `default`-layout page rendered at the bottom: sidebar comes after main in that shell, and TOC never noticed its headings weren't part of that content. `publicTocHeadingBlocks()` now scopes to the TOC's own `slot_type_id`.
+- **TOC links could come back in the wrong order once an article had more than one section.** Heading order was a flat sort by `(sort_order, id)`, but `sort_order` is scoped per `(page, slot, parent)` everywhere blocks get created — two headings under different `section` containers both start counting from 0. TOC now walks its slot's block tree in real document order: each parent's own children first, each level sorted by `(sort_order, id)`.
+- `toc` is a system block type now, joining `comments`/`rating`/`breadcrumb`/`navigation-auto`/`header-actions` — blocks whose content is derived from context rather than freely authored. It stays exactly as placeable and deletable on a page as before; `is_system` only makes the block *type* read-only in `Admin -> Block Types`.
+- A TOC placed inside a Shared Slot now renders empty rather than doing anything unexpected: a Shared Slot's block tree lives on a separate hidden source page, never on the consuming page's own blocks, so there is nothing in scope to scan. Not a supported combination either way.
+- Eight documentation lines describing the old "same page" scan are corrected to "same slot," including `docs/inventory.md`, the API-served AI authoring contract.
+
 ## 1.46.1
 
 - **The Internal Content API could bind a page slot to a Shared Slot and never release it.** `source_type` was writable only on the session-authenticated admin route, so a token client could create a reference that nothing in its own API could remove: the slot stayed bound and the Shared Slot stayed undeletable until someone opened every consuming page by hand. `PUT /webadmin/api/pages/{page}/slots/{slot}/source` writes all three source types — `page`, `shared_slot`, `disabled` — so the field has one endpoint rather than a write path per value.
