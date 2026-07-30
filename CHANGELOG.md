@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.3
+
+- **TOC rendered as `wb-link-list`, a plain link row with a hardcoded English "Jump to section" / "Jump to subsection" line that never went through any translator, whatever the site's locale.** It now renders `wb-section-nav`: a self-contained WebBlocks UI primitive with its own border, background, and padding — confirmed directly against the pinned CDN stylesheet, no dependency on the Settings Shell docs pattern it is normally seen inside.
+- The `wb-docs-rail` / `wb-settings-nav` modifier classes are deliberately not added. Both belong to that two-column docs shell: they pin the element into a CSS grid position and cap it to viewport height with its own internal scrollbar, which would clip a long TOC sitting inline in a normal content flow instead of beside it.
+- `wb-section-nav` is also what the shipped `WBSectionNav` module in `webblocks-ui.js` already keys off — the exact bundle the public layout already loads. It self-initializes on any `.wb-section-nav` it finds and live-updates `.is-active` / `aria-current="location"` on scroll, purely by matching a link's `href="#id"` against `document.getElementById(id)`. Using the right class name is the entire change: no JavaScript is owned by this package, and the hardcoded English chrome is gone with it — the primitive has no description line to begin with.
+
 ## 1.46.2
 
 - **TOC scanned the whole page instead of the slot it was placed in.** A TOC in `sidebar` happily listed headings that actually live in `main` — the block described the page, not the slot it was in, which is why a TOC placed in `sidebar` on a `default`-layout page rendered at the bottom: sidebar comes after main in that shell, and TOC never noticed its headings weren't part of that content. `publicTocHeadingBlocks()` now scopes to the TOC's own `slot_type_id`.
