@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.4
+
+- **A new `Article Layout` gives a TOC block a sticky rail beside the article instead of stacking it inline.** The reference "On this page" panel sits in a two-column CSS grid next to the article body, not above it. TOC's own slot-scoped scan (1.46.2) means it has to keep living inside `main` to see `main`'s own headings, so the split happens at render time around the unmoved block: when `main` has a top-level `toc` block, `Article Layout` pulls that one block into `wb-settings-nav.wb-docs-rail`, wraps the rest of `main` in `wb-settings-body`, and wraps both in `wb-settings-shell wb-docs-layout` — every class already shipped in the pinned `webblocks-ui.css`, no new CSS. A page on this layout with no `toc` block, or a `toc` nested under something other than a direct child of `main`, renders identically to `Default Layout`; the split is entirely opt-in and non-breaking.
+- **The Internal Content API could set a page's Page Layout only at creation, never on an existing page.** `PATCH /webadmin/api/pages/{page}/layout` closes that: it writes `public_shell` under `content.apply`, validates against the same active-layout allowlist the admin edit form uses, normalizes the legacy `dashboard` alias to `docs`, and — matching that same admin contract — does not mutate Page Slots on its own; call `sync-layout-slots` separately if the new layout defines slots the page does not have yet.
+
 ## 1.46.3
 
 - **TOC rendered as `wb-link-list`, a plain link row with a hardcoded English "Jump to section" / "Jump to subsection" line that never went through any translator, whatever the site's locale.** It now renders `wb-section-nav`: a self-contained WebBlocks UI primitive with its own border, background, and padding — confirmed directly against the pinned CDN stylesheet, no dependency on the Settings Shell docs pattern it is normally seen inside.
