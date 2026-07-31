@@ -1,8 +1,9 @@
-@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.plugin_catalog.title'), 'heading' => __('webblocks-cms::admin.plugin_catalog.title')])
-
 @php
-    $pluginCatalogText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.plugin_catalog.'.$key, $replace);
+    $pluginCatalogLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pluginCatalogText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('plugin_catalog.'.$key, $pluginCatalogLocale, $replace);
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $pluginCatalogText('title'), 'heading' => $pluginCatalogText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [

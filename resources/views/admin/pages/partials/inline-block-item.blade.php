@@ -1,6 +1,7 @@
 @php
     $selectedType = $blockTypes->firstWhere('id', $block->block_type_id) ?? $blockTypes->firstWhere('slug', $block->type);
-    $inlineBlocksText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.inline_blocks.'.$key, $replace);
+    $inlineBlocksLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $inlineBlocksText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
 @endphp
 
 <div class="wb-card wb-card-muted" data-wb-inline-block>

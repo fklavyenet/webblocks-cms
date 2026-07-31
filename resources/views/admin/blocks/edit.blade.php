@@ -1,5 +1,6 @@
 @php
-    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
+    $blockFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $blockFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('block_form.'.$key, $blockFormLocale, $replace);
     $blockPageName = $block->page?->title ?? $blockFormText('page_fallback');
     $blockSlotName = $block->slotType?->name ?? $block->slotName();
     $pageTitle = $blockFormText('edit_title', ['type' => $block->typeName(), 'page' => $blockPageName, 'slot' => $blockSlotName]);

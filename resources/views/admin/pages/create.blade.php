@@ -1,5 +1,6 @@
 @php
-    $pageFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_form.'.$key, $replace);
+    $pageFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_form.'.$key, $pageFormLocale, $replace);
     $pageTitle = $pageFormText('create_title');
 @endphp
 

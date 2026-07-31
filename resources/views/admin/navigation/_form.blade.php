@@ -5,7 +5,8 @@
     $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY)]);
     $iconOptions = ($iconCatalog ?? app(\WebBlocks\Cms\Support\Icons\IconCatalog::class))->navigationPickerOptions(old('icon', $item->icon), $item->icon);
     $cancelType = $cancelType ?? 'link';
-    $navigationFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_form.'.$key, $replace);
+    $navigationFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $navigationFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_form.'.$key, $navigationFormLocale, $replace);
     $submitLabel = $submitLabel ?? ($item->exists ? $navigationFormText('save_changes') : $navigationFormText('create'));
     $formActionsContainerClass = $formActionsContainerClass ?? null;
 @endphp

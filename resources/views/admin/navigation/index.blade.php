@@ -1,8 +1,7 @@
-@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.navigation_items.title'), 'heading' => __('webblocks-cms::admin.navigation_items.title')])
-
 @php
-  $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
-  $navigationFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_form.'.$key, $replace);
+  $navigationLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+  $navigationItemsText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_items.'.$key, $navigationLocale, $replace);
+  $navigationFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_form.'.$key, $navigationLocale, $replace);
   $baseQuery = ['site_id' => $site->id, 'menu_key' => $activeMenuKey];
   $requestedModal = request('modal');
   $requestedNavigationId = request()->integer('navigation');
@@ -28,6 +27,8 @@
 
   $allItems = collect($flattenTree($items));
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $navigationItemsText('title'), 'heading' => $navigationItemsText('title')])
 
 @section('content')
   @include('webblocks-cms::admin.partials.page-header', [

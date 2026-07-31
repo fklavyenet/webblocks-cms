@@ -1,5 +1,6 @@
 @php
-    $blockTypeFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_type_form.'.$key, $replace);
+    $blockTypeFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $blockTypeFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('block_type_form.'.$key, $blockTypeFormLocale, $replace);
 @endphp
 
 <div class="wb-stack wb-gap-4">

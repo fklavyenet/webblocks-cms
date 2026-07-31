@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.8
+
+- **Most admin screens resolved their UI copy through Laravel's global `__()` helper, which always renders in the single install-wide `app.locale` — an operator with their own `admin_locale` preference set (or the system admin locale) still saw every admin screen in the install's default language.** Only a handful of files (the block-edit modal, the admin shell/sidebar) had been migrated to the per-user `AdminLocaleResolver` + `CmsTranslator::admin()` path. Migrated the remaining ~36 admin Blade files — block types, pages, navigation, domains, and plugins screens and their partials — to resolve the authenticated admin's own locale instead, including a few "half-migrated" files that mixed both paths in the same template. Verified with `webblocks:admin-translation-audit --strict` against the existing baseline and the full test suite; no admin translation domain files still call `__('webblocks-cms::admin.*')` directly.
+
 ## 1.46.7
 
 - **The shared `admin.partials.listing-filters` component (used by Pages, Media, Comments, and Navigation) had no date field type**, only a search box and dropdowns — a plugin wanting a date filter had nothing to reuse and no path but a one-off filter UI of its own. Adds `dates`, the same shape as `selects` (id/name/label/value, optional `submitOnChange`), fully optional so every existing caller renders unchanged.

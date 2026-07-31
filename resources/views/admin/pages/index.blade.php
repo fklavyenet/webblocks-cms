@@ -81,7 +81,7 @@
                             'created_at' => $adminText('pages.created_at'),
                             'updated_at' => $adminText('pages.last_edited'),
                             'title' => $adminText('pages.columns.title'),
-                            'slug' => __('webblocks-cms::admin.page_form.slug'),
+                            'slug' => $adminText('page_form.slug'),
                             'status' => $adminText('common.status'),
                         ],
                     ],

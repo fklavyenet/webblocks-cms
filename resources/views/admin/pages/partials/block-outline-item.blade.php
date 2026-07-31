@@ -3,7 +3,8 @@
         ->where('page_id', $page->id)
         ->where('slot_type_id', $item['block']->slot_type_id)
         ->value('id');
-    $inlineBlocksText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.inline_blocks.'.$key, $replace);
+    $inlineBlocksLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $inlineBlocksText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
 @endphp
 
 <div class="wb-card wb-card-muted">

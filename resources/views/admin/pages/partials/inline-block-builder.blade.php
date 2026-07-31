@@ -18,7 +18,8 @@
             fn ($blockType) => $blockType->name,
         ])
         ->groupBy(fn ($blockType) => $blockType->category ?: 'content');
-    $inlineBlocksText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.inline_blocks.'.$key, $replace);
+    $inlineBlocksLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $inlineBlocksText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
 @endphp
 
 @once

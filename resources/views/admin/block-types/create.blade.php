@@ -1,8 +1,10 @@
-@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.block_type_form.create_title'), 'heading' => __('webblocks-cms::admin.block_type_form.create_title')])
-
 @php
-    $blockTypeFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_type_form.'.$key, $replace);
+    $blockTypeFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $blockTypeFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('block_type_form.'.$key, $blockTypeFormLocale, $replace);
+    $pageTitle = $blockTypeFormText('create_title');
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [

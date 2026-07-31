@@ -1,7 +1,8 @@
 @php
     $formSiteId = old('site_id', $page->site_id ?: ($selectedSiteId ?? $sites->first()?->id));
     $canEditContent = $canEditContent ?? true;
-    $pageFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_form.'.$key, $replace);
+    $pageFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_form.'.$key, $pageFormLocale, $replace);
 @endphp
 
 @php

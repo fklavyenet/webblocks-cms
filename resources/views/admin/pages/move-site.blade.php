@@ -1,5 +1,6 @@
 @php
-    $pageMoveSiteText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_move_site.'.$key, $replace);
+    $pageMoveSiteLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageMoveSiteText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_move_site.'.$key, $pageMoveSiteLocale, $replace);
     $pageTitle = $pageMoveSiteText('title');
     $siteName = $page->site?->name ?? $pageMoveSiteText('site_fallback');
     $backUrl = route('admin.pages.edit', $page);

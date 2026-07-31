@@ -6,7 +6,8 @@
     $lockPage = $lockPage ?? false;
     $lockSlot = $lockSlot ?? false;
     $cancelUrl = $cancelUrl ?? (($selectedPageId && $selectedSlotTypeId) ? route('admin.pages.slots.blocks', ['page' => $selectedPageId, 'slot' => $selectedSlotTypeId]) : ($selectedPageId ? route('admin.pages.edit', $selectedPageId) : route('admin.blocks.index')));
-    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
+    $blockFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $blockFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('block_form.'.$key, $blockFormLocale, $replace);
     $submitLabel = $submitLabel ?? $blockFormText('save');
     $modeLabel = $modeLabel ?? ($block->exists ? $blockFormText('edit') : $blockFormText('create'));
     $actionsContainerClass = $actionsContainerClass ?? null;

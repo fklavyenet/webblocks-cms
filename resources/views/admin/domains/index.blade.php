@@ -1,8 +1,9 @@
-@extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::admin.domains_index.title'), 'heading' => __('webblocks-cms::admin.domains_index.title')])
-
 @php
-    $domainsIndexText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.domains_index.'.$key, $replace);
+    $domainsIndexLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $domainsIndexText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('domains_index.'.$key, $domainsIndexLocale, $replace);
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $domainsIndexText('title'), 'heading' => $domainsIndexText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [

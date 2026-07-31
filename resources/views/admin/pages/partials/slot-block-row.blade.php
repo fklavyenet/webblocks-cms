@@ -9,7 +9,8 @@
     $rowSummary = $blockAdminSummary->primary($block);
     $childCount = $block->children->count();
     $sharedSlot = $sharedSlot ?? null;
-    $inlineBlocksText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.inline_blocks.'.$key, $replace);
+    $inlineBlocksLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $inlineBlocksText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
 @endphp
 
 <tbody

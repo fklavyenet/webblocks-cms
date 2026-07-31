@@ -1,7 +1,8 @@
 @php
   $modalTitleId = $modalId.'Title';
   $modalDescriptionId = $modalId.'Description';
-  $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
+  $navigationItemsLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+  $navigationItemsText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_items.'.$key, $navigationItemsLocale, $replace);
   $openModalId = old('_navigation_modal');
   $isOpen = $openModalId === $modalId || ($show ?? false);
   $closeUrl = $closeUrl ?? route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => $activeMenuKey]);

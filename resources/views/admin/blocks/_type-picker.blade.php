@@ -2,7 +2,7 @@
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.blocks.'.$key, $adminLocale, $replace);
-    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
+    $blockFormText = fn (string $key, array $replace = []) => $adminTranslator->admin('block_form.'.$key, $adminLocale, $replace);
     $search = strtolower(trim((string) request('block_type_search')));
     $availableBlockTypes = $blockTypes
         ->filter(function ($blockType) use ($search) {

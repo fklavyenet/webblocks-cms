@@ -5,7 +5,8 @@
     $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';
     $pageReturnUrl = $pageReturnUrl ?? request('return_url') ?? session('page_return_url');
     $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'return_url' => $pageReturnUrl]));
-    $pageAssetsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_assets.'.$key, $replace);
+    $pageAssetsLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageAssetsText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_assets.'.$key, $pageAssetsLocale, $replace);
 @endphp
 
 <div class="wb-card wb-card-muted">

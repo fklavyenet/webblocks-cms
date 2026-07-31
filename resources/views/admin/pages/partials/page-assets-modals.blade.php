@@ -7,7 +7,8 @@
     $siteHandle = $page->site?->handle ?: 'site';
     $pageSlug = $page->slug ?: 'page';
     $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';
-    $pageAssetsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_assets.'.$key, $replace);
+    $pageAssetsLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageAssetsText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_assets.'.$key, $pageAssetsLocale, $replace);
     $createType = in_array($requestedType, ['css', 'js'], true) ? $requestedType : 'css';
     $showCreateModal = $canManagePageAssets && $requestedModal === 'create-page-asset';
     $showEditModal = $canManagePageAssets && $requestedModal === 'edit-page-asset' && $selectedAsset;

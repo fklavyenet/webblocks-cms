@@ -4,7 +4,8 @@
     $modalDescriptionId = $modalId.'-description';
     $isOpen = ($pageImportOpen ?? false) || old('_page_import_modal') === $modalId;
     $selectedSiteId = (int) old('site_id', $pageImportSelectedSiteId ?? 0);
-    $pageImportText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_import.'.$key, $replace);
+    $pageImportLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageImportText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_import.'.$key, $pageImportLocale, $replace);
 @endphp
 
 <div class="wb-modal wb-modal-lg" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}" data-wb-admin-close-url="{{ $closeUrl }}" @if ($isOpen) data-wb-admin-autoload-overlay hidden @else hidden @endif>

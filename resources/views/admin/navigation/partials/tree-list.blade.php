@@ -1,6 +1,7 @@
 @php
     $listAttribute = $depth === 1 ? 'data-navigation-tree' : 'data-navigation-children';
-    $navigationItemsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.navigation_items.'.$key, $replace);
+    $navigationItemsLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $navigationItemsText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_items.'.$key, $navigationItemsLocale, $replace);
 @endphp
 
 <ul class="{{ $depth === 1 ? 'wb-navigation-tree' : 'wb-navigation-children' }}" {{ $listAttribute }}>

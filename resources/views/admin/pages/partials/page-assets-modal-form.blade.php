@@ -3,7 +3,8 @@
     $modalDescriptionId = $modalId.'Description';
     $isJs = $asset->type === 'js';
     $extension = $isJs ? 'js' : 'css';
-    $pageAssetsText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_assets.'.$key, $replace);
+    $pageAssetsLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageAssetsText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_assets.'.$key, $pageAssetsLocale, $replace);
 @endphp
 
 <div class="wb-modal wb-modal-lg" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}" data-wb-admin-close-url="{{ $closeUrl }}" data-wb-admin-autoload-overlay hidden>

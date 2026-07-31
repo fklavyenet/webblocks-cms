@@ -3,8 +3,10 @@
     $isCreateMode = $slotModalMode === 'create';
     $isEditMode = $slotModalMode === 'edit';
     $showModal = $isCreateMode || $isEditMode;
-    $blockFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_form.'.$key, $replace);
-    $blockTypeFormText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.block_type_form.'.$key, $replace);
+    $slotBlockModalLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $slotBlockModalTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $blockFormText = fn (string $key, array $replace = []) => $slotBlockModalTranslator->admin('block_form.'.$key, $slotBlockModalLocale, $replace);
+    $blockTypeFormText = fn (string $key, array $replace = []) => $slotBlockModalTranslator->admin('block_type_form.'.$key, $slotBlockModalLocale, $replace);
     $slotName = $slot->slotType?->name ?? $blockFormText('slot_fallback');
     $pageName = $page->title;
     $blockName = $isCreateMode ? ($slotModalSelectedBlockType?->name ?? $blockFormText('block_fallback')) : ($slotModalBlock?->typeName() ?? $blockFormText('block_fallback'));

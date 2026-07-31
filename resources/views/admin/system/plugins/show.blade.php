@@ -5,7 +5,7 @@
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('system_plugins_show.'.$key, $adminLocale, $replace);
-    $pluginSetupText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.plugin_setup.'.$key, $replace);
+    $pluginSetupText = fn (string $key, array $replace = []) => $adminTranslator->admin('plugin_setup.'.$key, $adminLocale, $replace);
     $statusClass = match ($plugin['lifecycle_label']) {
         $pluginSetupText('enabled') => 'wb-status-active',
         $pluginSetupText('incompatible'), $pluginSetupText('missing_files'), $pluginSetupText('error') => 'wb-status-danger',

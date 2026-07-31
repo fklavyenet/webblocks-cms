@@ -1,5 +1,6 @@
 @php
-    $pageBuilderText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.page_builder.'.$key, $replace);
+    $pageBuilderLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pageBuilderText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('page_builder.'.$key, $pageBuilderLocale, $replace);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageBuilderText('title_with_page', ['title' => $page->title]), 'heading' => $pageBuilderText('title')])

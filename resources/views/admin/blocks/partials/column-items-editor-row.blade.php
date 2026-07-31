@@ -2,7 +2,8 @@
     $inputName = $inputName ?? 'column_items';
     $itemBlockType = $itemBlockType ?? null;
     $editorKey = $editorKey ?? 'column-item';
-    $columnItemRowText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.column_items_editor_row.'.$key, $replace);
+    $columnItemRowLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $columnItemRowText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('column_items_editor_row.'.$key, $columnItemRowLocale, $replace);
     $newItemLabel = $newItemLabel ?? $columnItemRowText('new_item');
     $titleLabel = $titleLabel ?? $columnItemRowText('title');
     $titlePlaceholder = $titlePlaceholder ?? null;

@@ -1,5 +1,6 @@
 @php
-    $pluginSetupText = fn (string $key, array $replace = []) => __('webblocks-cms::admin.plugin_setup.'.$key, $replace);
+    $pluginSetupLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $pluginSetupText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('plugin_setup.'.$key, $pluginSetupLocale, $replace);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $title, 'heading' => $title])
