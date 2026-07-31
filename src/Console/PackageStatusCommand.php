@@ -8,6 +8,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use WebBlocks\Cms\Support\System\Updates\UpdateMigrationRunner;
+use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PackageStatusCommand extends Command
@@ -59,7 +60,11 @@ class PackageStatusCommand extends Command
       WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME
     );
 
+    $composerLockVersion = $this->composerLockedVersion(base_path('composer.lock'), WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
+
     $this->line('Package: '.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
+    $this->line('Installed runtime version (authoritative): '.WebBlocks::version());
+    $this->line('Composer lock recorded version: '.($composerLockVersion ?? 'not found').' (only reflects the last real "composer install/update"; System Updates overwrite package files directly without touching composer.lock, so this drifts from the runtime version above and must not be used to determine what is actually installed)');
     $this->line('Mode: read-only diagnostic only');
     $this->newLine();
 
@@ -563,6 +568,27 @@ class PackageStatusCommand extends Command
   protected function expectedFilesPresent(string $basePath, array $expectedFiles): bool
   {
     return $this->missingExpectedFiles($basePath, $expectedFiles) === [];
+  }
+
+  protected function composerLockedVersion(string $lockPath, string $packageName): ?string
+  {
+    if (! is_file($lockPath)) {
+      return null;
+    }
+
+    $decoded = json_decode((string) file_get_contents($lockPath), true);
+
+    if (! is_array($decoded)) {
+      return null;
+    }
+
+    foreach (array_merge($decoded['packages'] ?? [], $decoded['packages-dev'] ?? []) as $package) {
+      if (($package['name'] ?? null) === $packageName) {
+        return $package['version'] ?? null;
+      }
+    }
+
+    return null;
   }
 
   protected function composerJson(string $path): array
