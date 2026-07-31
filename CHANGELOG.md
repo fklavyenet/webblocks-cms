@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.6
+
+- **The Video block's external-link fallback was unreachable: any URL that wasn't a recognized YouTube/Vimeo embed rendered a broken native `<video>` tag instead of the documented "Open video" link.** `$videoSource` was computed as `$assetUrl ?: ($embedUrl ? null : $safeUrl)`, so a plain webpage or any other unsupported host fell all the way through to `$safeUrl` and produced a `<video><source>` pointing at something that isn't a video file and never plays. `$videoSource` is now only ever `$assetUrl`: an uploaded Media Library file is the sole source for the native `<video>` tag, recognized YouTube/Vimeo URLs still render their iframe embed, and everything else now reaches the existing link fallback, matching the renderer's own documented contract.
+
 ## 1.46.5
 
 - **The Internal Content API could read a site's resolved timezone in rendered content but never write it.** `PATCH /webadmin/api/sites/{site}/timezone` closes that, under `site-settings.write`: it accepts a standard IANA identifier such as `Europe/Berlin`, validated against the same set `Sites -> Edit Site` offers, and an empty value clears it back to the install-wide system timezone — the same convention the admin edit form uses, so the two surfaces cannot disagree about what blank means. A site's timezone is what anything resolving local wall-clock time for that site — a plugin's booking availability windows, for one — is interpreted against.
