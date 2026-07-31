@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.0
+
+- **The header slot's `wb-public-site-header` class is retired in favor of the fixed `wb-slot-header` class introduced in 1.47.0.** `public/cms/css/public.css`'s two rules — the header's bottom margin, and the extra top padding `main` gets when it immediately follows the header — now target `.wb-slot-header` and `.wb-slot-header + .wb-slot-main` instead of `.wb-public-site-header` and the mixed class/attribute selector that mismatch required. Since `wb-slot-header`/`wb-slot-main` render on every layout (Default, Article, and Docs alike), this spacing now also applies to the Docs shell's navbar header, which `wb-public-site-header` never reached before — a deliberate, previously-inconsistent gap being closed, not an incidental side effect. `header`'s `css_classes` catalog default is removed from Default and Article layouts (matching `footer`/`sidebar`, which never had one) since the class it used to carry is now the code-owned fixed class; an operator's own custom `css_classes` value for header is completely unaffected; it's still read and appended after `wb-slot-header` exactly as before. Also removes `.wb-public-footer .wb-footer-cookie-settings-link`, a rule left orphaned by 1.46.13's dead-code removal with no matching markup left anywhere.
+
 ## 1.47.0
 
 - **`wbcms_page_layout_slots.html_classes` is renamed to `css_classes`, matching the admin-facing "CSS Classes" field it has always been.** Purely a naming fix — the admin form, its validation, and every code path that reads or writes this field behave exactly as before, just under a name that says what it's for instead of what HTML attribute it becomes. Existing installs pick this up via a package update migration (`database/migrations/updates`); already-installed sites are unaffected until their next System Update, at which point the rename runs once, guarded and reversible.
