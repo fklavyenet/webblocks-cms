@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.7
+
+- **The shared `admin.partials.listing-filters` component (used by Pages, Media, Comments, and Navigation) had no date field type**, only a search box and dropdowns — a plugin wanting a date filter had nothing to reuse and no path but a one-off filter UI of its own. Adds `dates`, the same shape as `selects` (id/name/label/value, optional `submitOnChange`), fully optional so every existing caller renders unchanged.
+- **Clarified that `PluginMenuItem::group()` is an exact-match label, not a picklist.** Two unrelated plugins independently reaching for the same generic-sounding but undocumented group name (`Content`) silently shared one sidebar heading — working as designed (identical strings merge), but nothing said so. Added a docblock explaining the shared-bucket-vs-dedicated-section behavior, and a `docs/plugin-system.md` example showing a large plugin surface claiming its own section by passing its own name.
+
 ## 1.46.6
 
 - **The Video block's external-link fallback was unreachable: any URL that wasn't a recognized YouTube/Vimeo embed rendered a broken native `<video>` tag instead of the documented "Open video" link.** `$videoSource` was computed as `$assetUrl ?: ($embedUrl ? null : $safeUrl)`, so a plain webpage or any other unsupported host fell all the way through to `$safeUrl` and produced a `<video><source>` pointing at something that isn't a video file and never plays. `$videoSource` is now only ever `$assetUrl`: an uploaded Media Library file is the sole source for the native `<video>` tag, recognized YouTube/Vimeo URLs still render their iframe embed, and everything else now reaches the existing link fallback, matching the renderer's own documented contract.

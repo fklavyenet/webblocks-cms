@@ -320,13 +320,26 @@ The provider should register package views, config, migrations, and the plugin d
 
 Plugins may add admin menu entries, but every plugin menu entry must be permission-gated.
 
-The preferred behavior is to add items to existing admin groups such as:
+`PluginMenuItem::group(string $group)` is an **exact-match label, not a picklist**. The admin sidebar gives every distinct group string its own heading and only merges items whose group string is identical (slug-insensitively) — there is no fixed enum of allowed section names and no hardcoded bucket a plugin's items fall into by default.
 
-- System
-- Tools
-- Integrations
+Two ways to use it:
 
-A top-level plugin menu may be reserved only for a large product surface that would be confusing as a single group item.
+- **Share an existing bucket** by passing one of the shared names exactly: `System`, `Tools`, `Integrations`. Do this for a small utility whose few menu items don't warrant their own heading.
+- **Get your own dedicated section** by passing your plugin's own name instead, for a large product surface (e.g. a whole booking or commerce system). This needs no core-side registration — the heading is created automatically the first time a distinct group string is seen:
+
+```php
+->menu([
+    PluginMenuItem::make('appointments')
+        ->label('Appointments')
+        ->route('webblocks.plugins.webblocks_appointments.appointments.index')
+        ->icon('wb-icon-calendar')
+        ->permission(self::PERMISSION_VIEW)
+        ->group('Appointments') // its own section, not a shared bucket
+        ->sort(60),
+])
+```
+
+Do not reach for a generic-sounding but undocumented name (e.g. `Content`) as a substitute for either path above: it is not one of the shared buckets, so it reads as a request for your own section, but a plausible-sounding generic label like that is exactly what a second, unrelated plugin is also likely to pick — and two plugins passing the identical string silently share one heading. If your plugin is its own product surface, name the group after the plugin.
 
 Admin menu rules:
 

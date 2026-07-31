@@ -2,6 +2,7 @@
     $method = strtoupper($method ?? 'GET');
     $search = $search ?? null;
     $selects = $selects ?? [];
+    $dates = $dates ?? [];
     $hidden = $hidden ?? [];
     $showActions = $showActions ?? true;
     $showReset = $showReset ?? false;
@@ -32,7 +33,7 @@
         </div>
     @endif
 
-    @if ($selects !== [])
+    @if ($selects !== [] || $dates !== [])
         <div class="wb-admin-listing-filters-fields" data-admin-listing-filters-fields>
             @foreach ($selects as $select)
                 @php($selectedValue = (string) ($select['selected'] ?? $select['value'] ?? ''))
@@ -47,6 +48,20 @@
                             <option value="{{ $value }}" @selected($selectedValue === (string) $value)>{{ $label }}</option>
                         @endforeach
                     </select>
+                </div>
+            @endforeach
+
+            @foreach ($dates as $date)
+                <div class="wb-stack wb-gap-1 wb-field wb-admin-listing-filters-date">
+                    <label for="{{ $date['id'] }}" class="wb-label">{{ $date['label'] }}</label>
+                    <input
+                        id="{{ $date['id'] }}"
+                        name="{{ $date['name'] }}"
+                        type="date"
+                        class="wb-input"
+                        value="{{ $date['value'] ?? '' }}"
+                        @if (! empty($date['submitOnChange'])) onchange="this.form.submit()" @endif
+                    >
                 </div>
             @endforeach
         </div>

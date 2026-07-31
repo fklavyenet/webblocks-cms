@@ -437,6 +437,11 @@ svg.wb-sidebar-brand-logo {
     min-width: 8.5rem;
 }
 
+.wb-admin-listing-filters-date {
+    flex: 0 1 10rem;
+    min-width: 8.5rem;
+}
+
 .wb-admin-listing-filters-actions {
     display: inline-flex;
     flex-wrap: wrap;

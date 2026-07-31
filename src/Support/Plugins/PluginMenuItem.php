@@ -82,6 +82,23 @@ class PluginMenuItem
     return $this->permission;
   }
 
+  /**
+   * Which sidebar section this item renders under.
+   *
+   * This is an exact-match label, not a picklist: the admin layout gives every
+   * distinct string its own heading, and only merges items whose group string
+   * is byte-for-byte (slug-insensitively) identical. Passing one of the
+   * documented shared buckets ("System", "Tools", "Integrations") deliberately
+   * shares that heading with whatever else is already in it; passing anything
+   * else — including, and normally, your own plugin's name — gets your plugin
+   * a dedicated section with no core-side registration required.
+   *
+   * Two unrelated plugins that both reach for the same generic-sounding label
+   * (e.g. "Content") will silently share one heading, because that is exactly
+   * what identical strings mean here. If your plugin is its own product
+   * surface rather than a small utility that belongs in a shared bucket, pass
+   * its name, not a shared bucket's.
+   */
   public function group(string $group): self
   {
     $this->group = trim($group);
