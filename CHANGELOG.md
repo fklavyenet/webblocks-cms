@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.10
+
+- **A System Update that failed after replacing package files (for example a broken `composer` step, or any later post-install failure) had no way to undo the file swap.** The existing automatic recovery only restores the database and uploads from the pre-update backup, never the package code itself, so a failed run could leave `vendor/fklavyenet/webblocks-cms` on the new version while migrations, cache clears, and catalog repair never ran — a silent code/schema mismatch. Rather than growing that backup to snapshot all of `vendor/` (mostly unrelated, unchanged dependencies, fully reproducible from `composer.lock`), `UpdateInstaller` now keeps the pre-update package directory it already sets aside during the swap (previously deleted immediately after a successful `rename()`) until the whole update flow verifies successfully. Any failure between the file swap and that verification now rolls the package back to its exact pre-update contents; a successful run clears the kept-around backup once it's no longer needed.
+
 ## 1.46.9
 
 - **The public `main` slot never received its width-constraining container class on `Default Layout` and `Article Layout`, so page content rendered edge-to-edge instead of matching the header/footer width.** `PageLayoutCatalog`'s `main` managed-slot definition had no `html_classes` at all for either layout (every other slot — header, sidebar, docs' own `main` — has one), and the legacy fallback mapping in `SlotWrapperResolver` had the identical gap for pages without a managed-slot row. Both now carry `wb-public-main wb-container wb-container-lg`, matching the class pairing the (dead) hardcoded shell markup in `pages/partials/slots/main.blade.php` always intended. Existing sites pick this up the next time `php artisan webblocks:catalog-repair --all` runs (automatically on a successful in-app update, or manually once beforehand).
