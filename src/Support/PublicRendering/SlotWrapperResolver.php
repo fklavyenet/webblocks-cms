@@ -78,7 +78,7 @@ class SlotWrapperResolver
   {
     return match ($slug) {
       'header' => ['preset' => 'default', 'element' => 'header', 'id' => null, 'class' => 'wb-public-site-header', 'before_html' => null, 'start_html' => null, 'end_html' => null, 'after_html' => null],
-      'main' => ['preset' => 'default', 'element' => 'main', 'id' => 'main-content', 'class' => 'wb-public-main wb-container wb-container-lg', 'before_html' => null, 'start_html' => null, 'end_html' => null, 'after_html' => null],
+      'main' => ['preset' => 'default', 'element' => 'main', 'id' => 'main-content', 'class' => null, 'before_html' => null, 'start_html' => null, 'end_html' => null, 'after_html' => null],
       'sidebar' => ['preset' => 'default', 'element' => 'aside', 'id' => null, 'class' => null, 'before_html' => null, 'start_html' => null, 'end_html' => null, 'after_html' => null],
       'footer' => ['preset' => 'default', 'element' => 'footer', 'id' => null, 'class' => null, 'before_html' => null, 'start_html' => null, 'end_html' => null, 'after_html' => null],
       default => ['preset' => 'default', 'element' => 'div', 'id' => null, 'class' => null, 'before_html' => null, 'start_html' => null, 'end_html' => null, 'after_html' => null],
