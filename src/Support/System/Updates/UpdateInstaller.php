@@ -138,12 +138,15 @@ class UpdateInstaller
 
     $this->normalizeComposerPackageMetadata($targetPath, $output);
 
-    $this->commandRunner->run([
-      'composer',
-      'dump-autoload',
-      '--no-interaction',
-      '--optimize',
-    ], $targetPath, $output);
+    $this->commandRunner->run(
+      $this->commandRunner->composerCommand([
+        'dump-autoload',
+        '--no-interaction',
+        '--optimize',
+      ]),
+      $targetPath,
+      $output,
+    );
 
     $this->normalizeComposerAutoloadMetadata($targetPath, $output);
     $this->assertComposerAutoloadReady($targetPath);

@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Contracts\Process\ProcessResult;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Process\ExecutableFinder;
 
@@ -50,6 +51,59 @@ class UpdateCommandRunner
     }
 
     return 'php';
+  }
+
+  /**
+   * Runs Composer as `php <entry point>` instead of executing its shim
+   * directly. Under php-fpm (clear_env=yes), spawned subprocesses can inherit
+   * an empty PATH, so the OS can't resolve the `#!/usr/bin/env php` shebang
+   * in Composer's own binary and fails with "env: php: No such file or
+   * directory". Invoking the resolved PHP binary directly on Composer's entry
+   * file bypasses that shebang/env lookup entirely.
+   */
+  public function composerCommand(array $arguments): array
+  {
+    $composerEntryPath = $this->composerEntryPath();
+
+    if ($composerEntryPath === null) {
+      throw new UpdateException(
+        'The update could not locate a Composer executable to finish installing dependencies.',
+        'Unable to resolve a Composer entry point (checked the webblocks-updates.installer.composer_binary config, PATH via ExecutableFinder, and common install locations).',
+      );
+    }
+
+    return [
+      $this->phpBinary(),
+      $composerEntryPath,
+      ...$arguments,
+    ];
+  }
+
+  public function composerEntryPath(): ?string
+  {
+    $configured = trim((string) config('webblocks-updates.installer.composer_binary', ''));
+
+    if ($configured !== '' && File::isFile($configured)) {
+      return $configured;
+    }
+
+    $found = (new ExecutableFinder)->find('composer');
+
+    if (is_string($found) && $found !== '' && File::isFile($found)) {
+      return $found;
+    }
+
+    foreach ([
+      base_path('composer.phar'),
+      '/usr/local/bin/composer',
+      '/usr/bin/composer',
+    ] as $candidate) {
+      if (File::isFile($candidate)) {
+        return $candidate;
+      }
+    }
+
+    return null;
   }
 
   public function resolveCliPhpBinary(?string $binary): ?string
