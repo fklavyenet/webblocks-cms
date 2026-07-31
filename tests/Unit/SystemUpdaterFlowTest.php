@@ -243,6 +243,7 @@ class SystemUpdaterFlowTest extends TestCase
     $installer = Mockery::mock(UpdateInstaller::class);
     $installer->shouldReceive('enterMaintenance')->once();
     $installer->shouldReceive('applyPackage')->once();
+    $installer->shouldReceive('rollbackAppliedPackage')->once();
 
     return $installer;
   }
@@ -314,6 +315,7 @@ class SystemUpdaterFlowTest extends TestCase
       $installer->shouldReceive('installDependencies');
       $installer->shouldReceive('runPostInstallCommands');
       $installer->shouldReceive('verifyAppliedVersion');
+      $installer->shouldReceive('finalizeAppliedPackage');
       $installer->shouldReceive('leaveMaintenance');
     }
 

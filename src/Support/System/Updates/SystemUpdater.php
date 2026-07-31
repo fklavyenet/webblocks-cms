@@ -160,6 +160,7 @@ class SystemUpdater
       $this->updateInstaller->installDependencies($output);
       $this->updateInstaller->runPostInstallCommands($output);
       $this->updateInstaller->verifyAppliedVersion($toVersion, $output);
+      $this->updateInstaller->finalizeAppliedPackage($output);
       $this->updateInstaller->leaveMaintenance($output);
       $maintenanceEnabled = false;
 
@@ -197,6 +198,14 @@ class SystemUpdater
         preUpdateBackup: $backup,
       );
     } catch (Throwable $throwable) {
+      if ($applyStarted) {
+        try {
+          $this->updateInstaller->rollbackAppliedPackage($output);
+        } catch (Throwable $rollbackException) {
+          $output[] = 'Package rollback failed: '.$rollbackException->getMessage();
+        }
+      }
+
       if ($maintenanceEnabled) {
         try {
           $this->updateInstaller->leaveMaintenance($output);

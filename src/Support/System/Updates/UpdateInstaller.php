@@ -92,12 +92,67 @@ class UpdateInstaller
       throw new UpdateException('The update could not apply the downloaded package.', 'Failed to replace package runtime at '.$packageRuntimePath.'.');
     }
 
-    File::deleteDirectory($backupPath);
+    // backupPath is deliberately kept, not deleted, here: installDependencies()
+    // or runPostInstallCommands() can still fail after this swap, and
+    // rollbackAppliedPackage() needs the pre-update contents to undo it.
+    // finalizeAppliedPackage() clears it once the whole update flow succeeds.
 
     $output[] = 'Replaced '.$this->relativePath($targetPath, $packageRuntimePath).' with package artifact contents.';
 
     if ($normalizesRepoShapedVendorRoot) {
       $output[] = 'Normalized repo-shaped vendor package root to the flat canonical Composer package root.';
+    }
+  }
+
+  /**
+   * Undoes applyPackage() by restoring each package runtime path from the
+   * pre-update backup replacePackageRuntime() left in place. Called when a
+   * later step (installDependencies, runPostInstallCommands,
+   * verifyAppliedVersion) fails, so a broken dependency-install step doesn't
+   * leave the site on new package code with old migrations/config.
+   */
+  public function rollbackAppliedPackage(array &$output): void
+  {
+    $targetPath = $this->targetPath();
+
+    foreach ($this->packageRuntimePaths($targetPath) as $packageRuntimePath) {
+      $backupPath = $packageRuntimePath.'.wb-update-old';
+
+      if (! File::isDirectory($backupPath)) {
+        continue;
+      }
+
+      File::deleteDirectory($packageRuntimePath.'.wb-update-new');
+
+      if (File::isDirectory($packageRuntimePath) && ! File::deleteDirectory($packageRuntimePath)) {
+        $output[] = 'Could not remove the partially applied package at '.$this->relativePath($targetPath, $packageRuntimePath).' to roll it back.';
+
+        continue;
+      }
+
+      if (@rename($backupPath, $packageRuntimePath)) {
+        $output[] = 'Rolled back '.$this->relativePath($targetPath, $packageRuntimePath).' to its pre-update contents.';
+      } else {
+        $output[] = 'Failed to roll back '.$this->relativePath($targetPath, $packageRuntimePath).'; pre-update contents remain at '.$this->relativePath($targetPath, $backupPath).'.';
+      }
+    }
+  }
+
+  /**
+   * Clears the pre-update package backups once the whole update flow has
+   * succeeded (version verified) and they are no longer needed for rollback.
+   */
+  public function finalizeAppliedPackage(array &$output): void
+  {
+    $targetPath = $this->targetPath();
+
+    foreach ($this->packageRuntimePaths($targetPath) as $packageRuntimePath) {
+      $backupPath = $packageRuntimePath.'.wb-update-old';
+
+      if (File::isDirectory($backupPath)) {
+        File::deleteDirectory($backupPath);
+        $output[] = 'Cleared pre-update package backup at '.$this->relativePath($targetPath, $backupPath).'.';
+      }
     }
   }
 
