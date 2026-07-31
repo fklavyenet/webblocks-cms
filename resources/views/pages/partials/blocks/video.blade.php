@@ -29,7 +29,7 @@
     }
   }
 
-  $videoSource = $assetUrl ?: ($embedUrl ? null : $safeUrl);
+  $videoSource = $assetUrl;
 @endphp
 
 @if ($assetUrl || $embedUrl || $safeUrl || $block->title || $block->content)
