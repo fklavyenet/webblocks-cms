@@ -784,6 +784,7 @@ Writes an existing page's Page Layout (`public_shell`). The admin edit form coul
 ```text
 POST /webadmin/api/sites/{site}/public-theme
 PATCH /webadmin/api/sites/{site}/branding
+PATCH /webadmin/api/sites/{site}/timezone
 GET /webadmin/api/sites/{site}/assets/{css|js}
 PUT /webadmin/api/sites/{site}/assets/{css|js}
 ```
@@ -799,6 +800,8 @@ This endpoint updates only the safe site public theme preset used by public rend
 - Media replacement preserves the Media id and editorial references, clears obsolete image transforms, and derives future variants from the replacement binary.
 
 The favicon and social image fields must reference image records from the CMS Media Library, and `null` clears the selected media. Public site favicon changes should use this endpoint so the result remains admin-editable. Do not overwrite `/cms/brand/*`; those files are CMS product/admin shell assets, not site-level public branding.
+
+`PATCH /webadmin/api/sites/{site}/timezone` requires `site-settings.write` and sets a site's own timezone — a standard IANA identifier such as `Europe/Berlin`. Anything that resolves local wall-clock time for that site, such as a plugin's booking availability windows, is interpreted against this value. Send an empty `timezone` to clear it back to the install-wide system timezone from `Admin -> System Settings`.
 
 `GET /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.read` and reads the canonical physical site-level override file. It returns `relative_path`, `public_path`, `exists`, `contents`, `checksum`, `size`, `updated_at`, `readiness`, `guidance`, and CSS `analysis` without exposing the server absolute path. The `readiness` object reports whether the site directory, asset directory, and file are writable enough for CMS to create or update the asset. The `guidance` object tells AI/operator tools to keep CSS token-first, mode-aware, and native-block-first. For CSS, `asset.analysis.mode_awareness` reports `status`, warning messages, detected anti-pattern keys, signals such as literal color count, and recommended `--wb-public-*` tokens. `PUT /webadmin/api/sites/{site}/assets/{css|js}` requires `site-assets.write` and accepts:
 

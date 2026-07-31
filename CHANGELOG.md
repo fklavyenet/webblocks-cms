@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.5
+
+- **The Internal Content API could read a site's resolved timezone in rendered content but never write it.** `PATCH /webadmin/api/sites/{site}/timezone` closes that, under `site-settings.write`: it accepts a standard IANA identifier such as `Europe/Berlin`, validated against the same set `Sites -> Edit Site` offers, and an empty value clears it back to the install-wide system timezone — the same convention the admin edit form uses, so the two surfaces cannot disagree about what blank means. A site's timezone is what anything resolving local wall-clock time for that site — a plugin's booking availability windows, for one — is interpreted against.
+
 ## 1.46.4
 
 - **A new `Article Layout` gives a TOC block a sticky rail beside the article instead of stacking it inline.** The reference "On this page" panel sits in a two-column CSS grid next to the article body, not above it. TOC's own slot-scoped scan (1.46.2) means it has to keep living inside `main` to see `main`'s own headings, so the split happens at render time around the unmoved block: when `main` has a top-level `toc` block, `Article Layout` pulls that one block into `wb-settings-nav.wb-docs-rail`, wraps the rest of `main` in `wb-settings-body`, and wraps both in `wb-settings-shell wb-docs-layout` — every class already shipped in the pinned `webblocks-ui.css`, no new CSS. A page on this layout with no `toc` block, or a `toc` nested under something other than a direct child of `main`, renders identically to `Default Layout`; the split is entirely opt-in and non-breaking.

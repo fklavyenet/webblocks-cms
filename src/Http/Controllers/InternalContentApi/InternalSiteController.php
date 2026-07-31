@@ -17,6 +17,7 @@ use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Sites\SiteAssetStore;
 use WebBlocks\Cms\Support\Sites\SiteAssetWriteException;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Theme\BrandPalette;
 
 class InternalSiteController extends Controller
@@ -25,6 +26,7 @@ class InternalSiteController extends Controller
     private readonly InternalContentApiPresenter $presenter,
     private readonly PageLayoutSlotSyncer $slotSyncer,
     private readonly SiteAssetStore $siteAssets,
+    private readonly SystemSettings $systemSettings,
   ) {}
 
   public function updatePublicTheme(Request $request, Site $site): JsonResponse
@@ -49,6 +51,44 @@ class InternalSiteController extends Controller
       'ok' => true,
       'site' => $this->presenter->site($site->fresh(['locales'])),
       'writes' => [['type' => 'site_public_theme_preset', 'id' => $site->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  /**
+   * The admin edit form could always change a site's timezone (blank falls back to
+   * the install-wide system timezone from Admin -> System Settings). The Internal
+   * Content API had no way to write it, only to read the *resolved* value baked
+   * into rendered availability elsewhere — the same class of gap the page layout
+   * and Shared Slot detachment endpoints closed: a field the admin UI can set with
+   * no way back out through the API that manages everything else about a site.
+   */
+  public function updateTimezone(Request $request, Site $site): JsonResponse
+  {
+    if (! Schema::hasColumn('wbcms_sites', 'timezone')) {
+      return $this->validationError([
+        ['path' => 'site.timezone', 'message' => 'Site timezone is not available until the latest site schema has been applied.'],
+      ]);
+    }
+
+    $timezone = trim((string) $request->input('timezone'));
+
+    // Blank stores null, which reads as "follow the system timezone" — the same
+    // convention the admin edit form uses, so the two surfaces cannot disagree
+    // about what an empty value means.
+    if ($timezone !== '' && ! array_key_exists($timezone, $this->systemSettings->timezoneOptions())) {
+      return $this->validationError([
+        ['path' => 'timezone', 'message' => 'Timezone must be a standard IANA identifier such as Europe/Berlin, or blank to follow the system timezone.'],
+      ]);
+    }
+
+    $site->forceFill(['timezone' => $timezone !== '' ? $timezone : null])->save();
+
+    return response()->json([
+      'ok' => true,
+      'site' => $this->presenter->site($site->fresh(['locales'])),
+      'writes' => [['type' => 'site_timezone', 'id' => $site->id]],
       'warnings' => [],
       'errors' => [],
     ]);
