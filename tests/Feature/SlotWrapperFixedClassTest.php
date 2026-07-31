@@ -77,6 +77,17 @@ class SlotWrapperFixedClassTest extends TestCase
   }
 
   #[Test]
+  public function header_relies_solely_on_the_fixed_class_now_that_public_css_targets_it(): void
+  {
+    $page = $this->makePage('h', 'default');
+    $slot = $this->makeSlot($page, 'header');
+
+    $attributes = $this->resolver()->resolve($page, $slot)['attributes'];
+
+    $this->assertSame('wb-slot-header', $attributes['class']);
+  }
+
+  #[Test]
   public function an_operators_custom_css_classes_value_is_appended_not_erased(): void
   {
     $page = $this->makePage('c', 'default');

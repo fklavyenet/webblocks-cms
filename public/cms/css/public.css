@@ -1,8 +1,8 @@
-.wb-public-site-header {
+.wb-slot-header {
     margin-bottom: var(--wb-s6);
 }
 
-.wb-public-site-header + main[data-wb-slot="main"] {
+.wb-slot-header + .wb-slot-main {
     padding-top: var(--wb-s3);
 }
 
@@ -245,10 +245,5 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
    accent-text tone instead of the raw accent that shipped `a` rules use. */
 :is(body[data-wb-public-theme], [data-wb-public-theme-preview]) a:not(.wb-btn):not(.wb-navbar-link):not(.wb-dropdown-item):not(.wb-sidebar-link) {
     color: var(--wb-public-accent-text);
-}
-
-.wb-public-footer .wb-footer-cookie-settings-link {
-    padding-inline: 0;
-    min-height: auto;
 }
 
