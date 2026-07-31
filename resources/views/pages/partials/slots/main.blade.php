@@ -1,6 +1,4 @@
 @php
-    // Main content stays block-driven, but the public presentation layer gives it a stable semantic wrapper and rhythm.
-    $renderShell = $renderShell ?? true;
     $mainBlocks = $slot['blocks'];
 
     // Article Layout pulls a top-level toc block out of the normal flow and
@@ -31,31 +29,23 @@
     };
 @endphp
 
-@if ($renderShell)
-    <main class="wb-public-main" id="main-content">
-        <div class="wb-container wb-container-lg">
-@endif
-            @if ($articleToc)
-                <div class="wb-settings-shell wb-docs-layout">
-                    <div class="wb-settings-body">
-                        <div class="wb-stack wb-gap-6">
-                            @foreach ($mainBlocks as $block)
-                                {!! $renderBlock($block) !!}
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="wb-settings-nav wb-docs-rail">
-                        {!! $renderBlock($articleToc) !!}
-                    </div>
-                </div>
-            @else
-                <div class="wb-stack wb-gap-6">
-                    @foreach ($mainBlocks as $block)
-                        {!! $renderBlock($block) !!}
-                    @endforeach
-                </div>
-            @endif
-@if ($renderShell)
+@if ($articleToc)
+    <div class="wb-settings-shell wb-docs-layout">
+        <div class="wb-settings-body">
+            <div class="wb-stack wb-gap-6">
+                @foreach ($mainBlocks as $block)
+                    {!! $renderBlock($block) !!}
+                @endforeach
+            </div>
         </div>
-    </main>
+        <div class="wb-settings-nav wb-docs-rail">
+            {!! $renderBlock($articleToc) !!}
+        </div>
+    </div>
+@else
+    <div class="wb-stack wb-gap-6">
+        @foreach ($mainBlocks as $block)
+            {!! $renderBlock($block) !!}
+        @endforeach
+    </div>
 @endif

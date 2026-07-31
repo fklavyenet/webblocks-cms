@@ -42,7 +42,7 @@
   <div class="{{ $bodyClass }}">
 @endif
   @if (view()->exists($slotPartial))
-    @include($slotPartial, ['slot' => $slot, 'page' => $page, 'renderShell' => false])
+    @include($slotPartial, ['slot' => $slot, 'page' => $page])
   @elseif ($slot['blocks']->isNotEmpty())
     <div class="wb-stack">
       @foreach ($slot['blocks'] as $block)
