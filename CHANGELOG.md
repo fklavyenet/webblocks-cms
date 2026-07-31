@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.46.13
+
+- **Removes ~270 lines of unreachable "chrome" fallback markup from the header, footer, main, and sidebar slot partials.** Each of the four carried a legacy branch (`$slot['chrome']` populated, or `$renderShell` true) from an auto-generated site-chrome system that predates the current admin-managed Page Layout Slots (`html_classes`, block-driven rendering) introduced 2026-05-13. Nothing has populated `chrome` or passed `renderShell: true` since, so the branches — including a whole "site introduction banner" section, dropdown primary/mobile navigation, and a rich branded header — never rendered on any page; confirmed against every test, doc, and the plugin system's own extension contracts, none of which reference either mechanism. Each partial is now just its live, block-driven rendering path. `tests/fixtures/known-unstyled-classes.txt` drops the 22 class names that existed only in that dead code.
+
 ## 1.46.12
 
 - **Restores a bare `wb-public-main` on the `main` slot's `html_classes`, without any width class.** 1.46.11 reverted 1.46.9's mistaken `wb-container wb-container-lg` by clearing `main`'s `html_classes` entirely on `Default Layout` and `Article Layout`, but `docs/block-ui-renderer-contract.md`'s compliance matrix and `docs/inventory.md` both document `wb-public-main` as an "acceptable" primitive for the main slot and the public layout shell, independent of the `Container` block's own `wb-container` width tokens — the same documented contract that already covers `wb-public-body` and the `wb-public-block` wrapper. `main`'s `html_classes` is `wb-public-main` again on both layouts; `SlotWrapperResolver`'s legacy fallback mapping matches. Width remains exclusively the `Container` block's job, unchanged from 1.46.11.
