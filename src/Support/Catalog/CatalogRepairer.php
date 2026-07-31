@@ -133,7 +133,7 @@ class CatalogRepairer
             'description' => $slotDefinition['description'] ?? null,
             'html_element' => $slotDefinition['html_element'] ?? 'div',
             'html_id' => $slotDefinition['html_id'] ?? null,
-            'html_classes' => $slotDefinition['html_classes'] ?? null,
+            'css_classes' => $slotDefinition['css_classes'] ?? null,
             'before_html' => $slotDefinition['before_html'] ?? null,
             'start_html' => $slotDefinition['start_html'] ?? null,
             'end_html' => $slotDefinition['end_html'] ?? null,

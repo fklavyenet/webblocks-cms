@@ -29,8 +29,10 @@ class SlotWrapperResolver
       $attributes['id'] = $mapping['id'];
     }
 
-    if ($mapping['class'] !== null) {
-      $attributes['class'] = $mapping['class'];
+    $classAttribute = $this->classAttribute($slug, $mapping['class']);
+
+    if ($classAttribute !== '') {
+      $attributes['class'] = $classAttribute;
     }
 
     return [
@@ -51,15 +53,27 @@ class SlotWrapperResolver
     return $normalized !== '' ? $normalized : 'main';
   }
 
+  /**
+   * `wb-slot-{slug}` is always present, ahead of whatever the operator (or
+   * the catalog default) put in css_classes -- it lives in code, not the DB,
+   * so catalog-repair's force-sync can never erase it.
+   */
+  private function classAttribute(string $slug, ?string $customClasses): string
+  {
+    $fixedClass = LayoutMarkup::hasValidSlotName($slug) ? 'wb-slot-'.$slug : null;
+
+    return trim(collect([$fixedClass, $customClasses])->filter()->implode(' '));
+  }
+
   private function resolveManagedMapping(PageLayoutSlot $slot, string $slug): array
   {
     $element = LayoutMarkup::normalizeElement($slot->html_element);
 
     return [
-      'preset' => $this->presetFor($slug, $element, LayoutMarkup::normalizeTokenList($slot->html_classes)),
+      'preset' => $this->presetFor($slug, $element, LayoutMarkup::normalizeTokenList($slot->css_classes)),
       'element' => $element,
       'id' => LayoutMarkup::normalizeHtmlId($slot->html_id),
-      'class' => LayoutMarkup::normalizeTokenList($slot->html_classes),
+      'class' => LayoutMarkup::normalizeTokenList($slot->css_classes),
       'before_html' => trim((string) ($slot->before_html ?? '')) ?: null,
       'start_html' => trim((string) ($slot->start_html ?? '')) ?: null,
       'end_html' => trim((string) ($slot->end_html ?? '')) ?: null,

@@ -75,8 +75,8 @@
                 </div>
 
                 <div class="wb-stack wb-gap-1">
-                    <label for="page_layout_slot_html_classes">{{ $pageLayoutSlotFormText('css_classes') }}</label>
-                    <input id="page_layout_slot_html_classes" name="html_classes" class="wb-input" type="text" value="{{ old('html_classes', $pageLayoutSlot->html_classes) }}" maxlength="1000">
+                    <label for="page_layout_slot_css_classes">{{ $pageLayoutSlotFormText('css_classes') }}</label>
+                    <input id="page_layout_slot_css_classes" name="css_classes" class="wb-input" type="text" value="{{ old('css_classes', $pageLayoutSlot->css_classes) }}" maxlength="1000">
                     <div class="wb-text-sm wb-text-muted wb-stack wb-gap-1">
                         <div>{{ $pageLayoutSlotFormText('css_classes_help') }}</div>
                         <div>{!! $pageLayoutSlotFormText('css_classes_examples') !!}</div>

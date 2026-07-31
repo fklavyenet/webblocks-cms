@@ -82,7 +82,7 @@ class PageLayoutManager
 
     $hasDocsSidebar = $slots->contains(function (PageLayoutSlot $slot) {
       $slotName = LayoutMarkup::normalizeSlotName($slot->slot_name) ?? LayoutMarkup::normalizeSlotName($slot->slotType?->slug);
-      $classes = LayoutMarkup::normalizeTokenList($slot->html_classes);
+      $classes = LayoutMarkup::normalizeTokenList($slot->css_classes);
 
       return $slotName === 'sidebar'
         && ($slot->html_id === 'docsSidebar' || str_contains((string) $classes, 'wb-sidebar'));
@@ -90,7 +90,7 @@ class PageLayoutManager
 
     $hasDocsMain = $slots->contains(function (PageLayoutSlot $slot) {
       $slotName = LayoutMarkup::normalizeSlotName($slot->slot_name) ?? LayoutMarkup::normalizeSlotName($slot->slotType?->slug);
-      $classes = LayoutMarkup::normalizeTokenList($slot->html_classes);
+      $classes = LayoutMarkup::normalizeTokenList($slot->css_classes);
 
       return $slotName === 'main'
         && str_contains((string) $classes, 'wb-dashboard-main');
@@ -242,7 +242,7 @@ class PageLayoutManager
           'description' => $slot['description'] ?? null,
           'html_element' => $slot['html_element'] ?? 'div',
           'html_id' => $slot['html_id'] ?? null,
-          'html_classes' => $slot['html_classes'] ?? null,
+          'css_classes' => $slot['css_classes'] ?? null,
           'before_html' => $slot['before_html'] ?? null,
           'start_html' => $slot['start_html'] ?? null,
           'end_html' => $slot['end_html'] ?? null,

@@ -62,7 +62,7 @@
                                     <div class="wb-stack wb-gap-1 wb-text-sm">
                                         <div><strong>{{ $pageLayoutsText('element_label') }}</strong> <code>{{ $layoutSlot->html_element }}</code></div>
                                         <div><strong>{{ $pageLayoutsText('id_label') }}</strong> <span title="{{ $layoutSlot->html_id ?: '-' }}">{{ $layoutSlot->html_id ?: '-' }}</span></div>
-                                        <div title="{{ $layoutSlot->html_classes ?: '-' }}"><strong>{{ $pageLayoutsText('classes_label') }}</strong> {{ \Illuminate\Support\Str::limit($layoutSlot->html_classes ?: '-', 48) }}</div>
+                                        <div title="{{ $layoutSlot->css_classes ?: '-' }}"><strong>{{ $pageLayoutsText('classes_label') }}</strong> {{ \Illuminate\Support\Str::limit($layoutSlot->css_classes ?: '-', 48) }}</div>
                                     </div>
                                 </td>
                                 <td>

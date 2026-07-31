@@ -304,7 +304,7 @@ return new class extends Migration
       $table->text('description')->nullable();
       $table->string('html_element')->default('div');
       $table->string('html_id')->nullable();
-      $table->string('html_classes')->nullable();
+      $table->string('css_classes')->nullable();
       $table->longText('before_html')->nullable();
       $table->longText('start_html')->nullable();
       $table->longText('end_html')->nullable();

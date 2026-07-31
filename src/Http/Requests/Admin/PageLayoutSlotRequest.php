@@ -41,7 +41,7 @@ class PageLayoutSlotRequest extends FormRequest
       'slot_name' => $slotName,
       'html_element' => LayoutMarkup::normalizeElement($this->input('html_element')),
       'html_id' => LayoutMarkup::normalizeHtmlId($this->input('html_id')),
-      'html_classes' => LayoutMarkup::normalizeTokenList($this->input('html_classes')),
+      'css_classes' => LayoutMarkup::normalizeTokenList($this->input('css_classes')),
       'is_required' => $this->boolean('is_required', false),
       'is_active' => $this->boolean('is_active', true),
       'sort_order' => (int) $this->input('sort_order', 0),
@@ -74,7 +74,7 @@ class PageLayoutSlotRequest extends FormRequest
       'description' => ['nullable', 'string'],
       'html_element' => ['required', Rule::in(LayoutMarkup::allowedElements())],
       'html_id' => ['nullable', 'string', 'max:255'],
-      'html_classes' => ['nullable', 'string', 'max:1000'],
+      'css_classes' => ['nullable', 'string', 'max:1000'],
       'before_html' => ['nullable', 'string'],
       'start_html' => ['nullable', 'string'],
       'end_html' => ['nullable', 'string'],
@@ -92,8 +92,8 @@ class PageLayoutSlotRequest extends FormRequest
         $validator->errors()->add('html_id', 'HTML ID must be a safe HTML id token.');
       }
 
-      if (! LayoutMarkup::hasValidTokenList($this->input('html_classes'))) {
-        $validator->errors()->add('html_classes', 'CSS classes must be a safe whitespace-separated class token list.');
+      if (! LayoutMarkup::hasValidTokenList($this->input('css_classes'))) {
+        $validator->errors()->add('css_classes', 'CSS classes must be a safe whitespace-separated class token list.');
       }
 
       foreach (['before_html', 'start_html', 'end_html', 'after_html'] as $field) {
@@ -118,7 +118,7 @@ class PageLayoutSlotRequest extends FormRequest
     $data['slot_name'] = LayoutMarkup::normalizeSlotName($data['slot_name']);
     $data['html_element'] = LayoutMarkup::normalizeElement($data['html_element']);
     $data['html_id'] = LayoutMarkup::normalizeHtmlId($data['html_id'] ?? null);
-    $data['html_classes'] = LayoutMarkup::normalizeTokenList($data['html_classes'] ?? null);
+    $data['css_classes'] = LayoutMarkup::normalizeTokenList($data['css_classes'] ?? null);
     $data['label'] = filled($data['label'] ?? null) ? trim((string) $data['label']) : null;
     $data['description'] = filled($data['description'] ?? null) ? trim((string) $data['description']) : null;
     $data['before_html'] = trim((string) ($data['before_html'] ?? '')) ?: null;

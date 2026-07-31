@@ -17,7 +17,7 @@ class PageLayoutSlot extends CmsModel
     'description',
     'html_element',
     'html_id',
-    'html_classes',
+    'css_classes',
     'before_html',
     'start_html',
     'end_html',
