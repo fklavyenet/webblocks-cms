@@ -250,6 +250,8 @@ class SiteController extends Controller
   {
     $this->authorization->abortUnlessSiteSettingsMutation($request->user(), $site);
 
+    $previousHandle = $site->handle;
+
     DB::transaction(function () use ($request, $site): void {
       $data = $request->validated();
       $localeIds = $data['locale_ids'];
@@ -262,7 +264,9 @@ class SiteController extends Controller
       $this->syncLocales($site, $localeIds);
     });
 
-    $warnings = $this->sitePublicDirectories->ensureAssetDirectories($site->fresh());
+    $freshSite = $site->fresh();
+    $warnings = $this->sitePublicDirectories->relocateAssetDirectory($previousHandle, $freshSite);
+    $warnings = array_merge($warnings, $this->sitePublicDirectories->ensureAssetDirectories($freshSite));
 
     return redirect()
       ->route('admin.sites.edit', ['site' => $site, 'tab' => $request->input('_site_tab', 'site')])

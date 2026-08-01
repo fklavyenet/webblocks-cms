@@ -8,6 +8,48 @@ use WebBlocks\Cms\Models\Site;
 
 class SitePublicDirectoryManager
 {
+  /**
+   * Move a site's public override directory (site.css, site.js, and anything
+   * else under public/site/{handle}) to follow a handle change.
+   *
+   * Nothing else in the codebase keys these files by site id, only by
+   * handle, so a rename that skips this step silently orphans them: the
+   * asset resolver looks under the new handle, finds nothing, and the public
+   * layout just omits the <link>/<script> tags with no error anywhere.
+   */
+  public function relocateAssetDirectory(string $previousHandle, Site $site): array
+  {
+    $warnings = [];
+    $previousHandle = SiteHandle::normalize($previousHandle);
+    $currentHandle = $this->handle($site);
+
+    if ($previousHandle === '' || $currentHandle === '' || $previousHandle === $currentHandle) {
+      return $warnings;
+    }
+
+    $sourcePath = public_path('site/'.$previousHandle);
+
+    if (! is_dir($sourcePath)) {
+      return $warnings;
+    }
+
+    $targetPath = public_path('site/'.$currentHandle);
+
+    try {
+      if (is_dir($targetPath)) {
+        File::copyDirectory($sourcePath, $targetPath);
+        File::deleteDirectory($sourcePath);
+      } else {
+        File::ensureDirectoryExists(dirname($targetPath));
+        File::moveDirectory($sourcePath, $targetPath);
+      }
+    } catch (Throwable $exception) {
+      $warnings[] = 'CMS could not move the site asset directory from [site/'.$previousHandle.'] to [site/'.$currentHandle.']. Move public/site/'.$previousHandle.' to public/site/'.$currentHandle.' by hand so site.css and site.js keep serving under the new handle.';
+    }
+
+    return $warnings;
+  }
+
   public function ensureAssetDirectories(Site $site): array
   {
     $warnings = [];
