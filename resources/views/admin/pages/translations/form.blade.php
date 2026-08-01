@@ -118,7 +118,7 @@
                         </div>
 
                         <div class="wb-stack wb-gap-2 wb-field">
-                            <label for="og_image_media_id">{{ $adminText('og_image') }}</label>
+                            <label for="og_image_media_id_open">{{ $adminText('og_image') }}</label>
                             @include('webblocks-cms::admin.media.asset-picker-panel', [
                                 'name' => 'translation-og-image',
                                 'title' => $adminText('og_image'),

@@ -150,7 +150,7 @@
           @endif
 
           <div class="wb-action-group" data-wb-picker-selector-card-actions>
-            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-open aria-expanded="false" aria-controls="{{ $pickerPanelId }}">{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
+            <button type="button" id="{{ $pickerInputId }}_open" class="wb-btn wb-btn-secondary" data-wb-picker-open aria-expanded="false" aria-controls="{{ $pickerPanelId }}">{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
             <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
           </div>
         </div>
@@ -158,7 +158,7 @@
         <div class="wb-card-body wb-stack wb-gap-3">
     @else
       <div class="{{ $pickerControlsClass }}">
-        <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-open aria-expanded="false" aria-controls="{{ $pickerPanelId }}">{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
+        <button type="button" id="{{ $pickerInputId }}_open" class="wb-btn wb-btn-secondary" data-wb-picker-open aria-expanded="false" aria-controls="{{ $pickerPanelId }}">{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
         <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
       </div>
     @endif
@@ -248,7 +248,7 @@
           </div>
 
           <div class="wb-cluster wb-cluster-2">
-            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-open aria-expanded="false" aria-controls="{{ $pickerPanelId }}">{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
+            <button type="button" id="{{ $pickerInputId }}_open" class="wb-btn wb-btn-secondary" data-wb-picker-open aria-expanded="false" aria-controls="{{ $pickerPanelId }}">{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
             <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
           </div>
         </div>

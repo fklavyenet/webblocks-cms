@@ -195,7 +195,7 @@
 
                   <div class="wb-grid wb-grid-2 wb-gap-4">
                     <div class="wb-stack wb-gap-2 wb-field">
-                      <label for="favicon_media_id">{{ $adminText('favicon') }}</label>
+                      <label @if ($canManageSiteSettings) for="favicon_media_id_open" @endif>{{ $adminText('favicon') }}</label>
                       @if ($canManageSiteSettings)
                         @include('webblocks-cms::admin.media.asset-picker-panel', [
                           'name' => 'site-favicon',
@@ -221,7 +221,7 @@
                     </div>
 
                     <div class="wb-stack wb-gap-2 wb-field">
-                      <label for="social_image_media_id">{{ $adminText('social_image') }}</label>
+                      <label @if ($canManageSiteSettings) for="social_image_media_id_open" @endif>{{ $adminText('social_image') }}</label>
                       @if ($canManageSiteSettings)
                         @include('webblocks-cms::admin.media.asset-picker-panel', [
                           'name' => 'site-social-image',
