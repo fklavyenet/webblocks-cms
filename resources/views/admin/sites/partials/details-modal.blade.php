@@ -3,6 +3,7 @@
     $modalTitleId = $modalId.'Title';
     $modalDescriptionId = $modalId.'Description';
     $aliasCount = $site->siteDomains()->where('is_primary', false)->count();
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('site_form.'.$key, $adminLocaleCode, $replace);
 @endphp
 
 <div class="wb-overlay-layer wb-overlay-layer--dialog">
