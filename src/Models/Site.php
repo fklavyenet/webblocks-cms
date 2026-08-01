@@ -43,6 +43,23 @@ class Site extends CmsModel
     'theme',
   ];
 
+  /**
+   * Resolve a raw "last active tab" value into a known ADMIN_FORM_TABS key.
+   *
+   * The form's wb-tabs strip syncs its active tab into a hidden field via the
+   * shipped data-wb-tabs-field attribute, which writes the tab BUTTON's panel
+   * id ("site-settings-{key}-panel"), not the bare key the rest of the form
+   * and the controller work with. Unwrapping that id is app-specific glue the
+   * widget correctly leaves to the host; this is the one place it happens, so
+   * the controller and the form Blade never drift on how to read it back.
+   */
+  public static function normalizeAdminFormTab(?string $raw): string
+  {
+    $unwrapped = str_replace(['site-settings-', '-panel'], '', trim((string) $raw));
+
+    return in_array($unwrapped, self::ADMIN_FORM_TABS, true) ? $unwrapped : 'site';
+  }
+
   public const PUBLIC_THEME_PRESETS = [
     self::PUBLIC_THEME_CANVAS,
     'atlas',

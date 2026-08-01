@@ -8,9 +8,7 @@
   $localizedPageTitle = $site->exists ? $adminText('edit_title', ['name' => $site->name]) : $adminText('create_title');
   $canManageSiteSettings = $canManageSiteSettings ?? true;
   $canManageDomains = $canManageDomains ?? false;
-  $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), \WebBlocks\Cms\Models\Site::ADMIN_FORM_TABS, true)
-    ? ($siteTab ?? old('_site_tab', 'site'))
-    : 'site';
+  $siteTab = \WebBlocks\Cms\Models\Site::normalizeAdminFormTab($siteTab ?? old('_site_tab', 'site'));
   $isReadOnly = ! $canManageSiteSettings;
   $selectedLocaleIds = collect(old('locale_ids', $site->exists ? $site->locales->pluck('id') : $locales->where('is_default', true)->pluck('id')))
     ->map(fn ($id) => (int) $id)
@@ -25,9 +23,6 @@
   $publicThemePresets = collect(\WebBlocks\Cms\Models\Site::PUBLIC_THEME_PRESETS)
     ->mapWithKeys(fn (string $preset) => [$preset => str($preset)->headline()->toString()]);
   $selectedPublicThemePreset = old('public_theme_preset', $site->resolvedPublicThemePreset());
-  $tabUrl = fn (string $tab) => $site->exists
-    ? route('admin.sites.edit', ['site' => $site, 'tab' => $tab])
-    : route('admin.sites.create', ['tab' => $tab]);
   $actions = [];
 
   if ($site->exists && $canManageDomains) {
@@ -60,7 +55,7 @@
       @method($formMethod)
     @endif
 
-    <input type="hidden" name="_site_tab" value="{{ $siteTab }}">
+    <input type="hidden" name="_site_tab" value="{{ $siteTab }}" data-wb-site-settings-tab-input>
 
     <div class="wb-card">
       <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
@@ -84,7 +79,7 @@
           </div>
         @endif
 
-        <div class="wb-tabs">
+        <div class="wb-tabs" data-wb-tabs data-wb-tabs-field="[data-wb-site-settings-tab-input]">
           <div class="wb-tabs-nav" role="tablist" aria-label="{{ $adminText('site_settings_sections') }}">
             @foreach (collect(\WebBlocks\Cms\Models\Site::ADMIN_FORM_TABS)
               ->mapWithKeys(fn (string $tab) => [$tab => $adminText(match ($tab) {
@@ -93,16 +88,18 @@
                 'theme' => 'appearance',
                 default => $tab,
               })]) as $tabKey => $tabLabel)
-              <a
-                href="{{ $tabUrl($tabKey) }}"
+              <button
+                type="button"
                 class="wb-tabs-btn {{ $siteTab === $tabKey ? 'is-active' : '' }}"
+                data-wb-tab="site-settings-{{ $tabKey }}-panel"
                 aria-selected="{{ $siteTab === $tabKey ? 'true' : 'false' }}"
-              >{{ $tabLabel }}</a>
+                @if ($siteTab !== $tabKey) tabindex="-1" @endif
+              >{{ $tabLabel }}</button>
             @endforeach
           </div>
 
           <div class="wb-tabs-panels">
-            <div class="wb-tabs-panel {{ $siteTab === 'site' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'site' ? 'is-active' : '' }}" id="site-settings-site-panel">
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('site') }}</strong></div>
 
@@ -133,7 +130,7 @@
               </div>
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'locales' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'locales' ? 'is-active' : '' }}" id="site-settings-locales-panel">
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('locales') }}</strong></div>
 
@@ -167,7 +164,7 @@
               </div>
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'branding' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'branding' ? 'is-active' : '' }}" id="site-settings-branding-panel">
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('branding') }}</strong></div>
 
@@ -254,7 +251,7 @@
 
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'seo-defaults' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'seo-defaults' ? 'is-active' : '' }}" id="site-settings-seo-defaults-panel">
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('seo_defaults') }}</strong></div>
 
@@ -279,7 +276,7 @@
               </div>
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'head' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'head' ? 'is-active' : '' }}" id="site-settings-head-panel">
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('head_code') }}</strong></div>
 
@@ -297,7 +294,7 @@
               </div>
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'contact' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'contact' ? 'is-active' : '' }}" id="site-settings-contact-panel">
               <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('contact_forms') }}</strong></div>
 
@@ -313,7 +310,7 @@
               </div>
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'variables' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'variables' ? 'is-active' : '' }}" id="site-settings-variables-panel">
               @include('webblocks-cms::admin.sites.partials.variables-tab', [
                 'site' => $site,
                 'canManageSiteSettings' => $canManageSiteSettings,
@@ -321,7 +318,7 @@
               ])
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'assets' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'assets' ? 'is-active' : '' }}" id="site-settings-assets-panel">
               @include('webblocks-cms::admin.sites.partials.assets-tab', [
                 'site' => $site,
                 'canManageSiteSettings' => $canManageSiteSettings,
@@ -329,7 +326,7 @@
               ])
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'theme' ? 'is-active' : '' }}">
+            <div class="wb-tabs-panel {{ $siteTab === 'theme' ? 'is-active' : '' }}" id="site-settings-theme-panel">
               <div class="wb-text-sm wb-text-muted wb-mb-4">{{ $adminText('appearance_help') }}</div>
 
               @include('webblocks-cms::admin.sites.partials.theme-tab', [
@@ -438,6 +435,7 @@
           :submit-label="$site->exists ? $adminText('save_changes') : $adminText('create')"
           :delete-href="$site->exists && isset($siteDeleteReport) && $canManageDomains ? route('admin.sites.delete', $site) : null"
           :delete-disabled="$site->exists && isset($siteDeleteReport) ? ! $siteDeleteReport->canDelete : false"
+          :delete-attributes="$site->exists && isset($siteDeleteReport) && ! $siteDeleteReport->canDelete ? ['title' => implode(' ', $siteDeleteReport->blockers)] : []"
         />
       </div>
     </div>

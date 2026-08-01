@@ -93,7 +93,7 @@ class SiteController extends Controller
       'assetPickerFolders' => $this->assetPickerFolders(),
       'canManageSiteSettings' => true,
       'canManageDomains' => false,
-      'siteTab' => trim((string) request()->query('tab', old('_site_tab', 'site'))),
+      'siteTab' => Site::normalizeAdminFormTab(request()->query('tab', old('_site_tab', 'site'))),
       'timezoneOptions' => $this->systemSettings->timezoneOptions(),
       'systemTimezone' => $this->systemSettings->timezone(),
       'siteVariablesUi' => [
@@ -137,10 +137,7 @@ class SiteController extends Controller
     $canManageSiteSettings = $this->authorization->canMutateSiteSettings(request()->user(), $site);
     $canManageDomains = request()->user()?->isSuperAdmin() ?? false;
 
-    $requestedTab = trim((string) request()->query('tab', old('_site_tab', 'site')));
-    $siteTab = in_array($requestedTab, Site::ADMIN_FORM_TABS, true)
-          ? $requestedTab
-          : 'site';
+    $siteTab = Site::normalizeAdminFormTab(request()->query('tab', old('_site_tab', 'site')));
     $requestedModal = trim((string) request()->query('modal', old('_site_variable_modal', '')));
     $selectedVariable = null;
 

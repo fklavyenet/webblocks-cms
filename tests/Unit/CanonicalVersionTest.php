@@ -13,7 +13,7 @@ class CanonicalVersionTest extends TestCase
   {
     $this->assertSame('1.48.1', WebBlocks::VERSION);
     $this->assertSame(WebBlocks::VERSION, WebBlocks::version());
-    $this->assertSame('v2.16.3', WebBlocks::UI_VERSION);
+    $this->assertSame('v2.17.0', WebBlocks::UI_VERSION);
     $this->assertSame(WebBlocks::UI_VERSION, WebBlocks::uiVersion());
   }
 }

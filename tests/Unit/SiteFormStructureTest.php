@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Unit;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 /**
  * Structural guards for the Edit Site form.
@@ -155,12 +156,119 @@ class SiteFormStructureTest extends TestCase
       dirname(__DIR__, 2).'/src/Http/Controllers/Admin/SiteController.php'
     );
 
-    $this->assertStringContainsString('Site::ADMIN_FORM_TABS', $controller);
-    $this->assertStringContainsString('Site::ADMIN_FORM_TABS', $this->form());
+    // Both read the "last active tab" back through Site::normalizeAdminFormTab,
+    // the one place that unwraps wb-tabs' synced panel id and validates it
+    // against ADMIN_FORM_TABS. A second, independent in_array/ADMIN_FORM_TABS
+    // check in the controller would drift from it silently.
+    $this->assertStringContainsString('Site::normalizeAdminFormTab(', $controller);
+    $this->assertStringContainsString('Site::normalizeAdminFormTab(', $this->form());
+    $this->assertStringNotContainsString('Site::ADMIN_FORM_TABS', $controller);
     $this->assertDoesNotMatchRegularExpression(
       "/in_array\(\\\$requestedTab, \['site'/",
       $controller,
       'The tab list belongs to Site::ADMIN_FORM_TABS, not a second literal array.'
     );
+  }
+
+  #[Test]
+  public function normalize_admin_form_tab_unwraps_the_synced_panel_id(): void
+  {
+    foreach (Site::ADMIN_FORM_TABS as $tab) {
+      $this->assertSame($tab, Site::normalizeAdminFormTab('site-settings-'.$tab.'-panel'));
+      $this->assertSame($tab, Site::normalizeAdminFormTab($tab), 'A bare tab key (from ?tab=) must still resolve.');
+    }
+
+    $this->assertSame('site', Site::normalizeAdminFormTab(null));
+    $this->assertSame('site', Site::normalizeAdminFormTab(''));
+    $this->assertSame('site', Site::normalizeAdminFormTab('not-a-real-tab'));
+  }
+
+  /**
+   * Tab buttons used to be <a href="?tab=..."> links: clicking one navigated
+   * away and dropped every unsaved edit on every other tab, even though the
+   * card's single "Save Changes" button implied one shared save. The strip
+   * must stay a client-side toggle (the shipped wb-tabs widget, driven by
+   * data-wb-tab/data-wb-tabs) so switching tabs never reloads the page. The
+   * "last active tab" hidden field must be synced by the widget itself via
+   * data-wb-tabs-field, not by a CMS-authored wb:tabs:change listener — that
+   * class of hand-rolled workaround is exactly what shipped in webblocks-ui
+   * 2.17.0 to close, and CMS must not reintroduce a local copy of it.
+   */
+  #[Test]
+  public function the_tab_strip_switches_client_side_instead_of_navigating(): void
+  {
+    $form = $this->form();
+
+    $this->assertStringContainsString('data-wb-tabs', $form);
+    $this->assertStringContainsString('data-wb-tabs-field="[data-wb-site-settings-tab-input]"', $form);
+    $this->assertStringContainsString('data-wb-site-settings-tab-input', $form);
+    $this->assertStringNotContainsString('$tabUrl', $form);
+    $this->assertDoesNotMatchRegularExpression(
+      '/<a\b[^>]*class="wb-tabs-btn/',
+      $form,
+      'A tab button rendered as a link navigates the page instead of toggling a panel.'
+    );
+  }
+
+  #[Test]
+  public function every_tab_button_targets_its_own_panel_by_id(): void
+  {
+    $form = $this->form();
+
+    // The button loop derives data-wb-tab from the same $tabKey it labels
+    // with, so it stays in lockstep with Site::ADMIN_FORM_TABS by
+    // construction; combined with the one-panel-per-tab guard above, every
+    // panel below just needs the matching literal id to exist.
+    $this->assertStringContainsString(
+      'data-wb-tab="site-settings-{{ $tabKey }}-panel"',
+      $form,
+      'The tab button must derive its target panel id from the loop key, not a hardcoded one.'
+    );
+
+    foreach (Site::ADMIN_FORM_TABS as $tab) {
+      $panelId = 'site-settings-'.$tab.'-panel';
+
+      $this->assertStringContainsString(
+        'id="'.$panelId.'"',
+        $form,
+        sprintf('No panel carries %s.', $panelId)
+      );
+    }
+  }
+
+  /**
+   * A disabled Delete button with no explanation looks broken rather than
+   * blocked. SiteDeleteResult already computes why a site cannot be
+   * deleted (primary site, last remaining site, linked contact messages);
+   * the form must surface that as a title so the disabled state reads as
+   * "blocked, here's why" instead of dead UI.
+   */
+  #[Test]
+  public function the_disabled_delete_button_explains_why_via_its_blockers(): void
+  {
+    $form = $this->form();
+
+    $this->assertStringContainsString('siteDeleteReport->canDelete', $form);
+    $this->assertStringContainsString(
+      "'title' => implode(' ', \$siteDeleteReport->blockers)",
+      $form,
+      'The disabled Delete button must surface SiteDeleteResult::$blockers as its title.'
+    );
+  }
+
+  /**
+   * A CMS-authored "keep the active tab synced to a hidden field" listener
+   * (site-settings-tabs.js) shipped here briefly before webblocks-ui 2.17.0
+   * added data-wb-tabs-field to do this natively. Reintroducing a local copy
+   * — for this form or any other — is the standing violation to guard
+   * against: fix gaps in webblocks-ui, don't re-implement them downstream.
+   */
+  #[Test]
+  public function no_cms_authored_tab_sync_script_exists_for_this_form(): void
+  {
+    $this->assertFileDoesNotExist(dirname(__DIR__, 2).'/public/cms/js/admin/site-settings-tabs.js');
+    $this->assertStringNotContainsString('site-settings-tabs.js', $this->form());
+    $this->assertNotContains('cms/js/admin/site-settings-tabs.js', WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ASSET_FILES);
+    $this->assertNotContains('cms/js/admin/site-settings-tabs.js', WebBlocksCmsServiceProvider::ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES);
   }
 }

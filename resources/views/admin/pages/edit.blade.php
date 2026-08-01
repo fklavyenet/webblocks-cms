@@ -6,12 +6,22 @@
   $adminTranslator = app(CmsTranslator::class);
   $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('page_edit.'.$key, $adminLocale, $replace);
   $pageTitle = $adminText('title', ['id' => $page->id, 'title' => $page->title]);
-  $settingsTab = old('_page_settings_tab', match (request('tab')) {
-    'page-assets' => 'assets',
-    'layout-slots' => 'layout-slots',
+  // wb-tabs syncs its active tab into the hidden field below via
+  // data-wb-tabs-field, but it writes the tab button's panel id
+  // ("page-management-{key}-panel"), not the bare key read here and by
+  // request('tab') — unwrap it before folding both sources through the
+  // same known-value match.
+  $resolvePageSettingsTab = static fn (?string $value): string => match ($value) {
     'overview' => 'overview',
+    'settings' => 'settings',
+    'assets', 'page-assets' => 'assets',
+    'layout-slots' => 'layout-slots',
     default => 'settings',
-  });
+  };
+  $rawPageSettingsTab = old('_page_settings_tab');
+  $settingsTab = $rawPageSettingsTab !== null
+    ? $resolvePageSettingsTab(str_replace(['page-management-', '-panel'], '', $rawPageSettingsTab))
+    : $resolvePageSettingsTab(request('tab'));
   $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
   $pagePreviewUrl = route('admin.pages.preview', $page);
   $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
@@ -51,7 +61,7 @@
       <span class="wb-text-sm wb-text-muted">{{ $adminText('page_management_help') }}</span>
     </div>
     <div class="wb-card-body">
-      <div class="wb-tabs" data-wb-tabs data-wb-page-settings-tabs>
+      <div class="wb-tabs" data-wb-tabs data-wb-tabs-field="[data-wb-page-settings-tab-input]">
         <div class="wb-tabs-nav" role="tablist" aria-label="{{ $adminText('page_management_sections') }}">
           <button type="button" class="wb-tabs-btn {{ $settingsTab === 'overview' ? 'is-active' : '' }}" data-wb-tab="page-management-overview-panel" aria-selected="{{ $settingsTab === 'overview' ? 'true' : 'false' }}" @if ($settingsTab !== 'overview') tabindex="-1" @endif>{{ $adminText('overview') }}</button>
           <button type="button" class="wb-tabs-btn {{ $settingsTab === 'settings' ? 'is-active' : '' }}" data-wb-tab="page-management-settings-panel" aria-selected="{{ $settingsTab === 'settings' ? 'true' : 'false' }}" @if ($settingsTab !== 'settings') tabindex="-1" @endif>{{ $adminText('settings') }}</button>
@@ -374,6 +384,5 @@
 @endpush
 
 @push('admin-scripts')
-  @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/page-assets.js'])
   @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/page-slot-source-modals.js'])
 @endpush
