@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.3
+
+- **Fixes a Chrome accessibility audit warning ("Incorrect use of `<label for=FORM_ELEMENT>`") on every asset picker paired with an external `<label>`.** The label's `for` pointed at the picker's hidden input, which Chrome correctly refuses to accept as a label target since it's never visible or focusable. The picker's trigger button ("Choose/Replace ...") now carries `id="{inputId}_open"` in all three layout branches, and the three affected callers (Sites form: favicon, social image; page translations form: og image) point at that instead.
+
 ## 1.48.2
 
 - **Switching tabs on the Edit Site and Edit Page forms no longer discards unsaved edits.** Tab buttons were `<a href="?tab=...">` links: clicking one fired a full page navigation, so any edit made in the currently-loaded page — on the tab being left or any other tab — was gone once the new page loaded, even though the single "Save Changes" button implied one shared save across every tab. Tabs now switch client-side via the shipped `wb-tabs` widget (`data-wb-tab`/`data-wb-tabs`), so nothing reloads and nothing is lost.
