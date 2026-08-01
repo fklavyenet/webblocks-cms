@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.2
+
+- **Switching tabs on the Edit Site and Edit Page forms no longer discards unsaved edits.** Tab buttons were `<a href="?tab=...">` links: clicking one fired a full page navigation, so any edit made in the currently-loaded page — on the tab being left or any other tab — was gone once the new page loaded, even though the single "Save Changes" button implied one shared save across every tab. Tabs now switch client-side via the shipped `wb-tabs` widget (`data-wb-tab`/`data-wb-tabs`), so nothing reloads and nothing is lost.
+- **The Sites form's disabled Delete button now explains why.** `SiteDeleteResult` already computes the blocking reason (primary site, last remaining site, linked contact messages); the button now carries it as a `title` instead of just sitting disabled with no explanation.
+- **Bumps the pinned UI runtime to `v2.17.0`.** wb-tabs gains an opt-in `data-wb-tabs-field="<selector>"` attribute: the widget itself now writes the active tab's id into a declared form field on every change, closing the gap that pushed the Sites and Pages edit forms to each hand-roll their own `wb:tabs:change` listener just to keep a hidden "last active tab" input in sync (`page-assets.js`, and a short-lived `site-settings-tabs.js`) — both are deleted, replaced by the declarative attribute. `Site::normalizeAdminFormTab()` centralizes unwrapping the synced panel id back into `Site::ADMIN_FORM_TABS`'s bare keys, read by both `SiteController` and the form Blade.
+
 ## 1.48.1
 
 - **Renaming a site's handle no longer strands its `site.css`/`site.js` override files under the old handle's directory.** `SiteAssetResolver` always resolves these by the site's *current* `handle` column and returns `null` on a miss, so a handle change left the public layout silently omitting the `<link>`/`<script>` tags with nothing anywhere telling the operator why — the files were still on disk, just under `public/site/{old-handle}/` instead of `public/site/{new-handle}/`. `SiteController::update()` now relocates the directory to the new handle (merging into any already-created `css`/`js` scaffold) before `ensureAssetDirectories()` runs.
