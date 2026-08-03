@@ -23,6 +23,7 @@ class PublicSearchDeferralTest extends TestCase
   {
     // A leaked deferral would silently stop indexing for the rest of the suite.
     $this->assertFalse(PublicSearchIndexer::isDeferred());
+    $this->assertFalse(PublicSearchIndexer::isCoalescing());
 
     parent::tearDown();
   }
@@ -80,9 +81,7 @@ class PublicSearchDeferralTest extends TestCase
   #[Test]
   public function only_the_reactive_refresh_path_is_deferrable(): void
   {
-    $indexer = (string) file_get_contents(
-      dirname(__DIR__, 2).'/src/Support/Search/PublicSearchIndexer.php'
-    );
+    $indexer = $this->indexer();
 
     foreach (['refreshPage', 'refreshSharedSlot'] as $method) {
       $this->assertMatchesRegularExpression(
@@ -101,6 +100,84 @@ class PublicSearchDeferralTest extends TestCase
         sprintf('%s() is the explicit path and must always index.', $method)
       );
     }
+  }
+
+  #[Test]
+  public function a_bulk_deferral_outranks_coalescing(): void
+  {
+    $indexer = $this->indexer();
+
+    // A deferring bulk writer rebuilds the index itself afterwards. If the
+    // coalescing check ran first, its rows would queue up and be rebuilt a
+    // second time — exactly the cost the deferral exists to avoid.
+    foreach (['refreshPage', 'refreshSharedSlot'] as $method) {
+      $body = $this->methodBody($indexer, $method);
+
+      $this->assertLessThan(
+        (int) strpos($body, 'self::$coalescing > 0'),
+        (int) strpos($body, 'self::$deferred > 0'),
+        sprintf('%s() must check the deferral before the coalescing queue.', $method)
+      );
+    }
+  }
+
+  #[Test]
+  public function every_admin_write_route_coalesces_its_reindexes(): void
+  {
+    $routes = (string) file_get_contents(dirname(__DIR__, 2).'/routes/admin.php');
+
+    // The admin group is the block editor; the internal API group is the same
+    // writes under a token. A group left out keeps the per-row sweep.
+    $this->assertStringContainsString(
+      "'admin.access', CoalesceSearchIndexing::class]",
+      $routes,
+      'The admin group performs the block writes this exists for.'
+    );
+    $this->assertStringContainsString(
+      "'internal-api.token', CoalesceSearchIndexing::class]",
+      $routes,
+      'The Internal Content API writes the same rows as the admin.'
+    );
+  }
+
+  #[Test]
+  public function the_middleware_opens_a_scope_on_writes_and_closes_it_after_the_response(): void
+  {
+    $middleware = (string) file_get_contents(
+      dirname(__DIR__, 2).'/src/Http/Middleware/CoalesceSearchIndexing.php'
+    );
+
+    // A read opening a scope would be harmless but pointless; the cost being
+    // collapsed only exists on writes.
+    $this->assertStringContainsString('if (! $request->isMethodCacheable()) {', $middleware);
+    $this->assertStringContainsString('$this->indexer->beginCoalescing();', $middleware);
+
+    // terminate() runs after the response is sent, so the editor waits for the
+    // redirect, not for the rebuild.
+    $this->assertMatchesRegularExpression(
+      '/public function terminate\([^)]*\): void\s*\{[^}]*endCoalescing\(\)/',
+      $middleware,
+      'The flush belongs in terminate(), or the editor waits for it anyway.'
+    );
+  }
+
+  private function indexer(): string
+  {
+    return (string) file_get_contents(
+      dirname(__DIR__, 2).'/src/Support/Search/PublicSearchIndexer.php'
+    );
+  }
+
+  private function methodBody(string $source, string $method): string
+  {
+    $start = strpos($source, 'public function '.$method.'(');
+    $this->assertNotFalse($start, sprintf('%s() is gone; this guard is describing code that no longer exists.', $method));
+
+    $next = strpos($source, "\n  public function ", (int) $start + 1);
+
+    return $next === false
+      ? substr($source, (int) $start)
+      : substr($source, (int) $start, $next - (int) $start);
   }
 
   #[Test]

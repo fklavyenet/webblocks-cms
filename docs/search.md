@@ -36,6 +36,19 @@ Search does not index:
 
 Search may still use the page translation title because that is part of the public page identity, but page SEO overrides are otherwise treated as head metadata rather than searchable body content in Search V1.
 
+## When Indexing Runs
+
+Search rows are derived, and the CMS keeps them current on its own — every block, translation, and slot save reindexes the pages it affects. There is no queue worker to run and no cron entry to add.
+
+One editor save writes several rows, and each of them asks for the same reindex. Admin and Internal Content API writes therefore collect those requests and rebuild each affected page once, after the response has been sent. Two consequences worth knowing:
+
+- the editor waits for the redirect, not for the rebuild
+- a page's search row can lag its content by the moment it takes to run that rebuild, which matters only if you query the index immediately after a write
+
+Shared Slot content is the case this exists for. A slot used by every published page means one block edit affects every one of those pages, so a header change rebuilds them all — once, not once per row written.
+
+Bulk writers such as site import switch the reactive path off entirely and rebuild once at the end. `search:rebuild` and the admin rebuild action are always immediate and are never collected.
+
 ## Public Search Routes
 
 - default locale: `/search?q=term`

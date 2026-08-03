@@ -56,6 +56,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPluginController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
 use WebBlocks\Cms\Http\Middleware\AllowPagePreviewAccess;
+use WebBlocks\Cms\Http\Middleware\CoalesceSearchIndexing;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
@@ -73,7 +74,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api'])
     Route::get('/', [InternalApiDiscoveryController::class, 'index'])->name('discovery');
   });
 
-Route::middleware(['web', 'install.required', 'throttle:internal-content-api', 'internal-api.token'])
+Route::middleware(['web', 'install.required', 'throttle:internal-content-api', 'internal-api.token', CoalesceSearchIndexing::class])
   ->withoutMiddleware($internalApiCsrfMiddleware)
   ->prefix('webadmin/api')
   ->name('internal-content-api.')
@@ -168,7 +169,7 @@ Route::middleware(['web', 'install.required', AllowPagePreviewAccess::class])
     Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
   });
 
-Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access'])
+Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access', CoalesceSearchIndexing::class])
   ->prefix('webadmin')
   ->name('admin.')
   ->group(function () {
