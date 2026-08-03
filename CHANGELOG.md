@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.4
+
+- **Saving one Shared Slot block no longer reindexes every page using that slot, once per written row.** 1.43.2 identified this cost and fixed it for the site import, which is a bulk writer that knows what to rebuild afterwards. Its commit already recorded the case left open: "a header block save reindexes all 22 published pages that use the slot." An editor save turns out to be a bulk writer too — it is never one row, but a block row plus up to four translation families plus whatever child blocks a builder field syncs, and each of those save hooks asks for the same full sweep. On a site header, used by every published page, a single "Save Block" therefore rebuilt the whole set several times over and took seconds on a site with almost no content in it.
+- `PublicSearchIndexer::coalescing()` sits beside `deferring()` and needs nothing from the caller afterwards. The save hooks still name their targets — they are the ones that know which pages a write affects — but while a scope is open those targets queue instead of running, and the outermost exit rebuilds each page exactly once. A page queued for one locale and then for another is promoted to a full rebuild; a Shared Slot expands to its pages at flush time, after the slot assignments have finished being rewritten. `deferring()` still outranks it, so an import's rows do not queue up behind the rebuild it already does itself.
+- `CoalesceSearchIndexing` opens one scope per non-cacheable request on the admin and Internal Content API route groups, and flushes in `terminate()` — after the response has been sent. Nothing in the controllers changed, so every write path gets this, including the ones that were worst off: a Shared Slot revision restore deletes and recreates the entire block tree.
+- A write that throws discards its queue rather than flushing it: the rows never landed, so there is nothing to reindex. Verified against a three-page site sharing one slot — the same block save costs 6 index writes live and 3 coalesced, producing a byte-identical index.
+
 ## 1.48.3
 
 - **Fixes a Chrome accessibility audit warning ("Incorrect use of `<label for=FORM_ELEMENT>`") on every asset picker paired with an external `<label>`.** The label's `for` pointed at the picker's hidden input, which Chrome correctly refuses to accept as a label target since it's never visible or focusable. The picker's trigger button ("Choose/Replace ...") now carries `id="{inputId}_open"` in all three layout branches, and the three affected callers (Sites form: favicon, social image; page translations form: og image) point at that instead.
