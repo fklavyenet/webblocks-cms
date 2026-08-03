@@ -35,6 +35,37 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
+# Tagging is a step in the release flow that nothing used to enforce, so it was
+# the step that got skipped: 19 published versions between 1.37.1 and 1.48.3 had
+# no tag at all, and six more carry one pointing at some other commit. Publishing
+# does not need the tag — that is exactly why remembering it was the only thing
+# holding it in place. The artifact is built from HEAD, so requiring a matching
+# tag here costs nothing when the flow is followed and stops the release when it
+# is not.
+TAG_NAME="v${VERSION}"
+
+if ! git rev-parse -q --verify "refs/tags/${TAG_NAME}" >/dev/null; then
+  printf '[webblocks-release-prepare] No %s tag for this release.\n' "${TAG_NAME}" >&2
+  printf '[webblocks-release-prepare] Tag it before building the artifact:\n' >&2
+  printf '[webblocks-release-prepare]   git tag -a %s -m "webblocks-cms %s"\n' "${TAG_NAME}" "${VERSION}" >&2
+  exit 1
+fi
+
+if [ "$(git cat-file -t "refs/tags/${TAG_NAME}")" != "tag" ]; then
+  printf '[webblocks-release-prepare] %s is a lightweight tag; the release flow uses annotated tags.\n' "${TAG_NAME}" >&2
+  printf '[webblocks-release-prepare]   git tag -f -a %s -m "webblocks-cms %s"\n' "${TAG_NAME}" "${VERSION}" >&2
+  exit 1
+fi
+
+TAG_COMMIT="$(git rev-list -n1 "refs/tags/${TAG_NAME}")"
+HEAD_COMMIT="$(git rev-parse HEAD)"
+
+if [ "${TAG_COMMIT}" != "${HEAD_COMMIT}" ]; then
+  printf '[webblocks-release-prepare] %s points at %s, but the artifact is built from HEAD at %s.\n' "${TAG_NAME}" "${TAG_COMMIT}" "${HEAD_COMMIT}" >&2
+  printf '[webblocks-release-prepare] Move the tag to the commit being released, or release the commit it names.\n' >&2
+  exit 1
+fi
+
 git archive --format=tar --worktree-attributes HEAD | tar -xf - -C "${PACKAGE_DIR}"
 
 if [ ! -f "${PACKAGE_DIR}/composer.json" ]; then

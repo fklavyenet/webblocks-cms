@@ -27,4 +27,35 @@ class PackageReleaseToolingTest extends TestCase
     $this->assertStringNotContainsString(' artisan ', $surface);
     $this->assertStringNotContainsString('legacy-harness', $surface);
   }
+
+  /**
+   * Tagging is a release-flow step that publishing does not technically need,
+   * which is why it was the one that got skipped — 19 published versions
+   * between 1.37.1 and 1.48.3 shipped with no tag at all. The artifact is built
+   * from HEAD, so prepare is the natural place to require one.
+   */
+  public function test_prepare_refuses_to_build_an_artifact_for_an_untagged_release(): void
+  {
+    $prepare = (string) file_get_contents(__DIR__.'/../../scripts/release/prepare.sh');
+
+    $this->assertStringContainsString('TAG_NAME="v${VERSION}"', $prepare);
+    $this->assertStringContainsString('git rev-parse -q --verify "refs/tags/${TAG_NAME}"', $prepare);
+
+    // An annotated tag carries the tagger and message the flow asks for; a
+    // lightweight one is just a moveable pointer.
+    $this->assertStringContainsString('git cat-file -t "refs/tags/${TAG_NAME}"', $prepare);
+
+    // A tag naming some other commit is the failure mode six existing tags
+    // already have, and it would ship an artifact the tag does not describe.
+    $this->assertStringContainsString('TAG_COMMIT="$(git rev-list -n1 "refs/tags/${TAG_NAME}")"', $prepare);
+    $this->assertStringContainsString('HEAD_COMMIT="$(git rev-parse HEAD)"', $prepare);
+    $this->assertStringContainsString('if [ "${TAG_COMMIT}" != "${HEAD_COMMIT}" ]; then', $prepare);
+
+    // The guard is worthless if it runs after the artifact is already built.
+    $this->assertLessThan(
+      (int) strpos($prepare, 'git archive --format=tar'),
+      (int) strpos($prepare, 'TAG_NAME="v${VERSION}"'),
+      'The tag guard must run before the artifact is assembled.'
+    );
+  }
 }
