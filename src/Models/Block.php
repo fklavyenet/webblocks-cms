@@ -1363,6 +1363,40 @@ class Block extends CmsModel
       : 'wb-background-media wb-background-media--overlay-'.$overlay;
   }
 
+  /**
+   * A slide's own background overlay, expressed in the slider pattern's scale.
+   *
+   * Slides do not use the wb-background-media primitive — their image is a real
+   * <img class="wb-slide-media">, and the darkening comes from .wb-slide::after
+   * painting var(--wb-slider-overlay). The wb-slider-overlay-* classes only set
+   * that custom property, so one on the slide overrides the slider's choice for
+   * that slide alone.
+   *
+   * Returns null when the setting is absent, which is how the slider keeps
+   * control: BlockRequest stores this key only for a non-default choice, so an
+   * untouched slide inherits the slider's overlay instead of overriding it with
+   * a default of its own.
+   *
+   * The admin field offers four levels and the pattern defines three, so
+   * `medium` resolves to strong — someone who moved off soft asked for more
+   * cover, and rounding down would ignore the change they made.
+   */
+  public function slideBackgroundOverlayClass(): ?string
+  {
+    $overlay = $this->setting('background_overlay');
+
+    if (! is_string($overlay)) {
+      return null;
+    }
+
+    return match (trim($overlay)) {
+      'none' => 'wb-slider-overlay-none',
+      'soft' => 'wb-slider-overlay-soft',
+      'medium', 'strong' => 'wb-slider-overlay-strong',
+      default => null,
+    };
+  }
+
   public function publicBackgroundMediaStyle(): ?string
   {
     $url = $this->publicBackgroundMediaUrl();

@@ -17,7 +17,7 @@
         <div class="wb-text-sm wb-text-muted">{{ $adminText('aria_help') }}</div>
     </div>
 
-    @include('webblocks-cms::admin.blocks.types.partials.background-media-fields')
+    @include('webblocks-cms::admin.blocks.types.partials.background-media-fields', ['overlayInherits' => true])
 
     <div class="wb-alert wb-alert-info">
         {{ $adminText('container_help') }}

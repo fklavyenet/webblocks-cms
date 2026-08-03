@@ -2065,7 +2065,7 @@ class BlockRequest extends FormRequest
         }
 
         if ($blockType->slug === 'slide') {
-          $settings = $this->applyBackgroundMediaSettings($settings, $data);
+          $settings = $this->applyBackgroundMediaSettings($settings, $data, storeSoftOverlay: true);
 
           if ($slideAriaLabel !== '') {
             $settings['aria_label'] = $slideAriaLabel;
@@ -2210,10 +2210,20 @@ class BlockRequest extends FormRequest
     return array_filter($sanitized, fn (mixed $value): bool => $value !== null && $value !== '');
   }
 
-  private function applyBackgroundMediaSettings(array $settings, array $data): array
+  /**
+   * @param  bool  $storeSoftOverlay  Keep an explicit `soft` instead of dropping
+   *                                  it as the default. True for slides, where
+   *                                  the absent key means "inherit the slider's
+   *                                  overlay", so soft is a real choice and not
+   *                                  the same thing as leaving it alone.
+   */
+  private function applyBackgroundMediaSettings(array $settings, array $data, bool $storeSoftOverlay = false): array
   {
     $position = trim((string) ($data['background_position'] ?? 'center'));
     $overlay = trim((string) ($data['background_overlay'] ?? 'soft'));
+    $storableOverlays = $storeSoftOverlay
+      ? ['none', 'soft', 'medium', 'strong']
+      : ['none', 'medium', 'strong'];
 
     if (in_array($position, ['top', 'bottom', 'left', 'right'], true)) {
       $settings['background_position'] = $position;
@@ -2221,7 +2231,7 @@ class BlockRequest extends FormRequest
       unset($settings['background_position']);
     }
 
-    if (in_array($overlay, ['none', 'medium', 'strong'], true)) {
+    if (in_array($overlay, $storableOverlays, true)) {
       $settings['background_overlay'] = $overlay;
     } else {
       unset($settings['background_overlay']);

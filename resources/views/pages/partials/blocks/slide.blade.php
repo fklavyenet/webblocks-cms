@@ -18,6 +18,7 @@
     ])->filter()->implode(' ');
     $classes = collect([
         'wb-slide',
+        $block->slideBackgroundOverlayClass(),
         $contentPositionClass,
         $contentWidthClass,
         $textColorClass,

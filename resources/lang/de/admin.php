@@ -3380,6 +3380,8 @@ return [
       'soft' => 'Weich',
       'medium' => 'Mittel',
       'strong' => 'Stark',
+      'overlay_inherit' => 'Vom Slider übernehmen',
+      'overlay_inherit_help' => 'Überschreibt das Overlay des Sliders nur für diese Folie. Übernehmen behält die Einstellung des Sliders bei.',
       'none' => 'Keine',
       'overlay_help' => 'Der Renderer veröffentlicht Medien als Hintergrundbild; öffentliches CSS steuert Cover, Position und Overlay-Verhalten.',
     ],

@@ -3378,6 +3378,8 @@ return [
       'soft' => 'Yumuşak',
       'medium' => 'Orta',
       'strong' => 'Güçlü',
+      'overlay_inherit' => 'Slider\'dan devral',
+      'overlay_inherit_help' => 'Slider\'ın overlay ayarını yalnızca bu slayt için ezer. Devral seçeneği slider\'daki ayarı korur.',
       'none' => 'Yok',
       'overlay_help' => 'Renderer medyayı arka plan görseli olarak yayınlar; public CSS cover, pozisyon ve overlay davranışını kontrol eder.',
     ],

@@ -3380,6 +3380,8 @@ return [
       'soft' => 'Soft',
       'medium' => 'Medium',
       'strong' => 'Strong',
+      'overlay_inherit' => 'Inherit from slider',
+      'overlay_inherit_help' => 'Overrides the slider\'s overlay for this slide only. Inherit keeps whatever the slider is set to.',
       'none' => 'None',
       'overlay_help' => 'The renderer publishes media as a background image; public CSS controls cover, position, and overlay behavior.',
     ],

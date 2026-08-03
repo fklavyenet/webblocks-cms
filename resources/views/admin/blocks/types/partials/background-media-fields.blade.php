@@ -4,7 +4,20 @@
     $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.background_media.'.$key, $adminLocale);
     $backgroundSettings = is_array($block->settings) ? $block->settings : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
     $backgroundPosition = old('background_position', $backgroundSettings['background_position'] ?? 'center');
-    $backgroundOverlay = old('background_overlay', $backgroundSettings['background_overlay'] ?? 'soft');
+
+    // Slide passes this: its overlay sits on top of the slider's, so "no value"
+    // is a real state (inherit) rather than a stand-in for the soft default.
+    $overlayInherits = ($overlayInherits ?? false) === true;
+    $backgroundOverlay = old('background_overlay', $backgroundSettings['background_overlay'] ?? ($overlayInherits ? '' : 'soft'));
+    $overlayOptions = array_merge(
+        $overlayInherits ? ['' => $adminText('overlay_inherit')] : [],
+        [
+            'soft' => $adminText('soft'),
+            'medium' => $adminText('medium'),
+            'strong' => $adminText('strong'),
+            'none' => $adminText('none'),
+        ],
+    );
 @endphp
 
 <div class="wb-card wb-card-muted">
@@ -48,16 +61,11 @@
             <div class="wb-stack wb-gap-1">
                 <label for="background_overlay">{{ $adminText('overlay_label') }}</label>
                 <select id="background_overlay" name="background_overlay" class="wb-select">
-                    @foreach ([
-                        'soft' => $adminText('soft'),
-                        'medium' => $adminText('medium'),
-                        'strong' => $adminText('strong'),
-                        'none' => $adminText('none'),
-                    ] as $value => $label)
+                    @foreach ($overlayOptions as $value => $label)
                         <option value="{{ $value }}" @selected($backgroundOverlay === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                <div class="wb-text-sm wb-text-muted">{{ $adminText('overlay_help') }}</div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText($overlayInherits ? 'overlay_inherit_help' : 'overlay_help') }}</div>
             </div>
         </div>
     </div>

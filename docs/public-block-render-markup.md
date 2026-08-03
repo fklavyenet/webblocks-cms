@@ -3019,6 +3019,8 @@ This helper renders CMS `NavigationItem` rows for `sidebar-navigation` when that
 | `settings.show_arrows`, `settings.show_dots` | booleans | Controls whether arrows and dots render when more than one slide exists. |
 | `settings.overlay`, `content_position`, `content_width`, `text_color`, `background_fit` | enum values | Emits native `wb-slider-*` or `wb-slide-media-*` presentation classes. |
 | `slide.media_id` | image media | Emits an `img.wb-slide-media` element inside the Slide root. |
+| `slide.settings.background_overlay` | `none`, `soft`, `medium`, `strong` | Emits a `wb-slider-overlay-*` class on the Slide root, overriding the slider's overlay for that slide only. Absent means the slider's own overlay applies; `medium` resolves to `wb-slider-overlay-strong`, which the pattern's three levels are the reason for. |
+| `slide.settings.background_position` | `center`, `top`, `bottom`, `left`, `right` | Emits `object-position` on `img.wb-slide-media`. |
 | `slide.children` | nested blocks | Renders visible slide content inside `.wb-slide-content`. |
 
 ### Use for / Avoid for
