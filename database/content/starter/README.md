@@ -48,10 +48,14 @@ Lookup order for a default locale of `de-ch`: `home.de-ch.json`, `home.de.json`,
 
 ## Shipped Artwork
 
-`media/logo-mark.png` is `public/cms/brand/logo-mark.svg` rasterised at 400x400
-and centred on a 1200x600 transparent canvas. The canvas is the mark's
-clearspace: the hero's split layout sizes its media column with CSS, so a bare
-square would be stretched to the column's full width and swamp the page.
+`media/logo-mark.png` is `public/cms/brand/logo-mark.svg` rasterised at 96x96.
+
+The size is part of the asset because the `image` block renders at the file's
+own pixel size — it has no display-size setting — so the shipped file is what
+decides how large the mark appears. 96px sits next to the 3rem the admin
+sidebar brand uses. Do not put the mark in a CSS-sized media slot such as the
+hero's split layout: that stretches it to the column width, which on a desktop
+viewport meant a 490px logo dominating the page.
 
 It is a raster of the canonical SVG, not a redrawn copy — regenerate it from
 that file whenever the brand mark changes, rather than editing the PNG. PNG

@@ -10,9 +10,12 @@
             "settings": { "flow": "stack" },
             "children": [
               {
+                "type": "image",
+                "media": "logo-mark.png"
+              },
+              {
                 "type": "hero",
-                "media": "logo-mark.png",
-                "settings": { "title_tag": "h1", "layout": "split" },
+                "settings": { "title_tag": "h1" },
                 "translations": {
                   "subtitle": "Your site is installed",
                   "title": "WebBlocks CMS",

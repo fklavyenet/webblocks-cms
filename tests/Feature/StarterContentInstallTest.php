@@ -48,7 +48,7 @@ class StarterContentInstallTest extends TestCase
     $this->assertCount($result->blocksCreated, $blocks);
     $this->assertNotEmpty($blocks);
 
-    foreach (['section', 'container', 'hero', 'feature-grid', 'feature-item', 'cta', 'button_link'] as $type) {
+    foreach (['section', 'container', 'image', 'hero', 'feature-grid', 'feature-item', 'cta', 'button_link'] as $type) {
       $this->assertTrue($blocks->contains('type', $type), 'Expected a ['.$type.'] starter block.');
     }
 
@@ -120,27 +120,27 @@ class StarterContentInstallTest extends TestCase
   {
     $this->installStarterContent();
 
-    $hero = Block::query()->where('type', 'hero')->firstOrFail();
-    $media = Media::query()->findOrFail($hero->media_id);
+    $logo = Block::query()->where('type', 'image')->firstOrFail();
+    $media = Media::query()->findOrFail($logo->media_id);
 
     $this->assertSame('public', $media->disk);
     $this->assertSame('assets/starter/logo-mark.png', $media->path);
     $this->assertSame('image/png', $media->mime_type);
     $this->assertSame(Media::KIND_IMAGE, $media->kind);
-    $this->assertGreaterThan(0, (int) $media->width);
+    // The image block renders at the file's own pixel size, so the shipped
+    // artwork is what keeps the mark at brand size instead of page-wide.
+    $this->assertSame(96, (int) $media->width);
+    $this->assertSame(96, (int) $media->height);
     $this->assertTrue(Storage::disk('public')->exists($media->path));
 
     $html = view('webblocks-cms::pages.partials.block', [
-      'block' => app(BlockTranslationResolver::class)->resolve(
-        $hero->load(['textTranslations', 'children.textTranslations'])
-      ),
+      'block' => app(BlockTranslationResolver::class)->resolve($logo),
     ])->render();
 
-    // The split layout is what puts the mark beside the copy, and the source
-    // has to be this site's own origin: a CDN hot-link would make every public
-    // visitor issue a third-party request.
-    $this->assertStringContainsString('wb-promo--split', $html);
+    // Served from this site's own origin: a CDN hot-link would make every
+    // public visitor issue a third-party request.
     $this->assertStringContainsString('/storage/assets/starter/logo-mark.png', $html);
+    $this->assertStringContainsString('width="96"', $html);
     $this->assertStringNotContainsString('webblocksui.com/logo', $html);
   }
 
