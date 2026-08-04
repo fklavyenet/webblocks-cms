@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.11
+
+- **The starter page's logo now renders at brand size instead of page width.** 1.48.9 and 1.48.10 bound the mark to the hero's split layout, whose media column is CSS-sized at `width: 100%` — on a desktop viewport that meant a 490px logo dominating the page. It is now its own `image` block above the hero, and the hero returns to its plain full-width copy layout.
+- The `image` block renders at the file's own pixel size and exposes no display-size setting, so the shipped asset decides how large the mark appears: 96x96, next to the `3rem` the admin sidebar brand uses. `database/content/starter/README.md` records why the size lives in the file and warns against putting the mark back into a CSS-sized media slot.
+
 ## 1.48.10
 
 - **The starter page's logo is now the canonical brand mark itself rather than a redrawn copy of it.** 1.48.9 shipped a PNG drawn with ImageMagick primitives transcribed from `public/cms/brand/logo-mark.svg`, because converting that SVG directly produced a blank image on a machine whose ImageMagick has no SVG delegate. The transcription followed the source geometry, but a brand mark has to be exact: measured against a correct raster of the same file it differed on 3.5% of pixels, all of it stroke-edge antialiasing. The shipped file is now a raster of `logo-mark.svg` itself on the same clearspace canvas.
