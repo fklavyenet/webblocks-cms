@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.9
+
+- **The starter home page now shows the product mark beside its headline, served from the site's own Media Library.** Native blocks bind images by media id, so shipped artwork has to become a real library record first: the blueprint names a file bundled beside it, `StarterMediaImporter` copies it onto the site's public disk once, and the installer binds the record to the hero. The record is an ordinary library entry — retitle it, replace the file, or delete it from the admin like any other image.
+- **The logo is deliberately not hot-linked from a canonical URL on the docs site.** A remote image in content would make every visitor of a customer's public page issue a third-party request to us — a privacy exposure created on the customer's behalf — and would tie their home page to another host's uptime. It is also what `docs/ai-page-building-guide.md` already rules out; the sanctioned remote path there is `media/fetch`, which downloads into the library exactly like this does, minus the outbound network many production hosts do not have.
+- The mark ships as a 1200x600 PNG with the brand clearspace baked in, rendered through the hero's documented split layout where the media column is CSS-sized, so the file carries retina detail without dictating its displayed size. PNG rather than SVG keeps the shipped asset off the SVG upload path the media pipeline disables by default (`allow_svg_uploads`).
+- Nothing here can fail an install: a missing file or a read-only disk leaves the block without media, and the hero renders its copy alone.
+- Like the other starter content changes, this reaches a site the next time starter content is written — a fresh install, or `php artisan webblocks:starter-content` on a home page that is still empty.
+
 ## 1.48.8
 
 - **The starter page now leads with the product name at headline size instead of hiding it in the eyebrow.** "WebBlocks CMS" sat in the hero's subtitle field, which that block's contract renders as its small kicker, so the one thing a fresh install should announce was the least visible text on the page — Laravel and Craft both open on their own mark at full size. The brand takes the `h1` and the install confirmation moves to the kicker above it. No new blocks and no renderer change: each string simply moved into the field the hero contract already defines for that role, so an operator editing the hero sees the same two inputs as before.
