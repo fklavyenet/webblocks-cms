@@ -21,16 +21,6 @@
     $selectedIcon = $itemSettings['icon_slug'] ?? '';
     $selectedIconTone = $itemSettings['icon_tone'] ?? 'default';
     $selectedTone = $itemSettings['badge_tone'] ?? 'neutral';
-    $iconGroups = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->groupedPickerOptions('content', $selectedIcon, $selectedIcon);
-    $iconToneOptions = [
-        'default' => $columnItemRowText('default'),
-        'soft' => $columnItemRowText('soft'),
-        'brand' => $columnItemRowText('brand'),
-        'accent' => $columnItemRowText('accent'),
-        'highlight' => $columnItemRowText('highlight'),
-        'bold' => $columnItemRowText('bold'),
-        'quiet' => $columnItemRowText('quiet'),
-    ];
     $summaryText = $showSubtitle
         ? ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder)
         : ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder);
@@ -83,49 +73,20 @@
             </div>
         @endif
 
-        <div class="wb-grid wb-grid-4">
-            <div class="wb-stack wb-gap-1">
-                <label>{{ $columnItemRowText('icon') }}</label>
-                <select class="wb-select" name="{{ $rowPrefix }}[icon_slug]">
-                    <option value="">{{ $columnItemRowText('no_icon') }}</option>
-                    @if ($iconGroups['suggested']->isNotEmpty())
-                        <optgroup label="{{ $columnItemRowText('suggested_icons') }}">
-                            @foreach ($iconGroups['suggested'] as $icon)
-                                <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
-                            @endforeach
-                        </optgroup>
-                    @endif
-                    @if ($iconGroups['all']->isNotEmpty())
-                        <optgroup label="{{ $columnItemRowText('all_icons') }}">
-                            @foreach ($iconGroups['all'] as $icon)
-                                <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
-                            @endforeach
-                        </optgroup>
-                    @endif
-                </select>
-            </div>
-
-            <div class="wb-stack wb-gap-1">
-                <label>{{ $columnItemRowText('icon_tone') }}</label>
-                <select class="wb-select" name="{{ $rowPrefix }}[icon_tone]">
-                    @foreach ($iconToneOptions as $value => $label)
-                        <option value="{{ $value }}" @selected($selectedIconTone === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
+        <div class="wb-grid wb-grid-2">
+            @include('webblocks-cms::admin.blocks.partials.icon-picker-field', [
+                'slugName' => $rowPrefix.'[icon_slug]',
+                'toneName' => $rowPrefix.'[icon_tone]',
+                'badgeToneName' => $rowPrefix.'[badge_tone]',
+                'slug' => $selectedIcon,
+                'tone' => $selectedIconTone,
+                'badgeTone' => $selectedTone,
+                'label' => $columnItemRowText('icon'),
+            ])
 
             <div class="wb-stack wb-gap-1">
                 <label>{{ $columnItemRowText('badge') }}</label>
-                <input class="wb-input" type="text" name="{{ $rowPrefix }}[badge_label]" value="{{ $columnItem->eyebrow ?? $columnItem->translatedTextFieldValue('eyebrow') }}">
-            </div>
-
-            <div class="wb-stack wb-gap-1">
-                <label>{{ $columnItemRowText('badge_tone') }}</label>
-                <select class="wb-select" name="{{ $rowPrefix }}[badge_tone]">
-                    @foreach (['neutral' => $columnItemRowText('neutral'), 'info' => $columnItemRowText('info'), 'success' => $columnItemRowText('success'), 'warning' => $columnItemRowText('warning'), 'danger' => $columnItemRowText('danger')] as $value => $label)
-                        <option value="{{ $value }}" @selected($selectedTone === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
+                <input class="wb-input" type="text" name="{{ $rowPrefix }}[badge_label]" data-wb-badge-label-input value="{{ $columnItem->eyebrow ?? $columnItem->translatedTextFieldValue('eyebrow') }}">
             </div>
         </div>
 

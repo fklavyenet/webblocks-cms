@@ -13,6 +13,20 @@ class WebBlocksIconManifestSyncer
 {
   public const DEFAULT_MANIFEST = WebBlocks::ICONS_MANIFEST_URL;
 
+  /**
+   * The manifest shipped with the package, for the pinned UI version.
+   *
+   * Install and catalog repair read this rather than the CDN. The icon catalog
+   * is not optional content — every icon field in the admin is empty without
+   * it — so filling it cannot depend on outbound network the host may not
+   * have. The remote manifest stays the explicit action, for pulling a set
+   * newer than the pinned one.
+   */
+  public static function bundledManifestPath(): string
+  {
+    return dirname(__DIR__, 3).'/database/content/icons/webblocks-ui-'.WebBlocks::uiVersion().'.json';
+  }
+
   public function sync(?string $manifest = null, bool $deactivateMissing = false): array
   {
     $manifest = trim((string) ($manifest ?: self::DEFAULT_MANIFEST));

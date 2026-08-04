@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageLayoutSlot;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeCatalogSyncer;
 
@@ -153,20 +154,25 @@ class CatalogRepairer
     return $summary;
   }
 
+  /**
+   * Syncs the whole shipped icon catalog, which is what makes a site installed
+   * before the manifest was bundled pick it up on its next System Update: the
+   * updater runs this repair for exactly that reason.
+   */
   private function repairIcons(bool $dryRun): array
   {
     return $this->repairDefinitions(
       modelClass: IconCatalogItem::class,
       keys: ['source', 'slug'],
-      definitions: collect($this->fallbackNavigationIcons())
-        ->map(fn (string $slug, int $index) => [
-          'source' => 'webblocks-ui',
-          'slug' => $slug,
-          'label' => Str::of($slug)->replace('-', ' ')->title()->toString(),
-          'css_class' => 'wb-icon-'.$slug,
-          'categories' => ['navigation'],
-          'contexts' => ['navigation'],
-          'keywords' => IconCatalogItem::normalizeKeywords([$slug, 'navigation']),
+      definitions: collect($this->bundledIcons())
+        ->map(fn (array $icon, int $index) => [
+          'source' => (string) ($icon['source'] ?? 'webblocks-ui'),
+          'slug' => (string) $icon['slug'],
+          'label' => (string) ($icon['label'] ?? Str::of((string) $icon['slug'])->replace('-', ' ')->title()->toString()),
+          'css_class' => (string) ($icon['css_class'] ?? 'wb-icon-'.$icon['slug']),
+          'categories' => $icon['categories'] ?? [],
+          'contexts' => $icon['contexts'] ?? [],
+          'keywords' => IconCatalogItem::normalizeKeywords($icon['keywords'] ?? [(string) $icon['slug']]),
           'is_active' => true,
           'sort_order' => $index + 1,
         ])
@@ -258,30 +264,17 @@ class CatalogRepairer
     ];
   }
 
-  private function fallbackNavigationIcons(): array
+  /**
+   * @return array<int, array<string, mixed>>
+   */
+  private function bundledIcons(): array
   {
-    return [
-      'home',
-      'rocket',
-      'layers',
-      'palette',
-      'layout',
-      'box',
-      'star',
-      'layout-grid',
-      'circle-dot',
-      'layout-dashboard',
-      'settings',
-      'shield-check',
-      'file-text',
-      'route',
-      'images',
-      'cookie',
-      'megaphone',
-      'wrench',
-      'terminal',
-      'code',
-    ];
+    $path = WebBlocksIconManifestSyncer::bundledManifestPath();
+    $decoded = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
+
+    return is_array($decoded)
+      ? array_values(array_filter($decoded, fn ($icon) => is_array($icon) && ! empty($icon['slug'])))
+      : [];
   }
 
   private function mergeSummary(array $left, array $right): array

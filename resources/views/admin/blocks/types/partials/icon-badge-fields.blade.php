@@ -9,65 +9,21 @@
     $selectedIcon = old('icon_slug', $settings['icon_slug'] ?? '');
     $selectedIconTone = old('icon_tone', $settings['icon_tone'] ?? 'default');
     $selectedTone = old('badge_tone', $settings['badge_tone'] ?? 'neutral');
-    $iconGroups = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->groupedPickerOptions($iconContext, $selectedIcon, $settings['icon_slug'] ?? null);
-    $iconToneOptions = [
-        'default' => $adminText('default'),
-        'soft' => $adminText('soft'),
-        'brand' => $adminText('brand'),
-        'accent' => $adminText('accent'),
-        'highlight' => $adminText('highlight'),
-        'bold' => $adminText('bold'),
-        'quiet' => $adminText('quiet'),
-    ];
 @endphp
 
-<div class="wb-grid wb-grid-3">
-    <div class="wb-stack wb-gap-1">
-        <label for="icon_slug">{{ $adminText('icon') }}</label>
-        <select id="icon_slug" name="icon_slug" class="wb-select">
-            <option value="">{{ $adminText('no_icon') }}</option>
-            @if ($iconGroups['suggested']->isNotEmpty())
-                <optgroup label="{{ $adminText('suggested_icons') }}">
-                    @foreach ($iconGroups['suggested'] as $icon)
-                        <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
-                    @endforeach
-                </optgroup>
-            @endif
-            @if ($iconGroups['all']->isNotEmpty())
-                <optgroup label="{{ $adminText('all_icons') }}">
-                    @foreach ($iconGroups['all'] as $icon)
-                        <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
-                    @endforeach
-                </optgroup>
-            @endif
-        </select>
-        @if ($iconGroups['suggested']->isEmpty() && $iconGroups['all']->isEmpty())
-            <p class="wb-text-sm wb-text-muted">{{ $adminText('empty_catalog_hint') }}</p>
-        @endif
-    </div>
-
-    <div class="wb-stack wb-gap-1">
-        <label for="icon_tone">{{ $adminText('icon_tone') }}</label>
-        <select id="icon_tone" name="icon_tone" class="wb-select">
-            @foreach ($iconToneOptions as $value => $label)
-                <option value="{{ $value }}" @selected($selectedIconTone === $value)>{{ $label }}</option>
-            @endforeach
-        </select>
-    </div>
-
-    <div class="wb-stack wb-gap-1">
-        <label for="badge_tone">{{ $adminText('badge_tone') }}</label>
-        <select id="badge_tone" name="badge_tone" class="wb-select">
-            @foreach (['neutral' => $adminText('neutral'), 'info' => $adminText('info'), 'success' => $adminText('success'), 'warning' => $adminText('warning'), 'danger' => $adminText('danger')] as $value => $label)
-                <option value="{{ $value }}" @selected($selectedTone === $value)>{{ $label }}</option>
-            @endforeach
-        </select>
-    </div>
-</div>
+@include('webblocks-cms::admin.blocks.partials.icon-picker-field', [
+    'slugName' => 'icon_slug',
+    'toneName' => 'icon_tone',
+    'badgeToneName' => 'badge_tone',
+    'slug' => $selectedIcon,
+    'tone' => $selectedIconTone,
+    'badgeTone' => $selectedTone,
+    'label' => $adminText('icon'),
+])
 
 @if ($supportsBadgeLabel)
     <div class="wb-stack wb-gap-1">
         <label for="badge_label">{{ $adminText('badge_label') }}</label>
-        <input id="badge_label" name="badge_label" class="wb-input" type="text" maxlength="255" value="{{ old('badge_label', $block->eyebrow ?? $block->translatedTextFieldValue('eyebrow')) }}">
+        <input id="badge_label" name="badge_label" class="wb-input" type="text" maxlength="255" data-wb-badge-label-input value="{{ old('badge_label', $block->eyebrow ?? $block->translatedTextFieldValue('eyebrow')) }}">
     </div>
 @endif

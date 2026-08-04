@@ -86,7 +86,8 @@ What `webblocks:install` does:
 - prepares the `backups` filesystem disk root used by Backup / Restore
 - installs package-owned CMS assets into `public/cms`
 - creates `public/storage` when it is missing and the environment allows it
-- seeds locales, sites, slot types, page layouts, icons, and core block types idempotently
+- seeds locales, sites, slot types, page layouts, and core block types idempotently
+- seeds the complete WebBlocks UI icon catalog from the manifest shipped with the package, so icon fields work with no outbound network and no manual sync
 - provisions the published home page served at `/`, including its layout slots
 - fills that home page with the shipped starter content, unless it is turned off
 - records the installed version and install completion marker in `system_settings`
