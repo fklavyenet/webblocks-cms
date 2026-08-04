@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.8
+
+- **The starter page now leads with the product name at headline size instead of hiding it in the eyebrow.** "WebBlocks CMS" sat in the hero's subtitle field, which that block's contract renders as its small kicker, so the one thing a fresh install should announce was the least visible text on the page — Laravel and Craft both open on their own mark at full size. The brand takes the `h1` and the install confirmation moves to the kicker above it. No new blocks and no renderer change: each string simply moved into the field the hero contract already defines for that role, so an operator editing the hero sees the same two inputs as before.
+- The starter hero's secondary action opens `cms.webblocksui.com` instead of the GitHub docs tree.
+- Both changes are content, so they reach a site the next time starter content is written — a fresh install, or `php artisan webblocks:starter-content` on a home page that is still empty. A home page already filled by 1.48.6 or 1.48.7 keeps what it has; the two strings and the link are ordinary block copy that can be edited under Pages.
+
 ## 1.48.7
 
 - **`php artisan webblocks:starter-content` fills an empty home page with the starter content, replacing a `db:seed --class=...` instruction that could not be typed into a hosting panel.** 1.48.6 added the starter page but only runs it during install, by design — System Update must never write content into a live site — so an install made before it keeps its empty home page and needs one manual run. The documented seeder invocation failed twice on a real panel's Artisan screen: first on the production confirmation, which a non-interactive runner cannot answer (`Command cancelled.`), then, with `--force`, on the class name itself, because the panel stripped the backslashes and Laravel went looking for `Database\Seeders\WebBlocksCmsDatabaseSeedersStarterContentSeeder`.
