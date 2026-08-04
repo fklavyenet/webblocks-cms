@@ -4,7 +4,7 @@
     $meta = $block->stringValueOrNull($block->subtitle) ?? $block->translatedTextFieldValue('subtitle');
     $description = $block->stringValueOrNull($block->content) ?? $block->translatedTextFieldValue('content');
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
-    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();
     $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
 

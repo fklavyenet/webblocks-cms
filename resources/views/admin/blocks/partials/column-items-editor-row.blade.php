@@ -21,7 +21,7 @@
     $selectedIcon = $itemSettings['icon_slug'] ?? '';
     $selectedIconTone = $itemSettings['icon_tone'] ?? 'default';
     $selectedTone = $itemSettings['badge_tone'] ?? 'neutral';
-    $iconOptions = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->pickerOptions('content', $selectedIcon, $selectedIcon);
+    $iconGroups = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->groupedPickerOptions('content', $selectedIcon, $selectedIcon);
     $iconToneOptions = [
         'default' => $columnItemRowText('default'),
         'soft' => $columnItemRowText('soft'),
@@ -88,9 +88,20 @@
                 <label>{{ $columnItemRowText('icon') }}</label>
                 <select class="wb-select" name="{{ $rowPrefix }}[icon_slug]">
                     <option value="">{{ $columnItemRowText('no_icon') }}</option>
-                    @foreach ($iconOptions as $icon)
-                        <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
-                    @endforeach
+                    @if ($iconGroups['suggested']->isNotEmpty())
+                        <optgroup label="{{ $columnItemRowText('suggested_icons') }}">
+                            @foreach ($iconGroups['suggested'] as $icon)
+                                <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endif
+                    @if ($iconGroups['all']->isNotEmpty())
+                        <optgroup label="{{ $columnItemRowText('all_icons') }}">
+                            @foreach ($iconGroups['all'] as $icon)
+                                <option value="{{ $icon['slug'] }}" @selected($selectedIcon === $icon['slug'])>{{ $icon['label'] }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endif
                 </select>
             </div>
 

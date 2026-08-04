@@ -1,6 +1,6 @@
 @php
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
-    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), $block->publicIconTone());
     $headerClass = trim('wb-card-header'.($iconClass !== null ? ' wb-icon-card' : ''));
 @endphp
 

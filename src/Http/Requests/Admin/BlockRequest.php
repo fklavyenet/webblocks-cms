@@ -431,8 +431,8 @@ class BlockRequest extends FormRequest
       if (in_array($selectedBlockType?->slug, ['content_header', 'card_header', 'column_item', 'feature-item', 'link-list-item'], true)) {
         $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon_slug'));
 
-        if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
-          $validator->errors()->add('icon_slug', 'Select an active content icon from the catalog.');
+        if (! app(IconCatalog::class)->isActiveSelection($icon)) {
+          $validator->errors()->add('icon_slug', 'Select an active icon from the catalog.');
         }
       }
 
@@ -540,8 +540,8 @@ class BlockRequest extends FormRequest
 
           $icon = app(IconCatalog::class)->normalizeSlug($columnItem['icon_slug'] ?? null);
 
-          if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
-            $validator->errors()->add("column_items.{$index}.icon_slug", 'Select an active content icon from the catalog.');
+          if (! app(IconCatalog::class)->isActiveSelection($icon)) {
+            $validator->errors()->add("column_items.{$index}.icon_slug", 'Select an active icon from the catalog.');
           }
         }
       }
@@ -562,8 +562,8 @@ class BlockRequest extends FormRequest
 
           $icon = app(IconCatalog::class)->normalizeSlug($featureItem['icon_slug'] ?? null);
 
-          if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
-            $validator->errors()->add("feature_items.{$index}.icon_slug", 'Select an active content icon from the catalog.');
+          if (! app(IconCatalog::class)->isActiveSelection($icon)) {
+            $validator->errors()->add("feature_items.{$index}.icon_slug", 'Select an active icon from the catalog.');
           }
         }
       }
@@ -584,8 +584,8 @@ class BlockRequest extends FormRequest
 
           $icon = app(IconCatalog::class)->normalizeSlug($item['icon_slug'] ?? null);
 
-          if (! app(IconCatalog::class)->isValidSelection($icon, 'content')) {
-            $validator->errors()->add("link_list_items.{$index}.icon_slug", 'Select an active content icon from the catalog.');
+          if (! app(IconCatalog::class)->isActiveSelection($icon)) {
+            $validator->errors()->add("link_list_items.{$index}.icon_slug", 'Select an active icon from the catalog.');
           }
         }
       }

@@ -12,9 +12,16 @@ class PublicIconPresenter
 
   public function __construct(private readonly IconCatalog $catalog) {}
 
-  public function iconClass(?string $slug, string $context = 'content', ?string $tone = null): ?string
+  /**
+   * Any icon the catalog has active renders.
+   *
+   * This used to take a context and drop anything tagged outside it, so an
+   * icon that was set but out of context left the block rendering without one
+   * and nothing on the page, in the admin, or in a log said why.
+   */
+  public function iconClass(?string $slug, ?string $tone = null): ?string
   {
-    $slug = $this->catalog->activePublicIconSlug($slug, $context);
+    $slug = $this->catalog->activeIconSlug($slug);
 
     if ($slug === null) {
       return null;

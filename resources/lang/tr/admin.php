@@ -1075,6 +1075,8 @@ return [
   ],
   'column_items_editor_row' => [
     'new_item' => 'Yeni Öğe',
+    'suggested_icons' => 'Bu blok için önerilen',
+    'all_icons' => 'Tüm ikonlar',
     'title' => 'Başlık',
     'subtitle' => 'Alt Başlık',
     'url' => 'URL',
@@ -3171,6 +3173,9 @@ return [
       'icon_badge_fields' => [
         'icon' => 'İkon',
         'no_icon' => 'İkon yok',
+        'suggested_icons' => 'Bu blok için önerilen',
+        'all_icons' => 'Tüm ikonlar',
+        'empty_catalog_hint' => 'Katalogda henüz ikon yok. System -> Icons ekranından senkronlayın.',
         'icon_tone' => 'İkon tonu',
         'badge_tone' => 'Badge tonu',
         'badge_label' => 'Badge etiketi',

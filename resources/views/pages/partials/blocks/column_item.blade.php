@@ -15,7 +15,7 @@
         $statValue = $title;
     }
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
-    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), 'content', $block->publicIconTone());
+    $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();
     $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
 @endphp

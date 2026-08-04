@@ -721,8 +721,8 @@ class InternalContentApiOperations
       return $settings;
     }
 
-    if (! app(IconCatalog::class)->isValidSelection($slug, 'content')) {
-      $errors[] = $this->error($path.'.settings.icon_slug', 'icon_slug must be an active content icon catalog slug.');
+    if (! app(IconCatalog::class)->isActiveSelection($slug)) {
+      $errors[] = $this->error($path.'.settings.icon_slug', 'icon_slug must be an active icon catalog slug.');
       unset($settings['icon_slug']);
 
       return $settings;

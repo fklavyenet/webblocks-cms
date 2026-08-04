@@ -1079,6 +1079,8 @@ return [
   ],
   'column_items_editor_row' => [
     'new_item' => 'Neuer Eintrag',
+    'suggested_icons' => 'Für diesen Block empfohlen',
+    'all_icons' => 'Alle Icons',
     'title' => 'Titel',
     'subtitle' => 'Untertitel',
     'url' => 'URL',
@@ -3173,6 +3175,9 @@ return [
       'icon_badge_fields' => [
         'icon' => 'Icon',
         'no_icon' => 'Kein Icon',
+        'suggested_icons' => 'Für diesen Block empfohlen',
+        'all_icons' => 'Alle Icons',
+        'empty_catalog_hint' => 'Noch keine Icons im Katalog. Unter System -> Icons synchronisieren.',
         'icon_tone' => 'Icon-Ton',
         'badge_tone' => 'Badge-Ton',
         'badge_label' => 'Badge-Label',
