@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.12
+
+- **The starter page's logo now sits beside the heading as a brand lockup, instead of stacked above it.** 1.48.11 gave the mark its own block above the hero, which read as a separate element rather than as branding attached to the title.
+- `hero` cannot express logo-left/title-right at all: its media renders either as a background (left and centered layouts) or as a foreground image on the *right* (split). `cluster` is the horizontal primitive — `display: flex` with `align-items` — so the first section is now a cluster holding the `image` and a `content_header`, with the action buttons in a cluster below it. `content_header` carries the copy: its eyebrow renders as the badge, its title as the `h1`, its subtitle as the intro paragraph.
+- The cluster needs `wrap: nowrap`, because the header is a block-level flex item and default wrapping lets it claim the whole row — which drops the logo onto its own line, the very thing being fixed. `items_alignment: start` lines the mark up with the badge and heading instead of centring it against the full paragraph height. `database/content/starter/README.md` records this so the next edit does not reach for `hero` again.
+
 ## 1.48.11
 
 - **The starter page's logo now renders at brand size instead of page width.** 1.48.9 and 1.48.10 bound the mark to the hero's split layout, whose media column is CSS-sized at `width: 100%` — on a desktop viewport that meant a 490px logo dominating the page. It is now its own `image` block above the hero, and the hero returns to its plain full-width copy layout.
