@@ -48,7 +48,7 @@ class StarterContentInstallTest extends TestCase
     $this->assertCount($result->blocksCreated, $blocks);
     $this->assertNotEmpty($blocks);
 
-    foreach (['section', 'container', 'image', 'hero', 'feature-grid', 'feature-item', 'cta', 'button_link'] as $type) {
+    foreach (['section', 'container', 'cluster', 'image', 'content_header', 'feature-grid', 'feature-item', 'cta', 'button_link'] as $type) {
       $this->assertTrue($blocks->contains('type', $type), 'Expected a ['.$type.'] starter block.');
     }
 
@@ -61,38 +61,43 @@ class StarterContentInstallTest extends TestCase
   {
     $this->installStarterContent();
 
-    $hero = Block::query()->where('type', 'hero')->firstOrFail();
-    $translation = $hero->textTranslations()->firstOrFail();
+    $header = Block::query()->where('type', 'content_header')->firstOrFail();
+    $translation = $header->textTranslations()->firstOrFail();
 
-    $this->assertNull($hero->getRawOriginal('title'));
-    $this->assertNull($hero->getRawOriginal('subtitle'));
-    // The brand is the hero's headline, so it renders at title size rather
-    // than as the small eyebrow the contract keeps in the subtitle field.
+    $this->assertNull($header->getRawOriginal('title'));
+    $this->assertNull($header->getRawOriginal('subtitle'));
     $this->assertSame('WebBlocks CMS', $translation->title);
-    $this->assertSame('Your site is installed', $translation->subtitle);
-    $this->assertNotEmpty($translation->content);
+    $this->assertSame('Your site is installed', $translation->eyebrow);
+    $this->assertNotEmpty($translation->subtitle);
   }
 
   #[Test]
-  public function the_starter_hero_renders_its_copy_and_its_action_links(): void
+  public function the_brand_lockup_puts_the_logo_beside_the_heading_not_above_it(): void
   {
-    $this->installStarterContent();
+    $page = $this->provisionHomePage();
+    app(StarterContentInstaller::class)->install($page);
 
-    $hero = Block::query()
-      ->where('type', 'hero')
-      ->with(['textTranslations', 'children.textTranslations'])
-      ->firstOrFail();
+    $html = '';
 
-    $html = view('webblocks-cms::pages.partials.block', [
-      'block' => app(BlockTranslationResolver::class)->resolve($hero),
-    ])->render();
+    foreach ($this->renderableRootBlocks($page) as $block) {
+      $html .= view('webblocks-cms::pages.partials.block', ['block' => $block])->render();
+    }
 
-    $this->assertStringContainsString('<h1 class="wb-promo-title">WebBlocks CMS</h1>', $html);
+    // A cluster is the horizontal primitive: flex with align-items, so the mark
+    // sits beside the heading rather than above it. nowrap keeps the header
+    // block from claiming the full row and pushing the logo onto its own line.
+    $this->assertSame(1, preg_match('/<div class="wb-cluster[^"]*wb-flex-nowrap[^"]*"[^>]*>(.*?)<\/header>/s', $html, $lockup));
+
+    $logoAt = strpos($lockup[1], 'logo-mark.png');
+    $headingAt = strpos($lockup[1], '<h1 class="wb-content-title">WebBlocks CMS</h1>');
+
+    $this->assertIsInt($logoAt, 'The lockup should contain the logo.');
+    $this->assertIsInt($headingAt, 'The lockup should contain the heading.');
+    $this->assertLessThan($headingAt, $logoAt, 'The logo should come before the heading.');
+
     $this->assertStringContainsString('Your site is installed', $html);
     $this->assertStringContainsString('href="/webadmin"', $html);
-    $this->assertStringContainsString('Open the admin', $html);
     $this->assertStringContainsString('href="https://cms.webblocksui.com"', $html);
-    $this->assertStringContainsString('Read the docs', $html);
   }
 
   #[Test]
@@ -170,17 +175,19 @@ class StarterContentInstallTest extends TestCase
   {
     $this->installStarterContent();
 
-    $hero = Block::query()->where('type', 'hero')->firstOrFail();
-    $container = Block::query()->findOrFail($hero->parent_id);
+    $header = Block::query()->where('type', 'content_header')->firstOrFail();
+    $lockup = Block::query()->findOrFail($header->parent_id);
+    $container = Block::query()->findOrFail($lockup->parent_id);
     $section = Block::query()->findOrFail($container->parent_id);
 
+    $this->assertSame('cluster', $lockup->type);
     $this->assertSame('container', $container->type);
     $this->assertSame('section', $section->type);
     $this->assertNull($section->parent_id);
 
-    $buttons = Block::query()->where('parent_id', $hero->id)->orderBy('sort_order')->pluck('type')->all();
+    $lockupChildren = Block::query()->where('parent_id', $lockup->id)->orderBy('sort_order')->pluck('type')->all();
 
-    $this->assertSame(['button_link', 'button_link'], $buttons);
+    $this->assertSame(['image', 'content_header'], $lockupChildren);
   }
 
   #[Test]
@@ -243,7 +250,7 @@ class StarterContentInstallTest extends TestCase
 
     $this->assertSame('/', PageTranslation::query()->where('page_id', $homePage->id)->value('path'));
     $this->assertGreaterThan(0, $homePage->blocks()->count());
-    $this->assertTrue($homePage->blocks()->where('type', 'hero')->exists());
+    $this->assertTrue($homePage->blocks()->where('type', 'content_header')->exists());
   }
 
   #[Test]
@@ -291,7 +298,7 @@ class StarterContentInstallTest extends TestCase
     $this->artisan('webblocks:starter-content')
       ->assertSuccessful();
 
-    $this->assertTrue(Block::query()->where('type', 'hero')->exists());
+    $this->assertTrue(Block::query()->where('type', 'content_header')->exists());
     $this->assertSame('/', PageTranslation::query()->where('path', '/')->value('path'));
   }
 

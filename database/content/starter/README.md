@@ -57,6 +57,13 @@ sidebar brand uses. Do not put the mark in a CSS-sized media slot such as the
 hero's split layout: that stretches it to the column width, which on a desktop
 viewport meant a 490px logo dominating the page.
 
+The mark sits beside the heading rather than above it because `cluster` is the
+horizontal primitive — `display: flex` with `align-items` — holding the `image`
+and the `content_header`. It needs `wrap: nowrap`: the header is a block-level
+flex item, so with the default wrapping it claims the whole row and drops the
+logo onto a line of its own. `hero` cannot express this shape at all; its media
+renders as a background, or beside the copy on the right in the split layout.
+
 It is a raster of the canonical SVG, not a redrawn copy — regenerate it from
 that file whenever the brand mark changes, rather than editing the PNG. PNG
 rather than SVG keeps the shipped asset off the SVG path the media pipeline

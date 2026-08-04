@@ -219,9 +219,9 @@ The first `super_admin` is required for a completed install.
 
 ## Starter Content
 
-A fresh install publishes a home page at `/` and fills it with starter content: a hero carrying the product mark, a short feature grid, and a closing call to action. These are ordinary blocks, not a hard-coded welcome screen, so the first page a new admin opens in the editor is a working page they can rewrite, reorder, or delete.
+A fresh install publishes a home page at `/` and fills it with starter content: a brand lockup with the product mark beside the heading, a short feature grid, and a closing call to action. These are ordinary blocks, not a hard-coded welcome screen, so the first page a new admin opens in the editor is a working page they can rewrite, reorder, or delete.
 
-The hero's logo is imported into the site's own Media Library at install time and bound to the block like any other image, so it is served from the site's own origin and the operator can replace or delete it in the admin. It is never hot-linked from a remote host: that would make every public visitor issue a third-party request and tie the customer's home page to another host's uptime. An image that cannot be imported — read-only disk, missing file — leaves the block without media instead of failing the install.
+The logo is imported into the site's own Media Library at install time and bound to the block like any other image, so it is served from the site's own origin and the operator can replace or delete it in the admin. It is never hot-linked from a remote host: that would make every public visitor issue a third-party request and tie the customer's home page to another host's uptime. An image that cannot be imported — read-only disk, missing file — leaves the block without media instead of failing the install.
 
 Rules that make this safe to ship on every install path:
 

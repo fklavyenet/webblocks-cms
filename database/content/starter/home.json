@@ -7,30 +7,58 @@
         "children": [
           {
             "type": "container",
-            "settings": { "flow": "stack" },
+            "settings": {
+              "flow": "stack"
+            },
             "children": [
               {
-                "type": "image",
-                "media": "logo-mark.png"
+                "type": "cluster",
+                "settings": {
+                  "gap": "md",
+                  "wrap": "nowrap",
+                  "items_alignment": "start"
+                },
+                "children": [
+                  {
+                    "type": "image",
+                    "media": "logo-mark.png"
+                  },
+                  {
+                    "type": "content_header",
+                    "translations": {
+                      "eyebrow": "Your site is installed",
+                      "title": "WebBlocks CMS",
+                      "subtitle": "This page is not a placeholder screen. It is ordinary content created during install, so you can sign in, open it in the page editor, and make it yours."
+                    }
+                  }
+                ]
               },
               {
-                "type": "hero",
-                "settings": { "title_tag": "h1" },
-                "translations": {
-                  "subtitle": "Your site is installed",
-                  "title": "WebBlocks CMS",
-                  "content": "This page is not a placeholder screen. It is ordinary content created during install, so you can sign in, open it in the page editor, and make it yours."
+                "type": "cluster",
+                "settings": {
+                  "gap": "sm"
                 },
                 "children": [
                   {
                     "type": "button_link",
-                    "settings": { "url": "/webadmin", "variant": "primary" },
-                    "translations": { "title": "Open the admin" }
+                    "settings": {
+                      "url": "/webadmin",
+                      "variant": "primary"
+                    },
+                    "translations": {
+                      "title": "Open the admin"
+                    }
                   },
                   {
                     "type": "button_link",
-                    "settings": { "url": "https://cms.webblocksui.com", "variant": "secondary", "target": "_blank" },
-                    "translations": { "title": "Read the docs" }
+                    "settings": {
+                      "url": "https://cms.webblocksui.com",
+                      "variant": "secondary",
+                      "target": "_blank"
+                    },
+                    "translations": {
+                      "title": "Read the docs"
+                    }
                   }
                 ]
               }
@@ -43,7 +71,9 @@
         "children": [
           {
             "type": "container",
-            "settings": { "flow": "stack" },
+            "settings": {
+              "flow": "stack"
+            },
             "children": [
               {
                 "type": "feature-grid",
@@ -84,11 +114,15 @@
         "children": [
           {
             "type": "container",
-            "settings": { "flow": "stack" },
+            "settings": {
+              "flow": "stack"
+            },
             "children": [
               {
                 "type": "cta",
-                "settings": { "variant": "muted" },
+                "settings": {
+                  "variant": "muted"
+                },
                 "translations": {
                   "title": "Ready to replace this page?",
                   "content": "Nothing here is protected. Delete these starter blocks whenever you want, or keep one as a template for your own sections."
@@ -96,8 +130,13 @@
                 "children": [
                   {
                     "type": "button_link",
-                    "settings": { "url": "/webadmin/pages", "variant": "primary" },
-                    "translations": { "title": "Open the page editor" }
+                    "settings": {
+                      "url": "/webadmin/pages",
+                      "variant": "primary"
+                    },
+                    "translations": {
+                      "title": "Open the page editor"
+                    }
                   }
                 ]
               }
