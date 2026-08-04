@@ -33,6 +33,7 @@ use WebBlocks\Cms\Console\SitePromotionApplyCommand;
 use WebBlocks\Cms\Console\SitePromotionDryRunCommand;
 use WebBlocks\Cms\Console\SitePromotionInspectCommand;
 use WebBlocks\Cms\Console\SmokeNativeLocalCommand;
+use WebBlocks\Cms\Console\StarterContentCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
@@ -764,6 +765,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     SitePromotionInspectCommand::class,
     SyncCoreBlockTypesCommand::class,
     CatalogRepairCommand::class,
+    StarterContentCommand::class,
     SystemBackupRestoreCommand::class,
     SystemUpdateRunsCommand::class,
     SystemUpdatePruneRunsCommand::class,

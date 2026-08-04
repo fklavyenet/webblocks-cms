@@ -228,6 +228,45 @@ class StarterContentInstallTest extends TestCase
   }
 
   #[Test]
+  public function the_operator_command_fills_the_home_page_without_naming_a_class(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $this->seed(CoreCatalogSeeder::class);
+
+    $this->artisan('webblocks:starter-content')
+      ->assertSuccessful();
+
+    $this->assertTrue(Block::query()->where('type', 'hero')->exists());
+    $this->assertSame('/', PageTranslation::query()->where('path', '/')->value('path'));
+  }
+
+  #[Test]
+  public function the_operator_command_is_a_reportable_no_op_on_a_page_that_has_content(): void
+  {
+    $page = $this->provisionHomePage();
+    app(StarterContentInstaller::class)->install($page);
+    $blockCount = Block::query()->count();
+
+    $this->artisan('webblocks:starter-content')
+      ->expectsOutputToContain('The page already has blocks.')
+      ->assertSuccessful();
+
+    $this->assertSame($blockCount, Block::query()->count());
+  }
+
+  #[Test]
+  public function the_operator_command_reports_an_unknown_site_handle_instead_of_filling_another(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $this->seed(CoreCatalogSeeder::class);
+
+    $this->artisan('webblocks:starter-content', ['--site' => 'not-a-site'])
+      ->assertFailed();
+
+    $this->assertSame(0, Block::query()->count());
+  }
+
+  #[Test]
   public function the_install_command_resolves_and_offers_the_skip_switch(): void
   {
     $command = app(InstallWebBlocksCmsCommand::class);

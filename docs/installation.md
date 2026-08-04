@@ -240,13 +240,23 @@ WEBBLOCKS_CMS_STARTER_CONTENT_PATH=
 
 ### Adding Starter Content To An Existing Install
 
-An install created before this feature keeps its empty home page: System Update never adds content. To fill it once, on an install whose home page is still empty:
+An install created before this feature keeps its empty home page: System Update never adds content. To fill it once:
 
 ```bash
-php artisan db:seed --class="WebBlocks\Cms\Database\Seeders\StarterContentSeeder"
+php artisan webblocks:starter-content
 ```
 
-It provisions the site's page at `/` if it is missing, then writes the starter blocks only if that page has no blocks. On a site whose home page already has content it does nothing, and it never touches any other page.
+On a multisite install, `--site=handle` picks the site; without it the primary site is used.
+
+It provisions the site's page at `/` if it is missing, then writes the starter blocks only if that page has no blocks. On a site whose home page already has content it does nothing and reports why, and it never touches any other page. Running it twice is safe.
+
+The command takes no class name and does not ask for production confirmation, because both of those break the runners this is for. A hosting panel's Artisan screen cannot answer `db:seed`'s production prompt, and one has been seen to strip the backslashes out of a namespaced `--class` value, leaving Laravel to resolve `Database\Seeders\WebBlocksCmsDatabaseSeedersStarterContentSeeder`. The guarantee that would justify a confirmation prompt is structural here instead: starter content is only ever written into a page with no blocks.
+
+The same work is reachable as a seeder, which is what `db:seed` runs on a fresh install:
+
+```bash
+php artisan db:seed --class="WebBlocks\Cms\Database\Seeders\StarterContentSeeder" --force
+```
 
 Blueprints are JSON files under the package's `database/content/starter` directory, using the `webblocks.cms.starter-content.v1` schema and the same block vocabulary as `docs/ai-page-building-guide.md`. `home.json` is the shipped default; a locale-specific `home.{locale}.json` beside it wins for an install whose default locale matches. The directory's `README.md` documents the file format.
 
