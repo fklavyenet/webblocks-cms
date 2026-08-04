@@ -13,8 +13,8 @@
                 "type": "hero",
                 "settings": { "title_tag": "h1" },
                 "translations": {
-                  "subtitle": "WebBlocks CMS",
-                  "title": "Your site is installed",
+                  "subtitle": "Your site is installed",
+                  "title": "WebBlocks CMS",
                   "content": "This page is not a placeholder screen. It is ordinary content created during install, so you can sign in, open it in the page editor, and make it yours."
                 },
                 "children": [
@@ -25,7 +25,7 @@
                   },
                   {
                     "type": "button_link",
-                    "settings": { "url": "https://github.com/fklavyenet/webblocks-cms/tree/main/docs", "variant": "secondary", "target": "_blank" },
+                    "settings": { "url": "https://cms.webblocksui.com", "variant": "secondary", "target": "_blank" },
                     "translations": { "title": "Read the docs" }
                   }
                 ]

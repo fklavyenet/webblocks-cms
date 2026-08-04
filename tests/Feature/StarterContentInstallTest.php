@@ -63,9 +63,10 @@ class StarterContentInstallTest extends TestCase
 
     $this->assertNull($hero->getRawOriginal('title'));
     $this->assertNull($hero->getRawOriginal('subtitle'));
-    $this->assertSame('Your site is installed', $translation->title);
-    // The hero contract stores its visible eyebrow in the subtitle field.
-    $this->assertSame('WebBlocks CMS', $translation->subtitle);
+    // The brand is the hero's headline, so it renders at title size rather
+    // than as the small eyebrow the contract keeps in the subtitle field.
+    $this->assertSame('WebBlocks CMS', $translation->title);
+    $this->assertSame('Your site is installed', $translation->subtitle);
     $this->assertNotEmpty($translation->content);
   }
 
@@ -83,10 +84,11 @@ class StarterContentInstallTest extends TestCase
       'block' => app(BlockTranslationResolver::class)->resolve($hero),
     ])->render();
 
+    $this->assertStringContainsString('<h1 class="wb-promo-title">WebBlocks CMS</h1>', $html);
     $this->assertStringContainsString('Your site is installed', $html);
-    $this->assertStringContainsString('WebBlocks CMS', $html);
     $this->assertStringContainsString('href="/webadmin"', $html);
     $this->assertStringContainsString('Open the admin', $html);
+    $this->assertStringContainsString('href="https://cms.webblocksui.com"', $html);
     $this->assertStringContainsString('Read the docs', $html);
   }
 
@@ -102,7 +104,7 @@ class StarterContentInstallTest extends TestCase
       $html .= view('webblocks-cms::pages.partials.block', ['block' => $block])->render();
     }
 
-    $this->assertStringContainsString('Your site is installed', $html);
+    $this->assertStringContainsString('WebBlocks CMS', $html);
     $this->assertStringContainsString('Where to start', $html);
     $this->assertStringContainsString('Edit this page', $html);
     $this->assertStringContainsString('Add your media', $html);
