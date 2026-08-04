@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.7
+
+- **`php artisan webblocks:starter-content` fills an empty home page with the starter content, replacing a `db:seed --class=...` instruction that could not be typed into a hosting panel.** 1.48.6 added the starter page but only runs it during install, by design — System Update must never write content into a live site — so an install made before it keeps its empty home page and needs one manual run. The documented seeder invocation failed twice on a real panel's Artisan screen: first on the production confirmation, which a non-interactive runner cannot answer (`Command cancelled.`), then, with `--force`, on the class name itself, because the panel stripped the backslashes and Laravel went looking for `Database\Seeders\WebBlocksCmsDatabaseSeedersStarterContentSeeder`.
+- The command takes no class name and nothing else that can be mangled by a runner's quoting. `--site=handle` picks the site on a multisite install; without it the primary site is used. It reports how many blocks it wrote, or why it wrote none.
+- It deliberately skips Laravel's production confirmation, because the prompt cannot be answered by the runners it exists for and the guarantee it would protect is already structural: starter content is only ever written into a page that has no blocks at all. On a site whose home page already has content the command is a no-op that says so, it never touches any other page, and running it twice is safe.
+- The seeder is unchanged and still what `db:seed` runs on a fresh install. `docs/installation.md` keeps it as the alternative, now with the `--force` a production install needs.
+
 ## 1.48.6
 
 - **A fresh install now lands on a real home page instead of an empty one.** The installer always created the page and its layout slots but never any content, so `/` rendered an empty shell and the first page a new admin opened in the editor was blank; `php artisan db:seed` was worse, creating no page at all and letting `/` fall through to the host application's Laravel welcome view. The shipped starter page is a hero, a three-item feature grid, and a closing call to action — ordinary blocks with ordinary translations, written through the same `BlockPayloadWriter` the block editor and the Internal Content API use, so what lands in the database is what an editor would have built by hand and can be rewritten, reordered, or deleted like any other content.
