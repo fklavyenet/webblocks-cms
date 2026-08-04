@@ -46,6 +46,18 @@ Lookup order for a default locale of `de-ch`: `home.de-ch.json`, `home.de.json`,
   path segment is ignored. An image that cannot be imported (missing file,
   read-only disk) leaves the block without media rather than failing anything.
 
+## Shipped Artwork
+
+`media/logo-mark.png` is `public/cms/brand/logo-mark.svg` rasterised at 400x400
+and centred on a 1200x600 transparent canvas. The canvas is the mark's
+clearspace: the hero's split layout sizes its media column with CSS, so a bare
+square would be stretched to the column's full width and swamp the page.
+
+It is a raster of the canonical SVG, not a redrawn copy — regenerate it from
+that file whenever the brand mark changes, rather than editing the PNG. PNG
+rather than SVG keeps the shipped asset off the SVG path the media pipeline
+disables by default (`webblocks-cms.media.allow_svg_uploads`).
+
 Starter artwork is deliberately not hot-linked from a CDN. A remote URL in
 content would make every visitor of the customer's public site issue a
 third-party request, which `docs/ai-page-building-guide.md` rules out, and it
