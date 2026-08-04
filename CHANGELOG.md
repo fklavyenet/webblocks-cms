@@ -2,6 +2,15 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.13
+
+- **Icons are now chosen in a picker modal that shows them, instead of a dropdown listing their names.** The field became a trigger showing the current icon; the modal renders every icon's real glyph beside its name, searches by name and slug, and moved both tone controls inside next to a live preview that draws the chosen icon and the block's actual badge label in the chosen tones. It is built on the same pieces as the media picker (`wb-modal` through `WBModal`, an overlays push, `data-wb-` hooks, its own admin script), and the submitted field names are unchanged, so nothing about saving a block moved.
+- One modal serves the whole page. Item editors repeat the icon field and can add rows after load, so triggers carry their own state, the modal writes back to whichever one opened it, and the badge preview reads the label from that field's own row.
+- **A fresh install now has the full icon catalog without an operator step.** Install and the catalog repair a System Update runs both seeded 20 hand-written navigation slugs — duplicated in `IconCatalogSeeder` and `CatalogRepairer` — so every content icon field was empty until someone found `System -> Icons`. The package now carries the WebBlocks UI icon manifest for its pinned version (183 icons, 55 KB) and both paths seed from it, with no outbound network. Sites installed earlier pick it up on their next System Update. Pulling a set newer than the pinned one stays the explicit remote sync.
+- **`composer icons:vendor` refreshes that manifest, and `release:prepare` refuses to build without it.** A release whose bundled manifest is missing, or differs from the one published for the pinned UI version, now fails with the command to run; an unreachable CDN warns rather than blocking. The file stays committed because `composer require` installs from the GitHub tag and never sees the release artifact.
+- **Content blocks accept any active icon, and an icon outside its context no longer disappears silently.** The context tag comes from the UI manifest and records where an icon is used in the product's own chrome, not what it depicts, so filtering content by it left 11 of 183 icons reachable — and `PublicIconPresenter` applied the same filter again at render, so an icon set outside the context rendered as nothing with no error anywhere. Rendering now shows any active icon, the picker leads with the context's own under "Suggested for this block" and offers the rest under "All icons", and validation matches what the picker offers. Navigation icons keep their curated rule.
+- `GET /webadmin/api/icon-catalog?context=content` reports the full accepted set and marks the context's own with `suggested: true`, so API callers see the rule the admin enforces.
+
 ## 1.48.12
 
 - **The starter page's logo now sits beside the heading as a brand lockup, instead of stacked above it.** 1.48.11 gave the mark its own block above the hero, which read as a separate element rather than as branding attached to the title.
