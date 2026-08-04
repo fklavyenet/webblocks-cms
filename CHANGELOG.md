@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.48.10
+
+- **The starter page's logo is now the canonical brand mark itself rather than a redrawn copy of it.** 1.48.9 shipped a PNG drawn with ImageMagick primitives transcribed from `public/cms/brand/logo-mark.svg`, because converting that SVG directly produced a blank image on a machine whose ImageMagick has no SVG delegate. The transcription followed the source geometry, but a brand mark has to be exact: measured against a correct raster of the same file it differed on 3.5% of pixels, all of it stroke-edge antialiasing. The shipped file is now a raster of `logo-mark.svg` itself on the same clearspace canvas.
+- `database/content/starter/README.md` records where the artwork comes from and says to regenerate it from the SVG rather than edit the PNG, so the two cannot drift apart the next time the mark changes.
+
 ## 1.48.9
 
 - **The starter home page now shows the product mark beside its headline, served from the site's own Media Library.** Native blocks bind images by media id, so shipped artwork has to become a real library record first: the blueprint names a file bundled beside it, `StarterMediaImporter` copies it onto the site's public disk once, and the installer binds the record to the hero. The record is an ordinary library entry — retitle it, replace the file, or delete it from the admin like any other image.
