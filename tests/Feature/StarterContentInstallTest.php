@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder;
@@ -11,6 +12,7 @@ use WebBlocks\Cms\Database\Seeders\FoundationSiteLocaleSeeder;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Layout;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
@@ -18,6 +20,7 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Install\DefaultHomepageProvisioner;
 use WebBlocks\Cms\Support\Install\StarterContentInstaller;
 use WebBlocks\Cms\Support\Install\StarterContentResult;
+use WebBlocks\Cms\Support\Install\StarterMediaImporter;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -110,6 +113,56 @@ class StarterContentInstallTest extends TestCase
     $this->assertStringContainsString('Add your media', $html);
     $this->assertStringContainsString('Ready to replace this page?', $html);
     $this->assertStringContainsString('href="/webadmin/pages"', $html);
+  }
+
+  #[Test]
+  public function the_hero_logo_is_served_from_the_sites_own_media_library_not_a_remote_url(): void
+  {
+    $this->installStarterContent();
+
+    $hero = Block::query()->where('type', 'hero')->firstOrFail();
+    $media = Media::query()->findOrFail($hero->media_id);
+
+    $this->assertSame('public', $media->disk);
+    $this->assertSame('assets/starter/logo-mark.png', $media->path);
+    $this->assertSame('image/png', $media->mime_type);
+    $this->assertSame(Media::KIND_IMAGE, $media->kind);
+    $this->assertGreaterThan(0, (int) $media->width);
+    $this->assertTrue(Storage::disk('public')->exists($media->path));
+
+    $html = view('webblocks-cms::pages.partials.block', [
+      'block' => app(BlockTranslationResolver::class)->resolve(
+        $hero->load(['textTranslations', 'children.textTranslations'])
+      ),
+    ])->render();
+
+    // The split layout is what puts the mark beside the copy, and the source
+    // has to be this site's own origin: a CDN hot-link would make every public
+    // visitor issue a third-party request.
+    $this->assertStringContainsString('wb-promo--split', $html);
+    $this->assertStringContainsString('/storage/assets/starter/logo-mark.png', $html);
+    $this->assertStringNotContainsString('webblocksui.com/logo', $html);
+  }
+
+  #[Test]
+  public function importing_the_same_starter_image_twice_reuses_one_media_record(): void
+  {
+    $importer = app(StarterMediaImporter::class);
+    $source = dirname(__DIR__, 2).'/database/content/starter/media/logo-mark.png';
+
+    $first = $importer->import($source, 'WebBlocks CMS');
+    $second = $importer->import($source, 'WebBlocks CMS');
+
+    $this->assertNotNull($first);
+    $this->assertSame($first->id, $second?->id);
+    $this->assertSame(1, Media::query()->count());
+  }
+
+  #[Test]
+  public function a_missing_starter_image_leaves_the_block_without_media_instead_of_failing(): void
+  {
+    $this->assertNull(app(StarterMediaImporter::class)->import('/no/such/file.png', 'Missing'));
+    $this->assertSame(0, Media::query()->count());
   }
 
   #[Test]

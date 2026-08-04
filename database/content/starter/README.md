@@ -40,6 +40,17 @@ Lookup order for a default locale of `de-ch`: `home.de-ch.json`, `home.de.json`,
 - `translations` are flat, not locale-keyed: the copy is written for the
   install's default locale. Unsupported fields for a block type are ignored.
 - `children` nest blocks; order in the array is the rendered order.
+- `media` names an image file shipped beside the blueprint under `media/`. It is
+  imported into the site's own Media Library once and bound to the block by
+  media id — the only way native blocks take an image. Bare file names only; a
+  path segment is ignored. An image that cannot be imported (missing file,
+  read-only disk) leaves the block without media rather than failing anything.
+
+Starter artwork is deliberately not hot-linked from a CDN. A remote URL in
+content would make every visitor of the customer's public site issue a
+third-party request, which `docs/ai-page-building-guide.md` rules out, and it
+would couple their home page to another host's uptime. Bundling the file means
+the install is deterministic and works with no outbound network at all.
 
 The shipped blueprint deliberately uses no `settings.icon_slug`: a fresh install's
 icon catalog holds only the navigation-context fallback icons, and a content icon

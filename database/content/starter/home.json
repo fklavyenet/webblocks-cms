@@ -11,7 +11,8 @@
             "children": [
               {
                 "type": "hero",
-                "settings": { "title_tag": "h1" },
+                "media": "logo-mark.png",
+                "settings": { "title_tag": "h1", "layout": "split" },
                 "translations": {
                   "subtitle": "Your site is installed",
                   "title": "WebBlocks CMS",

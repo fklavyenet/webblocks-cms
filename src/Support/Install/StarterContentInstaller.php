@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
+use WebBlocks\Cms\Support\WebBlocks;
 
 /**
  * Fills a freshly provisioned page with the shipped starter blocks.
@@ -34,6 +35,7 @@ class StarterContentInstaller
 
   public function __construct(
     private readonly BlockPayloadWriter $blockPayloadWriter,
+    private readonly StarterMediaImporter $starterMediaImporter,
   ) {}
 
   public function enabled(): bool
@@ -58,18 +60,23 @@ class StarterContentInstaller
       return StarterContentResult::skipped('No enabled locale is available to write starter content in.');
     }
 
-    $blueprint = $this->readBlueprint((string) $locale->code);
+    $blueprintPath = $this->blueprintPath((string) $locale->code);
+    $blueprint = $blueprintPath === null ? null : $this->readBlueprint($blueprintPath);
 
     if ($blueprint === null) {
       return StarterContentResult::skipped('No usable starter content blueprint was found.');
     }
 
+    // Imported before the transaction: the file copy is not covered by it, and
+    // a block that cannot get its media should still be written without one.
+    $mediaIds = $this->importBlueprintMedia($blueprint, dirname((string) $blueprintPath));
+
     $created = 0;
     $skippedBlockTypes = [];
 
-    $this->withMassAssignmentProtection(function () use ($page, $blueprint, $locale, &$created, &$skippedBlockTypes): void {
-      PublicSearchIndexer::coalescing(function () use ($page, $blueprint, $locale, &$created, &$skippedBlockTypes): void {
-        DB::transaction(function () use ($page, $blueprint, $locale, &$created, &$skippedBlockTypes): void {
+    $this->withMassAssignmentProtection(function () use ($page, $blueprint, $locale, $mediaIds, &$created, &$skippedBlockTypes): void {
+      PublicSearchIndexer::coalescing(function () use ($page, $blueprint, $locale, $mediaIds, &$created, &$skippedBlockTypes): void {
+        DB::transaction(function () use ($page, $blueprint, $locale, $mediaIds, &$created, &$skippedBlockTypes): void {
           foreach ($blueprint['slots'] as $slotSlug => $nodes) {
             $slotType = SlotType::query()->where('slug', $slotSlug)->first();
 
@@ -78,7 +85,7 @@ class StarterContentInstaller
             }
 
             foreach (array_values($nodes) as $index => $node) {
-              $this->createBlock($page, $slotType, $node, (string) $locale->code, null, $index, $created, $skippedBlockTypes);
+              $this->createBlock($page, $slotType, $node, (string) $locale->code, null, $index, $mediaIds, $created, $skippedBlockTypes);
             }
           }
         });
@@ -93,9 +100,10 @@ class StarterContentInstaller
   }
 
   /**
+   * @param  array<string, int>  $mediaIds
    * @param  array<int, string>  $skippedBlockTypes
    */
-  private function createBlock(Page $page, SlotType $slotType, mixed $node, string $localeCode, ?Block $parent, int $sortOrder, int &$created, array &$skippedBlockTypes): void
+  private function createBlock(Page $page, SlotType $slotType, mixed $node, string $localeCode, ?Block $parent, int $sortOrder, array $mediaIds, int &$created, array &$skippedBlockTypes): void
   {
     if (! is_array($node)) {
       return;
@@ -133,6 +141,12 @@ class StarterContentInstaller
       'url' => $settings['url'] ?? null,
     ];
 
+    $mediaName = trim((string) ($node['media'] ?? ''));
+
+    if ($mediaName !== '' && isset($mediaIds[$mediaName])) {
+      $data['media_id'] = $mediaIds[$mediaName];
+    }
+
     // The writer picks the fields its family knows, so unsupported copy in a
     // customized blueprint is ignored rather than written to the wrong column.
     // Structural keys are never overwritten: a mistyped translation field must
@@ -153,8 +167,66 @@ class StarterContentInstaller
     $children = is_array($node['children'] ?? null) ? array_values($node['children']) : [];
 
     foreach ($children as $index => $child) {
-      $this->createBlock($page, $slotType, $child, $localeCode, $block, $index, $created, $skippedBlockTypes);
+      $this->createBlock($page, $slotType, $child, $localeCode, $block, $index, $mediaIds, $created, $skippedBlockTypes);
     }
+  }
+
+  /**
+   * Imports every image a blueprint names, once, keyed by its file name.
+   *
+   * A blueprint references artwork by file name in a `media` key; the file
+   * ships beside it under `media/`. Anything that fails to import is simply
+   * absent from the map, and the block is written without it.
+   *
+   * @param  array{slots: array<string, array<int, mixed>>}  $blueprint
+   * @return array<string, int>
+   */
+  private function importBlueprintMedia(array $blueprint, string $blueprintDirectory): array
+  {
+    $names = [];
+
+    $collect = function (mixed $node) use (&$collect, &$names): void {
+      if (! is_array($node)) {
+        return;
+      }
+
+      $name = trim((string) ($node['media'] ?? ''));
+
+      if ($name !== '' && ! in_array($name, $names, true)) {
+        $names[] = $name;
+      }
+
+      foreach (is_array($node['children'] ?? null) ? $node['children'] : [] as $child) {
+        $collect($child);
+      }
+    };
+
+    foreach ($blueprint['slots'] as $nodes) {
+      foreach ($nodes as $node) {
+        $collect($node);
+      }
+    }
+
+    $mediaIds = [];
+
+    foreach ($names as $name) {
+      // Blueprint-owned file names only: a path segment here would let a
+      // customized blueprint read files from outside its own directory.
+      if ($name !== basename($name)) {
+        continue;
+      }
+
+      $media = $this->starterMediaImporter->import(
+        $blueprintDirectory.DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.$name,
+        WebBlocks::name(),
+      );
+
+      if ($media) {
+        $mediaIds[$name] = $media->id;
+      }
+    }
+
+    return $mediaIds;
   }
 
   /**
@@ -183,14 +255,8 @@ class StarterContentInstaller
   /**
    * @return array{slots: array<string, array<int, mixed>>}|null
    */
-  private function readBlueprint(string $localeCode): ?array
+  private function readBlueprint(string $path): ?array
   {
-    $path = $this->blueprintPath($localeCode);
-
-    if ($path === null) {
-      return null;
-    }
-
     $contents = @file_get_contents($path);
 
     if ($contents === false) {
