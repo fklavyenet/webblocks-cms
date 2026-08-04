@@ -52,6 +52,7 @@
     "test": "vendor/bin/phpunit -c phpunit.xml.dist",
     "format": "vendor/bin/pint --config pint.json",
     "format:test": "vendor/bin/pint --config pint.json --test",
+    "icons:vendor": "scripts/release/vendor-icons.sh",
     "release:prepare": "scripts/release/prepare.sh",
     "release:publish-update": "scripts/release/publish-update.sh",
     "test:consumer": "tests/Support/check-current-consumer.sh",

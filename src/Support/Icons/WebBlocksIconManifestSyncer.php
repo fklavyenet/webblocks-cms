@@ -27,6 +27,29 @@ class WebBlocksIconManifestSyncer
     return dirname(__DIR__, 3).'/database/content/icons/webblocks-ui-'.WebBlocks::uiVersion().'.json';
   }
 
+  /**
+   * What install and catalog repair read: the bundled manifest, falling back
+   * to the pinned remote one.
+   *
+   * Every real distribution carries the file — the release flow refuses to
+   * build without it — so the fallback is for a hand-assembled checkout, not
+   * the normal path.
+   */
+  public static function installManifestSource(): string
+  {
+    $bundled = self::bundledManifestPath();
+
+    return is_file($bundled) && is_readable($bundled) ? $bundled : self::DEFAULT_MANIFEST;
+  }
+
+  /**
+   * @return array<int, array<string, mixed>>
+   */
+  public function readInstallManifest(): array
+  {
+    return $this->readManifest(self::installManifestSource());
+  }
+
   public function sync(?string $manifest = null, bool $deactivateMissing = false): array
   {
     $manifest = trim((string) ($manifest ?: self::DEFAULT_MANIFEST));

@@ -21,6 +21,6 @@ class IconCatalogSeeder extends Seeder
    */
   public function run(): void
   {
-    $this->syncer->sync(WebBlocksIconManifestSyncer::bundledManifestPath());
+    $this->syncer->sync(WebBlocksIconManifestSyncer::installManifestSource());
   }
 }

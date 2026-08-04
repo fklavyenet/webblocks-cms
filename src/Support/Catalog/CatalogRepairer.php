@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Throwable;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\IconCatalogItem;
 use WebBlocks\Cms\Models\PageLayout;
@@ -46,7 +47,7 @@ class CatalogRepairer
       } else {
         DB::commit();
       }
-    } catch (\Throwable $exception) {
+    } catch (Throwable $exception) {
       DB::rollBack();
 
       throw $exception;
@@ -269,12 +270,16 @@ class CatalogRepairer
    */
   private function bundledIcons(): array
   {
-    $path = WebBlocksIconManifestSyncer::bundledManifestPath();
-    $decoded = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
+    try {
+      $decoded = app(WebBlocksIconManifestSyncer::class)->readInstallManifest();
+    } catch (Throwable) {
+      // Repair reports per-scope results and an update continues past a failed
+      // scope, so an unreadable manifest leaves icons alone rather than
+      // wiping the catalog the site already has.
+      return [];
+    }
 
-    return is_array($decoded)
-      ? array_values(array_filter($decoded, fn ($icon) => is_array($icon) && ! empty($icon['slug'])))
-      : [];
+    return array_values(array_filter($decoded, fn ($icon) => is_array($icon) && ! empty($icon['slug'])));
   }
 
   private function mergeSummary(array $left, array $right): array

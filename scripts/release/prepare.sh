@@ -57,6 +57,36 @@ if [ "$(git cat-file -t "refs/tags/${TAG_NAME}")" != "tag" ]; then
   exit 1
 fi
 
+# The icon catalog ships with the package; a release that carries a manifest
+# for some other UI version would install a catalog that does not match the CSS
+# the browser loads. Missing is a hard error. Stale is a hard error. Unreachable
+# is not: a transient network failure should not block a release.
+UI_VERSION="$("${PHP_BIN}" -r '$source = file_get_contents($argv[1]); if (! preg_match("/UI_VERSION = '"'"'([^'"'"']+)'"'"'/", $source, $matches)) { fwrite(STDERR, "Unable to read the pinned UI version.\n"); exit(1); } echo $matches[1];' "${ROOT_DIR}/src/Support/WebBlocks.php")"
+ICON_MANIFEST_PATH="${ROOT_DIR}/database/content/icons/webblocks-ui-${UI_VERSION}.json"
+
+if [ ! -f "${ICON_MANIFEST_PATH}" ]; then
+  printf '[webblocks-release-prepare] No bundled icon manifest for %s.\n' "${UI_VERSION}" >&2
+  printf '[webblocks-release-prepare] Run "composer icons:vendor" and commit the result.\n' >&2
+  exit 1
+fi
+
+ICON_MANIFEST_TEMP="$(mktemp)"
+
+if curl -fsS --max-time 60 "https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@${UI_VERSION}/packages/webblocks/dist/webblocks-icons.json" -o "${ICON_MANIFEST_TEMP}"; then
+  if ! cmp -s "${ICON_MANIFEST_TEMP}" "${ICON_MANIFEST_PATH}"; then
+    rm -f "${ICON_MANIFEST_TEMP}"
+    printf '[webblocks-release-prepare] Bundled icon manifest differs from the one published for %s.\n' "${UI_VERSION}" >&2
+    printf '[webblocks-release-prepare] Run "composer icons:vendor" and commit the result.\n' >&2
+    exit 1
+  fi
+
+  printf '[webblocks-release-prepare] Bundled icon manifest matches %s.\n' "${UI_VERSION}"
+else
+  printf '[webblocks-release-prepare] Could not reach the icon manifest for %s; shipping the bundled copy unverified.\n' "${UI_VERSION}" >&2
+fi
+
+rm -f "${ICON_MANIFEST_TEMP}"
+
 TAG_COMMIT="$(git rev-list -n1 "refs/tags/${TAG_NAME}")"
 HEAD_COMMIT="$(git rev-parse HEAD)"
 
