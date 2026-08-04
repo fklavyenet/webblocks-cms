@@ -65,6 +65,7 @@ Supported options:
 - `--site-name=` default site name
 - `--site-handle=` default site handle
 - `--repair-partial` rename empty partial CMS tables before fresh-install migrations
+- `--skip-starter-content` publish an empty home page instead of the shipped starter page
 - `--force` overwrite package-owned CMS assets or published config files when needed
 
 What `webblocks:install` does:
@@ -86,6 +87,8 @@ What `webblocks:install` does:
 - installs package-owned CMS assets into `public/cms`
 - creates `public/storage` when it is missing and the environment allows it
 - seeds locales, sites, slot types, page layouts, icons, and core block types idempotently
+- provisions the published home page served at `/`, including its layout slots
+- fills that home page with the shipped starter content, unless it is turned off
 - records the installed version and install completion marker in `system_settings`
 - creates the first active `super_admin` only when one does not already exist
 
@@ -148,7 +151,7 @@ php artisan serve
 
 Notes:
 
-- `php artisan db:seed` installs the core CMS catalogs and records the current app version as the installed version for a fresh install
+- `php artisan db:seed` installs the core CMS catalogs, provisions the home page with its starter content, and records the current app version as the installed version for a fresh install
 - `php artisan storage:link` is required if public file serving should use `storage/app/public`
 - runtime directories under `storage/framework`, `storage/logs`, and `bootstrap/cache` are created automatically on first run
 - Backup / Restore stores archives on the `backups` filesystem disk, defaulting to `storage/app/backups`. The PHP runtime user should own that directory or share a deployment group with read/write access; avoid broad `777` modes.
@@ -213,6 +216,39 @@ The first `super_admin` is required for a completed install.
 - in a manual install, ensure at least one active `super_admin` account exists before considering the CMS fully installed
 
 `super_admin` is the install-level role that can access Users, sites, locales, settings, updates, backups, export/import, and all site content.
+
+## Starter Content
+
+A fresh install publishes a home page at `/` and fills it with starter content: a hero, a short feature grid, and a closing call to action. These are ordinary blocks, not a hard-coded welcome screen, so the first page a new admin opens in the editor is a working page they can rewrite, reorder, or delete.
+
+Rules that make this safe to ship on every install path:
+
+- starter content is written only into a page that has no blocks at all, so it can never overwrite existing content
+- it is install-time only; System Update never adds or restores it
+- a missing or unreadable blueprint is reported and skipped, never fatal to an install
+- an unknown block type skips that block and its children instead of failing
+
+Controls:
+
+```dotenv
+WEBBLOCKS_CMS_STARTER_CONTENT=true
+WEBBLOCKS_CMS_STARTER_CONTENT_PATH=
+```
+
+- `WEBBLOCKS_CMS_STARTER_CONTENT=false` installs an empty published home page. `php artisan webblocks:install --skip-starter-content` does the same for a single run.
+- `WEBBLOCKS_CMS_STARTER_CONTENT_PATH` points at a directory of your own blueprints when a product should ship its own starter page.
+
+### Adding Starter Content To An Existing Install
+
+An install created before this feature keeps its empty home page: System Update never adds content. To fill it once, on an install whose home page is still empty:
+
+```bash
+php artisan db:seed --class="WebBlocks\Cms\Database\Seeders\StarterContentSeeder"
+```
+
+It provisions the site's page at `/` if it is missing, then writes the starter blocks only if that page has no blocks. On a site whose home page already has content it does nothing, and it never touches any other page.
+
+Blueprints are JSON files under the package's `database/content/starter` directory, using the `webblocks.cms.starter-content.v1` schema and the same block vocabulary as `docs/ai-page-building-guide.md`. `home.json` is the shipped default; a locale-specific `home.{locale}.json` beside it wins for an install whose default locale matches. The directory's `README.md` documents the file format.
 
 ## Common Setup Notes
 
@@ -296,6 +332,7 @@ The diagnostic command must not print passwords, tokens, or mail secrets. Use `-
 6. Run `php artisan contact:mail-diagnose`.
 7. Submit a test native Contact Form and confirm it stores a Contact Message.
 8. Review email notification status for that test message.
-9. Create your first page.
-10. Add media, navigation, and blocks.
-11. Publish content through the editorial workflow.
+9. Open the starter home page in the editor and make it your own.
+10. Create your first page.
+11. Add media, navigation, and blocks.
+12. Publish content through the editorial workflow.

@@ -67,6 +67,12 @@ php artisan contact:mail-diagnose --send-test=you@example.com
 
 Use `php artisan contact:mail-diagnose --block=ID` when you need to inspect the fallback chain for one Contact Form block.
 
+## Edit The Starter Home Page
+
+A fresh install already publishes a home page at `/`, filled with starter blocks. Open `Pages` in the admin sidebar and edit the page whose path is `/` to see how a real page is composed, then rewrite it as your own. It is named after your site, not "Home". Nothing in it is protected: delete the starter blocks whenever you are ready.
+
+Installs created with starter content turned off get the same published home page, only empty.
+
 ## Create Your First Page
 
 Open `Pages` in the admin sidebar and create a page.

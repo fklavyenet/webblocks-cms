@@ -11,21 +11,17 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\FoundationSiteLocaleSeeder;
-use WebBlocks\Cms\Models\Layout;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageLayout;
-use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
-use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Database\CmsTable;
+use WebBlocks\Cms\Support\Install\DefaultHomepageProvisioner;
 use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
 use WebBlocks\Cms\Support\Install\LaravelWelcomeRouteCleaner;
 use WebBlocks\Cms\Support\Install\PartialInstallState;
-use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
+use WebBlocks\Cms\Support\Install\StarterContentInstaller;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
@@ -47,18 +43,21 @@ class InstallWebBlocksCmsCommand extends Command
     {--site-name= : Default site name}
     {--site-handle= : Default site handle}
     {--repair-partial : Rename empty partial CMS tables before running fresh-install migrations}
+    {--skip-starter-content : Leave the new home page empty instead of filling it with the shipped starter blocks}
     {--force : Overwrite package-owned assets}';
 
   protected $description = 'Install WebBlocks CMS into the current Laravel application';
 
   public function __construct(
     private readonly Filesystem $files,
+    private readonly DefaultHomepageProvisioner $defaultHomepageProvisioner,
     private readonly EnsuresCmsUserAccess $ensuresCmsUserAccess,
     private readonly InstallState $installState,
     private readonly InstalledVersionStore $installedVersionStore,
     private readonly LaravelSupportTableInstaller $laravelSupportTableInstaller,
     private readonly LaravelWelcomeRouteCleaner $laravelWelcomeRouteCleaner,
     private readonly PartialInstallState $partialInstallState,
+    private readonly StarterContentInstaller $starterContentInstaller,
   ) {
     parent::__construct();
   }
@@ -80,7 +79,7 @@ class InstallWebBlocksCmsCommand extends Command
     $this->seedCoreData();
     $site = $this->ensureDefaultSite();
     $this->ensureDefaultSiteDomain($site);
-    $this->ensureHomepage($site);
+    $this->ensureStarterContent($this->defaultHomepageProvisioner->provision($site));
     $this->ensureFirstSuperAdmin($site);
     $this->installedVersionStore->persist(WebBlocks::version());
     $this->installState->markInstalled();
@@ -338,60 +337,27 @@ class InstallWebBlocksCmsCommand extends Command
     $site->forceFill(['domain' => $host])->save();
   }
 
-  private function ensureHomepage(Site $site): void
+  private function ensureStarterContent(Page $homePage): void
   {
-    $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
-    $layout = Layout::query()->firstOrCreate(
-      ['slug' => 'default-layout'],
-      ['name' => 'Default Layout']
-    );
+    if ($this->option('skip-starter-content')) {
+      $this->components->info('Skipped starter content. The home page is published and empty.');
 
-    $homePage = Page::query()->firstOrCreate(
-      [
-        'site_id' => $site->id,
-        'page_type' => 'default',
-        'status' => Page::STATUS_PUBLISHED,
-      ],
-      [
-        'layout_id' => $layout->id,
-        'published_at' => now(),
-        'settings' => ['public_shell' => PageLayoutCatalog::handles()[0] ?? 'default'],
-      ],
-    );
-
-    PageTranslation::query()->updateOrCreate(
-      ['page_id' => $homePage->id, 'locale_id' => $defaultLocale->id],
-      [
-        'site_id' => $site->id,
-        'name' => $site->display_name ?: $site->name,
-        'slug' => 'home',
-        'path' => '/',
-      ],
-    );
-
-    foreach (['header', 'main', 'sidebar', 'footer'] as $index => $slotSlug) {
-      $slotTypeId = SlotType::query()->where('slug', $slotSlug)->value('id');
-
-      if (! $slotTypeId) {
-        continue;
-      }
-
-      PageSlot::query()->updateOrCreate(
-        [
-          'page_id' => $homePage->id,
-          'slot_type_id' => $slotTypeId,
-        ],
-        [
-          'source_type' => PageSlot::SOURCE_TYPE_PAGE,
-          'sort_order' => ($index + 1) * 10,
-        ],
-      );
+      return;
     }
 
-    $layoutHandle = PageLayout::query()->where('handle', 'default')->value('handle') ?? 'default';
-    $settings = is_array($homePage->settings) ? $homePage->settings : [];
-    $settings['public_shell'] = $layoutHandle;
-    $homePage->forceFill(['settings' => $settings, 'layout_id' => $layout->id, 'status' => Page::STATUS_PUBLISHED, 'published_at' => $homePage->published_at ?? now()])->save();
+    $result = $this->starterContentInstaller->install($homePage);
+
+    if (! $result->installed) {
+      $this->components->warn('Starter content was not installed: '.$result->reason);
+
+      return;
+    }
+
+    $this->components->info('Installed '.$result->blocksCreated.' starter content blocks on the home page.');
+
+    if ($result->skippedBlockTypes !== []) {
+      $this->components->warn('Skipped starter blocks with unavailable block types: '.implode(', ', $result->skippedBlockTypes).'.');
+    }
   }
 
   private function ensureFirstSuperAdmin(Site $site): void

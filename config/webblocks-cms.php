@@ -31,6 +31,17 @@ return [
     'install' => [
         'load_routes' => env('WEBBLOCKS_CMS_INSTALL_LOAD_ROUTES'),
         'web_routes_path' => env('WEBBLOCKS_CMS_WEB_ROUTES_PATH'),
+
+        // Fill the home page a fresh install creates with the shipped starter
+        // blocks. Disable it to install with an empty, editable home page.
+        // Existing content is never touched either way: starter content is
+        // only written into a page that has no blocks at all.
+        'starter_content' => (bool) env('WEBBLOCKS_CMS_STARTER_CONTENT', true),
+
+        // Directory holding starter content blueprints, when a product should
+        // ship its own instead of the package default. See
+        // database/content/starter/README.md for the file format.
+        'starter_content_path' => env('WEBBLOCKS_CMS_STARTER_CONTENT_PATH'),
     ],
     'middleware' => [
         'register_aliases' => env('WEBBLOCKS_CMS_REGISTER_MIDDLEWARE_ALIASES', true),

@@ -1,0 +1,106 @@
+{
+  "schema": "webblocks.cms.starter-content.v1",
+  "slots": {
+    "main": [
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": { "flow": "stack" },
+            "children": [
+              {
+                "type": "hero",
+                "settings": { "title_tag": "h1" },
+                "translations": {
+                  "subtitle": "WebBlocks CMS",
+                  "title": "Your site is installed",
+                  "content": "This page is not a placeholder screen. It is ordinary content created during install, so you can sign in, open it in the page editor, and make it yours."
+                },
+                "children": [
+                  {
+                    "type": "button_link",
+                    "settings": { "url": "/webadmin", "variant": "primary" },
+                    "translations": { "title": "Open the admin" }
+                  },
+                  {
+                    "type": "button_link",
+                    "settings": { "url": "https://github.com/fklavyenet/webblocks-cms/tree/main/docs", "variant": "secondary", "target": "_blank" },
+                    "translations": { "title": "Read the docs" }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": { "flow": "stack" },
+            "children": [
+              {
+                "type": "feature-grid",
+                "translations": {
+                  "title": "Where to start",
+                  "subtitle": "Three things worth doing before you publish."
+                },
+                "children": [
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Edit this page",
+                      "content": "The Pages screen in the admin lists this page at /. Open it in the block editor: every section you see here is a block you can rewrite, reorder, or delete."
+                    }
+                  },
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Build with blocks",
+                      "content": "Sections, containers, grids, and cards compose a layout. Add a block, choose its slot, and publish it when the content is ready."
+                    }
+                  },
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Add your media",
+                      "content": "Upload logos and images to the Media Library, then bind them to image, gallery, and hero blocks instead of hard-coding file paths."
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": { "flow": "stack" },
+            "children": [
+              {
+                "type": "cta",
+                "settings": { "variant": "muted" },
+                "translations": {
+                  "title": "Ready to replace this page?",
+                  "content": "Nothing here is protected. Delete these starter blocks whenever you want, or keep one as a template for your own sections."
+                },
+                "children": [
+                  {
+                    "type": "button_link",
+                    "settings": { "url": "/webadmin/pages", "variant": "primary" },
+                    "translations": { "title": "Open the page editor" }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

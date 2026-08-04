@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
     $this->call([
       FoundationSiteLocaleSeeder::class,
       CoreCatalogSeeder::class,
+      StarterContentSeeder::class,
     ]);
 
     app(InstalledVersionStore::class)->persist((string) config('app.version', 'dev'));
