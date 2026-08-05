@@ -259,14 +259,8 @@ class PageRouteResolver
       }
     }
 
-    $translation = $translations?->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)
+    return $translations?->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)
       ?? $page->translations()->where('locale_id', $resolvedLocale->id)->first();
-
-    if ($translation) {
-      $page->setRelation('currentTranslation', $translation);
-    }
-
-    return $translation;
   }
 
   public function siteLocale(?string $localeCode = null, ?Site $site = null): Locale
