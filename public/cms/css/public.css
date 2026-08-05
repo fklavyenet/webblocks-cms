@@ -1,3 +1,33 @@
+/* WebBlocks UI's reset gives `body` min-height: 100vh but leaves it display:
+   block, so that min-height pushes nothing down and a short page floats its
+   footer in the middle of the viewport. Make the public shell a flex column
+   and let main absorb the leftover height. Both selectors are code-owned
+   classes -- the layout's own body class and SlotWrapperResolver's fixed
+   wb-slot-* class -- never per-site css_classes, so a catalog re-sync cannot
+   break them. The direct-child selector deliberately skips the Docs shell,
+   where main sits inside .wb-dashboard-body: that pattern is height: 100%
+   inside an overflow: hidden, 100vh shell and owns its own height model. */
+.wb-public-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.wb-public-body > .wb-slot-main {
+    flex: 1 0 auto;
+}
+
+/* The footer slot had no chrome of its own, so it read as more page. WebBlocks
+   UI's footer pattern (wb-footer-grid and friends) is layout only and carries
+   no surface either -- and no renderer emits those classes, so block settings
+   could not reach one. This is the default every site was hand-writing in its
+   site.css. background-color, never the `background` shorthand: the shorthand
+   would wipe a background image an operator set on the same element. site.css
+   loads after this file at equal specificity, so an existing override wins. */
+.wb-slot-footer {
+    background-color: var(--wb-public-surface-strong);
+    border-top: 1px solid var(--wb-public-border);
+}
+
 .wb-slot-header {
     margin-bottom: var(--wb-s6);
 }
