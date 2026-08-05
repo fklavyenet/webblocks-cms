@@ -93,6 +93,8 @@ class SharedSlotController extends Controller
         ->paginate(AdminPagination::perPage())
         ->withQueryString();
 
+      AdminPagination::redirectOutOfRange($sharedSlots);
+
       // The usage modal lists the consuming pages, so the page slots travel with
       // the paginated rows rather than being fetched once per open row.
       $sharedSlots->getCollection()->load([

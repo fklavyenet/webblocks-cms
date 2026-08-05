@@ -88,12 +88,16 @@ class EngagementController extends Controller
       })
       ->when($status !== '', fn (Builder $query) => $query->where('status', $status));
 
+    $comments = $filteredQuery
+      ->with(['page.site', 'page.translations', 'block.blockType'])
+      ->latest()
+      ->paginate(AdminPagination::perPage())
+      ->withQueryString();
+
+    AdminPagination::redirectOutOfRange($comments, $request);
+
     return view('webblocks-cms::admin.engagement.comments', [
-      'comments' => $filteredQuery
-        ->with(['page.site', 'page.translations', 'block.blockType'])
-        ->latest()
-        ->paginate(AdminPagination::perPage())
-        ->withQueryString(),
+      'comments' => $comments,
       'filters' => [
         'search' => $search,
         'status' => $status,
@@ -136,12 +140,16 @@ class EngagementController extends Controller
         ->orWhere('path', 'like', "%{$search}%")))
       ->when($rating !== '', fn (Builder $query) => $query->where('rating_value', (int) $rating));
 
+    $ratings = (clone $filteredQuery)
+      ->with(['page.site', 'page.translations', 'block.blockType'])
+      ->latest()
+      ->paginate(AdminPagination::perPage())
+      ->withQueryString();
+
+    AdminPagination::redirectOutOfRange($ratings, $request);
+
     return view('webblocks-cms::admin.engagement.ratings', [
-      'ratings' => (clone $filteredQuery)
-        ->with(['page.site', 'page.translations', 'block.blockType'])
-        ->latest()
-        ->paginate(AdminPagination::perPage())
-        ->withQueryString(),
+      'ratings' => $ratings,
       'filters' => ['search' => $search, 'rating' => $rating],
       'ratingOptions' => $ratingOptions,
       'totalCount' => (clone $baseQuery)->count(),

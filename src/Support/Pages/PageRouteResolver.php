@@ -49,6 +49,21 @@ class PageRouteResolver
     return $this->applyLocalePrefix('/', $locale);
   }
 
+  public function homeUrl(?string $localeCode = null, ?Site $site = null): string
+  {
+    $resolvedSite = $site ?? $this->siteResolver->primary();
+    $path = $this->homePath($localeCode, $resolvedSite) ?? '/';
+    $domain = $this->canonicalDomainFor($resolvedSite);
+
+    if (! $domain) {
+      return url($path);
+    }
+
+    $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
+
+    return $scheme.'://'.$domain.$path;
+  }
+
   public function searchPath(?string $localeCode = null, ?Site $site = null): ?string
   {
     $resolvedSite = $site ?? $this->siteResolver->primary();

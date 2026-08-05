@@ -93,6 +93,9 @@ class BlockController extends Controller
       ->orderByDesc('id')
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
+
+    AdminPagination::redirectOutOfRange($blocks, $request);
+
     $currentPage = $pageId
       ? Page::query()->with(['site', 'translations.locale'])->find($pageId)
       : null;

@@ -50,6 +50,8 @@ class IconCatalogController extends Controller
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
+    AdminPagination::redirectOutOfRange($icons, $request);
+
     $baseQuery = array_filter([
       'search' => $filters['search'],
       'source' => $filters['source'],

@@ -44,6 +44,7 @@
                             <th>{{ $adminText('sites.columns.domains') }}</th>
                             <th>{{ $adminText('sites.columns.locales') }}</th>
                             <th>{{ $adminText('sites.columns.pages') }}</th>
+                            <th>{{ $adminText('sites.columns.view') }}</th>
                             <th>{{ $adminText('sites.columns.status') }}</th>
                             <th>{{ $adminText('sites.columns.actions') }}</th>
                         </tr>
@@ -74,6 +75,18 @@
                                     </div>
                                 </td>
                                 <td data-column="pages">{{ $site->pages_count }}</td>
+                                <td data-column="view">
+                                    <a
+                                        href="{{ $site->publicHomeUrl() }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="wb-action-btn wb-action-btn-view"
+                                        title="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
+                                        aria-label="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
+                                    >
+                                        <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
+                                    </a>
+                                </td>
                                 <td>
                                     <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? $adminText('sites.primary') : $adminText('sites.standard') }}</span>
                                 </td>

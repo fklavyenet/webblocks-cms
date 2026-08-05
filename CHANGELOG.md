@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.50.2
+
+- **The Sites list gained a View column.** Each row now carries the same globe button Pages has, opening that site's `/` home page on its own canonical domain in a new tab. Until now the domain was printed as text and reaching a site meant retyping it.
+- **Admin listings no longer show an empty table while the header counts rows.** Pages remembers the page number you were last on, so deleting rows or narrowing a filter could leave that number past the end of its own result set: the listing rendered "No pages found" with a count of 15 beside it, and the only way out was clearing the filters. Every paginated admin listing — Pages, Blocks, Media, Sites, Block Types, Slot Types, Shared Slots, Layouts, Locales, Users, Contact Messages, Engagement, Icons, API Tokens, Backups, Site Transfers — now redirects to its last real page, keeping the rest of the query string. Pages also repairs the page number it had remembered, so the stale value does not come back on the next visit.
+
 ## 1.50.1
 
 - **The public shell now sizes itself against the visible viewport.** WebBlocks UI's reset uses `min-height: 100vh`, which on mobile is the *largest* viewport — it reserves space for browser chrome that may already be retracted, so a page with nothing to scroll still scrolls a little. `.wb-public-body` adds `min-block-size: 100dvh`; a browser without `dvh` support drops the declaration and keeps the reset's `100vh`, so there is nothing to fall back to manually.

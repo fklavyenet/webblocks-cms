@@ -90,12 +90,16 @@ class ContactMessageController extends Controller
 
     $totalCount = (clone $baseQuery)->count();
 
+    $messages = $filteredQuery
+      ->with(['page', 'block.slotType', 'block.blockType'])
+      ->latest()
+      ->paginate(AdminPagination::perPage())
+      ->withQueryString();
+
+    AdminPagination::redirectOutOfRange($messages);
+
     return view('webblocks-cms::admin.contact-messages.index', [
-      'messages' => $filteredQuery
-        ->with(['page', 'block.slotType', 'block.blockType'])
-        ->latest()
-        ->paginate(AdminPagination::perPage())
-        ->withQueryString(),
+      'messages' => $messages,
       'filters' => [
         'search' => $search,
         'status' => $status,

@@ -27,6 +27,8 @@ class LocaleController extends Controller
       ->orderBy('name')
       ->paginate(AdminPagination::perPage());
 
+    AdminPagination::redirectOutOfRange($locales);
+
     return view('webblocks-cms::admin.locales.index', [
       'locales' => $locales,
       'reports' => $this->lifecycleGuard->inspectMany(collect($locales->items())),

@@ -91,6 +91,8 @@ class SystemBackupController extends Controller
         'query' => request()->query(),
       ]);
 
+    AdminPagination::redirectOutOfRange($backups);
+
     $backupArchiveStatuses = collect($backups->items())
       ->mapWithKeys(fn (SystemBackup $backup): array => [
         $backup->id => $this->systemBackupManager->archiveResolution($backup),

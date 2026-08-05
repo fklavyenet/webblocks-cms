@@ -88,6 +88,8 @@ class MediaController extends Controller
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
+    AdminPagination::redirectOutOfRange($mediaPaginator);
+
     $mediaPaginator->getCollection()->transform(function (Media $media) {
       $usages = $this->mediaUsageResolver->resolve($media);
       $media->setRelation('resolvedUsages', $usages);

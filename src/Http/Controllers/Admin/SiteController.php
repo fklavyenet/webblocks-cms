@@ -53,14 +53,18 @@ class SiteController extends Controller
               ->find($selectedDetailSiteId)
           : null;
 
+    $sites = Site::query()
+      ->with(['locales' => fn ($query) => $query->orderBy('name')])
+      ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
+      ->primaryFirst()
+      ->orderBy('name')
+      ->paginate(AdminPagination::perPage());
+
+    AdminPagination::redirectOutOfRange($sites);
+
     return view('webblocks-cms::admin.sites.index', [
       'exportablePages' => app(ExportablePages::class)->grouped(),
-      'sites' => Site::query()
-        ->with(['locales' => fn ($query) => $query->orderBy('name')])
-        ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
-        ->primaryFirst()
-        ->orderBy('name')
-        ->paginate(AdminPagination::perPage()),
+      'sites' => $sites,
       'siteDeleteReports' => Site::query()
         ->get()
         ->keyBy('id')

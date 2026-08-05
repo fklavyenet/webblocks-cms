@@ -48,6 +48,8 @@ class BlockTypeController extends Controller
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
+    AdminPagination::redirectOutOfRange($blockTypes, $request);
+
     $requestedModal = (string) $request->query('modal', '');
     $editBlockType = null;
     $contractBlockType = null;

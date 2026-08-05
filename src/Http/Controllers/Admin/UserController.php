@@ -39,6 +39,8 @@ class UserController extends Controller
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
+    AdminPagination::redirectOutOfRange($users, $request);
+
     return view('webblocks-cms::admin.users.index', [
       'users' => $users,
       'filters' => $filters,

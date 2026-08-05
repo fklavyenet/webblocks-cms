@@ -158,14 +158,28 @@ class PageController extends Controller
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
-    $this->pageIndexState->remember($request, array_filter([
+    $indexQuery = static fn (?int $pageNumber) => array_filter([
       'site' => $siteFilterValue,
       'search' => $search,
       'status' => $status,
       'sort' => $sort !== 'created_at' ? $sort : null,
       'direction' => $direction !== 'desc' ? $direction : null,
-      'page' => $pages->currentPage() > 1 ? (string) $pages->currentPage() : null,
-    ], fn (mixed $value) => $value !== null && $value !== ''));
+      'page' => $pageNumber !== null && $pageNumber > 1 ? (string) $pageNumber : null,
+    ], fn (mixed $value) => $value !== null && $value !== '');
+
+    $outOfRangePage = AdminPagination::outOfRangePage($pages);
+
+    if ($outOfRangePage !== null) {
+      $lastPageQuery = $indexQuery($outOfRangePage);
+      $this->pageIndexState->remember($request, $lastPageQuery);
+
+      redirect()->route('admin.pages.index', array_filter([
+        ...$lastPageQuery,
+        'details' => $detailsPageId ?: null,
+      ], fn (mixed $value) => $value !== null && $value !== ''))->throwResponse();
+    }
+
+    $this->pageIndexState->remember($request, $indexQuery($pages->currentPage()));
 
     return view('webblocks-cms::admin.pages.index', [
       'pages' => $pages,

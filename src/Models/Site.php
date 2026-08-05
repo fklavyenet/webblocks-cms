@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Database\CmsTable;
+use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -357,6 +358,11 @@ class Site extends CmsModel
     }
 
     return $this->siteDomains()->where('domain', $domain)->first();
+  }
+
+  public function publicHomeUrl(?string $localeCode = null): string
+  {
+    return app(PageRouteResolver::class)->homeUrl($localeCode, $this);
   }
 
   public function publicDisplayName(): string

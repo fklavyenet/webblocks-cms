@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
@@ -35,6 +36,9 @@ class CmsApiTokenController extends Controller
         ->orderByRaw('case when revoked_at is null then 0 else 1 end')
         ->latest()
         ->paginate($this->systemSettings->adminListingPerPage());
+
+      AdminPagination::redirectOutOfRange($tokens);
+
       if ($activitySchemaReady) {
         $tokens->getCollection()->each(function (CmsApiToken $token): void {
           $token->setRelation(

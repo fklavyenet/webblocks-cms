@@ -20,6 +20,8 @@ class SlotTypeController extends Controller
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
+    AdminPagination::redirectOutOfRange($slotTypes);
+
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.slot-types.index', [
       'slotTypes' => $slotTypes,
       'totalCount' => $totalCount,

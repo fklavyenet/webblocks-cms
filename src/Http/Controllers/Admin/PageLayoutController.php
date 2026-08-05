@@ -23,6 +23,8 @@ class PageLayoutController extends Controller
       ->orderBy('name')
       ->paginate(AdminPagination::perPage());
 
+    AdminPagination::redirectOutOfRange($pageLayouts);
+
     return view('webblocks-cms::admin.page-layouts.index', [
       'pageLayouts' => $pageLayouts,
       'totalCount' => $totalCount,

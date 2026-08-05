@@ -38,6 +38,9 @@ class SiteExportController extends Controller
       ->paginate(AdminPagination::perPage(), ['*'], 'imports_page')
       ->withQueryString();
 
+    AdminPagination::redirectOutOfRange($exports, pageName: 'exports_page');
+    AdminPagination::redirectOutOfRange($imports, pageName: 'imports_page');
+
     return view('webblocks-cms::admin.site-transfers.exports.index', [
       'exports' => $exports,
       'imports' => $imports,
