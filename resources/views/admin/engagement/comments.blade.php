@@ -55,6 +55,7 @@
                     'showReset' => ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '',
                     'resetUrl' => route('admin.engagement.comments.index'),
                     'applyLabel' => $adminText('engagement.apply'),
+                    'resetLabel' => $adminText('engagement.clear_filters'),
                 ])
             </div>
         </div>

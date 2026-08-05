@@ -144,6 +144,7 @@
                     'showReset' => $hasActiveFilters,
                     'resetUrl' => route('admin.system.backups.index'),
                     'applyLabel' => $adminText('common.apply'),
+                    'resetLabel' => $adminText('backups.clear_filters'),
                 ])
             </div>
         </div>

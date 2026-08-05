@@ -1,0 +1,149 @@
+{
+  "schema": "webblocks.cms.starter-content.v1",
+  "slots": {
+    "main": [
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": {
+              "flow": "stack"
+            },
+            "children": [
+              {
+                "type": "cluster",
+                "settings": {
+                  "gap": "md",
+                  "wrap": "nowrap",
+                  "items_alignment": "start"
+                },
+                "children": [
+                  {
+                    "type": "image",
+                    "media": "logo-mark.png"
+                  },
+                  {
+                    "type": "content_header",
+                    "translations": {
+                      "eyebrow": "Siten kuruldu",
+                      "title": "WebBlocks CMS",
+                      "subtitle": "Bu sayfa bir yer tutucu ekran değil. Kurulum sırasında oluşturulmuş sıradan bir içerik; giriş yap, sayfa düzenleyicide aç ve kendine göre şekillendir."
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "cluster",
+                "settings": {
+                  "gap": "sm"
+                },
+                "children": [
+                  {
+                    "type": "button_link",
+                    "settings": {
+                      "url": "/webadmin",
+                      "variant": "primary"
+                    },
+                    "translations": {
+                      "title": "Yönetim panelini aç"
+                    }
+                  },
+                  {
+                    "type": "button_link",
+                    "settings": {
+                      "url": "https://cms.webblocksui.com",
+                      "variant": "secondary",
+                      "target": "_blank"
+                    },
+                    "translations": {
+                      "title": "Dokümanları oku"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": {
+              "flow": "stack"
+            },
+            "children": [
+              {
+                "type": "feature-grid",
+                "translations": {
+                  "title": "Nereden başlamalı",
+                  "subtitle": "Yayınlamadan önce yapmaya değer üç şey."
+                },
+                "children": [
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Bu sayfayı düzenle",
+                      "content": "Yönetim panelindeki Sayfalar ekranı bu sayfayı / adresinde listeler. Blok düzenleyicide aç: burada gördüğün her bölüm yeniden yazabileceğin, sıralayabileceğin veya silebileceğin bir blok."
+                    }
+                  },
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Bloklarla inşa et",
+                      "content": "Bölümler, kapsayıcılar, ızgaralar ve kartlar bir düzen oluşturur. Bir blok ekle, slotunu seç ve içerik hazır olduğunda yayınla."
+                    }
+                  },
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Medyanı ekle",
+                      "content": "Logoları ve görselleri Medya Kitaplığına yükle, ardından dosya yollarını elle yazmak yerine görsel, galeri ve hero bloklarına bağla."
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": {
+              "flow": "stack"
+            },
+            "children": [
+              {
+                "type": "cta",
+                "settings": {
+                  "variant": "muted"
+                },
+                "translations": {
+                  "title": "Bu sayfayı değiştirmeye hazır mısın?",
+                  "content": "Burada hiçbir şey korumalı değil. Bu başlangıç bloklarını istediğin zaman sil ya da birini kendi bölümlerin için şablon olarak sakla."
+                },
+                "children": [
+                  {
+                    "type": "button_link",
+                    "settings": {
+                      "url": "/webadmin/pages",
+                      "variant": "primary"
+                    },
+                    "translations": {
+                      "title": "Sayfa düzenleyiciyi aç"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

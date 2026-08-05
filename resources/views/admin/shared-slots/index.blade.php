@@ -97,6 +97,7 @@
                     'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'updated_at' || $filters['direction'] !== 'desc',
                     'resetUrl' => $clearUrl,
                     'applyLabel' => $adminText('apply'),
+                    'resetLabel' => $adminText('clear_filters'),
                 ])
             </div>
         </div>

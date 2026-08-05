@@ -1,4 +1,7 @@
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
     $method = strtoupper($method ?? 'GET');
     $search = $search ?? null;
     $selects = $selects ?? [];
@@ -7,8 +10,10 @@
     $showActions = $showActions ?? true;
     $showReset = $showReset ?? false;
     $resetUrl = $resetUrl ?? null;
-    $applyLabel = $applyLabel ?? 'Apply';
-    $resetLabel = $resetLabel ?? 'Reset';
+    $listingFiltersLocale = app(AdminLocaleResolver::class)->locale();
+    $listingFiltersTranslator = app(CmsTranslator::class);
+    $applyLabel = $applyLabel ?? $listingFiltersTranslator->admin('common.apply', $listingFiltersLocale);
+    $resetLabel = $resetLabel ?? $listingFiltersTranslator->admin('common.clear_filters', $listingFiltersLocale);
     $resetFirst = $resetFirst ?? false;
 @endphp
 

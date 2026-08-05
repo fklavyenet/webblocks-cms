@@ -58,6 +58,7 @@
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.users.index'),
                 'applyLabel' => $adminText('apply'),
+                'resetLabel' => $adminText('clear_filters'),
             ])
         </div>
     </div>

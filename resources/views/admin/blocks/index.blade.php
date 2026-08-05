@@ -79,6 +79,7 @@
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.blocks.index'),
                 'applyLabel' => $blocksIndexText('apply'),
+                'resetLabel' => $blocksIndexText('clear_filters'),
             ])
         </div>
     </div>

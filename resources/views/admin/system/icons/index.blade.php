@@ -61,6 +61,7 @@
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.system.icons.index'),
                 'applyLabel' => $adminText('apply_filters'),
+                'resetLabel' => $adminText('clear_filters'),
             ])
         </div>
     </div>

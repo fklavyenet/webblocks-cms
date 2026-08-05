@@ -63,6 +63,7 @@
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.contact-messages.index'),
                 'applyLabel' => $adminText('apply'),
+                'resetLabel' => $adminText('clear_filters'),
             ])
         </div>
     </div>

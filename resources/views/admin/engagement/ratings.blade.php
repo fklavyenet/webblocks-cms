@@ -53,6 +53,7 @@
                     'showReset' => ($filters['search'] ?? '') !== '' || ($filters['rating'] ?? '') !== '',
                     'resetUrl' => route('admin.engagement.ratings.index'),
                     'applyLabel' => $adminText('engagement.apply'),
+                    'resetLabel' => $adminText('engagement.clear_filters'),
                 ])
             </div>
         </div>
