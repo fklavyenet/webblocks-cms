@@ -1,0 +1,149 @@
+{
+  "schema": "webblocks.cms.starter-content.v1",
+  "slots": {
+    "main": [
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": {
+              "flow": "stack"
+            },
+            "children": [
+              {
+                "type": "cluster",
+                "settings": {
+                  "gap": "md",
+                  "wrap": "nowrap",
+                  "items_alignment": "start"
+                },
+                "children": [
+                  {
+                    "type": "image",
+                    "media": "logo-mark.png"
+                  },
+                  {
+                    "type": "content_header",
+                    "translations": {
+                      "eyebrow": "Tu sitio está instalado",
+                      "title": "WebBlocks CMS",
+                      "subtitle": "Esta página no es una pantalla provisional. Es contenido normal creado durante la instalación: inicia sesión, ábrela en el editor de páginas y hazla tuya."
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "cluster",
+                "settings": {
+                  "gap": "sm"
+                },
+                "children": [
+                  {
+                    "type": "button_link",
+                    "settings": {
+                      "url": "/webadmin",
+                      "variant": "primary"
+                    },
+                    "translations": {
+                      "title": "Abrir el admin"
+                    }
+                  },
+                  {
+                    "type": "button_link",
+                    "settings": {
+                      "url": "https://cms.webblocksui.com",
+                      "variant": "secondary",
+                      "target": "_blank"
+                    },
+                    "translations": {
+                      "title": "Leer la documentación"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": {
+              "flow": "stack"
+            },
+            "children": [
+              {
+                "type": "feature-grid",
+                "translations": {
+                  "title": "Por dónde empezar",
+                  "subtitle": "Tres cosas que merece la pena hacer antes de publicar."
+                },
+                "children": [
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Edita esta página",
+                      "content": "La pantalla Páginas del admin muestra esta página en /. Ábrela en el editor de bloques: cada sección que ves aquí es un bloque que puedes reescribir, reordenar o eliminar."
+                    }
+                  },
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Construye con bloques",
+                      "content": "Secciones, contenedores, cuadrículas y tarjetas componen un layout. Añade un bloque, elige su slot y publícalo cuando el contenido esté listo."
+                    }
+                  },
+                  {
+                    "type": "feature-item",
+                    "translations": {
+                      "title": "Añade tus medios",
+                      "content": "Sube logotipos e imágenes a la biblioteca de medios y vincúlalos a bloques de imagen, galería y hero en lugar de escribir rutas de archivo a mano."
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "children": [
+          {
+            "type": "container",
+            "settings": {
+              "flow": "stack"
+            },
+            "children": [
+              {
+                "type": "cta",
+                "settings": {
+                  "variant": "muted"
+                },
+                "translations": {
+                  "title": "¿Listo para reemplazar esta página?",
+                  "content": "Nada de esto está protegido. Elimina estos bloques de inicio cuando quieras, o conserva uno como plantilla para tus propias secciones."
+                },
+                "children": [
+                  {
+                    "type": "button_link",
+                    "settings": {
+                      "url": "/webadmin/pages",
+                      "variant": "primary"
+                    },
+                    "translations": {
+                      "title": "Abrir el editor de páginas"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

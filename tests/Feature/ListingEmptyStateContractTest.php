@@ -64,7 +64,7 @@ class ListingEmptyStateContractTest extends TestCase
   #[DataProvider('listings')]
   public function every_filtered_empty_state_string_is_translated_in_each_locale(string $view, array $keys): void
   {
-    foreach (['en', 'de', 'tr'] as $locale) {
+    foreach (['en', 'de', 'tr', 'es', 'it'] as $locale) {
       $translations = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/admin.php';
 
       foreach ($keys as $key) {

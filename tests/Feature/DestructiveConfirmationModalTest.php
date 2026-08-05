@@ -283,7 +283,7 @@ class DestructiveConfirmationModalTest extends TestCase
       'close',
     ];
 
-    foreach (['en', 'de', 'tr'] as $locale) {
+    foreach (['en', 'de', 'tr', 'es', 'it'] as $locale) {
       $strings = require dirname(__DIR__, 2)."/resources/lang/{$locale}/admin.php";
       $sharedSlots = $strings['shared_slots'] ?? [];
 

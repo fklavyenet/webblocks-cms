@@ -7,7 +7,7 @@ use WebBlocks\Cms\Tests\TestCase;
 
 /**
  * The v3 System Updates screen vocabulary must stay complete in every admin
- * locale: en/de/tr expose identical `updates.*` key sets, and the keys the
+ * locale: en/de/tr/es/it expose identical `updates.*` key sets, and the keys the
  * v3 screen depends on (plus retired two-phase keys) are pinned here.
  */
 class AdminUpdatesLangParityTest extends TestCase
@@ -17,13 +17,14 @@ class AdminUpdatesLangParityTest extends TestCase
   {
     $keysByLocale = [];
 
-    foreach (['en', 'de', 'tr'] as $locale) {
+    foreach (['en', 'de', 'tr', 'es', 'it'] as $locale) {
       $keysByLocale[$locale] = $this->dotKeys($this->updatesSection($locale));
     }
 
     $this->assertNotSame([], $keysByLocale['en']);
-    $this->assertSame($keysByLocale['en'], $keysByLocale['de'], 'de updates.* keys must match en.');
-    $this->assertSame($keysByLocale['en'], $keysByLocale['tr'], 'tr updates.* keys must match en.');
+    foreach (['de', 'tr', 'es', 'it'] as $locale) {
+      $this->assertSame($keysByLocale['en'], $keysByLocale[$locale], "$locale updates.* keys must match en.");
+    }
   }
 
   #[Test]

@@ -104,7 +104,7 @@ class SiteFormStructureTest extends TestCase
       'brand_font_body_help',
     ];
 
-    foreach (['en', 'tr', 'de'] as $locale) {
+    foreach (['en', 'tr', 'de', 'es', 'it'] as $locale) {
       $lang = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/admin.php';
 
       foreach ($keys as $key) {

@@ -1,0 +1,42 @@
+<?php
+
+return [
+  'stat_card' => [
+    'learn_more' => 'Más información',
+  ],
+  'search_form' => [
+    'label' => 'Buscar',
+    'placeholder' => 'Buscar en este sitio',
+    'submit' => 'Buscar',
+  ],
+  'contact_form' => [
+    'submit' => 'Enviar mensaje',
+    'review' => 'Revisa el formulario',
+    'name' => 'Nombre',
+    'email' => 'Correo electrónico',
+    'subject' => 'Asunto',
+    'message' => 'Mensaje',
+    'storage' => 'Tu mensaje se guarda primero y luego se intenta enviar la notificación por correo.',
+  ],
+  'comments' => [
+    'unavailable' => 'Los comentarios no están disponibles temporalmente.',
+    'no_approved' => 'Aún no hay comentarios aprobados.',
+    'review_title' => 'Revisa el comentario',
+    'honeypot_label' => 'Deja este campo vacío',
+    'name_label' => 'Nombre',
+    'body_label' => 'Comentario',
+    'helper' => 'Los comentarios se revisan antes de publicarse.',
+    'submit' => 'Enviar comentario',
+    'closed' => 'Los comentarios nuevos están cerrados.',
+  ],
+  'rating' => [
+    'form_label' => 'Valora este contenido',
+    'option_label' => 'Valoración de :rating estrellas',
+    'option_text' => ':rating estrellas',
+    'unavailable' => 'Las valoraciones no están disponibles temporalmente.',
+    'summary' => 'Media de :average / 5 con :count valoración.',
+    'summary_plural' => 'Media de :average / 5 con :count valoraciones.',
+    'none' => 'Aún no hay valoraciones.',
+    'average_aria' => 'Valoración media de :average sobre 5',
+  ],
+];

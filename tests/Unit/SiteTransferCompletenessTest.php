@@ -177,7 +177,7 @@ class SiteTransferCompletenessTest extends TestCase
   #[Test]
   public function the_page_picker_strings_exist_in_every_shipped_locale(): void
   {
-    foreach (['en', 'tr', 'de'] as $locale) {
+    foreach (['en', 'tr', 'de', 'es', 'it'] as $locale) {
       $lang = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/admin.php';
 
       foreach ([

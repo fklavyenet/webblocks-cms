@@ -187,6 +187,8 @@ return [
     'language_en' => 'English',
     'language_de' => 'Deutsch',
     'language_tr' => 'Türkçe',
+    'language_es' => 'Español',
+    'language_it' => 'Italiano',
     'user_menu' => 'Kullanıcı menüsü',
     'profile' => 'Profil',
     'logout' => 'Çıkış',

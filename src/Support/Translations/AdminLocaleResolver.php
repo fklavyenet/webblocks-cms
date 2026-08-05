@@ -9,7 +9,7 @@ use WebBlocks\Cms\Support\System\SystemSettings;
 
 class AdminLocaleResolver
 {
-  public const SUPPORTED_LOCALES = ['en', 'de', 'tr'];
+  public const SUPPORTED_LOCALES = ['en', 'de', 'tr', 'es', 'it'];
 
   public function __construct(
     private readonly SystemSettings $systemSettings,
@@ -44,6 +44,8 @@ class AdminLocaleResolver
       'en' => 'EN - English',
       'de' => 'DE - Deutsch',
       'tr' => 'TR - Türkçe',
+      'es' => 'ES - Español',
+      'it' => 'IT - Italiano',
     ];
   }
 

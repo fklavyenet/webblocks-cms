@@ -46,6 +46,16 @@ packages/webblocks-cms/resources/lang/
     public.php
     blocks.php
     validation.php
+  es/
+    admin.php
+    public.php
+    blocks.php
+    validation.php
+  it/
+    admin.php
+    public.php
+    blocks.php
+    validation.php
 ```
 
 Files are the source of truth for product defaults because they are versioned, reviewable, safe to package, and available before database schema is guaranteed ready.
@@ -78,7 +88,7 @@ Admin Blade files must not introduce new user-visible hard-coded English copy. N
 
 The legacy admin HTML localization bridge has been removed. Admin responses are no longer post-processed through `LocalizeAdminHtml`, and there is no reviewed `admin.html` fallback phrase map. Non-English admin screens must render from structured translation keys directly.
 
-Use `php artisan webblocks:admin-translation-audit --locale=de --strict` or `--locale=tr --strict` to detect CMS-owned admin Blade copy that still appears as hard-coded user-visible English text. The audit automatically discovers admin Blade files under `packages/webblocks-cms/resources/views/admin/` so newly added admin windows, modals, lists, and partials are included without updating a manual file list. The legacy `--native-only` flag is kept for compatibility and now reports the same native-key readiness check.
+Use `php artisan webblocks:admin-translation-audit --locale=de --strict` (or any other non-English admin locale: `tr`, `es`, `it`) to detect CMS-owned admin Blade copy that still appears as hard-coded user-visible English text. The audit automatically discovers admin Blade files under `packages/webblocks-cms/resources/views/admin/` so newly added admin windows, modals, lists, and partials are included without updating a manual file list. The legacy `--native-only` flag is kept for compatibility and now reports the same native-key readiness check.
 
 Use the strict baseline gate before merging admin UI work:
 
