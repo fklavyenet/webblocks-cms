@@ -52,6 +52,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalInventoryControlle
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageTranslationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPluginController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
@@ -117,6 +118,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/pages/{page}/publish-page-owned-blocks', [InternalPagePublishController::class, 'publishPageOwnedBlocks'])->middleware('internal-api.capability:content.publish')->name('pages.publish-page-owned-blocks');
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
     Route::patch('/pages/{page}/layout', [InternalContentResourceController::class, 'updatePageLayout'])->middleware('internal-api.capability:content.apply')->name('pages.layout.update');
+    Route::get('/pages/{page}/translations', [InternalPageTranslationController::class, 'index'])->name('pages.translations.index');
+    Route::post('/pages/{page}/translations/{locale}', [InternalPageTranslationController::class, 'store'])->middleware('internal-api.capability:content.apply')->name('pages.translations.store');
+    Route::patch('/pages/{page}/translations/{translation}', [InternalPageTranslationController::class, 'update'])->middleware('internal-api.capability:content.apply')->name('pages.translations.update');
     Route::get('/pages/{page}/assets', [InternalPageAssetController::class, 'index'])->name('pages.assets.index');
     Route::post('/pages/{page}/assets/{type}', [InternalPageAssetController::class, 'store'])->middleware('internal-api.capability:page-assets.write')->name('pages.assets.store');
     Route::patch('/pages/{page}/assets/{pageAsset}', [InternalPageAssetController::class, 'update'])->middleware('internal-api.capability:page-assets.write')->name('pages.assets.update');
@@ -136,6 +140,8 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/shared-slots', [InternalSharedSlotController::class, 'index'])->name('shared-slots.index');
     Route::post('/shared-slots', [InternalSharedSlotController::class, 'store'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.store');
     Route::get('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'show'])->name('shared-slots.show');
+    Route::patch('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'update'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.update');
+    Route::delete('/shared-slots/{sharedSlot}', [InternalSharedSlotController::class, 'destroy'])->middleware('internal-api.capability:shared-slots.delete')->name('shared-slots.destroy');
     Route::post('/shared-slots/{sharedSlot}/blocks', [InternalSharedSlotController::class, 'storeBlock'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.blocks.store');
     Route::post('/shared-slots/{sharedSlot}/publish-blocks', [InternalSharedSlotController::class, 'publishBlocks'])->middleware(['internal-api.capability:shared-slots.write', 'internal-api.capability:content.publish'])->name('shared-slots.blocks.publish');
     Route::patch('/shared-slots/{sharedSlot}/blocks/reorder', [InternalSharedSlotController::class, 'reorderBlocks'])->middleware('internal-api.capability:shared-slots.write')->name('shared-slots.blocks.reorder');

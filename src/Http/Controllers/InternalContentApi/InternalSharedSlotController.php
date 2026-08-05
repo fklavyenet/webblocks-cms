@@ -6,18 +6,21 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class InternalSharedSlotController extends Controller
@@ -74,6 +77,202 @@ class InternalSharedSlotController extends Controller
       'warnings' => $warnings,
       'errors' => [],
     ], 201);
+  }
+
+  /**
+   * The API could create a Shared Slot and fill it with blocks, but never
+   * correct the Shared Slot itself: a typo in the handle or label, or a slot
+   * assigned to the wrong slot type, was permanent from the API's side.
+   *
+   * Moving a Shared Slot to another site is deliberately not part of this.
+   * That is a site transfer, not a rename, and it stays in the browser admin
+   * alongside the other cross-site operations.
+   */
+  public function update(Request $request, SharedSlot $sharedSlot): JsonResponse
+  {
+    $payload = $request->json()->all();
+    $unknown = array_diff(array_keys($payload), ['label', 'name', 'handle', 'slot', 'slot_name', 'layout', 'public_shell', 'is_active']);
+
+    if ($unknown !== []) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'unsupported_shared_slot_fields',
+        'message' => 'Shared Slot updates may only change the label, handle, slot type, layout, and active status.',
+        'blocked_fields' => array_values($unknown),
+        'warnings' => [],
+        'errors' => collect($unknown)
+          ->map(fn (string $field) => [
+            'path' => $field,
+            'message' => $field === 'site' || $field === 'site_id'
+              ? 'Moving a Shared Slot between sites is a browser admin operation.'
+              : 'This field is not part of a Shared Slot. Blocks have their own endpoints.',
+          ])
+          ->values()
+          ->all(),
+      ], 422);
+    }
+
+    $errors = [];
+    $updates = $this->sharedSlotUpdates($payload, $sharedSlot, $errors);
+
+    if ($errors !== []) {
+      return $this->validationError($errors);
+    }
+
+    if ($updates === []) {
+      return $this->validationError([['path' => 'shared_slot', 'message' => 'Provide at least one field to update.']]);
+    }
+
+    DB::transaction(function () use ($sharedSlot, $updates): void {
+      $before = $sharedSlot->fresh();
+      $sharedSlot->update($updates + ['updated_by_user_id' => null]);
+      $fresh = $sharedSlot->fresh();
+
+      $this->sourcePages->ensureFor($fresh);
+      $this->sourcePages->rebuildAssignments($fresh);
+
+      $this->captureSharedSlotRevision($before, $fresh);
+    });
+
+    return $this->ok([
+      'shared_slot' => $this->presenter->sharedSlot($sharedSlot->fresh(['site', 'slotBlocks.block.blockType', 'slotBlocks.block.slotType']), true),
+      'writes' => [['type' => 'shared_slot', 'id' => $sharedSlot->id]],
+    ]);
+  }
+
+  /**
+   * Deletion uses the same guard as the browser admin: a Shared Slot still
+   * referenced by a page slot is never removed, because that would silently
+   * empty a slot on every page pointing at it.
+   */
+  public function destroy(SharedSlot $sharedSlot): JsonResponse
+  {
+    if (! app(SharedSlotSchema::class)->pageSlotSourceColumnsExist()) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'shared_slots_not_ready',
+        'message' => 'Shared Slot references are not ready. Run the latest migrations before deleting Shared Slots.',
+        'warnings' => [],
+        'errors' => [['path' => 'shared_slot', 'message' => 'The page slot source columns are not available.']],
+      ], 409);
+    }
+
+    $pageSlots = $sharedSlot->pageSlots()->with('page')->get();
+
+    if ($pageSlots->isNotEmpty()) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'shared_slot_in_use',
+        'message' => 'Shared Slot cannot be deleted while it is referenced by one or more page slots.',
+        'usage' => $pageSlots
+          ->map(fn (PageSlot $slot) => [
+            'page_slot_id' => $slot->id,
+            'page_id' => $slot->page_id,
+            'slot' => $slot->slotSlug(),
+          ])
+          ->values()
+          ->all(),
+        'warnings' => [],
+        'errors' => [['path' => 'shared_slot', 'message' => 'Detach the Shared Slot from every page slot first.']],
+      ], 422);
+    }
+
+    $id = $sharedSlot->id;
+
+    DB::transaction(function () use ($sharedSlot): void {
+      $this->sourcePages->deleteFor($sharedSlot);
+      $sharedSlot->delete();
+    });
+
+    return $this->ok(['deleted' => ['type' => 'shared_slot', 'id' => $id]]);
+  }
+
+  /**
+   * @param  array<string, mixed>  $payload
+   * @return array<string, mixed>
+   */
+  private function sharedSlotUpdates(array $payload, SharedSlot $sharedSlot, array &$errors): array
+  {
+    $updates = [];
+
+    if (array_key_exists('label', $payload) || array_key_exists('name', $payload)) {
+      $label = trim((string) ($payload['label'] ?? $payload['name']));
+
+      if ($label === '') {
+        $errors[] = ['path' => 'label', 'message' => 'Shared Slot label is required.'];
+      } else {
+        $updates['name'] = $label;
+      }
+    }
+
+    if (array_key_exists('handle', $payload)) {
+      $handle = Str::slug(trim((string) $payload['handle']));
+
+      if ($handle === '') {
+        $errors[] = ['path' => 'handle', 'message' => 'Shared Slot handle is required.'];
+      } elseif (SharedSlot::query()
+        ->where('site_id', $sharedSlot->site_id)
+        ->where('handle', $handle)
+        ->whereKeyNot($sharedSlot->id)
+        ->exists()) {
+        $errors[] = ['path' => 'handle', 'message' => 'A Shared Slot with this handle already exists for the site.'];
+      } else {
+        $updates['handle'] = $handle;
+      }
+    }
+
+    if (array_key_exists('slot', $payload) || array_key_exists('slot_name', $payload)) {
+      $slot = Str::slug(trim((string) ($payload['slot'] ?? $payload['slot_name'])));
+
+      if ($slot === '' || ! SlotType::query()->where('slug', $slot)->where('status', 'published')->exists()) {
+        $errors[] = ['path' => 'slot', 'message' => 'Shared Slot slot name must resolve to a published slot type.'];
+      } else {
+        $updates['slot_name'] = $slot;
+      }
+    }
+
+    if (array_key_exists('layout', $payload) || array_key_exists('public_shell', $payload)) {
+      $shell = trim((string) ($payload['layout'] ?? $payload['public_shell']));
+      $updates['public_shell'] = $shell !== '' ? Page::normalizePublicShellHandle($shell) : null;
+    }
+
+    if (array_key_exists('is_active', $payload)) {
+      $updates['is_active'] = filter_var($payload['is_active'], FILTER_VALIDATE_BOOLEAN);
+    }
+
+    return $updates;
+  }
+
+  private function captureSharedSlotRevision(SharedSlot $before, SharedSlot $after): void
+  {
+    if (! $this->revisionManager->revisionsTableExists()) {
+      return;
+    }
+
+    $metadataChanged = collect(['name', 'handle', 'slot_name', 'public_shell'])
+      ->contains(fn (string $key) => data_get($before, $key) !== data_get($after, $key));
+
+    if ($metadataChanged) {
+      $this->revisionManager->capture(
+        $after,
+        null,
+        'metadata_updated',
+        'Shared Slot updated',
+        'Shared Slot metadata was updated through the Internal Content API.',
+        source: 'internal-content-api',
+      );
+    }
+
+    if ((bool) $before->is_active !== (bool) $after->is_active) {
+      $this->revisionManager->capture(
+        $after,
+        null,
+        'status_updated',
+        'Shared Slot status updated',
+        'Shared Slot active status was changed through the Internal Content API.',
+        source: 'internal-content-api',
+      );
+    }
   }
 
   public function storeBlock(Request $request, SharedSlot $sharedSlot): JsonResponse

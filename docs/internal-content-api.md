@@ -128,6 +128,7 @@ Super admins choose token capabilities when creating a token from `System -> API
 Advanced capabilities are separate options and are not selected by default:
 
 - `navigation.delete`
+- `shared-slots.delete`
 - `site-assets.read`
 - `site-assets.write`
 - `engagement.read`
@@ -151,7 +152,7 @@ Advanced capabilities are separate options and are not selected by default:
 - `backups.create`
 - `page-assets.write`
 
-Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, content publish, plugin install/manage/setup/uninstall, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`. Plugin lifecycle automation requires explicit plugin capabilities, and WebBlocks Commerce product/order API access requires explicit commerce capabilities.
+Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, Shared Slot delete, content publish, plugin install/manage/setup/uninstall, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`. Plugin lifecycle automation requires explicit plugin capabilities, and WebBlocks Commerce product/order API access requires explicit commerce capabilities.
 
 ## API Model
 
@@ -406,6 +407,20 @@ Both fields accept an object with a required `label` and a required `url`, or `n
 
 The fields work everywhere a block payload is accepted: content validate/apply plans, `POST /pages/{page}/slots/{slot}/blocks`, and `POST /shared-slots/{sharedSlot}/blocks`.
 
+### Page Translation API
+
+Page translations own localized page identity and the page-level SEO and Open Graph overrides. Content apply writes one translation row for one locale when it creates a page; these endpoints are how that row is read back and changed afterwards.
+
+`GET /webadmin/api/pages/{page}/translations` lists every translation on a page with `name`, `slug`, `path`, `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_media_id`. The same fields now appear on each translation in `GET /webadmin/api/pages/{page}`.
+
+`POST /webadmin/api/pages/{page}/translations/{locale}` requires `content.apply` and adds a translation for a locale that is already enabled for the page site. The `{locale}` segment accepts a locale code or a numeric ID. Only `name` is required: omit `slug` and `path` and both are derived from the name, exactly as the browser admin derives them. Creating a translation for a locale the page already has returns `422` with the code `page_translation_exists`.
+
+`PATCH /webadmin/api/pages/{page}/translations/{translation}` requires `content.apply` and writes only the fields the request carries, so a tool can set `seo_description` without resending page identity. Send `null` to clear an optional field.
+
+Slug and path always move together. Sending `path` re-derives the slug from its last segment; sending `slug` alone moves the page to `/{slug}`. Paths are canonicalized, checked against reserved CMS and host routes, and must stay unique for the site and locale. Because `Page` title and slug read through to the default translation, renaming that translation renames the page itself.
+
+Fields outside localized identity and SEO are rejected with `422` and the code `unsupported_page_translation_fields`, which names them in `blocked_fields`. Page status, layout, and block content have their own endpoints.
+
 ### Page Assets API
 
 Pages can load their own `/site/...` CSS and JS files in addition to the site-wide assets:
@@ -449,6 +464,14 @@ Adding blocks stays at `POST /shared-slots/{sharedSlot}/blocks`, and editing a s
 - Both deletes require `shared-slots.write` plus the dedicated `content.blocks.delete` capability.
 
 Unlike page block edits, these are not draft-only: Shared Slots have no draft-page concept. Reordering or deleting an already-published Shared Slot block therefore affects every assigned page immediately, which is why deletion is gated behind the destructive `content.blocks.delete` capability. Every write rebuilds the slot's page assignments and captures a Shared Slot revision so changes stay reversible.
+
+### Shared Slot Metadata API
+
+`PATCH /webadmin/api/shared-slots/{sharedSlot}` requires `shared-slots.write` and changes the Shared Slot itself rather than its blocks: `label`, `handle`, `slot`, `layout`, and `is_active`. Only the fields present are written. Handles stay unique per site, the slot name must resolve to a published slot type, and the Shared Slot source page and its assignments are rebuilt afterwards exactly as the browser admin rebuilds them. A metadata or status change captures a Shared Slot revision.
+
+Moving a Shared Slot to another site is not supported here and is rejected with `422` and the code `unsupported_shared_slot_fields`, which also covers any other field outside that set. Cross-site moves stay in the browser admin with the other site transfer operations.
+
+`DELETE /webadmin/api/shared-slots/{sharedSlot}` requires the destructive `shared-slots.delete` capability and applies the same guard as the browser admin: a Shared Slot still referenced by any page slot is never deleted. The `422` response carries the code `shared_slot_in_use` and a `usage` array naming the referencing page slots, so a tool can detach them first with `PUT /webadmin/api/pages/{page}/slots/{slot}/source`. If the Shared Slot reference columns have not been migrated yet, the endpoint returns `409` with `shared_slots_not_ready` instead of guessing.
 
 ### Media Library API
 
@@ -722,6 +745,9 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 
 - `GET /webadmin/api/pages`
 - `GET /webadmin/api/pages/{page}`
+- `GET /webadmin/api/pages/{page}/translations`
+- `POST /webadmin/api/pages/{page}/translations/{locale}`
+- `PATCH /webadmin/api/pages/{page}/translations/{translation}`
 - `POST /webadmin/api/pages/{page}/sync-layout-slots`
 - `PATCH /webadmin/api/pages/{page}/layout`
 - `POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot`
@@ -752,6 +778,8 @@ Navigation item URLs may be internal paths such as `/`, `/about`, `/contact`, an
 
 - `GET /webadmin/api/shared-slots`
 - `GET /webadmin/api/shared-slots/{sharedSlot}`
+- `PATCH /webadmin/api/shared-slots/{sharedSlot}`
+- `DELETE /webadmin/api/shared-slots/{sharedSlot}`
 - `POST /webadmin/api/shared-slots`
 - `POST /webadmin/api/shared-slots/{sharedSlot}/blocks`
 - `POST /webadmin/api/shared-slots/{sharedSlot}/publish-blocks`
@@ -1052,6 +1080,7 @@ Example English marketing homepage draft:
 
 ## Validation Rules
 
+- plan fields the API does not understand are rejected with `422` and the stable code `unsupported_plan_fields`, and the error path names each one; the accepted key set is scoped to the plan `mode`, so a key that is meaningful in one mode is still rejected in another
 - site handle or ID must resolve
 - locale must exist and be enabled for the target site
 - layout must exist

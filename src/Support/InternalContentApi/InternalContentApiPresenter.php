@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
@@ -144,14 +145,7 @@ class InternalContentApiPresenter
       'slug' => $page->slug,
       'source_sync' => $this->sourceSync($page),
       'staged_update' => $this->stagedUpdate($page),
-      'translations' => $translations->map(fn ($translation) => [
-        'id' => $translation->id,
-        'locale_id' => $translation->locale_id,
-        'locale' => $translation->locale?->code,
-        'name' => $translation->name,
-        'slug' => $translation->slug,
-        'path' => $translation->path,
-      ])->values()->all(),
+      'translations' => $translations->map(fn ($translation) => $this->pageTranslation($translation))->values()->all(),
       'slots' => $page->relationLoaded('slots')
         ? $page->slots->map(fn (PageSlot $slot) => $this->pageSlot($slot))->values()->all()
         : [],
@@ -164,6 +158,30 @@ class InternalContentApiPresenter
     }
 
     return $payload;
+  }
+
+  /**
+   * Localized page identity plus the page-level SEO and Open Graph overrides.
+   *
+   * The SEO fields were missing here for as long as they were unwritable, so a
+   * tool could neither set them nor read what a human had set.
+   */
+  public function pageTranslation(PageTranslation $translation): array
+  {
+    return [
+      'id' => $translation->id,
+      'locale_id' => $translation->locale_id,
+      'locale' => $translation->locale?->code,
+      'name' => $translation->name,
+      'slug' => $translation->slug,
+      'path' => $translation->path,
+      'seo_title' => $translation->seo_title,
+      'seo_description' => $translation->seo_description,
+      'seo_keywords' => $translation->seo_keywords,
+      'og_title' => $translation->og_title,
+      'og_description' => $translation->og_description,
+      'og_image_media_id' => $translation->og_image_media_id,
+    ];
   }
 
   public function pageSlot(PageSlot $slot): array

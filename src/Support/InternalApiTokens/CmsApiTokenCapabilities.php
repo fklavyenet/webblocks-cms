@@ -35,6 +35,8 @@ class CmsApiTokenCapabilities
 
   public const SHARED_SLOTS_WRITE = 'shared-slots.write';
 
+  public const SHARED_SLOTS_DELETE = 'shared-slots.delete';
+
   public const MEDIA_READ = 'media.read';
 
   public const MEDIA_WRITE = 'media.write';
@@ -104,6 +106,7 @@ class CmsApiTokenCapabilities
     self::MEDIA_MOVE,
     self::MEDIA_DELETE,
     self::NAVIGATION_DELETE,
+    self::SHARED_SLOTS_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
@@ -119,6 +122,7 @@ class CmsApiTokenCapabilities
     self::MEDIA_REPLACE,
     self::MEDIA_DELETE,
     self::NAVIGATION_DELETE,
+    self::SHARED_SLOTS_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
@@ -132,6 +136,7 @@ class CmsApiTokenCapabilities
     self::NAVIGATION_WRITE,
     self::NAVIGATION_DELETE,
     self::SHARED_SLOTS_WRITE,
+    self::SHARED_SLOTS_DELETE,
     self::MEDIA_READ,
     self::SITE_SETTINGS_WRITE,
     self::MEDIA_WRITE,
@@ -163,6 +168,7 @@ class CmsApiTokenCapabilities
     self::NAVIGATION_WRITE => 'Write navigation menu items',
     self::NAVIGATION_DELETE => 'Delete navigation menu items',
     self::SHARED_SLOTS_WRITE => 'Write Shared Slots',
+    self::SHARED_SLOTS_DELETE => 'Delete unreferenced Shared Slots',
     self::MEDIA_READ => 'Read Media Library records',
     self::SITE_SETTINGS_WRITE => 'Write safe site presentation settings',
     self::SITE_ASSETS_READ => 'Read canonical site CSS and JS override files',
@@ -267,6 +273,8 @@ class CmsApiTokenCapabilities
         'delete_page' => $this->has($token, self::PAGES_DELETE),
         'write_navigation_items' => $this->has($token, self::NAVIGATION_WRITE),
         'delete_navigation_items' => $this->has($token, self::NAVIGATION_DELETE),
+        'write_shared_slots' => $this->has($token, self::SHARED_SLOTS_WRITE),
+        'delete_shared_slots' => $this->has($token, self::SHARED_SLOTS_DELETE),
         'read_media' => $this->has($token, self::MEDIA_READ) || $this->has($token, self::CONTENT_READ),
         'write_media_metadata' => $this->has($token, self::MEDIA_WRITE),
         'upload_media' => $this->has($token, self::MEDIA_UPLOAD),

@@ -66,6 +66,133 @@ class InternalContentPlanService
     'overwrite',
   ];
 
+  public const UNSUPPORTED_KEY_ERROR_CODE = 'unsupported_plan_fields';
+
+  /**
+   * Plan keys understood at the top level of every mode.
+   *
+   * A plan may be posted flat or wrapped in `plan`, and `create_restore_point`
+   * rides alongside a flat plan for the controller to consume, so both stay
+   * acceptable here even though this service never reads them itself.
+   */
+  private const SHARED_PLAN_KEYS = [
+    'mode',
+    'plan',
+    'create_restore_point',
+    'site',
+    'site_handle',
+    'site_id',
+    'locale',
+    'locale_id',
+    'page',
+    'source_sync',
+  ];
+
+  /**
+   * Additional top-level plan keys accepted per mode.
+   *
+   * @var array<string, list<string>>
+   */
+  private const PLAN_KEYS_BY_MODE = [
+    self::MODE_CREATE_DRAFT_PAGE => [
+      'layout',
+      'page_layout',
+      'title',
+      'path',
+      'status',
+      'slots',
+      'navigation_menus',
+      'shared_slots',
+      'page_slot_shared_slots',
+    ],
+    self::MODE_REPLACE_EXISTING_DRAFT_PAGE => [
+      'page_id',
+      'expected_path',
+      'expected_updated_at',
+      'replace_slots',
+    ],
+    self::MODE_CREATE_STAGED_UPDATE => [
+      'page_id',
+      'source_page',
+      'source_page_id',
+      'expected_source_path',
+      'expected_source_updated_at',
+      'managed_slots',
+    ],
+    self::MODE_REPLACE_STAGED_UPDATE => [
+      'page_id',
+      'staged_page',
+      'staged_page_id',
+      'source_page',
+      'expected_source_page_id',
+      'expected_source_path',
+      'expected_source_updated_at',
+      'replace_slots',
+    ],
+    self::MODE_PROMOTE_STAGED_UPDATE => [
+      'page_id',
+      'staged_page',
+      'staged_page_id',
+      'source_page',
+      'source_page_id',
+      'expected_source_page_id',
+      'expected_source_path',
+      'expected_source_updated_at',
+      'promote_slots',
+      'managed_slots',
+    ],
+  ];
+
+  /**
+   * Keys accepted inside the `page` node, per mode.
+   *
+   * @var array<string, list<string>>
+   */
+  private const PAGE_NODE_KEYS_BY_MODE = [
+    self::MODE_CREATE_DRAFT_PAGE => [
+      'title',
+      'path',
+      'status',
+      'layout',
+      'settings',
+      'source_sync',
+    ],
+    self::MODE_REPLACE_EXISTING_DRAFT_PAGE => [
+      'id',
+      'expected_path',
+      'expected_updated_at',
+      'settings',
+      'source_sync',
+    ],
+    self::MODE_CREATE_STAGED_UPDATE => [
+      'id',
+      'expected_path',
+      'settings',
+      'source_sync',
+    ],
+    self::MODE_REPLACE_STAGED_UPDATE => [
+      'id',
+      'settings',
+      'source_sync',
+    ],
+    self::MODE_PROMOTE_STAGED_UPDATE => [
+      'id',
+      'expected_path',
+      'settings',
+      'source_sync',
+    ],
+  ];
+
+  /**
+   * Keys accepted inside the staged-update reference nodes.
+   *
+   * @var array<string, list<string>>
+   */
+  private const REFERENCE_NODE_KEYS = [
+    'source_page' => ['id', 'expected_path', 'expected_updated_at'],
+    'staged_page' => ['id'],
+  ];
+
   private const PLAN_MANAGED_RELATION_KEYS = [
     'id',
     'parent_id',
@@ -798,6 +925,14 @@ class InternalContentPlanService
     $errors = [];
     $warnings = [];
     $mode = trim((string) data_get($input, 'mode', self::MODE_CREATE_DRAFT_PAGE));
+
+    // An unrecognised mode still falls through to draft-page creation below, so
+    // the key check is made against the mode that actually runs.
+    $this->rejectUnsupportedKeys(
+      $input,
+      array_key_exists($mode, self::PLAN_KEYS_BY_MODE) ? $mode : self::MODE_CREATE_DRAFT_PAGE,
+      $errors,
+    );
 
     if ($mode === self::MODE_REPLACE_EXISTING_DRAFT_PAGE) {
       return $this->normalizeDraftPageReplacement($input, $errors, $warnings);
@@ -2166,6 +2301,49 @@ class InternalContentPlanService
       ->all();
 
     return $payload;
+  }
+
+  /**
+   * Rejects plan fields the API does not understand.
+   *
+   * Normalization reads the keys it knows and ignores everything else, so a
+   * plan carrying an unsupported field such as `page.seo_title` used to apply
+   * cleanly and write none of it. Failing here is the only way a caller can
+   * discover the boundary, because fields the API cannot write are absent from
+   * its read payloads too.
+   */
+  private function rejectUnsupportedKeys(array $input, string $mode, array &$errors): void
+  {
+    $this->rejectUnknownNodeKeys(
+      $input,
+      'plan',
+      [...self::SHARED_PLAN_KEYS, ...(self::PLAN_KEYS_BY_MODE[$mode] ?? [])],
+      $errors,
+    );
+
+    if (is_array($input['page'] ?? null)) {
+      $this->rejectUnknownNodeKeys($input['page'], 'plan.page', self::PAGE_NODE_KEYS_BY_MODE[$mode] ?? [], $errors);
+    }
+
+    foreach (self::REFERENCE_NODE_KEYS as $node => $allowedKeys) {
+      if (is_array($input[$node] ?? null)) {
+        $this->rejectUnknownNodeKeys($input[$node], 'plan.'.$node, $allowedKeys, $errors);
+      }
+    }
+  }
+
+  /**
+   * @param  list<string>  $allowedKeys
+   */
+  private function rejectUnknownNodeKeys(array $node, string $path, array $allowedKeys, array &$errors): void
+  {
+    foreach (array_diff(array_keys($node), $allowedKeys) as $key) {
+      $errors[] = [
+        'path' => $path.'.'.$key,
+        'message' => 'This field is not supported by the Internal Content API and would be ignored. Remove it, or set the value in the browser admin.',
+        'code' => self::UNSUPPORTED_KEY_ERROR_CODE,
+      ];
+    }
   }
 
   private function rejectForbiddenKeys(array $data, string $path, array &$errors, array $allowedKeys = []): void
