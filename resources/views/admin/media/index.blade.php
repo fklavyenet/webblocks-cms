@@ -22,6 +22,8 @@
     ]);
     $previewBaseQuery = array_merge($baseQuery, ['page' => $assets->currentPage() > 1 ? $assets->currentPage() : null]);
     $currentReturnUrl = route('admin.media.index', $previewBaseQuery);
+    // View mode and sorting change presentation, not which rows match.
+    $hasActiveFilters = $selectedFolderId || $search !== '' || $kind !== '' || $usage !== '';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
@@ -160,11 +162,15 @@
             @if ($assets->isEmpty())
                 <div class="wb-empty">
                     <div class="wb-empty-title">{{ $adminText('no_media_found') }}</div>
-                    <div class="wb-empty-text">{{ $adminText('no_media_found_help') }}</div>
+                    <div class="wb-empty-text">
+                        {{ $hasActiveFilters ? $adminText('no_media_filtered_help') : $adminText('no_media_found_help') }}
+                    </div>
                     <div class="wb-cluster wb-cluster-2">
                         <a href="{{ route('admin.media.index', ['modal' => 'upload-asset']) }}" class="wb-btn wb-btn-primary">{{ $adminText('upload_media') }}</a>
                         <a href="{{ route('admin.media.index', ['modal' => 'fetch-media']) }}" class="wb-btn wb-btn-secondary">{{ $adminText('fetch_url') }}</a>
-                        <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('reset_filters') }}</a>
+                        @if ($hasActiveFilters)
+                            <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('reset_filters') }}</a>
+                        @endif
                     </div>
                 </div>
             @elseif ($viewMode === 'grid')

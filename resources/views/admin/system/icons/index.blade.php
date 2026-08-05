@@ -76,7 +76,14 @@
             <div class="wb-card-body">
                 <div class="wb-empty">
                     <div class="wb-empty-title">{{ $adminText('empty_title') }}</div>
-                    <div class="wb-empty-text">{{ $adminText('empty_text') }}</div>
+                    <div class="wb-empty-text">
+                        {{ $hasActiveFilters ? $adminText('empty_filtered_text') : $adminText('empty_text') }}
+                    </div>
+                    @if ($hasActiveFilters)
+                        <div class="wb-empty-action">
+                            <a href="{{ route('admin.system.icons.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                        </div>
+                    @endif
                 </div>
             </div>
         @else

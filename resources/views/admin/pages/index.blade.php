@@ -14,6 +14,9 @@
         ]);
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', ['reset' => 1]);
+    // The site filter is a scope, not a narrowing filter: a site with no pages
+    // really is empty, and "create your first page" is the right thing to say.
+    $hasActiveFilters = ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '';
     $detailsBaseQuery = array_filter([
         'site' => $filters['site'],
         'search' => $filters['search'] !== '' ? $filters['search'] : null,
@@ -121,8 +124,15 @@
             <div class="wb-card-body">
                     <div class="wb-empty">
                         <div class="wb-empty-title">{{ $adminText('pages.no_pages') }}</div>
-                        <div class="wb-empty-text">{{ $adminText('pages.no_pages_help', ['site' => strtolower($siteContext)]) }}</div>
+                        <div class="wb-empty-text">
+                            {{ $hasActiveFilters
+                                ? $adminText('pages.no_pages_filtered_help')
+                                : $adminText('pages.no_pages_help', ['site' => strtolower($siteContext)]) }}
+                        </div>
                         <div class="wb-empty-action">
+                            @if ($hasActiveFilters)
+                                <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.clear_filters') }}</a>
+                            @endif
                             <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.create_page') }}</a>
                         </div>
                     </div>

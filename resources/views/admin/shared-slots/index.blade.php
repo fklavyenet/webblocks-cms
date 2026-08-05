@@ -14,6 +14,8 @@
   $sharedSlotsReady = $sharedSlotsReady ?? true;
   $newSharedSlotUrl = $activeSite ? route('admin.shared-slots.create', ['site' => $activeSite->id]) : route('admin.shared-slots.create');
   $clearUrl = route('admin.shared-slots.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
+    // Sorting does not hide rows, so it is not what makes a result set empty.
+    $hasActiveFilters = $filters['search'] !== '' || $filters['status'] !== '';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
@@ -115,7 +117,16 @@
             <div class="wb-card-body">
                 <div class="wb-empty">
                     <div class="wb-empty-title">{{ $adminText('no_shared_slots_found') }}</div>
-                    <div class="wb-empty-text">{{ $adminText('empty_help', ['site' => strtolower($siteContext)]) }}</div>
+                    <div class="wb-empty-text">
+                        {{ $hasActiveFilters
+                            ? $adminText('empty_filtered_help')
+                            : $adminText('empty_help', ['site' => strtolower($siteContext)]) }}
+                    </div>
+                    @if ($hasActiveFilters)
+                        <div class="wb-empty-action">
+                            <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                        </div>
+                    @endif
                     @if ($canCreateSharedSlots)
                         <div class="wb-empty-action">
                             <a href="{{ $newSharedSlotUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('create_shared_slot') }}</a>

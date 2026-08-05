@@ -167,8 +167,17 @@
 
                 <div class="wb-card-body">
                     <div class="wb-empty">
-                        <div class="wb-empty-title">{{ $adminText('backups.no_history') }}</div>
-                        <div class="wb-empty-text">{{ $adminText('backups.no_history_help') }}</div>
+                        <div class="wb-empty-title">
+                            {{ $hasActiveFilters ? $adminText('backups.no_backups_found') : $adminText('backups.no_history') }}
+                        </div>
+                        <div class="wb-empty-text">
+                            {{ $hasActiveFilters ? $adminText('backups.no_history_filtered_help') : $adminText('backups.no_history_help') }}
+                        </div>
+                        @if ($hasActiveFilters)
+                            <div class="wb-empty-action">
+                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.clear_filters') }}</a>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -5,6 +5,7 @@
     $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
+    $hasActiveFilters = ($filters['search'] ?? '') !== '' || ($filters['rating'] ?? '') !== '';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('engagement.ratings'), 'heading' => $adminText('engagement.ratings')])
@@ -68,7 +69,14 @@
                 @if ($ratings->isEmpty())
                     <div class="wb-empty">
                         <div class="wb-empty-title">{{ $adminText('engagement.no_ratings') }}</div>
-                        <div class="wb-empty-text">{{ $adminText('engagement.no_ratings_help') }}</div>
+                        <div class="wb-empty-text">
+                            {{ $hasActiveFilters ? $adminText('engagement.no_ratings_filtered_help') : $adminText('engagement.no_ratings_help') }}
+                        </div>
+                        @if ($hasActiveFilters)
+                            <div class="wb-empty-action">
+                                <a href="{{ route('admin.engagement.ratings.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('engagement.clear_filters') }}</a>
+                            </div>
+                        @endif
                     </div>
                 @else
                     <div class="wb-table-wrap">

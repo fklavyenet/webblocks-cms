@@ -7,6 +7,9 @@
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('contact_messages_index.'.$key, $adminLocale, $replace);
     $statusLabel = static fn (string $status) => $adminText('status_'.$status);
+    $hasActiveFilters = ($filters['search'] ?? '') !== ''
+        || ($filters['status'] ?? '') !== ''
+        || ($filters['notification'] ?? '') !== '';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
@@ -57,7 +60,7 @@
                         ],
                     ],
                 ],
-                'showReset' => ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['notification'] ?? '') !== '',
+                'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.contact-messages.index'),
                 'applyLabel' => $adminText('apply'),
             ])
@@ -68,8 +71,17 @@
         <div class="wb-card">
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">{{ $adminText('no_messages_yet') }}</div>
-                    <div class="wb-empty-text">{{ $adminText('no_messages_help') }}</div>
+                    <div class="wb-empty-title">
+                        {{ $hasActiveFilters ? $adminText('no_messages_found') : $adminText('no_messages_yet') }}
+                    </div>
+                    <div class="wb-empty-text">
+                        {{ $hasActiveFilters ? $adminText('no_messages_filtered_help') : $adminText('no_messages_help') }}
+                    </div>
+                    @if ($hasActiveFilters)
+                        <div class="wb-empty-action">
+                            <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -5,6 +5,7 @@
     $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
+    $hasActiveFilters = ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('engagement.comments'), 'heading' => $adminText('engagement.comments')])
@@ -70,7 +71,14 @@
                 @if ($comments->isEmpty())
                     <div class="wb-empty">
                         <div class="wb-empty-title">{{ $adminText('engagement.no_comments') }}</div>
-                        <div class="wb-empty-text">{{ $adminText('engagement.no_comments_help') }}</div>
+                        <div class="wb-empty-text">
+                            {{ $hasActiveFilters ? $adminText('engagement.no_comments_filtered_help') : $adminText('engagement.no_comments_help') }}
+                        </div>
+                        @if ($hasActiveFilters)
+                            <div class="wb-empty-action">
+                                <a href="{{ route('admin.engagement.comments.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('engagement.clear_filters') }}</a>
+                            </div>
+                        @endif
                     </div>
                 @else
                     <div class="wb-table-wrap">
