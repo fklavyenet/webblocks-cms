@@ -415,7 +415,9 @@ The fields work everywhere a block payload is accepted: content validate/apply p
 
 Add `?format=html` for the markup itself instead of the JSON envelope, and `?locale=de` to render a specific translation; the default is the site default locale. A locale the page has no translation for returns `422` with `page_translation_missing` and the locales it does have. Shared Slot source pages are editing scaffolding and return `422` with `page_not_renderable`, matching the browser admin's own 404 on them.
 
-This is how a tool verifies what it built. Content apply reports what was stored, which is not the same as what renders: a wrapper block with no children, a slot assigned to the wrong Shared Slot, or a layout without the slots the plan assumed all apply cleanly and still produce a page nobody wants.
+Rendering was already reachable before this endpoint existed: `GET /webadmin/pages/{page}/preview` accepts a Bearer token with `content.read` as well as an admin session, and still does. What this adds is locale selection — the browser preview always renders the default translation — plus a JSON envelope and a place in discovery and the OpenAPI document, so a tool finds it the same way it finds everything else instead of having to know about a route outside `/webadmin/api`.
+
+Either way, render before reporting a page finished. Content apply says what was stored, which is not the same as what renders: a wrapper block with no children, a slot assigned to the wrong Shared Slot, or a layout without the slots the plan assumed all apply cleanly and still produce a page nobody wants.
 
 ### Page Translation API
 

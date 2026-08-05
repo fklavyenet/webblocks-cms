@@ -83,4 +83,33 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $this->assertSame('page-assets.write', $paths['/pages/{page}/assets/{pageAsset}']['patch']['x-required-capability']);
     $this->assertSame('page-assets.write', $paths['/pages/{page}/assets/{pageAsset}']['delete']['x-required-capability']);
   }
+
+  /**
+   * The AI guide is what an agent reads to learn the workflow, and it is
+   * hand-written prose beside a hand-written route table -- so it drifts
+   * silently. It already had: page SEO, page rendering, site SEO defaults,
+   * the contact recipient, locale assignment, media folders, Shared Slot
+   * correction, domain capabilities and the unsupported-field rejection all
+   * shipped while the guide still described none of them.
+   */
+  #[Test]
+  public function the_ai_guide_covers_the_endpoints_a_page_building_tool_needs(): void
+  {
+    $guide = $this->app->make(InternalApiDiscoveryController::class)->aiGuide()->getData(true)['content'];
+
+    foreach ([
+      '/webadmin/api/pages/{page}/translations',
+      '/webadmin/api/pages/{page}/render',
+      '/webadmin/api/sites/{site}/seo',
+      '/webadmin/api/sites/{site}/contact-recipient',
+      '/webadmin/api/sites/{site}/locales',
+      '/webadmin/api/media/folders',
+      '/webadmin/api/shared-slots/{sharedSlot}',
+      '/webadmin/api/sites/{site}/domains',
+      'unsupported_plan_fields',
+      'seo_title',
+    ] as $needle) {
+      $this->assertStringContainsString($needle, $guide, 'The AI guide no longer mentions '.$needle.'.');
+    }
+  }
 }

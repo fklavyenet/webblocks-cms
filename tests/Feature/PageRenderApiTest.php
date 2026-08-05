@@ -15,10 +15,9 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
- * A tool could build a page and never look at it. The browser admin preview is
- * a session-authenticated route and admin.render was allowlisted to the System
- * Updates screen, so the only feedback an API caller had was the JSON it had
- * just written -- which says what was stored, not what renders.
+ * The admin preview route already took a Bearer token, so this endpoint is not
+ * what made rendering reachable. It renders a chosen locale rather than always
+ * the default translation, and it lives in discovery with the rest of the API.
  */
 class PageRenderApiTest extends TestCase
 {

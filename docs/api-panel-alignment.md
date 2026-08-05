@@ -63,7 +63,7 @@ Capabilities are defined in `CmsApiTokenCapabilities`. A gap in this document is
 | Page CSS and JS assets | Yes | `/pages/{page}/assets/*` | Aligned |
 | Rename a page, or change its slug or path | Yes | `PATCH /pages/{page}/translations/{translation}` | Aligned |
 | Page translations: add a locale, edit name, slug, path, SEO, Open Graph | Yes | `/pages/{page}/translations/*` | Aligned |
-| Preview a page | Yes | `GET /pages/{page}/render` | Aligned |
+| Preview a page | Yes | `GET /pages/{page}/render`, and `/webadmin/pages/{page}/preview` already took a Bearer token | Aligned |
 | **Page revisions: list and restore** | Yes | None | **Missing** |
 | Add, remove, or reorder a page slot | Yes | Only `sync-layout-slots` and slot source | Partial |
 | Clear every block in a page slot | Yes | Shared Slots have `clear`; pages do not | Partial |
@@ -225,7 +225,7 @@ Ordered by how much each unblocks, not by effort.
 **Tier 2 — complete**
 
 5. ~~Extend site settings: SEO defaults, `contact_recipient_email`, `locale_ids`.~~ `/sites/{site}/seo`, `/contact-recipient`, and `/locales`.
-6. ~~Page preview or render snapshot.~~ `GET /pages/{page}/render`, with `format=html` and per-locale rendering.
+6. ~~Page preview or render snapshot.~~ `GET /pages/{page}/render`, with `format=html` and per-locale rendering. This one was mis-scoped when the list was written: `/webadmin/pages/{page}/preview` already accepted a Bearer token, so the gap was discoverability and locale selection, not the ability to render at all.
 7. ~~Media folder creation.~~ `GET`/`POST /media/folders`.
 8. ~~Capability-gate the domain routes and move them under `/webadmin/api`.~~ Done, and `update` and `set primary` came with it.
 

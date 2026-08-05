@@ -14,13 +14,16 @@ use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 /**
- * A tool could build a page and never look at it. The browser admin preview is
- * a session-authenticated route, and admin.render was allowlisted to the System
- * Updates screen, so the only feedback available to an API caller was the JSON
- * it had just written -- which says what was stored, not what renders.
+ * The same render the browser admin preview performs: draft blocks included,
+ * noindex, never the public route, so nothing here publishes anything.
  *
- * This is the same render the admin preview performs: draft blocks included,
- * noindex, and never the public route, so nothing here publishes anything.
+ * The admin preview route already accepts a Bearer token with content.read
+ * (see AllowPagePreviewAccess), so this is not what made rendering reachable.
+ * What it adds is locale selection -- the admin preview always renders the
+ * default translation, which stopped being sufficient once second locales
+ * became writable -- along with a JSON envelope and a place in discovery and
+ * the OpenAPI document, so a tool finds it without knowing about a route that
+ * lives outside /webadmin/api.
  */
 class InternalPageRenderController extends Controller
 {

@@ -132,18 +132,41 @@ For blocks that expose `settings.icon_slug`, use only active icon slugs confirme
 6. Ask the user for explicit approval to apply the exact final plan.
 7. Only after approval, call `POST /webadmin/api/content/apply`.
 8. Read the created draft page id from the apply response.
-9. Produce the admin preview URL with `/webadmin/pages/{page}/preview`; tools may fetch it with the same Bearer token when it has `content.read`.
-10. Leave publishing to a human workflow unless the user explicitly approved an API publish operation and the token has `content.publish`.
+9. Set page-level SEO and any further locales with `/webadmin/api/pages/{page}/translations`; content apply cannot write them.
+10. Render the page with `GET /webadmin/api/pages/{page}/render` and check the result before reporting the page finished. `/webadmin/pages/{page}/preview` serves the same render for a browser, with the same Bearer token, and always in the default locale.
+11. Leave publishing to a human workflow unless the user explicitly approved an API publish operation and the token has `content.publish`.
+
+## Page Identity, SEO, and Locales
+
+Page identity and page-level SEO live on the page translation row. Content apply writes one translation for one locale when it creates the page and never touches it again, so everything afterwards goes through `/webadmin/api/pages/{page}/translations` with `content.apply`.
+
+- `GET /webadmin/api/pages/{page}/translations` lists every translation with `name`, `slug`, `path`, `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_media_id`. The same fields appear on each translation in `GET /webadmin/api/pages/{page}`.
+- `POST /webadmin/api/pages/{page}/translations/{locale}` adds a locale, by code or ID, that the site already has enabled. Only `name` is required; omit `slug` and `path` to derive both from it.
+- `PATCH /webadmin/api/pages/{page}/translations/{translation}` writes only the fields present, so `seo_description` can be set without resending page identity. Send `null` to clear an optional field.
+
+Slug and path move together: sending `path` re-derives the slug from its last segment, and sending `slug` alone moves the page to `/{slug}`. Renaming the default-locale translation renames the page itself, because `Page` title and slug read through to it.
+
+Do not put `page.seo_title` or any other SEO field in a content plan. Plans reject keys they do not understand with `422` and code `unsupported_plan_fields`, and a rejected plan writes nothing.
+
+Adding a language is two steps. Create or enable the locale globally with `POST`/`PATCH /webadmin/api/locales`, then assign it to the site with `PUT /webadmin/api/sites/{site}/locales` and `locale_ids`. A page translation cannot be saved for a locale the site has not enabled. That call replaces the whole set, always keeps the default locale, and refuses to detach a locale that still has page translations.
+
+Site-wide SEO defaults, inherited by any page whose translation has no override, use `PATCH /webadmin/api/sites/{site}/seo` with `site-settings.write`. That is separate from page-level SEO and from `PATCH /webadmin/api/sites/{site}/head`, which injects raw head markup.
 
 ## Safety Rules
 
 - Draft-first.
+- Render the page before reporting it finished. Content apply reports what was stored, not what renders: an empty wrapper, a slot pointing at the wrong Shared Slot, or a layout missing the slots the plan assumed all apply cleanly and still produce a broken page.
+- Content plans reject unrecognized fields. If a plan fails with `unsupported_plan_fields`, remove the named keys rather than retrying; the field belongs to another endpoint or to the browser admin.
+- After building a contact form, set the recipient with `PATCH /webadmin/api/sites/{site}/contact-recipient` and `site-settings.write`. Until it is set, the form collects submissions against the install-wide fallback rather than the site's own address.
+- Use `GET`/`POST /webadmin/api/media/folders` to organize uploads; creating a folder requires `media.write`. A duplicate name under the same parent is refused with `media_folder_exists` and the existing folder in the response — reuse that id instead of retrying.
+- Shared Slots can be corrected with `PATCH /webadmin/api/shared-slots/{sharedSlot}` and `shared-slots.write`. Deletion requires the explicit destructive `shared-slots.delete` and is refused while any page slot still references the Shared Slot. Moving one between sites is browser-admin work.
+- Site domains under `/webadmin/api/sites/{site}/domains` need `domains.write` to add, update, or promote, and the destructive `domains.delete` to remove. Domains decide which hostname resolves to which site; a page-building token should not hold these.
 - Apply only after explicit user approval.
 - Do not publish through content apply.
 - Do not assume page publish makes all blocks public; use `include_page_owned_blocks: true` only after explicit approval.
 - Do not delete pages through content apply.
 - Do not overwrite existing pages or blocks except with the explicit `replace_existing_draft_page` mode.
-- Do not replace live published pages directly. Use `create_staged_update_for_published_page`, `replace_staged_page_update`, preview the staged page, then use `promote_staged_page_update` only after explicit approval and only with `content.publish`.
+- Do not replace live published pages directly. Use `create_staged_update_for_published_page`, `replace_staged_page_update`, render the staged page with `GET /webadmin/api/pages/{staged_page}/render`, then use `promote_staged_page_update` only after explicit approval and only with `content.publish`.
 - Do not call apply if the target path already exists unless the user explicitly approves a conflict-handling plan supported by the API.
 - For existing draft replacement, include `expected_path` or `expected_updated_at` and replace only page-owned slots.
 - Treat `page.path` as the canonical public URL. Use `/contact`, `/games/fruit-train`, or `/docs/internal-content-api`, not `/p/contact`; `/p/...` is only a legacy public redirect. Preserve slash-bearing section paths; CMS derives the short slug from the final path segment.
