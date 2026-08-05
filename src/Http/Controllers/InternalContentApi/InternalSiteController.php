@@ -578,7 +578,13 @@ class InternalSiteController extends Controller
 
   private function analyzeCssModeAwareness(string $contents): array
   {
-    $css = trim($contents);
+    // Comments are documentation, not paint. A site.css that explains itself --
+    // "WebBlocks UI declares .wb-slider-text-light { color: #fff }, which is why
+    // this rule exists" -- was reported as carrying a literal color, so the more
+    // carefully an author documented a token-only stylesheet the more likely it
+    // was to warn. A dark-mode scope named only in a comment used to count as
+    // present too, which hid the warning it should have raised.
+    $css = trim((string) preg_replace('#/\*.*?\*/#s', ' ', $contents));
     $recommendedTokens = [
       '--wb-public-page-bg',
       '--wb-public-surface',

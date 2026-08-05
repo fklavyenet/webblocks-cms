@@ -97,6 +97,43 @@ class SiteCssModeAwarenessAnalysisTest extends TestCase
   }
 
   #[Test]
+  public function a_color_quoted_in_a_comment_is_documentation_not_paint(): void
+  {
+    // Taken from a live site.css: a token-only stylesheet whose comment quotes
+    // the shipped UI rule it repairs. It warned about a color it never set.
+    $analysis = $this->analyze(<<<'CSS'
+      /* WebBlocks UI declares `.wb-slider-text-light { color: #fff }` on the
+         slider root only, so nested blocks never receive it. */
+      .wb-slider-text-light .wb-slide-content { color: inherit; }
+      .wb-slot-footer { background: var(--wb-public-surface-strong); }
+      CSS);
+
+    $this->assertSame('pass', $analysis['status']);
+    $this->assertSame(0, $analysis['signals']['literal_color_declarations']);
+  }
+
+  #[Test]
+  public function a_dark_mode_scope_named_only_in_a_comment_does_not_count(): void
+  {
+    $analysis = $this->analyze(<<<'CSS'
+      /* Pairs with html[data-mode="dark"] body[data-wb-public-theme] elsewhere. */
+      .promo { background: #ffffff; }
+      CSS);
+
+    $this->assertFalse($analysis['signals']['has_dark_mode_scope']);
+    $this->assertSame('warning', $analysis['status']);
+  }
+
+  #[Test]
+  public function a_commented_out_rule_is_not_analyzed(): void
+  {
+    $analysis = $this->analyze('/* body { background: #ffffff; } */ .promo { color: var(--wb-public-text); }');
+
+    $this->assertSame('pass', $analysis['status']);
+    $this->assertSame([], $analysis['anti_patterns']);
+  }
+
+  #[Test]
   public function literal_colors_without_tokens_or_a_dark_scope_still_warn(): void
   {
     $analysis = $this->analyze('.promo { background: #ffffff; }');
