@@ -148,12 +148,26 @@
                     ->values()
                     ->all();
 
+                $content = view('webblocks-cms::pages.partials.slot', ['slot' => $slot, 'page' => $page, 'renderWrapper' => false])->render();
+
+                // A promoted header navbar (PublicPagePresenter) turns this wrapper
+                // into the navbar element itself and renders the navbar's children
+                // directly, so the sticky-navbar block that normally flushes pushed
+                // mobile drawers never runs. Flush here too, after the content has
+                // rendered, so the drawer still lands right after the navbar element
+                // per the shipped wb-navbar-drawer contract. Non-promoted slots have
+                // already been drained by sticky-navbar, so this is a no-op for them.
+                $navbarDrawers = app(\WebBlocks\Cms\Support\Blocks\PublicNavbarDrawerRegistry::class)
+                    ->flush()
+                    ->implode('');
+
                 return ($beforeHtml ? $beforeHtml : '')
                     .'<'.$tag.' '.implode(' ', $attributes).'>'
                     .($startHtml ? $startHtml : '')
-                    .view('webblocks-cms::pages.partials.slot', ['slot' => $slot, 'page' => $page, 'renderWrapper' => false])->render()
+                    .$content
                     .($endHtml ? $endHtml : '')
                     .'</'.$tag.'>'
+                    .$navbarDrawers
                     .($afterHtml ? $afterHtml : '');
             };
         @endphp
