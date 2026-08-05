@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.50.3
+
+- **The Sites list opens with its row actions instead of ending with them.** The View column moved to the front of the table and now carries three icons: the globe that opens the site's home page in a new tab, plus **View details** and **Edit site**, which were entries in the Manage dropdown and cost two clicks each. Manage keeps the rest — domains, clone, export, promote, delete.
+
 ## 1.50.2
 
 - **The Sites list gained a View column.** Each row now carries the same globe button Pages has, opening that site's `/` home page on its own canonical domain in a new tab. Until now the domain was printed as text and reaching a site meant retyping it.

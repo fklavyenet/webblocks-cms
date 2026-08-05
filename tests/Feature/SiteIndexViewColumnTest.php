@@ -54,6 +54,45 @@ class SiteIndexViewColumnTest extends TestCase
   }
 
   #[Test]
+  public function the_view_column_leads_the_row(): void
+  {
+    $this->makeSite('shop.example.test');
+
+    $html = $this->renderIndex();
+
+    $this->assertLessThan(
+      strpos($html, '<th>Name</th>'),
+      strpos($html, '<th>View</th>'),
+      'The View column heads the table.'
+    );
+    $this->assertLessThan(
+      strpos($html, '<td><strong>Shop</strong></td>'),
+      strpos($html, 'data-column="view"'),
+      'The View cell opens the row.'
+    );
+  }
+
+  #[Test]
+  public function details_and_edit_are_row_icons_rather_than_dropdown_entries(): void
+  {
+    $site = $this->makeSite('shop.example.test');
+
+    $html = $this->renderIndex();
+
+    // Both reachable in one click from the row, next to the globe.
+    $this->assertStringContainsString('wb-icon-panel-right', $html);
+    $this->assertStringContainsString('wb-action-btn wb-action-btn-edit', $html);
+    $this->assertStringContainsString(route('admin.sites.edit', $site), $html);
+    $this->assertStringContainsString('details_site='.$site->id, $html);
+
+    // ...and gone from the Manage dropdown, which keeps the rest.
+    $this->assertStringNotContainsString('class="wb-dropdown-item">View details</a>', $html);
+    $this->assertStringNotContainsString('class="wb-dropdown-item">Edit site</a>', $html);
+    $this->assertStringContainsString('class="wb-dropdown-item">Manage domains</a>', $html);
+    $this->assertStringContainsString('class="wb-dropdown-item">Clone site</a>', $html);
+  }
+
+  #[Test]
   public function the_view_strings_exist_in_every_shipped_locale(): void
   {
     foreach (['en', 'tr', 'de'] as $locale) {
