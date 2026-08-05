@@ -409,6 +409,14 @@ Both fields accept an object with a required `label` and a required `url`, or `n
 
 The fields work everywhere a block payload is accepted: content validate/apply plans, `POST /pages/{page}/slots/{slot}/blocks`, and `POST /shared-slots/{sharedSlot}/blocks`.
 
+### Page Render API
+
+`GET /webadmin/api/pages/{page}/render` requires `content.read` and returns the page rendered exactly as the browser admin preview renders it: draft blocks included, `X-Robots-Tag: noindex, nofollow`, and never through the public route, so nothing about it publishes anything.
+
+Add `?format=html` for the markup itself instead of the JSON envelope, and `?locale=de` to render a specific translation; the default is the site default locale. A locale the page has no translation for returns `422` with `page_translation_missing` and the locales it does have. Shared Slot source pages are editing scaffolding and return `422` with `page_not_renderable`, matching the browser admin's own 404 on them.
+
+This is how a tool verifies what it built. Content apply reports what was stored, which is not the same as what renders: a wrapper block with no children, a slot assigned to the wrong Shared Slot, or a layout without the slots the plan assumed all apply cleanly and still produce a page nobody wants.
+
 ### Page Translation API
 
 Page translations own localized page identity and the page-level SEO and Open Graph overrides. Content apply writes one translation row for one locale when it creates a page; these endpoints are how that row is read back and changed afterwards.
@@ -777,6 +785,7 @@ The human-readable AI Page Building Guide ships in package-native installs at `v
 
 - `GET /webadmin/api/pages`
 - `GET /webadmin/api/pages/{page}`
+- `GET /webadmin/api/pages/{page}/render`
 - `GET /webadmin/api/pages/{page}/translations`
 - `POST /webadmin/api/pages/{page}/translations/{locale}`
 - `PATCH /webadmin/api/pages/{page}/translations/{translation}`

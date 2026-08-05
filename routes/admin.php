@@ -52,6 +52,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalInventoryControlle
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageTranslationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPluginController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
@@ -118,6 +119,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/pages/{page}/publish-page-owned-blocks', [InternalPagePublishController::class, 'publishPageOwnedBlocks'])->middleware('internal-api.capability:content.publish')->name('pages.publish-page-owned-blocks');
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
     Route::patch('/pages/{page}/layout', [InternalContentResourceController::class, 'updatePageLayout'])->middleware('internal-api.capability:content.apply')->name('pages.layout.update');
+    Route::get('/pages/{page}/render', [InternalPageRenderController::class, 'show'])->middleware('internal-api.capability:content.read')->name('pages.render');
     Route::get('/pages/{page}/translations', [InternalPageTranslationController::class, 'index'])->name('pages.translations.index');
     Route::post('/pages/{page}/translations/{locale}', [InternalPageTranslationController::class, 'store'])->middleware('internal-api.capability:content.apply')->name('pages.translations.store');
     Route::patch('/pages/{page}/translations/{translation}', [InternalPageTranslationController::class, 'update'])->middleware('internal-api.capability:content.apply')->name('pages.translations.update');

@@ -63,7 +63,7 @@ Capabilities are defined in `CmsApiTokenCapabilities`. A gap in this document is
 | Page CSS and JS assets | Yes | `/pages/{page}/assets/*` | Aligned |
 | Rename a page, or change its slug or path | Yes | `PATCH /pages/{page}/translations/{translation}` | Aligned |
 | Page translations: add a locale, edit name, slug, path, SEO, Open Graph | Yes | `/pages/{page}/translations/*` | Aligned |
-| **Preview a page** | Yes | `admin-render` is allowlisted to system updates only | **Missing** |
+| Preview a page | Yes | `GET /pages/{page}/render` | Aligned |
 | **Page revisions: list and restore** | Yes | None | **Missing** |
 | Add, remove, or reorder a page slot | Yes | Only `sync-layout-slots` and slot source | Partial |
 | Clear every block in a page slot | Yes | Shared Slots have `clear`; pages do not | Partial |
@@ -222,12 +222,16 @@ Ordered by how much each unblocks, not by effort.
 3. ~~Page identity update.~~ Delivered with 2: title, slug and path are translation fields, and the default-locale translation is the page's own identity.
 4. ~~Shared Slot update and delete.~~ `PATCH` and `DELETE /shared-slots/{sharedSlot}`, the latter behind the new `shared-slots.delete` capability.
 
-**Tier 2 — operational friction**
+**Tier 2 — complete**
 
-5. ~~Extend site settings: SEO defaults, `contact_recipient_email`, `locale_ids`.~~ Done — `/sites/{site}/seo`, `/contact-recipient`, and `/locales`.
-6. Page preview or render snapshot, so a tool can verify what it produced.
-7. ~~Media folder creation.~~ Done — `GET`/`POST /media/folders`.
+5. ~~Extend site settings: SEO defaults, `contact_recipient_email`, `locale_ids`.~~ `/sites/{site}/seo`, `/contact-recipient`, and `/locales`.
+6. ~~Page preview or render snapshot.~~ `GET /pages/{page}/render`, with `format=html` and per-locale rendering.
+7. ~~Media folder creation.~~ `GET`/`POST /media/folders`.
 8. ~~Capability-gate the domain routes and move them under `/webadmin/api`.~~ Done, and `update` and `set primary` came with it.
+
+**What is left**
+
+Everything still marked Missing above is second-order: page duplication and site moves, revisions, bulk operations, the HTML-to-block converter, comment deletion, contact messages, schema authoring, search reindex, and visitor reports. None of them block a tool from building, checking, correcting and publishing a page, which is what Tiers 1 and 2 were about. Pick from them by demand rather than by working down the list.
 
 **Tier 3 — deliberate boundaries**
 
