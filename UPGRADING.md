@@ -2,7 +2,7 @@
 
 Back up the application files, database, environment configuration, storage, and uploads before changing CMS versions or installation topology. Validate the result in a non-production environment. Do not delete host-owned files or data as a blanket migration step.
 
-## Unreleased
+## 1.49.0
 
 - **Site domain API endpoints now require capabilities.** The `/admin-api` domain routes previously checked only that a CMS API token was valid, so any token could add or remove a domain. Adding, updating, and promoting a domain now require the new `domains.write` capability, and deleting one requires the new destructive `domains.delete`. Reads require `content.read`, which normal tokens already have. Grant the new capabilities on the System > API Tokens screen to any provisioning tool that manages domains, before upgrading it.
 - **Domain endpoints have a canonical home.** The same routes are now registered under `/webadmin/api` alongside the rest of the Internal Content API, and gain `PUT .../domains/{domain}` and `POST .../domains/{domain}/primary`. The `/admin-api` prefix keeps working. Prefer `/webadmin/api` for new integrations: its paths are covered by the CSRF exemption, which the legacy prefix never had.
