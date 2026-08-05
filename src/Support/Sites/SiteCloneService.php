@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\NavigationItemTranslation;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
@@ -505,8 +506,10 @@ class SiteCloneService
 
     $items = NavigationItem::query()
       ->where('site_id', $sourceSite->id)
+      ->with('translations')
       ->orderBy('id')
       ->get();
+    $defaultLocaleId = $this->defaultLocaleId();
 
     foreach ($items as $item) {
       $attributes = Arr::except($item->getAttributes(), ['id', 'site_id', 'parent_id', 'created_at', 'updated_at']);
@@ -519,6 +522,20 @@ class SiteCloneService
       $newItem = NavigationItem::query()->create($attributes);
       $navigationMap[$item->id] = $newItem->id;
       $counts['navigation_items_cloned']++;
+
+      foreach ($item->translations as $translation) {
+        if (! $options->withTranslations && $translation->locale_id !== $defaultLocaleId) {
+          continue;
+        }
+
+        NavigationItemTranslation::query()->create([
+          'navigation_item_id' => $newItem->id,
+          'locale_id' => $translation->locale_id,
+          'title' => $translation->title,
+          'created_at' => $translation->created_at,
+          'updated_at' => $translation->updated_at,
+        ]);
+      }
     }
 
     foreach ($items as $item) {

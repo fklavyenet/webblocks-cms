@@ -20,6 +20,7 @@ return new class extends Migration
   public function down(): void
   {
     foreach ([
+      'wbcms_navigation_item_translations',
       'wbcms_block_gallery_item_translations',
       'wbcms_block_contact_form_translations',
       'wbcms_block_image_translations',
@@ -592,6 +593,15 @@ return new class extends Migration
       $table->string('visibility')->default('visible');
       $table->boolean('is_system')->default(false);
       $table->timestamps();
+    });
+
+    $this->createTableIfMissing('wbcms_navigation_item_translations', function (Blueprint $table): void {
+      $table->id();
+      $table->foreignId('navigation_item_id')->constrained('wbcms_navigation_items')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
+      $table->string('title')->nullable();
+      $table->timestamps();
+      $table->unique(['navigation_item_id', 'locale_id'], 'wbcms_nav_item_tr_item_locale_unique');
     });
   }
 

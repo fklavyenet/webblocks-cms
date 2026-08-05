@@ -103,7 +103,7 @@ class SitePromotionApplier
         $this->syncPageAssets($archive, $payload, $allPageMap, $plan->applyAssets(), $inspection->includesAssets, $copiedFiles);
         $this->syncBlocks($payload, $allPageMap, $localeMap, $assetMaps['asset_map'], $plan->applyAssets());
         $this->rebuildSharedSlotAssignments($sharedSlotState['shared_slots']);
-        $this->syncNavigation($targetSite, $payload, $pageState['source_page_map'], $plan->isMirror());
+        $this->syncNavigation($targetSite, $payload, $pageState['source_page_map'], $localeMap, $plan->isMirror());
         $this->archiveMirrorPages($targetSite, array_keys($pageState['source_page_map']), $plan->isMirror());
       });
     } catch (Throwable $throwable) {
@@ -610,9 +610,11 @@ class SitePromotionApplier
     }
   }
 
-  private function syncNavigation(Site $targetSite, array $payload, array $pageMap, bool $mirror): void
+  private function syncNavigation(Site $targetSite, array $payload, array $pageMap, array $localeMap, bool $mirror): void
   {
     $items = collect($payload['navigation_items'] ?? [])->sortBy('position')->values();
+    $translationsBySourceItem = collect($payload['navigation_item_translations'] ?? [])
+      ->groupBy(fn (array $translation) => (int) ($translation['navigation_item_id'] ?? 0));
     $existing = NavigationItem::query()->where('site_id', $targetSite->id)->get()->keyBy(function (NavigationItem $item): string {
       return $item->menu_key.'|'.$item->link_type.'|'.($item->page_id ?: $item->url ?: $item->title).'|'.($item->parent_id ?: 'root');
     });
@@ -648,6 +650,26 @@ class SitePromotionApplier
 
       $keptIds[] = $navigationItem->id;
       $newMap[(int) ($item['id'] ?? 0)] = $navigationItem->id;
+
+      $keptLocaleIds = [];
+
+      foreach ($translationsBySourceItem->get((int) ($item['id'] ?? 0), collect()) as $translation) {
+        $mappedLocaleId = $localeMap[(int) ($translation['locale_id'] ?? 0)] ?? null;
+
+        if (! $mappedLocaleId) {
+          continue;
+        }
+
+        $navigationItem->translations()->updateOrCreate(
+          ['locale_id' => $mappedLocaleId],
+          ['title' => $translation['title'] ?? null],
+        );
+        $keptLocaleIds[] = $mappedLocaleId;
+      }
+
+      if ($mirror) {
+        $navigationItem->translations()->whereNotIn('locale_id', $keptLocaleIds)->delete();
+      }
     }
 
     if ($mirror) {

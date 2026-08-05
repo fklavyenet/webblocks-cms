@@ -16,7 +16,7 @@ class NavigationTree
     $items = NavigationItem::query()
       ->forSite($site)
       ->forMenu($menuKey)
-      ->with(['page.translations'])
+      ->with(['page.translations', 'translations.locale'])
       ->ordered()
       ->get();
 
@@ -28,7 +28,7 @@ class NavigationTree
     $items = NavigationItem::query()
       ->forSite($site)
       ->forMenu($menuKey)
-      ->with(['children', 'page.translations'])
+      ->with(['children', 'page.translations', 'translations.locale'])
       ->ordered()
       ->get();
 

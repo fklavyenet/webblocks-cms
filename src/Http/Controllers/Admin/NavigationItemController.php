@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\NavigationItemReorderRequest;
 use WebBlocks\Cms\Http\Requests\Admin\NavigationItemRequest;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Navigation\NavigationTree;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -69,7 +71,17 @@ class NavigationItemController extends Controller
   public function store(NavigationItemRequest $request): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $request->integer('site_id'));
-    NavigationItem::create($this->validatedData($request));
+    $data = $this->validatedData($request);
+    $translationLocale = $this->translationLocale($request->validated('locale'));
+
+    $item = NavigationItem::create($data);
+
+    if ($translationLocale && $request->filled('title')) {
+      $item->translations()->updateOrCreate(
+        ['locale_id' => $translationLocale->id],
+        ['title' => trim((string) $request->validated('title'))],
+      );
+    }
 
     return redirect()
       ->route('admin.navigation.index', ['site_id' => $request->integer('site_id'), 'menu_key' => $request->string('menu_key')->toString()])
@@ -92,7 +104,20 @@ class NavigationItemController extends Controller
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $navigation);
     $this->authorization->abortUnlessSiteAccess($request->user(), $request->integer('site_id'));
-    $navigation->update($this->validatedData($request));
+    $data = $this->validatedData($request);
+    $translationLocale = $this->translationLocale($request->validated('locale'));
+
+    if ($translationLocale) {
+      $translatedTitle = trim((string) ($data['title'] ?? ''));
+      unset($data['title']);
+      $navigation->update($data);
+      $navigation->translations()->updateOrCreate(
+        ['locale_id' => $translationLocale->id],
+        ['title' => $translatedTitle !== '' ? $translatedTitle : null],
+      );
+    } else {
+      $navigation->update($data);
+    }
 
     return redirect()
       ->route('admin.navigation.index', ['site_id' => $navigation->fresh()->site_id, 'menu_key' => $navigation->fresh()->menu_key])
@@ -148,9 +173,27 @@ class NavigationItemController extends Controller
       ->with('status', 'Navigation item updated successfully.');
   }
 
+  private function translationLocale(?string $localeCode): ?Locale
+  {
+    $code = Locale::normalizeCode((string) $localeCode);
+
+    if ($code === null) {
+      return null;
+    }
+
+    $locale = app(LocaleResolver::class)->resolve($code);
+
+    if (! $locale || $locale->id === app(LocaleResolver::class)->default()->id) {
+      return null;
+    }
+
+    return $locale;
+  }
+
   private function validatedData(NavigationItemRequest $request): array
   {
     $data = $request->validated();
+    unset($data['locale']);
     $data['site_id'] = (int) $data['site_id'];
 
     $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;

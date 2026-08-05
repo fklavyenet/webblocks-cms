@@ -134,6 +134,11 @@ class NavigationItem extends CmsModel
     return $this->hasMany(self::class, 'parent_id')->orderBy('position');
   }
 
+  public function translations(): HasMany
+  {
+    return $this->hasMany(NavigationItemTranslation::class);
+  }
+
   public function scopeVisible($query)
   {
     return $query->where('visibility', self::VISIBILITY_VISIBLE);
@@ -175,14 +180,47 @@ class NavigationItem extends CmsModel
     return $query->orderBy('position')->orderBy('id');
   }
 
-  public function resolvedTitle(): string
+  public function resolvedTitle(?Locale $locale = null): string
   {
-    return $this->title ?: ($this->page?->name ?: ($this->link_type === self::LINK_GROUP ? 'Untitled Group' : (string) $this->url));
+    return $this->translatedTitle($locale)
+      ?? ($this->title ?: ($this->page?->name ?: ($this->link_type === self::LINK_GROUP ? 'Untitled Group' : (string) $this->url)));
   }
 
-  public function resolvedLabel(): string
+  public function resolvedLabel(?Locale $locale = null): string
   {
-    return $this->resolvedTitle();
+    return $this->resolvedTitle($locale);
+  }
+
+  public function translationForLocale(Locale|string|null $locale): ?NavigationItemTranslation
+  {
+    $code = $locale instanceof Locale
+      ? $locale->code
+      : Locale::normalizeCode((string) $locale);
+
+    if ($code === null) {
+      return null;
+    }
+
+    if ($this->relationLoaded('translations')) {
+      return $this->translations->first(fn (NavigationItemTranslation $translation) => $translation->locale?->code === $code);
+    }
+
+    return $this->translations()
+      ->whereHas('locale', fn ($query) => $query->where('code', $code))
+      ->first();
+  }
+
+  private function translatedTitle(?Locale $locale): ?string
+  {
+    $requested = $locale?->code ?? request()?->route('locale');
+
+    if (! is_string($requested) || $requested === '') {
+      return null;
+    }
+
+    $title = trim((string) $this->translationForLocale($requested)?->title);
+
+    return $title !== '' ? $title : null;
   }
 
   public function resolvedUrl(): ?string

@@ -9,6 +9,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\NavigationItemTranslation;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
@@ -234,6 +235,12 @@ class InternalContentApiPresenter
       'menu_key' => $item->menu_key,
       'parent_id' => $item->parent_id,
       'label' => $item->resolvedLabel(),
+      'title_translations' => $item->relationLoaded('translations')
+        ? $item->translations
+          ->mapWithKeys(fn (NavigationItemTranslation $translation) => [$translation->locale?->code => $translation->title])
+          ->filter(fn ($title, $code) => is_string($code) && $code !== '' && $title !== null)
+          ->all()
+        : [],
       'link_type' => $item->link_type,
       'url' => $item->url,
       'target' => $item->target ?: '_self',

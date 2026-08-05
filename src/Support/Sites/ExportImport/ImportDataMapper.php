@@ -20,6 +20,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\NavigationItemTranslation;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageSlot;
@@ -323,7 +324,7 @@ class ImportDataMapper
         );
         break;
       case 'navigation':
-        $this->importNavigation($this->stateSite($state), $payload, $state['maps']['page'], $log);
+        $this->importNavigation($this->stateSite($state), $payload, $state['maps']['page'], $state['maps']['locale'], $log);
         break;
       case 'search_index':
         $indexed = app(PublicSearchIndexer::class)->rebuild($this->stateSite($state));
@@ -1489,7 +1490,7 @@ class ImportDataMapper
     $output[] = 'Imported '.$count.' gallery item translation row(s).';
   }
 
-  private function importNavigation(Site $site, array $payload, array $pageMap, array &$output): void
+  private function importNavigation(Site $site, array $payload, array $pageMap, array $localeMap, array &$output): void
   {
     $map = [];
 
@@ -1524,6 +1525,30 @@ class ImportDataMapper
     }
 
     $output[] = 'Imported '.count($map).' navigation item(s).';
+
+    $translationCount = 0;
+
+    foreach ($payload['navigation_item_translations'] ?? [] as $translationData) {
+      $itemId = $map[(int) ($translationData['navigation_item_id'] ?? 0)] ?? null;
+      $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
+
+      if (! $itemId || ! $localeId) {
+        continue;
+      }
+
+      NavigationItemTranslation::query()->create([
+        'navigation_item_id' => $itemId,
+        'locale_id' => $localeId,
+        'title' => $translationData['title'] ?? null,
+        'created_at' => $translationData['created_at'] ?? null,
+        'updated_at' => $translationData['updated_at'] ?? null,
+      ]);
+      $translationCount++;
+    }
+
+    if ($translationCount > 0) {
+      $output[] = 'Imported '.$translationCount.' navigation item translation row(s).';
+    }
   }
 
   private function availableHandle(string $requestedHandle): string

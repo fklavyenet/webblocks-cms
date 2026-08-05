@@ -7,12 +7,14 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Navigation\NavigationTree;
 
 class InternalNavigationController extends Controller
@@ -28,7 +30,7 @@ class InternalNavigationController extends Controller
   {
     $site = $this->siteFromRequest($request);
     $items = NavigationItem::query()
-      ->with(['page', 'children.page'])
+      ->with(['page', 'children.page', 'translations.locale', 'children.translations.locale'])
       ->when($site, fn ($query) => $query->where('site_id', $site->id))
       ->ordered()
       ->get()
@@ -60,7 +62,7 @@ class InternalNavigationController extends Controller
     }
 
     $items = NavigationItem::query()
-      ->with(['page', 'children.page'])
+      ->with(['page', 'children.page', 'translations.locale', 'children.translations.locale'])
       ->where('site_id', $site->id)
       ->where('menu_key', $navigationMenu)
       ->ordered()
@@ -127,7 +129,7 @@ class InternalNavigationController extends Controller
 
     return response()->json([
       'ok' => true,
-      'navigation_item' => $this->presenter->navigationItem($item->fresh(['page', 'children'])),
+      'navigation_item' => $this->presenter->navigationItem($item->fresh(['page', 'children', 'translations.locale'])),
       'writes' => [['type' => 'navigation_item', 'id' => $item->id]],
       'warnings' => [],
       'errors' => [],
@@ -145,16 +147,33 @@ class InternalNavigationController extends Controller
       ]);
     }
 
-    $updates = $this->normalizeNavigationItemUpdate($request->json()->all(), $item, $site, $navigationMenu, $errors);
+    $payload = $request->json()->all();
+    $translationLocale = $this->translationLocaleFromPayload($payload, $site, $errors);
+    $hasTitleKey = array_key_exists('label', $payload) || array_key_exists('title', $payload);
+
+    $updates = $this->normalizeNavigationItemUpdate($payload, $item, $site, $navigationMenu, $errors);
 
     if ($errors !== []) {
       return $this->validationError($errors);
     }
 
-    DB::transaction(fn () => $item->update($updates));
+    if ($translationLocale && $hasTitleKey) {
+      $translatedTitle = trim((string) ($updates['title'] ?? ''));
+      $updates['title'] = $item->title;
+
+      DB::transaction(function () use ($item, $updates, $translationLocale, $translatedTitle): void {
+        $item->update($updates);
+        $item->translations()->updateOrCreate(
+          ['locale_id' => $translationLocale->id],
+          ['title' => $translatedTitle !== '' ? $translatedTitle : null],
+        );
+      });
+    } else {
+      DB::transaction(fn () => $item->update($updates));
+    }
 
     return $this->ok([
-      'navigation_item' => $this->presenter->navigationItem($item->fresh(['page', 'children'])),
+      'navigation_item' => $this->presenter->navigationItem($item->fresh(['page', 'children', 'translations.locale'])),
       'writes' => [['type' => 'navigation_item', 'id' => $item->id]],
     ]);
   }
@@ -194,7 +213,7 @@ class InternalNavigationController extends Controller
     });
 
     $items = NavigationItem::query()
-      ->with(['page', 'children.page'])
+      ->with(['page', 'children.page', 'translations.locale', 'children.translations.locale'])
       ->where('site_id', $site->id)
       ->where('menu_key', $navigationMenu)
       ->ordered()
@@ -249,6 +268,28 @@ class InternalNavigationController extends Controller
       && in_array($navigationMenu, NavigationItem::menuKeys(), true)
       && (int) $item->site_id === (int) $site->id
       && $item->menu_key === $navigationMenu;
+  }
+
+  private function translationLocaleFromPayload(array &$payload, Site $site, array &$errors): ?Locale
+  {
+    if (! array_key_exists('locale', $payload)) {
+      return null;
+    }
+
+    $value = $payload['locale'];
+    unset($payload['locale']);
+
+    if ($value === null || trim((string) $value) === '') {
+      return null;
+    }
+
+    $locale = $this->operations->resolveLocale($value, $site, 'navigation_item.locale', $errors);
+
+    if (! $locale || $locale->id === app(LocaleResolver::class)->default()->id) {
+      return null;
+    }
+
+    return $locale;
   }
 
   private function normalizeNavigationItemUpdate(array $payload, NavigationItem $item, Site $site, string $navigationMenu, array &$errors): array

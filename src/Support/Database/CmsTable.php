@@ -34,6 +34,7 @@ final class CmsTable
     'locales',
     'media',
     'media_folders',
+    'navigation_item_translations',
     'navigation_items',
     'page_assets',
     'page_layout_slots',

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
@@ -45,6 +46,7 @@ class NavigationItemRequest extends FormRequest
       ],
       'page_id' => ['nullable', 'integer', 'exists:wbcms_pages,id'],
       'title' => ['nullable', 'string', 'max:255'],
+      'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:wbcms_locales,code'],
       'link_type' => ['required', 'string', Rule::in(NavigationItem::linkTypes())],
       'url' => ['nullable', 'string', 'max:2048'],
       'target' => ['nullable', 'string', Rule::in(['_self', '_blank'])],
@@ -67,6 +69,16 @@ class NavigationItemRequest extends FormRequest
       $siteId = $this->integer('site_id') ?: Site::primary()?->id;
       $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon'));
       $currentIcon = app(IconCatalog::class)->normalizeSlug($navigation?->icon);
+
+      $localeCode = Locale::normalizeCode($this->input('locale'));
+
+      if ($localeCode !== null) {
+        $site = Site::query()->with('locales')->find($siteId);
+
+        if (! $site || ! $site->hasEnabledLocale($localeCode)) {
+          $validator->errors()->add('locale', 'Selected locale must be enabled for the site.');
+        }
+      }
 
       if ($linkType === NavigationItem::LINK_PAGE && ! $pageId) {
         $validator->errors()->add('page_id', 'Select a page for page links.');

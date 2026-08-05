@@ -13,6 +13,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\NavigationItemTranslation;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageSlot;
@@ -69,6 +70,7 @@ class SiteExportDataBuilder
 
     $navigationItems = NavigationItem::query()
       ->where('site_id', $site->id)
+      ->with('translations')
       ->orderBy('id')
       ->get();
     $pageAssets = PageAsset::query()->whereIn('page_id', $pageIds)->orderBy('sort_order')->orderBy('id')->get();
@@ -350,6 +352,14 @@ class SiteExportDataBuilder
         'created_at' => $item->created_at?->toDateTimeString(),
         'updated_at' => $item->updated_at?->toDateTimeString(),
       ])->all(),
+      'navigation_item_translations' => $navigationItems->flatMap(fn (NavigationItem $item) => $item->translations->map(fn (NavigationItemTranslation $translation) => [
+        'id' => $translation->id,
+        'navigation_item_id' => $translation->navigation_item_id,
+        'locale_id' => $translation->locale_id,
+        'title' => $translation->title,
+        'created_at' => $translation->created_at?->toDateTimeString(),
+        'updated_at' => $translation->updated_at?->toDateTimeString(),
+      ]))->values()->all(),
       'media_folders' => $assetFolders->map(fn (MediaFolder $folder) => [
         'id' => $folder->id,
         'parent_id' => $folder->parent_id,
@@ -398,6 +408,7 @@ class SiteExportDataBuilder
         'block_contact_form_translations' => $blocks->sum(fn (Block $block) => $block->contactFormTranslations->count()),
         'block_gallery_item_translations' => $blocks->sum(fn (Block $block) => $block->blockAssets->sum(fn ($blockAsset) => $blockAsset->galleryItemTranslations->count())),
         'navigation_items' => $navigationItems->count(),
+        'navigation_item_translations' => $navigationItems->sum(fn (NavigationItem $item) => $item->translations->count()),
         'media_folders' => $assetFolders->count(),
         'media' => $assets->count(),
         'site_public_assets' => $sitePublicAssets->count(),
