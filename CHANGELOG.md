@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.50.6
+
+- **A listing that hides everything behind a filter no longer tells you to create your first one.** Ten admin listings shared a single empty-state message written for a genuinely empty install, so searching Pages on a site with fifteen of them answered "Adjust the filters or create your first page", and searching Contact Messages answered "No messages yet — published Contact Form blocks will save new submissions here". Each listing now tells the two states apart: nothing exists yet keeps its original invitation, while a filtered-away result says so and offers a way back to the unfiltered list.
+- Covers Pages, Contact Messages, Blocks, Shared Slots, Media, Icons, Backups, and both Engagement listings. Users already did this and is the pattern the rest now follow.
+- Sorting, view mode, and the site scope deliberately do not count as active filters: they do not hide rows, and a site with no pages really should be told to create its first one.
+- Contact Messages and Backups also switch their empty-state *title*, because "No messages yet" and "No backup history yet" are claims about time that a filtered result contradicts.
+- `ListingEmptyStateContractTest` holds the pattern in place for all ten listings and checks every new string is translated in English, German, and Turkish, so a listing added later cannot quietly fall back to one message.
+
 ## 1.50.5
 
 - **Pinned to WebBlocks UI 2.18.0**, which brings two fixes to every site on the next update.
