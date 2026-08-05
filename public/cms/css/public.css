@@ -10,6 +10,11 @@
 .wb-public-body {
     display: flex;
     flex-direction: column;
+    /* The reset's 100vh is the largest viewport on mobile, so it reserves room
+       for browser chrome that may be retracted and leaves a short page just
+       scrollable enough to feel broken. 100dvh tracks the visible viewport. A
+       browser without dvh drops this declaration and keeps the reset's 100vh. */
+    min-block-size: 100dvh;
 }
 
 .wb-public-body > .wb-slot-main {

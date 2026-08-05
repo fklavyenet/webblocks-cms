@@ -50,6 +50,12 @@ class PublicShellStickyFooterTest extends TestCase
       $css,
       'Main must absorb the leftover height and must not shrink below its content.'
     );
+    // The reset's own 100vh stays as the fallback for browsers without dvh.
+    $this->assertMatchesRegularExpression(
+      '/\.wb-public-body\s*\{[^}]*min-block-size:\s*100dvh;[^}]*\}/s',
+      $css,
+      'The shell must track the visible viewport, not the largest one.'
+    );
   }
 
   #[Test]
