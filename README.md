@@ -110,7 +110,7 @@ Existing full-repository clones must preserve host-owned `.env`, database, stora
 - Start with [Installation](docs/installation.md), [Getting Started](docs/getting-started.md), and [Core Concepts](docs/core-concepts.md).
 - Build content with [Page Layouts](docs/page-layouts.md), [Block Type Contracts](docs/block-type-contracts.md), [Editorial Workflow](docs/editorial-workflow.md), and [Revisions](docs/revisions.md).
 - Operate sites with [Multisite](docs/multisite.md), [Localization](docs/localization.md), [Users and Permissions](docs/users-and-permissions.md), [Media Image Variants](docs/media-image-variants.md), and [Operations](docs/operations.md).
-- Integrate trusted tools through the [Internal Content API](docs/internal-content-api.md), [API Discovery](docs/api-discovery.md), and [AI Page Building Guide](docs/ai-page-building-guide.md).
+- Integrate trusted tools through the [Internal Content API](docs/internal-content-api.md), [API Discovery](docs/api-discovery.md), and [AI Page Building Guide](docs/ai-page-building-guide.md), and check [API and Panel Alignment](docs/api-panel-alignment.md) for what the API deliberately does not cover.
 - Understand runtime boundaries in [Package Architecture](docs/package-architecture.md), [Laravel Coexistence](docs/coexistence.md), [Plugin System](docs/plugin-system.md), and [Updates](docs/updates.md).
 - Read planned work in the [Appointments Plugin Plan](docs/appointments-plugin-plan.md), which is a design record rather than shipped behavior.
 
