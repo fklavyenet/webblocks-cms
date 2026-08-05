@@ -73,23 +73,65 @@ class SiteIndexViewColumnTest extends TestCase
   }
 
   #[Test]
-  public function details_and_edit_are_row_icons_rather_than_dropdown_entries(): void
+  public function the_view_column_carries_the_globe_alone(): void
+  {
+    $this->makeSite('shop.example.test');
+
+    $html = $this->renderIndex();
+
+    $viewCell = $this->cellAfter($html, 'data-column="view"');
+
+    $this->assertStringContainsString('wb-icon-globe', $viewCell);
+    $this->assertStringNotContainsString('wb-icon-panel-right', $viewCell);
+    $this->assertStringNotContainsString('wb-icon-pencil', $viewCell);
+  }
+
+  #[Test]
+  public function details_and_edit_are_actions_column_icons_rather_than_dropdown_entries(): void
   {
     $site = $this->makeSite('shop.example.test');
 
     $html = $this->renderIndex();
 
-    // Both reachable in one click from the row, next to the globe.
+    // Both reachable in one click, ahead of the Manage button.
     $this->assertStringContainsString('wb-icon-panel-right', $html);
     $this->assertStringContainsString('wb-action-btn wb-action-btn-edit', $html);
     $this->assertStringContainsString(route('admin.sites.edit', $site), $html);
     $this->assertStringContainsString('details_site='.$site->id, $html);
+    $this->assertLessThan(
+      strpos($html, 'data-wb-target="#site-actions-'.$site->id.'"'),
+      strpos($html, 'wb-icon-panel-right'),
+      'The two icons lead the Actions cell, with Manage last.'
+    );
 
     // ...and gone from the Manage dropdown, which keeps the rest.
     $this->assertStringNotContainsString('class="wb-dropdown-item">View details</a>', $html);
     $this->assertStringNotContainsString('class="wb-dropdown-item">Edit site</a>', $html);
     $this->assertStringContainsString('class="wb-dropdown-item">Manage domains</a>', $html);
     $this->assertStringContainsString('class="wb-dropdown-item">Clone site</a>', $html);
+  }
+
+  #[Test]
+  public function the_manage_button_says_it_opens_a_menu(): void
+  {
+    $this->makeSite('shop.example.test');
+
+    $html = $this->renderIndex();
+
+    $this->assertMatchesRegularExpression(
+      '/Manage\s*\n?\s*<i class="wb-icon wb-icon-chevron-down"/',
+      $html,
+      'The Manage button carries a chevron.'
+    );
+  }
+
+  private function cellAfter(string $html, string $needle): string
+  {
+    $start = strpos($html, $needle);
+
+    $this->assertNotFalse($start, 'Expected to find '.$needle.' in the rendered table.');
+
+    return substr($html, $start, strpos($html, '</td>', $start) - $start);
   }
 
   #[Test]

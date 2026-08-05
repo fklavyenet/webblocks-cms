@@ -54,38 +54,16 @@
                             @php($deleteReport = $siteDeleteReports[$site->id] ?? null)
                             <tr data-site-id="{{ $site->id }}">
                                 <td data-column="view">
-                                    <div class="wb-action-group">
-                                        <a
-                                            href="{{ $site->publicHomeUrl() }}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="wb-action-btn wb-action-btn-view"
-                                            title="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
-                                            aria-label="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
-                                        >
-                                            <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
-                                        </a>
-
-                                        <a
-                                            href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}"
-                                            class="wb-action-btn"
-                                            aria-haspopup="dialog"
-                                            aria-controls="siteDetailsModal"
-                                            title="{{ $adminText('sites.view_details') }}"
-                                            aria-label="{{ $adminText('sites.view_details') }}"
-                                        >
-                                            <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
-                                        </a>
-
-                                        <a
-                                            href="{{ route('admin.sites.edit', $site) }}"
-                                            class="wb-action-btn wb-action-btn-edit"
-                                            title="{{ $adminText('sites.edit_site') }}"
-                                            aria-label="{{ $adminText('sites.edit_site') }}"
-                                        >
-                                            <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
-                                        </a>
-                                    </div>
+                                    <a
+                                        href="{{ $site->publicHomeUrl() }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="wb-action-btn wb-action-btn-view"
+                                        title="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
+                                        aria-label="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
+                                    >
+                                        <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
+                                    </a>
                                 </td>
                                 <td><strong>{{ $site->name }}</strong></td>
                                 <td><code>{{ $site->handle }}</code></td>
@@ -113,28 +91,51 @@
                                     <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? $adminText('sites.primary') : $adminText('sites.standard') }}</span>
                                 </td>
                                 <td>
-                                    <div class="wb-dropdown wb-dropdown-end">
-                                        <button
-                                            class="wb-btn wb-btn-secondary"
-                                            type="button"
-                                            data-wb-toggle="dropdown"
-                                            data-wb-target="#site-actions-{{ $site->id }}"
-                                            aria-expanded="false"
-                                            title="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
-                                            aria-label="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
+                                    <div class="wb-action-group">
+                                        <a
+                                            href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}"
+                                            class="wb-action-btn"
+                                            aria-haspopup="dialog"
+                                            aria-controls="siteDetailsModal"
+                                            title="{{ $adminText('sites.view_details') }}"
+                                            aria-label="{{ $adminText('sites.view_details') }}"
                                         >
-                                            {{ $adminText('common.manage') }}
-                                        </button>
+                                            <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
+                                        </a>
 
-                                        <div class="wb-dropdown-menu" id="site-actions-{{ $site->id }}">
-                                            <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.manage_domains') }}</a>
-                                            <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.clone_site') }}</a>
-                                            @if ($canExportSites)
-                                                <a href="{{ route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteIndexExportModal">{{ $adminText('sites.export_site') }}</a>
-                                                <a href="{{ route('admin.sites.promote', ['target_site_id' => $site->id]) }}" class="wb-dropdown-item">{{ $adminText('sites.promote_to_site') }}</a>
-                                            @endif
-                                            <hr class="wb-dropdown-divider">
-                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! $deleteReport?->canDelete) aria-disabled="true" @endif>{{ $adminText('sites.delete_site') }}</a>
+                                        <a
+                                            href="{{ route('admin.sites.edit', $site) }}"
+                                            class="wb-action-btn wb-action-btn-edit"
+                                            title="{{ $adminText('sites.edit_site') }}"
+                                            aria-label="{{ $adminText('sites.edit_site') }}"
+                                        >
+                                            <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
+                                        </a>
+
+                                        <div class="wb-dropdown wb-dropdown-end">
+                                            <button
+                                                class="wb-btn wb-btn-secondary"
+                                                type="button"
+                                                data-wb-toggle="dropdown"
+                                                data-wb-target="#site-actions-{{ $site->id }}"
+                                                aria-expanded="false"
+                                                title="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
+                                                aria-label="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
+                                            >
+                                                {{ $adminText('common.manage') }}
+                                                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
+                                            </button>
+
+                                            <div class="wb-dropdown-menu" id="site-actions-{{ $site->id }}">
+                                                <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.manage_domains') }}</a>
+                                                <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.clone_site') }}</a>
+                                                @if ($canExportSites)
+                                                    <a href="{{ route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteIndexExportModal">{{ $adminText('sites.export_site') }}</a>
+                                                    <a href="{{ route('admin.sites.promote', ['target_site_id' => $site->id]) }}" class="wb-dropdown-item">{{ $adminText('sites.promote_to_site') }}</a>
+                                                @endif
+                                                <hr class="wb-dropdown-divider">
+                                                <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! $deleteReport?->canDelete) aria-disabled="true" @endif>{{ $adminText('sites.delete_site') }}</a>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

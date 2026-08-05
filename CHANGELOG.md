@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.50.4
+
+- **The Sites row actions sit where they belong.** 1.50.3 put View details and Edit site in the leading View column, next to the globe; View now carries the globe alone, and the two icons moved into Actions, ahead of the Manage button. Manage also gained a chevron, so a button that opens a menu now looks like one. Nothing moved out of the dropdown that was not already out of it.
+
 ## 1.50.3
 
 - **The Sites list opens with its row actions instead of ending with them.** The View column moved to the front of the table and now carries three icons: the globe that opens the site's home page in a new tab, plus **View details** and **Edit site**, which were entries in the Manage dropdown and cost two clicks each. Manage keeps the rest — domains, clone, export, promote, delete.
