@@ -555,6 +555,27 @@ class InternalSiteController extends Controller
     return $asset;
   }
 
+  private const CSS_LITERAL_COLOR = '(?:\#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()';
+
+  private const CSS_BACKGROUND_DECLARATION = 'background(?:-color)?\s*:\s*'.self::CSS_LITERAL_COLOR;
+
+  private const CSS_TEXT_COLOR_DECLARATION = '(?<![\w-])color\s*:\s*'.self::CSS_LITERAL_COLOR;
+
+  /**
+   * These checks are about page-wide paint, so the selector token has to be the
+   * last compound of its selector: `body { background: #fff }` repaints the
+   * page, `body .promo { background: #fff }` paints one element. The token also
+   * has to end where the name ends -- `.wb-card-title` is not `.wb-card`, and
+   * `.wb-public-body` is not `body`, which is what used to report a purely
+   * local rule as a page-wide anti-pattern.
+   */
+  private function pageWideSelectorPattern(string $token, string $declaration): string
+  {
+    $compoundTail = '(?![\w-])(?:\.[\w-]+)*(?:\[[^\]]*\])*(?::{1,2}[\w-]+(?:\([^()]*\))?)*';
+
+    return '/'.$token.$compoundTail.'\s*(?:,[^{}]*)?\{[^{}]*'.$declaration.'/is';
+  }
+
   private function analyzeCssModeAwareness(string $contents): array
   {
     $css = trim($contents);
@@ -582,7 +603,7 @@ class InternalSiteController extends Controller
       ];
     }
 
-    preg_match_all('/(?<![\w-])(?:background(?:-color)?|color)\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/i', $css, $literalColorMatches);
+    preg_match_all('/(?<![\w-])(?:background(?:-color)?|color)\s*:\s*'.self::CSS_LITERAL_COLOR.'/i', $css, $literalColorMatches);
 
     $warnings = [];
     $antiPatterns = [];
@@ -592,23 +613,23 @@ class InternalSiteController extends Controller
 
     $pageWideChecks = [
       'body_theme_background' => [
-        '/(?:body(?:\.[\w-]+)?|body\s*\[\s*data-wb-public-theme[^\]]*\])[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        $this->pageWideSelectorPattern('(?<![\w.#-])body', self::CSS_BACKGROUND_DECLARATION),
         'Body/public-theme selectors set literal background colors; map page background through --wb-public-page-bg or a semantic site variable.',
       ],
       'body_theme_color' => [
-        '/(?:body(?:\.[\w-]+)?|body\s*\[\s*data-wb-public-theme[^\]]*\])[^{}]*\{[^{}]*(?<!-)color\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        $this->pageWideSelectorPattern('(?<![\w.#-])body', self::CSS_TEXT_COLOR_DECLARATION),
         'Body/public-theme selectors set literal text colors; map page text through --wb-public-text or a semantic site variable.',
       ],
       'main_background' => [
-        '/#main-content[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        $this->pageWideSelectorPattern('(?<![\w.#-])\#main-content', self::CSS_BACKGROUND_DECLARATION),
         '#main-content sets a literal background; use --wb-public-page-bg or a semantic site page background variable.',
       ],
       'section_background' => [
-        '/\.wb-section[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        $this->pageWideSelectorPattern('\.wb-section', self::CSS_BACKGROUND_DECLARATION),
         '.wb-section sets a literal background; native public sections should inherit public theme surface/page tokens unless the override is paired with dark-mode values.',
       ],
       'card_background' => [
-        '/\.wb-card[^{}]*\{[^{}]*background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/is',
+        $this->pageWideSelectorPattern('\.wb-card', self::CSS_BACKGROUND_DECLARATION),
         '.wb-card sets a literal background; card-like native blocks should usually keep WebBlocks UI surface tokens.',
       ],
     ];
