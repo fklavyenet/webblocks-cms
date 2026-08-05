@@ -248,6 +248,7 @@ class InternalApiDiscoveryController extends Controller
       'site_asset' => '/webadmin/api/sites/{site}/assets/{css|js}',
       'media' => '/webadmin/api/media',
       'media_upload' => '/webadmin/api/media',
+      'media_folders' => '/webadmin/api/media/folders',
       'media_remote_fetch' => '/webadmin/api/media/fetch',
       'media_update' => '/webadmin/api/media/{media}',
       'media_replace' => '/webadmin/api/media/{media}/replace',
@@ -363,6 +364,10 @@ class InternalApiDiscoveryController extends Controller
       '/media' => [
         'get' => ['summary' => 'List Media items for API-safe media assignment', 'x-required-capability' => 'media.read; content.read accepted for transitional compatibility', 'parameters' => [['name' => 'kind', 'in' => 'query', 'schema' => ['type' => 'string']], ['name' => 'search', 'in' => 'query', 'schema' => ['type' => 'string']]], 'responses' => ['200' => ['description' => 'Media JSON', 'content' => $json], '403' => ['description' => 'Requires media.read capability', 'content' => $json]]],
         'post' => ['summary' => 'Upload a file into the Media Library', 'x-required-capability' => 'media.upload', 'x-consumes' => 'multipart/form-data', 'x-supported-kinds' => ['image', 'video', 'document', 'other'], 'responses' => ['201' => ['description' => 'Uploaded media JSON', 'content' => $json], '403' => ['description' => 'Requires media.upload capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+      ],
+      '/media/folders' => [
+        'get' => ['summary' => 'List Media Library folders', 'responses' => ['200' => ['description' => 'Media folders JSON', 'content' => $json]]],
+        'post' => ['summary' => 'Create a Media Library folder', 'x-required-capability' => 'media.write', 'x-required-fields' => ['name'], 'x-supported-fields' => ['name', 'slug', 'parent_id'], 'x-note' => 'A folder whose name already exists under the same parent is refused with media_folder_exists and the existing folder in the response, so retries reuse it instead of piling up duplicates. File uploads into a folder with folder_id; move existing media with POST /media/{media}/move.', 'responses' => ['201' => ['description' => 'Created media folder JSON', 'content' => $json], '403' => ['description' => 'Requires media.write capability', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
       ],
       '/media/fetch' => ['post' => ['summary' => 'Fetch one approved public remote file into the Media Library', 'x-required-capability' => 'media.upload', 'x-required-fields' => ['source_url'], 'x-supported-fields' => ['folder_id', 'source_url', 'title', 'alt_text', 'caption', 'description'], 'x-safety-guards' => ['http/https only', 'private and reserved network targets rejected', 'redirect limit', 'remote fetch size limit', 'allowed media MIME types'], 'responses' => ['201' => ['description' => 'Fetched media JSON', 'content' => $json], '403' => ['description' => 'Requires media.upload capability', 'content' => $json], '422' => ['description' => 'Validation or fetch failure JSON', 'content' => $json]]]],
       '/media/{media}' => [

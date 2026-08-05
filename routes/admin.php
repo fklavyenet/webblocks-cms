@@ -150,6 +150,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/media', [InternalContentResourceController::class, 'media'])->name('media.index');
     Route::post('/media', [InternalContentResourceController::class, 'storeMedia'])->middleware('internal-api.capability:media.upload')->name('media.store');
     Route::post('/media/fetch', [InternalContentResourceController::class, 'fetchRemoteMedia'])->middleware('internal-api.capability:media.upload')->name('media.fetch');
+    // Registered before /media/{media} so "folders" is not read as a media id.
+    Route::get('/media/folders', [InternalContentResourceController::class, 'mediaFolders'])->name('media.folders.index');
+    Route::post('/media/folders', [InternalContentResourceController::class, 'storeMediaFolder'])->middleware('internal-api.capability:media.write')->name('media.folders.store');
     Route::patch('/media/{media}', [InternalContentResourceController::class, 'updateMedia'])->middleware('internal-api.capability:media.write')->name('media.update');
     Route::get('/media/{media}', [InternalContentResourceController::class, 'showMedia'])->name('media.show');
     Route::post('/media/{media}/replace', [InternalContentResourceController::class, 'replaceMedia'])->middleware('internal-api.capability:media.replace')->name('media.replace');

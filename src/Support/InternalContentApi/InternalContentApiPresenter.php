@@ -7,6 +7,7 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
@@ -186,6 +187,17 @@ class InternalContentApiPresenter
       'og_title' => $translation->og_title,
       'og_description' => $translation->og_description,
       'og_image_media_id' => $translation->og_image_media_id,
+    ];
+  }
+
+  public function mediaFolder(MediaFolder $folder): array
+  {
+    return [
+      'id' => $folder->id,
+      'name' => $folder->name,
+      'slug' => $folder->slug,
+      'parent_id' => $folder->parent_id,
+      'media_count' => $folder->media_count !== null ? (int) $folder->media_count : null,
     ];
   }
 

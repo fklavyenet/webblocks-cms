@@ -530,6 +530,8 @@ DELETE /webadmin/api/media/{media}
 
 `GET /webadmin/api/media` returns existing media records with safe fields such as id, kind, title, filename, original name, mime type, visibility, public URL when available, alt text, dimensions, previewability, and compact metadata label. It requires `media.read`. During the transition from older API tokens, `content.read` may also be accepted for read-only media discovery so existing page-building integrations keep working.
 
+`GET /webadmin/api/media/folders` lists Media Library folders with their media counts, and `POST /webadmin/api/media/folders` requires `media.write` and creates one from `name`, with optional `slug` and `parent_id`. A name that already exists under the same parent is refused with `422` and the code `media_folder_exists`, and the response carries the existing folder so a retrying tool reuses it instead of creating duplicates. File uploads into a folder with `folder_id`; move existing media with `POST /webadmin/api/media/{media}/move`.
+
 `POST /webadmin/api/media` requires `media.upload` and accepts `multipart/form-data` uploads into the normal CMS Media Library. The uploaded file becomes a regular `media` row and is visible in the browser admin Media screen and media pickers. The upload validation mirrors the browser admin Media Library allowed file types: common images, videos, PDFs, Office documents, text/CSV/RTF, and ZIP files.
 
 Supported metadata fields are `folder_id`, `title`, `alt_text`, `caption`, and `description`. The endpoint returns the created media object with its id and public URL when available.

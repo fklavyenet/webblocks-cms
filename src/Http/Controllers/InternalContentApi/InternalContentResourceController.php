@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockImageTranslation;
 use WebBlocks\Cms\Models\BlockTextTranslation;
@@ -17,6 +18,7 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
@@ -763,6 +765,79 @@ class InternalContentResourceController extends Controller
     ]);
 
     return $this->ok(['block' => $this->presenter->block($block)]);
+  }
+
+  public function mediaFolders(Request $request): JsonResponse
+  {
+    if (! $this->hasAnyCapability($request, [CmsApiTokenCapabilities::MEDIA_READ, CmsApiTokenCapabilities::CONTENT_READ])) {
+      return $this->capabilityError(CmsApiTokenCapabilities::MEDIA_READ, 'Reading Media Library records requires media.read.');
+    }
+
+    return $this->ok([
+      'media_folders' => MediaFolder::query()
+        ->withCount('media')
+        ->orderBy('name')
+        ->get()
+        ->map(fn (MediaFolder $folder) => $this->presenter->mediaFolder($folder))
+        ->values(),
+    ]);
+  }
+
+  /**
+   * Uploads could always be filed into a folder, but only one an operator had
+   * already made: folder_id resolved against existing rows and there was no way
+   * to add one. A tool could fill the Media Library and never organize it.
+   */
+  public function storeMediaFolder(Request $request): JsonResponse
+  {
+    $validator = Validator::make($request->json()->all(), [
+      'name' => ['required', 'string', 'max:255'],
+      'slug' => ['nullable', 'string', 'max:255'],
+      'parent_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationErrors('invalid_media_folder', 'The media folder payload is not valid.', $validator->errors()->toArray());
+    }
+
+    $data = $validator->validated();
+    $name = trim($data['name']);
+    $parentId = $data['parent_id'] ?? null;
+
+    // Two sibling folders with the same name are confusing for a human and a
+    // trap for a tool, which would otherwise pile up a copy per retry. Point
+    // the caller at the folder that already exists instead.
+    $existing = MediaFolder::query()
+      ->where('parent_id', $parentId)
+      ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+      ->first();
+
+    if ($existing) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'media_folder_exists',
+        'message' => 'A folder with this name already exists here. Use it instead of creating a duplicate.',
+        'media_folder' => $this->presenter->mediaFolder($existing),
+        'warnings' => [],
+        'errors' => [['path' => 'name', 'message' => 'Folder '.$existing->id.' already uses this name under the same parent.']],
+      ], 422);
+    }
+
+    $slug = trim((string) ($data['slug'] ?? ''));
+
+    $folder = MediaFolder::query()->create([
+      'name' => $name,
+      'slug' => Str::slug($slug !== '' ? $slug : $name) ?: null,
+      'parent_id' => $parentId,
+    ]);
+
+    return response()->json([
+      'ok' => true,
+      'media_folder' => $this->presenter->mediaFolder($folder->fresh()),
+      'writes' => [['type' => 'media_folder', 'id' => $folder->id]],
+      'warnings' => [],
+      'errors' => [],
+    ], 201);
   }
 
   public function media(Request $request): JsonResponse

@@ -117,12 +117,12 @@ Deletion requires the destructive `shared-slots.delete` capability and refuses t
 | List, read, upload, fetch remote | Yes | `/media`, `/media/fetch` | Aligned |
 | Update descriptive metadata | Yes | `PATCH /media/{media}` | Aligned |
 | Replace, move, delete | Yes | `/media/{media}/replace`, `/move`, `DELETE` | Aligned |
-| **Create a media folder** | Yes | None — `folder_id` may only reference an existing folder | **Missing** |
+| Create a media folder | Yes | `POST /media/folders` | Aligned |
 | Regenerate image transforms | Yes | None | Missing |
 | Bulk delete | Yes | Single delete only | Partial |
 | Change storage fields, binary, or folder via `PATCH` | Yes | Rejected with `unsupported_media_update_fields` | Panel-only by design — metadata writes must not move bytes |
 
-Folder creation is the practical blocker: a tool can file uploads into folders an operator already made, but cannot organize its own output.
+`POST /media/folders` refuses a name that already exists under the same parent and returns the existing folder, so a retrying tool reuses it instead of piling up duplicates.
 
 ## Navigation
 
@@ -226,7 +226,7 @@ Ordered by how much each unblocks, not by effort.
 
 5. ~~Extend site settings: SEO defaults, `contact_recipient_email`, `locale_ids`.~~ Done — `/sites/{site}/seo`, `/contact-recipient`, and `/locales`.
 6. Page preview or render snapshot, so a tool can verify what it produced.
-7. Media folder creation.
+7. ~~Media folder creation.~~ Done — `GET`/`POST /media/folders`.
 8. ~~Capability-gate the domain routes and move them under `/webadmin/api`.~~ Done, and `update` and `set primary` came with it.
 
 **Tier 3 — deliberate boundaries**
