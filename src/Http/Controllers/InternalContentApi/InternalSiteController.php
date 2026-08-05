@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use RuntimeException;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
@@ -89,6 +91,188 @@ class InternalSiteController extends Controller
       'ok' => true,
       'site' => $this->presenter->site($site->fresh(['locales'])),
       'writes' => [['type' => 'site_timezone', 'id' => $site->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  /**
+   * Site SEO defaults are the fallback title, description and keywords every
+   * public page inherits when its own page translation has no override. The
+   * branding endpoint deliberately does not carry them -- they are metadata,
+   * not brand presentation -- so until now they were panel-only, and a tool
+   * could build an entire site whose head metadata it could not touch.
+   */
+  public function updateSeoDefaults(Request $request, Site $site): JsonResponse
+  {
+    $fields = ['seo_title' => 255, 'seo_description' => 1000, 'seo_keywords' => 500];
+
+    foreach (array_keys($fields) as $column) {
+      if (! Schema::hasColumn('wbcms_sites', $column)) {
+        return $this->validationError([
+          ['path' => 'site.'.$column, 'message' => 'Site SEO defaults are not available until the latest site schema has been applied.'],
+        ]);
+      }
+    }
+
+    $payload = $request->json()->all();
+    $unknown = array_diff(array_keys($payload), array_keys($fields));
+
+    if ($unknown !== []) {
+      return $this->validationError(collect($unknown)
+        ->map(fn (string $field) => ['path' => $field, 'message' => 'This endpoint only writes seo_title, seo_description, and seo_keywords.'])
+        ->values()
+        ->all());
+    }
+
+    if ($payload === []) {
+      return $this->validationError([
+        ['path' => 'site.seo', 'message' => 'Provide at least one of seo_title, seo_description, or seo_keywords (send null to clear one).'],
+      ]);
+    }
+
+    $validator = Validator::make($payload, collect($fields)
+      ->map(fn (int $max) => ['sometimes', 'nullable', 'string', 'max:'.$max])
+      ->all());
+
+    if ($validator->fails()) {
+      return $this->validationError(collect($validator->errors()->toArray())
+        ->map(fn (array $messages, string $field) => ['path' => $field, 'message' => $messages[0] ?? 'Invalid value.'])
+        ->values()
+        ->all());
+    }
+
+    $updates = [];
+
+    foreach (array_keys($fields) as $field) {
+      if (array_key_exists($field, $payload)) {
+        $value = trim((string) $payload[$field]);
+        $updates[$field] = $value !== '' ? $value : null;
+      }
+    }
+
+    $site->forceFill($updates)->save();
+
+    return response()->json([
+      'ok' => true,
+      'site' => $this->presenter->site($site->fresh(['locales'])),
+      'writes' => [['type' => 'site_seo_defaults', 'id' => $site->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  /**
+   * Where contact form submissions are mailed. The API could already assemble
+   * a working contact form and had no way to say who receives it, so every
+   * API-built form needed a panel visit before it did anything useful.
+   */
+  public function updateContactRecipient(Request $request, Site $site): JsonResponse
+  {
+    if (! Schema::hasColumn('wbcms_sites', 'contact_recipient_email')) {
+      return $this->validationError([
+        ['path' => 'site.contact_recipient_email', 'message' => 'The site contact recipient is not available until the latest site schema has been applied.'],
+      ]);
+    }
+
+    if (! $request->has('contact_recipient_email')) {
+      return $this->validationError([
+        ['path' => 'contact_recipient_email', 'message' => 'Provide contact_recipient_email (send an empty value to fall back to the system recipient).'],
+      ]);
+    }
+
+    $validator = Validator::make($request->json()->all(), [
+      'contact_recipient_email' => ['nullable', 'email:rfc', 'max:255'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationError([
+        ['path' => 'contact_recipient_email', 'message' => $validator->errors()->first('contact_recipient_email')],
+      ]);
+    }
+
+    $value = trim((string) $validator->validated()['contact_recipient_email']);
+
+    $site->forceFill(['contact_recipient_email' => $value !== '' ? $value : null])->save();
+
+    return response()->json([
+      'ok' => true,
+      'site' => $this->presenter->site($site->fresh(['locales'])),
+      'writes' => [['type' => 'site_contact_recipient', 'id' => $site->id]],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  /**
+   * Which locales a site publishes in. A page translation cannot be saved for
+   * a locale the site has not enabled, so without this a tool could create
+   * locales globally and still never use them on a site.
+   *
+   * This is stricter than the admin form in one way: it refuses to detach a
+   * locale that still has page translations. The form lets a human do that
+   * knowingly; an unattended tool would just orphan the content.
+   */
+  public function updateLocales(Request $request, Site $site): JsonResponse
+  {
+    $validator = Validator::make($request->json()->all(), [
+      'locale_ids' => ['required', 'array', 'min:1'],
+      'locale_ids.*' => ['integer', Rule::exists(Locale::class, 'id')],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->validationError(collect($validator->errors()->toArray())
+        ->map(fn (array $messages, string $field) => ['path' => $field, 'message' => $messages[0] ?? 'Invalid value.'])
+        ->values()
+        ->all());
+    }
+
+    $localeIds = collect($validator->validated()['locale_ids'])->map(fn ($id) => (int) $id)->unique();
+
+    // The default locale is always attached, exactly as the admin form does it,
+    // so a site can never end up without the locale everything falls back to.
+    $defaultLocaleId = (int) Locale::query()->where('is_default', true)->value('id');
+
+    if ($defaultLocaleId !== 0) {
+      $localeIds = $localeIds->push($defaultLocaleId)->unique();
+    }
+
+    $disabled = Locale::query()->whereIn('id', $localeIds)->where('is_enabled', false)->pluck('code', 'id');
+
+    if ($disabled->isNotEmpty()) {
+      return $this->validationError($disabled
+        ->map(fn (string $code) => ['path' => 'locale_ids', 'message' => 'Locale '.$code.' is globally disabled. Enable it with PATCH /webadmin/api/locales/{locale} first.'])
+        ->values()
+        ->all());
+    }
+
+    $detaching = $site->locales()->pluck((new Locale)->qualifyColumn('id'))
+      ->map(fn ($id) => (int) $id)
+      ->reject(fn (int $id) => $localeIds->contains($id));
+
+    $blocked = [];
+
+    foreach ($detaching as $localeId) {
+      $count = PageTranslation::query()->where('site_id', $site->id)->where('locale_id', $localeId)->count();
+
+      if ($count > 0) {
+        $blocked[] = [
+          'path' => 'locale_ids',
+          'message' => 'Locale '.Locale::query()->whereKey($localeId)->value('code').' still has '.$count.' page translation(s) on this site. Delete or move them in the browser admin before removing the locale.',
+        ];
+      }
+    }
+
+    if ($blocked !== []) {
+      return $this->validationError($blocked);
+    }
+
+    $site->locales()->sync($localeIds->mapWithKeys(fn (int $id) => [$id => ['is_enabled' => true]])->all());
+
+    return response()->json([
+      'ok' => true,
+      'site' => $this->presenter->site($site->fresh(['locales'])),
+      'writes' => [['type' => 'site_locales', 'id' => $site->id]],
       'warnings' => [],
       'errors' => [],
     ]);

@@ -147,7 +147,7 @@ Contact messages have no API representation at all. A tool can build a contact f
 
 ## Sites and Configuration
 
-The panel site form writes more than twenty fields. The API covers them through four narrow endpoints: `branding`, `head`, `timezone`, and `public-theme`.
+The panel site form writes more than twenty fields. The API covers them through narrow single-purpose endpoints: `branding`, `head`, `timezone`, `public-theme`, `seo`, `contact-recipient`, and `locales`.
 
 | Field or capability | Panel | API | Status |
 | --- | --- | --- | --- |
@@ -156,9 +156,9 @@ The panel site form writes more than twenty fields. The API covers them through 
 | Timezone | Yes | `PATCH /sites/{site}/timezone` | Aligned |
 | Public theme preset | Yes | `POST /sites/{site}/public-theme` | Aligned |
 | Site CSS and JS override files | Yes | `/sites/{site}/assets/{type}` | Aligned |
-| **Site SEO defaults (`seo_title`, `seo_description`, `seo_keywords`)** | Yes | None | **Missing** |
-| **Contact recipient email** | Yes | None | **Missing** |
-| **Locale assignment (`locale_ids`)** | Yes | None | **Missing** |
+| Site SEO defaults (`seo_title`, `seo_description`, `seo_keywords`) | Yes | `PATCH /sites/{site}/seo` | Aligned |
+| Contact recipient email | Yes | `PATCH /sites/{site}/contact-recipient` | Aligned |
+| Locale assignment (`locale_ids`) | Yes | `PUT /sites/{site}/locales` | Aligned — stricter: refuses to detach a locale with page translations |
 | Site name and handle | Yes | None | Missing |
 | Primary-site flag | Yes | None | Missing |
 | Site variables | Yes | None | Missing |
@@ -168,7 +168,7 @@ The panel site form writes more than twenty fields. The API covers them through 
 | Site export and import | Yes | None | Panel-only by design — arbitrary import replacement is out of scope |
 | Domains: list, add, update, set primary, remove, status | Yes | `/webadmin/api/sites/{site}/domains/*` | Aligned |
 
-`contact_recipient_email` is the sharpest of these: the API can assemble a working contact form but cannot say who receives the mail, so every API-built form needs a panel visit before it does anything useful. See [Contact Forms and Messages](contact-forms-and-messages.md).
+What remains missing here is site identity — name, handle, primary flag — and site variables. Those are closer to provisioning than to content, and no tool has yet needed them.
 
 ## Schema and Definitions
 
@@ -224,7 +224,7 @@ Ordered by how much each unblocks, not by effort.
 
 **Tier 2 — operational friction**
 
-5. Extend site settings: SEO defaults, `contact_recipient_email`, `locale_ids`.
+5. ~~Extend site settings: SEO defaults, `contact_recipient_email`, `locale_ids`.~~ Done — `/sites/{site}/seo`, `/contact-recipient`, and `/locales`.
 6. Page preview or render snapshot, so a tool can verify what it produced.
 7. Media folder creation.
 8. ~~Capability-gate the domain routes and move them under `/webadmin/api`.~~ Done, and `update` and `set primary` came with it.

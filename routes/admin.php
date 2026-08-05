@@ -157,6 +157,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::delete('/media/{media}', [InternalContentResourceController::class, 'deleteMedia'])->middleware('internal-api.capability:media.delete')->name('media.delete');
     Route::patch('/sites/{site}/branding', [InternalSiteController::class, 'updateBranding'])->middleware('internal-api.capability:site-settings.write')->name('sites.branding.update');
     Route::patch('/sites/{site}/head', [InternalSiteController::class, 'updateCustomHead'])->middleware('internal-api.capability:site-settings.write')->name('sites.head.update');
+    Route::patch('/sites/{site}/seo', [InternalSiteController::class, 'updateSeoDefaults'])->middleware('internal-api.capability:site-settings.write')->name('sites.seo.update');
+    Route::patch('/sites/{site}/contact-recipient', [InternalSiteController::class, 'updateContactRecipient'])->middleware('internal-api.capability:site-settings.write')->name('sites.contact-recipient.update');
+    Route::put('/sites/{site}/locales', [InternalSiteController::class, 'updateLocales'])->middleware('internal-api.capability:site-settings.write')->name('sites.locales.update');
     Route::patch('/sites/{site}/timezone', [InternalSiteController::class, 'updateTimezone'])->middleware('internal-api.capability:site-settings.write')->name('sites.timezone.update');
     Route::get('/blocks', [InternalContentResourceController::class, 'blocks'])->name('blocks.index');
     Route::get('/blocks/{block}', [InternalContentResourceController::class, 'block'])->name('blocks.show');

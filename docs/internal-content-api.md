@@ -467,10 +467,25 @@ Adding blocks stays at `POST /shared-slots/{sharedSlot}/blocks`, and editing a s
 
 Unlike page block edits, these are not draft-only: Shared Slots have no draft-page concept. Reordering or deleting an already-published Shared Slot block therefore affects every assigned page immediately, which is why deletion is gated behind the destructive `content.blocks.delete` capability. Every write rebuilds the slot's page assignments and captures a Shared Slot revision so changes stay reversible.
 
+### Site Settings API
+
+Alongside `branding`, `head`, `timezone`, and `public-theme`, three further site fields are writable. All three require `site-settings.write`.
+
+`PATCH /webadmin/api/sites/{site}/seo` writes `seo_title`, `seo_description`, and `seo_keywords`: the site-wide fallback metadata a public page inherits when its own page translation carries no override. Partial, and `null` clears a field. Page-level overrides belong on the page translation; see the Page Translation API above.
+
+`PATCH /webadmin/api/sites/{site}/contact-recipient` writes `contact_recipient_email`, the address contact form submissions are mailed to. Send an empty value to fall back to the system recipient. A contact form assembled through the API does nothing useful until this is set.
+
+`PUT /webadmin/api/sites/{site}/locales` replaces the site's locale set from `locale_ids`. The default locale is always kept, exactly as the admin form keeps it, and locales must be globally enabled first through `POST`/`PATCH /webadmin/api/locales`. A page translation cannot be saved for a locale the site has not enabled, so this is the endpoint that makes a new locale usable on a site.
+
+This endpoint is stricter than the admin form in one respect: it refuses to detach a locale that still has page translations on the site, and the `422` names the locale and the count. The form lets an operator do that knowingly; an unattended tool would silently orphan the content.
+
 ### Site Domain API
 
 Domain records decide which hostname resolves to which site, so the browser admin keeps them behind system-level access. The API endpoints are:
 
+- `PATCH /webadmin/api/sites/{site}/seo`
+- `PATCH /webadmin/api/sites/{site}/contact-recipient`
+- `PUT /webadmin/api/sites/{site}/locales`
 - `GET /webadmin/api/sites/{site}/domains` requires `content.read`
 - `POST /webadmin/api/sites/{site}/domains` requires `domains.write`
 - `PUT /webadmin/api/sites/{site}/domains/{domain}` requires `domains.write`
