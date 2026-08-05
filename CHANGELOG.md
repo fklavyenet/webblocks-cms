@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.51.0
+
+- **The admin panel now speaks Spanish and Italian.** `es` and `it` join en, de, and tr as admin interface languages, selectable from the topbar language menu, the profile language preference, and the system admin-locale setting. All four translation catalogs — admin (3,714 keys), blocks, public, and validation — ship complete for both languages, with key sets, key order, and every `:placeholder` verified identical to the English source, so nothing falls back mid-screen. Technical vocabulary follows the same conventions the German catalog established: slot, layout, plugin, token, and slug stay in English; the informal register (tú/tu) matches de and tr.
+- **A fresh install in Spanish or Italian gets a starter home page in that language.** `home.es.json` and `home.it.json` sit beside the shipped starter blueprints and are picked up by the existing locale lookup, exactly as the German and Turkish variants were in 1.50.7.
+- The locale-parity test suite — updates vocabulary, shared-slot confirmation copy, listing empty states, site form structure — now iterates all five admin locales, so a key added to English without its four counterparts fails the build.
+
 ## 1.50.7
 
 - **The filter bar's Reset button is finally translated.** The shared listing-filters partial fell back to a hard-coded "Reset" that no listing overrode, so the button stayed English in the German and Turkish admin while the Apply button beside it was already localized. Every listing that shows the button — Pages, Contact Messages, Blocks, Block Types, Media, Shared Slots, Icons, Backups, Users, both Engagement listings, and the slot block picker — now passes a translated label, and the partial itself resolves translated defaults for both buttons, so a future caller that passes neither still renders localized text.
