@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.50.5
+
+- **Pinned to WebBlocks UI 2.18.0**, which brings two fixes to every site on the next update.
+- **Slide copy follows the slider's text colour.** UI's element selectors set `color` on `h1`–`h6` and `p` directly, which beat the colour inherited from `.wb-slider`, so neither the default white nor the Light/Dark text modifiers ever reached headings and paragraphs inside a slide — a Light-mode hero drew dark theme text over dark artwork. Sites that repaired this in their own `site.css` need no change: the shipped rule does the same thing, so the local one is now redundant rather than wrong.
+- **The phantom scroll on short mobile pages is gone at the source.** UI's reset no longer puts `min-height: 100vh` on `body`. It filled no height there, but it did force the body box to the *largest* mobile viewport, so a page with nothing to scroll still scrolled by the height of retracted browser chrome. **If your `site.css` or a hand-written layout relied on `body` being at least viewport-height, set the height on your own root element instead** — the shipped shells already do. `.wb-public-body` now declares both floors itself, `min-height: 100vh` for browsers without `dvh` and `min-block-size: 100dvh` over it, so the CMS public shell is unaffected; the admin and Docs shells were never affected, since `.wb-dashboard-shell` states its own `height: 100vh`.
+- The bundled icon catalog was re-vendored for 2.18.0 (183 icons, unchanged set), and the UI class snapshot the admin contract test reads moved with the pin. No class was added or removed between 2.17.0 and 2.18.0.
+
 ## 1.50.4
 
 - **The Sites row actions sit where they belong.** 1.50.3 put View details and Edit site in the leading View column, next to the globe; View now carries the globe alone, and the two icons moved into Actions, ahead of the Manage button. Manage also gained a chevron, so a button that opens a menu now looks like one. Nothing moved out of the dropdown that was not already out of it.

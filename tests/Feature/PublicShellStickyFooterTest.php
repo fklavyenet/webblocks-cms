@@ -16,12 +16,15 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
- * WebBlocks UI's reset sets body { min-height: 100vh } but leaves display:
- * block, so the min-height pushes nothing down: on a short page the footer
- * ends up mid-viewport. public.css makes the public shell a flex column and
- * lets main absorb the leftover height, which only works while main stays a
- * direct child of the body -- the Docs shell nests it and is excluded on
- * purpose, since .wb-dashboard-body already owns a 100vh height model.
+ * On a short page the footer used to end up mid-viewport. public.css makes the
+ * public shell a flex column and lets main absorb the leftover height, which
+ * only works while main stays a direct child of the body -- the Docs shell
+ * nests it and is excluded on purpose, since .wb-dashboard-body already owns a
+ * 100vh height model.
+ *
+ * The shell states its own viewport height. WebBlocks UI's reset used to set
+ * body { min-height: 100vh } and this rule leaned on it as the pre-dvh
+ * fallback; 2.18.0 dropped that declaration, so both floors are declared here.
  */
 class PublicShellStickyFooterTest extends TestCase
 {
@@ -43,18 +46,19 @@ class PublicShellStickyFooterTest extends TestCase
     $this->assertMatchesRegularExpression(
       '/\.wb-public-body\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*\}/s',
       $css,
-      'The public body must be a flex column, otherwise the reset min-height stays inert.'
+      'The public body must be a flex column, otherwise its min-height stays inert.'
     );
     $this->assertMatchesRegularExpression(
       '/\.wb-public-body\s*>\s*\.wb-slot-main\s*\{[^}]*flex:\s*1 0 auto;[^}]*\}/s',
       $css,
       'Main must absorb the leftover height and must not shrink below its content.'
     );
-    // The reset's own 100vh stays as the fallback for browsers without dvh.
+    // Since UI 2.18.0 nothing else sets a viewport floor on the body, so the
+    // shell declares both: 100vh for browsers without dvh, then 100dvh.
     $this->assertMatchesRegularExpression(
-      '/\.wb-public-body\s*\{[^}]*min-block-size:\s*100dvh;[^}]*\}/s',
+      '/\.wb-public-body\s*\{[^}]*min-height:\s*100vh;[^}]*min-block-size:\s*100dvh;[^}]*\}/s',
       $css,
-      'The shell must track the visible viewport, not the largest one.'
+      'The shell must carry its own 100vh floor before the 100dvh answer.'
     );
   }
 

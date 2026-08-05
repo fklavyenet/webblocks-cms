@@ -101,6 +101,8 @@ class SiteCssModeAwarenessAnalysisTest extends TestCase
   {
     // Taken from a live site.css: a token-only stylesheet whose comment quotes
     // the shipped UI rule it repairs. It warned about a color it never set.
+    // WebBlocks UI 2.18.0 ships that reset itself, so the rule below is now
+    // redundant rather than wrong -- it stays here as real analyzer input.
     $analysis = $this->analyze(<<<'CSS'
       /* WebBlocks UI declares `.wb-slider-text-light { color: #fff }` on the
          slider root only, so nested blocks never receive it. */

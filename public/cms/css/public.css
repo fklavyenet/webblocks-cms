@@ -1,19 +1,22 @@
-/* WebBlocks UI's reset gives `body` min-height: 100vh but leaves it display:
-   block, so that min-height pushes nothing down and a short page floats its
-   footer in the middle of the viewport. Make the public shell a flex column
-   and let main absorb the leftover height. Both selectors are code-owned
-   classes -- the layout's own body class and SlotWrapperResolver's fixed
-   wb-slot-* class -- never per-site css_classes, so a catalog re-sync cannot
-   break them. The direct-child selector deliberately skips the Docs shell,
-   where main sits inside .wb-dashboard-body: that pattern is height: 100%
-   inside an overflow: hidden, 100vh shell and owns its own height model. */
+/* A short page used to float its footer in the middle of the viewport. The
+   public shell is a flex column and main absorbs the leftover height. Both
+   selectors are code-owned classes -- the layout's own body class and
+   SlotWrapperResolver's fixed wb-slot-* class -- never per-site css_classes,
+   so a catalog re-sync cannot break them. The direct-child selector
+   deliberately skips the Docs shell, where main sits inside
+   .wb-dashboard-body: that pattern is height: 100% inside an overflow:
+   hidden, 100vh shell and owns its own height model. */
 .wb-public-body {
     display: flex;
     flex-direction: column;
-    /* The reset's 100vh is the largest viewport on mobile, so it reserves room
-       for browser chrome that may be retracted and leaves a short page just
-       scrollable enough to feel broken. 100dvh tracks the visible viewport. A
-       browser without dvh drops this declaration and keeps the reset's 100vh. */
+    /* The shell states its own viewport height. WebBlocks UI's reset used to
+       set min-height: 100vh on body and this rule leaned on it for browsers
+       without dvh; 2.18.0 dropped that declaration -- on a display: block body
+       it filled no height, while still forcing the box to the *large* mobile
+       viewport, which is what made a page with nothing to scroll scroll by the
+       height of retracted browser chrome. 100vh is the fallback floor, 100dvh
+       the visible-viewport answer that a supporting browser applies over it. */
+    min-height: 100vh;
     min-block-size: 100dvh;
 }
 
