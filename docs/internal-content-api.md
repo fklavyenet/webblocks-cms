@@ -129,6 +129,8 @@ Advanced capabilities are separate options and are not selected by default:
 
 - `navigation.delete`
 - `shared-slots.delete`
+- `domains.write`
+- `domains.delete`
 - `site-assets.read`
 - `site-assets.write`
 - `engagement.read`
@@ -464,6 +466,19 @@ Adding blocks stays at `POST /shared-slots/{sharedSlot}/blocks`, and editing a s
 - Both deletes require `shared-slots.write` plus the dedicated `content.blocks.delete` capability.
 
 Unlike page block edits, these are not draft-only: Shared Slots have no draft-page concept. Reordering or deleting an already-published Shared Slot block therefore affects every assigned page immediately, which is why deletion is gated behind the destructive `content.blocks.delete` capability. Every write rebuilds the slot's page assignments and captures a Shared Slot revision so changes stay reversible.
+
+### Site Domain API
+
+Domain records decide which hostname resolves to which site, so the browser admin keeps them behind system-level access. The API endpoints are:
+
+- `GET /webadmin/api/sites/{site}/domains` requires `content.read`
+- `POST /webadmin/api/sites/{site}/domains` requires `domains.write`
+- `PUT /webadmin/api/sites/{site}/domains/{domain}` requires `domains.write`
+- `POST /webadmin/api/sites/{site}/domains/{domain}/primary` requires `domains.write`
+- `DELETE /webadmin/api/sites/{site}/domains/{domain}` requires the destructive `domains.delete`
+- `GET /webadmin/api/domains/{domain}/status` requires `content.read`
+
+These endpoints previously lived only under an `/admin-api` prefix and checked nothing beyond token validity, so any token at all could add or remove a domain. They now sit under `/webadmin/api` with the rest of the API and every route carries a capability. The `/admin-api` prefix keeps working for existing provisioning tools, with the same capability requirements and one extra route, `GET /admin-api/sites`; new integrations should use `/webadmin/api`, whose paths are also covered by the CSRF exemption that the legacy prefix never had.
 
 ### Shared Slot Metadata API
 

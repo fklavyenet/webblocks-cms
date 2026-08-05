@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\AdminApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Http\Requests\Admin\SiteDomainStoreRequest;
+use WebBlocks\Cms\Http\Requests\Admin\SiteDomainUpdateRequest;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Support\Sites\SiteDomainManager;
@@ -59,6 +60,20 @@ class SiteDomainApiController extends Controller
     return response()->json([
       'domain' => $this->domainPayload($domain),
     ], 201);
+  }
+
+  public function updateDomain(SiteDomainUpdateRequest $request, Site $site, SiteDomain $domain): JsonResponse
+  {
+    return response()->json([
+      'domain' => $this->domainPayload($this->siteDomainManager->updateDomain($site, $domain, $request->validated())),
+    ]);
+  }
+
+  public function setPrimaryDomain(Site $site, SiteDomain $domain): JsonResponse
+  {
+    return response()->json([
+      'domain' => $this->domainPayload($this->siteDomainManager->setPrimaryDomain($site, $domain)),
+    ]);
   }
 
   public function destroyDomain(Site $site, SiteDomain $domain): JsonResponse

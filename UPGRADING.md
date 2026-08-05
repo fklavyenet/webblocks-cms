@@ -2,6 +2,12 @@
 
 Back up the application files, database, environment configuration, storage, and uploads before changing CMS versions or installation topology. Validate the result in a non-production environment. Do not delete host-owned files or data as a blanket migration step.
 
+## Unreleased
+
+- **Site domain API endpoints now require capabilities.** The `/admin-api` domain routes previously checked only that a CMS API token was valid, so any token could add or remove a domain. Adding, updating, and promoting a domain now require the new `domains.write` capability, and deleting one requires the new destructive `domains.delete`. Reads require `content.read`, which normal tokens already have. Grant the new capabilities on the System > API Tokens screen to any provisioning tool that manages domains, before upgrading it.
+- **Domain endpoints have a canonical home.** The same routes are now registered under `/webadmin/api` alongside the rest of the Internal Content API, and gain `PUT .../domains/{domain}` and `POST .../domains/{domain}/primary`. The `/admin-api` prefix keeps working. Prefer `/webadmin/api` for new integrations: its paths are covered by the CSRF exemption, which the legacy prefix never had.
+- **Content plans reject unrecognized fields.** `POST /webadmin/api/content/validate` and `/content/apply` used to ignore any plan key they did not understand, so a plan carrying an unsupported field applied cleanly and wrote none of it. Unknown keys now fail with `422` and the code `unsupported_plan_fields`. Tools that sent extra fields alongside a valid plan must stop sending them.
+
 ## 1.41.0
 
 WebBlocks CMS `1.41.0` replaces the two-phase System Update flow with a one-click flow. Upgrading through the in-app updater is supported from any `1.40.x` package-mode install: the release artifact keeps the package shape and file paths the `1.40.x` engine validates, so the old engine can apply `1.41.0` directly.

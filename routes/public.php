@@ -34,13 +34,35 @@ Route::middleware(['web', 'install.required'])->get('/{locale}/search.json', [Pu
   ->where('locale', Locale::routePattern())
   ->name('localized.search.json');
 
-Route::middleware(['web', 'install.required', 'internal-api.token'])->prefix('admin-api')->name('admin-api.')->group(function () {
-  Route::get('/sites', [SiteDomainApiController::class, 'indexSites'])->name('sites.index');
-  Route::get('/sites/{site}/domains', [SiteDomainApiController::class, 'indexDomains'])->name('sites.domains.index');
-  Route::post('/sites/{site}/domains', [SiteDomainApiController::class, 'storeDomain'])->name('sites.domains.store');
-  Route::delete('/sites/{site}/domains/{domain}', [SiteDomainApiController::class, 'destroyDomain'])->name('sites.domains.destroy');
-  Route::get('/domains/{domain}/status', [SiteDomainApiController::class, 'domainStatus'])->name('domains.status');
-});
+// Domain records decide which hostname resolves to which site, which is why
+// the browser admin keeps them behind system-level access. These routes only
+// ever checked that a token was valid, so any token at all could add or remove
+// a domain. Reads ride on content.read; writes need their own capabilities.
+$siteDomainRoutes = function (): void {
+  Route::get('/sites/{site}/domains', [SiteDomainApiController::class, 'indexDomains'])->middleware('internal-api.capability:content.read')->name('sites.domains.index');
+  Route::post('/sites/{site}/domains', [SiteDomainApiController::class, 'storeDomain'])->middleware('internal-api.capability:domains.write')->name('sites.domains.store');
+  Route::put('/sites/{site}/domains/{domain}', [SiteDomainApiController::class, 'updateDomain'])->middleware('internal-api.capability:domains.write')->name('sites.domains.update');
+  Route::post('/sites/{site}/domains/{domain}/primary', [SiteDomainApiController::class, 'setPrimaryDomain'])->middleware('internal-api.capability:domains.write')->name('sites.domains.primary');
+  Route::delete('/sites/{site}/domains/{domain}', [SiteDomainApiController::class, 'destroyDomain'])->middleware('internal-api.capability:domains.delete')->name('sites.domains.destroy');
+  Route::get('/domains/{domain}/status', [SiteDomainApiController::class, 'domainStatus'])->middleware('internal-api.capability:content.read')->name('domains.status');
+};
+
+// Canonical home, alongside every other Internal Content API endpoint. The CSRF
+// exemption is path-based on webadmin/api/*, so token clients reach the writes
+// here without the exemption gap the legacy prefix has.
+Route::middleware(['web', 'install.required', 'throttle:internal-content-api', 'internal-api.token'])
+  ->prefix('webadmin/api')
+  ->name('internal-content-api.')
+  ->group($siteDomainRoutes);
+
+// Legacy prefix, kept working for existing provisioning tools.
+Route::middleware(['web', 'install.required', 'internal-api.token'])
+  ->prefix('admin-api')
+  ->name('admin-api.')
+  ->group(function () use ($siteDomainRoutes): void {
+    Route::get('/sites', [SiteDomainApiController::class, 'indexSites'])->middleware('internal-api.capability:content.read')->name('sites.index');
+    $siteDomainRoutes();
+  });
 
 Route::middleware(['web', 'install.required'])->post('/contact-messages', [ContactMessageController::class, 'store'])
   ->middleware('throttle:contact-form-submissions')

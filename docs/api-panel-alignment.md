@@ -41,10 +41,10 @@ The API is not a single prefix. A tool integrating with the CMS talks to two:
 
 | Prefix | Auth | Scope |
 | --- | --- | --- |
-| `/webadmin/api` | `internal-api.token` plus a per-route capability | Content, media, navigation, Shared Slots, site presentation, plugins, engagement |
-| `/admin-api` | `internal-api.token` only | Site and domain records |
+| `/webadmin/api` | `internal-api.token` plus a per-route capability | Everything |
+| `/admin-api` | `internal-api.token` plus a per-route capability | Site and domain records, legacy alias |
 
-The split is historical rather than principled. `/admin-api` predates the capability model and its routes are not capability-gated: any valid token can add or remove a domain. Folding these routes into `/webadmin/api` behind `site-settings.write` (or a dedicated `domains.write`) is tracked in the roadmap below.
+The split is historical rather than principled. `/admin-api` predates the capability model, and its routes checked nothing beyond token validity until `domains.write` and `domains.delete` were introduced — any valid token could add or remove a domain. The domain routes now also live under `/webadmin/api`, which is where new integrations should point; the legacy prefix is kept working for existing provisioning tools.
 
 Capabilities are defined in `CmsApiTokenCapabilities`. A gap in this document is sometimes a missing capability as much as a missing route.
 
@@ -166,8 +166,7 @@ The panel site form writes more than twenty fields. The API covers them through 
 | Clone a site | Yes | None | Panel-only by design — whole-site duplication is operator-owned |
 | Promote a site | Yes | None | Panel-only by design — see [Operations](operations.md) |
 | Site export and import | Yes | None | Panel-only by design — arbitrary import replacement is out of scope |
-| Domains: list, add, remove, status | Yes | `/admin-api/*` | Partial — not capability-gated |
-| Domains: update, set primary | Yes | None | Missing |
+| Domains: list, add, update, set primary, remove, status | Yes | `/webadmin/api/sites/{site}/domains/*` | Aligned |
 
 `contact_recipient_email` is the sharpest of these: the API can assemble a working contact form but cannot say who receives the mail, so every API-built form needs a panel visit before it does anything useful. See [Contact Forms and Messages](contact-forms-and-messages.md).
 
@@ -228,7 +227,7 @@ Ordered by how much each unblocks, not by effort.
 5. Extend site settings: SEO defaults, `contact_recipient_email`, `locale_ids`.
 6. Page preview or render snapshot, so a tool can verify what it produced.
 7. Media folder creation.
-8. Capability-gate the domain routes and move them under `/webadmin/api`.
+8. ~~Capability-gate the domain routes and move them under `/webadmin/api`.~~ Done, and `update` and `set primary` came with it.
 
 **Tier 3 — deliberate boundaries**
 

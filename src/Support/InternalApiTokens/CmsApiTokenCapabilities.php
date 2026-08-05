@@ -51,6 +51,10 @@ class CmsApiTokenCapabilities
 
   public const SITE_SETTINGS_WRITE = 'site-settings.write';
 
+  public const DOMAINS_WRITE = 'domains.write';
+
+  public const DOMAINS_DELETE = 'domains.delete';
+
   public const SITE_ASSETS_READ = 'site-assets.read';
 
   public const SITE_ASSETS_WRITE = 'site-assets.write';
@@ -91,6 +95,8 @@ class CmsApiTokenCapabilities
   ];
 
   public const ADVANCED = [
+    self::DOMAINS_WRITE,
+    self::DOMAINS_DELETE,
     self::SITE_ASSETS_READ,
     self::SITE_ASSETS_WRITE,
     self::ENGAGEMENT_READ,
@@ -123,6 +129,7 @@ class CmsApiTokenCapabilities
     self::MEDIA_DELETE,
     self::NAVIGATION_DELETE,
     self::SHARED_SLOTS_DELETE,
+    self::DOMAINS_DELETE,
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
@@ -139,6 +146,8 @@ class CmsApiTokenCapabilities
     self::SHARED_SLOTS_DELETE,
     self::MEDIA_READ,
     self::SITE_SETTINGS_WRITE,
+    self::DOMAINS_WRITE,
+    self::DOMAINS_DELETE,
     self::MEDIA_WRITE,
     self::MEDIA_UPLOAD,
     self::MEDIA_REPLACE,
@@ -171,6 +180,8 @@ class CmsApiTokenCapabilities
     self::SHARED_SLOTS_DELETE => 'Delete unreferenced Shared Slots',
     self::MEDIA_READ => 'Read Media Library records',
     self::SITE_SETTINGS_WRITE => 'Write safe site presentation settings',
+    self::DOMAINS_WRITE => 'Add and change site domains',
+    self::DOMAINS_DELETE => 'Remove site domains',
     self::SITE_ASSETS_READ => 'Read canonical site CSS and JS override files',
     self::SITE_ASSETS_WRITE => 'Write canonical site CSS and JS override files',
     self::ENGAGEMENT_READ => 'Read public comments and ratings',
@@ -282,6 +293,8 @@ class CmsApiTokenCapabilities
         'move_media' => $this->has($token, self::MEDIA_MOVE),
         'delete_media' => $this->has($token, self::MEDIA_DELETE),
         'write_site_presentation_settings' => $this->has($token, self::SITE_SETTINGS_WRITE),
+        'write_site_domains' => $this->has($token, self::DOMAINS_WRITE),
+        'delete_site_domains' => $this->has($token, self::DOMAINS_DELETE),
         'read_site_assets' => $this->has($token, self::SITE_ASSETS_READ),
         'write_site_assets' => $this->has($token, self::SITE_ASSETS_WRITE),
         'read_engagement' => $this->has($token, self::ENGAGEMENT_READ),
