@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.50.7
+
+- **The filter bar's Reset button is finally translated.** The shared listing-filters partial fell back to a hard-coded "Reset" that no listing overrode, so the button stayed English in the German and Turkish admin while the Apply button beside it was already localized. Every listing that shows the button — Pages, Contact Messages, Blocks, Block Types, Media, Shared Slots, Icons, Backups, Users, both Engagement listings, and the slot block picker — now passes a translated label, and the partial itself resolves translated defaults for both buttons, so a future caller that passes neither still renders localized text.
+- The label is standardized on one key, `clear_filters`: Block Types' "Reset" and Media's "Reset filters" (both also used by their filtered empty states) were renamed to it, so the same action no longer reads differently from screen to screen.
+- **A fresh install in Turkish or German gets a starter home page in that language.** `home.tr.json` and `home.de.json` sit beside the shipped `home.json` and are picked up by the starter-content locale lookup that already existed; installs in any other default locale keep the English page. The copy follows the informal address the admin translations already use.
+
 ## 1.50.6
 
 - **A listing that hides everything behind a filter no longer tells you to create your first one.** Ten admin listings shared a single empty-state message written for a genuinely empty install, so searching Pages on a site with fifteen of them answered "Adjust the filters or create your first page", and searching Contact Messages answered "No messages yet — published Contact Form blocks will save new submissions here". Each listing now tells the two states apart: nothing exists yet keeps its original invitation, while a filtered-away result says so and offers a way back to the unfiltered list.
