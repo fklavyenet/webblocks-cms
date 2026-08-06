@@ -701,7 +701,7 @@ Class from `buttonLinkVariantClass()`, usually `wb-btn` plus a variant class.
 | --- | --- | --- |
 | variant | secondary | `buttonLinkVariantClass()` outputs `wb-btn wb-btn-secondary`. |
 | variant | default/other | `buttonLinkVariantClass()` outputs `wb-btn wb-btn-primary`. |
-| settings.url | safe URL | Renders the anchor `href`; unsafe/empty URL renders nothing. |
+| settings.url | safe URL | Renders the anchor `href`; unsafe/empty URL renders nothing. Internal site paths are rewritten to the render locale's translated path when the target page resolves (`/products` → `/es/productos`); external, unresolvable, or untranslated targets keep the stored URL. |
 | settings.target | _blank | Adds `target="_blank" rel="noopener noreferrer"`. |
 
 ### Use for / Avoid for

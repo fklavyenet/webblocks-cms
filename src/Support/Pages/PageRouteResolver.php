@@ -224,6 +224,76 @@ class PageRouteResolver
     return $page;
   }
 
+  /**
+   * Rewrites an operator-entered internal link to the same page's path in the
+   * requested locale, so a button pointing at "/products" lands on
+   * "/es/productos" when the page renders in Spanish. Returns the URL
+   * untouched when it is external, does not resolve to a published page, or
+   * the page has no translation in the requested locale — never worse than
+   * the stored link.
+   */
+  public function localizedPublicUrl(string $url, Locale|string|null $locale = null, ?Site $site = null): string
+  {
+    if (! $site || ! str_starts_with($url, '/') || str_starts_with($url, '//')) {
+      return $url;
+    }
+
+    $targetLocale = $this->requestedLocale($locale, $site);
+
+    if (! $targetLocale) {
+      return $url;
+    }
+
+    $suffixStart = strcspn($url, '?#');
+    $path = substr($url, 0, $suffixStart);
+    $suffix = substr($url, $suffixStart);
+
+    // Authors may paste an already-prefixed path ("/tr/urunler"); strip the
+    // locale segment and look the page up in that locale instead of the
+    // default one.
+    $authorLocale = $this->localeResolver->default();
+    $segments = array_values(array_filter(explode('/', trim($path, '/')), fn (string $segment) => $segment !== ''));
+    $prefixLocale = $segments === [] ? null : $this->localeResolver->enabled($segments[0], $site);
+
+    if ($prefixLocale && ! $prefixLocale->is_default) {
+      $authorLocale = $prefixLocale;
+      $path = '/'.implode('/', array_slice($segments, 1));
+    }
+
+    if (! $authorLocale) {
+      return $url;
+    }
+
+    try {
+      $path = PagePath::canonicalize($path);
+    } catch (\InvalidArgumentException) {
+      return $url;
+    }
+
+    if (PagePath::isReserved($path)) {
+      return $url;
+    }
+
+    $translation = PageTranslation::query()
+      ->with('page')
+      ->where('site_id', $site->id)
+      ->where('locale_id', $authorLocale->id)
+      ->where('path', $path)
+      ->whereHas('page', fn ($query) => $query
+        ->where('site_id', $site->id)
+        ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+        ->where('status', 'published'))
+      ->first();
+
+    if (! $translation || ! $translation->page) {
+      return $url;
+    }
+
+    $localizedPath = $this->pathFor($translation->page, $targetLocale, $site);
+
+    return $localizedPath ? $localizedPath.$suffix : $url;
+  }
+
   public function legacyRedirectPath(Request $request, string $legacyPath): ?string
   {
     $path = '/'.ltrim($legacyPath, '/');

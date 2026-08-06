@@ -536,7 +536,7 @@ The current published core catalog contains 51 rows:
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | `translations.title` as the button label; shared `settings.url`. |
+| Editable content | `translations.title` as the button label; shared `settings.url`. At public render time an internal path follows the render locale (rewritten to the target page's translated path when it resolves); the stored value stays shared and raw. |
 | Settings and variants | `settings.target`: `_self` or `_blank`; shared `variant`: primary/default or secondary. URL accepts a safe full HTTP(S) URL, site path, anchor, `mailto:`, or `tel:` target. |
 | Children/media | None. This is a standalone editorial action and is distinct from the non-catalog managed `button` child used by Hero and CTA. |
 | HTML | Generic wrapper plus `<a class="wb-btn wb-btn-primary">` or its secondary-class equivalent; `_blank` adds `rel="noopener noreferrer"`. Empty or unsafe URL emits no anchor. |
