@@ -306,7 +306,8 @@ class InternalNavigationController extends Controller
     $pageId = array_key_exists('page_id', $payload) ? $payload['page_id'] : $item->page_id;
     $parentId = array_key_exists('parent_id', $payload) ? $payload['parent_id'] : $item->parent_id;
     $visibility = (string) ($payload['visibility'] ?? $item->visibility);
-    $position = $payload['sort_order'] ?? $payload['position'] ?? $item->position;
+    $hasPosition = array_key_exists('sort_order', $payload) || array_key_exists('position', $payload);
+    $position = $hasPosition ? ($payload['sort_order'] ?? $payload['position']) : $item->position;
 
     if (! in_array($linkType, NavigationItem::linkTypes(), true)) {
       $errors[] = $this->operations->error('navigation_item.link_type', 'Navigation item link type must be supported.');
@@ -320,7 +321,8 @@ class InternalNavigationController extends Controller
       $errors[] = $this->operations->error('navigation_item.visibility', 'Navigation item visibility must be visible or hidden.');
     }
 
-    if (! is_numeric($position) || (int) $position < 1) {
+    // Pre-tree-editor rows may carry position 0; only reject positions the caller sent.
+    if ($hasPosition && (! is_numeric($position) || (int) $position < 1)) {
       $errors[] = $this->operations->error('navigation_item.sort_order', 'Navigation item sort order must be one or greater.');
     }
 
@@ -328,7 +330,11 @@ class InternalNavigationController extends Controller
       $parentId = null;
     }
 
-    if ($parentId !== null) {
+    // Legacy rows may sit under a non-group parent; only vet parents the caller reassigns.
+    $parentChanged = array_key_exists('parent_id', $payload)
+      && (int) ($parentId ?? 0) !== (int) ($item->parent_id ?? 0);
+
+    if ($parentId !== null && $parentChanged) {
       $parent = NavigationItem::query()->with('parent')->find((int) $parentId);
 
       if (! $parent || $parent->menu_key !== $navigationMenu || (int) $parent->site_id !== (int) $site->id) {
