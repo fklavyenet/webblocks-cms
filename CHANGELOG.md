@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.7
+
+- **The browser tab shows the same CMS icon on every page.** The packaged `favicon.svg` drew a different design (a solid tile) than the PNG icons (the monoline grid mark), and Chrome picks its favicon candidate per tab — so the icon could look different, and seemingly smaller, from one tab to the next. The SVG now draws the identical grid mark the PNGs carry, so every candidate renders the same icon. The PNG files themselves are untouched.
+
 ## 1.52.6
 
 - **API discovery now documents menu label translations.** Writing a navigation label for a non-default locale (`PATCH` the item with `locale` plus `label`) has worked since 1.52.0, but the live OpenAPI schema and AI guide never mentioned it, so API tools had to discover the format from source. The item PATCH spec now lists `locale` with the translation-row semantics and the `title_translations` read map, the AI guide and the navigation workflow describe the same write, and the spec states that untouched fields pass through without re-validation.
