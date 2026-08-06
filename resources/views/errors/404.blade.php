@@ -67,6 +67,9 @@
     <body class="wb-public-body" data-wb-public-theme="{{ $notFoundThemePreset }}">
         <div class="wb-error-shell">
             <main class="wb-stack wb-gap-3" style="max-width: 32rem;">
+                @if ($notFoundSiteName !== '')
+                    <p class="wb-error-brand"><a href="{{ $notFoundHomePath }}" class="wb-error-brand-link">{{ $notFoundSiteName }}</a></p>
+                @endif
                 <div class="wb-error-code" aria-hidden="true">404</div>
                 <span class="wb-eyebrow">{{ $notFoundText('eyebrow') }}</span>
                 <h1>{{ $notFoundText('title') }}</h1>

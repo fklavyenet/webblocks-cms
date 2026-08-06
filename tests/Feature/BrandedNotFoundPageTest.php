@@ -34,6 +34,8 @@ class BrandedNotFoundPageTest extends TestCase
     $response->assertSee('data-wb-public-theme', escape: false);
     $response->assertSee('This page does not exist');
     $response->assertSee('noindex, nofollow', escape: false);
+    // The brand line names the site and links home.
+    $response->assertSee('class="wb-error-brand-link">Test</a>', escape: false);
   }
 
   #[Test]
@@ -46,7 +48,9 @@ class BrandedNotFoundPageTest extends TestCase
     $response->assertNotFound();
     $response->assertSee('Bu sayfa mevcut değil');
     $response->assertSee('lang="tr"', escape: false);
-    $response->assertSee('href="/tr"', escape: false);
+    // Both the brand line and the CTA point at the Turkish home.
+    $response->assertSee('<a href="/tr" class="wb-error-brand-link">', escape: false);
+    $response->assertSee('href="/tr" class="wb-btn', escape: false);
   }
 
   #[Test]

@@ -281,7 +281,7 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
 
 /* Deliberate host theming choice: body text links use the contrast-safe
    accent-text tone instead of the raw accent that shipped `a` rules use. */
-:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) a:not(.wb-btn):not(.wb-navbar-link):not(.wb-dropdown-item):not(.wb-sidebar-link) {
+:is(body[data-wb-public-theme], [data-wb-public-theme-preview]) a:not(.wb-btn):not(.wb-navbar-link):not(.wb-dropdown-item):not(.wb-sidebar-link):not(.wb-error-brand-link) {
     color: var(--wb-public-accent-text);
 }
 
@@ -304,4 +304,20 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     line-height: 1;
     opacity: 0.35;
     margin-bottom: 0.5rem;
+}
+
+.wb-error-brand {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin-bottom: 1.5rem;
+}
+
+.wb-error-brand-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.wb-error-brand-link:hover,
+.wb-error-brand-link:focus-visible {
+    text-decoration: underline;
 }
