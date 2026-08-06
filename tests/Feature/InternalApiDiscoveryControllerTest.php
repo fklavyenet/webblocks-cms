@@ -85,6 +85,22 @@ class InternalApiDiscoveryControllerTest extends TestCase
   }
 
   /**
+   * The navigation translation write shipped in 1.52.0 but discovery never
+   * mentioned it, so API tools reverse-engineered it from source instead of
+   * reading it from the live schema.
+   */
+  #[Test]
+  public function openapi_schema_documents_the_navigation_item_locale_translation_write(): void
+  {
+    $response = $this->app->make(InternalApiDiscoveryController::class)->openapi();
+    $patch = $response->getData(true)['paths']['/navigation-menus/{navigationMenu}/items/{item}']['patch'];
+
+    $this->assertContains('locale', $patch['x-supported-fields']);
+    $this->assertStringContainsString('translation row', $patch['x-note']);
+    $this->assertStringContainsString('title_translations', $patch['x-note']);
+  }
+
+  /**
    * The AI guide is what an agent reads to learn the workflow, and it is
    * hand-written prose beside a hand-written route table -- so it drifts
    * silently. It already had: page SEO, page rendering, site SEO defaults,
@@ -108,6 +124,7 @@ class InternalApiDiscoveryControllerTest extends TestCase
       '/webadmin/api/sites/{site}/domains',
       'unsupported_plan_fields',
       'seo_title',
+      'title_translations',
     ] as $needle) {
       $this->assertStringContainsString($needle, $guide, 'The AI guide no longer mentions '.$needle.'.');
     }
