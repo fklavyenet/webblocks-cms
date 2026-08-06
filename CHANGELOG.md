@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.5
+
+- **Navigation items from older sites can be updated through the API again.** Updating a menu item re-validated fields the caller never sent against the item's stored values, so rows predating today's rules were locked out entirely: items still carrying sort order 0 from before the tree editor, and children nested under a page-type parent from before the groups-only rule. Even writing a title translation failed. Untouched fields now pass through as they are; a sort order or parent you actually send is validated exactly as before.
+
 ## 1.52.4
 
 - **The 404 page's browser tab keeps its icon.** The branded 404 builds its own `<head>` and emitted no favicon links, so the tab icon disappeared exactly on error pages. The page now resolves the favicon the same way every other public page does: the site's uploaded favicon wins, the packaged brand icons are the fallback.
