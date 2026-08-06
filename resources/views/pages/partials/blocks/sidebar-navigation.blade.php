@@ -39,6 +39,10 @@
           return $item->children->isNotEmpty();
         }
 
+        if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
+          return $item->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $item->resolvedUrl() !== null;
+        }
+
         return $item->resolvedUrl() !== null;
       })
       ->values();
