@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.1
+
+- **Button Link internal URLs now follow the page's language.** A button stored as `/products` sent every locale's visitor to the default-locale page; the public renderer now rewrites an internal path to the same page's translated path in the render locale (`/es/productos` on the Spanish render). An already-prefixed pasted path (`/tr/urunler`) resolves back through the page, and a query string or `#fragment` rides along. External URLs, paths that don't resolve to a published page, and pages without a translation in the render locale keep the stored URL untouched — the rewrite is never worse than the stored link. The stored value itself stays shared and raw: the admin form and the managed-CTA synchronizer read it exactly as entered.
+
 ## 1.52.0
 
 - **Multilingual sites get a public language switcher.** The Header Actions block now renders a compact dropdown — the same `wb-language-switcher--code` component the admin topbar already uses, so no new CSS — between the search trigger and the mode toggle. Each locale links to the current page's real translated path (the ES link on `/products` goes to `/es/productos`), falling back to that locale's home page when the page has no resolvable translation. It only renders when more than one enabled locale resolves a link, so single-locale sites are untouched, and a new `show_language_switcher` setting (default on) lets operators hide it per block — wired through the admin form, validation, the block contract, the internal content API, and all five admin languages.
