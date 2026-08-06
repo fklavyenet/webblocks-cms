@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.8
+
+- **Menus stop linking to pages that are no longer published.** The navbar always hid page-linked menu items whose page left the published state, but the footer/legal menus (`navigation-auto`) and the sidebar menu only checked the item's own visibility — so archiving a page removed its link from the navbar while the footer kept a dead link straight to the 404. Both renderers now apply the navbar's rule: a page-linked item renders only while its page is published.
+- **Pages can be archived through the Internal Content API.** `POST /webadmin/api/pages/{page}/archive` applies the admin workflow's archive transition under the same `content.publish` capability that gates publishing: allowed from `in_review` and `published`, draft pages are rejected, re-archiving is a no-op success, and staged update pages are refused (promote or delete those instead). A page revision is captured, capability discovery advertises `archive_page`, and the OpenAPI schema, AI guide, and docs describe the endpoint. Publishing the page again reverses the archive.
+
 ## 1.52.7
 
 - **The browser tab shows the same CMS icon on every page.** The packaged `favicon.svg` drew a different design (a solid tile) than the PNG icons (the monoline grid mark), and Chrome picks its favicon candidate per tab — so the icon could look different, and seemingly smaller, from one tab to the next. The SVG now draws the identical grid mark the PNGs carry, so every candidate renders the same icon. The PNG files themselves are untouched.
