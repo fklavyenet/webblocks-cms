@@ -280,6 +280,7 @@ class CmsApiTokenCapabilities
         'replace_staged_update' => $this->has($token, self::CONTENT_APPLY),
         'promote_staged_update' => $this->has($token, self::CONTENT_APPLY) && $this->has($token, self::CONTENT_PUBLISH),
         'publish_page' => $this->has($token, self::CONTENT_PUBLISH),
+        'archive_page' => $this->has($token, self::CONTENT_PUBLISH),
         'render_admin_snapshots' => $this->has($token, self::ADMIN_RENDER),
         'delete_page' => $this->has($token, self::PAGES_DELETE),
         'write_navigation_items' => $this->has($token, self::NAVIGATION_WRITE),

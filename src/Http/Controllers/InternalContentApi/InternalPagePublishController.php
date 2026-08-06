@@ -101,6 +101,61 @@ class InternalPagePublishController extends Controller
     ]);
   }
 
+  public function archive(Request $request, Page $page): JsonResponse
+  {
+    $this->rejectStagedUpdatePageArchive($page);
+
+    $fromStatus = $page->status;
+
+    $result = DB::transaction(function () use ($page, $fromStatus): array {
+      $lockedPage = Page::query()->lockForUpdate()->findOrFail($page->id);
+
+      // Same transition rule as the admin workflow: draft pages are not
+      // archivable, and re-archiving an archived page is a no-op success.
+      if (! in_array($lockedPage->status, [Page::STATUS_IN_REVIEW, Page::STATUS_PUBLISHED, Page::STATUS_ARCHIVED], true)) {
+        throw ValidationException::withMessages([
+          'page' => 'This page cannot be archived from its current status.',
+        ]);
+      }
+
+      if ($lockedPage->status !== Page::STATUS_ARCHIVED) {
+        $actor = $this->currentActorResolver->resolve(preferredSource: 'internal-api');
+        $lockedPage->forceFill([
+          'status' => Page::STATUS_ARCHIVED,
+          'archived_by_user_id' => $actor['user_id'],
+          'updated_by_user_id' => $actor['user_id'],
+        ])->save();
+      }
+
+      $updatedPage = $lockedPage->fresh(['site.locales', 'translations.locale', 'slots.slotType']);
+      $revision = $this->revisionManager->capture(
+        $updatedPage,
+        label: 'Page archived',
+        reason: 'Internal Content API archived the page.',
+        event: 'workflow_changed',
+        source: 'internal-api',
+      );
+
+      return [
+        'page' => $updatedPage,
+        'from_status' => $fromStatus,
+        'revision_id' => $revision->id,
+      ];
+    });
+
+    /** @var Page $archivedPage */
+    $archivedPage = $result['page'];
+
+    return response()->json([
+      'ok' => true,
+      'page' => $this->presenter->page($archivedPage),
+      'from_status' => $result['from_status'],
+      'revision_id' => $result['revision_id'],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
   public function publishPageOwnedBlocks(Request $request, Page $page): JsonResponse
   {
     if ($this->pageScopeHasHumanOnlyBlock($page)) {
@@ -171,6 +226,19 @@ class InternalPagePublishController extends Controller
         ],
       ],
     ], 409));
+  }
+
+  private function rejectStagedUpdatePageArchive(Page $page): void
+  {
+    $metadata = $page->settings['staged_update'] ?? null;
+
+    if (! is_array($metadata) || ($metadata['type'] ?? null) !== 'published_page_update') {
+      return;
+    }
+
+    throw ValidationException::withMessages([
+      'page' => 'This page is a staged update. Promote it onto its source page via content apply, or delete it with DELETE /webadmin/api/pages/{page}; archiving a staged draft is not supported.',
+    ]);
   }
 
   private function rejectSharedSlotCascade(Request $request): void

@@ -724,6 +724,7 @@ Publishing is separate from content apply and requires a token with `content.pub
 ```text
 POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
+POST /webadmin/api/pages/{page}/archive
 ```
 
 `POST /webadmin/api/pages/{page}/publish` publishes the page record. Its default payload is page-only:
@@ -745,6 +746,8 @@ Rules:
 - the response includes page id/status/path metadata, whether page-owned blocks were included, the count published, excluded Shared Slot summaries, and the page revision id
 
 `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes only unpublished page-owned blocks and does not change the page workflow status. It uses the same `content.publish` capability and the same Shared Slot exclusion rule.
+
+`POST /webadmin/api/pages/{page}/archive` takes the page off the public site: archived pages return 404 to visitors and their page-linked menu items stop rendering in public menus. It uses the same `content.publish` capability and mirrors the admin workflow rules: allowed from `in_review` and `published`, a draft page returns JSON `422`, re-archiving an archived page is a no-op success, and staged update pages are rejected (promote or delete those instead). The response includes page metadata, `from_status`, and the captured page revision id. Publishing the page again reverses the archive.
 
 AI/operator tools must not assume page publish makes all block content public. Use `include_page_owned_blocks: true` only when the user explicitly approved publishing all unpublished page-owned blocks for that page. Shared Slot content must be reviewed and published separately.
 
