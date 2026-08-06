@@ -36,6 +36,9 @@ class BrandedNotFoundPageTest extends TestCase
     $response->assertSee('noindex, nofollow', escape: false);
     // The brand line names the site and links home.
     $response->assertSee('class="wb-error-brand-link">Test</a>', escape: false);
+    // The tab keeps its favicon — packaged brand icons when the site sets none.
+    $response->assertSee('rel="icon"', escape: false);
+    $response->assertSee('cms/brand/favicon.svg', escape: false);
   }
 
   #[Test]

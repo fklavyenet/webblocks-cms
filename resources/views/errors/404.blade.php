@@ -45,6 +45,12 @@
 
     $notFoundSiteCssPath = app(\WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver::class)->cssPathFor($notFoundSite);
     $notFoundPublicCssPath = public_path('cms/css/public.css');
+
+    try {
+        $notFoundFaviconUrl = trim((string) $notFoundSite?->faviconAsset?->url());
+    } catch (\Throwable) {
+        $notFoundFaviconUrl = '';
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', $notFoundLocaleCode ?? app()->getLocale()) }}">
@@ -53,6 +59,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ $notFoundText('title') }}@if ($notFoundSiteName !== '') · {{ $notFoundSiteName }}@endif</title>
         <meta name="robots" content="noindex, nofollow">
+        {{-- Same favicon resolution as head-meta: the site's own icon wins,
+             the packaged brand icons are the fallback — the tab keeps its
+             identity on error pages too. --}}
+        @if ($notFoundFaviconUrl !== '')
+            <link rel="icon" href="{{ $notFoundFaviconUrl }}">
+            <link rel="shortcut icon" href="{{ $notFoundFaviconUrl }}">
+            <link rel="apple-touch-icon" href="{{ $notFoundFaviconUrl }}">
+        @else
+            <link rel="icon" type="image/svg+xml" href="{{ asset('cms/brand/favicon.svg') }}">
+            <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('cms/brand/favicon-16x16.png') }}">
+            <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('cms/brand/favicon-32x32.png') }}">
+            <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('cms/brand/apple-touch-icon.png') }}">
+            <link rel="shortcut icon" href="{{ asset('cms/brand/favicon-32x32.png') }}">
+        @endif
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
         @if (is_file($notFoundPublicCssPath))
             <link rel="stylesheet" href="{{ asset('cms/css/public.css') }}?v={{ filemtime($notFoundPublicCssPath) }}">
