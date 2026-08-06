@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.6
+
+- **API discovery now documents menu label translations.** Writing a navigation label for a non-default locale (`PATCH` the item with `locale` plus `label`) has worked since 1.52.0, but the live OpenAPI schema and AI guide never mentioned it, so API tools had to discover the format from source. The item PATCH spec now lists `locale` with the translation-row semantics and the `title_translations` read map, the AI guide and the navigation workflow describe the same write, and the spec states that untouched fields pass through without re-validation.
+
 ## 1.52.5
 
 - **Navigation items from older sites can be updated through the API again.** Updating a menu item re-validated fields the caller never sent against the item's stored values, so rows predating today's rules were locked out entirely: items still carrying sort order 0 from before the tree editor, and children nested under a page-type parent from before the groups-only rule. Even writing a title translation failed. Untouched fields now pass through as they are; a sort order or parent you actually send is validated exactly as before.
