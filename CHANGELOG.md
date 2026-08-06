@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.4
+
+- **The 404 page's browser tab keeps its icon.** The branded 404 builds its own `<head>` and emitted no favicon links, so the tab icon disappeared exactly on error pages. The page now resolves the favicon the same way every other public page does: the site's uploaded favicon wins, the packaged brand icons are the fallback.
+
 ## 1.52.3
 
 - **The 404 page now opens with the site's own brand line.** The site's display name sits above the 404 code, linking to the home page of the locale the visitor was browsing, so the page answers "whose 404 is this" at a glance. It inherits the page's text color rather than the accent link tone, and hides itself when no site name resolves. Deliberately the site's brand and not the CMS's — self-hosted CMSes keep their own name off visitor-facing error pages.
