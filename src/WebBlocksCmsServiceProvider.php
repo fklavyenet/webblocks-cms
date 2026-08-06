@@ -4,6 +4,8 @@ namespace WebBlocks\Cms;
 
 use FilesystemIterator;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -12,6 +14,7 @@ use Illuminate\Support\ServiceProvider;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use WebBlocks\Cms\Console\AdminTranslationAuditCommand;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
@@ -834,6 +837,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootInternalApiCsrfExclusions();
     $this->bootRoutes();
     $this->bootViews();
+    $this->bootNotFoundView();
     $this->bootMigrations();
     $this->bootPublishing();
 
@@ -1139,6 +1143,30 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
 
     $this->loadViewsFrom($this->viewsPath(), self::VIEW_NAMESPACE);
+  }
+
+  /**
+   * Renders the package's branded 404 for public HTML requests. The host
+   * app's own resources/views/errors/404.blade.php keeps winning — Laravel's
+   * error-view flow resolves it before this renderable's fallback matters,
+   * and the file check below keeps this renderable from shadowing it. JSON
+   * requests keep their JSON 404.
+   */
+  protected function bootNotFoundView(): void
+  {
+    $this->callAfterResolving(ExceptionHandler::class, function (ExceptionHandler $handler): void {
+      if (! $handler instanceof ExceptionsHandler) {
+        return;
+      }
+
+      $handler->renderable(function (NotFoundHttpException $exception, Request $request) {
+        if ($request->expectsJson() || is_file(resource_path('views/errors/404.blade.php'))) {
+          return null;
+        }
+
+        return response()->view('webblocks-cms::errors.404', ['request' => $request], 404);
+      });
+    });
   }
 
   protected function bootPluginTranslations(): void

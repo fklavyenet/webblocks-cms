@@ -24,6 +24,14 @@ return [
     'mode_auto' => 'Otomatik tema',
   ],
 
+  'errors' => [
+    'not_found' => [
+      'eyebrow' => 'Bulunamadı',
+      'title' => 'Bu sayfa mevcut değil',
+      'body' => 'Aradığınız sayfa taşınmış veya hiç var olmamış olabilir. Göz atmaya ana sayfadan devam edebilirsiniz.',
+      'cta' => 'Ana sayfaya dön',
+    ],
+  ],
   'preview' => [
     'title' => 'Onizleme modu',
     'body' => 'bu sayfa yayinlanmadikca herkese acik degildir.',

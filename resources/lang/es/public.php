@@ -24,6 +24,14 @@ return [
     'mode_auto' => 'Modo automático',
   ],
 
+  'errors' => [
+    'not_found' => [
+      'eyebrow' => 'No encontrada',
+      'title' => 'Esta página no existe',
+      'body' => 'La página que buscas puede haberse movido o no haber existido nunca. Vuelve a la página de inicio para seguir navegando.',
+      'cta' => 'Volver al inicio',
+    ],
+  ],
   'preview' => [
     'title' => 'Modo de vista previa',
     'body' => 'esta página no es pública hasta que se publique.',

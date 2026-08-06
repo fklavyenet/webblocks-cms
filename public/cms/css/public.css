@@ -285,3 +285,23 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     color: var(--wb-public-accent-text);
 }
 
+
+/* Branded 404 shell (errors/404.blade.php). The page renders outside the
+   normal public layout, so it declares its own viewport-height centering. */
+.wb-error-shell {
+    min-height: 100vh;
+    min-block-size: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+.wb-error-code {
+    font-size: 5rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.35;
+    margin-bottom: 0.5rem;
+}

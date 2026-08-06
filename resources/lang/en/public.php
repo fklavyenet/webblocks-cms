@@ -24,6 +24,14 @@ return [
     'mode_auto' => 'Auto mode',
   ],
 
+  'errors' => [
+    'not_found' => [
+      'eyebrow' => 'Not found',
+      'title' => 'This page does not exist',
+      'body' => 'The page you are looking for may have moved or never existed. Head back to the homepage to keep browsing.',
+      'cta' => 'Back to homepage',
+    ],
+  ],
   'preview' => [
     'title' => 'Preview mode',
     'body' => 'this page is not public unless it is published.',

@@ -24,6 +24,14 @@ return [
     'mode_auto' => 'Automatischer Modus',
   ],
 
+  'errors' => [
+    'not_found' => [
+      'eyebrow' => 'Nicht gefunden',
+      'title' => 'Diese Seite existiert nicht',
+      'body' => 'Die gesuchte Seite wurde möglicherweise verschoben oder hat nie existiert. Kehre zur Startseite zurück, um weiterzustöbern.',
+      'cta' => 'Zur Startseite',
+    ],
+  ],
   'preview' => [
     'title' => 'Vorschaumodus',
     'body' => 'diese Seite ist erst oeffentlich, wenn sie veroeffentlicht ist.',
