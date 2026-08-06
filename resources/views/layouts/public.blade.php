@@ -74,6 +74,8 @@
             'ogImage' => $publicMeta['og_image'] ?? null,
             'ogUrl' => $publicMeta['og_url'] ?? null,
             'ogSiteName' => $publicMeta['og_site_name'] ?? null,
+            'hreflangPage' => $page ?? null,
+            'hreflangSite' => $resolvedSite,
         ])
         @if ($previewMode ?? false)
             <meta name="robots" content="noindex, nofollow">

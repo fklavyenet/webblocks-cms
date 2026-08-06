@@ -7,6 +7,7 @@
     $showModeToggle = old('header_actions_show_mode_toggle', ($settings['show_mode_toggle'] ?? true) ? '1' : '0');
     $showAccentToggle = old('header_actions_show_accent_toggle', ($settings['show_accent_toggle'] ?? false) ? '1' : '0');
     $showSearch = old('header_actions_show_search', ($settings['show_search'] ?? true) ? '1' : '0');
+    $showLanguageSwitcher = old('header_actions_show_language_switcher', ($settings['show_language_switcher'] ?? true) ? '1' : '0');
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -41,6 +42,15 @@
                 <option value="1" @selected((string) $showSearch === '1')>{{ $adminText('show_search') }}</option>
                 <option value="0" @selected((string) $showSearch === '0')>{{ $adminText('hide_search') }}</option>
             </select>
+        </div>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="header_actions_show_language_switcher">{{ $adminText('language_label') }}</label>
+            <select id="header_actions_show_language_switcher" name="header_actions_show_language_switcher" class="wb-select">
+                <option value="1" @selected((string) $showLanguageSwitcher === '1')>{{ $adminText('show_language') }}</option>
+                <option value="0" @selected((string) $showLanguageSwitcher === '0')>{{ $adminText('hide_language') }}</option>
+            </select>
+            <div class="wb-text-sm wb-text-muted">{{ $adminText('language_help') }}</div>
         </div>
     </div>
 </div>

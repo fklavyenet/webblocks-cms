@@ -1827,6 +1827,7 @@ class InternalContentResourceController extends Controller
         'show_mode_toggle',
         'show_accent_toggle',
         'show_search',
+        'show_language_switcher',
       ];
     }
 
@@ -1952,7 +1953,7 @@ class InternalContentResourceController extends Controller
     }
 
     if ($type === 'header-actions') {
-      foreach (['show_mode_toggle', 'show_accent_toggle', 'show_search'] as $booleanSetting) {
+      foreach (['show_mode_toggle', 'show_accent_toggle', 'show_search', 'show_language_switcher'] as $booleanSetting) {
         if (array_key_exists($booleanSetting, $incoming)) {
           $safeIncoming[$booleanSetting] = filter_var($incoming[$booleanSetting], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
         }

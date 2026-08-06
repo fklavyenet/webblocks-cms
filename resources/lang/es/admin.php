@@ -3561,6 +3561,10 @@ return [
       'search_label' => 'Activador de búsqueda',
       'show_search' => 'Mostrar activador de búsqueda',
       'hide_search' => 'Ocultar activador de búsqueda',
+      'language_label' => 'Selector de idioma',
+      'show_language' => 'Mostrar selector de idioma',
+      'hide_language' => 'Ocultar selector de idioma',
+      'language_help' => 'Solo se renderiza cuando el sitio tiene más de una locale activada.',
     ],
     'audio' => [
       'locale_help' => 'El título y el texto de apoyo se traducen por idioma. El elemento de Medios seleccionado y la URL de audio externa se comparten entre idiomas.',

@@ -3559,6 +3559,10 @@ return [
       'search_label' => 'Arama tetikleyici',
       'show_search' => 'Arama tetikleyiciyi göster',
       'hide_search' => 'Arama tetikleyiciyi gizle',
+      'language_label' => 'Dil değiştirici',
+      'show_language' => 'Dil değiştiriciyi göster',
+      'hide_language' => 'Dil değiştiriciyi gizle',
+      'language_help' => 'Yalnızca sitede birden fazla etkin locale varsa render edilir.',
     ],
     'audio' => [
       'locale_help' => 'Başlık ve destek metni dile göre çevrilir. Seçili Medya öğesi ve harici audio URL’si diller arasında ortak kalır.',

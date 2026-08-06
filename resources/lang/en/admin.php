@@ -3561,6 +3561,10 @@ return [
       'search_label' => 'Search trigger',
       'show_search' => 'Show search trigger',
       'hide_search' => 'Hide search trigger',
+      'language_label' => 'Language switcher',
+      'show_language' => 'Show language switcher',
+      'hide_language' => 'Hide language switcher',
+      'language_help' => 'Only rendered when the site has more than one enabled locale.',
     ],
     'audio' => [
       'locale_help' => 'Title and supporting copy are translated per locale. The selected Media item and external audio URL stay shared across locales.',

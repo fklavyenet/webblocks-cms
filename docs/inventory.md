@@ -627,7 +627,7 @@ The current published core catalog contains 51 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | No copy. |
-| Settings and variants | Booleans `show_search`, `show_mode_toggle`, `show_accent_toggle`. Public preset/accent controls are currently suppressed by the site-level Public Theme model. |
+| Settings and variants | Booleans `show_search`, `show_mode_toggle`, `show_accent_toggle`, `show_language_switcher`. Public preset/accent controls are currently suppressed by the site-level Public Theme model. |
 | Children/media | None. |
 | HTML | Generic wrapper plus compact `.wb-topbar-actions` icon controls. |
 | Example appearance | Search and light/dark/auto mode actions at the right side of a Navbar. |

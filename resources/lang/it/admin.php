@@ -3560,6 +3560,10 @@ return [
       'search_label' => 'Attivatore della ricerca',
       'show_search' => 'Mostra l\'attivatore della ricerca',
       'hide_search' => 'Nascondi l\'attivatore della ricerca',
+      'language_label' => 'Selettore della lingua',
+      'show_language' => 'Mostra il selettore della lingua',
+      'hide_language' => 'Nascondi il selettore della lingua',
+      'language_help' => 'Viene renderizzato solo quando il sito ha più di una locale attivata.',
     ],
     'audio' => [
       'locale_help' => 'Titolo e testo di supporto sono tradotti per lingua. L\'elemento media selezionato e l\'URL audio esterno restano condivisi tra le lingue.',

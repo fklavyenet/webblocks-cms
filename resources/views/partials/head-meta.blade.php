@@ -27,6 +27,31 @@
 @if ($canonicalUrl !== '')
     <link rel="canonical" href="{{ $canonicalUrl }}">
 @endif
+{{-- hreflang is keyed on an explicitly passed $hreflangPage, not the inherited
+     $page: this partial is shared with the admin and guest layouts, whose views
+     also have a $page in scope, and only the public layout opts in. --}}
+@if (($hreflangPage ?? null) instanceof \WebBlocks\Cms\Models\Page)
+    @php
+        $hreflangRouteResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
+        $hreflangSite = ($hreflangSite ?? null) ?? $hreflangPage->site;
+        $hreflangLinks = ($hreflangSite ? $hreflangSite->enabledLocales()->get() : collect())
+            ->map(fn ($hreflangLocale) => [
+                'locale' => $hreflangLocale,
+                'url' => $hreflangRouteResolver->urlFor($hreflangPage, $hreflangLocale, $hreflangSite),
+            ])
+            ->filter(fn (array $entry) => $entry['url'] !== null)
+            ->values();
+    @endphp
+    @if ($hreflangLinks->count() > 1)
+        @foreach ($hreflangLinks as $hreflangEntry)
+            <link rel="alternate" hreflang="{{ $hreflangEntry['locale']->code }}" href="{{ $hreflangEntry['url'] }}">
+        @endforeach
+        @php $hreflangDefaultEntry = $hreflangLinks->first(fn (array $entry) => $entry['locale']->is_default); @endphp
+        @if ($hreflangDefaultEntry)
+            <link rel="alternate" hreflang="x-default" href="{{ $hreflangDefaultEntry['url'] }}">
+        @endif
+    @endif
+@endif
 @if ($faviconUrl !== '')
     <link rel="icon" href="{{ $faviconUrl }}">
     <link rel="shortcut icon" href="{{ $faviconUrl }}">

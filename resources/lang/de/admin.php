@@ -3561,6 +3561,10 @@ return [
       'search_label' => 'Suchauslöser',
       'show_search' => 'Suchauslöser anzeigen',
       'hide_search' => 'Suchauslöser ausblenden',
+      'language_label' => 'Sprachumschalter',
+      'show_language' => 'Sprachumschalter anzeigen',
+      'hide_language' => 'Sprachumschalter ausblenden',
+      'language_help' => 'Wird nur gerendert, wenn die Site mehr als eine aktivierte Locale hat.',
     ],
     'audio' => [
       'locale_help' => 'Titel und Begleittext werden pro Sprache übersetzt. Das ausgewählte Medienobjekt und die externe Audio-URL bleiben sprachübergreifend gemeinsam.',

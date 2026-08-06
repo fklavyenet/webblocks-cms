@@ -740,7 +740,7 @@ class BlockTypeContractRegistry
       'header-actions' => [
         'admin_form_fields' => ['Show mode toggle', 'Show accent toggle', 'Show search'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['settings.show_mode_toggle', 'settings.show_accent_toggle', 'settings.show_search'],
+        'shared_settings_fields' => ['settings.show_mode_toggle', 'settings.show_accent_toggle', 'settings.show_search', 'settings.show_language_switcher'],
         'storage_fields' => ['Shared header action toggles stay in block settings.'],
         'media_relationship_fields' => ['Search route and public WebBlocks UI mode behavior are consumed at render time; preset/accent controls are suppressed while site-level Public Theme presets own public theme selection.'],
         'child_container_behavior' => ['Not a container in the current contract.'],

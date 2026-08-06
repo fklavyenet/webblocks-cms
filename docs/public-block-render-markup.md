@@ -1300,6 +1300,7 @@ The actual core slug is `navbar-navigation`. It renders CMS NavigationItem trees
 | --- | --- | --- |
 | settings.show_search | false | Hides public search action. |
 | settings.show_mode_toggle | false | Hides mode toggle action. |
+| settings.show_language_switcher | false | Hides the language switcher dropdown. It only renders anyway when more than one enabled locale resolves a link. |
 | settings.show_accent_toggle | any | Public rendering suppresses preset/accent controls while site-level Public Theme presets are active. |
 | default settings | empty/true | Renders search and mode actions. |
 

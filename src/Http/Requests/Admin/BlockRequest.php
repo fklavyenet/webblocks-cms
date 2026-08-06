@@ -292,6 +292,7 @@ class BlockRequest extends FormRequest
       'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
       'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
       'header_actions_show_search' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
+      'header_actions_show_language_switcher' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
       'sticky_navbar_mode' => [$isStickyNavbar ? 'nullable' : 'prohibited', Rule::in(['sticky', 'fixed', 'static'])],
       'navbar_brand_aria_label' => [$isNavbarBrand ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'sidebar_brand_aria_label' => [$isSidebarBrand ? 'nullable' : 'prohibited', 'string', 'max:255'],
@@ -1575,6 +1576,7 @@ class BlockRequest extends FormRequest
           $settings['show_mode_toggle'] = (bool) ($data['header_actions_show_mode_toggle'] ?? true);
           $settings['show_accent_toggle'] = (bool) ($data['header_actions_show_accent_toggle'] ?? false);
           $settings['show_search'] = (bool) ($data['header_actions_show_search'] ?? true);
+          $settings['show_language_switcher'] = (bool) ($data['header_actions_show_language_switcher'] ?? true);
         }
 
         $data['title'] = null;

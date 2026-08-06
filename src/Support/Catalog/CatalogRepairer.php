@@ -124,27 +124,38 @@ class CatalogRepairer
           continue;
         }
 
+        // css_classes is operator-customizable presentation: when the catalog
+        // defines no canonical value for a slot (footer everywhere, header and
+        // sidebar in the default layout), repairing it to null would wipe the
+        // site's own classes — so the column is only repaired when the catalog
+        // actually states a value.
+        $slotAttributes = [
+          'page_layout_id' => $pageLayout->id,
+          'slot_name' => $slotDefinition['slot_name'],
+          'slot_type_id' => $slotType->id,
+          'label' => $slotDefinition['label'] ?? null,
+          'description' => $slotDefinition['description'] ?? null,
+          'html_element' => $slotDefinition['html_element'] ?? 'div',
+          'html_id' => $slotDefinition['html_id'] ?? null,
+          'css_classes' => $slotDefinition['css_classes'] ?? null,
+          'before_html' => $slotDefinition['before_html'] ?? null,
+          'start_html' => $slotDefinition['start_html'] ?? null,
+          'end_html' => $slotDefinition['end_html'] ?? null,
+          'after_html' => $slotDefinition['after_html'] ?? null,
+          'is_required' => (bool) ($slotDefinition['is_required'] ?? false),
+          'is_active' => (bool) ($slotDefinition['is_active'] ?? true),
+          'is_system' => (bool) ($slotDefinition['is_system'] ?? false),
+          'sort_order' => (int) ($slotDefinition['sort_order'] ?? 0),
+        ];
+
+        if (! array_key_exists('css_classes', $slotDefinition)) {
+          unset($slotAttributes['css_classes']);
+        }
+
         $slotSummary = $this->repairDefinitions(
           modelClass: PageLayoutSlot::class,
           keys: ['page_layout_id', 'slot_name'],
-          definitions: [[
-            'page_layout_id' => $pageLayout->id,
-            'slot_name' => $slotDefinition['slot_name'],
-            'slot_type_id' => $slotType->id,
-            'label' => $slotDefinition['label'] ?? null,
-            'description' => $slotDefinition['description'] ?? null,
-            'html_element' => $slotDefinition['html_element'] ?? 'div',
-            'html_id' => $slotDefinition['html_id'] ?? null,
-            'css_classes' => $slotDefinition['css_classes'] ?? null,
-            'before_html' => $slotDefinition['before_html'] ?? null,
-            'start_html' => $slotDefinition['start_html'] ?? null,
-            'end_html' => $slotDefinition['end_html'] ?? null,
-            'after_html' => $slotDefinition['after_html'] ?? null,
-            'is_required' => (bool) ($slotDefinition['is_required'] ?? false),
-            'is_active' => (bool) ($slotDefinition['is_active'] ?? true),
-            'is_system' => (bool) ($slotDefinition['is_system'] ?? false),
-            'sort_order' => (int) ($slotDefinition['sort_order'] ?? 0),
-          ]],
+          definitions: [$slotAttributes],
           dryRun: $dryRun,
         );
 

@@ -329,6 +329,7 @@ Supported fields are intentionally narrow:
 - `settings.show_search` for `header-actions`
 - `settings.show_mode_toggle` for `header-actions`
 - `settings.show_accent_toggle` for `header-actions`
+- `settings.show_language_switcher` for `header-actions`
 - text translations such as `title` and `subtitle`
 - image block translations through `translations.image.alt_text`, `translations.image.caption`, or the shorthand `translations.alt_text` and `translations.caption`
 - `url`
