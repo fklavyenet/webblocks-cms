@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.3
+
+- **The 404 page now opens with the site's own brand line.** The site's display name sits above the 404 code, linking to the home page of the locale the visitor was browsing, so the page answers "whose 404 is this" at a glance. It inherits the page's text color rather than the accent link tone, and hides itself when no site name resolves. Deliberately the site's brand and not the CMS's — self-hosted CMSes keep their own name off visitor-facing error pages.
+
 ## 1.52.2
 
 - **Every site now ships a branded 404 page.** A missing page used to fall through to Laravel's plain default — unbranded, English-only, ignoring the site's theme. The package now renders its own 404 for public HTML requests: the site's display name, public theme preset, brand palette, and `site.css` all apply, and the copy comes in the request's locale (resolved from the URL's locale prefix, falling back to the default locale) from a new `errors.not_found` public catalog shipped in all five languages. The "back to homepage" button resolves the locale's real home path, and the page carries `noindex, nofollow`.
