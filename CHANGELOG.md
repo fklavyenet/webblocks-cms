@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.2
+
+- **Every site now ships a branded 404 page.** A missing page used to fall through to Laravel's plain default — unbranded, English-only, ignoring the site's theme. The package now renders its own 404 for public HTML requests: the site's display name, public theme preset, brand palette, and `site.css` all apply, and the copy comes in the request's locale (resolved from the URL's locale prefix, falling back to the default locale) from a new `errors.not_found` public catalog shipped in all five languages. The "back to homepage" button resolves the locale's real home path, and the page carries `noindex, nofollow`.
+- JSON requests keep their JSON 404 untouched, and a host app that ships its own `resources/views/errors/404.blade.php` keeps winning — the package view is a fallback, not a takeover. Every lookup in the view is wrapped defensively, so a 404 can never escalate into a 500.
+
 ## 1.52.1
 
 - **Button Link internal URLs now follow the page's language.** A button stored as `/products` sent every locale's visitor to the default-locale page; the public renderer now rewrites an internal path to the same page's translated path in the render locale (`/es/productos` on the Spanish render). An already-prefixed pasted path (`/tr/urunler`) resolves back through the page, and a query string or `#fragment` rides along. External URLs, paths that don't resolve to a published page, and pages without a translation in the render locale keep the stored URL untouched — the rewrite is never worse than the stored link. The stored value itself stays shared and raw: the admin form and the managed-CTA synchronizer read it exactly as entered.
