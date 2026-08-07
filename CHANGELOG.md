@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.13
+
+- **The Pages table columns stop wrapping, this time for real.** 1.52.12 gave the id column `white-space: nowrap` and it kept breaking `#54` in half, because webblocks-ui's own `.wb-table td { white-space: normal; overflow-wrap: anywhere }` is a class *and* a type selector and outranks a lone class however late it loads. The rule is now scoped by the table class, and so are the five sibling columns — count, status, view, actions, last edited — which carried the same defect since they were written and had been wrapping just as quietly. A test now refuses an admin table cell override that cannot win against the base rule.
+- **Page ids lost the `#` prefix.** The column heading already says ID.
+
 ## 1.52.12
 
 - **Page ids stop wrapping onto two lines.** The Pages table gave its id column no width of its own, so once the page cell filled up with translated paths the browser took the slack from the id and broke `#54` across two lines. It now holds one line, like the id column in the block tables. The column heading, which was the only hard-coded one in that table, now comes from the admin catalog in all five panel languages.

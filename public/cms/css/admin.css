@@ -157,7 +157,7 @@ svg.wb-sidebar-brand-logo {
     -webkit-line-clamp: 1;
 }
 
-.wb-cms-block-children-cell {
+.wb-table .wb-cms-block-children-cell {
     text-align: center;
     white-space: nowrap;
 }
@@ -254,10 +254,13 @@ svg.wb-sidebar-brand-logo {
 }
 
 /* The page cell takes the slack, so the id column has none to give: without
-   this the browser wrapped "#54" onto two lines. */
-.wb-admin-pages-id-cell {
+   this the browser wrapped "54" onto two lines. The table class has to be in
+   the selector -- webblocks-ui ships `.wb-table td { white-space: normal;
+   overflow-wrap: anywhere }`, and a lone class loses to it on specificity. */
+.wb-admin-pages-table .wb-admin-pages-id-cell {
     width: 1%;
     white-space: nowrap;
+    overflow-wrap: normal;
     font-variant-numeric: tabular-nums;
 }
 
@@ -293,11 +296,14 @@ svg.wb-sidebar-brand-logo {
     line-height: 1.2;
 }
 
-.wb-admin-pages-count-cell,
-.wb-admin-pages-status-cell,
-.wb-admin-pages-view-cell,
-.wb-admin-pages-actions-cell {
+/* Scoped by the table class on purpose: see the id cell above -- the base
+   `.wb-table td` rule outranks a lone class and these all read as wrapped. */
+.wb-admin-pages-table .wb-admin-pages-count-cell,
+.wb-admin-pages-table .wb-admin-pages-status-cell,
+.wb-admin-pages-table .wb-admin-pages-view-cell,
+.wb-admin-pages-table .wb-admin-pages-actions-cell {
     white-space: nowrap;
+    overflow-wrap: normal;
 }
 
 .wb-admin-pages-count-cell,
@@ -305,8 +311,9 @@ svg.wb-sidebar-brand-logo {
     text-align: center;
 }
 
-.wb-admin-pages-last-edited-cell {
+.wb-admin-pages-table .wb-admin-pages-last-edited-cell {
     white-space: nowrap;
+    overflow-wrap: normal;
 }
 
 .wb-admin-pages-last-edited {
