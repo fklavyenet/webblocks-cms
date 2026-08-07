@@ -2410,6 +2410,7 @@ return [
     'bulk_delete_count_suffix' => 'seçili sayfa silinecek.',
     'bulk_delete_help' => 'Bu yalnızca bu sayfada görünen sayfalar için geçerlidir. Her seçili sayfa, site erişiminize karşı sunucu tarafinda yeniden kontrol edilir.',
     'columns' => [
+      'id' => 'ID',
       'page' => 'Sayfa',
       'view' => 'Görünüm',
       'title' => 'Başlık',

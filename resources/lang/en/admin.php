@@ -2412,6 +2412,7 @@ return [
     'bulk_delete_count_suffix' => 'selected pages will be deleted.',
     'bulk_delete_help' => 'This applies only to pages visible on this page. Every selected page is re-checked server-side against your site access before deletion.',
     'columns' => [
+      'id' => 'ID',
       'page' => 'Page',
       'view' => 'View',
       'title' => 'Title',

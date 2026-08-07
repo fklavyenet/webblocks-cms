@@ -171,7 +171,7 @@
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
-                                <th>ID</th>
+                                <th class="wb-admin-pages-id-cell">{{ $adminText('pages.columns.id') }}</th>
                                 <th>{{ $adminText('pages.columns.page') }}</th>
                                 <th>{{ $adminText('pages.columns.view') }}</th>
                                 <th title="{{ $adminText('pages.total_blocks_help') }}">{{ $adminText('pages.columns.total_blocks') }}</th>
@@ -196,7 +196,7 @@
                                             <span class="wb-sr-only">{{ $adminText('pages.select_page', ['title' => $page->title]) }}</span>
                                         </label>
                                     </td>
-                                    <td class="wb-admin-pages-table-cell wb-text-sm wb-text-muted">#{{ $page->id }}</td>
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-id-cell wb-text-sm wb-text-muted">#{{ $page->id }}</td>
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-page-cell">
                                         <div class="wb-admin-pages-page-meta">
                                             <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">

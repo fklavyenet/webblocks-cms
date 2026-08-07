@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.12
+
+- **Page ids stop wrapping onto two lines.** The Pages table gave its id column no width of its own, so once the page cell filled up with translated paths the browser took the slack from the id and broke `#54` across two lines. It now holds one line, like the id column in the block tables. The column heading, which was the only hard-coded one in that table, now comes from the admin catalog in all five panel languages.
+
 ## 1.52.11
 
 - **A block that is not being moved can be edited again.** Placement rules decide where a block may be *put*, but the admin re-ran them on every save, so a block whose parent no longer satisfies them was locked out of editing entirely — a Navbar Brand sitting in a footer, placed by a content plan and rendering publicly every day, answered "This block type requires a supported parent block" when only its label was changed. The parent select now always offers the block its own current parent (it previously fell back to "no parent", which is what turned a field edit into a detach request), and the placement rules are skipped while both the parent and the block type stay exactly as stored. Moving a block, or changing its type in place, is validated as strictly as before.

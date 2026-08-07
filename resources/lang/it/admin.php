@@ -2411,6 +2411,7 @@ return [
     'bulk_delete_count_suffix' => 'pagine selezionate verranno eliminate.',
     'bulk_delete_help' => 'Si applica solo alle pagine visibili in questa pagina. Ogni pagina selezionata viene ricontrollata lato server rispetto al tuo accesso ai siti prima dell\'eliminazione.',
     'columns' => [
+      'id' => 'ID',
       'page' => 'Pagina',
       'view' => 'Vedi',
       'title' => 'Titolo',

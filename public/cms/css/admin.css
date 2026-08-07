@@ -253,6 +253,14 @@ svg.wb-sidebar-brand-logo {
     line-height: 1.25;
 }
 
+/* The page cell takes the slack, so the id column has none to give: without
+   this the browser wrapped "#54" onto two lines. */
+.wb-admin-pages-id-cell {
+    width: 1%;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
 .wb-admin-pages-page-cell {
     min-width: 0;
 }
