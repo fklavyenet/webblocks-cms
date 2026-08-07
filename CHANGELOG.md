@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.18
+
+- **Table blocks are edited in a grid, not a text field.** The Table block offered one textarea where a row is a line and cells are separated by `|`. Adding a column meant retyping every line and counting bars, and a table copied out of a spreadsheet had to be reformatted by hand before it would paste. There is now a spreadsheet-style grid above that field: one input per cell, add/remove/move for rows and columns, Enter to walk down a column, and a multi-cell paste from Sheets or Excel that expands the grid in place. When the block is set to `First row is header`, the grid shows that first row as the header it will render as. A `Text view` button switches back to the pipe-separated form and back again, both directions in sync, for anyone who would rather type it.
+- Storage did not change. The pipe-separated `content` field is still the only source of truth, so the public renderer, the request layer, per-locale table translations, and every table already saved are untouched — the grid reads and writes the same string. With JavaScript off the plain textarea is what renders, as before.
+
 ## 1.52.17
 
 - **French is now a panel language, not only a site language.** 1.52.10 shipped `resources/lang/fr` for the public site, so a French site rendered its contact form, search overlay, and 404 page in French — while the people publishing it still worked in an English panel, because the admin catalog was never written and the topbar dropdown, which is fed by the supported-locale list, did not offer French at all. The admin catalog now ships complete: every key the English one carries, so the panel reads French from the dashboard to the block editor, and `FR Français` sits in the language menu beside the other five. Existing installs pick it up on update; nothing to configure.
