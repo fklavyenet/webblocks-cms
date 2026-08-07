@@ -182,7 +182,7 @@ class SiteImportPlanTest extends TestCase
   {
     // The modal shows the phase it is on. A phase added without labels would
     // surface a raw key like block_translation_storage to the operator.
-    foreach (['en', 'tr', 'de', 'es', 'it'] as $locale) {
+    foreach (['en', 'tr', 'de', 'es', 'it', 'fr'] as $locale) {
       $lang = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/admin.php';
       $labels = $lang['site_transfers']['import_phases'] ?? [];
 

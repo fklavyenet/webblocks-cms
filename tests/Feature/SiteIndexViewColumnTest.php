@@ -137,7 +137,7 @@ class SiteIndexViewColumnTest extends TestCase
   #[Test]
   public function the_view_strings_exist_in_every_shipped_locale(): void
   {
-    foreach (['en', 'tr', 'de', 'es', 'it'] as $locale) {
+    foreach (['en', 'tr', 'de', 'es', 'it', 'fr'] as $locale) {
       $lang = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/admin.php';
 
       $this->assertArrayHasKey('view', $lang['sites']['columns'], 'Missing sites.columns.view in the '.$locale.' strings.');

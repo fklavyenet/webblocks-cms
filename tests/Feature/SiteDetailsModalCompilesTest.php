@@ -39,7 +39,7 @@ class SiteDetailsModalCompilesTest extends TestCase
 
     $this->assertNotEmpty($keys, 'Expected to find $adminText(...) calls in the details modal.');
 
-    foreach (['en', 'tr', 'de', 'es', 'it'] as $locale) {
+    foreach (['en', 'tr', 'de', 'es', 'it', 'fr'] as $locale) {
       $lang = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/admin.php';
 
       foreach ($keys as $key) {

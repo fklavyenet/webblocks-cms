@@ -189,6 +189,7 @@ return [
     'language_tr' => 'Türkçe',
     'language_es' => 'Español',
     'language_it' => 'Italiano',
+    'language_fr' => 'Français',
     'user_menu' => 'Kullanıcı menüsü',
     'profile' => 'Profil',
     'logout' => 'Çıkış',

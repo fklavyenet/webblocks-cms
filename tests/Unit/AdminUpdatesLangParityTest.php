@@ -17,12 +17,12 @@ class AdminUpdatesLangParityTest extends TestCase
   {
     $keysByLocale = [];
 
-    foreach (['en', 'de', 'tr', 'es', 'it'] as $locale) {
+    foreach (['en', 'de', 'tr', 'es', 'it', 'fr'] as $locale) {
       $keysByLocale[$locale] = $this->dotKeys($this->updatesSection($locale));
     }
 
     $this->assertNotSame([], $keysByLocale['en']);
-    foreach (['de', 'tr', 'es', 'it'] as $locale) {
+    foreach (['de', 'tr', 'es', 'it', 'fr'] as $locale) {
       $this->assertSame($keysByLocale['en'], $keysByLocale[$locale], "$locale updates.* keys must match en.");
     }
   }

@@ -121,7 +121,7 @@ class SiteCustomHeadApiTest extends TestCase
     $this->assertStringContainsString('name="custom_head_html"', $form);
     $this->assertStringContainsString("\$siteTab === 'head'", $form);
 
-    foreach (['en', 'de', 'tr', 'es', 'it'] as $locale) {
+    foreach (['en', 'de', 'tr', 'es', 'it', 'fr'] as $locale) {
       $strings = require dirname(__DIR__, 2)."/resources/lang/{$locale}/admin.php";
       foreach (['head_code', 'head_code_help', 'head_code_warning', 'custom_head_html'] as $key) {
         $this->assertArrayHasKey($key, $strings['site_form'], "{$locale}.site_form.{$key} is missing.");
