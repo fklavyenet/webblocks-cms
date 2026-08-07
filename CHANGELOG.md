@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.15
+
+- **The language switcher shows what it does.** WebBlocks UI is now pinned to v2.19.0, which stops hiding the chevron on the `wb-language-switcher--code` trigger — the recommended variant, and the one both the admin topbar and the public Header Actions block use. Until now that trigger was a bare `EN` with nothing to say it opened a menu. Both switchers already ship the full trigger anatomy, so the pin is the whole change: no markup, and nothing to do per site. The release also restates the menu item rule the CMS already follows — a locale code followed by the language's own name, `Deutsch` rather than `German`.
+- The bundled icon catalog is re-vendored for the new pin; the icon set itself is unchanged.
+
 ## 1.52.14
 
 - **Block ids read like page ids.** The id column in the page slot and Shared Slot block tables rendered its number inside a `<code>` element, so it arrived as a tinted chip while the Pages table shows plain muted digits for the same thing. It is now the same plain treatment in both places.
