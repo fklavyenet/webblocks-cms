@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.17
+
+- **French is now a panel language, not only a site language.** 1.52.10 shipped `resources/lang/fr` for the public site, so a French site rendered its contact form, search overlay, and 404 page in French — while the people publishing it still worked in an English panel, because the admin catalog was never written and the topbar dropdown, which is fed by the supported-locale list, did not offer French at all. The admin catalog now ships complete: every key the English one carries, so the panel reads French from the dashboard to the block editor, and `FR Français` sits in the language menu beside the other five. Existing installs pick it up on update; nothing to configure.
+
 ## 1.52.16
 
 - **Admin table columns stop shredding words.** WebBlocks UI is now pinned to v2.20.0, which changes `.wb-table td` from `overflow-wrap: anywhere` to `break-word`. `anywhere` dropped a cell's min-content width to a single character, so `table-layout: auto` was free to squeeze any column below the width of its longest word — a name arriving as `Os / man`, a date as `2026-08- / 06`. Narrow viewports now scroll the table wrapper, which is what it is for, rather than breaking the copy. This is the upstream fix for what 1.52.13 could only work around column by column; those scoped rules stay, because the base rule still sets `white-space: normal` and a nowrap column still has to outrank it.
