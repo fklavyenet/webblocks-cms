@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.16
+
+- **Admin table columns stop shredding words.** WebBlocks UI is now pinned to v2.20.0, which changes `.wb-table td` from `overflow-wrap: anywhere` to `break-word`. `anywhere` dropped a cell's min-content width to a single character, so `table-layout: auto` was free to squeeze any column below the width of its longest word — a name arriving as `Os / man`, a date as `2026-08- / 06`. Narrow viewports now scroll the table wrapper, which is what it is for, rather than breaking the copy. This is the upstream fix for what 1.52.13 could only work around column by column; those scoped rules stay, because the base rule still sets `white-space: normal` and a nowrap column still has to outrank it.
+- The runtime also adds `wb-table-break`, an opt-in for a cell or row holding unbroken machine strings — URLs, tokens, hashes — that should wrap rather than widen the table. The class snapshot the admin is checked against records it; no admin table uses it yet.
+- The bundled icon catalog is re-vendored for the new pin; the icon set itself is unchanged.
+
 ## 1.52.15
 
 - **The language switcher shows what it does.** WebBlocks UI is now pinned to v2.19.0, which stops hiding the chevron on the `wb-language-switcher--code` trigger — the recommended variant, and the one both the admin topbar and the public Header Actions block use. Until now that trigger was a bare `EN` with nothing to say it opened a menu. Both switchers already ship the full trigger anatomy, so the pin is the whole change: no markup, and nothing to do per site. The release also restates the menu item rule the CMS already follows — a locale code followed by the language's own name, `Deutsch` rather than `German`.

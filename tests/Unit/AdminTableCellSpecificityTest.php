@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * webblocks-ui ships `.wb-table td { white-space: normal; overflow-wrap:
- * anywhere }`. That is a class *and* a type selector, so it outranks a lone
+ * break-word }`. That is a class *and* a type selector, so it outranks a lone
  * class in admin.css: a `.wb-some-id-cell { white-space: nowrap }` rule loads
  * later, looks right in the file, and still loses -- which is how a page id
  * kept breaking across two lines after a release that "fixed" it.
