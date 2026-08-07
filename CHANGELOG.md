@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.10
+
+- **The API page render now renders the locale it was asked for.** `GET /webadmin/api/pages/{page}/render?locale=it` resolved the page translation but never told the block renderer which locale it was rendering, and the route carries no locale prefix for the resolver to read on its own — so the page identity was Italian while every block on it stayed in the site default language. Locale selection is the reason this endpoint exists over the browser preview, so a tool checking its own translation work was told the work had not landed. The public site was always correct; only this preview was wrong.
+- **French is now a shipped language for public pages.** The package carried visitor-facing catalogs for English, Turkish, German, Spanish, and Italian only, so a site publishing in French fell back to English for everything the CMS itself renders: contact form field labels, the storage note under it, the search overlay, the theme mode labels, and the branded 404 page. Site content was unaffected and stayed French, which is what made the gap look like a handful of stray strings. `resources/lang/fr` now ships alongside the others, and a parity test refuses a catalog that does not carry every key English does.
+- **Screen-reader labels follow the page language.** The nav, breadcrumb, slider, and gallery viewer labels were hard-coded English in the blades, so `aria-label="footer navigation"` and `aria-label="Toggle navigation"` were announced that way on every translated page in every language, including the five that were otherwise complete. They now come from the shipped catalogs, menu labels included, and a test refuses a literal aria-label in the public blades.
+
 ## 1.52.9
 
 - **Contact form button and confirmation text can be translated through the API.** `PATCH /webadmin/api/blocks/{block}` only understood the text and image translation families, so a contact form's `submit_label` and `success_message` had no API path at all and a translated page kept its English "Send message" button. The endpoint now routes every translated field to the family its block type belongs to — text, button, image, or contact form — writes it through the same writer the admin uses (so the default-locale row is kept alongside the new one), and exposes contact form rows under `block.translations` so a tool can read what it wrote.

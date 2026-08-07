@@ -199,6 +199,7 @@
                     'viewerId' => $viewerId,
                     'viewerTitle' => $viewerTitle,
                     'galleryItems' => $galleryItems,
+                    'localeCode' => $block->renderLocaleCode(),
                 ])->render();
                 app(\WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry::class)->push($galleryViewerHtml);
             @endphp

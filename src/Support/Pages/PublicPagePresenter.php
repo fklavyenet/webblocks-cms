@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Pages;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
@@ -20,7 +21,13 @@ class PublicPagePresenter
     private readonly PageRouteResolver $pageRouteResolver,
   ) {}
 
-  public function present(Page $page, bool $preview = false): array
+  /**
+   * A caller that renders outside the public locale-prefixed route has no route
+   * locale for the resolvers to read, so it must say which locale it is
+   * rendering. Passing null keeps the public route's behaviour of resolving the
+   * locale from the request.
+   */
+  public function present(Page $page, bool $preview = false, Locale|string|null $locale = null): array
   {
     $topLevelBlocks = $page->blocks
       ->whereNull('parent_id')
@@ -29,12 +36,12 @@ class PublicPagePresenter
       ->values();
 
     $translatedTopLevelBlocks = $this->blockTranslationResolver
-      ->resolveCollection($topLevelBlocks, site: $page->site)
+      ->resolveCollection($topLevelBlocks, $locale, site: $page->site)
       ->values();
 
     $slots = $page->slots
       ->sortBy(fn (PageSlot $slot) => sprintf('%010d-%010d', (int) $slot->sort_order, (int) $slot->id))
-      ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks, $preview))
+      ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks, $preview, $locale))
       ->values();
 
     $slots = $this->orderSlotsForLayout($page, $slots);
@@ -152,11 +159,11 @@ class PublicPagePresenter
     return $this->siteLabel($page?->site);
   }
 
-  private function presentSlot(PageSlot $slot, Collection $topLevelBlocks, bool $preview): array
+  private function presentSlot(PageSlot $slot, Collection $topLevelBlocks, bool $preview, Locale|string|null $locale = null): array
   {
     $page = $slot->page ?? $slot->page()->firstOrFail();
     $slug = $slot->slotType?->slug ?? 'main';
-    $blocks = $this->applyRenderContext($this->resolveSlotBlocks($slot, $topLevelBlocks), $page, $slug, $preview);
+    $blocks = $this->applyRenderContext($this->resolveSlotBlocks($slot, $topLevelBlocks, $locale), $page, $slug, $preview);
     $wrapper = $this->slotWrapperResolver->resolve($page, $slot);
 
     if ($promotedNavbar = $this->promotedHeaderNavbar($slug, $blocks, $wrapper)) {
@@ -227,14 +234,14 @@ class PublicPagePresenter
       ->values();
   }
 
-  private function resolveSlotBlocks(PageSlot $slot, Collection $topLevelBlocks): Collection
+  private function resolveSlotBlocks(PageSlot $slot, Collection $topLevelBlocks, Locale|string|null $locale = null): Collection
   {
     if ($slot->usesPageOwnedBlocks()) {
       return $topLevelBlocks->where('slot_type_id', $slot->slot_type_id)->values();
     }
 
     if (PageSlot::normalizeRuntimeSourceType($slot->source_type) === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
-      return $this->publicSharedSlotResolver->resolve($slot);
+      return $this->publicSharedSlotResolver->resolve($slot, $locale);
     }
 
     return collect();

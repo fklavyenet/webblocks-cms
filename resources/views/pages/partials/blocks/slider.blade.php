@@ -1,4 +1,6 @@
 @php
+    $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+        ->get('blocks.a11y.'.$key, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
     $slides = $block->children
         ->filter(fn ($child) => $child->typeSlug() === 'slide')
         ->values();
@@ -41,15 +43,15 @@
     @if ($showArrows || $showDots)
         <div class="wb-slider-controls">
             @if ($showArrows)
-                <button type="button" class="wb-btn wb-btn-icon wb-slider-arrow wb-slider-prev" data-wb-slider-prev aria-label="Previous slide">
+                <button type="button" class="wb-btn wb-btn-icon wb-slider-arrow wb-slider-prev" data-wb-slider-prev aria-label="{{ $a11y('previous_slide') }}">
                     <i class="wb-icon wb-icon-chevron-left" aria-hidden="true"></i>
                 </button>
             @endif
             @if ($showDots)
-                <div class="wb-slider-dots" data-wb-slider-dots aria-label="{{ $block->title ?: 'Slider' }} slides"></div>
+                <div class="wb-slider-dots" data-wb-slider-dots aria-label="{{ trim(($block->title ?: '').' '.$a11y('slides')) }}"></div>
             @endif
             @if ($showArrows)
-                <button type="button" class="wb-btn wb-btn-icon wb-slider-arrow wb-slider-next" data-wb-slider-next aria-label="Next slide">
+                <button type="button" class="wb-btn wb-btn-icon wb-slider-arrow wb-slider-next" data-wb-slider-next aria-label="{{ $a11y('next_slide') }}">
                     <i class="wb-icon wb-icon-chevron-right" aria-hidden="true"></i>
                 </button>
             @endif

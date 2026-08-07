@@ -26,11 +26,13 @@
 
   $currentLabel = $currentTranslation?->name ?: $page?->title;
   $isHomePage = ($currentTranslation?->path ?? null) === '/';
+    $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+      ->get('blocks.a11y.'.$key, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
 @endphp
 
 @if ($isHomePage)
   @if ($includeCurrent && $currentLabel)
-    <nav class="wb-breadcrumb" aria-label="Breadcrumb">
+    <nav class="wb-breadcrumb" aria-label="{{ $a11y('breadcrumb') }}">
       <ol class="wb-breadcrumb-list">
         <li class="wb-breadcrumb-item">
           <span class="wb-breadcrumb-current" aria-current="page">{{ $currentLabel }}</span>
@@ -39,7 +41,7 @@
     </nav>
   @endif
 @elseif ($currentLabel || $homeLabel)
-  <nav class="wb-breadcrumb" aria-label="Breadcrumb">
+  <nav class="wb-breadcrumb" aria-label="{{ $a11y('breadcrumb') }}">
     <ol class="wb-breadcrumb-list">
       <li class="wb-breadcrumb-item">
         <a class="wb-breadcrumb-link" href="{{ $homePath }}">{{ $homeLabel }}</a>

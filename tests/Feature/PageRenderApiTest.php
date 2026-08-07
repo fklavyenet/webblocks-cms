@@ -74,6 +74,27 @@ class PageRenderApiTest extends TestCase
   }
 
   #[Test]
+  public function it_renders_the_requested_locale_in_the_blocks_too(): void
+  {
+    // The route carries no locale prefix, so the block translation resolver
+    // read the request and fell back to the default locale: the page identity
+    // was the requested translation while every block on it stayed English.
+    $page = $this->seedPage();
+    $german = Locale::query()->create(['code' => 'de', 'name' => 'German', 'is_default' => false, 'is_enabled' => true]);
+    $page->site->locales()->syncWithoutDetaching([$german->id => ['is_enabled' => true]]);
+    $page->translations()->create(['locale_id' => $german->id, 'name' => 'Uber uns', 'slug' => 'uber-uns', 'path' => '/uber-uns']);
+
+    $block = $page->blocks()->first();
+    $block->textTranslations()->create(['locale_id' => Locale::query()->where('code', 'en')->value('id'), 'title' => 'Draft heading']);
+    $block->textTranslations()->create(['locale_id' => $german->id, 'title' => 'Entwurfsuberschrift']);
+
+    $html = $this->render($page->fresh(), ['locale' => 'de'])->getData(true)['html'];
+
+    $this->assertStringContainsString('Entwurfsuberschrift', $html);
+    $this->assertStringNotContainsString('Draft heading', $html);
+  }
+
+  #[Test]
   public function it_names_the_available_locales_when_the_requested_one_is_missing(): void
   {
     $page = $this->seedPage();

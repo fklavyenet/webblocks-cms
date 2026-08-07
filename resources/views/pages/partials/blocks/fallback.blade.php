@@ -1,4 +1,6 @@
 @php
+    $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+        ->get('blocks.a11y.'.$key, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
     $slug = $block->typeSlug() ?? 'block';
     $settings = is_array($block->settings)
         ? $block->settings
@@ -247,7 +249,7 @@
         @break
 
     @case('breadcrumb')
-        <nav aria-label="Breadcrumb">
+        <nav aria-label="{{ $a11y('breadcrumb') }}">
             <ol class="wb-cluster wb-cluster-2 wb-text-sm">
                 <li><a href="{{ $homePath }}">Home</a></li>
                 <li>/</li>
@@ -257,7 +259,7 @@
         @break
 
     @case('pagination')
-        <nav class="wb-cluster wb-cluster-between wb-cluster-2" aria-label="Pagination">
+        <nav class="wb-cluster wb-cluster-between wb-cluster-2" aria-label="{{ $a11y('pagination') }}">
             <div>
                 @if ($previousPage)
                     <a href="{{ $previousPage->publicPath() }}" class="wb-btn wb-btn-secondary">Previous: {{ $previousPage->title }}</a>

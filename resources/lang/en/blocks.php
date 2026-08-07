@@ -9,6 +9,28 @@ return [
     'placeholder' => 'Search this site',
     'submit' => 'Search',
   ],
+  // Labels a screen reader announces but a sighted visitor never sees. They
+  // were hard-coded English in the blades, so they stayed English on every
+  // translated page.
+  'a11y' => [
+    'toggle_navigation' => 'Toggle navigation',
+    'breadcrumb' => 'Breadcrumb',
+    'pagination' => 'Pagination',
+    'previous_slide' => 'Previous slide',
+    'next_slide' => 'Next slide',
+    'previous_image' => 'Previous image',
+    'next_image' => 'Next image',
+    'slides' => 'Slides',
+    'close_viewer' => 'Close viewer',
+    'menu' => [
+      'primary' => 'Primary navigation',
+      'footer' => 'Footer navigation',
+      'mobile' => 'Mobile navigation',
+      'legal' => 'Legal navigation',
+      'docs' => 'Documentation navigation',
+      'other' => 'Secondary navigation',
+    ],
+  ],
   'contact_form' => [
     'submit' => 'Send message',
     'review' => 'Please review the form',

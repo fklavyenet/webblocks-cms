@@ -67,8 +67,12 @@ class InternalPageRenderController extends Controller
       $page->setRelation('currentTranslation', $translation);
     }
 
+    // Without this the presenter resolves block translations from the request,
+    // and this route carries no locale prefix for it to read -- so every render
+    // returned default-locale block copy while the page identity around it was
+    // already the requested translation's.
     $html = view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', [
-      ...$this->presenter->present($page, preview: true),
+      ...$this->presenter->present($page, preview: true, locale: $translation?->locale),
       'previewMode' => true,
     ])->render();
 

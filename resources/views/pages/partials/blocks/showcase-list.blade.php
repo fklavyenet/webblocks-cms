@@ -113,6 +113,7 @@
         $galleryViewerHtml = view('webblocks-cms::pages.partials.blocks.gallery-viewer', [
             'viewerId' => $viewerId,
             'galleryItems' => $galleryItems,
+            'localeCode' => $block->renderLocaleCode(),
         ])->render();
         app(\WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry::class)->push($galleryViewerHtml);
     @endphp

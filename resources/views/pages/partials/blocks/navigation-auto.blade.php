@@ -1,5 +1,11 @@
 @php
   $menuKey = $block->navigationMenuKey();
+  // The label used to be the raw menu key glued to the English word
+  // "navigation", so a screen reader announced "footer navigation" on every
+  // translated page.
+  $menuLabelKey = in_array($menuKey, \WebBlocks\Cms\Models\NavigationItem::menuKeys(), true) ? $menuKey : 'other';
+  $menuLabel = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+    ->get('blocks.a11y.menu.'.$menuLabelKey, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
   $siteScope = $block->renderSite()?->id;
   // Same rule as navbar-navigation: a page-linked item only renders while its
   // page is published, so archiving a page drops its link from every menu.
@@ -43,7 +49,7 @@
 @endphp
 
 @if ($items->isNotEmpty())
-  <nav class="wb-stack wb-gap-2" aria-label="{{ $menuKey }} navigation" data-wb-menu-key="{{ $menuKey }}">
+  <nav class="wb-stack wb-gap-2" aria-label="{{ $menuLabel }}" data-wb-menu-key="{{ $menuKey }}">
     @if (in_array($menuKey, [\WebBlocks\Cms\Models\NavigationItem::MENU_FOOTER, \WebBlocks\Cms\Models\NavigationItem::MENU_LEGAL], true))
       <ul class="wb-stack wb-gap-1">{!! $renderNavigationBranch($items) !!}</ul>
     @else

@@ -1,5 +1,7 @@
 @php
   $wrapperPreset = $slot['wrapper']['preset'] ?? null;
+  $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+    ->get('blocks.a11y.'.$key, strtolower((string) ($slot['blocks']->first()?->renderLocaleCode() ?? app()->getLocale())));
 @endphp
 
 @if ($slot['blocks']->isNotEmpty())
@@ -19,7 +21,7 @@
           data-wb-target="#docsSidebar"
           aria-expanded="false"
           aria-controls="docsSidebar"
-          aria-label="Toggle navigation"
+          aria-label="{{ $a11y('toggle_navigation') }}"
         >
           <span></span><span></span><span></span>
         </button>

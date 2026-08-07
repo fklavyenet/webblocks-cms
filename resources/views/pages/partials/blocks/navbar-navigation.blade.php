@@ -39,7 +39,9 @@
       return $item->resolvedUrl() !== null;
     })
     ->values();
-  $label = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title') ?? 'Primary navigation';
+  $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+    ->get('blocks.a11y.'.$key, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
+  $label = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title') ?? $a11y('menu.primary');
   $currentPath = '/'.ltrim(request()->path(), '/');
   $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
   $currentUrl = rtrim(url()->current(), '/');
@@ -178,7 +180,7 @@
     data-wb-collapse="{{ $drawerId }}"
     aria-expanded="false"
     aria-controls="{{ $drawerId }}"
-    aria-label="Toggle navigation"
+    aria-label="{{ $a11y('toggle_navigation') }}"
     data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"
   >
     <span></span><span></span><span></span>

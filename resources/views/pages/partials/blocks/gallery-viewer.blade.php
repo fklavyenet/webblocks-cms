@@ -3,6 +3,8 @@
     $viewerTitle = trim((string) ($viewerTitle ?? ''));
     $viewerTitleId = $viewerTitle !== '' ? $viewerId.'-title' : $viewerId.'-caption';
     $firstItemMeta = trim((string) (($firstItem['meta'] ?? $firstItem['overlay_title'] ?? $firstItem['overlay_text'] ?? '')));
+    $a11yLocaleCode = strtolower((string) ($localeCode ?? app()->getLocale()));
+    $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('blocks.a11y.'.$key, $a11yLocaleCode);
 @endphp
 
 @if ($firstItem)
@@ -14,15 +16,15 @@
                         <h2 class="wb-gallery-viewer-title wb-m-0" id="{{ $viewerTitleId }}">{{ $viewerTitle }}</h2>
                     @endif
                     <div class="wb-gallery-viewer-toolbar">
-                        <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-prev" type="button" aria-label="Previous image">
+                        <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-prev" type="button" aria-label="{{ $a11y('previous_image') }}">
                             <i class="wb-icon wb-icon-chevron-left" aria-hidden="true"></i>
                         </button>
                         <div class="wb-gallery-viewer-counter" aria-live="polite">1 / {{ $galleryItems->count() }}</div>
                         <div class="wb-cluster wb-cluster-2">
-                            <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-next" type="button" aria-label="Next image">
+                            <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-next" type="button" aria-label="{{ $a11y('next_image') }}">
                                 <i class="wb-icon wb-icon-chevron-right" aria-hidden="true"></i>
                             </button>
-                            <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-close" type="button" data-wb-dismiss="modal" aria-label="Close viewer">
+                            <button class="wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-close" type="button" data-wb-dismiss="modal" aria-label="{{ $a11y('close_viewer') }}">
                                 <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                             </button>
                         </div>

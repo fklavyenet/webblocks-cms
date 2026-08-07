@@ -1,0 +1,61 @@
+<?php
+
+return [
+  'stat_card' => [
+    'learn_more' => 'En savoir plus',
+  ],
+  'search_form' => [
+    'label' => 'Rechercher',
+    'placeholder' => 'Rechercher sur ce site',
+    'submit' => 'Rechercher',
+  ],
+  'a11y' => [
+    'toggle_navigation' => 'Afficher ou masquer la navigation',
+    'breadcrumb' => 'Fil d\'Ariane',
+    'pagination' => 'Pagination',
+    'previous_slide' => 'Diapositive précédente',
+    'next_slide' => 'Diapositive suivante',
+    'previous_image' => 'Image précédente',
+    'next_image' => 'Image suivante',
+    'slides' => 'Diapositives',
+    'close_viewer' => 'Fermer la visionneuse',
+    'menu' => [
+      'primary' => 'Navigation principale',
+      'footer' => 'Navigation du pied de page',
+      'mobile' => 'Navigation mobile',
+      'legal' => 'Navigation des mentions légales',
+      'docs' => 'Navigation de la documentation',
+      'other' => 'Navigation secondaire',
+    ],
+  ],
+  'contact_form' => [
+    'submit' => 'Envoyer le message',
+    'review' => 'Veuillez vérifier le formulaire',
+    'name' => 'Nom',
+    'email' => 'E-mail',
+    'subject' => 'Objet',
+    'message' => 'Message',
+    'storage' => 'Votre message est d\'abord enregistré, puis la notification par e-mail est tentée.',
+  ],
+  'comments' => [
+    'unavailable' => 'Les commentaires sont temporairement indisponibles.',
+    'no_approved' => 'Aucun commentaire approuvé pour le moment.',
+    'review_title' => 'Veuillez vérifier le commentaire',
+    'honeypot_label' => 'Laissez ce champ vide',
+    'name_label' => 'Nom',
+    'body_label' => 'Commentaire',
+    'helper' => 'Les commentaires sont examinés avant leur publication.',
+    'submit' => 'Publier le commentaire',
+    'closed' => 'Les nouveaux commentaires sont fermés.',
+  ],
+  'rating' => [
+    'form_label' => 'Évaluer ce contenu',
+    'option_label' => 'Note de :rating étoile',
+    'option_text' => ':rating étoile',
+    'unavailable' => 'Les évaluations sont temporairement indisponibles.',
+    'summary' => 'Moyenne de :average / 5 sur :count évaluation.',
+    'summary_plural' => 'Moyenne de :average / 5 sur :count évaluations.',
+    'none' => 'Aucune évaluation pour le moment.',
+    'average_aria' => 'Note moyenne de :average sur 5',
+  ],
+];
