@@ -92,6 +92,7 @@
                     <table class="wb-table wb-table-striped wb-table-hover wb-admin-slot-blocks-table" data-wb-slot-block-table data-admin-sortable-list data-admin-sortable-mode="slot-blocks" data-admin-sortable-reorder-url="{{ route('admin.shared-slots.blocks.reorder', $sharedSlot) }}">
                         <thead>
                             <tr>
+                                <th class="wb-admin-slot-block-id-cell">{{ $adminText('block_id') }}</th>
                                 <th>{{ $adminText('block_type') }}</th>
                                 <th>{{ $adminText('summary') }}</th>
                                 <th>{{ $adminText('children') }}</th>

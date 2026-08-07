@@ -1013,7 +1013,13 @@ class PageController extends Controller
       ->reject(fn (Block $block) => $block->isColumnItem())
       ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
       ->filter(fn (Block $block) => $block->canAcceptChildren())
-      ->filter(fn (Block $block) => ! $editedBlock || $block->canAcceptChildType($editedBlock->typeSlug()))
+      // A block's own parent always stays selectable, even where today's
+      // placement rules would not offer it as a new home. Dropping it left the
+      // select on "no parent", and saving an untouched content field then
+      // failed as if the editor had asked to detach the block.
+      ->filter(fn (Block $block) => ! $editedBlock
+        || (int) $editedBlock->parent_id === (int) $block->id
+        || $block->canAcceptChildType($editedBlock->typeSlug()))
       ->map(fn (Block $block) => [
         'id' => $block->id,
         'label' => str_repeat('— ', $this->blockDepth($block)).$block->parentCandidateLabel(),

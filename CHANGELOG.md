@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.11
+
+- **A block that is not being moved can be edited again.** Placement rules decide where a block may be *put*, but the admin re-ran them on every save, so a block whose parent no longer satisfies them was locked out of editing entirely — a Navbar Brand sitting in a footer, placed by a content plan and rendering publicly every day, answered "This block type requires a supported parent block" when only its label was changed. The parent select now always offers the block its own current parent (it previously fell back to "no parent", which is what turned a field edit into a detach request), and the placement rules are skipped while both the parent and the block type stay exactly as stored. Moving a block, or changing its type in place, is validated as strictly as before.
+- **Block lists show the block ID.** The page slot and Shared Slot block tables now open with an ID column, so the id in a URL, an API call, or a support question can be matched to a row without opening each block in turn.
+
 ## 1.52.10
 
 - **The API page render now renders the locale it was asked for.** `GET /webadmin/api/pages/{page}/render?locale=it` resolved the page translation but never told the block renderer which locale it was rendering, and the route carries no locale prefix for the resolver to read on its own — so the page identity was Italian while every block on it stayed in the site default language. Locale selection is the reason this endpoint exists over the browser preview, so a tool checking its own translation work was told the work had not landed. The public site was always correct; only this preview was wrong.

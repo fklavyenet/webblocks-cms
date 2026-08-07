@@ -185,6 +185,13 @@ svg.wb-sidebar-brand-logo {
     table-layout: auto;
 }
 
+.wb-admin-slot-blocks-table .wb-admin-slot-block-id-cell {
+    width: 1%;
+    white-space: nowrap;
+    color: var(--wb-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
 .wb-admin-slot-blocks-table .wb-admin-slot-block-type-cell {
     width: 1%;
     white-space: nowrap;

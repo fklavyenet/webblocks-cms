@@ -610,6 +610,21 @@ class BlockRequest extends FormRequest
         return;
       }
 
+      // Placement rules describe where a block may be *put*. An edit that
+      // leaves the block exactly where it already is is not a placement, and
+      // re-checking it locks a block out of editing whenever the rules tighten
+      // or the tree was built by an importer -- a footer brand block renders
+      // publicly but could not have its own text saved.
+      // Changing the block's type is a placement question again, so the skip
+      // only applies while both the parent and the type stay as stored.
+      $placementUnchanged = $block instanceof Block
+        && (int) $block->parent_id === (int) $parentId
+        && (int) ($selectedBlockType?->id ?? 0) === (int) $block->block_type_id;
+
+      if ($placementUnchanged) {
+        return;
+      }
+
       if ($selectedBlockType && ! $parent->canAcceptChildType($selectedBlockType->slug)) {
         $validator->errors()->add('parent_id', $selectedBlockType->name.' blocks cannot be placed inside '.$parent->typeName().'.');
 

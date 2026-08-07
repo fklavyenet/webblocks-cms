@@ -668,7 +668,11 @@ class SharedSlotController extends Controller
       ->reject(fn (Block $block) => $block->isColumnItem())
       ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
       ->filter(fn (Block $block) => $block->canAcceptChildren())
-      ->filter(fn (Block $block) => ! $editedBlock || $block->canAcceptChildType($editedBlock->typeSlug()))
+      // See PageController::slotParentBlocks: the edited block's own parent is
+      // always offered, so saving it does not read as a request to detach it.
+      ->filter(fn (Block $block) => ! $editedBlock
+        || (int) $editedBlock->parent_id === (int) $block->id
+        || $block->canAcceptChildType($editedBlock->typeSlug()))
       ->map(fn (Block $block) => [
         'id' => $block->id,
         'label' => str_repeat('— ', $this->blockDepth($block)).$block->parentCandidateLabel(),
