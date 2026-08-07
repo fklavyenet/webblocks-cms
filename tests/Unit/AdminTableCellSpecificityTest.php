@@ -21,6 +21,9 @@ class AdminTableCellSpecificityTest extends TestCase
   public function admin_table_cell_overrides_outrank_the_ui_base_rule(): void
   {
     $css = (string) file_get_contents(dirname(__DIR__, 2).'/public/cms/css/admin.css');
+    // Comments sit directly above the selectors this reads, and prose commas
+    // would otherwise be parsed as selector separators.
+    $css = (string) preg_replace('#/\*.*?\*/#s', '', $css);
     $underspecified = [];
 
     // Selectors for a table cell that fight the base rule: they set white-space

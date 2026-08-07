@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.14
+
+- **Block ids read like page ids.** The id column in the page slot and Shared Slot block tables rendered its number inside a `<code>` element, so it arrived as a tinted chip while the Pages table shows plain muted digits for the same thing. It is now the same plain treatment in both places.
+
 ## 1.52.13
 
 - **The Pages table columns stop wrapping, this time for real.** 1.52.12 gave the id column `white-space: nowrap` and it kept breaking `#54` in half, because webblocks-ui's own `.wb-table td { white-space: normal; overflow-wrap: anywhere }` is a class *and* a type selector and outranks a lone class however late it loads. The rule is now scoped by the table class, and so are the five sibling columns — count, status, view, actions, last edited — which carried the same defect since they were written and had been wrapping just as quietly. A test now refuses an admin table cell override that cannot win against the base rule.

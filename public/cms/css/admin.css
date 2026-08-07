@@ -185,9 +185,11 @@ svg.wb-sidebar-brand-logo {
     table-layout: auto;
 }
 
+/* Reads like the Pages table's id column: plain muted digits, not a code chip. */
 .wb-admin-slot-blocks-table .wb-admin-slot-block-id-cell {
     width: 1%;
     white-space: nowrap;
+    overflow-wrap: normal;
     color: var(--wb-text-muted);
     font-variant-numeric: tabular-nums;
 }

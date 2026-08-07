@@ -36,7 +36,7 @@
         data-slot-depth="{{ $depth }}"
         data-wb-slot-depth="{{ $depth }}"
     >
-        <td class="wb-admin-slot-block-id-cell"><code>{{ $block->id }}</code></td>
+        <td class="wb-admin-slot-block-id-cell wb-text-sm wb-text-muted">{{ $block->id }}</td>
         <td class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell">
             <div class="wb-block-hierarchy">
                 <div class="wb-cms-block-tree-item">
