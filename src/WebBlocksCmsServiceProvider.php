@@ -51,6 +51,7 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\InternalContentApi\InternalApiRateLimit;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
@@ -872,7 +873,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     });
 
     RateLimiter::for('internal-content-api', function (Request $request) {
-      return Limit::perMinute(120)->by($request->ip().'|'.((string) $request->bearerToken()));
+      return Limit::perMinute(InternalApiRateLimit::perMinute())->by($request->ip().'|'.((string) $request->bearerToken()));
     });
 
     // Group backstop for every plugin-owned public route. It is deliberately

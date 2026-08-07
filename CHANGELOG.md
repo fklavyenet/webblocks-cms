@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.52.9
+
+- **Contact form button and confirmation text can be translated through the API.** `PATCH /webadmin/api/blocks/{block}` only understood the text and image translation families, so a contact form's `submit_label` and `success_message` had no API path at all and a translated page kept its English "Send message" button. The endpoint now routes every translated field to the family its block type belongs to — text, button, image, or contact form — writes it through the same writer the admin uses (so the default-locale row is kept alongside the new one), and exposes contact form rows under `block.translations` so a tool can read what it wrote.
+- **A translated field the block cannot store is now refused instead of silently misfiled.** Sending `translations.title` to a button or contact form previously answered `200` while writing the value into the text translation table, which the renderer never reads. Fields outside the block's family are rejected with `422` and code `unsupported_block_translation_fields`, a block type with no translation family rejects `translations` with `unsupported_block_translations`, and a locale the block's site has not enabled returns `invalid_block_translation_locale` rather than failing as a server error.
+- **The API's rate limit is documented where clients read it.** The budget was enforced but never published, so a bulk client such as a full-site translation pass discovered it by hitting `429`. `GET /webadmin/api/openapi.json` now carries `x-rate-limit`, and the AI guide states the same number; it stays 120 requests per minute per token and IP and is configurable with `CMS_INTERNAL_API_RATE_LIMIT_PER_MINUTE`. Hosting or CDN layers in front of a site may still enforce less.
+
 ## 1.52.8
 
 - **Menus stop linking to pages that are no longer published.** The navbar always hid page-linked menu items whose page left the published state, but the footer/legal menus (`navigation-auto`) and the sidebar menu only checked the item's own visibility — so archiving a page removed its link from the navbar while the footer kept a dead link straight to the 404. Both renderers now apply the navbar's rule: a page-linked item renders only while its page is published.

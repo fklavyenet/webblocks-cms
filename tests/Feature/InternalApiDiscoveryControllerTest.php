@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
+use WebBlocks\Cms\Support\InternalContentApi\InternalApiRateLimit;
 use WebBlocks\Cms\Tests\TestCase;
 
 class InternalApiDiscoveryControllerTest extends TestCase
@@ -125,8 +126,38 @@ class InternalApiDiscoveryControllerTest extends TestCase
       'unsupported_plan_fields',
       'seo_title',
       'title_translations',
+      'submit_label',
+      'unsupported_block_translation_fields',
+      'requests per minute',
     ] as $needle) {
       $this->assertStringContainsString($needle, $guide, 'The AI guide no longer mentions '.$needle.'.');
     }
+  }
+
+  /**
+   * A bulk client can only pace itself against a number it can read, and a
+   * documented budget that does not match the throttle is worse than none.
+   */
+  #[Test]
+  public function the_documented_rate_limit_is_the_one_the_throttle_applies(): void
+  {
+    $documented = $this->app->make(InternalApiDiscoveryController::class)->openapi()->getData(true)['x-rate-limit'];
+
+    $this->assertSame(InternalApiRateLimit::perMinute(), $documented['requests_per_minute']);
+    $this->assertSame(429, $documented['exceeded_status']);
+    $this->assertStringContainsString(
+      (string) InternalApiRateLimit::perMinute(),
+      $this->app->make(InternalApiDiscoveryController::class)->aiGuide()->getData(true)['content'],
+    );
+  }
+
+  #[Test]
+  public function openapi_schema_documents_the_block_translation_families(): void
+  {
+    $patch = $this->app->make(InternalApiDiscoveryController::class)->openapi()->getData(true)['paths']['/blocks/{block}']['patch'];
+
+    $this->assertContains('locale', $patch['x-supported-fields']);
+    $this->assertContains('translations.contact_form.submit_label for contact_form blocks', $patch['x-supported-fields']);
+    $this->assertStringContainsString('unsupported_block_translation_fields', $patch['x-note']);
   }
 }

@@ -301,7 +301,7 @@ class InternalSharedSlotController extends Controller
 
     return response()->json([
       'ok' => true,
-      'block' => $this->presenter->block($block->fresh(['blockType', 'slotType', 'textTranslations', 'buttonTranslations', 'imageTranslations'])),
+      'block' => $this->presenter->block($block->fresh(['blockType', 'slotType', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])),
       'writes' => [['type' => 'shared_slot_block', 'id' => $block->id]],
       'warnings' => $warnings,
       'errors' => [],

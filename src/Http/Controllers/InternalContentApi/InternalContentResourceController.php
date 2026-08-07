@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\BlockImageTranslation;
-use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
@@ -27,6 +25,8 @@ use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
@@ -61,6 +61,8 @@ class InternalContentResourceController extends Controller
     private readonly PageRevisionManager $revisionManager,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
+    private readonly BlockTranslationRegistry $translationRegistry,
+    private readonly BlockTranslationWriter $translationWriter,
   ) {}
 
   public function sites(): JsonResponse
@@ -596,6 +598,7 @@ class InternalContentResourceController extends Controller
       'blocks.textTranslations',
       'blocks.buttonTranslations',
       'blocks.imageTranslations',
+      'blocks.contactFormTranslations',
     ]);
 
     $payload = $this->presenter->page($page, true);
@@ -734,7 +737,7 @@ class InternalContentResourceController extends Controller
   public function blocks(Request $request): JsonResponse
   {
     $blocks = Block::query()
-      ->with(['blockType', 'slotType', 'media', 'textTranslations', 'buttonTranslations', 'imageTranslations'])
+      ->with(['blockType', 'slotType', 'media', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
       ->when($request->filled('page'), fn ($query) => $query->where('page_id', (int) $request->query('page')))
       ->whereNull('parent_id')
       ->orderBy('sort_order')
@@ -756,12 +759,14 @@ class InternalContentResourceController extends Controller
       'textTranslations',
       'buttonTranslations',
       'imageTranslations',
+      'contactFormTranslations',
       'children.blockType',
       'children.slotType',
       'children.media',
       'children.textTranslations',
       'children.buttonTranslations',
       'children.imageTranslations',
+      'children.contactFormTranslations',
     ]);
 
     return $this->ok(['block' => $this->presenter->block($block)]);
@@ -1199,7 +1204,7 @@ class InternalContentResourceController extends Controller
       ], 403);
     }
 
-    $block->loadMissing(['blockType', 'textTranslations', 'imageTranslations']);
+    $block->loadMissing(['blockType', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations']);
     $type = (string) $block->typeSlug();
     $mediaId = $request->has('media_id') ? $request->input('media_id') : $request->input('asset_id');
     $mediaChanged = $request->has('media_id') || $request->has('asset_id');
@@ -1229,16 +1234,26 @@ class InternalContentResourceController extends Controller
       return $this->validationError('translations', 'Translations must be an object.');
     }
 
-    $textTranslations = $this->normalizeTextTranslations($translations);
-    $imageTranslations = $this->normalizeImageTranslations($translations);
+    $translationPayload = $this->normalizeBlockTranslations($block, $translations);
 
-    if ($imageTranslations !== [] && $type !== 'image') {
-      return $this->validationError('translations.image', 'Image translation fields are only supported for image blocks.');
+    if ($translationPayload instanceof JsonResponse) {
+      return $translationPayload;
+    }
+
+    // The translation models refuse a locale the block's site does not publish,
+    // and that guard throws rather than answering, so check it here while the
+    // request can still be reported as a validation failure.
+    if ($translationPayload !== [] && ! $block->page?->site?->hasEnabledLocale($locale)) {
+      return $this->validationError(
+        'locale',
+        'Translations can only be written for a locale the block page site has enabled. Assign it with PUT /webadmin/api/sites/{site}/locales first.',
+        'invalid_block_translation_locale',
+      );
     }
 
     $settings = $this->mergeSettings($block, $request);
 
-    DB::transaction(function () use ($block, $request, $mediaChanged, $mediaId, $settings, $textTranslations, $imageTranslations, $locale): void {
+    DB::transaction(function () use ($block, $request, $mediaChanged, $mediaId, $settings, $translationPayload, $locale): void {
       $updates = [];
 
       if ($mediaChanged) {
@@ -1262,18 +1277,10 @@ class InternalContentResourceController extends Controller
         $block->save();
       }
 
-      if ($textTranslations !== []) {
-        BlockTextTranslation::query()->updateOrCreate(
-          ['block_id' => $block->id, 'locale_id' => $locale->id],
-          $textTranslations,
-        );
-      }
+      if ($translationPayload !== []) {
+        $block->load(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations']);
 
-      if ($imageTranslations !== []) {
-        BlockImageTranslation::query()->updateOrCreate(
-          ['block_id' => $block->id, 'locale_id' => $locale->id],
-          $imageTranslations,
-        );
+        $this->translationWriter->sync($block, $translationPayload, $locale->code);
       }
     });
 
@@ -1284,12 +1291,14 @@ class InternalContentResourceController extends Controller
       'textTranslations',
       'buttonTranslations',
       'imageTranslations',
+      'contactFormTranslations',
       'children.blockType',
       'children.slotType',
       'children.media',
       'children.textTranslations',
       'children.buttonTranslations',
       'children.imageTranslations',
+      'children.contactFormTranslations',
     ]);
 
     return $this->ok([
@@ -1347,9 +1356,10 @@ class InternalContentResourceController extends Controller
 
     $block->refresh()->load([
       'blockType', 'slotType', 'media',
-      'textTranslations', 'buttonTranslations', 'imageTranslations',
+      'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations',
       'children.blockType', 'children.slotType', 'children.media',
       'children.textTranslations', 'children.buttonTranslations', 'children.imageTranslations',
+      'children.contactFormTranslations',
     ]);
 
     return response()->json([
@@ -1722,33 +1732,104 @@ class InternalContentResourceController extends Controller
       ?? Locale::query()->where('is_default', true)->firstOrFail();
   }
 
-  private function normalizeTextTranslations(array $translations): array
+  /**
+   * Turn the submitted translations object into the payload BlockTranslationWriter
+   * expects for this block's translation family, or a 422 when the caller sent a
+   * field the family cannot store. Every translatable family is routed here so a
+   * button or contact form edit lands in its own translation table instead of
+   * being written to the text table, where the renderer would never read it.
+   *
+   * Fields may be sent flat or nested under the family name (translations.text,
+   * translations.contact_form). Image blocks accept both the translation column
+   * names (caption, alt_text) and the block field names the writer maps them
+   * from (title, subtitle).
+   */
+  private function normalizeBlockTranslations(Block $block, array $translations): array|JsonResponse
   {
-    $text = is_array($translations['text'] ?? null) ? $translations['text'] : $translations;
-    $allowed = ['title', 'eyebrow', 'subtitle', 'content', 'meta'];
-    $payload = [];
+    $family = $this->translationRegistry->familyFor($block);
+    $families = ['text', 'button', 'image', 'contact_form'];
+    $foreign = array_values(array_diff(array_intersect(array_keys($translations), $families), [$family]));
 
-    foreach ($allowed as $field) {
-      if (array_key_exists($field, $text)) {
-        $payload[$field] = is_array($text[$field])
-          ? json_encode($text[$field], JSON_UNESCAPED_SLASHES)
-          : trim((string) $text[$field]);
-      }
+    if ($foreign !== []) {
+      return $this->validationError(
+        'translations.'.$foreign[0],
+        sprintf(
+          'This block belongs to the %s translation family, so %s translation fields cannot be written to it.',
+          $family ?? 'shared',
+          $foreign[0],
+        ),
+        'unsupported_block_translation_fields',
+      );
     }
 
-    return $payload;
-  }
+    $nested = $family !== null && is_array($translations[$family] ?? null) ? $translations[$family] : null;
+    $input = $nested ?? array_diff_key($translations, array_flip($families));
 
-  private function normalizeImageTranslations(array $translations): array
-  {
-    $image = is_array($translations['image'] ?? null) ? $translations['image'] : $translations;
-    $allowed = ['caption', 'alt_text'];
+    if ($family === null) {
+      if ($input === []) {
+        return [];
+      }
+
+      return $this->validationError(
+        'translations',
+        'This block type does not carry translations. Its shared fields are edited through settings, url, variant, or media_id.',
+        'unsupported_block_translations',
+      );
+    }
+
+    $accepted = match ($family) {
+      'text' => ['title' => 'title', 'eyebrow' => 'eyebrow', 'subtitle' => 'subtitle', 'content' => 'content', 'meta' => 'meta'],
+      'button' => ['title' => 'title'],
+      'image' => ['caption' => 'title', 'alt_text' => 'subtitle', 'title' => 'title', 'subtitle' => 'subtitle'],
+      'contact_form' => ['title' => 'title', 'content' => 'content', 'submit_label' => 'submit_label', 'success_message' => 'success_message'],
+    };
+
+    if ($family === 'image') {
+      // Both spellings are accepted; the translation column name wins.
+      $input = array_diff_key($input, array_flip(array_filter([
+        array_key_exists('caption', $input) ? 'title' : null,
+        array_key_exists('alt_text', $input) ? 'subtitle' : null,
+      ])));
+    }
+
+    $unsupported = array_values(array_diff(array_keys($input), array_keys($accepted)));
+
+    if ($unsupported !== []) {
+      return $this->validationError(
+        'translations.'.$unsupported[0],
+        sprintf(
+          'A %s block only accepts these translated fields: %s.',
+          $family,
+          implode(', ', $this->translationRegistry->translatedFieldMap($family)),
+        ),
+        'unsupported_block_translation_fields',
+      );
+    }
+
+    // The writer reads an empty string as "not submitted" for these fields and
+    // keeps the stored value, so accepting one would be a silent no-op.
+    $rejectsEmpty = match ($family) {
+      'button', 'image' => array_keys($accepted),
+      'contact_form' => ['submit_label', 'success_message'],
+      default => [],
+    };
+
     $payload = [];
 
-    foreach ($allowed as $field) {
-      if (array_key_exists($field, $image)) {
-        $payload[$field] = trim((string) $image[$field]) ?: null;
+    foreach ($input as $field => $value) {
+      $normalized = is_array($value)
+        ? json_encode($value, JSON_UNESCAPED_SLASHES)
+        : trim((string) $value);
+
+      if ($normalized === '' && in_array($field, $rejectsEmpty, true)) {
+        return $this->validationError(
+          'translations.'.$field,
+          'This field cannot be set to an empty value. Send the text it should carry in this locale.',
+          'empty_block_translation_field',
+        );
       }
+
+      $payload[$accepted[$field]] = $normalized;
     }
 
     return $payload;

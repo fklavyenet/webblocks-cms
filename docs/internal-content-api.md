@@ -156,6 +156,12 @@ Advanced capabilities are separate options and are not selected by default:
 
 Write endpoints check the relevant capability server-side. Missing capabilities return JSON `403` with `api_discovery_url`, `openapi_url`, `documentation_url`, and `example_url` guidance. Normal page-building tokens should not include destructive capabilities such as navigation delete, Shared Slot delete, content publish, plugin install/manage/setup/uninstall, or page delete. Reading Comments/Rating feedback requires explicit `engagement.read`; changing comment status requires explicit `engagement.moderate`. Plugin lifecycle automation requires explicit plugin capabilities, and WebBlocks Commerce product/order API access requires explicit commerce capabilities.
 
+## Rate Limit
+
+Every `/webadmin/api` route is throttled together, keyed by client IP and bearer token. The default budget is 120 requests per minute; exceeding it returns `429` with a `Retry-After` header. An install can change it with `CMS_INTERNAL_API_RATE_LIMIT_PER_MINUTE`, and the live value is published as `x-rate-limit` on `GET /webadmin/api/openapi.json` — clients should read it there rather than assume the default.
+
+Hosting, proxy, or CDN layers in front of the site may enforce a lower limit than the CMS does, so a bulk client such as a full-site translation pass should pace itself and back off on `429` instead of retrying immediately.
+
 ## API Model
 
 The API has two complementary modes.
@@ -332,8 +338,22 @@ Supported fields are intentionally narrow:
 - `settings.show_language_switcher` for `header-actions`
 - text translations such as `title` and `subtitle`
 - image block translations through `translations.image.alt_text`, `translations.image.caption`, or the shorthand `translations.alt_text` and `translations.caption`
+- contact form translations through `translations.contact_form.submit_label` and `translations.contact_form.success_message`, or the same names as shorthand, alongside `title` and `content`
 - `url`
 - `variant`
+
+Translated fields are written into the translation family the block type belongs to, for the locale in the request (the site default locale when `locale` is omitted):
+
+| Family | Block types | Fields |
+| --- | --- | --- |
+| `text` | header, hero, rich-text, columns, cta, and most content blocks | `title`, `eyebrow`, `subtitle`, `content`, `meta` |
+| `button` | button | `title` |
+| `image` | image | `caption`, `alt_text` (also accepted as `title`, `subtitle`) |
+| `contact_form` | contact_form | `title`, `content`, `submit_label`, `success_message` |
+
+A field the family does not own is refused with `422` and code `unsupported_block_translation_fields`, and a block type with no translation family refuses `translations` outright with `unsupported_block_translations` — neither is written to the text table, where nothing would read it. A locale the block's site has not enabled is refused with `invalid_block_translation_locale`. Stored rows are returned under `block.translations`, keyed by family.
+
+A contact form's `submit_label` and `success_message` are translations, not settings: they are the only way to localize the form's button and confirmation text, and they cannot be set through `settings`.
 
 The endpoint rejects topology and database implementation fields such as `parent_id`, `slot_type_id`, `block_type_id`, `type`, `sort_order`, and `children`. It also rejects raw HTML, remote media URLs, and source URLs. Existing media can be selected from the CMS Media Library, but this API does not import or download new remote media.
 

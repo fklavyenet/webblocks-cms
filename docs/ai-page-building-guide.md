@@ -152,6 +152,10 @@ Adding a language is two steps. Create or enable the locale globally with `POST`
 
 Site-wide SEO defaults, inherited by any page whose translation has no override, use `PATCH /webadmin/api/sites/{site}/seo` with `site-settings.write`. That is separate from page-level SEO and from `PATCH /webadmin/api/sites/{site}/head`, which injects raw head markup.
 
+Translating the blocks of an existing page is `PATCH /webadmin/api/blocks/{block}` with `locale` plus the fields the block's translation family owns: `title`/`eyebrow`/`subtitle`/`content`/`meta` for text blocks, `title` for a button, `caption`/`alt_text` for an image, and `title`/`content`/`submit_label`/`success_message` for a contact form. A contact form's button and confirmation text live only there — they are translations, not settings, and a page whose form still reads "Send message" in every language is the sign they were skipped. A field the family does not own is refused with `unsupported_block_translation_fields` rather than stored somewhere nothing reads it.
+
+A full-site translation pass is bulk work, so pace it: the API allows 120 requests per minute per token and IP by default (read `x-rate-limit` in the OpenAPI document for the live value), hosting layers in front of the site may allow fewer, and `429` carries a `Retry-After` to honour.
+
 ## Safety Rules
 
 - Draft-first.

@@ -294,6 +294,7 @@ class InternalContentApiPresenter
         'text' => $block->relationLoaded('textTranslations') ? $block->textTranslations->values()->all() : [],
         'button' => $block->relationLoaded('buttonTranslations') ? $block->buttonTranslations->values()->all() : [],
         'image' => $block->relationLoaded('imageTranslations') ? $block->imageTranslations->values()->all() : [],
+        'contact_form' => $block->relationLoaded('contactFormTranslations') ? $block->contactFormTranslations->values()->all() : [],
       ],
     ];
 

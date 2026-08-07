@@ -301,6 +301,7 @@ class InternalContentPlanService
           'blocks.textTranslations',
           'blocks.buttonTranslations',
           'blocks.imageTranslations',
+          'blocks.contactFormTranslations',
         ]);
 
         $writes[] = ['type' => 'staged_page_update', 'id' => $stagedPage->id];
@@ -383,6 +384,7 @@ class InternalContentPlanService
           'blocks.textTranslations',
           'blocks.buttonTranslations',
           'blocks.imageTranslations',
+          'blocks.contactFormTranslations',
         ]);
 
         $revision = $this->pageRevisionManager->capture(
@@ -456,6 +458,7 @@ class InternalContentPlanService
           'blocks.textTranslations',
           'blocks.buttonTranslations',
           'blocks.imageTranslations',
+          'blocks.contactFormTranslations',
         ]);
 
         $revision = $this->pageRevisionManager->capture(
@@ -531,6 +534,7 @@ class InternalContentPlanService
           'blocks.textTranslations',
           'blocks.buttonTranslations',
           'blocks.imageTranslations',
+          'blocks.contactFormTranslations',
         ]);
 
         $writes[] = ['type' => 'page', 'id' => $page->id];
