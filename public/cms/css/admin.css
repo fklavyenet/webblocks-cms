@@ -129,6 +129,103 @@ svg.wb-sidebar-brand-logo {
     display: none;
 }
 
+.wb-admin-table-toolbar {
+    margin-bottom: 0;
+}
+
+.wb-admin-table-grid-host[hidden],
+.wb-admin-table-source[hidden],
+[data-wb-table-grid-toolbar][hidden] {
+    display: none;
+}
+
+.wb-admin-table-grid-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--wb-border);
+    border-radius: var(--wb-r-lg);
+    background: var(--wb-surface);
+}
+
+table.wb-admin-table-grid {
+    border-collapse: collapse;
+    inline-size: 100%;
+    margin: 0;
+}
+
+table.wb-admin-table-grid th,
+table.wb-admin-table-grid td {
+    border: 1px solid var(--wb-border);
+    padding: 0;
+    text-align: start;
+    vertical-align: middle;
+}
+
+table.wb-admin-table-grid thead th,
+table.wb-admin-table-grid .wb-admin-table-grid-rowhead {
+    background: var(--wb-surface-2);
+    color: var(--wb-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+table.wb-admin-table-grid .wb-admin-table-grid-colhead {
+    padding: var(--wb-s1) var(--wb-s2);
+    white-space: nowrap;
+}
+
+.wb-admin-table-grid-colname {
+    margin-inline-end: var(--wb-s2);
+}
+
+.wb-admin-table-grid-colactions,
+.wb-admin-table-grid-rowactions {
+    display: inline-flex;
+    gap: 0.125rem;
+    white-space: nowrap;
+}
+
+table.wb-admin-table-grid .wb-admin-table-grid-rowactions {
+    padding: var(--wb-s1) var(--wb-s2);
+}
+
+table.wb-admin-table-grid .wb-admin-table-grid-rowhead {
+    inline-size: 2.5rem;
+    padding: var(--wb-s1) var(--wb-s2);
+    text-align: center;
+}
+
+table.wb-admin-table-grid .wb-admin-table-grid-corner {
+    inline-size: 2.5rem;
+    padding: var(--wb-s1) var(--wb-s2);
+}
+
+.wb-admin-table-grid-cell {
+    min-inline-size: 8rem;
+}
+
+input.wb-admin-table-grid-input {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    inline-size: 100%;
+    min-inline-size: 8rem;
+    padding: var(--wb-s2);
+}
+
+input.wb-admin-table-grid-input:focus {
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--wb-accent) 45%, transparent);
+    outline: none;
+}
+
+.wb-admin-table-grid-row.is-header input.wb-admin-table-grid-input {
+    font-weight: 600;
+}
+
+.wb-admin-table-grid-row.is-header .wb-admin-table-grid-rowhead {
+    color: var(--wb-accent-text, var(--wb-text-muted));
+}
+
 .wb-cms-block-tree-item {
     display: flex;
     align-items: center;
