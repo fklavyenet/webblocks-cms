@@ -35,6 +35,7 @@ class BlockContactFormTranslation extends CmsModel
     'content',
     'submit_label',
     'success_message',
+    'consent_label',
   ];
 
   public function block(): BelongsTo

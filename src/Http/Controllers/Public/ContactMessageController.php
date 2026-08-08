@@ -65,6 +65,8 @@ class ContactMessageController extends Controller
       'referer' => $request->headers->get('referer'),
       'spam_score' => $spamSignal['score'],
       'spam_reasons' => $spamSignal['reasons'] !== [] ? $spamSignal['reasons'] : null,
+      'consent_accepted_at' => $payload['consent_accepted_at'],
+      'consent_label' => $payload['consent_label'],
       'notification_enabled' => $notificationEnabled,
       'notification_recipient' => $notificationRecipient['email'],
       'notification_recipient_source' => $notificationRecipient['source'],

@@ -3550,6 +3550,10 @@ return [
       'delivery_label' => 'Impostazioni di consegna',
       'send_notification' => 'Invia notifica email',
       'delivery_help' => 'I messaggi di contatto vengono sempre memorizzati prima. Le impostazioni di notifica restano condivise tra le lingue.',
+      'consent_section_label' => 'Consenso',
+      'consent_required' => 'Richiedere una casella di consenso',
+      'consent_label' => 'Informativa sul consenso',
+      'consent_help' => 'Il testo e\' cio\' che la persona in visita accetta, quindi viene tradotto per lingua. L\'invio memorizza l\'ora dell\'accettazione e una copia di questo testo. Lascialo vuoto per nascondere la casella.',
     ],
     'header_actions' => [
       'system_title' => 'Azioni di intestazione di sistema',

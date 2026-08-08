@@ -7,6 +7,8 @@
     $recipientEmail = old('recipient_email', $block->setting('recipient_email'));
     $sendEmailNotification = (bool) old('send_email_notification', $block->setting('send_email_notification', true));
     $storeSubmissions = (bool) old('store_submissions', $block->setting('store_submissions', true));
+    $consentRequired = (bool) old('consent_required', $block->setting('consent_required', false));
+    $consentLabel = old('consent_label', $block->consent_label ?? '');
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -65,6 +67,27 @@
             </label>
 
             <span class="wb-text-sm wb-text-muted">{{ $adminText('delivery_help') }}</span>
+        </div>
+    </div>
+
+    {{--
+        The consent checkbox is the auditable half of storing submissions: the
+        toggle is product-owned and shared across locales, while the wording the
+        visitor agreed to is translated, because that wording is the notice.
+    --}}
+    <div class="wb-stack wb-gap-2">
+        <label>{{ $adminText('consent_section_label') }}</label>
+
+        <label class="wb-check">
+            <input type="hidden" name="consent_required" value="0">
+            <input type="checkbox" name="consent_required" value="1" @checked($consentRequired) @disabled(isset($activeLocale) && ! $isDefaultLocale)>
+            <span>{{ $adminText('consent_required') }}</span>
+        </label>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="consent_label">{{ $adminText('consent_label') }}</label>
+            <textarea id="consent_label" name="consent_label" class="wb-textarea" rows="3">{{ $consentLabel }}</textarea>
+            <span class="wb-text-sm wb-text-muted">{{ $adminText('consent_help') }}</span>
         </div>
     </div>
 </div>

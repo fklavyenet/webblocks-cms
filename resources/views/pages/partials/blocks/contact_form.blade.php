@@ -17,6 +17,11 @@
         : $resolvedSubmitLabel;
     $formCheck = app(\WebBlocks\Cms\Support\Contact\ContactFormCheck::class);
     $formCheckName = $formCheck->fieldName($block);
+    // The checkbox only renders when the form both requires consent and has
+    // wording for this locale: an unlabelled required checkbox would be a
+    // consent record with nothing recorded against it.
+    $consentLabelText = trim((string) ($block->consent_label ?? ''));
+    $requiresConsent = (bool) $block->setting('consent_required', false) && $consentLabelText !== '';
 @endphp
 
 <section class="wb-card wb-public-contact-form-card" id="contact-form-{{ $block->id }}">
@@ -96,6 +101,20 @@
                     @endforeach
                 @endif
             </div>
+
+            @if ($requiresConsent)
+                <div class="wb-stack wb-gap-1">
+                    <label class="wb-check">
+                        <input type="checkbox" name="consent" value="1" @checked(old('block_id') == $block->id && old('consent')) required>
+                        <span>{{ $consentLabelText }}</span>
+                    </label>
+                    @if ((int) old('block_id') === $block->id)
+                        @foreach ($errors->get('consent') as $message)
+                            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                        @endforeach
+                    @endif
+                </div>
+            @endif
 
             <div class="wb-cluster wb-cluster-between wb-cluster-2">
                 <span class="wb-text-sm wb-text-muted">{{ $contactFormCopy['storage'] }}</span>

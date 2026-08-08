@@ -5,6 +5,7 @@ return [
     'name_required' => 'Introduce tu nombre.',
     'email_required' => 'Introduce tu dirección de correo electrónico.',
     'email_valid' => 'Introduce una dirección de correo electrónico válida.',
+    'consent_required' => 'Confirma el aviso de tratamiento de datos para continuar.',
     'message_required' => 'Introduce un mensaje.',
   ],
   'comments' => [

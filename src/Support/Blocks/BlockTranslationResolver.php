@@ -172,13 +172,14 @@ class BlockTranslationResolver
       ? $block->settings
       : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
 
-    unset($settings['submit_label'], $settings['success_message']);
+    unset($settings['submit_label'], $settings['success_message'], $settings['consent_label']);
 
     $this->applyAttributes($block, [
       'title' => $translation->title,
       'content' => $translation->content,
       'submit_label' => $translation->submit_label ?: 'Send message',
       'success_message' => $translation->success_message ?: config('contact.success_message'),
+      'consent_label' => $translation->consent_label ?: null,
       'settings' => $settings,
     ]);
   }

@@ -979,12 +979,7 @@ class Block extends CmsModel
 
   public function sliderOverlayClass(): ?string
   {
-    return match ($this->appearanceSetting('overlay')) {
-      'soft' => 'wb-slider-overlay-soft',
-      'dark', 'strong' => 'wb-slider-overlay-strong',
-      'none' => 'wb-slider-overlay-none',
-      default => null,
-    };
+    return self::sliderOverlayClassFor($this->appearanceSetting('overlay'));
   }
 
   public function sliderContentPositionClass(): string
@@ -1377,9 +1372,8 @@ class Block extends CmsModel
    * untouched slide inherits the slider's overlay instead of overriding it with
    * a default of its own.
    *
-   * The admin field offers four levels and the pattern defines three, so
-   * `medium` resolves to strong — someone who moved off soft asked for more
-   * cover, and rounding down would ignore the change they made.
+   * The admin field's four levels each map to their own class since WebBlocks
+   * UI 2.22.0 added `wb-slider-overlay-medium`.
    */
   public function slideBackgroundOverlayClass(): ?string
   {
@@ -1389,10 +1383,30 @@ class Block extends CmsModel
       return null;
     }
 
-    return match (trim($overlay)) {
+    return self::sliderOverlayClassFor($overlay);
+  }
+
+  /**
+   * The single mapping from an overlay setting value to the slider pattern's
+   * scrim class, shared by the slider root and by individual slides.
+   *
+   * These used to be two separate match arms that had drifted apart: the slide
+   * arm collapsed `medium` onto strong, the slider arm had no `medium` case at
+   * all and dropped it to no overlay. The same word therefore produced three
+   * different results depending on where it was set. WebBlocks UI 2.22.0 ships
+   * a real `wb-slider-overlay-medium`, so every level now has its own class and
+   * there is one place to change when the scale grows again.
+   *
+   * `dark` is a legacy alias the slider root accepted before the scale was
+   * named; it is kept so stored content keeps rendering.
+   */
+  private static function sliderOverlayClassFor(?string $overlay): ?string
+  {
+    return match (trim((string) $overlay)) {
       'none' => 'wb-slider-overlay-none',
       'soft' => 'wb-slider-overlay-soft',
-      'medium', 'strong' => 'wb-slider-overlay-strong',
+      'medium' => 'wb-slider-overlay-medium',
+      'dark', 'strong' => 'wb-slider-overlay-strong',
       default => null,
     };
   }

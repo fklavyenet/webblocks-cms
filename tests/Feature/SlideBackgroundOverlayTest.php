@@ -41,10 +41,11 @@ class SlideBackgroundOverlayTest extends TestCase
     return [
       'none clears the slider overlay' => ['none', 'wb-slider-overlay-none'],
       'soft' => ['soft', 'wb-slider-overlay-soft'],
-      // The field offers four levels and the slider pattern defines three.
-      // medium rounds up: it is a deliberate move away from soft, and rounding
-      // down would render the change invisible — the bug being fixed here.
-      'medium rounds up to strong' => ['medium', 'wb-slider-overlay-strong'],
+      // WebBlocks UI 2.22.0 added wb-slider-overlay-medium, so the field's four
+      // levels each render distinctly. Before that the pattern defined three and
+      // medium rounded up to strong, which shipped a full-strength scrim to
+      // anyone who asked for a mid one.
+      'medium' => ['medium', 'wb-slider-overlay-medium'],
       'strong' => ['strong', 'wb-slider-overlay-strong'],
     ];
   }

@@ -3551,6 +3551,10 @@ return [
       'delivery_label' => 'Paramètres de remise',
       'send_notification' => 'Envoyer une notification par e-mail',
       'delivery_help' => 'Les messages de contact sont toujours enregistrés en premier. Les paramètres de notification restent communs à toutes les langues.',
+      'consent_section_label' => 'Consentement',
+      'consent_required' => 'Exiger une case de consentement',
+      'consent_label' => 'Avis de consentement',
+      'consent_help' => 'Le texte est ce que la personne visitant le site accepte, il est donc traduit par langue. L\'envoi enregistre l\'heure de l\'accord et une copie de ce texte. Laissez vide pour masquer la case.',
     ],
     'header_actions' => [
       'system_title' => 'Actions d\'en-tête système',

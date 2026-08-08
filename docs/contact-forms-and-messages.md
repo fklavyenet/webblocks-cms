@@ -54,12 +54,24 @@ Visible copy is translatable:
 - `content` or intro text
 - `submit_label`
 - `success_message`
+- `consent_label`
 
 Shared operational settings live on the block settings:
 
 - `recipient_email`
 - `send_email_notification`
 - `store_submissions`
+- `consent_required`
+
+### Consent Checkbox
+
+A site that stores submissions often has to record that the visitor agreed to that storage. Turn on *Require a consent checkbox* and write the notice into *Consent notice* for each locale. The wording is translated because the wording is the notice.
+
+The checkbox renders only when both are present: a required consent with no wording for the resolved locale renders no checkbox rather than an unlabelled one. The requirement is re-read from the block on submit, so removing the field from the DOM does not bypass it.
+
+An accepted submission stores `consent_accepted_at` and a **copy** of the wording in `consent_label` on the `contact_messages` row. Editing the block's notice afterwards does not rewrite past records, which is what makes the agreement provable.
+
+Do not put the notice in the intro text instead. Intro copy is prose beside the form; it is not attached to any submission.
 
 Keep editorial copy and operational routing separate. The form text can vary by locale, while recipient and notification settings stay shared for the block. German locale rendering uses German default labels for the native visitor fields when custom copy is not provided.
 

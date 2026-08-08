@@ -3551,6 +3551,10 @@ return [
       'delivery_label' => 'Delivery Settings',
       'send_notification' => 'Send email notification',
       'delivery_help' => 'Contact messages are always stored first. Notification settings stay shared across locales.',
+      'consent_section_label' => 'Consent',
+      'consent_required' => 'Require a consent checkbox',
+      'consent_label' => 'Consent notice',
+      'consent_help' => 'The wording is what the visitor agrees to, so it is translated per language. The submission stores the agreement time and a copy of this wording. Leave it empty to hide the checkbox.',
     ],
     'header_actions' => [
       'system_title' => 'System Header Actions',

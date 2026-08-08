@@ -3551,6 +3551,10 @@ return [
       'delivery_label' => 'Ajustes de entrega',
       'send_notification' => 'Enviar notificación por correo',
       'delivery_help' => 'Los mensajes de contacto siempre se almacenan primero. Los ajustes de notificación se comparten entre idiomas.',
+      'consent_section_label' => 'Consentimiento',
+      'consent_required' => 'Exigir una casilla de consentimiento',
+      'consent_label' => 'Aviso de consentimiento',
+      'consent_help' => 'El texto es lo que acepta la persona visitante, por eso se traduce por idioma. El envio guarda la hora de la aceptacion y una copia de este texto. Dejalo vacio para ocultar la casilla.',
     ],
     'header_actions' => [
       'system_title' => 'Acciones de encabezado de sistema',

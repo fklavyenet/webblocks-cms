@@ -3549,6 +3549,10 @@ return [
       'delivery_label' => 'Teslim Ayarları',
       'send_notification' => 'E-posta bildirimi gönder',
       'delivery_help' => 'İletişim mesajları her zaman önce kaydedilir. Bildirim ayarları diller arasında ortak kalır.',
+      'consent_section_label' => 'Onay',
+      'consent_required' => 'Onay kutusu zorunlu olsun',
+      'consent_label' => 'Onay metni',
+      'consent_help' => 'Metin, ziyaretcinin onayladigi seydir; bu yuzden dile gore cevrilir. Gonderi, onay zamanini ve bu metnin bir kopyasini saklar. Kutuyu gizlemek icin bos birakin.',
     ],
     'header_actions' => [
       'system_title' => 'Sistem Header Aksiyonları',

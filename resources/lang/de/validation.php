@@ -5,6 +5,7 @@ return [
     'name_required' => 'Geben Sie Ihren Namen ein.',
     'email_required' => 'Geben Sie Ihre E-Mail-Adresse ein.',
     'email_valid' => 'Geben Sie eine gueltige E-Mail-Adresse ein.',
+    'consent_required' => 'Bestätigen Sie den Datenschutzhinweis, um fortzufahren.',
     'message_required' => 'Geben Sie eine Nachricht ein.',
   ],
   'comments' => [

@@ -288,6 +288,8 @@ class BlockRequest extends FormRequest
       'recipient_email' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'email:rfc', 'max:255'],
       'send_email_notification' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
       'store_submissions' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
+      'consent_required' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'boolean'],
+      'consent_label' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:1000'],
       'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
       'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
       'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
@@ -1069,6 +1071,11 @@ class BlockRequest extends FormRequest
           'store_submissions' => $isTranslatedContactFormEdit
             ? (bool) ($existingSettings['store_submissions'] ?? true)
             : (bool) ($data['store_submissions'] ?? true),
+          // Shared like the other three: the requirement is one policy for the
+          // form, while the wording it is enforced against is translated.
+          'consent_required' => $isTranslatedContactFormEdit
+            ? (bool) ($existingSettings['consent_required'] ?? false)
+            : (bool) ($data['consent_required'] ?? false),
         ], JSON_UNESCAPED_SLASHES);
       }
 
@@ -2167,7 +2174,7 @@ class BlockRequest extends FormRequest
       $data['slot'] = $slotType?->slug;
     }
 
-    unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions']);
+    unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions'], $data['consent_required']);
     unset($data['layout']);
     unset($data['title_tag']);
     unset($data['language']);

@@ -82,7 +82,7 @@ class BlockTranslationRegistry
       'text' => ['title', 'eyebrow', 'subtitle', 'content', 'meta'],
       'button' => ['title'],
       'image' => ['caption', 'alt_text'],
-      'contact_form' => ['title', 'content', 'submit_label', 'success_message'],
+      'contact_form' => ['title', 'content', 'submit_label', 'success_message', 'consent_label'],
       default => [],
     };
   }

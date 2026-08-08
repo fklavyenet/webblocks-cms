@@ -12,7 +12,7 @@ final class WebBlocks
 
   public const VERSION = '1.52.18';
 
-  public const UI_VERSION = 'v2.20.0';
+  public const UI_VERSION = 'v2.22.0';
 
   public const UI_DIST_BASE = 'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@'.self::UI_VERSION.'/packages/webblocks/dist';
 

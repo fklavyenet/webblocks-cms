@@ -5,6 +5,7 @@ return [
     'name_required' => 'Enter your name.',
     'email_required' => 'Enter your email address.',
     'email_valid' => 'Enter a valid email address.',
+    'consent_required' => 'Confirm the data-processing notice to continue.',
     'message_required' => 'Enter a message.',
   ],
   'comments' => [

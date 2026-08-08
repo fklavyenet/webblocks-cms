@@ -1266,6 +1266,19 @@ Content plans may include `navigation_menus`, `shared_slots`, and `page_slot_sha
             "url": "/",
             "target": "_self",
             "sort_order": 10
+          },
+          {
+            "label": "About",
+            "link_type": "page",
+            "page_id": 9
+          },
+          {
+            "label": "Docs",
+            "link_type": "group",
+            "children": [
+              { "label": "Intro", "url": "/docs/intro" },
+              { "label": "Guide", "url": "/docs/guide" }
+            ]
           }
         ]
       }
@@ -1288,6 +1301,8 @@ Content plans may include `navigation_menus`, `shared_slots`, and `page_slot_sha
   }
 }
 ```
+
+Navigation items carry `link_type`: `custom_url` (the default, requires a safe internal path or `http(s)` URL), `page` (requires `page_id` for a page on the same site; the label falls back to the page name), or `group` (a label that opens its children and carries no URL). Only a `group` accepts `children`, which are created with their `parent_id` already linked, so a dropdown is one plan rather than a POST plus a PATCH per item. Content plans nest one level; deeper trees use `POST /navigation-menus/{menu}/items`. An unsupported `link_type` is refused by name instead of being coerced to `custom_url`.
 
 `page_slot_shared_slots[].page` may refer to the page created by the same plan by using `created`, or to an existing page ID. `shared_slot` may refer to a Shared Slot created earlier in the same plan or an existing same-site Shared Slot handle.
 

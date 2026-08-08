@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Contact\ContactFormCheck;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
@@ -11,6 +12,13 @@ use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 
 class ContactMessageRequest extends FormRequest
 {
+  /**
+   * The consent block is read during rules() and again while building the
+   * payload. `false` is the "not looked up yet" marker so a genuine miss caches
+   * as null instead of re-querying on every call.
+   */
+  private Block|null|false $resolvedConsentBlock = false;
+
   public function authorize(): bool
   {
     return true;
@@ -28,6 +36,9 @@ class ContactMessageRequest extends FormRequest
       'message' => ['required', 'string'],
       '_form_check_name' => ['nullable', 'string', 'max:255'],
       'submitted_at' => ['required', 'integer'],
+      // A client can drop the checkbox from the DOM, so the requirement is
+      // re-read from the block rather than trusted from the submission.
+      'consent' => [$this->blockRequiresConsent() ? 'accepted' : 'nullable'],
     ];
   }
 
@@ -38,6 +49,7 @@ class ContactMessageRequest extends FormRequest
       'email.required' => $this->validationText('contact_form.email_required'),
       'email.email' => $this->validationText('contact_form.email_valid'),
       'message.required' => $this->validationText('contact_form.message_required'),
+      'consent.accepted' => $this->validationText('contact_form.consent_required'),
     ];
   }
 
@@ -55,7 +67,46 @@ class ContactMessageRequest extends FormRequest
       'message' => trim((string) $data['message']),
       'form_check_filled' => app(ContactFormCheck::class)->isFilled($this->all(), (int) $data['block_id']),
       'submitted_at' => (int) $data['submitted_at'],
+      // The wording is copied onto the submission, not just referenced: the
+      // block's copy can be edited later, and a consent record that changes
+      // meaning afterwards proves nothing.
+      'consent_accepted_at' => $this->blockRequiresConsent() ? now() : null,
+      'consent_label' => $this->blockRequiresConsent() ? $this->consentBlock()?->consent_label : null,
     ];
+  }
+
+  private function blockRequiresConsent(): bool
+  {
+    $block = $this->consentBlock();
+
+    if (! $block) {
+      return false;
+    }
+
+    return (bool) $block->setting('consent_required', false)
+      && trim((string) ($block->consent_label ?? '')) !== '';
+  }
+
+  private function consentBlock(): ?Block
+  {
+    if ($this->resolvedConsentBlock !== false) {
+      return $this->resolvedConsentBlock;
+    }
+
+    $blockId = $this->input('block_id');
+
+    $block = is_numeric($blockId) ? Block::query()->find((int) $blockId) : null;
+
+    if ($block) {
+      // consent_label lives on the translation row, so the block has to be read
+      // through the same locale resolution the public form rendered with.
+      $block = app(BlockTranslationResolver::class)->resolve(
+        $block,
+        app(PublicLocaleContext::class)->forBlockSource($block, $this->input('source_url'))
+      );
+    }
+
+    return $this->resolvedConsentBlock = $block;
   }
 
   protected function getRedirectUrl(): string

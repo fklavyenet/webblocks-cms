@@ -217,6 +217,13 @@ class InternalContentApiOperations
     $target = trim((string) ($payload['target'] ?? '_self'));
     $sortOrder = (int) ($payload['sort_order'] ?? $payload['position'] ?? 0);
     $url = trim((string) ($payload['url'] ?? ''));
+    $linkType = trim((string) ($payload['link_type'] ?? NavigationItem::LINK_CUSTOM_URL));
+    $pageId = $payload['page_id'] ?? null;
+
+    if (! in_array($linkType, NavigationItem::linkTypes(), true)) {
+      $errors[] = $this->error($path.'.link_type', 'Navigation item link type must be one of: '.implode(', ', NavigationItem::linkTypes()).'.');
+      $linkType = NavigationItem::LINK_CUSTOM_URL;
+    }
 
     if ($label === '') {
       $errors[] = $this->error($path.'.label', 'Navigation item label is required.');
@@ -230,20 +237,71 @@ class InternalContentApiOperations
       $errors[] = $this->error($path.'.sort_order', 'Navigation item sort order must be zero or greater.');
     }
 
-    if (! $this->isSafeNavigationUrl($url)) {
+    // Each link type owns a different destination field. Validating the wrong
+    // one is how this used to report a URL error for an item whose URL the
+    // caller never sent.
+    $resolvedPageId = null;
+
+    if ($linkType === NavigationItem::LINK_PAGE) {
+      if (! $pageId) {
+        $errors[] = $this->error($path.'.page_id', 'Page navigation items require page_id.');
+      } else {
+        $page = Page::query()->find((int) $pageId);
+
+        if (! $page || ($site && (int) $page->site_id !== (int) $site->id)) {
+          $errors[] = $this->error($path.'.page_id', 'Selected page must belong to the selected site.');
+        } else {
+          $resolvedPageId = $page->id;
+          $label = $label !== '' ? $label : (string) $page->name;
+        }
+      }
+
+      $url = '';
+    } elseif ($linkType === NavigationItem::LINK_GROUP) {
+      if ($url !== '') {
+        $errors[] = $this->error($path.'.url', 'Navigation groups are labels that open their children and cannot carry a URL.');
+      }
+
+      $url = '';
+    } elseif (! $this->isSafeNavigationUrl($url)) {
       $errors[] = $this->error($path.'.url', 'Navigation item URL must be a safe internal path or http(s) URL.');
+    }
+
+    $children = [];
+
+    if (array_key_exists('children', $payload)) {
+      if (! is_array($payload['children'])) {
+        $errors[] = $this->error($path.'.children', 'Navigation item children must be an array.');
+      } elseif ($payload['children'] !== [] && $linkType !== NavigationItem::LINK_GROUP) {
+        $errors[] = $this->error($path.'.children', 'Only navigation groups can contain child items; set link_type to group.');
+      } else {
+        foreach ($payload['children'] as $index => $child) {
+          $normalizedChild = $this->normalizeNavigationItem($child, $site, $menuHandle, $path.'.children.'.$index, $errors);
+
+          if ($normalizedChild !== null) {
+            if ($normalizedChild['children'] !== []) {
+              $errors[] = $this->error($path.'.children.'.$index.'.children', 'Navigation depth cannot exceed 2 levels in a content plan; use POST /navigation-menus/{menu}/items for deeper trees.');
+            }
+
+            $normalizedChild['position'] = $normalizedChild['position'] > 0 ? $normalizedChild['position'] : $index + 1;
+            $children[] = $normalizedChild;
+          }
+        }
+      }
     }
 
     return [
       'site_id' => $site?->id,
       'menu_key' => $menuHandle ?: NavigationItem::MENU_PRIMARY,
       'title' => $label,
-      'link_type' => NavigationItem::LINK_CUSTOM_URL,
+      'link_type' => $linkType,
+      'page_id' => $resolvedPageId,
       'url' => $url,
-      'target' => $target,
+      'target' => $linkType === NavigationItem::LINK_GROUP ? null : $target,
       'position' => $sortOrder > 0 ? $sortOrder : 1,
       'visibility' => NavigationItem::VISIBILITY_VISIBLE,
       'is_system' => false,
+      'children' => $children,
     ];
   }
 
@@ -255,8 +313,23 @@ class InternalContentApiOperations
 
     $items = [];
     foreach ($normalized['items'] as $index => $item) {
+      $children = $item['children'] ?? [];
+      unset($item['children']);
+
       $item['position'] = $item['position'] ?: ($index + 1);
-      $items[] = NavigationItem::query()->create($item);
+      $parent = NavigationItem::query()->create($item);
+      $items[] = $parent;
+
+      // Children are created after their parent so parent_id is a real row id;
+      // a plan expressing a dropdown used to need one POST per item plus a
+      // PATCH per item to re-link them.
+      foreach ($children as $childIndex => $child) {
+        unset($child['children']);
+
+        $child['parent_id'] = $parent->id;
+        $child['position'] = $child['position'] ?: ($childIndex + 1);
+        $items[] = NavigationItem::query()->create($child);
+      }
     }
 
     return [

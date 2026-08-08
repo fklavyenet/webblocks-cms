@@ -31,6 +31,8 @@ class ContactMessage extends CmsModel
     'notification_sent_at',
     'notification_error',
     'notification_reason',
+    'consent_accepted_at',
+    'consent_label',
   ];
 
   protected function casts(): array
@@ -40,6 +42,7 @@ class ContactMessage extends CmsModel
       'spam_score' => 'integer',
       'notification_enabled' => 'boolean',
       'notification_sent_at' => 'datetime',
+      'consent_accepted_at' => 'datetime',
     ];
   }
 

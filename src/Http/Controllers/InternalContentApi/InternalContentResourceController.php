@@ -33,6 +33,7 @@ use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\InternalContentApi\MediaContractRegistry;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
@@ -404,29 +405,7 @@ class InternalContentResourceController extends Controller
         'media_discovery' => 'Use GET /webadmin/api/media?kind=image before assigning logo media. Do not invent public file paths or use HTML fallback blocks for native logo fields.',
         'topology_changes' => 'Use content/validate and content/apply for creating, replacing, nesting, or reordering blocks.',
       ],
-      'media_library' => [
-        'index_url' => '/webadmin/api/media',
-        'update_url_template' => '/webadmin/api/media/{media}',
-        'read_requires_capability' => 'media.read',
-        'read_transitional_capability' => 'content.read',
-        'write_requires_capability' => 'media.write',
-        'write_scope' => 'metadata-only',
-        'supported_update_fields' => [
-          'title',
-          'alt_text',
-          'caption',
-          'description',
-        ],
-        'unsupported_operations' => [
-          'upload files',
-          'delete media',
-          'replace binary files',
-          'move folders',
-          'change storage paths',
-          'change mime type, kind, visibility, size, or dimensions',
-          'fetch remote media',
-        ],
-      ],
+      'media_library' => app(MediaContractRegistry::class)->section(),
       'locales' => [
         'index_url' => '/webadmin/api/locales',
         'options_url' => '/webadmin/api/locale-options',
@@ -2208,13 +2187,28 @@ class InternalContentResourceController extends Controller
       'owns_public_root' => (bool) ($contract['owns_public_root_helper'] ?? false),
       'documented_contract' => (bool) ($contract['documented'] ?? false),
       'contract_status' => $contract['current_contract_status'] ?? null,
+      'unreachable_child_handles' => $this->unreachableChildHandles($contract['allowed_child_type_slugs'] ?? null),
     ];
+
+    if (in_array($blockType->slug, ['hero', 'cta'], true)) {
+      // allowed_child_handles reads as a dead end on its own: the only permitted
+      // child is `button`, which has no published catalog row, so a client that
+      // only looks at that field concludes the action row cannot be authored.
+      // It can — through these fields, which produce the same managed children
+      // the block editor maintains.
+      $payload['managed_action_fields'] = [
+        'primary_cta' => 'object with required label and url, or null to clear. Safe internal path or http(s) URL.',
+        'secondary_cta' => 'object with required label and url, or null to clear. Safe internal path or http(s) URL.',
+        'note' => 'Use these instead of creating child blocks. The CMS turns them into the managed button_link children the Page editor maintains, so the result stays editable in the admin. Free-form button children are refused by design.',
+      ];
+    }
 
     if ($blockType->slug === 'contact_form') {
       $payload['settings_schema'] = [
         'recipient_email' => 'nullable email string; overrides the site and environment recipient fallback chain when present',
         'send_email_notification' => 'boolean; default true',
         'store_submissions' => 'boolean; always true in the native CMS contract',
+        'consent_required' => 'boolean; default false. When true and the resolved locale has a consent_label, the public form renders a required consent checkbox and the submission records consent_accepted_at plus a copy of the wording.',
       ];
       $payload['public_submit_endpoint'] = [
         'method' => 'POST',
@@ -2267,6 +2261,34 @@ class InternalContentResourceController extends Controller
     }
 
     return $payload;
+  }
+
+  /**
+   * The subset of a block type's allowed child handles that no published
+   * catalog row can satisfy.
+   *
+   * Hero and CTA allow only `button`, which is not a published type, so
+   * allowed_child_handles alone reads as a documented dead end. Naming the
+   * unreachable handles explicitly lets a client tell "compose a child of this
+   * type" apart from "this parent is authored some other way" instead of
+   * discovering the difference by getting a 422.
+   *
+   * @param  array<int, string>|null  $allowedChildHandles
+   * @return array<int, string>
+   */
+  private function unreachableChildHandles(?array $allowedChildHandles): array
+  {
+    if (! $allowedChildHandles) {
+      return [];
+    }
+
+    $published = BlockType::query()
+      ->where('status', 'published')
+      ->whereIn('slug', $allowedChildHandles)
+      ->pluck('slug')
+      ->all();
+
+    return array_values(array_diff($allowedChildHandles, $published));
   }
 
   private function commerceBuyButtonSettingsSchema(): array

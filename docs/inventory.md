@@ -325,7 +325,7 @@ The current published core catalog contains 51 rows:
 | --- | --- |
 | Purpose | One panel inside Slider. |
 | Admin-editable content | No direct visible copy; optional editor-only `layout_name` and shared `aria_label`. |
-| Settings | Background image `media_id`; `background_position`; `background_overlay`; `content_position`; `content_width`; `text_color`; `background_fit`. |
+| Settings | Background image `media_id`; `background_position`; `background_overlay` (`none`, `soft`, `medium`, `strong` — each renders a distinct scrim since WebBlocks UI 2.22.0; before that `medium` collapsed onto `strong`); `content_position`; `content_width`; `text_color`; `background_fit`. |
 | Children | Any supported structured child type; a background-only Slide is allowed. Normal parent is Slider. |
 | HTML | Root-owning `<article class="wb-slide …" data-wb-public-block-type="slide">[img.wb-slide-media]<div class="wb-slide-content">…</div></article>`. |
 | Example appearance | Background product photo with nested Header, Plain Text, and Button Link content. |
@@ -383,11 +383,11 @@ The current published core catalog contains 51 rows:
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`; the admin also manages up to two translated CTA labels and shared CTA URLs through managed `button` children. |
 | Settings and variants | `variant`: default, muted, soft, accent; `layout`: left or centered; `title_tag`: h1, h2, h3; optional background image and overlay settings. |
-| Children/media | Contract allows only `button` children; direct image `media_id` is background media. |
+| Children/media | Actions are authored with the `primary_cta` / `secondary_cta` fields, not by creating children; direct image `media_id` is background media. |
 | HTML | Root-owning `<section class="wb-card wb-promo [wb-card-*]">` containing `.wb-card-body.wb-promo-copy`, eyebrow, promo title/text, and optional `.wb-promo-actions`. |
 | Example appearance | A contained promo-card hero with background media and up to two actions. |
 | Hard limitation | No structured foreground image, split column, product-price region, trust strip, or arbitrary nested content. Do not claim fidelity to a screenshot requiring those features. |
-| Catalog gap | The allowed managed child handle `button` has a renderer and translation support but is not a published core row in the audited catalog. Fresh-install API authoring must not assume it is discoverable. Use a separate Cluster with Button Link where structurally acceptable, otherwise report the missing managed-action contract. |
+| Actions | Send `primary_cta` and `secondary_cta` as `{label, url}` objects (or `null` to clear). The CMS turns them into the managed `button_link` children the Page editor maintains, so the result stays editable in the admin and the actions render inside `.wb-promo-actions`. `GET /block-types` reports them under `managed_action_fields`. Do not reach for a sibling Cluster with Button Link — that renders outside the promo root. `allowed_child_handles` still lists `button`, which has no published catalog row; it is reported in `unreachable_child_handles` because free-form `button` children are unsupported by design, not missing. |
 
 ### `cta` — CTA
 
@@ -395,10 +395,11 @@ The current published core catalog contains 51 rows:
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`; the admin manages up to two CTA labels/URLs through `button` children. |
 | Settings and variants | `variant`: default, muted, soft, accent; optional background image and overlay settings. CTA title renders as H2. |
-| Children/media | Only `button` children; direct image `media_id` is background media. |
+| Children/media | Actions are authored with the `primary_cta` / `secondary_cta` fields, not by creating children; direct image `media_id` is background media. |
 | HTML | Root-owning `<section class="wb-card wb-promo [wb-card-*]">` with `.wb-promo-copy` and optional action row. |
 | Example appearance | Short conversion band near the end of a page. |
-| Limitation | The same non-catalog `button` child gap described for Hero applies. `settings.layout=centered` is renderer-compatible but is not exposed by the normal CTA admin form and is not a recommended AI authoring field. |
+| Actions | Identical to Hero: send `primary_cta` / `secondary_cta` as `{label, url}` objects and the CMS maintains the managed `button_link` children. |
+| Limitation | `settings.layout=centered` is renderer-compatible but is not exposed by the normal CTA admin form and is not a recommended AI authoring field. |
 
 ### `columns` — Columns
 
@@ -741,10 +742,11 @@ The current published core catalog contains 51 rows:
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | Locale-owned `title`, `content`, `submit_label`, `success_message`. |
-| Settings and variants | `recipient_email`; `send_email_notification`; `store_submissions` remains product-owned true in the native contract. |
+| Editable content | Locale-owned `title`, `content`, `submit_label`, `success_message`, `consent_label`. |
+| Settings and variants | `recipient_email`; `send_email_notification`; `store_submissions` remains product-owned true in the native contract; `consent_required` (boolean, default false). |
+| Consent | Set `consent_required` and give the locale a `consent_label` to render a required consent checkbox. The wording is translated because it *is* the notice. An accepted submission stores `consent_accepted_at` plus a copy of the wording, so editing the block later cannot change what a past visitor is recorded as having agreed to. A required consent with no wording for the resolved locale renders no checkbox rather than an unlabelled one. `consent_required` is closed to PATCH: removing a legal notice from a live form is an operator decision. |
 | Children/media | None. |
-| HTML | Generic wrapper around native `section.wb-card`, CSRF-protected form, renderer-generated anti-spam field, WebBlocks inputs, textarea, validation errors, and submit button. |
+| HTML | Generic wrapper around native `section.wb-card`, CSRF-protected form, renderer-generated anti-spam field, WebBlocks inputs, textarea, optional consent checkbox, validation errors, and submit button. |
 | Example appearance | Fully managed contact form stored in Contact Messages with optional notification. |
 | Avoid | Raw form HTML, custom honeypot fields, or `mailto:` replacement. |
 
@@ -982,7 +984,10 @@ These are implementation findings, not permissions to invent behavior:
 8. Resolved: icon normalization has one owner. `InternalContentApiOperations` holds the canonical `PUBLIC_ICON_BLOCK_TYPES` list plus the shared slug/tone normalizers, and the full content plan delegates to them, so plans and incremental block endpoints validate icons identically.
 9. API block settings are not yet governed by one per-block machine-readable settings schema. Unknown settings can survive normalization even when no renderer or admin field uses them.
 10. Resolved: `navigation-auto` now has a documented contract in `BlockTypeContractRegistry` and is discoverable through block-types and content-contract.
-11. The repository has dashboard and page-management screenshots, but no canonical per-block/per-variant visual fixture gallery. The “Example appearance” descriptions in this inventory are therefore source-derived, not screenshot-backed golden references.
+11. WebBlocks UI ships a `wb-footer-*` anatomy (`wb-footer-grid`, `wb-footer-brand`, `wb-footer-nav`, `wb-footer-link`, `wb-footer-list`, `wb-footer-item`, `wb-footer-copy`, `wb-footer-meta`, `wb-footer-text`, `wb-footer-logo`) that no CMS renderer emits. A shared-slot footer composes generic `wb-section`/`wb-container`/`wb-grid`/`wb-stack`/`wb-cluster` instead, so the pattern is reachable only from hand-written layouts. Cosmetic since 1.50.0 gave `.wb-slot-footer` its own surface; a footer-composition block remains deliberately deferred rather than pending.
+12. Resolved: `GET /content-contract` derives its `media_library` section from the registered route table, so `supported_operations` and `unsupported_operations` cannot drift from what `openapi.json` publishes. Upload, remote fetch, delete, replace and move are published as supported with the capability each route enforces.
+13. Resolved: consent has a visitor-facing half. The System Settings banner toggle renders WebBlocks UI's Cookie Consent pattern on public pages and wires it to the existing `POST /privacy-consent/sync` endpoint, and `contact_form` gained `settings.consent_required` plus a translated `consent_label` recorded on each submission.
+14. The repository has dashboard and page-management screenshots, but no canonical per-block/per-variant visual fixture gallery. The “Example appearance” descriptions in this inventory are therefore source-derived, not screenshot-backed golden references.
 
 ## Recommended Inventory Freshness Checks
 

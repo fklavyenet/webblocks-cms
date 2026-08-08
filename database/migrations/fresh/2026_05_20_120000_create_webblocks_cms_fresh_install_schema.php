@@ -562,6 +562,7 @@ return new class extends Migration
       $table->longText('content')->nullable();
       $table->string('submit_label')->nullable();
       $table->longText('success_message')->nullable();
+      $table->longText('consent_label')->nullable();
       $table->timestamps();
       $table->unique(['block_id', 'locale_id']);
     });
@@ -682,6 +683,8 @@ return new class extends Migration
       $table->timestamp('notification_sent_at')->nullable();
       $table->text('notification_error')->nullable();
       $table->text('notification_reason')->nullable();
+      $table->timestamp('consent_accepted_at')->nullable();
+      $table->longText('consent_label')->nullable();
       $table->timestamps();
     });
 

@@ -420,6 +420,28 @@
     ]
   },
   {
+    "slug": "brand-cms",
+    "label": "WebBlocks CMS",
+    "css_class": "wb-icon-brand-cms",
+    "source": "webblocks-brand",
+    "categories": [
+      "brand"
+    ],
+    "contexts": [
+      "brand",
+      "product"
+    ],
+    "keywords": [
+      "brand",
+      "cms",
+      "logo",
+      "product",
+      "webblocks",
+      "content",
+      "blocks"
+    ]
+  },
+  {
     "slug": "briefcase",
     "label": "Briefcase",
     "css_class": "wb-icon-briefcase",

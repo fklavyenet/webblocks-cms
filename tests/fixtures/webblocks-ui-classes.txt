@@ -6,7 +6,7 @@
 # disagree, which is the point: a runtime bump that drops a class the
 # admin uses should be caught here rather than in a screenshot.
 #
-ui-version: v2.20.0
+ui-version: v2.22.0
 wb-absolute
 wb-accordion
 wb-accordion-body
@@ -188,6 +188,7 @@ wb-cmd-search
 wb-cmd-search-icon
 wb-cmd-shortcut-hint
 wb-col
+wb-col-
 wb-col-1
 wb-col-10
 wb-col-11
@@ -496,6 +497,7 @@ wb-icon-book
 wb-icon-book-open
 wb-icon-bookmark
 wb-icon-box
+wb-icon-brand-cms
 wb-icon-briefcase
 wb-icon-btn
 wb-icon-bug
@@ -1038,6 +1040,7 @@ wb-slider-height-md
 wb-slider-height-sm
 wb-slider-height-viewport
 wb-slider-height-xl
+wb-slider-overlay-medium
 wb-slider-overlay-none
 wb-slider-overlay-soft
 wb-slider-overlay-strong

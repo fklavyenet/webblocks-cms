@@ -7,6 +7,7 @@
         use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
         use WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver;
         use WebBlocks\Cms\Support\Translations\CmsTranslator;
+        use WebBlocks\Cms\Support\Visitors\VisitorConsent;
         use WebBlocks\Cms\Support\WebBlocks;
 
         $publicTranslator = app(CmsTranslator::class);
@@ -15,6 +16,23 @@
         $publicJsAssets = [
             'public-search-modal' => public_path('cms/js/public/public-search-modal.js'),
             'sidebar-navigation' => public_path('cms/js/public/sidebar-navigation.js'),
+            'privacy-consent-sync' => public_path('cms/js/privacy-consent-sync.js'),
+        ];
+
+        // The banner only renders while Visitor Reports and the System Settings
+        // toggle are both on and the visitor has not decided yet. The sync
+        // script still loads after a decision so a client-side change made from
+        // the reopened preference center reaches the server cookie.
+        $visitorConsent = app(VisitorConsent::class);
+        $consentBannerEnabled = $visitorConsent->bannerEnabled();
+        $shouldShowConsentBanner = $consentBannerEnabled && $visitorConsent->shouldShowBanner(request());
+        $consentSyncConfig = [
+            'syncUrl' => $consentBannerEnabled ? route('public.privacy-consent.sync') : null,
+            'csrfToken' => csrf_token(),
+            'reportsEnabled' => $consentBannerEnabled,
+            'consentCookieName' => $visitorConsent->cookieName(),
+            'consentLifetimeDays' => (int) config('cms.visitor_reports.consent_cookie_lifetime_days', 180),
+            'initialServerChoice' => $visitorConsent->storedChoice(request()),
         ];
         $headPageAssets = collect($headPageAssets ?? collect());
         $bodyEndPageAssets = collect($bodyEndPageAssets ?? collect());
@@ -109,6 +127,12 @@
         @endif
         @if (is_file($publicJsAssets['sidebar-navigation']))
             <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
+        @endif
+        @if ($consentBannerEnabled && is_file($publicJsAssets['privacy-consent-sync']))
+            <script>
+                window.WebBlocksCmsPrivacyConsent = @json($consentSyncConfig);
+            </script>
+            <script src="{{ asset('cms/js/privacy-consent-sync.js') }}?v={{ filemtime($publicJsAssets['privacy-consent-sync']) }}" defer></script>
         @endif
         @if ($siteJsPath)
             <script src="{{ $siteJsPath }}" defer></script>
@@ -228,6 +252,10 @@
             </div>
 
             @include('webblocks-cms::search.partials.modal')
+
+            @if ($shouldShowConsentBanner)
+                @include('webblocks-cms::partials.cookie-consent')
+            @endif
 
             @foreach ($publicOverlays as $overlayHtml)
                 {!! $overlayHtml !!}

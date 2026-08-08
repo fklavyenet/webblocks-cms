@@ -668,13 +668,14 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'contact_form' => [
-        'admin_form_fields' => ['Heading', 'Intro text', 'Submit label', 'Success message', 'Recipient email', 'Send email notification', 'Store submissions'],
-        'translatable_fields' => ['title', 'content', 'submit_label', 'success_message'],
-        'shared_settings_fields' => ['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions'],
+        'admin_form_fields' => ['Heading', 'Intro text', 'Submit label', 'Success message', 'Recipient email', 'Send email notification', 'Store submissions', 'Require a consent checkbox', 'Consent notice'],
+        'translatable_fields' => ['title', 'content', 'submit_label', 'success_message', 'consent_label'],
+        'shared_settings_fields' => ['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions', 'settings.consent_required'],
         'storage_fields' => [
           'Translated visible copy lives in block_contact_form_translations rows.',
           'Shared recipient and notification settings stay in block settings.',
           'Public submissions are stored as contact_messages rows before notification delivery is attempted.',
+          'The consent checkbox renders only when settings.consent_required is true and the resolved locale has a consent_label; an accepted submission records consent_accepted_at plus a copy of the wording so the agreement stays provable after the block copy is edited.',
         ],
         'media_relationship_fields' => ['Not applicable.'],
         'child_container_behavior' => ['Not a container in the current contract.'],

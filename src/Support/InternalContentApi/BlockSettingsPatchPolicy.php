@@ -47,6 +47,9 @@ final class BlockSettingsPatchPolicy
       'recipient_email' => self::CLOSED_DELIBERATE,
       'send_email_notification' => self::CLOSED_DELIBERATE,
       'store_submissions' => self::CLOSED_DELIBERATE,
+      // Turning the consent requirement off through a token would remove a
+      // legal notice from a live form, which is the operator's decision.
+      'consent_required' => self::CLOSED_DELIBERATE,
     ],
     'comments' => [
       // Whether commenter names are shown publicly is a privacy decision about

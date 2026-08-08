@@ -27,7 +27,7 @@ class BlockTranslationWriter
     if ($family === 'contact_form') {
       $settings = $this->decodeSettings($data['settings'] ?? null);
 
-      unset($settings['submit_label'], $settings['success_message']);
+      unset($settings['submit_label'], $settings['success_message'], $settings['consent_label']);
 
       $data['settings'] = $settings === []
         ? null
@@ -87,7 +87,7 @@ class BlockTranslationWriter
     if ($family === 'contact_form') {
       $settings = $this->decodeSettings($block->getRawOriginal('settings'));
 
-      unset($settings['submit_label'], $settings['success_message']);
+      unset($settings['submit_label'], $settings['success_message'], $settings['consent_label']);
 
       $updates['settings'] = $settings === []
         ? null
@@ -171,6 +171,9 @@ class BlockTranslationWriter
         'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'content', $block->getRawOriginal('content')),
         'submit_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'submit_label', 'Send message'),
         'success_message' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'success_message', config('contact.success_message')),
+        // Empty stays null: a blank consent label is how a form opts out of the
+        // checkbox, so it must not fall back to any default wording.
+        'consent_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'consent_label', '') ?: null,
       ],
     };
   }

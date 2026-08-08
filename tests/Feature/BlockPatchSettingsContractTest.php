@@ -279,6 +279,8 @@ class BlockPatchSettingsContractTest extends TestCase
     $this->assertSame([
       // Shows commenter names publicly: other people's data, not presentation.
       'comments.show_author_name',
+      // Removes a legal notice from a live form.
+      'contact_form.consent_required',
       'contact_form.recipient_email',
       'contact_form.send_email_notification',
       'contact_form.store_submissions',

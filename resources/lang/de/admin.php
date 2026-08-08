@@ -3551,6 +3551,10 @@ return [
       'delivery_label' => 'Zustelleinstellungen',
       'send_notification' => 'E-Mail-Benachrichtigung senden',
       'delivery_help' => 'Kontaktmeldungen werden immer zuerst gespeichert. Benachrichtigungseinstellungen bleiben sprachübergreifend gemeinsam.',
+      'consent_section_label' => 'Einwilligung',
+      'consent_required' => 'Eine Einwilligungs-Checkbox verlangen',
+      'consent_label' => 'Einwilligungshinweis',
+      'consent_help' => 'Der Text ist das, dem die Besucherin oder der Besucher zustimmt, und wird daher pro Sprache uebersetzt. Die Einsendung speichert den Zeitpunkt der Zustimmung und eine Kopie dieses Textes. Leer lassen, um die Checkbox auszublenden.',
     ],
     'header_actions' => [
       'system_title' => 'System-Header-Aktionen',
