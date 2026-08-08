@@ -9,3 +9,7 @@
 
 # Local AI agent contract — never tracked or pushed
 AGENTS.md
+
+# Local AI agent tooling config (launch.json for the preview runner) — same
+# rule as AGENTS.md: it describes this checkout, not the package.
+/.claude/

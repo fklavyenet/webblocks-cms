@@ -89,8 +89,8 @@ class PackageDevelopmentBoundaryTest extends TestCase
     // Exclude gitignored local/runtime artifacts so the assertion reflects the
     // committed tree, not whatever a developer's checkout happens to contain
     // (e.g. a stray storage/ from a local artisan run, coverage/, .DS_Store, or
-    // the local-only AGENTS.md). Keep this in sync with .gitignore.
-    $ignored = ['.', '..', '.git', 'vendor', 'composer.lock', '.phpunit.cache', '.phpunit.result.cache', 'storage', 'coverage', '.DS_Store', 'AGENTS.md'];
+    // the local-only AGENTS.md and .claude/). Keep this in sync with .gitignore.
+    $ignored = ['.', '..', '.git', 'vendor', 'composer.lock', '.phpunit.cache', '.phpunit.result.cache', 'storage', 'coverage', '.DS_Store', 'AGENTS.md', '.claude'];
     $actual = array_values(array_filter(scandir($root) ?: [], fn (string $entry): bool => ! in_array($entry, $ignored, true)));
 
     sort($expected);
