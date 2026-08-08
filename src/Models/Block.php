@@ -15,6 +15,9 @@ use Illuminate\Support\Stringable;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Pages\PageListItem;
+use WebBlocks\Cms\Support\Pages\PageListQuery;
+use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
@@ -262,6 +265,20 @@ class Block extends CmsModel
       return 'Location: '.str($this->navigationLocation())->headline();
     }
 
+    if ($this->typeSlug() === 'page-list') {
+      $settings = $this->pageListSettings();
+
+      $scopeSummary = match ($settings->scope) {
+        PageListSettings::SCOPE_PATH_PREFIX => $settings->pathPrefix ?? 'No path prefix',
+        PageListSettings::SCOPE_SUBTREE_OF_CURRENT => 'Pages below this one',
+        default => $settings->pageType
+          ? str($settings->pageType)->headline().' pages'
+          : 'No page type',
+      };
+
+      return $scopeSummary.', up to '.$settings->limit;
+    }
+
     if ($this->typeSlug() === 'stat-card') {
       return $this->stringValueOrNull($this->title)
         ?? $this->translatedTextFieldValue('title')
@@ -444,6 +461,22 @@ class Block extends CmsModel
     $walk(null);
 
     return $headings->values();
+  }
+
+  public function pageListSettings(): PageListSettings
+  {
+    return PageListSettings::fromBlock($this);
+  }
+
+  /**
+   * The pages this `page-list` block renders, already reduced to the render
+   * locale. Derived at render time from a page query, never from child blocks.
+   *
+   * @return Collection<int, PageListItem>
+   */
+  public function pageListItems(): Collection
+  {
+    return app(PageListQuery::class)->itemsFor($this);
   }
 
   public function translatedTextFieldValue(string $field, bool $stripTags = false): ?string

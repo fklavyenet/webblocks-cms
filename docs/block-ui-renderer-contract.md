@@ -96,6 +96,7 @@ Public pages now use explicit layout composition modes:
 | `gallery` | `wb-gallery` plus overlay root modal | acceptable | P1 public marketing/docs | keep using shipped gallery hooks and central overlay root while keeping intro copy outside the Gallery block itself |
 | `download` | `wb-btn` or card-with-button CTA | acceptable | P2 content quality | add explicit card/download variants later |
 | `navigation-auto` | nav/list primitives, optional `wb-link-list` | acceptable | P1 public marketing/docs | keep simple menus simple and reserve docs sidebars for real docs shells |
+| `page-list` | `wb-grid` of `wb-card`, or `wb-link-list` | acceptable | P1 public marketing/docs | keep rows derived from the page query and let the card/link-list primitives own the presentation |
 | `menu` | legacy alias of `navigation-auto` | acceptable | P3 later/custom | keep for migrated data only |
 | `contact_form` | form primitives, `wb-btn`, `wb-alert` | acceptable | P1 public marketing/docs | keep structured editor fields and avoid raw HTML forms |
 | `hero` | `wb-promo` marketing shell | acceptable | P1 public marketing/docs | keep hero first-class, translated, and action-driven through child button blocks |
@@ -536,6 +537,16 @@ Public pages now use explicit layout composition modes:
 - Intended WebBlocks UI output: `wb-section-nav` built from existing anchored `header` blocks in the same slot — a self-contained primitive, not `wb-link-list`, so it also picks up the shipped `WBSectionNav` scrollspy for free.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: TOC is a system block type. It only renders when `Header` blocks already expose explicit anchor IDs and does not attempt complex heading parsing or auto-generated anchors.
+
+### `page-list`
+
+- CMS block slug: `page-list`
+- Admin fields: `page_list_scope`, `page_list_page_type`, `page_list_path_prefix`, `page_list_sort`, `page_list_limit`, `page_list_layout`, `page_list_columns`, `page_list_show_thumbnail`, `page_list_show_description`, `page_list_exclude_current`
+- Translatable fields: none
+- Shared fields: `settings.scope`, `settings.page_type`, `settings.path_prefix`, `settings.sort`, `settings.limit`, `settings.layout`, `settings.columns`, `settings.show_thumbnail`, `settings.show_description`, `settings.exclude_current`
+- Intended WebBlocks UI output: the shipped card grid (`wb-grid` of `wb-card`) or the shipped link list (`wb-link-list`); no page-list-specific CSS is added by this package.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: card descriptions and thumbnails currently reuse each page's SEO description and Open Graph image. Dedicated `list_excerpt` and `list_image_media_id` page settings would let an editor write list copy without touching what search engines and social cards read.
 
 ### `navigation-auto`
 

@@ -958,7 +958,7 @@ class PageController extends Controller
     $block->source_type = $selectedBlockType->source_type ?: 'static';
     $block->setRelation('blockType', $selectedBlockType);
     $block->setRelation('slotType', $slot->slotType);
-    $block->setAttribute('translation_state', in_array($selectedBlockType->slug, ['navigation-auto', 'menu'], true) ? 'shared' : 'missing');
+    $block->setAttribute('translation_state', in_array($selectedBlockType->slug, ['navigation-auto', 'menu', 'page-list'], true) ? 'shared' : 'missing');
     $block->setAttribute('resolved_locale_code', $activeLocale->code);
 
     return [

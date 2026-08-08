@@ -495,6 +495,17 @@ class CoreBlockTypeCatalogSyncer
         'status' => 'published',
       ],
       [
+        'name' => 'Page List',
+        'slug' => 'page-list',
+        'category' => 'content',
+        'description' => 'Lists published pages of a page type or path subtree for the current site and locale.',
+        'source_type' => 'pages',
+        'is_system' => true,
+        'is_container' => false,
+        'sort_order' => 25,
+        'status' => 'published',
+      ],
+      [
         'name' => 'Breadcrumb',
         'slug' => 'breadcrumb',
         'category' => 'navigation',

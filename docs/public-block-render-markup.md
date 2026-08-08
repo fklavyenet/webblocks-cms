@@ -1869,6 +1869,75 @@ Avoid for: new shared headers where Navbar Navigation is the intended child.
 
 The renderer resolves a CMS Navigation menu by key. Footer and legal menus render stacked links; other menus render clustered button-style root links.
 
+## Page List (`page-list`)
+
+### Renderer source
+
+`packages/webblocks-cms/resources/views/pages/partials/blocks/page-list.blade.php`
+
+### Rendered HTML
+
+Cards layout:
+
+```html
+<div class="wb-public-block" data-wb-public-block-type="page-list">
+  <div class="wb-grid wb-grid-3">
+    <article class="wb-card">
+      <div class="wb-card-header">
+        <img src="/media/card/guide.jpg" alt="" loading="lazy" decoding="async">
+      </div>
+      <div class="wb-card-body wb-stack wb-gap-2">
+        <strong><a href="/guides/install" class="wb-link">Installing WebBlocks</a></strong>
+        <p class="wb-m-0">A short SEO description, trimmed to 160 characters.</p>
+      </div>
+    </article>
+  </div>
+</div>
+```
+
+Links layout:
+
+```html
+<div class="wb-link-list" data-wb-public-block-type="page-list">
+  <a href="/guides/install" class="wb-link-list-item">
+    <div class="wb-link-list-main">
+      <span class="wb-link-list-title">Installing WebBlocks</span>
+    </div>
+    <div class="wb-link-list-desc">A short SEO description, trimmed to 160 characters.</div>
+  </a>
+</div>
+```
+
+### Main CSS / WebBlocks UI classes
+
+`wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4`, `wb-card`, `wb-card-header`, `wb-card-body`, `wb-stack`, `wb-gap-2`, `wb-m-0`, `wb-link`, `wb-link-list`, `wb-link-list-item`, `wb-link-list-item--media`, `wb-link-list-thumb`, `wb-link-list-main`, `wb-link-list-title`, `wb-link-list-desc`.
+
+### Settings -> class / markup map
+
+| Setting | Value | Output effect |
+| --- | --- | --- |
+| settings.scope | `page_type` | Lists pages whose page type slug matches `settings.page_type`. |
+| settings.scope | `path_prefix` | Lists the page at `settings.path_prefix` and its subtree. |
+| settings.scope | `subtree_of_current` | Derives the prefix from the hosting page's own translated path. |
+| settings.sort | `published_desc`/`published_asc`/`title_asc`/`path_asc` | Orders the query; translated columns sort through a correlated subquery. |
+| settings.limit | 1-48 | Hard cap on rows. There is no pagination. |
+| settings.layout | `cards`/`links` | Chooses the `wb-grid` card root or the `wb-link-list` root. |
+| settings.columns | `2`/`3`/`4` | Adds `wb-grid-2`/`wb-grid-3`/`wb-grid-4`. Cards layout only. |
+| settings.show_thumbnail | true | Renders each page translation's Open Graph image through the `card` media transform. |
+| settings.show_description | true | Renders each page translation's SEO description, trimmed to 160 characters. |
+| settings.exclude_current | true | Drops the hosting page from its own list. |
+| empty result | any | Emits nothing at all — no root element, no empty-state copy. |
+
+### Use for / Avoid for
+
+Use for: an index page that must stay current on its own, such as a guides or blog listing.
+
+Avoid for: a curated or hand-ordered set of links, which `link-list` expresses better; and paginated archives, which this block does not implement.
+
+### Notes
+
+Rows are derived from a page query, never from child blocks. Five filters are enforced in the query and are not exposed as settings: published status, site scope, a resolvable translation in the render locale, Shared Slot source pages, and the hosting page. Titles come from the page translation name, descriptions from its SEO description, and thumbnails from its Open Graph image.
+
 ## TOC (`toc`)
 
 ### Renderer source

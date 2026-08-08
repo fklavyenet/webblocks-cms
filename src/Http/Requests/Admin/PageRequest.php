@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class PageRequest extends FormRequest
@@ -98,6 +99,21 @@ class PageRequest extends FormRequest
       'blocks.*.gallery_overlay_mode' => ['nullable', Rule::in(['none', 'gradient', 'solid'])],
       'blocks.*.gallery_lightbox_enabled' => ['nullable', 'boolean'],
       'blocks.*.gallery_viewer_title' => ['nullable', 'string', 'max:255'],
+      'blocks.*.page_list_scope' => ['nullable', Rule::in(PageListSettings::scopes())],
+      'blocks.*.page_list_page_type' => ['nullable', 'string', 'max:255'],
+      'blocks.*.page_list_path_prefix' => ['nullable', 'string', 'max:2048'],
+      'blocks.*.page_list_sort' => ['nullable', Rule::in(PageListSettings::sorts())],
+      'blocks.*.page_list_limit' => [
+        'nullable',
+        'integer',
+        'min:'.PageListSettings::LIMIT_MIN,
+        'max:'.PageListSettings::LIMIT_MAX,
+      ],
+      'blocks.*.page_list_layout' => ['nullable', Rule::in(PageListSettings::layouts())],
+      'blocks.*.page_list_columns' => ['nullable', Rule::in(PageListSettings::columnOptions())],
+      'blocks.*.page_list_show_thumbnail' => ['nullable', 'boolean'],
+      'blocks.*.page_list_show_description' => ['nullable', 'boolean'],
+      'blocks.*.page_list_exclude_current' => ['nullable', 'boolean'],
       'blocks.*.attachment_media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'blocks.*.attachment_asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'blocks.*.variant' => ['nullable', 'string', 'max:255'],
@@ -223,7 +239,50 @@ class PageRequest extends FormRequest
           $block['meta'] = null;
         }
 
-        unset($block['asset_id'], $block['gallery_asset_ids'], $block['gallery_media_ids'], $block['gallery_items'], $block['attachment_asset_id'], $block['attachment_media_id']);
+        if (($blockType?->slug ?? null) === 'page-list') {
+          /*
+           * Same normalization the single-block editor applies in
+           * BlockRequest, so the inline builder and the block form cannot
+           * write two different settings shapes for the same block.
+           */
+          $block['settings'] = json_encode(PageListSettings::fromArray([
+            'scope' => $block['page_list_scope'] ?? ($decodedSettings['scope'] ?? null),
+            'page_type' => $block['page_list_page_type'] ?? ($decodedSettings['page_type'] ?? null),
+            'path_prefix' => $block['page_list_path_prefix'] ?? ($decodedSettings['path_prefix'] ?? null),
+            'sort' => $block['page_list_sort'] ?? ($decodedSettings['sort'] ?? null),
+            'limit' => $block['page_list_limit'] ?? ($decodedSettings['limit'] ?? null),
+            'layout' => $block['page_list_layout'] ?? ($decodedSettings['layout'] ?? null),
+            'columns' => $block['page_list_columns'] ?? ($decodedSettings['columns'] ?? null),
+            'show_thumbnail' => $block['page_list_show_thumbnail'] ?? ($decodedSettings['show_thumbnail'] ?? null),
+            'show_description' => $block['page_list_show_description'] ?? ($decodedSettings['show_description'] ?? null),
+            'exclude_current' => $block['page_list_exclude_current'] ?? ($decodedSettings['exclude_current'] ?? null),
+          ])->toArray(), JSON_UNESCAPED_SLASHES);
+          $block['title'] = null;
+          $block['subtitle'] = null;
+          $block['content'] = null;
+          $block['url'] = null;
+          $block['variant'] = null;
+          $block['meta'] = null;
+        }
+
+        unset(
+          $block['asset_id'],
+          $block['gallery_asset_ids'],
+          $block['gallery_media_ids'],
+          $block['gallery_items'],
+          $block['attachment_asset_id'],
+          $block['attachment_media_id'],
+          $block['page_list_scope'],
+          $block['page_list_page_type'],
+          $block['page_list_path_prefix'],
+          $block['page_list_sort'],
+          $block['page_list_limit'],
+          $block['page_list_layout'],
+          $block['page_list_columns'],
+          $block['page_list_show_thumbnail'],
+          $block['page_list_show_description'],
+          $block['page_list_exclude_current'],
+        );
 
         return $block;
       })

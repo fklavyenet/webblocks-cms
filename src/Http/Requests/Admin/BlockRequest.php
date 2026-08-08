@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -64,6 +65,7 @@ class BlockRequest extends FormRequest
     $isContactForm = $selectedBlockType?->slug === 'contact_form';
     $isRating = $selectedBlockType?->slug === 'rating';
     $isComments = $selectedBlockType?->slug === 'comments';
+    $isPageList = $selectedBlockType?->slug === 'page-list';
     $isHero = $selectedBlockType?->slug === 'hero';
     $isCode = $selectedBlockType?->slug === 'code';
     $isHeader = $selectedBlockType?->slug === 'header';
@@ -203,6 +205,29 @@ class BlockRequest extends FormRequest
       'comments_show_approved' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
       'comments_show_author_name' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
       'comments_sort_order' => [$isComments ? 'required' : 'prohibited', Rule::in(['newest', 'oldest'])],
+      'page_list_scope' => [$isPageList ? 'required' : 'prohibited', Rule::in(PageListSettings::scopes())],
+      'page_list_page_type' => [
+        $isPageList && $this->input('page_list_scope') === PageListSettings::SCOPE_PAGE_TYPE ? 'required' : 'nullable',
+        $isPageList ? 'string' : 'prohibited',
+        'max:255',
+      ],
+      'page_list_path_prefix' => [
+        $isPageList && $this->input('page_list_scope') === PageListSettings::SCOPE_PATH_PREFIX ? 'required' : 'nullable',
+        $isPageList ? 'string' : 'prohibited',
+        'max:2048',
+      ],
+      'page_list_sort' => [$isPageList ? 'required' : 'prohibited', Rule::in(PageListSettings::sorts())],
+      'page_list_limit' => [
+        $isPageList ? 'required' : 'prohibited',
+        'integer',
+        'min:'.PageListSettings::LIMIT_MIN,
+        'max:'.PageListSettings::LIMIT_MAX,
+      ],
+      'page_list_layout' => [$isPageList ? 'required' : 'prohibited', Rule::in(PageListSettings::layouts())],
+      'page_list_columns' => [$isPageList ? 'required' : 'prohibited', Rule::in(PageListSettings::columnOptions())],
+      'page_list_show_thumbnail' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
+      'page_list_show_description' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
+      'page_list_exclude_current' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
       'primary_cta_label' => ['nullable', 'string', 'max:255'],
       'primary_cta_url' => ['nullable', 'string', 'max:2048'],
       'secondary_cta_label' => ['nullable', 'string', 'max:255'],
@@ -1045,6 +1070,33 @@ class BlockRequest extends FormRequest
         $data['settings'] = json_encode([
           'menu_key' => $data['navigation_menu_key'] ?? NavigationItem::MENU_PRIMARY,
         ], JSON_UNESCAPED_SLASHES);
+      }
+
+      if ($blockType?->slug === 'page-list') {
+        /*
+         * A system block with a derived list: no editorial copy, no media, no
+         * children. Everything the editor chose lives in settings, normalized
+         * through the same class the renderer reads.
+         */
+        $data['title'] = null;
+        $data['subtitle'] = null;
+        $data['content'] = null;
+        $data['url'] = null;
+        $data['variant'] = null;
+        $data['meta'] = null;
+        $data['asset_id'] = null;
+        $data['settings'] = json_encode(PageListSettings::fromArray([
+          'scope' => $data['page_list_scope'] ?? null,
+          'page_type' => $data['page_list_page_type'] ?? null,
+          'path_prefix' => $data['page_list_path_prefix'] ?? null,
+          'sort' => $data['page_list_sort'] ?? null,
+          'limit' => $data['page_list_limit'] ?? null,
+          'layout' => $data['page_list_layout'] ?? null,
+          'columns' => $data['page_list_columns'] ?? null,
+          'show_thumbnail' => $data['page_list_show_thumbnail'] ?? false,
+          'show_description' => $data['page_list_show_description'] ?? false,
+          'exclude_current' => $data['page_list_exclude_current'] ?? false,
+        ])->toArray(), JSON_UNESCAPED_SLASHES);
       }
 
       if ($blockType?->slug === 'contact_form') {

@@ -75,6 +75,7 @@ final class BlockSettingsPatchPolicy
    *   ['enum', [...]]  one of the listed values, anything else clears
    *   ['bool']         truthy/falsy, unparseable clears
    *   ['text', max]    trimmed free text capped at max, empty clears
+   *   ['int', min, max] integer clamped into range, non-numeric clears
    *   ['menu_key']     one of the navigation menu keys
    *   ['anchor']       same-page anchor ID, admin's format
    *
@@ -139,6 +140,18 @@ final class BlockSettingsPatchPolicy
       'active_matching' => ['enum', ['path', 'section', 'current-page', 'exact', 'off']],
     ],
     'navigation-auto' => ['menu_key' => ['menu_key']],
+    'page-list' => [
+      'scope' => ['enum', ['page_type', 'path_prefix', 'subtree_of_current']],
+      'page_type' => ['text', 255],
+      'path_prefix' => ['text', 2048],
+      'sort' => ['enum', ['published_desc', 'published_asc', 'title_asc', 'path_asc']],
+      'limit' => ['int', 1, 48],
+      'layout' => ['enum', ['cards', 'links']],
+      'columns' => ['enum', ['2', '3', '4']],
+      'show_thumbnail' => ['bool'],
+      'show_description' => ['bool'],
+      'exclude_current' => ['bool'],
+    ],
     'plain_text' => ['alignment' => ['enum', ['left', 'center', 'right']]],
     'rating' => [
       'allow_change' => ['bool'],

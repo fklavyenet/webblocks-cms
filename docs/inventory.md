@@ -199,12 +199,12 @@ Underscores normalize to hyphens in `data-wb-public-block-type`; for example `co
 
 ## Quick Catalog Index
 
-The current published core catalog contains 51 rows:
+The current published core catalog contains 52 rows:
 
 | Group | Handles |
 | --- | --- |
 | Layout and composition | `section`, `container`, `cluster`, `grid`, `card`, `card_header`, `card_body`, `card_footer`, `slider`, `slide` |
-| Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `audio`, `code`, `button_link`, `table`, `quote` |
+| Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `audio`, `code`, `button_link`, `table`, `quote`, `page-list` |
 | Navigation | `link-list`, `link-list-item`, `navigation-auto`, `toc`, `breadcrumb`, `header-actions`, `sticky-navbar`, `navbar-brand`, `navbar-navigation`, `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, `search-form`, `sidebar-footer` |
 | Pattern, form, and engagement | `alert`, `contact_form`, `rating`, `comments` |
 | Human-only advanced | `html` |
@@ -588,6 +588,17 @@ The current published core catalog contains 51 rows:
 | HTML | `<a class="wb-link-list-item">` with an optional leading thumbnail or icon (adding `wb-link-list-item--media`), title/meta/badge, and optional description. |
 | Example appearance | Documentation/resource row marked “New”. |
 | Render guard | Emits only with both a safe URL and title. |
+
+### `page-list` — Page List
+
+| Contract area | Source-backed behavior |
+| --- | --- |
+| Editable content | No page copy. Titles, descriptions, and thumbnails come from each listed page's translation. |
+| Settings and variants | `scope` (`page_type`, `path_prefix`, `subtree_of_current`), `page_type`, `path_prefix`, `sort`, `limit` (1-48), `layout` (`cards`/`links`), `columns`, `show_thumbnail`, `show_description`, `exclude_current`. |
+| Children/media | Neither. Rows come from a page query; thumbnails resolve from each page translation's Open Graph image. |
+| HTML | `wb-grid` of `wb-card` articles, or a `wb-link-list` of `wb-link-list-item` anchors. |
+| Example appearance | A three-column index of guide cards, each linking from its title. |
+| Render guard | Emits nothing when the query returns no pages, or while the scope is unconfigured. Published status, site, render-locale translation, Shared Slot source pages, and the hosting page are filtered in the query and are not settings. |
 
 ### `navigation-auto` — Navigation Auto
 

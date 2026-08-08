@@ -261,6 +261,14 @@ section -> hero + contact_form
 
 Use the native `contact_form` block for contact pages after discovery confirms the handle is available. Its visible copy is translated with `title`, `content`, `submit_label`, and `success_message`; shared settings are `recipient_email`, `send_email_notification`, and `store_submissions`. The renderer emits the native CSRF-protected public form, CMS-owned hidden generated anti-spam check field, and `/contact-messages` submit endpoint. AI/operator tools should not create the check field manually and should not use Trusted HTML, raw forms, or `mailto:` as substitutes.
 
+Index page that lists other pages:
+
+```text
+section -> container -> header + page-list
+```
+
+Use the native `page-list` block instead of hand-building a card grid that has to be rebuilt whenever a page is added. It renders published pages of a page type (`settings.scope = page_type` plus `settings.page_type`), of a path subtree (`path_prefix`), or below the hosting page (`subtree_of_current`), with `settings.sort`, `settings.limit` (1-48), `settings.layout` (`cards` or `links`), and `settings.columns`. Titles, descriptions, and thumbnails are read from each listed page's translation, so the block itself carries no editorial copy and accepts no children. Published status, site, render locale, Shared Slot source pages, and the hosting page are always filtered by the query and are not settings. There is no pagination: build a curated `link-list` if a specific order or a longer list is required.
+
 ## Bad Structures
 
 - Do not put a full page into one `rich-text` block.
@@ -269,6 +277,7 @@ Use the native `contact_form` block for contact pages after discovery confirms t
 - Do not create `section`, `container`, `cluster`, or `grid` blocks unless they contain useful child content.
 - Do not submit locale-keyed block translation shapes such as `translations.en.title`; use `translations.title` for the plan locale.
 - Do not build contact forms with Trusted HTML, raw form markup, or `mailto:` links when `contact_form` is available.
+- Do not hand-build a card grid of links to other pages when `page-list` can derive it, and do not add child blocks to `page-list`.
 - Do not guess handles.
 - Do not overwrite published content.
 - Do not mutate an existing live page when a new separate draft page is safer.

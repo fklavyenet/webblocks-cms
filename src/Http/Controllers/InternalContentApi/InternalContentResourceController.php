@@ -2085,6 +2085,7 @@ class InternalContentResourceController extends Controller
       'enum' => in_array(trim((string) $value), $rule[1], true) ? trim((string) $value) : null,
       'bool' => filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false,
       'text' => mb_substr(trim((string) $value), 0, $rule[1]) ?: null,
+      'int' => is_numeric($value) ? max($rule[1], min($rule[2], (int) $value)) : null,
       'menu_key' => in_array(trim((string) $value), NavigationItem::menuKeys(), true) ? trim((string) $value) : null,
       'anchor' => preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', trim((string) $value)) === 1
         ? trim((string) $value)

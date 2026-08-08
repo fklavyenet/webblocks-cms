@@ -713,6 +713,25 @@ class BlockTypeContractRegistry
         'current_contract_status' => 'clear',
         'known_gaps' => [],
       ],
+      'page-list' => [
+        'admin_form_fields' => ['Scope', 'Page type', 'Path prefix', 'Sort', 'Limit', 'Layout', 'Columns', 'Thumbnail toggle', 'Description toggle', 'Exclude current page'],
+        'translatable_fields' => [],
+        'shared_settings_fields' => [
+          'settings.scope', 'settings.page_type', 'settings.path_prefix', 'settings.sort', 'settings.limit',
+          'settings.layout', 'settings.columns', 'settings.show_thumbnail', 'settings.show_description', 'settings.exclude_current',
+        ],
+        'storage_fields' => [
+          'The block stores only its query and presentation settings; it has no editorial copy of its own.',
+          'Listed titles come from the page translation name, descriptions from the translation SEO description, and thumbnails from the translation Open Graph image.',
+        ],
+        'media_relationship_fields' => ['No block media. Thumbnails resolve from each listed page translation at render time.'],
+        'child_container_behavior' => ['Not a container. Rows come from a page query, not from child blocks.'],
+        'renderer_root_contract' => 'Owns its public root: a `wb-grid` of `wb-card` articles in the cards layout, or a `wb-link-list` of `wb-link-list-item` anchors in the links layout. Renders nothing when the query returns no pages.',
+        'current_contract_status' => 'clear',
+        'known_gaps' => [
+          'Card descriptions and thumbnails reuse the SEO description and Open Graph image, which are authored for search and social rather than for a card. Dedicated list_excerpt and list_image page settings are planned.',
+        ],
+      ],
       'navigation-auto' => [
         'admin_form_fields' => ['Navigation menu'],
         'translatable_fields' => [],
