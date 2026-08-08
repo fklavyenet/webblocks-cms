@@ -924,6 +924,22 @@
         syncEditor(editor);
     }
 
+    // The sanitizer always answers in blocks, so a clipboard holding a few words
+    // comes back as `<p>words</p>`. Inserted as a block it splits the paragraph
+    // it lands in, and the browser's resulting DOM no longer matches the
+    // sanitizer's canonical form -- which forces a full rewrite of the field and
+    // takes the undo stack with it. Content worth a single paragraph is inline
+    // content, so it is inserted as inline content.
+    function inlinePasteContent(html) {
+        var match = /^<p>([\s\S]*)<\/p>$/.exec(html || '');
+
+        if (!match || /<(?:p|ul|ol|li|blockquote)\b/i.test(match[1])) {
+            return null;
+        }
+
+        return match[1];
+    }
+
     function handlePaste(editor, event) {
         event.preventDefault();
 
@@ -936,7 +952,19 @@
             return;
         }
 
-        document.execCommand('insertHTML', false, safeHtml || escapeHtml(text));
+        var inline = inlinePasteContent(safeHtml);
+
+        document.execCommand('insertHTML', false, (inline === null ? safeHtml : inline) || escapeHtml(text));
+
+        if (inline !== null) {
+            syncEditor(editor);
+
+            return;
+        }
+
+        // A paste that really does carry several blocks can restructure the
+        // field, so it is normalized -- which still only rewrites when the
+        // browser's DOM and the sanitized form actually disagree.
         normalizeEditor(editor);
     }
 
