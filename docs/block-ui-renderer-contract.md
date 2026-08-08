@@ -546,7 +546,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `settings.scope`, `settings.page_type`, `settings.path_prefix`, `settings.sort`, `settings.limit`, `settings.layout`, `settings.columns`, `settings.show_thumbnail`, `settings.show_description`, `settings.exclude_current`
 - Intended WebBlocks UI output: the shipped card grid (`wb-grid` of `wb-card`) or the shipped link list (`wb-link-list`); no page-list-specific CSS is added by this package.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: card descriptions and thumbnails currently reuse each page's SEO description and Open Graph image. Dedicated `list_excerpt` and `list_image_media_id` page settings would let an editor write list copy without touching what search engines and social cards read.
+- Notes for later renderer/admin improvements: card descriptions read `page_translations.list_excerpt` first and fall back to the SEO description. Thumbnails still reuse the Open Graph image, which is authored at a social-share aspect ratio rather than a card one; a dedicated `list_image_media_id` remains the open half of this.
 
 ### `navigation-auto`
 

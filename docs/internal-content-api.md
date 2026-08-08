@@ -444,7 +444,7 @@ Either way, render before reporting a page finished. Content apply says what was
 
 Page translations own localized page identity and the page-level SEO and Open Graph overrides. Content apply writes one translation row for one locale when it creates a page; these endpoints are how that row is read back and changed afterwards.
 
-`GET /webadmin/api/pages/{page}/translations` lists every translation on a page with `name`, `slug`, `path`, `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_media_id`. The same fields now appear on each translation in `GET /webadmin/api/pages/{page}`.
+`GET /webadmin/api/pages/{page}/translations` lists every translation on a page with `name`, `slug`, `path`, `seo_title`, `seo_description`, `seo_keywords`, `list_excerpt`, `og_title`, `og_description`, and `og_image_media_id`. `list_excerpt` is the per-locale sentence a Page List block shows under this page's title on a listing card; it is capped at 300 characters and falls back to the SEO description when empty. The same fields now appear on each translation in `GET /webadmin/api/pages/{page}`.
 
 `POST /webadmin/api/pages/{page}/translations/{locale}` requires `content.apply` and adds a translation for a locale that is already enabled for the page site. The `{locale}` segment accepts a locale code or a numeric ID. Only `name` is required: omit `slug` and `path` and both are derived from the name, exactly as the browser admin derives them. Creating a translation for a locale the page already has returns `422` with the code `page_translation_exists`.
 

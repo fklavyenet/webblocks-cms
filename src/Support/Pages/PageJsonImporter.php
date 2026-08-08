@@ -78,6 +78,7 @@ class PageJsonImporter
           'seo_title' => $translation['seo_title'],
           'seo_description' => $translation['seo_description'],
           'seo_keywords' => $translation['seo_keywords'],
+          'list_excerpt' => $translation['list_excerpt'],
           'og_title' => $translation['og_title'],
           'og_description' => $translation['og_description'],
           'og_image_media_id' => null,
@@ -247,7 +248,7 @@ class PageJsonImporter
           ]);
         }
 
-        $unknownKeys = array_diff(array_keys($translation), ['name', 'slug', 'seo_title', 'seo_description', 'seo_keywords', 'og_title', 'og_description']);
+        $unknownKeys = array_diff(array_keys($translation), ['name', 'slug', 'seo_title', 'seo_description', 'seo_keywords', 'list_excerpt', 'og_title', 'og_description']);
 
         if ($unknownKeys !== []) {
           throw ValidationException::withMessages([
@@ -273,6 +274,7 @@ class PageJsonImporter
           'seo_title' => $this->nullableString($translation['seo_title'] ?? null),
           'seo_description' => $this->nullableString($translation['seo_description'] ?? null),
           'seo_keywords' => $this->nullableString($translation['seo_keywords'] ?? null),
+          'list_excerpt' => $this->nullableString($translation['list_excerpt'] ?? null),
           'og_title' => $this->nullableString($translation['og_title'] ?? null),
           'og_description' => $this->nullableString($translation['og_description'] ?? null),
         ];

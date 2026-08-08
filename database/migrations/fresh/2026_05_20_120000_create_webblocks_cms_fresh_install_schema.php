@@ -351,6 +351,7 @@ return new class extends Migration
       $table->string('seo_title')->nullable();
       $table->text('seo_description')->nullable();
       $table->text('seo_keywords')->nullable();
+      $table->text('list_excerpt')->nullable();
       $table->string('og_title')->nullable();
       $table->text('og_description')->nullable();
       $table->foreignId('og_image_media_id')->nullable()->constrained('wbcms_media')->nullOnDelete();

@@ -183,12 +183,7 @@ class PageListQuery
       return null;
     }
 
-    $description = null;
-
-    if ($settings->showDescription) {
-      $description = trim((string) ($translation->seo_description ?? ''));
-      $description = $description !== '' ? Str::limit($description, self::DESCRIPTION_LIMIT) : null;
-    }
+    $description = $settings->showDescription ? $this->describe($translation) : null;
 
     return new PageListItem(
       pageId: (int) $page->id,
@@ -197,5 +192,27 @@ class PageListQuery
       description: $description,
       thumbnail: $settings->showThumbnail ? $translation->ogImageMedia : null,
     );
+  }
+
+  /**
+   * The card description, in fallback order.
+   *
+   * `list_excerpt` is what an editor wrote for a listing, so it renders whole:
+   * cutting a sentence somebody composed for this exact card would be worse
+   * than a card one line taller, and the field is capped at 300 characters on
+   * the way in. The SEO description is borrowed rather than authored — it is
+   * written for a search result — so it is trimmed to a card-sized length.
+   */
+  private function describe(PageTranslation $translation): ?string
+  {
+    $excerpt = trim((string) ($translation->list_excerpt ?? ''));
+
+    if ($excerpt !== '') {
+      return $excerpt;
+    }
+
+    $seoDescription = trim((string) ($translation->seo_description ?? ''));
+
+    return $seoDescription !== '' ? Str::limit($seoDescription, self::DESCRIPTION_LIMIT) : null;
   }
 }

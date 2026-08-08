@@ -95,6 +95,7 @@ class PageDuplicator
           'seo_title' => $translation['seo_title'] ?? null,
           'seo_description' => $translation['seo_description'] ?? null,
           'seo_keywords' => $translation['seo_keywords'] ?? null,
+          'list_excerpt' => $translation['list_excerpt'] ?? null,
           'og_title' => $translation['og_title'] ?? null,
           'og_description' => $translation['og_description'] ?? null,
           'og_image_media_id' => $translation['og_image_media_id'] ?? null,

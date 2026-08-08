@@ -593,7 +593,7 @@ The current published core catalog contains 52 rows:
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | No page copy. Titles, descriptions, and thumbnails come from each listed page's translation. |
+| Editable content | No page copy. Titles, descriptions, and thumbnails come from each listed page's translation: `name`, then `list_excerpt` falling back to `seo_description`, then `og_image_media_id`. |
 | Settings and variants | `scope` (`page_type`, `path_prefix`, `subtree_of_current`), `page_type`, `path_prefix`, `sort`, `limit` (1-48), `layout` (`cards`/`links`), `columns`, `show_thumbnail`, `show_description`, `exclude_current`. |
 | Children/media | Neither. Rows come from a page query; thumbnails resolve from each page translation's Open Graph image. |
 | HTML | `wb-grid` of `wb-card` articles, or a `wb-link-list` of `wb-link-list-item` anchors. |

@@ -82,6 +82,26 @@
             </div>
         </div>
 
+        {{--
+            Deliberately its own card rather than a field in the SEO card: this
+            sentence is written for a Page List card on this site, not for a
+            search result. Filing it under SEO is what led editors to tune one
+            string for two audiences in the first place.
+        --}}
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>{{ $adminText('listing') }}</strong></div>
+
+            <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('listing_help') }}</div>
+
+                <div class="wb-stack-2 wb-field">
+                    <label for="translation_list_excerpt">{{ $adminText('list_excerpt') }}</label>
+                    <textarea id="translation_list_excerpt" name="list_excerpt" class="wb-input" rows="3" maxlength="300">{{ old('list_excerpt', $translation->list_excerpt) }}</textarea>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('list_excerpt_help') }}</div>
+                </div>
+            </div>
+        </div>
+
         <div class="wb-card">
             <div class="wb-card-header"><strong>{{ $adminText('seo') }}</strong></div>
 

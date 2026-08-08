@@ -885,6 +885,7 @@ class ImportDataMapper
         'seo_title' => $translationData['seo_title'] ?? null,
         'seo_description' => $translationData['seo_description'] ?? null,
         'seo_keywords' => $translationData['seo_keywords'] ?? null,
+        'list_excerpt' => $translationData['list_excerpt'] ?? null,
         'og_title' => $translationData['og_title'] ?? null,
         'og_description' => $translationData['og_description'] ?? null,
         'og_image_media_id' => $assetMap[(int) ($translationData['og_image_media_id'] ?? 0)] ?? null,

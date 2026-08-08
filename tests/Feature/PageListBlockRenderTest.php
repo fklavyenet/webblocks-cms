@@ -217,6 +217,61 @@ class PageListBlockRenderTest extends TestCase
   }
 
   #[Test]
+  public function a_list_excerpt_overrides_the_seo_description(): void
+  {
+    [$site, $locale, $guideType] = $this->seedSite();
+
+    $this->seedPage($site, $locale, 'Written for search', '/guides/a', $guideType, description: 'Install WebBlocks CMS on a Laravel app - the complete step by step reference guide for operators.');
+    $this->seedPage($site, $locale, 'Written for the card', '/guides/b', $guideType, description: 'An SEO description nobody should see here.', listExcerpt: 'A short line composed for this card.');
+
+    $items = $this->itemsFor($site, $locale)->keyBy('title');
+
+    $this->assertSame('A short line composed for this card.', $items['Written for the card']->description);
+    $this->assertStringStartsWith('Install WebBlocks CMS', (string) $items['Written for search']->description);
+  }
+
+  #[Test]
+  public function a_list_excerpt_renders_whole_while_a_borrowed_seo_description_is_trimmed(): void
+  {
+    [$site, $locale, $guideType] = $this->seedSite();
+
+    $longExcerpt = str_repeat('excerpt ', 30);
+    $longSeo = str_repeat('seo ', 60);
+
+    $this->seedPage($site, $locale, 'Authored', '/guides/a', $guideType, listExcerpt: $longExcerpt);
+    $this->seedPage($site, $locale, 'Borrowed', '/guides/b', $guideType, description: $longSeo);
+
+    $items = $this->itemsFor($site, $locale)->keyBy('title');
+
+    // Written for this card, so it is shown as written; the 300-character cap
+    // is enforced on the way in rather than by cutting it at render time.
+    $this->assertSame(trim($longExcerpt), $items['Authored']->description);
+    $this->assertStringEndsWith('...', (string) $items['Borrowed']->description);
+    $this->assertLessThan(mb_strlen($longSeo), mb_strlen((string) $items['Borrowed']->description));
+  }
+
+  #[Test]
+  public function the_list_excerpt_is_per_locale(): void
+  {
+    [$site, $locale, $guideType] = $this->seedSite();
+    $german = Locale::query()->create(['code' => 'de', 'name' => 'German', 'is_default' => false, 'is_enabled' => true]);
+    $site->locales()->syncWithoutDetaching([$german->id => ['is_enabled' => true]]);
+
+    $page = $this->seedPage($site, $locale, 'Guide', '/guides/a', $guideType, listExcerpt: 'The English card line.');
+    PageTranslation::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'locale_id' => $german->id,
+      'name' => 'Anleitung',
+      'slug' => 'a',
+      'path' => '/anleitungen/a',
+      'list_excerpt' => 'Die deutsche Kartenzeile.',
+    ]);
+
+    $this->assertSame('The English card line.', $this->itemsFor($site, $locale)->first()->description);
+  }
+
+  #[Test]
   public function the_admin_form_renders_its_own_translated_fields(): void
   {
     [$site, , $guideType] = $this->seedSite();
@@ -331,6 +386,7 @@ class PageListBlockRenderTest extends TestCase
     string $status = Page::STATUS_PUBLISHED,
     string $pageType = Page::TYPE_DEFAULT,
     ?string $description = null,
+    ?string $listExcerpt = null,
   ): Page {
     $page = Page::query()->create([
       'site_id' => $site->id,
@@ -348,6 +404,7 @@ class PageListBlockRenderTest extends TestCase
       'slug' => trim(basename($path), '/') ?: 'home',
       'path' => $path,
       'seo_description' => $description,
+      'list_excerpt' => $listExcerpt,
     ]);
 
     return $page;

@@ -34,6 +34,7 @@ class InternalPageTranslationController extends Controller
     'seo_title' => 255,
     'seo_description' => 1000,
     'seo_keywords' => 500,
+    'list_excerpt' => 300,
     'og_title' => 255,
     'og_description' => 1000,
   ];

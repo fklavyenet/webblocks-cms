@@ -24,6 +24,7 @@ class PageTranslation extends CmsModel
     'seo_title',
     'seo_description',
     'seo_keywords',
+    'list_excerpt',
     'og_title',
     'og_description',
     'og_image_media_id',

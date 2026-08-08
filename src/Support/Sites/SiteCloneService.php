@@ -294,6 +294,7 @@ class SiteCloneService
           'seo_title' => $translation->seo_title,
           'seo_description' => $translation->seo_description,
           'seo_keywords' => $translation->seo_keywords,
+          'list_excerpt' => $translation->list_excerpt,
           'og_title' => $translation->og_title,
           'og_description' => $translation->og_description,
           'og_image_media_id' => $options->withMedia && $translation->og_image_media_id

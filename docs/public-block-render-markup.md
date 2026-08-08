@@ -1924,7 +1924,7 @@ Links layout:
 | settings.layout | `cards`/`links` | Chooses the `wb-grid` card root or the `wb-link-list` root. |
 | settings.columns | `2`/`3`/`4` | Adds `wb-grid-2`/`wb-grid-3`/`wb-grid-4`. Cards layout only. |
 | settings.show_thumbnail | true | Renders each page translation's Open Graph image through the `card` media transform. |
-| settings.show_description | true | Renders each page translation's SEO description, trimmed to 160 characters. |
+| settings.show_description | true | Renders each page translation's `list_excerpt` whole; with none set, falls back to its SEO description trimmed to 160 characters. |
 | settings.exclude_current | true | Drops the hosting page from its own list. |
 | empty result | any | Emits nothing at all — no root element, no empty-state copy. |
 
@@ -1936,7 +1936,7 @@ Avoid for: a curated or hand-ordered set of links, which `link-list` expresses b
 
 ### Notes
 
-Rows are derived from a page query, never from child blocks. Five filters are enforced in the query and are not exposed as settings: published status, site scope, a resolvable translation in the render locale, Shared Slot source pages, and the hosting page. Titles come from the page translation name, descriptions from its SEO description, and thumbnails from its Open Graph image.
+Rows are derived from a page query, never from child blocks. Five filters are enforced in the query and are not exposed as settings: published status, site scope, a resolvable translation in the render locale, Shared Slot source pages, and the hosting page. Titles come from the page translation name, descriptions from its `list_excerpt` with the SEO description as fallback, and thumbnails from its Open Graph image.
 
 ## TOC (`toc`)
 
