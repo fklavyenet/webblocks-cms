@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.55.0
+
+- **Every page can say something different in a listing.** When a Page List block shows a page, it used to describe it with that page's SEO description — a sentence written for Google and social cards. If you wanted the card to read differently, your only option was to spoil the version search engines use. Each page translation now has its own **List description** under a new *Listing* heading on the page's language screen: one sentence, shown under the title on a listing card. Leave it blank and nothing changes — the SEO description is still used, shortened, exactly as before.
+- The list description is per language, like every other visible text on a page, so a Turkish card reads Turkish. What you write for a card is shown as written rather than cut mid-sentence; the field allows up to 300 characters so it cannot break a grid. A borrowed SEO description is still shortened to fit. The field travels with the page: duplicating a page, moving it between sites, cloning or exporting a site, promoting a staging site and restoring a revision all carry it.
+- Existing sites get the new field automatically on System Update; nothing has to be filled in for current pages to keep working.
+
 ## 1.54.3
 
 - **Undo works after pasting, not only after a toolbar button.** 1.54.1 stopped the editor rebuilding its field on every command, which is what had been throwing away the browser's undo stack — but pasting still lost it. The sanitizer always answers in blocks, so a clipboard holding a few words came back as `<p>words</p>`, and inserting that as a block split the paragraph it landed in. The browser's resulting markup no longer matched the sanitized form, so the field was rebuilt after all and Ctrl+Z did nothing. Content worth a single paragraph is now inserted as the inline content it actually is: the paragraph stays whole, nothing is rebuilt, and undo behaves. Formatting inside the pasted text is kept, and the paste is sanitized exactly as before.
