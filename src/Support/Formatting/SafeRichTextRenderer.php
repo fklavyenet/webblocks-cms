@@ -13,7 +13,23 @@ class SafeRichTextRenderer
   private const ROOT_MARKER = 'data-wb-rich-text-root';
 
   private const ALLOWED_BLOCK_TAGS = [
-    'p', 'ul', 'ol', 'li',
+    'p', 'ul', 'ol', 'li', 'blockquote',
+  ];
+
+  private const ALLOWED_INLINE_TAGS = [
+    'strong', 'em', 'code', 's',
+  ];
+
+  /**
+   * The editor writes the canonical tag, but content also arrives from pasted
+   * markup, the content API, and imports, so the legacy spellings are folded in
+   * rather than dropped.
+   */
+  private const INLINE_TAG_ALIASES = [
+    'b' => 'strong',
+    'i' => 'em',
+    'strike' => 's',
+    'del' => 's',
   ];
 
   private const DANGEROUS_TAGS = [
@@ -65,13 +81,13 @@ class SafeRichTextRenderer
     return $root instanceof DOMElement ? $root : null;
   }
 
-  private function sanitizeRootChildren(DOMNode $parent): string
+  private function sanitizeRootChildren(DOMNode $parent, bool $allowQuote = true): string
   {
     $blocks = [];
     $inlineBuffer = '';
 
     foreach ($this->childNodes($parent) as $child) {
-      $this->consumeRootNode($child, $blocks, $inlineBuffer);
+      $this->consumeRootNode($child, $blocks, $inlineBuffer, $allowQuote);
     }
 
     $this->flushInlineBuffer($blocks, $inlineBuffer);
@@ -79,7 +95,7 @@ class SafeRichTextRenderer
     return implode('', $blocks);
   }
 
-  private function consumeRootNode(DOMNode $node, array &$blocks, string &$inlineBuffer): void
+  private function consumeRootNode(DOMNode $node, array &$blocks, string &$inlineBuffer, bool $allowQuote = true): void
   {
     if ($node->nodeType === XML_TEXT_NODE || $node->nodeType === XML_CDATA_SECTION_NODE) {
       $inlineBuffer .= $this->escapeText($node->textContent ?? '');
@@ -91,13 +107,16 @@ class SafeRichTextRenderer
       return;
     }
 
-    $tag = $this->tagName($node);
+    $tag = self::INLINE_TAG_ALIASES[$this->tagName($node)] ?? $this->tagName($node);
 
     if ($this->isDangerousTag($tag)) {
       return;
     }
 
-    if ($tag === 'p') {
+    // `div` is not a rich-text block, but pasted and imported markup is full of
+    // them wrapping a paragraph's worth of copy. Treated as one, the way the
+    // editor's own sanitizer treats it, instead of dropping the copy with it.
+    if ($tag === 'p' || $tag === 'div') {
       $this->flushInlineBuffer($blocks, $inlineBuffer);
       $content = $this->sanitizeInlineChildren($node);
 
@@ -130,7 +149,19 @@ class SafeRichTextRenderer
       return;
     }
 
-    if (in_array($tag, ['strong', 'em', 'code', 'a', 'br'], true)) {
+    if ($tag === 'blockquote') {
+      $this->flushInlineBuffer($blocks, $inlineBuffer);
+      // A quote inside a quote flattens to one level, matching the editor.
+      $quoted = $this->sanitizeRootChildren($node, false);
+
+      if ($quoted !== '') {
+        $blocks[] = $allowQuote ? '<blockquote>'.$quoted.'</blockquote>' : $quoted;
+      }
+
+      return;
+    }
+
+    if (in_array($tag, [...self::ALLOWED_INLINE_TAGS, 'a', 'br'], true)) {
       $inlineBuffer .= $this->sanitizeInlineNode($node);
 
       return;
@@ -141,7 +172,7 @@ class SafeRichTextRenderer
     }
 
     foreach ($this->childNodes($node) as $child) {
-      $this->consumeRootNode($child, $blocks, $inlineBuffer);
+      $this->consumeRootNode($child, $blocks, $inlineBuffer, $allowQuote);
     }
   }
 
@@ -201,9 +232,24 @@ class SafeRichTextRenderer
     }
 
     if (in_array($tag, ['ul', 'ol'], true)) {
-      foreach ($this->childNodes($node) as $child) {
-        $this->collectListItems($child, $items);
+      // A list nested directly under its parent list rather than inside an item:
+      // browsers accept it, the HTML spec does not. Adopt it into the previous
+      // item when there is one, so the level survives.
+      $orphan = $this->sanitizeList($node, $tag);
+
+      if ($orphan === '') {
+        return;
       }
+
+      $last = array_key_last($items);
+
+      if ($last !== null && str_ends_with($items[$last], '</li>')) {
+        $items[$last] = substr($items[$last], 0, -5).$orphan.'</li>';
+
+        return;
+      }
+
+      $items[] = '<li>'.$orphan.'</li>';
 
       return;
     }
@@ -217,9 +263,24 @@ class SafeRichTextRenderer
 
   private function sanitizeListItem(DOMNode $node): string
   {
-    $content = $this->sanitizeInlineChildren($node);
+    $inline = '';
+    $nested = '';
 
-    return $this->hasMeaningfulInlineContent($content) ? '<li>'.$content.'</li>' : '';
+    foreach ($this->childNodes($node) as $child) {
+      if ($child->nodeType === XML_ELEMENT_NODE && in_array($this->tagName($child), ['ul', 'ol'], true)) {
+        $nested .= $this->sanitizeList($child, $this->tagName($child));
+
+        continue;
+      }
+
+      $inline .= $this->sanitizeInlineNode($child);
+    }
+
+    if (! $this->hasMeaningfulInlineContent($inline) && $nested === '') {
+      return '';
+    }
+
+    return '<li>'.$inline.$nested.'</li>';
   }
 
   private function sanitizeInlineChildren(DOMNode $parent): string
@@ -249,8 +310,13 @@ class SafeRichTextRenderer
       return '';
     }
 
+    $tag = self::INLINE_TAG_ALIASES[$tag] ?? $tag;
+
+    if (in_array($tag, self::ALLOWED_INLINE_TAGS, true)) {
+      return '<'.$tag.'>'.$this->sanitizeInlineChildren($node).'</'.$tag.'>';
+    }
+
     return match ($tag) {
-      'strong', 'em', 'code' => '<'.$tag.'>'.$this->sanitizeInlineChildren($node).'</'.$tag.'>',
       'a' => $this->sanitizeLink($node),
       'br' => '<br>',
       default => $this->sanitizeInlineChildren($node),

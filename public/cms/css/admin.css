@@ -116,13 +116,50 @@ svg.wb-sidebar-brand-logo {
     margin-bottom: 0;
 }
 
+/* The shipped reset is `ul, ol { list-style: none }`, so markers have to be
+   asked for. Without this the editor shows an indent where the reader will see
+   a bullet. */
 .wb-admin-rich-text-surface ul,
 .wb-admin-rich-text-surface ol {
     padding-left: 1.5rem;
+    list-style: revert;
 }
 
 .wb-admin-rich-text-surface code {
     font-family: var(--wb-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.wb-admin-rich-text-surface li > ul,
+.wb-admin-rich-text-surface li > ol {
+    margin-top: var(--wb-s1);
+    margin-bottom: 0;
+}
+
+/* The editing surface is not .wb-rich-text — that primitive is for rendered
+   output — so the quote gets its own echo of the shipped treatment here, close
+   enough that what is typed reads like what will publish. */
+.wb-admin-rich-text-surface blockquote {
+    margin: 0 0 var(--wb-s3);
+    padding: var(--wb-s2) var(--wb-s4);
+    border-inline-start: 3px solid var(--wb-border);
+    border-radius: var(--wb-r-md);
+    background: var(--wb-surface-2);
+    color: var(--wb-text-muted);
+}
+
+.wb-admin-rich-text-surface blockquote:last-child {
+    margin-bottom: 0;
+}
+
+.wb-admin-rich-text-surface blockquote > p:last-child {
+    margin-bottom: 0;
+}
+
+/* A toolbar toggle that reflects the caret: the shipped button has no pressed
+   state because it is not a toggle in general, only here. */
+.wb-admin-rich-text-toolbar .wb-btn[aria-pressed="true"] {
+    background: var(--wb-accent-soft);
+    color: var(--wb-accent-text);
 }
 
 .wb-admin-rich-text-input {

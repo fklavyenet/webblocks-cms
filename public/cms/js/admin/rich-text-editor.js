@@ -1,5 +1,24 @@
 (function () {
+    // The vocabulary here is the browser-side half of a pair: SafeRichTextRenderer
+    // sanitizes the same content again on render, so a tag allowed in one and not
+    // the other is silently dropped on the way to the page. Change both together.
+    var INLINE_TAGS = ['strong', 'em', 'code', 's'];
+    var INLINE_TAG_ALIASES = { b: 'strong', i: 'em', strike: 's', del: 's' };
+    var DROPPED_TAG_PATTERN = /^(script|style|iframe|img|figure|table|thead|tbody|tfoot|tr|td|th|button|h[1-6])$/;
+    var LIST_TAGS = ['ul', 'ol'];
+
+    var KEYBOARD_SHORTCUTS = { b: 'bold', i: 'italic', k: 'link' };
+
+    // Typed at the start of a block and completed with a space, the way the
+    // markers read in plain text.
+    var MARKDOWN_SHORTCUTS = [
+        { pattern: /^[-*]$/, command: 'insertUnorderedList' },
+        { pattern: /^1\.$/, command: 'insertOrderedList' },
+        { pattern: /^>$/, action: 'quote' },
+    ];
+
     var activeEditor = null;
+    var linkContext = null;
 
     function dispatchEditorEvents(input) {
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -90,17 +109,9 @@
             return '';
         }
 
-        var tag = node.tagName.toLowerCase();
+        var tag = INLINE_TAG_ALIASES[node.tagName.toLowerCase()] || node.tagName.toLowerCase();
 
-        if (tag === 'b') {
-            tag = 'strong';
-        }
-
-        if (tag === 'i') {
-            tag = 'em';
-        }
-
-        if (/^(script|style|iframe|img|figure|table|thead|tbody|tfoot|tr|td|th|button|h[1-6])$/.test(tag)) {
+        if (DROPPED_TAG_PATTERN.test(tag)) {
             return '';
         }
 
@@ -108,7 +119,7 @@
             return '<br>';
         }
 
-        if (tag === 'strong' || tag === 'em' || tag === 'code') {
+        if (INLINE_TAGS.indexOf(tag) !== -1) {
             var wrapped = sanitizeInlineChildren(node, doc);
 
             return hasMeaningfulText(wrapped) ? '<' + tag + '>' + wrapped + '</' + tag + '>' : '';
@@ -143,13 +154,24 @@
     }
 
     function sanitizeListItem(node, doc) {
-        var content = sanitizeInlineChildren(node, doc);
+        var inline = '';
+        var nested = '';
 
-        if (!hasMeaningfulText(content)) {
+        Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+            if (child.nodeType === Node.ELEMENT_NODE && LIST_TAGS.indexOf(child.tagName.toLowerCase()) !== -1) {
+                nested += sanitizeList(child, child.tagName.toLowerCase(), doc);
+
+                return;
+            }
+
+            inline += sanitizeInlineNode(child, doc);
+        });
+
+        if (!hasMeaningfulText(inline) && nested === '') {
             return '';
         }
 
-        return '<li>' + content + '</li>';
+        return '<li>' + inline + nested + '</li>';
     }
 
     function sanitizeList(node, tagName, doc) {
@@ -158,6 +180,7 @@
         Array.prototype.slice.call(node.childNodes).forEach(function (child) {
             if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'li') {
                 items += sanitizeListItem(child, doc);
+
                 return;
             }
 
@@ -171,26 +194,49 @@
                 return;
             }
 
-            if (child.nodeType === Node.ELEMENT_NODE) {
-                var fallback = sanitizeInlineNode(child, doc);
+            if (child.nodeType !== Node.ELEMENT_NODE) {
+                return;
+            }
 
-                if (hasMeaningfulText(fallback)) {
-                    items += '<li>' + fallback + '</li>';
+            // A list nested directly under its parent list rather than inside an
+            // item: browsers accept it, the HTML spec does not. Adopt it into the
+            // previous item when there is one, so the level survives.
+            if (LIST_TAGS.indexOf(child.tagName.toLowerCase()) !== -1) {
+                var orphan = sanitizeList(child, child.tagName.toLowerCase(), doc);
+
+                if (orphan === '') {
+                    return;
                 }
+
+                if (items.slice(-5) === '</li>') {
+                    items = items.slice(0, -5) + orphan + '</li>';
+
+                    return;
+                }
+
+                items += '<li>' + orphan + '</li>';
+
+                return;
+            }
+
+            var fallback = sanitizeInlineNode(child, doc);
+
+            if (hasMeaningfulText(fallback)) {
+                items += '<li>' + fallback + '</li>';
             }
         });
 
         return items ? '<' + tagName + '>' + items + '</' + tagName + '>' : '';
     }
 
-    function sanitizeHtmlFragment(html, doc) {
-        var template = doc.createElement('template');
+    function sanitizeBlocks(nodes, doc, allowQuote) {
         var blocks = [];
         var inlineBuffer = '';
 
         function flushInlineBuffer() {
             if (!hasMeaningfulText(inlineBuffer)) {
                 inlineBuffer = '';
+
                 return;
             }
 
@@ -198,9 +244,10 @@
             inlineBuffer = '';
         }
 
-        function consumeRootNode(node) {
+        function consumeNode(node) {
             if (node.nodeType === Node.TEXT_NODE) {
                 inlineBuffer += escapeHtml(node.textContent || '');
+
                 return;
             }
 
@@ -210,7 +257,7 @@
 
             var tag = node.tagName.toLowerCase();
 
-            if (/^(script|style|iframe|img|figure|table|thead|tbody|tfoot|tr|td|th|button|h[1-6])$/.test(tag)) {
+            if (DROPPED_TAG_PATTERN.test(tag)) {
                 return;
             }
 
@@ -226,7 +273,7 @@
                 return;
             }
 
-            if (tag === 'ul' || tag === 'ol') {
+            if (LIST_TAGS.indexOf(tag) !== -1) {
                 flushInlineBuffer();
 
                 var list = sanitizeList(node, tag, doc);
@@ -250,15 +297,35 @@
                 return;
             }
 
+            if (tag === 'blockquote') {
+                flushInlineBuffer();
+
+                // A quote inside a quote flattens to one level: the editor offers no
+                // way to build it and the rendered result is indistinguishable.
+                var quoted = sanitizeBlocks(Array.prototype.slice.call(node.childNodes), doc, false);
+
+                if (quoted !== '') {
+                    blocks.push(allowQuote ? '<blockquote>' + quoted + '</blockquote>' : quoted);
+                }
+
+                return;
+            }
+
             inlineBuffer += sanitizeInlineNode(node, doc);
         }
 
-        template.innerHTML = html || '';
-
-        Array.prototype.slice.call(template.content.childNodes).forEach(consumeRootNode);
+        nodes.forEach(consumeNode);
         flushInlineBuffer();
 
         return blocks.join('');
+    }
+
+    function sanitizeHtmlFragment(html, doc) {
+        var template = doc.createElement('template');
+
+        template.innerHTML = html || '';
+
+        return sanitizeBlocks(Array.prototype.slice.call(template.content.childNodes), doc, true);
     }
 
     function convertTextToHtml(text) {
@@ -336,12 +403,15 @@
         return element ? element.closest('[data-wb-rich-text-editor]') : null;
     }
 
+    // range.collapse(true) collapses to the *start*, so `atEnd` has to invert it.
+    // It did not, which is why the caret jumped to the top of the field after a
+    // paste instead of landing after what was pasted.
     function placeCaretInside(node, atEnd) {
         var selection = window.getSelection();
         var range = document.createRange();
 
         range.selectNodeContents(node);
-        range.collapse(atEnd !== false);
+        range.collapse(atEnd === false);
         selection.removeAllRanges();
         selection.addRange(range);
     }
@@ -435,20 +505,78 @@
         return getSelectionRange(editor.surface);
     }
 
-    function finalizeEditorChange(editor, options) {
+    // Rewriting the surface is what a full normalize costs: the browser's undo
+    // stack is dropped and the caret is rebuilt. So it happens only at the edges
+    // of editing -- paste, blur, submit -- and never after a toolbar command,
+    // which is why Ctrl+Z survives a bold or a list now. Between those points the
+    // hidden input still receives sanitized HTML on every keystroke, so what gets
+    // saved is clean regardless of what the surface is holding.
+    function normalizeEditor(editor, options) {
         options = options || {};
 
         var sanitized = sanitizeHtmlFragment(editor.surface.innerHTML, document);
 
-        editor.surface.innerHTML = sanitized || '<p><br></p>';
-        editor.savedRange = null;
+        if (editor.surface.innerHTML !== (sanitized || '<p><br></p>')) {
+            editor.surface.innerHTML = sanitized || '<p><br></p>';
+            editor.savedRange = null;
+        }
+
         syncInput(editor, sanitized);
 
         if (options.keepFocus !== false) {
             focusSurface(editor.surface);
-            placeCaretInside(editor.surface, true);
+
+            if (!editor.savedRange) {
+                placeCaretInside(editor.surface, true);
+            }
+
             saveSelection(editor);
         }
+
+        refreshToolbarState(editor);
+    }
+
+    function syncEditor(editor) {
+        syncInput(editor);
+        saveSelection(editor);
+        refreshToolbarState(editor);
+    }
+
+    function queryCommandState(command) {
+        try {
+            return document.queryCommandState(command);
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function refreshToolbarState(editor) {
+        if (!editor || !editor.buttons.length) {
+            return;
+        }
+
+        var range = getSelectionRange(editor.surface);
+        var node = range ? range.commonAncestorContainer : null;
+        var states = {
+            bold: !!range && queryCommandState('bold'),
+            italic: !!range && queryCommandState('italic'),
+            strikethrough: !!range && queryCommandState('strikeThrough'),
+            'bullet-list': !!range && queryCommandState('insertUnorderedList'),
+            'numbered-list': !!range && queryCommandState('insertOrderedList'),
+            code: !!range && !!closestElement(node, 'CODE', editor.surface),
+            link: !!range && !!closestElement(node, 'A', editor.surface),
+            quote: !!range && !!closestElement(node, 'BLOCKQUOTE', editor.surface),
+        };
+
+        editor.buttons.forEach(function (button) {
+            var action = button.getAttribute('data-wb-rich-text-action');
+
+            if (!Object.prototype.hasOwnProperty.call(states, action)) {
+                return;
+            }
+
+            button.setAttribute('aria-pressed', states[action] ? 'true' : 'false');
+        });
     }
 
     function execAndSync(editor, command, value) {
@@ -458,7 +586,7 @@
 
         focusSurface(editor.surface);
         document.execCommand(command, false, value || null);
-        finalizeEditorChange(editor);
+        syncEditor(editor);
     }
 
     function applyCode(editor) {
@@ -471,80 +599,329 @@
         var existingCode = closestElement(range.commonAncestorContainer, 'CODE', editor.surface);
 
         if (existingCode) {
+            var released = existingCode.firstChild;
+
             unwrap(existingCode);
-            finalizeEditorChange(editor);
+
+            if (released) {
+                placeCaretInside(released, true);
+            }
+
+            syncEditor(editor);
+
             return;
         }
 
-        if (range.collapsed) {
-            var code = document.createElement('code');
-
-            code.textContent = 'code';
-            range.insertNode(code);
-            placeCaretInside(code, false);
-            finalizeEditorChange(editor);
-            return;
-        }
-
-        var fragment = range.extractContents();
         var wrapper = document.createElement('code');
 
-        wrapper.appendChild(fragment);
+        if (range.collapsed) {
+            wrapper.textContent = 'code';
+            range.insertNode(wrapper);
+            placeCaretInside(wrapper, true);
+            syncEditor(editor);
+
+            return;
+        }
+
+        wrapper.appendChild(range.extractContents());
         range.insertNode(wrapper);
         placeCaretInside(wrapper, true);
-        finalizeEditorChange(editor);
+        syncEditor(editor);
     }
 
-    function applyLink(editor) {
+    function applyQuote(editor) {
         var range = ensureSelection(editor);
 
         if (!range) {
             return;
         }
 
-        var existingLink = closestElement(range.commonAncestorContainer, 'A', editor.surface);
-        var currentHref = existingLink ? existingLink.getAttribute('href') || '' : '';
-        var href = window.prompt('Enter link URL', currentHref || 'https://');
+        var existingQuote = closestElement(range.commonAncestorContainer, 'BLOCKQUOTE', editor.surface);
 
-        if (href === null) {
+        if (existingQuote) {
+            var released = existingQuote.firstChild;
+
+            unwrap(existingQuote);
+
+            if (released) {
+                placeCaretInside(released, true);
+            }
+
+            syncEditor(editor);
+
             return;
         }
 
-        href = href.trim();
+        focusSurface(editor.surface);
+        document.execCommand('formatBlock', false, 'blockquote');
+        syncEditor(editor);
+    }
 
-        if (existingLink) {
-            if (href === '') {
-                unwrap(existingLink);
-                finalizeEditorChange(editor);
+    function isInsideList(editor) {
+        var range = getSelectionRange(editor.surface);
+
+        return !!range && !!closestElement(range.commonAncestorContainer, 'LI', editor.surface);
+    }
+
+    function isAtBlockStart(node, surface) {
+        var current = node;
+
+        while (current && current.parentNode && current.parentNode !== surface) {
+            if (current.previousSibling) {
+                return false;
+            }
+
+            current = current.parentNode;
+        }
+
+        return !!current && current.parentNode === surface;
+    }
+
+    function applyMarkdownShortcut(editor, event) {
+        var range = getSelectionRange(editor.surface);
+
+        if (!range || !range.collapsed) {
+            return;
+        }
+
+        var node = range.startContainer;
+
+        if (node.nodeType !== Node.TEXT_NODE || !isAtBlockStart(node, editor.surface)) {
+            return;
+        }
+
+        var marker = String(node.textContent || '').slice(0, range.startOffset);
+        var shortcut = null;
+
+        MARKDOWN_SHORTCUTS.forEach(function (candidate) {
+            if (candidate.pattern.test(marker)) {
+                shortcut = candidate;
+            }
+        });
+
+        if (!shortcut) {
+            return;
+        }
+
+        event.preventDefault();
+
+        node.textContent = String(node.textContent || '').slice(range.startOffset);
+
+        var selection = window.getSelection();
+        var collapsed = document.createRange();
+
+        collapsed.setStart(node, 0);
+        collapsed.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(collapsed);
+        saveSelection(editor);
+
+        if (shortcut.action) {
+            handleAction(editor, shortcut.action);
+
+            return;
+        }
+
+        execAndSync(editor, shortcut.command);
+    }
+
+    function handleKeydown(editor, event) {
+        if ((event.metaKey || event.ctrlKey) && !event.altKey) {
+            var shortcutAction = KEYBOARD_SHORTCUTS[String(event.key || '').toLowerCase()];
+
+            if (shortcutAction) {
+                event.preventDefault();
+                handleAction(editor, shortcutAction);
+
                 return;
             }
+        }
 
-            if (isSafeHref(href)) {
-                existingLink.setAttribute('href', href);
-                finalizeEditorChange(editor);
+        // Tab is a list control only inside a list; everywhere else it stays the
+        // browser's focus key, so the field never becomes a keyboard trap.
+        if (event.key === 'Tab' && !event.metaKey && !event.ctrlKey && isInsideList(editor)) {
+            event.preventDefault();
+            execAndSync(editor, event.shiftKey ? 'outdent' : 'indent');
+
+            return;
+        }
+
+        if (event.key === ' ') {
+            applyMarkdownShortcut(editor, event);
+        }
+    }
+
+    function linkModal() {
+        return document.querySelector('[data-wb-rich-text-link-modal]');
+    }
+
+    function modalRuntime() {
+        return window.WBModal || null;
+    }
+
+    function setLinkError(dialog, message) {
+        var error = dialog.querySelector('[data-wb-rich-text-link-error]');
+
+        if (!error) {
+            return;
+        }
+
+        error.textContent = message || '';
+        error.hidden = !message;
+    }
+
+    function closeLinkModal(dialog) {
+        var runtime = modalRuntime();
+
+        if (runtime && typeof runtime.close === 'function') {
+            runtime.close(dialog);
+
+            return;
+        }
+
+        dialog.hidden = true;
+        dialog.classList.remove('is-open');
+    }
+
+    function applyLink(editor) {
+        var range = ensureSelection(editor);
+        var dialog = linkModal();
+
+        if (!range || !dialog) {
+            return;
+        }
+
+        var existingLink = closestElement(range.commonAncestorContainer, 'A', editor.surface);
+        var urlInput = dialog.querySelector('[data-wb-rich-text-link-url]');
+        var textInput = dialog.querySelector('[data-wb-rich-text-link-text]');
+        var removeButton = dialog.querySelector('[data-wb-rich-text-link-remove]');
+        var runtime = modalRuntime();
+
+        linkContext = { editor: editor, link: existingLink, selectedText: range.toString() };
+
+        if (urlInput) {
+            urlInput.value = existingLink ? existingLink.getAttribute('href') || '' : '';
+        }
+
+        if (textInput) {
+            textInput.value = existingLink ? existingLink.textContent || '' : range.toString();
+        }
+
+        if (removeButton) {
+            removeButton.hidden = !existingLink;
+        }
+
+        setLinkError(dialog, '');
+
+        if (runtime && typeof runtime.open === 'function') {
+            runtime.open(dialog, null);
+        } else {
+            dialog.hidden = false;
+            dialog.classList.add('is-open');
+        }
+
+        if (urlInput) {
+            window.setTimeout(function () {
+                urlInput.focus();
+                urlInput.select();
+            }, 0);
+        }
+    }
+
+    function commitLink(dialog) {
+        if (!linkContext) {
+            return;
+        }
+
+        var editor = linkContext.editor;
+        var existingLink = linkContext.link;
+        var urlInput = dialog.querySelector('[data-wb-rich-text-link-url]');
+        var textInput = dialog.querySelector('[data-wb-rich-text-link-text]');
+        var href = urlInput ? urlInput.value.trim() : '';
+        var label = textInput ? textInput.value.trim() : '';
+
+        if (!isSafeHref(href)) {
+            setLinkError(dialog, dialog.getAttribute('data-invalid-url-message') || 'Enter a valid URL.');
+
+            if (urlInput) {
+                urlInput.focus();
             }
 
             return;
         }
 
-        if (!isSafeHref(href)) {
+        closeLinkModal(dialog);
+        linkContext = null;
+
+        var range = ensureSelection(editor);
+
+        if (!range) {
             return;
         }
 
-        if (range.collapsed) {
-            var link = document.createElement('a');
+        if (existingLink) {
+            existingLink.setAttribute('href', href);
 
-            link.setAttribute('href', href);
-            link.textContent = href;
-            range.insertNode(link);
-            placeCaretAfter(link);
-            finalizeEditorChange(editor);
+            if (label !== '' && label !== existingLink.textContent) {
+                existingLink.textContent = label;
+            }
+
+            placeCaretAfter(existingLink);
+            syncEditor(editor);
+
             return;
         }
 
-        document.execCommand('unlink', false, null);
-        document.execCommand('createLink', false, href);
-        finalizeEditorChange(editor);
+        // An unchanged label over a real selection keeps whatever markup the
+        // selection carries -- bold inside a linked phrase survives. Any other
+        // case is an explicit rewrite, so a plain anchor is what was asked for.
+        if (!range.collapsed && (label === '' || label === range.toString())) {
+            focusSurface(editor.surface);
+            document.execCommand('unlink', false, null);
+            document.execCommand('createLink', false, href);
+            syncEditor(editor);
+
+            return;
+        }
+
+        var link = document.createElement('a');
+
+        link.setAttribute('href', href);
+        link.textContent = label !== '' ? label : href;
+
+        if (!range.collapsed) {
+            range.deleteContents();
+        }
+
+        range.insertNode(link);
+        placeCaretAfter(link);
+        syncEditor(editor);
+    }
+
+    function removeLink(dialog) {
+        if (!linkContext) {
+            return;
+        }
+
+        var editor = linkContext.editor;
+        var existingLink = linkContext.link;
+
+        closeLinkModal(dialog);
+        linkContext = null;
+
+        if (!existingLink) {
+            return;
+        }
+
+        var released = existingLink.firstChild;
+
+        unwrap(existingLink);
+
+        if (released) {
+            placeCaretInside(released, true);
+        }
+
+        syncEditor(editor);
     }
 
     function handlePaste(editor, event) {
@@ -560,7 +937,7 @@
         }
 
         document.execCommand('insertHTML', false, safeHtml || escapeHtml(text));
-        finalizeEditorChange(editor);
+        normalizeEditor(editor);
     }
 
     function handleAction(editor, action) {
@@ -572,31 +949,55 @@
 
         if (action === 'bold') {
             execAndSync(editor, 'bold');
+
             return;
         }
 
         if (action === 'italic') {
             execAndSync(editor, 'italic');
+
+            return;
+        }
+
+        if (action === 'strikethrough') {
+            execAndSync(editor, 'strikeThrough');
+
             return;
         }
 
         if (action === 'code') {
             applyCode(editor);
+
+            return;
+        }
+
+        if (action === 'quote') {
+            applyQuote(editor);
+
             return;
         }
 
         if (action === 'link') {
             applyLink(editor);
+
             return;
         }
 
         if (action === 'bullet-list') {
             execAndSync(editor, 'insertUnorderedList');
+
             return;
         }
 
         if (action === 'numbered-list') {
             execAndSync(editor, 'insertOrderedList');
+
+            return;
+        }
+
+        if (action === 'indent' || action === 'outdent') {
+            execAndSync(editor, action);
+
             return;
         }
 
@@ -607,7 +1008,7 @@
 
             document.execCommand('removeFormat', false, null);
             document.execCommand('unlink', false, null);
-            finalizeEditorChange(editor);
+            syncEditor(editor);
         }
     }
 
@@ -634,6 +1035,7 @@
             surface: surface,
             input: input,
             savedRange: null,
+            buttons: Array.prototype.slice.call(root.querySelectorAll('[data-wb-rich-text-action]')),
         };
 
         var initialHtml = sanitizeHtmlFragment(input.value, document);
@@ -649,22 +1051,31 @@
         surface.addEventListener('focus', function () {
             activeEditor = editor;
             saveSelection(editor);
+            refreshToolbarState(editor);
         });
 
         surface.addEventListener('input', function () {
             activeEditor = editor;
             syncInput(editor);
             saveSelection(editor);
+            refreshToolbarState(editor);
+        });
+
+        surface.addEventListener('keydown', function (event) {
+            activeEditor = editor;
+            handleKeydown(editor, event);
         });
 
         surface.addEventListener('keyup', function () {
             activeEditor = editor;
             saveSelection(editor);
+            refreshToolbarState(editor);
         });
 
         surface.addEventListener('mouseup', function () {
             activeEditor = editor;
             saveSelection(editor);
+            refreshToolbarState(editor);
         });
 
         surface.addEventListener('paste', function (event) {
@@ -673,7 +1084,14 @@
         });
 
         surface.addEventListener('blur', function () {
-            finalizeEditorChange(editor, { keepFocus: false });
+            // Opening the link dialog blurs the surface. Normalizing here would
+            // rebuild the very nodes the dialog is about to write into, so the
+            // pending dialog owns the field until it closes.
+            if (linkContext && linkContext.editor === editor) {
+                return;
+            }
+
+            normalizeEditor(editor, { keepFocus: false });
         });
 
         return editor;
@@ -721,6 +1139,7 @@
 
         activeEditor = editor;
         saveSelection(editor);
+        refreshToolbarState(editor);
     });
 
     document.addEventListener('focusin', function (event) {
@@ -790,6 +1209,53 @@
         handleAction(editor, button.dataset.wbRichTextAction);
     });
 
+    document.addEventListener('click', function (event) {
+        var dialog = event.target.closest('[data-wb-rich-text-link-modal]');
+
+        if (!dialog) {
+            return;
+        }
+
+        if (event.target.closest('[data-wb-rich-text-link-apply]')) {
+            event.preventDefault();
+            commitLink(dialog);
+
+            return;
+        }
+
+        if (event.target.closest('[data-wb-rich-text-link-remove]')) {
+            event.preventDefault();
+            removeLink(dialog);
+
+            return;
+        }
+
+        if (event.target.closest('[data-wb-dismiss="modal"]')) {
+            linkContext = null;
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        var dialog = event.target.closest ? event.target.closest('[data-wb-rich-text-link-modal]') : null;
+
+        if (!dialog || event.key !== 'Enter') {
+            return;
+        }
+
+        if (!event.target.matches('[data-wb-rich-text-link-url], [data-wb-rich-text-link-text]')) {
+            return;
+        }
+
+        event.preventDefault();
+        commitLink(dialog);
+    });
+
+    document.addEventListener('wb:modal:close', function (event) {
+        if (event.target && event.target.closest && event.target.closest('[data-wb-rich-text-link-modal]')) {
+            linkContext = null;
+        }
+    });
+
     document.addEventListener('submit', function (event) {
         var form = event.target;
 
@@ -803,7 +1269,7 @@
             var editor = bindEditor(root);
 
             if (editor) {
-                finalizeEditorChange(editor, { keepFocus: false });
+                normalizeEditor(editor, { keepFocus: false });
             }
         });
     }, true);

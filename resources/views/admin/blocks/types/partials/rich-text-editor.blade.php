@@ -13,6 +13,10 @@
     @push('admin-scripts')
         @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/rich-text-editor.js'])
     @endpush
+
+    @push('overlays')
+        @include('webblocks-cms::admin.blocks.types.partials.rich-text-link-modal')
+    @endpush
 @endonce
 
 <div class="wb-stack wb-gap-3">
@@ -29,22 +33,31 @@
             <div class="wb-toolbar wb-toolbar-sm wb-admin-rich-text-toolbar" role="toolbar" aria-label="{{ $adminText('formatting') }}">
                 <div class="wb-toolbar-start">
                     <div class="wb-action-group" role="group" aria-label="{{ $adminText('inline_formatting') }}">
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bold" aria-label="{{ $adminText('bold') }}" title="{{ $adminText('bold') }}">B</button>
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="italic" aria-label="{{ $adminText('italic') }}" title="{{ $adminText('italic') }}">I</button>
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="code" aria-label="{{ $adminText('code') }}" title="{{ $adminText('code') }}">{{ $adminText('code') }}</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bold" aria-pressed="false" aria-label="{{ $adminText('bold') }}" title="{{ $adminText('bold_title') }}">B</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="italic" aria-pressed="false" aria-label="{{ $adminText('italic') }}" title="{{ $adminText('italic_title') }}">I</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="strikethrough" aria-pressed="false" aria-label="{{ $adminText('strikethrough') }}" title="{{ $adminText('strikethrough') }}"><s>S</s></button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="code" aria-pressed="false" aria-label="{{ $adminText('code') }}" title="{{ $adminText('code') }}">{{ $adminText('code') }}</button>
                     </div>
 
                     <span class="wb-toolbar-divider" aria-hidden="true"></span>
 
                     <div class="wb-action-group" role="group" aria-label="{{ $adminText('links') }}">
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="link" aria-label="{{ $adminText('link') }}" title="{{ $adminText('link') }}">{{ $adminText('link') }}</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="link" aria-pressed="false" aria-label="{{ $adminText('link') }}" title="{{ $adminText('link_title_shortcut') }}">{{ $adminText('link') }}</button>
                     </div>
 
                     <span class="wb-toolbar-divider" aria-hidden="true"></span>
 
                     <div class="wb-action-group" role="group" aria-label="{{ $adminText('lists') }}">
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bullet-list" aria-label="{{ $adminText('bullet_list') }}" title="{{ $adminText('bullet_list') }}">{{ $adminText('bullet_list_button') }}</button>
-                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="numbered-list" aria-label="{{ $adminText('numbered_list') }}" title="{{ $adminText('numbered_list') }}">{{ $adminText('numbered_list_button') }}</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bullet-list" aria-pressed="false" aria-label="{{ $adminText('bullet_list') }}" title="{{ $adminText('bullet_list') }}">{{ $adminText('bullet_list_button') }}</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="numbered-list" aria-pressed="false" aria-label="{{ $adminText('numbered_list') }}" title="{{ $adminText('numbered_list') }}">{{ $adminText('numbered_list_button') }}</button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="outdent" aria-label="{{ $adminText('outdent') }}" title="{{ $adminText('outdent') }}"><i class="wb-icon wb-icon-chevron-left" aria-hidden="true"></i></button>
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="indent" aria-label="{{ $adminText('indent') }}" title="{{ $adminText('indent') }}"><i class="wb-icon wb-icon-chevron-right" aria-hidden="true"></i></button>
+                    </div>
+
+                    <span class="wb-toolbar-divider" aria-hidden="true"></span>
+
+                    <div class="wb-action-group" role="group" aria-label="{{ $adminText('blocks') }}">
+                        <button type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="quote" aria-pressed="false" aria-label="{{ $adminText('quote') }}" title="{{ $adminText('quote') }}">{{ $adminText('quote_button') }}</button>
                     </div>
 
                     <span class="wb-toolbar-divider" aria-hidden="true"></span>
@@ -76,5 +89,6 @@
             >{{ $value }}</textarea>
         </div>
         <div class="wb-text-sm wb-text-muted">{{ $adminText('help') }}</div>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('shortcuts_help') }}</div>
     </div>
 </div>
