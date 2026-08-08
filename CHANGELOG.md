@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.54.3
+
+- **Undo works after pasting, not only after a toolbar button.** 1.54.1 stopped the editor rebuilding its field on every command, which is what had been throwing away the browser's undo stack — but pasting still lost it. The sanitizer always answers in blocks, so a clipboard holding a few words came back as `<p>words</p>`, and inserting that as a block split the paragraph it landed in. The browser's resulting markup no longer matched the sanitized form, so the field was rebuilt after all and Ctrl+Z did nothing. Content worth a single paragraph is now inserted as the inline content it actually is: the paragraph stays whole, nothing is rebuilt, and undo behaves. Formatting inside the pasted text is kept, and the paste is sanitized exactly as before.
+- Pasting several paragraphs, or a list, still inserts blocks and can still restructure the field — the browser decorates inline runs with its own styling spans in that path, which the sanitizer strips, so the two can never agree. Undo after a multi-paragraph paste is therefore still lost; a single word, sentence, or URL — the common case — is not.
+
 ## 1.54.2
 
 - **List blocks get their bullets back.** WebBlocks UI is now pinned to v2.23.0. The shipped reset reads `ul, ol { list-style: none }` so that nav, breadcrumb, pagination, and every other structural list does not have to opt out one by one — but nothing opted a hand-authored list back in, so the List block rendered its items as bare indented lines, with a nested level indistinguishable from its parent. Ordered lists lost their numbers the same way. The new `wb-marker-list` primitive is the opt-in, and both the List block and the fallback renderer's list case now use it: real bullets, real numbers, and the browser's disc → circle → square ladder for nesting. Rich text lists were fixed upstream in v2.21.0 and already publish correctly.
