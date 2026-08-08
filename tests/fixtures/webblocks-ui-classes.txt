@@ -6,7 +6,7 @@
 # disagree, which is the point: a runtime bump that drops a class the
 # admin uses should be caught here rather than in a screenshot.
 #
-ui-version: v2.22.0
+ui-version: v2.23.0
 wb-absolute
 wb-accordion
 wb-accordion-body
@@ -764,6 +764,7 @@ wb-loading-screen-text
 wb-loading-spinner-wrap
 wb-lowercase
 wb-m-0
+wb-marker-list
 wb-mb-0
 wb-mb-1
 wb-mb-2

@@ -19,7 +19,10 @@
             <h3>{{ $block->title }}</h3>
         @endif
 
-        <{{ $listTag }} class="wb-stack wb-gap-1">
+        {{-- wb-marker-list, not wb-stack alone: the shipped reset drops markers on
+             every ul/ol so structural lists do not have to opt out, which left
+             this block rendering an indent where a reader expects a bullet. --}}
+        <{{ $listTag }} class="wb-marker-list">
             @foreach ($items as $item)
                 <li>{{ $item }}</li>
             @endforeach

@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.54.2
+
+- **List blocks get their bullets back.** WebBlocks UI is now pinned to v2.23.0. The shipped reset reads `ul, ol { list-style: none }` so that nav, breadcrumb, pagination, and every other structural list does not have to opt out one by one — but nothing opted a hand-authored list back in, so the List block rendered its items as bare indented lines, with a nested level indistinguishable from its parent. Ordered lists lost their numbers the same way. The new `wb-marker-list` primitive is the opt-in, and both the List block and the fallback renderer's list case now use it: real bullets, real numbers, and the browser's disc → circle → square ladder for nesting. Rich text lists were fixed upstream in v2.21.0 and already publish correctly.
+- **The plugin catalog's requirement list stops floating.** `wb-list` used to mean two things at once — the framed list-group surface every document describes, and an undocumented element rule that restored markers — and the element rule won on specificity, bolting a left indent and a row gap onto a surface built to be flush. v2.23.0 removes the element rule, so the requirements list on a plugin's catalog page sits flush against the card for the first time. No markup change was needed.
+- The pin also carries v2.20.1, which fixes responsive columns collapsing to one twelfth between their own breakpoint and the mobile stack, and v2.22.0's `wb-slider-overlay-medium`, the missing middle rung of the slider scrim ladder. The bundled icon catalog is re-vendored for the new pin at 184 glyphs; the icon set itself is unchanged.
+
 ## 1.54.1
 
 - **The rich text editor stops fighting the writer.** Every toolbar command rewrote the field's entire HTML, which dropped the browser's undo stack: bold a word, press Ctrl+Z, and nothing came back. The field is now rebuilt only when editing pauses — on paste, on leaving the field, and on save — so undo and redo behave the way they do in any other text box, while the value that actually gets stored is still sanitized on every keystroke. A second bug went with it: the caret jump after pasting. The helper that was meant to leave the cursor at the end of the pasted text had its argument inverted and sent it to the very top of the field instead.

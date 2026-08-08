@@ -35,7 +35,7 @@
             @if ($block->title)
                 <h3>{{ $block->title }}</h3>
             @endif
-            <ul class="wb-stack wb-gap-1">
+            <ul class="wb-marker-list">
                 @foreach ($listItems as $item)
                     <li>{{ $item }}</li>
                 @endforeach
