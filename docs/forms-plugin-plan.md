@@ -10,7 +10,7 @@ cms_source_id: webblocks-cms:docs/forms-plugin-plan.md
 
 # Forms Plugin Plan
 
-This document records the design for user-defined forms in WebBlocks CMS, and what has been built against it. The plugin has shipped through `0.3.0`; sections marked as shipped describe real behavior, and the scope section records what each release actually delivered. It follows the format of [the appointments plugin plan](appointments-plugin-plan.md), including its rule that a corrected assumption is recorded rather than quietly replaced — the reasoning is usually the useful part.
+This document records the design for user-defined forms in WebBlocks CMS, and what has been built against it. The plugin has shipped through `0.6.0`, and every item this plan scoped is now built; sections marked as shipped describe real behavior, and the scope section records what each release actually delivered. It follows the format of [the appointments plugin plan](appointments-plugin-plan.md), including its rule that a corrected assumption is recorded rather than quietly replaced — the reasoning is usually the useful part.
 
 ## Decision
 
@@ -66,7 +66,11 @@ Two gaps recorded as open in the appointments plan were still open when this was
 
 This is a real constraint on the product, and the honest response is to design around it rather than plan features that need it. Conditional field visibility and multi-step forms are therefore **server-rendered**: a step is a GET/POST round trip and a conditional branch is evaluated on the server between steps, exactly as the appointments booking flow walks its steps. This costs a page load per step and gains something worth having — the form works with JavaScript off, each step is a shareable URL, and there is no client-side validation to drift out of sync with the server's. If 0.6 lands later, a progressive enhancement can collapse the round trip without changing the server contract.
 
-Conditional visibility *within* a single step was the one feature genuinely deferred by this constraint. With 1.57.0 it is now buildable — and the server-rendered design stands unchanged underneath it, which is the point of having designed around the gap rather than waiting for it: everything shipped keeps working with JavaScript off, and an enhancement is an addition rather than a rewrite.
+Conditional visibility *within* a single step was the one feature genuinely deferred by this constraint. It shipped in plugin `0.6.0`, once CMS `1.57.0` closed 0.6 and a plugin could serve its own script.
+
+What it demonstrates is worth more than the feature. The server-rendered design underneath it did not change: the pipeline already evaluated each step against the stored field definitions, so deciding *which* fields were asked was one more filter in the same place. With JavaScript off nothing is hidden, every field is shown, and that same server-side answer still decides what counted — the degraded experience is more questions on screen rather than a form that cannot be submitted.
+
+That is the return on designing around the gap rather than waiting for it. Had the plan assumed a script from the start, closing 0.6 would have been the moment the feature became possible; instead it was the moment an enhancement could be added to something already working.
 
 ## Plugin Identity And Conventions
 
@@ -263,9 +267,15 @@ A form builder collects whatever the site owner asks for, which means it collect
 
 *Shipped as plugin `0.3.0`, with one item moved and one deferred.* Retention and the prune command arrived early, in `0.1.0`, because a retention policy nothing runs is a promise rather than a policy; `0.2.0` extended the same command to sweep the uploads an abandoned multi-step flow leaves behind. `0.3.0` delivered the webhook action, and — not in this plan — replaced the per-action delivery status columns with a `webblocks_forms_deliveries` table, because the actions table has always permitted several rows per form and two webhooks writing into one column pair meant the second erased the first.
 
-**The per-form throttle is deferred and not shipped.** What exists is narrower than the plan implies and worth stating precisely: the submit limiter is *keyed* per IP and form, so a visitor rate-limited on one form can still use another on the same page, but the limit *value* is install-wide in `config/webblocks-forms.php`. Making it per-form means a form lookup inside the rate limiter on every submit, which is a cost worth deciding on deliberately rather than adding to close a milestone.
+**The per-form throttle was deferred out of `0.3.0`, and shipped in `0.5.0`.** The deferral is left recorded rather than deleted, because the reasoning is the useful part: at `0.3.0` the submit limiter was already *keyed* per IP and form — a visitor limited on one form could still use another on the same page — but the limit *value* was install-wide. Making it per-form costs a form lookup inside the rate limiter on every submit, and that was a decision to take on its own merits rather than to close a milestone.
 
-**Later** — Within-step conditional visibility, now unblocked by CMS 1.57.0. *(The Campaigns action shipped in plugin `0.4.0`; the per-form throttle in `0.5.0`.)* Commerce and Appointments actions were investigated and dropped; see [Plugin-To-Plugin Actions](#plugin-to-plugin-actions).
+`0.5.0` took it: the value is now per form, capped by the install ceiling, and the lookup is cached per request. Where a handle answers for more than one site the tightest value wins, because the limiter only ever sees the handle the browser posted and erring stricter is the safe direction.
+
+**Later** — *Shipped.* The Campaigns action in plugin `0.4.0`, the per-form throttle in `0.5.0`, and within-step conditional visibility in `0.6.0`. Commerce and Appointments actions were investigated and **dropped rather than deferred**; see [Plugin-To-Plugin Actions](#plugin-to-plugin-actions).
+
+`0.6.0` raised the CMS floor to `^1.57.0`, the first release that publishes a plugin's static files, because it is the first release of this plugin that ships one. The cost is recorded rather than glossed: installs on `1.45`–`1.56` stay on `0.5.0`, which is complete. The alternative was a script tag that 404s on every page carrying a form — trading a version requirement an operator can read for a console error they cannot.
+
+Nothing in this plan remains unbuilt. One deliberate absence is worth recording because it looks like an omission: the optional Campaigns dependency is **not** declared in the manifest's `requires`. CMS `1.55`+ reads that key and warns about anything unmet, so declaring an optional neighbour would light a permanent warning on every install that deliberately does without it. Depending softly and declaring a hard dependency are different statements, and only the first is true here.
 
 ## Out Of Scope For v1
 
