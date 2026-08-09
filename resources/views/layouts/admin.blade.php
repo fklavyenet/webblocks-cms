@@ -60,6 +60,7 @@
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
                 ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
                 ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
+                ['label' => $adminText('navigation.support'), 'route' => 'admin.support.index', 'active' => ['admin.support.*'], 'icon' => 'wb-icon-message-square'],
             ];
 
             if (! $user?->can('access-system')) {

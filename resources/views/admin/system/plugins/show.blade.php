@@ -171,6 +171,16 @@
                     <div>{{ $plugin['required_cms_version'] ?? $adminText('not_declared') }}</div>
                 </div>
                 <div>
+                    <strong>{{ $adminText('requires') }}</strong>
+                    <div>
+                        @forelse ($plugin['requires'] ?? [] as $requirement => $constraint)
+                            <div><code>{{ $requirement }}</code> {{ $constraint }}</div>
+                        @empty
+                            {{ $adminText('not_declared') }}
+                        @endforelse
+                    </div>
+                </div>
+                <div>
                     <strong>{{ $adminText('settings_namespace') }}</strong>
                     <div><code>{{ $plugin['settings_namespace'] }}</code></div>
                 </div>

@@ -114,6 +114,29 @@ class PluginRegistry
     return $this->compatibility()->isCompatible($plugin);
   }
 
+  /**
+   * Requirements this install does not meet, as sentences for an operator.
+   *
+   * Reported, never enforced: see PluginRequirements for why a hard dependency
+   * graph is the wrong shape for a manually installed plugin system.
+   *
+   * @return list<string>
+   */
+  public function unmetRequirements(string $handle): array
+  {
+    $plugin = $this->find($handle);
+
+    if ($plugin === null) {
+      return [];
+    }
+
+    return (new PluginRequirements($this->compatibility()))->unmet(
+      $plugin,
+      $this->all(),
+      fn (string $dependency): bool => $this->isEnabled($dependency),
+    );
+  }
+
   public function incompatibilityMessage(string $handle): ?string
   {
     $plugin = $this->plugins[$handle] ?? null;
@@ -331,6 +354,7 @@ class PluginRegistry
       'compatible' => $compatible,
       'lifecycle_status' => $this->lifecycleStatus($configuredEnabled, $compatible),
       'incompatibility_message' => $this->incompatibilityMessage($plugin->handle()),
+      'unmet_requirements' => $this->unmetRequirements($plugin->handle()),
     ]);
   }
 

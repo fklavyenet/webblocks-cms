@@ -21,6 +21,9 @@ class PluginDefinition
 
   private ?string $requiredCmsVersion = null;
 
+  /** @var array<string, string> */
+  private array $requirements = [];
+
   private string $source = 'core';
 
   private ?string $installPath = null;
@@ -238,6 +241,38 @@ class PluginDefinition
   {
     $versionConstraint = is_string($versionConstraint) ? trim($versionConstraint) : null;
     $this->requiredCmsVersion = $versionConstraint !== '' ? $versionConstraint : null;
+
+    return $this;
+  }
+
+  /**
+   * What the plugin says it needs, from the manifest's `requires` key.
+   *
+   * Keys are `webblocks-cms`, `php`, or another plugin's handle; values are version
+   * constraints. Declaring something here is a statement for the operator, not a
+   * gate: nothing refuses to enable on the strength of it.
+   *
+   * @return array<string, string>
+   */
+  public function requirements(): array
+  {
+    return $this->requirements;
+  }
+
+  /**
+   * @param  array<string, mixed>  $requirements
+   */
+  public function requires(array $requirements): static
+  {
+    $clean = [];
+
+    foreach ($requirements as $handle => $constraint) {
+      if (is_string($handle) && is_scalar($constraint) && trim((string) $constraint) !== '') {
+        $clean[trim($handle)] = trim((string) $constraint);
+      }
+    }
+
+    $this->requirements = $clean;
 
     return $this;
   }
@@ -831,6 +866,7 @@ class PluginDefinition
       'provider' => $this->providerClass,
       'description' => $this->description,
       'required_cms_version' => $this->requiredCmsVersion,
+      'requires' => $this->requirements,
       'source' => $this->source,
       'install_path' => $this->installPath,
       'settings_namespace' => $this->settingsNamespaceValue(),

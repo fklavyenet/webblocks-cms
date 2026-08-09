@@ -36,6 +36,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SiteImportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SitePromotionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\SupportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
@@ -227,6 +228,16 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::match(['put', 'patch'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale.update');
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+
+    // Support — tickets are filed on WebBlocks Workbench, not stored here.
+    // Top-level rather than under System: `access-system` belongs to whoever
+    // maintains the installation, and the editor who cannot publish a page is
+    // the person with something to report.
+    Route::get('/support', [SupportController::class, 'index'])->name('support.index');
+    Route::get('/support/new', [SupportController::class, 'create'])->name('support.create');
+    Route::post('/support', [SupportController::class, 'store'])->name('support.store');
+    Route::get('/support/{ticket}', [SupportController::class, 'show'])->name('support.show');
+    Route::post('/support/{ticket}/replies', [SupportController::class, 'comment'])->name('support.comment');
     Route::get('/pages/converter', [PageConverterController::class, 'index'])->name('pages.converter.index');
     Route::post('/pages/converter/analyze', [PageConverterController::class, 'analyze'])->name('pages.converter.analyze');
     Route::post('/pages/converter/create-draft', [PageConverterController::class, 'createDraft'])->name('pages.converter.create-draft');

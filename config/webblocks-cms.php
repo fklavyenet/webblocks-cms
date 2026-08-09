@@ -80,4 +80,23 @@ return [
     'migrations' => [
         'fresh_path' => 'database/migrations/fresh',
     ],
+
+  /*
+   * WebBlocks Workbench is the shared ticket tracker behind every product in
+   * the fleet. The token is pinned to the WebBlocks CMS project on the
+   * Workbench side, so it can only ever file against the CMS. It speaks for
+   * every admin of THIS install, so it stays server-side and never reaches a
+   * browser.
+   *
+   * Each install holds its own token, which is what makes Workbench's
+   * per-token monthly quota bound one site's reporting without touching
+   * anyone else's. Installs are told apart by the id this app generates
+   * (WebBlocks\Cms\Support\Tickets\InstallId), not by anything set here.
+   */
+  'workbench' => [
+    'url' => env('WORKBENCH_URL', 'https://workbench.webblocksui.com'),
+    'ticket_token' => env('WORKBENCH_TICKET_TOKEN'),
+    'timeout' => (int) env('WORKBENCH_TIMEOUT', 10),
+  ],
+
 ];

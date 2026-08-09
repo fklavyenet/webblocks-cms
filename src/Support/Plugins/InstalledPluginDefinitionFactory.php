@@ -29,6 +29,12 @@ class InstalledPluginDefinitionFactory
       return $definition
         ->source('manual upload')
         ->installPath($path)
+        /*
+         * Applied to the provider's own definition too. A provider builds its
+         * definition in code and has no reason to restate `requires`, which lives in
+         * the manifest the installer and the catalog both read.
+         */
+        ->requires($this->requirements($manifest))
         ->migrations($this->migrationPaths($manifest));
     }
 
@@ -38,6 +44,7 @@ class InstalledPluginDefinitionFactory
       ->provider($provider)
       ->description($manifest['description'] ?? null)
       ->requiresCms($manifest['required_cms_version'] ?? null)
+      ->requires($this->requirements($manifest))
       ->source('manual upload')
       ->installPath($path);
 
@@ -129,6 +136,23 @@ class InstalledPluginDefinitionFactory
    * @param  array<string, mixed>  $manifest
    * @return array<int, string>
    */
+  /**
+   * The manifest's `requires` map, defensively.
+   *
+   * Documented and written by every catalog plugin since the beginning, and until now
+   * read by nothing. A manifest is third-party text, so anything that is not a map of
+   * strings is ignored rather than trusted.
+   *
+   * @param  array<string, mixed>  $manifest
+   * @return array<string, string>
+   */
+  private function requirements(array $manifest): array
+  {
+    $requires = $manifest['requires'] ?? null;
+
+    return is_array($requires) ? $requires : [];
+  }
+
   private function migrationPaths(array $manifest): array
   {
     $migrations = $manifest['migrations'] ?? [];

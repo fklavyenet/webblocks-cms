@@ -20,6 +20,23 @@ class PluginHealthMonitor
       return PluginHealthResult::unavailable();
     }
 
+    /*
+     * A warning, deliberately, and not `incompatible`: incompatible is a state the
+     * CMS enforces by refusing to run the plugin, and an unmet requirement is not
+     * enforced at all. The plugin is enabled, its routes are live, and it is expected
+     * to degrade on its own — so the health line exists to tell an operator why a
+     * feature went quiet, not to claim something has been stopped.
+     *
+     * Checked before the plugin's own reporter, because "the thing I depend on is
+     * missing" explains more than whatever that reporter is about to say about the
+     * consequences.
+     */
+    $unmet = $this->plugins->unmetRequirements($plugin->handle());
+
+    if ($unmet !== []) {
+      return PluginHealthResult::warning(implode(' ', $unmet));
+    }
+
     $reporter = $plugin->healthReporter();
 
     if ($reporter === null) {
