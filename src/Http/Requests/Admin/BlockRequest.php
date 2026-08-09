@@ -554,6 +554,16 @@ class BlockRequest extends FormRequest
             continue;
           }
 
+          // The row carries the item block type as a hidden field, filled from
+          // the published catalog. An unpublished or missing catalog row leaves
+          // it empty, and every row is then unusable -- say so instead of
+          // saving a parent whose children could not be written.
+          if (blank($columnItem['block_type_id'] ?? null)) {
+            $validator->errors()->add("column_items.{$index}.block_type_id", 'The Column Item block type is not available in the block catalog. Run "php artisan webblocks:catalog-repair --all" and try again.');
+
+            continue;
+          }
+
           if (blank($columnItem['title'] ?? null)) {
             $validator->errors()->add("column_items.{$index}.title", 'Column item title is required.');
           }
@@ -576,6 +586,16 @@ class BlockRequest extends FormRequest
             continue;
           }
 
+          // The row carries the item block type as a hidden field, filled from
+          // the published catalog. An unpublished or missing catalog row leaves
+          // it empty, and every row is then unusable -- say so instead of
+          // saving a parent whose children could not be written.
+          if (blank($featureItem['block_type_id'] ?? null)) {
+            $validator->errors()->add("feature_items.{$index}.block_type_id", 'The Feature Item block type is not available in the block catalog. Run "php artisan webblocks:catalog-repair --all" and try again.');
+
+            continue;
+          }
+
           if (blank($featureItem['title'] ?? null)) {
             $validator->errors()->add("feature_items.{$index}.title", 'Feature item title is required.');
           }
@@ -595,6 +615,16 @@ class BlockRequest extends FormRequest
       if ($isLinkList) {
         foreach ($this->input('link_list_items', []) as $index => $item) {
           if ((bool) ($item['_delete'] ?? false)) {
+            continue;
+          }
+
+          // The row carries the item block type as a hidden field, filled from
+          // the published catalog. An unpublished or missing catalog row leaves
+          // it empty, and every row is then unusable -- say so instead of
+          // saving a parent whose children could not be written.
+          if (blank($item['block_type_id'] ?? null)) {
+            $validator->errors()->add("link_list_items.{$index}.block_type_id", 'The Link List Item block type is not available in the block catalog. Run "php artisan webblocks:catalog-repair --all" and try again.');
+
             continue;
           }
 

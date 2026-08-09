@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.59.1
+
+- **A Columns, Feature Grid or Link List block can no longer lose its items on save.** Those three blocks author their children from a repeating list on the parent's own form, and the save step skips any row it cannot use. The sweep that follows read "skipped" as "the editor removed it" and deleted the block behind the row — and when no row survived, it deleted every child of that type at once. It now removes only what was actually taken off the list.
+- The way to hit it was an item block type missing from the block catalog. Each row carries its type as a hidden field filled from the published catalog; an unpublished or missing `column_item`, `feature-item` or `link-list-item` row leaves that field empty on every row, so nothing survives and the whole list went. The save now stops with a message naming `php artisan webblocks:catalog-repair --all` instead of quietly emptying the block.
+- Nothing changes for a healthy install: rows you delete are still deleted, and a row you take off the list is still a removal.
+
 ## 1.59.0
 
 - **Hero and CTA buttons are ordinary blocks now.** Both forms carried Primary CTA and Secondary CTA fields, and filling them created two Button Link blocks underneath — which then appeared in the block tree, could be edited from their own form, and could be dragged somewhere else entirely. Two places owned the same button, so a button moved out of a Hero left the Hero's form still claiming it was there. The fields are gone. A Hero's buttons are the Button Link children you add to it from the block tree, the same way a Slider holds Slides, and there is no longer a second owner to disagree with.

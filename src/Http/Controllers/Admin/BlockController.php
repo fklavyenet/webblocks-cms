@@ -697,6 +697,23 @@ class BlockController extends Controller
       ?? BlockType::query()->where('slug', $typeSlug)->first();
   }
 
+  /**
+   * Ids of the rows a builder editor posted back, whether or not each row was
+   * usable. A row that fails a guard is skipped, and skipping must never be a
+   * reason to delete the block behind it: the editor asked to keep it.
+   *
+   * @param  array<int, array<string, mixed>>  $items
+   * @return array<int, int>
+   */
+  private function submittedBuilderItemIds(array $items): array
+  {
+    return collect($items)
+      ->pluck('id')
+      ->filter()
+      ->map(fn (mixed $id) => (int) $id)
+      ->all();
+  }
+
   private function builderChildItemsFrom(Request $request, string $inputKey, bool $includeSubtitle = false): array
   {
     return collect($request->input($inputKey, []))
@@ -799,13 +816,16 @@ class BlockController extends Controller
       $keptIds[] = $featureItem->id;
     }
 
-    $staleItems = $block->children()->where('type', 'feature-item');
+    // Only rows the editor did not post back are gone. Deleting on an empty
+    // $keptIds used to wipe every child whenever no row survived the guards --
+    // an unpublished item block type in the catalog leaves block_type_id empty
+    // on every row, which is exactly that case.
+    $retainedIds = array_unique(array_merge($keptIds, $this->submittedBuilderItemIds($featureItems)));
 
-    if ($keptIds !== []) {
-      $staleItems->whereNotIn('id', $keptIds);
-    }
-
-    $staleItems->delete();
+    $block->children()
+      ->where('type', 'feature-item')
+      ->when($retainedIds !== [], fn ($query) => $query->whereNotIn('id', $retainedIds))
+      ->delete();
   }
 
   private function syncColumnItems(Block $block, array $columnItems, ?string $localeCode = null): void
@@ -866,13 +886,16 @@ class BlockController extends Controller
       $keptIds[] = $columnItem->id;
     }
 
-    $staleItems = $block->children()->where('type', 'column_item');
+    // Only rows the editor did not post back are gone. Deleting on an empty
+    // $keptIds used to wipe every child whenever no row survived the guards --
+    // an unpublished item block type in the catalog leaves block_type_id empty
+    // on every row, which is exactly that case.
+    $retainedIds = array_unique(array_merge($keptIds, $this->submittedBuilderItemIds($columnItems)));
 
-    if ($keptIds !== []) {
-      $staleItems->whereNotIn('id', $keptIds);
-    }
-
-    $staleItems->delete();
+    $block->children()
+      ->where('type', 'column_item')
+      ->when($retainedIds !== [], fn ($query) => $query->whereNotIn('id', $retainedIds))
+      ->delete();
   }
 
   private function syncLinkListItems(Block $block, array $linkListItems, ?string $localeCode = null): void
@@ -933,13 +956,16 @@ class BlockController extends Controller
       $keptIds[] = $linkListItem->id;
     }
 
-    $staleItems = $block->children()->where('type', 'link-list-item');
+    // Only rows the editor did not post back are gone. Deleting on an empty
+    // $keptIds used to wipe every child whenever no row survived the guards --
+    // an unpublished item block type in the catalog leaves block_type_id empty
+    // on every row, which is exactly that case.
+    $retainedIds = array_unique(array_merge($keptIds, $this->submittedBuilderItemIds($linkListItems)));
 
-    if ($keptIds !== []) {
-      $staleItems->whereNotIn('id', $keptIds);
-    }
-
-    $staleItems->delete();
+    $block->children()
+      ->where('type', 'link-list-item')
+      ->when($retainedIds !== [], fn ($query) => $query->whereNotIn('id', $retainedIds))
+      ->delete();
   }
 
   private function pageSlotRouteId(?int $pageId, ?int $slotTypeId): ?int
