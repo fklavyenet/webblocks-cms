@@ -57,6 +57,40 @@ if [ "$(git cat-file -t "refs/tags/${TAG_NAME}")" != "tag" ]; then
   exit 1
 fi
 
+# A published version's source reference is immutable, so moving a tag a remote
+# already carries is not a fix — Packagist rejects the update and every consumer
+# that resolved the old reference disagrees with the new one. It happened to
+# v1.58.1: a correction landed after tagging, and moving the tag was the only
+# route the two checks above left open. Bumping the version is the route.
+# Unreachable remotes are not fatal here, for the same reason the icon manifest
+# check tolerates them: a release must not hinge on the network being up.
+TAG_COMMIT="$(git -C "${ROOT_DIR}" rev-list -1 "${TAG_NAME}")"
+
+for REMOTE in $(git -C "${ROOT_DIR}" remote); do
+  if ! REMOTE_TAG="$(git -C "${ROOT_DIR}" ls-remote "${REMOTE}" "refs/tags/${TAG_NAME}^{}" "refs/tags/${TAG_NAME}" 2>/dev/null)"; then
+    printf '[webblocks-release-prepare] Could not reach %s to compare %s; moved-tag check skipped for that remote.\n' "${REMOTE}" "${TAG_NAME}" >&2
+
+    continue
+  fi
+
+  # An annotated tag answers twice: the tag object, then the commit it peels to.
+  # The peeled line is the one to compare, and the bare line is the fallback for
+  # a lightweight tag on the remote.
+  REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_TAG}" | awk -v peeled="refs/tags/${TAG_NAME}^{}" '$2 == peeled { print $1 }')"
+
+  if [ -z "${REMOTE_COMMIT}" ]; then
+    REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_TAG}" | awk -v bare="refs/tags/${TAG_NAME}" '$2 == bare { print $1 }')"
+  fi
+
+  if [ -n "${REMOTE_COMMIT}" ] && [ "${REMOTE_COMMIT}" != "${TAG_COMMIT}" ]; then
+    printf '[webblocks-release-prepare] %s already exists on %s at a different commit.\n' "${TAG_NAME}" "${REMOTE}" >&2
+    printf '[webblocks-release-prepare]   published: %s\n' "${REMOTE_COMMIT}" >&2
+    printf '[webblocks-release-prepare]   local:     %s\n' "${TAG_COMMIT}" >&2
+    printf '[webblocks-release-prepare] A released version cannot change its contents. Bump the version and tag the fix as a new release.\n' >&2
+    exit 1
+  fi
+done
+
 # The icon catalog ships with the package; a release that carries a manifest
 # for some other UI version would install a catalog that does not match the CSS
 # the browser loads. Missing is a hard error. Stale is a hard error. Unreachable
