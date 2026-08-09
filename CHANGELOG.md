@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.58.1
+
+Documentation only. No code changed, and no install behaves differently after updating.
+
+- **`translatedFields()` is documented.** `1.58.0` shipped per-locale copy for plugin-declared blocks and the plugin system guide never mentioned it — a capability a plugin author could not find is as good as one that does not exist, and it is the same failure as a manifest key nothing reads. The new section leads with what opts a block in, because the risk is not missing the feature but assuming it applies: declaring is the switch, and undeclared fields stay shared, which is right for a recipient address or a service id.
+- It also records the three things worth knowing before adopting it — translations become authoritative and the settings column stops carrying a copy, existing blocks migrate on their next write rather than losing their wording, and a locale with any row counts as translated so a blank field falls back instead of blanking the default — and that adoption is not obligatory.
+- The appointments and forms plan documents are brought up to date with what has actually shipped. Both still described core gaps `0.4` and `0.6` as open, one still opened with "nothing here has shipped yet", and one still quoted a CMS floor three bumps out of date. Phase 0 is now recorded as closed end to end: every gap those plans opened is fixed in core **and** in use by the plugin that found it.
+
 ## 1.58.0
 
 - **Plugin blocks can own translated copy.** `BlockTranslationRegistry` was a fixed `match` over core slugs, so a block declared by a plugin had no translation family and no field map: its copy lived in the settings column and was shared across every locale. A plugin release could ship several languages of its own strings, but an operator could never give one block they placed a second language.
