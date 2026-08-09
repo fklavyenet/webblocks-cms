@@ -8,7 +8,7 @@ use Throwable;
 class PluginRuntimeRefresher
 {
   /**
-   * @return array{optimized_caches_cleared: bool, plugin_block_types: array{created: int, updated: int, unchanged: int, skipped: int}}
+   * @return array{optimized_caches_cleared: bool, plugin_block_types: array{created: int, updated: int, unchanged: int, skipped: int}, plugin_assets: array{published: int, skipped: int, plugins: int}}
    */
   public function refresh(bool $clearOptimizedCaches = false, bool $registerRoutes = false): array
   {
@@ -51,9 +51,18 @@ class PluginRuntimeRefresher
      */
     $blockTypes = app(PluginBlockTypeCatalogSyncer::class)->sync();
 
+    /*
+     * Published from the same place and for the same reason as the block catalog
+     * rows: this is the one point every install, enable, disable, setup and update
+     * passes through, so it is the only place a plugin's static files can be
+     * guaranteed to match the version that is installed.
+     */
+    $assets = app(PluginAssetPublisher::class)->publishAll(app(PluginRegistry::class)->all());
+
     return [
       'optimized_caches_cleared' => $cleared,
       'plugin_block_types' => $blockTypes,
+      'plugin_assets' => $assets,
     ];
   }
 }

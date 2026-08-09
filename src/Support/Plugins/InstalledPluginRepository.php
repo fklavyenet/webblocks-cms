@@ -155,6 +155,14 @@ class InstalledPluginRepository
       $this->assertPathInsideRoot($pluginPath, $root);
       File::deleteDirectory($pluginPath);
     }
+
+    /*
+     * The published copy lives in the document root rather than under the plugin
+     * root, so removing the package does not remove it. Left behind, the site would
+     * keep serving the scripts of a plugin that is no longer installed, from a path
+     * whose name still claims it is.
+     */
+    app(PluginAssetPublisher::class)->unpublish($handle);
   }
 
   public function replaceVersion(string $handle, string $oldVersion, string $newVersion): void

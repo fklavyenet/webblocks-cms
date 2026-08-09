@@ -26,9 +26,20 @@ class InstalledPluginDefinitionFactory
     if ($enabled && class_exists($provider) && method_exists($provider, 'definition') && $this->providerUsableForPath($provider, $path)) {
       $definition = $provider::definition();
 
-      return $definition
+      $declared = $this->publicAssets($manifest);
+
+      $definition = $definition
         ->source('manual upload')
-        ->installPath($path)
+        ->installPath($path);
+
+      // Only when the manifest declares them. A provider that built its own list in
+      // code has said something more specific, and overwriting it with an empty
+      // array would silently drop assets that used to work.
+      if ($declared !== []) {
+        $definition->publicAssets($declared);
+      }
+
+      return $definition
         /*
          * Applied to the provider's own definition too. A provider builds its
          * definition in code and has no reason to restate `requires`, which lives in
@@ -45,6 +56,7 @@ class InstalledPluginDefinitionFactory
       ->description($manifest['description'] ?? null)
       ->requiresCms($manifest['required_cms_version'] ?? null)
       ->requires($this->requirements($manifest))
+      ->publicAssets($this->publicAssets($manifest))
       ->source('manual upload')
       ->installPath($path);
 
@@ -151,6 +163,82 @@ class InstalledPluginDefinitionFactory
     $requires = $manifest['requires'] ?? null;
 
     return is_array($requires) ? $requires : [];
+  }
+
+  /**
+   * Turn the manifest's `assets` declarations into emittable tags.
+   *
+   * Each entry names a file inside the plugin's `resources/public`, which
+   * `PluginAssetPublisher` copies to `/cms/plugins/{handle}`. The plugin therefore
+   * writes a path relative to its own package and never a URL: a plugin that could
+   * write its own URL could point the tag at another origin, and every page on the
+   * site would load it.
+   *
+   * @param  array<string, mixed>  $manifest
+   * @return list<PluginPublicAsset>
+   */
+  private function publicAssets(array $manifest): array
+  {
+    $declared = $manifest['assets'] ?? null;
+
+    if (! is_array($declared)) {
+      return [];
+    }
+
+    $handle = (string) ($manifest['handle'] ?? '');
+    $version = (string) ($manifest['version'] ?? '');
+    $assets = [];
+
+    foreach ($declared as $asset) {
+      if (! is_array($asset)) {
+        continue;
+      }
+
+      $key = trim((string) ($asset['handle'] ?? ''));
+      $relative = trim((string) ($asset['path'] ?? ''), '/');
+      $type = strtolower(trim((string) ($asset['type'] ?? '')));
+      $location = strtolower(trim((string) ($asset['location'] ?? PluginPublicAsset::LOCATION_HEAD)));
+
+      /*
+       * A path is a path. `..` and a leading slash are the two ways a relative
+       * reference stops being one, and a backslash is a separator on the platform
+       * that would treat it as such.
+       */
+      if ($key === '' || $relative === '' || str_contains($relative, '..') || str_contains($relative, '\\')) {
+        continue;
+      }
+
+      /*
+       * The version is the cache-buster. Without it a plugin update ships new CSS
+       * to a browser that keeps serving the old file from disk, and the operator
+       * sees a bug that does not exist on any other machine.
+       */
+      $url = '/cms/plugins/'.$handle.'/'.$relative.($version !== '' ? '?v='.rawurlencode($version) : '');
+
+      try {
+        $built = match (true) {
+          $type === PluginPublicAsset::TYPE_CSS => PluginPublicAsset::cssHead($key, $url),
+          $location === PluginPublicAsset::LOCATION_BODY_END => PluginPublicAsset::jsBodyEnd($key, $url),
+          default => PluginPublicAsset::jsHead($key, $url),
+        };
+      } catch (PluginException) {
+        // A manifest is third-party text; a malformed asset entry is dropped rather
+        // than allowed to break the plugin screen it appears on.
+        continue;
+      }
+
+      if (! empty($asset['module'])) {
+        $built->module();
+      }
+
+      if (! empty($asset['async'])) {
+        $built->async();
+      }
+
+      $assets[] = $built;
+    }
+
+    return $assets;
   }
 
   private function migrationPaths(array $manifest): array

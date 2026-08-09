@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.57.0
+
+- **Plugins can now ship CSS and JavaScript.** `PluginPublicAsset` could always emit a `<link>` or `<script>` for an enabled plugin, and the manifest always documented an `assets` key — but nothing ever copied a plugin's files anywhere a browser could reach, so the tag pointed at a 404. The appointments plugin hit this while building its booking form and shipped a fully server-rendered flow instead; every plugin since has worked around the same hole.
+- A plugin puts what it wants served in `resources/public` and declares it under `assets` with a handle, a type, and a path. The files are copied to `public/cms/plugins/{handle}` on every install, enable, disable, setup and update, removed on uninstall, and the emitted tag carries `?v={version}` so a plugin update is never served from a stale browser cache.
+- A plugin declares a path, never a URL: one that could write its own URL could point every page on the site at another origin. Publishing is a copy rather than a symlink, because a symlinked plugin directory would expose `src/`, migrations and everything else beside the CSS through the web server.
+- Only an allowlist of extensions is published — stylesheets, scripts, images, fonts, `json` and `txt`. `.php` is refused for the obvious reason; `.html`, `.svg` and `.xml` are refused because a browser will execute script from them on the site's own origin, which is also the admin's. Symlinks and dotfiles are skipped, and the target directory is cleared before each publish so a file dropped from a release stops being served rather than lingering for ever.
+
 ## 1.56.0
 
 - **Support: report a problem or request a change without leaving the admin.** A new `Support` item in the sidebar lets any signed-in admin file a request, follow its status, and reply to the team. Requests are typed as Problem, Suggestion, or Question, and the screens are translated into all six admin languages. It is a top-level item rather than a System one on purpose: `access-system` belongs to whoever maintains the installation, and the editor who cannot get a page to publish is exactly the person with something to report.
