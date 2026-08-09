@@ -2,6 +2,15 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.59.0
+
+- **Hero and CTA buttons are ordinary blocks now.** Both forms carried Primary CTA and Secondary CTA fields, and filling them created two Button Link blocks underneath — which then appeared in the block tree, could be edited from their own form, and could be dragged somewhere else entirely. Two places owned the same button, so a button moved out of a Hero left the Hero's form still claiming it was there. The fields are gone. A Hero's buttons are the Button Link children you add to it from the block tree, the same way a Slider holds Slides, and there is no longer a second owner to disagree with.
+- Nothing has to be migrated: the buttons on existing pages were already real Button Link blocks, and they keep rendering exactly as before. What changes is where you edit them — open the button itself rather than the Hero.
+- **A button you added by hand now actually renders.** Hero and CTA looked for the link in the `url` column, but Button Link stores its link in settings and the admin form deliberately leaves that column empty. Only the two buttons the old CTA fields generated wrote both, so they worked and a button added through *Add child* silently rendered as nothing at all. Both renderers now read the link the block type actually owns.
+- **The two-button limit is lifted.** The renderers cut the list at two, so a third button could be created and saved but never appeared on the page. Hero and CTA render every published button child that has a label and a link.
+- The block picker offered `button` for a Hero child — an unpublished legacy type — while the CTA fields produced `button_link`. Adding a child by hand gave you a different block from the one the form made. Hero and CTA now accept `button_link`, with the legacy type still allowed for content that already uses it.
+- Internal Content API callers can keep sending `primary_cta` and `secondary_cta`; they remain accepted as a shorthand that writes the first two button children. Declaring the buttons as explicit `children` is the canonical form and the only way to author more than two.
+
 ## 1.58.1
 
 - **Documentation only.** No code changed in this release, and no install behaves differently after updating. The docs carry `cms_sync` frontmatter, so publishing is what gets the corrections onto the docs site.

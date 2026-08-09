@@ -191,6 +191,45 @@ class ManagedCtaApiTest extends TestCase
   }
 
   #[Test]
+  public function hero_renders_every_hand_authored_button_child(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+
+    $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+    $buttonType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
+
+    $hero = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'hero', 'block_type_id' => $heroType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published', 'title' => 'Welcome',
+    ]);
+
+    // The admin form nulls the url column for button_link and stores the link in
+    // settings, so a hand-added action carries no legacy url at all.
+    foreach ([['Get started', '/signup'], ['Docs', '/docs'], ['Pricing', '/pricing']] as $index => [$label, $url]) {
+      Block::query()->create([
+        'page_id' => $page->id, 'parent_id' => $hero->id, 'type' => 'button_link',
+        'block_type_id' => $buttonType->id, 'source_type' => 'static',
+        'slot' => $slotType->slug, 'slot_type_id' => $slotType->id, 'sort_order' => $index,
+        'status' => 'published', 'title' => $label, 'url' => null,
+        'variant' => $index === 0 ? 'primary' : 'secondary',
+        'settings' => json_encode(['url' => $url, 'target' => '_self']),
+      ]);
+    }
+
+    $html = view('webblocks-cms::pages.partials.blocks.hero', [
+      'block' => $hero->fresh(['children.blockType', 'blockType']),
+    ])->render();
+
+    // Hero is a plain container now: no two-button cap, and the action filter
+    // must read the settings url that button_link actually owns.
+    $this->assertStringContainsString('/signup', $html);
+    $this->assertStringContainsString('/docs', $html);
+    $this->assertStringContainsString('/pricing', $html);
+  }
+
+  #[Test]
   public function managed_cta_is_written_in_the_button_link_shape_its_renderer_reads(): void
   {
     $this->seedBlockTypes();

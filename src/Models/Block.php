@@ -548,7 +548,7 @@ class Block extends CmsModel
   public function allowedChildTypeSlugs(): ?array
   {
     return match ($this->typeSlug()) {
-      'hero', 'cta' => ['button'],
+      'hero', 'cta' => ['button_link', 'button'],
       'slider' => ['slide'],
       'columns' => ['column_item'],
       'feature-grid' => ['feature-item', 'column_item'],

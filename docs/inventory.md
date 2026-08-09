@@ -381,24 +381,24 @@ The current published core catalog contains 52 rows:
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`; the admin also manages up to two translated CTA labels and shared CTA URLs through managed `button` children. |
+| Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`. Action buttons are separate child `button_link` blocks with their own admin form. |
 | Settings and variants | `variant`: default, muted, soft, accent; `layout`: left or centered; `title_tag`: h1, h2, h3; optional background image and overlay settings. |
-| Children/media | Actions are authored with the `primary_cta` / `secondary_cta` fields, not by creating children; direct image `media_id` is background media. |
+| Children/media | Actions are child `button_link` blocks, with no fixed count; direct image `media_id` is background media. |
 | HTML | Root-owning `<section class="wb-card wb-promo [wb-card-*]">` containing `.wb-card-body.wb-promo-copy`, eyebrow, promo title/text, and optional `.wb-promo-actions`. |
 | Example appearance | A contained promo-card hero with background media and up to two actions. |
 | Hard limitation | No structured foreground image, split column, product-price region, trust strip, or arbitrary nested content. Do not claim fidelity to a screenshot requiring those features. |
-| Actions | Send `primary_cta` and `secondary_cta` as `{label, url}` objects (or `null` to clear). The CMS turns them into the managed `button_link` children the Page editor maintains, so the result stays editable in the admin and the actions render inside `.wb-promo-actions`. `GET /block-types` reports them under `managed_action_fields`. Do not reach for a sibling Cluster with Button Link — that renders outside the promo root. `allowed_child_handles` still lists `button`, which has no published catalog row; it is reported in `unreachable_child_handles` because free-form `button` children are unsupported by design, not missing. |
+| Actions | Add `button_link` children; they render inside `.wb-promo-actions`. `primary_cta` / `secondary_cta` `{label, url}` objects remain accepted as a shorthand that writes the first two of those children. Do not reach for a sibling Cluster with Button Link — that renders outside the promo root. `allowed_child_handles` also lists legacy `button`, which has no published catalog row and stays in `unreachable_child_handles`. |
 
 ### `cta` — CTA
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`; the admin manages up to two CTA labels/URLs through `button` children. |
+| Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`. Action buttons are separate child `button_link` blocks with their own admin form. |
 | Settings and variants | `variant`: default, muted, soft, accent; optional background image and overlay settings. CTA title renders as H2. |
-| Children/media | Actions are authored with the `primary_cta` / `secondary_cta` fields, not by creating children; direct image `media_id` is background media. |
+| Children/media | Actions are child `button_link` blocks, with no fixed count; direct image `media_id` is background media. |
 | HTML | Root-owning `<section class="wb-card wb-promo [wb-card-*]">` with `.wb-promo-copy` and optional action row. |
 | Example appearance | Short conversion band near the end of a page. |
-| Actions | Identical to Hero: send `primary_cta` / `secondary_cta` as `{label, url}` objects and the CMS maintains the managed `button_link` children. |
+| Actions | Identical to Hero: add `button_link` children, or use the `primary_cta` / `secondary_cta` shorthand. |
 | Limitation | `settings.layout=centered` is renderer-compatible but is not exposed by the normal CTA admin form and is not a recommended AI authoring field. |
 
 ### `columns` — Columns
@@ -989,7 +989,7 @@ These are implementation findings, not permissions to invent behavior:
 2. `docs/block-type-contracts.md` says 42 published core types, while the current catalog defines 51.
 3. Several existing docs still show pre-package-only renderer paths under `packages/webblocks-cms/...`; current package paths begin at `resources/views/...`.
 4. Resolved: Trusted HTML is no longer API-writable. `BlockTypeApiAuthoringPolicy` blocks every API mutation path, including generic normalization, existing-block PATCH, and the Shared Slot reorder, subtree-delete, clear-all, and publish operations.
-5. Resolved: Hero and CTA actions are authored through the API with the `primary_cta` and `secondary_cta` fields, which create the same managed `button_link` children the admin editor maintains. Free-form `button` children remain unsupported by design, so the unpublished `button` catalog row is no longer an authoring blocker.
+5. Resolved: Hero and CTA are plain containers for `button_link` children in both the admin and the API. The `primary_cta` / `secondary_cta` fields survive as a two-button shorthand. The unpublished legacy `button` catalog row is no longer an authoring blocker.
 6. Resolved: the Column Item editor now exposes the subtitle field that the Columns `stats` variant renders as the stat value.
 7. Audio has a normal admin media picker and public media renderer, but the content-plan direct-media allowlist omits Audio.
 8. Resolved: icon normalization has one owner. `InternalContentApiOperations` holds the canonical `PUBLIC_ICON_BLOCK_TYPES` list plus the shared slug/tone normalizers, and the full content plan delegates to them, so plans and incremental block endpoints validate icons identically.

@@ -7,12 +7,13 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 
 /**
- * Shared owner of Hero/CTA managed call-to-action buttons.
+ * Internal Content API shorthand for Hero/CTA action buttons.
  *
- * Hero and CTA do not accept free-form button children: their actions are
- * "managed" child button blocks derived from primary/secondary CTA fields. The
- * admin editor and the Internal Content API both go through this class so a
- * CTA created by an AI tool stays editable in the normal block editor.
+ * Hero and CTA are ordinary containers: their buttons are plain `button_link`
+ * children that authors add and edit in the block tree. API callers may still
+ * send primary_cta/secondary_cta objects instead of declaring those children
+ * explicitly, and this class writes the first two button children for them so
+ * the result is indistinguishable from hand-authored blocks.
  */
 class ManagedCtaSynchronizer
 {

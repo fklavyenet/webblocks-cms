@@ -347,17 +347,17 @@ The block owns its root `<header>`. It always renders the title as `<h1>`. It is
 | variant | default/other | Uses `wb-card wb-promo` without muted/accent modifier. |
 | settings.layout | centered | Adds `wb-text-center` to `.wb-promo-copy`. |
 | settings.title_tag | h1/h2/h3 | Hero allows `h1`, `h2`, or `h3`; CTA renders its title as `h2`. |
-| child button blocks | published with label and URL | Renders up to two managed `.wb-btn` actions through `_actions`. |
+| child button blocks | published with label and URL | Renders every `button_link` (or legacy `button`) child as a `.wb-btn` action through `_actions`. |
 
 ### Use for / Avoid for
 
-Use for: top-of-page marketing introductions with managed CTA buttons.
+Use for: top-of-page marketing introductions with call-to-action buttons.
 
 Avoid for: general section grouping or arbitrary nested content.
 
 ### Notes
 
-The block owns its root promo `<section>`. It accepts only `button` child blocks for managed actions, and renders at most two published children with URL and label. `settings.title_tag` may change the heading element to `h1`, `h2`, or `h3`.
+The block owns its root promo `<section>`. It accepts `button_link` child blocks (legacy `button` still renders) with no fixed count, and renders every published child that has both a label and a URL. `settings.title_tag` may change the heading element to `h1`, `h2`, or `h3`.
 
 ## CTA (`cta`)
 
@@ -393,7 +393,7 @@ The block owns its root promo `<section>`. It accepts only `button` child blocks
 | variant | default/other | Uses `wb-card wb-promo` without muted/accent modifier. |
 | settings.layout | centered | Adds `wb-text-center` to `.wb-promo-copy`. |
 | settings.title_tag | h2 fixed in renderer | Hero allows `h1`, `h2`, or `h3`; CTA renders its title as `h2`. |
-| child button blocks | published with label and URL | Renders up to two managed `.wb-btn` actions through `_actions`. |
+| child button blocks | published with label and URL | Renders every `button_link` (or legacy `button`) child as a `.wb-btn` action through `_actions`. |
 
 ### Use for / Avoid for
 
@@ -403,7 +403,7 @@ Avoid for: full page intros; use Hero or Content Header.
 
 ### Notes
 
-The block owns its root promo `<section>`. It accepts only `button` child blocks for managed actions, and renders at most two published children with URL and label.
+The block owns its root promo `<section>`. It accepts `button_link` child blocks (legacy `button` still renders) with no fixed count, and renders every published child that has both a label and a URL.
 
 ## Card (`card`)
 

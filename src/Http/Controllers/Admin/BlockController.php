@@ -23,7 +23,6 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
-use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -45,7 +44,6 @@ class BlockController extends Controller
     private readonly SharedSlotRevisionManager $sharedSlotRevisionManager,
     private readonly AdminAuthorization $authorization,
     private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
-    private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
   ) {}
 
   public function moveUp(Block $block): RedirectResponse
@@ -191,18 +189,16 @@ class BlockController extends Controller
     $columnItems = $this->builderChildItemsFrom($request, 'column_items', true);
     $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
     $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
-    $managedCtas = $this->managedCtasFrom($request);
     $sharedSlot = $this->sharedSlotContext($request, null, (int) $data['page_id']);
     $page = $this->editablePageFromRequest($request, $sharedSlot, (int) $data['page_id']);
     $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $page);
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-    $block = DB::transaction(function () use ($page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode, $sharedSlot) {
+    $block = DB::transaction(function () use ($page, $columnItems, $featureItems, $linkListItems, $data, $localeCode, $sharedSlot) {
       $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
       $this->syncColumnItems($block, $columnItems, $localeCode);
       $this->syncFeatureItems($block, $featureItems, $localeCode);
       $this->syncLinkListItems($block, $linkListItems, $localeCode);
-      $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
       if ($sharedSlot) {
         $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
@@ -335,18 +331,16 @@ class BlockController extends Controller
     $columnItems = $this->builderChildItemsFrom($request, 'column_items', true);
     $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
     $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
-    $managedCtas = $this->managedCtasFrom($request);
     $sharedSlot = $this->sharedSlotContext($request, $contextSharedSlot, (int) $data['page_id']);
     $page = $this->editablePageFromRequest($request, $sharedSlot, (int) $data['page_id']);
     $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $page);
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-    DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode, $sharedSlot): void {
+    DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $data, $localeCode, $sharedSlot): void {
       $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
       $this->syncColumnItems($block, $columnItems, $localeCode);
       $this->syncFeatureItems($block, $featureItems, $localeCode);
       $this->syncLinkListItems($block, $linkListItems, $localeCode);
-      $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
       if ($sharedSlot) {
         $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
@@ -748,35 +742,6 @@ class BlockController extends Controller
       ->all();
   }
 
-  private function managedCtasFrom(Request $request): array
-  {
-    $localeCode = Locale::normalizeCode(trim((string) $request->input('locale', '')));
-    $isTranslatedLocaleEdit = $localeCode !== null;
-
-    return collect([
-      [
-        'key' => 'primary',
-        'label' => $request->input('primary_cta_label'),
-        'url' => $request->input('primary_cta_url'),
-        'variant' => 'primary',
-      ],
-      [
-        'key' => 'secondary',
-        'label' => $request->input('secondary_cta_label'),
-        'url' => $request->input('secondary_cta_url'),
-        'variant' => 'secondary',
-      ],
-    ])->map(function (array $cta, int $index) use ($isTranslatedLocaleEdit): array {
-      return [
-        'key' => $cta['key'],
-        'label' => trim((string) ($cta['label'] ?? '')) ?: null,
-        'url' => $isTranslatedLocaleEdit ? null : (trim((string) ($cta['url'] ?? '')) ?: null),
-        'variant' => $cta['variant'],
-        'sort_order' => $index,
-      ];
-    })->all();
-  }
-
   private function syncFeatureItems(Block $block, array $featureItems, ?string $localeCode = null): void
   {
     if (! $block->isFeatureGrid()) {
@@ -975,11 +940,6 @@ class BlockController extends Controller
     }
 
     $staleItems->delete();
-  }
-
-  private function syncManagedCtas(Block $block, array $managedCtas, ?string $localeCode = null): void
-  {
-    $this->managedCtaSynchronizer->sync($block, $managedCtas, $localeCode);
   }
 
   private function pageSlotRouteId(?int $pageId, ?int $slotTypeId): ?int

@@ -16,10 +16,11 @@
     $ctaClasses[] = $backgroundClass;
   }
 
+  // `button_link` keeps its link in settings while the legacy `button` type uses
+  // the url column, so an action needs whichever of the two its type owns.
   $actionBlocks = $block->children
     ->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link'], true))
-    ->filter(fn ($child) => filled($child->url) && filled($child->title))
-    ->take(2)
+    ->filter(fn ($child) => filled($child->buttonLinkUrl() ?: $child->url) && filled($child->title))
     ->values();
 @endphp
 
