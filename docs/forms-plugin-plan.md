@@ -62,11 +62,11 @@ Two gaps recorded as open in the appointments plan were still open when this was
 
 **0.4 Plugin blocks cannot own translatable fields.** Still open. `BlockTranslationRegistry::familyFor()` is a fixed `match` over core slugs — `contact_form` is in it, a plugin handle cannot be. This plugin is less affected than appointments was, because the workaround is the right design anyway: visitor-facing copy belongs to the *form*, not to the block that places it, so it lives in plugin-owned per-locale rows and never needs a block translation family. Core work here would be a convenience, not a dependency.
 
-**0.6 Plugin static assets are declarable but not servable.** Still open. `PluginPublicAsset` emits the tag, the manifest documents an `assets` key, and `InstalledPluginDefinitionFactory` never parses it — so a plugin cannot ship CSS or JavaScript and the emitted tag would 404.
+**0.6 Plugin static assets are declarable but not servable.** *(Closed in CMS 1.57.0.)* `PluginPublicAsset` emitted the tag, the manifest documented an `assets` key, and `InstalledPluginDefinitionFactory` never parsed it — so a plugin could not ship CSS or JavaScript and the emitted tag would 404. `PluginAssetPublisher` now copies a plugin's `resources/public` into the document root on every lifecycle change.
 
 This is a real constraint on the product, and the honest response is to design around it rather than plan features that need it. Conditional field visibility and multi-step forms are therefore **server-rendered**: a step is a GET/POST round trip and a conditional branch is evaluated on the server between steps, exactly as the appointments booking flow walks its steps. This costs a page load per step and gains something worth having — the form works with JavaScript off, each step is a shareable URL, and there is no client-side validation to drift out of sync with the server's. If 0.6 lands later, a progressive enhancement can collapse the round trip without changing the server contract.
 
-Conditional visibility *within* a single step is the one feature genuinely deferred by this constraint, and it is out of scope for v1.
+Conditional visibility *within* a single step was the one feature genuinely deferred by this constraint. With 1.57.0 it is now buildable — and the server-rendered design stands unchanged underneath it, which is the point of having designed around the gap rather than waiting for it: everything shipped keeps working with JavaScript off, and an enhancement is an addition rather than a rewrite.
 
 ## Plugin Identity And Conventions
 
@@ -265,7 +265,7 @@ A form builder collects whatever the site owner asks for, which means it collect
 
 **The per-form throttle is deferred and not shipped.** What exists is narrower than the plan implies and worth stating precisely: the submit limiter is *keyed* per IP and form, so a visitor rate-limited on one form can still use another on the same page, but the limit *value* is install-wide in `config/webblocks-forms.php`. Making it per-form means a form lookup inside the rate limiter on every submit, which is a cost worth deciding on deliberately rather than adding to close a milestone.
 
-**Later** — A Campaigns action. Within-step conditional visibility, once core gap 0.6 makes a progressive enhancement possible. Commerce and Appointments actions were investigated and dropped; see [Plugin-To-Plugin Actions](#plugin-to-plugin-actions).
+**Later** — Within-step conditional visibility, now unblocked by CMS 1.57.0. *(The Campaigns action shipped in plugin `0.4.0`; the per-form throttle in `0.5.0`.)* Commerce and Appointments actions were investigated and dropped; see [Plugin-To-Plugin Actions](#plugin-to-plugin-actions).
 
 ## Out Of Scope For v1
 
