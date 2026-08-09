@@ -47,6 +47,7 @@ class BlockTranslationResolver
 
     if ($family) {
       [$translation, $state, $resolvedLocale] = match ($family) {
+        BlockTranslationRegistry::PLUGIN_FAMILY => $this->resolvePluginTranslation($resolved, $requestedLocale, $defaultLocale),
         'text' => $this->resolveLoadedTranslation($resolved, 'textTranslations', $requestedLocale, $defaultLocale),
         'button' => $this->resolveLoadedTranslation($resolved, 'buttonTranslations', $requestedLocale, $defaultLocale),
         'image' => $this->resolveLoadedTranslation($resolved, 'imageTranslations', $requestedLocale, $defaultLocale),
@@ -90,6 +91,7 @@ class BlockTranslationResolver
 
     if ($family) {
       [, $state, $resolvedLocale] = match ($family) {
+        BlockTranslationRegistry::PLUGIN_FAMILY => $this->resolvePluginTranslation($block, $requestedLocale, $defaultLocale),
         'text' => $this->resolveLoadedTranslation($block, 'textTranslations', $requestedLocale, $defaultLocale),
         'button' => $this->resolveLoadedTranslation($block, 'buttonTranslations', $requestedLocale, $defaultLocale),
         'image' => $this->resolveLoadedTranslation($block, 'imageTranslations', $requestedLocale, $defaultLocale),
@@ -132,9 +134,85 @@ class BlockTranslationResolver
     return [null, 'missing', $defaultLocale];
   }
 
+  /**
+   * The plugin family's rows for a locale, with the same fallback the others get.
+   *
+   * Returned as a field/value map rather than a model, because a plugin block's copy
+   * is several rows sharing a locale where every other family is one row. A locale
+   * with any row at all counts as translated: a plugin declaring five fields where
+   * the operator filled two has still been translated, and calling that `missing`
+   * would report work that was done as work that was not.
+   *
+   * @return array{0: array<string, string|null>|null, 1: string, 2: Locale}
+   */
+  private function resolvePluginTranslation(Block $block, Locale $requestedLocale, Locale $defaultLocale): array
+  {
+    $rows = $block->relationLoaded('pluginTranslations')
+      ? $block->getRelation('pluginTranslations')
+      : $block->pluginTranslations()->get();
+
+    $forLocale = static fn (int $localeId): array => $rows
+      ->where('locale_id', $localeId)
+      ->pluck('value', 'field')
+      ->all();
+
+    $requested = $forLocale($requestedLocale->id);
+
+    if ($requested !== []) {
+      return [$requested, 'translated', $requestedLocale];
+    }
+
+    $fallback = $forLocale($defaultLocale->id);
+
+    if ($fallback !== []) {
+      return [
+        $fallback,
+        $requestedLocale->id === $defaultLocale->id ? 'translated' : 'fallback',
+        $defaultLocale,
+      ];
+    }
+
+    return [null, 'missing', $requestedLocale];
+  }
+
+  /**
+   * Overlay translated copy onto the block's settings.
+   *
+   * A plugin block reads its copy through `$block->setting()`, which decodes the
+   * settings column — so a translation has to arrive there rather than on a block
+   * attribute. Only fields with a value are overlaid: a blank translation means the
+   * operator has not written that one yet, and blanking the default would show a
+   * visitor an empty heading rather than the original.
+   *
+   * @param  array<string, string|null>|null  $translation
+   */
+  private function applyResolvedPluginFields(Block $block, mixed $translation): void
+  {
+    if (! is_array($translation)) {
+      return;
+    }
+
+    $settings = $block->decodedSettings();
+    $settings = is_array($settings) ? $settings : [];
+
+    foreach ($translation as $field => $value) {
+      if ($value !== null && $value !== '') {
+        $settings[$field] = $value;
+      }
+    }
+
+    $block->setAttribute('settings', $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES));
+  }
+
   private function applyResolvedFields(Block $block, string $family, mixed $translation): void
   {
     if (! $translation) {
+      return;
+    }
+
+    if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
+      $this->applyResolvedPluginFields($block, $translation);
+
       return;
     }
 

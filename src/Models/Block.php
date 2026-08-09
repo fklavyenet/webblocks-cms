@@ -175,6 +175,11 @@ class Block extends CmsModel
     return $this->hasMany(BlockContactFormTranslation::class);
   }
 
+  public function pluginTranslations(): HasMany
+  {
+    return $this->hasMany(BlockPluginTranslation::class);
+  }
+
   public function galleryItemTranslations(): HasManyThrough
   {
     return $this->hasManyThrough(

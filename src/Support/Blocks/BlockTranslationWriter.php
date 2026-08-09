@@ -24,6 +24,25 @@ class BlockTranslationWriter
       return $data;
     }
 
+    if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
+      /*
+       * The same rule Contact Form follows below: once a field is translated the
+       * translation is authoritative, and the settings column must not keep a second
+       * copy that nothing reads and nothing updates.
+       */
+      $settings = $this->decodeSettings($data['settings'] ?? null);
+
+      foreach ($this->registry->translatedFieldsFor($blockTypeSlug) as $field) {
+        unset($settings[$field]);
+      }
+
+      $data['settings'] = $settings === []
+        ? null
+        : json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+      return $data;
+    }
+
     if ($family === 'contact_form') {
       $settings = $this->decodeSettings($data['settings'] ?? null);
 
@@ -84,6 +103,18 @@ class BlockTranslationWriter
 
     $updates = array_fill_keys($this->canonicalBlockFieldsForFamily($family), null);
 
+    if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
+      $settings = $this->decodeSettings($block->getRawOriginal('settings'));
+
+      foreach ($this->registry->translatedFieldsFor($block) as $field) {
+        unset($settings[$field]);
+      }
+
+      $updates['settings'] = $settings === []
+        ? null
+        : json_encode($settings, JSON_UNESCAPED_SLASHES);
+    }
+
     if ($family === 'contact_form') {
       $settings = $this->decodeSettings($block->getRawOriginal('settings'));
 
@@ -99,14 +130,22 @@ class BlockTranslationWriter
 
   private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId, ?Block $translationSourceBlock = null): void
   {
+    $translationSourceBlock ??= $block;
+
+    if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
+      if (! $block->pluginTranslations()->where('locale_id', $defaultLocaleId)->exists()) {
+        $this->writeTranslation($block, $family, $defaultLocaleId, $this->pluginTranslationPayload([], $translationSourceBlock, $defaultLocaleId));
+      }
+
+      return;
+    }
+
     $relation = match ($family) {
       'text' => $block->textTranslations(),
       'button' => $block->buttonTranslations(),
       'image' => $block->imageTranslations(),
       'contact_form' => $block->contactFormTranslations(),
     };
-
-    $translationSourceBlock ??= $block;
 
     if ($relation->where('locale_id', $defaultLocaleId)->exists()) {
       return;
@@ -139,6 +178,21 @@ class BlockTranslationWriter
 
   private function writeTranslation(Block $block, string $family, int $localeId, array $payload): void
   {
+    if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
+      /*
+       * A row per field rather than a row per locale, which is what lets a plugin
+       * name fields core has never seen. The other families upsert once.
+       */
+      foreach ($payload as $field => $value) {
+        $block->pluginTranslations()->updateOrCreate(
+          ['locale_id' => $localeId, 'field' => $field],
+          ['value' => $value],
+        );
+      }
+
+      return;
+    }
+
     match ($family) {
       'text' => $block->textTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
       'button' => $block->buttonTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
@@ -149,6 +203,10 @@ class BlockTranslationWriter
 
   private function translationPayload(string $family, array $data, Block $block, int $localeId): array
   {
+    if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
+      return $this->pluginTranslationPayload($data, $block, $localeId);
+    }
+
     return match ($family) {
       'text' => [
         'title' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'title', $block->getRawOriginal('title')),
@@ -273,6 +331,45 @@ class BlockTranslationWriter
     }
 
     return trim(strip_tags($value)) !== '' ? $value : null;
+  }
+
+  /**
+   * The translated values for one plugin block, in one locale.
+   *
+   * Read from `plugin_settings`, the only name core accepts plugin block copy under
+   * — a plugin block posting `settings` fails validation — so this cannot be fed
+   * from anywhere else. A field absent from the request keeps whatever is already
+   * stored for that locale, which is what lets saving one locale leave the rest
+   * alone.
+   *
+   * @param  array<string, mixed>  $data
+   * @return array<string, string|null>
+   */
+  private function pluginTranslationPayload(array $data, Block $block, int $localeId): array
+  {
+    $posted = $data['plugin_settings'] ?? null;
+    $posted = is_array($posted) ? $posted : [];
+    $stored = $this->decodeSettings($block->getRawOriginal('settings'));
+    $payload = [];
+
+    foreach ($this->registry->translatedFieldsFor($block) as $field) {
+      if (array_key_exists($field, $posted)) {
+        $value = $posted[$field];
+      } else {
+        $existing = $block->pluginTranslations()
+          ->where('locale_id', $localeId)
+          ->where('field', $field)
+          ->value('value');
+
+        // The settings column is the last resort, and only reachable for a block
+        // saved before its plugin declared the field translatable.
+        $value = $existing ?? ($stored[$field] ?? null);
+      }
+
+      $payload[$field] = is_scalar($value) && (string) $value !== '' ? (string) $value : null;
+    }
+
+    return $payload;
   }
 
   private function canonicalBlockFieldsForFamily(string $family): array

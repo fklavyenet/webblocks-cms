@@ -16,6 +16,9 @@ class PluginBlockTypeDefinition implements PluginBlockExtension
 
   private ?string $publicView = null;
 
+  /** @var list<string> */
+  private array $translatedFields = [];
+
   /**
    * @param  array<string, mixed>  $metadata
    */
@@ -117,6 +120,51 @@ class PluginBlockTypeDefinition implements PluginBlockExtension
   /**
    * @param  array<string, mixed>  $metadata
    */
+  /**
+   * The fields on this block whose copy is translated per locale.
+   *
+   * Declaring any turns the block into a translatable one: core stores each named
+   * field per locale instead of leaving it in the block's settings column, and the
+   * per-locale editor shows them. Names are the plugin's own — they are stored as
+   * data, not as columns, which is what lets a package core has never seen name its
+   * own copy.
+   *
+   * Fields not named here stay in settings and are shared across locales, which is
+   * the right home for an operational choice such as a recipient address.
+   *
+   * @param  list<string>  $fields
+   */
+  public function translatedFields(array $fields): self
+  {
+    $clean = [];
+
+    foreach ($fields as $field) {
+      $field = is_string($field) ? trim($field) : '';
+
+      /*
+       * A field name becomes a database key, a form input name and part of a public
+       * contract, so it is restricted to something that survives all three. A
+       * malformed one is dropped rather than rejected: a bad entry in a third-party
+       * manifest must not stop the plugin loading.
+       */
+      if (preg_match('/^[a-z][a-z0-9_]{0,99}$/', $field) === 1 && ! in_array($field, $clean, true)) {
+        $clean[] = $field;
+      }
+    }
+
+    $this->translatedFields = $clean;
+
+    return $this;
+  }
+
+  /**
+   * @return list<string>
+   */
+  public function translatedFieldNames(): array
+  {
+    return $this->translatedFields;
+  }
+
   public function metadata(array $metadata): self
   {
     $this->metadata = $metadata;

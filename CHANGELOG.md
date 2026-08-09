@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.58.0
+
+- **Plugin blocks can own translated copy.** `BlockTranslationRegistry` was a fixed `match` over core slugs, so a block declared by a plugin had no translation family and no field map: its copy lived in the settings column and was shared across every locale. A plugin release could ship several languages of its own strings, but an operator could never give one block they placed a second language.
+- A plugin block type now declares `translatedFields([...])`, and core stores each named field per locale. Fields it does not name stay in settings and stay shared, which is the right home for an operational choice such as a recipient address — declaring is what opts a block in, so nothing acquires per-locale storage by accident.
+- Every other family is a table of fixed columns, because core knows the fields before the migration is written. A plugin's are declared at install time by a package core has never seen, so the plugin family is rows: one per block, locale and field name. That gives up the type safety of a column and buys the only thing that matters here — a plugin naming its own copy without core shipping a release first.
+- Translations are authoritative once a field is declared, the same rule Contact Form already follows: the settings column stops carrying a second copy that nothing reads and nothing updates. A locale with any row counts as translated, because a plugin declaring five fields where the operator filled two has still been translated. A blank translation falls back rather than blanking the original, so an unfinished locale shows the default heading rather than an empty one.
+- A disabled plugin's block reports no family. It contributes nothing anywhere else either, and writes would otherwise go to storage nothing could read back, since the field list that gives those rows meaning is gone with it.
+
 ## 1.57.0
 
 - **Plugins can now ship CSS and JavaScript.** `PluginPublicAsset` could always emit a `<link>` or `<script>` for an enabled plugin, and the manifest always documented an `assets` key — but nothing ever copied a plugin's files anywhere a browser could reach, so the tag pointed at a 404. The appointments plugin hit this while building its booking form and shipped a fully server-rendered flow instead; every plugin since has worked around the same hole.
