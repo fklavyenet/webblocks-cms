@@ -38,7 +38,22 @@ foreach ($markdownFiles as $file) {
     $errors[] = 'Private workspace path in '.str_replace($root.'/', '', $path);
   }
 
-  preg_match_all('/\[[^\]]*\]\(([^)]+)\)/', $contents, $matches);
+  /*
+   * Links inside a fenced code block are examples, not references.
+   *
+   * The private-path check above deliberately still reads the whole file — a
+   * `/Users/...` path is a leak whether or not it is in an example — but a document
+   * that shows what a page looks like will contain link syntax pointing at things
+   * that do not exist, and flagging those means either a permanently red check or a
+   * correct document mangled to satisfy it. Both are worse than not looking.
+   *
+   * `docs/user-guides-plan.md` is the case that surfaced this: a plan describing the
+   * shape of a user guide, with a `![...](screenshot)` placeholder and a site-path
+   * link inside a ```markdown block.
+   */
+  $prose = preg_replace('/^```.*?^```/ms', '', $contents) ?? $contents;
+
+  preg_match_all('/\[[^\]]*\]\(([^)]+)\)/', $prose, $matches);
 
   foreach ($matches[1] as $target) {
     $target = preg_replace('/#.*$/', '', trim($target, '<>'));

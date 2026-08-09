@@ -38,4 +38,22 @@ else
     echo "pre-push: no test runner installed, skipping"
 fi
 
+# --- repo-local gate, not part of the shared template ---
+#
+# The header above says this file is copied verbatim from
+# standards/templates/pre-push. This block is not: it is a CMS-specific check, and
+# whoever re-syncs the template needs to re-add it or decide it belongs upstream.
+#
+# It exists because the local gates and CI had drifted apart. CI runs a
+# documentation job that this hook did not, so a broken docs link passed every
+# push and turned the pipeline red for a run nobody was looking at — for ten
+# commits and three published releases, in the case that prompted this.
+#
+# A pre-push hook that is narrower than CI is worse than no hook: it produces
+# confidence rather than safety.
+if [ -f tests/Support/check-docs.php ]; then
+    echo "pre-push: check-docs"
+    php tests/Support/check-docs.php
+fi
+
 echo "pre-push: all gates passed"
