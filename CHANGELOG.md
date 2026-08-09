@@ -2,6 +2,19 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.56.0
+
+- **Support: report a problem or request a change without leaving the admin.** A new `Support` item in the sidebar lets any signed-in admin file a request, follow its status, and reply to the team. Requests are typed as Problem, Suggestion, or Question, and the screens are translated into all six admin languages. It is a top-level item rather than a System one on purpose: `access-system` belongs to whoever maintains the installation, and the editor who cannot get a page to publish is exactly the person with something to report.
+- Requests are filed on WebBlocks Workbench, the shared tracker behind every product in the fleet, through a server-to-server call. Nobody needs a second account, and the CMS sends only an opaque reference and a display name — no email address leaves the installation.
+- **Each installation holds its own token** (`WORKBENCH_TICKET_TOKEN`, issued per install and pinned to the WebBlocks CMS project). That is what makes Workbench's per-token monthly quota bound one site's reporting without touching anyone else's.
+- **Installs are told apart by an id the CMS generates, not by the token.** The CMS is installed independently on many sites, so local user ids restart at 1 everywhere; a bare id would have put every install's "user 1" in one bucket, and the ticket list is keyed on exactly that. `WebBlocks\Cms\Support\Tickets\InstallId` writes a random id once and folds it into the reporter reference, and sends it as `install_ref` so Workbench enforces the same boundary server-side (Workbench 0.1.89). It is a random UUID rather than a hash of `APP_KEY` or the site URL, so a key rotation or a domain change cannot silently re-identify the install and detach every reporter from their own history.
+- Tickets also carry the running version, the site URL and the environment. None of it can be backfilled once a ticket exists, and without a version a report cannot be answered.
+- The screens degrade quietly: an installation with no token says so in plain language, an unreachable tracker explains itself instead of failing, and a request that could not be sent is handed back with its text still in the form.
+
+### Fixed
+
+- Two Turkish admin strings sat under the wrong parent: `page_layouts.system` and `page_layouts.custom` where English carries `shared_slots.system` and `shared_slots.custom`. The Shared Slots screen fell back to English for both labels while the Page Layouts screen carried two keys nothing rendered.
+
 ## 1.55.0
 
 - **Every page can say something different in a listing.** When a Page List block shows a page, it used to describe it with that page's SEO description — a sentence written for Google and social cards. If you wanted the card to read differently, your only option was to spoil the version search engines use. Each page translation now has its own **List description** under a new *Listing* heading on the page's language screen: one sentence, shown under the title on a listing card. Leave it blank and nothing changes — the SEO description is still used, shortened, exactly as before.
