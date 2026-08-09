@@ -24,14 +24,28 @@ use WebBlocks\Cms\Tests\TestCase;
  */
 class WorkbenchSupportServiceTest extends TestCase
 {
+  private string $storage;
+
   protected function setUp(): void
   {
     parent::setUp();
 
-    File::delete(storage_path('app/webblocks-cms/support-install-id'));
+    // The install id is a file, and the shared testbench storage path is not
+    // this test's to delete from: a concurrent run of the suite would race it.
+    // Each test gets its own storage tree instead.
+    $this->storage = sys_get_temp_dir().'/webblocks-cms-support-'.bin2hex(random_bytes(8));
+    File::ensureDirectoryExists($this->storage);
+    $this->app->useStoragePath($this->storage);
 
     config()->set('webblocks-cms.workbench.url', 'https://workbench.test');
     config()->set('webblocks-cms.workbench.ticket_token', 'wbapi_test-token');
+  }
+
+  protected function tearDown(): void
+  {
+    File::deleteDirectory($this->storage);
+
+    parent::tearDown();
   }
 
   private function service(): WorkbenchSupportService
