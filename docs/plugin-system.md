@@ -183,7 +183,10 @@ PluginDefinition::make('webblocks-ui-manager')
   ])
   ->blockTypes([
     PluginBlockTypeDefinition::make('webblocks-ui-manager::release-card')
-      ->label('Release Card'),
+      ->label('Release Card')
+      // Optional: the fields whose copy is stored per locale. Declaring none keeps
+      // the block's copy shared across locales, which is the default and usually right.
+      ->translatedFields(['title']),
   ])
   ->publicAssets([
     PluginPublicAsset::cssHead('webblocks-ui-manager.public-css', '/cms/plugins/webblocks-ui-manager/public.css'),
@@ -225,6 +228,32 @@ A plugin block type may declare the views it renders through, using `adminView()
 Without a declaration the previous convention still applies: installed plugin view paths are appended to the CMS view namespace, and a plugin block's catalog slug is its handle with `::` replaced by `-`, so `appointments::form` resolves `webblocks-cms::pages.partials.blocks.appointments-form` when the plugin mirrors the CMS directory layout. Declaring the view is preferred, because it does not require the plugin to guess a core directory structure it does not own. A declared view that does not resolve falls back to the convention and then to the standard missing-renderer fallback, so a bad declaration degrades rather than throwing during a page render.
 
 Only enabled plugins contribute block views, and core block slugs are never affected by the lookup.
+
+## Plugin Block Translated Copy
+
+A plugin block type declares which of its fields are translated with `translatedFields([...])` on the block type definition:
+
+```php
+PluginBlockTypeDefinition::make('webblocks-appointments::form')
+  ->label('Appointment Form')
+  ->translatedFields(['title', 'intro', 'submit_label']),
+```
+
+**Declaring is what opts a block in.** A block that declares nothing keeps its copy in the settings column, shared across every locale, exactly as before — which is what most plugin blocks want, and means nothing acquires per-locale storage by accident. Fields left undeclared also stay shared, which is the right home for an operational choice: a recipient address or a service id means the same thing in every language, and giving it per-locale rows would invite an operator to set two values that must not differ.
+
+Names are the plugin's own and are stored as data, not as columns. Every core translation family — `text`, `button`, `image`, `contact_form` — is a table of fixed columns, which works because core knows the fields before the migration is written. A plugin's block is declared at install time by a package core has never seen, so the plugin family is rows in `wbcms_block_plugin_translations`: one per block, locale and field. That gives up the type safety a column has and buys the only thing that matters here.
+
+A name must match `[a-z][a-z0-9_]{0,99}` — it becomes a database key, a form input name, and part of a public contract. A malformed entry is dropped rather than rejected, because refusing would stop the whole plugin loading over a typo in one field name.
+
+Three consequences are worth knowing before adopting it:
+
+- **Translations become authoritative.** Once a field is declared, core stops keeping a copy in the settings column, the same rule Contact Form already follows. A second record of the same fact is one that rots.
+- **Existing blocks migrate on next write.** Core strips a declared field from settings only when the block is next saved, so pages placed before a plugin declared the field keep rendering their current copy until an operator edits them — at which point it moves into the default locale rather than being lost.
+- **A locale with any row counts as translated.** A plugin declaring five fields where the operator filled two has still been translated; a blank field falls back rather than blanking the default, so an unfinished locale shows the original wording rather than an empty heading.
+
+A disabled plugin's block reports no family at all. It contributes nothing anywhere else either, and writes would otherwise land in storage nothing could read back, since the field list that gives those rows meaning is gone with it.
+
+Adoption is not obligatory and should not be automatic. It belongs on a block whose copy an operator writes per placement; a block whose only setting is a reference to something else has nothing to translate, and declaring fields on it would imply an editing model the plugin does not have.
 
 ## Plugin Block Type Catalog Rows
 
