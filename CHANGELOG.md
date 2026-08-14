@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.61.1
+
+- Fix the System Plugins index and detail screens returning HTTP 500. The plugin requirements integration called a nonexistent `PluginRegistry::find()` method; it now uses the registry's canonical `get()` lookup and is covered through the same registry path used by the admin screens.
+
 ## 1.61.0
 
 - Navbar Navigation now renders the active catalog icon configured on each navigation item in both the desktop navigation and mobile drawer. The visible label remains beside the icon by default, preserving ordinary navigation semantics and giving plugin-owned progressive enhancements a stable icon-and-label anatomy to adapt into a header utility.

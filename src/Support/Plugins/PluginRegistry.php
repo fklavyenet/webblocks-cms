@@ -124,7 +124,7 @@ class PluginRegistry
    */
   public function unmetRequirements(string $handle): array
   {
-    $plugin = $this->find($handle);
+    $plugin = $this->get($handle);
 
     if ($plugin === null) {
       return [];

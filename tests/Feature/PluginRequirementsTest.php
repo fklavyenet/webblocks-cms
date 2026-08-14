@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRequirements;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -150,6 +151,24 @@ class PluginRequirementsTest extends TestCase
     $payload = $this->plugin(['php' => '>=8.3'])->toArray(true);
 
     $this->assertSame(['php' => '>=8.3'], $payload['requires']);
+  }
+
+  public function test_the_registry_can_report_requirements_for_a_registered_plugin(): void
+  {
+    /*
+     * The admin plugin screens obtain this value through PluginRegistry rather
+     * than calling PluginRequirements directly. Keep that integration covered:
+     * a stale call to a nonexistent registry lookup method took every plugin
+     * screen down before it could render.
+     */
+    $registry = new PluginRegistry;
+    $registry->register($this->plugin(['webblocks-campaigns' => '^0.7']));
+
+    $problems = $registry->unmetRequirements('webblocks-forms');
+
+    $this->assertCount(1, $problems);
+    $this->assertStringContainsString('webblocks-campaigns', $problems[0]);
+    $this->assertSame([], $registry->unmetRequirements('not-installed'));
   }
 
   /**
