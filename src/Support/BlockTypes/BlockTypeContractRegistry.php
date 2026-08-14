@@ -822,7 +822,7 @@ class BlockTypeContractRegistry
         'storage_fields' => ['Shared menu binding and shared ARIA label are stored on canonical block fields or settings.'],
         'media_relationship_fields' => ['Navigation structure is resolved from shared NavigationItem rows.'],
         'child_container_behavior' => ['Not a container in the current contract. Intended to live somewhere inside a Navbar tree.'],
-        'renderer_root_contract' => 'Owns the inner navbar-navigation wrapper only and maps active indicator settings to WebBlocks UI navbar active classes.',
+        'renderer_root_contract' => 'Owns the inner navbar-navigation wrapper, renders configured active catalog icons with their visible labels, and maps active indicator settings to WebBlocks UI navbar active classes.',
         'current_contract_status' => 'clear',
         'known_gaps' => [],
       ],

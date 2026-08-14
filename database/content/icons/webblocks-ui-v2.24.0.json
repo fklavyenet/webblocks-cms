@@ -2696,13 +2696,16 @@
       "commerce"
     ],
     "contexts": [
-      "commerce"
+      "commerce",
+      "navigation"
     ],
     "keywords": [
       "shopping",
       "cart",
       "commerce",
-      "billing"
+      "billing",
+      "basket",
+      "checkout"
     ]
   },
   {

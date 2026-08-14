@@ -90,8 +90,20 @@
     };
   };
   $drawerId = 'wb-navbar-drawer-'.$block->id;
+  $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
+  $renderItemContent = function ($item) use ($iconPresenter): string {
+    $title = e($item->resolvedTitle());
+    $iconClass = $iconPresenter->iconClass($item->sidebarIcon());
 
-  $renderDrawerItems = function ($items) use (&$renderDrawerItems, $isItemActive) {
+    if ($iconClass === null) {
+      return $title;
+    }
+
+    return '<i class="'.e($iconClass).'" aria-hidden="true"></i>'
+      .'<span>'.$title.'</span>';
+  };
+
+  $renderDrawerItems = function ($items) use (&$renderDrawerItems, $isItemActive, $renderItemContent) {
     $html = '';
 
     foreach ($items as $item) {
@@ -111,13 +123,13 @@
       }
 
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
-      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.e($item->resolvedTitle()).'</a>';
+      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.$renderItemContent($item).'</a>';
     }
 
     return $html;
   };
 
-  $renderItems = function ($items) use (&$renderItems, $block, $isItemActive) {
+  $renderItems = function ($items) use (&$renderItems, $block, $isItemActive, $renderItemContent) {
     $html = '';
 
     foreach ($items as $item) {
@@ -155,7 +167,7 @@
 
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
       $html .= '<li class="wb-navbar-nav-item">';
-      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.e($item->resolvedTitle()).'</a>';
+      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.$renderItemContent($item).'</a>';
       $html .= '</li>';
     }
 

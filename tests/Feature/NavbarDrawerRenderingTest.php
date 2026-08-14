@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\IconCatalogItem;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
@@ -65,7 +66,28 @@ class NavbarDrawerRenderingTest extends TestCase
     $this->assertStringContainsString('>Guides</a>', $drawer);
   }
 
-  private function renderNavbar(bool $withGroup = false): string
+  #[Test]
+  public function configured_navigation_icons_render_with_their_labels(): void
+  {
+    IconCatalogItem::query()->create([
+      'source' => 'webblocks-ui',
+      'slug' => 'shopping-cart',
+      'label' => 'Shopping Cart',
+      'css_class' => 'wb-icon-shopping-cart',
+      'categories' => ['commerce'],
+      'contexts' => ['commerce', 'navigation'],
+      'keywords' => ['cart'],
+      'is_active' => true,
+      'sort_order' => 1,
+    ]);
+
+    $html = $this->renderNavbar(icon: 'shopping-cart');
+
+    $this->assertSame(2, substr_count($html, 'wb-icon wb-icon-shopping-cart'));
+    $this->assertSame(2, substr_count($html, '<span>Docs</span>'));
+  }
+
+  private function renderNavbar(bool $withGroup = false, ?string $icon = null): string
   {
     $this->seedBlockTypes();
     [$page, $slotType] = $this->seedPage();
@@ -76,6 +98,7 @@ class NavbarDrawerRenderingTest extends TestCase
       'title' => 'Docs',
       'link_type' => NavigationItem::LINK_CUSTOM_URL,
       'url' => '/docs',
+      'icon' => $icon,
       'position' => 0,
       'visibility' => NavigationItem::VISIBILITY_VISIBLE,
     ]);

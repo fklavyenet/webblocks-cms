@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.61.0
+
+- Navbar Navigation now renders the active catalog icon configured on each navigation item in both the desktop navigation and mobile drawer. The visible label remains beside the icon by default, preserving ordinary navigation semantics and giving plugin-owned progressive enhancements a stable icon-and-label anatomy to adapt into a header utility.
+- Pin WebBlocks UI 2.24.0, which supplies the numeric `wb-btn-badge` icon-action overlay and admits `shopping-cart` to the curated navigation icon catalog.
+
 ## 1.60.0
 
 - Add first-class Stack and Split layout blocks backed only by shipped WebBlocks UI primitives. Stack owns vertical child rhythm; Split owns a two-sided row whose first child grows and whose second child stays content-sized.
