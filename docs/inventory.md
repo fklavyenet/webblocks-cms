@@ -120,6 +120,8 @@ A renderer may recognize a legacy or internal value that the normal admin form d
 | --- | --- | --- |
 | Major page band | `section` with child blocks | Do not put visible copy in Section settings. |
 | Width constraint | `container` | Do not use Container as a card or surface. |
+| Vertical content rhythm | `stack` | Do not use Container only to obtain vertical flow. |
+| Main content plus a compact action or value | `split` | Use exactly two direct children; nest Stack when a side needs multiple blocks. |
 | Horizontal actions or compact items | `cluster` | Do not use Grid for a single button row. |
 | Responsive repeated cells | `grid` with structured children | Do not use Grid to fake a semantic table. |
 | Page title, intro, badge, icon, metadata | `content_header` | It always owns an H1; do not use it for ordinary nested headings. |
@@ -234,6 +236,30 @@ The current published core catalog contains 52 rows:
 | HTML | Root-owning `<div class="wb-container [wb-container-*] [optional wb-stack]" data-wb-public-block-type="container">…</div>`; `wb-stack` requires explicit `flow: stack`. |
 | Example appearance | Centered page content with a maximum width; the neutral default composes directly with a Cluster inside Navbar. |
 | Avoid | Treating width as a surface, card, or theme role. |
+
+### `stack` — Stack
+
+| Contract area | Source-backed behavior |
+| --- | --- |
+| Purpose | Vertical flow and consistent rhythm between direct child blocks. |
+| Admin-editable content | No visible copy; optional editor-only `layout_name`. |
+| Settings | `spacing`: empty/default, 1, 2, 3, 4, 6, 8. |
+| Children | Any supported published child type; at least one child required by API plans. |
+| HTML | Root-owning `<div class="wb-stack [wb-stack-{n}]" data-wb-public-block-type="stack">…</div>`. |
+| Example appearance | A product name, description, and supporting note arranged from top to bottom. |
+| Avoid | Page-width control, horizontal actions, or equal columns. |
+
+### `split` — Split
+
+| Contract area | Source-backed behavior |
+| --- | --- |
+| Purpose | Two-sided composition where the first child grows and the second stays content-sized. |
+| Admin-editable content | No visible copy; optional editor-only `layout_name`. |
+| Settings | `gap`: empty/default, 0, 1, 2, 3, 4, 6, 8; `items_alignment`: center/default, start, end, stretch; `width`: auto/default or full. |
+| Children | Exactly two direct children. Put a Stack inside either side when that side needs multiple blocks. |
+| HTML | Root-owning `<div class="wb-split …" data-wb-public-block-type="split">…</div>` with allowlisted `wb-*` classes. |
+| Example appearance | Product identity on the left and a price plus buy action on the right. |
+| Avoid | Repeated equal columns, wrapping button groups, or more than two direct children. |
 
 ### `cluster` — Cluster
 

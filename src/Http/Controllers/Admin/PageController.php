@@ -1017,9 +1017,10 @@ class PageController extends Controller
       // placement rules would not offer it as a new home. Dropping it left the
       // select on "no parent", and saving an untouched content field then
       // failed as if the editor had asked to detach the block.
-      ->filter(fn (Block $block) => ! $editedBlock
-        || (int) $editedBlock->parent_id === (int) $block->id
-        || $block->canAcceptChildType($editedBlock->typeSlug()))
+      ->filter(fn (Block $block) => $editedBlock
+        ? (int) $editedBlock->parent_id === (int) $block->id
+          || ($block->canAcceptMoreChildren() && $block->canAcceptChildType($editedBlock->typeSlug()))
+        : $block->canAcceptMoreChildren())
       ->map(fn (Block $block) => [
         'id' => $block->id,
         'label' => str_repeat('— ', $this->blockDepth($block)).$block->parentCandidateLabel(),
@@ -1055,7 +1056,7 @@ class PageController extends Controller
 
     $parentBlock = $blocks->firstWhere('id', $parentId);
 
-    if (! $parentBlock || ! $parentBlock->canAcceptChildren()) {
+    if (! $parentBlock || ! $parentBlock->canAcceptMoreChildren()) {
       return collect();
     }
 

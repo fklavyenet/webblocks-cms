@@ -1274,6 +1274,20 @@ return [
     'footer_hint' => 'Select a block type to open its editor.',
     'system_block_description' => 'Configure the system-driven output for this block.',
     'content_block_description' => 'Open the editor for this content block.',
+    'block_types' => [
+      'stack' => [
+        'name' => 'Stack',
+        'description' => 'Arranges children from top to bottom and controls their vertical spacing.',
+      ],
+      'split' => [
+        'name' => 'Split',
+        'description' => 'Pairs exactly two children: the first grows and the second stays content-sized.',
+      ],
+      'cluster' => [
+        'name' => 'Cluster',
+        'description' => 'Groups compact items in a row and wraps them when space runs out.',
+      ],
+    ],
     'tabs' => [
       'common' => 'Common',
       'layout' => 'Layout',
@@ -3181,6 +3195,8 @@ return [
       'card_body_help' => 'Card Body is a composable region. Add nested content or layout blocks inside it.',
       'card_footer_help' => 'Card Footer is a composable region. Add nested action or supporting blocks inside it.',
       'slider_help' => 'Slider accepts Slide child blocks only. Put headings, text, cards, buttons, and other content inside each Slide.',
+      'stack_help' => 'Use Stack when child blocks must read from top to bottom. It owns vertical rhythm, not page width.',
+      'split_help' => 'Use Split for one growing main child and one content-sized supporting child. Add exactly two direct children; place a Stack inside either side when it needs multiple blocks.',
     ],
     'code' => [
       'locale_help' => 'Code title, label, and snippet body are translated per locale. The syntax language stays shared across locales.',
@@ -3722,6 +3738,26 @@ return [
       'none' => 'None',
       'stack' => 'Stack',
       'flow_help' => 'Container owns width only. Choose `None` for layout-neutral composition, or `Stack` for vertical flow.',
+    ],
+    'stack_settings' => [
+      'spacing_label' => 'Vertical spacing',
+      'default' => 'Default',
+      'spacing_help' => 'Controls only the space between direct children using shipped `wb-stack-*` classes.',
+    ],
+    'split_settings' => [
+      'width_label' => 'Width',
+      'auto' => 'Auto',
+      'full' => 'Full',
+      'width_help' => 'Use Full when the two-sided row should fill its parent.',
+      'align_label' => 'Vertical alignment',
+      'center' => 'Center',
+      'start' => 'Start',
+      'end' => 'End',
+      'stretch' => 'Stretch',
+      'align_help' => 'Aligns the two direct children on the cross axis. Center is the WebBlocks UI default.',
+      'gap_label' => 'Gap',
+      'default' => 'Default',
+      'gap_help' => 'Controls the space between the growing first child and content-sized second child using shipped `wb-gap-*` classes.',
     ],
     'grid_settings' => [
       'columns_label' => 'Columns',

@@ -180,6 +180,39 @@ Avoid for: using Container as a visual card or content surface.
 
 The block owns its root `<div>`. It renders child blocks directly. Width and flow settings change classes.
 
+## Stack (`stack`)
+
+### Rendered HTML
+
+```html
+<div class="wb-stack wb-stack-3" data-wb-public-block-type="stack">
+  <!-- child blocks -->
+</div>
+```
+
+`settings.spacing` accepts only `1`, `2`, `3`, `4`, `6`, or `8` and maps to the matching shipped `wb-stack-*` modifier. Empty or unsupported values keep the base `wb-stack` rhythm.
+
+Use for: top-to-bottom content groups whose direct-child spacing belongs to the group.
+
+Avoid for: width constraints, inline action groups, or columns.
+
+## Split (`split`)
+
+### Rendered HTML
+
+```html
+<div class="wb-split wb-gap-4 wb-items-start wb-w-full" data-wb-public-block-type="split">
+  <!-- growing first child -->
+  <!-- content-sized second child -->
+</div>
+```
+
+`settings.gap` maps to shipped `wb-gap-*` utilities, `settings.items_alignment` maps to shipped cross-axis utilities, and `settings.width: full` adds `wb-w-full`. Split requires exactly two direct children in admin and API authoring. Nest a Stack as either direct child when that side needs multiple blocks.
+
+Use for: a main label/copy group paired with a compact price, status, or action group.
+
+Avoid for: wrapping controls (Cluster), repeated equal cells (Grid), or more than two direct children.
+
 ## Grid (`grid`)
 
 ### Renderer source

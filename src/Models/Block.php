@@ -542,7 +542,24 @@ class Block extends CmsModel
       return true;
     }
 
-    return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'card_header', 'card_body', 'card_footer', 'hero', 'slider', 'slide', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
+    return in_array($slug, ['section', 'container', 'stack', 'split', 'cluster', 'grid', 'card', 'card_header', 'card_body', 'card_footer', 'hero', 'slider', 'slide', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
+  }
+
+  public function canAcceptMoreChildren(): bool
+  {
+    if (! $this->canAcceptChildren()) {
+      return false;
+    }
+
+    if ($this->typeSlug() !== 'split' || ! $this->exists) {
+      return true;
+    }
+
+    $childCount = $this->relationLoaded('children')
+      ? $this->children->count()
+      : $this->children()->count();
+
+    return $childCount < 2;
   }
 
   public function allowedChildTypeSlugs(): ?array
@@ -757,6 +774,37 @@ class Block extends CmsModel
   public function containerFlowClass(): ?string
   {
     return $this->containerFlow() === 'stack' ? 'wb-stack' : null;
+  }
+
+  public function stackSpacingClass(): ?string
+  {
+    return match ($this->appearanceSetting('spacing')) {
+      '1', '2', '3', '4', '6', '8' => 'wb-stack-'.$this->appearanceSetting('spacing'),
+      default => null,
+    };
+  }
+
+  public function splitGapClass(): ?string
+  {
+    return match ($this->appearanceSetting('gap')) {
+      '0', '1', '2', '3', '4', '6', '8' => 'wb-gap-'.$this->appearanceSetting('gap'),
+      default => null,
+    };
+  }
+
+  public function splitAlignClass(): ?string
+  {
+    return match ($this->appearanceSetting('items_alignment')) {
+      'start' => 'wb-items-start',
+      'end' => 'wb-items-end',
+      'stretch' => 'wb-items-stretch',
+      default => null,
+    };
+  }
+
+  public function splitWidthClass(): ?string
+  {
+    return $this->appearanceSetting('width') === 'full' ? 'wb-w-full' : null;
   }
 
   public function clusterGapClass(): ?string
@@ -1336,6 +1384,8 @@ class Block extends CmsModel
       'header',
       'section',
       'container',
+      'stack',
+      'split',
       'grid',
       'cluster',
       'card',

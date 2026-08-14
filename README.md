@@ -21,7 +21,7 @@ _The operator dashboard brings publishing state, common actions, recent pages, a
 - **Block-based publishing** — reusable page layouts, slots, nested blocks, drafts, review, publishing, revisions, and restore.
 - **Multisite and localization** — multiple sites, domains, locales, translated content, and site-scoped navigation and presentation.
 - **Media management** — a shared Media Library, responsive image variants, focal-point-aware crops, metadata, folders, and usage guards.
-- **Reusable content** — Shared Slots, navigation trees, block catalogs, and package-owned public renderers built on WebBlocks UI classes.
+- **Reusable content** — Shared Slots, navigation trees, block catalogs, native Stack/Split/Cluster/Grid layout composition, and package-owned public renderers built on WebBlocks UI classes.
 - **Operator workflows** — users and permissions, search, contact messages, engagement, backups, site transfer, cloning, and package-native updates.
 - **Trusted automation APIs** — capability-scoped Internal Content APIs for discovery, validation, draft-first page building, media, and publishing workflows.
 - **Static package assets** — no Node, npm, Vite, or frontend build chain is required by the CMS package.

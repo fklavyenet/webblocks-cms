@@ -204,6 +204,8 @@ class InternalContentPlanService
   private const CHILD_REQUIRED_BLOCK_TYPES = [
     'section',
     'container',
+    'stack',
+    'split',
     'cluster',
     'grid',
     'slider',
@@ -2033,6 +2035,10 @@ class InternalContentPlanService
 
     if ($children === [] && $this->requiresChildren($blockType)) {
       $errors[] = $this->error($path.'.children', 'This wrapper block type must contain renderable child blocks. Use nested children arrays; flat id/parent_id references are not part of the content plan contract.');
+    }
+
+    if ($blockType->slug === 'split' && count($children) !== 2) {
+      $errors[] = $this->error($path.'.children', 'Split must contain exactly two direct child blocks: a growing first side and a content-sized second side. Put a Stack inside either side when it needs multiple blocks.');
     }
 
     $normalizedChildren = [];

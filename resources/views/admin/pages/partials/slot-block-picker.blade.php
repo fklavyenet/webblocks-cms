@@ -39,13 +39,26 @@
 
   $eligibleBlockTypes = ($pickerBlockTypes ?? $blockTypes)->values();
 
-  $matchesSearch = function ($blockType) use ($pickerSearchTerm) {
+  $matchesSearch = function ($blockType) use ($pickerSearchTerm, $slotBlockPickerAdminTranslator, $slotBlockPickerAdminLocale) {
     if ($pickerSearchTerm === '') {
       return true;
     }
 
+    $localizedName = $slotBlockPickerAdminTranslator->getOrDefault(
+      'admin.page_slot_block_picker.block_types.'.$blockType->slug.'.name',
+      $blockType->name,
+      $slotBlockPickerAdminLocale,
+    );
+    $localizedDescription = $slotBlockPickerAdminTranslator->getOrDefault(
+      'admin.page_slot_block_picker.block_types.'.$blockType->slug.'.description',
+      (string) $blockType->description,
+      $slotBlockPickerAdminLocale,
+    );
+
     return str_contains(strtolower($blockType->name), $pickerSearchTerm)
       || str_contains(strtolower((string) $blockType->description), $pickerSearchTerm)
+      || str_contains(strtolower($localizedName), $pickerSearchTerm)
+      || str_contains(strtolower($localizedDescription), $pickerSearchTerm)
       || str_contains(strtolower((string) $blockType->category), $pickerSearchTerm)
       || str_contains(strtolower($blockType->slug), $pickerSearchTerm);
   };
@@ -67,7 +80,7 @@
   };
 
   $commonSlugs = ['header', 'rich-text', 'text', 'button', 'button-link', 'image', 'card', 'code', 'table', 'quote', 'alert'];
-  $layoutSlugs = ['section', 'container', 'grid', 'cluster', 'card'];
+  $layoutSlugs = ['section', 'container', 'stack', 'split', 'grid', 'cluster', 'card'];
   $contentSlugs = ['header', 'text', 'plain-text', 'rich-text', 'button', 'button-link', 'code', 'table', 'quote', 'alert', 'stat-card', 'image', 'gallery', 'file', 'video', 'audio', 'map', 'page-list'];
   $navigationSlugs = ['link-list', 'link-list-item', 'toc', 'breadcrumb', 'header-actions', 'sticky-navbar', 'navbar-brand', 'navbar-navigation', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-group', 'sidebar-nav-item', 'sidebar-footer', 'search-form', 'navigation-auto', 'menu'];
   $advancedSlugs = ['html'];
@@ -169,6 +182,14 @@
         : $slotBlockPickerText('content_block_description'));
   };
 
+  $localizedBlockTypeText = function ($blockType, string $field, string $fallback) use ($slotBlockPickerAdminTranslator, $slotBlockPickerAdminLocale) {
+    return $slotBlockPickerAdminTranslator->getOrDefault(
+      'admin.page_slot_block_picker.block_types.'.$blockType->slug.'.'.$field,
+      $fallback,
+      $slotBlockPickerAdminLocale,
+    );
+  };
+
   $tabUrl = function (string $tabKey) use ($slotBlockRoute, $pickerParentId, $pickerSearch) {
     return $slotBlockRoute([
       'picker' => 1,
@@ -266,13 +287,13 @@
                             data-wb-slot-block-link
                             data-base-url="{{ $slotBlockBaseRoute($pickerStateRouteParams + ['block_type_id' => $blockType->id]) }}"
                           >
-                            <strong>{{ $blockType->name }}</strong>
+                            <strong>{{ $localizedBlockTypeText($blockType, 'name', $blockType->name) }}</strong>
                           </a>
                         </td>
                         <td>
                           <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
                         </td>
-                        <td>{{ $descriptionFor($blockType) }}</td>
+                        <td>{{ $localizedBlockTypeText($blockType, 'description', $descriptionFor($blockType)) }}</td>
                       </tr>
                     @endforeach
                   </tbody>
@@ -330,13 +351,13 @@
                                     data-wb-slot-block-link
                                     data-base-url="{{ $slotBlockBaseRoute($pickerStateRouteParams + ['block_type_id' => $blockType->id]) }}"
                                   >
-                                    <strong>{{ $blockType->name }}</strong>
+                                    <strong>{{ $localizedBlockTypeText($blockType, 'name', $blockType->name) }}</strong>
                                   </a>
                                 </td>
                                 <td>
                                   <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
                                 </td>
-                                <td>{{ $descriptionFor($blockType) }}</td>
+                                <td>{{ $localizedBlockTypeText($blockType, 'description', $descriptionFor($blockType)) }}</td>
                               </tr>
                             @endforeach
                           </tbody>

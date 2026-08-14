@@ -1,7 +1,7 @@
 @php
     $depth = $depth ?? 0;
     $hasChildren = $block->children->isNotEmpty();
-    $canAddChildren = $block->canAcceptChildren();
+    $canAddChildren = $block->canAcceptMoreChildren();
     $isExpanded = $expandedBlockIds->contains($block->id);
     $rowId = 'slot-block-row-'.$block->id;
     $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');

@@ -93,6 +93,8 @@ class BlockRequest extends FormRequest
     $isSidebarNavGroup = $selectedBlockType?->slug === 'sidebar-nav-group';
     $isSidebarFooter = $selectedBlockType?->slug === 'sidebar-footer';
     $isSearchForm = $selectedBlockType?->slug === 'search-form';
+    $isStack = $selectedBlockType?->slug === 'stack';
+    $isSplit = $selectedBlockType?->slug === 'split';
     $isCluster = $selectedBlockType?->slug === 'cluster';
     $isGrid = $selectedBlockType?->slug === 'grid';
     $isCard = $selectedBlockType?->slug === 'card';
@@ -109,7 +111,7 @@ class BlockRequest extends FormRequest
     $supportsClusterGap = $isCluster;
     $supportsGridColumns = $isGrid;
     $supportsGridGap = $isGrid;
-    $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'cluster', 'grid', 'slider', 'slide'], true);
+    $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'stack', 'split', 'cluster', 'grid', 'slider', 'slide'], true);
     $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
     $isLocaleRequest = $this->filled('locale');
     $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
@@ -142,6 +144,10 @@ class BlockRequest extends FormRequest
       'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
       'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
       'container_flow' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'stack'])],
+      'stack_spacing' => [$isStack ? 'nullable' : 'prohibited', Rule::in(['', '1', '2', '3', '4', '6', '8'])],
+      'split_gap' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', '0', '1', '2', '3', '4', '6', '8'])],
+      'split_align' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'stretch'])],
+      'split_width' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'full'])],
       'cluster_gap' => [$supportsClusterGap ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'xs', 'sm', 'md', 'lg'])],
       'cluster_justify' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'between'])],
       'cluster_align' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'stretch'])],
@@ -676,6 +682,20 @@ class BlockRequest extends FormRequest
 
       if ($placementUnchanged) {
         return;
+      }
+
+      if ($parent->typeSlug() === 'split') {
+        $splitChildren = $parent->children();
+
+        if ($block instanceof Block) {
+          $splitChildren->whereKeyNot($block->getKey());
+        }
+
+        if ($splitChildren->count() >= 2) {
+          $validator->errors()->add('parent_id', 'Split accepts exactly two direct child blocks. Put a Stack inside either side when it needs multiple blocks.');
+
+          return;
+        }
       }
 
       if ($selectedBlockType && ! $parent->canAcceptChildType($selectedBlockType->slug)) {
@@ -1979,7 +1999,7 @@ class BlockRequest extends FormRequest
           : null;
       }
 
-      if (in_array($blockType?->slug, ['section', 'container', 'cluster', 'grid', 'slider', 'slide'], true)) {
+      if (in_array($blockType?->slug, ['section', 'container', 'stack', 'split', 'cluster', 'grid', 'slider', 'slide'], true)) {
         $existingSettings = $this->route('block') instanceof Block
           ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
           : [];
@@ -1989,6 +2009,10 @@ class BlockRequest extends FormRequest
         $spacing = trim((string) ($data['spacing'] ?? ''));
         $width = trim((string) ($data['width'] ?? ''));
         $containerFlow = trim((string) ($data['container_flow'] ?? ''));
+        $stackSpacing = trim((string) ($data['stack_spacing'] ?? ''));
+        $splitGap = trim((string) ($data['split_gap'] ?? ''));
+        $splitAlign = trim((string) ($data['split_align'] ?? ''));
+        $splitWidth = trim((string) ($data['split_width'] ?? ''));
         $clusterGap = trim((string) ($data['cluster_gap'] ?? ''));
         $clusterJustify = trim((string) ($data['cluster_justify'] ?? ''));
         $clusterAlign = trim((string) ($data['cluster_align'] ?? ''));
@@ -2039,6 +2063,38 @@ class BlockRequest extends FormRequest
             $settings['flow'] = $containerFlow;
           } else {
             unset($settings['flow']);
+          }
+
+          unset($settings['spacing']);
+        }
+
+        if ($blockType->slug === 'stack') {
+          if (in_array($stackSpacing, ['1', '2', '3', '4', '6', '8'], true)) {
+            $settings['spacing'] = $stackSpacing;
+          } else {
+            unset($settings['spacing']);
+          }
+
+          unset($settings['width'], $settings['gap'], $settings['items_alignment']);
+        }
+
+        if ($blockType->slug === 'split') {
+          if (in_array($splitGap, ['0', '1', '2', '3', '4', '6', '8'], true)) {
+            $settings['gap'] = $splitGap;
+          } else {
+            unset($settings['gap']);
+          }
+
+          if (in_array($splitAlign, ['start', 'end', 'stretch'], true)) {
+            $settings['items_alignment'] = $splitAlign;
+          } else {
+            unset($settings['items_alignment']);
+          }
+
+          if ($splitWidth === 'full') {
+            $settings['width'] = $splitWidth;
+          } else {
+            unset($settings['width']);
           }
 
           unset($settings['spacing']);
@@ -2270,7 +2326,7 @@ class BlockRequest extends FormRequest
     unset($data['show_button']);
     unset($data['icon_slug'], $data['icon_tone'], $data['badge_label'], $data['badge_tone']);
     unset($data['background_position'], $data['background_overlay']);
-    unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+    unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['stack_spacing'], $data['split_gap'], $data['split_align'], $data['split_width'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);
     unset($data['slider_height'], $data['slider_min_height'], $data['slider_aspect_ratio'], $data['slider_transition'], $data['slider_interval_ms']);
     unset($data['slider_overlay'], $data['slider_content_position'], $data['slider_content_width'], $data['slider_text_color'], $data['slider_background_fit']);
     unset($data['slider_autoplay'], $data['slider_pause_on_hover'], $data['slider_show_arrows'], $data['slider_show_dots'], $data['slider_loop'], $data['slider_swipe'], $data['slider_keyboard']);

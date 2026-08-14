@@ -1162,7 +1162,7 @@ Example English marketing homepage draft:
 - child support must follow block contracts where available
 - content plan block trees must use nested `children`; flat `id`, `parent_id`, `block_id`, `slot_type_id`, and `block_type_id` relationship fields are rejected because the API owns database IDs and parent assignment
 - block `translations` must contain direct field keys for the selected plan locale, such as `title`, `subtitle`, and `content`; locale-keyed shapes such as `translations.en.title` are rejected instead of being silently ignored
-- wrapper blocks such as `section`, `container`, `cluster`, `grid`, `card`, `card_body`, `card_footer`, `sticky-navbar`, and `sidebar-navigation` must include child blocks so they cannot validate as empty public chrome
+- wrapper blocks such as `section`, `container`, `stack`, `split`, `cluster`, `grid`, `card`, `card_body`, `card_footer`, `sticky-navbar`, and `sidebar-navigation` must include child blocks so they cannot validate as empty public chrome; `split` requires exactly two direct children, and either side may be a nested `stack`
 - user-facing text belongs in translation rows
 - shared settings remain shared
 - unknown unsafe settings are rejected

@@ -206,6 +206,8 @@ A full-site translation pass is bulk work, so pace it: the API allows 120 reques
 
 Migration and new-site tools should treat site CSS as a narrow site-specific override layer, not as the primary layout or color system. Use native block settings, Media Library-backed fields, public theme tokens, and inherited WebBlocks UI `wb-*` component styles first.
 
+Choose layout blocks by intent: `stack` arranges content top to bottom and owns vertical rhythm; `cluster` groups compact inline items and may wrap; `split` pairs exactly two direct children so the first grows and the second stays content-sized; `grid` creates repeated equal columns; `container` owns width. When one side of a Split needs several blocks, make that side a nested Stack rather than adding a third Split child.
+
 When site-level CSS is needed, use the canonical asset endpoints:
 
 ```text

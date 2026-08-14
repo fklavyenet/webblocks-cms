@@ -163,6 +163,16 @@ final class BlockSettingsPatchPolicy
       'layout_name' => ['text', 255],
       'spacing' => ['enum', ['sm', 'lg']],
     ],
+    'split' => [
+      'layout_name' => ['text', 255],
+      'gap' => ['enum', ['0', '1', '2', '3', '4', '6', '8']],
+      'items_alignment' => ['enum', ['start', 'center', 'end', 'stretch']],
+      'width' => ['enum', ['auto', 'full']],
+    ],
+    'stack' => [
+      'layout_name' => ['text', 255],
+      'spacing' => ['enum', ['1', '2', '3', '4', '6', '8']],
+    ],
     'sidebar-footer' => ['variant' => ['enum', ['info', 'success', 'warning', 'danger']]],
     'sidebar-nav-group' => [
       'layout_name' => ['text', 255],

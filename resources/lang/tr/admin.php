@@ -1272,6 +1272,20 @@ return [
     'footer_hint' => 'Editorunu açmak için bir blok türü seç.',
     'system_block_description' => 'Bu blok için sistem tarafından üretilen çıktınin ayarlarını yapılandır.',
     'content_block_description' => 'Bu içerik bloğu için editoru aç.',
+    'block_types' => [
+      'stack' => [
+        'name' => 'Dikey Akış (Stack)',
+        'description' => 'Alt blokları yukarıdan aşağıya dizer ve aralarındaki dikey boşluğu yönetir.',
+      ],
+      'split' => [
+        'name' => 'İki Taraflı Düzen (Split)',
+        'description' => 'Tam iki alt bloğu eşler; ilki esner, ikincisi içerik genişliğinde kalır.',
+      ],
+      'cluster' => [
+        'name' => 'Satır Grubu (Cluster)',
+        'description' => 'Kompakt öğeleri yan yana gruplar; yer kalmadığında alt satıra geçirir.',
+      ],
+    ],
     'tabs' => [
       'common' => 'Yaygin',
       'layout' => 'Layout',
@@ -3179,6 +3193,8 @@ return [
       'card_body_help' => 'Card Body birleşik bir bölgedir. İçine iç içe içerik veya layout blokları ekle.',
       'card_footer_help' => 'Card Footer birleşik bir bölgedir. İçine iç içe aksiyon veya destek blokları ekle.',
       'slider_help' => 'Slider yalnızca Slide alt bloklarını kabul eder. Başlıklari, metinleri, cardları, butonlari ve diğer içeriği her Slide içine koy.',
+      'stack_help' => 'Alt blokların yukarıdan aşağıya okunması gerektiğinde Stack kullan. Stack sayfa genişliğini değil, dikey ritmi yönetir.',
+      'split_help' => 'Esneyen bir ana öğe ile içerik genişliğinde kalan ikinci öğe için Split kullan. Tam iki doğrudan alt blok ekle; taraflardan biri birden çok blok gerektiriyorsa içine Stack yerleştir.',
     ],
     'code' => [
       'locale_help' => 'Code başlığı, etiketi ve snippet gövdesi dile göre çevrilir. Syntax dili diller arasında ortak kalır.',
@@ -3720,6 +3736,26 @@ return [
       'none' => 'Yok',
       'stack' => 'Stack',
       'flow_help' => 'Container yalnızca genişliği sahiplenir. Layout-nötr kompozisyon için `Yok`, dikey flow için `Stack` seç.',
+    ],
+    'stack_settings' => [
+      'spacing_label' => 'Dikey boşluk',
+      'default' => 'Varsayılan',
+      'spacing_help' => 'Yalnızca doğrudan alt bloklar arasındaki boşluğu, gelen `wb-stack-*` sınıflarıyla yönetir.',
+    ],
+    'split_settings' => [
+      'width_label' => 'Genişlik',
+      'auto' => 'Otomatik',
+      'full' => 'Tam',
+      'width_help' => 'İki taraflı satır parentını dolduracaksa Tam seç.',
+      'align_label' => 'Dikey hizalama',
+      'center' => 'Orta',
+      'start' => 'Başlangıç',
+      'end' => 'Son',
+      'stretch' => 'Uzat',
+      'align_help' => 'İki doğrudan alt bloğu çapraz eksende hizalar. Orta, WebBlocks UI varsayılanıdır.',
+      'gap_label' => 'Boşluk',
+      'default' => 'Varsayılan',
+      'gap_help' => 'Esneyen ilk alt blok ile içerik genişliğindeki ikinci alt blok arasındaki boşluğu, gelen `wb-gap-*` sınıflarıyla yönetir.',
     ],
     'grid_settings' => [
       'columns_label' => 'Sütunlar',

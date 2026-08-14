@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.60.0
+
+- Add first-class Stack and Split layout blocks backed only by shipped WebBlocks UI primitives. Stack owns vertical child rhythm; Split owns a two-sided row whose first child grows and whose second child stays content-sized.
+- Make the distinction visible in the editor: the block catalog and forms explain when to use Stack, Split, Cluster, and nested Stack composition. Split accepts exactly two direct children; admin and Internal Content API authoring reject a third side.
+
 ## 1.59.1
 
 - **A Columns, Feature Grid or Link List block can no longer lose its items on save.** Those three blocks author their children from a repeating list on the parent's own form, and the save step skips any row it cannot use. The sweep that follows read "skipped" as "the editor removed it" and deleted the block behind the row — and when no row survived, it deleted every child of that type at once. It now removes only what was actually taken off the list.

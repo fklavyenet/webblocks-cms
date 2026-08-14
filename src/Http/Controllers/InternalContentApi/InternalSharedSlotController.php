@@ -335,8 +335,10 @@ class InternalSharedSlotController extends Controller
       return null;
     }
 
-    if (! $parent->canAcceptChildren()) {
-      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block cannot accept child blocks.'];
+    if (! $parent->canAcceptMoreChildren()) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => $parent->typeSlug() === 'split'
+        ? 'Split already has its two direct child blocks. Put a Stack inside either side when it needs multiple blocks.'
+        : 'Parent block cannot accept child blocks.'];
 
       return null;
     }
