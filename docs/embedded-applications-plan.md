@@ -29,6 +29,8 @@ Disabling preserves existing blocks and makes the definition unavailable for new
 
 System → Embedded Applications provides create, list, edit, enable/disable, and guarded delete operations. The form exposes fields and selections for every stored definition property. It never asks for a manifest file or scans public directories.
 
+Application Block settings are managed as a compact table rather than a fixed collection of empty field cards. **Add Setting** opens a modal containing the typed schema fields; saving adds the draft setting to the table, while cancel closes the modal without changing the application. Existing rows use the same modal for editing and expose icon actions for editing and removal. The table is part of the parent application form, so these client-side changes are persisted only when the operator saves the application. The submitted `settings[*]` contract and API representation remain unchanged.
+
 The application files themselves may be deployed by the host's normal release, file manager, or asset pipeline. CMS records their public URLs; it does not become a general executable-file uploader.
 
 ## Application Block

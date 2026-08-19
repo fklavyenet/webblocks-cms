@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.64.0
+
+- Replace the fixed stack of empty Application Block setting cards with a compact settings table on the Embedded Application form.
+- Add and edit typed settings in a shared WebBlocks modal, cancel without changing the table, and remove rows through the standard icon action column. The database and Internal API settings contract remain unchanged.
+- Ship the setting editor as a page-scoped CMS admin asset and document the interface and persistence boundary.
+
 ## 1.63.1
 
 - Fix System Update installations returning HTTP 500 on Embedded Applications by shipping the required existing-install update migration, and include the same table in the consolidated fresh-install schema.
