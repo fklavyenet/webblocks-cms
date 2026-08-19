@@ -16,6 +16,8 @@ class EmbeddedApplicationSettingsEditorStructureTest extends TestCase
         $this->assertStringContainsString('data-wb-application-settings', $view);
         $this->assertStringContainsString('data-wb-setting-add', $view);
         $this->assertStringContainsString('id="embedded-application-setting-modal"', $view);
+        $this->assertStringContainsString("@push('overlays')", $view);
+        $this->assertStringNotContainsString("@push('modals')", $view);
         $this->assertStringContainsString('data-wb-setting-edit', $view);
         $this->assertStringContainsString('data-wb-setting-delete', $view);
         $this->assertStringNotContainsString('array_pad($settings', $view);

@@ -98,7 +98,7 @@
     @if ($editing)<div class="wb-card wb-mt-4"><div class="wb-card-body"><button class="wb-btn wb-btn-danger" type="button" data-wb-toggle="modal" data-wb-target="#delete-embedded-application-{{ $application->id }}" aria-haspopup="dialog">{{ $text('delete') }}</button></div></div>@endif
 @endsection
 
-@push('modals')
+@push('overlays')
     <div class="wb-modal wb-modal-lg" id="embedded-application-setting-modal" role="dialog" aria-modal="true" aria-labelledby="embedded-application-setting-modal-title">
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
@@ -128,7 +128,7 @@
 @endpush
 
 @if ($editing)
-    @push('modals')
+    @push('overlays')
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
             'id' => 'delete-embedded-application-'.$application->id,
             'title' => $text('delete'),

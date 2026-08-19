@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.64.1
+
+- Render the Embedded Application setting and delete dialogs through the admin layout's active `overlays` stack. In 1.64.0 both dialogs were pushed to an unused `modals` stack, so their trigger buttons had no modal target in the document.
+
 ## 1.64.0
 
 - Replace the fixed stack of empty Application Block setting cards with a compact settings table on the Embedded Application form.
