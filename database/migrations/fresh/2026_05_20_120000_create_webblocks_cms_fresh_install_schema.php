@@ -29,6 +29,7 @@ return new class extends Migration
       'wbcms_system_backup_restores',
       'wbcms_cms_api_token_activity_logs',
       'wbcms_cms_api_tokens',
+      'wbcms_embedded_applications',
       'wbcms_system_backups',
       'wbcms_system_update_runs',
       'wbcms_public_search_index',
@@ -761,6 +762,27 @@ return new class extends Migration
       $table->timestamps();
 
       $table->index(['revoked_at', 'created_at']);
+    });
+
+    $this->createTableIfMissing('wbcms_embedded_applications', function (Blueprint $table): void {
+      $table->id();
+      $table->string('handle', 64)->unique();
+      $table->string('name');
+      $table->text('description')->nullable();
+      $table->string('version', 64)->default('1.0.0');
+      $table->string('render_mode', 16);
+      $table->string('entry_url', 2048)->nullable();
+      $table->string('mount_element', 16)->nullable();
+      $table->string('mount_classes', 512)->nullable();
+      $table->json('css_assets')->nullable();
+      $table->json('js_assets')->nullable();
+      $table->json('supports')->nullable();
+      $table->json('settings_schema')->nullable();
+      $table->boolean('is_enabled')->default(true);
+      $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+      $table->foreignId('updated_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+      $table->timestamps();
+      $table->index(['is_enabled', 'name']);
     });
 
     $this->createTableIfMissing('wbcms_cms_api_token_activity_logs', function (Blueprint $table): void {

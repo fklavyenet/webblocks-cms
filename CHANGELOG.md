@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.63.1
+
+- Fix System Update installations returning HTTP 500 on Embedded Applications by shipping the required existing-install update migration, and include the same table in the consolidated fresh-install schema.
+- Show `applications.read`, `applications.write`, and `applications.delete` in the API Token capability editor so operators can grant the registry permissions introduced in 1.63.0.
+
 ## 1.63.0
 
 - Replace the Embedded Applications filesystem pilot with a system-admin database registry. Operators define every HTML entry, CSS/JavaScript asset, render option, supported context, and editor setting under System → Embedded Applications; no `application.json` upload or directory scan is used.

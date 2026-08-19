@@ -176,6 +176,16 @@ class CmsApiTokenController extends Controller
         ],
       ],
       [
+        'key' => 'applications',
+        'label' => 'Embedded Applications',
+        'description' => 'Discover, register, update, or delete trusted browser application definitions.',
+        'capabilities' => [
+          CmsApiTokenCapabilities::APPLICATIONS_READ,
+          CmsApiTokenCapabilities::APPLICATIONS_WRITE,
+          CmsApiTokenCapabilities::APPLICATIONS_DELETE,
+        ],
+      ],
+      [
         'key' => 'media',
         'label' => 'Media management',
         'description' => 'Upload, edit metadata, replace, move, and delete Media Library records.',

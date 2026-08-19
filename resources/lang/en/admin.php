@@ -1399,6 +1399,10 @@ return [
           'label' => 'Plugin lifecycle',
           'description' => 'Install, enable, setup, disable, or uninstall manually uploaded plugins.',
         ],
+        'applications' => [
+          'label' => 'Embedded Applications',
+          'description' => 'Discover, register, update, or delete trusted browser application definitions.',
+        ],
         'commerce' => [
           'label' => 'Commerce',
           'description' => 'Create products, place buy buttons, and read Commerce orders.',
@@ -1431,6 +1435,9 @@ return [
         'plugins_manage' => 'Enable or disable installed plugins',
         'plugins_setup' => 'Run plugin setup migrations',
         'plugins_uninstall' => 'Uninstall disabled manually uploaded plugins',
+        'applications_read' => 'Read Embedded Application definitions',
+        'applications_write' => 'Create and update Embedded Application definitions',
+        'applications_delete' => 'Delete unused Embedded Application definitions',
         'commerce_read' => 'Read commerce product catalog records',
         'commerce_products_write' => 'Create or update commerce products',
         'commerce_orders_read' => 'Read commerce order records',
