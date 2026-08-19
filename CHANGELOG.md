@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.66.0
+
+- Identify CMS-rendered public pages with a versionless `X-Powered-By: WebBlocks CMS` response header so technology catalogues can distinguish the CMS from sites that use WebBlocks UI alone.
+- Keep the signal scoped to package-owned public page and search routes, with `WEBBLOCKS_CMS_SEND_POWERED_BY_HEADER=false` available for installations whose policy requires suppressing product identification.
+
 ## 1.65.1
 
 - Give the Graphite public theme distinct light and dark palettes. The shared mode-cycle control now produces a visible Light/Dark/Auto change instead of updating its state while Graphite remains permanently dark.

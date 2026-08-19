@@ -9,28 +9,31 @@ use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
+use WebBlocks\Cms\Http\Middleware\AddCmsIdentificationHeader;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
+$publicPageMiddleware = ['web', 'install.required', AddCmsIdentificationHeader::class];
+
 if (config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, false)) {
-  Route::middleware(['web', 'install.required'])
+  Route::middleware($publicPageMiddleware)
     ->get(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH, PackagePublicStatusController::class)
     ->name(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME);
 }
 
-Route::middleware(['web', 'install.required'])->get('/', [PageController::class, 'home'])->name('home');
+Route::middleware($publicPageMiddleware)->get('/', [PageController::class, 'home'])->name('home');
 
-Route::middleware(['web', 'install.required'])->get('/{locale}', [PageController::class, 'home'])
+Route::middleware($publicPageMiddleware)->get('/{locale}', [PageController::class, 'home'])
   ->where('locale', Locale::routePattern())
   ->name('localized.home');
 
-Route::middleware(['web', 'install.required'])->get('/search', PublicSearchController::class)->name('search');
-Route::middleware(['web', 'install.required'])->get('/search.json', [PublicSearchController::class, 'json'])->name('search.json');
-Route::middleware(['web', 'install.required'])->get('/{locale}/search', PublicSearchController::class)
+Route::middleware($publicPageMiddleware)->get('/search', PublicSearchController::class)->name('search');
+Route::middleware($publicPageMiddleware)->get('/search.json', [PublicSearchController::class, 'json'])->name('search.json');
+Route::middleware($publicPageMiddleware)->get('/{locale}/search', PublicSearchController::class)
   ->where('locale', Locale::routePattern())
   ->name('localized.search');
-Route::middleware(['web', 'install.required'])->get('/{locale}/search.json', [PublicSearchController::class, 'json'])
+Route::middleware($publicPageMiddleware)->get('/{locale}/search.json', [PublicSearchController::class, 'json'])
   ->where('locale', Locale::routePattern())
   ->name('localized.search.json');
 
@@ -80,18 +83,18 @@ Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name(
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
 });
 
-Route::middleware(['web', 'install.required'])->get('/p/{path}', [PageController::class, 'legacy'])
+Route::middleware($publicPageMiddleware)->get('/p/{path}', [PageController::class, 'legacy'])
   ->where('path', '.*')
   ->name('pages.legacy');
-Route::middleware(['web', 'install.required'])->get('/{locale}/p/{path}', [PageController::class, 'legacy'])
+Route::middleware($publicPageMiddleware)->get('/{locale}/p/{path}', [PageController::class, 'legacy'])
   ->where('locale', Locale::routePattern())
   ->where('path', '.*')
   ->name('localized.pages.legacy');
 
-Route::middleware(['web', 'install.required'])->get('/{locale}/{slug}', [PageController::class, 'show'])
+Route::middleware($publicPageMiddleware)->get('/{locale}/{slug}', [PageController::class, 'show'])
   ->where('locale', Locale::routePattern())
   ->where('slug', PagePath::routePattern())
   ->name('localized.pages.show');
-Route::middleware(['web', 'install.required'])->get('/{slug}', [PageController::class, 'show'])
+Route::middleware($publicPageMiddleware)->get('/{slug}', [PageController::class, 'show'])
   ->where('slug', PagePath::routePattern())
   ->name('pages.show');

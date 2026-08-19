@@ -73,6 +73,10 @@ return [
     'public' => [
         'load_routes' => env('WEBBLOCKS_CMS_PUBLIC_LOAD_ROUTES', true),
         'load_status_route' => env('WEBBLOCKS_CMS_PUBLIC_LOAD_STATUS_ROUTE', false),
+
+        // Give technology catalogues a stable CMS signal without disclosing
+        // the installed version. Hosts can opt out when policy requires it.
+        'send_powered_by_header' => (bool) env('WEBBLOCKS_CMS_SEND_POWERED_BY_HEADER', true),
     ],
     'boundaries' => [
         'load_migrations' => env('WEBBLOCKS_CMS_LOAD_PACKAGE_MIGRATIONS', false),

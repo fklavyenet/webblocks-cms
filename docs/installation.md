@@ -236,10 +236,12 @@ Controls:
 ```dotenv
 WEBBLOCKS_CMS_STARTER_CONTENT=true
 WEBBLOCKS_CMS_STARTER_CONTENT_PATH=
+WEBBLOCKS_CMS_SEND_POWERED_BY_HEADER=true
 ```
 
 - `WEBBLOCKS_CMS_STARTER_CONTENT=false` installs an empty published home page. `php artisan webblocks:install --skip-starter-content` does the same for a single run.
 - `WEBBLOCKS_CMS_STARTER_CONTENT_PATH` points at a directory of your own blueprints when a product should ship its own starter page.
+- `WEBBLOCKS_CMS_SEND_POWERED_BY_HEADER=true` adds `X-Powered-By: WebBlocks CMS` to CMS public page responses so technology catalogues can identify the product without learning its installed version. Set it to `false` when an installation policy requires suppressing product identification.
 
 ### Adding Starter Content To An Existing Install
 
