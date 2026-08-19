@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.65.1
+
+- Give the Graphite public theme distinct light and dark palettes. The shared mode-cycle control now produces a visible Light/Dark/Auto change instead of updating its state while Graphite remains permanently dark.
+
 ## 1.65.0
 
 - Add an optional whole-card URL and link target to the native Card block. Composable Cards render as one semantic, safely validated link while unlinked Cards remain articles.

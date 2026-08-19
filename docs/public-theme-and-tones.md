@@ -105,7 +105,7 @@ Supported public theme presets:
 | Atlas | `atlas` | Documentation and information-site oriented. |
 | Pulse | `pulse` | Lively SaaS or product feel. |
 | Prism | `prism` | Colorful and creative. |
-| Graphite | `graphite` | Serious, dark, and technical. |
+| Graphite | `graphite` | Serious, neutral, and technical, with coordinated light and dark palettes. |
 | Horizon | `horizon` | Open, airy, and modern. |
 
 `canvas` is the default and fallback preset. CMS core maps every supported preset to public page, surface, text, border, link/accent, button, badge, and visual icon tone tokens in `public/cms/css/public.css`.
@@ -150,7 +150,7 @@ Theme presets are token sets, not isolated colors. The current implementation ac
 - Preview states that show common blocks, icons, borders, links, and surfaces.
 - No arbitrary block-level color fields in the default authoring flow.
 
-The site theme preset is the identity layer. The WebBlocks UI color mode toggle remains available through Header Actions where enabled and controls `html[data-mode]`; CMS public theme CSS provides dark-context overrides for non-Graphite presets when `data-mode="dark"` or `data-mode="auto"` resolves dark. `graphite` is intentionally dark by preset character, so its visual identity stays dark in every mode.
+The site theme preset is the identity layer. The WebBlocks UI color mode toggle remains available through Header Actions where enabled and controls `html[data-mode]`; CMS public theme CSS provides a light palette plus dark-context overrides for every preset when `data-mode="dark"` or `data-mode="auto"` resolves dark. Graphite retains its technical cyan-on-charcoal identity in dark mode and uses a coordinated cool-neutral palette in light mode, so the mode control always produces a visible and truthful result.
 
 ## Mode-Aware Site CSS
 
