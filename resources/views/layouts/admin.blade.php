@@ -91,6 +91,7 @@
                             ['label' => $adminText('navigation.page_layouts'), 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*']],
                             ['label' => $adminText('navigation.slot_types'), 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
                             ['label' => $adminText('navigation.block_types'), 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
+                            ['label' => $adminText('navigation.embedded_applications'), 'route' => 'admin.embedded-applications.index', 'active' => ['admin.embedded-applications.*']],
                             ['label' => $adminText('navigation.settings'), 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
                             ['label' => $adminText('navigation.api_tokens'), 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*']],
                             ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*']],

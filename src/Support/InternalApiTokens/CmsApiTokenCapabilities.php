@@ -75,6 +75,10 @@ class CmsApiTokenCapabilities
 
   public const APPLICATIONS_READ = 'applications.read';
 
+  public const APPLICATIONS_WRITE = 'applications.write';
+
+  public const APPLICATIONS_DELETE = 'applications.delete';
+
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
@@ -109,6 +113,8 @@ class CmsApiTokenCapabilities
     self::PLUGINS_SETUP,
     self::PLUGINS_UNINSTALL,
     self::APPLICATIONS_READ,
+    self::APPLICATIONS_WRITE,
+    self::APPLICATIONS_DELETE,
     self::MEDIA_WRITE,
     self::MEDIA_UPLOAD,
     self::MEDIA_REPLACE,
@@ -132,6 +138,7 @@ class CmsApiTokenCapabilities
     self::CONTENT_PUBLISH,
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
+    self::APPLICATIONS_DELETE,
   ];
 
   public const ALL = [
@@ -167,6 +174,8 @@ class CmsApiTokenCapabilities
     self::PLUGINS_SETUP,
     self::PLUGINS_UNINSTALL,
     self::APPLICATIONS_READ,
+    self::APPLICATIONS_WRITE,
+    self::APPLICATIONS_DELETE,
   ];
 
   public const LABELS = [
@@ -188,10 +197,12 @@ class CmsApiTokenCapabilities
     self::ENGAGEMENT_MODERATE => 'Moderate public comments',
     self::PLUGINS_READ => 'Read installed plugin status',
     self::PLUGINS_INSTALL => 'Install manually uploaded plugin ZIP artifacts',
+    self::APPLICATIONS_READ => 'Read Embedded Application definitions',
+    self::APPLICATIONS_WRITE => 'Create and update Embedded Application definitions',
+    self::APPLICATIONS_DELETE => 'Delete unused Embedded Application definitions',
     self::PLUGINS_MANAGE => 'Enable or disable installed plugins',
     self::PLUGINS_SETUP => 'Run plugin setup migrations',
     self::PLUGINS_UNINSTALL => 'Uninstall disabled manually uploaded plugins',
-    self::APPLICATIONS_READ => 'Read registered Embedded Application definitions and schemas',
     self::MEDIA_WRITE => 'Write safe Media Library metadata',
     self::MEDIA_UPLOAD => 'Upload Media Library files',
     self::MEDIA_REPLACE => 'Replace Media Library files',

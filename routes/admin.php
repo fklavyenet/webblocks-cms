@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
+use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\LocaleController;
@@ -101,8 +102,11 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
     Route::get('/applications', [InternalApplicationController::class, 'index'])->middleware('internal-api.capability:applications.read')->name('applications.index');
+    Route::post('/applications', [InternalApplicationController::class, 'store'])->middleware('internal-api.capability:applications.write')->name('applications.store');
     Route::get('/applications/{application}/schema', [InternalApplicationController::class, 'schema'])->middleware('internal-api.capability:applications.read')->name('applications.schema');
     Route::get('/applications/{application}', [InternalApplicationController::class, 'show'])->middleware('internal-api.capability:applications.read')->name('applications.show');
+    Route::patch('/applications/{application}', [InternalApplicationController::class, 'update'])->middleware('internal-api.capability:applications.write')->name('applications.update');
+    Route::delete('/applications/{application}', [InternalApplicationController::class, 'destroy'])->middleware('internal-api.capability:applications.delete')->name('applications.destroy');
     Route::get('/icon-catalog', [InternalContentResourceController::class, 'iconCatalog'])->name('icon-catalog.index');
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/plugins', [InternalPluginController::class, 'index'])->middleware('internal-api.capability:plugins.read')->name('plugins.index');
@@ -344,6 +348,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::delete('page-layouts/{page_layout}/slots/{page_layout_slot}', [PageLayoutSlotController::class, 'destroy'])->name('page-layouts.slots.destroy');
       Route::resource('slot-types', SlotTypeController::class)->only(['index']);
       Route::resource('block-types', BlockTypeController::class)->except(['show']);
+      Route::resource('embedded-applications', EmbeddedApplicationController::class)->except(['show'])->parameters(['embedded-applications' => 'embedded_application']);
       Route::get('site-transfers/exports', [SiteExportController::class, 'index'])->name('site-transfers.exports.index');
       Route::post('site-transfers/exports', [SiteExportController::class, 'store'])->name('site-transfers.exports.store');
       Route::delete('site-transfers/exports/bulk', [SiteExportController::class, 'bulkDestroy'])->name('site-transfers.exports.bulk-destroy');

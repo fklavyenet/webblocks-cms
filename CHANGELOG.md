@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.63.0
+
+- Replace the Embedded Applications filesystem pilot with a system-admin database registry. Operators define every HTML entry, CSS/JavaScript asset, render option, supported context, and editor setting under System → Embedded Applications; no `application.json` upload or directory scan is used.
+- Keep host application paths out of CMS core. Same-origin URL validation, stable unique handles, enabled state, and guarded deletion replace hard-coded roots such as a product-specific `/play-assets` directory.
+- Add `applications.read`, `applications.write`, and destructive `applications.delete` API capabilities. Content validate/apply and direct block updates use the same database-backed settings validation as the admin editor.
+
 ## 1.62.0
 
 - Add Embedded Applications as a first-class CMS capability. A trusted local HTML/CSS/JavaScript application can declare a versioned `application.json` manifest and be placed with the new Application Block without requiring a bespoke PHP plugin.

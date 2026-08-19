@@ -630,8 +630,8 @@ The current published core catalog contains 52 rows:
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | No editorial copy. Selects a manifest-backed Embedded Application by stable `application_handle`. |
-| Settings and variants | `application_settings` is validated against the selected manifest schema. CMS-owned presentation settings are `width`, `loading`, `aspect_ratio`, `min_height`, `show_loading_state`, and `show_failure_state`. |
+| Editable content | No editorial copy. Selects a database-registered Embedded Application by stable `application_handle`. |
+| Settings and variants | `application_settings` is validated against the selected definition schema. CMS-owned presentation settings are `width`, `loading`, `aspect_ratio`, `min_height`, `show_loading_state`, and `show_failure_state`. |
 | Children/media | Neither. Executable assets belong to the registered application definition and cannot be supplied through block content or Media. |
 | HTML | Inline applications receive a generated `.wb-application__mount`; iframe applications receive a CMS-owned, sandboxed iframe. CSS and JavaScript declared by ready definitions load once per page. |
 | API authoring | Writable through content validate/apply and direct block settings patch. Discover handles with `GET /webadmin/api/applications` and schemas with `/applications/{application}/schema`; these reads require `applications.read`. Registry mutation is not exposed. |

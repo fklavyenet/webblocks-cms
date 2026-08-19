@@ -55,7 +55,7 @@ final readonly class ApplicationDefinition
       'version' => $this->version,
       'schema_version' => $this->schemaVersion,
       'provider' => [
-        'type' => 'manifest',
+        'type' => 'database',
         'handle' => $this->provider,
       ],
       'render_mode' => $this->renderMode,

@@ -2,12 +2,14 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
-use Illuminate\Support\Facades\File;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationController;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Support\Applications\ApplicationAssetCollector;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
@@ -15,39 +17,34 @@ use WebBlocks\Cms\Tests\TestCase;
 
 class EmbeddedApplicationsTest extends TestCase
 {
-  private string $root;
-
   protected function setUp(): void
   {
     parent::setUp();
-
-    $this->root = storage_path('framework/testing/embedded-feature-'.bin2hex(random_bytes(4)));
-    File::ensureDirectoryExists($this->root.'/typing');
-    File::put($this->root.'/typing/app.css', '.typing {}');
-    File::put($this->root.'/typing/app.js', 'export default {};');
-    File::put($this->root.'/typing/application.json', json_encode([
-      'schema_version' => 1,
-      'handle' => 'typing-test',
-      'name' => 'Typing Test',
-      'version' => '1.0.0',
-      'render_mode' => 'inline',
-      'mount' => ['element' => 'div', 'class' => 'typing-app'],
-      'assets' => [
-        'css' => [['path' => 'app.css']],
-        'js' => [['path' => 'app.js', 'type' => 'module']],
-      ],
-      'settings_schema' => [
-        'duration' => ['type' => 'integer', 'min' => 30, 'max' => 120, 'default' => 60],
-      ],
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    config()->set('cms.embedded_applications.roots', [['path' => $this->root, 'url' => '/test-apps']]);
-  }
-
-  protected function tearDown(): void
-  {
-    File::deleteDirectory($this->root);
-
-    parent::tearDown();
+    Schema::create('wbcms_embedded_applications', function (Blueprint $table): void {
+      $table->id();
+      $table->string('handle')->unique();
+      $table->string('name');
+      $table->text('description')->nullable();
+      $table->string('version');
+      $table->string('render_mode');
+      $table->string('entry_url')->nullable();
+      $table->string('mount_element')->nullable();
+      $table->string('mount_classes')->nullable();
+      $table->json('css_assets')->nullable();
+      $table->json('js_assets')->nullable();
+      $table->json('supports')->nullable();
+      $table->json('settings_schema')->nullable();
+      $table->boolean('is_enabled')->default(true);
+      $table->unsignedBigInteger('created_by_user_id')->nullable();
+      $table->unsignedBigInteger('updated_by_user_id')->nullable();
+      $table->timestamps();
+    });
+    EmbeddedApplication::query()->create([
+      'handle' => 'typing-test', 'name' => 'Typing Test', 'version' => '1.0.0', 'render_mode' => 'inline',
+      'mount_element' => 'div', 'mount_classes' => 'typing-app', 'css_assets' => ['/test-apps/typing/app.css'],
+      'js_assets' => [['path' => '/test-apps/typing/app.js', 'type' => 'module', 'load_position' => 'body_end']],
+      'settings_schema' => ['duration' => ['type' => 'integer', 'min' => 30, 'max' => 120, 'default' => 60]], 'is_enabled' => true,
+    ]);
   }
 
   #[Test]
@@ -60,6 +57,8 @@ class EmbeddedApplicationsTest extends TestCase
     $this->assertFalse($definition['is_container']);
     $this->assertContains(CmsApiTokenCapabilities::APPLICATIONS_READ, CmsApiTokenCapabilities::ADVANCED);
     $this->assertContains(CmsApiTokenCapabilities::APPLICATIONS_READ, CmsApiTokenCapabilities::ALL);
+    $this->assertContains(CmsApiTokenCapabilities::APPLICATIONS_WRITE, CmsApiTokenCapabilities::ADVANCED);
+    $this->assertContains(CmsApiTokenCapabilities::APPLICATIONS_DELETE, CmsApiTokenCapabilities::DESTRUCTIVE);
   }
 
   #[Test]

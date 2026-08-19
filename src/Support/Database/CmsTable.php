@@ -28,6 +28,7 @@ final class CmsTable
     'content_ratings',
     'demo_asset_references',
     'demo_media_references',
+    'embedded_applications',
     'icon_catalog_items',
     'layout_types',
     'layouts',

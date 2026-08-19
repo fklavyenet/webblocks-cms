@@ -2,136 +2,69 @@
 
 namespace WebBlocks\Cms\Tests\Unit;
 
-use Illuminate\Support\Facades\File;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Tests\TestCase;
 
 class ApplicationRegistryTest extends TestCase
 {
-  private string $root;
-
   protected function setUp(): void
   {
     parent::setUp();
+    Schema::create('wbcms_embedded_applications', function (Blueprint $table): void {
+      $table->id();
+      $table->string('handle')->unique();
+      $table->string('name');
+      $table->text('description')->nullable();
+      $table->string('version');
+      $table->string('render_mode');
+      $table->string('entry_url')->nullable();
+      $table->string('mount_element')->nullable();
+      $table->string('mount_classes')->nullable();
+      $table->json('css_assets')->nullable();
+      $table->json('js_assets')->nullable();
+      $table->json('supports')->nullable();
+      $table->json('settings_schema')->nullable();
+      $table->boolean('is_enabled')->default(true);
+      $table->unsignedBigInteger('created_by_user_id')->nullable();
+      $table->unsignedBigInteger('updated_by_user_id')->nullable();
+      $table->timestamps();
+    });
+  }
 
-    $this->root = storage_path('framework/testing/embedded-applications-'.bin2hex(random_bytes(4)));
-    File::ensureDirectoryExists($this->root.'/typing');
-    config()->set('cms.embedded_applications.roots', [
-      ['path' => $this->root, 'url' => '/test-apps'],
+  public function test_it_reads_and_normalizes_a_ready_database_record(): void
+  {
+    EmbeddedApplication::query()->create([
+      'handle' => 'typing-test', 'name' => 'Typing Test', 'version' => '1.0.0', 'render_mode' => 'inline',
+      'mount_element' => 'div', 'mount_classes' => 'typing-app', 'css_assets' => ['/applications/typing/app.css'],
+      'js_assets' => [['path' => '/applications/typing/app.js', 'type' => 'module', 'load_position' => 'body_end']],
+      'supports' => ['locale' => true, 'theme' => true], 'settings_schema' => ['duration' => ['type' => 'integer', 'default' => 60]], 'is_enabled' => true,
     ]);
-  }
-
-  protected function tearDown(): void
-  {
-    File::deleteDirectory($this->root);
-
-    parent::tearDown();
-  }
-
-  public function test_it_discovers_and_normalizes_a_ready_local_manifest(): void
-  {
-    File::put($this->root.'/typing/app.css', '.typing {}');
-    File::put($this->root.'/typing/app.js', 'export default {};');
-    File::put($this->root.'/typing/application.json', json_encode([
-      'schema_version' => 1,
-      'handle' => 'typing-test',
-      'name' => 'Typing Test',
-      'version' => '1.0.0',
-      'render_mode' => 'inline',
-      'mount' => ['element' => 'div', 'class' => 'typing-app'],
-      'assets' => [
-        'css' => [['path' => 'app.css']],
-        'js' => [['path' => 'app.js', 'type' => 'module']],
-      ],
-      'supports' => ['locale' => true, 'theme' => true],
-      'settings_schema' => [
-        'duration' => ['type' => 'integer', 'min' => 30, 'max' => 120, 'default' => 60],
-        'show_live_stats' => ['type' => 'boolean', 'default' => true],
-      ],
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
     $definition = app(ApplicationRegistry::class)->ready('typing-test');
-
-    $this->assertNotNull($definition);
-    $this->assertSame('/test-apps/typing/app.css', $definition->assets['css'][0]['path']);
-    $this->assertSame('/test-apps/typing/app.js', $definition->assets['js'][0]['path']);
+    $this->assertSame('/applications/typing/app.css', $definition->assets['css'][0]['path']);
     $this->assertSame('module', $definition->assets['js'][0]['type']);
-    $this->assertTrue($definition->supports['locale']);
-    $this->assertArrayNotHasKey('path', $definition->toArray()['provider']);
+    $this->assertSame('database', $definition->toArray()['provider']['type']);
   }
 
-  public function test_it_reports_missing_and_traversing_files_without_exposing_absolute_paths(): void
+  public function test_disabled_records_are_discoverable_but_not_ready(): void
   {
-    File::put($this->root.'/typing/application.json', json_encode([
-      'schema_version' => 1,
-      'handle' => 'unsafe-app',
-      'name' => 'Unsafe App',
-      'render_mode' => 'inline',
-      'assets' => [
-        'css' => [['path' => '../secret.css']],
-        'js' => [['path' => 'missing.js']],
-      ],
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
-    $definition = app(ApplicationRegistry::class)->find('unsafe-app');
-    $payload = $definition?->toArray();
-
-    $this->assertNotNull($definition);
-    $this->assertFalse($definition->isReady());
-    $this->assertContains('application_asset_path_invalid', array_column($payload['readiness']['issues'], 'code'));
-    $this->assertContains('application_asset_missing', array_column($payload['readiness']['issues'], 'code'));
-    $this->assertStringNotContainsString($this->root, json_encode($payload));
+    EmbeddedApplication::query()->create(['handle' => 'paused-app', 'name' => 'Paused', 'version' => '1.0.0', 'render_mode' => 'iframe', 'entry_url' => '/applications/paused/index.html', 'is_enabled' => false]);
+    $this->assertNull(app(ApplicationRegistry::class)->ready('paused-app'));
+    $this->assertSame('invalid', app(ApplicationRegistry::class)->find('paused-app')->toArray()['readiness']['status']);
   }
 
-  public function test_settings_are_normalized_against_the_manifest_schema(): void
+  public function test_settings_are_normalized_against_the_database_schema(): void
   {
-    File::put($this->root.'/typing/app.js', 'export default {};');
-    File::put($this->root.'/typing/application.json', json_encode([
-      'schema_version' => 1,
-      'handle' => 'typing-test',
-      'name' => 'Typing Test',
-      'render_mode' => 'inline',
-      'assets' => ['js' => [['path' => 'app.js']]],
-      'settings_schema' => [
-        'duration' => ['type' => 'enum', 'values' => [30, 60, 120], 'default' => 60],
-        'layout' => ['type' => 'string', 'max_length' => 16],
-        'enabled' => ['type' => 'boolean', 'default' => true],
-      ],
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
-    $definition = app(ApplicationRegistry::class)->ready('typing-test');
+    EmbeddedApplication::query()->create([
+      'handle' => 'typing-test', 'name' => 'Typing Test', 'version' => '1.0.0', 'render_mode' => 'inline', 'is_enabled' => true,
+      'settings_schema' => ['duration' => ['type' => 'enum', 'values' => [30, 60], 'default' => 60], 'enabled' => ['type' => 'boolean', 'default' => true]],
+    ]);
     $errors = [];
-    $normalized = app(ApplicationSettingsValidator::class)->normalize($definition, [
-      'duration' => 60,
-      'layout' => 'tr-f',
-      'enabled' => '0',
-      'unknown' => true,
-    ], 'settings.application_settings', $errors);
-
-    $this->assertSame(['duration' => 60, 'layout' => 'tr-f', 'enabled' => false], $normalized);
+    $normalized = app(ApplicationSettingsValidator::class)->normalize(app(ApplicationRegistry::class)->ready('typing-test'), ['duration' => 60, 'enabled' => '0', 'unknown' => true], 'settings.application_settings', $errors);
+    $this->assertSame(['duration' => 60, 'enabled' => false], $normalized);
     $this->assertSame('application_setting_unknown', $errors[0]['code']);
-  }
-
-  public function test_duplicate_handles_fail_closed_without_exposing_paths(): void
-  {
-    foreach (['typing', 'other'] as $directory) {
-      File::ensureDirectoryExists($this->root.'/'.$directory);
-      File::put($this->root.'/'.$directory.'/app.js', 'export default {};');
-      File::put($this->root.'/'.$directory.'/application.json', json_encode([
-        'schema_version' => 1,
-        'handle' => 'duplicate-app',
-        'name' => 'Duplicate App',
-        'render_mode' => 'inline',
-        'assets' => ['js' => [['path' => 'app.js']]],
-      ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    }
-
-    $definition = app(ApplicationRegistry::class)->find('duplicate-app');
-
-    $this->assertNotNull($definition);
-    $this->assertFalse($definition->isReady());
-    $this->assertContains('application_handle_duplicate', array_column($definition->issues, 'code'));
-    $this->assertStringNotContainsString($this->root, json_encode($definition->toArray()));
   }
 }

@@ -8,6 +8,7 @@ return [
     'sites' => 'Siteler',
     'pages' => 'Sayfalar',
     'shared_slots' => 'Paylaşılan Slotlar',
+    'embedded_applications' => 'Gömülü Uygulamalar',
     'navigation' => 'Navigasyon',
     'media' => 'Medya',
     'contact_messages' => 'İletişim Mesajları',
@@ -3560,12 +3561,12 @@ return [
     ],
     'application' => [
       'system_title' => 'Gömülü Uygulama',
-      'system_help' => 'Kayıtlı bir uygulamayı yerleştirir. Çalıştırılabilir dosyalar manifestte kalır; bu blok yalnızca doğrulanmış ayarları saklar.',
+      'system_help' => 'Sistem yöneticisinin kaydettiği bir uygulamayı yerleştirir; bu blok yalnızca doğrulanmış örnek ayarlarını saklar.',
       'application_label' => 'Uygulama',
       'application_placeholder' => 'Kayıtlı bir uygulama seçin',
-      'application_help' => 'Uygulamalar, izin verilen yerel application.json manifestlerinden keşfedilir.',
+      'application_help' => 'Uygulamalar, Gömülü Uygulamalar ekranında yönetilen veritabanı kayıtlarından listelenir.',
       'not_ready' => 'hazır değil',
-      'manifest_application' => 'Manifest tabanlı yerel uygulama',
+      'manifest_application' => 'CMS tarafından kayıtlı uygulama',
       'width_label' => 'Genişlik',
       'width' => ['content' => 'İçerik', 'wide' => 'Geniş', 'full' => 'Tam genişlik'],
       'loading_label' => 'Yükleme',
@@ -4189,6 +4190,17 @@ return [
       'show_summary' => 'Ortalama ve sayıyı göster',
       'hide_summary' => 'Ortalama ve sayıyı gizle',
     ],
+  ],
+
+  'embedded_applications' => [
+    'title' => 'Gömülü Uygulamalar', 'description' => 'Güvenilen HTML, CSS ve JavaScript uygulamalarını CMS veritabanına kaydedin ve Application Block ile yerleştirin.',
+    'create' => 'Yeni uygulama', 'create_title' => 'Yeni Gömülü Uygulama', 'edit_title' => 'Gömülü Uygulamayı Düzenle', 'form_description' => 'Uygulama sözleşmesini burada tanımlayın. Manifest dosyası veya klasör taraması kullanılmaz.',
+    'trust_title' => 'Güvenilen çalıştırılabilir kod', 'trust_help' => 'Uygulama varlıklarını yalnızca sistem yöneticileri kaydetmelidir. Bu betikler genel site kökeninde çalışır.',
+    'name' => 'Ad', 'handle' => 'Tanıtıcı', 'version' => 'Sürüm', 'mode' => 'Render modu', 'status' => 'Durum', 'actions' => 'İşlemler', 'application_description' => 'Açıklama',
+    'entry_url' => 'HTML giriş URL’si (iframe)', 'mount_element' => 'Bağlama elementi (inline)', 'mount_classes' => 'Bağlama sınıfları (inline)', 'css_urls' => 'CSS URL’leri', 'one_url_per_line' => 'Her satıra aynı kökene ait bir mutlak yol yazın.',
+    'js_assets' => 'JavaScript varlıkları', 'supports' => 'Desteklenen bağlam', 'settings_schema' => 'Application Block ayarları', 'settings_help' => 'Editörlere sunulacak isteğe bağlı ayarlar. Boş satırlar yok sayılır.',
+    'enabled' => 'Etkin', 'disabled' => 'Devre dışı', 'edit' => 'Düzenle', 'save' => 'Uygulamayı kaydet', 'delete' => 'Uygulamayı sil', 'delete_description' => 'Silme kalıcıdır ve bu tanıtıcıyı kullanan bir Application Block varken reddedilir.', 'delete_confirm' => 'Kalıcı olarak sil:', 'empty' => 'Henüz Gömülü Uygulama kaydedilmedi.',
+    'created' => 'Gömülü Uygulama oluşturuldu.', 'updated' => 'Gömülü Uygulama güncellendi.', 'deleted' => 'Gömülü Uygulama silindi.',
   ],
 
   'support' => [
