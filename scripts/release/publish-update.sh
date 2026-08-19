@@ -53,4 +53,26 @@ for arg in "$@"; do
 done
 
 cd "${ROOT_DIR}"
+
+DRY_RUN=false
+for arg in "${ARGS[@]}"; do
+  if [ "${arg}" = "--dry-run" ]; then
+    DRY_RUN=true
+  fi
+done
+
+# Check GitHub access before the irreversible Publisher write. This prevents a
+# release from reaching the stable update channel while the repository sidebar
+# remains pinned to an older GitHub Release.
+if [ "${DRY_RUN}" = false ]; then
+  if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1; then
+    printf '[webblocks-publish-update] GitHub CLI authentication is required before publishing. Run gh auth login.\n' >&2
+    exit 1
+  fi
+fi
+
 "${PHP_BIN}" vendor/bin/testbench webblocks:publish-update "${ARGS[@]}"
+
+if [ "${DRY_RUN}" = false ]; then
+  "${ROOT_DIR}/scripts/release/publish-github.sh"
+fi
