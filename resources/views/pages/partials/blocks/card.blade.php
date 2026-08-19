@@ -11,14 +11,24 @@
     };
     $cardClass = collect(['wb-card', $cardVariantClass, $block->publicBackgroundMediaClass()])->filter()->implode(' ');
     $backgroundStyle = $block->publicBackgroundMediaStyle();
+    $cardUrl = $block->cardUrl();
+    $cardTarget = $block->cardTarget();
 @endphp
 
 @if ($hasRegionChildren)
-    <article class="{{ $cardClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
+    @if ($cardUrl !== null)
+        <a href="{{ $cardUrl }}" class="{{ $cardClass }} wb-no-decoration" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($cardTarget === '_blank') target="_blank" rel="noopener noreferrer"@endif @if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
+    @else
+        <article class="{{ $cardClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($backgroundStyle !== null) style="{{ $backgroundStyle }}"@endif>
+    @endif
         @foreach ($regionChildren as $child)
             @include('webblocks-cms::pages.partials.block', ['block' => $child])
         @endforeach
-    </article>
+    @if ($cardUrl !== null)
+        </a>
+    @else
+        </article>
+    @endif
 @else
     @php
         $subtitle = trim((string) ($block->subtitle ?? ''));

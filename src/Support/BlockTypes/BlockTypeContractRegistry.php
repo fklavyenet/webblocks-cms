@@ -246,18 +246,19 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'card' => [
-        'admin_form_fields' => ['Admin label', 'Card style', 'Background media', 'Background position', 'Background overlay'],
+        'admin_form_fields' => ['Admin label', 'Card style', 'Background media', 'Background position', 'Background overlay', 'Card URL', 'Link target'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['media_id', 'variant', 'settings.layout_name', 'settings.background_position', 'settings.background_overlay'],
+        'shared_settings_fields' => ['media_id', 'variant', 'settings.layout_name', 'settings.background_position', 'settings.background_overlay', 'settings.url', 'settings.target'],
         'storage_fields' => [
           'Card shell settings stay in block settings.',
           'The optional visual style lives on the shared block variant column and renders WebBlocks UI card variant classes: flat, muted, highlight, or accent. An empty variant renders the default card.',
           'Optional background image ownership stays on the canonical block media_id column.',
+          'Optional URL and target stay in shared settings; a Card with a safe URL owns an anchor root so its complete surface is one keyboard-accessible link.',
           'Older saved card rows may still carry translated copy, media, and action data for legacy fallback rendering when the card has no region children.',
         ],
         'media_relationship_fields' => ['Optional card background media is owned through the direct block media_id relation. Child region blocks are the primary relationship.'],
         'child_container_behavior' => ['Container-capable. Allowed direct child types are `card_header`, `card_body`, and `card_footer`. Recommended structure is one of each region, but duplicates are not currently blocked.'],
-        'renderer_root_contract' => 'Owns its public `article.wb-card` root.',
+        'renderer_root_contract' => 'Owns its public `article.wb-card` root, or an `a.wb-card` root when a safe Card URL is configured.',
         'current_contract_status' => 'clear',
         'known_gaps' => ['Legacy fallback rendering remains only for older saved cards that have no region children yet.'],
       ],
@@ -736,11 +737,11 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'page-list' => [
-        'admin_form_fields' => ['Scope', 'Page type', 'Path prefix', 'Sort', 'Limit', 'Layout', 'Columns', 'Thumbnail toggle', 'Description toggle', 'Exclude current page'],
+        'admin_form_fields' => ['Scope', 'Page type', 'Path prefix', 'Sort', 'Limit', 'Layout', 'Columns', 'Thumbnail toggle', 'Description toggle', 'Exclude current page', 'Clickable card toggle'],
         'translatable_fields' => [],
         'shared_settings_fields' => [
           'settings.scope', 'settings.page_type', 'settings.path_prefix', 'settings.sort', 'settings.limit',
-          'settings.layout', 'settings.columns', 'settings.show_thumbnail', 'settings.show_description', 'settings.exclude_current',
+          'settings.layout', 'settings.columns', 'settings.show_thumbnail', 'settings.show_description', 'settings.exclude_current', 'settings.clickable_card',
         ],
         'storage_fields' => [
           'The block stores only its query and presentation settings; it has no editorial copy of its own.',
@@ -748,7 +749,7 @@ class BlockTypeContractRegistry
         ],
         'media_relationship_fields' => ['No block media. Thumbnails resolve from each listed page translation at render time.'],
         'child_container_behavior' => ['Not a container. Rows come from a page query, not from child blocks.'],
-        'renderer_root_contract' => 'Owns its public root: a `wb-grid` of `wb-card` articles in the cards layout, or a `wb-link-list` of `wb-link-list-item` anchors in the links layout. Renders nothing when the query returns no pages.',
+        'renderer_root_contract' => 'Owns its public root: a `wb-grid` of `wb-card` articles or whole-card anchors in the cards layout, or a `wb-link-list` of `wb-link-list-item` anchors in the links layout. Renders nothing when the query returns no pages.',
         'current_contract_status' => 'clear',
         'known_gaps' => [
           'Card descriptions and thumbnails reuse the SEO description and Open Graph image, which are authored for search and social rather than for a card. Dedicated list_excerpt and list_image page settings are planned.',

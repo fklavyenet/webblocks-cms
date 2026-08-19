@@ -116,6 +116,7 @@ class PageRequest extends FormRequest
       'blocks.*.page_list_show_thumbnail' => ['nullable', 'boolean'],
       'blocks.*.page_list_show_description' => ['nullable', 'boolean'],
       'blocks.*.page_list_exclude_current' => ['nullable', 'boolean'],
+      'blocks.*.page_list_clickable_card' => ['nullable', 'boolean'],
       'blocks.*.application_handle' => ['nullable', 'string', 'max:64'],
       'blocks.*.application_settings' => ['nullable', 'array'],
       'blocks.*.application_width' => ['nullable', Rule::in(['content', 'wide', 'full'])],
@@ -266,6 +267,7 @@ class PageRequest extends FormRequest
             'show_thumbnail' => $block['page_list_show_thumbnail'] ?? ($decodedSettings['show_thumbnail'] ?? null),
             'show_description' => $block['page_list_show_description'] ?? ($decodedSettings['show_description'] ?? null),
             'exclude_current' => $block['page_list_exclude_current'] ?? ($decodedSettings['exclude_current'] ?? null),
+            'clickable_card' => $block['page_list_clickable_card'] ?? ($decodedSettings['clickable_card'] ?? null),
           ])->toArray(), JSON_UNESCAPED_SLASHES);
           $block['title'] = null;
           $block['subtitle'] = null;
@@ -322,6 +324,7 @@ class PageRequest extends FormRequest
           $block['page_list_show_thumbnail'],
           $block['page_list_show_description'],
           $block['page_list_exclude_current'],
+          $block['page_list_clickable_card'],
           $block['application_handle'],
           $block['application_settings'],
           $block['application_width'],

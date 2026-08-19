@@ -291,9 +291,9 @@ The current published core catalog contains 52 rows:
 | --- | --- |
 | Purpose | Composable framed surface. |
 | Admin-editable content | No normal visible parent copy; optional editor-only `layout_name`. Legacy no-region Card rows may still render old copy. |
-| Settings | Optional Card style on the shared `variant` column: `flat`, `muted`, `highlight`, `accent`; an empty variant renders the default card. Optional background image `media_id`, `background_position`, `background_overlay`. |
+| Settings | Optional Card style on the shared `variant` column: `flat`, `muted`, `highlight`, `accent`; an empty variant renders the default card. Optional background image `media_id`, `background_position`, `background_overlay`. Optional `url` and `target` make the entire composable Card one semantic link. |
 | Children | Direct children restricted to `card_header`, `card_body`, `card_footer`; at least one child required by API plans. |
-| HTML | Root-owning `<article class="wb-card" data-wb-public-block-type="card">…</article>`. |
+| HTML | Root-owning `<article class="wb-card">…</article>`, or `<a class="wb-card wb-no-decoration">…</a>` when a whole-card URL is configured. Linked Cards must not contain nested interactive controls. |
 | Example appearance | Image or icon header, editable body content, and action footer inside one native Card shell. |
 | Avoid | Cards nested inside Cards or using legacy parent copy for new content. |
 
@@ -620,9 +620,9 @@ The current published core catalog contains 52 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | No page copy. Titles, descriptions, and thumbnails come from each listed page's translation: `name`, then `list_excerpt` falling back to `seo_description`, then `og_image_media_id`. |
-| Settings and variants | `scope` (`page_type`, `path_prefix`, `subtree_of_current`), `page_type`, `path_prefix`, `sort`, `limit` (1-48), `layout` (`cards`/`links`), `columns`, `show_thumbnail`, `show_description`, `exclude_current`. |
+| Settings and variants | `scope` (`page_type`, `path_prefix`, `subtree_of_current`), `page_type`, `path_prefix`, `sort`, `limit` (1-48), `layout` (`cards`/`links`), `columns`, `show_thumbnail`, `show_description`, `exclude_current`, `clickable_card`. |
 | Children/media | Neither. Rows come from a page query; thumbnails resolve from each page translation's Open Graph image. |
-| HTML | `wb-grid` of `wb-card` articles, or a `wb-link-list` of `wb-link-list-item` anchors. |
+| HTML | `wb-grid` of `wb-card` articles (or single-link Card roots when `clickable_card` is enabled), or a `wb-link-list` of `wb-link-list-item` anchors. |
 | Example appearance | A three-column index of guide cards, each linking from its title. |
 | Render guard | Emits nothing when the query returns no pages, or while the scope is unconfigured. Published status, site, render-locale translation, Shared Slot source pages, and the hosting page are filtered in the query and are not settings. |
 

@@ -190,8 +190,8 @@ class BlockRequest extends FormRequest
       'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
       'target' => [($isButtonLink || $isNavbarBrand || $isSidebarBrand || $isSidebarNavItem) ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
       'action_label' => ['prohibited', 'string', 'max:255'],
-      'card_url' => ['prohibited', 'string', 'max:2048'],
-      'card_target' => ['prohibited', Rule::in(['_self', '_blank'])],
+      'card_url' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:2048'],
+      'card_target' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
       'card_variant' => ['prohibited', Rule::in(['default', 'promo'])],
       'image_alt' => ['prohibited', 'string', 'max:255'],
       'image_caption' => ['prohibited', 'string', 'max:255'],
@@ -237,6 +237,7 @@ class BlockRequest extends FormRequest
       'page_list_show_thumbnail' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
       'page_list_show_description' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
       'page_list_exclude_current' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
+      'page_list_clickable_card' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
       'application_handle' => [$isApplication ? 'required' : 'prohibited', 'string', 'max:64'],
       'application_settings' => [$isApplication ? 'nullable' : 'prohibited', 'array'],
       'application_width' => [$isApplication ? 'required' : 'prohibited', Rule::in(['content', 'wide', 'full'])],
@@ -1176,6 +1177,7 @@ class BlockRequest extends FormRequest
           'show_thumbnail' => $data['page_list_show_thumbnail'] ?? false,
           'show_description' => $data['page_list_show_description'] ?? false,
           'exclude_current' => $data['page_list_exclude_current'] ?? false,
+          'clickable_card' => $data['page_list_clickable_card'] ?? false,
         ])->toArray(), JSON_UNESCAPED_SLASHES);
       }
 
@@ -1439,6 +1441,8 @@ class BlockRequest extends FormRequest
 
         if ($blockType?->slug === 'card') {
           $settings = $this->applyBackgroundMediaSettings($settings, $data);
+          $settings['url'] = trim((string) ($data['card_url'] ?? '')) ?: null;
+          $settings['target'] = ($data['card_target'] ?? '_self') === '_blank' ? '_blank' : '_self';
         }
 
         if ($blockType?->slug === 'card_header') {

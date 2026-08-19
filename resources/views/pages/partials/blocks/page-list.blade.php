@@ -20,7 +20,11 @@
             @foreach ($items as $item)
                 @php($thumbnailUrl = $settings->showThumbnail ? $item->thumbnailUrl() : null)
 
-                <article class="wb-card">
+                @if ($settings->clickableCard)
+                    <a href="{{ $item->url }}" class="wb-card wb-no-decoration">
+                @else
+                    <article class="wb-card">
+                @endif
                     @if ($thumbnailUrl !== null)
                         <div class="wb-card-header">
                             <img src="{{ $thumbnailUrl }}" alt="{{ $item->thumbnailAltText() }}" loading="lazy" decoding="async">
@@ -28,13 +32,23 @@
                     @endif
 
                     <div class="wb-card-body wb-stack wb-gap-2">
-                        <strong><a href="{{ $item->url }}" class="wb-link">{{ $item->title }}</a></strong>
+                        <strong>
+                            @if ($settings->clickableCard)
+                                {{ $item->title }}
+                            @else
+                                <a href="{{ $item->url }}" class="wb-link">{{ $item->title }}</a>
+                            @endif
+                        </strong>
 
                         @if ($item->description !== null)
                             <p class="wb-m-0">{{ $item->description }}</p>
                         @endif
                     </div>
-                </article>
+                @if ($settings->clickableCard)
+                    </a>
+                @else
+                    </article>
+                @endif
             @endforeach
         </div>
     @else

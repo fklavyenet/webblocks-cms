@@ -104,5 +104,13 @@
                 <option value="0" @selected(! $boolValue('page_list_exclude_current', $settings->excludeCurrent))>{{ $adminText('option_no') }}</option>
             </select>
         </div>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="block_{{ $index }}_page_list_clickable_card">{{ $adminText('clickable_card_label') }}</label>
+            <select id="block_{{ $index }}_page_list_clickable_card" name="{{ $prefix }}[page_list_clickable_card]" class="wb-select">
+                <option value="1" @selected($boolValue('page_list_clickable_card', $settings->clickableCard))>{{ $adminText('option_yes') }}</option>
+                <option value="0" @selected(! $boolValue('page_list_clickable_card', $settings->clickableCard))>{{ $adminText('option_no') }}</option>
+            </select>
+        </div>
     </div>
 </div>

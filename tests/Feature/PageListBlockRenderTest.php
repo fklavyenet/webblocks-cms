@@ -204,6 +204,20 @@ class PageListBlockRenderTest extends TestCase
   }
 
   #[Test]
+  public function the_clickable_card_layout_renders_each_row_as_one_semantic_link(): void
+  {
+    [$site, $locale, $guideType] = $this->seedSite();
+    $this->seedPage($site, $locale, 'A guide', '/guides/a', $guideType, description: 'How to do the thing.');
+
+    $html = $this->render($this->block($site, ['clickable_card' => true]));
+
+    $this->assertStringContainsString('<a href="/guides/a" class="wb-card wb-no-decoration">', $html);
+    $this->assertStringContainsString('<strong>', $html);
+    $this->assertStringNotContainsString('<article class="wb-card">', $html);
+    $this->assertSame(1, substr_count($html, 'href="/guides/a"'), 'A clickable card must not contain a nested title link.');
+  }
+
+  #[Test]
   public function the_links_layout_renders_a_link_list(): void
   {
     [$site, $locale, $guideType] = $this->seedSite();
@@ -283,6 +297,7 @@ class PageListBlockRenderTest extends TestCase
 
     $this->assertStringContainsString('name="page_list_scope"', $html);
     $this->assertStringContainsString('name="page_list_limit"', $html);
+    $this->assertStringContainsString('name="page_list_clickable_card"', $html);
     $this->assertStringContainsString('value="/guides"', $html);
     $this->assertStringContainsString($guideType->name, $html, 'Page type options come from the page_types catalog.');
     // A missing lang key renders as the raw dotted key, so this also proves
@@ -306,6 +321,7 @@ class PageListBlockRenderTest extends TestCase
     // nothing while looking like a working form.
     $this->assertStringContainsString('name="blocks[2][page_list_scope]"', $html);
     $this->assertStringContainsString('name="blocks[2][page_list_limit]"', $html);
+    $this->assertStringContainsString('name="blocks[2][page_list_clickable_card]"', $html);
     $this->assertStringNotContainsString('admin.blocks.page_list.', $html);
   }
 

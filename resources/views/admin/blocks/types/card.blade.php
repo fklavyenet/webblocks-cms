@@ -29,5 +29,22 @@
 
     @include('webblocks-cms::admin.blocks.types.partials.background-media-fields')
 
+    <div class="wb-grid wb-grid-2">
+        <div class="wb-stack wb-gap-1">
+            <label for="card_url">{{ $adminText('card_url_label') }}</label>
+            <input id="card_url" name="card_url" class="wb-input" type="text" maxlength="2048" value="{{ old('card_url', $block->cardUrl()) }}" placeholder="/page">
+            <div class="wb-text-sm wb-text-muted">{{ $adminText('card_url_help') }}</div>
+        </div>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="card_target">{{ $adminText('card_target_label') }}</label>
+            <select id="card_target" name="card_target" class="wb-select">
+                <option value="_self" @selected(old('card_target', $block->cardTarget()) === '_self')>{{ $adminText('card_target_self') }}</option>
+                <option value="_blank" @selected(old('card_target', $block->cardTarget()) === '_blank')>{{ $adminText('card_target_blank') }}</option>
+            </select>
+            <div class="wb-text-sm wb-text-muted">{{ $adminText('card_target_help') }}</div>
+        </div>
+    </div>
+
     <div class="wb-text-sm wb-text-muted">{{ $adminText('card_help') }}</div>
 </div>

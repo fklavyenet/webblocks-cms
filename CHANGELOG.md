@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.65.0
+
+- Add an optional whole-card URL and link target to the native Card block. Composable Cards render as one semantic, safely validated link while unlinked Cards remain articles.
+- Add a Page List option that makes each generated card fully clickable without producing nested title links.
+- Expose both behaviors through the admin forms and Internal Content API settings contract, with six-locale guidance and renderer coverage.
+
 ## 1.64.1
 
 - Render the Embedded Application setting and delete dialogs through the admin layout's active `overlays` stack. In 1.64.0 both dialogs were pushed to an unused `modals` stack, so their trigger buttons had no modal target in the document.

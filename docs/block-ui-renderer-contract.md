@@ -256,7 +256,7 @@ Public pages now use explicit layout composition modes:
 - `header`, `section`, `container`, `grid`, `cluster`, `card`, and `content_header` are root-owning layout/content-shell blocks and should not receive a generic public wrapper from the public block loop.
 - `Section` owns the semantic `<section class="wb-section">` root when needed.
 - `Container`, `Grid`, and `Cluster` own their own non-semantic layout roots unless a specific renderer intentionally chooses otherwise.
-- `Card` owns its `<article class="wb-card">` root.
+- `Card` owns its `<article class="wb-card">` root, or a single `<a class="wb-card wb-no-decoration">` root when its optional whole-card URL is set.
 - `Card Header`, `Card Body`, and `Card Footer` own their matching WebBlocks UI region roots and together define the normal Card public structure.
 - `Header` owns its semantic heading root such as `<h1>` or `<h2>`.
 - `Content Header` owns its semantic `<header class="wb-content-header">` root and always renders its title as `<h1 class="wb-content-title">`.
@@ -541,9 +541,9 @@ Public pages now use explicit layout composition modes:
 ### `page-list`
 
 - CMS block slug: `page-list`
-- Admin fields: `page_list_scope`, `page_list_page_type`, `page_list_path_prefix`, `page_list_sort`, `page_list_limit`, `page_list_layout`, `page_list_columns`, `page_list_show_thumbnail`, `page_list_show_description`, `page_list_exclude_current`
+- Admin fields: `page_list_scope`, `page_list_page_type`, `page_list_path_prefix`, `page_list_sort`, `page_list_limit`, `page_list_layout`, `page_list_columns`, `page_list_show_thumbnail`, `page_list_show_description`, `page_list_exclude_current`, `page_list_clickable_card`
 - Translatable fields: none
-- Shared fields: `settings.scope`, `settings.page_type`, `settings.path_prefix`, `settings.sort`, `settings.limit`, `settings.layout`, `settings.columns`, `settings.show_thumbnail`, `settings.show_description`, `settings.exclude_current`
+- Shared fields: `settings.scope`, `settings.page_type`, `settings.path_prefix`, `settings.sort`, `settings.limit`, `settings.layout`, `settings.columns`, `settings.show_thumbnail`, `settings.show_description`, `settings.exclude_current`, `settings.clickable_card`
 - Intended WebBlocks UI output: the shipped card grid (`wb-grid` of `wb-card`) or the shipped link list (`wb-link-list`); no page-list-specific CSS is added by this package.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: card descriptions read `page_translations.list_excerpt` first and fall back to the SEO description. Thumbnails still reuse the Open Graph image, which is authored at a social-share aspect ratio rather than a card one; a dedicated `list_image_media_id` remains the open half of this.

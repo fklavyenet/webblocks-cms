@@ -454,6 +454,14 @@ The block owns its root promo `<section>`. It accepts `button_link` child blocks
 </article>
 ```
 
+With `settings.url`, a composable Card instead owns one semantic link root:
+
+```html
+<a href="/target" class="wb-card wb-no-decoration" data-wb-public-block-type="card">
+  <div class="wb-card-body">...</div>
+</a>
+```
+
 Legacy no-region fallback:
 
 ```html
@@ -479,6 +487,8 @@ Legacy no-region fallback:
 | --- | --- | --- |
 | settings.layout_name | any stored value | Admin/layout metadata only; no public class effect in the current renderer. |
 | child blocks | published children | Rendered inside the card or region root. |
+| settings.url | safe public URL | Changes the composable Card root from `<article>` to `<a class="wb-card wb-no-decoration">`. |
+| settings.target | `_self`/`_blank` | Controls the whole-card link target; `_blank` also emits `rel="noopener noreferrer"`. |
 | legacy card fields | older Card rows without region children | Card parent can render a minimal legacy header/body/footer fallback. |
 
 ### Use for / Avoid for
@@ -489,7 +499,7 @@ Avoid for: wrapping whole page sections or nesting cards inside cards.
 
 ### Notes
 
-The block owns its root `<article>`. Normal structure is child `card_header`, `card_body`, and `card_footer` region blocks. The fallback path only applies to older saved card rows without region children.
+The block owns its root `<article>` or, when a URL is configured, its root `<a>`. Normal structure is child `card_header`, `card_body`, and `card_footer` region blocks. Linked Cards must not contain nested links, buttons, or form controls. The fallback path only applies to older saved card rows without region children.
 
 ## Card Header (`card_header`)
 
@@ -1959,6 +1969,7 @@ Links layout:
 | settings.show_thumbnail | true | Renders each page translation's Open Graph image through the `card` media transform. |
 | settings.show_description | true | Renders each page translation's `list_excerpt` whole; with none set, falls back to its SEO description trimmed to 160 characters. |
 | settings.exclude_current | true | Drops the hosting page from its own list. |
+| settings.clickable_card | true | In cards layout, changes each card root to one semantic `wb-card wb-no-decoration` link and removes the nested title link. |
 | empty result | any | Emits nothing at all — no root element, no empty-state copy. |
 
 ### Use for / Avoid for

@@ -100,7 +100,11 @@ final class BlockSettingsPatchPolicy
       'home_label' => ['text', 255],
       'include_current' => ['bool'],
     ],
-    'card' => ['layout_name' => ['text', 255]],
+    'card' => [
+      'layout_name' => ['text', 255],
+      'url' => ['text', 2048],
+      'target' => ['enum', ['_self', '_blank']],
+    ],
     'card_body' => ['layout_name' => ['text', 255]],
     'card_footer' => ['layout_name' => ['text', 255]],
     'card_header' => ['layout_name' => ['text', 255]],
@@ -161,6 +165,7 @@ final class BlockSettingsPatchPolicy
       'show_thumbnail' => ['bool'],
       'show_description' => ['bool'],
       'exclude_current' => ['bool'],
+      'clickable_card' => ['bool'],
     ],
     'plain_text' => ['alignment' => ['enum', ['left', 'center', 'right']]],
     'rating' => [

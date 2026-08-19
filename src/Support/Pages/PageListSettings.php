@@ -49,6 +49,7 @@ class PageListSettings
     public readonly bool $showThumbnail,
     public readonly bool $showDescription,
     public readonly bool $excludeCurrent,
+    public readonly bool $clickableCard,
   ) {}
 
   public static function fromBlock(Block $block): self
@@ -64,6 +65,7 @@ class PageListSettings
       'show_thumbnail' => $block->setting('show_thumbnail'),
       'show_description' => $block->setting('show_description'),
       'exclude_current' => $block->setting('exclude_current'),
+      'clickable_card' => $block->setting('clickable_card'),
     ]);
   }
 
@@ -83,6 +85,7 @@ class PageListSettings
       showThumbnail: self::bool($settings['show_thumbnail'] ?? null, true),
       showDescription: self::bool($settings['show_description'] ?? null, true),
       excludeCurrent: self::bool($settings['exclude_current'] ?? null, true),
+      clickableCard: self::bool($settings['clickable_card'] ?? null, false),
     );
   }
 
@@ -104,6 +107,7 @@ class PageListSettings
       'show_thumbnail' => $this->showThumbnail,
       'show_description' => $this->showDescription,
       'exclude_current' => $this->excludeCurrent,
+      'clickable_card' => $this->clickableCard,
     ];
   }
 
