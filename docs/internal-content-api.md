@@ -915,6 +915,34 @@ The `anti_patterns` checks are about page-wide paint, so each one requires its t
 
 `asset.analysis.mode_awareness` is intentionally a heuristic contract, not a CSS linter. It reports `pass` or `warning`, `warnings`, detected `anti_patterns`, simple `signals` such as literal color declarations, `uses_public_theme_tokens`, and `has_dark_mode_scope`, plus the recommended `--wb-public-*` token roles. Tools should use this signal to catch likely mixed-mode regressions early and still rely on visual QA for final design parity.
 
+### Embedded Application Assets API
+
+Application code should not be merged into a site's global `site.css` or
+`site.js`. A registered Embedded Application can own physical CSS and JavaScript
+files under its site-scoped public directory:
+
+```text
+GET    /webadmin/api/sites/{site}/applications/{application}/assets
+GET    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js}/{filename}
+PUT    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js}/{filename}
+DELETE /webadmin/api/sites/{site}/applications/{application}/assets/{css|js}/{filename}
+```
+
+The deterministic public path is
+`/site/{site_handle}/applications/{application_handle}/{type}/{filename}`.
+`GET`, `PUT`, and `DELETE` require `applications.read`, `applications.write`,
+and `applications.delete` respectively. Filenames are basenames only and must
+end in the selected `.css` or `.js` extension; traversal, nested paths, other
+file types, and remote URLs are rejected.
+
+`PUT` accepts `contents` and `expected_checksum`. Send `null` only when creating
+a missing file; read an existing file first and send its checksum when replacing
+it. Replacements and deletions preserve revision copies. Delete is refused while
+the Embedded Application definition still references the asset's public path.
+After writing an asset, use its returned `public_path` in `css_assets` or
+`js_assets`; the Application Block then loads it only where the application is
+placed.
+
 ### Content Validate / Apply Endpoints
 
 - `POST /webadmin/api/content/validate`

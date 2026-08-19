@@ -37,6 +37,12 @@ The application files themselves may be deployed by the host's normal release, f
 
 The editor selects an enabled definition by handle. The form derives optional instance controls from `settings_schema`. The block also owns width, loading strategy, aspect ratio, minimum height, loading state, and failure state. Public rendering resolves the current database definition and deduplicates its assets.
 
+Executable CSS and JavaScript can be created through the Application Assets
+API. They remain physical, host-owned files under
+`public/site/{site_handle}/applications/{application_handle}/`; only their safe
+same-origin public paths are stored in the database definition. The API never
+scans directories and never treats asset files as application discovery data.
+
 ## Internal API
 
 - `GET /webadmin/api/applications` and detail/schema reads require `applications.read`.

@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.67.0
+
+- Add a site-scoped Embedded Application Assets API for isolated CSS and JavaScript files under `/site/{site_handle}/applications/{application_handle}`.
+- Protect creates, replacements, and deletes with safe basename/type validation, explicit application capabilities, optimistic checksums, and revision snapshots. Referenced files cannot be deleted until their registry path is removed.
+- Document the asset-first workflow so application code no longer needs to be merged into global `site.css` and `site.js` files.
+
 ## 1.66.0
 
 - Identify CMS-rendered public pages with a versionless `X-Powered-By: WebBlocks CMS` response header so technology catalogues can distinguish the CMS from sites that use WebBlocks UI alone.

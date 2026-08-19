@@ -47,6 +47,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalAdminRenderController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
@@ -107,6 +108,10 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/applications/{application}', [InternalApplicationController::class, 'show'])->middleware('internal-api.capability:applications.read')->name('applications.show');
     Route::patch('/applications/{application}', [InternalApplicationController::class, 'update'])->middleware('internal-api.capability:applications.write')->name('applications.update');
     Route::delete('/applications/{application}', [InternalApplicationController::class, 'destroy'])->middleware('internal-api.capability:applications.delete')->name('applications.destroy');
+    Route::get('/sites/{site}/applications/{application}/assets', [InternalApplicationAssetController::class, 'index'])->middleware('internal-api.capability:applications.read')->name('applications.assets.index');
+    Route::get('/sites/{site}/applications/{application}/assets/{type}/{filename}', [InternalApplicationAssetController::class, 'show'])->middleware('internal-api.capability:applications.read')->name('applications.assets.show');
+    Route::put('/sites/{site}/applications/{application}/assets/{type}/{filename}', [InternalApplicationAssetController::class, 'update'])->middleware('internal-api.capability:applications.write')->name('applications.assets.update');
+    Route::delete('/sites/{site}/applications/{application}/assets/{type}/{filename}', [InternalApplicationAssetController::class, 'destroy'])->middleware('internal-api.capability:applications.delete')->name('applications.assets.destroy');
     Route::get('/icon-catalog', [InternalContentResourceController::class, 'iconCatalog'])->name('icon-catalog.index');
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/plugins', [InternalPluginController::class, 'index'])->middleware('internal-api.capability:plugins.read')->name('plugins.index');

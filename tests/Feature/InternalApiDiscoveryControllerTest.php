@@ -85,6 +85,20 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $this->assertSame('page-assets.write', $paths['/pages/{page}/assets/{pageAsset}']['delete']['x-required-capability']);
   }
 
+  #[Test]
+  public function openapi_schema_documents_application_asset_endpoints(): void
+  {
+    $paths = $this->app->make(InternalApiDiscoveryController::class)->openapi()->getData(true)['paths'];
+
+    $this->assertSame('applications.read', $paths['/sites/{site}/applications/{application}/assets']['get']['x-required-capability']);
+    $asset = $paths['/sites/{site}/applications/{application}/assets/{type}/{filename}'];
+    $this->assertSame('applications.read', $asset['get']['x-required-capability']);
+    $this->assertSame('applications.write', $asset['put']['x-required-capability']);
+    $this->assertSame('applications.delete', $asset['delete']['x-required-capability']);
+    $this->assertContains('expected_checksum', $asset['put']['x-required-fields']);
+    $this->assertStringContainsString('/site/{site_handle}/applications/', $asset['put']['x-public-path']);
+  }
+
   /**
    * The navigation translation write shipped in 1.52.0 but discovery never
    * mentioned it, so API tools reverse-engineered it from source instead of
