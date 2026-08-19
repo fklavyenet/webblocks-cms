@@ -321,3 +321,47 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
 .wb-error-brand-link:focus-visible {
     text-decoration: underline;
 }
+/* Embedded Applications --------------------------------------------------- */
+.wb-application {
+  inline-size: 100%;
+  min-block-size: var(--wb-application-min-height, 0);
+}
+
+.wb-application--content {
+  max-inline-size: var(--wb-container-lg, 72rem);
+  margin-inline: auto;
+}
+
+.wb-application--wide {
+  max-inline-size: var(--wb-container-xl, 90rem);
+  margin-inline: auto;
+}
+
+.wb-application__mount,
+.wb-application__frame-wrap,
+.wb-application__frame {
+  inline-size: 100%;
+  min-block-size: inherit;
+}
+
+.wb-application__frame-wrap {
+  overflow: hidden;
+}
+
+.wb-application__frame-wrap--16-9 {
+  aspect-ratio: 16 / 9;
+}
+
+.wb-application__frame-wrap--4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+.wb-application__frame-wrap--1-1 {
+  aspect-ratio: 1;
+}
+
+.wb-application__frame {
+  display: block;
+  block-size: 100%;
+  border: 0;
+}

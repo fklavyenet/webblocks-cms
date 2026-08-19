@@ -57,7 +57,7 @@ With a valid CMS API Bearer token, discovery returns:
 - `authenticated: true`
 - token capability names, without token value, token preview, or token hash
 - recommended next steps
-- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, blocks, media, page publish, page-owned block publish, navigation, Shared Slots, plugin lifecycle endpoints, and Commerce product/order endpoints
+- links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, blocks, media, registered Embedded Applications, page publish, page-owned block publish, navigation, Shared Slots, plugin lifecycle endpoints, and Commerce product/order endpoints
 
 The authenticated response is the canonical bootstrap contract for AI/operator tools. Tools should follow returned links instead of assuming local filesystem access to the CMS repository or package docs.
 
@@ -118,6 +118,8 @@ Use `GET /webadmin/api/media` to discover existing CMS Media records before assi
 The Media Library write surface separates powers: `POST /webadmin/api/media` with `media.upload` uploads files, `POST /webadmin/api/media/fetch` with `media.upload` fetches one approved public remote file URL into the normal Media Library pipeline, `PATCH /webadmin/api/media/{media}` with `media.write` updates only `title`, `alt_text`, `caption`, and `description`, `POST /webadmin/api/media/{media}/replace` with `media.replace` replaces same-kind files while preserving references, `POST /webadmin/api/media/{media}/move` with `media.move` changes folder assignment, and `DELETE /webadmin/api/media/{media}` with `media.delete` deletes only unused media. These endpoints must not change storage paths directly.
 
 Use plugin lifecycle endpoints only with explicit plugin token capabilities. `POST /webadmin/api/plugins/install` accepts a plugin ZIP and leaves it disabled, `POST /webadmin/api/plugins/{plugin}/enable` enables it, `POST /webadmin/api/plugins/{plugin}/setup` runs plugin migrations, and uninstall requires a disabled manually uploaded plugin. WebBlocks Commerce automation then uses `POST /webadmin/api/commerce/products` to create active products and `webblocks-commerce-buy-button` blocks through content validate/apply with `settings.commerce_product_id` from the product response. The Commerce API returns setup-required JSON when the plugin is disabled or migrations are pending.
+
+Embedded Applications are discovered with `GET /webadmin/api/applications`; individual definitions and their dynamic instance-setting schemas are available at `/applications/{application}` and `/applications/{application}/schema`. These reads require `applications.read`. Content tools may place an already registered, ready application with the API-writable `application` block, but cannot register executable source or mutate the registry.
 
 Publish links require `content.publish`. `POST /webadmin/api/pages/{page}/publish` defaults to page-only publishing with `include_page_owned_blocks: false`; it does not publish draft blocks unless the request explicitly sets `include_page_owned_blocks: true`. Shared Slot cascade publishing is unsupported and returns JSON validation feedback. `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes eligible page-owned draft or in-review blocks without changing the page workflow status.
 

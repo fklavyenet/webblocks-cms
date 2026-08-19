@@ -73,6 +73,8 @@ class CmsApiTokenCapabilities
 
   public const PLUGINS_UNINSTALL = 'plugins.uninstall';
 
+  public const APPLICATIONS_READ = 'applications.read';
+
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
@@ -106,6 +108,7 @@ class CmsApiTokenCapabilities
     self::PLUGINS_MANAGE,
     self::PLUGINS_SETUP,
     self::PLUGINS_UNINSTALL,
+    self::APPLICATIONS_READ,
     self::MEDIA_WRITE,
     self::MEDIA_UPLOAD,
     self::MEDIA_REPLACE,
@@ -118,10 +121,6 @@ class CmsApiTokenCapabilities
     self::CONTENT_BLOCKS_DELETE,
     self::BACKUPS_CREATE,
     self::PAGE_ASSETS_WRITE,
-    self::PLUGINS_INSTALL,
-    self::PLUGINS_MANAGE,
-    self::PLUGINS_SETUP,
-    self::PLUGINS_UNINSTALL,
   ];
 
   public const DESTRUCTIVE = [
@@ -167,6 +166,7 @@ class CmsApiTokenCapabilities
     self::PLUGINS_MANAGE,
     self::PLUGINS_SETUP,
     self::PLUGINS_UNINSTALL,
+    self::APPLICATIONS_READ,
   ];
 
   public const LABELS = [
@@ -191,6 +191,7 @@ class CmsApiTokenCapabilities
     self::PLUGINS_MANAGE => 'Enable or disable installed plugins',
     self::PLUGINS_SETUP => 'Run plugin setup migrations',
     self::PLUGINS_UNINSTALL => 'Uninstall disabled manually uploaded plugins',
+    self::APPLICATIONS_READ => 'Read registered Embedded Application definitions and schemas',
     self::MEDIA_WRITE => 'Write safe Media Library metadata',
     self::MEDIA_UPLOAD => 'Upload Media Library files',
     self::MEDIA_REPLACE => 'Replace Media Library files',

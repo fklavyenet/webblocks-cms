@@ -15,6 +15,8 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
+use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
@@ -120,6 +122,8 @@ class InternalContentApiOperations
     private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
     private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
+    private readonly ApplicationRegistry $applicationRegistry,
+    private readonly ApplicationSettingsValidator $applicationSettingsValidator,
   ) {}
 
   public function resolveSite(mixed $value, string $path, array &$errors): ?Site
@@ -562,6 +566,7 @@ class InternalContentApiOperations
     $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
+    $settings = $this->normalizeApplicationSettings($settings, $blockType, $path, $errors);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {
       if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {
@@ -684,12 +689,13 @@ class InternalContentApiOperations
     }
   }
 
-  public function error(string $path, string $message): array
+  public function error(string $path, string $message, ?string $code = null): array
   {
-    return [
+    return array_filter([
       'path' => $path,
       'message' => $message,
-    ];
+      'code' => $code,
+    ], fn ($value) => $value !== null);
   }
 
   private function parentAcceptsChild(BlockType $parentType, BlockType $childType): bool
@@ -973,5 +979,58 @@ class InternalContentApiOperations
     unset($settings['product_id']);
 
     return $settings;
+  }
+
+  private function normalizeApplicationSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
+  {
+    if ($blockType->slug !== 'application') {
+      return $settings;
+    }
+
+    $allowed = [
+      'application_handle',
+      'application_settings',
+      'width',
+      'loading',
+      'aspect_ratio',
+      'min_height',
+      'show_loading_state',
+      'show_failure_state',
+    ];
+
+    foreach (array_diff(array_keys($settings), $allowed) as $field) {
+      $errors[] = $this->error($path.'.settings.'.$field, 'Application setting is not part of the Application Block contract.', 'application_setting_unknown');
+    }
+
+    $handle = trim((string) ($settings['application_handle'] ?? ''));
+    $definition = $this->applicationRegistry->find($handle);
+
+    if (! $definition) {
+      $errors[] = $this->error($path.'.settings.application_handle', 'Application handle must resolve through GET /webadmin/api/applications.', 'application_not_found');
+
+      return $settings;
+    }
+
+    if (! $definition->isReady()) {
+      $errors[] = $this->error($path.'.settings.application_handle', 'Selected Embedded Application is not ready.', 'application_not_ready');
+
+      return $settings;
+    }
+
+    return [
+      'application_handle' => $definition->handle,
+      'application_settings' => $this->applicationSettingsValidator->normalize(
+        $definition,
+        $settings['application_settings'] ?? [],
+        $path.'.settings.application_settings',
+        $errors,
+      ),
+      'width' => in_array($settings['width'] ?? null, ['content', 'wide', 'full'], true) ? $settings['width'] : 'content',
+      'loading' => in_array($settings['loading'] ?? null, ['lazy', 'eager'], true) ? $settings['loading'] : 'lazy',
+      'aspect_ratio' => in_array($settings['aspect_ratio'] ?? null, ['auto', '16/9', '4/3', '1/1'], true) ? $settings['aspect_ratio'] : 'auto',
+      'min_height' => max(0, min(2000, (int) ($settings['min_height'] ?? 0))),
+      'show_loading_state' => (bool) ($settings['show_loading_state'] ?? true),
+      'show_failure_state' => (bool) ($settings['show_failure_state'] ?? false),
+    ];
   }
 }

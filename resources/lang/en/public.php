@@ -23,6 +23,9 @@ return [
     'mode_dark' => 'Dark mode',
     'mode_auto' => 'Auto mode',
   ],
+  'applications' => [
+    'unavailable' => 'This application is temporarily unavailable.',
+  ],
 
   'errors' => [
     'not_found' => [

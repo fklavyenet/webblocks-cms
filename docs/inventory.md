@@ -206,7 +206,7 @@ The current published core catalog contains 52 rows:
 | Group | Handles |
 | --- | --- |
 | Layout and composition | `section`, `container`, `cluster`, `grid`, `card`, `card_header`, `card_body`, `card_footer`, `slider`, `slide` |
-| Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `audio`, `code`, `button_link`, `table`, `quote`, `page-list` |
+| Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `audio`, `code`, `button_link`, `table`, `quote`, `page-list`, `application` |
 | Navigation | `link-list`, `link-list-item`, `navigation-auto`, `toc`, `breadcrumb`, `header-actions`, `sticky-navbar`, `navbar-brand`, `navbar-navigation`, `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, `search-form`, `sidebar-footer` |
 | Pattern, form, and engagement | `alert`, `contact_form`, `rating`, `comments` |
 | Human-only advanced | `html` |
@@ -625,6 +625,17 @@ The current published core catalog contains 52 rows:
 | HTML | `wb-grid` of `wb-card` articles, or a `wb-link-list` of `wb-link-list-item` anchors. |
 | Example appearance | A three-column index of guide cards, each linking from its title. |
 | Render guard | Emits nothing when the query returns no pages, or while the scope is unconfigured. Published status, site, render-locale translation, Shared Slot source pages, and the hosting page are filtered in the query and are not settings. |
+
+### `application` — Application Block
+
+| Contract area | Source-backed behavior |
+| --- | --- |
+| Editable content | No editorial copy. Selects a manifest-backed Embedded Application by stable `application_handle`. |
+| Settings and variants | `application_settings` is validated against the selected manifest schema. CMS-owned presentation settings are `width`, `loading`, `aspect_ratio`, `min_height`, `show_loading_state`, and `show_failure_state`. |
+| Children/media | Neither. Executable assets belong to the registered application definition and cannot be supplied through block content or Media. |
+| HTML | Inline applications receive a generated `.wb-application__mount`; iframe applications receive a CMS-owned, sandboxed iframe. CSS and JavaScript declared by ready definitions load once per page. |
+| API authoring | Writable through content validate/apply and direct block settings patch. Discover handles with `GET /webadmin/api/applications` and schemas with `/applications/{application}/schema`; these reads require `applications.read`. Registry mutation is not exposed. |
+| Render guard | Missing, invalid, or duplicate definitions do not load assets or execute. They render nothing unless the block's translated generic failure state is enabled. |
 
 ### `navigation-auto` — Navigation Auto
 

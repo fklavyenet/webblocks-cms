@@ -528,6 +528,17 @@ class CoreBlockTypeCatalogSyncer
         'status' => 'published',
       ],
       [
+        'name' => 'Application',
+        'slug' => 'application',
+        'category' => 'content',
+        'description' => 'Places a registered Embedded Application with validated instance and presentation settings.',
+        'source_type' => 'application',
+        'is_system' => true,
+        'is_container' => false,
+        'sort_order' => 25,
+        'status' => 'published',
+      ],
+      [
         'name' => 'Breadcrumb',
         'slug' => 'breadcrumb',
         'category' => 'navigation',

@@ -15,6 +15,8 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
+use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
@@ -66,6 +68,7 @@ class BlockRequest extends FormRequest
     $isRating = $selectedBlockType?->slug === 'rating';
     $isComments = $selectedBlockType?->slug === 'comments';
     $isPageList = $selectedBlockType?->slug === 'page-list';
+    $isApplication = $selectedBlockType?->slug === 'application';
     $isHero = $selectedBlockType?->slug === 'hero';
     $isCode = $selectedBlockType?->slug === 'code';
     $isHeader = $selectedBlockType?->slug === 'header';
@@ -234,6 +237,14 @@ class BlockRequest extends FormRequest
       'page_list_show_thumbnail' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
       'page_list_show_description' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
       'page_list_exclude_current' => [$isPageList ? 'nullable' : 'prohibited', 'boolean'],
+      'application_handle' => [$isApplication ? 'required' : 'prohibited', 'string', 'max:64'],
+      'application_settings' => [$isApplication ? 'nullable' : 'prohibited', 'array'],
+      'application_width' => [$isApplication ? 'required' : 'prohibited', Rule::in(['content', 'wide', 'full'])],
+      'application_loading' => [$isApplication ? 'required' : 'prohibited', Rule::in(['lazy', 'eager'])],
+      'application_aspect_ratio' => [$isApplication ? 'required' : 'prohibited', Rule::in(['auto', '16/9', '4/3', '1/1'])],
+      'application_min_height' => [$isApplication ? 'nullable' : 'prohibited', 'integer', 'min:0', 'max:2000'],
+      'application_show_loading_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
+      'application_show_failure_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
       'media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'gallery_media_ids' => ['nullable', 'array'],
@@ -363,6 +374,29 @@ class BlockRequest extends FormRequest
       $isColumns = $selectedBlockType?->slug === 'columns';
       $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
       $isLinkList = $selectedBlockType?->slug === 'link-list';
+
+      if ($selectedBlockType?->slug === 'application') {
+        $handle = trim((string) $this->input('application_handle'));
+        $definition = app(ApplicationRegistry::class)->find($handle);
+
+        if (! $definition) {
+          $validator->errors()->add('application_handle', 'Select a registered Embedded Application.');
+        } elseif (! $definition->isReady()) {
+          $validator->errors()->add('application_handle', 'Selected Embedded Application is not ready.');
+        } else {
+          $applicationErrors = [];
+          app(ApplicationSettingsValidator::class)->normalize(
+            $definition,
+            $this->input('application_settings', []),
+            'application_settings',
+            $applicationErrors,
+          );
+
+          foreach ($applicationErrors as $error) {
+            $validator->errors()->add($error['path'], $error['message']);
+          }
+        }
+      }
 
       if ($selectedBlockType?->slug === 'button_link') {
         $url = trim((string) $this->input('url', ''));
@@ -1174,6 +1208,32 @@ class BlockRequest extends FormRequest
           'consent_required' => $isTranslatedContactFormEdit
             ? (bool) ($existingSettings['consent_required'] ?? false)
             : (bool) ($data['consent_required'] ?? false),
+        ], JSON_UNESCAPED_SLASHES);
+      }
+
+      if ($blockType?->slug === 'application') {
+        $definition = app(ApplicationRegistry::class)->ready(trim((string) ($data['application_handle'] ?? '')));
+        $applicationErrors = [];
+        $applicationSettings = $definition
+          ? app(ApplicationSettingsValidator::class)->normalize($definition, $data['application_settings'] ?? [], 'application_settings', $applicationErrors)
+          : [];
+
+        $data['title'] = null;
+        $data['subtitle'] = null;
+        $data['content'] = null;
+        $data['url'] = null;
+        $data['variant'] = null;
+        $data['meta'] = null;
+        $data['asset_id'] = null;
+        $data['settings'] = json_encode([
+          'application_handle' => $definition?->handle,
+          'application_settings' => $applicationSettings,
+          'width' => $data['application_width'] ?? 'content',
+          'loading' => $data['application_loading'] ?? 'lazy',
+          'aspect_ratio' => $data['application_aspect_ratio'] ?? 'auto',
+          'min_height' => (int) ($data['application_min_height'] ?? 0),
+          'show_loading_state' => (bool) ($data['application_show_loading_state'] ?? true),
+          'show_failure_state' => (bool) ($data['application_show_failure_state'] ?? false),
         ], JSON_UNESCAPED_SLASHES);
       }
 

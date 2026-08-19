@@ -23,6 +23,9 @@ return [
     'mode_dark' => 'Koyu tema',
     'mode_auto' => 'Otomatik tema',
   ],
+  'applications' => [
+    'unavailable' => 'Bu uygulama geçici olarak kullanılamıyor.',
+  ],
 
   'errors' => [
     'not_found' => [

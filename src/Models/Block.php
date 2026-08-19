@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use WebBlocks\Cms\Support\Applications\ApplicationDefinition;
+use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
@@ -282,6 +284,11 @@ class Block extends CmsModel
       };
 
       return $scopeSummary.', up to '.$settings->limit;
+    }
+
+    if ($this->typeSlug() === 'application') {
+      return $this->applicationDefinition()?->name
+        ?? ((string) $this->setting('application_handle', '') ?: 'Unconfigured application');
     }
 
     if ($this->typeSlug() === 'stat-card') {
@@ -1407,6 +1414,7 @@ class Block extends CmsModel
       'rating',
       'comments',
       'sticky-navbar',
+      'application',
     ], true);
   }
 
@@ -1515,6 +1523,29 @@ class Block extends CmsModel
   public function setting(string $key, mixed $default = null): mixed
   {
     return data_get($this->decodedSettings(), $key, $default);
+  }
+
+  public function applicationDefinition(): ?ApplicationDefinition
+  {
+    if ($this->typeSlug() !== 'application') {
+      return null;
+    }
+
+    return app(ApplicationRegistry::class)->find(trim((string) $this->setting('application_handle', '')));
+  }
+
+  public function readyApplicationDefinition(): ?ApplicationDefinition
+  {
+    $definition = $this->applicationDefinition();
+
+    return $definition?->isReady() ? $definition : null;
+  }
+
+  public function applicationSettings(): array
+  {
+    $settings = $this->setting('application_settings', []);
+
+    return is_array($settings) ? $settings : [];
   }
 
   private function backgroundPosition(): string

@@ -19,6 +19,18 @@ return [
     'internal_api' => [
         'rate_limit_per_minute' => (int) env('CMS_INTERNAL_API_RATE_LIMIT_PER_MINUTE', 120),
     ],
+    'embedded_applications' => [
+        'roots' => [
+            [
+                'path' => public_path('site'),
+                'url' => '/site',
+            ],
+            [
+                'path' => public_path('play-assets'),
+                'url' => '/play-assets',
+            ],
+        ],
+    ],
     'multisite' => [
         'unknown_host_fallback' => env('CMS_MULTISITE_UNKNOWN_HOST_FALLBACK', env('APP_ENV', 'production') !== 'production'),
     ],

@@ -23,6 +23,9 @@ return [
     'mode_dark' => 'Dunkler Modus',
     'mode_auto' => 'Automatischer Modus',
   ],
+  'applications' => [
+    'unavailable' => 'Diese Anwendung ist vorübergehend nicht verfügbar.',
+  ],
 
   'errors' => [
     'not_found' => [

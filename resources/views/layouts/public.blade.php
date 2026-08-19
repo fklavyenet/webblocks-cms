@@ -71,6 +71,8 @@
         // operator input by design — never populate this from untrusted/visitor sources.
         $customHeadHtml = trim((string) ($resolvedSite?->custom_head_html ?? ''));
         $brandPaletteCss = app(\WebBlocks\Cms\Support\Theme\BrandPaletteRenderer::class)->render($resolvedSite);
+        $applicationAssets = $applicationAssets ?? ['css' => collect(), 'head_js' => collect(), 'body_end_js' => collect(), 'has_applications' => false];
+        $applicationRuntimePath = public_path('cms/js/public/application-runtime.js');
     @endphp
 
     <head>
@@ -119,6 +121,9 @@
         @foreach ($headCssPluginAssets as $pluginAsset)
             <link rel="stylesheet" href="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}">
         @endforeach
+        @foreach ($applicationAssets['css'] as $applicationAsset)
+            <link rel="stylesheet" href="{{ $applicationAsset['path'] }}" data-wb-application-asset>
+        @endforeach
 
         {{-- Public JS assets --}}
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
@@ -142,6 +147,9 @@
         @endforeach
         @foreach ($headJsPluginAssets as $pluginAsset)
             <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
+        @endforeach
+        @foreach ($applicationAssets['head_js'] as $applicationAsset)
+            <script src="{{ $applicationAsset['path'] }}" @if (($applicationAsset['type'] ?? 'classic') === 'module') type="module" @else defer @endif data-wb-application-asset></script>
         @endforeach
 
         {{-- Operator-authored custom head markup (verification meta, SEO, analytics). Trusted, raw. --}}
@@ -238,6 +246,12 @@
                 <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
             @endif
         @endforeach
+        @foreach ($applicationAssets['body_end_js'] as $applicationAsset)
+            <script src="{{ $applicationAsset['path'] }}" @if (($applicationAsset['type'] ?? 'classic') === 'module') type="module" @else defer @endif data-wb-application-asset></script>
+        @endforeach
+        @if ($applicationAssets['has_applications'] && is_file($applicationRuntimePath))
+            <script src="{{ asset('cms/js/public/application-runtime.js') }}?v={{ filemtime($applicationRuntimePath) }}" defer></script>
+        @endif
         <div id="wb-overlay-root" class="wb-overlay-root">
             <div class="wb-toast-container wb-toast-container-top-right">
                 @if (session('contact_form_success_message'))

@@ -40,7 +40,7 @@ The canonical prefix is:
 
 This keeps the API inside the CMS admin boundary while using a concise, familiar API segment. Resource-style endpoints should live directly under this prefix, such as `/webadmin/api/pages` and `/webadmin/api/blocks`.
 
-Before planning content, read the packaged [CMS Inventory](inventory.md) with `GET /webadmin/api/inventory`. It is the per-block design and authoring contract and is the first document an AI should read. The `html` block is human-only: it stays readable through the API, but every API mutation touching it is rejected with `422` and the stable code `block_type_not_api_writable`, and no capability overrides that.
+Before planning content, read the packaged [CMS Inventory](inventory.md) with `GET /webadmin/api/inventory`. It is the per-block design and authoring contract and is the first document an AI should read. The `html` block is human-only: it stays readable through the API, but every API mutation touching it is rejected with `422` and the stable code `block_type_not_api_writable`, and no capability overrides that. For an `application` block, first discover a ready definition and its settings schema through `GET /webadmin/api/applications`; API writes may reference registered applications but cannot introduce executable code or file paths.
 
 API discovery starts at:
 

@@ -85,6 +85,16 @@ final class BlockSettingsPatchPolicy
    * @var array<string, array<string, array{0: string, 1?: mixed}>>
    */
   public const PATCHABLE = [
+    'application' => [
+      'application_handle' => ['text', 64],
+      'application_settings' => ['application_settings'],
+      'width' => ['enum', ['content', 'wide', 'full']],
+      'loading' => ['enum', ['lazy', 'eager']],
+      'aspect_ratio' => ['enum', ['auto', '16/9', '4/3', '1/1']],
+      'min_height' => ['int', 0, 2000],
+      'show_loading_state' => ['bool'],
+      'show_failure_state' => ['bool'],
+    ],
     'alert' => ['variant' => ['enum', ['info', 'success', 'warning', 'danger']]],
     'breadcrumb' => [
       'home_label' => ['text', 255],

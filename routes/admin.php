@@ -46,6 +46,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalAdminRenderController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
@@ -99,6 +100,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::patch('/locales/{locale}', [InternalContentResourceController::class, 'updateLocale'])->middleware('internal-api.capability:site-settings.write')->name('locales.update');
     Route::get('/page-layouts', [InternalContentResourceController::class, 'pageLayouts'])->name('page-layouts.index');
     Route::get('/block-types', [InternalContentResourceController::class, 'blockTypes'])->name('block-types.index');
+    Route::get('/applications', [InternalApplicationController::class, 'index'])->middleware('internal-api.capability:applications.read')->name('applications.index');
+    Route::get('/applications/{application}/schema', [InternalApplicationController::class, 'schema'])->middleware('internal-api.capability:applications.read')->name('applications.schema');
+    Route::get('/applications/{application}', [InternalApplicationController::class, 'show'])->middleware('internal-api.capability:applications.read')->name('applications.show');
     Route::get('/icon-catalog', [InternalContentResourceController::class, 'iconCatalog'])->name('icon-catalog.index');
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/plugins', [InternalPluginController::class, 'index'])->middleware('internal-api.capability:plugins.read')->name('plugins.index');

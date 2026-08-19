@@ -11,6 +11,8 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
+use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -114,6 +116,14 @@ class PageRequest extends FormRequest
       'blocks.*.page_list_show_thumbnail' => ['nullable', 'boolean'],
       'blocks.*.page_list_show_description' => ['nullable', 'boolean'],
       'blocks.*.page_list_exclude_current' => ['nullable', 'boolean'],
+      'blocks.*.application_handle' => ['nullable', 'string', 'max:64'],
+      'blocks.*.application_settings' => ['nullable', 'array'],
+      'blocks.*.application_width' => ['nullable', Rule::in(['content', 'wide', 'full'])],
+      'blocks.*.application_loading' => ['nullable', Rule::in(['lazy', 'eager'])],
+      'blocks.*.application_aspect_ratio' => ['nullable', Rule::in(['auto', '16/9', '4/3', '1/1'])],
+      'blocks.*.application_min_height' => ['nullable', 'integer', 'min:0', 'max:2000'],
+      'blocks.*.application_show_loading_state' => ['nullable', 'boolean'],
+      'blocks.*.application_show_failure_state' => ['nullable', 'boolean'],
       'blocks.*.attachment_media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'blocks.*.attachment_asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'blocks.*.variant' => ['nullable', 'string', 'max:255'],
@@ -265,6 +275,36 @@ class PageRequest extends FormRequest
           $block['meta'] = null;
         }
 
+        if (($blockType?->slug ?? null) === 'application') {
+          $definition = app(ApplicationRegistry::class)->ready(trim((string) ($block['application_handle'] ?? ($decodedSettings['application_handle'] ?? ''))));
+          $applicationErrors = [];
+          $applicationSettings = $definition
+            ? app(ApplicationSettingsValidator::class)->normalize(
+              $definition,
+              $block['application_settings'] ?? ($decodedSettings['application_settings'] ?? []),
+              'blocks.'.$index.'.application_settings',
+              $applicationErrors,
+            )
+            : [];
+
+          $block['settings'] = json_encode([
+            'application_handle' => $definition?->handle,
+            'application_settings' => $applicationSettings,
+            'width' => $block['application_width'] ?? ($decodedSettings['width'] ?? 'content'),
+            'loading' => $block['application_loading'] ?? ($decodedSettings['loading'] ?? 'lazy'),
+            'aspect_ratio' => $block['application_aspect_ratio'] ?? ($decodedSettings['aspect_ratio'] ?? 'auto'),
+            'min_height' => (int) ($block['application_min_height'] ?? ($decodedSettings['min_height'] ?? 0)),
+            'show_loading_state' => (bool) ($block['application_show_loading_state'] ?? ($decodedSettings['show_loading_state'] ?? true)),
+            'show_failure_state' => (bool) ($block['application_show_failure_state'] ?? ($decodedSettings['show_failure_state'] ?? false)),
+          ], JSON_UNESCAPED_SLASHES);
+          $block['title'] = null;
+          $block['subtitle'] = null;
+          $block['content'] = null;
+          $block['url'] = null;
+          $block['variant'] = null;
+          $block['meta'] = null;
+        }
+
         unset(
           $block['asset_id'],
           $block['gallery_asset_ids'],
@@ -282,6 +322,14 @@ class PageRequest extends FormRequest
           $block['page_list_show_thumbnail'],
           $block['page_list_show_description'],
           $block['page_list_exclude_current'],
+          $block['application_handle'],
+          $block['application_settings'],
+          $block['application_width'],
+          $block['application_loading'],
+          $block['application_aspect_ratio'],
+          $block['application_min_height'],
+          $block['application_show_loading_state'],
+          $block['application_show_failure_state'],
         );
 
         return $block;
@@ -300,6 +348,41 @@ class PageRequest extends FormRequest
       $siteId = (int) $this->input('site_id');
       $page = $this->route('page');
       $page = $page instanceof Page ? $page->loadMissing('translations') : null;
+
+      foreach ($this->input('blocks', []) as $index => $block) {
+        $blockType = ! empty($block['block_type_id']) ? BlockType::query()->find((int) $block['block_type_id']) : null;
+
+        if ($blockType?->slug !== 'application') {
+          continue;
+        }
+
+        $handle = trim((string) ($block['application_handle'] ?? ''));
+        $definition = app(ApplicationRegistry::class)->find($handle);
+
+        if (! $definition) {
+          $validator->errors()->add("blocks.{$index}.application_handle", 'Select a registered Embedded Application.');
+
+          continue;
+        }
+
+        if (! $definition->isReady()) {
+          $validator->errors()->add("blocks.{$index}.application_handle", 'Selected Embedded Application is not ready.');
+
+          continue;
+        }
+
+        $applicationErrors = [];
+        app(ApplicationSettingsValidator::class)->normalize(
+          $definition,
+          $block['application_settings'] ?? [],
+          "blocks.{$index}.application_settings",
+          $applicationErrors,
+        );
+
+        foreach ($applicationErrors as $error) {
+          $validator->errors()->add($error['path'], $error['message']);
+        }
+      }
 
       if (! $page || $siteId <= 0) {
         return;

@@ -8,6 +8,7 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Support\Applications\ApplicationAssetCollector;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\PublicRendering\SlotWrapperResolver;
 
@@ -19,6 +20,7 @@ class PublicPagePresenter
     private readonly PublicSharedSlotResolver $publicSharedSlotResolver,
     private readonly SlotWrapperResolver $slotWrapperResolver,
     private readonly PageRouteResolver $pageRouteResolver,
+    private readonly ApplicationAssetCollector $applicationAssetCollector,
   ) {}
 
   /**
@@ -45,12 +47,14 @@ class PublicPagePresenter
       ->values();
 
     $slots = $this->orderSlotsForLayout($page, $slots);
+    $applicationAssets = $this->applicationAssetCollector->collect($slots);
 
     return [
       'page' => $page,
       'slots' => $slots,
       'headPageAssets' => $this->pageAssetRenderer->headAssetsFor($page),
       'bodyEndPageAssets' => $this->pageAssetRenderer->bodyEndAssetsFor($page),
+      'applicationAssets' => $applicationAssets,
       'publicMeta' => $this->publicMeta($page),
       'publicLocaleCode' => $page->currentTranslation?->locale?->code,
       'publicBodyClass' => collect([

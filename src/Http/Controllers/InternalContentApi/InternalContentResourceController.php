@@ -24,6 +24,8 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
+use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
@@ -1893,6 +1895,19 @@ class InternalContentResourceController extends Controller
       ];
     }
 
+    if ($type === 'application') {
+      $allowedSettings = [
+        'application_handle',
+        'application_settings',
+        'width',
+        'loading',
+        'aspect_ratio',
+        'min_height',
+        'show_loading_state',
+        'show_failure_state',
+      ];
+    }
+
     // The gate comes from the value rules, so a field cannot be accepted without
     // one and cannot be refused while the contract advertises it.
     $allowedSettings = [
@@ -1928,6 +1943,60 @@ class InternalContentResourceController extends Controller
     }
 
     $safeIncoming = [];
+
+    if ($type === 'application') {
+      $handle = trim((string) ($incoming['application_handle'] ?? $settings['application_handle'] ?? ''));
+      $definition = app(ApplicationRegistry::class)->find($handle);
+
+      if (! $definition) {
+        abort(response()->json([
+          'ok' => false,
+          'code' => 'application_not_found',
+          'message' => 'Embedded Application is not registered.',
+          'warnings' => [],
+          'errors' => [['path' => 'settings.application_handle', 'message' => 'Select a handle returned by GET /webadmin/api/applications.']],
+        ], 422));
+      }
+
+      if (! $definition->isReady()) {
+        abort(response()->json([
+          'ok' => false,
+          'code' => 'application_not_ready',
+          'message' => 'Embedded Application is not ready.',
+          'warnings' => [],
+          'errors' => [['path' => 'settings.application_handle', 'message' => 'Resolve the application readiness issues before placing it.']],
+        ], 422));
+      }
+
+      $applicationErrors = [];
+      $applicationSettings = app(ApplicationSettingsValidator::class)->normalize(
+        $definition,
+        $incoming['application_settings'] ?? $settings['application_settings'] ?? [],
+        'settings.application_settings',
+        $applicationErrors,
+      );
+
+      if ($applicationErrors !== []) {
+        abort(response()->json([
+          'ok' => false,
+          'code' => $applicationErrors[0]['code'] ?? 'application_setting_invalid',
+          'message' => 'Application settings do not match the selected application schema.',
+          'warnings' => [],
+          'errors' => $applicationErrors,
+        ], 422));
+      }
+
+      $safeIncoming = [
+        'application_handle' => $definition->handle,
+        'application_settings' => $applicationSettings,
+        'width' => in_array($incoming['width'] ?? $settings['width'] ?? null, ['content', 'wide', 'full'], true) ? ($incoming['width'] ?? $settings['width']) : 'content',
+        'loading' => in_array($incoming['loading'] ?? $settings['loading'] ?? null, ['lazy', 'eager'], true) ? ($incoming['loading'] ?? $settings['loading']) : 'lazy',
+        'aspect_ratio' => in_array($incoming['aspect_ratio'] ?? $settings['aspect_ratio'] ?? null, ['auto', '16/9', '4/3', '1/1'], true) ? ($incoming['aspect_ratio'] ?? $settings['aspect_ratio']) : 'auto',
+        'min_height' => max(0, min(2000, (int) ($incoming['min_height'] ?? $settings['min_height'] ?? 0))),
+        'show_loading_state' => (bool) ($incoming['show_loading_state'] ?? $settings['show_loading_state'] ?? true),
+        'show_failure_state' => (bool) ($incoming['show_failure_state'] ?? $settings['show_failure_state'] ?? false),
+      ];
+    }
 
     if (array_key_exists('url', $incoming)) {
       $safeIncoming['url'] = $this->safeUrl($incoming['url']);
@@ -2054,9 +2123,11 @@ class InternalContentResourceController extends Controller
       }
     }
 
-    foreach (BlockSettingsPatchPolicy::rulesFor($type) as $field => $rule) {
-      if (array_key_exists($field, $incoming)) {
-        $safeIncoming[$field] = $this->sanitizeSettingValue($incoming[$field], $rule);
+    if ($type !== 'application') {
+      foreach (BlockSettingsPatchPolicy::rulesFor($type) as $field => $rule) {
+        if (array_key_exists($field, $incoming)) {
+          $safeIncoming[$field] = $this->sanitizeSettingValue($incoming[$field], $rule);
+        }
       }
     }
 

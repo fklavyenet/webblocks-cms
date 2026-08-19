@@ -754,6 +754,25 @@ class BlockTypeContractRegistry
           'Card descriptions and thumbnails reuse the SEO description and Open Graph image, which are authored for search and social rather than for a card. Dedicated list_excerpt and list_image page settings are planned.',
         ],
       ],
+      'application' => [
+        'admin_form_fields' => ['Registered application', 'Application settings', 'Width', 'Loading', 'Aspect ratio', 'Minimum height', 'Loading state', 'Failure state'],
+        'translatable_fields' => [],
+        'shared_settings_fields' => [
+          'settings.application_handle', 'settings.application_settings', 'settings.width', 'settings.loading',
+          'settings.aspect_ratio', 'settings.min_height', 'settings.show_loading_state', 'settings.show_failure_state',
+        ],
+        'storage_fields' => [
+          'The block stores a stable registry handle and settings normalized against that application manifest.',
+          'Application source, asset paths, render mode, and security capabilities remain owned by the registry definition.',
+        ],
+        'media_relationship_fields' => ['No direct CMS Media relationship. Executable application assets are registry-owned files, not editorial media.'],
+        'child_container_behavior' => ['Not a container. The application runtime owns its internal DOM.'],
+        'renderer_root_contract' => 'Owns a `.wb-application` root. Inline definitions receive a safe mount element; iframe definitions receive a CMS-owned iframe wrapper. Missing or invalid definitions never break the surrounding page.',
+        'current_contract_status' => 'phase 1: manifest registry and inline/iframe rendering',
+        'known_gaps' => [
+          'Trusted operator definitions, plugin-provided definitions, registry mutation APIs, and the iframe message bridge are deferred.',
+        ],
+      ],
       'navigation-auto' => [
         'admin_form_fields' => ['Navigation menu'],
         'translatable_fields' => [],

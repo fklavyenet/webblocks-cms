@@ -81,7 +81,7 @@
 
   $commonSlugs = ['header', 'rich-text', 'text', 'button', 'button-link', 'image', 'card', 'code', 'table', 'quote', 'alert'];
   $layoutSlugs = ['section', 'container', 'stack', 'split', 'grid', 'cluster', 'card'];
-  $contentSlugs = ['header', 'text', 'plain-text', 'rich-text', 'button', 'button-link', 'code', 'table', 'quote', 'alert', 'stat-card', 'image', 'gallery', 'file', 'video', 'audio', 'map', 'page-list'];
+  $contentSlugs = ['header', 'text', 'plain-text', 'rich-text', 'button', 'button-link', 'code', 'table', 'quote', 'alert', 'stat-card', 'image', 'gallery', 'file', 'video', 'audio', 'map', 'page-list', 'application'];
   $navigationSlugs = ['link-list', 'link-list-item', 'toc', 'breadcrumb', 'header-actions', 'sticky-navbar', 'navbar-brand', 'navbar-navigation', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-group', 'sidebar-nav-item', 'sidebar-footer', 'search-form', 'navigation-auto', 'menu'];
   $advancedSlugs = ['html'];
 

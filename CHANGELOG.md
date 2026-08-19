@@ -2,6 +2,14 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.62.0
+
+- Add Embedded Applications as a first-class CMS capability. A trusted local HTML/CSS/JavaScript application can declare a versioned `application.json` manifest and be placed with the new Application Block without requiring a bespoke PHP plugin.
+- Support inline mounts and controlled same-origin iframe applications inside the normal public layout. Application CSS and JavaScript load only on pages that use them and are deduplicated across repeated instances.
+- Validate every application handle, local asset path, render mode, mount declaration, and instance setting before rendering. Missing files, path traversal, invalid manifests, and duplicate handles fail closed without exposing server filesystem paths.
+- Add `applications.read` API discovery for registered definitions and their settings schemas. Content validate/apply and direct block updates use the same manifest-backed settings validation as the admin editor, while executable source and registry mutation remain outside the content API.
+- Add Application Block administration and public fallback translations in English, Turkish, German, Spanish, French, and Italian, plus the Embedded Applications architecture and API documentation.
+
 ## 1.61.1
 
 - Fix the System Plugins index and detail screens returning HTTP 500. The plugin requirements integration called a nonexistent `PluginRegistry::find()` method; it now uses the registry's canonical `get()` lookup and is covered through the same registry path used by the admin screens.
