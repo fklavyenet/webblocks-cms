@@ -37,6 +37,7 @@ class SiteTransferPackage
     'data/site_domains.json',
     'data/site_public_assets.json',
     'data/site_variables.json',
+    'data/embedded_applications.json',
   ];
 
   public const ALL_DATA_FILES = [

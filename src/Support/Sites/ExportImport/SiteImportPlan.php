@@ -45,6 +45,7 @@ class SiteImportPlan
     'pages' => 'pages',
     'page_assets' => 'page_assets',
     'site_public_assets' => null,
+    'embedded_applications' => null,
     'shared_slots' => null,
     'page_slots' => 'page_slots',
     'blocks' => 'blocks',

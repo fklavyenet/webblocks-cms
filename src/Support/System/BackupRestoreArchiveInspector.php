@@ -69,9 +69,15 @@ class BackupRestoreArchiveInspector
 
       $manifestIncludesUploads = (bool) data_get($manifest, 'included_parts.uploads', false);
       $archiveHasUploads = $this->archiveHasPath($archive, 'uploads/public/');
+      $manifestIncludesSitePublic = (bool) data_get($manifest, 'included_parts.site_public', false);
+      $archiveHasSitePublic = $this->archiveHasPath($archive, 'site-public/');
 
       if ($manifestIncludesUploads && ! $archiveHasUploads) {
         throw new RuntimeException('Backup archive manifest says uploads are included, but uploads/public is missing.');
+      }
+
+      if ($manifestIncludesSitePublic && ! $archiveHasSitePublic) {
+        throw new RuntimeException('Backup archive manifest says site public files are included, but site-public is missing.');
       }
 
       return new BackupRestoreInspection(
@@ -80,6 +86,8 @@ class BackupRestoreArchiveInspector
         includesUploads: $manifestIncludesUploads || $archiveHasUploads,
         databaseSqlPath: 'database/database.sql',
         uploadsRootPath: $manifestIncludesUploads || $archiveHasUploads ? 'uploads/public' : null,
+        includesSitePublic: $manifestIncludesSitePublic || $archiveHasSitePublic,
+        sitePublicRootPath: $manifestIncludesSitePublic || $archiveHasSitePublic ? 'site-public' : null,
       );
     } finally {
       $archive->close();

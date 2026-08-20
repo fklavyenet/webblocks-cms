@@ -127,6 +127,27 @@ class SiteTransferCompletenessTest extends TestCase
   }
 
   #[Test]
+  public function embedded_application_contracts_and_entries_are_portable(): void
+  {
+    $package = $this->source('SiteTransferPackage.php');
+    $builder = $this->source('SiteExportDataBuilder.php');
+    $mapper = $this->source('ImportDataMapper.php');
+
+    $this->assertStringContainsString('embedded_applications.json', $package);
+    $this->assertStringContainsString("'embedded_applications' =>", $builder);
+    $this->assertStringContainsString('private function importEmbeddedApplications(', $mapper);
+
+    $rebase = new ReflectionMethod(ImportDataMapper::class, 'rebaseSiteAssetReferences');
+    $rebase->setAccessible(true);
+    $instance = (new \ReflectionClass(ImportDataMapper::class))->newInstanceWithoutConstructor();
+    $html = '<script src="/site/default/applications/game/js/app.js"></script>';
+    $this->assertSame(
+      '<script src="/site/imported/applications/game/js/app.js"></script>',
+      $rebase->invoke($instance, $html, 'site/imported/applications/game/index.html', 'default', 'imported')
+    );
+  }
+
+  #[Test]
   public function binary_assets_and_unchanged_handles_are_left_alone(): void
   {
     $rebase = new ReflectionMethod(ImportDataMapper::class, 'rebaseSiteAssetReferences');

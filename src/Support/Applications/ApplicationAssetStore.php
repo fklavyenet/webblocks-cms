@@ -11,13 +11,23 @@ use WebBlocks\Cms\Support\Sites\SiteHandle;
 
 class ApplicationAssetStore
 {
-  public const TYPES = ['css', 'js'];
+  public const TYPES = ['css', 'js', 'html'];
 
   public function all(Site $site, EmbeddedApplication $application): array
   {
     $assets = [];
 
     foreach (self::TYPES as $type) {
+      if ($type === 'html') {
+        $asset = $this->read($site, $application, 'html', 'index.html');
+
+        if ($asset['exists']) {
+          $assets[] = $asset;
+        }
+
+        continue;
+      }
+
       $directory = $this->directory($site, $application, $type);
 
       if (! is_dir($directory)) {
@@ -45,7 +55,9 @@ class ApplicationAssetStore
       'type' => $type,
       'filename' => $filename,
       'relative_path' => $this->relativePath($site, $application, $type, $filename),
-      'public_path' => '/'.$this->relativePath($site, $application, $type, $filename),
+      'public_path' => $type === 'html'
+        ? $this->managedEntryPath($application)
+        : '/'.$this->relativePath($site, $application, $type, $filename),
       'exists' => $exists,
       'contents' => $contents,
       'checksum' => $exists ? hash('sha256', $contents) : null,
@@ -104,7 +116,20 @@ class ApplicationAssetStore
       throw new RuntimeException('Valid site and application handles are required.');
     }
 
-    return 'site/'.$siteHandle.'/applications/'.$applicationHandle.'/'.$type.'/'.$filename;
+    return 'site/'.$siteHandle.'/applications/'.$applicationHandle.'/'.($type === 'html' ? $filename : $type.'/'.$filename);
+  }
+
+  public function managedEntryPath(EmbeddedApplication $application): string
+  {
+    return '/webblocks-applications/'.trim((string) $application->handle).'/index.html';
+  }
+
+  public function activateManagedEntry(EmbeddedApplication $application): void
+  {
+    $application->forceFill([
+      'render_mode' => 'iframe',
+      'entry_url' => $this->managedEntryPath($application),
+    ])->save();
   }
 
   private function absolutePath(Site $site, EmbeddedApplication $application, string $type, string $filename): string
@@ -130,7 +155,11 @@ class ApplicationAssetStore
     $filename = trim($filename);
 
     if (! in_array($type, self::TYPES, true)) {
-      throw new RuntimeException('Application asset type must be css or js.');
+      throw new RuntimeException('Application asset type must be css, js, or html.');
+    }
+
+    if ($type === 'html' && $filename !== 'index.html') {
+      throw new RuntimeException('The managed HTML entry filename must be index.html.');
     }
 
     if (preg_match('/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/', $filename) !== 1 || strtolower(pathinfo($filename, PATHINFO_EXTENSION)) !== $type) {

@@ -1930,6 +1930,7 @@ return [
       'pages' => 'Importando páginas',
       'page_assets' => 'Copiando assets de páginas',
       'site_public_assets' => 'Copiando assets del sitio',
+      'embedded_applications' => 'Importando aplicaciones integradas',
       'shared_slots' => 'Importando slots compartidos',
       'page_slots' => 'Asignando slots de páginas',
       'blocks' => 'Importando bloques',

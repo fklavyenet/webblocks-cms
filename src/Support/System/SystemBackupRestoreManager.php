@@ -125,6 +125,18 @@ class SystemBackupRestoreManager
         $output[] = 'No uploads payload was present in this backup archive.';
       }
 
+      if ($inspection->includesSitePublic && $inspection->sitePublicRootPath !== null) {
+        $this->restoreDirectory(
+          $extractedDirectory.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $inspection->sitePublicRootPath),
+          public_path('site'),
+          $temporaryDirectory.'/current-site-public-rollback',
+          'Site public files restored to public/site.',
+          $output,
+        );
+      } else {
+        $output[] = 'No site public payload was present in this backup archive.';
+      }
+
       $this->maintenanceRunner->run($output);
 
       $restoreRecord = $this->recordRestoreOutcome(
@@ -247,6 +259,34 @@ class SystemBackupRestoreManager
         $this->moveDirectory($rollbackDirectory, $targetDirectory);
       }
 
+      throw $throwable;
+    }
+  }
+
+  private function restoreDirectory(string $sourceDirectory, string $targetDirectory, string $rollbackDirectory, string $successMessage, array &$output): void
+  {
+    if (! File::isDirectory($sourceDirectory)) {
+      throw new RuntimeException('Restore archive is missing an expected directory after extraction.');
+    }
+
+    $hadExistingTarget = File::isDirectory($targetDirectory);
+    File::ensureDirectoryExists(dirname($targetDirectory));
+
+    if ($hadExistingTarget) {
+      $this->moveDirectory($targetDirectory, $rollbackDirectory);
+    }
+
+    try {
+      $this->moveDirectory($sourceDirectory, $targetDirectory);
+      $output[] = $successMessage;
+      if ($hadExistingTarget) {
+        File::deleteDirectory($rollbackDirectory);
+      }
+    } catch (Throwable $throwable) {
+      File::deleteDirectory($targetDirectory);
+      if ($hadExistingTarget && File::isDirectory($rollbackDirectory)) {
+        $this->moveDirectory($rollbackDirectory, $targetDirectory);
+      }
       throw $throwable;
     }
   }

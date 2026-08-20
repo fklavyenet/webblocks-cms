@@ -918,7 +918,8 @@ The `anti_patterns` checks are about page-wide paint, so each one requires its t
 ### Embedded Application Assets API
 
 Application code should not be merged into a site's global `site.css` or
-`site.js`. A registered Embedded Application can own physical CSS and JavaScript
+`site.js`. A registered Embedded Application can own physical CSS, JavaScript,
+and a managed `index.html` entry
 files under its site-scoped public directory:
 
 ```text

@@ -35,7 +35,11 @@ class InternalApplicationAssetController extends Controller
     }
 
     try {
-      $asset = $this->assets->write($site, $this->application($application), $type, $filename, (string) $validator->validated()['contents'], $validator->validated()['expected_checksum'] ?? null);
+      $record = $this->application($application);
+      $asset = $this->assets->write($site, $record, $type, $filename, (string) $validator->validated()['contents'], $validator->validated()['expected_checksum'] ?? null);
+      if ($type === 'html') {
+        $this->assets->activateManagedEntry($record);
+      }
     } catch (RuntimeException $exception) {
       return $this->invalid($exception->getMessage());
     }
@@ -53,7 +57,10 @@ class InternalApplicationAssetController extends Controller
     try {
       $record = $this->application($application);
       $current = $this->assets->read($site, $record, $type, $filename);
-      $references = collect($current['type'] === 'css' ? $record->css_assets : $record->js_assets)
+      if ($current['type'] === 'html' && $record->entry_url === $current['public_path']) {
+        return $this->invalid('Change the Embedded Application entry URL before deleting its managed index.html file.');
+      }
+      $references = collect($current['type'] === 'css' ? $record->css_assets : ($current['type'] === 'js' ? $record->js_assets : []))
         ->map(fn (array|string $asset): string => is_array($asset) ? (string) ($asset['path'] ?? '') : $asset);
 
       if ($references->contains($current['public_path'])) {

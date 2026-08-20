@@ -45,6 +45,9 @@ class EmbeddedApplicationAssetController extends Controller
         throw new RuntimeException($this->message('asset_exists'));
       }
       $this->assets->write($site, $embeddedApplication, $type, $filename, (string) file_get_contents($file->getRealPath()), null);
+      if ($type === 'html') {
+        $this->assets->activateManagedEntry($embeddedApplication);
+      }
     } catch (RuntimeException $exception) {
       return back()->withErrors(['asset' => $exception->getMessage()]);
     }
@@ -71,7 +74,10 @@ class EmbeddedApplicationAssetController extends Controller
 
     try {
       $current = $this->assets->read($site, $embeddedApplication, $type, $filename);
-      $references = collect($type === 'css' ? $embeddedApplication->css_assets : $embeddedApplication->js_assets)
+      if ($type === 'html' && $embeddedApplication->entry_url === $current['public_path']) {
+        throw new RuntimeException($this->message('asset_referenced'));
+      }
+      $references = collect($type === 'css' ? $embeddedApplication->css_assets : ($type === 'js' ? $embeddedApplication->js_assets : []))
         ->map(fn (array|string $asset): string => is_array($asset) ? (string) ($asset['path'] ?? '') : $asset);
       if ($references->contains($current['public_path'])) {
         throw new RuntimeException($this->message('asset_referenced'));

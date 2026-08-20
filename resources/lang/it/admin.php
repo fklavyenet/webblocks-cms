@@ -1929,6 +1929,7 @@ return [
       'pages' => 'Importazione delle pagine',
       'page_assets' => 'Copia degli asset delle pagine',
       'site_public_assets' => 'Copia degli asset del sito',
+      'embedded_applications' => 'Importazione delle applicazioni incorporate',
       'shared_slots' => 'Importazione degli slot condivisi',
       'page_slots' => 'Assegnazione degli slot delle pagine',
       'blocks' => 'Importazione dei blocchi',

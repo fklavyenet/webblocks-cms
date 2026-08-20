@@ -29,11 +29,15 @@ Disabling preserves existing blocks and makes the definition unavailable for new
 
 System → Embedded Applications provides create, list, edit, enable/disable, and guarded delete operations. The form exposes fields and selections for every stored definition property. It never asks for a manifest file or scans public directories.
 
-After saving a definition, **Application files** opens its site-scoped file manager. A system administrator selects the host site, uploads a `.css` or `.js` file, and can then edit or delete it from a compact table. Files are written under `/site/{site_handle}/applications/{application_handle}/{type}`. Updates use checksums and replacements/deletions retain revision snapshots; a file referenced by the definition cannot be deleted until its URL is removed.
+After saving a definition, **Application files** opens its site-scoped file manager. A system administrator selects the host site and uploads `.css`, `.js`, or the single managed HTML entry named `index.html`. CSS and JavaScript live under `/site/{site_handle}/applications/{application_handle}/{type}`; the HTML entry lives at the application root and is served through `/webblocks-applications/{application_handle}/index.html`, where the request host selects the correct site copy. Uploading `index.html` switches the definition to iframe mode and assigns that stable entry URL. Updates use checksums and replacements/deletions retain revision snapshots; a referenced file cannot be deleted until its URL is removed.
 
 Application Block settings are managed as a compact table rather than a fixed collection of empty field cards. **Add Setting** opens a modal containing the typed schema fields; saving adds the draft setting to the table, while cancel closes the modal without changing the application. Existing rows use the same modal for editing and expose icon actions for editing and removal. The table is part of the parent application form, so these client-side changes are persisted only when the operator saves the application. The submitted `settings[*]` contract and API representation remain unchanged.
 
-Application files may still be deployed by the host's normal release or asset pipeline. The admin file manager and the dedicated API provide a narrowly scoped alternative for registered applications; they accept only safe `.css` and `.js` basenames and are not a general executable-file browser.
+Application files may still be deployed by the host's normal release or asset pipeline. The admin file manager and dedicated API provide a narrowly scoped alternative for registered applications; CSS/JS accept safe basenames, while HTML is deliberately restricted to `index.html`. This is not a general executable-file browser.
+
+### Backup and transfer
+
+System backups include the database-backed application contracts and the complete `public/site` tree, then restore both with rollback protection. Site Export/Import includes definitions referenced by exported Application Blocks plus their site-scoped `applications/` files even when ordinary media inclusion is disabled. Existing installation-wide definitions are reused only when their contracts match; a conflicting handle stops the import instead of silently changing applications used by other sites.
 
 ## Application Block
 

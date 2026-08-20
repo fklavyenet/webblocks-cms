@@ -19,7 +19,7 @@ class EmbeddedApplicationAssetRequest extends FormRequest
     ];
 
     if ($this->isMethod('post')) {
-      $rules['asset'] = ['required', 'file', 'max:1024', 'extensions:css,js'];
+      $rules['asset'] = ['required', 'file', 'max:1024', 'extensions:css,js,html'];
     } elseif ($this->isMethod('put')) {
       $rules['contents'] = ['required', 'string', 'max:1000000'];
       $rules['expected_checksum'] = ['required', 'string', 'size:64'];

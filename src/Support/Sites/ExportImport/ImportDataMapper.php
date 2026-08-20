@@ -15,6 +15,7 @@ use WebBlocks\Cms\Models\BlockImageTranslation;
 use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\Layout;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
@@ -308,6 +309,9 @@ class ImportDataMapper
         break;
       case 'site_public_assets':
         $this->importSitePublicAssets($this->stateSite($state), $archive, $payload, $state['copied_files'], $log);
+        break;
+      case 'embedded_applications':
+        $this->importEmbeddedApplications($payload, $log);
         break;
       case 'shared_slots':
         $result = $this->importSharedSlots($this->stateSite($state), $payload, $log);
@@ -1008,6 +1012,37 @@ class ImportDataMapper
     }
   }
 
+  private function importEmbeddedApplications(array $payload, array &$output): void
+  {
+    $fields = ['name', 'description', 'version', 'render_mode', 'entry_url', 'mount_element', 'mount_classes', 'css_assets', 'js_assets', 'supports', 'settings_schema', 'is_enabled'];
+    $count = 0;
+
+    foreach (($payload['embedded_applications'] ?? []) as $data) {
+      $handle = trim((string) ($data['handle'] ?? ''));
+      if (preg_match('/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/', $handle) !== 1) {
+        throw new RuntimeException('Import package contains an invalid Embedded Application handle.');
+      }
+
+      $attributes = array_intersect_key($data, array_flip($fields));
+      $existing = EmbeddedApplication::query()->where('handle', $handle)->first();
+
+      if ($existing) {
+        foreach ($attributes as $field => $value) {
+          if ($existing->{$field} != $value) {
+            throw new RuntimeException('Embedded Application ['.$handle.'] conflicts with the existing installation-wide definition.');
+          }
+        }
+      } else {
+        EmbeddedApplication::query()->create(['handle' => $handle, ...$attributes]);
+      }
+      $count++;
+    }
+
+    if ($count > 0) {
+      $output[] = 'Imported or verified '.$count.' Embedded Application definition(s).';
+    }
+  }
+
   private function restorePageAssetFile(ZipArchive $archive, string $path, array &$copiedFiles): void
   {
     $relativePath = $this->pageAssetPathValidator->relativePublicPath($path);
@@ -1061,7 +1096,7 @@ class ImportDataMapper
       return $contents;
     }
 
-    if (! preg_match('/\.(css|js)$/i', $targetRelativePath)) {
+    if (! preg_match('/\.(css|js|html)$/i', $targetRelativePath)) {
       return $contents;
     }
 

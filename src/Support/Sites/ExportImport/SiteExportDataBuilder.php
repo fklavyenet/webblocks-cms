@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Symfony\Component\Finder\SplFileInfo;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
 use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\Locale;
@@ -67,6 +68,18 @@ class SiteExportDataBuilder
       ->orderBy('id')
       ->get();
     $blockIds = $blocks->pluck('id');
+    $applicationHandles = $blocks->map(function (Block $block): string {
+      $settings = $block->settings;
+      if (! is_array($settings)) {
+        $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+      }
+
+      return trim((string) data_get($settings, 'application_handle', ''));
+    })->filter()->unique()->values();
+    $embeddedApplications = EmbeddedApplication::query()
+      ->whereIn('handle', $applicationHandles)
+      ->orderBy('handle')
+      ->get();
 
     $navigationItems = NavigationItem::query()
       ->where('site_id', $site->id)
@@ -74,9 +87,10 @@ class SiteExportDataBuilder
       ->orderBy('id')
       ->get();
     $pageAssets = PageAsset::query()->whereIn('page_id', $pageIds)->orderBy('sort_order')->orderBy('id')->get();
+    $allSitePublicAssets = $this->sitePublicAssetsFor($site);
     $sitePublicAssets = $includesMedia
-      ? $this->sitePublicAssetsFor($site)
-      : collect();
+      ? $allSitePublicAssets
+      : $allSitePublicAssets->filter(fn (array $asset): bool => str_starts_with((string) ($asset['sub_path'] ?? ''), 'applications/'))->values();
 
     $assetIds = $includesMedia
       ? collect()
@@ -174,6 +188,21 @@ class SiteExportDataBuilder
         'updated_at' => $siteVariable->updated_at?->toDateTimeString(),
       ])->all(),
       'site_public_assets' => $sitePublicAssets->all(),
+      'embedded_applications' => $embeddedApplications->map(fn (EmbeddedApplication $application) => [
+        'handle' => $application->handle,
+        'name' => $application->name,
+        'description' => $application->description,
+        'version' => $application->version,
+        'render_mode' => $application->render_mode,
+        'entry_url' => $application->entry_url,
+        'mount_element' => $application->mount_element,
+        'mount_classes' => $application->mount_classes,
+        'css_assets' => $application->css_assets,
+        'js_assets' => $application->js_assets,
+        'supports' => $application->supports,
+        'settings_schema' => $application->settings_schema,
+        'is_enabled' => (bool) $application->is_enabled,
+      ])->all(),
       'pages' => $pages->map(fn (Page $page) => [
         'id' => $page->id,
         'site_id' => $page->site_id,

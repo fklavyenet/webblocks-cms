@@ -51,6 +51,21 @@ class ApplicationAssetStoreTest extends TestCase
   }
 
   #[Test]
+  public function it_stores_the_managed_html_entry_at_the_application_root_and_exposes_a_stable_url(): void
+  {
+    $store = $this->app->make(ApplicationAssetStore::class);
+    $html = $store->write($this->site(), $this->application(), 'html', 'index.html', '<!doctype html><title>Typing</title>', null);
+
+    $this->assertSame('/webblocks-applications/typing/index.html', $html['public_path']);
+    $this->assertSame('site/example/applications/typing/index.html', $html['relative_path']);
+    $this->assertFileExists($this->temporaryPublicPath.'/site/example/applications/typing/index.html');
+    $this->assertCount(1, $store->all($this->site(), $this->application()));
+
+    $this->expectException(RuntimeException::class);
+    $store->write($this->site(), $this->application(), 'html', 'other.html', '<p>no</p>', null);
+  }
+
+  #[Test]
   public function it_rejects_traversal_wrong_extensions_and_stale_checksums(): void
   {
     $store = $this->app->make(ApplicationAssetStore::class);

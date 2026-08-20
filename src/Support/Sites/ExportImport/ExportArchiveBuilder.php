@@ -73,21 +73,21 @@ class ExportArchiveBuilder
           $fileCount++;
         }
 
-        foreach ($payload['site_public_assets'] ?? [] as $sitePublicAsset) {
-          $sourcePath = $this->canonicalSitePublicAssetPath($sitePublicAsset);
-          $absolutePath = public_path($sourcePath);
+      }
 
-          if (! is_file($absolutePath)) {
-            $output[] = 'Skipped missing site public asset file '.$sourcePath.'.';
+      foreach ($payload['site_public_assets'] ?? [] as $sitePublicAsset) {
+        $sourcePath = $this->canonicalSitePublicAssetPath($sitePublicAsset);
+        $absolutePath = public_path($sourcePath);
 
-            continue;
-          }
-
-          $archiveEntry = 'files/public/'.$sourcePath;
-          $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive file path');
-          $archive->addFile($absolutePath, $archiveEntry);
-          $fileCount++;
+        if (! is_file($absolutePath)) {
+          $output[] = 'Skipped missing site public asset file '.$sourcePath.'.';
+          continue;
         }
+
+        $archiveEntry = 'files/public/'.$sourcePath;
+        $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive file path');
+        $archive->addFile($absolutePath, $archiveEntry);
+        $fileCount++;
       }
 
       $archive->close();

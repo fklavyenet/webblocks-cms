@@ -24,8 +24,10 @@ class BackupManifestBuilder
       'included_parts' => [
         'database' => $backup->includes_database,
         'uploads' => $backup->includes_uploads,
+        'site_public' => true,
       ],
       'uploads_root' => 'storage/app/public',
+      'site_public_root' => 'public/site',
       'archive_format' => 'zip',
       'archive_filename' => $archiveFilename,
     ];

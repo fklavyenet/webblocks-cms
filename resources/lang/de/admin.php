@@ -1930,6 +1930,7 @@ return [
       'pages' => 'Seiten werden importiert',
       'page_assets' => 'Seiten-Assets werden kopiert',
       'site_public_assets' => 'Website-Assets werden kopiert',
+      'embedded_applications' => 'Eingebettete Anwendungen werden importiert',
       'shared_slots' => 'Gemeinsame Slots werden importiert',
       'page_slots' => 'Seiten-Slots werden zugewiesen',
       'blocks' => 'Blöcke werden importiert',

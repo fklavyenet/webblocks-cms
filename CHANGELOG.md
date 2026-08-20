@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.69.0
+
+- Add CMS-managed `index.html` entries for iframe Embedded Applications, resolved per request host through a stable application URL.
+- Make Embedded Application contracts and executable files portable in site Export/Import, with explicit conflicts instead of overwriting installation-wide definitions.
+- Include `public/site` in System Backup archives and restore it with rollback protection so application files and site presentation assets are recoverable.
+
 ## 1.68.0
 
 - Add the missing system-admin file manager for site-scoped Embedded Application CSS and JavaScript assets.
