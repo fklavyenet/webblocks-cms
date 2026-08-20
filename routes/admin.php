@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
+use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
@@ -353,6 +354,10 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::delete('page-layouts/{page_layout}/slots/{page_layout_slot}', [PageLayoutSlotController::class, 'destroy'])->name('page-layouts.slots.destroy');
       Route::resource('slot-types', SlotTypeController::class)->only(['index']);
       Route::resource('block-types', BlockTypeController::class)->except(['show']);
+      Route::get('embedded-applications/{embedded_application}/assets', [EmbeddedApplicationAssetController::class, 'index'])->name('embedded-applications.assets.index');
+      Route::post('embedded-applications/{embedded_application}/assets', [EmbeddedApplicationAssetController::class, 'store'])->name('embedded-applications.assets.store');
+      Route::put('embedded-applications/{embedded_application}/assets/{type}/{filename}', [EmbeddedApplicationAssetController::class, 'update'])->name('embedded-applications.assets.update');
+      Route::delete('embedded-applications/{embedded_application}/assets/{type}/{filename}', [EmbeddedApplicationAssetController::class, 'destroy'])->name('embedded-applications.assets.destroy');
       Route::resource('embedded-applications', EmbeddedApplicationController::class)->except(['show'])->parameters(['embedded-applications' => 'embedded_application']);
       Route::get('site-transfers/exports', [SiteExportController::class, 'index'])->name('site-transfers.exports.index');
       Route::post('site-transfers/exports', [SiteExportController::class, 'store'])->name('site-transfers.exports.store');

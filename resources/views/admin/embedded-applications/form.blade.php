@@ -12,6 +12,14 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', ['title' => $editing ? $text('edit_title') : $text('create_title'), 'description' => $text('form_description')])
     @include('webblocks-cms::admin.partials.flash')
+    @if ($editing)
+        <div class="wb-card wb-mb-4">
+            <div class="wb-card-body wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                <div><strong>{{ $text('application_files') }}</strong><div class="wb-text-sm wb-text-muted">{{ $text('application_files_help') }}</div></div>
+                <a class="wb-btn wb-btn-primary" href="{{ route('admin.embedded-applications.assets.index', $application) }}"><i class="wb-icon wb-icon-folder" aria-hidden="true"></i> {{ $text('manage_files') }}</a>
+            </div>
+        </div>
+    @endif
     <div class="wb-card">
         <form method="POST" action="{{ $editing ? route('admin.embedded-applications.update', $application) : route('admin.embedded-applications.store') }}" class="wb-stack wb-gap-0">
             @csrf

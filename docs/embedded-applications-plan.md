@@ -29,9 +29,11 @@ Disabling preserves existing blocks and makes the definition unavailable for new
 
 System → Embedded Applications provides create, list, edit, enable/disable, and guarded delete operations. The form exposes fields and selections for every stored definition property. It never asks for a manifest file or scans public directories.
 
+After saving a definition, **Application files** opens its site-scoped file manager. A system administrator selects the host site, uploads a `.css` or `.js` file, and can then edit or delete it from a compact table. Files are written under `/site/{site_handle}/applications/{application_handle}/{type}`. Updates use checksums and replacements/deletions retain revision snapshots; a file referenced by the definition cannot be deleted until its URL is removed.
+
 Application Block settings are managed as a compact table rather than a fixed collection of empty field cards. **Add Setting** opens a modal containing the typed schema fields; saving adds the draft setting to the table, while cancel closes the modal without changing the application. Existing rows use the same modal for editing and expose icon actions for editing and removal. The table is part of the parent application form, so these client-side changes are persisted only when the operator saves the application. The submitted `settings[*]` contract and API representation remain unchanged.
 
-The application files themselves may be deployed by the host's normal release, file manager, or asset pipeline. CMS records their public URLs; it does not become a general executable-file uploader.
+Application files may still be deployed by the host's normal release or asset pipeline. The admin file manager and the dedicated API provide a narrowly scoped alternative for registered applications; they accept only safe `.css` and `.js` basenames and are not a general executable-file browser.
 
 ## Application Block
 

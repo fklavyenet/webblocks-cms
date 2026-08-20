@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.68.0
+
+- Add the missing system-admin file manager for site-scoped Embedded Application CSS and JavaScript assets.
+- Link each saved Embedded Application to a site selector and file list with `.css`/`.js` upload, source editing, checksummed updates, revision-backed deletion, and standard WebBlocks modal actions.
+- Keep executable files isolated under `/site/{site_handle}/applications/{application_handle}` and refuse deletion while the application definition still references the public path.
+
 ## 1.67.0
 
 - Add a site-scoped Embedded Application Assets API for isolated CSS and JavaScript files under `/site/{site_handle}/applications/{application_handle}`.
