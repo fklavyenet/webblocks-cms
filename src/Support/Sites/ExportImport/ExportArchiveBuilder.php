@@ -81,6 +81,7 @@ class ExportArchiveBuilder
 
         if (! is_file($absolutePath)) {
           $output[] = 'Skipped missing site public asset file '.$sourcePath.'.';
+
           continue;
         }
 
