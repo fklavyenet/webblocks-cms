@@ -31,4 +31,16 @@ class SystemSettingsTabsStructureTest extends TestCase
     $this->assertStringContainsString("['tab' => \$request->validated('section')]", $controller);
     $this->assertStringContainsString("['tab' => 'mail']", $controller);
   }
+
+  #[Test]
+  public function mail_tools_open_as_overlays_and_test_errors_reopen_the_test_modal(): void
+  {
+    $view = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/system/settings.blade.php');
+
+    $this->assertStringContainsString('data-wb-target="#settings-mail-diagnostics-modal"', $view);
+    $this->assertStringContainsString('data-wb-target="#settings-mail-test-modal"', $view);
+    $this->assertStringContainsString('id="settings-mail-diagnostics-modal" role="dialog"', $view);
+    $this->assertStringContainsString('id="settings-mail-test-modal" role="dialog"', $view);
+    $this->assertStringContainsString("\$errors->has('recipient_email') ? 'is-open' : ''", $view);
+  }
 }

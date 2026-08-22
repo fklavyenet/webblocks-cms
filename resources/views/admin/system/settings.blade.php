@@ -257,8 +257,17 @@
                     @endif
                 </div>
 
-                <div class="wb-card-footer">
-                    <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.system.settings.edit')" :submit-label="$systemText('save_changes')" />
+                <div class="wb-card-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                    <div class="wb-cluster wb-cluster-2">
+                        <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="modal" data-wb-target="#settings-mail-diagnostics-modal" aria-haspopup="dialog">{{ $systemText('diagnostics') }}</button>
+                        <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#settings-mail-test-modal" aria-haspopup="dialog">{{ $systemText('send_test_email') }}</button>
+                    </div>
+
+                    <x-webblocks-cms::admin.form-actions
+                        :cancel-url="route('admin.system.settings.edit', ['tab' => 'mail'])"
+                        :submit-label="$systemText('save_changes')"
+                        container-class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap"
+                    />
                 </div>
             </form>
 
@@ -279,64 +288,6 @@
                 ];
             @endphp
 
-            <div class="wb-card-body wb-stack wb-gap-4">
-                <section class="wb-stack wb-gap-3" aria-labelledby="settings-mail-diagnostics-heading" data-wb-mail-diagnostics>
-                    <div>
-                        <strong id="settings-mail-diagnostics-heading">{{ $systemText('diagnostics') }}</strong>
-                    </div>
-
-                    <div class="wb-table-wrap" data-wb-mail-diagnostics-table>
-                        <table class="wb-table wb-table-striped">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $systemText('setting') }}</th>
-                                    <th scope="col">{{ $systemText('value') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($mailDiagnosticItems as $item)
-                                    <tr data-wb-mail-diagnostic-item>
-                                        <th scope="row" class="wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</th>
-                                        <td data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">
-                                            @if (($item['mailto'] ?? false) && $item['value'] !== $systemText('not_configured'))
-                                                <a href="mailto:{{ $item['value'] }}">{{ $item['value'] }}</a>
-                                            @else
-                                                {{ $item['value'] }}
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="wb-text-sm wb-text-muted">{{ $systemText('secret_values_hidden') }}</div>
-                </section>
-
-                <section class="wb-stack wb-gap-3" aria-labelledby="settings-mail-test-heading" data-wb-mail-test>
-                    <div>
-                        <strong id="settings-mail-test-heading">{{ $systemText('send_test_email') }}</strong>
-                    </div>
-
-                    <form method="POST" action="{{ route('admin.system.settings.mail.test') }}" class="wb-stack wb-gap-3">
-                        @csrf
-
-                        <div class="wb-grid wb-grid-2 wb-gap-4">
-                            <div class="wb-stack-2 wb-field">
-                                <label for="settings_mail_test_recipient_email">{{ $systemText('recipient_email') }}</label>
-                                <input id="settings_mail_test_recipient_email" name="recipient_email" type="email" class="wb-input" maxlength="255" required value="{{ old('recipient_email') }}" @error('recipient_email') aria-invalid="true" aria-describedby="settings_mail_test_recipient_email_error" @enderror>
-                                @error('recipient_email')
-                                    <div id="settings_mail_test_recipient_email_error" class="wb-field-error">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="wb-cluster wb-cluster-2">
-                            <button type="submit" class="wb-btn wb-btn-primary">{{ $systemText('send_test_email_button') }}</button>
-                        </div>
-                    </form>
-                </section>
-            </div>
         </div>
 
         </div>
@@ -420,3 +371,69 @@
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    <div class="wb-modal wb-modal-lg" id="settings-mail-diagnostics-modal" role="dialog" aria-modal="true" aria-labelledby="settings-mail-diagnostics-title">
+        <div class="wb-modal-dialog">
+            <div class="wb-modal-header">
+                <h2 class="wb-modal-title" id="settings-mail-diagnostics-title">{{ $systemText('diagnostics') }}</h2>
+                <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('common.close') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>
+            </div>
+            <div class="wb-modal-body wb-stack wb-gap-4" data-wb-mail-diagnostics>
+                <div class="wb-table-wrap" data-wb-mail-diagnostics-table>
+                    <table class="wb-table wb-table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ $systemText('setting') }}</th>
+                                <th scope="col">{{ $systemText('value') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($mailDiagnosticItems as $item)
+                                <tr data-wb-mail-diagnostic-item>
+                                    <th scope="row" class="wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</th>
+                                    <td data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">
+                                        @if (($item['mailto'] ?? false) && $item['value'] !== $systemText('not_configured'))
+                                            <a href="mailto:{{ $item['value'] }}">{{ $item['value'] }}</a>
+                                        @else
+                                            {{ $item['value'] }}
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="wb-text-sm wb-text-muted">{{ $systemText('secret_values_hidden') }}</div>
+            </div>
+            <div class="wb-modal-footer">
+                <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('common.close') }}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="wb-modal {{ $errors->has('recipient_email') ? 'is-open' : '' }}" id="settings-mail-test-modal" role="dialog" aria-modal="true" aria-labelledby="settings-mail-test-title">
+        <div class="wb-modal-dialog">
+            <form method="POST" action="{{ route('admin.system.settings.mail.test') }}">
+                @csrf
+                <div class="wb-modal-header">
+                    <h2 class="wb-modal-title" id="settings-mail-test-title">{{ $systemText('send_test_email') }}</h2>
+                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('common.close') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>
+                </div>
+                <div class="wb-modal-body">
+                    <div class="wb-stack-2 wb-field">
+                        <label for="settings_mail_test_recipient_email">{{ $systemText('recipient_email') }}</label>
+                        <input id="settings_mail_test_recipient_email" name="recipient_email" type="email" class="wb-input" maxlength="255" required value="{{ old('recipient_email') }}" @error('recipient_email') aria-invalid="true" aria-describedby="settings_mail_test_recipient_email_error" @enderror>
+                        @error('recipient_email')
+                            <div id="settings_mail_test_recipient_email_error" class="wb-field-error">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
+                    <button type="submit" class="wb-btn wb-btn-primary">{{ $systemText('send_test_email_button') }}</button>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $adminText('common.cancel') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endpush

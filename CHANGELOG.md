@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.69.2
+
+- Move CMS Mail diagnostics and test-email tools out of the System Settings page flow into dedicated WebBlocks modals opened from the Mail footer, keeping the mail configuration form focused and compact.
+- Reopen the Send Test Email modal automatically after recipient validation or delivery errors so operators can correct and retry without losing context.
+
 ## 1.69.1
 
 - Organize System Settings into focused General, Project Identity, Mail, Privacy, and Runtime Information tabs while keeping each settings section independently saved and returning operators to the relevant tab after actions or validation errors.
