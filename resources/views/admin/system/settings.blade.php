@@ -6,6 +6,22 @@
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
     $systemText = static fn (string $key, array $replace = []) => $adminTranslator->admin('system_settings.'.$key, $adminLocale, $replace);
+    $systemTabs = [
+        'general' => $systemText('general'),
+        'project' => $systemText('project_identity'),
+        'mail' => $systemText('mail'),
+        'privacy' => $systemText('privacy'),
+        'runtime' => $systemText('runtime_information'),
+    ];
+    $systemTab = old('section', request()->query('tab', 'general'));
+
+    if ($errors->has('recipient_email')) {
+        $systemTab = 'mail';
+    }
+
+    if (! array_key_exists($systemTab, $systemTabs)) {
+        $systemTab = 'general';
+    }
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $systemText('title'), 'heading' => $systemText('title')])
@@ -18,8 +34,26 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <div class="wb-stack wb-gap-4">
-        <div class="wb-card">
+    <div class="wb-card">
+        <div class="wb-card-header"><strong>{{ $systemText('settings') }}</strong></div>
+
+        <div class="wb-card-body">
+            <div class="wb-tabs" data-wb-tabs>
+                <div class="wb-tabs-nav" role="tablist" aria-label="{{ $systemText('sections') }}">
+                    @foreach ($systemTabs as $tabKey => $tabLabel)
+                        <button
+                            type="button"
+                            class="wb-tabs-btn {{ $systemTab === $tabKey ? 'is-active' : '' }}"
+                            data-wb-tab="system-settings-{{ $tabKey }}-panel"
+                            aria-selected="{{ $systemTab === $tabKey ? 'true' : 'false' }}"
+                            @if ($systemTab !== $tabKey) tabindex="-1" @endif
+                        >{{ $tabLabel }}</button>
+                    @endforeach
+                </div>
+
+                <div class="wb-tabs-panels">
+                    <div class="wb-tabs-panel {{ $systemTab === 'general' ? 'is-active' : '' }}" id="system-settings-general-panel">
+        <div class="wb-card wb-card-muted">
             <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
                 @csrf
                 @method('PUT')
@@ -79,7 +113,10 @@
             </form>
         </div>
 
-        <div class="wb-card">
+        </div>
+
+                    <div class="wb-tabs-panel {{ $systemTab === 'project' ? 'is-active' : '' }}" id="system-settings-project-panel">
+        <div class="wb-card wb-card-muted">
             <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
                 @csrf
                 @method('PUT')
@@ -117,7 +154,10 @@
             </form>
         </div>
 
-        <div class="wb-card">
+        </div>
+
+                    <div class="wb-tabs-panel {{ $systemTab === 'mail' ? 'is-active' : '' }}" id="system-settings-mail-panel">
+        <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $systemText('mail') }}</strong></div>
 
             <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
@@ -292,14 +332,17 @@
                         </div>
 
                         <div class="wb-cluster wb-cluster-2">
-                            <button type="submit" class="wb-button wb-button-secondary">{{ $systemText('send_test_email_button') }}</button>
+                            <button type="submit" class="wb-btn wb-btn-primary">{{ $systemText('send_test_email_button') }}</button>
                         </div>
                     </form>
                 </section>
             </div>
         </div>
 
-        <div class="wb-card">
+        </div>
+
+                    <div class="wb-tabs-panel {{ $systemTab === 'privacy' ? 'is-active' : '' }}" id="system-settings-privacy-panel">
+        <div class="wb-card wb-card-muted">
             <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
                 @csrf
                 @method('PUT')
@@ -333,7 +376,10 @@
             </form>
         </div>
 
-        <div class="wb-card">
+        </div>
+
+                    <div class="wb-tabs-panel {{ $systemTab === 'runtime' ? 'is-active' : '' }}" id="system-settings-runtime-panel">
+        <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $systemText('runtime_information') }}</strong></div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
@@ -364,6 +410,10 @@
                     </div>
                     <div class="wb-settings-row-control">
                         <span>{{ $mailDiagnostics['config_cached'] ? $systemText('yes') : $systemText('no') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
                     </div>
                 </div>
             </div>

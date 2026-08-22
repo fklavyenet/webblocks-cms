@@ -31,15 +31,14 @@
                             <td style="padding:0 0 10px;"><a href="mailto:{{ $contactMessage->email }}" style="color:#0f766e;">{{ $contactMessage->email }}</a></td>
                         </tr>
                         <tr>
-                            <td style="padding:0 0 16px; width:96px; color:#64748b;">Subject</td>
-                            <td style="padding:0 0 16px;"><strong>{{ $contactMessage->subject ?: '-' }}</strong></td>
+                            <td style="padding:0 0 10px; width:96px; color:#64748b;">Subject</td>
+                            <td style="padding:0 0 10px;"><strong>{{ $contactMessage->subject ?: '-' }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:0; width:96px; color:#64748b; vertical-align:top;">Message</td>
+                            <td class="wb-email-message-body" style="padding:0; font-size:16px; white-space:normal;">{!! nl2br(e($contactMessage->message)) !!}</td>
                         </tr>
                     </table>
-
-                    <div class="wb-email-message" style="border-top:1px solid #e2e8f0; margin-top:4px; padding-top:16px;">
-                        <div style="font-weight:bold; margin-bottom:8px;">Message</div>
-                        <div class="wb-email-message-body" style="font-size:16px; white-space:normal;">{!! nl2br(e($contactMessage->message)) !!}</div>
-                    </div>
                 </td>
             </tr>
             <tr>

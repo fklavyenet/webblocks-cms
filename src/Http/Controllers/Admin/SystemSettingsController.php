@@ -65,7 +65,7 @@ class SystemSettingsController extends Controller
     $this->systemSettings->save($request->settingsPayload());
 
     return redirect()
-      ->route('admin.system.settings.edit')
+      ->route('admin.system.settings.edit', ['tab' => $request->validated('section')])
       ->with('status', 'Settings updated successfully.');
   }
 
@@ -75,13 +75,13 @@ class SystemSettingsController extends Controller
       $sender->send($request->recipientEmail());
     } catch (Throwable) {
       return redirect()
-        ->route('admin.system.settings.edit')
+        ->route('admin.system.settings.edit', ['tab' => 'mail'])
         ->withInput($request->only('recipient_email'))
         ->withErrors(['recipient_email' => 'The test email could not be sent. Please check CMS Mail settings.']);
     }
 
     return redirect()
-      ->route('admin.system.settings.edit')
+      ->route('admin.system.settings.edit', ['tab' => 'mail'])
       ->with('status', 'Test email sent to '.$request->recipientEmail().'.');
   }
 }

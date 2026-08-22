@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.69.1
+
+- Organize System Settings into focused General, Project Identity, Mail, Privacy, and Runtime Information tabs while keeping each settings section independently saved and returning operators to the relevant tab after actions or validation errors.
+- Group detailed Visitor Reports into Acquisition, Journeys, Audience, Traffic, and Content tabs while keeping filters and summary metrics visible and preserving the selected report tab when filters are applied.
+- Align the visitor message body with the Name, Email, and Subject rows in contact notification emails, and promote Send Test Email to a clear primary action.
+
 ## 1.69.0
 
 - Add CMS-managed `index.html` entries for iframe Embedded Applications, resolved per request host through a stable application URL.

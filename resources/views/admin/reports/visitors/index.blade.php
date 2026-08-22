@@ -21,6 +21,18 @@
     ];
     $supportsCampaignReports = ($supportsUtmBreakdowns ?? false) && ($utmEnabled ?? true);
     $hasFilters = $filters['date_range'] !== 'last_30_days' || $filters['site'] !== 'all' || $filters['locale'] !== 'all' || ($filters['traffic'] ?? 'all') !== 'all';
+    $reportTabs = [
+        'acquisition' => $adminText('acquisition'),
+        'journeys' => $adminText('journeys'),
+        'audience' => $adminText('audience'),
+        'traffic' => $adminText('traffic'),
+        'content' => $adminText('content'),
+    ];
+    $reportTab = preg_replace('/^visitor-reports-|\-panel$/', '', (string) request()->query('tab', 'acquisition'));
+
+    if (! array_key_exists($reportTab, $reportTabs)) {
+        $reportTab = 'acquisition';
+    }
 
     $trackedMetric = function ($value, string $state, int $decimals = 0) use ($adminText): string {
         if ($state === 'not_tracked') {
@@ -72,6 +84,8 @@
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body">
                 <form method="GET" action="{{ route('admin.reports.visitors.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
+                    <input type="hidden" name="tab" value="{{ $reportTab }}" data-wb-visitor-reports-tab-input>
+
                     <div class="wb-cluster wb-cluster-2">
                         <div class="wb-stack wb-gap-1">
                             <label for="visitor_reports_date_range">{{ $adminText('date_range') }}</label>
@@ -190,7 +204,25 @@
             </div>
         </div>
 
-        <div class="wb-grid wb-grid-2">
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>{{ $adminText('detailed_reports') }}</strong></div>
+            <div class="wb-card-body">
+                <div class="wb-tabs" data-wb-tabs data-wb-tabs-field="[data-wb-visitor-reports-tab-input]">
+                    <div class="wb-tabs-nav" role="tablist" aria-label="{{ $adminText('report_sections') }}">
+                        @foreach ($reportTabs as $tabKey => $tabLabel)
+                            <button
+                                type="button"
+                                class="wb-tabs-btn {{ $reportTab === $tabKey ? 'is-active' : '' }}"
+                                data-wb-tab="visitor-reports-{{ $tabKey }}-panel"
+                                aria-selected="{{ $reportTab === $tabKey ? 'true' : 'false' }}"
+                                @if ($reportTab !== $tabKey) tabindex="-1" @endif
+                            >{{ $tabLabel }}</button>
+                        @endforeach
+                    </div>
+
+                    <div class="wb-tabs-panels">
+                        <div class="wb-tabs-panel {{ $reportTab === 'acquisition' ? 'is-active' : '' }}" id="visitor-reports-acquisition-panel">
+                            <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header"><strong>{{ $adminText('top_campaigns') }}</strong></div>
                 <div class="wb-card-body">
@@ -312,6 +344,12 @@
                 </div>
             </div>
 
+                            </div>
+                        </div>
+
+                        <div class="wb-tabs-panel {{ $reportTab === 'journeys' ? 'is-active' : '' }}" id="visitor-reports-journeys-panel">
+                            <div class="wb-grid wb-grid-2">
+
             <div class="wb-card">
                 <div class="wb-card-header"><strong>{{ $adminText('top_entry_pages') }}</strong></div>
                 <div class="wb-card-body">
@@ -375,6 +413,12 @@
                     @endif
                 </div>
             </div>
+
+                            </div>
+                        </div>
+
+                        <div class="wb-tabs-panel {{ $reportTab === 'audience' ? 'is-active' : '' }}" id="visitor-reports-audience-panel">
+                            <div class="wb-grid wb-grid-2">
 
             <div class="wb-card">
                 <div class="wb-card-header"><strong>{{ $adminText('locale_summary') }}</strong></div>
@@ -442,6 +486,11 @@
                 </div>
             </div>
 
+                            </div>
+                        </div>
+
+                        <div class="wb-tabs-panel {{ $reportTab === 'traffic' ? 'is-active' : '' }}" id="visitor-reports-traffic-panel">
+
             <div class="wb-card">
                 <div class="wb-card-header"><strong>{{ $adminText('bot_visibility') }}</strong></div>
                 <div class="wb-card-body">
@@ -473,7 +522,10 @@
                     @endif
                 </div>
             </div>
-        </div>
+
+                        </div>
+
+                        <div class="wb-tabs-panel {{ $reportTab === 'content' ? 'is-active' : '' }}" id="visitor-reports-content-panel">
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>{{ $adminText('top_pages') }}</strong></div>
@@ -509,6 +561,11 @@
                         </table>
                     </div>
                 @endif
+            </div>
+        </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     @endif

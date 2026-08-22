@@ -13,8 +13,6 @@ wb-api-token-capabilities
 wb-auth-shell-centered
 wb-auth-shell-panel
 wb-block-row
-wb-button
-wb-button-secondary
 wb-code-block
 wb-dropdown-end
 wb-empty-state
