@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.70.1
+
+- Put the guarded **Clean Up Now** action directly beside the automatic-cleanup status on the Backups screen, so operators can see eligible backup count, open the confirmation modal, and clean up without remembering the System Settings tab.
+- Keep policy editing in System Settings while returning completed cleanup runs to the Backups history with the deleted count and freed space result.
+
 ## 1.70.0
 
 - Add automatic cleanup for expired system-generated backups, with a dedicated System Settings tab, a non-destructive preview, protected latest pre-update restore points, and manual/uploaded/running backups excluded from cleanup.

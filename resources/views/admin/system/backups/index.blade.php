@@ -32,11 +32,18 @@
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-stack-4">
-        <div class="wb-alert wb-alert-info">
-            <div>
+        <div class="wb-alert wb-alert-info wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+            <div class="wb-stack wb-gap-1">
                 <div class="wb-alert-title">{{ $adminText('backups.cleanup_status', ['status' => $backupCleanupSettings['enabled'] ? $adminText('common.enabled') : $adminText('common.disabled')]) }}</div>
                 <div>{{ $adminText('backups.cleanup_status_help', ['days' => $backupCleanupSettings['pre_update_days'], 'keep' => $backupCleanupSettings['keep_latest_pre_update'], 'count' => $backupCleanupPreview->candidateCount()]) }} <a href="{{ route('admin.system.settings.edit', ['tab' => 'backup-cleanup']) }}" class="wb-link">{{ $adminText('backups.manage_cleanup_settings') }}</a></div>
             </div>
+            <button
+                type="button"
+                class="wb-btn wb-btn-danger"
+                data-wb-toggle="modal"
+                data-wb-target="#backups-cleanup-run-modal"
+                @disabled($backupCleanupPreview->candidateCount() === 0)
+            >{{ $adminText('backups.clean_up_now') }}</button>
         </div>
         @if (! $backupTableExists)
             <div class="wb-alert wb-alert-warning">
@@ -359,3 +366,17 @@
         @endif
     </div>
 @endsection
+
+@push('overlays')
+    @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+        'id' => 'backups-cleanup-run-modal',
+        'title' => $adminText('backups.clean_up_now'),
+        'description' => $adminText('backups.cleanup_confirm_description'),
+        'action' => route('admin.system.backups.cleanup'),
+        'method' => 'POST',
+        'submitLabel' => $adminText('backups.clean_up_now'),
+    ])
+        <p>{{ $adminText('backups.cleanup_preview_help', ['count' => $backupCleanupPreview->candidateCount(), 'size' => number_format($backupCleanupPreview->candidateBytes / 1048576, 1)]) }}</p>
+        <p>{{ $adminText('backups.cleanup_preservation_help') }}</p>
+    @endcomponent
+@endpush

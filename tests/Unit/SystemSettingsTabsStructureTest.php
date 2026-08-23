@@ -43,4 +43,14 @@ class SystemSettingsTabsStructureTest extends TestCase
     $this->assertStringContainsString('id="settings-mail-test-modal" role="dialog"', $view);
     $this->assertStringContainsString("\$errors->has('recipient_email') ? 'is-open' : ''", $view);
   }
+
+  #[Test]
+  public function backups_cleanup_action_stays_with_the_cleanup_status_and_uses_a_modal(): void
+  {
+    $view = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/system/backups/index.blade.php');
+
+    $this->assertStringContainsString('data-wb-target="#backups-cleanup-run-modal"', $view);
+    $this->assertStringContainsString("'action' => route('admin.system.backups.cleanup')", $view);
+    $this->assertStringContainsString('@disabled($backupCleanupPreview->candidateCount() === 0)', $view);
+  }
 }

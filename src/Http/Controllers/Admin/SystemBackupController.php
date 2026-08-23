@@ -137,6 +137,15 @@ class SystemBackupController extends Controller
     }
   }
 
+  public function cleanup(): RedirectResponse
+  {
+    $result = $this->backupCleanup->run(force: true);
+
+    return redirect()
+      ->route('admin.system.backups.index')
+      ->with('status', 'Backup cleanup removed '.$result->deletedCount().' backup(s) and freed '.number_format($result->deletedBytes).' byte(s).');
+  }
+
   public function createUpload(): View
   {
     return view('webblocks-cms::admin.system.backups.upload');
