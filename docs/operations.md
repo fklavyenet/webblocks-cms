@@ -57,6 +57,14 @@ The update screen can report states such as:
 
 The in-app update flow is one click. A single `Update to X` action downloads the release package, takes an automatic pre-update backup, applies protected-path rules, runs required package update migrations, clears caches, verifies the applied WebBlocks CMS code version against the target release, records the update run, and persists the installed version. If the apply fails, the updater automatically restores the pre-update backup and records the run with the `restored` status; if the automatic restore also fails, the run is recorded as `failed` with both error trails. For manual recovery, the pre-update backup remains on the Backups screen for download and restore, and `php artisan system:backup:restore` performs a CLI restore.
 
+### Automatic backup cleanup
+
+`System → Settings → Backup Cleanup` owns the install-wide retention policy. By default cleanup is enabled, pre-update backups are eligible after 14 days while the latest five successful pre-update backups are always protected, restore-safety backups are retained for 30 days, and content-apply restore points for 7 days. Manual and uploaded backups are never eligible, and running backups are never deleted.
+
+Cleanup runs after a successful System Update and daily at 03:30 through Laravel Scheduler. The host must run Laravel's normal `schedule:run` cron entry for the daily execution. Operators can preview and run the policy from System Settings or use `php artisan system:backups:cleanup --dry-run` and `php artisan system:backups:cleanup`. `--force` applies the policy when automatic cleanup is disabled. Archive deletion and database-record deletion use the normal backup manager; a record is retained when its archive cannot be deleted.
+
+The Internal API exposes `GET /webadmin/api/system/backup-cleanup` (`backups.read`), `PUT /webadmin/api/system/backup-cleanup` (`backups.settings.write`), and destructive `POST /webadmin/api/system/backup-cleanup/run` (`backups.delete`). Cleanup settings are stored in `wbcms_system_settings`, so no additional schema migration is required for existing installations.
+
 Update availability is based on the latest published release version being newer than the running CMS code version. Historical failed update runs and stale stored installed-version values remain inspectable through the run details modal and retained-run CLI, but they do not make a current install actionable by themselves.
 
 The screen is a single status card. When a compatible update is available, it shows the current-to-latest version path, a folded `What's new` changelog area, the one-click `Update to X` action with a backup note, and a server-backup advisory linking to the Backups screen so operators take a fresh full backup before a major update. When no update is available, it shows a quiet up-to-date message with installed version and last-checked time.

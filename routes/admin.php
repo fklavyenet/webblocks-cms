@@ -50,6 +50,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalAdminRenderControl
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalBackupCleanupController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
@@ -93,6 +94,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/examples/contact-page', [InternalApiDiscoveryController::class, 'contactPageExample'])->name('examples.contact-page');
     Route::get('/examples/landing-page', [InternalApiDiscoveryController::class, 'landingPageExample'])->name('examples.landing-page');
     Route::get('/admin-render/system-updates', [InternalAdminRenderController::class, 'systemUpdates'])->middleware('internal-api.capability:admin.render')->name('admin-render.system-updates');
+    Route::get('/system/backup-cleanup', [InternalBackupCleanupController::class, 'show'])->middleware('internal-api.capability:backups.read')->name('system.backup-cleanup.show');
+    Route::put('/system/backup-cleanup', [InternalBackupCleanupController::class, 'update'])->middleware('internal-api.capability:backups.settings.write')->name('system.backup-cleanup.update');
+    Route::post('/system/backup-cleanup/run', [InternalBackupCleanupController::class, 'run'])->middleware('internal-api.capability:backups.delete')->name('system.backup-cleanup.run');
     Route::get('/sites', [InternalContentResourceController::class, 'sites'])->name('sites.index');
     Route::post('/sites/{site}/public-theme', [InternalSiteController::class, 'updatePublicTheme'])->middleware('internal-api.capability:site-settings.write')->name('sites.public-theme.update');
     Route::get('/sites/{site}/assets/{type}', [InternalSiteController::class, 'showAsset'])->middleware('internal-api.capability:site-assets.read')->name('sites.assets.show');
@@ -386,6 +390,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::delete('system/backups/{backup}/restores/{restore}', [SystemBackupController::class, 'destroyRestore'])->name('system.backups.restores.destroy');
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+      Route::post('system/settings/backup-cleanup/run', [SystemSettingsController::class, 'cleanupBackups'])->name('system.settings.backup-cleanup.run');
       Route::post('system/settings/mail/test', [SystemSettingsController::class, 'sendMailTest'])->name('system.settings.mail.test');
       Route::get('system/api-tokens', [CmsApiTokenController::class, 'index'])->name('system.api-tokens.index');
       Route::post('system/api-tokens', [CmsApiTokenController::class, 'store'])->name('system.api-tokens.store');

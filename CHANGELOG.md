@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.70.0
+
+- Add automatic cleanup for expired system-generated backups, with a dedicated System Settings tab, a non-destructive preview, protected latest pre-update restore points, and manual/uploaded/running backups excluded from cleanup.
+- Run the cleanup policy after every successful System Update, with optional Laravel Scheduler and CLI execution for installations that also want time-based housekeeping between updates.
+- Expose backup cleanup policy reads, writes, and destructive execution through separately scoped Internal API capabilities and document the admin, CLI, scheduler, update, and API workflows.
+
 ## 1.69.2
 
 - Move CMS Mail diagnostics and test-email tools out of the System Settings page flow into dedicated WebBlocks modals opened from the Mail footer, keeping the mail configuration form focused and compact.

@@ -62,6 +62,16 @@ class SystemSettings
 
   public const CMS_MAIL_MODE_CUSTOM = 'custom';
 
+  public const BACKUP_CLEANUP_ENABLED = 'system.backup_cleanup_enabled';
+
+  public const BACKUP_CLEANUP_PRE_UPDATE_DAYS = 'system.backup_cleanup_pre_update_days';
+
+  public const BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE = 'system.backup_cleanup_keep_latest_pre_update';
+
+  public const BACKUP_CLEANUP_RESTORE_SAFETY_DAYS = 'system.backup_cleanup_restore_safety_days';
+
+  public const BACKUP_CLEANUP_CONTENT_APPLY_DAYS = 'system.backup_cleanup_content_apply_days';
+
   private const READABLE_KEYS = [
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
@@ -83,6 +93,11 @@ class SystemSettings
     self::CMS_MAIL_FROM_NAME,
     self::CMS_MAIL_REPLY_TO_ADDRESS,
     self::CMS_MAIL_TIMEOUT,
+    self::BACKUP_CLEANUP_ENABLED,
+    self::BACKUP_CLEANUP_PRE_UPDATE_DAYS,
+    self::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE,
+    self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS,
+    self::BACKUP_CLEANUP_CONTENT_APPLY_DAYS,
   ];
 
   public const MANAGED_KEYS = [
@@ -104,6 +119,11 @@ class SystemSettings
     self::CMS_MAIL_FROM_NAME,
     self::CMS_MAIL_REPLY_TO_ADDRESS,
     self::CMS_MAIL_TIMEOUT,
+    self::BACKUP_CLEANUP_ENABLED,
+    self::BACKUP_CLEANUP_PRE_UPDATE_DAYS,
+    self::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE,
+    self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS,
+    self::BACKUP_CLEANUP_CONTENT_APPLY_DAYS,
   ];
 
   public function all(): array
@@ -290,6 +310,23 @@ class SystemSettings
     return $this->trimmed($this->get(self::CMS_MAIL_PASSWORD)) !== null;
   }
 
+  public function backupCleanupEnabled(): bool
+  {
+    return filter_var($this->get(self::BACKUP_CLEANUP_ENABLED, true), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true;
+  }
+
+  /** @return array{enabled: bool, pre_update_days: int, keep_latest_pre_update: int, restore_safety_days: int, content_apply_days: int} */
+  public function backupCleanupSettings(): array
+  {
+    return [
+      'enabled' => $this->backupCleanupEnabled(),
+      'pre_update_days' => $this->boundedInt(self::BACKUP_CLEANUP_PRE_UPDATE_DAYS, 14, 1, 3650),
+      'keep_latest_pre_update' => $this->boundedInt(self::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE, 5, 1, 100),
+      'restore_safety_days' => $this->boundedInt(self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS, 30, 1, 3650),
+      'content_apply_days' => $this->boundedInt(self::BACKUP_CLEANUP_CONTENT_APPLY_DAYS, 7, 1, 3650),
+    ];
+  }
+
   public function save(array $values): void
   {
     if (! $this->settingsTableExists()) {
@@ -370,5 +407,12 @@ class SystemSettings
     $value = trim((string) $value);
 
     return $value !== '' ? $value : null;
+  }
+
+  private function boundedInt(string $key, int $default, int $min, int $max): int
+  {
+    $value = filter_var($this->get($key), FILTER_VALIDATE_INT, ['options' => ['min_range' => $min, 'max_range' => $max]]);
+
+    return is_int($value) ? $value : $default;
   }
 }

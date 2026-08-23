@@ -27,6 +27,12 @@ class CmsApiTokenCapabilities
 
   public const BACKUPS_CREATE = 'backups.create';
 
+  public const BACKUPS_READ = 'backups.read';
+
+  public const BACKUPS_SETTINGS_WRITE = 'backups.settings.write';
+
+  public const BACKUPS_DELETE = 'backups.delete';
+
   public const PAGE_ASSETS_WRITE = 'page-assets.write';
 
   public const NAVIGATION_WRITE = 'navigation.write';
@@ -126,6 +132,9 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
     self::BACKUPS_CREATE,
+    self::BACKUPS_READ,
+    self::BACKUPS_SETTINGS_WRITE,
+    self::BACKUPS_DELETE,
     self::PAGE_ASSETS_WRITE,
   ];
 
@@ -139,6 +148,7 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
     self::APPLICATIONS_DELETE,
+    self::BACKUPS_DELETE,
   ];
 
   public const ALL = [
@@ -163,6 +173,9 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE,
     self::CONTENT_BLOCKS_DELETE,
     self::BACKUPS_CREATE,
+    self::BACKUPS_READ,
+    self::BACKUPS_SETTINGS_WRITE,
+    self::BACKUPS_DELETE,
     self::PAGE_ASSETS_WRITE,
     self::SITE_ASSETS_READ,
     self::SITE_ASSETS_WRITE,
@@ -212,6 +225,9 @@ class CmsApiTokenCapabilities
     self::PAGES_DELETE => 'Delete pages',
     self::CONTENT_BLOCKS_DELETE => 'Delete page-owned blocks',
     self::BACKUPS_CREATE => 'Create a system backup restore point before content apply',
+    self::BACKUPS_READ => 'Read backup cleanup policy and preview',
+    self::BACKUPS_SETTINGS_WRITE => 'Change the automatic backup cleanup policy',
+    self::BACKUPS_DELETE => 'Run destructive automatic backup cleanup',
     self::PAGE_ASSETS_WRITE => 'Attach page-specific /site CSS and JS assets to pages',
   ];
 

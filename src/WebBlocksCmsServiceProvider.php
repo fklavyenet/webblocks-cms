@@ -4,6 +4,7 @@ namespace WebBlocks\Cms;
 
 use FilesystemIterator;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
 use Illuminate\Http\Request;
@@ -39,6 +40,7 @@ use WebBlocks\Cms\Console\SmokeNativeLocalCommand;
 use WebBlocks\Cms\Console\StarterContentCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
+use WebBlocks\Cms\Console\SystemBackupCleanupCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
 use WebBlocks\Cms\Console\SystemUpdatePruneRunsCommand;
 use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
@@ -773,6 +775,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     CatalogRepairCommand::class,
     StarterContentCommand::class,
     SystemBackupRestoreCommand::class,
+    SystemBackupCleanupCommand::class,
     SystemUpdateRunsCommand::class,
     SystemUpdatePruneRunsCommand::class,
   ];
@@ -837,6 +840,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootAuthorization();
     $this->bootRateLimiters();
     $this->bootCommands();
+    $this->bootSchedule();
     $this->bootInternalApiCsrfExclusions();
     $this->bootRoutes();
     $this->bootViews();
@@ -903,6 +907,21 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     if ($this->installCommandShouldLoad()) {
       $this->commands([InstallWebBlocksCmsCommand::class]);
     }
+  }
+
+  protected function bootSchedule(): void
+  {
+    $this->app->booted(function (): void {
+      if (! $this->app->bound(Schedule::class)) {
+        return;
+      }
+
+      $this->app->make(Schedule::class)
+        ->command('system:backups:cleanup')
+        ->dailyAt('03:30')
+        ->withoutOverlapping()
+        ->onOneServer();
+    });
   }
 
   protected function bootInternalApiCsrfExclusions(): void

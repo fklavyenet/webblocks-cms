@@ -166,8 +166,14 @@ Destructive or publish capabilities are separate advanced options and are not se
 - `media.delete`
 - `content.publish`
 - `pages.delete`
+- `backups.create`
+- `backups.read`
+- `backups.settings.write`
+- `backups.delete`
 
 Destructive or sensitive operations must require an explicit matching capability and should not be granted to normal page-building tokens. Public feedback analysis uses `engagement.read`; comment status changes use `engagement.moderate`.
+
+Backup retention is an install-level operational API. `GET /webadmin/api/system/backup-cleanup` returns the stored policy and a non-mutating preview with eligible count and bytes. `PUT /webadmin/api/system/backup-cleanup` replaces the complete policy. `POST /webadmin/api/system/backup-cleanup/run` permanently deletes currently eligible archives and records and therefore requires the explicit destructive `backups.delete` capability. Manual, uploaded, and running backups are never eligible; the configured number of latest successful pre-update backups remains protected even when older than the age threshold.
 
 Normal page-building tools should not assume publishing is available. If `content.publish` is absent, tools should stop before calling publish endpoints and report that a trusted operator token with publish capability is required.
 

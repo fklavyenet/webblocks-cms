@@ -23,9 +23,12 @@ use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SqlDumpContentValidator;
 use WebBlocks\Cms\Support\System\SystemBackupArchiveResolution;
 use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
+use WebBlocks\Cms\Support\System\SystemBackupCleanup;
+use WebBlocks\Cms\Support\System\SystemBackupCleanupResult;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreMaintenanceRunner;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 /**
  * One-click self-update pipeline. A single lock is held across the whole flow:
@@ -173,6 +176,19 @@ class SystemUpdater
       $summary = $warningCount > 0
         ? 'Updated to '.$toVersion.' with '.$warningCount.' warning(s).'
         : 'Updated to '.$toVersion.' successfully.';
+
+      try {
+        $cleanup = app(SystemBackupCleanup::class)->run();
+        $output[] = 'Automatic backup cleanup removed '.$cleanup->deletedCount().' expired backup(s) and freed '.number_format($cleanup->deletedBytes).' byte(s).';
+      } catch (Throwable $cleanupFailure) {
+        $output[] = 'Automatic backup cleanup did not complete: '.$this->sanitizeFailureDetail($cleanupFailure->getMessage());
+        Log::warning('Post-update automatic backup cleanup did not complete.', [
+          'from_version' => $fromVersion,
+          'to_version' => $toVersion,
+          'exception' => $cleanupFailure::class,
+          'message' => $cleanupFailure->getMessage(),
+        ]);
+      }
 
       $this->persistRun($run, $status, $summary, $output, $warningCount, $finishedAt, $durationMs);
 
@@ -351,6 +367,9 @@ class SystemUpdater
       SystemBackupArchiveResolver::class,
       SystemBackupArchiveResolution::class,
       SystemBackupManager::class,
+      SystemBackupCleanup::class,
+      SystemBackupCleanupResult::class,
+      SystemSettings::class,
       SiteTransferPackage::class,
     ] as $class) {
       class_exists($class);

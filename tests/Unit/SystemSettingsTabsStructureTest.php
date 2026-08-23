@@ -18,9 +18,9 @@ class SystemSettingsTabsStructureTest extends TestCase
     $this->assertStringContainsString('class="wb-tabs-nav" role="tablist"', $view);
     $this->assertStringContainsString('data-wb-tab="system-settings-{{ $tabKey }}-panel"', $view);
 
-    preg_match_all('/id="system-settings-([a-z]+)-panel"/', $view, $matches);
+    preg_match_all('/id="system-settings-([a-z-]+)-panel"/', $view, $matches);
 
-    $this->assertSame(['general', 'project', 'mail', 'privacy', 'runtime'], $matches[1]);
+    $this->assertSame(['general', 'project', 'mail', 'privacy', 'backup-cleanup', 'runtime'], $matches[1]);
   }
 
   #[Test]

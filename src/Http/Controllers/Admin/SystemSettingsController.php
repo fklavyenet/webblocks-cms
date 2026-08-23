@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -22,6 +23,7 @@ class SystemSettingsController extends Controller
     private readonly InstalledVersionStore $installedVersionStore,
     private readonly CmsMailSettingsResolver $mailSettingsResolver,
     private readonly AdminLocaleResolver $adminLocaleResolver,
+    private readonly SystemBackupCleanup $backupCleanup,
   ) {}
 
   public function edit(): View
@@ -49,7 +51,9 @@ class SystemSettingsController extends Controller
         'cms_mail_reply_to_address' => old('cms_mail_reply_to_address', $this->systemSettings->cmsMailSettings()['reply_to_address']),
         'cms_mail_timeout' => old('cms_mail_timeout', $this->systemSettings->cmsMailSettings()['timeout']),
         'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
+        ...$this->systemSettings->backupCleanupSettings(),
       ],
+      'backupCleanupPreview' => $this->backupCleanup->preview(),
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
       'cmsMailMailerOptions' => array_combine(CmsMailSettingsResolver::SUPPORTED_MAILERS, CmsMailSettingsResolver::SUPPORTED_MAILERS),
       'localeOptions' => $this->systemSettings->enabledLocaleOptions(),
@@ -58,6 +62,15 @@ class SystemSettingsController extends Controller
       'installedVersionDisplay' => $this->installedVersionStore->displayVersion(),
       'environment' => app()->environment(),
     ]);
+  }
+
+  public function cleanupBackups(): RedirectResponse
+  {
+    $result = $this->backupCleanup->run(force: true);
+
+    return redirect()
+      ->route('admin.system.settings.edit', ['tab' => 'backup-cleanup'])
+      ->with('status', 'Backup cleanup removed '.$result->deletedCount().' backup(s) and freed '.number_format($result->deletedBytes).' byte(s).');
   }
 
   public function update(SystemSettingsRequest $request): RedirectResponse

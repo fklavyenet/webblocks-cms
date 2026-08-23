@@ -214,6 +214,9 @@ class CmsApiTokenController extends Controller
         'description' => 'Create a full system backup restore point before a large or destructive content apply. Grant only when explicitly needed.',
         'capabilities' => [
           CmsApiTokenCapabilities::BACKUPS_CREATE,
+          CmsApiTokenCapabilities::BACKUPS_READ,
+          CmsApiTokenCapabilities::BACKUPS_SETTINGS_WRITE,
+          CmsApiTokenCapabilities::BACKUPS_DELETE,
         ],
       ],
       ...app(PluginApiCapabilityRegistrar::class)->groups(),

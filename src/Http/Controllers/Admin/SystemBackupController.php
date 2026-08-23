@@ -19,8 +19,10 @@ use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
 use WebBlocks\Cms\Support\System\SystemBackupBulkDeleter;
+use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\System\UploadedSystemBackupManager;
 
 class SystemBackupController extends Controller
@@ -33,6 +35,8 @@ class SystemBackupController extends Controller
     private readonly UploadedSystemBackupManager $uploadedSystemBackupManager,
     private readonly BackupRestoreArchiveInspector $archiveInspector,
     private readonly SystemBackupBulkDeleter $systemBackupBulkDeleter,
+    private readonly SystemBackupCleanup $backupCleanup,
+    private readonly SystemSettings $systemSettings,
   ) {}
 
   public function index(): View
@@ -48,6 +52,7 @@ class SystemBackupController extends Controller
       SystemBackup::TYPE_UPLOADED,
       SystemBackup::TYPE_RESTORE_SAFETY,
       SystemBackup::TYPE_PRE_UPDATE,
+      SystemBackup::TYPE_CONTENT_APPLY,
     ], true)) {
       $type = '';
     }
@@ -112,6 +117,8 @@ class SystemBackupController extends Controller
       'totalCount' => $totalCount,
       'filteredCount' => $backups->total(),
       'backupArchiveStatuses' => $backupArchiveStatuses,
+      'backupCleanupSettings' => $this->systemSettings->backupCleanupSettings(),
+      'backupCleanupPreview' => $this->backupCleanup->preview(),
     ]);
   }
 

@@ -32,6 +32,12 @@
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-stack-4">
+        <div class="wb-alert wb-alert-info">
+            <div>
+                <div class="wb-alert-title">{{ $adminText('backups.cleanup_status', ['status' => $backupCleanupSettings['enabled'] ? $adminText('common.enabled') : $adminText('common.disabled')]) }}</div>
+                <div>{{ $adminText('backups.cleanup_status_help', ['days' => $backupCleanupSettings['pre_update_days'], 'keep' => $backupCleanupSettings['keep_latest_pre_update'], 'count' => $backupCleanupPreview->candidateCount()]) }} <a href="{{ route('admin.system.settings.edit', ['tab' => 'backup-cleanup']) }}" class="wb-link">{{ $adminText('backups.manage_cleanup_settings') }}</a></div>
+            </div>
+        </div>
         @if (! $backupTableExists)
             <div class="wb-alert wb-alert-warning">
                 <div>
