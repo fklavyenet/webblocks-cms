@@ -83,9 +83,17 @@ class PublicPagePresenter
 
   private function stagedSourcePageBodyClass(Page $page): ?string
   {
-    $metadata = is_array($page->settings ?? null) ? ($page->settings['staged_update'] ?? null) : null;
+    $settings = is_array($page->settings ?? null) ? $page->settings : [];
+    $metadata = $settings['staged_update'] ?? $settings['revision_restore_candidate'] ?? null;
 
-    if (! is_array($metadata) || ($metadata['type'] ?? null) !== 'published_page_update') {
+    if (! is_array($metadata)) {
+      return null;
+    }
+
+    $isPublishedPageUpdate = ($metadata['type'] ?? null) === 'published_page_update';
+    $isRevisionCandidate = isset($settings['revision_restore_candidate']);
+
+    if (! $isPublishedPageUpdate && ! $isRevisionCandidate) {
       return null;
     }
 

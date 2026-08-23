@@ -108,10 +108,12 @@ class PageController extends Controller
       ->pluck('locales_count', 'id');
 
     $totalCount = $this->authorization->scopePagesForUser(Page::query(), $request->user())
+      ->whereNull('settings->revision_restore_candidate')
       ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
       ->count();
 
     $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
+      ->whereNull('settings->revision_restore_candidate')
       ->with([
         'site',
         'translations.locale',
@@ -275,6 +277,7 @@ class PageController extends Controller
   public function edit(Page $page): View
   {
     $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+    abort_if($page->isRevisionRestoreCandidate(), 404);
 
     $relations = [
       'site',
@@ -378,6 +381,7 @@ class PageController extends Controller
   public function update(PageRequest $request, Page $page): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+    abort_if($page->isRevisionRestoreCandidate(), 404);
     $this->authorization->abortUnlessSiteAccess($request->user(), (int) $request->validated('site_id'));
 
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
@@ -576,6 +580,7 @@ class PageController extends Controller
   public function updateWorkflow(Request $request, Page $page): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+    abort_if($page->isRevisionRestoreCandidate(), 404);
 
     $action = $request->string('action')->toString();
     $includePageOwnedBlocks = $action === PageWorkflowManager::ACTION_PUBLISH
@@ -797,6 +802,7 @@ class PageController extends Controller
   public function destroy(Page $page): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+    abort_if($page->isRevisionRestoreCandidate(), 404);
     $request = request();
     $siteId = $page->site_id;
 

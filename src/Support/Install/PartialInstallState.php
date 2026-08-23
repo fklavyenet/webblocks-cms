@@ -33,6 +33,7 @@ class PartialInstallState
     'page_translations',
     'page_assets',
     'page_revisions',
+    'page_revision_candidates',
     'shared_slots',
     'page_slots',
     'blocks',

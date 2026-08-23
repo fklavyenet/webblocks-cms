@@ -192,6 +192,11 @@ GET /webadmin/api/block-types
 GET /webadmin/api/content-contract
 GET /webadmin/api/pages
 GET /webadmin/api/pages/{page}
+GET /webadmin/api/pages/{page}/versions
+GET /webadmin/api/pages/{page}/versions/{version}
+POST /webadmin/api/pages/{page}/versions/{version}/candidate
+POST /webadmin/api/pages/{page}/version-candidates/{candidate}/apply
+DELETE /webadmin/api/pages/{page}/version-candidates/{candidate}
 POST /webadmin/api/pages/{page}/publish
 POST /webadmin/api/pages/{page}/publish-page-owned-blocks
 POST /webadmin/api/pages/{page}/slots/{slot}/shared-slot
@@ -431,6 +436,17 @@ Both fields accept an object with a required `label` and a required `url`, or `n
 The fields work everywhere a block payload is accepted: content validate/apply plans, `POST /pages/{page}/slots/{slot}/blocks`, and `POST /shared-slots/{sharedSlot}/blocks`.
 
 ### Page Render API
+
+### Page version review and restore candidates
+
+Page recovery uses an inspect-preview-apply workflow. There is no direct restore endpoint.
+
+- `GET /webadmin/api/pages/{page}/versions` lists saved versions with their page state, audit fields, and a summary of changes from the preceding version. `GET .../versions/{version}` returns the full comparison and reference-health result. Both require `content.read`.
+- `POST .../versions/{version}/candidate` requires `content.apply`. It creates a private draft candidate from the snapshot and returns its browser preview URL. The source page is not changed.
+- `POST .../version-candidates/{candidate}/apply` requires both `content.apply` and `content.publish`. Apply is rejected with JSON `409` and code `restore_candidate_stale` if the source page changed after the candidate was prepared. A successful apply creates the normal pre- and post-restore safety versions and removes the technical draft.
+- `DELETE .../version-candidates/{candidate}` requires `content.apply`; it removes the candidate without changing the source page.
+
+Candidates are deliberately absent from ordinary page discovery and site export. Tools should always inspect the version, prepare a candidate, render or open its `preview_url`, and only then call `apply_url` after explicit operator approval.
 
 `GET /webadmin/api/pages/{page}/render` requires `content.read` and returns the page rendered exactly as the browser admin preview renders it: draft blocks included, `X-Robots-Tag: noindex, nofollow`, and never through the public route, so nothing about it publishes anything.
 

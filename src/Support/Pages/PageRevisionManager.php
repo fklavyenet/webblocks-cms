@@ -148,6 +148,29 @@ class PageRevisionManager
     return $this->snapshot($page);
   }
 
+  public function applySnapshotToCandidate(Page $candidate, array $snapshot, array $metadata): void
+  {
+    $snapshot['page']['status'] = Page::STATUS_DRAFT;
+    $snapshot['page']['published_at'] = null;
+    $snapshot['page']['review_requested_at'] = null;
+    $settings = $snapshot['page']['settings'] ?? [];
+    $settings = is_array($settings) ? $settings : (json_decode((string) $settings, true) ?: []);
+    $settings['revision_restore_candidate'] = $metadata;
+    $snapshot['page']['settings'] = $settings;
+
+    $basePath = '/version-previews/page-'.$metadata['source_page_id'].'/revision-'.$metadata['revision_id'].'/candidate-'.$candidate->id;
+    $snapshot['translations'] = collect($snapshot['translations'] ?? [])
+      ->map(function (array $translation) use ($basePath): array {
+        $path = $basePath.'/locale-'.$translation['locale_id'];
+        $translation['slug'] = trim(str_replace('/', '-', $path), '-');
+        $translation['path'] = $path;
+
+        return $translation;
+      })->all();
+
+    $this->applySnapshot($candidate, $snapshot);
+  }
+
   private function snapshot(Page $page): array
   {
     $defaultTranslation = $page->defaultTranslation();

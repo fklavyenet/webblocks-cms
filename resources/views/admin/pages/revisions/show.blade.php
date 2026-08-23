@@ -54,6 +54,15 @@
         </div>
     </div>
 
+    @if ($candidate)
+        <div class="wb-alert wb-alert-info">
+            <div>
+                <div class="wb-alert-title">{{ $text('candidate_ready') }}</div>
+                <div>{{ $text('candidate_ready_help', ['time' => $candidate->created_at?->format('Y-m-d H:i') ?? '—']) }}</div>
+            </div>
+        </div>
+    @endif
+
     <div class="wb-card">
         <div class="wb-card-header"><strong>{{ $text('current_vs_version') }}</strong></div>
         <div class="wb-card-body">
@@ -100,9 +109,18 @@
             </div>
         </div>
         <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <span class="wb-text-sm wb-text-danger">{{ $text('live_restore_warning') }}</span>
-            @if ($canRestoreRevisions)
-                <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#restore-page-version-modal">{{ $text('replace_current_page') }}</button>
+            <span class="wb-text-sm wb-text-muted">{{ $text('candidate_first_help') }}</span>
+            @if ($canRestoreRevisions && ! $candidate)
+                <form method="POST" action="{{ route('admin.pages.revisions.candidate.prepare', [$page, $revision]) }}">
+                    @csrf
+                    <button type="submit" class="wb-btn wb-btn-primary">{{ $text('prepare_candidate') }}</button>
+                </form>
+            @elseif ($candidate)
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <a href="{{ route('admin.pages.preview', $candidate->candidatePage) }}" class="wb-btn wb-btn-primary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i> <span>{{ $text('preview_candidate') }}</span></a>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="modal" data-wb-target="#discard-page-version-candidate-modal">{{ $text('discard_candidate') }}</button>
+                    <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#apply-page-version-candidate-modal">{{ $text('apply_candidate') }}</button>
+                </div>
             @else
                 <span class="wb-text-sm wb-text-muted">{{ $inspection['health']['status'] === 'blocked' ? $text('restore_blocked') : $text('view_only') }}</span>
             @endif
@@ -111,17 +129,31 @@
 @endsection
 
 @push('overlays')
-    @if ($canRestoreRevisions)
+    @if ($candidate)
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
-            'id' => 'restore-page-version-modal',
-            'title' => $text('replace_current_page'),
-            'description' => $text('replace_description'),
-            'action' => route('admin.pages.revisions.restore', [$page, $revision]),
+            'id' => 'apply-page-version-candidate-modal',
+            'title' => $text('apply_candidate'),
+            'description' => $text('apply_candidate_description'),
+            'action' => route('admin.pages.revisions.candidate.apply', [$page, $candidate]),
             'method' => 'POST',
-            'submitLabel' => $text('replace_current_page'),
+            'submitLabel' => $text('apply_candidate'),
         ])
-            <p>{{ $text('replace_confirm', ['id' => $revision->id]) }}</p>
-            <p>{{ $text('restore_warning') }}</p>
+            <p>{{ $text('apply_candidate_warning', ['id' => $revision->id]) }}</p>
+            <label class="wb-cluster wb-cluster-2" for="confirm_apply_candidate">
+                <input id="confirm_apply_candidate" name="confirm_apply_candidate" type="checkbox" value="1" required>
+                <span>{{ $text('confirm_candidate_previewed') }}</span>
+            </label>
+        @endcomponent
+
+        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+            'id' => 'discard-page-version-candidate-modal',
+            'title' => $text('discard_candidate'),
+            'description' => $text('discard_candidate_description'),
+            'action' => route('admin.pages.revisions.candidate.discard', [$page, $candidate]),
+            'method' => 'DELETE',
+            'submitLabel' => $text('discard_candidate'),
+        ])
+            <p>{{ $text('discard_candidate_help') }}</p>
         @endcomponent
     @endif
 @endpush

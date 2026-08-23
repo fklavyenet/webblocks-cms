@@ -54,17 +54,29 @@ When possible, the revision entry also records who triggered the change and what
 
 For published-page staged updates, revisions are captured for the staged draft as it is created or replaced, and the published source page receives pre-promote and post-promote safety snapshots when staged content is promoted.
 
-## Restore Behavior
+## Review And Restore Behavior
 
-Restore works in place on the current page.
+The Version History screen describes each saved version in page terms: saved time, actor, source, page state, and the structural changes from the preceding version. Opening **Review** shows the selected version beside the current page, including translations, slots, blocks, assets, layout, workflow, and reference-health checks. A version with missing required references is blocked from restore.
 
-When a revision is restored:
+Restore is a two-step candidate workflow rather than a direct write:
 
-1. a fresh pre-restore safety revision is created first
-2. the selected revision snapshot is applied to the current page
-3. a new post-restore revision entry is recorded and linked to the source revision
+1. **Prepare Restore Preview** creates a private technical draft from the selected snapshot; the current page remains unchanged.
+2. The operator opens the normal CMS preview for that candidate and checks the rendered result.
+3. **Apply This Version** verifies that the current page has not changed since the candidate was prepared.
+4. A fresh pre-restore safety revision is created, the selected snapshot is applied to the current page, and a post-restore revision is linked to the source revision.
+5. The technical candidate page is removed. The operator can instead discard it at any time without changing the current page.
 
-This keeps both the previous live state and the restored state in revision history.
+Candidate pages use collision-free internal translation paths, remain drafts, and are excluded from normal page listings and site export. Their preview retains the source page's body class so page-scoped CSS can be reviewed accurately.
+
+If somebody edits the source page after the candidate was prepared, apply stops with a stale-candidate error. The operator must discard the candidate, review the current state, and prepare a new one. This prevents an old preview from silently overwriting newer work.
+
+The Internal Content API exposes the same workflow:
+
+- `GET /webadmin/api/pages/{page}/versions` and `GET /webadmin/api/pages/{page}/versions/{version}` require `content.read`.
+- `POST /webadmin/api/pages/{page}/versions/{version}/candidate` and candidate discard require `content.apply`.
+- `POST /webadmin/api/pages/{page}/version-candidates/{candidate}/apply` requires both `content.apply` and `content.publish` because it can replace a published page.
+
+There is deliberately no direct revision-restore API endpoint.
 
 ## Shared Slot Revisions
 

@@ -41,6 +41,7 @@ final class CmsTable
     'page_layout_slots',
     'page_layouts',
     'page_revisions',
+    'page_revision_candidates',
     'page_slots',
     'page_translations',
     'page_types',

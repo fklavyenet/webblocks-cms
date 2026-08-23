@@ -37,7 +37,10 @@ class PageRevisionExperienceStructureTest extends TestCase
     $this->assertStringContainsString("\$text('restore_scope')", $view);
     $this->assertStringContainsString("\$text('shared_slot_boundary')", $view);
     $this->assertStringContainsString("\$inspection['health']['status'] === 'blocked'", $view);
-    $this->assertStringContainsString('data-wb-target="#restore-page-version-modal"', $view);
+    $this->assertStringContainsString("route('admin.pages.revisions.candidate.prepare'", $view);
+    $this->assertStringContainsString('data-wb-target="#apply-page-version-candidate-modal"', $view);
+    $this->assertStringContainsString("route('admin.pages.revisions.candidate.apply'", $view);
+    $this->assertStringNotContainsString('pages.revisions.restore', $view);
   }
 
   #[Test]

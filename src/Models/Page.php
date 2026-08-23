@@ -134,6 +134,11 @@ class Page extends CmsModel
     return data_get(is_array($this->settings) ? $this->settings : [], $key, $default);
   }
 
+  public function isRevisionRestoreCandidate(): bool
+  {
+    return is_array($this->setting('revision_restore_candidate'));
+  }
+
   public static function supportsSettingsColumn(): bool
   {
     return Schema::hasColumn((new self)->getTable(), 'settings');

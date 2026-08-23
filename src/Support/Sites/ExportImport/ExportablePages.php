@@ -20,6 +20,7 @@ class ExportablePages
   public function grouped(): array
   {
     return Page::query()
+      ->whereNull('settings->revision_restore_candidate')
       // Shared-slot source pages are machinery behind a shared slot rather
       // than content anyone chooses, and the exporter skips them anyway.
       ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)

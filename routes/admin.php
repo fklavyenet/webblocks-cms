@@ -61,6 +61,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationControll
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRevisionController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageTranslationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPluginController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
@@ -145,6 +146,11 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
     Route::patch('/pages/{page}/layout', [InternalContentResourceController::class, 'updatePageLayout'])->middleware('internal-api.capability:content.apply')->name('pages.layout.update');
     Route::get('/pages/{page}/render', [InternalPageRenderController::class, 'show'])->middleware('internal-api.capability:content.read')->name('pages.render');
+    Route::get('/pages/{page}/versions', [InternalPageRevisionController::class, 'index'])->middleware('internal-api.capability:content.read')->name('pages.versions.index');
+    Route::get('/pages/{page}/versions/{revision}', [InternalPageRevisionController::class, 'show'])->middleware('internal-api.capability:content.read')->name('pages.versions.show');
+    Route::post('/pages/{page}/versions/{revision}/candidate', [InternalPageRevisionController::class, 'prepare'])->middleware('internal-api.capability:content.apply')->name('pages.versions.candidate.prepare');
+    Route::post('/pages/{page}/version-candidates/{candidate}/apply', [InternalPageRevisionController::class, 'apply'])->middleware(['internal-api.capability:content.apply', 'internal-api.capability:content.publish'])->name('pages.version-candidates.apply');
+    Route::delete('/pages/{page}/version-candidates/{candidate}', [InternalPageRevisionController::class, 'discard'])->middleware('internal-api.capability:content.apply')->name('pages.version-candidates.discard');
     Route::get('/pages/{page}/translations', [InternalPageTranslationController::class, 'index'])->name('pages.translations.index');
     Route::post('/pages/{page}/translations/{locale}', [InternalPageTranslationController::class, 'store'])->middleware('internal-api.capability:content.apply')->name('pages.translations.store');
     Route::patch('/pages/{page}/translations/{translation}', [InternalPageTranslationController::class, 'update'])->middleware('internal-api.capability:content.apply')->name('pages.translations.update');
@@ -278,7 +284,9 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::post('/pages/{page}/move-site', [PageSiteMoveController::class, 'store'])->name('pages.move-site.store');
     Route::get('/pages/{page}/revisions', [PageRevisionController::class, 'index'])->name('pages.revisions.index');
     Route::get('/pages/{page}/revisions/{revision}', [PageRevisionController::class, 'show'])->name('pages.revisions.show');
-    Route::post('/pages/{page}/revisions/{revision}/restore', [PageRevisionController::class, 'restore'])->name('pages.revisions.restore');
+    Route::post('/pages/{page}/revisions/{revision}/candidate', [PageRevisionController::class, 'prepareCandidate'])->name('pages.revisions.candidate.prepare');
+    Route::post('/pages/{page}/revision-candidates/{candidate}/apply', [PageRevisionController::class, 'applyCandidate'])->name('pages.revisions.candidate.apply');
+    Route::delete('/pages/{page}/revision-candidates/{candidate}', [PageRevisionController::class, 'discardCandidate'])->name('pages.revisions.candidate.discard');
     Route::post('/pages/{page}/sync-layout-slots', [PageSlotController::class, 'syncLayoutSlots'])->name('pages.layout-slots.sync');
     Route::post('/pages/{page}/slots', [PageSlotController::class, 'store'])->name('pages.slots.store');
     Route::delete('/pages/{page}/slots/{slot}', [PageSlotController::class, 'destroy'])->name('pages.slots.destroy');

@@ -39,6 +39,7 @@ return new class extends Migration
       'wbcms_site_exports',
       'wbcms_icon_catalog_items',
       'wbcms_page_assets',
+      'wbcms_page_revision_candidates',
       'wbcms_shared_slot_revisions',
       'wbcms_shared_slot_blocks',
       'wbcms_shared_slots',
@@ -395,6 +396,21 @@ return new class extends Migration
       $table->json('snapshot');
       $table->foreignId('restored_from_page_revision_id')->nullable()->constrained('wbcms_page_revisions')->nullOnDelete();
       $table->timestamps();
+    });
+
+    $this->createTableIfMissing('wbcms_page_revision_candidates', function (Blueprint $table): void {
+      $table->id();
+      $table->foreignId('page_id')->constrained('wbcms_pages')->cascadeOnDelete();
+      $table->foreignId('page_revision_id')->constrained('wbcms_page_revisions')->cascadeOnDelete();
+      $table->foreignId('candidate_page_id')->nullable()->constrained('wbcms_pages')->nullOnDelete();
+      $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+      $table->string('status', 24)->default('ready');
+      $table->timestamp('source_updated_at')->nullable();
+      $table->timestamp('applied_at')->nullable();
+      $table->timestamp('discarded_at')->nullable();
+      $table->timestamps();
+      $table->index(['page_id', 'status']);
+      $table->index(['page_revision_id', 'status']);
     });
 
     $this->createTableIfMissing('wbcms_shared_slots', function (Blueprint $table): void {
