@@ -2,6 +2,12 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.72.0
+
+- Replace opaque Page Revision rows and one-click restores with a clear Version History review workflow that compares the current page with the selected saved version and reports restore scope and missing references before any write.
+- Add private restore candidates: prepare the selected version as a draft, preview its rendered result, then explicitly apply or discard it while the current page remains unchanged until approval.
+- Reject stale candidates when the current page changes after preview, retain pre/post-restore safety versions, hide technical candidates from page lists and exports, and expose the same guarded review workflow through the documented Internal Content API.
+
 ## 1.71.0
 
 - Replace the narrow System Settings backup-cleanup tab with a dedicated **Maintenance → Cleanup** workspace that combines retention settings, non-destructive previews, and guarded category-specific cleanup actions.
