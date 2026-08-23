@@ -307,7 +307,7 @@ class Page extends CmsModel
 
   public function revisions(): HasMany
   {
-    return $this->hasMany(PageRevision::class)->latest('created_at');
+    return $this->hasMany(PageRevision::class)->latest('created_at')->latest('id');
   }
 
   public function pageAssets(): HasMany

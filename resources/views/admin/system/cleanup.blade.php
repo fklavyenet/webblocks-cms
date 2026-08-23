@@ -62,10 +62,35 @@
 
     <div class="wb-card wb-mt-4">
         <div class="wb-card-header"><strong>{{ $text('retained_history') }}</strong></div>
-        <div class="wb-card-body wb-grid wb-grid-3 wb-gap-4">
-            <div><strong>{{ $text('page_revisions') }}</strong><div class="wb-text-muted">{{ $overview['page_revisions'] }}</div></div>
-            <div><strong>{{ $text('shared_slot_revisions') }}</strong><div class="wb-text-muted">{{ $overview['shared_slot_revisions'] }}</div></div>
-            <div><strong>{{ $text('transfer_packages') }}</strong><div class="wb-text-muted">{{ $overview['transfer_packages'] }} · <a class="wb-link" href="{{ route('admin.site-transfers.exports.index') }}">{{ $text('manage') }}</a></div></div>
+        <div class="wb-card-body">
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ $text('history_type') }}</th>
+                            <th scope="col">{{ $text('item_count') }}</th>
+                            <th scope="col" class="wb-table-actions">{{ $text('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ $text('page_revisions') }}</td>
+                            <td>{{ number_format($overview['page_revisions']) }}</td>
+                            <td class="wb-table-actions"><span class="wb-text-muted">{{ $text('retained') }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{{ $text('shared_slot_revisions') }}</td>
+                            <td>{{ number_format($overview['shared_slot_revisions']) }}</td>
+                            <td class="wb-table-actions"><span class="wb-text-muted">{{ $text('retained') }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>{{ $text('transfer_packages') }}</td>
+                            <td>{{ number_format($overview['transfer_packages']) }}</td>
+                            <td class="wb-table-actions"><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.site-transfers.exports.index') }}">{{ $text('manage') }}</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="wb-card-footer wb-text-sm wb-text-muted">{{ $text('retained_history_help') }}</div>
     </div>

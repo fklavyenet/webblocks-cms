@@ -31,7 +31,7 @@
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>{{ $adminText('revision_history') }}</strong>
+            <strong>{{ $adminText('version_history') }}</strong>
             <span class="wb-text-sm wb-text-muted">{{ $adminText('newest_first') }}</span>
         </div>
         <div class="wb-card-body">
@@ -45,10 +45,11 @@
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
-                                <th>{{ $adminText('created') }}</th>
-                                <th>{{ $adminText('revision') }}</th>
-                                <th>{{ $adminText('audit') }}</th>
-                                <th>{{ $adminText('restore') }}</th>
+                                <th>{{ $adminText('saved_at') }}</th>
+                                <th>{{ $adminText('changes') }}</th>
+                                <th>{{ $adminText('page_state') }}</th>
+                                <th>{{ $adminText('saved_by') }}</th>
+                                <th class="wb-table-actions">{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -58,33 +59,31 @@
                                     <td>
                                         <div class="wb-stack wb-gap-1">
                                             <strong>{{ $revision->labelText() }}</strong>
-                                            @if ($revision->reason)
-                                                <span class="wb-text-sm wb-text-muted">{{ $revision->reason }}</span>
-                                            @endif
+                                            <span class="wb-text-sm wb-text-muted">
+                                                @if ($revision->display_summary['type'] === 'initial')
+                                                    {{ $adminText('summary_initial') }}
+                                                @elseif ($revision->display_summary['type'] === 'unchanged')
+                                                    {{ $adminText('summary_unchanged') }}
+                                                @else
+                                                    {{ collect($revision->display_summary['categories'])->map(fn ($key) => $adminText($key))->implode(', ') }}{{ $revision->display_summary['extra'] > 0 ? ' · '.$adminText('summary_more', ['count' => $revision->display_summary['extra']]) : '' }}
+                                                @endif
+                                            </span>
                                             @if ($revision->restoredFrom)
                                                 <span class="wb-text-sm wb-text-muted">{{ $adminText('restored_from_revision', ['id' => $revision->restoredFrom->id]) }}</span>
                                             @endif
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="wb-stack wb-gap-1 wb-text-sm">
-                                            <span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
-                                            <span class="wb-text-muted">{{ $adminText('source') }}: {{ $revision->sourceText() }}</span>
-                                            <span class="wb-text-muted">{{ $adminText('event') }}: {{ $revision->eventText() }}</span>
-                                        </div>
+                                        <span class="wb-badge">{{ str(data_get($revision->snapshot, 'page.status', 'unknown'))->headline() }}</span>
                                     </td>
                                     <td>
-                                        @if ($canRestoreRevisions)
-                                            <button
-                                                type="button"
-                                                class="wb-btn wb-btn-secondary"
-                                                data-wb-toggle="modal"
-                                                data-wb-target="#restore-page-revision-{{ $revision->id }}"
-                                                aria-haspopup="dialog"
-                                            >{{ $adminText('restore') }}</button>
-                                        @else
-                                            <span class="wb-text-sm wb-text-muted">{{ $adminText('view_only') }}</span>
-                                        @endif
+                                        <div class="wb-stack wb-gap-1 wb-text-sm">
+                                            <span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
+                                            <span class="wb-text-muted">{{ $revision->sourceText() }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="wb-table-actions">
+                                        <a href="{{ route('admin.pages.revisions.show', [$page, $revision]) }}" class="wb-btn wb-btn-secondary">{{ $adminText('review') }}</a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -95,31 +94,3 @@
         </div>
     </div>
 @endsection
-
-@push('overlays')
-    @if ($canRestoreRevisions)
-        @foreach ($revisions as $revision)
-            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
-                'id' => 'restore-page-revision-'.$revision->id,
-                'title' => $adminText('restore_title'),
-                'description' => $adminText('restore_description'),
-                'action' => route('admin.pages.revisions.restore', [$page, $revision]),
-                'method' => 'POST',
-                'submitLabel' => $adminText('restore'),
-            ])
-                <p>{{ $adminText('restore_confirm_prefix') }} <strong>{{ $adminText('revision') }} #{{ $revision->id }}</strong>? {{ $adminText('restore_warning') }}</p>
-
-                <dl class="wb-stack wb-gap-2 wb-text-sm">
-                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                        <dt class="wb-text-muted">{{ $adminText('created') }}</dt>
-                        <dd>{{ $revision->created_at?->format('Y-m-d H:i') }}</dd>
-                    </div>
-                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                        <dt class="wb-text-muted">{{ $adminText('event') }}</dt>
-                        <dd>{{ $revision->eventText() }}</dd>
-                    </div>
-                </dl>
-            @endcomponent
-        @endforeach
-    @endif
-@endpush

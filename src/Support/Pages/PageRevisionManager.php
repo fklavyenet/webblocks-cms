@@ -131,6 +131,23 @@ class PageRevisionManager
     });
   }
 
+  public function snapshotForInspection(Page $page): array
+  {
+    $page->load([
+      'site',
+      'translations.locale',
+      'slots.slotType',
+      'pageAssets',
+      'blocks.blockAssets.galleryItemTranslations',
+      'blocks.textTranslations',
+      'blocks.buttonTranslations',
+      'blocks.imageTranslations',
+      'blocks.contactFormTranslations',
+    ]);
+
+    return $this->snapshot($page);
+  }
+
   private function snapshot(Page $page): array
   {
     $defaultTranslation = $page->defaultTranslation();

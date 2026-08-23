@@ -165,7 +165,7 @@ class DestructiveConfirmationModalTest extends TestCase
       'admin/locales/index.blade.php' => 'delete-locale-',
       'admin/navigation/partials/tree-list.blade.php' => 'delete-navigation-item-',
       'admin/pages/partials/block-outline-item.blade.php' => 'delete-outline-block-',
-      'admin/pages/revisions/index.blade.php' => 'restore-page-revision-',
+      'admin/pages/revisions/show.blade.php' => 'restore-page-version-modal',
       'admin/system/backups/show.blade.php' => 'restore-backup-',
     ];
 

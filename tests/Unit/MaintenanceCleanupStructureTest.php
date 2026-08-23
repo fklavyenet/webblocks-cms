@@ -18,6 +18,8 @@ class MaintenanceCleanupStructureTest extends TestCase
     }
 
     $this->assertStringContainsString("route('admin.site-transfers.exports.index')", $view);
+    $this->assertStringContainsString('class="wb-table wb-table-striped"', $view);
+    $this->assertStringNotContainsString('wb-card-body wb-grid wb-grid-3', $view);
     $this->assertStringNotContainsString('Clean Everything', $view);
   }
 
