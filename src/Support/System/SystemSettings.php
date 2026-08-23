@@ -72,6 +72,12 @@ class SystemSettings
 
   public const BACKUP_CLEANUP_CONTENT_APPLY_DAYS = 'system.backup_cleanup_content_apply_days';
 
+  public const CLEANUP_ASSET_REVISION_DAYS = 'system.cleanup_asset_revision_days';
+
+  public const CLEANUP_KEEP_LATEST_ASSET_REVISIONS = 'system.cleanup_keep_latest_asset_revisions';
+
+  public const CLEANUP_TEMPORARY_WORKSPACE_HOURS = 'system.cleanup_temporary_workspace_hours';
+
   private const READABLE_KEYS = [
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
@@ -98,6 +104,9 @@ class SystemSettings
     self::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE,
     self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS,
     self::BACKUP_CLEANUP_CONTENT_APPLY_DAYS,
+    self::CLEANUP_ASSET_REVISION_DAYS,
+    self::CLEANUP_KEEP_LATEST_ASSET_REVISIONS,
+    self::CLEANUP_TEMPORARY_WORKSPACE_HOURS,
   ];
 
   public const MANAGED_KEYS = [
@@ -124,6 +133,9 @@ class SystemSettings
     self::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE,
     self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS,
     self::BACKUP_CLEANUP_CONTENT_APPLY_DAYS,
+    self::CLEANUP_ASSET_REVISION_DAYS,
+    self::CLEANUP_KEEP_LATEST_ASSET_REVISIONS,
+    self::CLEANUP_TEMPORARY_WORKSPACE_HOURS,
   ];
 
   public function all(): array
@@ -324,6 +336,16 @@ class SystemSettings
       'keep_latest_pre_update' => $this->boundedInt(self::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE, 5, 1, 100),
       'restore_safety_days' => $this->boundedInt(self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS, 30, 1, 3650),
       'content_apply_days' => $this->boundedInt(self::BACKUP_CLEANUP_CONTENT_APPLY_DAYS, 7, 1, 3650),
+    ];
+  }
+
+  /** @return array{asset_revision_days: int, keep_latest_asset_revisions: int, temporary_workspace_hours: int} */
+  public function maintenanceCleanupSettings(): array
+  {
+    return [
+      'asset_revision_days' => $this->boundedInt(self::CLEANUP_ASSET_REVISION_DAYS, 90, 1, 3650),
+      'keep_latest_asset_revisions' => $this->boundedInt(self::CLEANUP_KEEP_LATEST_ASSET_REVISIONS, 20, 1, 1000),
+      'temporary_workspace_hours' => $this->boundedInt(self::CLEANUP_TEMPORARY_WORKSPACE_HOURS, 24, 1, 8760),
     ];
   }
 

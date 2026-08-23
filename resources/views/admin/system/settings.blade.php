@@ -11,7 +11,6 @@
         'project' => $systemText('project_identity'),
         'mail' => $systemText('mail'),
         'privacy' => $systemText('privacy'),
-        'backup-cleanup' => $systemText('backup_cleanup'),
         'runtime' => $systemText('runtime_information'),
     ];
     $systemTab = old('section', request()->query('tab', 'general'));
@@ -330,57 +329,6 @@
 
         </div>
 
-                    <div class="wb-tabs-panel {{ $systemTab === 'backup-cleanup' ? 'is-active' : '' }}" id="system-settings-backup-cleanup-panel">
-        <div class="wb-card wb-card-muted">
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="section" value="backup-cleanup">
-
-                <div class="wb-card-header"><strong>{{ $systemText('backup_cleanup') }}</strong></div>
-                <div class="wb-card-body wb-stack wb-gap-4">
-                    <div class="wb-text-sm wb-text-muted">{{ $systemText('backup_cleanup_help') }}</div>
-                    <div class="wb-stack-2 wb-field">
-                        <input type="hidden" name="backup_cleanup_enabled" value="0">
-                        <label class="wb-cluster wb-cluster-2" for="settings_backup_cleanup_enabled">
-                            <input id="settings_backup_cleanup_enabled" name="backup_cleanup_enabled" type="checkbox" value="1" @checked($settings['enabled'])>
-                            <span>{{ $systemText('backup_cleanup_enabled') }}</span>
-                        </label>
-                    </div>
-                    <div class="wb-grid wb-grid-2 wb-gap-4">
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_backup_cleanup_pre_update_days">{{ $systemText('pre_update_retention_days') }}</label>
-                            <input id="settings_backup_cleanup_pre_update_days" name="backup_cleanup_pre_update_days" type="number" class="wb-input" min="1" max="3650" required value="{{ $settings['pre_update_days'] }}">
-                        </div>
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_backup_cleanup_keep_latest_pre_update">{{ $systemText('keep_latest_pre_update') }}</label>
-                            <input id="settings_backup_cleanup_keep_latest_pre_update" name="backup_cleanup_keep_latest_pre_update" type="number" class="wb-input" min="1" max="100" required value="{{ $settings['keep_latest_pre_update'] }}">
-                        </div>
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_backup_cleanup_restore_safety_days">{{ $systemText('restore_safety_retention_days') }}</label>
-                            <input id="settings_backup_cleanup_restore_safety_days" name="backup_cleanup_restore_safety_days" type="number" class="wb-input" min="1" max="3650" required value="{{ $settings['restore_safety_days'] }}">
-                        </div>
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_backup_cleanup_content_apply_days">{{ $systemText('content_apply_retention_days') }}</label>
-                            <input id="settings_backup_cleanup_content_apply_days" name="backup_cleanup_content_apply_days" type="number" class="wb-input" min="1" max="3650" required value="{{ $settings['content_apply_days'] }}">
-                        </div>
-                    </div>
-                    <div class="wb-alert wb-alert-info">
-                        <div>
-                            <div class="wb-alert-title">{{ $systemText('cleanup_preview') }}</div>
-                            <div>{{ $systemText('cleanup_preview_help', ['count' => $backupCleanupPreview->candidateCount(), 'size' => number_format($backupCleanupPreview->candidateBytes / 1048576, 1)]) }}</div>
-                        </div>
-                    </div>
-                    <div class="wb-text-sm wb-text-muted">{{ $systemText('manual_uploaded_preserved') }}</div>
-                </div>
-                <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                    <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.system.settings.edit')" :submit-label="$systemText('save_changes')" />
-                    <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#backup-cleanup-run-modal" @disabled($backupCleanupPreview->candidateCount() === 0)>{{ $systemText('clean_up_now') }}</button>
-                </div>
-            </form>
-        </div>
-                    </div>
-
                     <div class="wb-tabs-panel {{ $systemTab === 'runtime' ? 'is-active' : '' }}" id="system-settings-runtime-panel">
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $systemText('runtime_information') }}</strong></div>
@@ -425,18 +373,6 @@
 @endsection
 
 @push('overlays')
-    @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
-        'id' => 'backup-cleanup-run-modal',
-        'title' => $systemText('clean_up_now'),
-        'description' => $systemText('cleanup_confirm_description'),
-        'action' => route('admin.system.settings.backup-cleanup.run'),
-        'method' => 'POST',
-        'submitLabel' => $systemText('clean_up_now'),
-    ])
-        <p>{{ $systemText('cleanup_preview_help', ['count' => $backupCleanupPreview->candidateCount(), 'size' => number_format($backupCleanupPreview->candidateBytes / 1048576, 1)]) }}</p>
-        <p>{{ $systemText('manual_uploaded_preserved') }}</p>
-    @endcomponent
-
     <div class="wb-modal wb-modal-lg" id="settings-mail-diagnostics-modal" role="dialog" aria-modal="true" aria-labelledby="settings-mail-diagnostics-title">
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">

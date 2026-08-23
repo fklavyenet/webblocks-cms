@@ -39,11 +39,6 @@ class SystemSettingsRequest extends FormRequest
       'cms_mail_from_name' => trim((string) $this->input('cms_mail_from_name')),
       'cms_mail_reply_to_address' => trim((string) $this->input('cms_mail_reply_to_address')),
       'cms_mail_timeout' => trim((string) $this->input('cms_mail_timeout')),
-      'backup_cleanup_enabled' => $this->boolean('backup_cleanup_enabled'),
-      'backup_cleanup_pre_update_days' => trim((string) $this->input('backup_cleanup_pre_update_days')),
-      'backup_cleanup_keep_latest_pre_update' => trim((string) $this->input('backup_cleanup_keep_latest_pre_update')),
-      'backup_cleanup_restore_safety_days' => trim((string) $this->input('backup_cleanup_restore_safety_days')),
-      'backup_cleanup_content_apply_days' => trim((string) $this->input('backup_cleanup_content_apply_days')),
     ]);
   }
 
@@ -52,7 +47,7 @@ class SystemSettingsRequest extends FormRequest
     $customSmtpRequired = Rule::requiredIf(fn (): bool => $this->input('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_CUSTOM && $this->input('cms_mail_mailer') === 'smtp');
 
     $sectionRules = [
-      'section' => ['required', Rule::in(['general', 'project', 'mail', 'privacy', 'backup-cleanup'])],
+      'section' => ['required', Rule::in(['general', 'project', 'mail', 'privacy'])],
     ];
 
     return match ($this->input('section')) {
@@ -92,13 +87,6 @@ class SystemSettingsRequest extends FormRequest
       'privacy' => $sectionRules + [
         'visitor_consent_banner_enabled' => ['required', 'boolean'],
       ],
-      'backup-cleanup' => $sectionRules + [
-        'backup_cleanup_enabled' => ['required', 'boolean'],
-        'backup_cleanup_pre_update_days' => ['required', 'integer', 'min:1', 'max:3650'],
-        'backup_cleanup_keep_latest_pre_update' => ['required', 'integer', 'min:1', 'max:100'],
-        'backup_cleanup_restore_safety_days' => ['required', 'integer', 'min:1', 'max:3650'],
-        'backup_cleanup_content_apply_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      ],
       default => $sectionRules,
     };
   }
@@ -124,16 +112,6 @@ class SystemSettingsRequest extends FormRequest
     if ($this->validated('section') === 'privacy') {
       return [
         SystemSettings::VISITOR_CONSENT_BANNER_ENABLED => $this->validated('visitor_consent_banner_enabled'),
-      ];
-    }
-
-    if ($this->validated('section') === 'backup-cleanup') {
-      return [
-        SystemSettings::BACKUP_CLEANUP_ENABLED => $this->validated('backup_cleanup_enabled'),
-        SystemSettings::BACKUP_CLEANUP_PRE_UPDATE_DAYS => $this->validated('backup_cleanup_pre_update_days'),
-        SystemSettings::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE => $this->validated('backup_cleanup_keep_latest_pre_update'),
-        SystemSettings::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS => $this->validated('backup_cleanup_restore_safety_days'),
-        SystemSettings::BACKUP_CLEANUP_CONTENT_APPLY_DAYS => $this->validated('backup_cleanup_content_apply_days'),
       ];
     }
 

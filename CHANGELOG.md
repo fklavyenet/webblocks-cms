@@ -2,6 +2,13 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.71.0
+
+- Replace the narrow System Settings backup-cleanup tab with a dedicated **Maintenance → Cleanup** workspace that combines retention settings, non-destructive previews, and guarded category-specific cleanup actions.
+- Add bounded retention and automatic post-write pruning for site CSS/JS and Embedded Application CSS/JS/HTML revisions, while always preserving both the configured minimum revision count and age window.
+- Add safe cleanup previews and actions for obsolete generated Media variants and abandoned System Update or Plugin Catalog workspaces; original media, editorial revision history, transfer packages, manual backups, and uploaded backups remain protected.
+- Add `system:cleanup` CLI previews/runs plus separately scoped `maintenance.read`, `maintenance.settings.write`, and destructive `maintenance.delete` Internal API capabilities and OpenAPI discovery.
+
 ## 1.70.1
 
 - Put the guarded **Clean Up Now** action directly beside the automatic-cleanup status on the Backups screen, so operators can see eligible backup count, open the confirmation modal, and clean up without remembering the System Settings tab.

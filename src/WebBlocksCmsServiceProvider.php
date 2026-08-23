@@ -24,6 +24,7 @@ use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
 use WebBlocks\Cms\Console\GenerateUpdateSigningKeyCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
+use WebBlocks\Cms\Console\MaintenanceCleanupCommand;
 use WebBlocks\Cms\Console\MediaVariantsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
@@ -763,6 +764,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     BlockTypeContractsAuditCommand::class,
     ImportDemoMedia::class,
     MediaVariantsCommand::class,
+    MaintenanceCleanupCommand::class,
     ResetPrimitiveBlocksCommand::class,
     SiteCloneCommand::class,
     SiteDeleteCommand::class,

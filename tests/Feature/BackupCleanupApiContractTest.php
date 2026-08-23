@@ -42,5 +42,18 @@ class BackupCleanupApiContractTest extends TestCase
     $this->assertSame(CmsApiTokenCapabilities::BACKUPS_SETTINGS_WRITE, $paths['/system/backup-cleanup']['put']['x-required-capability']);
     $this->assertSame(CmsApiTokenCapabilities::BACKUPS_DELETE, $paths['/system/backup-cleanup/run']['post']['x-required-capability']);
     $this->assertTrue($paths['/system/backup-cleanup/run']['post']['x-destructive']);
+    $this->assertSame(CmsApiTokenCapabilities::MAINTENANCE_READ, $paths['/system/cleanup']['get']['x-required-capability']);
+    $this->assertSame(CmsApiTokenCapabilities::MAINTENANCE_SETTINGS_WRITE, $paths['/system/cleanup']['put']['x-required-capability']);
+    $this->assertSame(CmsApiTokenCapabilities::MAINTENANCE_DELETE, $paths['/system/cleanup/{category}/run']['post']['x-required-capability']);
+    $this->assertTrue($paths['/system/cleanup/{category}/run']['post']['x-destructive']);
+  }
+
+  #[Test]
+  public function maintenance_cleanup_routes_use_separate_capabilities(): void
+  {
+    $this->assertContains('internal-api.capability:maintenance.read', Route::getRoutes()->getByName('internal-content-api.system.cleanup.show')?->gatherMiddleware() ?? []);
+    $this->assertContains('internal-api.capability:maintenance.settings.write', Route::getRoutes()->getByName('internal-content-api.system.cleanup.update')?->gatherMiddleware() ?? []);
+    $this->assertContains('internal-api.capability:maintenance.delete', Route::getRoutes()->getByName('internal-content-api.system.cleanup.run')?->gatherMiddleware() ?? []);
+    $this->assertContains(CmsApiTokenCapabilities::MAINTENANCE_DELETE, CmsApiTokenCapabilities::DESTRUCTIVE);
   }
 }

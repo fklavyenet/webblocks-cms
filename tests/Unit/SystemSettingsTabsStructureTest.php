@@ -20,7 +20,8 @@ class SystemSettingsTabsStructureTest extends TestCase
 
     preg_match_all('/id="system-settings-([a-z-]+)-panel"/', $view, $matches);
 
-    $this->assertSame(['general', 'project', 'mail', 'privacy', 'backup-cleanup', 'runtime'], $matches[1]);
+    $this->assertSame(['general', 'project', 'mail', 'privacy', 'runtime'], $matches[1]);
+    $this->assertStringNotContainsString('system-settings-backup-cleanup-panel', $view);
   }
 
   #[Test]

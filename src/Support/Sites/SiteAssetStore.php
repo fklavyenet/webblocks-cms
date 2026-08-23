@@ -3,10 +3,12 @@
 namespace WebBlocks\Cms\Support\Sites;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 
 class SiteAssetStore
 {
@@ -64,11 +66,21 @@ class SiteAssetStore
     try {
       File::ensureDirectoryExists(dirname($path));
       File::put($path, $contents);
+      $this->pruneRevisions();
     } catch (Throwable $exception) {
       throw $this->writeException($site, $type, $exception);
     }
 
     return $this->read($site, $type);
+  }
+
+  private function pruneRevisions(): void
+  {
+    try {
+      app(MaintenanceCleanup::class)->run(MaintenanceCleanup::ASSET_REVISIONS);
+    } catch (Throwable $exception) {
+      Log::warning('Site asset revision cleanup did not complete.', ['message' => $exception->getMessage()]);
+    }
   }
 
   public function relativePath(Site $site, string $type): string

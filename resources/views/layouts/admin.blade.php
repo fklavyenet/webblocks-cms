@@ -106,6 +106,7 @@
                     'items' => [
                         ['label' => $adminText('navigation.search_rebuild'), 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*']],
                         ['label' => $adminText('navigation.backups'), 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*']],
+                        ['label' => $adminText('navigation.cleanup'), 'route' => 'admin.system.cleanup.index', 'active' => ['admin.system.cleanup.*']],
                         ['label' => $adminText('navigation.export_import'), 'route' => 'admin.site-transfers.exports.index', 'active' => ['admin.site-transfers.*']],
                         ['label' => $adminText('navigation.update'), 'route' => 'admin.system.updates.index', 'active' => ['admin.system.updates.*']],
                     ],

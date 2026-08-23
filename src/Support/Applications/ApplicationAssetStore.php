@@ -3,11 +3,13 @@
 namespace WebBlocks\Cms\Support\Applications;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
+use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 
 class ApplicationAssetStore
 {
@@ -81,6 +83,7 @@ class ApplicationAssetStore
     try {
       File::ensureDirectoryExists(dirname($this->absolutePath($site, $application, $type, $filename)));
       File::put($this->absolutePath($site, $application, $type, $filename), $contents);
+      $this->pruneRevisions();
     } catch (Throwable $exception) {
       throw new RuntimeException('CMS could not write the application asset. Check public/site permissions.', previous: $exception);
     }
@@ -102,6 +105,7 @@ class ApplicationAssetStore
 
     $this->writeRevision($site, $application, $current);
     File::delete($this->absolutePath($site, $application, $type, $filename));
+    $this->pruneRevisions();
 
     return $current;
   }
@@ -174,5 +178,14 @@ class ApplicationAssetStore
     $path = storage_path('app/cms/application-assets/'.$site->id.'/'.$application->handle.'/'.$asset['type'].'/'.now()->format('YmdHis').'-'.$asset['checksum'].'-'.$asset['filename']);
     File::ensureDirectoryExists(dirname($path));
     File::put($path, $asset['contents']);
+  }
+
+  private function pruneRevisions(): void
+  {
+    try {
+      app(MaintenanceCleanup::class)->run(MaintenanceCleanup::ASSET_REVISIONS);
+    } catch (Throwable $exception) {
+      Log::warning('Application asset revision cleanup did not complete.', ['message' => $exception->getMessage()]);
+    }
   }
 }
