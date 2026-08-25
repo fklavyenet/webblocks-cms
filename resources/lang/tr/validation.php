@@ -14,9 +14,9 @@ return [
     'body_max' => 'Yorumlar :max karakterden uzun olamaz.',
   ],
   'rating' => [
-    'required' => 'Bir puan secin.',
-    'integer' => 'Gecerli bir puan secin.',
-    'min' => 'En az :min yildiz secin.',
-    'max' => 'En fazla :max yildiz secin.',
+    'required' => 'Bir puan seçin.',
+    'integer' => 'Geçerli bir puan seçin.',
+    'min' => 'En az :min yıldız seçin.',
+    'max' => 'En fazla :max yıldız seçin.',
   ],
 ];

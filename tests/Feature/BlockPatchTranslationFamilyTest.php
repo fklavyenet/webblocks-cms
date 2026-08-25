@@ -137,6 +137,31 @@ class BlockPatchTranslationFamilyTest extends TestCase
   }
 
   #[Test]
+  public function patching_a_rating_writes_localized_heading_copy_to_the_text_translation_row(): void
+  {
+    $block = $this->seedBlock('rating');
+
+    $response = $this->patchBlock($block, [
+      'locale' => 'de',
+      'translations' => [
+        'title' => 'Dieses Spiel bewerten',
+        'subtitle' => 'Wie hat dir das Spiel gefallen?',
+      ],
+    ]);
+
+    $this->assertSame(200, $response->getStatusCode());
+
+    $translation = BlockTextTranslation::query()
+      ->where('block_id', $block->id)
+      ->where('locale_id', $this->locale('de')->id)
+      ->first();
+
+    $this->assertNotNull($translation);
+    $this->assertSame('Dieses Spiel bewerten', $translation->title);
+    $this->assertSame('Wie hat dir das Spiel gefallen?', $translation->subtitle);
+  }
+
+  #[Test]
   public function patching_an_image_accepts_the_translation_column_names(): void
   {
     $block = $this->seedBlock('image');

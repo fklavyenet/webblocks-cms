@@ -171,7 +171,6 @@ final class BlockSettingsPatchPolicy
     'rating' => [
       'allow_change' => ['bool'],
       'show_summary' => ['bool'],
-      'title' => ['text', 120],
     ],
     'search-form' => ['show_button' => ['bool']],
     'section' => [

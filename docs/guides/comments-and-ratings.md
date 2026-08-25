@@ -20,7 +20,7 @@ card_thumbnail: 03-comments-moderation.png
 
 ## Steps
 
-1. In the Main slot, select **Add Block**, then choose **Rating**. Set the **Heading**, and decide whether visitors may change a vote (**Vote changes**) and whether the **Public summary** is shown.
+1. In the Main slot, select **Add Block**, then choose **Rating**. Set the locale-aware **Heading** and optional **Supporting text**, and decide whether visitors may change a vote (**Vote changes**) and whether the **Public summary** is shown. Switch the editor locale to translate the two copy fields; behavior remains shared.
 
 > **Screenshot** `01-rating-form.png` — The Rating block settings.
 > Alt: Rating block form showing heading, vote changes, and public summary settings.

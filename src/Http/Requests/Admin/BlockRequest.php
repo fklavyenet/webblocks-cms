@@ -209,7 +209,7 @@ class BlockRequest extends FormRequest
       'rating_scale' => [$isRating ? 'required' : 'prohibited', Rule::in(['5'])],
       'rating_allow_change' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
       'rating_show_summary' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
-      'rating_title' => [$isRating ? 'nullable' : 'prohibited', 'string', 'max:120'],
+      'rating_title' => ['prohibited'],
       'comments_form_enabled' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
       'comments_show_approved' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
       'comments_show_author_name' => [$isComments ? 'nullable' : 'prohibited', 'boolean'],
@@ -1657,16 +1657,20 @@ class BlockRequest extends FormRequest
       }
 
       if ($blockType?->slug === 'rating') {
-        $ratingTitle = trim((string) ($data['rating_title'] ?? ''));
-        $settings = [
-          'scale' => 5,
-          'allow_change' => (bool) ($data['rating_allow_change'] ?? true),
-          'show_summary' => (bool) ($data['rating_show_summary'] ?? true),
-          'title' => $ratingTitle !== '' ? $ratingTitle : null,
-        ];
+        $existingSettings = $this->route('block') instanceof Block
+          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          : [];
+        $settings = is_array($existingSettings) ? $existingSettings : [];
 
-        $data['title'] = null;
-        $data['subtitle'] = null;
+        if (! $isLocaleRequest) {
+          $settings['scale'] = 5;
+          $settings['allow_change'] = (bool) ($data['rating_allow_change'] ?? true);
+          $settings['show_summary'] = (bool) ($data['rating_show_summary'] ?? true);
+          unset($settings['title']);
+        }
+
+        $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+        $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
         $data['content'] = null;
         $data['url'] = null;
         $data['asset_id'] = null;

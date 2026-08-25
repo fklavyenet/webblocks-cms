@@ -12,7 +12,8 @@
         $ratingAverage = $ratingCount > 0 ? round((float) (clone $ratings)->avg('rating_value'), 1) : null;
     }
     $showSummary = (bool) $block->setting('show_summary', true);
-    $title = trim((string) $block->setting('title', ''));
+    $title = trim((string) ($block->title ?: $block->setting('title', '')));
+    $subtitle = trim((string) $block->subtitle);
     $averagePercent = $ratingAverage !== null ? round(($ratingAverage / 5) * 100, 2) : 0;
     $success = session('rating_success_block_id') === $block->id ? session('rating_success_message') : null;
 @endphp
@@ -21,6 +22,10 @@
     <div class="wb-card-body wb-stack wb-gap-3">
         @if ($title !== '')
             <h3>{{ $title }}</h3>
+        @endif
+
+        @if ($subtitle !== '')
+            <p class="wb-text-muted">{{ $subtitle }}</p>
         @endif
 
         @if ($success)

@@ -44,10 +44,10 @@ return [
     'dismiss_message' => 'Mesaji kapat',
   ],
   'engagement' => [
-    'comments_unavailable' => 'Yorumlar gecici olarak kullanilamiyor.',
-    'comment_submitted' => 'Tesekkurler. Yorumunuz gorunmeden once incelenecek.',
-    'ratings_unavailable' => 'Puanlamalar gecici olarak kullanilamiyor.',
-    'rating_submitted' => 'Puaniniz icin tesekkurler.',
+    'comments_unavailable' => 'Yorumlar geçici olarak kullanılamıyor.',
+    'comment_submitted' => 'Teşekkürler. Yorumunuz görünmeden önce incelenecek.',
+    'ratings_unavailable' => 'Puanlamalar geçici olarak kullanılamıyor.',
+    'rating_submitted' => 'Puanınız için teşekkürler.',
   ],
   'cookie_consent' => [
     'aria_label' => 'Çerez onayı',
