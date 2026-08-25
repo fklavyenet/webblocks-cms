@@ -323,6 +323,20 @@ Catalog installs register the plugin disabled by default, the same as manual upl
 
 The update POST re-reads catalog detail/latest metadata server-side, requires the same compatible published complete artifact metadata, downloads the controlled ZIP, verifies SHA-256, validates the ZIP through the same plugin package validator, and replaces the installed plugin package version. The plugin-owned database tables are preserved, enabled or disabled lifecycle state is preserved by moving enabled state to the new version only when the old version was enabled, and plugin migrations are not run automatically. If the updated plugin declares new migrations or its tables are missing, the existing setup-required guidance and explicit `Run Plugin Migrations` flow remain responsible for schema setup.
 
+### Planned update transparency and plugin identity
+
+A future Plugin System release should bring plugin updates to the same operator-information standard as native CMS updates. Before the operator confirms `Update from Catalog`, the modal should show the installed and target versions plus the target release's safe catalog metadata: summary, highlights, fixes, compatibility notes, migration or operator actions, and cumulative changelog entries when supplied. Channel, CMS compatibility, artifact validation/scan status, filename, size, and checksum may be shown as secondary technical details. Missing release notes must produce an explicit neutral fallback rather than an empty panel, and all remote copy must be rendered as escaped text or through an intentionally sanitized formatting contract. The install action must still re-read and verify catalog metadata server-side; content displayed in the modal is explanatory and is never trusted as installation authority.
+
+The host should also provide a reusable plugin-identity view model or WebBlocks UI partial for plugin-owned admin pages. At minimum it should expose the registered label and installed version, with optional source/channel and update-available state. Plugin screens should consume that host-provided identity instead of hard-coding a version in their Blade views. WebBlocks Commerce Settings is the intended first adopter, followed by other plugins as they release compatible admin screens.
+
+Acceptance criteria for that future slice:
+
+- the update confirmation can distinguish the current version from the target version and summarize what changes before any write occurs;
+- structured release metadata follows the native CMS update vocabulary where equivalent fields exist, with a clear fallback for older catalog releases;
+- plugin-owned admin pages can render their installed version from the registry/manifest through one shared host contract;
+- the component remains generic: no Commerce-specific label, route, or version logic belongs in CMS core; and
+- tests cover release notes present, legacy or missing notes, unsafe remote text, unavailable catalog metadata, and a plugin page rendering the registered version.
+
 Future marketplace and catalog planning is outside this package repository's documented runtime contract.
 
 ## Minimal Plugin Example

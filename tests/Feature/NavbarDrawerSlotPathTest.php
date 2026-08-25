@@ -33,6 +33,7 @@ class NavbarDrawerSlotPathTest extends TestCase
     $html = $this->renderHeaderSlot(nested: false);
 
     $this->assertStringContainsString('wb-navbar-toggle', $html);
+    $this->assertStringContainsString('class="wb-navbar wb-sticky"', $html);
     $this->assertMatchesRegularExpression('/data-wb-collapse="wb-navbar-drawer-\d+"/', $html);
     $this->assertStringContainsString('<div class="wb-navbar-drawer"', $html);
 

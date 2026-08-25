@@ -47,6 +47,7 @@ class NavbarDrawerPromotedHeaderTest extends TestCase
       'sticky-navbar',
       $header['wrapper']['attributes']['data-wb-public-block-type'] ?? null,
     );
+    $this->assertContains('wb-sticky', explode(' ', $header['wrapper']['attributes']['class'] ?? ''));
 
     // Promotion replaces the navbar block with its children, which is exactly
     // why nothing flushes the drawer registry on this path.
@@ -104,7 +105,7 @@ class NavbarDrawerPromotedHeaderTest extends TestCase
     $this->assertNotFalse($navbar);
     $this->assertGreaterThan($announcement, $headerClose);
     $this->assertGreaterThan($headerClose, $navbar, 'Sticky navbar must be a sibling of the short announcement wrapper.');
-    $this->assertMatchesRegularExpression('/class="[^"]*\\bwb-navbar\\b[^"]*"/', substr($html, $navbar, $navbarClose - $navbar));
+    $this->assertMatchesRegularExpression('/class="[^"]*\\bwb-navbar\\b[^"]*\\bwb-sticky\\b[^"]*"/', substr($html, $navbar, $navbarClose - $navbar));
     $this->assertNotFalse($drawer);
     $this->assertGreaterThan($navbarClose, $drawer, 'Drawer must remain immediately after the promoted navbar path.');
   }

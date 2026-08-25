@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.72.3
+
+- Apply the explicit WebBlocks UI `wb-sticky` utility whenever a Navbar block uses sticky mode, so the selected behavior survives more-specific site slot styling in both direct and promoted header render paths.
+- Document the planned Plugin Catalog update-transparency and shared plugin-identity contracts, including safe release metadata, legacy fallbacks, generic host boundaries, and acceptance criteria.
+
 ## 1.72.2
 
 - Keep a sticky navbar attached to the viewport when its public header slot also contains an announcement or other root blocks by promoting the navbar into its own ordered render unit outside the short header wrapper.

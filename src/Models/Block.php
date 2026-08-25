@@ -1602,7 +1602,7 @@ class Block extends CmsModel
     return match ($this->navbarPosition()) {
       'static' => 'wb-navbar--static',
       'fixed' => 'wb-fixed',
-      default => null,
+      default => 'wb-sticky',
     };
   }
 
