@@ -46,6 +46,7 @@ class PublicPagePresenter
       ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks, $preview, $locale))
       ->values();
 
+    $slots = $this->separateHeaderNavbarsFromSiblingBlocks($slots);
     $slots = $this->orderSlotsForLayout($page, $slots);
     $applicationAssets = $this->applicationAssetCollector->collect($slots);
 
@@ -229,6 +230,59 @@ class PublicPagePresenter
       'element' => 'nav',
       'attributes' => $attributes,
     ]);
+  }
+
+  /**
+   * A sticky element is bounded by its nearest containing block. When a public
+   * header contains an announcement (or any other root block) beside a navbar,
+   * keeping both inside the short header slot wrapper prevents the navbar from
+   * remaining sticky for the page. Split the header into ordered render units
+   * so each navbar can use the existing promoted-wrapper contract while the
+   * other blocks remain in normal flow.
+   */
+  private function separateHeaderNavbarsFromSiblingBlocks(Collection $slots): Collection
+  {
+    return $slots->flatMap(function (array $slot): Collection {
+      $blocks = collect($slot['blocks'] ?? []);
+      $wrapper = $slot['wrapper'] ?? [];
+
+      if (($slot['slug'] ?? null) !== 'header'
+        || ($wrapper['preset'] ?? null) !== 'default'
+        || $blocks->count() < 2
+        || ! $blocks->contains(fn ($block) => $block instanceof Block && $block->typeSlug() === 'sticky-navbar')) {
+        return collect([$slot]);
+      }
+
+      $groups = $blocks
+        ->chunkWhile(fn ($block, $key, Collection $chunk) => ($block->typeSlug() === 'sticky-navbar') === ($chunk->last()->typeSlug() === 'sticky-navbar'))
+        ->values();
+
+      return $groups->flatMap(function (Collection $group) use ($slot, $wrapper): Collection {
+        if ($group->count() === 1 && $group->first()->typeSlug() === 'sticky-navbar') {
+          $navbar = $group->first();
+
+          return collect([array_replace($slot, [
+            'wrapper' => $this->presentedWrapper($this->promoteWrapperToNavbar($wrapper, $navbar)),
+            'blocks' => $navbar->children,
+          ])]);
+        }
+
+        return collect([array_replace($slot, ['blocks' => $group->values()])]);
+      });
+    })->values();
+  }
+
+  private function presentedWrapper(array $wrapper): array
+  {
+    return [
+      'preset' => $wrapper['preset'],
+      'element' => $wrapper['element'],
+      'attributes' => $wrapper['attributes'],
+      'before_html' => $wrapper['before_html'] ?? null,
+      'start_html' => $wrapper['start_html'] ?? null,
+      'end_html' => $wrapper['end_html'] ?? null,
+      'after_html' => $wrapper['after_html'] ?? null,
+    ];
   }
 
   private function orderSlotsForLayout(Page $page, Collection $slots): Collection

@@ -88,9 +88,30 @@ class NavbarDrawerPromotedHeaderTest extends TestCase
     $this->assertSame(2, substr_count($html, '>Docs</a>'));
   }
 
-  private function renderPublicPage(): string
+  #[Test]
+  public function a_header_announcement_does_not_bound_the_sticky_navbar(): void
   {
-    $page = $this->seedNavbarPage();
+    $html = $this->renderPublicPage(withAnnouncement: true);
+
+    $announcement = strpos($html, 'Shipping announcement');
+    $headerClose = strpos($html, '</header>', $announcement);
+    $navbar = strpos($html, '<nav ', $headerClose);
+    $navbarClose = strpos($html, '</nav>', $navbar);
+    $drawer = strpos($html, '<div class="wb-navbar-drawer"', $navbarClose);
+
+    $this->assertNotFalse($announcement);
+    $this->assertNotFalse($headerClose);
+    $this->assertNotFalse($navbar);
+    $this->assertGreaterThan($announcement, $headerClose);
+    $this->assertGreaterThan($headerClose, $navbar, 'Sticky navbar must be a sibling of the short announcement wrapper.');
+    $this->assertMatchesRegularExpression('/class="[^"]*\\bwb-navbar\\b[^"]*"/', substr($html, $navbar, $navbarClose - $navbar));
+    $this->assertNotFalse($drawer);
+    $this->assertGreaterThan($navbarClose, $drawer, 'Drawer must remain immediately after the promoted navbar path.');
+  }
+
+  private function renderPublicPage(bool $withAnnouncement = false): string
+  {
+    $page = $this->seedNavbarPage($withAnnouncement);
 
     // Mirrors WebBlocks\Cms\Http\Controllers\Public\PageController::renderPage().
     return view(
@@ -99,7 +120,7 @@ class NavbarDrawerPromotedHeaderTest extends TestCase
     )->render();
   }
 
-  private function seedNavbarPage(): Page
+  private function seedNavbarPage(bool $withAnnouncement = false): Page
   {
     $this->seedBlockTypes();
     [$page, $slotType] = $this->seedPage();
@@ -131,7 +152,13 @@ class NavbarDrawerPromotedHeaderTest extends TestCase
 
     // The shipped "Shared responsive navbar" shape, and the one both public
     // WebBlocks sites use: a single navbar wrapping container > cluster.
-    $navbar = $make('sticky-navbar', null);
+    if ($withAnnouncement) {
+      $announcement = $make('rich-text', null);
+      $announcement->update(['content' => 'Shipping announcement']);
+    }
+
+    $navbar = $make('sticky-navbar', null, ['sticky_mode' => 'sticky']);
+    $navbar->update(['sort_order' => $withAnnouncement ? 1 : 0]);
     $container = $make('container', $navbar->id, ['width' => 'xl']);
     $cluster = $make('cluster', $container->id, ['alignment' => 'between']);
     $make('navbar-navigation', $cluster->id, ['menu_key' => NavigationItem::MENU_PRIMARY]);
@@ -146,6 +173,7 @@ class NavbarDrawerPromotedHeaderTest extends TestCase
       ['slug' => 'navbar-navigation', 'name' => 'Navbar Navigation'],
       ['slug' => 'container', 'name' => 'Container'],
       ['slug' => 'cluster', 'name' => 'Cluster'],
+      ['slug' => 'rich-text', 'name' => 'Rich Text'],
     ] as $definition) {
       BlockType::query()->firstOrCreate(['slug' => $definition['slug']], $definition + ['is_active' => true]);
     }

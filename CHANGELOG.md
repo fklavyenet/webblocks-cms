@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.72.2
+
+- Keep a sticky navbar attached to the viewport when its public header slot also contains an announcement or other root blocks by promoting the navbar into its own ordered render unit outside the short header wrapper.
+- Preserve the existing lone-navbar promotion path and render mobile drawer markup immediately after the promoted navbar in both single-block and mixed-header layouts.
+
 ## 1.72.1
 
 - Make Rating headings and supporting text locale-aware through normal block text translations while retaining legacy `settings.title` rendering as a compatibility fallback.
