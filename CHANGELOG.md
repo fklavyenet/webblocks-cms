@@ -2,7 +2,7 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
-## Unreleased
+## 1.72.1
 
 - Make Rating headings and supporting text locale-aware through normal block text translations while retaining legacy `settings.title` rendering as a compatibility fallback.
 - Correct Turkish Rating and Comments public copy, validation feedback, and submission confirmations with proper Turkish characters and natural wording.
