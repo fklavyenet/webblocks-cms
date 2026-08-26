@@ -9,8 +9,10 @@ use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginException;
+use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
 use WebBlocks\Cms\Support\Plugins\PluginPublicRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginSettingsDefinition;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -20,6 +22,34 @@ use WebBlocks\Cms\Tests\TestCase;
  */
 class PluginPublicSurfaceTest extends TestCase
 {
+  public function test_settings_surface_is_added_to_the_plugins_sidebar_group_when_omitted(): void
+  {
+    $plugin = $this->pluginDefinition()
+      ->menu([
+        PluginMenuItem::make('appointments')->label('Appointments')->route('appointments.index')->group('Appointments')->sort(60),
+      ])
+      ->settings(PluginSettingsDefinition::make('appointments.settings')->label('Settings'));
+
+    $items = $this->registryWith($plugin)->menuItems();
+
+    $this->assertCount(2, $items);
+    $this->assertSame('appointments.settings', $items[1]['item']->routeName());
+    $this->assertSame('Appointments', $items[1]['item']->groupName());
+    $this->assertSame(61, $items[1]['item']->sortOrder());
+    $this->assertSame('wb-icon-settings', $items[1]['item']->iconClass());
+  }
+
+  public function test_explicit_settings_menu_item_is_not_duplicated(): void
+  {
+    $plugin = $this->pluginDefinition()
+      ->menu([
+        PluginMenuItem::make('settings')->label('Settings')->route('appointments.settings')->group('Appointments'),
+      ])
+      ->settings(PluginSettingsDefinition::make('appointments.settings'));
+
+    $this->assertCount(1, $this->registryWith($plugin)->menuItems());
+  }
+
   public function test_public_route_prefix_and_name_prefix_are_derived_from_the_handle(): void
   {
     $plugin = $this->pluginDefinition();

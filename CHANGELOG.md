@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.72.8
+
+- Keep every enabled plugin settings surface one click away by adding a standard Settings entry to the plugin's own sidebar group when its definition does not already declare one. Existing explicit entries retain their label, permission, icon and order.
+- Render the System Plugin detail Capabilities card as a compact WebBlocks UI table instead of a loose four-column grid.
+
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
 ## 1.72.7

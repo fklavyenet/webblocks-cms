@@ -152,7 +152,13 @@ class PluginRegistry
     $items = [];
 
     foreach ($this->enabled() as $plugin) {
-      foreach ($plugin->menuItems() as $item) {
+      $pluginItems = $plugin->menuItems();
+
+      if ($settingsItem = $this->settingsMenuItem($plugin, $pluginItems)) {
+        $pluginItems[] = $settingsItem;
+      }
+
+      foreach ($pluginItems as $item) {
         if (! $this->userCanView($user, $item->permissionName())) {
           continue;
         }
@@ -167,6 +173,55 @@ class PluginRegistry
     usort($items, fn (array $left, array $right): int => $left['item']->sortOrder() <=> $right['item']->sortOrder());
 
     return $items;
+  }
+
+  /**
+   * Settings are an operational plugin surface, not a detail-page capability.
+   * Keep them one click away in the plugin's own sidebar group even when an
+   * older plugin declaration omitted the otherwise redundant menu entry.
+   *
+   * @param  array<int|string, PluginMenuItem>  $items
+   */
+  private function settingsMenuItem(PluginDefinition $plugin, array $items): ?PluginMenuItem
+  {
+    $settings = $plugin->settingsDefinition();
+
+    if ($settings === null) {
+      return null;
+    }
+
+    $route = $settings->routeName ?? $plugin->routeNamePrefix().'.settings.edit';
+
+    foreach ($items as $item) {
+      if ($item->routeName() === $route) {
+        return null;
+      }
+    }
+
+    $groups = array_values(array_filter(array_map(
+      static fn (PluginMenuItem $item): ?string => $item->groupName(),
+      $items,
+    )));
+    $sort = $items === []
+      ? 100
+      : max(array_map(static fn (PluginMenuItem $item): int => $item->sortOrder(), $items)) + 1;
+    $permissions = $plugin->permissionsList();
+    $permission = array_key_exists($plugin->handle().'.settings', $permissions)
+      ? $plugin->handle().'.settings'
+      : (array_key_exists($plugin->handle().'.manage', $permissions) ? $plugin->handle().'.manage' : null);
+
+    $item = PluginMenuItem::make('plugin-settings')
+      ->label($settings->labelText())
+      ->route($route)
+      ->icon('wb-icon-settings')
+      ->group($groups !== [] ? end($groups) : $plugin->labelText())
+      ->sort($sort);
+
+    if ($permission !== null) {
+      $item->permission($permission);
+    }
+
+    return $item;
   }
 
   /**

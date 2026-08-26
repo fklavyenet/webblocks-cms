@@ -114,44 +114,19 @@
         </div>
 
         <div class="wb-card-body">
-            <div class="wb-grid wb-grid-4">
-                <div>
-                    <strong>{{ $adminText('routes') }}</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['admin_routes_count'] : $adminText('available_after_enabling') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('commands') }}</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['commands_count'] : $adminText('available_after_enabling') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('permissions') }}</strong>
-                    <div>{{ $plugin['permissions_count'] }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('menu_items') }}</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['menu_items_count'] : $adminText('available_after_enabling') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('settings') }}</strong>
-                    <div>{{ $plugin['settings'] ? ($plugin['enabled'] ? $adminText('declared') : $adminText('available_after_enabling')) : $adminText('not_declared') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('migrations') }}</strong>
-                    <div>{{ $plugin['migrations_count'] ?? $adminText('manual_plugin_owned') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('assets') }}</strong>
-                    <div>{{ $plugin['public_assets_count'] }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('dashboard_cards') }}</strong>
-                    <div>{{ $plugin['enabled'] ? $plugin['dashboard_widgets_count'] + $plugin['system_cards_count'] : $adminText('available_after_enabling') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('blocks') }}</strong>
-                    <div>{{ $plugin['block_types_count'] + $plugin['block_packs_count'] }}</div>
-                </div>
-            </div>
+            <table class="wb-table">
+                <tbody>
+                    <tr><th scope="row">{{ $adminText('routes') }}</th><td>{{ $plugin['enabled'] ? $plugin['admin_routes_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('commands') }}</th><td>{{ $plugin['enabled'] ? $plugin['commands_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('permissions') }}</th><td>{{ $plugin['permissions_count'] }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('menu_items') }}</th><td>{{ $plugin['enabled'] ? $plugin['menu_items_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('settings') }}</th><td>{{ $plugin['settings'] ? ($plugin['enabled'] ? $adminText('declared') : $adminText('available_after_enabling')) : $adminText('not_declared') }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('migrations') }}</th><td>{{ $plugin['migrations_count'] ?? $adminText('manual_plugin_owned') }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('assets') }}</th><td>{{ $plugin['public_assets_count'] }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('dashboard_cards') }}</th><td>{{ $plugin['enabled'] ? $plugin['dashboard_widgets_count'] + $plugin['system_cards_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row">{{ $adminText('blocks') }}</th><td>{{ $plugin['block_types_count'] + $plugin['block_packs_count'] }}</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 

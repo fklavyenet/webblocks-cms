@@ -462,6 +462,8 @@ Settings rules:
 
 Phase 2 provides a read-only settings route foundation for enabled plugins that declare `PluginSettingsDefinition` without a custom route name. The default route is:
 
+Every enabled settings surface is also present in the plugin's own admin sidebar group. Plugins may declare that menu item explicitly to control its label, permission, icon and order. When they omit it, the CMS supplies a settings item after the plugin's existing menu entries, preferring `{handle}.settings` and then `{handle}.manage` when either permission exists.
+
 ```text
 /webadmin/plugins/{plugin-handle}/settings
 ```
