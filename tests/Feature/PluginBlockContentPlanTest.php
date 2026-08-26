@@ -186,7 +186,7 @@ class PluginBlockContentPlanTest extends TestCase
   {
     Schema::drop('wbcms_block_plugin_translations');
 
-    $migration = require dirname(__DIR__, 2).'/database/migrations/2026_08_26_120000_repair_block_plugin_translations_table.php';
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_08_26_120000_repair_block_plugin_translations_table.php';
     $migration->up();
     $migration->up();
 

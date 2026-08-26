@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.72.6
+
+- Put the missing plugin-translation-table repair in the package update-migration path so System Update runs it without touching an unbaselined host application's migrations.
+
 ## 1.72.5
 
 - Persist plugin-owned translated fields when a block is created through either the direct draft page-slot endpoint or Shared Slot authoring, matching the Content Apply writer contract.
