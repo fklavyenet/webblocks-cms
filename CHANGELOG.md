@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.72.5
+
+- Persist plugin-owned translated fields when a block is created through either the direct draft page-slot endpoint or Shared Slot authoring, matching the Content Apply writer contract.
+- Repair existing installations whose plugin translation table is missing, and cover direct `201` creation plus Content Apply round trips for the WebBlocks Appointments Form translated fields.
+
 ## 1.72.4
 
 - Allow enabled plugin block types such as WebBlocks Appointments Form to pass the same Content API validate/apply workflow as core blocks, including plugin-owned translated fields and staged-page replacement.

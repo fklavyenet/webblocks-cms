@@ -2,13 +2,17 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageLayoutSlot;
+use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
@@ -92,6 +96,45 @@ class PluginBlockContentPlanTest extends TestCase
     $this->assertTrue($result->ok, json_encode($result->errors, JSON_PRETTY_PRINT));
     $this->assertSame('webblocks-appointments-form', Block::query()->sole()->type);
     $this->assertCount(6, Block::query()->sole()->pluginTranslations);
+    $this->assertSame(
+      ['intro' => 'Wählen Sie einen verfügbaren Termin.', 'submit_label' => 'Termin verbindlich buchen', 'title' => 'Online-Termin buchen'],
+      Block::query()->sole()->pluginTranslations()->whereHas('locale', fn ($query) => $query->where('code', 'de'))->pluck('value', 'field')->sortKeys()->all(),
+    );
+  }
+
+  #[Test]
+  public function direct_page_slot_post_creates_a_plugin_block_with_translations(): void
+  {
+    $site = Site::query()->where('handle', 'default')->sole();
+    $main = SlotType::query()->where('slug', 'main')->sole();
+    $page = Page::query()->create(['site_id' => $site->id, 'status' => Page::STATUS_DRAFT]);
+    PageSlot::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+      'sort_order' => 0,
+    ]);
+
+    $request = Request::create(
+      '/webadmin/api/pages/'.$page->id.'/slots/main/blocks?locale=de',
+      'POST',
+      [],
+      [],
+      [],
+      ['CONTENT_TYPE' => 'application/json'],
+      json_encode($this->pluginBlockPayload(), JSON_THROW_ON_ERROR),
+    );
+
+    $response = app(InternalContentResourceController::class)->storeSlotBlock($request, $page, 'main');
+    $payload = $response->getData(true);
+
+    $this->assertSame(201, $response->getStatusCode());
+    $this->assertTrue($payload['ok']);
+    $this->assertSame('webblocks-appointments-form', $payload['block']['type']);
+    $this->assertSame(
+      ['intro' => 'Wählen Sie einen verfügbaren Termin.', 'submit_label' => 'Termin verbindlich buchen', 'title' => 'Online-Termin buchen'],
+      Block::query()->sole()->pluginTranslations()->whereHas('locale', fn ($query) => $query->where('code', 'de'))->pluck('value', 'field')->sortKeys()->all(),
+    );
   }
 
   #[Test]
@@ -138,6 +181,18 @@ class PluginBlockContentPlanTest extends TestCase
     $this->assertSame(InternalContentPlanService::APPLY_WRITE_ERROR_CODE, $result->errors[0]['code']);
   }
 
+  #[Test]
+  public function repair_migration_restores_a_missing_plugin_translation_table(): void
+  {
+    Schema::drop('wbcms_block_plugin_translations');
+
+    $migration = require dirname(__DIR__, 2).'/database/migrations/2026_08_26_120000_repair_block_plugin_translations_table.php';
+    $migration->up();
+    $migration->up();
+
+    $this->assertTrue(Schema::hasTable('wbcms_block_plugin_translations'));
+  }
+
   private function minimalPlan(): array
   {
     return [
@@ -153,11 +208,23 @@ class PluginBlockContentPlanTest extends TestCase
         ],
         'slots' => [
           'main' => [[
-            'type' => 'webblocks-appointments-form',
-            'settings' => [],
+            ...$this->pluginBlockPayload(),
           ]],
         ],
       ],
+    ];
+  }
+
+  private function pluginBlockPayload(): array
+  {
+    return [
+      'type' => 'webblocks-appointments-form',
+      'translations' => [
+        'title' => 'Online-Termin buchen',
+        'intro' => 'Wählen Sie einen verfügbaren Termin.',
+        'submit_label' => 'Termin verbindlich buchen',
+      ],
+      'settings' => [],
     ];
   }
 }
