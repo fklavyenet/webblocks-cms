@@ -2,6 +2,10 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.72.7
+
+- Let plugin public renderers safely read null, JSON, or array block settings through the public `Block::decodedSettings()` contract, fixing HTTP 500 responses when rendering or previewing API-authored Appointments Form blocks.
+
 ## 1.72.6
 
 - Put the missing plugin-translation-table repair in the package update-migration path so System Update runs it without touching an unbaselined host application's migrations.

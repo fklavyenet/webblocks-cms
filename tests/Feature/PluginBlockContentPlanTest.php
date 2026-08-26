@@ -5,7 +5,9 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
+use WebBlocks\Cms\Http\Controllers\Admin\PageController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
@@ -18,6 +20,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
+use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
@@ -27,6 +30,13 @@ use WebBlocks\Cms\Tests\TestCase;
 
 class PluginBlockContentPlanTest extends TestCase
 {
+  protected function defineEnvironment($app): void
+  {
+    parent::defineEnvironment($app);
+
+    $app['config']->set('webblocks-cms.routes.admin', true);
+  }
+
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
@@ -42,6 +52,7 @@ class PluginBlockContentPlanTest extends TestCase
       ->blockTypes([
         PluginBlockTypeDefinition::make('webblocks-appointments::form')
           ->label('Appointments Form')
+          ->publicView('appointments-test::appointments-form')
           ->translatedFields(['title', 'intro', 'submit_label']),
       ]);
 
@@ -52,6 +63,7 @@ class PluginBlockContentPlanTest extends TestCase
     $this->app->forgetInstance(PluginBlockCatalog::class);
     $this->app->forgetInstance(BlockTranslationRegistry::class);
     $this->app->forgetInstance(BlockTypeContractRegistry::class);
+    $this->app->make('view')->addNamespace('appointments-test', dirname(__DIR__).'/fixtures/plugin-blocks');
 
     $site = Site::query()->create(['name' => 'Default', 'handle' => 'default', 'is_primary' => true]);
     $english = Locale::query()->create(['code' => 'en', 'name' => 'English', 'is_default' => true, 'is_enabled' => true]);
@@ -135,6 +147,31 @@ class PluginBlockContentPlanTest extends TestCase
       ['intro' => 'Wählen Sie einen verfügbaren Termin.', 'submit_label' => 'Termin verbindlich buchen', 'title' => 'Online-Termin buchen'],
       Block::query()->sole()->pluginTranslations()->whereHas('locale', fn ($query) => $query->where('code', 'de'))->pluck('value', 'field')->sortKeys()->all(),
     );
+  }
+
+  #[Test]
+  public function plugin_block_renders_through_api_and_browser_preview(): void
+  {
+    $applied = app(InternalContentPlanService::class)->apply($this->minimalPlan());
+    $this->assertTrue($applied->ok, json_encode($applied->errors, JSON_PRETTY_PRINT));
+    $page = Page::query()->findOrFail($applied->data['page']['id']);
+
+    $renderRequest = Request::create('/webadmin/api/pages/'.$page->id.'/render', 'GET', ['format' => 'html', 'locale' => 'de']);
+    $renderResponse = app(InternalPageRenderController::class)->show($renderRequest, $page);
+
+    $this->assertSame(200, $renderResponse->getStatusCode());
+    $this->assertStringContainsString('Online-Termin buchen', $renderResponse->getContent());
+    $this->assertStringContainsString('name="service_id"', $renderResponse->getContent());
+    $this->assertStringContainsString('name="resource_id"', $renderResponse->getContent());
+
+    $previewRequest = Request::create('/webadmin/pages/'.$page->id.'/preview', 'GET');
+    $previewRequest->attributes->set('cms_internal_preview', true);
+    $this->app->instance('request', $previewRequest);
+    $previewResponse = app(PageController::class)->preview($page->fresh(), app(PublicPagePresenter::class));
+
+    $this->assertSame(200, $previewResponse->getStatusCode());
+    $this->assertStringContainsString('name="service_id"', $previewResponse->getContent());
+    $this->assertStringContainsString('name="resource_id"', $previewResponse->getContent());
   }
 
   #[Test]
