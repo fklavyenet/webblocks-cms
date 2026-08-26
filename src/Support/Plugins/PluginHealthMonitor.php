@@ -56,7 +56,8 @@ class PluginHealthMonitor
     if (is_array($result)) {
       return new PluginHealthResult(
         (string) ($result['status'] ?? PluginHealthResult::UNKNOWN),
-        (string) ($result['message'] ?? '')
+        (string) ($result['message'] ?? ''),
+        is_array($result['checks'] ?? null) ? $result['checks'] : [],
       );
     }
 
@@ -68,7 +69,7 @@ class PluginHealthMonitor
   }
 
   /**
-   * @return array{status: string, message: string}
+   * @return array{status: string, message: string, checks: array<int, array{name: string, status: string, message: string}>}
    */
   public function healthArrayFor(PluginDefinition $plugin): array
   {

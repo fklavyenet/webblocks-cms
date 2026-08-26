@@ -623,6 +623,7 @@ The Phase 2 runtime now includes:
 - default read-only settings pages for enabled plugins that declare `PluginSettingsDefinition`
 - enabled-only console command collection through `PluginCommandRegistrar`
 - `PluginHealthResult`, `PluginLifecycleStatus`, and `PluginHealthMonitor` for basic status reporting
+- `PluginHealthResult::withChecks()` for an overall result plus named individual checks; core renders those checks in the plugin-list Health modal and plugin-detail Health table
 - `System -> Plugins` detail pages that expose lifecycle, health, settings, route, command, permission, and menu contribution summaries
 - route guard coverage proving enabled test plugin routes register, disabled plugin routes are absent, `/webadmin` remains canonical, `/cms` is not a Laravel admin route namespace, and CMS-owned `/admin` routes remain absent
 

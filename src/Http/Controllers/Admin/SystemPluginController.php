@@ -286,6 +286,7 @@ class SystemPluginController extends Controller
       $health = [
         'status' => 'inactive',
         'message' => 'Not checked while disabled.',
+        'checks' => [],
       ];
     }
 

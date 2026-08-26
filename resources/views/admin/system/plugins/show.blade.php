@@ -212,6 +212,10 @@
                     <span class="wb-status {{ $healthClass }}">{{ $plugin['health']['status'] === 'inactive' ? $adminText('inactive') : ucfirst($plugin['health']['status']) }}</span>
                 </div>
                 <div>{{ $plugin['health']['message'] !== '' ? $plugin['health']['message'] : $adminText('no_health_details') }}</div>
+                @include('webblocks-cms::admin.system.plugins.partials.health-checks', [
+                    'health' => $plugin['health'],
+                    'healthText' => static fn (string $key) => $adminText('health_'.$key),
+                ])
             </div>
         </div>
     </div>

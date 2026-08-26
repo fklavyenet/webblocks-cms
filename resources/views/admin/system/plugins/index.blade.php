@@ -79,6 +79,7 @@
                                     };
                                     $uninstallModalId = 'plugin-uninstall-'.$plugin['handle'];
                                     $updateModalId = 'plugin-update-'.$plugin['handle'];
+                                    $healthModalId = 'plugin-health-'.$plugin['handle'];
                                 @endphp
                                 <tr>
                                     <td class="wb-plugins-cell-name">
@@ -101,9 +102,9 @@
                                         @endif
                                     </td>
                                     <td class="wb-plugins-cell-health">
-                                        <span class="wb-status {{ $healthClass }}">
+                                        <button type="button" class="wb-status {{ $healthClass }}" data-wb-toggle="modal" data-wb-target="#{{ $healthModalId }}" title="{{ $systemPluginsIndexText('view_health_details') }}" aria-label="{{ $systemPluginsIndexText('view_health_details_for', ['label' => $plugin['label']]) }}">
                                             {{ $plugin['health']['status'] === 'inactive' ? $systemPluginsIndexText('inactive') : ucfirst($plugin['health']['status']) }}
-                                        </span>
+                                        </button>
                                         @if ($plugin['health']['message'] !== '')
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin['health']['message'] }}</div>
                                         @endif
@@ -174,6 +175,30 @@
                                                 </div>
                                             </div>
                                         @endif
+
+                                        <div class="wb-modal wb-modal-lg" id="{{ $healthModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $healthModalId }}-title">
+                                            <div class="wb-modal-dialog">
+                                                <div class="wb-modal-header">
+                                                    <h2 class="wb-modal-title" id="{{ $healthModalId }}-title">{{ $systemPluginsIndexText('health_details_title', ['label' => $plugin['label']]) }}</h2>
+                                                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $systemPluginsIndexText('close_health_details') }}">
+                                                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="wb-modal-body wb-stack wb-gap-4">
+                                                    <div class="wb-cluster wb-cluster-2">
+                                                        <span class="wb-status {{ $healthClass }}">{{ $plugin['health']['status'] === 'inactive' ? $systemPluginsIndexText('inactive') : ucfirst($plugin['health']['status']) }}</span>
+                                                        <span>{{ $plugin['health']['message'] }}</span>
+                                                    </div>
+                                                    @include('webblocks-cms::admin.system.plugins.partials.health-checks', [
+                                                        'health' => $plugin['health'],
+                                                        'healthText' => static fn (string $key) => $systemPluginsIndexText('health_'.$key),
+                                                    ])
+                                                </div>
+                                                <div class="wb-modal-footer">
+                                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $systemPluginsIndexText('close') }}</button>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         @if ($plugin['can_uninstall'])
                                             @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [

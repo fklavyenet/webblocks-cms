@@ -17,6 +17,8 @@ class PluginHealthResult
   public function __construct(
     public readonly string $status,
     public readonly string $message = '',
+    /** @var array<int, array{name: string, status: string, message: string}> */
+    public readonly array $checks = [],
   ) {}
 
   public static function healthy(string $message = 'Plugin is enabled.'): self
@@ -45,13 +47,29 @@ class PluginHealthResult
   }
 
   /**
-   * @return array{status: string, message: string}
+   * @param  array<int, array{name: string, status: string, message?: string}>  $checks
+   */
+  public static function withChecks(string $status, string $message, array $checks): self
+  {
+    return new self($status, $message, array_map(
+      static fn (array $check): array => [
+        'name' => trim((string) ($check['name'] ?? '')),
+        'status' => trim((string) ($check['status'] ?? self::UNKNOWN)),
+        'message' => trim((string) ($check['message'] ?? '')),
+      ],
+      $checks,
+    ));
+  }
+
+  /**
+   * @return array{status: string, message: string, checks: array<int, array{name: string, status: string, message: string}>}
    */
   public function toArray(): array
   {
     return [
       'status' => $this->status,
       'message' => $this->message,
+      'checks' => $this->checks,
     ];
   }
 }

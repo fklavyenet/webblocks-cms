@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.73.0
+
+- Extend plugin health reports with backward-compatible individual checks, including a shared status, name and detail contract.
+- Make the Health status in the Plugins list open a WebBlocks UI details modal and render the same checks as a table in each plugin's Health card.
+
 ## 1.72.9
 
 - Fix plugin admin breadcrumbs and sidebar active states so each menu route family selects its own item, views without an explicit layout title fall back to that active item, and repeated group/current labels are collapsed.
