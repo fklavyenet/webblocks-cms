@@ -381,6 +381,12 @@ class InstalledPluginDefinitionFactory
         $blockType->metadata($item['metadata']);
       }
 
+      $translatedFields = $item['translated_fields'] ?? null;
+
+      if (is_array($translatedFields)) {
+        $blockType->translatedFields($translatedFields);
+      }
+
       $blockTypes[] = $blockType;
     }
 

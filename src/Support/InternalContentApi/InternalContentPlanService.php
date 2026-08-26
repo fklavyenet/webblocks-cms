@@ -35,6 +35,8 @@ use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 
 class InternalContentPlanService
 {
+  public const APPLY_WRITE_ERROR_CODE = 'content_apply_write_failed';
+
   public const MODE_CREATE_DRAFT_PAGE = 'create_draft_page';
 
   public const MODE_REPLACE_EXISTING_DRAFT_PAGE = 'replace_existing_draft_page';
@@ -596,7 +598,11 @@ class InternalContentPlanService
         ok: false,
         normalizedPlan: $plan,
         warnings: $validated->warnings,
-        errors: [$this->error('plan.apply', 'Content apply failed while writing the normalized plan. Check application logs for the exception details.')],
+        errors: [$this->error(
+          'plan.apply',
+          'Content apply could not persist the validated plan. The transaction was rolled back; use the error code to correlate this failure with the application log.',
+          self::APPLY_WRITE_ERROR_CODE,
+        )],
         renderability: $validated->renderability,
       );
     }
@@ -628,6 +634,10 @@ class InternalContentPlanService
       'status' => 'draft',
       'is_system' => (bool) $blockType->is_system,
       'settings' => $settings,
+      // Content plans expose translated copy under `translations`; the admin form
+      // calls the same values `plugin_settings`. Feed the canonical writer both
+      // shapes so plugin-owned translation rows use the API contract too.
+      'plugin_settings' => $translations,
       'variant' => $payload['variant'] ?? ($payload['settings']['variant'] ?? null),
       'url' => $payload['settings']['url'] ?? null,
       'media_id' => $payload['media_id'] ?? null,
@@ -2519,12 +2529,13 @@ class InternalContentPlanService
     }
   }
 
-  private function error(string $path, string $message): array
+  private function error(string $path, string $message, ?string $code = null): array
   {
-    return [
+    return array_filter([
       'path' => $path,
       'message' => $message,
-    ];
+      'code' => $code,
+    ], fn (mixed $value): bool => $value !== null);
   }
 
   private function pluginBlockUnavailable(BlockType $blockType): bool

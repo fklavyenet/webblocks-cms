@@ -23,6 +23,7 @@ return new class extends Migration
       'wbcms_navigation_item_translations',
       'wbcms_block_gallery_item_translations',
       'wbcms_block_contact_form_translations',
+      'wbcms_block_plugin_translations',
       'wbcms_block_image_translations',
       'wbcms_block_button_translations',
       'wbcms_block_text_translations',
@@ -583,6 +584,16 @@ return new class extends Migration
       $table->longText('consent_label')->nullable();
       $table->timestamps();
       $table->unique(['block_id', 'locale_id']);
+    });
+
+    $this->createTableIfMissing('wbcms_block_plugin_translations', function (Blueprint $table): void {
+      $table->id();
+      $table->foreignId('block_id')->constrained('wbcms_blocks')->cascadeOnDelete();
+      $table->foreignId('locale_id')->constrained('wbcms_locales')->cascadeOnDelete();
+      $table->string('field', 100);
+      $table->text('value')->nullable();
+      $table->timestamps();
+      $table->unique(['block_id', 'locale_id', 'field'], 'wbcms_block_plugin_tr_unique');
     });
 
     $this->createTableIfMissing('wbcms_block_gallery_item_translations', function (Blueprint $table): void {

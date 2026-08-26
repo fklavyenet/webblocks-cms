@@ -2,6 +2,11 @@
 
 This file is a recent rolling changelog for WebBlocks CMS and keeps only the latest release notes. Older release notes are archived under docs/releases/.
 
+## 1.72.4
+
+- Allow enabled plugin block types such as WebBlocks Appointments Form to pass the same Content API validate/apply workflow as core blocks, including plugin-owned translated fields and staged-page replacement.
+- Publish the runtime plugin authoring contract through `content-contract`, preserve manifest `translated_fields` metadata, include plugin translation storage in fresh installs, and return the stable `content_apply_write_failed` code when an unexpected transactional write still fails.
+
 ## 1.72.3
 
 - Apply the explicit WebBlocks UI `wb-sticky` utility whenever a Navbar block uses sticky mode, so the selected behavior survives more-specific site slot styling in both direct and promoted header render paths.

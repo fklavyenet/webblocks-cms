@@ -18,6 +18,7 @@ final class CmsTable
     'block_gallery_item_translations',
     'block_image_translations',
     'block_media',
+    'block_plugin_translations',
     'block_text_translations',
     'block_types',
     'blocks',

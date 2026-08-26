@@ -6,12 +6,15 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
+use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 
 class BlockTypeContractRegistry
 {
   public function __construct(
     private readonly CoreBlockTypeCatalogSyncer $syncer,
     private readonly BlockTranslationRegistry $translationRegistry,
+    private readonly PluginBlockCatalog $pluginBlockCatalog,
   ) {}
 
   /**
@@ -35,6 +38,12 @@ class BlockTypeContractRegistry
     $model = $blockType instanceof BlockType ? $blockType : null;
     $slug = trim((string) ($model?->slug ?? $blockType ?? ''));
     $catalog = $this->catalogDefinitionFor($slug) ?? $this->fallbackCatalogDefinition($model, $slug);
+    $pluginDefinition = $this->pluginBlockCatalog->enabledDefinitionForCatalogSlug($slug);
+
+    if ($pluginDefinition !== null) {
+      return $this->pluginContract($catalog, $pluginDefinition);
+    }
+
     $documented = $slug !== '' && array_key_exists($slug, $this->documentedContracts()) && $this->catalogDefinitionFor($slug) !== null;
 
     if (! $documented) {
@@ -67,6 +76,39 @@ class BlockTypeContractRegistry
       rendererRootContract: $contract['renderer_root_contract'],
       currentContractStatus: $contract['current_contract_status'],
       knownGaps: $contract['known_gaps'],
+      supportsChildren: $block->canAcceptChildren(),
+      allowedChildTypeSlugs: $block->allowedChildTypeSlugs(),
+      ownsPublicRootHelper: $block->ownsPublicRoot(),
+    );
+  }
+
+  private function pluginContract(array $catalog, PluginBlockTypeDefinition $definition): BlockTypeContract
+  {
+    $fields = $definition->translatedFieldNames();
+    $block = $this->contractBlock($catalog);
+
+    return new BlockTypeContract(
+      slug: (string) ($catalog['slug'] ?? $this->pluginBlockCatalog->catalogSlugForDefinition($definition)),
+      label: (string) ($catalog['name'] ?? $definition->labelText()),
+      category: (string) ($catalog['category'] ?? ''),
+      status: (string) ($catalog['status'] ?? ''),
+      sourceType: (string) ($catalog['source_type'] ?? 'static'),
+      isSystem: (bool) ($catalog['is_system'] ?? false),
+      isContainer: (bool) ($catalog['is_container'] ?? false),
+      documented: true,
+      translationFamily: $fields === [] ? null : BlockTranslationRegistry::PLUGIN_FAMILY,
+      translationFamilyFields: $fields,
+      adminFormSource: $definition->adminViewName(),
+      adminFormFields: [...$fields, 'settings.*'],
+      translatableFields: $fields,
+      sharedSettingsFields: ['settings.*'],
+      storageFields: ['settings', ...array_map(fn (string $field): string => 'plugin_translation.'.$field, $fields)],
+      mediaRelationshipFields: [],
+      childContainerBehavior: [],
+      publicRendererSource: $definition->publicViewName(),
+      rendererRootContract: 'Owned by the enabled plugin public renderer.',
+      currentContractStatus: 'clear',
+      knownGaps: [],
       supportsChildren: $block->canAcceptChildren(),
       allowedChildTypeSlugs: $block->allowedChildTypeSlugs(),
       ownsPublicRootHelper: $block->ownsPublicRoot(),
