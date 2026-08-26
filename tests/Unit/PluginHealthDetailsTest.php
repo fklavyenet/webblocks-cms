@@ -29,6 +29,8 @@ class PluginHealthDetailsTest extends TestCase
     $show = file_get_contents($root.'/resources/views/admin/system/plugins/show.blade.php');
 
     $this->assertStringContainsString('data-wb-target="#{{ $healthModalId }}"', $index);
+    $this->assertStringContainsString('class="wb-icon wb-icon-activity"', $index);
+    $this->assertStringNotContainsString('<button type="button" class="wb-status', $index);
     $this->assertStringContainsString('plugins.partials.health-checks', $index);
     $this->assertStringContainsString('plugins.partials.health-checks', $show);
   }

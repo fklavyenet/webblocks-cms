@@ -102,9 +102,9 @@
                                         @endif
                                     </td>
                                     <td class="wb-plugins-cell-health">
-                                        <button type="button" class="wb-status {{ $healthClass }}" data-wb-toggle="modal" data-wb-target="#{{ $healthModalId }}" title="{{ $systemPluginsIndexText('view_health_details') }}" aria-label="{{ $systemPluginsIndexText('view_health_details_for', ['label' => $plugin['label']]) }}">
+                                        <span class="wb-status {{ $healthClass }}">
                                             {{ $plugin['health']['status'] === 'inactive' ? $systemPluginsIndexText('inactive') : ucfirst($plugin['health']['status']) }}
-                                        </button>
+                                        </span>
                                         @if ($plugin['health']['message'] !== '')
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin['health']['message'] }}</div>
                                         @endif
@@ -114,6 +114,10 @@
                                             <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}" class="wb-action-btn" title="{{ $systemPluginsIndexText('view_details') }}" aria-label="{{ $systemPluginsIndexText('view_details') }}">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
+
+                                            <button type="button" class="wb-action-btn" title="{{ $systemPluginsIndexText('view_health_details') }}" aria-label="{{ $systemPluginsIndexText('view_health_details_for', ['label' => $plugin['label']]) }}" data-wb-toggle="modal" data-wb-target="#{{ $healthModalId }}">
+                                                <i class="wb-icon wb-icon-activity" aria-hidden="true"></i>
+                                            </button>
 
                                             @if ($plugin['can_update_from_catalog'])
                                                 <button type="button" class="wb-action-btn" title="{{ $systemPluginsIndexText('update_from_catalog') }}" aria-label="{{ $systemPluginsIndexText('update_from_catalog') }}" data-wb-toggle="modal" data-wb-target="#{{ $updateModalId }}">

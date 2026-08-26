@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.73.1
+
+- Keep Health badges as non-interactive status indicators and move the health-check modal trigger into the standard Actions column with a dedicated activity icon.
+
 ## 1.73.0
 
 - Extend plugin health reports with backward-compatible individual checks, including a shared status, name and detail contract.
