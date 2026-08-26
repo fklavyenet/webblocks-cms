@@ -50,6 +50,15 @@ class PluginPublicSurfaceTest extends TestCase
     $this->assertCount(1, $this->registryWith($plugin)->menuItems());
   }
 
+  public function test_admin_layout_uses_each_plugin_menu_route_family_for_active_state(): void
+  {
+    $layout = (string) file_get_contents(__DIR__.'/../../resources/views/layouts/admin.blade.php');
+
+    $this->assertStringContainsString("Str::beforeLast(\$pluginRouteName, '.').'.*'", $layout);
+    $this->assertStringNotContainsString("routeNamePrefix().'.*'", $layout);
+    $this->assertStringContainsString("\$activeGroup['item']['label'] ?? \$activeTopItem['label']", $layout);
+  }
+
   public function test_public_route_prefix_and_name_prefix_are_derived_from_the_handle(): void
   {
     $plugin = $this->pluginDefinition();

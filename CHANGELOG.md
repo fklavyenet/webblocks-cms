@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.72.9
+
+- Fix plugin admin breadcrumbs and sidebar active states so each menu route family selects its own item, views without an explicit layout title fall back to that active item, and repeated group/current labels are collapsed.
+
 ## 1.72.8
 
 - Keep every enabled plugin settings surface one click away by adding a standard Settings entry to the plugin's own sidebar group when its definition does not already declare one. Existing explicit entries retain their label, permission, icon and order.

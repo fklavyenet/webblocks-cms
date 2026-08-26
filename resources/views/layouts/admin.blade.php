@@ -138,12 +138,18 @@
                     $groupIndex = array_key_last($sidebarGroups);
                 }
 
+                $pluginRouteName = $item->routeName();
+                $pluginRouteSuffix = Illuminate\Support\Str::afterLast($pluginRouteName, '.');
+                $pluginRouteActive = in_array($pluginRouteSuffix, ['index', 'create', 'store', 'edit', 'update', 'show', 'destroy'], true)
+                    ? [Illuminate\Support\Str::beforeLast($pluginRouteName, '.').'.*']
+                    : [$pluginRouteName];
+
                 $sidebarGroups[$groupIndex]['items'][] = [
                     // Plugin-provided menu label, localized via the plugin's lang catalog (falls back to the literal).
                     'label' => $adminTranslator->plugin($pluginHandle, 'admin.menu.'.$item->key(), $adminLocale, [], $item->labelText()),
                     'route' => $item->routeName(),
                     'url' => route($item->routeName(), [], false),
-                    'active' => [$pluginMenuItem['plugin']->routeNamePrefix().'.*'],
+                    'active' => $pluginRouteActive,
                     'icon' => $item->iconClass(),
                 ];
             }
@@ -155,11 +161,6 @@
             $adminNavbarBreadcrumb = $breadcrumb ?? null;
 
             if (! $adminNavbarBreadcrumb) {
-                $currentTitle = $heading ?? $title ?? $adminText('navigation.dashboard');
-
-                if ($currentTitle === 'Dashboard') {
-                    $currentTitle = $adminText('navigation.dashboard');
-                }
                 $activeTopItem = collect($menuItems)->first(fn (array $item) => $matchesActiveRoute($item));
                 $activeGroup = collect($sidebarGroups)
                     ->map(function (array $group) use ($matchesActiveRoute) {
@@ -169,6 +170,11 @@
                     })
                     ->filter()
                     ->first();
+                $currentTitle = $heading ?? $title ?? $activeGroup['item']['label'] ?? $activeTopItem['label'] ?? $adminText('navigation.dashboard');
+
+                if ($currentTitle === 'Dashboard') {
+                    $currentTitle = $adminText('navigation.dashboard');
+                }
                 $breadcrumbItems = [];
 
                 if (! request()->routeIs('admin.dashboard')) {
@@ -176,7 +182,9 @@
                 }
 
                 if ($activeGroup) {
+                    if ($activeGroup['group']['label'] !== $currentTitle) {
                     $breadcrumbItems[] = ['label' => $activeGroup['group']['label'], 'url' => null];
+                    }
                     $activeItemLabel = $activeGroup['item']['label'] ?? $currentTitle;
 
                     if ($activeItemLabel !== $currentTitle) {
