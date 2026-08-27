@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 @php
     use WebBlocks\Cms\Support\System\SystemSettings;
+    use WebBlocks\Cms\Support\Admin\DocumentationUrlResolver;
     use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
     use WebBlocks\Cms\Support\Translations\CmsTranslator;
     use WebBlocks\Cms\Support\WebBlocks;
@@ -60,7 +61,6 @@
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
                 ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
                 ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
-                ['label' => $adminText('navigation.support'), 'route' => 'admin.support.index', 'active' => ['admin.support.*'], 'icon' => 'wb-icon-message-square'],
             ];
 
             if (! $user?->can('access-system')) {
@@ -78,7 +78,28 @@
 
             $sidebarGroups = [];
 
+            $sidebarGroups[] = [
+                'key' => 'help',
+                'label' => $adminText('navigation.help'),
+                'icon' => 'wb-icon-help-circle',
+                'items' => [
+                    [
+                        'label' => $adminText('navigation.documentation'),
+                        'url' => app(DocumentationUrlResolver::class)->url($adminLocale),
+                        'active' => [],
+                        'external' => true,
+                    ],
+                    ['label' => $adminText('navigation.support'), 'route' => 'admin.support.index', 'active' => ['admin.support.*']],
+                ],
+            ];
+
             if ($user?->can('access-system')) {
+                $sidebarGroups[0]['items'][] = [
+                    'label' => $adminText('navigation.system_information'),
+                    'route' => 'admin.system.information',
+                    'active' => ['admin.system.information'],
+                ];
+
                 $sidebarGroups[] = [
                     'key' => 'system',
                     'label' => $adminText('navigation.system'),
@@ -264,6 +285,7 @@
                                     <a
                                         href="{{ $item['url'] ?? route($item['route']) }}"
                                         class="wb-nav-group-item {{ $matchesActiveRoute($item) ? 'is-active' : '' }}"
+                                        @if ($item['external'] ?? false) target="_blank" rel="noopener noreferrer" @endif
                                         @if ($matchesActiveRoute($item)) aria-current="page" @endif
                                     >
                                         {{ $item['label'] }}
@@ -276,6 +298,11 @@
 
                 <div class="wb-sidebar-footer">
                     <div class="wb-text-sm wb-text-muted wb-text-center">{{ WebBlocks::name() }} v{{ WebBlocks::VERSION }}</div>
+                    <div class="wb-text-sm wb-text-muted wb-text-center">
+                        {!! $adminTranslator->get('admin.navigation.developed_by', $adminLocale, [
+                            'company' => '<a href="https://fklavye.net" target="_blank" rel="noopener noreferrer">fklavye.net</a>',
+                        ]) !!}
+                    </div>
                 </div>
             </aside>
 

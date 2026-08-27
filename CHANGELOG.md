@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.73.5
+
+- Add a localized Help sidebar group with locale-aware links to the six-language CMS documentation site, move Support beneath it, and give system operators a non-sensitive System Information table.
+- Credit fklavye.net in the fixed admin sidebar footer while keeping WebBlocks CMS product identity and version visible.
+
 ## 1.73.4
 
 - Delete a technical staged-update page atomically after successful promotion while retaining the published source page's pre/post-promote safety versions, so API-authored site updates no longer accumulate archived staged pages.

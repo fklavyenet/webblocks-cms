@@ -41,6 +41,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\SupportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemInformationController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
@@ -408,6 +409,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::put('system/cleanup', [MaintenanceCleanupController::class, 'update'])->name('system.cleanup.update');
       Route::post('system/cleanup/{category}', [MaintenanceCleanupController::class, 'run'])->name('system.cleanup.run');
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
+      Route::get('system/information', SystemInformationController::class)->name('system.information');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
       Route::post('system/settings/mail/test', [SystemSettingsController::class, 'sendMailTest'])->name('system.settings.mail.test');
       Route::get('system/api-tokens', [CmsApiTokenController::class, 'index'])->name('system.api-tokens.index');

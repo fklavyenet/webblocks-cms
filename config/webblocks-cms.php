@@ -49,6 +49,7 @@ return [
     'admin' => [
         'load_routes' => env('WEBBLOCKS_CMS_ADMIN_LOAD_ROUTES', true),
         'load_status_route' => env('WEBBLOCKS_CMS_ADMIN_LOAD_STATUS_ROUTE', false),
+        'documentation_url' => env('WEBBLOCKS_CMS_DOCUMENTATION_URL', 'https://cms.webblocksui.com'),
     ],
     'assets' => [
         'install_path' => env('WEBBLOCKS_CMS_PUBLIC_ASSET_PATH', 'public/cms'),

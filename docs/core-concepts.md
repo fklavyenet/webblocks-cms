@@ -69,6 +69,8 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 ## Site Identity
 
 - WebBlocks CMS product identity is fixed in the admin shell and comes from `App\Support\WebBlocks`.
+- The admin sidebar Help group keeps Documentation and Support available to every CMS user. Documentation opens the configured `webblocks-cms.admin.documentation_url` in the selected admin language (`en` uses the root; the other five shipped locales use `/{locale}`), while System Information is limited to users with `access-system` and reports only non-sensitive runtime metadata in a table.
+- The fixed sidebar footer shows the WebBlocks CMS version and credits `fklavye.net` as the developer. Host project identity settings do not replace that product credit.
 - Project Identity is install-level admin context configured in `Admin -> System -> Settings`.
 - Project Identity currently includes `Project Name` and `Project Tagline`.
 - Project Identity is used only for admin topbar context and admin browser titles.
