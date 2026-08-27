@@ -64,7 +64,7 @@ Supported options:
 - `--name=` first super admin display name
 - `--email=` first super admin email address
 - `--password=` first super admin password
-- `--site-name=` default site name
+- `--site-name=` first site name; when omitted, `WEBBLOCKS_CMS_DEFAULT_SITE_NAME` is used if configured, otherwise the normalized `APP_URL` host is used
 - `--site-handle=` default site handle
 - `--repair-partial` rename empty partial CMS tables before fresh-install migrations
 - `--skip-starter-content` publish an empty home page instead of the shipped starter page
@@ -72,6 +72,7 @@ Supported options:
 
 What `webblocks:install` does:
 
+- names the first site after the normalized `APP_URL` host while keeping its internal handle `default`; `www.` is omitted from the name, meaningful subdomains are retained, and local or IP hosts fall back to `Default Site`
 - publishes `config/webblocks-cms.php` when the host app does not already have it
 - removes the untouched fresh Laravel welcome route from `routes/web.php` when it is safe, with a timestamped backup first, so CMS public routes can serve `/`
 - patches `app/Models/User.php` with `WebBlocks\Cms\Auth\Concerns\HasWebBlocksCmsAccess`

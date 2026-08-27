@@ -67,7 +67,9 @@ return [
     ],
     'defaults' => [
         'locale' => env('WEBBLOCKS_CMS_DEFAULT_LOCALE', 'en'),
-        'site_name' => env('WEBBLOCKS_CMS_DEFAULT_SITE_NAME', 'Default Site'),
+        // Leave null to derive a fresh install's first site name from APP_URL.
+        // An explicit value remains authoritative for product-specific installs.
+        'site_name' => env('WEBBLOCKS_CMS_DEFAULT_SITE_NAME'),
         'site_handle' => env('WEBBLOCKS_CMS_DEFAULT_SITE_HANDLE', 'default'),
     ],
     'public' => [

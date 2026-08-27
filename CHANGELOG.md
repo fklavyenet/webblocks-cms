@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.73.3
+
+- Name a fresh installation's first site after its normalized `APP_URL` host instead of the opaque "Default Site", while keeping an explicit `--site-name` or `WEBBLOCKS_CMS_DEFAULT_SITE_NAME` authoritative and retaining the stable `default` handle.
+
 ## 1.73.2
 
 - Present every Contact Message detail card as a consistent WebBlocks UI label/value table, including the visitor Message field beside its message body instead of as a detached heading above it.

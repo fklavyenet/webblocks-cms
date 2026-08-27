@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Install\DefaultHomepageProvisioner;
+use WebBlocks\Cms\Support\Install\InitialSiteNameResolver;
 use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
 use WebBlocks\Cms\Support\Install\LaravelWelcomeRouteCleaner;
@@ -53,6 +54,7 @@ class InstallWebBlocksCmsCommand extends Command
     private readonly DefaultHomepageProvisioner $defaultHomepageProvisioner,
     private readonly EnsuresCmsUserAccess $ensuresCmsUserAccess,
     private readonly InstallState $installState,
+    private readonly InitialSiteNameResolver $initialSiteNameResolver,
     private readonly InstalledVersionStore $installedVersionStore,
     private readonly LaravelSupportTableInstaller $laravelSupportTableInstaller,
     private readonly LaravelWelcomeRouteCleaner $laravelWelcomeRouteCleaner,
@@ -283,14 +285,14 @@ class InstallWebBlocksCmsCommand extends Command
 
   private function ensureDefaultSite(): Site
   {
-    $siteName = trim((string) ($this->option('site-name') ?: config('webblocks-cms.defaults.site_name', 'Default Site')));
+    $siteName = $this->initialSiteNameResolver->resolve($this->option('site-name'));
     $siteHandle = Str::slug((string) ($this->option('site-handle') ?: config('webblocks-cms.defaults.site_handle', 'default')));
 
     $site = Site::query()->updateOrCreate(
       ['handle' => $siteHandle],
       [
-        'name' => $siteName !== '' ? $siteName : 'Default Site',
-        'display_name' => $siteName !== '' ? $siteName : 'Default Site',
+        'name' => $siteName,
+        'display_name' => $siteName,
         'is_primary' => true,
       ],
     );
