@@ -144,6 +144,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/pages/{page}/publish-page-owned-blocks', [InternalPagePublishController::class, 'publishPageOwnedBlocks'])->middleware('internal-api.capability:content.publish')->name('pages.publish-page-owned-blocks');
     Route::post('/pages/{page}/archive', [InternalPagePublishController::class, 'archive'])->middleware('internal-api.capability:content.publish')->name('pages.archive');
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
+    Route::delete('/pages/{page}/staged-update', [InternalContentResourceController::class, 'discardStagedUpdate'])->middleware('internal-api.capability:content.apply')->name('pages.staged-update.discard');
     Route::patch('/pages/{page}/layout', [InternalContentResourceController::class, 'updatePageLayout'])->middleware('internal-api.capability:content.apply')->name('pages.layout.update');
     Route::get('/pages/{page}/render', [InternalPageRenderController::class, 'show'])->middleware('internal-api.capability:content.read')->name('pages.render');
     Route::get('/pages/{page}/versions', [InternalPageRevisionController::class, 'index'])->middleware('internal-api.capability:content.read')->name('pages.versions.index');

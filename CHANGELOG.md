@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.73.4
+
+- Delete a technical staged-update page atomically after successful promotion while retaining the published source page's pre/post-promote safety versions, so API-authored site updates no longer accumulate archived staged pages.
+- Add a narrowly scoped `content.apply` discard action for abandoned active staged drafts and a guarded `webblocks:staged-updates:prune` command for previewing or removing legacy promoted/archived staged pages.
+
 ## 1.73.3
 
 - Name a fresh installation's first site after its normalized `APP_URL` host instead of the opaque "Default Site", while keeping an explicit `--site-name` or `WEBBLOCKS_CMS_DEFAULT_SITE_NAME` authoritative and retaining the stable `default` handle.

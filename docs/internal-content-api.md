@@ -670,7 +670,9 @@ promote_staged_page_update
 
 `replace_staged_page_update` reuses the draft replacement rules against the staged draft page. Use it for every subsequent revision after a staged draft exists. It replaces only page-owned slots and rejects Shared Slot-backed slots.
 
-`promote_staged_page_update` applies staged page-owned slot content back onto the published source page in a transaction. It preserves the source page path, status, layout, Shared Slot assignments, and page settings unless an allowlisted `source_sync` update is supplied. Promoted page-owned blocks are written as `published` so the public page reflects the promoted content immediately. Shared Slot content is never cascaded. Promote requires the normal `content.apply` route capability and the advanced `content.publish` capability.
+`promote_staged_page_update` applies staged page-owned slot content back onto the published source page in a transaction. It preserves the source page path, status, layout, Shared Slot assignments, and page settings unless an allowlisted `source_sync` update is supplied. Promoted page-owned blocks are written as `published` so the public page reflects the promoted content immediately. Shared Slot content is never cascaded. After the source page's pre/post-promote safety versions are captured, the technical staged page is deleted in the same transaction; a failed promotion therefore leaves the draft available for correction. Promote requires the normal `content.apply` route capability and the advanced `content.publish` capability.
+
+Abandoning an active staged draft uses `DELETE /webadmin/api/pages/{staged_page}/staged-update`. This narrow discard endpoint requires `content.apply`, accepts only a draft page with active staged-update metadata, and never changes the published source page or its saved versions. It avoids granting a page-building tool the broad `pages.delete` capability merely to clean up its own technical draft.
 
 If a normalized apply plan passes validation but fails during transactional writes, the API returns normal validation JSON with `ok=false` and an error at `plan.apply`. The detailed exception is recorded in application logs; API responses stay public-safe and do not include stack traces, database internals, tokens, or local paths.
 
@@ -728,7 +730,16 @@ Promote after preview and explicit approval:
 }
 ```
 
-No new schema table is required for this workflow; staged lifecycle metadata uses the existing Page `settings` JSON column. Existing installs already updated enough to run current Internal Content API source-sync workflows have the required storage.
+No new schema table is required for this workflow; active staged lifecycle metadata uses the existing Page `settings` JSON column. Promoted technical pages are not retained because source-page versions provide the recovery trail.
+
+Installations upgrading from a version that archived promoted staged pages can preview and remove those legacy records once:
+
+```bash
+php artisan webblocks:staged-updates:prune --dry-run
+php artisan webblocks:staged-updates:prune
+```
+
+The command selects only archived pages whose staged metadata explicitly says `type=published_page_update` and `state=promoted`. Active drafts and ordinary archived pages are never candidates.
 
 ### Source Sync Metadata
 

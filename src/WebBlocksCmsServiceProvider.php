@@ -27,6 +27,7 @@ use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\MaintenanceCleanupCommand;
 use WebBlocks\Cms\Console\MediaVariantsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
+use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
@@ -754,6 +755,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const PACKAGE_CONSOLE_COMMANDS = [
     PackageStatusCommand::class,
     PublishUpdateCommand::class,
+    PrunePromotedStagedUpdatesCommand::class,
     GenerateUpdateSigningKeyCommand::class,
     ContactMailDiagnoseCommand::class,
     DoctorNativeLocalCommand::class,

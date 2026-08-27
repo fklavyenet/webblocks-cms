@@ -469,6 +469,8 @@ class InternalContentResourceController extends Controller
         'reuse_policy' => 'Only one active draft staged update is kept per published source page. Repeating create_staged_update_for_published_page for the same source returns the existing active staged draft with data.reused_staged_update=true; use replace_staged_page_update for later content revisions.',
         'wrong_endpoint_guard' => 'POST /webadmin/api/pages/{staged_page}/publish is rejected for staged updates. Use content/apply with mode promote_staged_page_update.',
         'promote_action_discovery' => 'GET /webadmin/api/pages/{staged_page} returns _actions.promote with the exact guarded payload.',
+        'successful_promote_cleanup' => 'Successful promotion deletes the technical staged page in the same transaction after source-page safety versions are captured.',
+        'discard_action_discovery' => 'GET /webadmin/api/pages/{staged_page} returns _actions.discard. DELETE /webadmin/api/pages/{staged_page}/staged-update requires content.apply and accepts only an active draft staged update.',
         'example' => [
           'create' => [
             'plan' => [
@@ -609,6 +611,16 @@ class InternalContentResourceController extends Controller
       : [];
 
     return [
+      'discard' => [
+        'method' => 'DELETE',
+        'url' => '/webadmin/api/pages/'.$page->id.'/staged-update',
+        'available' => $this->capabilities->has($token, CmsApiTokenCapabilities::CONTENT_APPLY) && $isActiveDraft,
+        'required_capabilities' => [CmsApiTokenCapabilities::CONTENT_APPLY],
+        'required_state' => [
+          'page_status' => Page::STATUS_DRAFT,
+          'staged_update_state' => 'draft',
+        ],
+      ],
       'promote' => [
         'method' => 'POST',
         'url' => '/webadmin/api/content/apply',
@@ -660,6 +672,49 @@ class InternalContentResourceController extends Controller
       'deleted' => [
         'type' => 'page',
         'id' => $pageId,
+      ],
+      'warnings' => [],
+      'errors' => [],
+    ]);
+  }
+
+  public function discardStagedUpdate(Page $page): JsonResponse
+  {
+    $metadata = is_array($page->settings) ? ($page->settings['staged_update'] ?? null) : null;
+
+    if (
+      $page->status !== Page::STATUS_DRAFT
+      || ! is_array($metadata)
+      || ($metadata['type'] ?? null) !== 'published_page_update'
+      || ($metadata['state'] ?? 'draft') !== 'draft'
+    ) {
+      return response()->json([
+        'ok' => false,
+        'warnings' => [],
+        'errors' => [[
+          'path' => 'page.staged_update',
+          'code' => 'page_not_active_staged_update',
+          'message' => 'Only an active draft staged update can be discarded through this endpoint.',
+        ]],
+      ], 422);
+    }
+
+    $pageId = $page->id;
+    $sourcePageId = $metadata['source_page_id'] ?? null;
+
+    $this->pageDeleter->delete($page);
+
+    Log::info('Internal Content API staged update discarded.', [
+      'staged_page_id' => $pageId,
+      'source_page_id' => $sourcePageId,
+    ]);
+
+    return response()->json([
+      'ok' => true,
+      'discarded' => [
+        'type' => 'staged_page_update',
+        'id' => $pageId,
+        'source_page_id' => $sourcePageId,
       ],
       'warnings' => [],
       'errors' => [],

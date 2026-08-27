@@ -450,8 +450,6 @@ class InternalContentPlanService
           'published_at' => $sourcePage->published_at ?? now(),
         ])->save();
 
-        $this->markStagedUpdatePromoted($stagedPage, $sourcePage);
-
         $sourcePage = $sourcePage->fresh([
           'site.locales',
           'translations.locale',
@@ -473,7 +471,11 @@ class InternalContentPlanService
           source: 'internal-content-api',
         );
 
-        $writes[] = ['type' => 'staged_page_update_promote', 'id' => $stagedPage->id];
+        $stagedPageId = $stagedPage->id;
+        $stagedPage->delete();
+
+        $writes[] = ['type' => 'staged_page_update_promote', 'id' => $stagedPageId];
+        $writes[] = ['type' => 'deleted_staged_page', 'id' => $stagedPageId];
         $writes[] = ['type' => 'page', 'id' => $sourcePage->id];
         $writes[] = ['type' => 'page_revision', 'id' => $revision->id];
         $writes[] = ['type' => 'deleted_block', 'count' => $deletedCount];
@@ -486,7 +488,12 @@ class InternalContentPlanService
             ->all(),
         ];
         $data['page'] = $this->presenter->page($sourcePage, true);
-        $data['staged_page'] = $this->presenter->page($stagedPage->fresh(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot']), false);
+        $data['staged_update'] = [
+          'id' => $stagedPageId,
+          'state' => 'promoted',
+          'deleted' => true,
+          'promoted_to_page_id' => $sourcePage->id,
+        ];
 
         return ['writes' => $writes, 'data' => $data];
       }
@@ -919,21 +926,6 @@ class InternalContentPlanService
         'success_message' => $translation->success_message,
       ]);
     }
-  }
-
-  private function markStagedUpdatePromoted(Page $stagedPage, Page $sourcePage): void
-  {
-    $settings = is_array($stagedPage->settings) ? $stagedPage->settings : [];
-    $metadata = is_array($settings['staged_update'] ?? null) ? $settings['staged_update'] : [];
-    $metadata['state'] = 'promoted';
-    $metadata['promoted_at'] = now()->toIso8601String();
-    $metadata['promoted_to_page_id'] = $sourcePage->id;
-    $settings['staged_update'] = $metadata;
-
-    $stagedPage->forceFill([
-      'settings' => $settings,
-      'status' => Page::STATUS_ARCHIVED,
-    ])->save();
   }
 
   private function normalize(array $payload): InternalContentPlanResult
