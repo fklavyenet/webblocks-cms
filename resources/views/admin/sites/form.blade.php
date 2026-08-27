@@ -318,14 +318,6 @@
               ])
             </div>
 
-            <div class="wb-tabs-panel {{ $siteTab === 'assets' ? 'is-active' : '' }}" id="site-settings-assets-panel">
-              @include('webblocks-cms::admin.sites.partials.assets-tab', [
-                'site' => $site,
-                'canManageSiteSettings' => $canManageSiteSettings,
-                'siteAssets' => $siteAssets ?? collect(),
-              ])
-            </div>
-
             <div class="wb-tabs-panel {{ $siteTab === 'theme' ? 'is-active' : '' }}" id="site-settings-theme-panel">
               <div class="wb-text-sm wb-text-muted wb-mb-4">{{ $adminText('appearance_help') }}</div>
 

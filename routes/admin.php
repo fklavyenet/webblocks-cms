@@ -279,6 +279,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::post('/pages/{page}/assets/{type}', [PageAssetController::class, 'store'])->name('pages.assets.store');
     Route::put('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'update'])->name('pages.assets.update');
     Route::delete('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'destroy'])->name('pages.assets.destroy');
+    Route::get('/assets', [SiteAssetController::class, 'index'])->name('site-assets.index');
     Route::put('/sites/{site}/assets/{type}', [SiteAssetController::class, 'update'])->name('sites.assets.update');
     Route::get('/pages/{page}/duplicate', [PageDuplicateController::class, 'create'])->name('pages.duplicate.create');
     Route::post('/pages/{page}/duplicate', [PageDuplicateController::class, 'store'])->name('pages.duplicate.store');

@@ -17,7 +17,6 @@ use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
-use WebBlocks\Cms\Support\Sites\SiteAssetStore;
 use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use WebBlocks\Cms\Support\Sites\SiteDeleteService;
@@ -31,7 +30,6 @@ class SiteController extends Controller
     private readonly SiteCloneService $siteCloneService,
     private readonly SiteDeleteService $siteDeleteService,
     private readonly AdminAuthorization $authorization,
-    private readonly SiteAssetStore $siteAssetStore,
     private readonly SitePublicDirectoryManager $sitePublicDirectories,
     private readonly SystemSettings $systemSettings,
   ) {}
@@ -172,9 +170,6 @@ class SiteController extends Controller
         'selectedVariable' => $selectedVariable,
         'closeUrl' => route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']),
       ],
-      'siteAssets' => collect(SiteAssetStore::TYPES)
-        ->map(fn (string $type) => $this->siteAssetStore->read($site, $type))
-        ->values(),
     ]);
   }
 

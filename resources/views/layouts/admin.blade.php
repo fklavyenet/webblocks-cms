@@ -59,6 +59,7 @@
                 ['label' => $adminText('navigation.shared_slots'), 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-layers'],
                 ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
+                ['label' => $adminText('navigation.assets'), 'route' => 'admin.site-assets.index', 'active' => ['admin.site-assets.*'], 'icon' => 'wb-icon-code'],
                 ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
                 ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
             ];
@@ -78,7 +79,7 @@
 
             $sidebarGroups = [];
 
-            $sidebarGroups[] = [
+            $helpSidebarGroup = [
                 'key' => 'help',
                 'label' => $adminText('navigation.help'),
                 'icon' => 'wb-icon-help-circle',
@@ -94,7 +95,7 @@
             ];
 
             if ($user?->can('access-system')) {
-                $sidebarGroups[0]['items'][] = [
+                $helpSidebarGroup['items'][] = [
                     'label' => $adminText('navigation.system_information'),
                     'route' => 'admin.system.information',
                     'active' => ['admin.system.information'],
@@ -133,6 +134,8 @@
                     ],
                 ];
             }
+
+            $sidebarGroups[] = $helpSidebarGroup;
 
             foreach (app(\WebBlocks\Cms\Support\Plugins\PluginRegistry::class)->menuItems($user) as $pluginMenuItem) {
                 $item = $pluginMenuItem['item'];

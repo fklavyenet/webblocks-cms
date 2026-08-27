@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.73.6
+
+- Move site CSS and JavaScript Assets out of the crowded Site Settings tab strip into a dedicated, site-selectable sidebar destination immediately after Media while preserving site-scoped visibility, mutation permissions, checksum guards, and revision snapshots.
+- Place the Help sidebar group after Maintenance for system operators while retaining Documentation, Support, and System Information together.
+
 ## 1.73.5
 
 - Add a localized Help sidebar group with locale-aware links to the six-language CMS documentation site, move Support beneath it, and give system operators a non-sensitive System Information table.

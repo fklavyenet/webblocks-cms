@@ -19,7 +19,6 @@ class SiteAssetRequest extends FormRequest
       'contents' => (string) $this->input('contents', ''),
       'expected_checksum' => $this->filled('expected_checksum') ? (string) $this->input('expected_checksum') : null,
       '_site_asset_type' => $this->assetType(),
-      '_site_tab' => 'assets',
     ]);
   }
 
@@ -29,7 +28,6 @@ class SiteAssetRequest extends FormRequest
       'contents' => ['nullable', 'string', 'max:300000'],
       'expected_checksum' => ['nullable', 'string', 'size:64'],
       '_site_asset_type' => ['required', 'string', Rule::in(SiteAssetStore::TYPES)],
-      '_site_tab' => ['nullable', 'string', Rule::in(['assets'])],
     ];
   }
 
@@ -53,7 +51,7 @@ class SiteAssetRequest extends FormRequest
     $site = $this->route('site');
 
     if ($site) {
-      return route('admin.sites.edit', ['site' => $site, 'tab' => 'assets']);
+      return route('admin.site-assets.index', ['site' => $site]);
     }
 
     return parent::getRedirectUrl();

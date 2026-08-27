@@ -40,7 +40,6 @@ class Site extends CmsModel
     'head',
     'contact',
     'variables',
-    'assets',
     'theme',
   ];
 
