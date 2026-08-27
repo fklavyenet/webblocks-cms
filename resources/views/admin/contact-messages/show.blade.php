@@ -36,24 +36,16 @@
 
     <div class="wb-card">
         <div class="wb-card-header"><strong>{{ $adminText('visitor_message') }}</strong></div>
-        <div class="wb-card-body wb-stack wb-gap-4">
-            <dl class="wb-detail-list wb-contact-message-meta">
-                <div class="wb-detail-row">
-                    <dt class="wb-detail-label">{{ $adminText('name') }}</dt>
-                    <dd class="wb-detail-value">{{ $message->name }}</dd>
-                </div>
-                <div class="wb-detail-row">
-                    <dt class="wb-detail-label">{{ $adminText('email') }}</dt>
-                    <dd class="wb-detail-value"><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></dd>
-                </div>
-                <div class="wb-detail-row">
-                    <dt class="wb-detail-label">{{ $adminText('subject') }}</dt>
-                    <dd class="wb-detail-value">{{ $message->subject ?? $adminText('empty_value') }}</dd>
-                </div>
-            </dl>
-            <div class="wb-stack wb-gap-2">
-                <strong>{{ $adminText('message') }}</strong>
-                <div class="wb-contact-message-body">{{ $message->message }}</div>
+        <div class="wb-card-body">
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-striped">
+                    <tbody>
+                        <tr><th scope="row">{{ $adminText('name') }}</th><td>{{ $message->name }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('email') }}</th><td><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td></tr>
+                        <tr><th scope="row">{{ $adminText('subject') }}</th><td>{{ $message->subject ?? $adminText('empty_value') }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('message') }}</th><td><div class="wb-contact-message-body">{{ $message->message }}</div></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -61,24 +53,36 @@
     <div class="wb-grid wb-grid-2">
         <div class="wb-card">
             <div class="wb-card-header"><strong>{{ $adminText('submission_details') }}</strong></div>
-            <div class="wb-card-body wb-stack wb-gap-2">
-                <div><strong>{{ $adminText('page_label') }}</strong> {{ $message->page?->title ?? '-' }}</div>
-                <div><strong>{{ $adminText('path_label') }}</strong> <code>{{ $message->sourcePath() }}</code></div>
-                <div><strong>{{ $adminText('source_url_label') }}</strong> @if ($message->source_url)<a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $adminText('open_source') }}</a>@else - @endif</div>
-                <div><strong>{{ $adminText('referrer_label') }}</strong> {{ $message->referer ?? '-' }}</div>
-                <div><strong>{{ $adminText('received_at_label') }}</strong> {{ $message->created_at?->format('Y-m-d H:i:s') }}</div>
-                <div><strong>{{ $adminText('block_slot_label') }}</strong> {{ $message->block?->typeName() ?? '-' }} / {{ $message->block?->slotType?->name ?? $message->block?->slotName() ?? '-' }}</div>
+            <div class="wb-card-body">
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-striped">
+                        <tbody>
+                            <tr><th scope="row">{{ $adminText('page_label') }}</th><td>{{ $message->page?->title ?? '-' }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('path_label') }}</th><td><code>{{ $message->sourcePath() }}</code></td></tr>
+                            <tr><th scope="row">{{ $adminText('source_url_label') }}</th><td>@if ($message->source_url)<a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $adminText('open_source') }}</a>@else - @endif</td></tr>
+                            <tr><th scope="row">{{ $adminText('referrer_label') }}</th><td>{{ $message->referer ?? '-' }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('received_at_label') }}</th><td>{{ $message->created_at?->format('Y-m-d H:i:s') }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('block_slot_label') }}</th><td>{{ $message->block?->typeName() ?? '-' }} / {{ $message->block?->slotType?->name ?? $message->block?->slotName() ?? '-' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>{{ $adminText('email_notification') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2">
-                <div><strong>{{ $adminText('status_label') }}</strong> <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></div>
-                <div><strong>{{ $adminText('recipient_label') }}</strong> {{ $message->notification_recipient ?? '-' }}</div>
-                <div><strong>{{ $adminText('recipient_source_label') }}</strong> {{ $message->notificationSourceLabel() }}</div>
-                <div><strong>{{ $adminText('attempted_sent_at_label') }}</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                <div><strong>{{ $adminText('failure_or_skipped_reason_label') }}</strong> {{ $message->notificationDetail() ?? '-' }}</div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-striped">
+                        <tbody>
+                            <tr><th scope="row">{{ $adminText('status_label') }}</th><td><span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></td></tr>
+                            <tr><th scope="row">{{ $adminText('recipient_label') }}</th><td>{{ $message->notification_recipient ?? '-' }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('recipient_source_label') }}</th><td>{{ $message->notificationSourceLabel() }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('attempted_sent_at_label') }}</th><td>{{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('failure_or_skipped_reason_label') }}</th><td>{{ $message->notificationDetail() ?? '-' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 @if ($message->hasLegacyNotificationState())
                     <div class="wb-alert wb-alert-info">{{ $adminText('legacy_notification_state') }}</div>
                 @endif
@@ -100,14 +104,14 @@
     <div class="wb-card">
         <div class="wb-card-header"><strong>{{ $adminText('message_classification') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-2">
-            <div><strong>{{ $adminText('editorial_status_label') }}</strong> <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></div>
-            <div><strong>{{ $adminText('spam_score_label') }}</strong> {{ $message->spam_score ?? 0 }}</div>
-            <div><strong>{{ $adminText('spam_signals_label') }}</strong>
-                @if ($message->spamReasonLabels() === [])
-                    -
-                @else
-                    {{ implode(', ', $message->spamReasonLabels()) }}
-                @endif
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-striped">
+                    <tbody>
+                        <tr><th scope="row">{{ $adminText('editorial_status_label') }}</th><td><span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></td></tr>
+                        <tr><th scope="row">{{ $adminText('spam_score_label') }}</th><td>{{ $message->spam_score ?? 0 }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('spam_signals_label') }}</th><td>@if ($message->spamReasonLabels() === []) - @else {{ implode(', ', $message->spamReasonLabels()) }} @endif</td></tr>
+                    </tbody>
+                </table>
             </div>
             <div class="wb-text-sm wb-text-muted">{{ $adminText('classification_help') }}</div>
         </div>
@@ -117,11 +121,15 @@
         <div class="wb-card-header"><strong>{{ $adminText('technical_details') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-2">
             <div class="wb-text-sm wb-text-muted">{{ $adminText('technical_details_help') }}</div>
-            <div class="wb-grid wb-grid-2">
-                <div><strong>{{ $adminText('ip_address_label') }}</strong> {{ $message->ip_address ?? '-' }}</div>
-                <div><strong>{{ $adminText('user_agent_label') }}</strong> {{ $message->user_agent ?? '-' }}</div>
-                <div><strong>{{ $adminText('block_id_label') }}</strong> {{ $message->block_id ? '#'.$message->block_id : '-' }}</div>
-                <div><strong>{{ $adminText('page_id_label') }}</strong> {{ $message->page_id ? '#'.$message->page_id : '-' }}</div>
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-striped">
+                    <tbody>
+                        <tr><th scope="row">{{ $adminText('ip_address_label') }}</th><td>{{ $message->ip_address ?? '-' }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('user_agent_label') }}</th><td>{{ $message->user_agent ?? '-' }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('block_id_label') }}</th><td>{{ $message->block_id ? '#'.$message->block_id : '-' }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('page_id_label') }}</th><td>{{ $message->page_id ? '#'.$message->page_id : '-' }}</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

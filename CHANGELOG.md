@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.73.2
+
+- Present every Contact Message detail card as a consistent WebBlocks UI label/value table, including the visitor Message field beside its message body instead of as a detached heading above it.
+
 ## 1.73.1
 
 - Keep Health badges as non-interactive status indicators and move the health-check modal trigger into the standard Actions column with a dedicated activity icon.
