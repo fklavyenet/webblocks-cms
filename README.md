@@ -63,7 +63,7 @@ Laravel discovers `WebBlocks\Cms\WebBlocksCmsServiceProvider` through the packag
 - prepares storage and seeds the core CMS catalog; and
 - creates the first site and super administrator.
 
-Review [Installation](docs/installation.md) before using repair options or integrating with an application that already has data. For route and user-identity boundaries in an existing product, see [Laravel coexistence](docs/coexistence.md).
+Review [Hosting Requirements](docs/hosting-requirements.md), the qualification method in [Hosting Capacity Validation](docs/hosting-capacity-validation.md), the explicitly provisional [Hosting Capacity Results](docs/hosting-capacity-results.md), and the [Hosting Readiness Checklist](docs/hosting-readiness-checklist.md) before provisioning production hosting. Current measurements are workload evidence, not a production-certified universal minimum. Review [Installation](docs/installation.md) before using repair options or integrating with an application that already has data. For route and user-identity boundaries in an existing product, see [Laravel coexistence](docs/coexistence.md).
 
 ## Host integration
 
@@ -107,7 +107,7 @@ Existing full-repository clones must preserve host-owned `.env`, database, stora
 
 ## Documentation
 
-- Start with [Installation](docs/installation.md), [Getting Started](docs/getting-started.md), and [Core Concepts](docs/core-concepts.md).
+- Start with [Hosting Requirements](docs/hosting-requirements.md), [Hosting Capacity Validation](docs/hosting-capacity-validation.md), the provisional [Hosting Capacity Results](docs/hosting-capacity-results.md), [Installation](docs/installation.md), [Getting Started](docs/getting-started.md), and [Core Concepts](docs/core-concepts.md).
 - Build content with [Page Layouts](docs/page-layouts.md), [Block Type Contracts](docs/block-type-contracts.md), [Editorial Workflow](docs/editorial-workflow.md), and [Revisions](docs/revisions.md).
 - Operate sites with [Multisite](docs/multisite.md), [Localization](docs/localization.md), [Users and Permissions](docs/users-and-permissions.md), [Media Image Variants](docs/media-image-variants.md), and [Operations](docs/operations.md).
 - Integrate trusted tools through the [Internal Content API](docs/internal-content-api.md), [API Discovery](docs/api-discovery.md), and [AI Page Building Guide](docs/ai-page-building-guide.md), and check [API and Panel Alignment](docs/api-panel-alignment.md) for what the API deliberately does not cover.

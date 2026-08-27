@@ -14,6 +14,8 @@ cms_source_id: webblocks-cms:docs/installation.md
 
 WebBlocks CMS supports a package-consumer install flow for fresh Laravel applications, a browser-based install wizard for fresh maintenance-repo installs, and a manual Laravel CLI install path.
 
+Before provisioning a production server, review [Hosting Requirements](hosting-requirements.md), qualify the intended workload using [Hosting Capacity Validation](hosting-capacity-validation.md), compare it with the explicitly provisional [Hosting Capacity Results](hosting-capacity-results.md), and complete the [Hosting Readiness Checklist](hosting-readiness-checklist.md). Those pages separate the base install contract from optional image, mail, scheduler, backup, and package-native update dependencies; the current partial measurements are not a production certification.
+
 For a fresh install, start by getting the WebBlocks CMS source code onto your machine. Run Composer, create `.env`, use Artisan, and open the browser install wizard only after the source code exists locally.
 
 An install is considered complete when the application has a working CMS baseline:
