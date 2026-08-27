@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
@@ -99,6 +100,32 @@ class ButtonLinkLocalizedUrlTest extends TestCase
     $this->assertSame('/target-g', $block->buttonLinkUrl());
   }
 
+  public static function editorialLinkBlockProvider(): array
+  {
+    return [
+      'button' => ['button'],
+      'card' => ['card'],
+      'column item' => ['column_item'],
+      'link list item' => ['link-list-item'],
+      'stat card' => ['stat-card'],
+    ];
+  }
+
+  #[Test]
+  #[DataProvider('editorialLinkBlockProvider')]
+  public function editorial_link_blocks_follow_the_render_locale(string $type): void
+  {
+    $suffix = 'family-'.str_replace('_', '-', $type);
+    $site = $this->seedSite($suffix);
+    $block = $this->makeEditorialLinkBlock($site, $type, '/target-'.$suffix);
+    $block->setAttribute('render_locale_code', 'tr');
+    $block->setRelation('renderPage', $block->page->setRelation('site', $site));
+
+    $html = view('webblocks-cms::pages.partials.blocks.'.$type, ['block' => $block])->render();
+
+    $this->assertStringContainsString('href="/tr/hedef-'.$suffix.'"', $html);
+  }
+
   private function seedSite(string $suffix, bool $withTurkishTranslation = true): Site
   {
     $site = Site::query()->create(['name' => 'Test', 'handle' => 'test-'.$suffix, 'is_primary' => true]);
@@ -151,5 +178,24 @@ class ButtonLinkLocalizedUrlTest extends TestCase
     $block->setRelation('renderPage', $block->page->setRelation('site', $site));
 
     return view('webblocks-cms::pages.partials.blocks.button_link', ['block' => $block])->render();
+  }
+
+  private function makeEditorialLinkBlock(Site $site, string $type, string $url): Block
+  {
+    $hostPage = Page::query()->create(['site_id' => $site->id, 'slug' => 'host-'.$type.'-'.$site->handle, 'status' => Page::STATUS_PUBLISHED]);
+    $mainSlotTypeId = SlotType::query()->firstOrCreate(['slug' => 'main'], ['name' => 'Main', 'status' => 'published', 'sort_order' => 0])->id;
+
+    return Block::create([
+      'page_id' => $hostPage->id,
+      'type' => $type,
+      'slot_type_id' => $mainSlotTypeId,
+      'sort_order' => 0,
+      'title' => 'Go',
+      'content' => 'Description',
+      'meta' => $type === 'card' ? 'Go' : null,
+      'url' => $type === 'card' ? null : $url,
+      'settings' => $type === 'card' ? json_encode(['url' => $url]) : null,
+      'status' => 'published',
+    ]);
   }
 }

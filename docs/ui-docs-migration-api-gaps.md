@@ -218,15 +218,11 @@ maintenance.
 
 ## Minor, already-known defects (unrelated to the migration, cheap to fix)
 
-**`link-list-item` internal URLs are not locale-aware.** 1.52.1 gave
-`button_link` locale-following internal URLs via
-`PageRouteResolver::localizedPublicUrl()`, called from
-`resources/views/pages/partials/blocks/button_link.blade.php`. The same call is
-missing from `link-list-item.blade.php`, so footer link lists on a translated
-page still point at default-locale paths and drop the visitor out of their
-locale. We are currently patching this client-side in each site's `site.js`,
-which we would like to delete. Reproduce: `https://cms.webblocksui.com/tr`,
-footer link list.
+**Resolved in 1.73.7: `link-list-item` and the other operator-authored content
+link blocks are locale-aware.** They now share the translated-page resolver
+previously used only by `button_link`, so internal links follow the public
+render locale without changing the stored admin/API value. Per-site
+JavaScript path tables are no longer required for these blocks.
 
 **The navbar's "hide the current page's own link" rule does not recognise a
 non-default-locale home.** A page-type item pointing at the home page is

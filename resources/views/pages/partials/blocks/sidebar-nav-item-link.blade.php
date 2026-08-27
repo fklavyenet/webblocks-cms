@@ -1,5 +1,5 @@
 @php
-    $href = $item->sidebarLinkUrl();
+    $href = $item->localizedPublicUrl($item->sidebarLinkUrl());
     $label = $item->sidebarNavResolvedLabel();
     $icon = $item->sidebarNavItemIcon();
     $target = $item->sidebarLinkTarget() === '_blank';

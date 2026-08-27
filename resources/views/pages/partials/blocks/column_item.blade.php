@@ -18,6 +18,7 @@
     $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();
     $badgeClass = $iconPresenter->badgeClass($block->publicBadgeTone());
+    $itemUrl = $block->localizedPublicUrl($block->url);
 @endphp
 
 @php
@@ -77,8 +78,8 @@
     @default
         <div class="wb-card">
             <div class="wb-card-body wb-stack wb-gap-2">
-                @if ($block->url)
-                    <a href="{{ $block->url }}" class="wb-no-decoration">
+                @if ($itemUrl)
+                    <a href="{{ $itemUrl }}" class="wb-no-decoration">
                         <div class="wb-icon-card wb-items-start">
                             {!! $renderIcon() !!}
 

@@ -1,5 +1,5 @@
 @php
-    $href = $block->linkListItemUrl();
+    $href = $block->localizedPublicUrl($block->linkListItemUrl());
     $title = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title');
     $meta = $block->stringValueOrNull($block->subtitle) ?? $block->translatedTextFieldValue('subtitle');
     $description = $block->stringValueOrNull($block->content) ?? $block->translatedTextFieldValue('content');

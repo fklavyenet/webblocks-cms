@@ -20,6 +20,7 @@ use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PageListItem;
 use WebBlocks\Cms\Support\Pages\PageListQuery;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
+use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
@@ -629,6 +630,22 @@ class Block extends CmsModel
     }
 
     return str_starts_with($url, '//') ? null : $url;
+  }
+
+  /**
+   * Resolve an editorial URL for this block's public render locale without
+   * changing the stored value used by admin forms and API responses.
+   */
+  public function localizedPublicUrl(mixed $value): ?string
+  {
+    $url = self::safePublicUrl($value);
+
+    if ($url === null) {
+      return null;
+    }
+
+    return app(PageRouteResolver::class)
+      ->localizedPublicUrl($url, $this->renderLocaleCode(), $this->renderSite());
   }
 
   public function canAcceptChildType(?string $childTypeSlug): bool

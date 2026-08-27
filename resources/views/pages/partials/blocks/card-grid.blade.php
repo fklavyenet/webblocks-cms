@@ -33,6 +33,7 @@
         @php
           $asset = $assets->get((int) ($item['asset_id'] ?? 0));
           $assetUrl = $asset?->url();
+          $itemUrl = $block->localizedPublicUrl($item['url'] ?? null);
         @endphp
 
         <div class="wb-card">
@@ -49,8 +50,8 @@
               <p class="wb-m-0">{{ $item['content'] }}</p>
             @endif
 
-            @if (! empty($item['url']) && ! empty($item['url_label']))
-              <a href="{{ $item['url'] }}">{{ $item['url_label'] }}</a>
+            @if ($itemUrl && ! empty($item['url_label']))
+              <a href="{{ $itemUrl }}">{{ $item['url_label'] }}</a>
             @endif
           </div>
         </div>

@@ -1,7 +1,7 @@
 @php
     $site = $block->renderSite();
     $routeResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
-    $href = $block->sidebarLinkUrl()
+    $href = $block->localizedPublicUrl($block->sidebarLinkUrl())
         ?? $routeResolver->homePath($block->renderLocaleCode(), $site)
         ?? '/';
     $target = $block->sidebarLinkTarget() === '_blank';

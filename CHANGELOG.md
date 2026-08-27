@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.73.7
+
+- Make operator-authored internal links follow the active public locale across Button, Card, Card Grid, Column Item, Contact Info, Link List Item, Showcase List, Stat Card, Navbar Brand, Sidebar Brand, and Sidebar Nav Item blocks, using the same translated-page resolver already used by Button Link while preserving external URLs, unresolved paths, query strings, fragments, and stored admin/API values.
+- Remove the need for per-site JavaScript path tables on multilingual content cards: a Turkish render of a card stored with `/products` now links directly to that page's translated path such as `/tr/urunler` in the server-rendered HTML.
+
 ## 1.73.6
 
 - Move site CSS and JavaScript Assets out of the crowded Site Settings tab strip into a dedicated, site-selectable sidebar destination immediately after Media while preserving site-scoped visibility, mutation permissions, checksum guards, and revision snapshots.

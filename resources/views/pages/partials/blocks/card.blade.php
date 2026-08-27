@@ -11,7 +11,7 @@
     };
     $cardClass = collect(['wb-card', $cardVariantClass, $block->publicBackgroundMediaClass()])->filter()->implode(' ');
     $backgroundStyle = $block->publicBackgroundMediaStyle();
-    $cardUrl = $block->cardUrl();
+    $cardUrl = $block->localizedPublicUrl($block->cardUrl());
     $cardTarget = $block->cardTarget();
 @endphp
 
@@ -35,7 +35,7 @@
         $title = trim((string) ($block->title ?? ''));
         $description = trim((string) ($block->content ?? ''));
         $actionLabel = trim((string) ($block->meta ?? ''));
-        $url = $block->cardUrl();
+        $url = $block->localizedPublicUrl($block->cardUrl());
         $target = $block->cardTarget();
         $hasLegacyAction = $url !== null && $actionLabel !== '';
         $renderedDescription = app(\WebBlocks\Cms\Support\Formatting\InlineRichTextRenderer::class)->render($description);

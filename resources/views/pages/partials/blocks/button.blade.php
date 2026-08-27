@@ -1,7 +1,7 @@
 @php
     // Keep attachment compatibility for existing button blocks until they are migrated to dedicated download blocks.
     $attachmentUrl = $block->attachmentAsset()?->url();
-    $buttonUrl = $attachmentUrl ?: $block->url;
+    $buttonUrl = $attachmentUrl ?: $block->localizedPublicUrl($block->url);
     $variantClassMap = [
         'primary' => 'wb-btn wb-btn-primary',
         'secondary' => 'wb-btn wb-btn-secondary',

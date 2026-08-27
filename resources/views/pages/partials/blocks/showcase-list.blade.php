@@ -1,6 +1,4 @@
 @php
-    use WebBlocks\Cms\Models\Block;
-
     $settings = is_array($block->settings)
         ? $block->settings
         : (json_decode((string) $block->settings, true) ?: []);
@@ -97,7 +95,7 @@
                 @endif
 
                 @php
-                    $itemUrl = Block::safePublicUrl($item['url'] ?? null);
+                    $itemUrl = $block->localizedPublicUrl($item['url'] ?? null);
                 @endphp
 
                 @if ($itemUrl)

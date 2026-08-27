@@ -2,7 +2,7 @@
 $label = $block->subtitle;
 $value = $block->title;
 $detail = $block->content;
-$url = $block->stringValueOrNull($block->url);
+$url = $block->localizedPublicUrl($block->url);
 
 $hasValue = $value !== null && trim((string) $value) !== '';
 

@@ -1,7 +1,7 @@
 @php
     $site = $block->renderSite();
     $routeResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
-    $href = $block->navbarBrandUrl()
+    $href = $block->localizedPublicUrl($block->navbarBrandUrl())
         ?? $routeResolver->homePath($block->renderLocaleCode(), $site)
         ?? '/';
     $target = $block->navbarBrandTarget() === '_blank';

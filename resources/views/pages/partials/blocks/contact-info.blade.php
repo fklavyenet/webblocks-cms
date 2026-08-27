@@ -1,6 +1,4 @@
 @php
-    use WebBlocks\Cms\Models\Block;
-
     $settings = is_array($block->settings)
         ? $block->settings
         : (json_decode((string) $block->settings, true) ?: []);
@@ -20,7 +18,7 @@
 
         @foreach ($items as $item)
             @php
-                $itemUrl = Block::safePublicUrl($item['url'] ?? null);
+                $itemUrl = $block->localizedPublicUrl($item['url'] ?? null);
             @endphp
 
             <div class="wb-stack wb-gap-1 wb-public-contact-meta">
