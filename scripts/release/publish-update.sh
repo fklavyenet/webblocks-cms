@@ -6,11 +6,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PHP_BIN="${PHP_BIN:-php}"
 
 # Publisher credentials live outside the package. A .env at the repository root
-# is a package boundary violation, so the default is a maintainer-local sibling
-# directory; WEBBLOCKS_RELEASE_ENV_FILE overrides it, and a root .env still wins
-# if one is present so existing checkouts keep working. This file never ships:
-# scripts/ is export-ignore.
-ENV_FILE="${WEBBLOCKS_RELEASE_ENV_FILE:-${ROOT_DIR}/../webblocks-cms-release-config/.env}"
+# is a package boundary violation, so the default is a clearly named file in the
+# project-family root; WEBBLOCKS_RELEASE_ENV_FILE overrides it, and a root .env
+# still wins if one is present so existing checkouts keep working. This file
+# never ships: scripts/ is export-ignore.
+ENV_FILE="${WEBBLOCKS_RELEASE_ENV_FILE:-${ROOT_DIR}/../publish.env}"
 
 if [ -f "${ROOT_DIR}/.env" ]; then
   ENV_FILE="${ROOT_DIR}/.env"

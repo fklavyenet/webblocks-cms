@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.73.8
+
+- Present Dashboard Overview and Visitor Summary values as ordered WebBlocks UI tables, preserving label, value, and supporting-detail hierarchy without metric-card styling.
+- Resolve Publisher credentials from the project-family `publish.env` file by default, keeping release secrets outside the package checkout while retaining the explicit `WEBBLOCKS_RELEASE_ENV_FILE` override.
+
 ## 1.73.7
 
 - Make operator-authored internal links follow the active public locale across Button, Card, Card Grid, Column Item, Contact Info, Link List Item, Showcase List, Stat Card, Navbar Brand, Sidebar Brand, and Sidebar Nav Item blocks, using the same translated-page resolver already used by Button Link while preserving external URLs, unresolved paths, query strings, fragments, and stored admin/API values.

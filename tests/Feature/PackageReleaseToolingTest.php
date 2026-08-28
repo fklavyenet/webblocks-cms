@@ -23,6 +23,7 @@ class PackageReleaseToolingTest extends TestCase
     $this->assertStringContainsString('HEAD:src/Support/WebBlocks.php', $prepare);
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD', $prepare);
     $this->assertStringContainsString('vendor/bin/testbench webblocks:publish-update', $publish);
+    $this->assertStringContainsString('${ROOT_DIR}/../publish.env', $publish);
     $this->assertStringNotContainsString('packages/webblocks-cms', $surface);
     $this->assertStringNotContainsString(' artisan ', $surface);
     $this->assertStringNotContainsString('legacy-harness', $surface);

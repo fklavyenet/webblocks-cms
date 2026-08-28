@@ -61,36 +61,36 @@
                 </div>
 
                 <div class="wb-card-body">
-                    <div class="wb-grid wb-grid-2">
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                            <span>{{ $adminText('dashboard.pages') }}</span>
-                            <span class="wb-status-pill wb-status-info">{{ $stats['pages'] }}</span>
-                        </div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.published_drafts', ['published' => $stats['publishedPages'], 'drafts' => $stats['draftPages']]) }}</div>
-
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                            <span>{{ $adminText('dashboard.blocks') }}</span>
-                            <span class="wb-status-pill wb-status-info">{{ $stats['blocks'] }}</span>
-                        </div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.blocks_help') }}</div>
-
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                            <span>{{ $adminText('dashboard.media') }}</span>
-                            <span class="wb-status-pill wb-status-info">{{ $stats['media'] }}</span>
-                        </div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.media_help') }}</div>
-
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                            <span>{{ $adminText('dashboard.slot_types') }}</span>
-                            <span class="wb-status-pill wb-status-pending">{{ $stats['slotTypes'] }}</span>
-                        </div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.slot_types_help') }}</div>
-
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                            <span>{{ $adminText('dashboard.block_types') }}</span>
-                            <span class="wb-status-pill wb-status-pending">{{ $stats['blockTypes'] }}</span>
-                        </div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.block_types_help') }}</div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-striped">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">{{ $adminText('dashboard.pages') }}</th>
+                                    <td>{{ number_format($stats['pages']) }}</td>
+                                    <td class="wb-text-muted">{{ $adminText('dashboard.published_drafts', ['published' => $stats['publishedPages'], 'drafts' => $stats['draftPages']]) }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">{{ $adminText('dashboard.blocks') }}</th>
+                                    <td>{{ number_format($stats['blocks']) }}</td>
+                                    <td class="wb-text-muted">{{ $adminText('dashboard.blocks_help') }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">{{ $adminText('dashboard.media') }}</th>
+                                    <td>{{ number_format($stats['media']) }}</td>
+                                    <td class="wb-text-muted">{{ $adminText('dashboard.media_help') }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">{{ $adminText('dashboard.slot_types') }}</th>
+                                    <td>{{ number_format($stats['slotTypes']) }}</td>
+                                    <td class="wb-text-muted">{{ $adminText('dashboard.slot_types_help') }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">{{ $adminText('dashboard.block_types') }}</th>
+                                    <td>{{ number_format($stats['blockTypes']) }}</td>
+                                    <td class="wb-text-muted">{{ $adminText('dashboard.block_types_help') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -175,25 +175,28 @@
                             <div class="wb-empty-title">{{ $adminText('dashboard.visitor_missing') }}</div>
                         </div>
                     @else
-                        <div class="wb-grid wb-grid-2">
-                            <div class="wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.page_views') }}</div>
-                                <strong>{{ number_format($visitorSummary['total_page_views']) }}</strong>
-                            </div>
-                            <div class="wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.unique_visitors') }}</div>
-                                <strong>{{ number_format($visitorSummary['unique_visitors']) }}</strong>
-                            </div>
-                        </div>
-
-                        <div class="wb-stack wb-gap-1">
-                            <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.top_page') }}</div>
-                            @if ($visitorSummary['top_page_path'])
-                                <div><code>{{ $visitorSummary['top_page_path'] }}</code></div>
-                                <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.views', ['count' => number_format($visitorSummary['top_page_views'])]) }}</div>
-                            @else
-                                <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.no_visits') }}</div>
-                            @endif
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">{{ $adminText('dashboard.page_views') }}</th>
+                                        <td>{{ number_format($visitorSummary['total_page_views']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ $adminText('dashboard.unique_visitors') }}</th>
+                                        <td>{{ number_format($visitorSummary['unique_visitors']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ $adminText('dashboard.top_page') }}</th>
+                                        @if ($visitorSummary['top_page_path'])
+                                            <td><code>{{ $visitorSummary['top_page_path'] }}</code></td>
+                                            <td class="wb-text-muted">{{ $adminText('dashboard.views', ['count' => number_format($visitorSummary['top_page_views'])]) }}</td>
+                                        @else
+                                            <td colspan="2" class="wb-text-muted">{{ $adminText('dashboard.no_visits') }}</td>
+                                        @endif
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     @endif
                 </div>
