@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.74.0
+
+- Replace the unused manually provisioned Workbench token with WebBlocks Support Protocol 1.0: system operators can connect Workbench or an agency-owned compatible HTTPS provider, complete provider-owned purchase/activation, and receive a per-installation credential encrypted at rest. Ticket reporters remain isolated by the generated installation and user references.
+- Publish the provider discovery, activation, ticket and revocation contract in `docs/webblocks-support-protocol-v1.md`; support credentials never appear in the browser, logs or site exports.
+
 ## 1.73.8
 
 - Present Dashboard Overview and Visitor Summary values as ordered WebBlocks UI tables, preserving label, value, and supporting-detail hierarchy without metric-card styling.

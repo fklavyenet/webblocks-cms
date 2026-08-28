@@ -35,7 +35,51 @@
 
         @include('webblocks-cms::admin.partials.flash')
 
-        @if (! $configured)
+        @if ($canManageConnection)
+            <section class="wb-card">
+                <div class="wb-card-header">
+                    <h2 class="wb-card-title">{{ $adminText('support.connection_title') }}</h2>
+                </div>
+                <div class="wb-card-body wb-stack wb-gap-4">
+                    @if (! $connection)
+                        <p class="wb-text-muted">{{ $adminText('support.connection_intro') }}</p>
+                        <form method="POST" action="{{ route('admin.support.connection.store') }}" class="wb-stack wb-gap-3">
+                            @csrf
+                            <div class="wb-field">
+                                <label class="wb-label" for="supportProviderUrl">{{ $adminText('support.provider_url') }}</label>
+                                <input id="supportProviderUrl" class="wb-input" type="url" name="provider_url" value="{{ old('provider_url', 'https://workbench.webblocksui.com') }}" required>
+                                <p class="wb-text-muted wb-text-sm">{{ $adminText('support.provider_url_help') }}</p>
+                                @error('provider_url')<div class="wb-field-error">{{ $message }}</div>@enderror
+                            </div>
+                            <div><button class="wb-btn wb-btn-primary" type="submit">{{ $adminText('support.connect') }}</button></div>
+                        </form>
+                    @elseif ($connection->status === 'pending')
+                        <p>{{ $adminText('support.activation_instructions', ['provider' => $connection->provider_name]) }}</p>
+                        <div class="wb-alert wb-alert-info">
+                            <div><strong>{{ $adminText('support.activation_code') }}:</strong> {{ $connection->activation_user_code }}</div>
+                        </div>
+                        <div class="wb-cluster">
+                            <a class="wb-btn wb-btn-primary" href="{{ $connection->activation_url }}" target="_blank" rel="noopener noreferrer">{{ $adminText('support.open_activation') }}</a>
+                            <form method="POST" action="{{ route('admin.support.connection.refresh') }}">@csrf<button class="wb-btn wb-btn-secondary" type="submit">{{ $adminText('support.check_activation') }}</button></form>
+                            <button class="wb-btn wb-btn-danger" type="button" data-wb-toggle="modal" data-wb-target="#support-disconnect-modal" aria-haspopup="dialog">{{ $adminText('support.disconnect') }}</button>
+                        </div>
+                    @else
+                        <div class="wb-table-wrap">
+                            <table class="wb-table">
+                                <tbody>
+                                    <tr><th>{{ $adminText('support.provider') }}</th><td>{{ $connection->provider_name }}</td></tr>
+                                    <tr><th>{{ $adminText('support.connection_status') }}</th><td>{{ $connection->status }}</td></tr>
+                                    @if ($connection->plan_name)<tr><th>{{ $adminText('support.plan') }}</th><td>{{ $connection->plan_name }}</td></tr>@endif
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="wb-btn wb-btn-danger" type="button" data-wb-toggle="modal" data-wb-target="#support-disconnect-modal" aria-haspopup="dialog">{{ $adminText('support.disconnect') }}</button>
+                    @endif
+                </div>
+            </section>
+        @endif
+
+        @if (! $configured && ! $canManageConnection)
             <div class="wb-alert wb-alert-warning">
                 <div>{{ $adminText('support.not_configured') }}</div>
             </div>
@@ -93,3 +137,19 @@
         </section>
     </div>
 @endsection
+
+@if ($canManageConnection && $connection)
+    @push('overlays')
+        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+            'id' => 'support-disconnect-modal',
+            'title' => $adminText('support.disconnect_title'),
+            'description' => $adminText('support.disconnect_description'),
+            'action' => route('admin.support.connection.destroy'),
+            'method' => 'DELETE',
+            'submitLabel' => $adminText('support.disconnect'),
+            'cancelLabel' => $adminText('common.cancel'),
+        ])
+            <p>{{ $adminText('support.disconnect_description') }}</p>
+        @endcomponent
+    @endpush
+@endif
