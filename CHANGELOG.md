@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.74.1
+
+- Repair the package-owned support connection table at the activation write boundary when a host update skipped package migrations, so public installations can connect a compatible support provider without terminal access.
+
 ## 1.74.0
 
 - Replace the unused manually provisioned Workbench token with WebBlocks Support Protocol 1.0: system operators can connect Workbench or an agency-owned compatible HTTPS provider, complete provider-owned purchase/activation, and receive a per-installation credential encrypted at rest. Ticket reporters remain isolated by the generated installation and user references.

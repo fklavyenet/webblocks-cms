@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\SupportConnection;
 use WebBlocks\Cms\Support\Tickets\InstallId;
 use WebBlocks\Cms\Support\Tickets\SupportActivationService;
@@ -142,6 +143,32 @@ class SupportTicketServiceTest extends TestCase
     $this->assertSame('ABCD-EFGH', $connection->activation_user_code);
     $this->assertSame('polling-secret', $connection->activation_secret);
     $this->assertNotSame('polling-secret', $connection->getRawOriginal('activation_secret'));
+  }
+
+  public function test_activation_repairs_a_missing_support_connections_table(): void
+  {
+    Schema::dropIfExists('wbcms_support_connections');
+    Http::fake([
+      '8.8.8.8/.well-known/webblocks-support' => Http::response([
+        'protocol' => 'webblocks-support',
+        'version' => '1.0',
+        'name' => 'Example Support',
+        'api_base_url' => 'https://8.8.8.8/api/webblocks-support/v1',
+        'capabilities' => ['ticket.create', 'ticket.list', 'ticket.read', 'ticket.reply'],
+      ]),
+      '8.8.8.8/api/webblocks-support/v1/activations' => Http::response([
+        'activation_id' => 'activation-1',
+        'activation_secret' => 'polling-secret',
+        'user_code' => 'ABCD-EFGH',
+        'verification_url' => 'https://8.8.8.8/connect',
+        'expires_at' => now()->addMinutes(10)->toIso8601String(),
+      ], 201),
+    ]);
+
+    $connection = app(SupportActivationService::class)->start('https://8.8.8.8');
+
+    $this->assertTrue(Schema::hasTable('wbcms_support_connections'));
+    $this->assertSame('activation-1', $connection->activation_id);
   }
 
   public function test_approved_activation_replaces_the_polling_secret_with_an_installation_credential(): void
