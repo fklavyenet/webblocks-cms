@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.75.2
+
+- Defer the entire plugin runtime refresh until the redirected request after a catalog update. This prevents old in-memory manifest, health and asset classes from being combined with the replacement package and turning an otherwise successful update into a 500 response.
+
 ## 1.75.1
 
 - Show safe catalog release summaries, highlights, or notes in plugin update confirmation modals, with an explicit fallback when a release has no notes.

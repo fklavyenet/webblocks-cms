@@ -227,14 +227,14 @@ class SystemPluginController extends Controller
     }
 
     /*
-     * The provider for the installed version is already loaded in this PHP
-     * request. Registering the replacement's route file now can make new route
-     * code call methods that do not exist on that old in-memory class. The next
-     * redirected request starts with the replacement source and registers its
-     * routes normally; the remaining manifest-driven reconciliation is safe to
-     * perform here.
+     * Every class from the installed version may already be loaded in this PHP
+     * request, including manifest readers, health reporters and asset
+     * definitions. Rebuilding any runtime registry after replacing its source
+     * can therefore combine old in-memory classes with the new package on disk.
+     * The redirected request starts clean and performs normal plugin discovery,
+     * route registration, health checks and asset reconciliation from one
+     * consistent version.
      */
-    $this->runtimeRefresher->refresh(clearOptimizedCaches: true, registerRoutes: false);
 
     return redirect()
       ->route('admin.system.plugins.index')

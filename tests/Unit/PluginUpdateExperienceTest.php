@@ -22,11 +22,11 @@ class PluginUpdateExperienceTest extends TestCase
     $this->assertStringNotContainsString('{!! $plugin[\'catalog_update\']', $view);
   }
 
-  public function test_catalog_update_defers_new_route_registration_to_the_next_request(): void
+  public function test_catalog_update_defers_all_runtime_refresh_to_the_next_request(): void
   {
     $controller = (string) file_get_contents(dirname(__DIR__, 2).'/src/Http/Controllers/Admin/SystemPluginController.php');
 
-    $this->assertStringContainsString('refresh(clearOptimizedCaches: true, registerRoutes: false)', $controller);
-    $this->assertStringNotContainsString('refresh(clearOptimizedCaches: true, registerRoutes: true)', $controller);
+    $this->assertStringContainsString('Every class from the installed version may already be loaded', $controller);
+    $this->assertStringNotContainsString('refresh(clearOptimizedCaches: true, registerRoutes:', $controller);
   }
 }
