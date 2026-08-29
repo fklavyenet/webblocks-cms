@@ -90,7 +90,6 @@
                         'active' => [],
                         'external' => true,
                     ],
-                    ['label' => $adminText('navigation.support'), 'route' => 'admin.support.index', 'active' => ['admin.support.*']],
                 ],
             ];
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.75.0
+
+- Remove the Support menu, provider client, ticket screens, connection storage and protocol contract from CMS core. Provider-backed support is now owned by the optional WebBlocks Support catalog plugin.
+
 ## 1.74.2
 
 - Accept a same-origin HTTPS activation page carrying its short user code in the query string while retaining public-host, credential, fragment and provider-origin protections, so Workbench activation responses are no longer rejected before they can be saved.
@@ -11,7 +15,7 @@
 ## 1.74.0
 
 - Replace the unused manually provisioned Workbench token with WebBlocks Support Protocol 1.0: system operators can connect Workbench or an agency-owned compatible HTTPS provider, complete provider-owned purchase/activation, and receive a per-installation credential encrypted at rest. Ticket reporters remain isolated by the generated installation and user references.
-- Publish the provider discovery, activation, ticket and revocation contract in `docs/webblocks-support-protocol-v1.md`; support credentials never appear in the browser, logs or site exports.
+- Publish the provider discovery, activation, ticket and revocation contract in the 1.74.0 release artifact; support credentials never appear in the browser, logs or site exports.
 
 ## 1.73.8
 

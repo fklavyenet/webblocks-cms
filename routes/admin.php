@@ -39,7 +39,6 @@ use WebBlocks\Cms\Http\Controllers\Admin\SiteImportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SitePromotionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
-use WebBlocks\Cms\Http\Controllers\Admin\SupportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemInformationController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
@@ -260,18 +259,6 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::patch('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale.update');
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
-    // Support — tickets live at the connected protocol-compatible provider.
-    // Top-level rather than under System: `access-system` belongs to whoever
-    // maintains the installation, and the editor who cannot publish a page is
-    // the person with something to report.
-    Route::get('/support', [SupportController::class, 'index'])->name('support.index');
-    Route::get('/support/new', [SupportController::class, 'create'])->name('support.create');
-    Route::post('/support', [SupportController::class, 'store'])->name('support.store');
-    Route::post('/support/connection', [SupportController::class, 'connect'])->name('support.connection.store');
-    Route::post('/support/connection/refresh', [SupportController::class, 'refreshActivation'])->name('support.connection.refresh');
-    Route::delete('/support/connection', [SupportController::class, 'disconnect'])->name('support.connection.destroy');
-    Route::get('/support/{ticket}', [SupportController::class, 'show'])->name('support.show');
-    Route::post('/support/{ticket}/replies', [SupportController::class, 'comment'])->name('support.comment');
     Route::get('/pages/converter', [PageConverterController::class, 'index'])->name('pages.converter.index');
     Route::post('/pages/converter/analyze', [PageConverterController::class, 'analyze'])->name('pages.converter.analyze');
     Route::post('/pages/converter/create-draft', [PageConverterController::class, 'createDraft'])->name('pages.converter.create-draft');
