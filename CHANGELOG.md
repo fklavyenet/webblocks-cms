@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.74.2
+
+- Accept a same-origin HTTPS activation page carrying its short user code in the query string while retaining public-host, credential, fragment and provider-origin protections, so Workbench activation responses are no longer rejected before they can be saved.
+
 ## 1.74.1
 
 - Repair the package-owned support connection table at the activation write boundary when a host update skipped package migrations, so public installations can connect a compatible support provider without terminal access.

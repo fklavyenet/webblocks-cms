@@ -70,7 +70,10 @@ final class CompatibleSupportProvider
       }
     }
 
-    $verificationUrl = $this->urlGuard->normalize($payload['verification_url']);
+    // Provider-owned activation pages commonly carry the short user code in
+    // the query string. It is safe only after the normal HTTPS/public-host
+    // checks and the same-origin assertion below have both passed.
+    $verificationUrl = $this->urlGuard->normalizeNavigationUrl($payload['verification_url']);
 
     if ($this->origin($verificationUrl) !== $this->origin($provider['provider_url'])) {
       throw new SupportProviderException('The activation page must use the provider origin.');

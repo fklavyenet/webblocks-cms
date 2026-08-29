@@ -132,7 +132,7 @@ class SupportTicketServiceTest extends TestCase
         'activation_id' => 'activation-1',
         'activation_secret' => 'polling-secret',
         'user_code' => 'ABCD-EFGH',
-        'verification_url' => 'https://8.8.8.8/connect',
+        'verification_url' => 'https://8.8.8.8/connect?code=ABCD-EFGH',
         'expires_at' => now()->addMinutes(10)->toIso8601String(),
       ], 201),
     ]);
@@ -141,6 +141,7 @@ class SupportTicketServiceTest extends TestCase
 
     $this->assertSame('pending', $connection->status);
     $this->assertSame('ABCD-EFGH', $connection->activation_user_code);
+    $this->assertSame('https://8.8.8.8/connect?code=ABCD-EFGH', $connection->activation_url);
     $this->assertSame('polling-secret', $connection->activation_secret);
     $this->assertNotSame('polling-secret', $connection->getRawOriginal('activation_secret'));
   }

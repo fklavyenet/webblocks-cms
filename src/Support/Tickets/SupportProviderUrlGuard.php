@@ -6,12 +6,22 @@ final class SupportProviderUrlGuard
 {
   public function normalize(string $url): string
   {
+    return $this->normalizeUrl($url, false);
+  }
+
+  public function normalizeNavigationUrl(string $url): string
+  {
+    return $this->normalizeUrl($url, true);
+  }
+
+  private function normalizeUrl(string $url, bool $allowQuery): string
+  {
     $url = rtrim(trim($url), '/');
     $parts = parse_url($url);
     $scheme = strtolower((string) ($parts['scheme'] ?? ''));
     $host = strtolower(trim((string) ($parts['host'] ?? ''), '[]'));
 
-    if ($scheme !== 'https' || $host === '' || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
+    if ($scheme !== 'https' || $host === '' || isset($parts['user']) || isset($parts['pass']) || (! $allowQuery && isset($parts['query'])) || isset($parts['fragment'])) {
       throw new SupportProviderException('The support provider must be a plain HTTPS origin URL.');
     }
 
