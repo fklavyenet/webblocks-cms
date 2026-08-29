@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.1
+
+- Show safe catalog release summaries, highlights, or notes in plugin update confirmation modals, with an explicit fallback when a release has no notes.
+- Defer replacement plugin route registration until the redirected request after a catalog update, avoiding old-provider/new-route class mismatches in the successful update request.
+
 ## 1.75.0
 
 - Remove the Support menu, provider client, ticket screens, connection storage and protocol contract from CMS core. Provider-backed support is now owned by the optional WebBlocks Support catalog plugin.

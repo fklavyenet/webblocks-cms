@@ -165,6 +165,26 @@
 
                                                         <div class="wb-modal-body wb-stack wb-gap-4">
                                                             <p id="{{ $updateModalId }}-body">{{ $systemPluginsIndexText('update_confirm_body', ['label' => $plugin['label'], 'current' => $plugin['version'] ?? $systemPluginsIndexText('unknown'), 'version' => $plugin['catalog_update']['version']]) }}</p>
+
+                                                            <section class="wb-stack wb-gap-2" aria-labelledby="{{ $updateModalId }}-release-notes">
+                                                                <h3 id="{{ $updateModalId }}-release-notes">{{ $systemPluginsIndexText('update_release_notes') }}</h3>
+
+                                                                @if (! empty($plugin['catalog_update']['summary']))
+                                                                    <p>{{ $plugin['catalog_update']['summary'] }}</p>
+                                                                @endif
+
+                                                                @if (! empty($plugin['catalog_update']['highlights']))
+                                                                    <ul>
+                                                                        @foreach ($plugin['catalog_update']['highlights'] as $highlight)
+                                                                            <li>{{ $highlight }}</li>
+                                                                        @endforeach
+                                                                    </ul>
+                                                                @elseif (! empty($plugin['catalog_update']['notes']) && $plugin['catalog_update']['notes'] !== $plugin['catalog_update']['summary'])
+                                                                    <p class="wb-text-sm">{{ $plugin['catalog_update']['notes'] }}</p>
+                                                                @elseif (empty($plugin['catalog_update']['summary']))
+                                                                    <p class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('update_release_notes_unavailable') }}</p>
+                                                                @endif
+                                                            </section>
                                                         </div>
 
                                                         <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">

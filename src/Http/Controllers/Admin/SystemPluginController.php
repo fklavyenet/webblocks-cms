@@ -226,7 +226,15 @@ class SystemPluginController extends Controller
       return back()->withErrors(['plugin' => $this->controlledCatalogUpdateError($exception)]);
     }
 
-    $this->runtimeRefresher->refresh(clearOptimizedCaches: true, registerRoutes: true);
+    /*
+     * The provider for the installed version is already loaded in this PHP
+     * request. Registering the replacement's route file now can make new route
+     * code call methods that do not exist on that old in-memory class. The next
+     * redirected request starts with the replacement source and registers its
+     * routes normally; the remaining manifest-driven reconciliation is safe to
+     * perform here.
+     */
+    $this->runtimeRefresher->refresh(clearOptimizedCaches: true, registerRoutes: false);
 
     return redirect()
       ->route('admin.system.plugins.index')
@@ -352,6 +360,9 @@ class SystemPluginController extends Controller
 
       $updates[$plugin->handle] = [
         'version' => $plugin->latestCompatibleRelease->version,
+        'summary' => $plugin->latestCompatibleRelease->summary,
+        'notes' => $plugin->latestCompatibleRelease->notes,
+        'highlights' => $plugin->latestCompatibleRelease->highlights,
       ];
     }
 

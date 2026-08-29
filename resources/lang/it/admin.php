@@ -1062,6 +1062,8 @@ return [
     'update_from_catalog' => 'Aggiorna dal catalogo',
     'update_confirm_title' => 'Aggiorna :label',
     'update_confirm_body' => 'Aggiornare :label dalla versione :current alla :version? La nuova release viene scaricata dal catalogo dei plugin e installata immediatamente.',
+    'update_release_notes' => 'Novità',
+    'update_release_notes_unavailable' => 'Non sono state fornite note di rilascio per questo aggiornamento.',
     'update_confirm_submit' => 'Aggiorna ora',
     'update_confirm_cancel' => 'Annulla',
     'update_in_progress' => 'Aggiornamento…',

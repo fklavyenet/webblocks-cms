@@ -1063,6 +1063,8 @@ return [
     'update_from_catalog' => 'Katalogdan güncelle',
     'update_confirm_title' => ':label güncelle',
     'update_confirm_body' => ':label eklentisi :current sürümünden :version sürümüne güncellensin mi? Yeni sürüm Eklenti Kataloğu\'ndan indirilip hemen kurulur.',
+    'update_release_notes' => 'Yenilikler',
+    'update_release_notes_unavailable' => 'Bu güncelleme için sürüm notu sağlanmadı.',
     'update_confirm_submit' => 'Şimdi güncelle',
     'update_confirm_cancel' => 'Vazgeç',
     'update_in_progress' => 'Güncelleniyor…',
