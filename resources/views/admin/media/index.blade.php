@@ -126,26 +126,26 @@
         </div>
 
         <div class="wb-card-body wb-stack wb-gap-4">
-            <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-media-toolbar">
-                <div class="wb-cluster wb-cluster-2 wb-media-folder-pills">
-                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">{{ $adminText('all_folders') }} <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
+            <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-items-end">
+                <div class="wb-cluster wb-cluster-2">
+                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">{{ $adminText('all_folders') }} <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
                     @foreach ($folders as $folder)
-                        <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                        <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                             {{ $folder->name }} <span class="wb-text-sm">{{ $folder->assets_count }}</span>
                         </a>
                     @endforeach
                 </div>
 
-                <div class="wb-cluster wb-cluster-2 wb-media-view-toggle">
+                <div class="wb-cluster wb-cluster-2">
                     <label class="wb-check" for="select_all_visible_media_toolbar">
                         <input id="select_all_visible_media_toolbar" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('select_all_visible_media') }}">
                         <span>{{ $adminText('select_visible') }}</span>
                     </label>
-                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'list'])) }}" class="wb-btn wb-btn-secondary" @if($viewMode === 'list') aria-current="page" @endif>
+                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'list'])) }}" class="wb-btn {{ $viewMode === 'list' ? 'wb-btn-primary' : 'wb-btn-secondary' }}" @if($viewMode === 'list') aria-current="page" @endif>
                         <i class="wb-icon wb-icon-list" aria-hidden="true"></i>
                         <span>{{ $adminText('list') }}</span>
                     </a>
-                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'grid'])) }}" class="wb-btn wb-btn-secondary" @if($viewMode === 'grid') aria-current="page" @endif>
+                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'grid'])) }}" class="wb-btn {{ $viewMode === 'grid' ? 'wb-btn-primary' : 'wb-btn-secondary' }}" @if($viewMode === 'grid') aria-current="page" @endif>
                         <i class="wb-icon wb-icon-panel-left" aria-hidden="true"></i>
                         <span>{{ $adminText('grid') }}</span>
                     </a>

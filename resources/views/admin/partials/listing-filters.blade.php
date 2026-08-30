@@ -17,7 +17,7 @@
     $resetFirst = $resetFirst ?? false;
 @endphp
 
-<form method="{{ $method }}" action="{{ $action }}" class="wb-admin-listing-filters" data-admin-listing-filters>
+<form method="{{ $method }}" action="{{ $action }}" class="wb-filter-bar wb-items-end" data-admin-listing-filters>
     @foreach ($hidden as $name => $value)
         @if ($value !== null && $value !== '')
             <input type="hidden" name="{{ $name }}" value="{{ $value }}">
@@ -25,7 +25,7 @@
     @endforeach
 
     @if ($search)
-        <div class="wb-stack wb-gap-1 wb-field wb-admin-listing-filters-search" data-admin-listing-filters-search>
+        <div class="wb-stack wb-gap-1 wb-field wb-flex-1 wb-min-w-0" data-admin-listing-filters-search>
             <label for="{{ $search['id'] }}" class="wb-label">{{ $search['label'] }}</label>
             <input
                 id="{{ $search['id'] }}"
@@ -39,13 +39,13 @@
     @endif
 
     @if ($selects !== [] || $dates !== [])
-        <div class="wb-admin-listing-filters-fields" data-admin-listing-filters-fields>
+        <div class="wb-filter-bar-start wb-items-end" data-admin-listing-filters-fields>
             @foreach ($selects as $select)
                 @php($selectedValue = (string) ($select['selected'] ?? $select['value'] ?? ''))
                 @php($includePlaceholder = ! array_key_exists('placeholder', $select) || $select['placeholder'] !== null)
-                <div class="wb-stack wb-gap-1 wb-field wb-admin-listing-filters-select">
+                <div class="wb-stack wb-gap-1 wb-field">
                     <label for="{{ $select['id'] }}" class="wb-label">{{ $select['label'] }}</label>
-                    <select id="{{ $select['id'] }}" name="{{ $select['name'] }}" class="wb-select" @if (! empty($select['submitOnChange'])) onchange="this.form.submit()" @endif>
+                    <select id="{{ $select['id'] }}" name="{{ $select['name'] }}" class="wb-filter-select" @if (! empty($select['submitOnChange'])) onchange="this.form.submit()" @endif>
                         @if ($includePlaceholder)
                             <option value="">{{ $select['placeholder'] ?? 'All' }}</option>
                         @endif
@@ -57,13 +57,13 @@
             @endforeach
 
             @foreach ($dates as $date)
-                <div class="wb-stack wb-gap-1 wb-field wb-admin-listing-filters-date">
+                <div class="wb-stack wb-gap-1 wb-field">
                     <label for="{{ $date['id'] }}" class="wb-label">{{ $date['label'] }}</label>
                     <input
                         id="{{ $date['id'] }}"
                         name="{{ $date['name'] }}"
                         type="date"
-                        class="wb-input"
+                        class="wb-input wb-input-sm"
                         value="{{ $date['value'] ?? '' }}"
                         @if (! empty($date['submitOnChange'])) onchange="this.form.submit()" @endif
                     >
@@ -73,7 +73,7 @@
     @endif
 
     @if ($showActions)
-        <div class="wb-admin-listing-filters-actions" data-admin-listing-filters-actions>
+        <div class="wb-filter-bar-end wb-items-end" data-admin-listing-filters-actions>
             @if ($showReset && $resetUrl && $resetFirst)
                 <a href="{{ $resetUrl }}" class="wb-btn wb-btn-secondary">{{ $resetLabel }}</a>
             @endif

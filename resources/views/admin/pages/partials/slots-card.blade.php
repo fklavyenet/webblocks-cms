@@ -275,8 +275,8 @@
                                 <div class="wb-stack wb-gap-2">
                                     <label class="wb-text-sm" for="slot-source-type-page-{{ $pageSlot->id }}">{{ $adminText('source') }}</label>
 
-                                    <div class="wb-cluster wb-cluster-2 wb-admin-slot-source-picker" role="radiogroup" aria-label="{{ $adminText('source') }}" data-wb-slot-source-picker>
-                                        <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_PAGE ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-page-{{ $pageSlot->id }}" data-wb-slot-source-option>
+                                    <div class="wb-btn-check-group" role="radiogroup" aria-label="{{ $adminText('source') }}" data-wb-slot-source-picker>
+                                        <label class="wb-btn-check" for="slot-source-type-page-{{ $pageSlot->id }}">
                                             <input
                                                 id="slot-source-type-page-{{ $pageSlot->id }}"
                                                 type="radio"
@@ -288,7 +288,7 @@
                                             <span>{{ $adminText('page_content') }}</span>
                                         </label>
 
-                                        <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-shared-slot-{{ $pageSlot->id }}" data-wb-slot-source-option>
+                                        <label class="wb-btn-check" for="slot-source-type-shared-slot-{{ $pageSlot->id }}">
                                             <input
                                                 id="slot-source-type-shared-slot-{{ $pageSlot->id }}"
                                                 type="radio"
@@ -300,7 +300,7 @@
                                             <span>{{ $adminText('shared_slot') }}</span>
                                         </label>
 
-                                        <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_DISABLED ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-disabled-{{ $pageSlot->id }}" data-wb-slot-source-option>
+                                        <label class="wb-btn-check" for="slot-source-type-disabled-{{ $pageSlot->id }}">
                                             <input
                                                 id="slot-source-type-disabled-{{ $pageSlot->id }}"
                                                 type="radio"

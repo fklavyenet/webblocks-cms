@@ -28,7 +28,7 @@
 
 @if ($paginator->hasPages())
   <div class="wb-card-footer">
-    <div class="wb-admin-pagination{{ $compact ? ' wb-admin-pagination-compact' : '' }}" data-admin-pagination>
+    <div class="wb-cluster wb-cluster-end wb-cluster-2" data-admin-pagination>
       <nav class="wb-pagination{{ $compact ? ' wb-pagination-compact' : '' }}" aria-label="{{ $ariaLabel }}">
         <ol class="wb-pagination-list">
           <li class="wb-pagination-item{{ $paginator->onFirstPage() ? ' is-disabled' : '' }}">
@@ -70,7 +70,7 @@
       </nav>
 
       @if ($summaryText)
-        <div class="wb-text-sm wb-text-muted wb-pagination-info" data-admin-pagination-summary>
+        <div class="wb-text-sm wb-text-muted wb-pagination-info{{ $compact ? ' wb-nowrap' : '' }}" data-admin-pagination-summary>
           @if ($compact)
             {{ $summaryText }}
           @else

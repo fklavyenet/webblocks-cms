@@ -26,7 +26,7 @@ class ListingFiltersDatesTest extends TestCase
       ],
     ])->render();
 
-    $this->assertStringContainsString('wb-admin-listing-filters-date', $html);
+    $this->assertStringContainsString('class="wb-filter-bar wb-items-end"', $html);
     $this->assertStringContainsString('id="example_date"', $html);
     $this->assertStringContainsString('name="date"', $html);
     $this->assertStringContainsString('type="date"', $html);
@@ -56,7 +56,7 @@ class ListingFiltersDatesTest extends TestCase
       ],
     ])->render();
 
-    $this->assertStringNotContainsString('wb-admin-listing-filters-date', $html);
-    $this->assertStringContainsString('wb-admin-listing-filters-select', $html);
+    $this->assertStringNotContainsString('type="date"', $html);
+    $this->assertStringContainsString('class="wb-filter-select"', $html);
   }
 }

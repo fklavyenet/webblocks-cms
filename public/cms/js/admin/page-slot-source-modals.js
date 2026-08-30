@@ -78,15 +78,6 @@
             sourceHelper.textContent = helperTextBySource[sourceType] || helperTextBySource.page;
         }
 
-        form.querySelectorAll('[data-wb-slot-source-option]').forEach(function (option) {
-            var input = option.querySelector('[data-wb-slot-source-type]');
-            var isActive = input && input.checked;
-
-            option.classList.toggle('wb-btn-primary', !!isActive);
-            option.classList.toggle('is-active', !!isActive);
-            option.classList.toggle('wb-btn-secondary', !isActive);
-            option.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
     }
 
     document.querySelectorAll('[data-wb-page-slot-source-form]').forEach(syncSourceForm);

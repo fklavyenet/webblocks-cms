@@ -167,5 +167,4 @@
 @endsection
 
 @push('admin-scripts')
-    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/password-fields.js'])
 @endpush

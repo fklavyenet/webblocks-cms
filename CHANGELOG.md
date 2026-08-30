@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.6
+
+- Move admin password visibility, listing filters, pagination layout, slot-source selection, and Media view/folder states onto the WebBlocks UI primitives already loaded by the panel.
+- Remove the superseded password script and obsolete Updates/admin styling, reducing the CMS-owned admin frontend by more than 450 lines without changing CMS workflows or stored values.
+
 ## 1.75.5
 
 - Pin WebBlocks UI `v2.24.3`, whose documented tabs contract owns panel visibility, accessibility state and keyboard state after activation.
