@@ -29,20 +29,8 @@
 
         if (container && container.matches('[data-wb-slot-block-picker-tabs]')) {
             var pickerTabInput = document.querySelector('[data-wb-slot-block-picker-tab-input]');
-            var selectedPanelId = event.detail && event.detail.tabId ? event.detail.tabId : null;
-
             if (pickerTabInput && event.detail && event.detail.tabId) {
                 pickerTabInput.value = event.detail.tabId.replace('slot-block-picker-panel-', '');
-            }
-
-            if (selectedPanelId) {
-                container.querySelectorAll('.wb-tabs-panel').forEach(function (panel) {
-                    var isActive = panel.id === selectedPanelId;
-
-                    panel.classList.toggle('is-active', isActive);
-                    panel.hidden = !isActive;
-                    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
-                });
             }
 
             return;

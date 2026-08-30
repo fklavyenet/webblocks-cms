@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.5
+
+- Pin WebBlocks UI `v2.24.3`, whose documented tabs contract owns panel visibility, accessibility state and keyboard state after activation.
+- Remove the page-builder block picker's duplicate panel visibility synchronization while retaining its domain-only active-tab field mapping.
+
 ## 1.75.4
 
 - Pin WebBlocks UI `v2.24.1` and move admin and public sidebar navigation groups onto its canonical `data-wb-nav-group` container contract.
