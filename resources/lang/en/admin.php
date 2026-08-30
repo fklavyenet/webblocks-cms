@@ -1194,6 +1194,7 @@ return [
     'update_confirm_body' => 'Update :label from version :current to :version? The new release is downloaded from the Plugin Catalog and installed immediately.',
     'update_release_notes' => "What's new",
     'update_release_notes_unavailable' => 'No release notes were provided for this update.',
+    'update_release_notes_link' => 'View full release notes',
     'update_confirm_submit' => 'Update now',
     'update_confirm_cancel' => 'Cancel',
     'update_in_progress' => 'Updating…',

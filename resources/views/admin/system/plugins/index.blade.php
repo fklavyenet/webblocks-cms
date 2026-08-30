@@ -184,6 +184,12 @@
                                                                 @elseif (empty($plugin['catalog_update']['summary']))
                                                                     <p class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('update_release_notes_unavailable') }}</p>
                                                                 @endif
+
+                                                                @if (! empty($plugin['catalog_update']['details_url']))
+                                                                    <a class="wb-btn wb-btn-secondary" href="{{ $plugin['catalog_update']['details_url'] }}" target="_blank" rel="noopener noreferrer">
+                                                                        <i class="wb-icon wb-icon-external-link" aria-hidden="true"></i>{{ $systemPluginsIndexText('update_release_notes_link') }}
+                                                                    </a>
+                                                                @endif
                                                             </section>
                                                         </div>
 

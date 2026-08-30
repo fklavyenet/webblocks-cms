@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.3
+
+- Plugin update confirmations now link directly to the release's full changelog when the catalog provides a safe details URL, so operators are never left with an unresolvable `See CHANGELOG.md` instruction.
+- Keep the release summary and highlights in the modal while opening full notes in a separate, protected tab.
+
 ## 1.75.2
 
 - Defer the entire plugin runtime refresh until the redirected request after a catalog update. This prevents old in-memory manifest, health and asset classes from being combined with the replacement package and turning an otherwise successful update into a 500 response.

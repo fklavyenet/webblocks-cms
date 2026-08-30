@@ -1065,6 +1065,7 @@ return [
     'update_confirm_body' => 'Mettre à jour :label de la version :current vers :version ? La nouvelle version est téléchargée depuis le catalogue d\'extensions et installée immédiatement.',
     'update_release_notes' => 'Nouveautés',
     'update_release_notes_unavailable' => 'Aucune note de version n’a été fournie pour cette mise à jour.',
+    'update_release_notes_link' => 'Voir toutes les notes de version',
     'update_confirm_submit' => 'Mettre à jour maintenant',
     'update_confirm_cancel' => 'Annuler',
     'update_in_progress' => 'Mise à jour…',

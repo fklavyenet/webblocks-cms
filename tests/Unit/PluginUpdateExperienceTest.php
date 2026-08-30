@@ -17,8 +17,13 @@ class PluginUpdateExperienceTest extends TestCase
       $this->assertStringContainsString("\$plugin['catalog_update']['{$field}']", $view);
     }
 
+    $this->assertStringContainsString("'details_url' => \$plugin->latestCompatibleRelease->detailsUrl", $controller);
+    $this->assertStringContainsString("\$plugin['catalog_update']['details_url']", $view);
+
     $this->assertStringContainsString("systemPluginsIndexText('update_release_notes')", $view);
     $this->assertStringContainsString("systemPluginsIndexText('update_release_notes_unavailable')", $view);
+    $this->assertStringContainsString("systemPluginsIndexText('update_release_notes_link')", $view);
+    $this->assertStringContainsString('rel="noopener noreferrer"', $view);
     $this->assertStringNotContainsString('{!! $plugin[\'catalog_update\']', $view);
   }
 

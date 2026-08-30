@@ -1065,6 +1065,7 @@ return [
     'update_confirm_body' => '¿Actualizar :label de la versión :current a la :version? La nueva versión se descarga del catálogo de plugins y se instala de inmediato.',
     'update_release_notes' => 'Novedades',
     'update_release_notes_unavailable' => 'No se proporcionaron notas de la versión para esta actualización.',
+    'update_release_notes_link' => 'Ver todas las notas de la versión',
     'update_confirm_submit' => 'Actualizar ahora',
     'update_confirm_cancel' => 'Cancelar',
     'update_in_progress' => 'Actualizando…',

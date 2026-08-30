@@ -363,6 +363,7 @@ class SystemPluginController extends Controller
         'summary' => $plugin->latestCompatibleRelease->summary,
         'notes' => $plugin->latestCompatibleRelease->notes,
         'highlights' => $plugin->latestCompatibleRelease->highlights,
+        'details_url' => $plugin->latestCompatibleRelease->detailsUrl,
       ];
     }
 
