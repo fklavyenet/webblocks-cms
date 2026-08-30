@@ -275,8 +275,8 @@
 
                     @foreach ($sidebarGroups as $group)
                         @php($groupIsActive = collect($group['items'])->contains(fn ($item) => $matchesActiveRoute($item)))
-                        <div class="wb-nav-group {{ $groupIsActive ? 'is-open' : '' }}">
-                            <button type="button" class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}" aria-expanded="{{ $groupIsActive ? 'true' : 'false' }}" data-wb-nav-group-toggle>
+                        <div class="wb-nav-group {{ $groupIsActive ? 'is-open' : '' }}" data-wb-nav-group @if ($groupIsActive) data-wb-nav-group-open @endif>
+                            <button type="button" class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}" aria-expanded="{{ $groupIsActive ? 'true' : 'false' }}">
                                 <i class="wb-icon {{ $group['icon'] }} wb-nav-group-icon" aria-hidden="true"></i>
                                 <span class="wb-nav-group-label">{{ $group['label'] }}</span>
                                 <span class="wb-nav-group-arrow" aria-hidden="true"></span>

@@ -2333,7 +2333,7 @@ The renderer delegates to `sidebar-nav-item-link.blade.php`. It emits nothing wi
 
 ```html
 <div class="wb-nav-group is-open" data-wb-nav-group>
-  <button type="button" class="wb-nav-group-toggle is-active" data-wb-nav-group-toggle>
+  <button type="button" class="wb-nav-group-toggle is-active" aria-expanded="true">
     <span class="wb-nav-group-icon"><i class="wb-icon wb-icon-folder" aria-hidden="true"></i></span>
     <span class="wb-nav-group-label">Group</span>
     <span class="wb-nav-group-arrow" aria-hidden="true"></span>
@@ -3052,7 +3052,7 @@ This is an internal helper for `sidebar-nav-item` and `sidebar-nav-group`. The c
 
 ```html
 <div class="wb-nav-group is-open" data-wb-nav-group>
-  <button type="button" class="wb-nav-group-toggle is-active" aria-expanded="true" data-wb-nav-group-toggle>
+  <button type="button" class="wb-nav-group-toggle is-active" aria-expanded="true">
     <span class="wb-nav-group-icon"><i class="wb-icon wb-icon-folder" aria-hidden="true"></i></span>
     <span class="wb-nav-group-label">Group</span>
     <span class="wb-nav-group-arrow" aria-hidden="true"></span>

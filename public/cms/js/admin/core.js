@@ -103,21 +103,6 @@
         window.location.assign(admin.loginUrl || '/login');
     }
 
-    function bindNavGroupToggles() {
-        document.querySelectorAll('[data-wb-nav-group-toggle]').forEach(function (toggle) {
-            toggle.addEventListener('click', function () {
-                var group = toggle.closest('.wb-nav-group');
-
-                if (!group) {
-                    return;
-                }
-
-                var isOpen = group.classList.toggle('is-open');
-                toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            });
-        });
-    }
-
     function normalizeSiteHandle(value) {
         return String(value || '')
             .normalize('NFKD')
@@ -501,7 +486,6 @@
     admin.bindBusySubmitButtons = bindBusySubmitButtons;
 
     bindAdminTransientUiReset();
-    bindNavGroupToggles();
     bindSiteHandleAutosuggest();
     bootstrapAdminAutoloadOverlays();
     bindDirtyCloseConfirmationActions();

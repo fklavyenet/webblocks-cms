@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.4
+
+- Pin WebBlocks UI `v2.24.1` and move admin and public sidebar navigation groups onto its canonical `data-wb-nav-group` container contract.
+- Remove the CMS-owned navigation-group click handler and obsolete toggle marker so WebBlocks UI alone owns open/close state, accessibility synchronization and interaction events.
+
 ## 1.75.3
 
 - Plugin update confirmations now link directly to the release's full changelog when the catalog provides a safe details URL, so operators are never left with an unresolvable `See CHANGELOG.md` instruction.

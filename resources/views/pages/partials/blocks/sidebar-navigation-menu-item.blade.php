@@ -11,8 +11,8 @@
 
 @if ($label !== '')
     @if ($isGroup)
-        <div class="wb-nav-group{{ $isActive ? ' is-open' : '' }}" data-wb-nav-group>
-            <button type="button" class="wb-nav-group-toggle{{ $isActive ? ' is-active' : '' }}" aria-expanded="{{ $isActive ? 'true' : 'false' }}" aria-controls="{{ $groupItemsId }}" data-wb-nav-group-toggle>
+        <div class="wb-nav-group{{ $isActive ? ' is-open' : '' }}" data-wb-nav-group @if ($isActive) data-wb-nav-group-open @endif>
+            <button type="button" class="wb-nav-group-toggle{{ $isActive ? ' is-active' : '' }}" aria-expanded="{{ $isActive ? 'true' : 'false' }}" aria-controls="{{ $groupItemsId }}">
                 @if ($icon !== null)
                     <span class="wb-nav-group-icon"><i class="wb-icon wb-icon-{{ $icon }}" aria-hidden="true"></i></span>
                 @endif
