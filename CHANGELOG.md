@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.75.8
+
+- Replace the vendored SortableJS navigation dependency with a CMS-owned vanilla JavaScript tree sorter that preserves automatic persistence, three-level and group-parent guards, touch/pointer movement, rollback after failed saves, and ordered save queuing.
+- Add keyboard navigation ordering through the focused drag handle: Up/Down reorders siblings, Right nests beneath the preceding group, and Left moves an item out one level.
+- Remove the third-party SortableJS runtime and license files from the release package; this release deliberately leaves the separately pinned WebBlocks UI CDN migration for the next step.
+
 ## 1.75.7
 
 - Pin remote-media downloads to the public IP address that passed validation, closing the DNS-rebinding gap while retaining per-redirect validation, download limits, and the existing media allowlist.

@@ -806,12 +806,9 @@ input.wb-admin-table-grid-input:focus {
     justify-content: flex-end;
 }
 
-.wb-navigation-tree-ghost {
-    opacity: 0.4;
-}
-
 .wb-navigation-tree-chosen .wb-navigation-row {
     border-color: var(--wb-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-accent) 24%, transparent);
 }
 .wb-gallery-picker-dialog {
     display: flex;

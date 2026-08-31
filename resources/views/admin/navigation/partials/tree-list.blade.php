@@ -8,7 +8,7 @@
     @foreach ($items as $item)
         <li class="wb-navigation-tree-item" data-navigation-item data-item-id="{{ $item->id }}" data-depth="{{ $depth }}" data-item-link-type="{{ $item->link_type }}">
             <div class="wb-navigation-row">
-                <button type="button" class="wb-navigation-handle" data-navigation-handle title="{{ $navigationItemsText('drag_to_reorder') }}" aria-label="{{ $navigationItemsText('drag_to_reorder') }}">
+                <button type="button" class="wb-navigation-handle" data-navigation-handle title="{{ $navigationItemsText('drag_to_reorder') }}" aria-label="{{ $navigationItemsText('drag_to_reorder') }}" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight">
                     <span aria-hidden="true">⋮⋮</span>
                 </button>
 

@@ -57,14 +57,18 @@ class SecurityHardeningContractTest extends TestCase
   }
 
   #[Test]
-  public function navigation_sorting_uses_the_package_owned_script(): void
+  public function navigation_sorting_uses_the_cms_native_pointer_and_keyboard_module(): void
   {
     $view = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/navigation/index.blade.php');
+    $script = file_get_contents(dirname(__DIR__, 2).'/public/cms/js/admin/navigation-tree.js');
 
     $this->assertIsString($view);
-    $this->assertStringContainsString("asset('cms/js/vendor/sortablejs-1.15.6.min.js')", $view);
-    $this->assertStringNotContainsString('cdn.jsdelivr.net/npm/sortablejs', $view);
-    $this->assertFileExists(dirname(__DIR__, 2).'/public/cms/js/vendor/sortablejs-1.15.6.min.js');
-    $this->assertFileExists(dirname(__DIR__, 2).'/public/cms/js/vendor/sortablejs-LICENSE.txt');
+    $this->assertIsString($script);
+    $this->assertStringContainsString("'cms/js/admin/navigation-tree.js'", $view);
+    $this->assertStringContainsString("root.addEventListener('pointerdown'", $script);
+    $this->assertStringContainsString("root.addEventListener('keydown'", $script);
+    $this->assertStringContainsString("['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']", $script);
+    $this->assertStringNotContainsString('Sortable', $view.$script);
+    $this->assertFileDoesNotExist(dirname(__DIR__, 2).'/public/cms/js/vendor/sortablejs-1.15.6.min.js');
   }
 }
