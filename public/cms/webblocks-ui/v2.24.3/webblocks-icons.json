@@ -1,0 +1,3353 @@
+[
+  {
+    "slug": "activity",
+    "label": "Activity",
+    "css_class": "wb-icon-activity",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "activity",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "area-chart",
+    "label": "Area Chart",
+    "css_class": "wb-icon-area-chart",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "area",
+      "chart",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "arrow-down",
+    "label": "Arrow Down",
+    "css_class": "wb-icon-arrow-down",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation"
+    ],
+    "keywords": [
+      "arrow",
+      "down",
+      "ui",
+      "control",
+      "move",
+      "sort",
+      "reorder"
+    ]
+  },
+  {
+    "slug": "arrow-left",
+    "label": "Arrow Left",
+    "css_class": "wb-icon-arrow-left",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation"
+    ],
+    "keywords": [
+      "arrow",
+      "left",
+      "ui",
+      "control",
+      "back",
+      "previous"
+    ]
+  },
+  {
+    "slug": "arrow-right",
+    "label": "Arrow Right",
+    "css_class": "wb-icon-arrow-right",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation"
+    ],
+    "keywords": [
+      "arrow",
+      "right",
+      "ui",
+      "control",
+      "next",
+      "forward"
+    ]
+  },
+  {
+    "slug": "arrow-up",
+    "label": "Arrow Up",
+    "css_class": "wb-icon-arrow-up",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation"
+    ],
+    "keywords": [
+      "arrow",
+      "up",
+      "ui",
+      "control",
+      "move",
+      "sort",
+      "reorder"
+    ]
+  },
+  {
+    "slug": "arrow-up-circle",
+    "label": "Arrow Up Circle",
+    "css_class": "wb-icon-arrow-up-circle",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls"
+    ],
+    "keywords": [
+      "arrow",
+      "up",
+      "circle",
+      "ui",
+      "control"
+    ]
+  },
+  {
+    "slug": "arrow-up-down",
+    "label": "Arrow Up Down",
+    "css_class": "wb-icon-arrow-up-down",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation",
+      "sorting"
+    ],
+    "keywords": [
+      "arrow",
+      "up",
+      "down",
+      "ui",
+      "control",
+      "sort",
+      "reorder",
+      "drag"
+    ]
+  },
+  {
+    "slug": "at-sign",
+    "label": "At Sign",
+    "css_class": "wb-icon-at-sign",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "at",
+      "sign",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "badge-check",
+    "label": "Badge Check",
+    "css_class": "wb-icon-badge-check",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "badge",
+      "check",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "badge-percent",
+    "label": "Badge Percent",
+    "css_class": "wb-icon-badge-percent",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "badge",
+      "percent",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "ban",
+    "label": "Ban",
+    "css_class": "wb-icon-ban",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "ban",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "banknote",
+    "label": "Banknote",
+    "css_class": "wb-icon-banknote",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "banknote",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "bar-chart",
+    "label": "Bar Chart",
+    "css_class": "wb-icon-bar-chart",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "bar",
+      "chart",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "bar-chart2",
+    "label": "Bar Chart 2",
+    "css_class": "wb-icon-bar-chart2",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "bar",
+      "chart2",
+      "chart",
+      "2",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "bar-chart3",
+    "label": "Bar Chart 3",
+    "css_class": "wb-icon-bar-chart3",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "bar",
+      "chart3",
+      "chart",
+      "3",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "bell",
+    "label": "Bell",
+    "css_class": "wb-icon-bell",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "bell",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "bell-ring",
+    "label": "Bell Ring",
+    "css_class": "wb-icon-bell-ring",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "bell",
+      "ring",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "book",
+    "label": "Book",
+    "css_class": "wb-icon-book",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial"
+    ],
+    "contexts": [
+      "editorial"
+    ],
+    "keywords": [
+      "book",
+      "content",
+      "editorial"
+    ]
+  },
+  {
+    "slug": "book-open",
+    "label": "Book Open",
+    "css_class": "wb-icon-book-open",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial"
+    ],
+    "contexts": [
+      "editorial"
+    ],
+    "keywords": [
+      "book",
+      "open",
+      "content",
+      "editorial"
+    ]
+  },
+  {
+    "slug": "bookmark",
+    "label": "Bookmark",
+    "css_class": "wb-icon-bookmark",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial"
+    ],
+    "contexts": [
+      "editorial"
+    ],
+    "keywords": [
+      "bookmark",
+      "content",
+      "editorial"
+    ]
+  },
+  {
+    "slug": "box",
+    "label": "Box",
+    "css_class": "wb-icon-box",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial",
+      "layout"
+    ],
+    "contexts": [
+      "editorial",
+      "navigation",
+      "components"
+    ],
+    "keywords": [
+      "box",
+      "content",
+      "editorial",
+      "primitives",
+      "components",
+      "ui"
+    ]
+  },
+  {
+    "slug": "brand-cms",
+    "label": "WebBlocks CMS",
+    "css_class": "wb-icon-brand-cms",
+    "source": "webblocks-brand",
+    "categories": [
+      "brand"
+    ],
+    "contexts": [
+      "brand",
+      "product"
+    ],
+    "keywords": [
+      "brand",
+      "cms",
+      "logo",
+      "product",
+      "webblocks",
+      "content",
+      "blocks"
+    ]
+  },
+  {
+    "slug": "briefcase",
+    "label": "Briefcase",
+    "css_class": "wb-icon-briefcase",
+    "source": "webblocks-ui",
+    "categories": [
+      "brands"
+    ],
+    "contexts": [
+      "branding"
+    ],
+    "keywords": [
+      "briefcase",
+      "brand",
+      "social"
+    ]
+  },
+  {
+    "slug": "bug",
+    "label": "Bug",
+    "css_class": "wb-icon-bug",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "bug",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "building2",
+    "label": "Building 2",
+    "css_class": "wb-icon-building2",
+    "source": "webblocks-ui",
+    "categories": [
+      "brands"
+    ],
+    "contexts": [
+      "branding"
+    ],
+    "keywords": [
+      "building2",
+      "building",
+      "2",
+      "brand",
+      "social"
+    ]
+  },
+  {
+    "slug": "calculator",
+    "label": "Calculator",
+    "css_class": "wb-icon-calculator",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "calculator",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "calendar",
+    "label": "Calendar",
+    "css_class": "wb-icon-calendar",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "calendar",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "camera",
+    "label": "Camera",
+    "css_class": "wb-icon-camera",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "camera",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "check",
+    "label": "Check",
+    "css_class": "wb-icon-check",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "check",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "chevron-down",
+    "label": "Chevron Down",
+    "css_class": "wb-icon-chevron-down",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls"
+    ],
+    "keywords": [
+      "chevron",
+      "down",
+      "ui",
+      "control"
+    ]
+  },
+  {
+    "slug": "chevron-left",
+    "label": "Chevron Left",
+    "css_class": "wb-icon-chevron-left",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation"
+    ],
+    "keywords": [
+      "chevron",
+      "left",
+      "ui",
+      "control",
+      "back",
+      "previous"
+    ]
+  },
+  {
+    "slug": "chevron-right",
+    "label": "Chevron Right",
+    "css_class": "wb-icon-chevron-right",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation"
+    ],
+    "keywords": [
+      "chevron",
+      "right",
+      "ui",
+      "control",
+      "next",
+      "forward"
+    ]
+  },
+  {
+    "slug": "chevron-up",
+    "label": "Chevron Up",
+    "css_class": "wb-icon-chevron-up",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls"
+    ],
+    "keywords": [
+      "chevron",
+      "up",
+      "ui",
+      "control"
+    ]
+  },
+  {
+    "slug": "circle",
+    "label": "Circle",
+    "css_class": "wb-icon-circle",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status"
+    ],
+    "keywords": [
+      "circle",
+      "status",
+      "feedback"
+    ]
+  },
+  {
+    "slug": "circle-dot",
+    "label": "Circle Dot",
+    "css_class": "wb-icon-circle-dot",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status",
+      "navigation",
+      "overview"
+    ],
+    "keywords": [
+      "circle",
+      "dot",
+      "status",
+      "feedback",
+      "overview",
+      "current",
+      "section"
+    ]
+  },
+  {
+    "slug": "circle-help",
+    "label": "Circle Help",
+    "css_class": "wb-icon-circle-help",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status"
+    ],
+    "keywords": [
+      "circle",
+      "help",
+      "status",
+      "feedback"
+    ]
+  },
+  {
+    "slug": "clapperboard",
+    "label": "Clapperboard",
+    "css_class": "wb-icon-clapperboard",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "clapperboard",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "cloud",
+    "label": "Cloud",
+    "css_class": "wb-icon-cloud",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "cloud",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "code",
+    "label": "Code",
+    "css_class": "wb-icon-code",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content",
+      "navigation",
+      "developer"
+    ],
+    "keywords": [
+      "code",
+      "content",
+      "document",
+      "developer",
+      "playground",
+      "integration"
+    ]
+  },
+  {
+    "slug": "columns2",
+    "label": "Columns 2",
+    "css_class": "wb-icon-columns2",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "columns2",
+      "columns",
+      "2",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "contact",
+    "label": "Contact",
+    "css_class": "wb-icon-contact",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "contact",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "cookie",
+    "label": "Cookie",
+    "css_class": "wb-icon-cookie",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status",
+      "navigation",
+      "privacy"
+    ],
+    "keywords": [
+      "cookie",
+      "status",
+      "feedback",
+      "privacy",
+      "consent",
+      "preferences"
+    ]
+  },
+  {
+    "slug": "copy",
+    "label": "Copy",
+    "css_class": "wb-icon-copy",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "copy",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "cpu",
+    "label": "Cpu",
+    "css_class": "wb-icon-cpu",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "cpu",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "credit-card",
+    "label": "Credit Card",
+    "css_class": "wb-icon-credit-card",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "credit",
+      "card",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "database",
+    "label": "Database",
+    "css_class": "wb-icon-database",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "database",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "download",
+    "label": "Download",
+    "css_class": "wb-icon-download",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "download",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "external-link",
+    "label": "External Link",
+    "css_class": "wb-icon-external-link",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "external",
+      "link",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "eye",
+    "label": "Eye",
+    "css_class": "wb-icon-eye",
+    "source": "webblocks-ui",
+    "categories": [
+      "visibility"
+    ],
+    "contexts": [
+      "state"
+    ],
+    "keywords": [
+      "eye",
+      "view",
+      "state"
+    ]
+  },
+  {
+    "slug": "eye-off",
+    "label": "Eye Off",
+    "css_class": "wb-icon-eye-off",
+    "source": "webblocks-ui",
+    "categories": [
+      "visibility"
+    ],
+    "contexts": [
+      "state"
+    ],
+    "keywords": [
+      "eye",
+      "off",
+      "view",
+      "state"
+    ]
+  },
+  {
+    "slug": "file",
+    "label": "File",
+    "css_class": "wb-icon-file",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "folder"
+    ]
+  },
+  {
+    "slug": "file-archive",
+    "label": "File Archive",
+    "css_class": "wb-icon-file-archive",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "archive",
+      "folder"
+    ]
+  },
+  {
+    "slug": "file-code",
+    "label": "File Code",
+    "css_class": "wb-icon-file-code",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "code",
+      "folder"
+    ]
+  },
+  {
+    "slug": "file-image",
+    "label": "File Image",
+    "css_class": "wb-icon-file-image",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "image",
+      "folder"
+    ]
+  },
+  {
+    "slug": "file-lock",
+    "label": "File Lock",
+    "css_class": "wb-icon-file-lock",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "lock",
+      "folder"
+    ]
+  },
+  {
+    "slug": "file-plus",
+    "label": "File Plus",
+    "css_class": "wb-icon-file-plus",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "plus",
+      "folder"
+    ]
+  },
+  {
+    "slug": "file-search",
+    "label": "File Search",
+    "css_class": "wb-icon-file-search",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "search",
+      "folder"
+    ]
+  },
+  {
+    "slug": "file-text",
+    "label": "File Text",
+    "css_class": "wb-icon-file-text",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content",
+      "navigation"
+    ],
+    "keywords": [
+      "file",
+      "text",
+      "content",
+      "document",
+      "page"
+    ]
+  },
+  {
+    "slug": "file-x",
+    "label": "File X",
+    "css_class": "wb-icon-file-x",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "file",
+      "x",
+      "folder"
+    ]
+  },
+  {
+    "slug": "files",
+    "label": "Files",
+    "css_class": "wb-icon-files",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "files",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "film",
+    "label": "Film",
+    "css_class": "wb-icon-film",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "film",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "fingerprint",
+    "label": "Fingerprint",
+    "css_class": "wb-icon-fingerprint",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "fingerprint",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "folder",
+    "label": "Folder",
+    "css_class": "wb-icon-folder",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "folder",
+      "file"
+    ]
+  },
+  {
+    "slug": "folder-open",
+    "label": "Folder Open",
+    "css_class": "wb-icon-folder-open",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "folder",
+      "open",
+      "file"
+    ]
+  },
+  {
+    "slug": "folder-plus",
+    "label": "Folder Plus",
+    "css_class": "wb-icon-folder-plus",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "folder",
+      "plus",
+      "file"
+    ]
+  },
+  {
+    "slug": "folder-tree",
+    "label": "Folder Tree",
+    "css_class": "wb-icon-folder-tree",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "folder",
+      "tree",
+      "file"
+    ]
+  },
+  {
+    "slug": "gauge",
+    "label": "Gauge",
+    "css_class": "wb-icon-gauge",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "gauge",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "github",
+    "label": "Github",
+    "css_class": "wb-icon-github",
+    "source": "webblocks-ui",
+    "categories": [
+      "brands"
+    ],
+    "contexts": [
+      "branding"
+    ],
+    "keywords": [
+      "github",
+      "brand",
+      "social"
+    ]
+  },
+  {
+    "slug": "globe",
+    "label": "Globe",
+    "css_class": "wb-icon-globe",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "globe",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "grip-vertical",
+    "label": "Grip Vertical",
+    "css_class": "wb-icon-grip-vertical",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "sorting"
+    ],
+    "keywords": [
+      "grip",
+      "vertical",
+      "layout",
+      "structure",
+      "drag",
+      "reorder",
+      "handle"
+    ]
+  },
+  {
+    "slug": "hammer",
+    "label": "Hammer",
+    "css_class": "wb-icon-hammer",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "hammer",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "hand-coins",
+    "label": "Hand Coins",
+    "css_class": "wb-icon-hand-coins",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "hand",
+      "coins",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "heading",
+    "label": "Heading",
+    "css_class": "wb-icon-heading",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "heading",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "heart",
+    "label": "Heart",
+    "css_class": "wb-icon-heart",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial"
+    ],
+    "contexts": [
+      "editorial"
+    ],
+    "keywords": [
+      "heart",
+      "content",
+      "editorial"
+    ]
+  },
+  {
+    "slug": "help-circle",
+    "label": "Help Circle",
+    "css_class": "wb-icon-help-circle",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status"
+    ],
+    "keywords": [
+      "help",
+      "circle",
+      "status",
+      "feedback"
+    ]
+  },
+  {
+    "slug": "history",
+    "label": "History",
+    "css_class": "wb-icon-history",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "history",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "home",
+    "label": "Home",
+    "css_class": "wb-icon-home",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation",
+      "dashboard"
+    ],
+    "keywords": [
+      "home",
+      "layout",
+      "structure",
+      "start",
+      "dashboard"
+    ]
+  },
+  {
+    "slug": "image",
+    "label": "Image",
+    "css_class": "wb-icon-image",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "image",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "images",
+    "label": "Images",
+    "css_class": "wb-icon-images",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media",
+      "navigation"
+    ],
+    "keywords": [
+      "images",
+      "media",
+      "asset",
+      "gallery",
+      "photos"
+    ]
+  },
+  {
+    "slug": "inbox",
+    "label": "Inbox",
+    "css_class": "wb-icon-inbox",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "inbox",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "info",
+    "label": "Info",
+    "css_class": "wb-icon-info",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status"
+    ],
+    "keywords": [
+      "info",
+      "status",
+      "feedback"
+    ]
+  },
+  {
+    "slug": "instagram",
+    "label": "Instagram",
+    "css_class": "wb-icon-instagram",
+    "source": "webblocks-ui",
+    "categories": [
+      "brands"
+    ],
+    "contexts": [
+      "branding"
+    ],
+    "keywords": [
+      "instagram",
+      "brand",
+      "social"
+    ]
+  },
+  {
+    "slug": "key-round",
+    "label": "Key Round",
+    "css_class": "wb-icon-key-round",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "key",
+      "round",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "languages",
+    "label": "Languages",
+    "css_class": "wb-icon-languages",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "languages",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "laptop",
+    "label": "Laptop",
+    "css_class": "wb-icon-laptop",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "laptop",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "layers",
+    "label": "Layers",
+    "css_class": "wb-icon-layers",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system",
+      "navigation",
+      "architecture"
+    ],
+    "keywords": [
+      "layers",
+      "system",
+      "settings",
+      "architecture",
+      "structure"
+    ]
+  },
+  {
+    "slug": "layout",
+    "label": "Layout",
+    "css_class": "wb-icon-layout",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation"
+    ],
+    "keywords": [
+      "layout",
+      "structure",
+      "page"
+    ]
+  },
+  {
+    "slug": "layout-dashboard",
+    "label": "Layout Dashboard",
+    "css_class": "wb-icon-layout-dashboard",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics",
+      "layout"
+    ],
+    "contexts": [
+      "analytics",
+      "navigation",
+      "dashboard"
+    ],
+    "keywords": [
+      "layout",
+      "dashboard",
+      "analytics",
+      "reporting",
+      "admin",
+      "workspace",
+      "shell"
+    ]
+  },
+  {
+    "slug": "layout-grid",
+    "label": "Layout Grid",
+    "css_class": "wb-icon-layout-grid",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation",
+      "patterns"
+    ],
+    "keywords": [
+      "layout",
+      "grid",
+      "structure",
+      "patterns",
+      "overview",
+      "sections"
+    ]
+  },
+  {
+    "slug": "line-chart",
+    "label": "Line Chart",
+    "css_class": "wb-icon-line-chart",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "line",
+      "chart",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "linkedin",
+    "label": "Linkedin",
+    "css_class": "wb-icon-linkedin",
+    "source": "webblocks-ui",
+    "categories": [
+      "brands"
+    ],
+    "contexts": [
+      "branding"
+    ],
+    "keywords": [
+      "linkedin",
+      "brand",
+      "social"
+    ]
+  },
+  {
+    "slug": "list",
+    "label": "List",
+    "css_class": "wb-icon-list",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "list",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "list-ordered",
+    "label": "List Ordered",
+    "css_class": "wb-icon-list-ordered",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "list",
+      "ordered",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "lock",
+    "label": "Lock",
+    "css_class": "wb-icon-lock",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "lock",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "lock-open",
+    "label": "Lock Open",
+    "css_class": "wb-icon-lock-open",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "lock",
+      "open",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "log-out",
+    "label": "Log Out",
+    "css_class": "wb-icon-log-out",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls"
+    ],
+    "keywords": [
+      "log",
+      "out",
+      "ui",
+      "control"
+    ]
+  },
+  {
+    "slug": "mail",
+    "label": "Mail",
+    "css_class": "wb-icon-mail",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "mail",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "map-pin",
+    "label": "Map Pin",
+    "css_class": "wb-icon-map-pin",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "map",
+      "pin",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "maximize2",
+    "label": "Maximize 2",
+    "css_class": "wb-icon-maximize2",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "maximize2",
+      "maximize",
+      "2",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "megaphone",
+    "label": "Megaphone",
+    "css_class": "wb-icon-megaphone",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication",
+      "marketing"
+    ],
+    "contexts": [
+      "communication",
+      "navigation",
+      "marketing"
+    ],
+    "keywords": [
+      "megaphone",
+      "message",
+      "communication",
+      "marketing",
+      "campaign",
+      "announce",
+      "promotion"
+    ]
+  },
+  {
+    "slug": "memory-stick",
+    "label": "Memory Stick",
+    "css_class": "wb-icon-memory-stick",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "memory",
+      "stick",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "menu",
+    "label": "Menu",
+    "css_class": "wb-icon-menu",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls",
+      "navigation"
+    ],
+    "keywords": [
+      "menu",
+      "ui",
+      "control",
+      "navigation",
+      "sidebar"
+    ]
+  },
+  {
+    "slug": "message-square",
+    "label": "Message Square",
+    "css_class": "wb-icon-message-square",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "message",
+      "square",
+      "communication"
+    ]
+  },
+  {
+    "slug": "messages-square",
+    "label": "Messages Square",
+    "css_class": "wb-icon-messages-square",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "messages",
+      "square",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "mic",
+    "label": "Mic",
+    "css_class": "wb-icon-mic",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "mic",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "minimize2",
+    "label": "Minimize 2",
+    "css_class": "wb-icon-minimize2",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "minimize2",
+      "minimize",
+      "2",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "minus",
+    "label": "Minus",
+    "css_class": "wb-icon-minus",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "minus",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "monitor",
+    "label": "Monitor",
+    "css_class": "wb-icon-monitor",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "monitor",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "moon",
+    "label": "Moon",
+    "css_class": "wb-icon-moon",
+    "source": "webblocks-ui",
+    "categories": [
+      "theme"
+    ],
+    "contexts": [
+      "theme"
+    ],
+    "keywords": [
+      "moon",
+      "theme",
+      "appearance"
+    ]
+  },
+  {
+    "slug": "mouse-pointer2",
+    "label": "Mouse Pointer 2",
+    "css_class": "wb-icon-mouse-pointer2",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "mouse",
+      "pointer2",
+      "pointer",
+      "2",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "music",
+    "label": "Music",
+    "css_class": "wb-icon-music",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "music",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "newspaper",
+    "label": "Newspaper",
+    "css_class": "wb-icon-newspaper",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "newspaper",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "octagon-alert",
+    "label": "Octagon Alert",
+    "css_class": "wb-icon-octagon-alert",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status"
+    ],
+    "keywords": [
+      "octagon",
+      "alert",
+      "status",
+      "feedback"
+    ]
+  },
+  {
+    "slug": "package",
+    "label": "Package",
+    "css_class": "wb-icon-package",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "package",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "palette",
+    "label": "Palette",
+    "css_class": "wb-icon-palette",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation",
+      "theme"
+    ],
+    "keywords": [
+      "palette",
+      "layout",
+      "structure",
+      "foundation",
+      "design",
+      "tokens"
+    ]
+  },
+  {
+    "slug": "panel-left",
+    "label": "Panel Left",
+    "css_class": "wb-icon-panel-left",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls"
+    ],
+    "keywords": [
+      "panel",
+      "left",
+      "ui",
+      "control"
+    ]
+  },
+  {
+    "slug": "panel-right",
+    "label": "Panel Right",
+    "css_class": "wb-icon-panel-right",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls"
+    ],
+    "keywords": [
+      "panel",
+      "right",
+      "ui",
+      "control"
+    ]
+  },
+  {
+    "slug": "pause",
+    "label": "Pause",
+    "css_class": "wb-icon-pause",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "pause",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "pen-tool",
+    "label": "Pen Tool",
+    "css_class": "wb-icon-pen-tool",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "pen",
+      "tool",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "pencil",
+    "label": "Pencil",
+    "css_class": "wb-icon-pencil",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "pencil",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "phone",
+    "label": "Phone",
+    "css_class": "wb-icon-phone",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "phone",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "pie-chart",
+    "label": "Pie Chart",
+    "css_class": "wb-icon-pie-chart",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "pie",
+      "chart",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "play",
+    "label": "Play",
+    "css_class": "wb-icon-play",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "play",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "plug",
+    "label": "Plug",
+    "css_class": "wb-icon-plug",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "plug",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "plus",
+    "label": "Plus",
+    "css_class": "wb-icon-plus",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "plus",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "printer",
+    "label": "Printer",
+    "css_class": "wb-icon-printer",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "printer",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "quote",
+    "label": "Quote",
+    "css_class": "wb-icon-quote",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "quote",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "receipt",
+    "label": "Receipt",
+    "css_class": "wb-icon-receipt",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files"
+    ],
+    "keywords": [
+      "receipt",
+      "file",
+      "folder"
+    ]
+  },
+  {
+    "slug": "receipt-text",
+    "label": "Receipt Text",
+    "css_class": "wb-icon-receipt-text",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "receipt",
+      "text",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "rectangle-horizontal",
+    "label": "Rectangle Horizontal",
+    "css_class": "wb-icon-rectangle-horizontal",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "rectangle",
+      "horizontal",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "repeat",
+    "label": "Repeat",
+    "css_class": "wb-icon-repeat",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "repeat",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "rocket",
+    "label": "Rocket",
+    "css_class": "wb-icon-rocket",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status",
+      "navigation",
+      "onboarding"
+    ],
+    "keywords": [
+      "rocket",
+      "status",
+      "feedback",
+      "launch",
+      "start",
+      "getting-started"
+    ]
+  },
+  {
+    "slug": "rotate-ccw",
+    "label": "Rotate Ccw",
+    "css_class": "wb-icon-rotate-ccw",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "rotate",
+      "ccw",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "rotate-cw",
+    "label": "Rotate Cw",
+    "css_class": "wb-icon-rotate-cw",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "rotate",
+      "cw",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "route",
+    "label": "Route",
+    "css_class": "wb-icon-route",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices",
+      "navigation",
+      "structure"
+    ],
+    "keywords": [
+      "route",
+      "device",
+      "platform",
+      "breadcrumb",
+      "path",
+      "hierarchy"
+    ]
+  },
+  {
+    "slug": "router",
+    "label": "Router",
+    "css_class": "wb-icon-router",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices",
+      "network"
+    ],
+    "keywords": [
+      "router",
+      "device",
+      "platform",
+      "network",
+      "wifi"
+    ]
+  },
+  {
+    "slug": "rows2",
+    "label": "Rows 2",
+    "css_class": "wb-icon-rows2",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "rows2",
+      "rows",
+      "2",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "save",
+    "label": "Save",
+    "css_class": "wb-icon-save",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "save",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "search",
+    "label": "Search",
+    "css_class": "wb-icon-search",
+    "source": "webblocks-ui",
+    "categories": [
+      "visibility"
+    ],
+    "contexts": [
+      "state",
+      "navigation",
+      "discovery"
+    ],
+    "keywords": [
+      "search",
+      "view",
+      "state",
+      "find",
+      "lookup"
+    ]
+  },
+  {
+    "slug": "send",
+    "label": "Send",
+    "css_class": "wb-icon-send",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication"
+    ],
+    "keywords": [
+      "send",
+      "message",
+      "communication"
+    ]
+  },
+  {
+    "slug": "server",
+    "label": "Server",
+    "css_class": "wb-icon-server",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "server",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "settings",
+    "label": "Settings",
+    "css_class": "wb-icon-settings",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system",
+      "navigation",
+      "settings"
+    ],
+    "keywords": [
+      "settings",
+      "system",
+      "preferences",
+      "configuration"
+    ]
+  },
+  {
+    "slug": "share2",
+    "label": "Share 2",
+    "css_class": "wb-icon-share2",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial"
+    ],
+    "contexts": [
+      "editorial"
+    ],
+    "keywords": [
+      "share2",
+      "share",
+      "2",
+      "content",
+      "editorial"
+    ]
+  },
+  {
+    "slug": "shield",
+    "label": "Shield",
+    "css_class": "wb-icon-shield",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "shield",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "shield-check",
+    "label": "Shield Check",
+    "css_class": "wb-icon-shield-check",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity",
+      "navigation",
+      "auth",
+      "security"
+    ],
+    "keywords": [
+      "shield",
+      "check",
+      "user",
+      "identity",
+      "auth",
+      "security",
+      "login",
+      "access"
+    ]
+  },
+  {
+    "slug": "shopping-bag",
+    "label": "Shopping Bag",
+    "css_class": "wb-icon-shopping-bag",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "shopping",
+      "bag",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "shopping-cart",
+    "label": "Shopping Cart",
+    "css_class": "wb-icon-shopping-cart",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce",
+      "navigation"
+    ],
+    "keywords": [
+      "shopping",
+      "cart",
+      "commerce",
+      "billing",
+      "basket",
+      "checkout"
+    ]
+  },
+  {
+    "slug": "sidebar",
+    "label": "Sidebar",
+    "css_class": "wb-icon-sidebar",
+    "source": "webblocks-ui",
+    "categories": [
+      "controls"
+    ],
+    "contexts": [
+      "controls"
+    ],
+    "keywords": [
+      "sidebar",
+      "ui",
+      "control"
+    ]
+  },
+  {
+    "slug": "sliders-horizontal",
+    "label": "Sliders Horizontal",
+    "css_class": "wb-icon-sliders-horizontal",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "sliders",
+      "horizontal",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "smartphone",
+    "label": "Smartphone",
+    "css_class": "wb-icon-smartphone",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "smartphone",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "sparkles",
+    "label": "Sparkles",
+    "css_class": "wb-icon-sparkles",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "sparkles",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "square",
+    "label": "Square",
+    "css_class": "wb-icon-square",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout"
+    ],
+    "keywords": [
+      "square",
+      "layout",
+      "structure"
+    ]
+  },
+  {
+    "slug": "square-terminal",
+    "label": "Square Terminal",
+    "css_class": "wb-icon-square-terminal",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system",
+      "developer"
+    ],
+    "keywords": [
+      "square",
+      "terminal",
+      "system",
+      "settings",
+      "console",
+      "developer"
+    ]
+  },
+  {
+    "slug": "star",
+    "label": "Star",
+    "css_class": "wb-icon-star",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial"
+    ],
+    "contexts": [
+      "editorial",
+      "navigation",
+      "reference"
+    ],
+    "keywords": [
+      "star",
+      "content",
+      "editorial",
+      "icons",
+      "reference",
+      "catalog"
+    ]
+  },
+  {
+    "slug": "sticky-note",
+    "label": "Sticky Note",
+    "css_class": "wb-icon-sticky-note",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "sticky",
+      "note",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "store",
+    "label": "Store",
+    "css_class": "wb-icon-store",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "store",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "sun",
+    "label": "Sun",
+    "css_class": "wb-icon-sun",
+    "source": "webblocks-ui",
+    "categories": [
+      "theme"
+    ],
+    "contexts": [
+      "theme"
+    ],
+    "keywords": [
+      "sun",
+      "theme",
+      "appearance"
+    ]
+  },
+  {
+    "slug": "sun-moon",
+    "label": "Sun Moon",
+    "css_class": "wb-icon-sun-moon",
+    "source": "webblocks-ui",
+    "categories": [
+      "theme"
+    ],
+    "contexts": [
+      "theme"
+    ],
+    "keywords": [
+      "sun",
+      "moon",
+      "theme",
+      "appearance"
+    ]
+  },
+  {
+    "slug": "tablet",
+    "label": "Tablet",
+    "css_class": "wb-icon-tablet",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "tablet",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "tablet-smartphone",
+    "label": "Tablet Smartphone",
+    "css_class": "wb-icon-tablet-smartphone",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "tablet",
+      "smartphone",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "target",
+    "label": "Target",
+    "css_class": "wb-icon-target",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "target",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "terminal",
+    "label": "Terminal",
+    "css_class": "wb-icon-terminal",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system",
+      "navigation",
+      "developer"
+    ],
+    "keywords": [
+      "terminal",
+      "system",
+      "settings",
+      "developer",
+      "javascript",
+      "runtime"
+    ]
+  },
+  {
+    "slug": "toggle-left",
+    "label": "Toggle Left",
+    "css_class": "wb-icon-toggle-left",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "toggle",
+      "left",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "toggle-right",
+    "label": "Toggle Right",
+    "css_class": "wb-icon-toggle-right",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system"
+    ],
+    "keywords": [
+      "toggle",
+      "right",
+      "system",
+      "settings"
+    ]
+  },
+  {
+    "slug": "trash",
+    "label": "Trash",
+    "css_class": "wb-icon-trash",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "trash",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "trash2",
+    "label": "Trash 2",
+    "css_class": "wb-icon-trash2",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "trash2",
+      "trash",
+      "2",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "trending-up",
+    "label": "Trending Up",
+    "css_class": "wb-icon-trending-up",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics"
+    ],
+    "keywords": [
+      "trending",
+      "up",
+      "analytics",
+      "reporting"
+    ]
+  },
+  {
+    "slug": "triangle-alert",
+    "label": "Triangle Alert",
+    "css_class": "wb-icon-triangle-alert",
+    "source": "webblocks-ui",
+    "categories": [
+      "status"
+    ],
+    "contexts": [
+      "status"
+    ],
+    "keywords": [
+      "triangle",
+      "alert",
+      "status",
+      "feedback"
+    ]
+  },
+  {
+    "slug": "twitter",
+    "label": "Twitter",
+    "css_class": "wb-icon-twitter",
+    "source": "webblocks-ui",
+    "categories": [
+      "brands"
+    ],
+    "contexts": [
+      "branding"
+    ],
+    "keywords": [
+      "twitter",
+      "brand",
+      "social"
+    ]
+  },
+  {
+    "slug": "type",
+    "label": "Type",
+    "css_class": "wb-icon-type",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content"
+    ],
+    "keywords": [
+      "type",
+      "content",
+      "document"
+    ]
+  },
+  {
+    "slug": "upload",
+    "label": "Upload",
+    "css_class": "wb-icon-upload",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "upload",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "user",
+    "label": "User",
+    "css_class": "wb-icon-user",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "user-plus",
+    "label": "User Plus",
+    "css_class": "wb-icon-user-plus",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "user",
+      "plus",
+      "identity"
+    ]
+  },
+  {
+    "slug": "user-round",
+    "label": "User Round",
+    "css_class": "wb-icon-user-round",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "user",
+      "round",
+      "identity"
+    ]
+  },
+  {
+    "slug": "users",
+    "label": "Users",
+    "css_class": "wb-icon-users",
+    "source": "webblocks-ui",
+    "categories": [
+      "users"
+    ],
+    "contexts": [
+      "identity"
+    ],
+    "keywords": [
+      "users",
+      "user",
+      "identity"
+    ]
+  },
+  {
+    "slug": "video",
+    "label": "Video",
+    "css_class": "wb-icon-video",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "video",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "volume2",
+    "label": "Volume 2",
+    "css_class": "wb-icon-volume2",
+    "source": "webblocks-ui",
+    "categories": [
+      "media"
+    ],
+    "contexts": [
+      "media"
+    ],
+    "keywords": [
+      "volume2",
+      "volume",
+      "2",
+      "media",
+      "asset"
+    ]
+  },
+  {
+    "slug": "wallet",
+    "label": "Wallet",
+    "css_class": "wb-icon-wallet",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce"
+    ],
+    "keywords": [
+      "wallet",
+      "commerce",
+      "billing"
+    ]
+  },
+  {
+    "slug": "watch",
+    "label": "Watch",
+    "css_class": "wb-icon-watch",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "watch",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "wifi",
+    "label": "Wifi",
+    "css_class": "wb-icon-wifi",
+    "source": "webblocks-ui",
+    "categories": [
+      "devices"
+    ],
+    "contexts": [
+      "devices"
+    ],
+    "keywords": [
+      "wifi",
+      "device",
+      "platform"
+    ]
+  },
+  {
+    "slug": "wrench",
+    "label": "Wrench",
+    "css_class": "wb-icon-wrench",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system",
+      "navigation",
+      "tools"
+    ],
+    "keywords": [
+      "wrench",
+      "system",
+      "settings",
+      "tools",
+      "utilities",
+      "setup"
+    ]
+  },
+  {
+    "slug": "x",
+    "label": "X",
+    "css_class": "wb-icon-x",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions"
+    ],
+    "keywords": [
+      "x",
+      "action",
+      "command"
+    ]
+  },
+  {
+    "slug": "youtube",
+    "label": "Youtube",
+    "css_class": "wb-icon-youtube",
+    "source": "webblocks-ui",
+    "categories": [
+      "brands"
+    ],
+    "contexts": [
+      "branding"
+    ],
+    "keywords": [
+      "youtube",
+      "brand",
+      "social"
+    ]
+  }
+]

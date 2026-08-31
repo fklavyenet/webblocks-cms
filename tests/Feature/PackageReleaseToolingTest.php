@@ -60,18 +60,22 @@ class PackageReleaseToolingTest extends TestCase
     );
   }
 
-  public function test_release_refuses_to_ship_without_the_icon_manifest_for_the_pinned_ui_version(): void
+  public function test_release_refuses_to_ship_without_the_verified_local_ui_runtime(): void
   {
     $prepare = (string) file_get_contents(dirname(__DIR__, 2).'/scripts/release/prepare.sh');
 
-    // Packagist installs from the tag, not from the built zip, so the manifest
-    // has to be committed; this is what stops it going stale after a UI bump.
+    // Packagist installs from the tag, not from the built zip, so both the
+    // runtime and its checksum manifest have to be committed.
     $this->assertStringContainsString('webblocks-ui-${UI_VERSION}.json', $prepare);
-    $this->assertStringContainsString('composer icons:vendor', $prepare);
+    $this->assertStringContainsString('scripts/release/verify-ui.php', $prepare);
+    $this->assertStringContainsString('composer ui:vendor', $prepare);
 
     $composer = json_decode((string) file_get_contents(dirname(__DIR__, 2).'/composer.json'), true);
 
-    $this->assertSame('scripts/release/vendor-icons.sh', $composer['scripts']['icons:vendor'] ?? null);
-    $this->assertFileExists(dirname(__DIR__, 2).'/scripts/release/vendor-icons.sh');
+    $this->assertSame('scripts/release/vendor-ui.sh', $composer['scripts']['ui:vendor'] ?? null);
+    $this->assertSame('php scripts/release/verify-ui.php', $composer['scripts']['ui:verify'] ?? null);
+    $this->assertSame('scripts/release/vendor-ui.sh', $composer['scripts']['icons:vendor'] ?? null);
+    $this->assertFileExists(dirname(__DIR__, 2).'/scripts/release/vendor-ui.sh');
+    $this->assertFileExists(dirname(__DIR__, 2).'/scripts/release/verify-ui.php');
   }
 }

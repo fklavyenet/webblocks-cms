@@ -1,0 +1,27 @@
+{
+    "product": "webblocks-ui",
+    "version": "v2.24.3",
+    "source_reference": "https://github.com/fklavyenet/webblocks-ui/tree/v2.24.3",
+    "artifacts": {
+        "webblocks-ui.css": {
+            "sha256": "ac168234d4f8cb4aab218690196fbcb522c37cb430ede1a327c946dd5695db89",
+            "bytes": 279859
+        },
+        "webblocks-icons.css": {
+            "sha256": "59a41755ee5d1df39f38afea84a858b7bc65e5d8f7475bbf7de59f1396e6b1bf",
+            "bytes": 149906
+        },
+        "webblocks-ui.js": {
+            "sha256": "1e4794f4e3fe56acbbb6518a6abb085ef651272bcccb9ea26ae80396060f8252",
+            "bytes": 167948
+        },
+        "webblocks-icons.json": {
+            "sha256": "f9b7eb6dedc8bb2dbd9ca5f9ae8b3b502f3730136bd25a0220c99c4cd04a8c47",
+            "bytes": 55531
+        },
+        "LICENSE.txt": {
+            "sha256": "6219806287052f8d57f7eb09041af912a7d7e38c53f3954e991049765fa43fd2",
+            "bytes": 941
+        }
+    }
+}

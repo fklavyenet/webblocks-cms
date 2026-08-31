@@ -141,15 +141,15 @@ Public favicon and social sharing artwork are now selected from the shared Media
 
 ## WebBlocks UI Assets
 
-WebBlocks UI assets remain loaded from CDN in the CMS public layout.
+WebBlocks UI browser assets are served from the installed CMS package under the versioned path `public/cms/webblocks-ui/{UI_VERSION}/`. Admin, guest, public, and error layouts therefore make no runtime CDN request for the UI CSS, icon CSS, or JavaScript.
 
-CMS-owned default CDN references are pinned to WebBlocks UI `v2.15.0` for the public and admin runtime CSS, icons CSS, runtime JS, the default icon manifest sync source, and the WebBlocks UI AI contract referenced by repo-local AI instructions. Production layout output uses the canonical jsDelivr tag URL format with the standard dist artifacts `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js` while minification hardening is deferred. Browser-facing CSS and JavaScript must not use `raw.githubusercontent.com` fallbacks because Chrome can block those responses through ORB or MIME handling.
+The UI source and build chain remain owned by the WebBlocks UI repository. CMS vendors only its pinned published `dist` artifacts, icon catalog, and upstream license with `composer ui:vendor`. The command writes a deterministic checksum/size manifest, and `composer ui:verify` plus the release preparation guard refuse missing, modified, mismatched, or externally dependent assets. A UI version bump must vendor and commit the complete matching runtime; editing generated files in CMS is not supported.
 
-Those CDN assets are part of the UI project and must not be edited or compiled inside the CMS repository. When installed on an operator site, WebBlocks UI Manager records release, artifact, manifest, checksum, and publish-run metadata as plugin-owned behavior and can publish validated files into a configured local/project-owned static CDN target. CMS core still consumes the existing pinned CDN URLs until a separate explicit migration changes that behavior.
+WebBlocks UI Manager remains a separate operator tool for publishing UI releases to configured static CDN targets. That workflow does not change the CMS core runtime, which always consumes its package-local pinned copy.
 
 ## Admin JavaScript Scope
 
-The package admin layout keeps global JavaScript intentionally small: pinned WebBlocks UI `webblocks-ui.js` plus the shared CMS admin core asset at `public/cms/js/admin/core.js`. Feature-specific admin behavior must be loaded through the `admin-scripts` stack by the view or partial that renders the matching DOM hooks.
+The package admin layout keeps global JavaScript intentionally small: the pinned, package-local WebBlocks UI `webblocks-ui.js` plus the shared CMS admin core asset at `public/cms/js/admin/core.js`. Feature-specific admin behavior must be loaded through the `admin-scripts` stack by the view or partial that renders the matching DOM hooks.
 
 Examples of page-scoped feature assets include asset picker panels, media copy buttons, sortable builder rows, inline and structured builder editors, page-builder modals, slot block delete modals, page slot source modals, Embedded Application setting-table modals, Edit Page asset controls, Gallery item editing, Rich Text editing, and admin password visibility toggles. These remain CMS-owned static files under `public/cms/js/admin/` with matching package source copies under `packages/webblocks-cms/public/cms/js/admin/` where applicable. CMS admin assets do not use Vite, npm, Tailwind, `public/build`, hot files, or any frontend build chain.
 

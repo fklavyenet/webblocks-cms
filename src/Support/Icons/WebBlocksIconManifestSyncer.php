@@ -53,6 +53,11 @@ class WebBlocksIconManifestSyncer
   public function sync(?string $manifest = null, bool $deactivateMissing = false): array
   {
     $manifest = trim((string) ($manifest ?: self::DEFAULT_MANIFEST));
+
+    if ($manifest === self::DEFAULT_MANIFEST) {
+      $manifest = self::bundledManifestPath();
+    }
+
     $entries = $this->readManifest($manifest);
     $syncedAt = now();
     $seenSlugs = [];

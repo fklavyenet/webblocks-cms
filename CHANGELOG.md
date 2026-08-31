@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.75.9
+
+- Serve the pinned WebBlocks UI `v2.24.3` CSS, icon CSS, JavaScript, and icon catalog from versioned package-local paths across admin, guest, public, and error layouts, removing the browser runtime dependency on jsDelivr.
+- Add a unified UI vendoring command, upstream license, deterministic SHA-256/size manifest, and release verification gate for missing, modified, mismatched, or externally dependent UI artifacts.
+- Replace stale UI runtime directories during package updates while keeping WebBlocks UI source compilation and the separate UI Manager CDN publishing workflow outside CMS core.
+
 ## 1.75.8
 
 - Replace the vendored SortableJS navigation dependency with a CMS-owned vanilla JavaScript tree sorter that preserves automatic persistence, three-level and group-parent guards, touch/pointer movement, rollback after failed saves, and ordered save queuing.

@@ -168,6 +168,12 @@ class UpdateInstaller
 
     File::ensureDirectoryExists($target);
 
+    $targetUiRuntime = $target.DIRECTORY_SEPARATOR.'webblocks-ui';
+
+    if (File::isDirectory($targetUiRuntime)) {
+      File::deleteDirectory($targetUiRuntime);
+    }
+
     foreach (File::allFiles($source) as $file) {
       $relativePath = ltrim(str_replace($source, '', $file->getPathname()), DIRECTORY_SEPARATOR);
       $destination = $target.DIRECTORY_SEPARATOR.$relativePath;

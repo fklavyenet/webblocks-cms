@@ -98,9 +98,11 @@ done
 UI_VERSION="$("${PHP_BIN}" -r '$source = file_get_contents($argv[1]); if (! preg_match("/UI_VERSION = '"'"'([^'"'"']+)'"'"'/", $source, $matches)) { fwrite(STDERR, "Unable to read the pinned UI version.\n"); exit(1); } echo $matches[1];' "${ROOT_DIR}/src/Support/WebBlocks.php")"
 ICON_MANIFEST_PATH="${ROOT_DIR}/database/content/icons/webblocks-ui-${UI_VERSION}.json"
 
+"${PHP_BIN}" "${ROOT_DIR}/scripts/release/verify-ui.php"
+
 if [ ! -f "${ICON_MANIFEST_PATH}" ]; then
   printf '[webblocks-release-prepare] No bundled icon manifest for %s.\n' "${UI_VERSION}" >&2
-  printf '[webblocks-release-prepare] Run "composer icons:vendor" and commit the result.\n' >&2
+  printf '[webblocks-release-prepare] Run "composer ui:vendor" and commit the result.\n' >&2
   exit 1
 fi
 
@@ -110,7 +112,7 @@ if curl -fsS --max-time 60 "https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@
   if ! cmp -s "${ICON_MANIFEST_TEMP}" "${ICON_MANIFEST_PATH}"; then
     rm -f "${ICON_MANIFEST_TEMP}"
     printf '[webblocks-release-prepare] Bundled icon manifest differs from the one published for %s.\n' "${UI_VERSION}" >&2
-    printf '[webblocks-release-prepare] Run "composer icons:vendor" and commit the result.\n' >&2
+    printf '[webblocks-release-prepare] Run "composer ui:vendor" and commit the result.\n' >&2
     exit 1
   fi
 
