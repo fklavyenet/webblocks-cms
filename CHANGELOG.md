@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.75.7
+
+- Pin remote-media downloads to the public IP address that passed validation, closing the DNS-rebinding gap while retaining per-redirect validation, download limits, and the existing media allowlist.
+- Isolate managed Embedded Application frames from the CMS origin by removing same-origin authority and applying restrictive CSP/referrer headers to their HTML entries.
+- Apply the Internal Content API rate limit to the legacy `/admin-api` compatibility prefix and serve the pinned SortableJS navigation dependency from the package with its upstream license instead of executing CDN-hosted admin code.
+
 ## 1.75.6
 
 - Move admin password visibility, listing filters, pagination layout, slot-source selection, and Media view/folder states onto the WebBlocks UI primitives already loaded by the panel.

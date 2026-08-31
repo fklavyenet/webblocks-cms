@@ -72,6 +72,8 @@ The Internal Content API (`/webadmin/api`) is for trusted operator/AI tooling.
   token values.
 - Treat API tokens as secrets. Scope them to the minimum capabilities a tool
   needs, and rotate them if exposed.
+- Both the canonical `/webadmin/api` routes and the legacy `/admin-api`
+  compatibility routes share the Internal Content API rate limiter.
 
 See [Internal Content API](internal-content-api.md).
 
@@ -137,6 +139,14 @@ signature over its checksum, or the update is refused.
   the same origin as the admin. Enable it only on installs where every account
   that can upload media is trusted, via `WEBBLOCKS_CMS_ALLOW_SVG_UPLOADS=true`.
   The same allowlist governs server-side remote media fetches.
+- **Remote media fetching validates every redirect target and pins the HTTP
+  connection to the public IP address that passed validation.** This closes the
+  DNS lookup/connection race used by DNS-rebinding attacks. Remote fetching
+  fails closed when PHP cURL address pinning is unavailable.
+- **Managed Embedded Application iframes are opaque-origin sandboxes.** Their
+  entry responses apply restrictive CSP and referrer headers, and the iframe
+  does not receive same-origin access to CMS cookies, storage, the parent page,
+  or authenticated panel requests.
 
 ## Telemetry and privacy
 

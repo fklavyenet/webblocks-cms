@@ -34,7 +34,7 @@
                     src="{{ $definition->entry }}"
                     title="{{ $definition->name }}"
                     loading="{{ $loading }}"
-                    sandbox="allow-scripts allow-same-origin"
+                    sandbox="allow-scripts"
                     @if ($definition->supports['fullscreen'] ?? false) allow="fullscreen" allowfullscreen @endif
                 ></iframe>
             </div>

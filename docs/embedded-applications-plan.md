@@ -31,6 +31,14 @@ System → Embedded Applications provides create, list, edit, enable/disable, an
 
 After saving a definition, **Application files** opens its site-scoped file manager. A system administrator selects the host site and uploads `.css`, `.js`, or the single managed HTML entry named `index.html`. CSS and JavaScript live under `/site/{site_handle}/applications/{application_handle}/{type}`; the HTML entry lives at the application root and is served through `/webblocks-applications/{application_handle}/index.html`, where the request host selects the correct site copy. Uploading `index.html` switches the definition to iframe mode and assigns that stable entry URL. Updates use checksums and replacements/deletions retain revision snapshots; a referenced file cannot be deleted until its URL is removed.
 
+Managed iframe entries run as sandboxed, opaque-origin documents. They may execute
+scripts, but they do not receive same-origin access to CMS cookies, storage, the
+parent document, or authenticated panel requests. The entry response also applies
+a restrictive Content Security Policy: assets and network connections are
+same-origin by default, objects and forms are disabled, and referrer data is not
+sent. Applications that require cross-origin services must use a separately
+reviewed host integration rather than weakening the shared CMS origin.
+
 Application Block settings are managed as a compact table rather than a fixed collection of empty field cards. **Add Setting** opens a modal containing the typed schema fields; saving adds the draft setting to the table, while cancel closes the modal without changing the application. Existing rows use the same modal for editing and expose icon actions for editing and removal. The table is part of the parent application form, so these client-side changes are persisted only when the operator saves the application. The submitted `settings[*]` contract and API representation remain unchanged.
 
 Application files may still be deployed by the host's normal release or asset pipeline. The admin file manager and dedicated API provide a narrowly scoped alternative for registered applications; CSS/JS accept safe basenames, while HTML is deliberately restricted to `index.html`. This is not a general executable-file browser.

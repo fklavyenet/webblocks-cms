@@ -65,7 +65,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
   ->group($siteDomainRoutes);
 
 // Legacy prefix, kept working for existing provisioning tools.
-Route::middleware(['web', 'install.required', 'internal-api.token'])
+Route::middleware(['web', 'install.required', 'throttle:internal-content-api', 'internal-api.token'])
   ->prefix('admin-api')
   ->name('admin-api.')
   ->group(function () use ($siteDomainRoutes): void {

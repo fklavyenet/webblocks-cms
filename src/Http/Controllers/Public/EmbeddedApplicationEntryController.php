@@ -24,6 +24,8 @@ class EmbeddedApplicationEntryController extends Controller
       'Content-Type' => 'text/html; charset=UTF-8',
       'Cache-Control' => 'no-cache',
       'ETag' => '"'.$asset['checksum'].'"',
+      'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
+      'Referrer-Policy' => 'no-referrer',
       'X-Content-Type-Options' => 'nosniff',
     ]);
   }

@@ -64,13 +64,16 @@ class RemoteMediaFetcher
     $maxRedirects = (int) config('webblocks-cms.media.remote_fetch.max_redirects', 3);
 
     for ($redirect = 0; $redirect <= $maxRedirects; $redirect++) {
-      $this->assertPublicUrl($currentUrl);
+      $pinnedAddress = $this->publicAddressForUrl($currentUrl);
 
       $response = Http::accept('*/*')
         ->timeout((int) config('webblocks-cms.media.remote_fetch.timeout_seconds', 15))
         ->connectTimeout((int) config('webblocks-cms.media.remote_fetch.connect_timeout_seconds', 5))
         ->withOptions([
           'allow_redirects' => false,
+          'curl' => [
+            CURLOPT_RESOLVE => [$this->curlResolveEntry($currentUrl, $pinnedAddress)],
+          ],
           'progress' => function (int $downloadTotal, int $downloadedBytes) use ($maxBytes): void {
             if ($downloadTotal > $maxBytes || $downloadedBytes > $maxBytes) {
               throw new RuntimeException('Remote media is larger than the configured limit.');
@@ -101,7 +104,7 @@ class RemoteMediaFetcher
     throw new RuntimeException('Remote media followed too many redirects.');
   }
 
-  private function assertPublicUrl(string $url): void
+  private function publicAddressForUrl(string $url): string
   {
     $parts = parse_url($url);
     $scheme = strtolower((string) ($parts['scheme'] ?? ''));
@@ -115,11 +118,29 @@ class RemoteMediaFetcher
       throw new RuntimeException('Remote media URL must not target a local host.');
     }
 
-    foreach ($this->resolveHostIps($host) as $ip) {
+    $addresses = $this->resolveHostIps($host);
+
+    foreach ($addresses as $ip) {
       if (! $this->isPublicIp($ip)) {
         throw new RuntimeException('Remote media URL resolves to a private or reserved network address.');
       }
     }
+
+    if (! defined('CURLOPT_RESOLVE')) {
+      throw new RuntimeException('Remote media fetching requires the PHP cURL extension so the validated address can be pinned.');
+    }
+
+    return $addresses[0];
+  }
+
+  private function curlResolveEntry(string $url, string $ip): string
+  {
+    $parts = parse_url($url);
+    $host = trim((string) ($parts['host'] ?? ''), '[]');
+    $port = (int) ($parts['port'] ?? (strtolower((string) ($parts['scheme'] ?? '')) === 'https' ? 443 : 80));
+    $address = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? '['.$ip.']' : $ip;
+
+    return $host.':'.$port.':'.$address;
   }
 
   private function resolveHostIps(string $host): array

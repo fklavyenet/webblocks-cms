@@ -161,7 +161,8 @@
 @endpush
 
 @push('scripts')
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+  @php($sortableJsPath = public_path('cms/js/vendor/sortablejs-1.15.6.min.js'))
+  <script src="{{ asset('cms/js/vendor/sortablejs-1.15.6.min.js') }}?v={{ filemtime($sortableJsPath) }}"></script>
   <script>
     (function () {
       function initNavigationTree(root) {

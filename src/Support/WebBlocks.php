@@ -10,7 +10,7 @@ final class WebBlocks
 
   public const HANDLE = 'webblocks-cms';
 
-  public const VERSION = '1.75.6';
+  public const VERSION = '1.75.7';
 
   public const UI_VERSION = 'v2.24.3';
 
