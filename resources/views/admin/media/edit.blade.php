@@ -126,7 +126,7 @@
                                 <span class="wb-text-sm wb-text-muted">{{ $adminText('focal_point_help') }}</span>
                                 <button type="button" class="wb-media-focal-picker" data-wb-focal-image aria-label="{{ $adminText('choose_focal_point') }}">
                                     <img src="{{ $asset->transformUrl('content') }}" alt="{{ $asset->thumbnailLabel() }}">
-                                    <span class="wb-media-focal-marker" data-wb-focal-marker style="left: {{ old('focal_point_x', $asset->focal_point_x ?? 0.5) * 100 }}%; top: {{ old('focal_point_y', $asset->focal_point_y ?? 0.5) * 100 }}%;"></span>
+                                    <span class="wb-media-focal-marker" data-wb-focal-marker data-wb-focal-x-value="{{ old('focal_point_x', $asset->focal_point_x ?? 0.5) }}" data-wb-focal-y-value="{{ old('focal_point_y', $asset->focal_point_y ?? 0.5) }}"></span>
                                 </button>
                                 <input type="hidden" name="focal_point_x" value="{{ old('focal_point_x', $asset->focal_point_x ?? 0.5) }}" data-wb-focal-x>
                                 <input type="hidden" name="focal_point_y" value="{{ old('focal_point_y', $asset->focal_point_y ?? 0.5) }}" data-wb-focal-y>
@@ -232,7 +232,7 @@
                             <div class="wb-card-body wb-stack wb-gap-3">
                                 <div class="wb-stack wb-gap-1">
                                     <strong>{{ $adminText('path') }}</strong>
-                                    <code style="white-space: normal; word-break: break-word; display: block;">{{ $asset->path }}</code>
+                                    <code class="wb-admin-code-wrap">{{ $asset->path }}</code>
                                 </div>
 
                                 <div class="wb-stack wb-gap-1">
@@ -250,7 +250,7 @@
                                             </button>
                                         @endif
                                     </div>
-                                    <code style="white-space: normal; word-break: break-word; display: block;">{{ $publicUrl ?: '-' }}</code>
+                                    <code class="wb-admin-code-wrap">{{ $publicUrl ?: '-' }}</code>
                                 </div>
 
                                 <div><strong>{{ $adminText('created_label') }}</strong> {{ $asset->created_at?->format('Y-m-d H:i') ?? '-' }}</div>

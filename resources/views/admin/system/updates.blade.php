@@ -324,72 +324,7 @@
 @endsection
 
 @if ($updateAvailable && $canUpdate)
-@push('scripts')
-  <script>
-    (function () {
-      var form = document.querySelector('[data-wb-update-form]');
-      var modal = document.querySelector('[data-webblocks-update-progress-modal]');
-
-      if (!form || !modal) { return; }
-
-      function openModal(trigger) {
-        modal.addEventListener('wb:overlay:close-request', function (closeEvent) {
-          closeEvent.preventDefault();
-        });
-
-        if (window.WBModal && typeof window.WBModal.open === 'function') {
-          window.WBModal.open(modal, trigger);
-        } else {
-          modal.hidden = false;
-          modal.classList.add('is-open');
-        }
-      }
-
-      // No fetch (very old browser): fall back to a plain submit + spinner.
-      if (!window.fetch) {
-        form.addEventListener('submit', function () { openModal(null); });
-        return;
-      }
-
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-
-        var button = form.querySelector('[data-wb-update-submit]');
-        if (button) { button.disabled = true; }
-        openModal(button);
-
-        var body = new FormData(form);
-        var health = modal.getAttribute('data-wb-health-url') || window.location.href;
-        var returnUrl = modal.getAttribute('data-wb-return-url') || window.location.href;
-        var waiting = modal.getAttribute('data-wb-waiting-label');
-        var status = document.getElementById('wb-update-progress-status');
-        var started = Date.now();
-        var done = false;
-
-        function goHome() { if (done) { return; } done = true; window.location.assign(returnUrl); }
-
-        // A successful self-update swaps the app's own code and restarts
-        // php-fpm, so the triggering request (and the next few) can drop with
-        // a 502 while fresh workers spin up. Fire the update, then poll the
-        // lightweight indicator endpoint (which does not consume the flash)
-        // until the app answers again, and only then navigate — the reload
-        // window stays hidden behind the overlay instead of surfacing as a 502.
-        function poll() {
-          if (done) { return; }
-          if (Date.now() - started > 180000) { goHome(); return; } // 3-min safety net
-          fetch(health, { method: 'GET', cache: 'no-store', credentials: 'same-origin' })
-            .then(function (res) {
-              if (res && res.status >= 200 && res.status < 500) { goHome(); } else { setTimeout(poll, 1500); }
-            })
-            .catch(function () { setTimeout(poll, 1500); });
-        }
-
-        fetch(form.getAttribute('action'), { method: 'POST', body: body, redirect: 'manual', credentials: 'same-origin' })
-          .then(function () { if (waiting && status) { status.textContent = waiting; } })
-          .catch(function () { if (waiting && status) { status.textContent = waiting; } })
-          .then(poll);
-      });
-    }());
-  </script>
+@push('admin-scripts')
+  @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/system-update.js'])
 @endpush
 @endif

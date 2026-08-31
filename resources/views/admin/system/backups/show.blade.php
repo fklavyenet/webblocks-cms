@@ -259,22 +259,6 @@
     @endforeach
 @endpush
 
-@push('scripts')
-    <script>
-        document.querySelectorAll('[data-wb-restore-form]').forEach(function (form) {
-            var acknowledgement = form.querySelector('[data-wb-restore-ack]');
-            var submitButton = form.querySelector('[data-wb-restore-submit]');
-
-            if (!acknowledgement || !submitButton) {
-                return;
-            }
-
-            var syncRestoreSubmitState = function () {
-                submitButton.disabled = !acknowledgement.checked;
-            };
-
-            syncRestoreSubmitState();
-            acknowledgement.addEventListener('change', syncRestoreSubmitState);
-        });
-    </script>
+@push('admin-scripts')
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/backup-restore.js'])
 @endpush

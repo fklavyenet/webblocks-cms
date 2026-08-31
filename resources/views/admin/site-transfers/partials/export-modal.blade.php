@@ -108,11 +108,11 @@
 
                                 @foreach ($exportablePages as $pagesSiteId => $sitePages)
                                     <div data-wb-export-page-group="{{ $pagesSiteId }}" hidden>
-                                        <div class="wb-table-wrap" style="max-height: 26rem; overflow-y: auto;">
+                                        <div class="wb-table-wrap wb-site-export-pages-table">
                                             <table class="wb-table wb-table-sm wb-table-striped wb-table-hover">
                                                 <thead>
                                                     <tr>
-                                                        <th style="width: 2.5rem;"><span class="wb-sr-only">{{ $adminText('site_transfers.pages_to_include') }}</span></th>
+                                                        <th class="wb-site-export-pages-check"><span class="wb-sr-only">{{ $adminText('site_transfers.pages_to_include') }}</span></th>
                                                         <th>{{ $adminText('site_transfers.page_column') }}</th>
                                                         <th>{{ $adminText('site_transfers.status_column') }}</th>
                                                         <th>{{ $adminText('site_transfers.path_column') }}</th>
@@ -168,77 +168,7 @@
 </div>
 
 @if (! empty($exportablePages ?? []))
-@push('scripts')
-  <script>
-    (function () {
-      var root = document.querySelector('[data-wb-export-pages]');
-      var select = document.querySelector('[data-wb-export-site-select]');
-
-      if (!root) { return; }
-
-      function groups() { return root.querySelectorAll('[data-wb-export-page-group]'); }
-
-      // The same modal is opened from the Sites screen with the site already
-      // fixed and no select to read. Bailing out there would leave every box
-      // disabled while the empty hidden input still submitted, which reads on
-      // the server as "no pages selected" — an empty package, silently.
-      function activeGroup() {
-        if (!select) {
-          return groups().length === 1 ? groups()[0] : null;
-        }
-
-        return root.querySelector('[data-wb-export-page-group="' + select.value + '"]');
-      }
-
-      function boxes(group) {
-        return group ? group.querySelectorAll('input[type="checkbox"]') : [];
-      }
-
-      // The counter lives in the card header, outside the per-site group, so
-      // it is looked up from the card rather than from the group it counts.
-      function updateCount(group) {
-        var label = root.querySelector('[data-wb-export-pages-count]');
-        if (!label) { return; }
-
-        if (!group) { label.textContent = ''; return; }
-
-        var all = boxes(group);
-        var on = 0;
-        all.forEach(function (b) { if (b.checked) { on++; } });
-        label.textContent = on + ' / ' + all.length;
-      }
-
-      // Only the selected site's boxes are enabled, so a hidden group can never
-      // smuggle its pages into the submitted selection.
-      function sync() {
-        groups().forEach(function (group) {
-          var isActive = group === activeGroup();
-          group.hidden = !isActive;
-          boxes(group).forEach(function (box) { box.disabled = !isActive; });
-        });
-
-        updateCount(activeGroup());
-      }
-
-      function setAll(predicate) {
-        var group = activeGroup();
-        boxes(group).forEach(function (box) {
-          box.checked = predicate(box.getAttribute('data-wb-export-page-status'));
-        });
-        updateCount(group);
-      }
-
-      if (select) { select.addEventListener('change', sync); }
-      root.addEventListener('change', function (event) {
-        if (event.target.matches('input[type="checkbox"]')) { updateCount(activeGroup()); }
-      });
-
-      root.querySelector('[data-wb-export-pages-all]').addEventListener('click', function () { setAll(function () { return true; }); });
-      root.querySelector('[data-wb-export-pages-none]').addEventListener('click', function () { setAll(function () { return false; }); });
-      root.querySelector('[data-wb-export-pages-published]').addEventListener('click', function () { setAll(function (status) { return status === 'published'; }); });
-
-      sync();
-    }());
-  </script>
+@push('admin-scripts')
+  @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/site-export-page-picker.js'])
 @endpush
 @endif

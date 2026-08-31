@@ -9,6 +9,9 @@
 
     if (!button || !marker || !inputX || !inputY) return;
 
+    marker.style.left = (Number(marker.dataset.wbFocalXValue || 0.5) * 100) + '%';
+    marker.style.top = (Number(marker.dataset.wbFocalYValue || 0.5) * 100) + '%';
+
     button.addEventListener('click', function (event) {
       var bounds = button.getBoundingClientRect();
       var x = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));

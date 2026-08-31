@@ -477,6 +477,16 @@
         }
     }
 
+    function bindSubmitOnChange() {
+        document.addEventListener('change', function (event) {
+            var field = event.target.closest('[data-wb-submit-on-change]');
+
+            if (field && field.form) {
+                field.form.requestSubmit();
+            }
+        });
+    }
+
     admin.escapeHtml = escapeHtml;
     admin.resetAdminTransientUiState = resetAdminTransientUiState;
     admin.bindAdminTransientUiReset = bindAdminTransientUiReset;
@@ -492,4 +502,5 @@
     bindDirtyOverlayGuards();
     bindUpdateIndicator();
     bindBusySubmitButtons();
+    bindSubmitOnChange();
 }());

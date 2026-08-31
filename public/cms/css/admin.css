@@ -1217,3 +1217,47 @@ input.wb-admin-table-grid-input:focus {
     justify-content: flex-start;
     gap: 0.5rem;
 }
+
+.wb-site-export-pages-table {
+    max-height: 26rem;
+    overflow-y: auto;
+}
+
+.wb-site-export-pages-check {
+    width: 2.5rem;
+}
+
+.wb-admin-code-wrap,
+.wb-revision-depth {
+    display: block;
+}
+
+.wb-admin-code-wrap {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.wb-admin-break-anywhere {
+    overflow-wrap: anywhere;
+}
+
+.wb-text-end {
+    text-align: end;
+}
+
+.wb-slot-block-picker-name-column {
+    width: 18rem;
+}
+
+.wb-slot-block-picker-category-column {
+    width: 9rem;
+}
+
+.wb-revision-depth-1 { padding-inline-start: 1.25rem; }
+.wb-revision-depth-2 { padding-inline-start: 2.5rem; }
+.wb-revision-depth-3 { padding-inline-start: 3.75rem; }
+.wb-revision-depth-4 { padding-inline-start: 5rem; }
+.wb-revision-depth-5 { padding-inline-start: 6.25rem; }
+.wb-revision-depth-6 { padding-inline-start: 7.5rem; }
+.wb-revision-depth-7 { padding-inline-start: 8.75rem; }
+.wb-revision-depth-8 { padding-inline-start: 10rem; }

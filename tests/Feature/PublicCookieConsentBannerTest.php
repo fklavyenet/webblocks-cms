@@ -98,11 +98,11 @@ class PublicCookieConsentBannerTest extends TestCase
     $html = $this->renderPage();
 
     $this->assertStringContainsString('cms/js/privacy-consent-sync.js', $html);
-    $this->assertStringContainsString('WebBlocksCmsPrivacyConsent', $html);
+    $this->assertStringNotContainsString('WebBlocksCmsPrivacyConsent', $html);
 
     // privacy-consent-sync.js returns immediately unless all three are present.
-    foreach (['syncUrl', 'csrfToken', 'reportsEnabled'] as $key) {
-      $this->assertStringContainsString($key, $html);
+    foreach (['data-sync-url', 'data-csrf-token', 'data-reports-enabled'] as $attribute) {
+      $this->assertStringContainsString($attribute, $html);
     }
 
     $this->assertStringContainsString('privacy-consent', $html, 'syncUrl must point at the endpoint the controller serves.');

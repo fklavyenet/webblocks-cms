@@ -266,8 +266,8 @@
               <div class="wb-table-wrap wb-slot-block-picker-table-wrap">
                 <table class="wb-table wb-table-striped wb-table-hover">
                   <colgroup>
-                    <col style="width: 18rem;">
-                    <col style="width: 9rem;">
+                    <col class="wb-slot-block-picker-name-column">
+                    <col class="wb-slot-block-picker-category-column">
                     <col>
                   </colgroup>
                   <thead>
@@ -330,8 +330,8 @@
                       <div class="wb-table-wrap wb-slot-block-picker-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                           <colgroup>
-                            <col style="width: 18rem;">
-                            <col style="width: 9rem;">
+                            <col class="wb-slot-block-picker-name-column">
+                            <col class="wb-slot-block-picker-category-column">
                             <col>
                           </colgroup>
                           <thead>

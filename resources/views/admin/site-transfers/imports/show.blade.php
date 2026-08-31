@@ -152,14 +152,14 @@
                             <thead>
                                 <tr>
                                     <th>{{ $adminText('site_transfers.area') }}</th>
-                                    <th style="text-align: right;">{{ $adminText('site_transfers.count') }}</th>
+                                    <th class="wb-text-end">{{ $adminText('site_transfers.count') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($counts as $label => $value)
                                     <tr>
                                         <td>{{ str($label)->replace('_', ' ')->title() }}</td>
-                                        <td style="text-align: right;">{{ $value }}</td>
+                                        <td class="wb-text-end">{{ $value }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -201,6 +201,7 @@
             data-wb-import-progress-modal
             data-wb-return-url="{{ route('admin.site-transfers.imports.show', $siteImport) }}"
             data-wb-busy-label="{{ $adminText('site_transfers.import_busy') }}"
+            data-wb-phase-labels="{{ base64_encode(json_encode($importPhaseLabels, JSON_THROW_ON_ERROR)) }}"
             hidden
         >
             <div class="wb-modal-dialog">
@@ -214,7 +215,7 @@
                             <span class="wb-text-sm wb-text-muted" data-wb-import-counter></span>
                         </div>
                         <div class="wb-progress-bar" data-wb-import-bar>
-                            <div class="wb-progress-bar-fill" data-wb-import-fill style="width: 0%;"></div>
+                            <div class="wb-progress-bar-fill" data-wb-import-fill></div>
                         </div>
                         <span class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.import_keep_open') }}</span>
                     </div>
@@ -234,118 +235,7 @@
 @endsection
 
 @if ($siteImport->isValidated() || $siteImport->isResumable())
-@push('scripts')
-    <script>
-      (function () {
-        var form = document.querySelector('[data-wb-import-form]');
-        var modal = document.querySelector('[data-wb-import-progress-modal]');
-
-        if (!form || !modal || !window.fetch) { return; }
-
-        var phaseEl = modal.querySelector('[data-wb-import-phase]');
-        var counterEl = modal.querySelector('[data-wb-import-counter]');
-        var fillEl = modal.querySelector('[data-wb-import-fill]');
-        var barEl = modal.querySelector('[data-wb-import-bar]');
-        var errorEl = modal.querySelector('[data-wb-import-error]');
-        var errorMessageEl = modal.querySelector('[data-wb-import-error-message]');
-        var actionsEl = modal.querySelector('[data-wb-import-actions]');
-        var retryEl = modal.querySelector('[data-wb-import-retry]');
-        var phaseLabels = @json($importPhaseLabels);
-        var stepUrl = form.getAttribute('data-wb-step-url');
-        var returnUrl = modal.getAttribute('data-wb-return-url');
-        var busyLabel = modal.getAttribute('data-wb-busy-label');
-        var token = form.querySelector('input[name="_token"]');
-
-        function openModal(trigger) {
-          // A live import cannot be cancelled from here; it can only be left,
-          // and leaving is safe because every step has committed.
-          modal.addEventListener('wb:overlay:close-request', function (event) { event.preventDefault(); });
-
-          if (window.WBModal && typeof window.WBModal.open === 'function') {
-            window.WBModal.open(modal, trigger);
-          } else {
-            modal.hidden = false;
-            modal.classList.add('is-open');
-          }
-        }
-
-        function render(state) {
-          var percent = Math.max(0, Math.min(100, state.percent || 0));
-          fillEl.style.width = percent + '%';
-          phaseEl.textContent = phaseLabels[state.phase] || phaseLabels.starting;
-          counterEl.textContent = state.total ? (state.done + ' / ' + state.total + ' (' + percent + '%)') : '';
-        }
-
-        function fail(message) {
-          barEl.classList.add('wb-progress-bar-danger');
-          errorMessageEl.textContent = message || '';
-          errorEl.hidden = false;
-          actionsEl.hidden = false;
-        }
-
-        function finish() {
-          barEl.classList.add('wb-progress-bar-success');
-          fillEl.style.width = '100%';
-          window.location.assign(returnUrl);
-        }
-
-        function stepOnce() {
-          var body = new FormData(form);
-
-          return fetch(stepUrl, {
-            method: 'POST',
-            body: body,
-            credentials: 'same-origin',
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-          }).then(function (response) {
-            return response.json().then(function (state) { return { status: response.status, state: state }; });
-          });
-        }
-
-        function run() {
-          errorEl.hidden = true;
-          actionsEl.hidden = true;
-          barEl.classList.remove('wb-progress-bar-danger');
-
-          stepOnce().then(function (result) {
-            var state = result.state || {};
-
-            // 409: another tab holds the step lock. Its work is our work, so
-            // wait for it rather than competing.
-            if (result.status === 409) {
-              phaseEl.textContent = busyLabel;
-              setTimeout(run, 2000);
-              return;
-            }
-
-            render(state);
-
-            if (state.failed) { fail(state.failure_message); return; }
-            if (state.finished) { finish(); return; }
-
-            run();
-          }).catch(function () {
-            // A dropped request loses at most the slice in flight; the cursor
-            // on the server is authoritative, so just try the next step.
-            setTimeout(run, 3000);
-          });
-        }
-
-        form.addEventListener('submit', function (event) {
-          event.preventDefault();
-
-          var button = form.querySelector('[data-wb-import-submit]');
-          if (button) { button.disabled = true; }
-
-          openModal(button);
-          run();
-        });
-
-        if (retryEl) { retryEl.addEventListener('click', run); }
-
-        void token;
-      }());
-    </script>
+@push('admin-scripts')
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/site-import.js'])
 @endpush
 @endif
-

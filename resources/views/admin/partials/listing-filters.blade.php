@@ -45,7 +45,7 @@
                 @php($includePlaceholder = ! array_key_exists('placeholder', $select) || $select['placeholder'] !== null)
                 <div class="wb-stack wb-gap-1 wb-field">
                     <label for="{{ $select['id'] }}" class="wb-label">{{ $select['label'] }}</label>
-                    <select id="{{ $select['id'] }}" name="{{ $select['name'] }}" class="wb-filter-select" @if (! empty($select['submitOnChange'])) onchange="this.form.submit()" @endif>
+                    <select id="{{ $select['id'] }}" name="{{ $select['name'] }}" class="wb-filter-select" @if (! empty($select['submitOnChange'])) data-wb-submit-on-change @endif>
                         @if ($includePlaceholder)
                             <option value="">{{ $select['placeholder'] ?? 'All' }}</option>
                         @endif
@@ -65,7 +65,7 @@
                         type="date"
                         class="wb-input wb-input-sm"
                         value="{{ $date['value'] ?? '' }}"
-                        @if (! empty($date['submitOnChange'])) onchange="this.form.submit()" @endif
+                        @if (! empty($date['submitOnChange'])) data-wb-submit-on-change @endif
                     >
                 </div>
             @endforeach

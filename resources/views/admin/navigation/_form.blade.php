@@ -45,7 +45,13 @@
                 <option value="custom_url" @selected(old('link_type', $item->link_type ?: 'page') === 'custom_url')>{{ $navigationFormText('custom_url') }}</option>
                 <option value="group" @selected(old('link_type', $item->link_type ?: 'page') === 'group')>{{ $navigationFormText('group') }}</option>
             </select>
-            <div class="wb-text-sm wb-text-muted" data-navigation-link-type-copy>
+            <div
+                class="wb-text-sm wb-text-muted"
+                data-navigation-link-type-copy
+                data-navigation-copy-group="{{ $navigationFormText('group_help') }}"
+                data-navigation-copy-custom-url="{{ $navigationFormText('custom_url_help') }}"
+                data-navigation-copy-page="{{ $navigationFormText('page_help') }}"
+            >
                 @if ($isGroup)
                     {{ $navigationFormText('group_help') }}
                 @elseif ($isUrl)
@@ -119,84 +125,9 @@
 
     <input type="hidden" name="position" value="{{ old('position', $item->position ?: 1) }}">
 
-    <script>
-        (function () {
-            var currentScript = document.currentScript;
-
-            if (!currentScript) {
-                return;
-            }
-
-            var form = currentScript.closest('form');
-
-            if (!form || form.dataset.navigationFormReady === '1') {
-                return;
-            }
-
-            form.dataset.navigationFormReady = '1';
-
-            var linkType = form.querySelector('[data-navigation-link-type]');
-            var pageField = form.querySelector('[data-navigation-page-field]');
-            var urlField = form.querySelector('[data-navigation-url-field]');
-            var targetField = form.querySelector('[data-navigation-target-field]');
-            var copy = form.querySelector('[data-navigation-link-type-copy]');
-            var pageInput = form.querySelector('#page_id');
-            var urlInput = form.querySelector('#url');
-            var targetInput = form.querySelector('#target');
-
-            if (!linkType) {
-                return;
-            }
-
-            function sync() {
-                var type = linkType.value;
-                var isPage = type === 'page';
-                var isUrl = type === 'custom_url';
-                var isGroup = type === 'group';
-
-                if (pageField) {
-                    pageField.hidden = !isPage;
-                }
-
-                if (urlField) {
-                    urlField.hidden = !isUrl;
-                }
-
-                if (targetField) {
-                    targetField.hidden = !isUrl;
-                }
-
-                if (pageInput) {
-                    pageInput.disabled = !isPage;
-                }
-
-                if (urlInput) {
-                    urlInput.disabled = !isUrl;
-                }
-
-                if (targetInput) {
-                    targetInput.disabled = !isUrl;
-                }
-
-                if (copy) {
-                    var copyTexts = {
-                        group: @js($navigationFormText('group_help')),
-                        customUrl: @js($navigationFormText('custom_url_help')),
-                        page: @js($navigationFormText('page_help'))
-                    };
-
-                    copy.textContent = isGroup
-                        ? copyTexts.group
-                        : (isUrl
-                            ? copyTexts.customUrl
-                            : copyTexts.page);
-                }
-            }
-
-            linkType.addEventListener('change', sync);
-            sync();
-        })();
-    </script>
+    @push('admin-scripts')
+        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/navigation-form.js'])
+    @endpush
 
     @if ($formActionsContainerClass)
         <x-webblocks-cms::admin.form-actions

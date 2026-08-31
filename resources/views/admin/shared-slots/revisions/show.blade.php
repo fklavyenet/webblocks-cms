@@ -90,7 +90,7 @@
                             @foreach ($snapshotBlocks as $snapshotBlock)
                                 <tr>
                                     <td>
-                                        <span style="padding-left: {{ $snapshotBlock['depth'] * 1.25 }}rem; display: inline-block;">
+                                        <span class="wb-revision-depth wb-revision-depth-{{ min(8, max(0, (int) $snapshotBlock['depth'])) }}">
                                             {{ str($snapshotBlock['type'])->replace('-', ' ')->headline() }}
                                         </span>
                                     </td>

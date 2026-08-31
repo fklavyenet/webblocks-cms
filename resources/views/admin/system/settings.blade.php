@@ -392,7 +392,7 @@
                             @foreach ($mailDiagnosticItems as $item)
                                 <tr data-wb-mail-diagnostic-item>
                                     <th scope="row" class="wb-text-muted" data-wb-mail-diagnostic-label>{{ $item['label'] }}</th>
-                                    <td data-wb-mail-diagnostic-value style="overflow-wrap: anywhere;">
+                                    <td class="wb-admin-break-anywhere" data-wb-mail-diagnostic-value>
                                         @if (($item['mailto'] ?? false) && $item['value'] !== $systemText('not_configured'))
                                             <a href="mailto:{{ $item['value'] }}">{{ $item['value'] }}</a>
                                         @else

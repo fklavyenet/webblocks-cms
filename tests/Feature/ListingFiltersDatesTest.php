@@ -43,7 +43,8 @@ class ListingFiltersDatesTest extends TestCase
       ],
     ])->render();
 
-    $this->assertStringContainsString('onchange="this.form.submit()"', $html);
+    $this->assertStringContainsString('data-wb-submit-on-change', $html);
+    $this->assertStringNotContainsString('onchange=', $html);
   }
 
   #[Test]

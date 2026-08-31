@@ -1,5 +1,14 @@
 (function () {
-    var config = window.WebBlocksCmsPrivacyConsent;
+    var script = document.currentScript;
+    var data = script ? script.dataset : {};
+    var config = {
+        syncUrl: data.syncUrl,
+        csrfToken: data.csrfToken,
+        reportsEnabled: data.reportsEnabled === '1',
+        consentCookieName: data.consentCookieName,
+        consentLifetimeDays: Number(data.consentLifetimeDays || 180),
+        initialServerChoice: data.initialServerChoice
+    };
 
     if (!config || !config.syncUrl || !config.reportsEnabled) {
         return;

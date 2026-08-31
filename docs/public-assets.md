@@ -149,7 +149,7 @@ WebBlocks UI Manager remains a separate operator tool for publishing UI releases
 
 ## Admin JavaScript Scope
 
-The package admin layout keeps global JavaScript intentionally small: the pinned, package-local WebBlocks UI `webblocks-ui.js` plus the shared CMS admin core asset at `public/cms/js/admin/core.js`. Feature-specific admin behavior must be loaded through the `admin-scripts` stack by the view or partial that renders the matching DOM hooks.
+The package admin layout keeps global JavaScript intentionally small: the pinned, package-local WebBlocks UI `webblocks-ui.js` plus the shared CMS admin core asset at `public/cms/js/admin/core.js`. Feature-specific admin behavior must be loaded through the `admin-scripts` stack by the view or partial that renders the matching DOM hooks. Blade views must not embed executable scripts or DOM event attributes; localized/configured values cross the HTML boundary through escaped `data-*` attributes.
 
 Examples of page-scoped feature assets include asset picker panels, media copy buttons, sortable builder rows, inline and structured builder editors, page-builder modals, slot block delete modals, page slot source modals, Embedded Application setting-table modals, Edit Page asset controls, Gallery item editing, Rich Text editing, and admin password visibility toggles. These remain CMS-owned static files under `public/cms/js/admin/` with matching package source copies under `packages/webblocks-cms/public/cms/js/admin/` where applicable. CMS admin assets do not use Vite, npm, Tailwind, `public/build`, hot files, or any frontend build chain.
 

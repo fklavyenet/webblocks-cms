@@ -20,6 +20,13 @@ class SiteImportViewCompilesTest extends TestCase
     );
   }
 
+  private function runtime(): string
+  {
+    return (string) file_get_contents(
+      dirname(__DIR__, 2).'/public/cms/js/admin/site-import.js'
+    );
+  }
+
   #[Test]
   public function the_import_view_compiles_with_no_directive_left_behind(): void
   {
@@ -42,7 +49,9 @@ class SiteImportViewCompilesTest extends TestCase
     // The map is built from SiteImportPlan::keys() rather than written out by
     // hand, so a phase added later cannot show up in the modal as a raw key.
     $this->assertStringContainsString('SiteImportPlan::keys()', $source);
-    $this->assertStringContainsString('@json($importPhaseLabels)', $source);
+    $this->assertStringContainsString('data-wb-phase-labels=', $source);
+    $this->assertStringContainsString('cms/js/admin/site-import.js', $source);
+    $this->assertStringContainsString('modal.dataset.wbPhaseLabels', $this->runtime());
     $this->assertStringContainsString("site_transfers.import_phases.'.\$phase", $source);
   }
 
@@ -59,7 +68,7 @@ class SiteImportViewCompilesTest extends TestCase
   #[Test]
   public function the_progress_modal_cannot_be_dismissed_while_a_step_is_running(): void
   {
-    $source = $this->source();
+    $source = $this->runtime();
 
     // Leaving is safe — every step has committed — but a stray click that
     // closes the overlay would stop the browser driving the remaining steps
@@ -71,7 +80,7 @@ class SiteImportViewCompilesTest extends TestCase
   #[Test]
   public function a_locked_step_is_waited_out_rather_than_retried_against(): void
   {
-    $source = $this->source();
+    $source = $this->runtime();
 
     // 409 means another tab holds the per-import lock. Its work is this run's
     // work, so the answer is to wait, not to race it.

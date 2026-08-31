@@ -134,10 +134,16 @@
             <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
         @endif
         @if ($consentBannerEnabled && is_file($publicJsAssets['privacy-consent-sync']))
-            <script>
-                window.WebBlocksCmsPrivacyConsent = @json($consentSyncConfig);
-            </script>
-            <script src="{{ asset('cms/js/privacy-consent-sync.js') }}?v={{ filemtime($publicJsAssets['privacy-consent-sync']) }}" defer></script>
+            <script
+                src="{{ asset('cms/js/privacy-consent-sync.js') }}?v={{ filemtime($publicJsAssets['privacy-consent-sync']) }}"
+                data-sync-url="{{ $consentSyncConfig['syncUrl'] }}"
+                data-csrf-token="{{ $consentSyncConfig['csrfToken'] }}"
+                data-reports-enabled="{{ $consentSyncConfig['reportsEnabled'] ? '1' : '0' }}"
+                data-consent-cookie-name="{{ $consentSyncConfig['consentCookieName'] }}"
+                data-consent-lifetime-days="{{ $consentSyncConfig['consentLifetimeDays'] }}"
+                data-initial-server-choice="{{ $consentSyncConfig['initialServerChoice'] }}"
+                defer
+            ></script>
         @endif
         @if ($siteJsPath)
             <script src="{{ $siteJsPath }}" defer></script>

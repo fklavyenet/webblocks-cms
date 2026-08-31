@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.75.10
+
+- Move the Site export page picker and every remaining CMS-authored inline JavaScript runtime into cacheable, page-scoped package assets across Navigation, Backups, System Updates, Site Imports, and public privacy-consent synchronization.
+- Replace inline listing-filter event handlers with data-driven admin-core behavior and move all remaining admin-view style attributes, including the Site export table rules, into package CSS or data-driven page assets.
+- Add a repository-wide Blade guard that rejects inline executable scripts and DOM event attributes before they can ship again.
+
 ## 1.75.9
 
 - Serve the pinned WebBlocks UI `v2.24.3` CSS, icon CSS, JavaScript, and icon catalog from versioned package-local paths across admin, guest, public, and error layouts, removing the browser runtime dependency on jsDelivr.
