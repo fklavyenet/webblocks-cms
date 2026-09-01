@@ -1,6 +1,7 @@
 /.editorconfig export-ignore
 /.github export-ignore
 /.gitignore export-ignore
+/.publisher-client.json export-ignore
 /.phpunit.cache export-ignore
 /.phpunit.result.cache export-ignore
 /composer.lock export-ignore

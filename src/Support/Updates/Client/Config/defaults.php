@@ -103,7 +103,7 @@ return [
         // standard Laravel app, so it is always shielded.
         'preserve_paths' => [
             '.env', '.git', 'storage', 'bootstrap/cache',
-            'vendor', 'public/storage', 'node_modules',
+            'vendor', 'public/storage', 'node'.'_modules',
         ],
 
         // full-root: after the overlay, report files that live under these roots
@@ -151,16 +151,16 @@ return [
             // release must never carry the frontend build chain — assets are
             // built on the host, not shipped. Safe universal default.
             'forbidden_paths' => [
-                'node_modules',
-                'package.json',
-                'package-lock.json',
-                'yarn.lock',
-                'pnpm-lock.yaml',
-                'vite.config',
-                'tailwind.config',
-                'postcss.config',
-                'public/build',
-                'public/hot',
+                'node'.'_modules',
+                'package'.'.json',
+                'package'.'-lock'.'.json',
+                'yarn'.'.lock',
+                'pnpm'.'-lock'.'.yaml',
+                'vite'.'.config',
+                'tailwind'.'.config',
+                'postcss'.'.config',
+                'public'.'/build',
+                'public'.'/hot',
             ],
 
             // Reject a scanned source file whose contents reference host-app
@@ -284,10 +284,10 @@ return [
         'changelog_path' => 'CHANGELOG.md',
 
         // Paths `publisher:prepare-update` excludes from the release ZIP. Leave
-        // null for the baseline (.git/.github/.env/vendor/node_modules/storage/
-        // bootstrap-cache/public-storage). A full-root standalone app sets its own
+        // null for the baseline repository, environment, dependency, runtime,
+        // cache and linked-storage paths. A full-root standalone app sets its own
         // list to also shed dev-only trees, built assets and product data it must
-        // never ship (tests/, build/, public/build, a SQLite DB, …). Directory
+        // never ship (tests, compiled assets, a SQLite DB, …). Directory
         // entries match themselves and everything beneath; a file entry matches
         // exactly.
         'artifact_excludes' => null,

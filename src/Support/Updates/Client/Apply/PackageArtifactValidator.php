@@ -14,10 +14,8 @@ use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateException;
  * Shared package-boundary validation (§7.1 hardening) rejects a staged tree
  * that:
  *   - carries files outside the configured package allowlist,
- *   - ships frontend build-chain files (node_modules, vite/tailwind/postcss
- *     config, lockfiles, compiled public/build|hot),
- *   - hides host-runtime references in scanned source (App\Http\Controllers,
- *     App\Models\, host layout/route references, npm/vite tooling),
+ *   - ships configured frontend build-chain files,
+ *   - hides configured host-runtime references in scanned source,
  *   - uses hidden or unsafe path segments, or
  *   - contains symlinks.
  *

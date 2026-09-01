@@ -46,7 +46,7 @@ class PackageDevelopmentBoundaryTest extends TestCase
 
     $this->assertIsString($attributes);
 
-    foreach (['/.editorconfig', '/.github', '/.gitignore', '/CODE_OF_CONDUCT.md', '/CONTRIBUTING.md', '/SECURITY.md', '/SUPPORT.md', '/composer.lock', '/coverage', '/phpunit.xml.dist', '/pint.json', '/scripts', '/tests', '/vendor'] as $path) {
+    foreach (['/.editorconfig', '/.github', '/.gitignore', '/.publisher-client.json', '/CODE_OF_CONDUCT.md', '/CONTRIBUTING.md', '/SECURITY.md', '/SUPPORT.md', '/composer.lock', '/coverage', '/phpunit.xml.dist', '/pint.json', '/scripts', '/tests', '/vendor'] as $path) {
       $this->assertStringContainsString($path.' export-ignore', $attributes);
     }
   }

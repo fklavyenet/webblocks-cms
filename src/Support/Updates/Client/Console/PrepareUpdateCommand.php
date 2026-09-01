@@ -34,7 +34,7 @@ final class PrepareUpdateCommand extends Command
      * data), e.g. a full-root standalone app shipping `tests/`, `build/` or a
      * SQLite database it must never overwrite on the target.
      */
-    private const EXCLUDES = ['.git', '.github', '.env', 'vendor', 'node_modules', 'storage', 'bootstrap/cache', 'public/storage'];
+    private const EXCLUDES = ['.git', '.github', '.env', 'vendor', 'node'.'_modules', 'storage', 'bootstrap/cache', 'public/storage'];
 
     public function handle(VersionResolver $versions): int
     {

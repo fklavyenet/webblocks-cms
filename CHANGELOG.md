@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.13
+
+- Exclude the development-only embedded Client manifest from CMS distribution and update ZIPs so package validation never rejects it as a hidden path.
+- Synchronize the embedded Client runtime with the latest self-compatible denylist implementation.
+
 ## 1.75.12
 
 - Synchronize the embedded Publisher Client transition hardening, including safe exception loading before post-apply dependency changes and configurable generated-source content-scan exclusions.
