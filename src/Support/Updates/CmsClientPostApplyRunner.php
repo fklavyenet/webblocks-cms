@@ -13,5 +13,6 @@ final class CmsClientPostApplyRunner implements PostApplyRunner
   {
     $this->installer->installDependencies($output);
     $this->installer->runPostInstallCommands($output);
+    $this->installer->syncRuntimeAssets($output);
   }
 }

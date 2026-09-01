@@ -193,6 +193,20 @@ class UpdateInstaller
     }
   }
 
+  /**
+   * Publish package-owned browser assets after the shared Client has swapped
+   * the active Composer package. Package updates do not otherwise write the
+   * host application's public directory.
+   */
+  public function syncRuntimeAssets(array &$output): void
+  {
+    $targetPath = $this->targetPath();
+
+    foreach ($this->packageRuntimePaths($targetPath) as $packageRuntimePath) {
+      $this->syncRootRuntimeAssets($targetPath, $packageRuntimePath, $output);
+    }
+  }
+
   public function installDependencies(array &$output): void
   {
     $targetPath = $this->targetPath();

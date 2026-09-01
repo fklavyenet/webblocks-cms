@@ -90,6 +90,27 @@ class UpdateInstallerPackageRollbackTest extends TestCase
     $this->assertSame([], $output);
   }
 
+  #[Test]
+  public function runtime_assets_are_published_from_the_active_package_after_a_client_swap(): void
+  {
+    File::ensureDirectoryExists($this->packageRuntimePath.'/public/cms/webblocks-ui/v2.24.4');
+    File::put($this->packageRuntimePath.'/public/cms/webblocks-ui/v2.24.4/webblocks-ui.css', 'NEW UI');
+    File::ensureDirectoryExists($this->packageRuntimePath.'/public/cms/css');
+    File::put($this->packageRuntimePath.'/public/cms/css/admin.css', 'NEW ADMIN');
+    File::ensureDirectoryExists($this->targetPath.'/public/cms/webblocks-ui/v2.24.3');
+    File::put($this->targetPath.'/public/cms/webblocks-ui/v2.24.3/webblocks-ui.css', 'OLD UI');
+
+    $output = [];
+    $this->installer()->syncRuntimeAssets($output);
+
+    $this->assertFileDoesNotExist($this->targetPath.'/public/cms/webblocks-ui/v2.24.3/webblocks-ui.css');
+    $this->assertSame('NEW UI', File::get($this->targetPath.'/public/cms/webblocks-ui/v2.24.4/webblocks-ui.css'));
+    $this->assertSame('NEW ADMIN', File::get($this->targetPath.'/public/cms/css/admin.css'));
+    $this->assertTrue(collect($output)->contains(
+      fn (string $line): bool => str_contains($line, 'Synced package public/cms assets'),
+    ));
+  }
+
   private function newPackageRoot(string $markerContents): string
   {
     $packageRoot = $this->targetPath.'/incoming-package';

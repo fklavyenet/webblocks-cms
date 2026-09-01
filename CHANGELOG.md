@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.17
+
+- Synchronize package-owned `public/cms` assets into the host public directory after Publisher Client package updates, ensuring a newly pinned WebBlocks UI runtime is immediately available at the URLs rendered by CMS layouts.
+- Cover the embedded Client post-apply asset publication path so future UI version bumps cannot finish successfully with missing browser assets.
+
 ## 1.75.16
 
 - Show the embedded Publisher Client version and visually distinguish release-detail section headings on System Updates.
