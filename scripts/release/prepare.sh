@@ -146,6 +146,7 @@ fi
     -x '__MACOSX/*' \
     -x '._*' \
     -x '.git*' \
+    -x '*/.*' \
     -x '.github/*' \
     -x 'CHANGELOG.md' \
     -x 'LICENSE' \
@@ -169,7 +170,15 @@ for ($index = 0; $index < $zip->numFiles; $index++) {
   $segments = explode("/", $entry);
   $root = $segments[0];
 
-  if (str_starts_with($root, ".") || ! in_array($root, $allowed, true)) {
+  $hasHiddenSegment = false;
+  foreach ($segments as $segment) {
+    if ($segment === "." || $segment === ".." || str_starts_with($segment, ".")) {
+      $hasHiddenSegment = true;
+      break;
+    }
+  }
+
+  if ($hasHiddenSegment || ! in_array($root, $allowed, true)) {
     fwrite(STDERR, "[webblocks-release-prepare] Release ZIP path is outside the CMS package allowlist: {$entry}\n");
     exit(1);
   }

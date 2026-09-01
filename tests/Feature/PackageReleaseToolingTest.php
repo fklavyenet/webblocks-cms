@@ -23,6 +23,8 @@ class PackageReleaseToolingTest extends TestCase
     $this->assertStringContainsString('HEAD:src/Support/WebBlocks.php', $prepare);
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD', $prepare);
     $this->assertStringContainsString("-x 'CHANGELOG.md'", $prepare);
+    $this->assertStringContainsString("-x '*/.*'", $prepare);
+    $this->assertStringContainsString('$hasHiddenSegment', $prepare);
     $this->assertStringContainsString('Release ZIP path is outside the CMS package allowlist', $prepare);
     $this->assertStringContainsString('vendor/bin/testbench webblocks:publish-update', $publish);
     $this->assertStringContainsString('${ROOT_DIR}/../publish.env', $publish);

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.15
+
+- Exclude nested dot-segment placeholders such as `.gitkeep` from CMS update ZIPs.
+- Validate every path segment—not only the top-level root—against the hidden-path rule before an artefact can be signed or published.
+
 ## 1.75.14
 
 - Restrict CMS update ZIPs to the exact package-runtime allowlist, excluding repository documentation that is valid in source distributions but not installable runtime content.
