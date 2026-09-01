@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.14
+
+- Restrict CMS update ZIPs to the exact package-runtime allowlist, excluding repository documentation that is valid in source distributions but not installable runtime content.
+- Add a release-time ZIP inspection gate that rejects every hidden or non-allowlisted entry before signing and publishing.
+
 ## 1.75.13
 
 - Exclude the development-only embedded Client manifest from CMS distribution and update ZIPs so package validation never rejects it as a hidden path.

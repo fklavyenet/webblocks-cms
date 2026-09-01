@@ -146,8 +146,37 @@ fi
     -x '__MACOSX/*' \
     -x '._*' \
     -x '.git*' \
-    -x '.github/*'
+    -x '.github/*' \
+    -x 'CHANGELOG.md' \
+    -x 'LICENSE' \
+    -x 'README.md' \
+    -x 'UPGRADING.md'
 )
+
+"${PHP_BIN}" -r '
+$zip = new ZipArchive();
+$path = $argv[1];
+$allowed = ["composer.json", "src", "routes", "resources", "database", "config", "public", "docs", "stubs"];
+
+if ($zip->open($path) !== true) {
+  fwrite(STDERR, "[webblocks-release-prepare] Unable to inspect release ZIP.\n");
+  exit(1);
+}
+
+for ($index = 0; $index < $zip->numFiles; $index++) {
+  $entry = trim(str_replace("\\", "/", (string) $zip->getNameIndex($index)), "/");
+  if ($entry === "") continue;
+  $segments = explode("/", $entry);
+  $root = $segments[0];
+
+  if (str_starts_with($root, ".") || ! in_array($root, $allowed, true)) {
+    fwrite(STDERR, "[webblocks-release-prepare] Release ZIP path is outside the CMS package allowlist: {$entry}\n");
+    exit(1);
+  }
+}
+
+$zip->close();
+' "${ARCHIVE_PATH}"
 
 CHECKSUM="$(shasum -a 256 "${ARCHIVE_PATH}" | cut -d' ' -f1)"
 printf '%s\n' "${CHECKSUM}" > "${ARCHIVE_PATH}.sha256"
