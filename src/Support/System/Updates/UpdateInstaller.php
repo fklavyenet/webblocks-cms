@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Support\Facades\File;
 use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
+use WebBlocks\Cms\Support\Updates\CmsRuntimeAssetSynchronizer;
 
 class UpdateInstaller
 {
@@ -158,39 +159,7 @@ class UpdateInstaller
 
   private function syncRootRuntimeAssets(string $targetPath, string $packageRoot, array &$output): void
   {
-    $source = $packageRoot.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'cms';
-
-    if (! File::isDirectory($source)) {
-      return;
-    }
-
-    $target = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'cms';
-
-    File::ensureDirectoryExists($target);
-
-    $targetUiRuntime = $target.DIRECTORY_SEPARATOR.'webblocks-ui';
-
-    if (File::isDirectory($targetUiRuntime)) {
-      File::deleteDirectory($targetUiRuntime);
-    }
-
-    foreach (File::allFiles($source) as $file) {
-      $relativePath = ltrim(str_replace($source, '', $file->getPathname()), DIRECTORY_SEPARATOR);
-      $destination = $target.DIRECTORY_SEPARATOR.$relativePath;
-
-      File::ensureDirectoryExists(dirname($destination));
-      File::copy($file->getPathname(), $destination);
-    }
-
-    $output[] = 'Synced package public/cms assets into public/cms runtime compatibility path.';
-
-    $retiredCmsIndex = $target.DIRECTORY_SEPARATOR.'index.php';
-
-    if (File::exists($retiredCmsIndex) && ! File::exists($source.DIRECTORY_SEPARATOR.'index.php')) {
-      File::delete($retiredCmsIndex);
-
-      $output[] = 'Removed retired public/cms/index.php front-controller handoff.';
-    }
+    app(CmsRuntimeAssetSynchronizer::class)->sync($packageRoot, $targetPath, $output);
   }
 
   /**

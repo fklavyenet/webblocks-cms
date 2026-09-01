@@ -35,4 +35,13 @@ class EmbeddedPublisherClientTest extends TestCase
 
     $this->assertArrayNotHasKey('fklavyenet/webblocks-publisher-client', $composer['require'] ?? []);
   }
+
+  public function test_fresh_post_apply_console_process_can_repair_a_missing_ui_runtime(): void
+  {
+    $provider = (string) file_get_contents(dirname(__DIR__, 2).'/src/WebBlocksCmsServiceProvider.php');
+
+    $this->assertStringContainsString('$this->bootRuntimeAssetCompatibility();', $provider);
+    $this->assertStringContainsString("public_path('cms/webblocks-ui/'.WebBlocks::UI_VERSION.'/manifest.json')", $provider);
+    $this->assertStringContainsString('app(CmsRuntimeAssetSynchronizer::class)->sync(dirname(__DIR__), base_path(), $output);', $provider);
+  }
 }

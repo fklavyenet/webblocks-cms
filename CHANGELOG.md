@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.18
+
+- Repair a missing host-public WebBlocks UI runtime from a freshly swapped CMS package when the updater launches its first post-apply Artisan process.
+- Keep the normal Client post-apply asset synchronization while adding a compatibility bridge for updates initiated by the already-loaded 1.75.16/1.75.17 runtime.
+
 ## 1.75.17
 
 - Synchronize package-owned `public/cms` assets into the host public directory after Publisher Client package updates, ensuring a newly pinned WebBlocks UI runtime is immediately available at the URLs rendered by CMS layouts.

@@ -8,6 +8,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +86,7 @@ use WebBlocks\Cms\Support\Updates\CmsClientBackupManager;
 use WebBlocks\Cms\Support\Updates\CmsClientInstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\CmsClientPostApplyRunner;
 use WebBlocks\Cms\Support\Updates\CmsClientRunRecorder;
+use WebBlocks\Cms\Support\Updates\CmsRuntimeAssetSynchronizer;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class WebBlocksCmsServiceProvider extends ServiceProvider
@@ -868,6 +870,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootNotFoundView();
     $this->bootMigrations();
     $this->bootPublishing();
+    $this->bootRuntimeAssetCompatibility();
 
     // Run after the whole application has booted so every route (including the
     // host app's own routes such as login/register) is registered and can be
@@ -1327,6 +1330,29 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootConfigPublishing();
     $this->bootAssetPublishing();
     $this->bootStubPublishing();
+  }
+
+  /**
+   * Package updates execute follow-up Artisan commands in fresh PHP
+   * processes. That is the earliest point at which newly swapped package code
+   * can repair a missing host-public UI runtime, even when the web request
+   * that started the update still has the previous post-apply class loaded.
+   */
+  protected function bootRuntimeAssetCompatibility(): void
+  {
+    if (! $this->app->runningInConsole() || $this->app->runningUnitTests()) {
+      return;
+    }
+
+    $sourceManifest = $this->publicPath('cms/webblocks-ui/'.WebBlocks::UI_VERSION.'/manifest.json');
+    $targetManifest = public_path('cms/webblocks-ui/'.WebBlocks::UI_VERSION.'/manifest.json');
+
+    if (! File::isFile($sourceManifest) || File::isFile($targetManifest)) {
+      return;
+    }
+
+    $output = [];
+    app(CmsRuntimeAssetSynchronizer::class)->sync(dirname(__DIR__), base_path(), $output);
   }
 
   protected function bootConfigPublishing(): void
