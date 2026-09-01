@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.75.11
+
+- Embed the shared Publisher Client runtime directly in the public CMS package, removing the private Composer repository requirement for CMS consumers.
+- Route System Updates through the shared update engine while preserving CMS-owned full backups, run history, installed-version storage, post-apply maintenance, and the existing update interface.
+- Add a deterministic source manifest and documented synchronization workflow so the embedded runtime remains aligned with the private canonical Client.
+
 ## 1.75.10
 
 - Move the Site export page picker and every remaining CMS-authored inline JavaScript runtime into cacheable, page-scoped package assets across Navigation, Backups, System Updates, Site Imports, and public privacy-consent synchronization.

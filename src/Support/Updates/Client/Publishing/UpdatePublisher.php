@@ -1,0 +1,479 @@
+<?php
+
+// Generated from the shared Publisher Client runtime. Do not edit directly.
+
+namespace WebBlocks\Cms\Support\Updates\Client\Publishing;
+
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Symfony\Component\Finder\Finder;
+
+/**
+ * Owner-side release publisher shared by package and application consumers.
+ * and parameterized off config: product/channel/URLs, the Bearer token (the
+ * "only I can publish" gate, §7.8 layer A), and the Ed25519 signing key.
+ *
+ * Signing is MANDATORY (§7.8): publish refuses to run without a valid signing key,
+ * because an unsigned release would be rejected by every client. Product/version
+ * identity and the payload/artifact come from a prepared payload JSON discovered
+ * under the configured release storage path (or passed explicitly).
+ */
+final class UpdatePublisher
+{
+  private const DETAIL_FIELDS = [
+    'title', 'summary', 'highlights', 'fixes',
+    'compatibility_notes', 'migration_notes', 'asset_notes',
+    'operator_notes', 'technical_notes',
+  ];
+
+  public function publish(array $options = []): UpdatePublishResult
+  {
+    $payloadPath = $this->resolvePayloadPath($options);
+    $payload = $this->readPayload($payloadPath);
+    $artifactPath = $this->resolveArtifactPath($options, $payload);
+    $checksum = $this->verifyChecksum($artifactPath, $payload);
+    $product = (string) config('publisher-client.product', '');
+    $channel = (string) config('publisher-client.channel', 'stable');
+    $version = $this->stringOption($options, 'version')
+      ?? $this->payloadString($payload, 'version')
+      ?? throw new RuntimeException('Publisher payload is missing a release version.');
+    $token = $this->token();
+    $signature = $this->signChecksum($checksum); // throws if no signing key (mandatory)
+    $configuredKeys = [
+      'WEBBLOCKS_PUBLISHER_TOKEN' => $token !== '',
+      'WEBBLOCKS_PUBLISHER_SIGNING_KEY' => true,
+    ];
+
+    if (($options['dry_run'] ?? false) === true) {
+      return new UpdatePublishResult(
+        status: 'dry_run',
+        message: 'Dry-run passed. Artifact, checksum, signature, metadata, endpoint, and token configuration were checked without publishing.',
+        product: $product,
+        channel: $channel,
+        version: $version,
+        artifactPath: $artifactPath,
+        payloadPath: $payloadPath,
+        checksumSha256: $checksum,
+        tokenConfigured: $token !== '',
+        published: false,
+        verified: false,
+        configuredKeys: $configuredKeys,
+      );
+    }
+
+    if ($token === '') {
+      return new UpdatePublishResult(
+        status: 'skipped',
+        message: 'Update publisher token is not configured. Artifact was generated but not published.',
+        product: $product,
+        channel: $channel,
+        version: $version,
+        artifactPath: $artifactPath,
+        payloadPath: $payloadPath,
+        checksumSha256: $checksum,
+        tokenConfigured: false,
+        published: false,
+        verified: false,
+        configuredKeys: $configuredKeys,
+      );
+    }
+
+    $publishResponse = $this->sendPublishRequest($token, $artifactPath, $payload, $product, $channel, $version, $checksum, $signature);
+    $latestResponse = $this->verifyLatestRelease($product, $channel, $version, $checksum);
+
+    return new UpdatePublishResult(
+      status: 'published',
+      message: 'Update publisher accepted the artifact and latest verification matched the published release metadata.',
+      product: $product,
+      channel: $channel,
+      version: $version,
+      artifactPath: $artifactPath,
+      payloadPath: $payloadPath,
+      checksumSha256: $checksum,
+      tokenConfigured: true,
+      published: true,
+      verified: true,
+      configuredKeys: $configuredKeys,
+      publishResponse: $publishResponse,
+      latestResponse: $latestResponse,
+    );
+  }
+
+  private function resolvePayloadPath(array $options): string
+  {
+    $explicit = $this->stringOption($options, 'payload');
+
+    if ($explicit !== null) {
+      return $this->existingFile($explicit, 'Publisher payload');
+    }
+
+    $version = $this->stringOption($options, 'version');
+    $candidates = $this->payloadCandidates($version);
+
+    if ($candidates === []) {
+      throw new RuntimeException($version === null
+        ? 'No retained publisher payload was found. Run the prepare step or pass --payload.'
+        : "No retained publisher payload was found for version {$version}. Pass --payload.");
+    }
+
+    if (count($candidates) > 1) {
+      throw new RuntimeException('Multiple retained publisher payloads were found. Pass --version or --payload to publish explicitly.');
+    }
+
+    return $candidates[0];
+  }
+
+  private function payloadCandidates(?string $version): array
+  {
+    $product = (string) config('publisher-client.product', '');
+    $root = storage_path(trim((string) config('publisher-client.publisher.release_storage_path', 'app/publisher-client-release'), '/'));
+
+    if (! is_dir($root)) {
+      return [];
+    }
+
+    $pattern = $version === null
+      ? '/^'.preg_quote($product, '/').'-\d+\.\d+\.\d+(?:[-.][0-9A-Za-z.-]+)?-update-server-payload\.json$/'
+      : '/^'.preg_quote($product.'-'.$version, '/').'-update-server-payload\.json$/';
+
+    $paths = [];
+
+    $finder = Finder::create()
+      ->files()
+      ->ignoreUnreadableDirs()
+      ->name('*-update-server-payload.json')
+      ->depth('<= 4')
+      ->in($root);
+
+    foreach ($finder as $file) {
+      if (preg_match($pattern, $file->getFilename()) === 1) {
+        $paths[$file->getRealPath()] = $file->getMTime();
+      }
+    }
+
+    arsort($paths);
+
+    if ($version !== null) {
+      return array_keys($paths);
+    }
+
+    $latestMtime = reset($paths);
+
+    if ($latestMtime === false) {
+      return [];
+    }
+
+    return array_keys(array_filter($paths, fn (int $mtime): bool => $mtime === $latestMtime));
+  }
+
+  private function readPayload(string $payloadPath): array
+  {
+    $payload = json_decode(file_get_contents($payloadPath) ?: '', true);
+
+    if (! is_array($payload)) {
+      throw new RuntimeException("Publisher payload is not valid JSON: {$payloadPath}");
+    }
+
+    return $payload;
+  }
+
+  private function resolveArtifactPath(array $options, array $payload): string
+  {
+    $artifactPath = $this->stringOption($options, 'artifact')
+      ?? $this->payloadString($payload, 'artifact_path');
+
+    if ($artifactPath === null) {
+      throw new RuntimeException('No artifact path was provided. Pass --artifact or include artifact_path in the publisher payload.');
+    }
+
+    return $this->existingFile($artifactPath, 'Package artifact');
+  }
+
+  private function verifyChecksum(string $artifactPath, array $payload): string
+  {
+    $expected = strtolower((string) Arr::get($payload, 'checksum_sha256', ''));
+
+    if (! preg_match('/^[a-f0-9]{64}$/', $expected)) {
+      throw new RuntimeException('Publisher payload is missing a valid checksum_sha256 value.');
+    }
+
+    $actual = strtolower((string) hash_file('sha256', $artifactPath));
+
+    if (! hash_equals($expected, $actual)) {
+      throw new RuntimeException('Artifact checksum mismatch. The artifact was not published.');
+    }
+
+    return $actual;
+  }
+
+  /**
+   * Sign the release checksum with the owner's Ed25519 secret key. Mandatory
+   * (§7.8): throws if no valid signing key is configured, so an unsigned release
+   * — which every client would reject — is never published.
+   */
+  private function signChecksum(string $checksum): string
+  {
+    $signingKey = $this->signingKey();
+
+    if ($signingKey === '') {
+      throw new RuntimeException(
+        'Release signing is required but no signing key is configured. Set WEBBLOCKS_PUBLISHER_SIGNING_KEY (base64 Ed25519 secret key).',
+      );
+    }
+
+    $secret = base64_decode($signingKey, true);
+
+    if ($secret === false || strlen($secret) !== SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
+      throw new RuntimeException('WEBBLOCKS_PUBLISHER_SIGNING_KEY is not a valid base64 Ed25519 secret key.');
+    }
+
+    return base64_encode(sodium_crypto_sign_detached(strtolower($checksum), $secret));
+  }
+
+  private function sendPublishRequest(string $token, string $artifactPath, array $payload, string $product, string $channel, string $version, string $checksum, string $signature): array
+  {
+    $fields = array_filter([
+      'product' => $product,
+      'channel' => $channel,
+      'version' => $version,
+      'checksum_sha256' => $checksum,
+      'signature' => $signature,
+      'artifact_filename' => $this->payloadString($payload, 'artifact_filename') ?? basename($artifactPath),
+      'minimum_client_version' => $this->payloadString($payload, 'minimum_client_version'),
+      'source_reference' => $this->payloadString($payload, 'source_reference') ?? 'v'.$version,
+      'release_notes' => $this->payloadString($payload, 'release_notes') ?? $this->payloadNotes($payload),
+      'notes' => $this->payloadNotes($payload),
+      'details' => $this->releaseDetails($payload),
+      'keep' => $this->payloadBool($payload, 'keep') ? '1' : null,
+    ], fn (mixed $value): bool => $value !== null && $value !== '');
+
+    try {
+      $response = Http::acceptJson()
+        ->asMultipart()
+        ->timeout((int) config('publisher-client.publisher.timeout_seconds', 120))
+        ->connectTimeout((int) config('publisher-client.publisher.connect_timeout_seconds', 5))
+        ->withToken($token, 'Bearer')
+        ->attach('package', fopen($artifactPath, 'r'), basename($artifactPath), ['Content-Type' => 'application/zip'])
+        ->post($this->publishUrl(), $fields);
+    } catch (ConnectionException $exception) {
+      throw new RuntimeException('Update publisher request failed: '.$exception->getMessage(), previous: $exception);
+    }
+
+    if ($response->failed()) {
+      throw new RuntimeException($this->failedPublishMessage($response->status(), $response->json(), $response->body(), $product, $channel, $token));
+    }
+
+    $responsePayload = $response->json();
+
+    return is_array($responsePayload) ? $responsePayload : [];
+  }
+
+  private function verifyLatestRelease(string $product, string $channel, string $version, string $checksum): array
+  {
+    $serverUrl = rtrim((string) config('publisher-client.server_url', ''), '/');
+    $latestPath = (string) config('publisher-client.latest_path', '/api/updates/latest');
+
+    try {
+      $response = Http::acceptJson()
+        ->timeout((int) config('publisher-client.timeout_seconds', 5))
+        ->connectTimeout((int) config('publisher-client.connect_timeout_seconds', 3))
+        ->get($serverUrl.$latestPath, ['product' => $product, 'channel' => $channel])
+        ->throw();
+    } catch (ConnectionException|RequestException $exception) {
+      throw new RuntimeException('Update publisher latest verification failed: '.$exception->getMessage(), previous: $exception);
+    }
+
+    $payload = $response->json();
+
+    if (! is_array($payload)) {
+      throw new RuntimeException('Update publisher latest verification returned malformed JSON.');
+    }
+
+    $data = Arr::get($payload, 'data', []);
+    $latestVersion = is_array($data) ? (string) ($data['version'] ?? '') : '';
+    $latestProduct = is_array($data) ? (string) ($data['product'] ?? '') : '';
+    $latestChannel = is_array($data) ? (string) ($data['channel'] ?? '') : '';
+    $latestChecksum = is_array($data) ? (string) ($data['checksum_sha256'] ?? '') : '';
+    $artifactUrl = is_array($data) ? (string) ($data['artifact_url'] ?? '') : '';
+
+    if ($latestVersion !== $version || $latestProduct !== $product || $latestChannel !== $channel || $latestChecksum !== $checksum || $artifactUrl === '') {
+      throw new RuntimeException("Update publisher latest verification failed. Expected {$product} {$channel} {$version} with matching checksum and artifact URL.");
+    }
+
+    return $payload;
+  }
+
+  private function releaseDetails(array $payload): ?string
+  {
+    $details = [];
+    $source = Arr::get($payload, 'details', Arr::get($payload, 'release_details', []));
+
+    if (is_array($source)) {
+      foreach (self::DETAIL_FIELDS as $field) {
+        if (array_key_exists($field, $source)) {
+          $details[$field] = $source[$field];
+        }
+      }
+    }
+
+    foreach (self::DETAIL_FIELDS as $field) {
+      if (array_key_exists($field, $payload)) {
+        $details[$field] = $payload[$field];
+      }
+    }
+
+    return $details === [] ? null : json_encode($details, JSON_UNESCAPED_SLASHES);
+  }
+
+  private function payloadNotes(array $payload): ?string
+  {
+    $notes = Arr::get($payload, 'notes');
+
+    if (is_array($notes)) {
+      return implode("\n", array_filter(array_map(fn (mixed $note): string => trim((string) $note), $notes)));
+    }
+
+    return is_string($notes) ? $notes : null;
+  }
+
+  private function token(): string
+  {
+    $env = getenv('WEBBLOCKS_PUBLISHER_TOKEN');
+
+    if (is_string($env) && trim($env) !== '') {
+      return trim($env);
+    }
+
+    return trim((string) config('publisher-client.publisher.token', ''));
+  }
+
+  private function signingKey(): string
+  {
+    $env = getenv('WEBBLOCKS_PUBLISHER_SIGNING_KEY');
+
+    if (is_string($env) && trim($env) !== '') {
+      return trim($env);
+    }
+
+    return trim((string) config('publisher-client.signature.signing_key', ''));
+  }
+
+  private function publishUrl(): string
+  {
+    $serverUrl = rtrim((string) config('publisher-client.server_url', ''), '/');
+    $publishPath = (string) config('publisher-client.publish_path', '/api/updates/publish');
+
+    if ($serverUrl === '') {
+      throw new RuntimeException('Update publisher URL is not configured.');
+    }
+
+    return str_ends_with($serverUrl, $publishPath) ? $serverUrl : $serverUrl.$publishPath;
+  }
+
+  private function failedPublishMessage(int $status, mixed $json, string $body, string $product, string $channel, string $token): string
+  {
+    $summary = $this->safeResponseSummary($json, $body, $token);
+    $message = "Update publisher request failed with HTTP {$status}.";
+
+    if ($status === 401) {
+      $message .= " Check that the Bearer publish token is valid for product [{$product}] and channel [{$channel}].";
+    }
+
+    if ($summary !== '') {
+      $message .= ' Response: '.$summary;
+    }
+
+    return $message;
+  }
+
+  private function safeResponseSummary(mixed $json, string $body, string $token): string
+  {
+    if (is_array($json)) {
+      $parts = array_filter([
+        'message' => $this->safeScalar(Arr::get($json, 'message'), $token),
+        'status' => $this->safeScalar(Arr::get($json, 'status'), $token),
+      ]);
+
+      $summary = implode('; ', array_map(
+        fn (string $key, string $value): string => $key.': '.$value,
+        array_keys($parts),
+        $parts,
+      ));
+    } else {
+      $summary = trim(strip_tags($body));
+    }
+
+    return $this->redactSecrets(mb_substr(preg_replace('/\s+/', ' ', $summary) ?? '', 0, 300), $token);
+  }
+
+  private function safeScalar(mixed $value, string $token): ?string
+  {
+    if (! is_scalar($value)) {
+      return null;
+    }
+
+    $value = trim((string) $value);
+
+    return $value === '' ? null : $this->redactSecrets($value, $token);
+  }
+
+  private function redactSecrets(string $value, string $token): string
+  {
+    if ($token !== '') {
+      $value = str_replace($token, '[redacted]', $value);
+    }
+
+    return preg_replace('/Bearer\s+[A-Za-z0-9._~+\/-]+=*/i', 'Bearer [redacted]', $value) ?? $value;
+  }
+
+  private function existingFile(string $path, string $label): string
+  {
+    $path = $this->absolutePath($path);
+
+    if (! is_file($path)) {
+      throw new RuntimeException("{$label} does not exist: {$path}");
+    }
+
+    return $path;
+  }
+
+  private function absolutePath(string $path): string
+  {
+    if (str_starts_with($path, DIRECTORY_SEPARATOR)) {
+      return $path;
+    }
+
+    if (preg_match('/^[A-Za-z]:[\/\\\\]/', $path) === 1) {
+      return $path;
+    }
+
+    if (str_starts_with($path, 'storage/app/')) {
+      return Storage::path(substr($path, strlen('storage/app/')));
+    }
+
+    return base_path($path);
+  }
+
+  private function stringOption(array $options, string $key): ?string
+  {
+    $value = $options[$key] ?? null;
+
+    return is_string($value) && trim($value) !== '' ? trim($value) : null;
+  }
+
+  private function payloadString(array $payload, string $key): ?string
+  {
+    $value = Arr::get($payload, $key);
+
+    return is_string($value) && trim($value) !== '' ? trim($value) : null;
+  }
+
+  private function payloadBool(array $payload, string $key): bool
+  {
+    return filter_var(Arr::get($payload, $key, false), FILTER_VALIDATE_BOOL);
+  }
+}

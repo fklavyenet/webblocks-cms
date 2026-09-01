@@ -1,5 +1,8 @@
 {
   "preset": "laravel",
+  "exclude": [
+    "src/Support/Updates/Client"
+  ],
   "rules": {
     "array_syntax": {
       "syntax": "short"

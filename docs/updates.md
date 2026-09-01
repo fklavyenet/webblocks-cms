@@ -12,6 +12,17 @@ cms_source_id: webblocks-cms:docs/updates.md
 
 Updates in WebBlocks CMS are release-based and package-based.
 
+## Shared Client Source
+
+CMS ships the shared Publisher Client runtime as synchronized source under
+`src/Support/Updates/Client`; it does not require the private Client Composer
+package. CMS-owned adapters keep database run history, installed-version
+persistence, package-only migrations, catalog repair, and full CMS backups.
+Generated Client files are not edited directly. The private Client checkout is
+the source of truth and updates all registered copies with
+`composer embed:sync-all`; `composer embed:check-all` detects drift through the
+package-root `.publisher-client.json` manifest.
+
 ## Core Rules
 
 - The installed version reflects the last real release applied to the install.
