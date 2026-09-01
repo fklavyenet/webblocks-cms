@@ -353,9 +353,10 @@
                                 <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
                             </button>
 
-                            <div class="wb-dropdown wb-dropdown-end">
-                                <button class="wb-btn wb-btn-ghost wb-btn-icon" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-theme-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.theme_settings') }}" title="{{ $adminText('topbar.theme_settings') }}">
-                                    <i class="wb-icon wb-icon-palette" aria-hidden="true"></i>
+                            <div class="wb-theme-switcher wb-dropdown wb-dropdown-end">
+                                <button class="wb-btn wb-btn-ghost wb-theme-switcher-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-theme-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.theme_settings') }}" title="{{ $adminText('topbar.theme_settings') }}">
+                                    <i class="wb-icon wb-icon-palette wb-theme-switcher-icon" aria-hidden="true"></i>
+                                    <i class="wb-icon wb-icon-chevron-down wb-theme-switcher-chevron" aria-hidden="true"></i>
                                 </button>
 
                                 <div class="wb-dropdown-menu" id="admin-theme-menu">

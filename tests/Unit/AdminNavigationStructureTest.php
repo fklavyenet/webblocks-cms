@@ -35,4 +35,15 @@ class AdminNavigationStructureTest extends TestCase
     $this->assertNotFalse($appendHelp);
     $this->assertGreaterThan($maintenance, $appendHelp);
   }
+
+  #[Test]
+  public function theme_menu_uses_the_shared_palette_and_chevron_trigger(): void
+  {
+    $layout = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/admin.blade.php');
+
+    $this->assertStringContainsString('wb-theme-switcher wb-dropdown wb-dropdown-end', $layout);
+    $this->assertStringContainsString('wb-theme-switcher-trigger', $layout);
+    $this->assertStringContainsString('wb-icon-palette wb-theme-switcher-icon', $layout);
+    $this->assertStringContainsString('wb-icon-chevron-down wb-theme-switcher-chevron', $layout);
+  }
 }

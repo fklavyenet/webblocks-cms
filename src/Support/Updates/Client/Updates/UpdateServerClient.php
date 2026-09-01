@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
+use WebBlocks\Cms\Support\Updates\Client\PublisherClient;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\TelemetryProvider;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\VersionResolver;
 
@@ -381,6 +382,23 @@ class UpdateServerClient
           'items' => $items,
         ];
       }
+    }
+
+    $engineNote = sprintf(
+      'Installed update engine: Publisher Client %s (%s).',
+      PublisherClient::VERSION,
+      (string) config('publisher-client.distribution', 'composer'),
+    );
+    $technicalIndex = array_search('technical_notes', array_column($groups, 'key'), true);
+
+    if ($technicalIndex === false) {
+      $groups[] = [
+        'key' => 'technical_notes',
+        'label' => self::RELEASE_DETAIL_GROUPS['technical_notes'],
+        'items' => [$engineNote],
+      ];
+    } else {
+      $groups[$technicalIndex]['items'][] = $engineNote;
     }
 
     if ($summary === null && $groups === [] && $fallbackNotes !== []) {

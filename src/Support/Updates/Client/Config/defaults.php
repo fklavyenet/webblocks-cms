@@ -22,6 +22,10 @@ use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 
 return [
 
+    // How this runtime entered the product. Embedded consumers override this
+    // in EmbeddedRuntimeServiceProvider; Composer installs keep this default.
+    'distribution' => 'composer',
+
     // Master + web-trigger kill switches (§4.3).
     'enabled' => env('PUBLISHER_CLIENT_ENABLED', true),
     'web_run_enabled' => env('PUBLISHER_CLIENT_WEB_RUN_ENABLED', true),

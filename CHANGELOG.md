@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.75.16
+
+- Show the embedded Publisher Client version and visually distinguish release-detail section headings on System Updates.
+- Pin WebBlocks UI `v2.24.4` and use its canonical palette-icon plus chevron theme switcher in the admin navbar.
+
 ## 1.75.15
 
 - Exclude nested dot-segment placeholders such as `.gitkeep` from CMS update ZIPs.

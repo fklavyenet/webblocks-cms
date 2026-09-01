@@ -35,6 +35,7 @@ final class EmbeddedRuntimeServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/Config/defaults.php', 'publisher-client');
+        $this->app['config']->set('publisher-client.distribution', 'embedded');
 
         $this->app->bind(VersionResolver::class, function ($app) {
             $configured = $app['config']->get('publisher-client.version.resolver', ConfigVersionResolver::class);

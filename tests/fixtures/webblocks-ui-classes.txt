@@ -6,7 +6,7 @@
 # disagree, which is the point: a runtime bump that drops a class the
 # admin uses should be caught here rather than in a screenshot.
 #
-ui-version: v2.24.3
+ui-version: v2.24.4
 wb-absolute
 wb-accordion
 wb-accordion-body
@@ -1133,6 +1133,10 @@ wb-text-xl
 wb-text-xs
 wb-textarea
 wb-textarea-error
+wb-theme-switcher
+wb-theme-switcher-chevron
+wb-theme-switcher-icon
+wb-theme-switcher-trigger
 wb-toast
 wb-toast-body
 wb-toast-close

@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.24.3 (https://webblocksui.com/)
+ * WebBlocks UI v2.24.4 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -8773,11 +8773,29 @@ html.wb-js .wb-popover-panel {
    bases. Host apps own data and routes.
    ============================================================ */
 
+.wb-theme-switcher,
 .wb-language-switcher,
 .wb-auth-entry,
 .wb-user-menu {
   display: inline-flex;
   align-items: center;
+}
+
+/* Canonical preset/accent menu trigger. Hosts provide only the menu labels and
+   choices; WebBlocks UI owns the palette + chevron affordance and spacing. */
+.wb-theme-switcher-trigger {
+  width: auto;
+  padding-inline: var(--wb-s2);
+  gap: var(--wb-s1);
+}
+
+.wb-theme-switcher-icon,
+.wb-theme-switcher-chevron {
+  flex: 0 0 auto;
+}
+
+.wb-theme-switcher-chevron {
+  color: var(--wb-muted);
 }
 
 .wb-auth-entry {
