@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.75.12
+
+- Synchronize the embedded Publisher Client transition hardening, including safe exception loading before post-apply dependency changes and configurable generated-source content-scan exclusions.
+
 ## 1.75.11
 
 - Embed the shared Publisher Client runtime directly in the public CMS package, removing the private Composer repository requirement for CMS consumers.

@@ -36,6 +36,7 @@ final class PackageArtifactValidator
    * @param  list<string>  $forbiddenContentPatterns
    * @param  list<string>  $scanExtensions
    * @param  list<string>  $requiredPaths
+   * @param  list<string>  $contentScanExcludedPaths
    */
   public function __construct(
     private readonly array $allowedRoots = [],
@@ -44,6 +45,7 @@ final class PackageArtifactValidator
     private readonly array $scanExtensions = ['php', 'blade.php', 'json', 'md', 'css', 'js'],
     private readonly bool $rejectHiddenSegments = true,
     private readonly array $requiredPaths = [],
+    private readonly array $contentScanExcludedPaths = [],
   ) {}
 
   public static function fromConfig(): self
@@ -57,6 +59,7 @@ final class PackageArtifactValidator
       scanExtensions: self::stringList($config['scan_extensions'] ?? ['php', 'blade.php', 'json', 'md', 'css', 'js']),
       rejectHiddenSegments: (bool) ($config['reject_hidden_segments'] ?? true),
       requiredPaths: self::stringList($config['required_paths'] ?? []),
+      contentScanExcludedPaths: self::stringList($config['content_scan_excluded_paths'] ?? []),
     );
   }
 
@@ -87,10 +90,25 @@ final class PackageArtifactValidator
         );
       }
 
-      if ($this->shouldScanFile($relativePath)) {
+      if (! $this->isContentScanExcluded($relativePath) && $this->shouldScanFile($relativePath)) {
         $this->assertNoForbiddenContent($relativePath, (string) File::get($file->getPathname()));
       }
     }
+  }
+
+  private function isContentScanExcluded(string $relativePath): bool
+  {
+    $normalized = trim(str_replace('\\', '/', $relativePath), '/');
+
+    foreach ($this->contentScanExcludedPaths as $excluded) {
+      $excluded = trim(str_replace('\\', '/', $excluded), '/');
+
+      if ($excluded !== '' && ($normalized === $excluded || str_starts_with($normalized, $excluded.'/'))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public function assertAllowedPath(string $relativePath): void

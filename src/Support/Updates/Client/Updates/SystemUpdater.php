@@ -63,6 +63,10 @@ class SystemUpdater
 
   public function run(?int $userId = null): UpdateResult
   {
+    // Keep the exception class resident before a post-apply Composer install
+    // can remove or replace the package path that served the current request.
+    class_exists(UpdateException::class);
+
     if (! (bool) config('publisher-client.web_run_enabled', true)) {
       throw new UpdateException('Updates are disabled for this install.');
     }
