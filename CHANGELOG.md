@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.75.19
+
+- Establish the canonical WebBlocks CMS product name, official slogan, and package description in source and public documentation.
+- Use “A modern block-based CMS.” throughout the package-owned admin and authentication surfaces.
+- Describe the package as content operations across multiple sites and locales without making Laravel part of the primary brand line.
+
 ## 1.75.18
 
 - Repair a missing host-public WebBlocks UI runtime from a freshly swapped CMS package when the updater launches its first post-apply Artisan process.
