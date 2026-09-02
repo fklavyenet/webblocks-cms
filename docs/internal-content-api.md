@@ -375,7 +375,7 @@ Example:
   },
   "translations": {
     "title": "WebBlocks CMS",
-    "subtitle": "Composable content operations"
+    "subtitle": "A modern block-based CMS."
   }
 }
 ```
