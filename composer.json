@@ -1,7 +1,7 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
   "name": "fklavyenet/webblocks-cms",
-  "description": "A Laravel-native, block-based CMS for multisite content operations.",
+  "description": "A modern block-based CMS for content operations across multiple sites and locales.",
   "keywords": [
     "blocks",
     "cms",

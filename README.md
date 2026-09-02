@@ -1,5 +1,7 @@
 # WebBlocks CMS
 
+**A modern block-based CMS.**
+
 [![Package CI](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml)
 [![Latest Stable Version](https://img.shields.io/packagist/v/fklavyenet/webblocks-cms.svg)](https://packagist.org/packages/fklavyenet/webblocks-cms)
 [![Total Downloads](https://img.shields.io/packagist/dt/fklavyenet/webblocks-cms.svg)](https://packagist.org/packages/fklavyenet/webblocks-cms)
@@ -7,7 +9,7 @@
 [![Laravel 13](https://img.shields.io/badge/Laravel-13-ff2d20.svg)](composer.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-WebBlocks CMS is a Laravel-native, block-based CMS for multisite content operations. It adds structured pages, media, navigation, editorial workflows, and an operator admin under `/webadmin` to a host Laravel application.
+WebBlocks CMS is a modern block-based CMS for content operations across multiple sites and locales. It adds structured pages, media, navigation, editorial workflows, and an operator admin under `/webadmin` to a host Laravel application.
 
 > [!IMPORTANT]
 > This repository is Composer package source, not a complete deployable Laravel application. Install `fklavyenet/webblocks-cms` into a host Laravel 13 application; the host continues to own its bootstrap, `.env`, database, queues, mail, deployment, backups, and public document root.
@@ -107,6 +109,7 @@ Existing full-repository clones must preserve host-owned `.env`, database, stora
 
 ## Documentation
 
+- Use the canonical product name, slogan, and package description from [Brand identity](docs/brand-identity.md).
 - Start with [Hosting Requirements](docs/hosting-requirements.md), [Hosting Capacity Validation](docs/hosting-capacity-validation.md), the provisional [Hosting Capacity Results](docs/hosting-capacity-results.md), [Installation](docs/installation.md), [Getting Started](docs/getting-started.md), and [Core Concepts](docs/core-concepts.md).
 - Build content with [Page Layouts](docs/page-layouts.md), [Block Type Contracts](docs/block-type-contracts.md), [Editorial Workflow](docs/editorial-workflow.md), and [Revisions](docs/revisions.md).
 - Operate sites with [Multisite](docs/multisite.md), [Localization](docs/localization.md), [Users and Permissions](docs/users-and-permissions.md), [Media Image Variants](docs/media-image-variants.md), and [Operations](docs/operations.md).
