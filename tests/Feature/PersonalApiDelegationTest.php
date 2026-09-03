@@ -31,6 +31,20 @@ class PersonalApiDelegationTest extends TestCase
   }
 
   #[Test]
+  public function network_controls_migration_is_idempotent(): void
+  {
+    Schema::create('wbcms_cms_api_tokens', function (Blueprint $table): void {
+      $table->id();
+    });
+
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_09_03_170000_add_personal_token_network_controls.php';
+    $migration->up();
+    $migration->up();
+
+    $this->assertTrue(Schema::hasColumns('wbcms_cms_api_tokens', ['allowed_ip_ranges', 'requests_per_minute']));
+  }
+
+  #[Test]
   public function personal_policy_keeps_system_authority_out_of_user_tokens(): void
   {
     $source = file_get_contents(dirname(__DIR__, 2).'/src/Support/InternalApiTokens/PersonalApiTokenPolicy.php');
@@ -72,6 +86,8 @@ class PersonalApiDelegationTest extends TestCase
     $this->assertStringContainsString('internal-content-api.navigation-menus.show', $delegation);
     $this->assertStringContainsString('PageWorkflowManager $workflow', $delegation);
     $this->assertStringContainsString('delegated_workflow_access_denied', $delegation);
+    $this->assertStringContainsString('delegated_network_access_denied', $delegation);
+    $this->assertStringContainsString('personal_api_token_rate_limit_exceeded', $delegation);
     $this->assertGreaterThanOrEqual(5, substr_count($engagement, 'cms_api_allowed_site_ids'));
     $this->assertStringContainsString("'approved_by_user_id' => \$request->user()?->id", $engagement);
     $this->assertStringContainsString('scopeMediaForUser($mediaQuery, $user)', $resources);

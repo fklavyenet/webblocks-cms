@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'ip_or_cidr' => 'Introduce una dirección IP o una red CIDR válida.',
   'contact_form' => [
     'name_required' => 'Introduce tu nombre.',
     'email_required' => 'Introduce tu dirección de correo electrónico.',

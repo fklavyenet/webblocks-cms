@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.76.5
+
+- Add optional exact IPv4/IPv6 and CIDR network allowlists to personal AI tokens, enforced alongside the owner's live CMS permissions.
+- Add configurable per-token ceilings of 30, 60, 120, or 300 requests per minute with stable `429` responses and `Retry-After` guidance.
+- Publish personal-token network constraints through authenticated API discovery and provide a copy-ready AI setup prompt with the one-time token details.
+- Preserve unrestricted-network behavior for existing tokens, default legacy tokens to 60 requests per minute, and document the new controls with localized validation feedback.
+
 ## 1.76.4
 
 - Let users edit the name, allowed sites, delegated capabilities, and renewed expiry of their own personal AI tokens without revealing or replacing the token secret.

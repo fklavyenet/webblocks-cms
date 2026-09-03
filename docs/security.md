@@ -72,6 +72,9 @@ The Internal Content API (`/webadmin/api`) is for trusted operator/AI tooling.
   token values.
 - Treat API tokens as secrets. Scope them to the minimum capabilities a tool
   needs, and rotate them if exposed.
+- Personal AI tokens can be restricted to exact IPv4/IPv6 addresses or CIDR
+  networks and carry a token-specific per-minute request ceiling. These checks
+  are enforced in addition to live user, site, workflow, and capability access.
 - Both the canonical `/webadmin/api` routes and the legacy `/admin-api`
   compatibility routes share the Internal Content API rate limiter.
 

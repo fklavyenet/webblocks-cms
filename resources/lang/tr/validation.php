@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'ip_or_cidr' => 'Geçerli bir IP adresi veya CIDR ağı girin.',
   'contact_form' => [
     'name_required' => 'Adinizi girin.',
     'email_required' => 'E-posta adresinizi girin.',

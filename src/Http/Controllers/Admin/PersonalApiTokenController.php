@@ -50,6 +50,8 @@ class PersonalApiTokenController extends Controller
       'capabilities' => array_values(array_unique($request->validated('capabilities'))),
       'allowed_site_ids' => array_values(array_unique($request->validated('site_ids'))),
       'expires_at' => now()->addDays((int) $request->validated('expires_in_days')),
+      'allowed_ip_ranges' => $request->validated('allowed_ip_ranges', []),
+      'requests_per_minute' => (int) $request->validated('requests_per_minute'),
     ])->save();
 
     return back()->with('status_key', 'profile.api_tokens.updated');
@@ -64,6 +66,8 @@ class PersonalApiTokenController extends Controller
       'personal',
       array_values(array_unique($request->validated('site_ids'))),
       now()->addDays((int) $request->validated('expires_in_days')),
+      $request->validated('allowed_ip_ranges', []),
+      (int) $request->validated('requests_per_minute'),
     );
 
     return redirect()->route('admin.profile.api-tokens.index')

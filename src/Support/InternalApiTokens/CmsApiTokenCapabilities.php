@@ -325,6 +325,11 @@ class CmsApiTokenCapabilities
 
     return [
       'capabilities' => $capabilities,
+      'token_type' => $token?->token_type ?: 'system',
+      'network_policy' => $token?->isPersonal() ? [
+        'allowed_ip_ranges' => $token->allowed_ip_ranges ?? [],
+        'requests_per_minute' => (int) ($token->requests_per_minute ?: 60),
+      ] : null,
       'destructive_capabilities' => array_values(array_intersect($capabilities, self::DESTRUCTIVE)),
       'destructive_requires_explicit_capability' => true,
       'can' => [

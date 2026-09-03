@@ -16,6 +16,8 @@ class CmsApiToken extends CmsModel
     'capabilities',
     'token_type',
     'allowed_site_ids',
+    'allowed_ip_ranges',
+    'requests_per_minute',
     'expires_at',
     'created_by_user_id',
     'last_used_at',
@@ -30,6 +32,8 @@ class CmsApiToken extends CmsModel
       'last_used_at' => 'datetime',
       'capabilities' => 'array',
       'allowed_site_ids' => 'array',
+      'allowed_ip_ranges' => 'array',
+      'requests_per_minute' => 'integer',
       'expires_at' => 'datetime',
       'revoked_at' => 'datetime',
     ];

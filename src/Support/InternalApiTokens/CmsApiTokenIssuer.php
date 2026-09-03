@@ -17,6 +17,8 @@ class CmsApiTokenIssuer
     string $tokenType = 'system',
     ?array $allowedSiteIds = null,
     mixed $expiresAt = null,
+    ?array $allowedIpRanges = null,
+    ?int $requestsPerMinute = null,
   ): IssuedCmsApiToken {
     $plainToken = self::TOKEN_PREFIX.Str::random(64);
 
@@ -28,6 +30,8 @@ class CmsApiTokenIssuer
       'token_type' => $tokenType,
       'allowed_site_ids' => $allowedSiteIds === null ? null : array_values(array_unique(array_map('intval', $allowedSiteIds))),
       'expires_at' => $expiresAt,
+      'allowed_ip_ranges' => $allowedIpRanges,
+      'requests_per_minute' => $requestsPerMinute,
       'created_by_user_id' => $creator?->id,
     ]);
 

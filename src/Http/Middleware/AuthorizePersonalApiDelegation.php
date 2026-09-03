@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Media;
@@ -17,6 +18,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\InternalApiTokens\PersonalApiTokenNetworkPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiResponseMetadata;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -27,6 +29,7 @@ class AuthorizePersonalApiDelegation
     private readonly InternalApiResponseMetadata $metadata,
     private readonly AdminAuthorization $authorization,
     private readonly PageWorkflowManager $workflow,
+    private readonly PersonalApiTokenNetworkPolicy $networkPolicy,
   ) {}
 
   public function handle(Request $request, Closure $next): mixed
@@ -46,6 +49,27 @@ class AuthorizePersonalApiDelegation
     if ($allowedSiteIds->isEmpty()) {
       return $this->denied('This personal API token no longer has access to any site.');
     }
+
+    if (! $this->networkPolicy->allows($token, $request->ip())) {
+      return $this->denied('This personal API token cannot be used from the current network.', 'delegated_network_access_denied');
+    }
+
+    $rateLimitKey = 'personal-api-token:'.$token->id;
+    $requestLimit = max(1, (int) ($token->requests_per_minute ?: 60));
+
+    if (RateLimiter::tooManyAttempts($rateLimitKey, $requestLimit)) {
+      $retryAfter = RateLimiter::availableIn($rateLimitKey);
+
+      return response()->json($this->metadata->merge([
+        'ok' => false,
+        'code' => 'personal_api_token_rate_limit_exceeded',
+        'message' => 'This personal API token has exceeded its per-minute request limit.',
+        'retry_after' => $retryAfter,
+        'errors' => [['path' => 'Authorization', 'message' => 'Retry after the token rate limit resets.']],
+      ]), 429)->header('Retry-After', (string) $retryAfter);
+    }
+
+    RateLimiter::hit($rateLimitKey, 60);
 
     $request->attributes->set('cms_api_user', $user);
     $request->attributes->set('cms_api_allowed_site_ids', $allowedSiteIds->all());
