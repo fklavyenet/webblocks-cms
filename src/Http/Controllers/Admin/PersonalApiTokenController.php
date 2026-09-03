@@ -16,12 +16,15 @@ class PersonalApiTokenController extends Controller
   public function index(PersonalApiTokenPolicy $policy): View
   {
     $user = request()->user();
+    $capabilities = $policy->grantable($user);
+    $presenter = app(CmsApiTokenCapabilities::class);
 
     return view('webblocks-cms::admin.profile.api-tokens', [
-      'tokens' => CmsApiToken::query()->where('token_type', 'personal')->where('created_by_user_id', $user->id)->latest()->get(),
+      'tokens' => CmsApiToken::query()->where('token_type', 'personal')->where('created_by_user_id', $user->id)->latest()->paginate(20),
       'sites' => $user->accessibleSites(),
-      'capabilities' => $policy->grantable($user),
-      'capabilityLabels' => app(CmsApiTokenCapabilities::class)->labelsAll(),
+      'capabilityGroups' => $this->capabilityGroups($capabilities),
+      'capabilityLabels' => $presenter->labelsAll(),
+      'capabilitiesPresenter' => $presenter,
       'createdToken' => session('created_personal_api_token'),
       'apiBaseUrl' => url('/webadmin/api'),
     ]);
@@ -62,5 +65,26 @@ class PersonalApiTokenController extends Controller
     abort_unless($token->isPersonal() && (int) $token->created_by_user_id === (int) request()->user()->id, 404);
 
     return $token;
+  }
+
+  private function capabilityGroups(array $grantable): array
+  {
+    $groups = [
+      ['key' => 'page-building', 'label' => 'Page building', 'description' => 'Draft content, navigation, Shared Slots, media discovery, and safe site presentation.', 'capabilities' => CmsApiTokenCapabilities::DEFAULT],
+      ['key' => 'media', 'label' => 'Media management', 'description' => 'Upload, edit, replace, move, or delete accessible Media Library records.', 'capabilities' => [CmsApiTokenCapabilities::MEDIA_WRITE, CmsApiTokenCapabilities::MEDIA_UPLOAD, CmsApiTokenCapabilities::MEDIA_REPLACE, CmsApiTokenCapabilities::MEDIA_MOVE, CmsApiTokenCapabilities::MEDIA_DELETE]],
+      ['key' => 'destructive', 'label' => 'Publishing and destructive actions', 'description' => 'Publish content or delete pages, blocks, navigation items, and Shared Slots.', 'capabilities' => [CmsApiTokenCapabilities::NAVIGATION_DELETE, CmsApiTokenCapabilities::SHARED_SLOTS_DELETE, CmsApiTokenCapabilities::CONTENT_PUBLISH, CmsApiTokenCapabilities::PAGES_DELETE, CmsApiTokenCapabilities::CONTENT_BLOCKS_DELETE]],
+      ['key' => 'personal-site-feedback', 'label' => 'Site feedback', 'description' => 'Read and moderate public comments and ratings for allowed sites.', 'capabilities' => [CmsApiTokenCapabilities::ENGAGEMENT_READ, CmsApiTokenCapabilities::ENGAGEMENT_MODERATE]],
+    ];
+
+    return collect($groups)
+      ->map(fn (array $group): array => $group + ['capabilities' => []])
+      ->map(function (array $group) use ($grantable): array {
+        $group['capabilities'] = array_values(array_intersect($group['capabilities'], $grantable));
+
+        return $group;
+      })
+      ->filter(fn (array $group): bool => $group['capabilities'] !== [])
+      ->values()
+      ->all();
   }
 }

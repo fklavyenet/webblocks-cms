@@ -392,7 +392,7 @@ return [
     'api_tokens' => [
       'title' => 'Personal AI Tokens', 'description' => 'Delegate CMS work to an AI within your current role and site access.', 'manage' => 'Manage AI Tokens', 'back' => 'Back to Profile',
       'create_title' => 'Create a personal token', 'create_description' => 'The token can never exceed your live CMS permissions. Access ends when your role, site access, account, or token expires.',
-      'name' => 'Token name', 'sites' => 'Allowed sites', 'permissions' => 'Delegated permissions', 'expires' => 'Expires after', 'days' => 'days', 'create' => 'Create Token',
+      'name' => 'Token name', 'sites' => 'Allowed sites', 'sites_help' => 'The AI can discover and change content only in the selected sites while you retain access.', 'permissions' => 'Delegated permissions', 'expires' => 'Expires after', 'days' => 'days', 'create' => 'Create Token',
       'existing_title' => 'Your tokens', 'api_base' => 'API base URL: :url', 'copy_now' => 'Copy this token now. It will not be shown again.', 'revoke' => 'Revoke', 'delete' => 'Delete', 'empty' => 'You have no personal AI tokens.',
       'revoke_confirm' => 'Revoke this token immediately?', 'delete_confirm' => 'Permanently delete this token and its activity history?', 'created' => 'Personal AI token created.', 'revoked' => 'Personal AI token revoked.', 'deleted' => 'Personal AI token deleted.',
     ],

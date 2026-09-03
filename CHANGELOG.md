@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.76.2
+
+- Align Personal AI Tokens with the system API Tokens experience through a full-width card flow, API discovery quick start, grouped capability selectors, selection counts, standard token table, pagination, and copy-ready token setup details.
+- Preserve personal-token site scope and expiry controls while presenting them with the same WebBlocks UI patterns used by install-level service tokens.
+
 ## 1.76.1
 
 - Fix the Profile and Personal AI Tokens page-header actions to use the shared HTML action contract, preventing an array-to-string rendering exception after upgrading to 1.76.0.
