@@ -13,6 +13,7 @@ class RequireInternalApiToken
   public function __construct(
     private readonly CmsApiTokenAuthenticator $authenticator,
     private readonly InternalApiResponseMetadata $metadata,
+    private readonly AuthorizePersonalApiDelegation $delegation,
   ) {}
 
   public function handle(Request $request, Closure $next): mixed
@@ -27,7 +28,7 @@ class RequireInternalApiToken
 
     $request->attributes->set('cms_api_token', $token);
 
-    return $next($request);
+    return $this->delegation->handle($request, $next);
   }
 
   private function resolveToken(Request $request): string

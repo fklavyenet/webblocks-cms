@@ -48,6 +48,7 @@ use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class InternalContentResourceController extends Controller
 {
@@ -66,11 +67,13 @@ class InternalContentResourceController extends Controller
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
     private readonly BlockTranslationRegistry $translationRegistry,
     private readonly BlockTranslationWriter $translationWriter,
+    private readonly AdminAuthorization $adminAuthorization,
   ) {}
 
   public function sites(): JsonResponse
   {
     $sites = Site::query()
+      ->when(request()->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereIn('id', request()->attributes->get('cms_api_allowed_site_ids')))
       ->with([
         'faviconMedia',
         'locales' => fn ($query) => $query->orderByDesc('is_default')->orderBy('name'),
@@ -551,6 +554,7 @@ class InternalContentResourceController extends Controller
   public function pages(Request $request): JsonResponse
   {
     $pages = Page::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['site.locales', 'translations.locale', 'slots.slotType'])
       ->withCount(['slots', 'blocks'])
       ->when($request->filled('site'), function ($query) use ($request) {
@@ -773,6 +777,7 @@ class InternalContentResourceController extends Controller
   public function blocks(Request $request): JsonResponse
   {
     $blocks = Block::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereHas('page', fn ($pageQuery) => $pageQuery->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids'))))
       ->with(['blockType', 'slotType', 'media', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
       ->when($request->filled('page'), fn ($query) => $query->where('page_id', (int) $request->query('page')))
       ->whereNull('parent_id')
@@ -888,6 +893,7 @@ class InternalContentResourceController extends Controller
     }
 
     $media = Media::query()
+      ->when($request->attributes->get('cms_api_user'), fn ($query, $user) => $this->adminAuthorization->scopeMediaForUser($query, $user))
       ->when($request->filled('kind'), fn ($query) => $query->where('kind', (string) $request->query('kind')))
       ->when($request->boolean('image_only'), fn ($query) => $query->where('kind', Media::KIND_IMAGE))
       ->when($request->filled('search'), function ($query) use ($request): void {

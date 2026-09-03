@@ -14,6 +14,9 @@ class CmsApiToken extends CmsModel
     'token_hash',
     'token_preview',
     'capabilities',
+    'token_type',
+    'allowed_site_ids',
+    'expires_at',
     'created_by_user_id',
     'last_used_at',
     'last_used_ip',
@@ -26,6 +29,8 @@ class CmsApiToken extends CmsModel
     return [
       'last_used_at' => 'datetime',
       'capabilities' => 'array',
+      'allowed_site_ids' => 'array',
+      'expires_at' => 'datetime',
       'revoked_at' => 'datetime',
     ];
   }
@@ -48,6 +53,16 @@ class CmsApiToken extends CmsModel
   public function isRevoked(): bool
   {
     return $this->revoked_at !== null;
+  }
+
+  public function isPersonal(): bool
+  {
+    return $this->token_type === 'personal';
+  }
+
+  public function isExpired(): bool
+  {
+    return $this->expires_at !== null && $this->expires_at->isPast();
   }
 
   public function statusLabel(): string

@@ -334,6 +334,9 @@ return [
     'show_password' => 'Şifreyi göster',
     'updated' => 'Profil güncellendi.',
     'password_updated' => 'Şifre güncellendi.',
+    'api_tokens' => [
+      'title' => 'Kişisel AI Tokenları', 'description' => 'CMS işlerini mevcut rol ve site erişiminiz sınırında bir AI’a devredin.', 'manage' => 'AI Tokenlarını Yönet', 'back' => 'Profile Dön', 'create_title' => 'Kişisel token oluştur', 'create_description' => 'Token, güncel CMS yetkilerinizi hiçbir zaman aşamaz.', 'name' => 'Token adı', 'sites' => 'İzin verilen siteler', 'permissions' => 'Devredilen yetkiler', 'expires' => 'Geçerlilik süresi', 'days' => 'gün', 'create' => 'Token Oluştur', 'existing_title' => 'Tokenlarınız', 'api_base' => 'API temel adresi: :url', 'copy_now' => 'Bu tokenı şimdi kopyalayın. Bir daha gösterilmeyecektir.', 'revoke' => 'İptal Et', 'delete' => 'Sil', 'empty' => 'Henüz kişisel AI tokenınız yok.', 'revoke_confirm' => 'Bu token hemen iptal edilsin mi?', 'delete_confirm' => 'Bu token ve işlem geçmişi kalıcı olarak silinsin mi?', 'created' => 'Kişisel AI tokenı oluşturuldu.', 'revoked' => 'Kişisel AI tokenı iptal edildi.', 'deleted' => 'Kişisel AI tokenı silindi.',
+    ],
   ],
   'flash' => [
     'success' => 'Başarılı',

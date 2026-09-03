@@ -39,6 +39,7 @@ class InternalSharedSlotController extends Controller
   {
     $site = $this->siteFromRequest($request);
     $sharedSlots = SharedSlot::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['site', 'slotBlocks.block.blockType', 'slotBlocks.block.slotType'])
       ->when($site, fn ($query) => $query->where('site_id', $site->id))
       ->orderBy('name')

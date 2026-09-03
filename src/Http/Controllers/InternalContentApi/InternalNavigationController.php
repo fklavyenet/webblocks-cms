@@ -30,6 +30,7 @@ class InternalNavigationController extends Controller
   {
     $site = $this->siteFromRequest($request);
     $items = NavigationItem::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['page', 'children.page', 'translations.locale', 'children.translations.locale'])
       ->when($site, fn ($query) => $query->where('site_id', $site->id))
       ->ordered()
@@ -38,7 +39,9 @@ class InternalNavigationController extends Controller
 
     $menus = collect(NavigationItem::menuKeys())
       ->flatMap(function (string $handle) use ($site, $items) {
-        $sites = $site ? collect([$site]) : Site::query()->primaryFirst()->orderBy('name')->get();
+        $sites = $site ? collect([$site]) : Site::query()
+          ->when(request()->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereIn('id', request()->attributes->get('cms_api_allowed_site_ids')))
+          ->primaryFirst()->orderBy('name')->get();
 
         return $sites->map(fn (Site $menuSite) => $this->presenter->navigationMenu(
           $menuSite,

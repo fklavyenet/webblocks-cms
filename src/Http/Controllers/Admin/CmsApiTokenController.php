@@ -32,6 +32,7 @@ class CmsApiTokenController extends Controller
 
     if ($schemaReady) {
       $tokens = CmsApiToken::query()
+        ->where(fn ($query) => $query->whereNull('token_type')->orWhere('token_type', 'system'))
         ->with('creator')
         ->orderByRaw('case when revoked_at is null then 0 else 1 end')
         ->latest()
@@ -129,7 +130,7 @@ class CmsApiTokenController extends Controller
       return false;
     }
 
-    foreach (['id', 'name', 'token_hash', 'token_preview', 'capabilities', 'created_by_user_id', 'last_used_at', 'last_used_ip', 'last_used_user_agent', 'revoked_at', 'created_at', 'updated_at'] as $column) {
+    foreach (['id', 'name', 'token_hash', 'token_preview', 'token_type', 'capabilities', 'allowed_site_ids', 'expires_at', 'created_by_user_id', 'last_used_at', 'last_used_ip', 'last_used_user_agent', 'revoked_at', 'created_at', 'updated_at'] as $column) {
       if (! Schema::hasColumn('wbcms_cms_api_tokens', $column)) {
         return false;
       }

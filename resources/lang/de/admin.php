@@ -335,6 +335,9 @@ return [
     'show_password' => 'Passwort anzeigen',
     'updated' => 'Profil wurde aktualisiert.',
     'password_updated' => 'Passwort wurde aktualisiert.',
+    'api_tokens' => [
+      'title' => 'Persönliche AI-Tokens', 'description' => 'Delegieren Sie CMS-Arbeiten innerhalb Ihrer Rolle und Website-Zugriffe an eine AI.', 'manage' => 'AI-Tokens verwalten', 'back' => 'Zurück zum Profil', 'create_title' => 'Persönliches Token erstellen', 'create_description' => 'Das Token kann Ihre aktuellen CMS-Berechtigungen niemals überschreiten.', 'name' => 'Tokenname', 'sites' => 'Erlaubte Websites', 'permissions' => 'Delegierte Berechtigungen', 'expires' => 'Läuft ab nach', 'days' => 'Tagen', 'create' => 'Token erstellen', 'existing_title' => 'Ihre Tokens', 'api_base' => 'API-Basis-URL: :url', 'copy_now' => 'Kopieren Sie dieses Token jetzt. Es wird nicht erneut angezeigt.', 'revoke' => 'Widerrufen', 'delete' => 'Löschen', 'empty' => 'Sie haben keine persönlichen AI-Tokens.', 'created' => 'Persönliches AI-Token erstellt.', 'revoked' => 'Persönliches AI-Token widerrufen.', 'deleted' => 'Persönliches AI-Token gelöscht.',
+    ],
   ],
   'flash' => [
     'success' => 'Erfolg',

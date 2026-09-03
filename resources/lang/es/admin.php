@@ -334,6 +334,9 @@ return [
     'show_password' => 'Mostrar contraseña',
     'updated' => 'Perfil actualizado correctamente.',
     'password_updated' => 'Contraseña actualizada correctamente.',
+    'api_tokens' => [
+      'title' => 'Tokens personales de IA', 'description' => 'Delega tareas del CMS a una IA dentro de tu rol y acceso a sitios.', 'manage' => 'Gestionar tokens de IA', 'back' => 'Volver al perfil', 'create_title' => 'Crear un token personal', 'create_description' => 'El token nunca puede superar tus permisos actuales del CMS.', 'name' => 'Nombre del token', 'sites' => 'Sitios permitidos', 'permissions' => 'Permisos delegados', 'expires' => 'Caduca después de', 'days' => 'días', 'create' => 'Crear token', 'existing_title' => 'Tus tokens', 'api_base' => 'URL base de API: :url', 'copy_now' => 'Copia este token ahora. No volverá a mostrarse.', 'revoke' => 'Revocar', 'delete' => 'Eliminar', 'empty' => 'No tienes tokens personales de IA.', 'created' => 'Token personal de IA creado.', 'revoked' => 'Token personal de IA revocado.', 'deleted' => 'Token personal de IA eliminado.',
+    ],
   ],
   'flash' => [
     'success' => 'Éxito',

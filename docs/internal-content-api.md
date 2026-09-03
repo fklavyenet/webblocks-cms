@@ -10,6 +10,12 @@ cms_source_id: webblocks-cms:docs/internal-content-api.md
 
 # Internal Content API
 
+## User-delegated AI access
+
+CMS users can create expiring personal AI tokens from their Profile. A personal token authenticates as its owning user and is authorized by the intersection of the token capabilities, selected sites, the owner’s current role, current site assignments, and the normal content workflow. It becomes unusable immediately when the owner is inactive or no longer has CMS access.
+
+Personal tokens are intended for content, navigation, Shared Slot, media, engagement, and draft workflows. Install-level operations remain system-token only. Personal write requests that create or select content must provide the target site rather than relying on the installation’s primary-site fallback. API activity continues to record the token, while page and revision audit actors resolve to the delegating user.
+
 ## Purpose
 
 The Internal Content API is a secure CMS API for trusted AI and operator tools. It lets those tools inspect CMS content contracts, create draft-first content, replace specific page-owned slots on existing draft pages, run explicit publish operations through structured JSON, and request allowlisted admin render snapshots for visual QA without logging into, scraping, or automating the browser admin UI.

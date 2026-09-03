@@ -28,8 +28,16 @@ class CmsApiTokenAuthenticator
       ->where('token_hash', $candidateHash)
       ->first();
 
-    if (! $token || ! hash_equals($token->token_hash, $candidateHash)) {
+    if (! $token || ! hash_equals($token->token_hash, $candidateHash) || $token->isExpired()) {
       return null;
+    }
+
+    if ($token->isPersonal()) {
+      $token->loadMissing('creator');
+
+      if (! $token->creator?->canAccessAdmin()) {
+        return null;
+      }
     }
 
     $token->forceFill([

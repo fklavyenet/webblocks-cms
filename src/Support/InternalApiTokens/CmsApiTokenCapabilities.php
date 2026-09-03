@@ -305,7 +305,18 @@ class CmsApiTokenCapabilities
 
   public function has(?CmsApiToken $token, string $capability): bool
   {
-    return in_array($capability, $this->capabilitiesFor($token), true);
+    if (! in_array($capability, $this->capabilitiesFor($token), true)) {
+      return false;
+    }
+
+    if (! $token?->isPersonal()) {
+      return true;
+    }
+
+    $token->loadMissing('creator');
+
+    return $token->creator !== null
+      && app(PersonalApiTokenPolicy::class)->canUse($token->creator, $capability);
   }
 
   public function publicDescription(?CmsApiToken $token): array

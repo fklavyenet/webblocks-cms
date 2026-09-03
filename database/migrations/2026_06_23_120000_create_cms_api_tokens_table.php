@@ -13,7 +13,10 @@ return new class extends Migration
       $table->string('name');
       $table->string('token_hash', 128)->unique();
       $table->string('token_preview', 32);
+      $table->string('token_type', 20)->default('system');
       $table->json('capabilities')->nullable();
+      $table->json('allowed_site_ids')->nullable();
+      $table->timestamp('expires_at')->nullable();
       $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
       $table->timestamp('last_used_at')->nullable();
       $table->string('last_used_ip', 45)->nullable();

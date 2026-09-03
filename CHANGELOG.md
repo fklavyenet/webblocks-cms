@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.76.0
+
+- Add personal AI API tokens for editors, site admins, and super admins under Profile, with explicit site scopes, capability selection, expiry, revocation, and one-time secret display.
+- Evaluate personal tokens against their owner’s live active status, role, and current site assignments on every request so delegated AI access can never outlive or exceed the user’s CMS access.
+- Scope API site, page, block, navigation, Shared Slot, and Media Library discovery to the delegated user, preserve the user as the audit actor, and keep system, backup, maintenance, plugin, application, domain, and executable asset authority out of personal tokens.
+- Keep existing super-admin-managed System API tokens as a separate service-token surface for trusted install-level automation.
+
 ## 1.75.19
 
 - Establish the canonical WebBlocks CMS product name, official slogan, and package description in source and public documentation.

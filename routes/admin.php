@@ -27,6 +27,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageRevisionController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSiteMoveController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
+use WebBlocks\Cms\Http\Controllers\Admin\PersonalApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\ProfileController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
@@ -258,6 +259,10 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::match(['put', 'patch'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale.update');
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::get('/profile/api-tokens', [PersonalApiTokenController::class, 'index'])->name('profile.api-tokens.index');
+    Route::post('/profile/api-tokens', [PersonalApiTokenController::class, 'store'])->name('profile.api-tokens.store');
+    Route::post('/profile/api-tokens/{token}/revoke', [PersonalApiTokenController::class, 'revoke'])->name('profile.api-tokens.revoke');
+    Route::delete('/profile/api-tokens/{token}', [PersonalApiTokenController::class, 'destroy'])->name('profile.api-tokens.destroy');
 
     Route::get('/pages/converter', [PageConverterController::class, 'index'])->name('pages.converter.index');
     Route::post('/pages/converter/analyze', [PageConverterController::class, 'analyze'])->name('pages.converter.analyze');

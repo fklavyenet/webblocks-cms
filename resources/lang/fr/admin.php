@@ -334,6 +334,9 @@ return [
     'show_password' => 'Afficher le mot de passe',
     'updated' => 'Profil mis à jour avec succès.',
     'password_updated' => 'Mot de passe mis à jour avec succès.',
+    'api_tokens' => [
+      'title' => 'Jetons IA personnels', 'description' => 'Déléguez des tâches CMS à une IA dans les limites de votre rôle et de vos sites.', 'manage' => 'Gérer les jetons IA', 'back' => 'Retour au profil', 'create_title' => 'Créer un jeton personnel', 'create_description' => 'Le jeton ne peut jamais dépasser vos autorisations CMS actuelles.', 'name' => 'Nom du jeton', 'sites' => 'Sites autorisés', 'permissions' => 'Autorisations déléguées', 'expires' => 'Expire après', 'days' => 'jours', 'create' => 'Créer le jeton', 'existing_title' => 'Vos jetons', 'api_base' => 'URL de base API : :url', 'copy_now' => 'Copiez ce jeton maintenant. Il ne sera plus affiché.', 'revoke' => 'Révoquer', 'delete' => 'Supprimer', 'empty' => 'Vous n’avez aucun jeton IA personnel.', 'created' => 'Jeton IA personnel créé.', 'revoked' => 'Jeton IA personnel révoqué.', 'deleted' => 'Jeton IA personnel supprimé.',
+    ],
   ],
   'flash' => [
     'success' => 'Succès',
