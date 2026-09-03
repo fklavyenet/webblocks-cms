@@ -81,15 +81,15 @@ The API uses Bearer token authentication:
 Authorization: Bearer <token>
 ```
 
-CMS API tokens are created by a CMS super admin from `System -> API Tokens`. The CMS stores only a SHA-256 hash plus a safe preview in the `cms_api_tokens` database table. The plain token is shown once immediately after creation and is never shown again.
+The CMS has two token surfaces. Editors, Site admins, and Super admins create personal AI tokens from `Profile -> Personal AI Tokens`; those tokens act as their owner within live role, site, workflow, network, and capability limits. Super admins create System API tokens from `System -> API Tokens` for explicitly authorized installation-level automation. The CMS stores only a SHA-256 hash plus a safe preview in the `cms_api_tokens` database table. The plain token is shown once immediately after creation and is never shown again.
 
 The one-time token panel provides copy controls for both the full token and the generated local `.env` example. Copy feedback is announced accessibly, and the browser implementation includes a fallback for environments without the modern Clipboard API.
 
 Tokens created with the older default page-building capability set are treated as eligible for the read-only `admin.render` capability at runtime, so trusted operator tools can use allowlisted admin visual QA snapshots after updating without rotating the token. Narrow custom tokens that do not include the former default set remain restricted.
 
-The Tokens list includes a history action for each token. It opens a WebBlocks UI modal with the latest 10 API activity records for that token. Activity records are intentionally small: request time, status, method, path without query string, route name, required capability when a capability guard was evaluated, IP, and a short user-agent value. The CMS does not store request bodies, query strings, response bodies, bearer token values, token hashes, or token previews in activity rows. Older activity rows are pruned automatically so each token keeps only the latest 10 records.
+Both token screens include a history action for each token. It opens a WebBlocks UI modal with the latest 10 API activity records for that token. Activity records are intentionally small: request time, status, method, path without query string, route name, required capability when a capability guard was evaluated, IP, and a short user-agent value. The CMS does not store request bodies, query strings, response bodies, bearer token values, token hashes, or token previews in activity rows. Older activity rows are pruned automatically so each token keeps only the latest 10 records.
 
-Super admins can revoke a token to immediately disable API access while keeping the audit row visible, or delete a token to permanently remove the token record from the list. Deleting an active token also immediately disables API access because the authenticator can no longer find a matching stored hash.
+Users can edit, revoke, and delete their own personal tokens; Super admins manage System tokens. Editing changes policy metadata without revealing the secret. Revocation immediately disables API access while retaining the audit row. Deleting a token permanently removes it and its activity history.
 
 Local AI and operator tools should store the generated token in a trusted operator secret store.
 
@@ -123,7 +123,7 @@ Content-Type: application/json
 
 ## Capabilities
 
-Super admins choose token capabilities when creating a token from `System -> API Tokens`, and can later edit a token's name and capabilities without exposing or rotating the token secret. Discovery exposes the saved capabilities without returning the token value, token hash, or token preview. Standard page-building tokens default to these capabilities:
+Token owners choose capabilities when creating or editing a personal token; Super admins do the same for System tokens. Editing does not expose or rotate the secret. A personal token form shows only capabilities the owner's current role can delegate, and every request re-checks that live role. Discovery exposes the effective capabilities without returning the token value, token hash, or token preview. Standard page-building tokens use these capabilities:
 
 - `content.read`
 - `content.validate`
@@ -169,6 +169,8 @@ Write endpoints check the relevant capability server-side. Missing capabilities 
 Every `/webadmin/api` route is throttled together, keyed by client IP and bearer token. The default budget is 120 requests per minute; exceeding it returns `429` with a `Retry-After` header. An install can change it with `CMS_INTERNAL_API_RATE_LIMIT_PER_MINUTE`, and the live value is published as `x-rate-limit` on `GET /webadmin/api/openapi.json` — clients should read it there rather than assume the default.
 
 Hosting, proxy, or CDN layers in front of the site may enforce a lower limit than the CMS does, so a bulk client such as a full-site translation pass should pace itself and back off on `429` instead of retrying immediately.
+
+Personal tokens additionally carry a configurable ceiling of 30, 60, 120, or 300 requests per minute; existing personal tokens without a saved value use 60. They may also restrict access to exact IPv4/IPv6 addresses or CIDR networks. Authenticated discovery reports these settings under `token.network_policy`. Laravel's resolved client IP is authoritative, so hosts behind a reverse proxy or CDN must trust only their real proxy addresses and forwarded headers before relying on the allowlist.
 
 ## API Model
 
@@ -1020,8 +1022,13 @@ API errors are JSON-only. They must not redirect to login, render CSRF pages, or
 
 Expected statuses:
 
-- `401` for missing, invalid, or revoked tokens
-- `403` for missing capabilities
+- `401 invalid_internal_api_token` for missing, invalid, revoked, expired, or no-longer-user-backed tokens
+- `403 missing_internal_api_capability` for missing capabilities
+- `403 delegated_site_access_denied` when a personal token targets a site outside its live scope
+- `403 delegated_workflow_access_denied` when the owner cannot edit the page in its current workflow state
+- `403 delegated_operation_denied` for installation-level operations that reject personal tokens
+- `403 delegated_network_access_denied` when the resolved IP is outside the personal token allowlist
+- `429 personal_api_token_rate_limit_exceeded` when the personal ceiling is reached; clients must honour `Retry-After`
 - `422` for validation errors
 
 ## Resource API Examples

@@ -61,8 +61,10 @@ These are the most important controls for a production install:
 
 The Internal Content API (`/webadmin/api`) is for trusted operator/AI tooling.
 
-- Tokens are created by a `super_admin` from `System → API Tokens`, **stored as
-  hashes**, and shown in plain text only once.
+- Personal tokens are created by any active CMS user from **Profile → Personal
+  AI Tokens**; installation-level System tokens are created by a `super_admin`
+  from **System → API Tokens**. Both are **stored as hashes** and shown in plain
+  text only once.
 - Each token carries explicit **capabilities** (read, publish, media, plugin
   lifecycle, commerce, …). Advanced/destructive capabilities are separate opt-ins;
   normal page-building capabilities are the default.
@@ -72,13 +74,20 @@ The Internal Content API (`/webadmin/api`) is for trusted operator/AI tooling.
   token values.
 - Treat API tokens as secrets. Scope them to the minimum capabilities a tool
   needs, and rotate them if exposed.
+- Personal AI tokens continuously intersect selected capabilities and sites
+  with their owner's live role, active state, site assignments, and page
+  workflow authority. Installation-level operations remain System-token only.
 - Personal AI tokens can be restricted to exact IPv4/IPv6 addresses or CIDR
   networks and carry a token-specific per-minute request ceiling. These checks
   are enforced in addition to live user, site, workflow, and capability access.
 - Both the canonical `/webadmin/api` routes and the legacy `/admin-api`
   compatibility routes share the Internal Content API rate limiter.
 
-See [Internal Content API](internal-content-api.md).
+When a reverse proxy or CDN is present, configure Laravel to trust only the
+actual proxy addresses and verify the resolved client IP before enabling an
+allowlist. Never accept spoofable forwarded headers directly from the internet.
+
+See [Personal AI Tokens](personal-ai-tokens.md) and [Internal Content API](internal-content-api.md).
 
 ## Update security
 

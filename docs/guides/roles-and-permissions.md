@@ -53,4 +53,4 @@ Site access is separate from the role. An editor assigned to one site cannot see
 - **Deactivating beats deleting** when someone leaves. Their name stays readable in revision history instead of becoming a mystery.
 - Passwords are set here at creation. Nobody else should ever need to know one — that is what the reset flow is for.
 
-**Next:** [Duplicate, Move, And Archive Pages](/guides/duplicate-move-archive)
+**Next:** [Connect Your AI Safely](/guides/personal-ai-tokens)

@@ -36,14 +36,12 @@ Trusted AI/operator tools can inspect a CMS install, build a structured draft co
 
 Create API tokens from the CMS admin panel:
 
-- Editors and site admins create personal AI tokens under **Profile → Manage AI Tokens**. They select only sites already assigned to their account, choose delegated capabilities, and set a 30, 90, or 365 day expiry. The CMS intersects this scope with the owner’s live role and site assignments on every request; disabling the user or removing a site assignment takes effect immediately.
+- Editors and site admins create personal AI tokens under **Profile → Manage AI Tokens**. They select only sites already assigned to their account, choose delegated capabilities, set a 30, 90, or 365 day expiry, and may restrict the token to IPv4/IPv6 or CIDR networks with a token-specific request ceiling. The CMS intersects this scope with the owner’s live role and site assignments on every request; disabling the user or removing a site assignment takes effect immediately.
 - Super admins may use the same personal-token flow when an AI should act as their named delegate. Install-level service automation continues to use **System → API Tokens**.
-- Personal tokens never receive backup, maintenance, plugin, Embedded Application, domain, site-asset, page-asset, or admin-render authority. Editors also cannot delegate publishing, page deletion, or site-setting changes. A token capability narrows user authority and never expands it.
+- Personal tokens never receive backup, maintenance, plugin, Embedded Application, domain, site-asset, page-asset, or admin-render authority. Editors cannot delegate publishing or site-setting changes. A token capability narrows user authority and never expands it.
 - Personal content writes must identify the target site explicitly. Discovery responses for sites, pages, blocks, navigation, Shared Slots, and media are restricted to the token’s effective site scope.
 
-```text
-System -> API Tokens
-```
+For installation-level automation, a Super admin instead opens **System → API Tokens** and grants only the required System-token capabilities.
 
 The plain token is shown once immediately after creation. Store it in a trusted operator secret store and never paste a real token into prompts, documentation, logs, screenshots, tickets, or release reports.
 
@@ -166,7 +164,7 @@ Two separate consent surfaces exist. Neither needs a Trusted HTML block, and nei
 - **Cookie/analytics consent** is a site-wide feature, not a block. Visitor Reports plus the System Settings toggle *Show the public privacy settings banner* render WebBlocks UI's Cookie Consent pattern on every public page and post the visitor's decision to `POST /privacy-consent/sync`, which returns the consent cookie that gates analytics tracking. There is nothing to place on a page and nothing to author — if a site needs a cookie banner, the answer is the toggle, not markup.
 - **Form consent** is per contact form. Set `settings.consent_required` and translate `consent_label` on the `contact_form` block to render a required checkbox whose label is the data-processing notice. The accepted submission records the time and a copy of that wording. Do not demote the notice into the form's intro text: intro copy is prose beside the form, not an auditable per-submission fact. `consent_required` is closed to `PATCH`, so it is set in the admin or in the block's creating plan.
 
-A full-site translation pass is bulk work, so pace it: the API allows 120 requests per minute per token and IP by default (read `x-rate-limit` in the OpenAPI document for the live value), hosting layers in front of the site may allow fewer, and `429` carries a `Retry-After` to honour.
+A full-site translation pass is bulk work, so pace it: the installation API allows 120 requests per minute per token and IP by default (read `x-rate-limit` in the OpenAPI document for the live value), a personal token may impose a lower 30/60/120/300 ceiling, hosting layers may allow fewer, and `429` carries a `Retry-After` to honour.
 
 ## Safety Rules
 

@@ -55,7 +55,8 @@ With a valid CMS API Bearer token, discovery returns:
 - `cms_version` and `product_version`
 - `api_version`
 - `authenticated: true`
-- token capability names, without token value, token preview, or token hash
+- token type and capability names, without token value, token preview, or token hash
+- personal-token network policy, including its IP/CIDR allowlist and request-per-minute ceiling
 - recommended next steps
 - links for OpenAPI, AI guide, content contract, examples, validate/apply, pages, blocks, media, registered Embedded Applications, page publish, page-owned block publish, navigation, Shared Slots, plugin lifecycle endpoints, and Commerce product/order endpoints
 
@@ -142,7 +143,7 @@ Content-Type: application/json
 
 ## Capabilities
 
-CMS API tokens expose the capabilities selected at token creation in discovery so tools can understand allowed actions before attempting writes.
+CMS API tokens expose their effective capabilities in discovery so tools can understand allowed actions before attempting writes. Personal tokens also expose `token_type: personal` and their network policy; they are further constrained by the owner's live role, site assignments, selected sites, and page workflow. Installation-level System tokens remain a separate super-admin-managed surface.
 
 Standard page-building capabilities:
 
@@ -188,8 +189,10 @@ Content API endpoints return JSON errors instead of browser redirects, login pag
 
 Expected status behavior:
 
-- `401` for missing, invalid, or revoked tokens
-- `403` for missing capabilities
+- `401 invalid_internal_api_token` for missing, invalid, revoked, expired, or no-longer-user-backed tokens
+- `403 missing_internal_api_capability` for missing capabilities
+- `403 delegated_site_access_denied`, `delegated_workflow_access_denied`, `delegated_operation_denied`, or `delegated_network_access_denied` for personal-token policy failures
+- `429 personal_api_token_rate_limit_exceeded` with `Retry-After` for a personal-token ceiling
 - `422` for invalid content payloads
 
 ## Security

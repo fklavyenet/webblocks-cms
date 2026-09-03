@@ -2,7 +2,7 @@
 guide: true
 guide_slug: duplicate-move-archive
 guide_series: H
-guide_order: 39
+guide_order: 40
 cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/duplicate-move-archive

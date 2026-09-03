@@ -8,7 +8,7 @@ $required = ['README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.
 // Documentation that the product depends on at runtime or contractually.
 // docs/inventory.md is served by GET /webadmin/api/inventory and is the
 // AI-facing authoring contract, so losing it must fail the docs check.
-$requiredDocs = ['docs/inventory.md'];
+$requiredDocs = ['docs/inventory.md', 'docs/personal-ai-tokens.md'];
 $errors = [];
 
 foreach ($required as $file) {

@@ -81,6 +81,24 @@ This role cannot publish or archive pages, and cannot access install-level syste
 
 This site boundary applies across major content areas such as pages, navigation, media, visitor reports, and contact messages.
 
+## Delegating Work To An AI
+
+Every active Editor, Site admin, and Super admin can create a personal AI token
+from their own Profile. The token does not create another role: it acts as its
+owner and is continuously limited by the intersection of selected token
+capabilities, selected sites, the owner's current role and assignments, and the
+page workflow.
+
+| Role | Personal AI scope |
+| --- | --- |
+| `editor` | Read, validate, and change draft content on selected assigned sites; no publish or site-settings authority |
+| `site_admin` | Assigned-site content plus optional publish and safe site-settings capabilities |
+| `super_admin` | The same personal content/site capability surface across selected sites; installation-level operations still require a System API token |
+
+Role changes, site removal, deactivation, token expiry, revocation, IP policy,
+and request limits are enforced on subsequent API requests. See [Personal AI
+Tokens](personal-ai-tokens.md) for setup, lifecycle, and security guidance.
+
 ## Audit References
 
 Pages, page revisions, Shared Slots, and Shared Slot revisions can store nullable references back to CMS users for audit attribution.
