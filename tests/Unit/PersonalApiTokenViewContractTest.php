@@ -28,5 +28,8 @@ class PersonalApiTokenViewContractTest extends TestCase
     $this->assertStringContainsString('wb-api-token-capability-groups', $source);
     $this->assertStringContainsString('wb-table wb-table-striped wb-table-hover', $source);
     $this->assertStringContainsString('admin.partials.pagination', $source);
+    $this->assertStringContainsString('admin.profile.api-tokens.update', $source);
+    $this->assertStringContainsString('activity-personal-api-token-', $source);
+    $this->assertStringContainsString('$token->activityLogs', $source);
   }
 }

@@ -261,6 +261,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::get('/profile/api-tokens', [PersonalApiTokenController::class, 'index'])->name('profile.api-tokens.index');
     Route::post('/profile/api-tokens', [PersonalApiTokenController::class, 'store'])->name('profile.api-tokens.store');
+    Route::put('/profile/api-tokens/{token}', [PersonalApiTokenController::class, 'update'])->name('profile.api-tokens.update');
     Route::post('/profile/api-tokens/{token}/revoke', [PersonalApiTokenController::class, 'revoke'])->name('profile.api-tokens.revoke');
     Route::delete('/profile/api-tokens/{token}', [PersonalApiTokenController::class, 'destroy'])->name('profile.api-tokens.destroy');
 

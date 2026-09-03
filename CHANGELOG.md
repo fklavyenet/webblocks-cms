@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.76.4
+
+- Let users edit the name, allowed sites, delegated capabilities, and renewed expiry of their own personal AI tokens without revealing or replacing the token secret.
+- Show each personal token's ten most recent API requests with authorization outcome, route, required capability, timestamp, client IP, and user agent.
+- Distinguish expired tokens from active tokens and enforce personal-token ownership before validating an update request.
+
 ## 1.76.3
 
 - Enforce delegated users' live page-workflow authority for personal-token content writes and prevent personal tokens from changing the installation-wide locale catalogue.

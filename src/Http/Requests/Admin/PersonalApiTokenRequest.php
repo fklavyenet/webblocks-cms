@@ -4,13 +4,21 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Support\InternalApiTokens\PersonalApiTokenPolicy;
 
 class PersonalApiTokenRequest extends FormRequest
 {
   public function authorize(): bool
   {
-    return $this->user()?->canAccessAdmin() === true;
+    if ($this->user()?->canAccessAdmin() !== true) {
+      return false;
+    }
+
+    $token = $this->route('token');
+
+    return ! $token instanceof CmsApiToken
+      || ($token->isPersonal() && (int) $token->created_by_user_id === (int) $this->user()->id);
   }
 
   public function rules(): array

@@ -67,12 +67,16 @@ class CmsApiToken extends CmsModel
 
   public function statusLabel(): string
   {
-    return $this->isRevoked() ? 'Revoked' : 'Active';
+    return match (true) {
+      $this->isRevoked() => 'Revoked',
+      $this->isExpired() => 'Expired',
+      default => 'Active',
+    };
   }
 
   public function statusBadgeClass(): string
   {
-    return $this->isRevoked() ? 'wb-status-pending' : 'wb-status-active';
+    return ($this->isRevoked() || $this->isExpired()) ? 'wb-status-pending' : 'wb-status-active';
   }
 
   public function createdAtLabel(): string

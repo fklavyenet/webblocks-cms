@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\PersonalApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
@@ -19,15 +20,39 @@ class PersonalApiTokenController extends Controller
     $capabilities = $policy->grantable($user);
     $presenter = app(CmsApiTokenCapabilities::class);
 
+    $tokens = CmsApiToken::query()->where('token_type', 'personal')->where('created_by_user_id', $user->id)->latest()->paginate(20);
+    $activitySchemaReady = $this->activitySchemaReady();
+
+    if ($activitySchemaReady) {
+      $tokens->getCollection()->each(fn (CmsApiToken $token) => $token->setRelation(
+        'activityLogs',
+        $token->activityLogs()->latest('occurred_at')->latest('id')->limit(10)->get(),
+      ));
+    }
+
     return view('webblocks-cms::admin.profile.api-tokens', [
-      'tokens' => CmsApiToken::query()->where('token_type', 'personal')->where('created_by_user_id', $user->id)->latest()->paginate(20),
+      'tokens' => $tokens,
       'sites' => $user->accessibleSites(),
       'capabilityGroups' => $this->capabilityGroups($capabilities),
       'capabilityLabels' => $presenter->labelsAll(),
       'capabilitiesPresenter' => $presenter,
       'createdToken' => session('created_personal_api_token'),
       'apiBaseUrl' => url('/webadmin/api'),
+      'activitySchemaReady' => $activitySchemaReady,
     ]);
+  }
+
+  public function update(PersonalApiTokenRequest $request, CmsApiToken $token): RedirectResponse
+  {
+    $token = $this->ownedToken($token);
+    $token->forceFill([
+      'name' => trim((string) $request->validated('name')),
+      'capabilities' => array_values(array_unique($request->validated('capabilities'))),
+      'allowed_site_ids' => array_values(array_unique($request->validated('site_ids'))),
+      'expires_at' => now()->addDays((int) $request->validated('expires_in_days')),
+    ])->save();
+
+    return back()->with('status_key', 'profile.api_tokens.updated');
   }
 
   public function store(PersonalApiTokenRequest $request, CmsApiTokenIssuer $issuer): RedirectResponse
@@ -86,5 +111,11 @@ class PersonalApiTokenController extends Controller
       ->filter(fn (array $group): bool => $group['capabilities'] !== [])
       ->values()
       ->all();
+  }
+
+  private function activitySchemaReady(): bool
+  {
+    return Schema::hasTable('wbcms_cms_api_token_activity_logs')
+      && Schema::hasColumn('wbcms_cms_api_token_activity_logs', 'cms_api_token_id');
   }
 }
