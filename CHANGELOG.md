@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.76.7
+
+- Restore the embedded Publisher Client version in System Updates release details by adding it to the CMS-owned update client that actually feeds the live screen.
+- Render release-detail group labels such as Highlights and Technical notes as distinct headings in both available-update and up-to-date states.
+- Keep version-only changelog rows compact instead of creating empty expandable details solely for the update-engine note.
+
 ## 1.76.6
 
 - Align Personal AI Token Network Controls with the standard CMS field layout, removing the browser-native fieldset and legend border from both create and edit forms.
