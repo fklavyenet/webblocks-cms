@@ -138,7 +138,7 @@
                     <div class="wb-accordion-content{{ $open ? ' is-open' : '' }}" id="wb-release-{{ $loop->iteration }}">
                       <div class="wb-accordion-body wb-stack wb-stack-2 wb-mt-3">
                         @foreach (($entry['groups'] ?? []) as $group)
-                          <p class="wb-text-xs wb-text-muted">{{ $group['label'] }}</p>
+                          <h4 class="wb-text-sm"><strong>{{ $group['label'] }}</strong></h4>
                           <ul class="wb-text-sm">
                             @foreach ($group['items'] as $item)
                               <li>{{ $item }}</li>
@@ -208,7 +208,7 @@
                     <p class="wb-text-sm">{{ $currentNotes['summary'] }}</p>
                   @endif
                   @foreach (($currentNotes['groups'] ?? []) as $group)
-                    <p class="wb-text-xs wb-text-muted">{{ $group['label'] }}</p>
+                    <h4 class="wb-text-sm"><strong>{{ $group['label'] }}</strong></h4>
                     <ul class="wb-text-sm">
                       @foreach ($group['items'] as $item)
                         <li>{{ $item }}</li>

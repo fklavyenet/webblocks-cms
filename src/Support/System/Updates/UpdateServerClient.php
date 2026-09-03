@@ -7,6 +7,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\Updates\Client\PublisherClient;
 use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 
 class UpdateServerClient
@@ -400,6 +401,25 @@ class UpdateServerClient
       // Degraded payload with only raw notes: promote the first line to the
       // summary and keep the remainder as fallback body copy.
       $summary = array_shift($fallbackNotes);
+    }
+
+    if ($title !== null || $summary !== null || $groups !== [] || $fallbackNotes !== []) {
+      $engineNote = sprintf(
+        'Installed update engine: Publisher Client %s (%s).',
+        PublisherClient::VERSION,
+        (string) config('publisher-client.distribution', 'embedded'),
+      );
+      $technicalIndex = array_search('technical_notes', array_column($groups, 'key'), true);
+
+      if ($technicalIndex === false) {
+        $groups[] = [
+          'key' => 'technical_notes',
+          'label' => self::RELEASE_DETAIL_GROUPS['technical_notes'],
+          'items' => [$engineNote],
+        ];
+      } else {
+        $groups[$technicalIndex]['items'][] = $engineNote;
+      }
     }
 
     return [

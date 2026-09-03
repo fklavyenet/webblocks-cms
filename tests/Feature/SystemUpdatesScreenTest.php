@@ -51,6 +51,7 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertStringContainsString('What&#039;s new since 1.40.0', $html);
     $this->assertStringContainsString('wb-accordion-trigger', $html);
     $this->assertStringContainsString('One-click self-updates.', $html);
+    $this->assertStringContainsString('<h4 class="wb-text-sm"><strong>Highlights</strong></h4>', $html);
     $this->assertStringContainsString('wb-list-item', $html);
 
     // Progress modal wired to the indicator poll.
@@ -81,6 +82,7 @@ class SystemUpdatesScreenTest extends TestCase
 
     // Folded "What's new in X" accordion for the current release.
     $this->assertStringContainsString('What&#039;s new in 1.40.0', $html);
+    $this->assertStringContainsString('<h4 class="wb-text-sm"><strong>Highlights</strong></h4>', $html);
 
     // No update action in this state.
     $this->assertStringNotContainsString('data-wb-update-form', $html);

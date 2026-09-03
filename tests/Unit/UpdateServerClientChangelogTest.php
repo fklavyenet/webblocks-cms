@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\Updates\InstallationTelemetry;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\Updates\Client\PublisherClient;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -44,7 +45,12 @@ class UpdateServerClientChangelogTest extends TestCase
 
     $this->assertSame(['1.43.0', 'v1.42.0', '1.41.0'], array_column($entries, 'version'));
     $this->assertSame('Target release.', $entries[0]['summary']);
-    $this->assertSame([['key' => 'fixes', 'label' => 'Fixes', 'items' => ['A fix.']]], $entries[0]['groups']);
+    $this->assertSame(['fixes', 'technical_notes'], array_column($entries[0]['groups'], 'key'));
+    $this->assertSame(['A fix.'], $entries[0]['groups'][0]['items']);
+    $this->assertSame(
+      ['Installed update engine: Publisher Client '.PublisherClient::VERSION.' (embedded).'],
+      $entries[0]['groups'][1]['items'],
+    );
 
     // Version-only entry carries no accordion body.
     $this->assertNull($entries[1]['summary']);
@@ -126,9 +132,13 @@ class UpdateServerClientChangelogTest extends TestCase
     // Shown once, in the trigger.
     $this->assertSame($line, $entry['summary']);
     // Highlights that merely repeat the summary are dropped; technical notes stay.
+    $this->assertSame('technical_notes', $entry['groups'][0]['key']);
+    $this->assertSame('Technical notes', $entry['groups'][0]['label']);
+    $this->assertSame('Source reference: v1.41.1', $entry['groups'][0]['items'][0]);
+    $this->assertSame('Artifact checksum: abc123', $entry['groups'][0]['items'][1]);
     $this->assertSame(
-      [['key' => 'technical_notes', 'label' => 'Technical notes', 'items' => ['Source reference: v1.41.1', 'Artifact checksum: abc123']]],
-      $entry['groups']
+      'Installed update engine: Publisher Client '.PublisherClient::VERSION.' (embedded).',
+      $entry['groups'][0]['items'][2],
     );
     // The raw release_notes duplicate is not rendered a second time.
     $this->assertSame([], $entry['fallback_notes']);
