@@ -30,6 +30,7 @@ class InternalEngagementController extends Controller
 
     $filters = $this->commentFilters($request);
     $query = CommentEntry::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['site', 'page', 'block.blockType'])
       ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']))
       ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
@@ -56,7 +57,7 @@ class InternalEngagementController extends Controller
       'pagination' => $this->pagination($comments),
       'summary' => [
         'total' => (clone $query)->count(),
-        'by_status' => $this->commentStatusCounts($filters),
+        'by_status' => $this->commentStatusCounts($request, $filters),
       ],
     ]);
   }
@@ -76,13 +77,14 @@ class InternalEngagementController extends Controller
     ]);
 
     $comment = CommentEntry::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['site', 'page', 'block.blockType'])
       ->findOrFail($commentEntry);
 
     $comment->update([
       'status' => $validated['status'],
       'approved_at' => $validated['status'] === 'approved' ? now() : null,
-      'approved_by_user_id' => null,
+      'approved_by_user_id' => $request->user()?->id,
     ]);
 
     $comment->refresh()->load(['site', 'page', 'block.blockType']);
@@ -109,6 +111,7 @@ class InternalEngagementController extends Controller
 
     $filters = $this->ratingFilters($request);
     $query = ContentRating::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['site', 'page', 'block.blockType'])
       ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']))
       ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
@@ -131,7 +134,7 @@ class InternalEngagementController extends Controller
       'summary' => [
         'total' => (clone $query)->count(),
         'average' => $average !== null ? round((float) $average, 2) : null,
-        'by_value' => $this->ratingValueCounts($filters),
+        'by_value' => $this->ratingValueCounts($request, $filters),
       ],
     ]);
   }
@@ -221,9 +224,10 @@ class InternalEngagementController extends Controller
     ];
   }
 
-  private function commentStatusCounts(array $filters): array
+  private function commentStatusCounts(Request $request, array $filters): array
   {
     $query = CommentEntry::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
       ->when($filters['page_id'] !== null, fn (Builder $query) => $query->where('page_id', $filters['page_id']))
       ->when($filters['block_id'] !== null, fn (Builder $query) => $query->where('block_id', $filters['block_id']));
@@ -235,9 +239,10 @@ class InternalEngagementController extends Controller
       ->all();
   }
 
-  private function ratingValueCounts(array $filters): array
+  private function ratingValueCounts(Request $request, array $filters): array
   {
     $query = ContentRating::query()
+      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']))
       ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
       ->when($filters['page_id'] !== null, fn (Builder $query) => $query->where('page_id', $filters['page_id']))

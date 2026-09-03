@@ -819,9 +819,17 @@ class InternalContentResourceController extends Controller
       return $this->capabilityError(CmsApiTokenCapabilities::MEDIA_READ, 'Reading Media Library records requires media.read.');
     }
 
+    $user = $request->attributes->get('cms_api_user');
+
     return $this->ok([
       'media_folders' => MediaFolder::query()
-        ->withCount('media')
+        ->when(
+          $user,
+          fn ($query) => $query->withCount([
+            'media' => fn ($mediaQuery) => $this->adminAuthorization->scopeMediaForUser($mediaQuery, $user),
+          ]),
+          fn ($query) => $query->withCount('media'),
+        )
         ->orderBy('name')
         ->get()
         ->map(fn (MediaFolder $folder) => $this->presenter->mediaFolder($folder))

@@ -627,7 +627,7 @@ class InternalSharedSlotController extends Controller
 
   private function siteFromRequest(Request $request): ?Site
   {
-    $value = $request->query('site', $request->input('site', $request->input('site_id')));
+    $value = $request->query('site', $request->query('site_id', $request->input('site', $request->input('site_id'))));
 
     if ($value === null || $value === '') {
       return null;

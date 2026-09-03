@@ -59,6 +59,24 @@ class PersonalApiDelegationTest extends TestCase
     $this->assertStringContainsString('delegated_site_access_denied', $delegation);
   }
 
+  #[Test]
+  public function personal_delegation_closes_global_workflow_and_aggregate_fallbacks(): void
+  {
+    $root = dirname(__DIR__, 2);
+    $delegation = file_get_contents($root.'/src/Http/Middleware/AuthorizePersonalApiDelegation.php');
+    $engagement = file_get_contents($root.'/src/Http/Controllers/InternalContentApi/InternalEngagementController.php');
+    $resources = file_get_contents($root.'/src/Http/Controllers/InternalContentApi/InternalContentResourceController.php');
+
+    $this->assertStringContainsString('internal-content-api.locales.store', $delegation);
+    $this->assertStringContainsString('internal-content-api.locales.update', $delegation);
+    $this->assertStringContainsString('internal-content-api.navigation-menus.show', $delegation);
+    $this->assertStringContainsString('PageWorkflowManager $workflow', $delegation);
+    $this->assertStringContainsString('delegated_workflow_access_denied', $delegation);
+    $this->assertGreaterThanOrEqual(5, substr_count($engagement, 'cms_api_allowed_site_ids'));
+    $this->assertStringContainsString("'approved_by_user_id' => \$request->user()?->id", $engagement);
+    $this->assertStringContainsString('scopeMediaForUser($mediaQuery, $user)', $resources);
+  }
+
   private function constantName(string $capability): string
   {
     return strtoupper(str_replace(['.', '-'], '_', $capability));

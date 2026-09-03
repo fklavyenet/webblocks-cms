@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiResponseMetadata;
+use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class AuthorizePersonalApiDelegation
@@ -25,6 +26,7 @@ class AuthorizePersonalApiDelegation
   public function __construct(
     private readonly InternalApiResponseMetadata $metadata,
     private readonly AdminAuthorization $authorization,
+    private readonly PageWorkflowManager $workflow,
   ) {}
 
   public function handle(Request $request, Closure $next): mixed
@@ -78,6 +80,22 @@ class AuthorizePersonalApiDelegation
     }
 
     $routeName = (string) $request->route()?->getName();
+
+    if (in_array($routeName, ['internal-content-api.locales.store', 'internal-content-api.locales.update'], true)) {
+      return $this->denied('Global locale administration cannot be delegated through a personal API token.', 'delegated_operation_denied');
+    }
+
+    if ($routeName === 'internal-content-api.navigation-menus.show' && $payloadSiteIds === []) {
+      return $this->denied('Personal API navigation requests must identify an allowed site explicitly.');
+    }
+
+    if (! $request->isMethodSafe() && $routeName !== 'internal-content-api.pages.delete') {
+      $page = $this->pageFromRoute($request);
+
+      if ($page && ! $this->workflow->canEditContent($user, $page) && ! str_contains($routeName, '.publish') && ! str_ends_with($routeName, '.archive')) {
+        return $this->denied('The delegated user cannot edit content in the page’s current workflow state.', 'delegated_workflow_access_denied');
+      }
+    }
     $siteRequired = $request->isMethodSafe() === false
       && (str_starts_with($routeName, 'internal-content-api.navigation-menus.')
         || str_starts_with($routeName, 'internal-content-api.shared-slots.')
@@ -97,6 +115,7 @@ class AuthorizePersonalApiDelegation
     $plan = is_array($payload['plan'] ?? null) ? $payload['plan'] : $payload;
     $values = [
       $request->query('site'),
+      $request->query('site_id'),
       $plan['site'] ?? null,
       $plan['site_id'] ?? null,
       $plan['site_handle'] ?? null,
@@ -126,6 +145,25 @@ class AuthorizePersonalApiDelegation
     return array_values(array_unique($ids));
   }
 
+  private function pageFromRoute(Request $request): ?Page
+  {
+    foreach ($request->route()?->parameters() ?? [] as $resource) {
+      $page = match (true) {
+        $resource instanceof Page => $resource,
+        $resource instanceof PageSlot => $resource->page,
+        $resource instanceof PageTranslation => $resource->page,
+        $resource instanceof Block => $resource->page,
+        default => null,
+      };
+
+      if ($page) {
+        return $page;
+      }
+    }
+
+    return null;
+  }
+
   private function siteIdFor(mixed $resource): ?int
   {
     return match (true) {
@@ -142,11 +180,11 @@ class AuthorizePersonalApiDelegation
     } ?: null;
   }
 
-  private function denied(string $message): JsonResponse
+  private function denied(string $message, string $code = 'delegated_site_access_denied'): JsonResponse
   {
     return response()->json($this->metadata->merge([
       'ok' => false,
-      'code' => 'delegated_site_access_denied',
+      'code' => $code,
       'message' => $message,
       'errors' => [['path' => 'Authorization', 'message' => $message]],
     ]), 403);

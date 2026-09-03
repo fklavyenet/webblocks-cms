@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.76.3
+
+- Enforce delegated users' live page-workflow authority for personal-token content writes and prevent personal tokens from changing the installation-wide locale catalogue.
+- Require an explicit allowed site for personal-token navigation discovery and consistently accept `site_id` as a site selector.
+- Scope engagement records, engagement aggregates, and Media Library folder counts to the personal token's current site access, while recording the delegated user as the moderation actor.
+
 ## 1.76.2
 
 - Align Personal AI Tokens with the system API Tokens experience through a full-width card flow, API discovery quick start, grouped capability selectors, selection counts, standard token table, pagination, and copy-ready token setup details.
