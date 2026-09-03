@@ -13,7 +13,7 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $text('title'),
         'description' => $text('description'),
-        'actions' => [['label' => $text('back'), 'url' => route('admin.profile.edit'), 'class' => 'wb-btn wb-btn-secondary']],
+        'actions' => '<a href="'.e(route('admin.profile.edit')).'" class="wb-btn wb-btn-secondary">'.e($text('back')).'</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')

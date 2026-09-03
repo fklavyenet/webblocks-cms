@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.76.1
+
+- Fix the Profile and Personal AI Tokens page-header actions to use the shared HTML action contract, preventing an array-to-string rendering exception after upgrading to 1.76.0.
+
 ## 1.76.0
 
 - Add personal AI API tokens for editors, site admins, and super admins under Profile, with explicit site scopes, capability selection, expiry, revocation, and one-time secret display.

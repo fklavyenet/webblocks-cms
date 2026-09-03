@@ -13,7 +13,7 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
         'description' => $adminText('description'),
-        'actions' => [['label' => $adminText('api_tokens.manage'), 'url' => route('admin.profile.api-tokens.index'), 'class' => 'wb-btn wb-btn-secondary']],
+        'actions' => '<a href="'.e(route('admin.profile.api-tokens.index')).'" class="wb-btn wb-btn-secondary">'.e($adminText('api_tokens.manage')).'</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
