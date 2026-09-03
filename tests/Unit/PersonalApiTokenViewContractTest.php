@@ -31,5 +31,7 @@ class PersonalApiTokenViewContractTest extends TestCase
     $this->assertStringContainsString('admin.profile.api-tokens.update', $source);
     $this->assertStringContainsString('activity-personal-api-token-', $source);
     $this->assertStringContainsString('$token->activityLogs', $source);
+    $this->assertStringContainsString('wb-field wb-stack wb-gap-3', $source);
+    $this->assertStringNotContainsString('<fieldset class="wb-field"><legend class="wb-label">{{ $text(\'network_controls\') }}</legend>', $source);
   }
 }
