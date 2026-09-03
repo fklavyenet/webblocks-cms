@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.76.6
+
+- Align Personal AI Token Network Controls with the standard CMS field layout, removing the browser-native fieldset and legend border from both create and edit forms.
+- Add a complete Personal AI Tokens reference and user guide covering Personal versus System tokens, live role and site boundaries, lifecycle operations, network controls, reverse proxies, API errors, and safe AI connection practices.
+- Update README, security, permissions, API discovery, Internal Content API, and AI page-building documentation so user-delegated access and installation-level automation are described consistently.
+
 ## 1.76.5
 
 - Add optional exact IPv4/IPv6 and CIDR network allowlists to personal AI tokens, enforced alongside the owner's live CMS permissions.
