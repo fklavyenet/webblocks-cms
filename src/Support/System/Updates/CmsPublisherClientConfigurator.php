@@ -32,6 +32,8 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.apply.package_validation.allowed_roots', [
       'composer.json', 'src', 'routes', 'resources', 'database', 'config', 'public', 'docs', 'stubs',
     ]);
+    $config->set('publisher-client.apply.package_validation.forbidden_content_patterns', []);
+    $config->set('publisher-client.apply.package_validation.content_scan_excluded_paths', []);
     $config->set('publisher-client.apply.package_validation.required_paths', ['src']);
     $config->set('publisher-client.package.name', 'fklavyenet/webblocks-cms');
     $config->set('publisher-client.package.service_provider', WebBlocksCmsServiceProvider::class);

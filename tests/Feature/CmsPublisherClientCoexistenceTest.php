@@ -20,14 +20,18 @@ class CmsPublisherClientCoexistenceTest extends TestCase
     config()->set('publisher-client.version.source', '1.20.0');
     config()->set('publisher-client.apply.target_path', '/wrong-product');
     config()->set('publisher-client.apply.workspace_root', 'app/wrong-product');
+    config()->set('publisher-client.apply.package_validation.forbidden_content_patterns', ['WebBlocks\\Cms']);
+    config()->set('publisher-client.apply.package_validation.content_scan_excluded_paths', ['src/ForeignRuntime']);
 
     app(CmsPublisherClientConfigurator::class)->configure();
 
     $this->assertSame('webblocks-cms', config('publisher-client.product'));
     $this->assertSame(ConfigVersionResolver::class, config('publisher-client.version.resolver'));
-    $this->assertSame('1.78.5', app(VersionResolver::class)->current());
+    $this->assertSame('1.78.6', app(VersionResolver::class)->current());
     $this->assertNotSame('/wrong-product', config('publisher-client.apply.target_path'));
     $this->assertSame('app/system-updates', config('publisher-client.apply.workspace_root'));
+    $this->assertSame([], config('publisher-client.apply.package_validation.forbidden_content_patterns'));
+    $this->assertSame([], config('publisher-client.apply.package_validation.content_scan_excluded_paths'));
     $this->assertInstanceOf(UpdateServerClient::class, app(UpdateServerClient::class));
   }
 

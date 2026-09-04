@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.78.6
+
+- Clear co-installed products' artifact content-scan patterns and exclusions when entering a CMS update operation, preventing valid CMS namespaces and configuration files from being rejected as foreign host-runtime references.
+
 ## 1.78.5
 
 - Preserve another co-installed product's active Publisher Client configuration during CMS provider boot, while continuing to restore CMS-owned values at every CMS update operation. This lets older co-installed packages reach their own update screen and upgrade to operation-boundary isolation without a bootstrap configuration collision.
