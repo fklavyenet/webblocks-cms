@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.78.1
+## 1.78.2
 
 - Repair legacy system-update history tables during package updates and keep the Updates screen available before that repair completes.
 - Simplify the Visitor Reports chart card with concise comparison copy and actions, omit redundant daily and single-series labels, and show localized day labels on the axis while retaining full dates in the accessible values table.
