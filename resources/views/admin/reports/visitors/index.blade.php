@@ -82,80 +82,78 @@
             </div>
         </div>
     @else
-        <div class="wb-card wb-card-muted">
-            <div class="wb-card-body">
-                <form method="GET" action="{{ route('admin.reports.visitors.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
-                    <input type="hidden" name="tab" value="{{ $reportTab }}" data-wb-visitor-reports-tab-input>
+        <form method="GET" action="{{ route('admin.reports.visitors.index') }}" class="wb-filter-bar wb-filter-bar--fields" data-admin-listing-filters>
+            <input type="hidden" name="tab" value="{{ $reportTab }}" data-wb-visitor-reports-tab-input>
 
-                    <div class="wb-cluster wb-cluster-2">
-                        <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_date_range">{{ $adminText('date_range') }}</label>
-                            <select id="visitor_reports_date_range" name="date_range" class="wb-select">
-                                <option value="today" @selected($filters['date_range'] === 'today')>{{ $adminText('today') }}</option>
-                                <option value="last_7_days" @selected($filters['date_range'] === 'last_7_days')>{{ $adminText('last_7_days') }}</option>
-                                <option value="last_30_days" @selected($filters['date_range'] === 'last_30_days')>{{ $adminText('last_30_days') }}</option>
-                                <option value="this_month" @selected($filters['date_range'] === 'this_month')>{{ $adminText('this_month') }}</option>
-                                <option value="custom" @selected($filters['date_range'] === 'custom')>{{ $adminText('custom') }}</option>
-                            </select>
-                        </div>
+            <div class="wb-filter-bar-fields" data-admin-listing-filters-fields>
+                <div class="wb-field">
+                    <label class="wb-label" for="visitor_reports_date_range">{{ $adminText('date_range') }}</label>
+                    <select id="visitor_reports_date_range" name="date_range" class="wb-filter-select">
+                        <option value="today" @selected($filters['date_range'] === 'today')>{{ $adminText('today') }}</option>
+                        <option value="last_7_days" @selected($filters['date_range'] === 'last_7_days')>{{ $adminText('last_7_days') }}</option>
+                        <option value="last_30_days" @selected($filters['date_range'] === 'last_30_days')>{{ $adminText('last_30_days') }}</option>
+                        <option value="this_month" @selected($filters['date_range'] === 'this_month')>{{ $adminText('this_month') }}</option>
+                        <option value="custom" @selected($filters['date_range'] === 'custom')>{{ $adminText('custom') }}</option>
+                    </select>
+                </div>
 
-                        <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_from">{{ $adminText('from') }}</label>
-                            <input id="visitor_reports_from" name="from" type="date" class="wb-input" value="{{ $filters['from'] }}">
-                        </div>
+                <div class="wb-field">
+                    <label class="wb-label" for="visitor_reports_from">{{ $adminText('from') }}</label>
+                    <input id="visitor_reports_from" name="from" type="date" class="wb-input" value="{{ $filters['from'] }}">
+                </div>
 
-                        <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_to">{{ $adminText('to') }}</label>
-                            <input id="visitor_reports_to" name="to" type="date" class="wb-input" value="{{ $filters['to'] }}">
-                        </div>
+                <div class="wb-field">
+                    <label class="wb-label" for="visitor_reports_to">{{ $adminText('to') }}</label>
+                    <input id="visitor_reports_to" name="to" type="date" class="wb-input" value="{{ $filters['to'] }}">
+                </div>
 
-                        <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_site">{{ $adminText('site') }}</label>
-                            <select id="visitor_reports_site" name="site" class="wb-select">
-                                <option value="all" @selected($filters['site'] === 'all')>{{ $adminText('all_sites') }}</option>
-                                @foreach ($sites as $site)
-                                    <option value="{{ $site->id }}" @selected($filters['site'] === (string) $site->id)>{{ $site->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                <div class="wb-field">
+                    <label class="wb-label" for="visitor_reports_site">{{ $adminText('site') }}</label>
+                    <select id="visitor_reports_site" name="site" class="wb-filter-select">
+                        <option value="all" @selected($filters['site'] === 'all')>{{ $adminText('all_sites') }}</option>
+                        @foreach ($sites as $site)
+                            <option value="{{ $site->id }}" @selected($filters['site'] === (string) $site->id)>{{ $site->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                        <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_locale">{{ $adminText('locale') }}</label>
-                            <select id="visitor_reports_locale" name="locale" class="wb-select">
-                                <option value="all" @selected($filters['locale'] === 'all')>{{ $adminText('all_locales') }}</option>
-                                @foreach ($locales as $locale)
-                                    <option value="{{ $locale->id }}" @selected($filters['locale'] === (string) $locale->id)>{{ $locale->name }} ({{ strtoupper($locale->code) }})</option>
-                                @endforeach
-                            </select>
-                        </div>
+                <div class="wb-field">
+                    <label class="wb-label" for="visitor_reports_locale">{{ $adminText('locale') }}</label>
+                    <select id="visitor_reports_locale" name="locale" class="wb-filter-select">
+                        <option value="all" @selected($filters['locale'] === 'all')>{{ $adminText('all_locales') }}</option>
+                        @foreach ($locales as $locale)
+                            <option value="{{ $locale->id }}" @selected($filters['locale'] === (string) $locale->id)>{{ $locale->name }} ({{ strtoupper($locale->code) }})</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                        <div class="wb-stack wb-gap-1">
-                            <label for="visitor_reports_traffic">{{ $adminText('traffic') }}</label>
-                            <select id="visitor_reports_traffic" name="traffic" class="wb-select">
-                                <option value="all" @selected(($filters['traffic'] ?? 'all') === 'all')>{{ $adminText('all_traffic') }}</option>
-                                <option value="human" @selected(($filters['traffic'] ?? 'all') === 'human')>{{ $adminText('human_only') }}</option>
-                                <option value="bots" @selected(($filters['traffic'] ?? 'all') === 'bots')>{{ $adminText('bots_only') }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
+                <div class="wb-field">
+                    <label class="wb-label" for="visitor_reports_traffic">{{ $adminText('traffic') }}</label>
+                    <select id="visitor_reports_traffic" name="traffic" class="wb-filter-select">
+                        <option value="all" @selected(($filters['traffic'] ?? 'all') === 'all')>{{ $adminText('all_traffic') }}</option>
+                        <option value="human" @selected(($filters['traffic'] ?? 'all') === 'human')>{{ $adminText('human_only') }}</option>
+                        <option value="bots" @selected(($filters['traffic'] ?? 'all') === 'bots')>{{ $adminText('bots_only') }}</option>
+                    </select>
+                </div>
+                <div class="wb-filter-bar-actions" data-admin-listing-filters-actions>
+                    <div class="wb-action-group">
                         <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('apply') }}</button>
                         @if ($hasFilters)
                             <a href="{{ route('admin.reports.visitors.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear') }}</a>
                         @endif
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
 
-        <div class="wb-card wb-card-muted">
-            <div class="wb-card-body wb-text-sm wb-text-muted">
-                {{ $insightText('privacy') }}
-            </div>
-        </div>
-
-        @include('webblocks-cms::admin.reports.visitors.insights')
+        @if ($report['insights']['archived']['total_page_views'] > 0)
+            <div class="wb-alert wb-alert-info" role="status">{{ $insightText('archived', ['views' => number_format($report['insights']['archived']['total_page_views'])]) }}</div>
+        @endif
+        @if (! $report['insights']['retention']['ready'])
+            <div class="wb-alert wb-alert-warning" role="status">{{ $insightText('cleanup_not_ready') }}</div>
+        @elseif (! $report['insights']['retention']['enabled'])
+            <div class="wb-alert wb-alert-info" role="status">{{ $insightText('cleanup_disabled') }}</div>
+        @endif
 
         <div class="wb-grid wb-grid-4">
             <div class="wb-card">
@@ -206,6 +204,8 @@
                 </div>
             </div>
         </div>
+
+        @include('webblocks-cms::admin.reports.visitors.insights')
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>{{ $adminText('detailed_reports') }}</strong></div>

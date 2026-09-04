@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.77.1
+
+- Align Visitor Reports with labelled UI filter fields, place summary metrics before the chart, and move chart values and report information into standard WebBlocks UI modals. Keep actionable retention notices visible and correct the daily chart caption.
+
 ## 1.77.0
 
 - Add visitor charts, equal-length period comparisons, measurement coverage and tracking status using existing records without additional visitor identifiers or public tracking code.

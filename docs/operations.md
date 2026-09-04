@@ -493,7 +493,8 @@ consent decisions continue to govern identifier collection.
 
 - Charts fill missing days with zero recorded views. Ranges longer than 90 days
   use equally sized multi-day buckets, labelled in the chart and accessible value
-  table. Dates use the same application/database calendar as existing reports.
+  table, opened with the chart-values button in a WebBlocks UI modal. Dates use
+  the same application/database calendar as existing reports.
 - The previous period ends immediately before the selected period. A zero previous
   total has no percentage change. Periods including today or future dates are
   labelled provisional. Counts describe retained records, not proof that tracking
@@ -509,6 +510,17 @@ consent decisions continue to govern identifier collection.
   than five views, avoiding direct subtraction of a suppressed cell. This is a
   display safeguard, not a guarantee of anonymisation. No individual journeys are
   added. The ten largest groups are shown when a breakdown is available.
+
+The report follows the labelled WebBlocks UI filter-bar contract, with summary
+metrics above the chart and detailed report tabs below. Measurement coverage,
+tracking status, privacy context and retention policy are available in the
+**Report information** modal. Missing migrations, disabled cleanup and archived
+record notices remain visible on the report itself.
+
+The chart currently uses server-rendered SVG and CMS-owned styling; it is not a
+WebBlocks UI chart component and does not load a charting library. A future shared
+UI chart should own presentation, accessible values and theme behaviour, while
+CMS continues to own data aggregation, filtering and authorization.
 
 ### Cleanup policy
 

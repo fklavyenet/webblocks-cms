@@ -1,6 +1,8 @@
 <?php
 
 return [
+  'information' => 'Report information',
+  'daily' => 'Daily page views',
   'cleanup_busy' => 'Visitor report cleanup is already running.',
   'trend' => 'Page views over time',
   'comparison' => 'Previous period (:from – :to): :views page views.',

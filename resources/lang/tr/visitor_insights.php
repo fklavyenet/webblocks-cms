@@ -1,6 +1,8 @@
 <?php
 
 return [
+  'information' => 'Rapor bilgileri',
+  'daily' => 'Günlük sayfa görüntülemeleri',
   'cleanup_busy' => 'Ziyaretçi raporu temizliği zaten çalışıyor.',
   'trend' => 'Zaman içinde sayfa görüntülemeleri',
   'comparison' => 'Önceki dönem (:from – :to): :views sayfa görüntülemesi.',
