@@ -168,9 +168,13 @@ signature over its checksum, or the update is refused.
   emails, paths, database details, user counts, tokens, or arbitrary env/config
   values are sent. Set `WEBBLOCKS_TELEMETRY=false` to opt out; metadata checks
   continue without an installation ID.
-- Visitor Reports store normalized referrer host, traffic type, UTM values,
-  device category, and a bot flag only — not raw referrer URLs, full query
-  strings, full user-agents, or raw IP addresses. See [Operations](operations.md).
+- Visitor Reports retain page-view records with path, time, normalized referrer
+  host, UTM values, device category and bot classification. Consent-based full
+  tracking may also retain a session key and IP HMAC; these are pseudonymous
+  identifiers, not a guarantee of anonymity. New charts and page detail modals
+  introduce no additional identifiers or public tracking scripts. Scheduled
+  retention replaces expired detail with daily site/locale counts and later
+  expires those counts. See [Operations](operations.md#visitor-report-trends-and-retention).
 
 ## Reporting a vulnerability
 

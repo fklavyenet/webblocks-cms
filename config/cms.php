@@ -32,6 +32,9 @@ return [
         'allow_destructive_commands' => env('WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS', false),
     ],
     'visitor_reports' => [
+        'cleanup_enabled' => env('CMS_VISITOR_CLEANUP_ENABLED', true),
+        'detail_retention_days' => env('CMS_VISITOR_DETAIL_RETENTION_DAYS', 90),
+        'total_retention_days' => env('CMS_VISITOR_TOTAL_RETENTION_DAYS', 400),
         'enabled' => env('CMS_VISITOR_REPORTS_ENABLED', true),
         'utm_enabled' => env('CMS_VISITOR_UTM_ENABLED', true),
         'consent_banner_enabled' => env('CMS_VISITOR_CONSENT_BANNER_ENABLED', env('CMS_VISITOR_REPORTS_ENABLED', true)),

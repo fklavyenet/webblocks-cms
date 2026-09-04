@@ -50,6 +50,7 @@ class PartialInstallState
     'site_imports',
     'contact_messages',
     'visitor_events',
+    'visitor_daily_totals',
     'icon_catalog_items',
     'system_update_runs',
     'system_backups',

@@ -47,6 +47,7 @@ use WebBlocks\Cms\Console\SystemBackupCleanupCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
 use WebBlocks\Cms\Console\SystemUpdatePruneRunsCommand;
 use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
+use WebBlocks\Cms\Console\VisitorReportCleanupCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
@@ -325,6 +326,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/sites/partials/theme-tab.blade.php',
     'admin/sites/partials/variables-tab.blade.php',
     'admin/reports/visitors/index.blade.php',
+    'admin/reports/visitors/insights.blade.php',
+    'admin/reports/visitors/page-details.blade.php',
     'admin/slot-types/index.blade.php',
     'admin/plugins/catalog/index.blade.php',
     'admin/shared-slots/_form.blade.php',
@@ -413,6 +416,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/pages/slot-blocks.blade.php',
     'admin/pages/translations/form.blade.php',
     'admin/reports/visitors/index.blade.php',
+    'admin/reports/visitors/insights.blade.php',
+    'admin/reports/visitors/page-details.blade.php',
     'admin/slot-types/index.blade.php',
     'admin/sites/clone.blade.php',
     'admin/sites/delete.blade.php',
@@ -778,6 +783,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ImportDemoMedia::class,
     MediaVariantsCommand::class,
     MaintenanceCleanupCommand::class,
+    VisitorReportCleanupCommand::class,
     ResetPrimitiveBlocksCommand::class,
     SiteCloneCommand::class,
     SiteDeleteCommand::class,
@@ -967,6 +973,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       if (! $this->app->bound(Schedule::class)) {
         return;
       }
+
+      $this->app->make(Schedule::class)
+        ->command('visitors:cleanup')
+        ->dailyAt('03:45')
+        ->withoutOverlapping(1440)
+        ->onOneServer();
 
       $this->app->make(Schedule::class)
         ->command('system:backups:cleanup')

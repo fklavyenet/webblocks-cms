@@ -64,6 +64,7 @@ final class CmsTable
     'system_settings',
     'system_update_runs',
     'visitor_events',
+    'visitor_daily_totals',
   ];
 
   public static function name(string $table): string

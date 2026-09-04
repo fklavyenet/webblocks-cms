@@ -29,7 +29,7 @@ WebBlocks CMS includes install-level operational tools for updates, backups, and
 
 ## Visitor Reports
 
-Visitor Reports is a privacy-safe operational report for public page activity. Anonymous page views can be counted without consent-based identifiers. The report also stores aggregate-only referrer, campaign, device, and bot information:
+Visitor Reports provides operational summaries of public page activity. Basic page-view records do not require consent-based identifiers. Records include reduced referrer, campaign, device, and bot information:
 
 - referrers are normalized to host/domain plus `direct`, `internal`, or `external` type; full referrer URLs are not stored or shown
 - empty referrers are grouped as `Direct / Unknown`
@@ -483,3 +483,80 @@ Site Clone is different from Export / Import:
 - pages, media, navigation, and editorial workflow are primarily site-scoped content features
 - users are install-level accounts, even when some roles are restricted to assigned sites
 - release packaging and installed-path preservation are separate concerns: releases do not ship `project/`, while installed `project/` content is preserved across updates
+
+## Visitor report trends and retention
+
+Visitor Reports now derives a time chart, an equal-length previous-period comparison,
+measurement coverage and page detail modals from the existing records. It does not
+add public scripts, cookies, identifiers, events or third-party transfers. Existing
+consent decisions continue to govern identifier collection.
+
+- Charts fill missing days with zero recorded views. Ranges longer than 90 days
+  use equally sized multi-day buckets, labelled in the chart and accessible value
+  table. Dates use the same application/database calendar as existing reports.
+- The previous period ends immediately before the selected period. A zero previous
+  total has no percentage change. Periods including today or future dates are
+  labelled provisional. Counts describe retained records, not proof that tracking
+  was continuously active or that an empty historical period had no visitors.
+- Coverage is the share of views with a usable consent-based identifier in retained
+  detail records. It is **not** a consent acceptance rate. Visitor/session estimates
+  describe this subset and are not verified counts of people.
+- Tracking status shows the last detailed record within the accessible selected
+  site scope, independently of date, locale and traffic filters. It does not claim
+  that the scheduler is running or that absent records prove a tracking failure.
+- Content rows open WebBlocks UI modals with page/site/locale totals and independent
+  device/referrer breakdowns. A whole breakdown is hidden if any group has fewer
+  than five views, avoiding direct subtraction of a suppressed cell. This is a
+  display safeguard, not a guarantee of anonymisation. No individual journeys are
+  added. The ten largest groups are shown when a breakdown is available.
+
+### Cleanup policy
+
+The package registers `visitors:cleanup` daily at 03:45 through Laravel Scheduler.
+The host must run its normal scheduler; no public request performs cleanup.
+The scheduled command and manual command share an atomic cache lock. Use a shared
+lock-capable cache when scheduling on multiple servers.
+
+| Configuration | Default | Meaning |
+| --- | --- | --- |
+| `CMS_VISITOR_CLEANUP_ENABLED` | `true` | Enable scheduled/manual visitor cleanup. |
+| `CMS_VISITOR_DETAIL_RETENTION_DAYS` | `90` | Roll up records before the start of the day this many days ago. |
+| `CMS_VISITOR_TOTAL_RETENTION_DAYS` | `400` | Delete totals before the start of the day this many days ago; never shorter than detail retention. |
+
+These are product defaults, not legal retention requirements or a legal compliance
+certification. Site owners can choose shorter periods for their purposes. Existing
+installs with a working scheduler start applying this policy after the new migration
+and code are installed. There is no deletion inside the migration itself.
+
+Preview and execute locally on the host:
+
+```bash
+php artisan visitors:cleanup --dry-run
+php artisan visitors:cleanup
+```
+
+Cleanup runs even when new visit collection is disabled. Disabling collection must
+not leave historical identifiers stored indefinitely. Disabling cleanup itself is
+shown on the report. Missing summary migrations block cleanup without deleting
+records and leave existing reports operational.
+
+Expired records are replaced transactionally, one day at a time, with rows in
+`wbcms_visitor_daily_totals`: site, locale (zero for unknown), day, total views and
+bot views. They retain no page path, referrer, campaign, device, exact visit time,
+IP hash or session identifier. Late records merge into existing totals once.
+Records older than the total retention horizon, records without a date, and expired
+records whose site has been deleted are discarded without a rollup. Deleting a site
+also removes its daily totals. Existing backups have their own retention lifecycle;
+this command does not rewrite backup archives.
+
+The main totals, chart and comparison combine retained detail with daily totals and
+preserve site authorization plus site/locale/traffic filters. Bot totals include both
+sources. Detailed tables and session metrics use only remaining detail records;
+an explicit notice explains the difference when a period includes rollups. Daily
+unique visitors or sessions are deliberately not summed across days. The report
+never reconstructs visitor histories from the retained summaries.
+
+Fresh installs and existing-install update migrations both create the totals table.
+Run the normal package migration/update flow before enabling scheduled cleanup.
+New insight strings ship in English and Turkish; other admin locales use the normal
+English fallback where an insight translation is unavailable.

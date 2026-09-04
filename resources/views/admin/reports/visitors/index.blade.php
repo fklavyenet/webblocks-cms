@@ -5,6 +5,7 @@
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('visitor_reports.'.$key, $adminLocale, $replace);
+    $insightText = static fn (string $key, array $replace = []) => $adminTranslator->get('visitor_insights.'.$key, $adminLocale, $replace);
     $summary = $report['summary'] ?? [
         'total_page_views' => 0,
         'human_page_views' => 0,
@@ -150,15 +151,17 @@
 
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-text-sm wb-text-muted">
-                {{ $adminText('privacy_message') }}
+                {{ $insightText('privacy') }}
             </div>
         </div>
+
+        @include('webblocks-cms::admin.reports.visitors.insights')
 
         <div class="wb-grid wb-grid-4">
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
                     <div class="wb-text-sm wb-text-muted">{{ $adminText('total_page_views') }}</div>
-                    <div class="wb-text-xs wb-text-muted">{{ $adminText('anonymous_aggregate') }}</div>
+                    <div class="wb-text-xs wb-text-muted">{{ $insightText('aggregate') }}</div>
                     <strong>{{ number_format($summary['total_page_views']) }}</strong>
                 </div>
             </div>
@@ -545,6 +548,7 @@
                                     <th>{{ $adminText('locale') }}</th>
                                     <th>{{ $adminText('page_views') }}</th>
                                     <th>{{ $adminText('unique_visitors') }}</th>
+                                    <th>{{ $insightText('actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -555,6 +559,11 @@
                                         <td>{{ strtoupper($row['locale_code']) }}</td>
                                         <td>{{ number_format($row['page_views']) }}</td>
                                         <td>{{ $trackedMetric($row['unique_visitors'], $row['unique_visitors_state']) }}</td>
+                                        <td class="wb-table-actions"><div class="wb-action-group">
+                                            <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#visitor-page-{{ $loop->index }}" aria-label="{{ $insightText('details') }}">
+                                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                            </button>
+                                        </div></td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -568,5 +577,6 @@
                 </div>
             </div>
         </div>
+        @include('webblocks-cms::admin.reports.visitors.page-details')
     @endif
 @endsection

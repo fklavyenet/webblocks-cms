@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.77.0
+
+- Add visitor charts, equal-length period comparisons, measurement coverage and tracking status using existing records without additional visitor identifiers or public tracking code.
+- Add page detail modals with aggregate device/referrer reports and suppression of small breakdown groups.
+- Add scheduled visitor retention with atomic daily rollups, configurable detail/total lifetimes, preview support, and explicit notices for periods whose detail has expired.
+- Enable visitor cleanup by default through the host scheduler: retain detail for 90 days and daily totals for 400 days. Existing installations apply this policy after updating; configure `CMS_VISITOR_CLEANUP_ENABLED=false` to pause cleanup and use `visitors:cleanup --dry-run` to preview it.
+
 ## 1.76.10
 
 - Adopt WebBlocks UI 2.25.2 so filter actions stay beside fields when their full group fits and move together only when space runs out. Both single Apply and Apply + Clear Filters states are covered.

@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
@@ -42,23 +43,33 @@ class VisitorReportsQuery
 
   public function build(array $filters): array
   {
-    $query = $this->filteredQuery($filters);
-    $summary = $this->summary(clone $query);
-    $supportsUtmBreakdowns = $this->supportsUtmBreakdowns();
+    return DB::transaction(function () use ($filters): array {
+      $query = $this->filteredQuery($filters);
+      $summary = $this->summary(clone $query);
+      $insights = $this->insights($filters, clone $query, $summary);
+      foreach (['total_page_views', 'human_page_views', 'bot_page_views'] as $metric) {
+        $summary[$metric] += $insights['archived'][$metric];
+      }
+      $supportsUtmBreakdowns = $this->supportsUtmBreakdowns();
 
-    return [
-      'summary' => $summary,
-      'metric_states' => $this->metricStates($summary),
-      'top_pages' => $this->topPages(clone $query),
-      'top_entry_pages' => $this->topEntryPages(clone $query),
-      'top_referrers' => $this->topReferrers(clone $query),
-      'top_campaigns' => $supportsUtmBreakdowns ? $this->topCampaigns(clone $query) : collect(),
-      'source_breakdown' => $supportsUtmBreakdowns ? $this->sourceBreakdown(clone $query) : collect(),
-      'medium_breakdown' => $supportsUtmBreakdowns ? $this->mediumBreakdown(clone $query) : collect(),
-      'locale_summary' => $this->localeSummary(clone $query),
-      'device_summary' => $this->deviceSummary(clone $query),
-      'bot_summary' => $this->botSummary(clone $query, $summary['total_page_views']),
-    ];
+      return [
+        'insights' => $insights,
+        'summary' => $summary,
+        'metric_states' => $this->metricStates($summary),
+        'top_pages' => $this->topPages(clone $query),
+        'top_entry_pages' => $this->topEntryPages(clone $query),
+        'top_referrers' => $this->topReferrers(clone $query),
+        'top_campaigns' => $supportsUtmBreakdowns ? $this->topCampaigns(clone $query) : collect(),
+        'source_breakdown' => $supportsUtmBreakdowns ? $this->sourceBreakdown(clone $query) : collect(),
+        'medium_breakdown' => $supportsUtmBreakdowns ? $this->mediumBreakdown(clone $query) : collect(),
+        'locale_summary' => $this->localeSummary(clone $query),
+        'device_summary' => $this->deviceSummary(clone $query),
+        'bot_summary' => collect([
+          ['label' => 'Human / unknown', 'page_views' => $summary['human_page_views']],
+          ['label' => 'Bots', 'page_views' => $summary['bot_page_views']],
+        ])->map(fn ($row) => [...$row, 'share' => $summary['total_page_views'] > 0 ? round($row['page_views'] / $summary['total_page_views'] * 100, 1) : 0.0]),
+      ];
+    });
   }
 
   public function hasEventsTable(): bool
@@ -111,11 +122,123 @@ class VisitorReportsQuery
 
     return [
       ...$summary,
-      'total_page_views' => $totals['total_page_views'],
+      'total_page_views' => $totals['total_page_views'] + $this->archivedTotals(['from' => $from->toDateString(), 'to' => $to->toDateString(), 'site' => 'all', 'locale' => 'all', 'traffic' => 'all', 'user' => $user])['total_page_views'],
       'unique_visitors' => $totals['unique_visitors'] ?? 0,
       'top_page_path' => $topPage['path'] ?? null,
       'top_page_views' => $topPage['page_views'] ?? 0,
     ];
+  }
+
+  private function archivedQuery(array $filters): \Illuminate\Database\Query\Builder
+  {
+    $query = DB::table('wbcms_visitor_daily_totals')
+      ->whereBetween('day', [$filters['from'], $filters['to']]);
+    $user = $filters['user'] ?? null;
+    if ($user && ! $user->isSuperAdmin()) {
+      $query->whereIn('site_id', $user->accessibleSiteIds());
+    }
+
+    return $query
+      ->when($filters['site'] !== 'all', fn ($q) => $q->where('site_id', (int) $filters['site']))
+      ->when($filters['locale'] !== 'all', fn ($q) => $q->where('locale_id', (int) $filters['locale']));
+  }
+
+  private function archivedTotals(array $filters): array
+  {
+    $totals = ['total_page_views' => 0, 'human_page_views' => 0, 'bot_page_views' => 0];
+    if (! Schema::hasTable('wbcms_visitor_daily_totals')) {
+      return $totals;
+    }
+    $row = $this->archivedQuery($filters)->selectRaw('SUM(page_views) as views, SUM(bot_page_views) as bots')->first();
+    $totals['human_page_views'] = ($filters['traffic'] ?? 'all') === 'bots' ? 0 : (int) $row->views - (int) $row->bots;
+    $totals['bot_page_views'] = ($filters['traffic'] ?? 'all') === 'human' ? 0 : (int) $row->bots;
+    $totals['total_page_views'] = $totals['human_page_views'] + $totals['bot_page_views'];
+
+    return $totals;
+  }
+
+  private function insights(array $filters, Builder $query, array $summary): array
+  {
+    $from = CarbonImmutable::parse($filters['from'])->startOfDay();
+    $to = CarbonImmutable::parse($filters['to'])->startOfDay();
+    $days = (int) $from->diffInDays($to) + 1;
+    $previousFilters = [...$filters, 'from' => $from->subDays($days)->toDateString(), 'to' => $from->subDay()->toDateString()];
+    $archived = $this->archivedTotals($filters);
+    $previous = $this->filteredQuery($previousFilters)->count() + $this->archivedTotals($previousFilters)['total_page_views'];
+    $current = $summary['total_page_views'] + $archived['total_page_views'];
+    $daily = (clone $query)->selectRaw('DATE(visited_at) as day, COUNT(*) as views')
+      ->groupByRaw('DATE(visited_at)')->orderBy('day')->get()->pluck('views', 'day')->all();
+    if (Schema::hasTable('wbcms_visitor_daily_totals')) {
+      $expression = match ($filters['traffic'] ?? 'all') {
+        'human' => 'page_views - bot_page_views',
+        'bots' => 'bot_page_views',
+        default => 'page_views',
+      };
+      foreach ($this->archivedQuery($filters)->select('day')->selectRaw('SUM('.$expression.') as views')->groupBy('day')->get() as $row) {
+        $daily[$row->day] = (int) ($daily[$row->day] ?? 0) + (int) $row->views;
+      }
+    }
+    // Keep custom multi-year charts bounded, without changing report filters.
+    $bucketDays = max(1, (int) ceil($days / 90));
+    $buckets = [];
+    for ($offset = 0; $offset < $days; $offset += $bucketDays) {
+      $start = $from->addDays($offset);
+      $end = $start->addDays($bucketDays - 1)->min($to);
+      $buckets[] = ['from' => $start->toDateString(), 'to' => $end->toDateString(), 'views' => 0];
+    }
+    foreach ($daily as $day => $views) {
+      $index = intdiv((int) $from->diffInDays(CarbonImmutable::parse($day)), $bucketDays);
+      $buckets[$index]['views'] += (int) $views;
+    }
+    $maximum = max(1, ...array_column($buckets, 'views'));
+    foreach ($buckets as $index => &$bucket) {
+      $bucket['x'] = round(20 + ($index + 0.5) * 860 / count($buckets), 2);
+      $bucket['y'] = round(180 - $bucket['views'] / $maximum * 160, 2);
+    }
+    unset($bucket);
+    $lastQuery = $this->filteredVisitorEvents($filters['user'] ?? null)
+      ->when($filters['site'] !== 'all', fn ($q) => $q->where('site_id', (int) $filters['site']));
+
+    return [
+      'archived' => $archived,
+      'previous_from' => $previousFilters['from'],
+      'previous_to' => $previousFilters['to'],
+      'previous_views' => $previous,
+      'change' => $previous > 0 ? round(($current - $previous) / $previous * 100, 1) : null,
+      'buckets' => $buckets,
+      'bucket_days' => $bucketDays,
+      'maximum' => $maximum,
+      'points' => implode(' ', array_map(fn ($bucket) => $bucket['x'].','.$bucket['y'], $buckets)),
+      'coverage' => $current > 0 ? round($summary['tracked_page_views'] / $current * 100, 1) : null,
+      'last_record' => $lastQuery->max('visited_at'),
+      'retention' => app(VisitorReportRetention::class)->policy(),
+      'includes_today' => $to->greaterThanOrEqualTo(CarbonImmutable::today()),
+    ];
+  }
+
+  private function pageDetails(Builder $query, VisitorEvent $event): array
+  {
+    $query->where('site_id', $event->site_id)->where('path', $event->path);
+    $event->locale_id === null ? $query->whereNull('locale_id') : $query->where('locale_id', $event->locale_id);
+    $devices = (clone $query)->select('device_type')->selectRaw('COUNT(*) as page_views')
+      ->groupBy('device_type')->get()->map(fn ($row) => [
+        'label' => in_array($row->device_type, ['desktop', 'mobile', 'tablet', 'bot'], true) ? $row->device_type : 'unknown',
+        'views' => (int) $row->page_views,
+      ]);
+    $columns = ['site_id', 'referrer'];
+    foreach (['referrer_host', 'referrer_type'] as $column) {
+      if ($this->supportsColumn($column)) {
+        $columns[] = $column;
+      }
+    }
+    $referrers = (clone $query)->with('site.siteDomains')->select($columns)
+      ->selectRaw('COUNT(*) as page_views')->groupBy($columns)->get()
+      ->groupBy(fn ($row) => $this->referrerLabel($row))
+      ->map(fn ($rows, $label) => ['label' => $label, 'views' => (int) $rows->sum('page_views')])->values();
+
+    // Suppress the entire dimension when a small cell exists, so totals cannot reveal it by subtraction.
+    return collect(['devices' => $devices, 'referrers' => $referrers])->map(fn ($rows) => $rows->contains(fn ($row) => $row['views'] < 5) ? [] : $rows->sortByDesc('views')->take(10)->values()->all()
+    )->all();
   }
 
   private function filteredQuery(array $filters): Builder
@@ -175,6 +298,8 @@ class VisitorReportsQuery
 
   private function topPages(Builder $query, int $limit = 15): Collection
   {
+    $detailQuery = clone $query;
+
     return $query
       ->select('site_id', 'locale_id', 'path')
       ->selectRaw('COUNT(*) as page_views')
@@ -186,6 +311,7 @@ class VisitorReportsQuery
       ->limit($limit)
       ->get()
       ->map(fn (VisitorEvent $event) => [
+        'details' => $limit > 1 ? $this->pageDetails(clone $detailQuery, $event) : [],
         'site_name' => $event->site?->name ?? 'Unknown site',
         'locale_code' => $event->locale?->code ?? 'default',
         'path' => $event->path,
@@ -199,6 +325,7 @@ class VisitorReportsQuery
   {
     $entries = $this->fullTrackingQuery($query)
       ->whereNotNull('session_key')
+      ->where('session_key', '!=', '')
       ->select(['id', 'site_id', 'locale_id', 'path', 'session_key', 'visited_at'])
       ->orderBy('session_key')
       ->orderBy('visited_at')
@@ -500,53 +627,31 @@ class VisitorReportsQuery
     return $query->where('tracking_mode', self::FULL_TRACKING_MODE);
   }
 
-  private function botSummary(Builder $query, int $totalPageViews): Collection
-  {
-    if (! $this->supportsBotBreakdowns()) {
-      return collect([
-        ['label' => 'Human / unknown', 'page_views' => $totalPageViews, 'share' => $totalPageViews > 0 ? 100.0 : 0.0],
-        ['label' => 'Bots', 'page_views' => 0, 'share' => 0.0],
-      ]);
-    }
-
-    return $query
-      ->select('is_bot')
-      ->selectRaw('COUNT(*) as page_views')
-      ->groupBy('is_bot')
-      ->orderByDesc('page_views')
-      ->get()
-      ->map(fn (VisitorEvent $event) => [
-        'label' => $event->is_bot ? 'Bots' : 'Human / unknown',
-        'page_views' => (int) $event->page_views,
-        'share' => $totalPageViews > 0 ? round(((int) $event->page_views / $totalPageViews) * 100, 1) : 0.0,
-      ]);
-  }
-
   private function totalSessionsExpression(): string
   {
     if (! $this->supportsTrackingMode()) {
-      return 'COUNT(DISTINCT session_key)';
+      return "COUNT(DISTINCT NULLIF(session_key, ''))";
     }
 
-    return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN session_key END)";
+    return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN NULLIF(session_key, '') END)";
   }
 
   private function uniqueVisitorsExpression(): string
   {
     if (! $this->supportsTrackingMode()) {
-      return 'COUNT(DISTINCT COALESCE(ip_hash, session_key))';
+      return "COUNT(DISTINCT COALESCE(NULLIF(ip_hash, ''), NULLIF(session_key, '')))";
     }
 
-    return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN COALESCE(ip_hash, session_key) END)";
+    return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN COALESCE(NULLIF(ip_hash, ''), NULLIF(session_key, '')) END)";
   }
 
   private function trackedPageViewsExpression(): string
   {
     if (! $this->supportsTrackingMode()) {
-      return 'COUNT(*)';
+      return "SUM(CASE WHEN COALESCE(NULLIF(ip_hash, ''), NULLIF(session_key, '')) IS NOT NULL THEN 1 ELSE 0 END)";
     }
 
-    return "SUM(CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' AND COALESCE(ip_hash, session_key) IS NOT NULL THEN 1 ELSE 0 END)";
+    return "SUM(CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' AND COALESCE(NULLIF(ip_hash, ''), NULLIF(session_key, '')) IS NOT NULL THEN 1 ELSE 0 END)";
   }
 
   private function humanPageViewsExpression(): string

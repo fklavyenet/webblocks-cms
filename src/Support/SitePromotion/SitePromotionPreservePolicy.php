@@ -34,6 +34,7 @@ class SitePromotionPreservePolicy
       'data/update_history.json',
       'data/contact_messages.json',
       'data/visitor_events.json',
+      'data/visitor_daily_totals.json',
       'data/public_search_index.json',
       'data/api_tokens.json',
     ];
