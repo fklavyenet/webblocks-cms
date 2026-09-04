@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'chart_help' => 'Sol/sağ: tarihler. Home/End: ilk/son değer. Escape: seçimi temizle.',
+  'chart_error' => 'Grafik çizilemedi. Verileri okumak için grafik değerlerini açın.',
+  'chart_fallback' => 'Tam veri tablosunu okumak için grafik değerlerini açın.',
+
   'information' => 'Rapor bilgileri',
   'daily' => 'Günlük sayfa görüntülemeleri',
   'cleanup_busy' => 'Ziyaretçi raporu temizliği zaten çalışıyor.',

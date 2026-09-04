@@ -18,24 +18,14 @@
             @endif
         </p>
         @if ($insights['includes_today'])<p class="wb-text-muted">{{ $insightText('partial_day') }}</p>@endif
-        <figure class="wb-visitor-trend">
-            <svg viewBox="0 0 900 210" role="img" aria-labelledby="visitor-trend-title visitor-trend-description">
-                <title id="visitor-trend-title">{{ $insightText('trend') }}</title>
-                <desc id="visitor-trend-description">{{ $filters['from'] }} – {{ $filters['to'] }}. {{ $insightText('table') }}</desc>
-                <text x="20" y="14">{{ number_format($insights['maximum']) }}</text>
-                <text x="5" y="184">0</text>
-                <line class="wb-visitor-trend-axis" x1="20" y1="180" x2="880" y2="180" />
-                <polyline class="wb-visitor-trend-line" points="{{ $insights['points'] }}" />
-                @foreach ($insights['buckets'] as $bucket)
-                    <circle class="wb-visitor-trend-point" cx="{{ $bucket['x'] }}" cy="{{ $bucket['y'] }}" r="3">
-                        <title>{{ $bucket['from'] }} – {{ $bucket['to'] }}: {{ $bucket['views'] }}</title>
-                    </circle>
-                @endforeach
-                <text x="20" y="205">{{ $filters['from'] }}</text>
-                <text x="880" y="205" text-anchor="end">{{ $filters['to'] }}</text>
-            </svg>
-            <figcaption class="wb-text-sm wb-text-muted">{{ $insights['bucket_days'] === 1 ? $insightText('daily') : $insightText('bucket', ['days' => $insights['bucket_days']]) }}</figcaption>
-        </figure>
+        <div class="wb-chart" data-wb-chart="line" data-wb-chart-table="visitor-chart-data"
+            aria-label="{{ $insightText('trend') }}" lang="{{ $adminLocale ?? 'en' }}"
+            data-wb-chart-help="{{ $insightText('chart_help') }}"
+            data-wb-chart-empty="{{ $insightText('no_data') }}"
+            data-wb-chart-error="{{ $insightText('chart_error') }}">
+            <p class="wb-chart-fallback wb-text-muted">{{ $insightText('chart_fallback') }}</p>
+        </div>
+        <p class="wb-text-sm wb-text-muted">{{ $insights['bucket_days'] === 1 ? $insightText('daily') : $insightText('bucket', ['days' => $insights['bucket_days']]) }}</p>
     </div>
 </section>
 <div id="visitor-chart-values" class="wb-modal" role="dialog" aria-modal="true" aria-labelledby="visitor-chart-values-title">
@@ -45,10 +35,10 @@
             <button type="button" class="wb-icon-btn wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $insightText('close') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>
         </div>
         <div class="wb-modal-body">
-            <div class="wb-table-wrap"><table class="wb-table wb-table-striped">
+            <div class="wb-table-wrap"><table id="visitor-chart-data" class="wb-table wb-table-striped">
                 <thead><tr><th scope="col">{{ $insightText('date') }}</th><th scope="col">{{ $insightText('views') }}</th></tr></thead>
                 <tbody>@foreach ($insights['buckets'] as $bucket)
-                    <tr><td>{{ $bucket['from'] }}@if ($bucket['to'] !== $bucket['from']) – {{ $bucket['to'] }}@endif</td><td>{{ number_format($bucket['views']) }}</td></tr>
+                    <tr><th scope="row">{{ $bucket['from'] }}@if ($bucket['to'] !== $bucket['from']) – {{ $bucket['to'] }}@endif</th><td data-wb-chart-value="{{ $bucket['views'] }}">{{ number_format($bucket['views']) }}</td></tr>
                 @endforeach</tbody>
             </table></div>
         </div>

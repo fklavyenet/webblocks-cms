@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.25.2 (https://webblocksui.com/)
+ * WebBlocks UI v2.26.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -3781,6 +3781,70 @@ html[data-theme="auto"]:not([data-mode="light"]) .wb-alert-danger {
   justify-content: flex-start;
   flex-wrap: nowrap;
 }
+/* WebBlocks UI — Chart. Presentation only; source tables remain host-owned. */
+.wb-chart {
+  --wb-chart-height: 18rem;
+  --wb-chart-color-1: var(--wb-accent);
+  --wb-chart-color-2: #b45309;
+  --wb-chart-color-3: #7c3aed;
+  --wb-chart-color-4: #047857;
+  --wb-chart-color-5: #be185d;
+  --wb-chart-color-6: #0369a1;
+  --wb-chart-color-7: #9f1239;
+  --wb-chart-color-8: #52525b;
+  min-inline-size: 0;
+}
+[data-mode="dark"] .wb-chart {
+  --wb-chart-color-2: #fbbf24;
+  --wb-chart-color-3: #c4b5fd;
+  --wb-chart-color-4: #6ee7b7;
+  --wb-chart-color-5: #f9a8d4;
+  --wb-chart-color-6: #7dd3fc;
+  --wb-chart-color-7: #fda4af;
+  --wb-chart-color-8: #d4d4d8;
+}
+@media (prefers-color-scheme: dark) {
+html[data-mode="auto"] .wb-chart {
+  --wb-chart-color-2: #fbbf24;
+  --wb-chart-color-3: #c4b5fd;
+  --wb-chart-color-4: #6ee7b7;
+  --wb-chart-color-5: #f9a8d4;
+  --wb-chart-color-6: #7dd3fc;
+  --wb-chart-color-7: #fda4af;
+  --wb-chart-color-8: #d4d4d8;
+}
+}
+
+.wb-chart-viewport { block-size: var(--wb-chart-height); min-inline-size: 0; }
+.wb-chart-viewport:focus-visible { outline: 2px solid var(--wb-accent); outline-offset: 2px; }
+.wb-chart-svg { direction: ltr; display: block; inline-size: 100%; block-size: 100%; overflow: hidden; }
+.wb-chart-label { fill: var(--wb-muted); font: 12px var(--wb-font); }
+.wb-chart-axis { stroke: var(--wb-muted); stroke-width: 1; }
+.wb-chart-grid { stroke: var(--wb-border); stroke-width: 1; }
+.wb-chart-series-1 { color: var(--wb-chart-color-1); }
+.wb-chart-series-2 { color: var(--wb-chart-color-2); }
+.wb-chart-series-3 { color: var(--wb-chart-color-3); }
+.wb-chart-series-4 { color: var(--wb-chart-color-4); }
+.wb-chart-series-5 { color: var(--wb-chart-color-5); }
+.wb-chart-series-6 { color: var(--wb-chart-color-6); }
+.wb-chart-series-7 { color: var(--wb-chart-color-7); }
+.wb-chart-series-8 { color: var(--wb-chart-color-8); }
+.wb-chart-line { fill: none; stroke: currentColor; stroke-width: 2; }
+.wb-chart-series-2 .wb-chart-line { stroke-dasharray: 8 3; }
+.wb-chart-series-3 .wb-chart-line { stroke-dasharray: 2 3; }
+.wb-chart-series-4 .wb-chart-line { stroke-dasharray: 8 3 2 3; }
+.wb-chart-series-5 .wb-chart-line { stroke-dasharray: 12 4; }
+.wb-chart-series-6 .wb-chart-line { stroke-dasharray: 4 4; }
+.wb-chart-series-7 .wb-chart-line { stroke-dasharray: 12 3 3 3; }
+.wb-chart-series-8 .wb-chart-line { stroke-dasharray: 1 3; }
+.wb-chart-mark { fill: currentColor; }
+.wb-chart-mark.is-active { stroke: var(--wb-text); stroke-width: 3; paint-order: stroke fill; }
+.wb-chart-readout { min-block-size: 1.5em; overflow-wrap: anywhere; font-size: var(--wb-font-size-sm); }
+.wb-chart-legend { display: flex; flex-wrap: wrap; gap: var(--wb-s2) var(--wb-s4); padding: 0; margin-block: var(--wb-s2); list-style: none; }
+.wb-chart-legend > li { display: inline-flex; align-items: center; gap: var(--wb-s2); font-size: var(--wb-font-size-sm); min-inline-size: 0; max-inline-size: 100%; overflow-wrap: anywhere; }
+.wb-chart-swatch { inline-size: 1.5rem; block-size: .5rem; flex-shrink: 0; }
+.wb-chart.is-ready > .wb-chart-fallback { display: none; }
+.wb-chart [hidden] { display: none !important; }
 /* ============================================================
    WebBlocks UI — Media (wb-media)
    ============================================================ */

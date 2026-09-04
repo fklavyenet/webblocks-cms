@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.78.0
+
+- Adopt WebBlocks UI 2.26.0 and its dependency-free Chart component for Visitor Reports, using the existing chart-values modal table as the data source.
+- Add responsive, themed charts with keyboard, mouse and touch value readouts; remove the CMS-specific SVG renderer, coordinate calculation and chart CSS. Visitor collection and privacy behavior are unchanged.
+
 ## 1.77.1
 
 - Align Visitor Reports with labelled UI filter fields, place summary metrics before the chart, and move chart values and report information into standard WebBlocks UI modals. Keep actionable retention notices visible and correct the daily chart caption.

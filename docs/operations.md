@@ -517,10 +517,12 @@ tracking status, privacy context and retention policy are available in the
 **Report information** modal. Missing migrations, disabled cleanup and archived
 record notices remain visible on the report itself.
 
-The chart currently uses server-rendered SVG and CMS-owned styling; it is not a
-WebBlocks UI chart component and does not load a charting library. A future shared
-UI chart should own presentation, accessible values and theme behaviour, while
-CMS continues to own data aggregation, filtering and authorization.
+The chart uses the bundled WebBlocks UI 2.26.0 `wb-chart` component and the
+modal's `visitor-chart-data` table as its source. Numeric attributes contain
+unformatted counts; visible cells retain localized formatting. UI owns SVG
+drawing, axes, resize and keyboard interaction; CMS keeps queries, permissions,
+privacy and aggregation. No external chart library or additional visitor
+collection is introduced.
 
 ### Cleanup policy
 

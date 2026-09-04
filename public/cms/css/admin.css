@@ -1263,9 +1263,3 @@ input.wb-admin-table-grid-input:focus {
 .wb-revision-depth-8 { padding-inline-start: 10rem; }
 
 /* Visitor charts use aggregate values rendered by Blade; no tracking script. */
-.wb-visitor-trend { margin: 0; }
-.wb-visitor-trend svg { display: block; width: 100%; height: auto; }
-.wb-visitor-trend text { fill: currentColor; font-size: 12px; }
-.wb-visitor-trend-axis { stroke: currentColor; opacity: .25; }
-.wb-visitor-trend-line { fill: none; stroke: var(--wb-accent, currentColor); stroke-width: 2; }
-.wb-visitor-trend-point { fill: var(--wb-accent, currentColor); }

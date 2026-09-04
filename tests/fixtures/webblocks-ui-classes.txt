@@ -6,7 +6,7 @@
 # disagree, which is the point: a runtime bump that drops a class the
 # admin uses should be caught here rather than in a screenshot.
 #
-ui-version: v2.25.2
+ui-version: v2.26.0
 wb-absolute
 wb-accordion
 wb-accordion-body
@@ -160,6 +160,26 @@ wb-card-media--start
 wb-card-media--stretch
 wb-card-muted
 wb-card-title
+wb-chart
+wb-chart-axis
+wb-chart-fallback
+wb-chart-grid
+wb-chart-label
+wb-chart-legend
+wb-chart-line
+wb-chart-mark
+wb-chart-readout
+wb-chart-series-1
+wb-chart-series-2
+wb-chart-series-3
+wb-chart-series-4
+wb-chart-series-5
+wb-chart-series-6
+wb-chart-series-7
+wb-chart-series-8
+wb-chart-svg
+wb-chart-swatch
+wb-chart-viewport
 wb-check
 wb-cluster
 wb-cluster-2

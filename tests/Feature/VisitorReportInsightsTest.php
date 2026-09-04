@@ -276,6 +276,25 @@ class VisitorReportInsightsTest extends TestCase
   }
 
   #[Test]
+  public function native_ui_chart_uses_the_modal_table_without_a_second_renderer(): void
+  {
+    $this->event('2026-09-01 12:00:00');
+    $report = $this->report();
+    $text = fn ($key, $replace = []) => app(CmsTranslator::class)->get('visitor_insights.'.$key, 'en', $replace);
+    $html = view('webblocks-cms::admin.reports.visitors.insights', [
+      'report' => $report, 'summary' => $report['summary'], 'insightText' => $text,
+      'filters' => ['from' => '2026-09-01', 'to' => '2026-09-03'],
+    ])->render();
+    $this->assertStringContainsString('data-wb-chart="line"', $html);
+    $this->assertStringContainsString('data-wb-chart-table="visitor-chart-data"', $html);
+    $this->assertStringContainsString('id="visitor-chart-data"', $html);
+    $this->assertStringContainsString('data-wb-chart-value="0"', $html);
+    $this->assertStringContainsString('data-wb-chart-value="1"', $html);
+    $this->assertStringNotContainsString('<svg', $html);
+    $this->assertStringNotContainsString('<script', $html);
+  }
+
+  #[Test]
   public function insight_and_page_modal_views_render_translated_accessible_escaped_content(): void
   {
     $this->event('2026-09-01 12:00:00', ['path' => '/<script>']);
@@ -284,7 +303,8 @@ class VisitorReportInsightsTest extends TestCase
     $data = ['report' => $report, 'summary' => $report['summary'], 'insightText' => $text, 'filters' => ['from' => '2026-09-01', 'to' => '2026-09-03']];
     $html = view('webblocks-cms::admin.reports.visitors.insights', $data)->render();
     $this->assertStringContainsString('Ölçüm kapsamı', $html);
-    $this->assertStringContainsString('role="img"', $html);
+    $this->assertStringContainsString('aria-label="Zaman içinde sayfa görüntülemeleri"', $html);
+    $this->assertStringContainsString('data-wb-chart="line"', $html);
     $this->assertStringNotContainsString('style=', $html);
     $html = view('webblocks-cms::admin.reports.visitors.page-details', $data)->render();
     $this->assertStringContainsString('wb-modal', $html);

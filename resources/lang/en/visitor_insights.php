@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'chart_help' => 'Left/right: dates. Home/end: first/last value. Escape: clear selection.',
+  'chart_error' => 'The chart could not be drawn. Open chart values to read the data.',
+  'chart_fallback' => 'Open chart values to read the complete data table.',
+
   'information' => 'Report information',
   'daily' => 'Daily page views',
   'cleanup_busy' => 'Visitor report cleanup is already running.',

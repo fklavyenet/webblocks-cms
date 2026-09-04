@@ -190,12 +190,6 @@ class VisitorReportsQuery
       $index = intdiv((int) $from->diffInDays(CarbonImmutable::parse($day)), $bucketDays);
       $buckets[$index]['views'] += (int) $views;
     }
-    $maximum = max(1, ...array_column($buckets, 'views'));
-    foreach ($buckets as $index => &$bucket) {
-      $bucket['x'] = round(20 + ($index + 0.5) * 860 / count($buckets), 2);
-      $bucket['y'] = round(180 - $bucket['views'] / $maximum * 160, 2);
-    }
-    unset($bucket);
     $lastQuery = $this->filteredVisitorEvents($filters['user'] ?? null)
       ->when($filters['site'] !== 'all', fn ($q) => $q->where('site_id', (int) $filters['site']));
 
@@ -207,8 +201,6 @@ class VisitorReportsQuery
       'change' => $previous > 0 ? round(($current - $previous) / $previous * 100, 1) : null,
       'buckets' => $buckets,
       'bucket_days' => $bucketDays,
-      'maximum' => $maximum,
-      'points' => implode(' ', array_map(fn ($bucket) => $bucket['x'].','.$bucket['y'], $buckets)),
       'coverage' => $current > 0 ? round($summary['tracked_page_views'] / $current * 100, 1) : null,
       'last_record' => $lastQuery->max('visited_at'),
       'retention' => app(VisitorReportRetention::class)->policy(),
