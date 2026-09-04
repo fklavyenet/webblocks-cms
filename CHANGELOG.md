@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.78.5
+
+- Preserve another co-installed product's active Publisher Client configuration during CMS provider boot, while continuing to restore CMS-owned values at every CMS update operation. This lets older co-installed packages reach their own update screen and upgrade to operation-boundary isolation without a bootstrap configuration collision.
+
 ## 1.78.4
 
 - Restore all CMS-owned Publisher Client runtime values at each update operation boundary, including the server, workspace, package target, version resolver, and lock, so co-installed update clients cannot leak application-global configuration into CMS services.

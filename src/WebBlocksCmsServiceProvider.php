@@ -889,6 +889,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function configureEmbeddedPublisherClient(): void
   {
+    $configuredProduct = $this->app['config']->get('publisher-client.product');
+
+    if (is_string($configuredProduct) && $configuredProduct !== '' && $configuredProduct !== 'webblocks-cms') {
+      return;
+    }
+
     $this->app->make(CmsPublisherClientConfigurator::class)->configure();
   }
 

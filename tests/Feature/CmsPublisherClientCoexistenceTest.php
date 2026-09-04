@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\VersionResolver;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
 use WebBlocks\Cms\Tests\TestCase;
+use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class CmsPublisherClientCoexistenceTest extends TestCase
 {
@@ -24,9 +25,29 @@ class CmsPublisherClientCoexistenceTest extends TestCase
 
     $this->assertSame('webblocks-cms', config('publisher-client.product'));
     $this->assertSame(ConfigVersionResolver::class, config('publisher-client.version.resolver'));
-    $this->assertSame('1.78.4', app(VersionResolver::class)->current());
+    $this->assertSame('1.78.5', app(VersionResolver::class)->current());
     $this->assertNotSame('/wrong-product', config('publisher-client.apply.target_path'));
     $this->assertSame('app/system-updates', config('publisher-client.apply.workspace_root'));
     $this->assertInstanceOf(UpdateServerClient::class, app(UpdateServerClient::class));
+  }
+
+  #[Test]
+  public function cms_boot_configuration_does_not_replace_an_already_active_product(): void
+  {
+    config()->set('publisher-client.product', 'another-product');
+    config()->set('publisher-client.version.resolver', 'Vendor\\Product\\Updates\\ConfigVersionResolver');
+
+    $provider = new class(app()) extends WebBlocksCmsServiceProvider
+    {
+      public function configurePublisherClientForTest(): void
+      {
+        $this->configureEmbeddedPublisherClient();
+      }
+    };
+
+    $provider->configurePublisherClientForTest();
+
+    $this->assertSame('another-product', config('publisher-client.product'));
+    $this->assertSame('Vendor\\Product\\Updates\\ConfigVersionResolver', config('publisher-client.version.resolver'));
   }
 }
