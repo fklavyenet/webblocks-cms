@@ -46,7 +46,7 @@ class SystemUpdateRun extends CmsModel
 
   public function triggeredBy(): BelongsTo
   {
-    return $this->belongsTo(User::class, 'triggered_by_user_id');
+    return $this->belongsTo(config('auth.providers.users.model', User::class), 'triggered_by_user_id');
   }
 
   public function statusLabel(): string

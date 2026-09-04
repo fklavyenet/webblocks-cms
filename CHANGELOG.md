@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.78.1
+
+- Repair legacy system-update history tables during package updates and keep the Updates screen available before that repair completes.
+- Simplify the Visitor Reports chart card with concise comparison copy and actions, omit redundant daily and single-series labels, and show localized day labels on the axis while retaining full dates in the accessible values table.
+
 ## 1.78.0
 
 - Adopt WebBlocks UI 2.26.0 and its dependency-free Chart component for Visitor Reports, using the existing chart-values modal table as the data source.

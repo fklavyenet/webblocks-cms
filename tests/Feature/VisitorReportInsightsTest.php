@@ -290,6 +290,8 @@ class VisitorReportInsightsTest extends TestCase
     $this->assertStringContainsString('id="visitor-chart-data"', $html);
     $this->assertStringContainsString('data-wb-chart-value="0"', $html);
     $this->assertStringContainsString('data-wb-chart-value="1"', $html);
+    $this->assertStringContainsString('data-wb-chart-label="1 Sep"', $html);
+    $this->assertStringContainsString('>2026-09-01</th>', $html);
     $this->assertStringNotContainsString('<svg', $html);
     $this->assertStringNotContainsString('<script', $html);
   }
@@ -303,7 +305,7 @@ class VisitorReportInsightsTest extends TestCase
     $data = ['report' => $report, 'summary' => $report['summary'], 'insightText' => $text, 'filters' => ['from' => '2026-09-01', 'to' => '2026-09-03']];
     $html = view('webblocks-cms::admin.reports.visitors.insights', $data)->render();
     $this->assertStringContainsString('Ölçüm kapsamı', $html);
-    $this->assertStringContainsString('aria-label="Zaman içinde sayfa görüntülemeleri"', $html);
+    $this->assertStringContainsString('aria-label="Sayfa görüntülemeleri"', $html);
     $this->assertStringContainsString('data-wb-chart="line"', $html);
     $this->assertStringNotContainsString('style=', $html);
     $html = view('webblocks-cms::admin.reports.visitors.page-details', $data)->render();

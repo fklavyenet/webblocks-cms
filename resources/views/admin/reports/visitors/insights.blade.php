@@ -1,5 +1,6 @@
 @php
     $insights = $report['insights'];
+    $chartDate = static fn (string $date) => \Carbon\CarbonImmutable::parse($date)->locale($adminLocale ?? 'en')->isoFormat('D MMM');
 @endphp
 <section class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
@@ -10,14 +11,8 @@
         </div>
     </div>
     <div class="wb-card-body wb-stack wb-gap-3">
-        <p>{{ $insightText('comparison', ['from' => $insights['previous_from'], 'to' => $insights['previous_to'], 'views' => number_format($insights['previous_views'])]) }}
-            @if ($insights['change'] !== null)
-                <strong>{{ $insightText('change', ['value' => ($insights['change'] > 0 ? '+' : '').number_format($insights['change'], 1)]) }}</strong>
-            @else
-                {{ $insightText('no_baseline') }}
-            @endif
-        </p>
-        @if ($insights['includes_today'])<p class="wb-text-muted">{{ $insightText('partial_day') }}</p>@endif
+        <p class="wb-text-muted">{{ $insightText('previous') }} <strong>{{ number_format($insights['previous_views']) }}</strong>@if ($insights['change'] !== null) · <strong>{{ $insightText('change', ['value' => ($insights['change'] > 0 ? '+' : '').number_format($insights['change'], 1)]) }}</strong>@endif</p>
+        @if ($insights['includes_today'])<p class="wb-text-sm wb-text-muted">{{ $insightText('partial_day') }}</p>@endif
         <div class="wb-chart" data-wb-chart="line" data-wb-chart-table="visitor-chart-data"
             aria-label="{{ $insightText('trend') }}" lang="{{ $adminLocale ?? 'en' }}"
             data-wb-chart-help="{{ $insightText('chart_help') }}"
@@ -25,7 +20,7 @@
             data-wb-chart-error="{{ $insightText('chart_error') }}">
             <p class="wb-chart-fallback wb-text-muted">{{ $insightText('chart_fallback') }}</p>
         </div>
-        <p class="wb-text-sm wb-text-muted">{{ $insights['bucket_days'] === 1 ? $insightText('daily') : $insightText('bucket', ['days' => $insights['bucket_days']]) }}</p>
+        @if ($insights['bucket_days'] > 1)<p class="wb-text-sm wb-text-muted">{{ $insightText('bucket', ['days' => $insights['bucket_days']]) }}</p>@endif
     </div>
 </section>
 <div id="visitor-chart-values" class="wb-modal" role="dialog" aria-modal="true" aria-labelledby="visitor-chart-values-title">
@@ -38,7 +33,7 @@
             <div class="wb-table-wrap"><table id="visitor-chart-data" class="wb-table wb-table-striped">
                 <thead><tr><th scope="col">{{ $insightText('date') }}</th><th scope="col">{{ $insightText('views') }}</th></tr></thead>
                 <tbody>@foreach ($insights['buckets'] as $bucket)
-                    <tr><th scope="row">{{ $bucket['from'] }}@if ($bucket['to'] !== $bucket['from']) – {{ $bucket['to'] }}@endif</th><td data-wb-chart-value="{{ $bucket['views'] }}">{{ number_format($bucket['views']) }}</td></tr>
+                    <tr><th scope="row" data-wb-chart-label="{{ $chartDate($bucket['from']) }}">{{ $bucket['from'] }}@if ($bucket['to'] !== $bucket['from']) – {{ $bucket['to'] }}@endif</th><td data-wb-chart-value="{{ $bucket['views'] }}">{{ number_format($bucket['views']) }}</td></tr>
                 @endforeach</tbody>
             </table></div>
         </div>

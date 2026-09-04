@@ -6,7 +6,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
@@ -89,7 +88,7 @@ class SystemUpdateController extends Controller
 
   private function reconcileVerifiedPostApplyFailure(): void
   {
-    if (! Schema::hasTable('wbcms_system_update_runs')) {
+    if (! $this->runRetention->schemaReady()) {
       return;
     }
 

@@ -1,5 +1,5 @@
 /*!
- * WebBlocks UI v2.26.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.26.1 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -2779,6 +2779,7 @@
       if (!name) throw new Error('invalid-config');
       return { label: name, values: [], display: [] };
     });
+    var displayLabels = [];
     var labels = rows.map(function (row) {
       if (row.cells.length !== headers.length) throw new Error('invalid-row');
       series.forEach(function (item, index) {
@@ -2791,9 +2792,12 @@
         item.values.push(value);
         item.display.push(cell.textContent.trim() || (value === null ? '' : String(value)));
       });
-      return row.cells[0].textContent.trim();
+      var labelCell = row.cells[0];
+      var fullLabel = labelCell.textContent.trim();
+      displayLabels.push((labelCell.getAttribute('data-wb-chart-label') || fullLabel).trim());
+      return fullLabel;
     });
-    return { table: table, label: label, type: type, labels: labels, series: series };
+    return { table: table, label: label, type: type, labels: labels, displayLabels: displayLabels, series: series };
   }
 
   function scale(series) {
@@ -2836,7 +2840,7 @@
     var text = state.root.getAttribute('data-wb-chart-help') || '';
     if (selection) {
       var item = state.data.series[selection.series];
-      text = item.label + ' — ' + state.data.labels[selection.index] + ': ' + item.display[selection.index];
+      text = (state.data.series.length > 1 ? item.label + ' — ' : '') + state.data.displayLabels[selection.index] + ': ' + item.display[selection.index];
     }
     if (state.readout.textContent !== text) state.readout.textContent = text;
     if (notify && selection) emit(state.root, 'select', {
@@ -2899,7 +2903,7 @@
     state.geometry = null;
     var domain = scale(state.data.series);
     state.viewport.hidden = !domain;
-    state.legend.hidden = !domain;
+    state.legend.hidden = !domain || state.data.series.length === 1;
     root.classList.toggle('is-empty', !domain);
     if (!domain) {
       state.readout.textContent = root.getAttribute('data-wb-chart-empty') || '';
@@ -2922,9 +2926,9 @@
       state.svg.append(node('line', { x1: left, y1: y(tick), x2: right, y2: y(tick), class: tick === 0 ? 'wb-chart-axis' : 'wb-chart-grid' }, undefined, true));
       state.svg.append(node('text', { x: left - 8, y: y(tick) + 4, 'text-anchor': 'end', class: 'wb-chart-label' }, format(tick), true));
     });
-    var longest = Math.max(1, ...state.data.labels.map(function (label) { return Math.min(18, label.length); }));
+    var longest = Math.max(1, ...state.data.displayLabels.map(function (label) { return Math.min(18, label.length); }));
     var interval = Math.max(1, Math.ceil(longest * 7 / slot));
-    state.data.labels.forEach(function (label, i) {
+    state.data.displayLabels.forEach(function (label, i) {
       if (i % interval !== 0) return;
       var halfLabel = Math.min(18, label.length) * 3.5;
       var labelX = Math.max(halfLabel + 4, Math.min(width - halfLabel - 4, x(i)));
@@ -2957,7 +2961,7 @@
         } else {
           mark = node('circle', Object.assign(attributes, { cx: x(i), cy: y(value), r: 3 }), undefined, true);
         }
-        mark.append(node('title', {}, item.label + ' — ' + state.data.labels[i] + ': ' + item.display[i], true));
+        mark.append(node('title', {}, (state.data.series.length > 1 ? item.label + ' — ' : '') + state.data.displayLabels[i] + ': ' + item.display[i], true));
         group.append(mark);
         state.marks.push(mark);
       });

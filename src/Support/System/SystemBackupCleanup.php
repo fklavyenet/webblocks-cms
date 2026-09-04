@@ -61,7 +61,7 @@ class SystemBackupCleanup
 
   private function failedUpdateBackupIds()
   {
-    if (! Schema::hasTable('wbcms_system_update_runs')) {
+    if (! Schema::hasTable('wbcms_system_update_runs') || ! Schema::hasColumn('wbcms_system_update_runs', 'started_at')) {
       return collect();
     }
 

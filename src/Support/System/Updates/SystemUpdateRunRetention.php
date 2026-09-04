@@ -10,12 +10,18 @@ class SystemUpdateRunRetention
 {
   public function retainedRuns(?int $keep = null): Collection
   {
-    if (! Schema::hasTable('wbcms_system_update_runs')) {
+    if (! $this->schemaReady()) {
       return collect();
     }
 
-    return SystemUpdateRun::query()
-      ->with('triggeredBy')
+    $query = SystemUpdateRun::query();
+    $userModel = config('auth.providers.users.model', 'App\\Models\\User');
+
+    if (is_string($userModel) && class_exists($userModel)) {
+      $query->with('triggeredBy');
+    }
+
+    return $query
       ->orderByDesc('started_at')
       ->orderByDesc('id')
       ->limit($this->keep($keep))
@@ -24,7 +30,7 @@ class SystemUpdateRunRetention
 
   public function prune(?int $keep = null): int
   {
-    if (! Schema::hasTable('wbcms_system_update_runs')) {
+    if (! $this->schemaReady()) {
       return 0;
     }
 
@@ -43,6 +49,15 @@ class SystemUpdateRunRetention
       });
 
     return $deleted;
+  }
+
+  public function schemaReady(): bool
+  {
+    $table = 'wbcms_system_update_runs';
+
+    return Schema::hasTable($table)
+      && collect(['summary', 'warning_count', 'started_at', 'finished_at', 'duration_ms', 'triggered_by_user_id'])
+        ->every(fn (string $column): bool => Schema::hasColumn($table, $column));
   }
 
   private function protectedIds(int $keep): array
