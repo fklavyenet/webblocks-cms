@@ -14,17 +14,19 @@ class CmsPublisherClientCoexistenceTest extends TestCase
   #[Test]
   public function cms_restores_its_namespaced_runtime_after_another_product_overwrites_shared_config(): void
   {
-    config()->set('publisher-client.product', 'quiztem');
-    config()->set('publisher-client.version.resolver', 'QuizTem\\Support\\Updates\\Client\\Support\\Version\\ConfigVersionResolver');
+    config()->set('publisher-client.product', 'another-product');
+    config()->set('publisher-client.version.resolver', 'Vendor\\Product\\Updates\\ConfigVersionResolver');
     config()->set('publisher-client.version.source', '1.20.0');
     config()->set('publisher-client.apply.target_path', '/wrong-product');
+    config()->set('publisher-client.apply.workspace_root', 'app/wrong-product');
 
     app(CmsPublisherClientConfigurator::class)->configure();
 
     $this->assertSame('webblocks-cms', config('publisher-client.product'));
     $this->assertSame(ConfigVersionResolver::class, config('publisher-client.version.resolver'));
-    $this->assertSame('1.78.3', app(VersionResolver::class)->current());
+    $this->assertSame('1.78.4', app(VersionResolver::class)->current());
     $this->assertNotSame('/wrong-product', config('publisher-client.apply.target_path'));
+    $this->assertSame('app/system-updates', config('publisher-client.apply.workspace_root'));
     $this->assertInstanceOf(UpdateServerClient::class, app(UpdateServerClient::class));
   }
 }

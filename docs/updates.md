@@ -44,6 +44,26 @@ package-root `.publisher-client.json` manifest.
 - Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.
 - A System Update is recorded as successful only after the applied package runtime reports the target version from the canonical `WebBlocks\Cms\Support\WebBlocks` version source. If the applied code still reports an older or unexpected version, the apply is treated as failed and the updater automatically restores the pre-update backup; the run is recorded with the `restored` status when the restore succeeds, or `failed` with both error trails when it does not.
 
+### Co-installed update clients
+
+A host application may install more than one package that embeds a namespaced
+Publisher Client runtime. Laravel configuration is application-global, so the
+shared `publisher-client` key must not be treated as permanent product state:
+another service provider can legitimately write its own product, version
+resolver, package target, validation, migration, and post-apply values later in
+the same boot cycle.
+
+Every CMS update entry point therefore restores the complete CMS-owned client
+configuration before resolving an update service. Controllers must inject only
+`CmsPublisherClientConfigurator`, call `configure()`, and then resolve
+`SystemUpdateInspector`, `UpdateServerClient`, `SystemUpdater`, or
+`AdminUpdateIndicator` from the container. Constructor or action-method
+injection of those update services can resolve their dependency graph before
+the CMS configuration has been restored and must not be introduced. The
+coexistence regression test deliberately replaces the shared configuration
+with an unrelated product namespace and proves that the CMS resolver, version,
+target, and update client are restored together.
+
 ## Release Details
 
 The System Updates screen is a single status card with two states. When the install is up to date, it shows a quiet up-to-date summary with the installed version and last-checked time. When a compatible update is available, it shows the installed-to-target version path, a folded `What's new` area with a per-version changelog accordion, a one-click `Update to X` action with a backup note (automatic pre-update backup, automatic restore on failure), and a server-backup advisory line that links to the Backups screen for a fresh full backup before major updates. The visible summary compares the running CMS code version with the latest published release; the stored installed version remains an install-history/update-persistence value only.
@@ -127,7 +147,7 @@ Any WebBlocks CMS schema change that is required by runtime code must support bo
 
 Fresh schema alone is not enough. If new runtime code expects a table or column, the release must include an update migration for existing installs or the update must fail safely before the new code path can raw-500. Package-native System Updates must not require ordinary users to SSH into a site and run manual migrations after a successful update.
 
-A successful package-native System Update means the applied code, required schema, cache clears, and post-apply version/schema readiness are aligned. Admin, API, and runtime pages that depend on newly added schema should show controlled setup/update guidance for missing schema instead of exposing raw framework/database errors. The 1.32.146 to 1.32.147 API token incident is the reference failure mode: `cms_api_tokens` existed only in the normal migration path, package-native QuizTem updated the code, and `System -> API Tokens` raw-500ed until 1.32.147 added a package update migration and graceful readiness handling.
+A successful package-native System Update means the applied code, required schema, cache clears, and post-apply version/schema readiness are aligned. Admin, API, and runtime pages that depend on newly added schema should show controlled setup/update guidance for missing schema instead of exposing raw framework/database errors. The 1.32.146 to 1.32.147 API token incident is the reference failure mode: `cms_api_tokens` existed only in the normal migration path, a package consumer updated the code, and `System -> API Tokens` returned a server error until 1.32.147 added a package update migration and graceful readiness handling.
 
 Engagement schema follows the same contract. Package-native updates must automatically ensure the runtime-owned `wbcms_comment_entries` and `wbcms_content_ratings` tables; administrators must not need to run host `artisan migrate` commands. The repair migration is idempotent: it preserves and renames legacy unprefixed engagement tables when present, creates missing prefixed tables otherwise, and intentionally preserves engagement data on rollback.
 

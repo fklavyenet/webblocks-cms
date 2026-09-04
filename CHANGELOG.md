@@ -1,8 +1,13 @@
 # Changelog
 
+## 1.78.4
+
+- Restore all CMS-owned Publisher Client runtime values at each update operation boundary, including the server, workspace, package target, version resolver, and lock, so co-installed update clients cannot leak application-global configuration into CMS services.
+- Document the Laravel configuration boundary for hosts that install more than one package with an embedded update client.
+
 ## 1.78.3
 
-- Isolate the CMS update runtime from co-installed products that use embedded Publisher clients, preventing QuizTem configuration from being injected into CMS update services.
+- Isolate the CMS update runtime from co-installed products that use embedded Publisher clients, preventing another package's configuration from being injected into CMS update services.
 
 ## 1.78.2
 

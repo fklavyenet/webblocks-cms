@@ -18,8 +18,13 @@ final class CmsPublisherClientConfigurator
 
     $config->set('publisher-client.product', 'webblocks-cms');
     $config->set('publisher-client.product_name', 'WebBlocks CMS');
-    $config->set('publisher-client.channel', 'stable');
+    $config->set('publisher-client.channel', (string) config('webblocks-updates.channel', 'stable'));
+    $config->set('publisher-client.server_url', (string) config('webblocks-updates.server_url'));
+    $config->set('publisher-client.latest_path', (string) config('webblocks-updates.latest_path', '/api/updates/latest'));
+    $config->set('publisher-client.apply.workspace_root', (string) config('webblocks-updates.installer.workspace_root', 'app/system-updates'));
+    $config->set('publisher-client.apply.download_timeout_seconds', (int) config('webblocks-updates.installer.download_timeout_seconds', 120));
     $config->set('publisher-client.lock.name', (string) config('webblocks-updates.installer.lock_name', 'system-updates:run'));
+    $config->set('publisher-client.lock.ttl_seconds', (int) config('webblocks-updates.installer.lock_ttl_seconds', 900));
     $config->set('publisher-client.apply.strategy', 'package');
     $config->set('publisher-client.apply.target_path', $runtimeRoot);
     $config->set('publisher-client.apply.enforce_active_runtime_target', true);
