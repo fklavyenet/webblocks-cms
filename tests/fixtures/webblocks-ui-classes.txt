@@ -6,7 +6,7 @@
 # disagree, which is the point: a runtime bump that drops a class the
 # admin uses should be caught here rather than in a screenshot.
 #
-ui-version: v2.24.4
+ui-version: v2.25.0
 wb-absolute
 wb-accordion
 wb-accordion-body
@@ -363,8 +363,12 @@ wb-field-error
 wb-field-hint
 wb-field-meta
 wb-filter-bar
+wb-filter-bar--fields
+wb-filter-bar-actions
 wb-filter-bar-attached
 wb-filter-bar-end
+wb-filter-bar-fields
+wb-filter-bar-search
 wb-filter-bar-start
 wb-filter-chip
 wb-filter-chip-remove

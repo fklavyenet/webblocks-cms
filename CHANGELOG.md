@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.76.8
+
+- Adopt WebBlocks UI 2.25.0 labelled filter grids across shared admin listings, keeping label spacing compact, wrapped rows distinct, and actions aligned with controls.
+
+- Omit the unused language icon from code-only language switchers in the admin navbar and public header actions instead of relying on CSS to hide it.
+
 ## 1.76.7
 
 - Restore the embedded Publisher Client version in System Updates release details by adding it to the CMS-owned update client that actually feeds the live screen.

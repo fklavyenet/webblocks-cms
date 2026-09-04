@@ -26,7 +26,7 @@ class ListingFiltersDatesTest extends TestCase
       ],
     ])->render();
 
-    $this->assertStringContainsString('class="wb-filter-bar wb-items-end"', $html);
+    $this->assertStringContainsString('class="wb-filter-bar wb-filter-bar--fields"', $html);
     $this->assertStringContainsString('id="example_date"', $html);
     $this->assertStringContainsString('name="date"', $html);
     $this->assertStringContainsString('type="date"', $html);

@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.24.4 (https://webblocksui.com/)
+ * WebBlocks UI v2.25.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -5472,6 +5472,62 @@ button.wb-pagination-link {
 
   .wb-search-bar-full {
     width: 100%;
+  }
+}
+
+/* Labelled filters opt in: one grid owns wrapping and shared control rows.
+   Keep the legacy chip/search bar composition unchanged. */
+.wb-filter-bar--fields {
+  display: block;
+  container-type: inline-size;
+}
+
+.wb-filter-bar-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: var(--wb-s5) var(--wb-s3);
+  min-width: 0;
+}
+
+.wb-filter-bar-fields > .wb-field,
+.wb-filter-bar-actions {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: var(--wb-s1);
+  min-width: 0;
+  align-content: normal;
+}
+
+.wb-filter-bar-fields > .wb-field > .wb-label {
+  align-self: end;
+  overflow-wrap: anywhere;
+}
+
+.wb-filter-bar-fields > .wb-field > :is(.wb-input, .wb-select, .wb-filter-select) {
+  width: 100%;
+  min-width: 0;
+  align-self: center;
+}
+
+.wb-filter-bar-search {
+  grid-column: 1 / -1;
+}
+
+.wb-filter-bar-actions {
+  grid-column: -2 / -1;
+}
+
+.wb-filter-bar-actions > .wb-action-group {
+  grid-row: 2;
+  align-self: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@container (min-width: 70rem) {
+  .wb-filter-bar-search {
+    grid-column: span 2;
   }
 }
 /* ============================================================

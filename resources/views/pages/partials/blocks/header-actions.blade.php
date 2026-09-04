@@ -59,7 +59,6 @@
                         aria-label="{{ $currentLocaleName ?? 'Language' }}"
                         aria-expanded="false"
                     >
-                        <i class="wb-icon wb-icon-languages wb-language-switcher-icon" aria-hidden="true"></i>
                         <span class="wb-language-switcher-code" lang="{{ $currentLocaleCode }}" aria-hidden="true">{{ strtoupper((string) $currentLocaleCode) }}</span>
                         <i class="wb-icon wb-icon-chevron-down wb-language-switcher-chevron" aria-hidden="true"></i>
                     </button>

@@ -389,7 +389,6 @@
                                         aria-label="{{ $adminText('topbar.choose_language') }}"
                                         aria-expanded="false"
                                     >
-                                        <i class="wb-icon wb-icon-languages wb-language-switcher-icon" aria-hidden="true"></i>
                                         <span class="wb-language-switcher-code" lang="{{ $adminLocale }}" aria-hidden="true">{{ strtoupper($adminLocale) }}</span>
                                         <i class="wb-icon wb-icon-chevron-down wb-language-switcher-chevron" aria-hidden="true"></i>
                                     </button>
