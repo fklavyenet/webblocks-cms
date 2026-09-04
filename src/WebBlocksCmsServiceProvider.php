@@ -78,6 +78,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
+use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as ClientInstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner as ClientPostApplyRunner;
@@ -888,30 +889,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function configureEmbeddedPublisherClient(): void
   {
-    $runtimeRoot = dirname(__DIR__);
-    $config = $this->app['config'];
-
-    $config->set('publisher-client.product', 'webblocks-cms');
-    $config->set('publisher-client.product_name', 'WebBlocks CMS');
-    $config->set('publisher-client.channel', 'stable');
-    $config->set('publisher-client.lock.name', (string) config('webblocks-updates.installer.lock_name', 'system-updates:run'));
-    $config->set('publisher-client.apply.strategy', 'package');
-    $config->set('publisher-client.apply.target_path', $runtimeRoot);
-    $config->set('publisher-client.apply.enforce_active_runtime_target', true);
-    $config->set('publisher-client.apply.composer_install', false);
-    $config->set('publisher-client.apply.package_validation.allowed_roots', [
-      'composer.json', 'src', 'routes', 'resources', 'database', 'config',
-      'public', 'docs', 'stubs',
-    ]);
-    $config->set('publisher-client.apply.package_validation.required_paths', ['src']);
-    $config->set('publisher-client.package.name', 'fklavyenet/webblocks-cms');
-    $config->set('publisher-client.package.service_provider', self::class);
-    $config->set('publisher-client.version.source', WebBlocks::VERSION);
-    $config->set('publisher-client.version.const_file', 'src/Support/WebBlocks.php');
-    $config->set('publisher-client.version.const_name', 'VERSION');
-    $config->set('publisher-client.migrations.enabled', false);
-    $config->set('publisher-client.commands.allowed', []);
-    $config->set('publisher-client.commands.post_apply', []);
+    $this->app->make(CmsPublisherClientConfigurator::class)->configure();
   }
 
   protected function bootRateLimiters(): void

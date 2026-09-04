@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.78.3
+
+- Isolate the CMS update runtime from co-installed products that use embedded Publisher clients, preventing QuizTem configuration from being injected into CMS update services.
+
 ## 1.78.2
 
 - Repair legacy system-update history tables during package updates and keep the Updates screen available before that repair completes.

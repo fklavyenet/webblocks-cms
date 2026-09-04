@@ -14,6 +14,7 @@ use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\Database\CmsTableCompatibilityViews;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
+use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
@@ -21,25 +22,20 @@ use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemUpdateController extends Controller
 {
-  public function __construct(
-    private readonly SystemUpdateInspector $systemUpdateInspector,
-    private readonly SystemUpdater $systemUpdater,
-    private readonly SystemUpdateRunRetention $runRetention,
-    private readonly AdminUpdateIndicator $updateIndicator,
-    private readonly CmsTableCompatibilityViews $compatibilityViews,
-  ) {}
+  public function __construct(private readonly CmsPublisherClientConfigurator $publisherClient) {}
 
   public function index(Request $request): View
   {
-    $this->compatibilityViews->dropLegacyUpdateBridgeViews();
+    $this->publisherClient->configure();
+    app(CmsTableCompatibilityViews::class)->dropLegacyUpdateBridgeViews();
     $this->reconcileVerifiedPostApplyFailure();
 
-    $report = $this->systemUpdateInspector->report();
+    $report = app(SystemUpdateInspector::class)->report();
     $checkedAt = session('system_updates_checked_at');
 
     return view('webblocks-cms::admin.system.updates', [
       'report' => $report,
-      'runs' => $this->runRetention->retainedRuns(),
+      'runs' => app(SystemUpdateRunRetention::class)->retainedRuns(),
       'preflight' => $report['checks'] ?? [],
       'checkedAt' => is_string($checkedAt)
         ? now()->parse($checkedAt)
@@ -49,9 +45,10 @@ class SystemUpdateController extends Controller
 
   public function check(): RedirectResponse
   {
-    $report = $this->systemUpdateInspector->refreshReport();
-    $this->updateIndicator->storeVersionStatus($report['version'] ?? []);
-    $this->runRetention->prune();
+    $this->publisherClient->configure();
+    $report = app(SystemUpdateInspector::class)->refreshReport();
+    app(AdminUpdateIndicator::class)->storeVersionStatus($report['version'] ?? []);
+    app(SystemUpdateRunRetention::class)->prune();
 
     return redirect()
       ->route('admin.system.updates.index')
@@ -61,10 +58,11 @@ class SystemUpdateController extends Controller
 
   public function store(RunSystemUpdateRequest $request): RedirectResponse
   {
+    $this->publisherClient->configure();
     try {
-      $result = $this->systemUpdater->run($request->user());
-      $this->updateIndicator->clear();
-      $this->runRetention->prune();
+      $result = app(SystemUpdater::class)->run($request->user());
+      app(AdminUpdateIndicator::class)->clear();
+      app(SystemUpdateRunRetention::class)->prune();
 
       return redirect()
         ->route('admin.system.updates.index')
@@ -80,7 +78,8 @@ class SystemUpdateController extends Controller
 
   public function indicator(): JsonResponse
   {
-    $payload = $this->updateIndicator->payload();
+    $this->publisherClient->configure();
+    $payload = app(AdminUpdateIndicator::class)->payload();
     $payload['url'] = route('admin.system.updates.index');
 
     return response()->json($payload);
@@ -88,7 +87,7 @@ class SystemUpdateController extends Controller
 
   private function reconcileVerifiedPostApplyFailure(): void
   {
-    if (! $this->runRetention->schemaReady()) {
+    if (! app(SystemUpdateRunRetention::class)->schemaReady()) {
       return;
     }
 
