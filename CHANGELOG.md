@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.76.10
+
+- Adopt WebBlocks UI 2.25.2 so filter actions stay beside fields when their full group fits and move together only when space runs out. Both single Apply and Apply + Clear Filters states are covered.
+
 ## 1.76.9
 
 - Adopt WebBlocks UI 2.25.1 so Apply and Clear Filters share a full-width, end-aligned action row instead of wrapping inside one filter column.

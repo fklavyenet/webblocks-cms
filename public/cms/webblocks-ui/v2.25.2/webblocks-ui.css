@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.25.1 (https://webblocksui.com/)
+ * WebBlocks UI v2.25.2 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -5475,26 +5475,27 @@ button.wb-pagination-link {
   }
 }
 
-/* Labelled filters opt in: one grid owns wrapping and shared control rows.
-   Keep the legacy chip/search bar composition unchanged. */
+/* Labelled filters opt in. Each field and the complete action group
+   participate in the same wrapping flow; action width comes from its labels. */
 .wb-filter-bar--fields {
   display: block;
   container-type: inline-size;
 }
 
 .wb-filter-bar-fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: var(--wb-s5) var(--wb-s3);
   min-width: 0;
 }
 
 .wb-filter-bar-fields > .wb-field {
+  flex: 1 1 10rem;
   display: grid;
-  grid-row: span 2;
-  grid-template-rows: subgrid;
+  grid-template-rows: 1fr auto;
   row-gap: var(--wb-s1);
-  min-width: 0;
+  min-inline-size: min(100%, 10rem);
   align-content: normal;
 }
 
@@ -5506,27 +5507,38 @@ button.wb-pagination-link {
 .wb-filter-bar-fields > .wb-field > :is(.wb-input, .wb-select, .wb-filter-select) {
   width: 100%;
   min-width: 0;
-  align-self: center;
 }
 
-.wb-filter-bar-search {
-  grid-column: 1 / -1;
+/* A shared control size aligns centers without offsets or empty labels.
+   rem sizing continues to scale with the user's text size. */
+.wb-filter-bar-fields > .wb-field > :is(.wb-input, .wb-select, .wb-filter-select),
+.wb-filter-bar-actions > .wb-action-group > .wb-btn {
+  block-size: 2.75rem;
+  min-block-size: 2.75rem;
+}
+
+.wb-filter-bar-fields > .wb-filter-bar-search {
+  flex-basis: 100%;
 }
 
 .wb-filter-bar-actions {
-  grid-column: 1 / -1;
-  min-width: 0;
+  flex: 0 1 auto;
+  align-self: flex-end;
+  margin-inline-start: auto;
+  max-inline-size: 100%;
+  min-inline-size: 0;
 }
 
 .wb-filter-bar-actions > .wb-action-group {
-
+  inline-size: max-content;
+  max-inline-size: 100%;
   justify-content: flex-end;
   flex-wrap: wrap;
 }
 
 @container (min-width: 70rem) {
-  .wb-filter-bar-search {
-    grid-column: span 2;
+  .wb-filter-bar-fields > .wb-filter-bar-search {
+    flex: 2 1 18rem;
   }
 }
 /* ============================================================
