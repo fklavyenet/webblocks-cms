@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.25.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.25.1 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -5489,8 +5489,7 @@ button.wb-pagination-link {
   min-width: 0;
 }
 
-.wb-filter-bar-fields > .wb-field,
-.wb-filter-bar-actions {
+.wb-filter-bar-fields > .wb-field {
   display: grid;
   grid-row: span 2;
   grid-template-rows: subgrid;
@@ -5515,12 +5514,12 @@ button.wb-pagination-link {
 }
 
 .wb-filter-bar-actions {
-  grid-column: -2 / -1;
+  grid-column: 1 / -1;
+  min-width: 0;
 }
 
 .wb-filter-bar-actions > .wb-action-group {
-  grid-row: 2;
-  align-self: center;
+
   justify-content: flex-end;
   flex-wrap: wrap;
 }

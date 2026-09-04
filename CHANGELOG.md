@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.76.9
+
+- Adopt WebBlocks UI 2.25.1 so Apply and Clear Filters share a full-width, end-aligned action row instead of wrapping inside one filter column.
+
 ## 1.76.8
 
 - Adopt WebBlocks UI 2.25.0 labelled filter grids across shared admin listings, keeping label spacing compact, wrapped rows distinct, and actions aligned with controls.
