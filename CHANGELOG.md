@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.78.8
+
+- Adopt WebBlocks UI 2.26.4, whose canonical build and validation flow removes Node and Playwright tooling while preserving the dependency-free Chart runtime and intrinsic table key columns.
+
 ## 1.78.7
 
 - Keep every WebBlocks card's content inside its canonical body region, restore disclosure chevrons on card accordions, and adopt WebBlocks UI 2.26.3 for intrinsic-width key columns in semantic tables without fixed percentages or truncated labels.
