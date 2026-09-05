@@ -113,8 +113,11 @@ class PluginAssetPublisher
 
     foreach (File::allFiles($source, false) as $file) {
       if ($this->isPublishable($file, $source)) {
-        $this->copy($file, $source, $target);
-        $published++;
+        if ($this->copy($file, $source, $target)) {
+          $published++;
+        } else {
+          $skipped++;
+        }
 
         continue;
       }
@@ -153,6 +156,54 @@ class PluginAssetPublisher
     return '/cms/plugins/'.$handle;
   }
 
+  /**
+   * Resolve one safe file from an installed plugin's public source directory.
+   *
+   * The web route uses this only when the preferred document-root copy is absent.
+   * Keeping resolution here ensures the copy path and fallback path share the same
+   * extension, dotfile, symlink and directory-boundary checks.
+   */
+  public function sourceFileFor(PluginDefinition $plugin, string $relative): ?string
+  {
+    if ($relative === '' || trim($relative, '/') !== $relative || str_contains($relative, "\0") || str_contains($relative, '\\')) {
+      return null;
+    }
+
+    $segments = explode('/', $relative);
+
+    if (array_any($segments, static fn (string $segment): bool => $segment === '' || $segment === '.' || $segment === '..' || str_starts_with($segment, '.'))) {
+      return null;
+    }
+
+    $installPath = $plugin->installPathValue();
+
+    if ($installPath === null || $installPath === '') {
+      return null;
+    }
+
+    $source = realpath(rtrim($installPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.self::SOURCE_DIRECTORY);
+
+    if ($source === false || ! is_dir($source)) {
+      return null;
+    }
+
+    $candidate = $source.DIRECTORY_SEPARATOR.implode(DIRECTORY_SEPARATOR, $segments);
+
+    if (is_link($candidate)) {
+      return null;
+    }
+
+    $real = realpath($candidate);
+
+    if ($real === false || ! is_file($real)) {
+      return null;
+    }
+
+    $file = new SplFileInfo($real);
+
+    return $this->isPublishable($file, $source) ? $real : null;
+  }
+
   private function targetFor(string $handle): string
   {
     return public_path('cms'.DIRECTORY_SEPARATOR.'plugins'.DIRECTORY_SEPARATOR.$handle);
@@ -184,7 +235,7 @@ class PluginAssetPublisher
     return in_array(strtolower($file->getExtension()), self::ALLOWED_EXTENSIONS, true);
   }
 
-  private function copy(SplFileInfo $file, string $source, string $target): void
+  private function copy(SplFileInfo $file, string $source, string $target): bool
   {
     $relative = ltrim(str_replace($source, '', $file->getPathname()), DIRECTORY_SEPARATOR);
     $destination = $target.DIRECTORY_SEPARATOR.$relative;
@@ -192,14 +243,15 @@ class PluginAssetPublisher
     File::ensureDirectoryExists(dirname($destination));
 
     try {
-      File::copy($file->getPathname(), $destination);
+      return File::copy($file->getPathname(), $destination) && is_file($destination);
     } catch (Throwable) {
       /*
        * A document root that cannot be written is an operator problem — a read-only
        * deploy, a permissions mistake — and not a reason to fail an enable. The
-       * plugin degrades to the tag pointing at nothing, which is where it was before
-       * any of this existed.
+       * plugin falls back to the guarded Laravel asset route. The failed copy is
+       * reported as skipped rather than counted as a successful publication.
        */
+      return false;
     }
   }
 }

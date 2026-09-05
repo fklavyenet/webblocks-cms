@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.78.9
+
+- Serve installed plugin assets through a guarded Laravel fallback when the preferred document-root copy is unavailable, while retaining extension, traversal, dotfile and symlink protections.
+- Count a plugin asset as published only after its document-root copy succeeds, so permission and filesystem failures no longer report false success.
+
 ## 1.78.8
 
 - Adopt WebBlocks UI 2.26.4, whose canonical build and validation flow removes Node and Playwright tooling while preserving the dependency-free Chart runtime and intrinsic table key columns.

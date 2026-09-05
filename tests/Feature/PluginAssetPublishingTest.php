@@ -3,8 +3,11 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
+use WebBlocks\Cms\Http\Controllers\Public\PluginAssetController;
 use WebBlocks\Cms\Support\Plugins\PluginAssetPublisher;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -52,6 +55,57 @@ class PluginAssetPublishingTest extends TestCase
     $this->assertSame(2, $result['published']);
     $this->assertFileExists(public_path('cms/plugins/example-plugin/forms.css'));
     $this->assertFileExists(public_path('cms/plugins/example-plugin/nested/forms.js'));
+  }
+
+  public function test_a_safe_source_file_can_be_resolved_for_http_fallback(): void
+  {
+    $this->writeAsset('nested/forms.css', 'body{}');
+
+    $file = (new PluginAssetPublisher)->sourceFileFor($this->plugin(), 'nested/forms.css');
+
+    $this->assertSame(realpath($this->pluginPath.'/resources/public/nested/forms.css'), $file);
+  }
+
+  public function test_http_fallback_serves_an_installed_plugin_asset_when_the_public_copy_is_absent(): void
+  {
+    $this->writeAsset('forms.css', 'body{color:green}');
+    $registry = new PluginRegistry(['example-plugin' => true]);
+    $registry->register($this->plugin());
+    $this->app->instance(PluginRegistry::class, $registry);
+
+    Route::get('/cms/plugins/{plugin}/{path}', PluginAssetController::class)->where('path', '.+');
+
+    $response = $this->get('/cms/plugins/example-plugin/forms.css?v=1.0.0')
+      ->assertOk()
+      ->assertHeader('Cache-Control', 'immutable, max-age=31536000, public')
+      ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+    $this->assertSame('body{color:green}', $response->baseResponse->getFile()->getContent());
+  }
+
+  public function test_http_fallback_refuses_unknown_plugins_and_unsafe_files(): void
+  {
+    $this->writeAsset('shell.php', '<?php echo "no";');
+    $registry = new PluginRegistry(['example-plugin' => true]);
+    $registry->register($this->plugin());
+    $this->app->instance(PluginRegistry::class, $registry);
+
+    Route::get('/cms/plugins/{plugin}/{path}', PluginAssetController::class)->where('path', '.+');
+
+    $this->get('/cms/plugins/missing-plugin/forms.css')->assertNotFound();
+    $this->get('/cms/plugins/example-plugin/shell.php')->assertNotFound();
+  }
+
+  public function test_source_fallback_refuses_traversal_dotfiles_and_unlisted_extensions(): void
+  {
+    $this->writeAsset('safe.css', 'body{}');
+    $this->writeAsset('.private/hidden.css', 'body{}');
+    $this->writeAsset('page.html', '<p>no</p>');
+    $publisher = new PluginAssetPublisher;
+
+    $this->assertNull($publisher->sourceFileFor($this->plugin(), '../safe.css'));
+    $this->assertNull($publisher->sourceFileFor($this->plugin(), '.private/hidden.css'));
+    $this->assertNull($publisher->sourceFileFor($this->plugin(), 'page.html'));
   }
 
   public function test_executable_and_scriptable_files_are_never_published(): void

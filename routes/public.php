@@ -8,6 +8,7 @@ use WebBlocks\Cms\Http\Controllers\Public\ContentRatingController;
 use WebBlocks\Cms\Http\Controllers\Public\EmbeddedApplicationEntryController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
+use WebBlocks\Cms\Http\Controllers\Public\PluginAssetController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
 use WebBlocks\Cms\Http\Middleware\AddCmsIdentificationHeader;
@@ -16,6 +17,12 @@ use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 $publicPageMiddleware = ['web', 'install.required', AddCmsIdentificationHeader::class];
+
+Route::middleware($publicPageMiddleware)
+  ->get('/cms/plugins/{plugin}/{path}', PluginAssetController::class)
+  ->where('plugin', '[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*')
+  ->where('path', '.+')
+  ->name('plugin-assets.show');
 
 Route::middleware($publicPageMiddleware)
   ->get('/webblocks-applications/{application}/index.html', EmbeddedApplicationEntryController::class)
