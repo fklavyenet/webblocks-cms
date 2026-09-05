@@ -33,7 +33,7 @@
 
                     <div class="wb-stack wb-gap-2">
                         <label for="archive">{{ $adminText('backups.archive_zip') }}</label>
-                        <input id="archive" type="file" name="archive" class="wb-input" accept=".zip,application/zip" required>
+                        <input id="archive" type="file" name="archive" class="wb-file" accept=".zip,application/zip" required>
                         <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.upload_description') }}</div>
                     </div>
 

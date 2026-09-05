@@ -446,7 +446,7 @@
                             <div class="wb-grid wb-grid-2">
                                 <div class="wb-stack wb-gap-1">
                                     <label for="file">{{ $adminText('file') }}</label>
-                                    <input id="file" name="file" type="file" class="wb-input" required>
+                                    <input id="file" name="file" type="file" class="wb-file" required>
                                     <span>{{ $adminText('accepted_file_types') }}</span>
                                 </div>
 

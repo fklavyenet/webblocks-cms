@@ -259,7 +259,7 @@
 
                     <div class="wb-field">
                         <label class="wb-label" for="page_converter_source_file">{{ $adminText('optional_html_file') }}</label>
-                        <input class="wb-input" id="page_converter_source_file" type="file" name="source_file" accept=".html,.htm,text/html">
+                        <input class="wb-file" id="page_converter_source_file" type="file" name="source_file" accept=".html,.htm,text/html">
                         @error('source_file')
                             <div class="wb-field-error">{{ $message }}</div>
                         @enderror

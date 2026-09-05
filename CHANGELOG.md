@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.78.10
+
+- Adopt WebBlocks UI 2.27.0 and its native `wb-file`, `wb-color`, and `wb-range` form primitives.
+- Use `wb-file` for CMS upload controls and `wb-color` for the existing brand colour picker while preserving browser-native picker, filename, keyboard, and form behavior.
+
 ## 1.78.9
 
 - Serve installed plugin assets through a guarded Laravel fallback when the preferred document-root copy is unavailable, while retaining extension, traversal, dotfile and symlink protections.

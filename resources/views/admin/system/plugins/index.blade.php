@@ -28,7 +28,7 @@
                     @csrf
                     <div>
                         <label for="plugin_zip">{{ $systemPluginsIndexText('plugin_zip') }}</label>
-                        <input id="plugin_zip" type="file" name="plugin_zip" accept=".zip,application/zip" required>
+                        <input id="plugin_zip" class="wb-file" type="file" name="plugin_zip" accept=".zip,application/zip" required>
                         @error('plugin_zip')
                             <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
                         @enderror

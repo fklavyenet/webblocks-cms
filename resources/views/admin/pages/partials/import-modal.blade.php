@@ -50,7 +50,7 @@
 
                     <div class="wb-field wb-stack-2">
                         <label for="page_import_json_file">{{ $pageImportText('json_file') }}</label>
-                        <input id="page_import_json_file" name="json_file" class="wb-input" type="file" accept="application/json,.json,text/plain" required>
+                        <input id="page_import_json_file" name="json_file" class="wb-file" type="file" accept="application/json,.json,text/plain" required>
                         <div class="wb-text-sm wb-text-muted">{{ $pageImportText('json_help') }}</div>
                         @error('json_file')
                             <div class="wb-alert wb-alert-danger wb-text-sm">{{ $message }}</div>

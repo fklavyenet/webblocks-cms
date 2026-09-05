@@ -384,7 +384,7 @@
                   <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-1">
                       <label for="{{ $pickerInputId }}_inline_upload">{{ $assetPickerText('file') }}</label>
-                      <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
+                      <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-file" data-wb-picker-upload-input>
                     </div>
                     <div class="wb-stack wb-gap-1">
                       <label for="{{ $pickerInputId }}_inline_upload_title">{{ $assetPickerText('title') }}</label>
@@ -465,7 +465,7 @@
               <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-1">
                   <label for="{{ $pickerInputId }}_inline_upload">{{ $assetPickerText('file') }}</label>
-                  <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
+                  <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-file" data-wb-picker-upload-input>
                 </div>
                 <div class="wb-stack wb-gap-1">
                   <label for="{{ $pickerInputId }}_inline_upload_title">{{ $assetPickerText('title') }}</label>

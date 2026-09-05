@@ -344,7 +344,7 @@
                           <div class="wb-brand-colour">
                             <input
                               id="site_{{ $brandField }}_picker"
-                              class="wb-brand-colour-swatch"
+                              class="wb-color wb-brand-colour-swatch"
                               type="color"
                               value="{{ old($brandField, $site->{$brandField}) ?: '#ffffff' }}"
                               data-wb-brand-picker="site_{{ $brandField }}"

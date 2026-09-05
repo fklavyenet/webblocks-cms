@@ -28,7 +28,7 @@
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-2">
                             <label for="archive">{{ $adminText('upload_promotion_package') }}</label>
-                            <input id="archive" name="archive" class="wb-input" type="file" accept=".zip">
+                            <input id="archive" name="archive" class="wb-file" type="file" accept=".zip">
                         </div>
 
                         <div class="wb-stack wb-gap-2">

@@ -6,7 +6,7 @@
 # disagree, which is the point: a runtime bump that drops a class the
 # admin uses should be caught here rather than in a screenshot.
 #
-ui-version: v2.26.4
+ui-version: v2.27.0
 wb-absolute
 wb-accordion
 wb-accordion-body
@@ -280,6 +280,10 @@ wb-collapse-body
 wb-collapse-icon
 wb-collapse-panel
 wb-collapse-trigger
+wb-color
+wb-color-error
+wb-color-lg
+wb-color-sm
 wb-confirm
 wb-confirm-icon
 wb-confirm-icon-danger
@@ -382,6 +386,10 @@ wb-field
 wb-field-error
 wb-field-hint
 wb-field-meta
+wb-file
+wb-file-error
+wb-file-lg
+wb-file-sm
 wb-filter-bar
 wb-filter-bar--fields
 wb-filter-bar-actions
@@ -944,6 +952,10 @@ wb-radio-card
 wb-radio-card-body
 wb-radio-group
 wb-radio-group--stack
+wb-range
+wb-range-error
+wb-range-lg
+wb-range-sm
 wb-rating
 wb-rating-input
 wb-rating-stars
