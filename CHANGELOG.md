@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.78.11
+
+- Clear compiled Blade views after a Plugin Catalog update replaces an installed plugin, preventing stale plugin templates from surviving across requests while still deferring runtime registry rebuilding to the next request.
+
 ## 1.78.10
 
 - Adopt WebBlocks UI 2.27.0 and its native `wb-file`, `wb-color`, and `wb-range` form primitives.

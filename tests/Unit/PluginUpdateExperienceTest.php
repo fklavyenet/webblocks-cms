@@ -27,11 +27,12 @@ class PluginUpdateExperienceTest extends TestCase
     $this->assertStringNotContainsString('{!! $plugin[\'catalog_update\']', $view);
   }
 
-  public function test_catalog_update_defers_all_runtime_refresh_to_the_next_request(): void
+  public function test_catalog_update_clears_compiled_views_without_rebuilding_runtime_registries(): void
   {
     $controller = (string) file_get_contents(dirname(__DIR__, 2).'/src/Http/Controllers/Admin/SystemPluginController.php');
 
     $this->assertStringContainsString('Every class from the installed version may already be loaded', $controller);
+    $this->assertStringContainsString('$this->runtimeRefresher->clearCompiledViews();', $controller);
     $this->assertStringNotContainsString('refresh(clearOptimizedCaches: true, registerRoutes:', $controller);
   }
 }

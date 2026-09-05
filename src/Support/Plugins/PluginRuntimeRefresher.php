@@ -7,6 +7,17 @@ use Throwable;
 
 class PluginRuntimeRefresher
 {
+  public function clearCompiledViews(): bool
+  {
+    try {
+      Artisan::call('view:clear');
+
+      return true;
+    } catch (Throwable) {
+      return false;
+    }
+  }
+
   /**
    * @return array{optimized_caches_cleared: bool, plugin_block_types: array{created: int, updated: int, unchanged: int, skipped: int}, plugin_assets: array{published: int, skipped: int, plugins: int}}
    */
