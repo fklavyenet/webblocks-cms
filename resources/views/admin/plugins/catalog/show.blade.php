@@ -336,8 +336,9 @@
         </div>
 
         <details class="wb-card">
-            <summary class="wb-card-header">
+            <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
                 <strong>{{ $adminText('declared_metadata') }}</strong>
+                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
             </summary>
             <div class="wb-card-body">
                 <div class="wb-grid wb-grid-2">

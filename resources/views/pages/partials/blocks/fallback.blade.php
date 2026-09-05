@@ -104,7 +104,10 @@
                     <div class="wb-stack wb-gap-2">
                         @foreach ($items as $item)
                             <details class="wb-card">
-                                <summary class="wb-card-header"><strong>{{ $item['title'] ?? 'Item' }}</strong></summary>
+                                <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                                    <strong>{{ $item['title'] ?? 'Item' }}</strong>
+                                    <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
+                                </summary>
                                 <div class="wb-card-body">{{ $item['content'] ?? '' }}</div>
                             </details>
                         @endforeach

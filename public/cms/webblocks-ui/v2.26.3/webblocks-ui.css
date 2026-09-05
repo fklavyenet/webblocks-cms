@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.26.2 (https://webblocksui.com/)
+ * WebBlocks UI v2.26.3 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -3744,6 +3744,12 @@ html[data-theme="auto"]:not([data-mode="light"]) .wb-alert-danger {
 .wb-table-sm th,
 .wb-table-sm td {
   padding: var(--wb-s2) var(--wb-s3);
+}
+
+/* ── Intrinsic key column ─────────────────────────────────── */
+.wb-table th.wb-table-key {
+  width: 1%;
+  white-space: nowrap;
 }
 
 /* ── Sortable header ──────────────────────────────────────── */

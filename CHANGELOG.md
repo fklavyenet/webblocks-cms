@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.78.7
+
+- Keep every WebBlocks card's content inside its canonical body region, restore disclosure chevrons on card accordions, and adopt WebBlocks UI 2.26.3 for intrinsic-width key columns in semantic tables without fixed percentages or truncated labels.
+
 ## 1.78.6
 
 - Clear co-installed products' artifact content-scan patterns and exclusions when entering a CMS update operation, preventing valid CMS namespaces and configuration files from being rejected as foreign host-runtime references.

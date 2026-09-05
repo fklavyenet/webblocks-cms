@@ -17,8 +17,9 @@
   </div>
 
   <div class="wb-card">
-    <div class="wb-table-wrap">
-      <table class="wb-table wb-table-striped">
+    <div class="wb-card-body">
+      <div class="wb-table-wrap">
+        <table class="wb-table wb-table-striped">
         <thead>
           <tr>
             <th scope="col">{{ $text('property') }}</th>
@@ -28,7 +29,7 @@
         <tbody>
           @foreach ($information as $key => $value)
             <tr>
-              <th scope="row">{{ $text($key) }}</th>
+              <th scope="row" class="wb-table-key">{{ $text($key) }}</th>
               <td>
                 @if ($key === 'debug_mode')
                   <span class="wb-status-pill {{ $value ? 'wb-status-pending' : 'wb-status-active' }}">
@@ -41,7 +42,8 @@
             </tr>
           @endforeach
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   </div>
 @endsection

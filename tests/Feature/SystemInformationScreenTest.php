@@ -55,7 +55,7 @@ class SystemInformationScreenTest extends TestCase
 
     $this->assertStringContainsString('<table ', $view);
     $this->assertStringContainsString('<th scope="col">', $view);
-    $this->assertStringContainsString('<th scope="row">', $view);
+    $this->assertStringContainsString('<th scope="row" class="wb-table-key">', $view);
   }
 
   #[Test]

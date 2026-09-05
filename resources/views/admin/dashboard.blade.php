@@ -65,27 +65,27 @@
                         <table class="wb-table wb-table-striped">
                             <tbody>
                                 <tr>
-                                    <th scope="row">{{ $adminText('dashboard.pages') }}</th>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('dashboard.pages') }}</th>
                                     <td>{{ number_format($stats['pages']) }}</td>
                                     <td class="wb-text-muted">{{ $adminText('dashboard.published_drafts', ['published' => $stats['publishedPages'], 'drafts' => $stats['draftPages']]) }}</td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">{{ $adminText('dashboard.blocks') }}</th>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('dashboard.blocks') }}</th>
                                     <td>{{ number_format($stats['blocks']) }}</td>
                                     <td class="wb-text-muted">{{ $adminText('dashboard.blocks_help') }}</td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">{{ $adminText('dashboard.media') }}</th>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('dashboard.media') }}</th>
                                     <td>{{ number_format($stats['media']) }}</td>
                                     <td class="wb-text-muted">{{ $adminText('dashboard.media_help') }}</td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">{{ $adminText('dashboard.slot_types') }}</th>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('dashboard.slot_types') }}</th>
                                     <td>{{ number_format($stats['slotTypes']) }}</td>
                                     <td class="wb-text-muted">{{ $adminText('dashboard.slot_types_help') }}</td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">{{ $adminText('dashboard.block_types') }}</th>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('dashboard.block_types') }}</th>
                                     <td>{{ number_format($stats['blockTypes']) }}</td>
                                     <td class="wb-text-muted">{{ $adminText('dashboard.block_types_help') }}</td>
                                 </tr>
@@ -179,15 +179,15 @@
                             <table class="wb-table wb-table-striped">
                                 <tbody>
                                     <tr>
-                                        <th scope="row">{{ $adminText('dashboard.page_views') }}</th>
+                                        <th scope="row" class="wb-table-key">{{ $adminText('dashboard.page_views') }}</th>
                                         <td>{{ number_format($visitorSummary['total_page_views']) }}</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">{{ $adminText('dashboard.unique_visitors') }}</th>
+                                        <th scope="row" class="wb-table-key">{{ $adminText('dashboard.unique_visitors') }}</th>
                                         <td>{{ number_format($visitorSummary['unique_visitors']) }}</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">{{ $adminText('dashboard.top_page') }}</th>
+                                        <th scope="row" class="wb-table-key">{{ $adminText('dashboard.top_page') }}</th>
                                         @if ($visitorSummary['top_page_path'])
                                             <td><code>{{ $visitorSummary['top_page_path'] }}</code></td>
                                             <td class="wb-text-muted">{{ $adminText('dashboard.views', ['count' => number_format($visitorSummary['top_page_views'])]) }}</td>

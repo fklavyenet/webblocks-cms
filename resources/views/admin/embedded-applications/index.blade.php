@@ -14,8 +14,9 @@
             <strong>{{ $text('title') }}</strong>
             <a href="{{ route('admin.embedded-applications.create') }}" class="wb-btn wb-btn-primary">{{ $text('create') }}</a>
         </div>
-        <div class="wb-table-wrap">
-            <table class="wb-table">
+        <div class="wb-card-body">
+            <div class="wb-table-wrap">
+                <table class="wb-table">
                 <thead><tr><th>{{ $text('name') }}</th><th>{{ $text('handle') }}</th><th>{{ $text('mode') }}</th><th>{{ $text('status') }}</th><th>{{ $text('actions') }}</th></tr></thead>
                 <tbody>
                 @forelse ($applications as $application)
@@ -30,7 +31,8 @@
                     <tr><td colspan="5">{{ $text('empty') }}</td></tr>
                 @endforelse
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
     </div>
 @endsection

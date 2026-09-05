@@ -114,25 +114,28 @@
         </div>
 
         <div class="wb-card-body">
-            <table class="wb-table">
-                <tbody>
-                    <tr><th scope="row">{{ $adminText('routes') }}</th><td>{{ $plugin['enabled'] ? $plugin['admin_routes_count'] : $adminText('available_after_enabling') }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('commands') }}</th><td>{{ $plugin['enabled'] ? $plugin['commands_count'] : $adminText('available_after_enabling') }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('permissions') }}</th><td>{{ $plugin['permissions_count'] }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('menu_items') }}</th><td>{{ $plugin['enabled'] ? $plugin['menu_items_count'] : $adminText('available_after_enabling') }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('settings') }}</th><td>{{ $plugin['settings'] ? ($plugin['enabled'] ? $adminText('declared') : $adminText('available_after_enabling')) : $adminText('not_declared') }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('migrations') }}</th><td>{{ $plugin['migrations_count'] ?? $adminText('manual_plugin_owned') }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('assets') }}</th><td>{{ $plugin['public_assets_count'] }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('dashboard_cards') }}</th><td>{{ $plugin['enabled'] ? $plugin['dashboard_widgets_count'] + $plugin['system_cards_count'] : $adminText('available_after_enabling') }}</td></tr>
-                    <tr><th scope="row">{{ $adminText('blocks') }}</th><td>{{ $plugin['block_types_count'] + $plugin['block_packs_count'] }}</td></tr>
-                </tbody>
-            </table>
+            <div class="wb-table-wrap">
+                <table class="wb-table">
+                    <tbody>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('routes') }}</th><td>{{ $plugin['enabled'] ? $plugin['admin_routes_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('commands') }}</th><td>{{ $plugin['enabled'] ? $plugin['commands_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('permissions') }}</th><td>{{ $plugin['permissions_count'] }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('menu_items') }}</th><td>{{ $plugin['enabled'] ? $plugin['menu_items_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('settings') }}</th><td>{{ $plugin['settings'] ? ($plugin['enabled'] ? $adminText('declared') : $adminText('available_after_enabling')) : $adminText('not_declared') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('migrations') }}</th><td>{{ $plugin['migrations_count'] ?? $adminText('manual_plugin_owned') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('assets') }}</th><td>{{ $plugin['public_assets_count'] }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('dashboard_cards') }}</th><td>{{ $plugin['enabled'] ? $plugin['dashboard_widgets_count'] + $plugin['system_cards_count'] : $adminText('available_after_enabling') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('blocks') }}</th><td>{{ $plugin['block_types_count'] + $plugin['block_packs_count'] }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <details class="wb-card">
-        <summary class="wb-card-header">
+        <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <strong>{{ $adminText('technical_details') }}</strong>
+            <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
         </summary>
 
         <div class="wb-card-body">

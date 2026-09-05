@@ -40,10 +40,10 @@
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped">
                     <tbody>
-                        <tr><th scope="row">{{ $adminText('name') }}</th><td>{{ $message->name }}</td></tr>
-                        <tr><th scope="row">{{ $adminText('email') }}</th><td><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td></tr>
-                        <tr><th scope="row">{{ $adminText('subject') }}</th><td>{{ $message->subject ?? $adminText('empty_value') }}</td></tr>
-                        <tr><th scope="row">{{ $adminText('message') }}</th><td><div class="wb-contact-message-body">{{ $message->message }}</div></td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('name') }}</th><td>{{ $message->name }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('email') }}</th><td><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('subject') }}</th><td>{{ $message->subject ?? $adminText('empty_value') }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('message') }}</th><td><div class="wb-contact-message-body">{{ $message->message }}</div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -57,12 +57,12 @@
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped">
                         <tbody>
-                            <tr><th scope="row">{{ $adminText('page_label') }}</th><td>{{ $message->page?->title ?? '-' }}</td></tr>
-                            <tr><th scope="row">{{ $adminText('path_label') }}</th><td><code>{{ $message->sourcePath() }}</code></td></tr>
-                            <tr><th scope="row">{{ $adminText('source_url_label') }}</th><td>@if ($message->source_url)<a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $adminText('open_source') }}</a>@else - @endif</td></tr>
-                            <tr><th scope="row">{{ $adminText('referrer_label') }}</th><td>{{ $message->referer ?? '-' }}</td></tr>
-                            <tr><th scope="row">{{ $adminText('received_at_label') }}</th><td>{{ $message->created_at?->format('Y-m-d H:i:s') }}</td></tr>
-                            <tr><th scope="row">{{ $adminText('block_slot_label') }}</th><td>{{ $message->block?->typeName() ?? '-' }} / {{ $message->block?->slotType?->name ?? $message->block?->slotName() ?? '-' }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('page_label') }}</th><td>{{ $message->page?->title ?? '-' }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('path_label') }}</th><td><code>{{ $message->sourcePath() }}</code></td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('source_url_label') }}</th><td>@if ($message->source_url)<a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $adminText('open_source') }}</a>@else - @endif</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('referrer_label') }}</th><td>{{ $message->referer ?? '-' }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('received_at_label') }}</th><td>{{ $message->created_at?->format('Y-m-d H:i:s') }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('block_slot_label') }}</th><td>{{ $message->block?->typeName() ?? '-' }} / {{ $message->block?->slotType?->name ?? $message->block?->slotName() ?? '-' }}</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -75,11 +75,11 @@
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped">
                         <tbody>
-                            <tr><th scope="row">{{ $adminText('status_label') }}</th><td><span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></td></tr>
-                            <tr><th scope="row">{{ $adminText('recipient_label') }}</th><td>{{ $message->notification_recipient ?? '-' }}</td></tr>
-                            <tr><th scope="row">{{ $adminText('recipient_source_label') }}</th><td>{{ $message->notificationSourceLabel() }}</td></tr>
-                            <tr><th scope="row">{{ $adminText('attempted_sent_at_label') }}</th><td>{{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>
-                            <tr><th scope="row">{{ $adminText('failure_or_skipped_reason_label') }}</th><td>{{ $message->notificationDetail() ?? '-' }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('status_label') }}</th><td><span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('recipient_label') }}</th><td>{{ $message->notification_recipient ?? '-' }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('recipient_source_label') }}</th><td>{{ $message->notificationSourceLabel() }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('attempted_sent_at_label') }}</th><td>{{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('failure_or_skipped_reason_label') }}</th><td>{{ $message->notificationDetail() ?? '-' }}</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -107,9 +107,9 @@
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped">
                     <tbody>
-                        <tr><th scope="row">{{ $adminText('editorial_status_label') }}</th><td><span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></td></tr>
-                        <tr><th scope="row">{{ $adminText('spam_score_label') }}</th><td>{{ $message->spam_score ?? 0 }}</td></tr>
-                        <tr><th scope="row">{{ $adminText('spam_signals_label') }}</th><td>@if ($message->spamReasonLabels() === []) - @else {{ implode(', ', $message->spamReasonLabels()) }} @endif</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('editorial_status_label') }}</th><td><span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('spam_score_label') }}</th><td>{{ $message->spam_score ?? 0 }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('spam_signals_label') }}</th><td>@if ($message->spamReasonLabels() === []) - @else {{ implode(', ', $message->spamReasonLabels()) }} @endif</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -124,10 +124,10 @@
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped">
                     <tbody>
-                        <tr><th scope="row">{{ $adminText('ip_address_label') }}</th><td>{{ $message->ip_address ?? '-' }}</td></tr>
-                        <tr><th scope="row">{{ $adminText('user_agent_label') }}</th><td>{{ $message->user_agent ?? '-' }}</td></tr>
-                        <tr><th scope="row">{{ $adminText('block_id_label') }}</th><td>{{ $message->block_id ? '#'.$message->block_id : '-' }}</td></tr>
-                        <tr><th scope="row">{{ $adminText('page_id_label') }}</th><td>{{ $message->page_id ? '#'.$message->page_id : '-' }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('ip_address_label') }}</th><td>{{ $message->ip_address ?? '-' }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('user_agent_label') }}</th><td>{{ $message->user_agent ?? '-' }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('block_id_label') }}</th><td>{{ $message->block_id ? '#'.$message->block_id : '-' }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('page_id_label') }}</th><td>{{ $message->page_id ? '#'.$message->page_id : '-' }}</td></tr>
                     </tbody>
                 </table>
             </div>

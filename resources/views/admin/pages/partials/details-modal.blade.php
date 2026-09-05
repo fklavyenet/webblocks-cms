@@ -50,31 +50,31 @@
                                     <table class="wb-table wb-table-striped wb-table-hover wb-text-sm">
                                         <tbody>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('id') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('id') }}</th>
                                                 <td>{{ $page->id }}</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('name') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('name') }}</th>
                                                 <td>{{ $page->title }}</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('slug') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('slug') }}</th>
                                                 <td><code>{{ $page->slug }}</code></td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('path') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('path') }}</th>
                                                 <td><code>{{ $defaultPublicPath ?? $pageDetailsText('missing') }}</code></td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('site') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('site') }}</th>
                                                 <td>{{ $page->site?->name }}</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('default_url') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('default_url') }}</th>
                                                 <td><code>{{ $defaultPublicUrl ?? $pageDetailsText('missing') }}</code></td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('locales') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('locales') }}</th>
                                                 <td>
                                                     <div class="wb-stack wb-gap-1">
                                                         @foreach ($localeSummaries as $localeSummary)
@@ -84,11 +84,11 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('slot_count') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('slot_count') }}</th>
                                                 <td>{{ $slotCount }}</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('block_count') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('block_count') }}</th>
                                                 <td>{{ $blockCount }}</td>
                                             </tr>
                                         </tbody>
@@ -104,43 +104,43 @@
                                     <table class="wb-table wb-table-striped wb-table-hover wb-text-sm">
                                         <tbody>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('status') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('status') }}</th>
                                                 <td><span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span></td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('review_requested') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('review_requested') }}</th>
                                                 <td>{{ $reviewRequestedLabel }}</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('published') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('published') }}</th>
                                                 <td>{{ $publishedLabel }}</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('created_by') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('created_by') }}</th>
                                                 <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->createdByUser])</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('last_edited_by') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('last_edited_by') }}</th>
                                                 <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->updatedByUser])</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('published_by') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('published_by') }}</th>
                                                 <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->publishedByUser])</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('archived_by') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('archived_by') }}</th>
                                                 <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->archivedByUser])</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('review_requested_by') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('review_requested_by') }}</th>
                                                 <td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('created') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('created') }}</th>
                                                 <td>{{ $page->created_at?->format('Y-m-d H:i') }}</td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">{{ $pageDetailsText('updated') }}</th>
+                                                <th scope="row" class="wb-table-key">{{ $pageDetailsText('updated') }}</th>
                                                 <td>{{ $page->updated_at?->format('Y-m-d H:i') }}</td>
                                             </tr>
                                         </tbody>

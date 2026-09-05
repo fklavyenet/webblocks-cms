@@ -6,7 +6,7 @@
 # disagree, which is the point: a runtime bump that drops a class the
 # admin uses should be caught here rather than in a screenshot.
 #
-ui-version: v2.26.2
+ui-version: v2.26.3
 wb-absolute
 wb-accordion
 wb-accordion-body
@@ -1128,6 +1128,7 @@ wb-table-actions
 wb-table-break
 wb-table-check-cell
 wb-table-hover
+wb-table-key
 wb-table-sm
 wb-table-striped
 wb-table-wrap

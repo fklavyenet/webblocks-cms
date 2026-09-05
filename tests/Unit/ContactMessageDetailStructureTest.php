@@ -13,9 +13,9 @@ class ContactMessageDetailStructureTest extends TestCase
     $view = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/contact-messages/show.blade.php');
 
     $this->assertSame(5, substr_count($view, '<table class="wb-table wb-table-striped">'));
-    $this->assertSame(22, substr_count($view, '<th scope="row">'));
+    $this->assertSame(22, substr_count($view, '<th scope="row" class="wb-table-key">'));
     $this->assertStringContainsString(
-      '<tr><th scope="row">{{ $adminText(\'message\') }}</th><td><div class="wb-contact-message-body">{{ $message->message }}</div></td></tr>',
+      '<tr><th scope="row" class="wb-table-key">{{ $adminText(\'message\') }}</th><td><div class="wb-contact-message-body">{{ $message->message }}</div></td></tr>',
       $view,
     );
     $this->assertStringNotContainsString('wb-detail-list', $view);
