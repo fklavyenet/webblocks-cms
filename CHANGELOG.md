@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.78.13
+
+- Distinguish Composer package requirements such as `fklavyenet/quiztem` from CMS plugin handles in plugin health checks, and validate their installed versions through Composer's runtime package metadata instead of incorrectly reporting them as missing plugins.
+
 ## 1.78.12
 
 - Republish a Plugin Catalog package's public assets immediately after an update without loading the replacement provider into the old request, invalidate the manifest-backed plugin and asset registries, and retain versioned asset URLs so browsers cannot reuse the previous release's CSS or JavaScript.

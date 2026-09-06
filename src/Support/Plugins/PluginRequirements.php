@@ -2,6 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use Composer\InstalledVersions;
+use Throwable;
+
 /**
  * What a plugin says it needs, checked against what this install has.
  *
@@ -58,9 +61,10 @@ class PluginRequirements
         continue;
       }
 
-      $problem = match ($handle) {
-        self::CMS => $this->checkCms($plugin, $constraint),
-        self::PHP => $this->checkPhp($constraint),
+      $problem = match (true) {
+        $handle === self::CMS => $this->checkCms($plugin, $constraint),
+        $handle === self::PHP => $this->checkPhp($constraint),
+        str_contains($handle, '/') => $this->checkComposerPackage($handle, $constraint),
         default => $this->checkPlugin($handle, $constraint, $installed, $isEnabled),
       };
 
@@ -103,6 +107,27 @@ class PluginRequirements
     }
 
     return 'Requires PHP '.$constraint.'; running '.PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION.'.'.PHP_RELEASE_VERSION.'.';
+  }
+
+  private function checkComposerPackage(string $package, string $constraint): ?string
+  {
+    try {
+      if (! InstalledVersions::isInstalled($package)) {
+        return 'Requires the Composer package '.$package.' '.$constraint.', which is not installed.';
+      }
+
+      $version = InstalledVersions::getVersion($package)
+        ?? InstalledVersions::getPrettyVersion($package);
+    } catch (Throwable) {
+      return 'Requires the Composer package '.$package.' '.$constraint.', whose installed version could not be read.';
+    }
+
+    if (! is_string($version) || $version === '' || ! $this->compatibility->satisfies($version, $constraint)) {
+      return 'Requires the Composer package '.$package.' '.$constraint.'; installed is '
+        .(is_string($version) && $version !== '' ? $version : 'unknown').'.';
+    }
+
+    return null;
   }
 
   /**

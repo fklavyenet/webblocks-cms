@@ -113,6 +113,34 @@ class PluginRequirementsTest extends TestCase
     $this->assertStringContainsString('PHP', $problems[0]);
   }
 
+  public function test_an_installed_composer_package_is_not_mistaken_for_a_plugin(): void
+  {
+    $this->assertSame([], $this->unmet($this->plugin([
+      'laravel/framework' => '>=13.0',
+    ])));
+  }
+
+  public function test_a_missing_composer_package_is_reported_as_a_package(): void
+  {
+    $problems = $this->unmet($this->plugin([
+      'example-vendor/not-installed' => '>=1.0',
+    ]));
+
+    $this->assertCount(1, $problems);
+    $this->assertStringContainsString('Composer package example-vendor/not-installed', $problems[0]);
+    $this->assertStringNotContainsString('plugin example-vendor/not-installed', $problems[0]);
+  }
+
+  public function test_an_installed_composer_package_below_the_constraint_is_reported(): void
+  {
+    $problems = $this->unmet($this->plugin([
+      'laravel/framework' => '>=99.0',
+    ]));
+
+    $this->assertCount(1, $problems);
+    $this->assertStringContainsString('installed is', $problems[0]);
+  }
+
   public function test_a_manifest_that_contradicts_itself_about_the_cms_says_so(): void
   {
     /*
