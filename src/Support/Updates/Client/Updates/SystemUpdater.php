@@ -14,6 +14,7 @@ use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder;
+use WebBlocks\Cms\Support\Updates\Client\PostApply\ComposerPackageMetadataSynchronizer;
 use WebBlocks\Cms\Support\Updates\Client\Support\RunStatus;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\VersionResolver;
 
@@ -51,6 +52,7 @@ class SystemUpdater
     private readonly UpdateSignatureVerifier $signatureVerifier,
     private readonly ApplyStrategy $applyStrategy,
     private readonly VersionResolver $versions,
+    private readonly ComposerPackageMetadataSynchronizer $composerMetadata,
     private readonly BackupManager $backupManager,
     private readonly RunRecorder $runRecorder,
     private readonly InstalledVersionStore $versionStore,
@@ -145,6 +147,9 @@ class SystemUpdater
       $warningCount += $this->mergeStrategyOutput($applyResult, $output);
       $this->heartbeat->beat();
 
+      $this->composerMetadata->synchronize($commandDir, $output);
+      $this->heartbeat->beat();
+
       $this->postApplyRunner->run($commandDir, $output);
       $this->heartbeat->beat();
 
@@ -172,6 +177,7 @@ class SystemUpdater
 
       $this->runRecorder->finish($runRef, $status, $summary, $outputText, $warningCount, $durationMs);
       $this->runRecorder->prune();
+      $this->composerMetadata->commit();
 
       Log::info('Publisher client update completed.', [
         'from_version' => $fromVersion,
@@ -193,6 +199,8 @@ class SystemUpdater
         preUpdateBackup: $backupHandle,
       );
     } catch (Throwable $throwable) {
+      $this->composerMetadata->rollback($output);
+
       if ($maintenanceEnabled) {
         try {
           $this->leaveMaintenance(base_path(), $output);

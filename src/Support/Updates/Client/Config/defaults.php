@@ -133,6 +133,10 @@ return [
         'composer_install' => env('PUBLISHER_CLIENT_COMPOSER_INSTALL', false),
         'composer_install_args' => ['install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'],
 
+        // package: replacing vendor code outside Composer must also synchronize
+        // Composer's lock/installed registries and regenerate installed.php.
+        'sync_composer_metadata' => true,
+
         // Hard cap on artifact size before extraction.
         'max_artifact_bytes' => 26214400, // 25 MB
 

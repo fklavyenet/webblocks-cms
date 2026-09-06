@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.78.14
+
+- Updated the embedded Publisher Client to 1.1.7. Package-scoped CMS updates
+  now synchronize Composer's lock and installed-version metadata with the
+  newly applied CMS version, regenerate `installed.php`, verify the runtime
+  registry, and restore the previous metadata if the update later fails.
+
 ## 1.78.13
 
 - Distinguish Composer package requirements such as `fklavyenet/quiztem` from CMS plugin handles in plugin health checks, and validate their installed versions through Composer's runtime package metadata instead of incorrectly reporting them as missing plugins.
