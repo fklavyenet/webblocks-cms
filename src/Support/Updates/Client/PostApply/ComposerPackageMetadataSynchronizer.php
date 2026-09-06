@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace WebBlocks\Cms\Support\Updates\Client\PostApply;
 
+use Composer\InstalledVersions;
 use Illuminate\Support\Facades\File;
 use JsonException;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\ApplyStrategy;
@@ -63,7 +64,9 @@ final class ComposerPackageMetadataSynchronizer
             $output,
         );
 
-        $this->assertInstalledPhp($commandDir, $package, $version);
+        $installed = $this->installedPhpData($commandDir);
+        $this->assertInstalledPhp($installed, $package, $version);
+        InstalledVersions::reload($installed);
 
         $output[] = 'Synchronized Composer package metadata for '.$package.' '.$version
             .($changed === [] ? '.' : ' ('.implode(', ', $changed).').');
@@ -150,7 +153,8 @@ final class ComposerPackageMetadataSynchronizer
         return true;
     }
 
-    private function assertInstalledPhp(string $commandDir, string $packageName, string $version): void
+    /** @return array<string, mixed> */
+    private function installedPhpData(string $commandDir): array
     {
         $path = $commandDir.'/vendor/composer/installed.php';
 
@@ -159,6 +163,17 @@ final class ComposerPackageMetadataSynchronizer
         }
 
         $installed = (static fn (string $file): mixed => require $file)($path);
+
+        if (! is_array($installed)) {
+            throw new UpdateException('Composer runtime metadata was not regenerated.', 'Invalid vendor/composer/installed.php data.');
+        }
+
+        return $installed;
+    }
+
+    /** @param array<string, mixed> $installed */
+    private function assertInstalledPhp(array $installed, string $packageName, string $version): void
+    {
         $metadata = is_array($installed) ? ($installed['versions'][$packageName] ?? null) : null;
         $actual = is_array($metadata) ? ($metadata['version'] ?? $metadata['pretty_version'] ?? null) : null;
 

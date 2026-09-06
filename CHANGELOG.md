@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.78.16
+
+- Read Composer package requirements from the current on-disk
+  `vendor/composer/installed.json` registry before falling back to Composer's
+  process-local `InstalledVersions` cache. Plugin Health now reflects
+  package-scoped updates even when the host uses long-running PHP workers.
+- Updated the embedded Publisher Client to 1.1.8 so the update request also
+  reloads Composer's process-local installed-package registry after repair.
+
 ## 1.78.15
 
 - Published the follow-up Composer metadata repair release so installations

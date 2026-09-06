@@ -2,9 +2,6 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
-use Composer\InstalledVersions;
-use Throwable;
-
 /**
  * What a plugin says it needs, checked against what this install has.
  *
@@ -37,7 +34,12 @@ class PluginRequirements
 
   public function __construct(
     private readonly PluginCompatibility $compatibility = new PluginCompatibility,
-  ) {}
+    ?ComposerPackageVersions $composerPackages = null,
+  ) {
+    $this->composerPackages = $composerPackages ?? new ComposerPackageVersions;
+  }
+
+  private readonly ComposerPackageVersions $composerPackages;
 
   /**
    * Unmet requirements, as sentences for an operator.
@@ -111,16 +113,13 @@ class PluginRequirements
 
   private function checkComposerPackage(string $package, string $constraint): ?string
   {
-    try {
-      if (! InstalledVersions::isInstalled($package)) {
-        return 'Requires the Composer package '.$package.' '.$constraint.', which is not installed.';
-      }
+    $installed = $this->composerPackages->find($package);
 
-      $version = InstalledVersions::getVersion($package)
-        ?? InstalledVersions::getPrettyVersion($package);
-    } catch (Throwable) {
-      return 'Requires the Composer package '.$package.' '.$constraint.', whose installed version could not be read.';
+    if (! $installed['installed']) {
+      return 'Requires the Composer package '.$package.' '.$constraint.', which is not installed.';
     }
+
+    $version = $installed['version'];
 
     if (! is_string($version) || $version === '' || ! $this->compatibility->satisfies($version, $constraint)) {
       return 'Requires the Composer package '.$package.' '.$constraint.'; installed is '
