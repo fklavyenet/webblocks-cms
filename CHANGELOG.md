@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.78.15
+
+- Published the follow-up Composer metadata repair release so installations
+  running Publisher Client 1.1.7 execute the shared package-version
+  synchronization and replace stale CMS entries in generated `installed.php`.
+
 ## 1.78.14
 
 - Updated the embedded Publisher Client to 1.1.7. Package-scoped CMS updates
