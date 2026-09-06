@@ -96,33 +96,74 @@ class PluginAssetPublisher
     $source = realpath(rtrim($installPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.self::SOURCE_DIRECTORY);
 
     if ($source === false || ! is_dir($source)) {
+      // A newer release may intentionally stop shipping public assets. In that
+      // case the previous release's copy must not remain reachable forever.
+      $this->unpublish($plugin->handle());
+
       return null;
     }
 
     $target = $this->targetFor($plugin->handle());
+    $parent = dirname($target);
+    $staging = $parent.DIRECTORY_SEPARATOR.'.'.$plugin->handle().'.publishing-'.bin2hex(random_bytes(8));
+    $previous = $parent.DIRECTORY_SEPARATOR.'.'.$plugin->handle().'.previous-'.bin2hex(random_bytes(8));
     $published = 0;
     $skipped = 0;
+    $copyFailed = false;
 
     /*
-     * Cleared first so a file removed from a plugin release stops being served.
-     * Publishing over the top would leave the previous version's scripts reachable
-     * indefinitely, which is the failure that makes "we removed that" untrue.
+     * Build a complete replacement beside the live directory. Renaming it into
+     * place keeps the old release intact if a copy fails and prevents requests
+     * from observing a half-published asset tree during an update.
      */
-    File::deleteDirectory($target);
-    File::ensureDirectoryExists($target);
+    File::ensureDirectoryExists($parent);
+    File::ensureDirectoryExists($staging);
 
     foreach (File::allFiles($source, false) as $file) {
       if ($this->isPublishable($file, $source)) {
-        if ($this->copy($file, $source, $target)) {
+        if ($this->copy($file, $source, $staging)) {
           $published++;
         } else {
           $skipped++;
+          $copyFailed = true;
         }
 
         continue;
       }
 
       $skipped++;
+    }
+
+    if ($copyFailed) {
+      File::deleteDirectory($staging);
+
+      return ['published' => 0, 'skipped' => $skipped];
+    }
+
+    try {
+      if (is_dir($target) && ! File::moveDirectory($target, $previous)) {
+        File::deleteDirectory($staging);
+
+        return ['published' => 0, 'skipped' => $skipped + 1];
+      }
+
+      if (! File::moveDirectory($staging, $target)) {
+        if (is_dir($previous)) {
+          File::moveDirectory($previous, $target);
+        }
+
+        return ['published' => 0, 'skipped' => $skipped + 1];
+      }
+
+      File::deleteDirectory($previous);
+    } catch (Throwable) {
+      File::deleteDirectory($staging);
+
+      if (! is_dir($target) && is_dir($previous)) {
+        File::moveDirectory($previous, $target);
+      }
+
+      return ['published' => 0, 'skipped' => $skipped + 1];
     }
 
     return ['published' => $published, 'skipped' => $skipped];

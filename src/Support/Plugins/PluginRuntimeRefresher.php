@@ -19,6 +19,31 @@ class PluginRuntimeRefresher
   }
 
   /**
+   * Publish one newly installed package without loading its provider classes.
+   *
+   * Catalog updates run after the old provider has already been loaded in the
+   * current request. Building the full registry here could mix that class with
+   * the new files, while static assets only need trusted installer coordinates.
+   *
+   * @return array{published: int, skipped: int}|null
+   */
+  public function refreshInstalledPackageAssets(string $handle, string $version, string $path): ?array
+  {
+    $plugin = PluginDefinition::make($handle)
+      ->version($version)
+      ->installPath($path);
+
+    $result = app(PluginAssetPublisher::class)->publish($plugin);
+
+    // Ensure the redirected request rebuilds both the manifest-backed plugin
+    // registry and its derived asset registry from the new package version.
+    app()->forgetInstance(PluginPublicAssetRegistry::class);
+    app()->forgetInstance(PluginRegistry::class);
+
+    return $result;
+  }
+
+  /**
    * @return array{optimized_caches_cleared: bool, plugin_block_types: array{created: int, updated: int, unchanged: int, skipped: int}, plugin_assets: array{published: int, skipped: int, plugins: int}}
    */
   public function refresh(bool $clearOptimizedCaches = false, bool $registerRoutes = false): array

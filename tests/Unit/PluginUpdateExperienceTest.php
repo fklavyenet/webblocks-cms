@@ -32,6 +32,7 @@ class PluginUpdateExperienceTest extends TestCase
     $controller = (string) file_get_contents(dirname(__DIR__, 2).'/src/Http/Controllers/Admin/SystemPluginController.php');
 
     $this->assertStringContainsString('Every class from the installed version may already be loaded', $controller);
+    $this->assertStringContainsString('$this->runtimeRefresher->refreshInstalledPackageAssets(', $controller);
     $this->assertStringContainsString('$this->runtimeRefresher->clearCompiledViews();', $controller);
     $this->assertStringNotContainsString('refresh(clearOptimizedCaches: true, registerRoutes:', $controller);
   }

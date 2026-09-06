@@ -175,6 +175,35 @@ class PluginAssetPublishingTest extends TestCase
     $this->assertFileExists(public_path('cms/plugins/example-plugin/new.js'));
   }
 
+  public function test_updated_css_is_republished_and_served_from_the_versioned_public_url(): void
+  {
+    $this->writeAsset('css/public.css', '.wbq-old{}');
+    (new PluginAssetPublisher)->publish($this->plugin('0.2.11'));
+
+    $this->writeAsset('css/public.css', '.wbq-quiz-introduction__overview{display:grid}');
+    $updated = $this->plugin('0.2.12');
+    (new PluginAssetPublisher)->publish($updated);
+
+    $this->assertStringContainsString(
+      '.wbq-quiz-introduction__overview',
+      (string) File::get(public_path('cms/plugins/example-plugin/css/public.css')),
+    );
+
+    $registry = new PluginRegistry(['example-plugin' => true]);
+    $registry->register($updated);
+    $this->app->instance(PluginRegistry::class, $registry);
+    Route::get('/cms/plugins/{plugin}/{path}', PluginAssetController::class)->where('path', '.+');
+
+    $response = $this->get('/cms/plugins/example-plugin/css/public.css?v=0.2.12')
+      ->assertOk()
+      ->assertHeader('Cache-Control', 'immutable, max-age=31536000, public');
+
+    $this->assertStringContainsString(
+      '.wbq-quiz-introduction__overview',
+      $response->baseResponse->getFile()->getContent(),
+    );
+  }
+
   public function test_a_plugin_with_no_asset_directory_publishes_nothing(): void
   {
     // Most plugins. It must be silent for them rather than creating empty folders.
@@ -219,11 +248,11 @@ class PluginAssetPublishingTest extends TestCase
     File::put($path, $contents);
   }
 
-  private function plugin(): PluginDefinition
+  private function plugin(string $version = '1.0.0'): PluginDefinition
   {
     return PluginDefinition::make('example-plugin')
       ->label('Example')
-      ->version('1.0.0')
+      ->version($version)
       ->installPath($this->pluginPath);
   }
 }

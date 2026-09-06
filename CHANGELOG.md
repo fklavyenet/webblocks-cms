@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.78.12
+
+- Republish a Plugin Catalog package's public assets immediately after an update without loading the replacement provider into the old request, invalidate the manifest-backed plugin and asset registries, and retain versioned asset URLs so browsers cannot reuse the previous release's CSS or JavaScript.
+- Replace published plugin asset trees through a staged directory swap, preserving the previous working copy if publication fails and removing files that the replacement release no longer ships.
+- Cover a QuizTem-style `0.2.11` to `0.2.12` update by verifying that the replacement CSS selector is present in both the document-root copy and the versioned public HTTP response.
+
 ## 1.78.11
 
 - Clear compiled Blade views after a Plugin Catalog update replaces an installed plugin, preventing stale plugin templates from surviving across requests while still deferring runtime registry rebuilding to the next request.

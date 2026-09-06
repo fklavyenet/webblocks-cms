@@ -222,6 +222,11 @@ class SystemPluginController extends Controller
 
     try {
       $installed = $this->catalogInstallBridge->update($result->plugin, $installedVersion);
+      $this->runtimeRefresher->refreshInstalledPackageAssets(
+        (string) $installed['handle'],
+        (string) $installed['version'],
+        (string) $installed['path'],
+      );
       $this->runtimeRefresher->clearCompiledViews();
     } catch (RuntimeException $exception) {
       return back()->withErrors(['plugin' => $this->controlledCatalogUpdateError($exception)]);
@@ -231,11 +236,11 @@ class SystemPluginController extends Controller
      * Every class from the installed version may already be loaded in this PHP
      * request, including manifest readers, health reporters and asset
      * definitions. Rebuilding the runtime registries here could therefore mix
-     * old in-memory classes with the new package on disk. Compiled Blade files
-     * are different: they persist across requests and must be cleared after the
-     * package is replaced. The redirected request then performs normal plugin
-     * discovery, route registration, health checks and asset reconciliation
-     * from one consistent version.
+     * old in-memory classes with the new package on disk. Static assets are safe
+     * to publish directly from the install result without loading provider code,
+     * and compiled Blade files persist across requests, so both are refreshed
+     * explicitly. The redirected request then performs normal plugin discovery,
+     * route registration and health checks from one consistent version.
      */
 
     return redirect()
