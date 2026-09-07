@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.78.17
+
+- Updated the embedded Publisher Client to 1.1.11. Package-scoped updates now
+  explicitly synchronize Composer's generated `installed.php` runtime registry
+  because `composer dump-autoload` does not rewrite that file.
+- Runtime metadata repair remains fail-closed when the target package entry is
+  missing and re-reads the repaired file before accepting the update.
+
 ## 1.78.16
 
 - Read Composer package requirements from the current on-disk

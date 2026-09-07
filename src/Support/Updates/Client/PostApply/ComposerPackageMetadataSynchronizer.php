@@ -52,6 +52,10 @@ final class ComposerPackageMetadataSynchronizer
         $this->snapshot = $this->snapshotMetadata($commandDir);
         $changed = [];
 
+        if ($this->synchronizeRootRequirement($commandDir.'/composer.json', $package, $version)) {
+            $changed[] = 'composer.json';
+        }
+
         foreach (['composer.lock', 'vendor/composer/installed.json'] as $relative) {
             if ($this->synchronizeJson($commandDir.'/'.$relative, $package, $version)) {
                 $changed[] = $relative;
@@ -65,6 +69,7 @@ final class ComposerPackageMetadataSynchronizer
         );
 
         $installed = $this->installedPhpData($commandDir);
+        $installed = $this->synchronizeInstalledPhp($commandDir, $installed, $package, $version);
         $this->assertInstalledPhp($installed, $package, $version);
         InstalledVersions::reload($installed);
 
@@ -136,6 +141,10 @@ final class ComposerPackageMetadataSynchronizer
                 $metadata['version'] = $this->normalizedVersion($version);
                 $metadata['pretty_version'] = $version;
 
+                if (array_key_exists('version_normalized', $metadata)) {
+                    $metadata['version_normalized'] = $this->normalizedVersion($version);
+                }
+
                 if ($list === null) {
                     $document[$index] = $metadata;
                 } else {
@@ -162,6 +171,10 @@ final class ComposerPackageMetadataSynchronizer
             throw new UpdateException('Composer runtime metadata was not regenerated.', 'Missing vendor/composer/installed.php.');
         }
 
+        if (function_exists('opcache_invalidate')) {
+            opcache_invalidate($path, true);
+        }
+
         $installed = (static fn (string $file): mixed => require $file)($path);
 
         if (! is_array($installed)) {
@@ -185,6 +198,38 @@ final class ComposerPackageMetadataSynchronizer
         }
     }
 
+    /**
+     * Composer's dump-autoload command does not rewrite installed.php. Keep the
+     * generated runtime registry aligned explicitly after a package replacement.
+     *
+     * @param array<string, mixed> $installed
+     * @return array<string, mixed>
+     */
+    private function synchronizeInstalledPhp(
+        string $commandDir,
+        array $installed,
+        string $packageName,
+        string $version,
+    ): array {
+        $metadata = $installed['versions'][$packageName] ?? null;
+
+        if (! is_array($metadata)) {
+            throw new UpdateException(
+                'Composer runtime metadata could not be synchronized.',
+                'Missing '.$packageName.' in vendor/composer/installed.php.',
+            );
+        }
+
+        $metadata['pretty_version'] = $version;
+        $metadata['version'] = $this->normalizedVersion($version);
+        $installed['versions'][$packageName] = $metadata;
+
+        $path = $commandDir.'/vendor/composer/installed.php';
+        File::put($path, '<?php return '.var_export($installed, true).';'.PHP_EOL);
+
+        return $this->installedPhpData($commandDir);
+    }
+
     private function normalizedVersion(string $version): string
     {
         $segments = explode('.', preg_replace('/[^0-9.].*$/', '', $version) ?: $version);
@@ -196,10 +241,34 @@ final class ComposerPackageMetadataSynchronizer
         return implode('.', $segments);
     }
 
+    private function synchronizeRootRequirement(string $path, string $packageName, string $version): bool
+    {
+        if (! File::isFile($path)) {
+            return false;
+        }
+
+        try {
+            $document = json_decode((string) File::get($path), true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new UpdateException('Composer package metadata could not be synchronized.', 'Invalid JSON in '.$path.': '.$exception->getMessage());
+        }
+
+        $constraint = is_array($document) ? ($document['require'][$packageName] ?? null) : null;
+
+        if (! is_string($constraint) || preg_match('/^v?\d+(?:\.\d+){1,3}$/', trim($constraint)) !== 1) {
+            return false;
+        }
+
+        $document['require'][$packageName] = $version;
+        File::put($path, json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL);
+
+        return true;
+    }
+
     /** @return array<string, string|null> */
     private function snapshotMetadata(string $commandDir): array
     {
-        $paths = [$commandDir.'/composer.lock'];
+        $paths = [$commandDir.'/composer.json', $commandDir.'/composer.lock'];
         $composerDir = $commandDir.'/vendor/composer';
 
         if (File::isDirectory($composerDir)) {
