@@ -1,4 +1,5 @@
 (function () {
+    function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
     var treeSelector = '[data-wb-cms-slot-block-tree][data-page-id][data-slot-type-id]';
     var storagePrefix = 'webblocks.cms.slotBlocks.expanded';
 
@@ -135,8 +136,8 @@
 
     function setToggleExpanded(button, expanded) {
         button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        button.setAttribute('aria-label', expanded ? 'Collapse child blocks' : 'Expand child blocks');
-        button.setAttribute('title', expanded ? 'Collapse child blocks' : 'Expand child blocks');
+        button.setAttribute('aria-label', expanded ? i18n('collapse-children') : i18n('expand-children'));
+        button.setAttribute('title', expanded ? i18n('collapse-children') : i18n('expand-children'));
     }
 
     function rowVisible(root, row) {

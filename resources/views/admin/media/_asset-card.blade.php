@@ -1,6 +1,11 @@
 @php
+    use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+    use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
     $assetLabel = $asset->title ?: $asset->filename;
     $pickerVariant = $pickerVariant ?? 'card';
+    $pickerLocale = app(AdminLocaleResolver::class)->locale();
+    $pickerText = static fn (string $key) => app(CmsTranslator::class)->admin('media_asset_picker.'.$key, $pickerLocale);
 @endphp
 
 @if ($pickerVariant === 'compact-list')
@@ -20,15 +25,15 @@
             </div>
 
             <div class="wb-picker-asset-row__meta wb-text-sm wb-text-muted">
-                <span>{{ $asset->folder?->name ?? 'No folder' }}</span>
+                <span>{{ $asset->folder?->name ?? $pickerText('no_folder') }}</span>
                 <span>{{ ucfirst($asset->kind) }}</span>
             </div>
 
             <div class="wb-picker-asset-row__action">
                 @if ($multi ?? false)
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-asset-toggle data-wb-asset='@json($asset->pickerPayload())' aria-pressed="false">Select</button>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-asset-toggle data-wb-asset='@json($asset->pickerPayload())' aria-pressed="false">{{ $pickerText('select') }}</button>
                 @else
-                    <button type="button" class="wb-btn wb-btn-primary" data-wb-asset-select data-wb-asset='@json($asset->pickerPayload())'>Select</button>
+                    <button type="button" class="wb-btn wb-btn-primary" data-wb-asset-select data-wb-asset='@json($asset->pickerPayload())'>{{ $pickerText('select') }}</button>
                 @endif
             </div>
         </div>
@@ -48,14 +53,14 @@
 
                 <strong>{{ $assetLabel }}</strong>
                 <span class="wb-text-sm wb-text-muted">{{ $asset->original_name }}</span>
-                <span class="wb-text-sm wb-text-muted">{{ $asset->folder?->name ?? 'No folder' }}</span>
+                <span class="wb-text-sm wb-text-muted">{{ $asset->folder?->name ?? $pickerText('no_folder') }}</span>
             </div>
 
             <div class="wb-cluster wb-cluster-2">
                 @if ($multi ?? false)
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-asset-toggle data-wb-asset='@json($asset->pickerPayload())' aria-pressed="false">Select</button>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-asset-toggle data-wb-asset='@json($asset->pickerPayload())' aria-pressed="false">{{ $pickerText('select') }}</button>
                 @else
-                    <button type="button" class="wb-btn wb-btn-primary" data-wb-asset-select data-wb-asset='@json($asset->pickerPayload())'>Select</button>
+                    <button type="button" class="wb-btn wb-btn-primary" data-wb-asset-select data-wb-asset='@json($asset->pickerPayload())'>{{ $pickerText('select') }}</button>
                 @endif
             </div>
         </div>

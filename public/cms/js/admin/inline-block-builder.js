@@ -1,4 +1,5 @@
 (function () {
+    function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
     if (!document.querySelector('[data-wb-inline-builder]')) {
         return;
     }
@@ -28,7 +29,7 @@
             nextIndexInput.value = String(index + 1);
         }
 
-        block.querySelector('[data-wb-inline-label]').textContent = payload.name || 'New Block';
+        block.querySelector('[data-wb-inline-label]').textContent = payload.name || i18n('new-block');
         block.querySelector('[data-wb-inline-body]').innerHTML = buildInlineFields(index, payload, defaultSlotTypeId);
         list.appendChild(block);
         syncInlineBuilder(builder);
@@ -36,32 +37,32 @@
 
     function buildInlineFields(index, payload, defaultSlotTypeId) {
         var typeId = payload.id || '';
-        var title = payload.name || 'Block';
+        var title = payload.name || i18n('block');
         var contentFields = '';
 
         switch (payload.slug) {
             case 'heading':
-                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>Heading Text</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>Heading Level</label><select class="wb-select" name="blocks[' + index + '][variant]"><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="h4">H4</option><option value="h5">H5</option><option value="h6">H6</option></select></div></div>';
+                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>' + i18n('heading-text') + '</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>' + i18n('heading-level') + '</label><select class="wb-select" name="blocks[' + index + '][variant]"><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="h4">H4</option><option value="h5">H5</option><option value="h6">H6</option></select></div></div>';
                 break;
             case 'section':
-                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>Section Title</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>Section Variant</label><select class="wb-select" name="blocks[' + index + '][variant]"><option value="default">default</option><option value="muted">muted</option><option value="accent">accent</option><option value="wide">wide</option></select></div></div><div class="wb-stack wb-gap-1"><label>Section Intro</label><textarea class="wb-textarea" rows="5" name="blocks[' + index + '][content]"></textarea></div>';
+                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>' + i18n('section-title') + '</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>' + i18n('section-variant') + '</label><select class="wb-select" name="blocks[' + index + '][variant]"><option value="default">default</option><option value="muted">muted</option><option value="accent">accent</option><option value="wide">wide</option></select></div></div><div class="wb-stack wb-gap-1"><label>' + i18n('section-intro') + '</label><textarea class="wb-textarea" rows="5" name="blocks[' + index + '][content]"></textarea></div>';
                 break;
             case 'callout':
-                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>CTA Title</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>Tone</label><select class="wb-select" name="blocks[' + index + '][variant]"><option value="info">info</option><option value="success">success</option><option value="warning">warning</option><option value="danger">danger</option></select></div></div><div class="wb-stack wb-gap-1"><label>CTA Content</label><textarea class="wb-textarea" rows="5" name="blocks[' + index + '][content]"></textarea></div>';
+                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>' + i18n('cta-title') + '</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>' + i18n('tone') + '</label><select class="wb-select" name="blocks[' + index + '][variant]"><option value="info">info</option><option value="success">success</option><option value="warning">warning</option><option value="danger">danger</option></select></div></div><div class="wb-stack wb-gap-1"><label>' + i18n('cta-content') + '</label><textarea class="wb-textarea" rows="5" name="blocks[' + index + '][content]"></textarea></div>';
                 break;
             case 'rich-text':
             case 'text':
             case 'html':
-                contentFields = '<div class="wb-stack wb-gap-1"><label>Content</label><textarea class="wb-textarea" rows="8" name="blocks[' + index + '][content]"></textarea></div>';
+                contentFields = '<div class="wb-stack wb-gap-1"><label>' + i18n('content') + '</label><textarea class="wb-textarea" rows="8" name="blocks[' + index + '][content]"></textarea></div>';
                 break;
             case 'button':
-                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>Button Label</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>URL</label><input class="wb-input" type="text" name="blocks[' + index + '][url]"></div></div>';
+                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>' + i18n('button-label') + '</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>URL</label><input class="wb-input" type="text" name="blocks[' + index + '][url]"></div></div>';
                 break;
             case 'download':
-                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>Download Label</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>Document Asset ID</label><input class="wb-input" type="number" min="1" name="blocks[' + index + '][asset_id]"></div></div>';
+                contentFields = '<div class="wb-grid wb-grid-2"><div class="wb-stack wb-gap-1"><label>' + i18n('download-label') + '</label><input class="wb-input" type="text" name="blocks[' + index + '][title]"></div><div class="wb-stack wb-gap-1"><label>' + i18n('document-asset-id') + '</label><input class="wb-input" type="number" min="1" name="blocks[' + index + '][asset_id]"></div></div>';
                 break;
             default:
-                contentFields = '<div class="wb-stack wb-gap-1"><label>Content</label><textarea class="wb-textarea" rows="6" name="blocks[' + index + '][content]"></textarea></div>';
+                contentFields = '<div class="wb-stack wb-gap-1"><label>' + i18n('content') + '</label><textarea class="wb-textarea" rows="6" name="blocks[' + index + '][content]"></textarea></div>';
                 break;
         }
 
@@ -71,7 +72,7 @@
             '<input type="hidden" name="blocks[' + index + '][sort_order]" value="' + index + '" data-wb-inline-sort>' +
             '<input type="hidden" name="blocks[' + index + '][block_type_id]" value="' + typeId + '">' +
             '<input type="hidden" name="blocks[' + index + '][is_system]" value="' + (payload.is_system ? '1' : '0') + '">' +
-            '<div class="wb-grid wb-grid-4"><div class="wb-stack wb-gap-1"><label>Block Type</label><div class="wb-card wb-card-muted"><div class="wb-card-body"><strong>' + title + '</strong><div>' + (payload.description || 'Inline block editor') + '</div></div></div></div><div class="wb-stack wb-gap-1"><label>Slot Type ID</label><input class="wb-input" type="number" min="1" name="blocks[' + index + '][slot_type_id]" value="' + defaultSlotTypeId + '"></div><div class="wb-stack wb-gap-1"><label>Status</label><select class="wb-select" name="blocks[' + index + '][status]"><option value="published">published</option><option value="draft">draft</option></select></div><div class="wb-stack wb-gap-1"><label>Kind</label><div class="wb-card wb-card-muted"><div class="wb-card-body"><strong>' + (payload.is_system ? 'System Block' : 'Content Block') + '</strong></div></div></div></div>' +
+            '<div class="wb-grid wb-grid-4"><div class="wb-stack wb-gap-1"><label>' + i18n('block-type') + '</label><div class="wb-card wb-card-muted"><div class="wb-card-body"><strong>' + title + '</strong><div>' + (payload.description || i18n('inline-block-editor')) + '</div></div></div></div><div class="wb-stack wb-gap-1"><label>' + i18n('slot-type-id') + '</label><input class="wb-input" type="number" min="1" name="blocks[' + index + '][slot_type_id]" value="' + defaultSlotTypeId + '"></div><div class="wb-stack wb-gap-1"><label>' + i18n('status') + '</label><select class="wb-select" name="blocks[' + index + '][status]"><option value="published">' + i18n('published') + '</option><option value="draft">' + i18n('draft') + '</option></select></div><div class="wb-stack wb-gap-1"><label>' + i18n('kind') + '</label><div class="wb-card wb-card-muted"><div class="wb-card-body"><strong>' + (payload.is_system ? i18n('system-block') : i18n('content-block')) + '</strong></div></div></div></div>' +
             '<div class="wb-card wb-card-accent"><div class="wb-card-body">' + contentFields + '</div></div>';
     }
 
@@ -110,7 +111,7 @@
             var empty = document.createElement('div');
             empty.className = 'wb-empty';
             empty.setAttribute('data-wb-inline-empty', '');
-            empty.innerHTML = '<div class="wb-empty-title">No blocks yet</div><div class="wb-empty-text">Add the first block to start composing this page inline.</div>';
+            empty.innerHTML = '<div class="wb-empty-title">' + i18n('no-blocks-yet') + '</div><div class="wb-empty-text">' + i18n('add-first-block') + '</div>';
             list.appendChild(empty);
         }
     }

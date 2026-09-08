@@ -305,7 +305,7 @@
                 </div>
             @endif
 
-            <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback aria-live="polite"></div>
+            <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback data-wb-copy-success="{{ $adminText('public_url_copied') }}" data-wb-copy-failed="{{ $adminText('copy_failed') }}" aria-live="polite"></div>
         </div>
 
         @include('webblocks-cms::admin.partials.pagination', ['paginator' => $assets, 'ariaLabel' => $adminText('media_pagination'), 'compact' => true])

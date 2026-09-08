@@ -39,7 +39,7 @@
                         return;
                     }
 
-                    feedback.textContent = 'Public URL copied.';
+                    feedback.textContent = feedback.getAttribute('data-wb-copy-success') || '';
                     window.clearTimeout(window.__wbMediaCopyTimer || 0);
                     window.__wbMediaCopyTimer = window.setTimeout(function () {
                         feedback.textContent = '';
@@ -47,7 +47,7 @@
                 })
                 .catch(function () {
                     if (feedback) {
-                        feedback.textContent = 'Copy failed.';
+                        feedback.textContent = feedback.getAttribute('data-wb-copy-failed') || '';
                     }
                 });
         });

@@ -1,6 +1,6 @@
 <?php
 
-return [
+$translations = [
   'navigation' => [
     'aria' => 'Yönetim gezinmesi',
     'toggle' => 'Gezinmeyi aç/kapat',
@@ -57,7 +57,7 @@ return [
   'navigation_items' => [
     'title' => 'Navigasyon Öğeleri',
     'description' => 'Site menülerini, açılır grupları ve altbilgi bağlantılarını yönetin.',
-    'context_label' => 'Site: :site · :menü',
+    'context_label' => 'Site: :site · Menü: :menu',
     'docs_group_help' => 'Daraltılabilir doküman kenar çubuğu grupları için <code>Grup Ekle</code> kullanın. Ardından alt bağlantıları bu grubun içine yerleştirmek için öğe modallarında <code>Üst Grup</code> seçin.',
     'add_item' => 'Öğe Ekle',
     'add_group' => 'Grup Ekle',
@@ -4271,3 +4271,5 @@ return [
   ],
 
 ];
+
+return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

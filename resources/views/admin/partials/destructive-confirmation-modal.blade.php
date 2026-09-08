@@ -55,7 +55,7 @@
                 @endif
             </div>
 
-            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close {{ $title }}">
+            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('common.close_named', app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(), ['name' => $title]) }}">
                 <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
             </button>
         </div>

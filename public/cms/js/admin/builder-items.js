@@ -1,4 +1,5 @@
 (function () {
+    function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
     if (!document.querySelector('[data-wb-builder-items-editor]')) {
         return;
     }
@@ -51,7 +52,7 @@
             var empty = document.createElement('div');
             empty.className = 'wb-empty';
             empty.setAttribute('data-wb-builder-item-empty', editorKey);
-            empty.innerHTML = '<div class="wb-empty-title">' + escapeHtml(template ? template.getAttribute('data-empty-title') : 'No items yet') + '</div><div class="wb-empty-text">' + escapeHtml(template ? template.getAttribute('data-empty-description') : 'Add the first item to continue.') + '</div>';
+            empty.innerHTML = '<div class="wb-empty-title">' + escapeHtml(template ? template.getAttribute('data-empty-title') : i18n('no-items-yet')) + '</div><div class="wb-empty-text">' + escapeHtml(template ? template.getAttribute('data-empty-description') : i18n('add-first-item')) + '</div>';
             list.appendChild(empty);
         }
     }
@@ -66,7 +67,7 @@
         var titleInput = row.querySelector('[data-wb-builder-item-title="' + editorKey + '"]');
 
         if (label && titleInput) {
-            label.textContent = titleInput.value.trim() || 'New Item';
+            label.textContent = titleInput.value.trim() || i18n('new-item');
         }
     }
 
@@ -86,8 +87,8 @@
         var expanded = !body.hidden;
 
         toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        toggleButton.setAttribute('title', expanded ? 'Collapse item' : 'Expand item');
-        toggleButton.setAttribute('aria-label', expanded ? 'Collapse item' : 'Expand item');
+        toggleButton.setAttribute('title', expanded ? i18n('collapse-item') : i18n('expand-item'));
+        toggleButton.setAttribute('aria-label', expanded ? i18n('collapse-item') : i18n('expand-item'));
         icon.classList.toggle('wb-icon-minus', expanded);
         icon.classList.toggle('wb-icon-plus', !expanded);
     }

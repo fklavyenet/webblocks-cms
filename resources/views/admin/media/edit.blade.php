@@ -174,7 +174,7 @@
                             @if ($variant['available'])
                                 <img src="{{ $variant['url'] }}" alt="{{ $asset->thumbnailLabel() }}" loading="lazy">
                             @else
-                                <span class="wb-alert wb-alert-info">Not generated yet</span>
+                                <span class="wb-alert wb-alert-info">{{ $adminText('not_generated_yet') }}</span>
                             @endif
                             <strong>{{ ucfirst($variant['name']) }}</strong>
                             <span class="wb-text-sm wb-text-muted">{{ $variant['width'] }}@if($variant['height']) × {{ $variant['height'] }}@endif · {{ ucfirst($variant['fit']) }}</span>
@@ -185,7 +185,7 @@
         @endif
     </div>
 
-    <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback aria-live="polite"></div>
+    <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback data-wb-copy-success="{{ $adminText('public_url_copied') }}" data-wb-copy-failed="{{ $adminText('copy_failed') }}" aria-live="polite"></div>
 @endsection
 
 @push('overlays')

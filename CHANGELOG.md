@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.78.21
+
+- Complete the German, Turkish, Spanish, Italian, and French admin catalogues so every English CMS admin key has a localized counterpart instead of silently falling back to English.
+- Move dynamic media, asset-picker, block-builder, item-builder, tree, and gallery labels out of Blade and JavaScript literals and into the locale catalogue, including accessible modal close labels.
+- Add full-catalogue key and placeholder parity coverage across all six supported admin locales, plus a regression guard against English JavaScript UI fallbacks.
+
 ## 1.78.20
 
 - Apply the operator's selected admin locale to authenticated CMS and plugin routes, so plugin views using Laravel's standard translation helper stay in the same language as the CMS shell.

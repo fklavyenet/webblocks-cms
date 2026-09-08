@@ -1,4 +1,5 @@
 (function () {
+    function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
     if (!document.querySelector('[data-wb-gallery-items-editor]')) {
         return;
     }
@@ -93,7 +94,7 @@
         }
 
         editor.querySelectorAll('[data-wb-gallery-items-count]').forEach(function (badge) {
-            badge.textContent = String(count) + ' ' + (count === 1 ? 'item' : 'items');
+            badge.textContent = String(count) + ' ' + (count === 1 ? i18n('item') : i18n('items'));
         });
     }
 
@@ -172,13 +173,13 @@
                         if (key === 'overlay_title' || key === 'overlay_text') {
                             var overlayTitleField = row.querySelector('[data-wb-gallery-field="overlay_title"]');
                             var overlayTextField = row.querySelector('[data-wb-gallery-field="overlay_text"]');
-                            summary.textContent = ((overlayTitleField && overlayTitleField.value.trim()) || (overlayTextField && overlayTextField.value.trim()) || 'No overlay title');
+                            summary.textContent = ((overlayTitleField && overlayTitleField.value.trim()) || (overlayTextField && overlayTextField.value.trim()) || i18n('no-overlay-title'));
                             return;
                         }
 
                         summary.textContent = field.value.trim() || (key === 'alt_text'
-                            ? 'No alt text'
-                            : 'No caption');
+                            ? i18n('no-alt-text')
+                            : i18n('no-caption'));
                     }
                 }
             });
@@ -217,7 +218,7 @@
         wrapper.innerHTML = template.innerHTML
             .replaceAll('__MODAL_ID__', escapeHtml(modalId))
             .replaceAll('__MEDIA_ID__', escapeHtml(asset.id))
-            .replaceAll('__ITEM_LABEL__', escapeHtml(asset.title || asset.filename || 'Selected image'))
+            .replaceAll('__ITEM_LABEL__', escapeHtml(asset.title || asset.filename || i18n('selected-image')))
             .trim();
 
         if (!wrapper.firstElementChild) {
@@ -238,7 +239,7 @@
         }
 
         var previewHtml = asset.previewable && asset.url
-            ? '<img src="' + escapeHtml(asset.url) + '" alt="' + escapeHtml(asset.title || asset.filename || 'Selected image') + '" width="72" height="48">'
+            ? '<img src="' + escapeHtml(asset.url) + '" alt="' + escapeHtml(asset.title || asset.filename || i18n('selected-image')) + '" width="72" height="48">'
             : '<span class="wb-text-sm wb-text-muted">No preview</span>';
         var modalId = 'gallery-item-modal-' + escapeHtml(prefix.replace(/[^A-Za-z0-9_-]+/g, '-')) + '-' + escapeHtml(asset.id);
 
@@ -253,7 +254,7 @@
             .replaceAll('__OVERLAY_TITLE_NAME__', escapeHtml(itemFieldName(prefix, index, 'overlay_title')))
             .replaceAll('__OVERLAY_TEXT_NAME__', escapeHtml(itemFieldName(prefix, index, 'overlay_text')))
             .replaceAll('__PREVIEW_HTML__', previewHtml)
-            .replaceAll('__ITEM_LABEL__', escapeHtml(asset.title || asset.filename || 'Selected image'))
+            .replaceAll('__ITEM_LABEL__', escapeHtml(asset.title || asset.filename || i18n('selected-image')))
             .replaceAll('__ITEM_META__', escapeHtml([asset.kind, asset.original_name].filter(Boolean).join(' | ')))
             .replaceAll('__MODAL_ID__', modalId);
     }

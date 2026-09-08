@@ -1,6 +1,6 @@
 <?php
 
-return [
+$translations = [
   'navigation' => [
     'aria' => 'Navigazione admin',
     'toggle' => 'Mostra/nascondi navigazione',
@@ -4233,3 +4233,5 @@ return [
   ],
 
 ];
+
+return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

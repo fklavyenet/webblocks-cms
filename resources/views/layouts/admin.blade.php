@@ -43,7 +43,7 @@
         @endif
         @stack('styles')
     </head>
-        <body data-wb-admin-login-url="{{ route('webblocks.auth.login') }}">
+        <body data-wb-admin-login-url="{{ route('webblocks.auth.login') }}" @foreach (['new_block', 'block', 'block_type', 'inline_block_editor', 'slot_type_id', 'status', 'kind', 'system_block', 'content_block', 'no_blocks_yet', 'add_first_block', 'collapse_children', 'expand_children', 'no_items_yet', 'add_first_item', 'new_item', 'collapse_item', 'expand_item', 'selected', 'select', 'selected_asset', 'choose_file_before_upload', 'upload_failed', 'select_file_to_upload', 'no_overlay_title', 'no_alt_text', 'no_caption', 'selected_image', 'item', 'items', 'heading_text', 'heading_level', 'section_title', 'section_variant', 'section_intro', 'cta_title', 'tone', 'cta_content', 'content', 'button_label', 'download_label', 'document_asset_id', 'published', 'draft'] as $javascriptLabel) data-wb-i18n-{{ str_replace('_', '-', $javascriptLabel) }}="{{ $adminText('javascript.'.$javascriptLabel) }}" @endforeach>
         @php
             $user = auth()->user();
             $userInitials = collect(preg_split('/\s+/', trim($user?->name ?? 'User')))

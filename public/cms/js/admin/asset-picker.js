@@ -1,4 +1,5 @@
 (function () {
+    function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
     if (!document.querySelector('[data-wb-asset-picker-panel]')) {
         return;
     }
@@ -21,7 +22,7 @@
             return;
         }
 
-        button.textContent = isSelected ? 'Selected' : 'Select';
+        button.textContent = isSelected ? i18n('selected') : i18n('select');
         button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
         button.classList.toggle('wb-btn-primary', isSelected);
         button.classList.toggle('wb-btn-secondary', !isSelected);
@@ -172,10 +173,10 @@
         var html = '';
 
         if (selectedAsset.previewable && selectedAsset.url) {
-            html += '<img src="' + escapeHtml(selectedAsset.url) + '" alt="' + escapeHtml(selectedAsset.alt || selectedAsset.title || selectedAsset.filename || 'Selected asset') + '" width="96" height="64">';
+            html += '<img src="' + escapeHtml(selectedAsset.url) + '" alt="' + escapeHtml(selectedAsset.alt || selectedAsset.title || selectedAsset.filename || i18n('selected-asset')) + '" width="96" height="64">';
         }
 
-        html += '<strong>' + escapeHtml(selectedAsset.title || selectedAsset.filename || 'Selected asset') + '</strong>';
+        html += '<strong>' + escapeHtml(selectedAsset.title || selectedAsset.filename || i18n('selected-asset')) + '</strong>';
         html += '<div class="wb-text-sm wb-text-muted">' + escapeHtml([selectedAsset.kind, selectedAsset.original_name].filter(Boolean).join(' | ')) + '</div>';
 
         if (summary) {
@@ -204,10 +205,10 @@
         var html = '<div class="wb-card-body wb-stack wb-gap-2">';
 
         if (asset.previewable && asset.url) {
-            html += '<img src="' + escapeHtml(asset.url) + '" alt="' + escapeHtml(asset.title || asset.filename || 'Selected asset') + '" width="120" height="84">';
+            html += '<img src="' + escapeHtml(asset.url) + '" alt="' + escapeHtml(asset.title || asset.filename || i18n('selected-asset')) + '" width="120" height="84">';
         }
 
-        html += '<strong>' + escapeHtml(asset.title || asset.filename || 'Selected asset') + '</strong>';
+        html += '<strong>' + escapeHtml(asset.title || asset.filename || i18n('selected-asset')) + '</strong>';
         html += '<button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="' + escapeHtml(asset.id) + '">Remove</button>';
         html += '</div>';
         preview.innerHTML = html;
@@ -579,7 +580,7 @@
         if (toggleButton) {
             var multiRoot = pickerRootFromChild(toggleButton);
             var multiAsset = parseAssetPayload(toggleButton.getAttribute('data-wb-asset'));
-            var isSelected = toggleButton.textContent.trim() === 'Selected';
+            var isSelected = toggleButton.textContent.trim() === i18n('selected');
 
             if (isSelected) {
                 removeMultiSelection(multiRoot, multiAsset.id);
@@ -615,7 +616,7 @@
 
         if (!uploadRoot || !fileInput || !fileInput.files || !fileInput.files[0]) {
             if (status) {
-                status.textContent = 'Choose a file before uploading.';
+                status.textContent = i18n('choose-file-before-upload');
             }
             return;
         }
@@ -651,7 +652,7 @@
                 }
 
                 if (!response.ok) {
-                    throw new Error('Upload failed');
+                    throw new Error(i18n('upload-failed'));
                 }
 
                 window.location.reload();
@@ -692,7 +693,7 @@
         if (status) {
             status.textContent = uploadInput.files && uploadInput.files[0]
                 ? uploadInput.files[0].name + ' ready to upload.'
-                : 'Select a file to upload it to the shared media library.';
+                : i18n('select-file-to-upload');
         }
     });
 
