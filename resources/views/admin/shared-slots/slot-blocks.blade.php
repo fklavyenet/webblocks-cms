@@ -171,6 +171,7 @@
 
 @push('admin-scripts')
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin-sortable-list.js'])
+    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/block-list-actions.js'])
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/inline-block-builder.js'])
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/builder-items.js'])
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/page-builder-modals.js'])

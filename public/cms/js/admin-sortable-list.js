@@ -311,12 +311,42 @@
         Array.prototype.slice.call(root.querySelectorAll(rootSelector)).forEach(bindRoot);
     }
 
+    function moveByButton(button) {
+        var item = button.closest(itemSelector);
+        var root = item ? item.parentElement : null;
+        var direction = button.getAttribute('data-wb-slot-block-move');
+
+        if (!item || !root || rootMode(root) !== 'slot-blocks') return false;
+
+        var siblings = groupItems(root, item);
+        var index = siblings.indexOf(item);
+        var target = siblings[direction === 'up' ? index - 1 : index + 1];
+
+        if (!target) return true;
+
+        originalOrder = sortableItems(root).slice();
+        var moving = segmentFor(item);
+        var targetSegment = segmentFor(target);
+        var reference = direction === 'up' ? target : targetSegment[targetSegment.length - 1].nextElementSibling;
+
+        moving.forEach(function (part) { root.insertBefore(part, reference); });
+        updateOrderInputs(root);
+        persistSlotBlockReorder(root, item);
+
+        return true;
+    }
+
     document.addEventListener('mousedown', function (event) {
         activeHandle = event.target.closest(handleSelector);
     });
 
     document.addEventListener('mouseup', function () {
         activeHandle = null;
+    });
+
+    document.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-wb-slot-block-move]');
+        if (button && moveByButton(button)) event.preventDefault();
     });
 
     document.addEventListener('dragend', function () {

@@ -583,6 +583,15 @@ input.wb-admin-table-grid-input:focus {
     cursor: grabbing;
 }
 
+.wb-admin-block-status-switch input:checked + .wb-switch-track {
+  background: var(--wb-success);
+}
+
+.wb-admin-block-status-switch input:disabled + .wb-switch-track {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .is-sortable-invalid-target {
     cursor: not-allowed;
 }

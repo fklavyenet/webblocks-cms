@@ -3,11 +3,13 @@
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\Blocks\UpdateBlockStatus;
 use WebBlocks\Cms\Http\Requests\Admin\BlockRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -30,6 +32,8 @@ use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -44,6 +48,7 @@ class BlockController extends Controller
     private readonly SharedSlotRevisionManager $sharedSlotRevisionManager,
     private readonly AdminAuthorization $authorization,
     private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
+    private readonly UpdateBlockStatus $updateBlockStatus,
   ) {}
 
   public function moveUp(Block $block): RedirectResponse
@@ -62,6 +67,38 @@ class BlockController extends Controller
     abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
 
     return $this->move($block, 'down');
+  }
+
+  public function updateStatus(Request $request, Block $block): RedirectResponse|JsonResponse
+  {
+    [$sharedSlot, $page] = $this->editingContext($block);
+    $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $block);
+    abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+
+    $data = $request->validate([
+      'status' => ['required', 'in:draft,published'],
+    ]);
+
+    $this->updateBlockStatus->execute($block, $data['status'], $page, $sharedSlot, $request->user());
+    $message = app(CmsTranslator::class)->admin(
+      $data['status'] === 'published' ? 'inline_blocks.status_published' : 'inline_blocks.status_draft',
+      app(AdminLocaleResolver::class)->locale(),
+    );
+
+    if ($request->expectsJson()) {
+      return response()->json([
+        'success' => true,
+        'status' => $data['status'],
+        'message' => $message,
+      ]);
+    }
+
+    return redirect()
+      ->route($sharedSlot ? 'admin.shared-slots.blocks.edit' : 'admin.pages.slots.blocks', $sharedSlot
+        ? ['shared_slot' => $sharedSlot, 'locale' => $request->input('locale'), 'return_url' => $request->input('return_url')]
+        : ['page' => $page, 'slot' => $this->pageSlotRouteId($block->page_id, $block->slot_type_id) ?: $block->slot_type_id, 'locale' => $request->input('locale'), 'return_url' => $request->input('return_url')])
+      ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
+      ->with('status', $message);
   }
 
   public function index(Request $request): View

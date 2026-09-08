@@ -75,9 +75,26 @@
             @endif
         </td>
         <td class="wb-admin-slot-block-status-cell">
-            <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
-                {{ $block->status }}
-            </span>
+            <form method="POST" action="{{ route('admin.blocks.status.update', $block) }}" data-wb-block-status-form data-published-label="{{ $inlineBlocksText('published') }}" data-draft-label="{{ $inlineBlocksText('draft') }}" data-error-message="{{ $inlineBlocksText('status_update_failed') }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
+                @if ($sharedSlot)
+                    <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
+                @endif
+                @unless ($activeLocale->is_default)
+                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                @endunless
+                <input type="hidden" name="status" value="draft">
+                <label class="wb-switch wb-admin-block-status-switch">
+                    <input type="checkbox" name="status" value="published" @checked($block->status === 'published') data-wb-block-status-toggle>
+                    <span class="wb-switch-track" aria-hidden="true"></span>
+                    <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}" data-wb-block-status-label>
+                        {{ $block->status === 'published' ? $inlineBlocksText('published') : $inlineBlocksText('draft') }}
+                    </span>
+                </label>
+                <noscript><button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">{{ $inlineBlocksText('save_status') }}</button></noscript>
+            </form>
         </td>
         <td class="wb-admin-slot-block-actions-cell">
             <div class="wb-action-group">
@@ -90,7 +107,7 @@
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
-                    <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+                    <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}" data-wb-slot-block-move="up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
                 </form>
                 <form method="POST" action="{{ route('admin.blocks.move-down', $block) }}">
                     @csrf
@@ -101,7 +118,7 @@
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
-                    <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+                    <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}" data-wb-slot-block-move="down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                 </form>
                 <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $inlineBlocksText('edit') }}" aria-label="{{ $inlineBlocksText('edit') }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                 @if ($canAddChildren)

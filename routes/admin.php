@@ -333,6 +333,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('engagement/ratings', [EngagementController::class, 'ratings'])->name('engagement.ratings.index');
     Route::post('/blocks/{block}/move-up', [BlockController::class, 'moveUp'])->name('blocks.move-up');
     Route::post('/blocks/{block}/move-down', [BlockController::class, 'moveDown'])->name('blocks.move-down');
+    Route::patch('/blocks/{block}/status', [BlockController::class, 'updateStatus'])->name('blocks.status.update');
     Route::get('/blocks', [BlockController::class, 'index'])->name('blocks.index')->middleware('can:access-system');
     Route::resource('blocks', BlockController::class)->except(['show', 'index']);
     Route::get('sites/{site}/edit', [SiteController::class, 'edit'])->name('sites.edit');

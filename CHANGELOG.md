@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.78.18
+
+- Add an accessible publish/draft switch to every block row in the page and
+  Shared Slot editors. Status changes save in place with localized toast
+  feedback, roll back visually on failure, retain a no-JavaScript form
+  fallback, and capture the appropriate page or Shared Slot version.
+- Make the existing block move-up and move-down controls reorder in place with
+  the same dependency-free JavaScript and guarded persistence used by drag and
+  drop, while retaining their normal form-submit fallback.
+
 ## 1.78.17
 
 - Updated the embedded Publisher Client to 1.1.11. Package-scoped updates now
