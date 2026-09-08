@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.78.20
+
+- Apply the operator's selected admin locale to authenticated CMS and plugin routes, so plugin views using Laravel's standard translation helper stay in the same language as the CMS shell.
+- Require uploaded and catalog-updated plugins to mirror every English translation catalogue across all six CMS admin locales: English, German, Turkish, Spanish, Italian, and French.
+- Document the plugin admin localization and translated sidebar menu-key contracts.
+
 ## 1.78.19
 
 - Restore CSS and JavaScript override saving from the standalone Site Assets
