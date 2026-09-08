@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use RuntimeException;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use ZipArchive;
 
 class PluginZipInstaller
@@ -46,6 +47,7 @@ class PluginZipInstaller
       [$manifestPath, $stripPrefix] = $this->locateManifest($entries);
       $manifest = $this->manifest($zip, $manifestPath);
       $this->validateManifest($manifest);
+      $this->validateAdminTranslations($entries, $stripPrefix);
 
       $handle = (string) $manifest['handle'];
       $version = (string) $manifest['version'];
@@ -183,6 +185,42 @@ class PluginZipInstaller
 
     if ($definition->requiredCmsVersion() === null || ! $this->compatibility->isCompatible($definition)) {
       throw new RuntimeException('The plugin package is not compatible with this CMS version.');
+    }
+  }
+
+  /**
+   * Every plugin admin catalogue must cover every locale the CMS lets an
+   * operator select. Matching the English catalogue filenames keeps the rule
+   * extensible when a plugin splits its UI copy across several files.
+   *
+   * @param  array<int, string>  $entries
+   */
+  private function validateAdminTranslations(array $entries, string $stripPrefix): void
+  {
+    $relativeEntries = array_map(
+      fn (string $entry): string => $stripPrefix !== '' && str_starts_with($entry, $stripPrefix)
+        ? substr($entry, strlen($stripPrefix))
+        : $entry,
+      $entries,
+    );
+
+    $englishCatalogues = array_values(array_filter(
+      $relativeEntries,
+      fn (string $entry): bool => preg_match('#^resources/lang/en/[^/]+\.php$#', $entry) === 1,
+    ));
+
+    if ($englishCatalogues === []) {
+      throw new RuntimeException('The plugin package must provide English translation catalogues under resources/lang/en.');
+    }
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      foreach ($englishCatalogues as $englishCatalogue) {
+        $required = preg_replace('#^resources/lang/en/#', 'resources/lang/'.$locale.'/', $englishCatalogue, 1);
+
+        if (! is_string($required) || ! in_array($required, $relativeEntries, true)) {
+          throw new RuntimeException("The plugin package is missing the {$locale} translation catalogue for ".basename($englishCatalogue).'.');
+        }
+      }
     }
   }
 

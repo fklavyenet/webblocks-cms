@@ -405,6 +405,20 @@ Admin menu rules:
 - menu item labels should describe the capability, not leak install-specific project names into generic CMS installs
 - menu entries must not appear in core installs when the owning plugin is absent
 
+## Admin Localization Rules
+
+The CMS applies the selected operator locale to every authenticated admin request,
+including plugin-owned routes. Plugins may therefore use Laravel's normal `__()`
+helper for their namespaced catalogues.
+
+Every plugin package must ship `resources/lang/en/*.php` and mirror every English
+catalogue filename under each locale in
+`AdminLocaleResolver::SUPPORTED_LOCALES`. Installation and catalog updates reject
+a package with a missing supported-locale catalogue. The admin sidebar resolves
+plugin menu copy from `admin.menu.{item-key}` and group copy from
+`admin.menu_group.{slugged-group-name}`, falling back to manifest labels only when
+the translated key is absent.
+
 ## Route Namespace Rules
 
 Admin plugin routes default to this URL prefix:

@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PluginRouteFallbackController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginSettingsController;
 use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
 use WebBlocks\Cms\Http\Middleware\ServeCmsPageBeforeRedirectCatchAll;
+use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\Locale;
 
@@ -20,6 +21,7 @@ class PluginRouteRegistrar
     'install.required',
     UseCmsAuthenticationRedirect::class,
     'admin.access',
+    UseAdminLocale::class,
   ];
 
   private PluginAuthorizationRegistrar $authorization;

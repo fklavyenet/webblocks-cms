@@ -69,6 +69,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotControll
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
 use WebBlocks\Cms\Http\Middleware\AllowPagePreviewAccess;
 use WebBlocks\Cms\Http\Middleware\CoalesceSearchIndexing;
+use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
@@ -216,7 +217,7 @@ Route::middleware(['web', 'install.required', AllowPagePreviewAccess::class])
     Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
   });
 
-Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access', CoalesceSearchIndexing::class])
+Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access', UseAdminLocale::class, CoalesceSearchIndexing::class])
   ->prefix('webadmin')
   ->name('admin.')
   ->group(function () {

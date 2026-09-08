@@ -129,7 +129,7 @@ class PublicSearchDeferralTest extends TestCase
     // The admin group is the block editor; the internal API group is the same
     // writes under a token. A group left out keeps the per-row sweep.
     $this->assertStringContainsString(
-      "'admin.access', CoalesceSearchIndexing::class]",
+      "'admin.access', UseAdminLocale::class, CoalesceSearchIndexing::class]",
       $routes,
       'The admin group performs the block writes this exists for.'
     );
