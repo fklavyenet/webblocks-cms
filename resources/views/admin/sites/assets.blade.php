@@ -21,15 +21,20 @@
   @if ($sites->isNotEmpty())
     <div class="wb-card wb-card-muted wb-mb-4">
       <div class="wb-card-body">
-        <form method="GET" action="{{ route('admin.site-assets.index') }}" class="wb-cluster wb-cluster-2 wb-flex-wrap">
-          <label for="site_asset_site"><strong>{{ $adminText('site') }}</strong></label>
-          <select id="site_asset_site" name="site" class="wb-select">
-            @foreach ($sites as $siteOption)
-              <option value="{{ $siteOption->id }}" @selected($site?->is($siteOption))>{{ $siteOption->name }}</option>
-            @endforeach
-          </select>
-          <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('select_site') }}</button>
-        </form>
+        @include('webblocks-cms::admin.partials.listing-filters', [
+          'action' => route('admin.site-assets.index'),
+          'selects' => [
+            [
+              'id' => 'site_asset_site',
+              'name' => 'site',
+              'label' => $adminText('site'),
+              'selected' => (string) $site?->id,
+              'placeholder' => null,
+              'options' => $sites->mapWithKeys(fn ($siteOption) => [$siteOption->id => $siteOption->name])->all(),
+            ],
+          ],
+          'applyLabel' => $adminText('select_site'),
+        ])
       </div>
     </div>
   @endif

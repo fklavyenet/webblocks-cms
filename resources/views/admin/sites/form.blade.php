@@ -439,15 +439,6 @@
       'canManageSiteSettings' => $canManageSiteSettings,
       'siteVariablesUi' => $siteVariablesUi,
     ])
-
-    @foreach (($siteAssets ?? collect()) as $asset)
-      <form id="site-asset-{{ $asset['type'] }}-form" method="POST" action="{{ route('admin.sites.assets.update', ['site' => $site, 'type' => $asset['type']]) }}">
-        @csrf
-        @method('PUT')
-        <input type="hidden" name="expected_checksum" value="{{ $asset['checksum'] }}">
-        <input type="hidden" name="_site_asset_type" value="{{ $asset['type'] }}">
-      </form>
-    @endforeach
   @endif
 @endsection
 

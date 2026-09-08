@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.78.19
+
+- Restore CSS and JavaScript override saving from the standalone Site Assets
+  screen by keeping each editor, checksum guard, and submit action in its own
+  complete form.
+- Align the site selector with the shared labelled admin listing-filter
+  standard, and compact each asset card by showing its canonical path once and
+  moving file size or creation status into the header.
+
 ## 1.78.18
 
 - Add an accessible publish/draft switch to every block row in the page and
