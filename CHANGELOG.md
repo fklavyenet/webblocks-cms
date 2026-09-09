@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.78.25
+
+- Upgrade the bundled WebBlocks UI runtime to `v2.27.1`, keeping an open mobile navigation drawer attached below its sticky or fixed navbar while the page scrolls.
+- Constrain tall mobile navigation drawers to the remaining viewport and let them scroll internally, while preserving normal document flow for static navbars.
+
 ## 1.78.24
 
 - Give Site admins an assigned-site Dashboard, Sites index, Visitor Reports, Contact Messages, and Engagement navigation while keeping every query constrained to their live site assignments.
