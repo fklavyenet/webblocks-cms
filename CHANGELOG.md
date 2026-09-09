@@ -1,9 +1,12 @@
 # Changelog
 
-## 1.78.22
+## 1.78.23
 
 - Fix locale-aware public navigation active states by comparing the current request path with the final rendered link path, preserving exact, section, root, trailing-slash, and query-string behavior while opening parent sidebar groups for active localized children.
 - Share active-path matching across navbar, menu-backed sidebar, and manual sidebar navigation renderers, including localized `current-page` routes and page-identity matching.
+
+## 1.78.22
+
 - Let plugins explicitly grant individual admin permissions to `site_admin` or `editor` roles while preserving the secure Super Admin-only default and requiring plugins to enforce assigned-site boundaries separately.
 - Load role grants from uploaded plugin manifests and expose them through plugin permission metadata, so provider-backed and manifest-only plugins share the same authorization contract.
 
