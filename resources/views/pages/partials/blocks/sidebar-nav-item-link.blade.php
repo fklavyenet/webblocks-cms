@@ -3,7 +3,7 @@
     $label = $item->sidebarNavResolvedLabel();
     $icon = $item->sidebarNavItemIcon();
     $target = $item->sidebarLinkTarget() === '_blank';
-    $isActive = $item->sidebarNavItemIsActive();
+    $isActive = $item->sidebarNavItemIsActive($href);
     $linkClass = $nested ? 'wb-nav-group-item' : 'wb-sidebar-link';
 @endphp
 

@@ -42,24 +42,9 @@
   $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
     ->get('blocks.a11y.'.$key, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
   $label = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title') ?? $a11y('menu.primary');
-  $currentPath = '/'.ltrim(request()->path(), '/');
-  $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
-  $currentUrl = rtrim(url()->current(), '/');
   $currentPageId = (int) ($block->renderPageId() ?? 0);
-  $normalizePath = function (?string $value): ?string {
-    if (! is_string($value) || trim($value) === '') {
-      return null;
-    }
-
-    if (preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:/', $value) === 1 || str_starts_with($value, '#')) {
-      return null;
-    }
-
-    $path = '/'.ltrim(parse_url($value, PHP_URL_PATH) ?? '', '/');
-
-    return $path === '/' ? '/' : rtrim($path, '/');
-  };
-  $isItemActive = function ($item) use (&$isItemActive, $activeMatching, $currentPageId, $currentPath, $currentUrl, $normalizePath): bool {
+  $activeState = app(\WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState::class);
+  $isItemActive = function ($item) use (&$isItemActive, $activeMatching, $currentPageId, $activeState): bool {
     if ($activeMatching === 'off') {
       return false;
     }
@@ -74,20 +59,7 @@
       return false;
     }
 
-    $normalized = $normalizePath($href);
-
-    return match ($activeMatching) {
-      'exact' => rtrim((string) url()->to($href), '/') === $currentUrl,
-      'current-page' => $item->page_id !== null
-        ? (int) $item->page_id === $currentPageId
-        : $normalized !== null && $normalized === $currentPath,
-      'section' => $normalized !== null && $normalized !== '/'
-        ? $currentPath === $normalized || str_starts_with($currentPath, $normalized.'/')
-        : $currentPath === '/',
-      default => ($item->page_id !== null && (int) $item->page_id === $currentPageId)
-        || rtrim((string) url()->to($href), '/') === $currentUrl
-        || ($normalized !== null && $normalized === $currentPath),
-    };
+    return $activeState->matches($href, $activeMatching, $item->page_id, $currentPageId ?: null);
   };
   $drawerId = 'wb-navbar-drawer-'.$block->id;
   $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);

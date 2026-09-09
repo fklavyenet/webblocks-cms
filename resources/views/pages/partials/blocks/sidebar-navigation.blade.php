@@ -8,23 +8,8 @@
     ->values();
   $showIcons = $block->sidebarNavigationShowIcons();
   $activeMatching = $block->sidebarNavigationActiveMatching();
-  $currentPath = '/'.ltrim(request()->path(), '/');
-  $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
-  $currentUrl = rtrim(url()->current(), '/');
   $currentPageId = (int) ($block->renderPageId() ?? 0);
-  $normalizePath = function (?string $value): ?string {
-    if (! is_string($value) || trim($value) === '') {
-      return null;
-    }
-
-    if (preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:/', $value) === 1 || str_starts_with($value, '#')) {
-      return null;
-    }
-
-    $path = '/'.ltrim(parse_url($value, PHP_URL_PATH) ?? '', '/');
-
-    return $path === '/' ? '/' : rtrim($path, '/');
-  };
+  $activeState = app(\WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState::class);
 
   $filterVisibleItems = function ($items) use (&$filterVisibleItems) {
     return $items
@@ -48,7 +33,7 @@
       ->values();
   };
 
-  $isNavigationItemActive = function (\WebBlocks\Cms\Models\NavigationItem $item) use (&$isNavigationItemActive, $activeMatching, $currentPageId, $currentPath, $currentUrl, $normalizePath): bool {
+  $isNavigationItemActive = function (\WebBlocks\Cms\Models\NavigationItem $item) use (&$isNavigationItemActive, $activeMatching, $currentPageId, $activeState): bool {
     if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
       return $item->children->contains(fn ($child) => $isNavigationItemActive($child));
     }
@@ -59,13 +44,7 @@
       return false;
     }
 
-    return match ($activeMatching) {
-      'exact' => rtrim((string) url()->to($href), '/') === $currentUrl,
-      'current-page' => $item->page_id !== null
-        ? (int) $item->page_id === $currentPageId
-        : $normalizePath($href) !== null && $normalizePath($href) === $currentPath,
-      default => $normalizePath($href) !== null && $normalizePath($href) === $currentPath,
-    };
+    return $activeState->matches($href, $activeMatching, $item->page_id, $currentPageId ?: null);
   };
 
   $items = $menuKey !== null

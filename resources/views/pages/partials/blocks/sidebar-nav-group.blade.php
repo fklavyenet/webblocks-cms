@@ -2,7 +2,11 @@
     $label = $block->sidebarNavResolvedLabel();
     $icon = $block->sidebarNavItemIcon();
     $items = $block->children->where('status', 'published')->filter(fn ($child) => $child->isSidebarNavItem())->sortBy('sort_order')->values();
-    $isOpen = $block->sidebarNavGroupInitiallyOpen() || $items->contains(fn ($item) => $item->sidebarNavItemIsActive());
+    $isOpen = $block->sidebarNavGroupInitiallyOpen() || $items->contains(function ($item) {
+        $href = $item->localizedPublicUrl($item->sidebarLinkUrl());
+
+        return $item->sidebarNavItemIsActive($href);
+    });
     $groupItemsId = 'wb-nav-group-items-'.$block->id;
 @endphp
 

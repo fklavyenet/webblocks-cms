@@ -17,6 +17,7 @@ use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState;
 use WebBlocks\Cms\Support\Pages\PageListItem;
 use WebBlocks\Cms\Support\Pages\PageListQuery;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
@@ -1760,19 +1761,18 @@ class Block extends CmsModel
     return $path === '/' ? '/' : rtrim($path, '/');
   }
 
-  public function sidebarNavItemIsActive(): bool
+  public function sidebarNavItemIsActive(?string $resolvedHref = null): bool
   {
-    $href = $this->sidebarLinkUrl();
-    $hrefPath = $this->sidebarNavResolvedPath();
-    $currentPath = '/'.ltrim(request()->path(), '/');
-    $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
+    $mode = $this->sidebarNavItemActiveMode();
 
-    return match ($this->sidebarNavItemActiveMode()) {
-      'exact' => $href !== null && url()->current() === url($href),
-      'current-page' => $hrefPath !== null && request()->routeIs('pages.show') && $hrefPath === $currentPath,
-      'manual' => $this->sidebarNavItemManualActive(),
-      default => $hrefPath !== null && $hrefPath === $currentPath,
-    };
+    if ($mode === 'manual') {
+      return $this->sidebarNavItemManualActive();
+    }
+
+    $href = $resolvedHref ?? $this->localizedPublicUrl($this->sidebarLinkUrl());
+
+    return app(PublicNavigationActiveState::class)
+      ->matches($href, $mode);
   }
 
   private function siteAccessibleLabelFallback(): string
