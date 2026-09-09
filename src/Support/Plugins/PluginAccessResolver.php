@@ -14,8 +14,14 @@ class PluginAccessResolver
 
   public function canAccessPluginPermission(?Authenticatable $user, string $permission, ?PluginRegistry $registry = null): bool
   {
-    if ($this->isDeclaredPluginPermission($permission, $registry)) {
-      return $this->isSuperAdmin($user);
+    if ($declaredPermission = $this->declaredPluginPermission($permission, $registry)) {
+      if ($this->isSuperAdmin($user)) {
+        return true;
+      }
+
+      $role = $this->normalizedRole($user);
+
+      return $role !== null && in_array($role, $declaredPermission->roleNames(), true);
     }
 
     return Gate::has($permission) && (bool) $user?->can($permission);
@@ -42,20 +48,37 @@ class PluginAccessResolver
     return (bool) ($user->is_admin ?? false);
   }
 
-  private function isDeclaredPluginPermission(string $permission, ?PluginRegistry $registry = null): bool
+  private function declaredPluginPermission(string $permission, ?PluginRegistry $registry = null): ?PluginPermission
   {
     if ($registry === null && ! app()->bound(PluginRegistry::class)) {
-      return false;
+      return null;
     }
 
     $registry ??= app(PluginRegistry::class);
 
     foreach ($registry->permissions(enabledOnly: true) as $permissions) {
       if (array_key_exists($permission, $permissions)) {
-        return true;
+        return $permissions[$permission];
       }
     }
 
-    return false;
+    return null;
+  }
+
+  private function normalizedRole(?Authenticatable $user): ?string
+  {
+    if ($user === null) {
+      return null;
+    }
+
+    if (method_exists($user, 'normalizedRole')) {
+      $role = $user->normalizedRole();
+
+      return is_string($role) && $role !== '' ? $role : null;
+    }
+
+    $role = $user->role ?? null;
+
+    return is_string($role) && $role !== '' ? $role : null;
   }
 }

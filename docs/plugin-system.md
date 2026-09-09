@@ -462,7 +462,12 @@ webblocks-ui-manager.settings
 
 Permission behavior must stay compatible with the CMS permission model. If super admin bypass exists, it must use the same explicit CMS authorization path as core CMS permissions.
 
-Plugin permissions must be visible in admin role management when the plugin is installed or discoverable. Disabled plugin permissions must not authorize active behavior, even if a role still stores a matching permission string.
+Plugin permissions default to `super_admin` only. A plugin may explicitly grant a
+permission to site-scoped roles with `PluginPermission::roles()`, for example
+`->roles(['site_admin'])`. Super admins are always included. Granting a plugin
+permission does not bypass assigned-site checks: every site-scoped plugin query and
+write must still enforce the CMS site boundary separately. Disabled plugin permissions
+must not authorize active behavior.
 
 ## Settings Rules
 

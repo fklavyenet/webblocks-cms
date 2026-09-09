@@ -56,6 +56,7 @@ This role can:
 - manage content for assigned sites
 - publish pages for assigned sites
 - move pages between workflow states for assigned sites
+- use enabled plugin features that explicitly grant access to `site_admin`, limited to assigned sites
 
 This role cannot access install-level system areas such as Users, settings, updates, backups, or export/import.
 
@@ -136,6 +137,7 @@ Cannot:
 - access Users
 - access install-level system screens
 - manage content outside assigned sites
+- use plugin permissions that have not explicitly granted access to `site_admin`
 
 ### `editor`
 

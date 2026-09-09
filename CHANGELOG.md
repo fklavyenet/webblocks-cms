@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.78.22
+
+- Let plugins explicitly grant individual admin permissions to `site_admin` or `editor` roles while preserving the secure Super Admin-only default and requiring plugins to enforce assigned-site boundaries separately.
+- Load role grants from uploaded plugin manifests and expose them through plugin permission metadata, so provider-backed and manifest-only plugins share the same authorization contract.
+
 ## 1.78.21
 
 - Complete the German, Turkish, Spanish, Italian, and French admin catalogues so every English CMS admin key has a localized counterpart instead of silently falling back to English.

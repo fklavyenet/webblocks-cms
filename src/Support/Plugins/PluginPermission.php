@@ -4,6 +4,9 @@ namespace WebBlocks\Cms\Support\Plugins;
 
 class PluginPermission
 {
+  /** @var list<string> */
+  private array $roles = ['super_admin'];
+
   private string $label = '';
 
   private ?string $description = null;
@@ -52,7 +55,35 @@ class PluginPermission
   }
 
   /**
-   * @return array{name: string, label: string, description: ?string}
+   * Declare which CMS roles receive this permission by default.
+   *
+   * Super admins always retain access to enabled plugin permissions. Plugins
+   * must opt site-scoped roles in explicitly so an upgrade cannot silently
+   * broaden an existing plugin's admin surface.
+   *
+   * @param  list<string>  $roles
+   */
+  public function roles(array $roles): self
+  {
+    $allowed = ['super_admin', 'site_admin', 'editor'];
+    $roles = array_values(array_unique(array_filter(
+      array_map(static fn (mixed $role): string => is_string($role) ? trim($role) : '', $roles),
+      static fn (string $role): bool => in_array($role, $allowed, true),
+    )));
+
+    $this->roles = array_values(array_unique(['super_admin', ...$roles]));
+
+    return $this;
+  }
+
+  /** @return list<string> */
+  public function roleNames(): array
+  {
+    return $this->roles;
+  }
+
+  /**
+   * @return array{name: string, label: string, description: ?string, roles: list<string>}
    */
   public function toArray(): array
   {
@@ -60,6 +91,7 @@ class PluginPermission
       'name' => $this->name,
       'label' => $this->labelText(),
       'description' => $this->description,
+      'roles' => $this->roles,
     ];
   }
 }

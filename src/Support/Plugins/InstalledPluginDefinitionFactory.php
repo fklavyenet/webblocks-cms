@@ -83,9 +83,15 @@ class InstalledPluginDefinitionFactory
         continue;
       }
 
-      $permissions[] = PluginPermission::make($name)
+      $pluginPermission = PluginPermission::make($name)
         ->label((string) ($permission['label'] ?? $name))
         ->description($permission['description'] ?? null);
+
+      if (is_array($permission['roles'] ?? null)) {
+        $pluginPermission->roles($permission['roles']);
+      }
+
+      $permissions[] = $pluginPermission;
     }
 
     $definition->permissions($permissions);
