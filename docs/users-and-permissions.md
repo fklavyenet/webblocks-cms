@@ -54,8 +54,10 @@ This role can:
 
 - access `/webadmin`
 - manage content for assigned sites
+- view and update settings for assigned sites
 - publish pages for assigned sites
 - move pages between workflow states for assigned sites
+- review visitor reports, contact messages, comments, and ratings for assigned sites
 - use enabled plugin features that explicitly grant access to `site_admin`, limited to assigned sites
 
 This role cannot access install-level system areas such as Users, settings, updates, backups, or export/import.
@@ -68,6 +70,7 @@ This role can:
 
 - access `/webadmin`
 - work with content for assigned sites
+- review settings for assigned sites without changing them
 - edit pages while they are in `draft`
 - submit pages for review
 - move an `in_review` page back to `draft`
@@ -80,7 +83,7 @@ This role cannot publish or archive pages, and cannot access install-level syste
 - `site_admin` and `editor` must have at least one assigned site
 - site-scoped admin areas are filtered and enforced server-side by assigned site access
 
-This site boundary applies across major content areas such as pages, navigation, media, visitor reports, and contact messages.
+This site boundary applies across major content areas such as the dashboard, sites, pages, navigation, media, visitor reports, engagement, and contact messages. Visitor reports and operational inbox/moderation areas are available to Site admins, but not Editors.
 
 ## Delegating Work To An AI
 

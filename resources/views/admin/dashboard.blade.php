@@ -5,6 +5,7 @@
     $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
+    $canViewVisitorReports = $canViewVisitorReports ?? false;
     $visitorSummary = $visitorSummary ?? [
         'is_enabled' => false,
         'table_exists' => false,
@@ -48,9 +49,6 @@
                             @endcan
                         </div>
 
-                        @cannot('access-system')
-                            <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.system_only') }}</div>
-                        @endcannot
                     </div>
                 </div>
             </div>
@@ -79,6 +77,7 @@
                                     <td>{{ number_format($stats['media']) }}</td>
                                     <td class="wb-text-muted">{{ $adminText('dashboard.media_help') }}</td>
                                 </tr>
+                                @can('access-system')
                                 <tr>
                                     <th scope="row" class="wb-table-key">{{ $adminText('dashboard.slot_types') }}</th>
                                     <td>{{ number_format($stats['slotTypes']) }}</td>
@@ -89,6 +88,7 @@
                                     <td>{{ number_format($stats['blockTypes']) }}</td>
                                     <td class="wb-text-muted">{{ $adminText('dashboard.block_types_help') }}</td>
                                 </tr>
+                                @endcan
                             </tbody>
                         </table>
                     </div>
@@ -158,6 +158,7 @@
             </div>
         </div>
 
+        @if ($canViewVisitorReports)
         <div class="wb-grid wb-grid-1">
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
@@ -202,6 +203,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         @if (! empty($pluginDashboardWidgets))
             <div class="wb-grid wb-grid-2">

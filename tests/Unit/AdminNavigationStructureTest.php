@@ -37,6 +37,20 @@ class AdminNavigationStructureTest extends TestCase
   }
 
   #[Test]
+  public function site_scoped_navigation_uses_explicit_role_abilities(): void
+  {
+    $layout = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/admin.blade.php');
+    $systemGroup = strpos($layout, "'key' => 'system'");
+    $visitorReports = strpos($layout, "'route' => 'admin.reports.visitors.index'");
+
+    $this->assertStringContainsString("can('manage-site-operations')", $layout);
+    $this->assertStringContainsString("can('view-visitor-reports')", $layout);
+    $this->assertNotFalse($visitorReports);
+    $this->assertNotFalse($systemGroup);
+    $this->assertLessThan($systemGroup, $visitorReports);
+  }
+
+  #[Test]
   public function theme_menu_uses_the_shared_palette_and_chevron_trigger(): void
   {
     $layout = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/admin.blade.php');

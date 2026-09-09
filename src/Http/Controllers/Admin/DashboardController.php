@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
@@ -25,11 +24,9 @@ class DashboardController extends Controller
     private readonly PluginAdminExtensionRegistry $pluginAdminExtensions,
   ) {}
 
-  public function __invoke(Request $request): RedirectResponse|View
+  public function __invoke(Request $request): View
   {
-    if (! $request->user()?->isSuperAdmin()) {
-      return redirect()->route('admin.pages.index');
-    }
+    $canViewVisitorReports = (bool) $request->user()?->can('view-visitor-reports');
 
     return view('webblocks-cms::admin.dashboard', [
       'title' => 'Admin Dashboard',
@@ -53,7 +50,8 @@ class DashboardController extends Controller
         ->latest()
         ->limit(5)
         ->get(),
-      'visitorSummary' => $this->visitorReports->dashboardSummary($request->user()),
+      'visitorSummary' => $canViewVisitorReports ? $this->visitorReports->dashboardSummary($request->user()) : null,
+      'canViewVisitorReports' => $canViewVisitorReports,
       'pluginDashboardWidgets' => $this->pluginAdminExtensions->dashboardWidgets($request->user()),
     ]);
   }

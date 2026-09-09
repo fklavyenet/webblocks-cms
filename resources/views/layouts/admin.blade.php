@@ -60,12 +60,15 @@
                 ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
                 ['label' => $adminText('navigation.assets'), 'route' => 'admin.site-assets.index', 'active' => ['admin.site-assets.*'], 'icon' => 'wb-icon-code'],
-                ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
-                ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'],
             ];
 
-            if (! $user?->can('access-system')) {
-                $menuItems = array_values(array_filter($menuItems, fn (array $item) => $item['route'] !== 'admin.sites.index'));
+            if ($user?->can('manage-site-operations')) {
+                $menuItems[] = ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'];
+                $menuItems[] = ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'];
+            }
+
+            if ($user?->can('view-visitor-reports')) {
+                $menuItems[] = ['label' => $adminText('navigation.visitor_reports'), 'route' => 'admin.reports.visitors.index', 'active' => ['admin.reports.visitors.*'], 'icon' => 'wb-icon-bar-chart'];
             }
 
             if ($user?->can('access-system')) {
@@ -116,7 +119,6 @@
                             ['label' => $adminText('navigation.settings'), 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
                             ['label' => $adminText('navigation.api_tokens'), 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*']],
                             ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*']],
-                            ['label' => $adminText('navigation.visitor_reports'), 'route' => 'admin.reports.visitors.index', 'active' => ['admin.reports.visitors.*']],
                         ],
                     ];
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.78.24
+
+- Give Site admins an assigned-site Dashboard, Sites index, Visitor Reports, Contact Messages, and Engagement navigation while keeping every query constrained to their live site assignments.
+- Make assigned-site settings discoverable to Editors as a read-only surface, retain Site admin settings writes, and keep site creation, domains, cloning, deletion, transfer, schema, plugin, and maintenance controls exclusive to Super admins.
+- Enforce explicit Site admin-or-higher abilities on visitor analytics, contact-message operations, and engagement moderation routes so hidden navigation can never grant Editors direct URL access.
+
 ## 1.78.23
 
 - Fix locale-aware public navigation active states by comparing the current request path with the final rendered link path, preserving exact, section, root, trailing-slash, and query-string behavior while opening parent sidebar groups for active localized children.

@@ -5,6 +5,7 @@
     $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
+    $canManageSites = $canManageSites ?? true;
     $siteExportUi = $siteExportUi ?? ['requestedModal' => '', 'selectedSite' => null, 'closeUrl' => route('admin.sites.index')];
     $showExportModal = $canExportSites && $siteExportUi['requestedModal'] === 'export-site' && $siteExportUi['selectedSite'];
     $siteDetailsUi = $siteDetailsUi ?? ['requestedModal' => '', 'selectedSite' => null, 'closeUrl' => route('admin.sites.index')];
@@ -29,9 +30,11 @@
                 <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $sites->total() }}</span>
             </div>
 
+            @if ($canManageSites)
             <div class="wb-cluster wb-cluster-2">
                 <a href="{{ route('admin.sites.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('sites.add_site') }}</a>
             </div>
+            @endif
         </div>
 
         <div class="wb-card-body">
@@ -112,6 +115,7 @@
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
 
+                                        @if ($canManageSites)
                                         <div class="wb-dropdown wb-dropdown-end">
                                             <button
                                                 class="wb-btn wb-btn-secondary"
@@ -137,6 +141,7 @@
                                                 <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! $deleteReport?->canDelete) aria-disabled="true" @endif>{{ $adminText('sites.delete_site') }}</a>
                                             </div>
                                         </div>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

@@ -36,22 +36,23 @@ class SiteController extends Controller
 
   public function index(): View
   {
-    $siteCount = Site::query()->count();
     $user = request()->user();
+    $sitesQuery = fn () => $this->authorization->scopeSitesForUser(Site::query(), $user);
+    $siteCount = $sitesQuery()->count();
     $requestedModal = trim((string) request()->query('modal', old('_site_export_modal', '')));
     $selectedExportSiteId = (int) request()->integer('export_site', old('site_id'));
     $selectedExportSite = $selectedExportSiteId > 0
-          ? Site::query()->find($selectedExportSiteId)
+          ? $sitesQuery()->find($selectedExportSiteId)
           : null;
     $selectedDetailSiteId = (int) request()->integer('details_site');
     $selectedDetailSite = $selectedDetailSiteId > 0
-          ? Site::query()
+          ? $sitesQuery()
               ->with(['locales' => fn ($query) => $query->orderBy('name')])
               ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
               ->find($selectedDetailSiteId)
           : null;
 
-    $sites = Site::query()
+    $sites = $sitesQuery()
       ->with(['locales' => fn ($query) => $query->orderBy('name')])
       ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
       ->primaryFirst()
@@ -63,11 +64,11 @@ class SiteController extends Controller
     return view('webblocks-cms::admin.sites.index', [
       'exportablePages' => app(ExportablePages::class)->grouped(),
       'sites' => $sites,
-      'siteDeleteReports' => Site::query()
-        ->get()
-        ->keyBy('id')
-        ->map(fn (Site $site) => $this->siteDeleteService->inspect($site)),
+      'siteDeleteReports' => $user?->isSuperAdmin()
+        ? $sitesQuery()->get()->keyBy('id')->map(fn (Site $site) => $this->siteDeleteService->inspect($site))
+        : collect(),
       'siteCount' => $siteCount,
+      'canManageSites' => $user?->isSuperAdmin() ?? false,
       'canExportSites' => $user?->isSuperAdmin() ?? false,
       'siteExportUi' => [
         'requestedModal' => $requestedModal,
