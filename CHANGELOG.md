@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.79.0
+
+- Add a local, plugin-facing public submission protection service that combines content, timing, repeated-content, source-burst, and form-burst signals without a CAPTCHA, external API, daemon, or optional runtime dependency.
+- Classify visitor submissions as allowed, quarantined, or spam; retain suspicious Contact Form messages for review while suppressing their email notifications.
+- Replace the client-controlled Contact Form and comment timestamps with form-bound HMAC-signed rendering proofs, and fail closed when proof or honeypot metadata is missing, altered, or replayed against another form.
+- Share site-scoped abuse counters across native forms and compatible plugins while storing only keyed hashes in the configured Laravel cache.
+- Publish configurable quarantine/spam thresholds and frequency windows, and document the integration contract for visitor-facing form plugins.
+
 ## 1.78.25
 
 - Upgrade the bundled WebBlocks UI runtime to `v2.27.1`, keeping an open mobile navigation drawer attached below its sticky or fixed navbar while the page scrolls.

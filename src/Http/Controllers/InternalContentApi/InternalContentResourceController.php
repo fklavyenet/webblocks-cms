@@ -2368,12 +2368,13 @@ class InternalContentResourceController extends Controller
         'message' => 'required string',
         '_form_check_name' => 'renderer-generated signed metadata; not normal visitor input',
         'form_check_{token}' => 'renderer-generated anti-spam check field; not normal visitor input',
-        'submitted_at' => 'required integer timestamp',
+        '_form_stamp' => 'renderer-issued timestamp bound to this form and protected by an HMAC signature',
       ];
       $payload['spam_behavior'] = [
         'check_field' => 'renderer-generated form_check_{token} field signed by _form_check_name',
         'check_response' => 'generic success redirect without storing or notifying when the generated check field is filled or invalid',
-        'classification' => 'stored submissions may be classified as spam from conservative commercial/link/repeat-IP signals',
+        'classification' => 'stored submissions are allowed, quarantined, or classified as spam by the local shared submission-protection service',
+        'delivery' => 'quarantined and spam submissions are retained for review without sending notifications or running external actions',
       ];
       $payload['storage_behavior'] = 'Legitimate submissions are stored in contact_messages before email notification is attempted; notification status fields do not change the editorial message status.';
       $payload['notification_behavior'] = [

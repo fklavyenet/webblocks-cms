@@ -35,7 +35,7 @@ class ContactMessageRequest extends FormRequest
       'subject' => ['nullable', 'string', 'max:255'],
       'message' => ['required', 'string'],
       '_form_check_name' => ['nullable', 'string', 'max:255'],
-      'submitted_at' => ['required', 'integer'],
+      '_form_stamp' => ['required', 'string', 'max:255'],
       // A client can drop the checkbox from the DOM, so the requirement is
       // re-read from the block rather than trusted from the submission.
       'consent' => [$this->blockRequiresConsent() ? 'accepted' : 'nullable'],
@@ -66,7 +66,7 @@ class ContactMessageRequest extends FormRequest
       'subject' => trim((string) ($data['subject'] ?? '')) ?: null,
       'message' => trim((string) $data['message']),
       'form_check_filled' => app(ContactFormCheck::class)->isFilled($this->all(), (int) $data['block_id']),
-      'submitted_at' => (int) $data['submitted_at'],
+      'elapsed_seconds' => app(ContactFormCheck::class)->elapsedSeconds($data['_form_stamp'], (int) $data['block_id']),
       // The wording is copied onto the submission, not just referenced: the
       // block's copy can be edited later, and a consent record that changes
       // meaning afterwards proves nothing.

@@ -25,7 +25,7 @@ class CommentEntryRequest extends FormRequest
       'author_name' => ['nullable', 'string', 'max:80'],
       'body' => ['required', 'string', 'min:2', 'max:1200'],
       '_form_check_name' => ['nullable', 'string', 'max:255'],
-      'submitted_at' => ['required', 'integer'],
+      '_form_stamp' => ['required', 'string', 'max:255'],
     ];
   }
 
@@ -49,7 +49,7 @@ class CommentEntryRequest extends FormRequest
       'author_name' => trim((string) ($data['author_name'] ?? '')) ?: null,
       'body' => trim((string) $data['body']),
       'form_check_filled' => app(ContactFormCheck::class)->isFilled($this->all(), (int) $data['block_id']),
-      'submitted_at' => (int) $data['submitted_at'],
+      'elapsed_seconds' => app(ContactFormCheck::class)->elapsedSeconds($data['_form_stamp'], (int) $data['block_id']),
     ];
   }
 

@@ -11,13 +11,14 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
-use WebBlocks\Cms\Support\Contact\ContactMessageSpamScorer;
+use WebBlocks\Cms\Support\PublicSubmissions\PublicSubmissionProtection;
+use WebBlocks\Cms\Support\PublicSubmissions\SubmissionDecision;
 
 class ContactMessageController extends Controller
 {
   public function __construct(
     private readonly ContactMessageNotifier $notifier,
-    private readonly ContactMessageSpamScorer $spamScorer,
+    private readonly PublicSubmissionProtection $protection,
   ) {}
 
   public function store(ContactMessageRequest $request): RedirectResponse
@@ -41,7 +42,7 @@ class ContactMessageController extends Controller
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $fallbackUrl);
     $successMessage = $block->success_message ?? config('contact.success_message');
 
-    if ($payload['form_check_filled'] || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
+    if ($payload['form_check_filled'] || $payload['elapsed_seconds'] === null || $payload['elapsed_seconds'] < $minimumSubmitSeconds) {
       return redirect($sourceUrl)
         ->with('contact_form_success_block_id', $block->id)
         ->with('contact_form_success_message', $successMessage);
@@ -49,7 +50,17 @@ class ContactMessageController extends Controller
 
     $notificationEnabled = (bool) $block->setting('send_email_notification', true);
     $notificationRecipient = $this->notificationRecipient($block, $block->page?->site);
-    $spamSignal = $this->spamScorer->score($payload, $request->ip());
+    $spamSignal = $this->protection->inspect(
+      (int) $block->page?->site_id,
+      'contact',
+      $block->id,
+      [
+        'subject' => $payload['subject'],
+        'message' => $payload['message'],
+      ],
+      $request->ip(),
+      $payload['elapsed_seconds'],
+    );
 
     $contactMessage = ContactMessage::create([
       'block_id' => $block->id,
@@ -58,7 +69,11 @@ class ContactMessageController extends Controller
       'email' => $payload['email'],
       'subject' => $payload['subject'],
       'message' => $payload['message'],
-      'status' => $spamSignal['is_spam'] ? 'spam' : 'new',
+      'status' => match ($spamSignal['decision']) {
+        SubmissionDecision::SPAM => 'spam',
+        SubmissionDecision::QUARANTINE => 'quarantined',
+        default => 'new',
+      },
       'source_url' => $sourceUrl,
       'ip_address' => $request->ip(),
       'user_agent' => $request->userAgent(),
@@ -72,6 +87,16 @@ class ContactMessageController extends Controller
       'notification_recipient_source' => $notificationRecipient['source'],
       'notification_status' => 'pending',
     ]);
+
+    if ($spamSignal['decision'] !== SubmissionDecision::ALLOW) {
+      $contactMessage->update([
+        'notification_status' => 'skipped',
+      ]);
+
+      return redirect($sourceUrl)
+        ->with('contact_form_success_block_id', $block->id)
+        ->with('contact_form_success_message', $successMessage);
+    }
 
     $result = $this->notifier->send($contactMessage);
 

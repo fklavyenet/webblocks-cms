@@ -9,8 +9,8 @@ use WebBlocks\Cms\Http\Requests\CommentEntryRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
-use WebBlocks\Cms\Support\Engagement\CommentSpamScorer;
 use WebBlocks\Cms\Support\Engagement\EngagementVisitor;
+use WebBlocks\Cms\Support\PublicSubmissions\PublicSubmissionProtection;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 
@@ -47,7 +47,7 @@ class CommentEntryController extends Controller
 
     $minimumSubmitSeconds = (int) config('contact.minimum_submit_seconds', 3);
 
-    if ($payload['form_check_filled'] || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
+    if ($payload['form_check_filled'] || $payload['elapsed_seconds'] === null || $payload['elapsed_seconds'] < $minimumSubmitSeconds) {
       return redirect($sourceUrl)
         ->with('comment_success_block_id', $block->id)
         ->with('comment_success_message', $this->translator->public('engagement.comment_submitted', $localeCode));
@@ -56,7 +56,14 @@ class CommentEntryController extends Controller
     $visitor = app(EngagementVisitor::class);
     $siteId = (int) $block->page?->site_id;
     $ipHash = $visitor->ipHash($request->ip());
-    $spamSignal = app(CommentSpamScorer::class)->score($payload, $ipHash);
+    $spamSignal = app(PublicSubmissionProtection::class)->inspect(
+      $siteId,
+      'comment',
+      $block->id,
+      $payload,
+      $request->ip(),
+      $payload['elapsed_seconds'],
+    );
 
     CommentEntry::query()->create([
       'site_id' => $siteId ?: null,

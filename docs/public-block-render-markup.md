@@ -2091,7 +2091,7 @@ The block does not own the slot-level root. The shared variant controls the aler
         <input type="hidden" name="block_id" value="1">
         <input type="hidden" name="page_id" value="10">
         <input type="hidden" name="source_url" value="/contact">
-        <input type="hidden" name="submitted_at" value="1770000000">
+        <input type="hidden" name="_form_stamp" value="1770000000|signed-value">
         <input type="hidden" name="_form_check_name" value="signed-generated-field-name">
         <div class="wb-sr-only" inert aria-hidden="true">
           <label for="contact-form-check-1">Leave this field empty</label>

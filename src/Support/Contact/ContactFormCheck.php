@@ -3,63 +3,37 @@
 namespace WebBlocks\Cms\Support\Contact;
 
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Support\PublicSubmissions\SubmissionProof;
 
 class ContactFormCheck
 {
   public function fieldName(Block|int $block): string
   {
-    $blockId = $block instanceof Block ? $block->id : $block;
-    $token = substr(hash_hmac('sha256', 'form-check-name:'.((int) $blockId), $this->key()), 0, 32);
-
-    return 'form_check_'.$token;
+    return app(SubmissionProof::class)->fieldName('cms-block', $this->id($block));
   }
 
   public function signedFieldName(Block|int $block): string
   {
-    $fieldName = $this->fieldName($block);
+    return app(SubmissionProof::class)->signedFieldName('cms-block', $this->id($block));
+  }
 
-    return $fieldName.'|'.$this->sign($fieldName);
+  public function issueStamp(Block|int $block): string
+  {
+    return app(SubmissionProof::class)->issueStamp('cms-block', $this->id($block));
+  }
+
+  public function elapsedSeconds(?string $stamp, Block|int $block): ?int
+  {
+    return app(SubmissionProof::class)->elapsedSeconds($stamp, 'cms-block', $this->id($block));
   }
 
   public function isFilled(array $input, Block|int $block): bool
   {
-    $signedFieldName = trim((string) ($input['_form_check_name'] ?? ''));
-
-    if ($signedFieldName === '') {
-      return false;
-    }
-
-    $fieldName = $this->verifiedFieldName($signedFieldName, $block);
-
-    if ($fieldName === null) {
-      return true;
-    }
-
-    return trim((string) ($input[$fieldName] ?? '')) !== '';
+    return app(SubmissionProof::class)->trapWasTriggered($input, 'cms-block', $this->id($block));
   }
 
-  private function verifiedFieldName(string $signedFieldName, Block|int $block): ?string
+  private function id(Block|int $block): int
   {
-    [$fieldName, $signature] = array_pad(explode('|', $signedFieldName, 2), 2, '');
-
-    if ($fieldName !== $this->fieldName($block)) {
-      return null;
-    }
-
-    if (! preg_match('/\Aform_check_[a-f0-9]{32}\z/', $fieldName)) {
-      return null;
-    }
-
-    return hash_equals($this->sign($fieldName), $signature) ? $fieldName : null;
-  }
-
-  private function sign(string $fieldName): string
-  {
-    return hash_hmac('sha256', $fieldName, $this->key());
-  }
-
-  private function key(): string
-  {
-    return (string) config('app.key');
+    return $block instanceof Block ? (int) $block->id : $block;
   }
 }

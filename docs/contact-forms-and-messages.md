@@ -99,6 +99,7 @@ Renderer-generated anti-spam check field:
 
 - `_form_check_name` signed metadata
 - `form_check_{token}` generated check input
+- `_form_stamp` form-bound signed rendering timestamp
 
 The renderer creates these fields automatically. Do not create them manually in content, raw HTML, or API payloads. The check field is not part of normal visitor input, and the old `website` field is no longer the public Contact Form contract.
 

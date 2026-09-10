@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Contact\ContactFormCheck;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -114,18 +115,35 @@ class ContactFormConsentTest extends TestCase
     $this->assertNull($message->consent_label);
   }
 
-  private function submit(Block $block, ?string $consent): void
+  #[Test]
+  public function suspicious_contact_messages_are_quarantined_without_notification(): void
   {
+    $block = $this->seedForm(consentRequired: false, consentLabel: null);
+
+    $this->submit($block, consent: null, message: 'We noticed your website and offer digital marketing services.');
+
+    $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+    $this->assertSame('quarantined', $message->status);
+    $this->assertSame('skipped', $message->notification_status);
+    $this->assertSame(50, $message->spam_score);
+  }
+
+  private function submit(Block $block, ?string $consent, string $message = 'Hello there.'): void
+  {
+    config()->set('contact.minimum_submit_seconds', 0);
+    $check = app(ContactFormCheck::class);
+    $checkField = $check->fieldName($block);
     $payload = [
       'block_id' => (string) $block->id,
       'page_id' => (string) $block->page_id,
       'name' => 'Visitor',
       'email' => 'visitor@example.com',
-      'message' => 'Hello there.',
+      'message' => $message,
       'source_url' => '/about',
-      // The controller drops anything submitted faster than the minimum, which
-      // would short-circuit before the record is written.
-      'submitted_at' => (string) (now()->timestamp - 60),
+      '_form_stamp' => $check->issueStamp($block),
+      '_form_check_name' => $check->signedFieldName($block),
+      $checkField => '',
     ];
 
     if ($consent !== null) {

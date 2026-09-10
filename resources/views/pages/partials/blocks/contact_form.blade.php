@@ -52,7 +52,7 @@
             <input type="hidden" name="block_id" value="{{ $block->id }}">
             <input type="hidden" name="page_id" value="{{ $page->id ?? $block->renderPageId() ?? $block->page_id }}">
             <input type="hidden" name="source_url" value="{{ request()->getRequestUri() }}">
-            <input type="hidden" name="submitted_at" value="{{ now()->timestamp }}">
+            <input type="hidden" name="_form_stamp" value="{{ $formCheck->issueStamp($block) }}">
             <input type="hidden" name="_form_check_name" value="{{ $formCheck->signedFieldName($block) }}">
 
             <div class="wb-sr-only" inert aria-hidden="true">

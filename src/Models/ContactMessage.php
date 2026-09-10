@@ -48,7 +48,7 @@ class ContactMessage extends CmsModel
 
   public static function statuses(): array
   {
-    return ['new', 'read', 'replied', 'archived', 'spam'];
+    return ['new', 'quarantined', 'read', 'replied', 'archived', 'spam'];
   }
 
   public function block(): BelongsTo
@@ -65,6 +65,7 @@ class ContactMessage extends CmsModel
   {
     return match ($this->status) {
       'new' => 'wb-status-info',
+      'quarantined' => 'wb-status-pending',
       'read' => 'wb-status-pending',
       'replied' => 'wb-status-active',
       'archived' => 'wb-status-pending',
