@@ -35,6 +35,7 @@ return new class extends Migration
       'wbcms_system_update_runs',
       'wbcms_public_search_index',
       'wbcms_visitor_events',
+      'wbcms_submission_fingerprints',
       'wbcms_contact_messages',
       'wbcms_site_imports',
       'wbcms_site_exports',
@@ -716,6 +717,21 @@ return new class extends Migration
       $table->timestamp('consent_accepted_at')->nullable();
       $table->longText('consent_label')->nullable();
       $table->timestamps();
+    });
+
+    $this->createTableIfMissing('wbcms_submission_fingerprints', function (Blueprint $table): void {
+      $table->id();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->char('exact_hash', 64);
+      $table->char('simhash', 16);
+      $table->unsignedInteger('occurrences')->default(0);
+      $table->unsignedInteger('spam_count')->default(0);
+      $table->unsignedInteger('ham_count')->default(0);
+      $table->timestamp('last_seen_at');
+      $table->timestamps();
+
+      $table->unique(['site_id', 'exact_hash'], 'wbcms_sub_fp_site_exact_uq');
+      $table->index(['site_id', 'last_seen_at'], 'wbcms_sub_fp_site_seen_idx');
     });
 
     $this->createTableIfMissing('wbcms_visitor_events', function (Blueprint $table): void {

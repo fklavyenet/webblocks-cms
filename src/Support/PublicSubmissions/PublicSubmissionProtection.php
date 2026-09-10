@@ -3,9 +3,13 @@
 namespace WebBlocks\Cms\Support\PublicSubmissions;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 final class PublicSubmissionProtection
 {
+  public function __construct(private readonly SubmissionFingerprint $fingerprint) {}
+
   private const COMMERCIAL_PATTERNS = [
     'backlink', 'casino', 'content marketing', 'crypto', 'digital marketing',
     'guest post', 'increase your traffic', 'lead generation', 'link building',
@@ -70,12 +74,21 @@ final class PublicSubmissionProtection
     $scope = 'wbcms:submission:'.$siteId.':';
     $fingerprintText = preg_replace('/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i', '', $text) ?? $text;
     $fingerprintText = trim(preg_replace('/\s+/u', ' ', $fingerprintText) ?? '');
+    $storedSignal = $this->storedFingerprintSignal($siteId, $fingerprintText);
+
+    if ($storedSignal > 0) {
+      $score += $storedSignal;
+      $reasons[] = $storedSignal >= 50 ? 'known_spam_fingerprint' : 'similar_spam_fingerprint';
+    } elseif ($storedSignal < 0) {
+      $score = max(0, $score + $storedSignal);
+      $reasons[] = 'known_legitimate_fingerprint';
+    }
     $contentCount = $fingerprintText === '' ? 0 : $this->increment(
       $scope.'content:'.$this->hash($fingerprintText),
       (int) config('public-submissions.fingerprint_window_seconds', 86400),
     );
 
-    if ($fingerprintText !== '' && $contentCount >= 2) {
+    if ($fingerprintText !== '' && $contentCount >= 2 && $storedSignal >= 0) {
       $score += $contentCount >= 4 ? 60 : 30;
       $reasons[] = 'repeated_content';
     }
@@ -107,6 +120,39 @@ final class PublicSubmissionProtection
     ];
   }
 
+  /** @param array<string, mixed> $answers */
+  public function recordOutcome(int $siteId, array $answers, string $outcome): void
+  {
+    if (! in_array($outcome, ['spam', 'ham'], true) || ! Schema::hasTable('wbcms_submission_fingerprints')) {
+      return;
+    }
+
+    $text = $this->fingerprintText($this->normalize($answers));
+
+    if ($text === '') {
+      return;
+    }
+
+    $exact = $this->fingerprint->exact($text);
+    $now = now();
+    DB::table('wbcms_submission_fingerprints')->upsert([[
+      'site_id' => $siteId,
+      'exact_hash' => $exact,
+      'simhash' => $this->fingerprint->similar($text),
+      'occurrences' => 0,
+      'spam_count' => 0,
+      'ham_count' => 0,
+      'last_seen_at' => $now,
+      'created_at' => $now,
+      'updated_at' => $now,
+    ]], ['site_id', 'exact_hash'], ['simhash', 'last_seen_at', 'updated_at']);
+
+    DB::table('wbcms_submission_fingerprints')
+      ->where('site_id', $siteId)
+      ->where('exact_hash', $exact)
+      ->increment($outcome.'_count', 1, ['last_seen_at' => $now, 'updated_at' => $now]);
+  }
+
   private function normalize(array $answers): string
   {
     $parts = [];
@@ -117,6 +163,76 @@ final class PublicSubmissionProtection
     });
 
     return mb_strtolower(trim(preg_replace('/\s+/u', ' ', implode(' ', $parts)) ?? ''));
+  }
+
+  private function fingerprintText(string $text): string
+  {
+    $text = preg_replace('/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i', '', $text) ?? $text;
+
+    return trim(preg_replace('/\s+/u', ' ', $text) ?? '');
+  }
+
+  private function storedFingerprintSignal(int $siteId, string $text): int
+  {
+    if ($text === '' || ! Schema::hasTable('wbcms_submission_fingerprints')) {
+      return 0;
+    }
+
+    $exact = $this->fingerprint->exact($text);
+    $similar = $this->fingerprint->similar($text);
+    $rows = DB::table('wbcms_submission_fingerprints')
+      ->where('site_id', $siteId)
+      ->where('last_seen_at', '>=', now()->subDays(90))
+      ->orderByDesc('last_seen_at')
+      ->limit(200)
+      ->get();
+    $signal = 0;
+    $nearReputation = 0;
+
+    foreach ($rows as $row) {
+      $reputation = ((int) $row->spam_count) - ((int) $row->ham_count);
+
+      if ($reputation === 0) {
+        continue;
+      }
+
+      if ($row->exact_hash === $exact) {
+        $signal = $reputation > 0 ? 60 : -40;
+        break;
+      }
+
+      if ($this->fingerprint->distance($similar, (string) $row->simhash) <= (int) config('public-submissions.similarity_distance', 10)) {
+        $nearReputation += $reputation;
+      }
+    }
+
+    if ($signal === 0) {
+      $signal = match (true) {
+        $nearReputation > 0 => 35,
+        $nearReputation < 0 => -20,
+        default => 0,
+      };
+    }
+
+    $now = now();
+    DB::table('wbcms_submission_fingerprints')->upsert([[
+      'site_id' => $siteId,
+      'exact_hash' => $exact,
+      'simhash' => $similar,
+      'occurrences' => 0,
+      'spam_count' => 0,
+      'ham_count' => 0,
+      'last_seen_at' => $now,
+      'created_at' => $now,
+      'updated_at' => $now,
+    ]], ['site_id', 'exact_hash'], ['simhash', 'last_seen_at', 'updated_at']);
+
+    DB::table('wbcms_submission_fingerprints')
+      ->where('site_id', $siteId)
+      ->where('exact_hash', $exact)
+      ->increment('occurrences', 1, ['last_seen_at' => $now, 'updated_at' => $now]);
+
+    return $signal;
   }
 
   private function containsAny(string $text, array $patterns): bool

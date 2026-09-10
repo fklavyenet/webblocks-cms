@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageBulkDeleter;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
+use WebBlocks\Cms\Support\PublicSubmissions\PublicSubmissionProtection;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class ContactMessageController extends Controller
@@ -20,6 +21,7 @@ class ContactMessageController extends Controller
     private readonly AdminAuthorization $authorization,
     private readonly ContactMessageBulkDeleter $contactMessageBulkDeleter,
     private readonly ContactMessageIndexState $contactMessageIndexState,
+    private readonly PublicSubmissionProtection $submissionProtection,
   ) {}
 
   public function index(Request $request): View
@@ -135,9 +137,25 @@ class ContactMessageController extends Controller
       'status' => ['required', Rule::in(ContactMessage::statuses())],
     ]);
 
+    $previousStatus = $contactMessage->status;
+
     $contactMessage->update([
       'status' => $validated['status'],
     ]);
+
+    $outcome = match (true) {
+      $validated['status'] === 'spam' && $previousStatus !== 'spam' => 'spam',
+      in_array($previousStatus, ['spam', 'quarantined'], true) && in_array($validated['status'], ['new', 'read', 'replied'], true) => 'ham',
+      default => null,
+    };
+
+    if ($outcome) {
+      $siteId = (int) ($contactMessage->page?->site_id ?? $contactMessage->page()->value('site_id'));
+      $this->submissionProtection->recordOutcome($siteId, [
+        'subject' => $contactMessage->subject,
+        'message' => $contactMessage->message,
+      ], $outcome);
+    }
 
     return redirect()
       ->back()

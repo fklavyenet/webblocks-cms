@@ -27,6 +27,21 @@ The default quarantine and spam thresholds are 20 and 60. Install operators can 
 `CMS_SUBMISSION_QUARANTINE_SCORE` and `CMS_SUBMISSION_SPAM_SCORE`. The quarantine
 threshold must stay below the spam threshold. Frequency window lengths are controlled
 by `CMS_SUBMISSION_FINGERPRINT_WINDOW` and `CMS_SUBMISSION_SOURCE_WINDOW`.
+`CMS_SUBMISSION_SIMILARITY_DISTANCE` controls the maximum 64-bit SimHash distance
+for a near-duplicate match and defaults to 10.
+
+## Local feedback and similarity
+
+The CMS stores site-scoped exact HMAC hashes and 64-bit SimHash fingerprints in
+`wbcms_submission_fingerprints`. It never copies submitted content into that table.
+Exact fingerprints carry the strongest reputation; near-duplicates receive a smaller
+signal. Comparisons are limited to the 200 most recently seen fingerprints from the
+same site within 90 days.
+
+Call `recordOutcome($siteId, $answers, 'spam')` when an operator explicitly marks a
+submission as spam. Call it with `ham` when an operator restores spam or quarantine to
+a legitimate workflow status. Archiving is not feedback: an operator may archive spam
+without asserting that the classifier was wrong.
 
 ## Renderer proof
 

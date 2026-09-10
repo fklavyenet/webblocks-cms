@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.80.0
+
+- Learn site-scoped local spam reputation from operator status changes: marking a Contact Message or compatible plugin submission as spam raises risk for later copies, while restoring it to a legitimate workflow status records a false-positive correction.
+- Persist only keyed exact hashes, 64-bit similarity fingerprints, counters, and timestamps in the new submission-fingerprint table; submitted content remains in its owning Contact Message or plugin record.
+- Detect near-duplicate campaigns with a bounded local SimHash comparison, catching small wording changes and sender rotation without an external service.
+- Keep feedback isolated per site, expire similarity influence after 90 days, cap each comparison to the 200 most recent fingerprints, and use atomic upserts and increments for concurrent submissions.
+- Let install operators tune the similarity distance alongside the existing local submission thresholds and frequency windows.
+
 ## 1.79.0
 
 - Add a local, plugin-facing public submission protection service that combines content, timing, repeated-content, source-burst, and form-burst signals without a CAPTCHA, external API, daemon, or optional runtime dependency.
