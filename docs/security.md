@@ -136,12 +136,17 @@ signature over its checksum, or the update is refused.
 
 ## Content and input safety
 
-- **Contact forms** render a real CSRF-protected form with a CMS-owned hidden
-  honeypot field; filled honeypots are quietly discarded. Submissions are stored
-  first, spam is quarantined for review, and email delivery is resolved
-  separately. See [Contact Forms & Messages](contact-forms-and-messages.md).
-- **Comments** default to `pending` and quarantine link/contact-pattern spam for
-  moderation before public display.
+- **Public forms** share a local protection pipeline: form-bound signed proof,
+  generated honeypots, timing, content/repetition scoring, keyed sender and source
+  counters, `/24` or `/64` network pressure, and site-local learned fingerprints.
+  It makes no external request. Protection counters use keyed hashes; daily metrics
+  contain aggregate decisions only. See [Public Submission
+  Protection](public-submission-protection.md).
+- **Contact forms** store scored submissions for review. Quarantine and spam suppress
+  notification while remaining separate from notification delivery history. See
+  [Contact Forms & Messages](contact-forms-and-messages.md).
+- **Comments** default to `pending`; a spam decision is retained as spam and never
+  appears publicly without moderation.
 - **Trusted HTML** is limited to wrapper-adjacent layout markup and must not be
   used to inject scripts; prefer the native block contracts, which the Internal
   Content API validates draft-first.

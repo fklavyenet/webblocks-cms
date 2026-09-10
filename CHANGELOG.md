@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.81.1
+
+- Document how local submission protection combines signed render proofs, privacy-preserving reputation, burst detection, and operator feedback across native and compatible plugin forms.
+- Clarify the integration contract, configuration, diagnostics, retention boundaries, and operational guidance for Contact Forms, comments, ratings, and plugin-owned public submissions.
+
 ## 1.81.0
 
 - Detect rotating-source campaigns with site-scoped sender and network-prefix bursts shared by Contact Form, comments, and compatible plugin forms.

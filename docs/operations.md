@@ -116,7 +116,7 @@ Installed CMS working copies are update consumers. They may fetch source history
 
 ## Contact Mail Diagnostics
 
-Contact Form submissions are saved before notification delivery. Email notification status reflects notification behavior only and does not change the editorial status or spam classification. `Sent` means Laravel accepted the send through a configured real mail transport without an exception; it does not guarantee inbox delivery. `Failed` means a real send was attempted and threw a sanitized failure. `Skipped` or `Not configured` means no real send was attempted because notification was disabled, no recipient resolved, the mailer is `log`, `array`, or `null`, or SMTP config is incomplete. Scored spam is intentionally stored/quarantined for admin review; only filled generated check-field or too-fast submissions may be discarded before storage with the generic success redirect. A future configurable threshold such as `CONTACT_SPAM_AUTO_DISCARD_SCORE` can be considered after enough production data exists to tune it safely.
+Contact Form submissions are saved before notification delivery. Email notification status reflects notification behavior only and does not change editorial classification. `Sent` means Laravel accepted the send through a configured real mail transport without an exception; it does not guarantee inbox delivery. `Failed` means a real notification attempt threw a sanitized failure. `Skipped` or `Not configured` means no real send occurred. Valid submissions score as allowed, quarantined, or spam; quarantine and spam are retained for review with notification suppressed. Invalid signed proof, a filled generated check field, or submission below the hard minimum time follows generic success without storage. The rolling protection summary counts only requests that reached scoring. See [Public Submission Protection](public-submission-protection.md) for signals, thresholds, privacy boundaries, and tuning.
 
 Contact Form notification recipients resolve in this order:
 
@@ -164,8 +164,9 @@ Operational smoke test:
 2. Submit a test message.
 3. Confirm the message appears in `/webadmin/contact-messages`.
 4. Review notification status and safe failure detail.
-5. Run `php artisan contact:mail-diagnose --block=ID` if recipient resolution is unclear.
-6. Run `php artisan contact:mail-diagnose --send-test=operator@example.com` only for a controlled SMTP send check.
+5. Review the 30-day protection totals and correct false positives through status.
+6. Run `php artisan contact:mail-diagnose --block=ID` if recipient resolution is unclear.
+7. Run `php artisan contact:mail-diagnose --send-test=operator@example.com` only for a controlled SMTP send check.
 
 ## WebBlocks UI Manager Operator Plugin
 

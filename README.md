@@ -25,6 +25,7 @@ _The operator dashboard brings publishing state, common actions, recent pages, a
 - **Media management** — a shared Media Library, responsive image variants, focal-point-aware crops, metadata, folders, and usage guards.
 - **Reusable content** — Shared Slots, navigation trees, block catalogs, native Stack/Split/Cluster/Grid layout composition, and package-owned public renderers built on WebBlocks UI classes.
 - **Operator workflows** — users and permissions, search, contact messages, engagement, backups, site transfer, cloning, and package-native updates.
+- **Local submission protection** — signed form proof, honeypots, content and burst scoring, site-local learned reputation, quarantine, delivery suppression, and privacy-preserving 30-day metrics shared with compatible plugins—without CAPTCHA or an external service.
 - **User-delegated AI and trusted automation APIs** — personal AI tokens inherit the user's live role and selected-site boundaries, while separate system tokens cover explicitly authorized installation-level tools.
 - **Static package assets** — no Node, npm, Vite, or frontend build chain is required by the CMS package.
 

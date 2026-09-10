@@ -56,7 +56,11 @@ That is the right default, and it means comments need an owner. A form nobody mo
 
 - **One vote per visitor.** The CMS recognises a repeat visitor and does not count them twice; **Vote changes** decides whether they may revise the vote they already cast.
 - The **Spam** score is a signal, not a verdict. Read the comment before acting on the number.
-- **Reject** and **Spam** are different: reject is editorial, spam trains the filter. Use the one you mean.
+- **Reject** and **Spam** are different editorial classifications. Use the one you mean;
+  comment moderation status does not currently feed the learned fingerprint store.
+- Comments use the same local content, repetition, exact-IP, network-prefix, and learned
+  reputation pipeline as Contact Form and compatible plugin forms. They do not require
+  a CAPTCHA or external moderation service.
 - Turning the **Comment form** off leaves existing approved comments visible while stopping new ones — the graceful way to close a discussion.
 
 **Next:** [Site Search](/guides/site-search)

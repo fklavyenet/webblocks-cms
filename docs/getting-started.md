@@ -178,8 +178,15 @@ Smoke test before announcing the page:
 3. Open `/webadmin/contact-messages`.
 4. Confirm the message was stored.
 5. Check notification status and safe failure details if delivery failed.
+6. Read the 30-day protection summary and inspect any quarantined or spam records.
 
 Accepted real submissions are stored before notification is attempted. A notification failure does not mean the visitor submission failed, and public visitors should not see mail diagnostics.
+
+The shared protection service is local and applies across native Contact Form, Comments,
+and compatible plugin forms. It combines signed form proof, a generated honeypot,
+content and repetition scoring, sender and network bursts, and site-local operator
+feedback. See [Public Submission Protection](public-submission-protection.md) before
+changing its optional environment thresholds.
 
 ## Next Areas To Learn
 

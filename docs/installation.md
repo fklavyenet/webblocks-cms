@@ -192,7 +192,8 @@ Notes:
 - contact submissions are stored independently from notification delivery, so a public `Message sent` response confirms storage success even if admin later shows notification `Failed`, `Skipped`, or `Not configured`
 - `MAIL_MAILER=log`, `MAIL_MAILER=array`, and `MAIL_MAILER=null` are not real outbound delivery and are shown as not configured for Contact Message notification
 - Contact Form blocks render a hidden wrapper (shipped `wb-sr-only` class) with `inert`, `aria-hidden="true"`, a renderer-generated `form_check_{token}` field, `tabindex="-1"`, `autocomplete="off"`, and a form-bound signed timestamp; invalid proof or a filled check field produces the same generic success redirect without storing a Contact Message or attempting notification
-- submissions that pass the generated check field can still be classified as `spam` by conservative stored signals such as commercial outreach language, link density, repeated same-IP submissions, or a free-mail sales pitch with a generic subject; this status is durable admin classification and is separate from email notification state
+- submissions that pass signed proof and the generated check field are scored locally with content, exact and near-duplicate repetition, exact-IP, sender-address, `/24` or `/64` network, form-burst, and learned site-reputation signals; allowed, quarantined, and spam remain durable admin classifications separate from notification state
+- protection requires no CAPTCHA or external service; cache keys use keyed hashes and the 30-day admin metrics contain aggregate decisions rather than submitted content
 - when notification delivery fails, admins can inspect the saved message under `Admin -> Contact Messages` to see the compact failure state in the list and the stored failure detail on the message detail screen
 
 Then open:

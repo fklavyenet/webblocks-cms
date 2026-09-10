@@ -144,6 +144,12 @@ Storage happens before any action is attempted and is never retracted by an acti
 
 Anti-spam reuses the Contact Form model rather than inventing a third one: a renderer-generated signed check field, a timing floor, and conservative scoring. Filled check fields and implausibly fast submissions receive the same generic success response as a real submission without being stored. Scored spam is retained with spam status for review, not auto-deleted. No scoring detail, delivery internal, or validation of the check field itself reaches the visitor.
 
+That original private-scorer description is historical. Plugin `0.8.0` moved Forms to
+the CMS-owned `PublicSubmissionProtection` service and added a quarantined state;
+`0.9.0` connected operator spam/ham corrections to persistent site-local exact and
+near-duplicate reputation; `0.10.0` gained shared sender and `/24`–`/64` network-burst
+signals plus the content-free 30-day summary. Actions now run only for `allow`.
+
 Two protections are invisible in the markup and easy to lose in a rewrite, both inherited from the appointments public surface. Submitted values are validated against the *stored* field definitions rather than against anything the post claims, so a crafted post cannot introduce a field the form does not have or bypass a rule the renderer applied. And any redirect target is honoured only as a same-site path, so a form cannot be turned into an open redirect.
 
 The registrar's group throttle (60/min per IP and plugin by default) applies to every public route. A per-form throttle is an additional stricter limit, not a replacement.
@@ -279,7 +285,7 @@ A form builder collects whatever the site owner asks for, which means it collect
 
 `0.5.0` took it: the value is now per form, capped by the install ceiling, and the lookup is cached per request. Where a handle answers for more than one site the tightest value wins, because the limiter only ever sees the handle the browser posted and erring stricter is the safe direction.
 
-**Later** — *Shipped.* The Campaigns action in plugin `0.4.0`, the per-form throttle in `0.5.0`, within-step conditional visibility in `0.6.0`, and the Contact Form importer in `0.7.0`. Commerce and Appointments actions were investigated and **dropped rather than deferred**; see [Plugin-To-Plugin Actions](#plugin-to-plugin-actions).
+**Later** — *Shipped.* The Campaigns action in plugin `0.4.0`, the per-form throttle in `0.5.0`, within-step conditional visibility in `0.6.0`, the Contact Form importer in `0.7.0`, the shared protection service and quarantine in `0.8.0`, learned local reputation in `0.9.0`, and shared sender/network pressure plus metrics in `0.10.0`. Commerce and Appointments actions were investigated and **dropped rather than deferred**; see [Plugin-To-Plugin Actions](#plugin-to-plugin-actions).
 
 `0.6.0` raised the CMS floor to `^1.57.0`, the first release that publishes a plugin's static files, because it is the first release of this plugin that ships one. The cost is recorded rather than glossed: installs on `1.45`–`1.56` stay on `0.5.0`, which is complete. The alternative was a script tag that 404s on every page carrying a form — trading a version requirement an operator can read for a console error they cannot.
 
@@ -311,7 +317,12 @@ Migrations are tested against MySQL, not only SQLite, before any release.
 
 All three questions this plan opened are now closed. Two are recorded in their own sections — two inboxes with core untouched, under out of scope, and a plugin-owned private disk for uploads, under its own heading. The third is below.
 
-### CMS Floor: `^1.45.6`
+### CMS Floor: `^1.81.0`
+
+The historical derivation below explains the original `^1.45.6` floor. Plugin `0.6.0`
+raised it to `^1.57.0` for published plugin assets; `0.8.0` raised it to `^1.79.0` for
+the shared protection service; `0.9.0` required `^1.80.0` for learned fingerprints;
+and `0.10.0` requires `^1.81.0` for sender/network signals and aggregate summaries.
 
 The placeholder was `^1.52.18`, chosen because it was the current release and not because anything needed it. That is not a harmless default: a floor set to whatever is current refuses installation on an older install the plugin would run on perfectly well, which is why the other catalog plugins sit on narrow floors of `^1.45.5`, `^1.46.0` and `^1.46.7` rather than on the version that happened to be shipping the week they were built.
 
@@ -334,3 +345,4 @@ Nothing is broken by it. The plugin's service provider calls `mergeConfigFrom()`
 - [Contact Forms And Messages](contact-forms-and-messages.md)
 - [Block Type Contracts](block-type-contracts.md)
 - [Multisite](multisite.md)
+- [Public Submission Protection](public-submission-protection.md)

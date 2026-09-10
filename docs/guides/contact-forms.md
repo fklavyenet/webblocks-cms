@@ -29,12 +29,16 @@ card_thumbnail: 02-inbox.png
 > **Screenshot** `01-form.png` — The Contact Form block with copy, delivery, and consent settings.
 > Alt: Contact form block showing heading, intro, submit label, success message, delivery and consent settings.
 
-6. Messages arrive in **Contact Messages**. The list shows who wrote, about what, and the status.
+6. Messages arrive in **Contact Messages**. The list shows who wrote, about what, and
+   the status. The summary above it shows the last 30 days of checked, allowed,
+   quarantined, and spam submissions across the sites you may access.
 
 > **Screenshot** `02-inbox.png` — The Contact Messages inbox.
 > Alt: Contact messages inbox listing submissions with their status.
 
-7. Open one to read it in full, mark it **read**, **replied**, **spam**, or **archived**, and see whether the email notification actually went out.
+7. Open one to read it in full, mark it **read**, **replied**, **spam**, or **archived**,
+   and see whether the email notification actually went out. Mark real campaigns
+   **spam** so later copies are recognized; restore a false positive to a normal status.
 
 > **Screenshot** `03-message.png` — A single message with its submission and delivery details.
 > Alt: Contact message detail showing the visitor message, submission details, and email notification state.
@@ -57,7 +61,15 @@ Set it on the **site**, not on every block. Overrides are for the one form that 
 ## Notes
 
 - **The message is stored whether or not the email arrives.** The detail screen separates the two, so a delivery problem never means lost enquiries.
-- Forms carry a timing and honeypot check. A submission made faster than a human could type is refused, which is why an automated test that fills and submits instantly sees nothing arrive.
+- Forms carry signed timing and honeypot checks. A submission made faster than the hard
+  minimum is silently discarded, which is why an automated test that fills and submits
+  instantly sees nothing arrive.
+- Valid submissions are also scored locally. Suspicious messages are retained as
+  **Quarantined** or **Spam**, but their email notification is suppressed. The filter
+  shares repetition, sender, exact-IP, network-prefix, and learned reputation signals
+  with Comments and WebBlocks Forms on the same site.
+- **Archive** does not train protection. Use **Spam** for actual abuse and restore false
+  positives to New, Read, or Replied.
 - Write the **Success Message** as a promise you keep. "We will be in touch" sets an expectation; "Message received" sets none.
 - The consent notice is your text, not boilerplate the CMS writes for you. If you collect it, say what you are collecting and why.
 

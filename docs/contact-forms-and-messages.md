@@ -119,7 +119,8 @@ Contact Messages is an admin review screen. It is not a public listing and not a
 
 The admin screen lets CMS users review submissions at a user-guide level:
 
-- message status such as new, read, replied, archived, or spam
+- rolling 30-day Checked, Allowed, Quarantined, and Spam totals for accessible sites
+- message status such as new, quarantined, read, replied, archived, or spam
 - source page context when available
 - spam score and spam reason labels for review
 - whether notification was skipped, sent, failed, or is pending
@@ -137,9 +138,10 @@ Older saved messages may have notification state inferred from the legacy sent/e
 
 Contact Messages also follows the shared admin listing behavior for selected bulk deletion where available. Treat deletion as an admin cleanup action, not as part of normal public form handling.
 
-## Spam Handling
+## Local Submission Protection
 
-Spam handling has two layers.
+Spam handling has three local layers and does not require a CAPTCHA or external spam
+service.
 
 The renderer-generated check-field layer is immediate discard:
 
@@ -148,14 +150,32 @@ The renderer-generated check-field layer is immediate discard:
 - check-field submissions are not stored
 - check-field submissions do not trigger notification
 
-Submissions that pass the generated check field can still be scored conservatively. Current examples of scoring signals include:
+Submissions that pass proof and the generated check field are scored conservatively.
+Signals are shared across native Contact Form, Comments, and compatible plugin forms on
+the same site. Current examples include:
 
 - high link density or multiple links
 - commercial outreach language
-- generic sales-style subject and message combinations
-- repeated submissions from the same IP address
+- repeated exact or near-duplicate campaign content
+- repeated submissions from the same exact IP address
+- repeated use of one sender address across changing messages and forms
+- bursts across a nearby IPv4 `/24` or IPv6 `/64` network
+- bursts aimed at one form
+- local reputation learned from administrator spam and false-positive decisions
 
-Scored spam is intentionally retained with spam status for admin review. Do not describe automatic spam deletion as current behavior. A configurable auto-discard threshold is only a possible future direction after observing production data.
+The default result is Allowed below 20 points, Quarantined from 20 through 59, and Spam
+from 60. Quarantined and spam messages are retained for review but notification is
+skipped. The visitor still sees the normal success response.
+
+Marking a message **Spam** trains site-local reputation for later exact and similar
+campaigns. Restoring Spam or Quarantined to New, Read, or Replied records a
+false-positive correction. **Archive** is filing only and does not train the filter.
+
+The rolling summary counts submissions that reached scoring. Filled traps, invalid
+proof, and submissions below the hard minimum time are silently discarded before
+scoring and do not appear in the totals. See [Public Submission
+Protection](public-submission-protection.md) for weights, privacy boundaries,
+configuration, and the plugin contract.
 
 ## Email Notification Fallback Chain
 
@@ -232,6 +252,7 @@ Before publishing or announcing a public contact page:
 7. Submit a test message with name, email, subject, and message.
 8. Confirm `/webadmin/contact-messages` shows the stored message.
 9. Review notification status and any safe failure details.
+10. Review the local protection summary and correct any false positives deliberately.
 
 If notification fails but the message is stored, treat it as a mail delivery issue, not a failed public form submission.
 
@@ -265,3 +286,4 @@ Content apply remains draft-first and does not publish by default. Operators sho
 - [Internal Content API](internal-content-api.md)
 - [API Discovery](api-discovery.md)
 - [AI Page Building Guide](ai-page-building-guide.md)
+- [Public Submission Protection](public-submission-protection.md)
