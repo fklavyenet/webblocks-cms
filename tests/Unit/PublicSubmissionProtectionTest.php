@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Unit;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\PublicSubmissions\PublicSubmissionProtection;
 use WebBlocks\Cms\Support\PublicSubmissions\SubmissionDecision;
 use WebBlocks\Cms\Support\PublicSubmissions\SubmissionFingerprint;
@@ -109,5 +110,55 @@ class PublicSubmissionProtectionTest extends TestCase
     $this->assertSame(SubmissionDecision::ALLOW, $result['decision']);
     $this->assertContains('known_legitimate_fingerprint', $result['reasons']);
     $this->assertNotContains('repeated_content', $result['reasons']);
+  }
+
+  public function test_sender_burst_is_shared_across_forms_and_changing_messages(): void
+  {
+    $protection = app(PublicSubmissionProtection::class);
+    $result = [];
+
+    foreach (range(1, 4) as $attempt) {
+      $result = $protection->inspect(1, 'plugin-form', 'form-'.$attempt, [
+        'email' => 'sender@example.test',
+        'message' => 'Distinct request number '.$attempt,
+      ], '192.0.2.'.$attempt, 30);
+    }
+
+    $this->assertSame(SubmissionDecision::QUARANTINE, $result['decision']);
+    $this->assertContains('sender_burst', $result['reasons']);
+  }
+
+  public function test_network_burst_uses_ipv4_subnet_without_storing_the_address(): void
+  {
+    $protection = app(PublicSubmissionProtection::class);
+    $result = [];
+
+    foreach (range(1, 12) as $attempt) {
+      $result = $protection->inspect(7, 'plugin-form', 'form-'.$attempt, [
+        'message' => 'Unique network request '.$attempt,
+      ], '198.51.100.'.$attempt, 30);
+    }
+
+    $this->assertSame(SubmissionDecision::QUARANTINE, $result['decision']);
+    $this->assertContains('network_burst', $result['reasons']);
+  }
+
+  public function test_daily_summary_contains_only_aggregate_decisions(): void
+  {
+    $protection = app(PublicSubmissionProtection::class);
+    $protection->inspect(9, 'contact', 1, ['message' => 'Ordinary request'], '203.0.113.1', 30);
+    $protection->inspect(9, 'plugin-form', 2, ['message' => 'We noticed your website and offer digital marketing services.'], '203.0.114.1', 30);
+
+    $this->assertSame([
+      'days' => 30,
+      'allowed' => 1,
+      'quarantined' => 1,
+      'spam' => 0,
+      'total' => 2,
+    ], $protection->summary([9]));
+    $this->assertSame(
+      ['id', 'site_id', 'date', 'surface', 'allowed', 'quarantined', 'spam', 'created_at', 'updated_at'],
+      Schema::getColumnListing('wbcms_submission_daily_totals'),
+    );
   }
 }

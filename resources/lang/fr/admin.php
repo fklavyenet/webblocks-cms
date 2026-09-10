@@ -3045,6 +3045,11 @@ $translations = [
     'cannot_be_undone' => 'Cette action est irréversible depuis l\'interface d\'administration.',
   ],
   'contact_messages_index' => [
+    'protection_summary' => 'Protection locale · :days derniers jours',
+    'protection_total' => 'Vérifiés',
+    'protection_allowed' => 'Autorisés',
+    'protection_quarantined' => 'En quarantaine',
+    'protection_spam' => 'Indésirables',
     'title' => 'Messages de contact',
     'description' => 'Consultez les demandes publiques enregistrées, distinguez le statut éditorial d\'indésirabilité de la remise des notifications par e-mail, et mettez à jour le statut des messages.',
     'search' => 'Rechercher',

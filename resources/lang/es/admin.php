@@ -3045,6 +3045,11 @@ $translations = [
     'cannot_be_undone' => 'Esto no se puede deshacer desde la interfaz de administración.',
   ],
   'contact_messages_index' => [
+    'protection_summary' => 'Protección local · últimos :days días',
+    'protection_total' => 'Comprobados',
+    'protection_allowed' => 'Permitidos',
+    'protection_quarantined' => 'En cuarentena',
+    'protection_spam' => 'Spam',
     'title' => 'Mensajes de contacto',
     'description' => 'Revisa las consultas públicas guardadas, separa el estado editorial de spam de la entrega de notificaciones por correo y actualiza el estado de los mensajes.',
     'search' => 'Buscar',

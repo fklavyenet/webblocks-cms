@@ -100,6 +100,31 @@ final class PublicSubmissionProtection
         $score += $sourceCount >= 8 ? 40 : 20;
         $reasons[] = 'source_burst';
       }
+
+      $network = $this->networkPrefix($ip);
+
+      if ($network !== null) {
+        $networkCount = $this->increment($scope.'network:'.$this->hash($network), (int) config('public-submissions.network_window_seconds', 3600));
+        $networkQuarantine = (int) config('public-submissions.network_quarantine_count', 12);
+        $networkSpam = (int) config('public-submissions.network_spam_count', 30);
+
+        if ($networkCount >= $networkQuarantine) {
+          $score += $networkCount >= $networkSpam ? 40 : 20;
+          $reasons[] = 'network_burst';
+        }
+      }
+    }
+
+    foreach ($this->emailAddresses($answers) as $email) {
+      $emailCount = $this->increment($scope.'email:'.$this->hash($email), (int) config('public-submissions.email_window_seconds', 86400));
+      $emailQuarantine = (int) config('public-submissions.email_quarantine_count', 4);
+      $emailSpam = (int) config('public-submissions.email_spam_count', 8);
+
+      if ($emailCount >= $emailQuarantine) {
+        $score += $emailCount >= $emailSpam ? 40 : 20;
+        $reasons[] = 'sender_burst';
+        break;
+      }
     }
 
     $formCount = $this->increment($scope.'form:'.$surface.':'.$this->hash((string) $form), 60);
@@ -111,6 +136,7 @@ final class PublicSubmissionProtection
 
     $score = min(100, $score);
     $decision = SubmissionDecision::forScore($score);
+    $this->recordDecision($siteId, $surface, $decision);
 
     return [
       'score' => $score,
@@ -118,6 +144,36 @@ final class PublicSubmissionProtection
       'decision' => $decision,
       'is_spam' => $decision === SubmissionDecision::SPAM,
     ];
+  }
+
+  /** @param iterable<int> $siteIds
+   * @return array{days: int, total: int, allowed: int, quarantined: int, spam: int}
+   */
+  public function summary(iterable $siteIds, int $days = 30): array
+  {
+    $days = max(1, min(365, $days));
+    $empty = ['days' => $days, 'total' => 0, 'allowed' => 0, 'quarantined' => 0, 'spam' => 0];
+
+    if (! Schema::hasTable('wbcms_submission_daily_totals')) {
+      return $empty;
+    }
+
+    $ids = collect($siteIds)->map(fn ($id) => (int) $id)->filter()->unique()->values();
+
+    if ($ids->isEmpty()) {
+      return $empty;
+    }
+
+    $row = DB::table('wbcms_submission_daily_totals')
+      ->whereIn('site_id', $ids)
+      ->where('date', '>=', now()->subDays($days - 1)->toDateString())
+      ->selectRaw('SUM(allowed) as allowed, SUM(quarantined) as quarantined, SUM(spam) as spam')
+      ->first();
+    $allowed = (int) ($row->allowed ?? 0);
+    $quarantined = (int) ($row->quarantined ?? 0);
+    $spam = (int) ($row->spam ?? 0);
+
+    return compact('days', 'allowed', 'quarantined', 'spam') + ['total' => $allowed + $quarantined + $spam];
   }
 
   /** @param array<string, mixed> $answers */
@@ -244,6 +300,64 @@ final class PublicSubmissionProtection
     }
 
     return false;
+  }
+
+  /** @param array<string, mixed> $answers
+   * @return list<string>
+   */
+  private function emailAddresses(array $answers): array
+  {
+    $values = [];
+    array_walk_recursive($answers, static function ($value) use (&$values): void {
+      if (is_scalar($value)) {
+        preg_match_all('/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i', (string) $value, $matches);
+        array_push($values, ...array_map('mb_strtolower', $matches[0]));
+      }
+    });
+
+    return array_values(array_unique($values));
+  }
+
+  private function networkPrefix(string $ip): ?string
+  {
+    $binary = @inet_pton($ip);
+
+    if ($binary === false) {
+      return null;
+    }
+
+    return strlen($binary) === 4
+      ? '4:'.bin2hex(substr($binary, 0, 3))
+      : '6:'.bin2hex(substr($binary, 0, 8));
+  }
+
+  private function recordDecision(int $siteId, string $surface, string $decision): void
+  {
+    if (! Schema::hasTable('wbcms_submission_daily_totals')) {
+      return;
+    }
+
+    $column = match ($decision) {
+      SubmissionDecision::ALLOW => 'allowed',
+      SubmissionDecision::QUARANTINE => 'quarantined',
+      default => 'spam',
+    };
+    $now = now();
+    DB::table('wbcms_submission_daily_totals')->upsert([[
+      'site_id' => $siteId,
+      'date' => $now->toDateString(),
+      'surface' => substr($surface, 0, 40),
+      'allowed' => 0,
+      'quarantined' => 0,
+      'spam' => 0,
+      'created_at' => $now,
+      'updated_at' => $now,
+    ]], ['site_id', 'date', 'surface'], ['updated_at']);
+    DB::table('wbcms_submission_daily_totals')
+      ->where('site_id', $siteId)
+      ->where('date', $now->toDateString())
+      ->where('surface', substr($surface, 0, 40))
+      ->increment($column, 1, ['updated_at' => $now]);
   }
 
   private function increment(string $key, int $seconds): int

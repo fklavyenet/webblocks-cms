@@ -8,7 +8,7 @@ signals.
 
 The service makes no network requests and needs no CAPTCHA, API key, daemon, or
 optional PHP extension. It combines content, timing, repeated-content, source-burst,
-and form-burst signals. Counters use the host application's configured Laravel cache
+sender-burst, network-prefix-burst, and form-burst signals. Counters use the host application's configured Laravel cache
 store; the values are HMAC hashes rather than submitted content or plain IP addresses.
 
 ## Decisions
@@ -26,9 +26,18 @@ responses never expose the score or reasons.
 The default quarantine and spam thresholds are 20 and 60. Install operators can set
 `CMS_SUBMISSION_QUARANTINE_SCORE` and `CMS_SUBMISSION_SPAM_SCORE`. The quarantine
 threshold must stay below the spam threshold. Frequency window lengths are controlled
-by `CMS_SUBMISSION_FINGERPRINT_WINDOW` and `CMS_SUBMISSION_SOURCE_WINDOW`.
+by `CMS_SUBMISSION_FINGERPRINT_WINDOW`, `CMS_SUBMISSION_SOURCE_WINDOW`,
+`CMS_SUBMISSION_EMAIL_WINDOW`, and `CMS_SUBMISSION_NETWORK_WINDOW`. Sender and
+network escalation counts are configurable with their corresponding
+`*_QUARANTINE_COUNT` and `*_SPAM_COUNT` values. Network counters reduce IPv4 to `/24`
+and IPv6 to `/64` before applying the keyed hash.
 `CMS_SUBMISSION_SIMILARITY_DISTANCE` controls the maximum 64-bit SimHash distance
 for a near-duplicate match and defaults to 10.
+
+Each inspected submission also increments one content-free daily aggregate in
+`wbcms_submission_daily_totals`. Rows contain only site, date, surface, and allow,
+quarantine, and spam counts. `summary($siteIds, $days)` supplies the shared rolling
+admin metric without reading or duplicating form content.
 
 ## Local feedback and similarity
 

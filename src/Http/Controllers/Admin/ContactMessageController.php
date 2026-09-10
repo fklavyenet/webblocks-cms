@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteContactMessagesRequest;
 use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageBulkDeleter;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
@@ -91,6 +92,9 @@ class ContactMessageController extends Controller
       });
 
     $totalCount = (clone $baseQuery)->count();
+    $siteIds = Site::query()
+      ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, $request->user()))
+      ->pluck('id');
 
     $messages = $filteredQuery
       ->with(['page', 'block.slotType', 'block.blockType'])
@@ -110,6 +114,7 @@ class ContactMessageController extends Controller
       'totalCount' => $totalCount,
       'filteredCount' => (clone $filteredQuery)->count(),
       'currentReturnUrl' => $this->contactMessageIndexState->returnUrl($request),
+      'protectionSummary' => $this->submissionProtection->summary($siteIds),
     ]);
   }
 

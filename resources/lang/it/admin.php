@@ -3044,6 +3044,11 @@ $translations = [
     'cannot_be_undone' => 'Questa operazione non può essere annullata dall\'interfaccia admin.',
   ],
   'contact_messages_index' => [
+    'protection_summary' => 'Protezione locale · ultimi :days giorni',
+    'protection_total' => 'Controllati',
+    'protection_allowed' => 'Consentiti',
+    'protection_quarantined' => 'In quarantena',
+    'protection_spam' => 'Spam',
     'title' => 'Messaggi di contatto',
     'description' => 'Esamina le richieste pubbliche salvate, separa lo stato editoriale di spam dalla consegna delle notifiche email e aggiorna lo stato dei messaggi.',
     'search' => 'Cerca',

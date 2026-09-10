@@ -24,6 +24,16 @@
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
+        <div class="wb-card-header"><strong>{{ $adminText('protection_summary', ['days' => $protectionSummary['days']]) }}</strong></div>
+        <div class="wb-card-body wb-cluster wb-cluster-4 wb-flex-wrap">
+            <span>{{ $adminText('protection_total') }}: <strong>{{ $protectionSummary['total'] }}</strong></span>
+            <span>{{ $adminText('protection_allowed') }}: <strong>{{ $protectionSummary['allowed'] }}</strong></span>
+            <span>{{ $adminText('protection_quarantined') }}: <strong>{{ $protectionSummary['quarantined'] }}</strong></span>
+            <span>{{ $adminText('protection_spam') }}: <strong>{{ $protectionSummary['spam'] }}</strong></span>
+        </div>
+    </div>
+
+    <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
             @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.contact-messages.index'),

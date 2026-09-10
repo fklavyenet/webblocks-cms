@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.81.0
+
+- Detect rotating-source campaigns with site-scoped sender and network-prefix bursts shared by Contact Form, comments, and compatible plugin forms.
+- Keep e-mail addresses and IP addresses out of protection storage: frequency keys use keyed hashes, and network pressure is reduced to IPv4 `/24` or IPv6 `/64` prefixes before hashing.
+- Add content-free daily allow, quarantine, and spam totals and show the rolling 30-day result in Contact Messages and compatible plugin inboxes.
+- Let operators tune sender and network windows and thresholds locally without a CAPTCHA, external service, daemon, or optional module.
+
 ## 1.80.0
 
 - Learn site-scoped local spam reputation from operator status changes: marking a Contact Message or compatible plugin submission as spam raises risk for later copies, while restoring it to a legitimate workflow status records a false-positive correction.

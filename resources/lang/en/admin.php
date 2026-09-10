@@ -3270,6 +3270,11 @@ return [
   'contact_messages_index' => [
     'title' => 'Contact Messages',
     'description' => 'Review saved public enquiries, separate editorial spam status from email notification delivery, and update message status.',
+    'protection_summary' => 'Local protection · last :days days',
+    'protection_total' => 'Checked',
+    'protection_allowed' => 'Allowed',
+    'protection_quarantined' => 'Quarantined',
+    'protection_spam' => 'Spam',
     'search' => 'Search',
     'search_placeholder' => 'Search name, email, subject, or message',
     'status' => 'Status',

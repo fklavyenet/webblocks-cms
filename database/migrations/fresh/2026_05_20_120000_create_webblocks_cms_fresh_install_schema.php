@@ -35,6 +35,7 @@ return new class extends Migration
       'wbcms_system_update_runs',
       'wbcms_public_search_index',
       'wbcms_visitor_events',
+      'wbcms_submission_daily_totals',
       'wbcms_submission_fingerprints',
       'wbcms_contact_messages',
       'wbcms_site_imports',
@@ -732,6 +733,20 @@ return new class extends Migration
 
       $table->unique(['site_id', 'exact_hash'], 'wbcms_sub_fp_site_exact_uq');
       $table->index(['site_id', 'last_seen_at'], 'wbcms_sub_fp_site_seen_idx');
+    });
+
+    $this->createTableIfMissing('wbcms_submission_daily_totals', function (Blueprint $table): void {
+      $table->id();
+      $table->foreignId('site_id')->constrained('wbcms_sites')->cascadeOnDelete();
+      $table->date('date');
+      $table->string('surface', 40);
+      $table->unsignedInteger('allowed')->default(0);
+      $table->unsignedInteger('quarantined')->default(0);
+      $table->unsignedInteger('spam')->default(0);
+      $table->timestamps();
+
+      $table->unique(['site_id', 'date', 'surface'], 'wbcms_sub_day_site_date_surface_uq');
+      $table->index(['site_id', 'date'], 'wbcms_sub_day_site_date_idx');
     });
 
     $this->createTableIfMissing('wbcms_visitor_events', function (Blueprint $table): void {
