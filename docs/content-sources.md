@@ -46,6 +46,10 @@ At public render time the binding wins when it resolves to a non-empty value. Mi
 
 Bindings live under `settings.content_bindings`, so existing page duplication, revision, export, and import behavior preserves them without a domain-specific database column.
 
-## Next contract slice
+## Collection sources
 
-This entity-field pilot intentionally precedes collection repetition. The next slice will let a generic CMS collection context repeat existing Slide/Card child compositions for source records while keeping Slider/Grid rendering in core.
+A plugin may register `ContentSourceDefinition::collection(...)` with a resolver implementing `ContentCollectionSourceResolver`. A Slider can select that collection and one of its existing Slide children as the repeated template. At render time CMS clones that Slide subtree for each record, supplies the record as the current collection item, and resolves descendant field bindings against it.
+
+Other Slides remain ordinary editorial children and keep their position. The selected template is replaced in place by its resolved records, so one Slider can deliberately mix manual and dynamic slides without a plugin-owned carousel or card renderer. Resolution is capped at 50 records. A missing source, disabled plugin, invalid template, or resolver failure safely restores the ordinary stored Slide tree.
+
+The current pilot applies repetition to Slider/Slide. Grid/Card collection composition is the next compatible presentation target; it should reuse the same collection context rather than add a second source contract.

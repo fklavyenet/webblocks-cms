@@ -58,6 +58,7 @@ use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
+use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiRateLimit;
@@ -1068,6 +1069,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       $app->make(PluginRegistry::class)
     ));
     $this->app->singleton(ContentBindingResolver::class);
+    $this->app->singleton(ContentCollectionRenderer::class);
     $this->app->singleton(ContentSourceEditor::class);
 
     /*

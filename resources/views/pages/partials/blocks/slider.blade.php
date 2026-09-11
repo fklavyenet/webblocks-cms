@@ -1,9 +1,7 @@
 @php
     $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
         ->get('blocks.a11y.'.$key, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
-    $slides = $block->children
-        ->filter(fn ($child) => $child->typeSlug() === 'slide')
-        ->values();
+    $slides = app(\WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer::class)->sliderSlides($block);
     $slideCount = $slides->count();
     $showControls = $slideCount > 1;
     $showArrows = $showControls && $block->sliderBooleanSetting('show_arrows', true);

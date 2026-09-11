@@ -429,7 +429,11 @@ class InstalledPluginDefinitionFactory
         continue;
       }
 
-      $sources[] = ContentSourceDefinition::entity($handle)
+      $source = ($item['kind'] ?? 'entity') === 'collection'
+        ? ContentSourceDefinition::collection($handle)
+        : ContentSourceDefinition::entity($handle);
+
+      $sources[] = $source
         ->label(is_string($item['label'] ?? null) ? $item['label'] : $handle)
         ->resolver($resolver)
         ->fields($fields);

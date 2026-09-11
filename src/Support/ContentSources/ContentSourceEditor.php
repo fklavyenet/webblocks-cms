@@ -23,7 +23,23 @@ class ContentSourceEditor
       preview: true,
     );
 
+    $collectionSource = $this->collectionSourceFor($block);
+
+    if ($collectionSource instanceof ContentSourceDefinition) {
+      foreach ($collectionSource->fieldDefinitions() as $field => $definition) {
+        if (in_array($definition['type'], $acceptedTypes, true)) {
+          $choices[] = [
+            'value' => implode('|', [$collectionSource->handle(), '@item', $field]),
+            'label' => $collectionSource->labelText().' / Current collection item / '.$definition['label'],
+          ];
+        }
+      }
+    }
+
     foreach ($this->sources->all() as $source) {
+      if ($source->isCollection()) {
+        continue;
+      }
       $resolverClass = $source->resolverClass();
 
       if ($resolverClass === null) {
@@ -68,6 +84,10 @@ class ContentSourceEditor
 
   public function supports(Block $block): bool
   {
+    if ($block->typeSlug() === 'slider') {
+      return $this->sources->collections() !== [];
+    }
+
     return $this->targets($block) !== [] && $this->sources->all() !== [];
   }
 
@@ -97,5 +117,37 @@ class ContentSourceEditor
       (string) ($binding['record'] ?? ''),
       (string) ($binding['field'] ?? ''),
     ]);
+  }
+
+  /** @return array<string, string> */
+  public function collectionChoices(): array
+  {
+    return array_map(
+      fn (ContentSourceDefinition $source): string => $source->labelText(),
+      $this->sources->collections(),
+    );
+  }
+
+  private function collectionSourceFor(Block $block): ?ContentSourceDefinition
+  {
+    $current = $block;
+
+    for ($depth = 0; $depth < 8; $depth++) {
+      if ($current->typeSlug() === 'slider') {
+        $handle = trim((string) $current->setting('content_collection.source', ''));
+
+        return $this->sources->find($handle);
+      }
+
+      $parent = $current->relationLoaded('parent') ? $current->getRelation('parent') : $current->parent;
+
+      if (! $parent instanceof Block) {
+        return null;
+      }
+
+      $current = $parent;
+    }
+
+    return null;
   }
 }

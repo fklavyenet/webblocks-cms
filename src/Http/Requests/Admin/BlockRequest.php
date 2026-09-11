@@ -249,6 +249,9 @@ class BlockRequest extends FormRequest
       'application_show_failure_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
       'content_binding_selection' => ['nullable', 'array'],
       'content_binding_selection.*' => ['nullable', 'string', 'max:500'],
+      'content_collection_source' => [$isSlider ? 'nullable' : 'prohibited', 'string', 'max:160'],
+      'content_collection_template_id' => [$isSlider ? 'nullable' : 'prohibited', 'integer', 'min:1'],
+      'content_collection_limit' => [$isSlider ? 'nullable' : 'prohibited', 'integer', 'min:1', 'max:50'],
       'media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'gallery_media_ids' => ['nullable', 'array'],
@@ -2436,9 +2439,31 @@ class BlockRequest extends FormRequest
       unset($settings['content_bindings']);
     }
 
+    if (($data['type'] ?? $existingBlock?->typeSlug()) === 'slider' && array_key_exists('content_collection_source', $data)) {
+      $sourceHandle = trim((string) ($data['content_collection_source'] ?? ''));
+      $templateId = (int) ($data['content_collection_template_id'] ?? 0);
+      $validSource = array_key_exists($sourceHandle, $sourceEditor->collectionChoices());
+      $validTemplate = $templateId > 0 && Block::query()
+        ->whereKey($templateId)
+        ->where('parent_id', $existingBlock?->id)
+        ->where('type', 'slide')
+        ->exists();
+
+      if ($sourceHandle !== '' && $validSource && $validTemplate) {
+        $settings['content_collection'] = [
+          'source' => $sourceHandle,
+          'template_block_id' => $templateId,
+          'limit' => min(max((int) ($data['content_collection_limit'] ?? 12), 1), 50),
+        ];
+      } else {
+        unset($settings['content_collection']);
+      }
+    }
+
     $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
 
     unset($data['plugin_settings'], $data['content_binding_selection']);
+    unset($data['content_collection_source'], $data['content_collection_template_id'], $data['content_collection_limit']);
 
     return $data;
   }

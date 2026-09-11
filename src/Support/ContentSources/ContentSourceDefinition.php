@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\ContentSources;
 
+use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
 use WebBlocks\Cms\Support\Plugins\PluginException;
 
@@ -11,13 +12,13 @@ class ContentSourceDefinition
 
   private string $label = '';
 
-  /** @var class-string<ContentSourceResolver>|null */
+  /** @var class-string<ContentSourceResolver|ContentCollectionSourceResolver>|null */
   private ?string $resolver = null;
 
   /** @var array<string, array{type: string, label: string}> */
   private array $fields = [];
 
-  private function __construct(private readonly string $handle)
+  private function __construct(private readonly string $handle, private readonly string $kind)
   {
     if (! self::isValidHandle($handle)) {
       throw new PluginException("Content source handle [{$handle}] must be namespaced like plugin-handle::source-name.");
@@ -26,7 +27,12 @@ class ContentSourceDefinition
 
   public static function entity(string $handle): self
   {
-    return new self($handle);
+    return new self($handle, 'entity');
+  }
+
+  public static function collection(string $handle): self
+  {
+    return new self($handle, 'collection');
   }
 
   public static function isValidHandle(string $handle): bool
@@ -63,11 +69,13 @@ class ContentSourceDefinition
     return $this->label !== '' ? $this->label : $this->handle;
   }
 
-  /** @param class-string<ContentSourceResolver> $resolver */
+  /** @param class-string<ContentSourceResolver|ContentCollectionSourceResolver> $resolver */
   public function resolver(string $resolver): self
   {
-    if (! is_a($resolver, ContentSourceResolver::class, true)) {
-      throw new PluginException("Content source resolver [{$resolver}] must implement ".ContentSourceResolver::class.'.');
+    $contract = $this->isCollection() ? ContentCollectionSourceResolver::class : ContentSourceResolver::class;
+
+    if (! is_a($resolver, $contract, true)) {
+      throw new PluginException("Content source resolver [{$resolver}] must implement {$contract}.");
     }
 
     $this->resolver = $resolver;
@@ -75,10 +83,15 @@ class ContentSourceDefinition
     return $this;
   }
 
-  /** @return class-string<ContentSourceResolver>|null */
+  /** @return class-string<ContentSourceResolver|ContentCollectionSourceResolver>|null */
   public function resolverClass(): ?string
   {
     return $this->resolver;
+  }
+
+  public function isCollection(): bool
+  {
+    return $this->kind === 'collection';
   }
 
   /**

@@ -23,7 +23,18 @@ class ContentBindingResolver
     $sourceField = trim((string) ($binding['field'] ?? ''));
     $resolverClass = $source?->resolverClass();
 
-    if ($source === null || $recordKey === '' || ! isset($source->fieldDefinitions()[$sourceField]) || $resolverClass === null) {
+    if ($source === null || $recordKey === '' || ! isset($source->fieldDefinitions()[$sourceField])) {
+      return $binding['fallback'] ?? $fallback;
+    }
+
+    if ($recordKey === '@item') {
+      $item = $block->getAttribute('content_source_item');
+      $value = is_array($item) ? data_get($item, $sourceField) : null;
+
+      return $value !== null && $value !== '' ? $value : ($binding['fallback'] ?? $fallback);
+    }
+
+    if ($resolverClass === null) {
       return $binding['fallback'] ?? $fallback;
     }
 

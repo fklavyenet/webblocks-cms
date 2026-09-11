@@ -5,9 +5,11 @@ namespace WebBlocks\Cms\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
+use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceContext;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
+use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -40,6 +42,48 @@ class ContentSourceBindingTest extends TestCase
     $this->assertStringContainsString('Editorial fallback', view($heading->publicRenderView(), ['block' => $heading])->render());
   }
 
+  #[Test]
+  public function a_collection_repeats_an_existing_slide_template_and_keeps_editorial_slides(): void
+  {
+    $this->registerCatalogSource(enabled: true);
+
+    $slider = new Block(['type' => 'slider']);
+    $slider->id = 10;
+    $slider->settings = [
+      'content_collection' => [
+        'source' => 'plugin-catalog::featured-plugins',
+        'template_block_id' => 12,
+        'limit' => 2,
+      ],
+    ];
+
+    $editorialSlide = new Block(['type' => 'slide']);
+    $editorialSlide->id = 11;
+    $editorialSlide->setRelation('children', collect());
+
+    $templateSlide = new Block(['type' => 'slide']);
+    $templateSlide->id = 12;
+    $heading = $this->boundBlock('header', 'title', 'name', 'Plugin fallback');
+    $heading->settings = [
+      'content_bindings' => [
+        'title' => [
+          'source' => 'plugin-catalog::featured-plugins',
+          'record' => '@item',
+          'field' => 'name',
+        ],
+      ],
+    ];
+    $templateSlide->setRelation('children', collect([$heading]));
+    $slider->setRelation('children', collect([$editorialSlide, $templateSlide]));
+
+    $slides = app(ContentCollectionRenderer::class)->sliderSlides($slider);
+
+    $this->assertCount(3, $slides);
+    $this->assertSame($editorialSlide, $slides[0]);
+    $this->assertSame('WebBlocks SEO', $slides[1]->children[0]->boundPublicValue('title', 'fallback'));
+    $this->assertSame('WebBlocks Forms', $slides[2]->children[0]->boundPublicValue('title', 'fallback'));
+  }
+
   private function registerCatalogSource(bool $enabled): void
   {
     $plugin = PluginDefinition::make('plugin-catalog')
@@ -54,6 +98,13 @@ class ContentSourceBindingTest extends TestCase
             'description' => ['type' => 'rich_text', 'label' => 'Description'],
             'download_url' => ['type' => 'url', 'label' => 'Download URL'],
           ]),
+        ContentSourceDefinition::collection('plugin-catalog::featured-plugins')
+          ->label('Featured plugins')
+          ->resolver(FakeFeaturedPluginsSource::class)
+          ->fields([
+            'name' => ['type' => 'text', 'label' => 'Plugin name'],
+            'description' => ['type' => 'rich_text', 'label' => 'Description'],
+          ]),
       ]);
 
     $registry = new PluginRegistry(['plugin-catalog' => $enabled]);
@@ -62,6 +113,7 @@ class ContentSourceBindingTest extends TestCase
     $this->app->instance(PluginRegistry::class, $registry);
     $this->app->forgetInstance(ContentSourceRegistry::class);
     $this->app->forgetInstance(ContentBindingResolver::class);
+    $this->app->forgetInstance(ContentCollectionRenderer::class);
   }
 
   private function boundBlock(string $type, string $target, string $field, string $fallback): Block
@@ -80,6 +132,17 @@ class ContentSourceBindingTest extends TestCase
     ];
 
     return $block;
+  }
+}
+
+class FakeFeaturedPluginsSource implements ContentCollectionSourceResolver
+{
+  public function resolveCollection(array $settings, ContentSourceContext $context): iterable
+  {
+    return [
+      ['name' => 'WebBlocks SEO', 'description' => '<p>SEO metadata.</p>'],
+      ['name' => 'WebBlocks Forms', 'description' => '<p>Public forms.</p>'],
+    ];
   }
 }
 

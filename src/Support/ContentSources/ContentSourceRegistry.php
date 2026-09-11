@@ -40,4 +40,10 @@ class ContentSourceRegistry
   {
     return $this->all()[$handle] ?? null;
   }
+
+  /** @return array<string, ContentSourceDefinition> */
+  public function collections(): array
+  {
+    return array_filter($this->all(), fn (ContentSourceDefinition $source): bool => $source->isCollection());
+  }
 }
