@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.82.0
+
+- Let plugins declare secure, site-aware content sources whose fields operators can bind to core blocks without embedding host-specific application knowledge in CMS core.
+- Render collection-backed block templates with query controls and pagination, including nested layouts and locale-aware public output.
+- Expose authorized content-source discovery, resource browsing, schema, and option endpoints through the Internal Content API, while enforcing each source's access policy.
+- Add localized source-binding controls to the block editor, hide unavailable source controls, and document the plugin declaration, runtime, authoring, and security contracts.
+- Preserve configured local ports when resolving generated page routes.
+
 ## 1.81.2
 
 - Localize the Visitor Reports page-view chart, chart values, accessibility guidance, and Report Info modal in German, Spanish, French, and Italian instead of falling back to English.
