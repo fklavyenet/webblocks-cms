@@ -313,4 +313,32 @@ class VisitorReportInsightsTest extends TestCase
     $this->assertStringContainsString('/&lt;script&gt;', $html);
     $this->assertStringNotContainsString('<script>', $html);
   }
+
+  #[Test]
+  public function every_admin_locale_translates_the_chart_and_report_information_modal(): void
+  {
+    $english = require dirname(__DIR__, 2).'/resources/lang/en/visitor_insights.php';
+
+    foreach (['en', 'tr', 'de', 'es', 'fr', 'it'] as $locale) {
+      $catalog = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/visitor_insights.php';
+      $this->assertSame(array_keys($english), array_keys($catalog), $locale);
+    }
+
+    $this->event('2026-09-01 12:00:00');
+    $report = $this->report();
+    $text = fn ($key, $replace = []) => app(CmsTranslator::class)->get('visitor_insights.'.$key, 'de', $replace);
+    $html = view('webblocks-cms::admin.reports.visitors.insights', [
+      'report' => $report,
+      'summary' => $report['summary'],
+      'insightText' => $text,
+      'adminLocale' => 'de',
+      'filters' => ['from' => '2026-09-01', 'to' => '2026-09-03'],
+    ])->render();
+
+    $this->assertStringContainsString('>Seitenaufrufe</h2>', $html);
+    $this->assertStringContainsString('>Berichtsinformationen</button>', $html);
+    $this->assertStringContainsString('>Vorheriger Zeitraum:', $html);
+    $this->assertStringNotContainsString('>Page views</h2>', $html);
+    $this->assertStringNotContainsString('>Report info</button>', $html);
+  }
 }
