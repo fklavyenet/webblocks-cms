@@ -59,9 +59,7 @@ class PageRouteResolver
       return url($path);
     }
 
-    $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
-
-    return $scheme.'://'.$domain.$path;
+    return $this->canonicalOrigin($domain).$path;
   }
 
   public function searchPath(?string $localeCode = null, ?Site $site = null): ?string
@@ -121,9 +119,7 @@ class PageRouteResolver
       return url($path);
     }
 
-    $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
-
-    return $scheme.'://'.$domain.$path;
+    return $this->canonicalOrigin($domain).$path;
   }
 
   public function canonicalUrlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
@@ -163,6 +159,20 @@ class PageRouteResolver
 
     return $this->siteResolver->primaryDomainFor($site)?->domain
       ?? $site->domain;
+  }
+
+  private function canonicalOrigin(string $domain): string
+  {
+    $appUrl = (string) config('app.url');
+    $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
+    $appHost = $this->siteDomainNormalizer->normalize(parse_url($appUrl, PHP_URL_HOST));
+    $port = parse_url($appUrl, PHP_URL_PORT);
+
+    if ($appHost === $domain && is_int($port)) {
+      return $scheme.'://'.$domain.':'.$port;
+    }
+
+    return $scheme.'://'.$domain;
   }
 
   public function findPublishedPage(Request $request, ?string $slug = null): ?Page

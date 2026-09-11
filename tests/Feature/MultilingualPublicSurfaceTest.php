@@ -43,6 +43,17 @@ class MultilingualPublicSurfaceTest extends TestCase
   }
 
   #[Test]
+  public function canonical_urls_preserve_the_configured_local_development_port(): void
+  {
+    config()->set('app.url', 'http://localhost:8000');
+    $page = $this->seedPage('port', withSecondLocale: true);
+    $page->site->update(['domain' => 'localhost']);
+
+    $this->assertSame('http://localhost:8000/about-port', $page->publicUrl('en'));
+    $this->assertSame('http://localhost:8000/tr/hakkinda-port', $page->publicUrl('tr'));
+  }
+
+  #[Test]
   public function a_single_locale_site_emits_no_hreflang_at_all(): void
   {
     $page = $this->seedPage('b', withSecondLocale: false);
