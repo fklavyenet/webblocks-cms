@@ -1038,6 +1038,7 @@ return [
     'content_binding_field_image_source' => 'Image source',
     'content_binding_literal' => 'Editorial value entered in this block',
     'content_source_current_item' => 'Current collection item',
+    'content_source_unavailable_selection' => 'Previously selected source (unavailable)',
     'content_collection_title' => 'Dynamic collection',
     'content_collection_help' => 'Repeat one existing child block as a template while preserving the other editorial blocks.',
     'content_collection_source' => 'Collection source',

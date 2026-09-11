@@ -854,6 +854,7 @@ $translations = [
     'content_binding_field_image_source' => 'Origine immagine',
     'content_binding_literal' => 'Valore editoriale inserito in questo blocco',
     'content_source_current_item' => 'Elemento corrente della raccolta',
+    'content_source_unavailable_selection' => 'Fonte selezionata in precedenza (non disponibile)',
     'content_collection_title' => 'Raccolta dinamica',
     'content_collection_help' => 'Ripeti un blocco figlio esistente come modello mantenendo gli altri blocchi editoriali.',
     'content_collection_source' => 'Origine raccolta',

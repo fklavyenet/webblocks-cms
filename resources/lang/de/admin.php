@@ -856,6 +856,7 @@ $translations = [
     'content_binding_field_image_source' => 'Bildquelle',
     'content_binding_literal' => 'In diesem Block eingegebener redaktioneller Wert',
     'content_source_current_item' => 'Aktuelles Sammlungselement',
+    'content_source_unavailable_selection' => 'Zuvor ausgewählte Quelle (nicht verfügbar)',
     'content_collection_title' => 'Dynamische Sammlung',
     'content_collection_help' => 'Einen vorhandenen untergeordneten Block als Vorlage wiederholen und andere redaktionelle Blöcke beibehalten.',
     'content_collection_source' => 'Sammlungsquelle',

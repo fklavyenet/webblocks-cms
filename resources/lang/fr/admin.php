@@ -855,6 +855,7 @@ $translations = [
     'content_binding_field_image_source' => 'Source de l’image',
     'content_binding_literal' => 'Valeur éditoriale saisie dans ce bloc',
     'content_source_current_item' => 'Élément actuel de la collection',
+    'content_source_unavailable_selection' => 'Source précédemment sélectionnée (indisponible)',
     'content_collection_title' => 'Collection dynamique',
     'content_collection_help' => 'Répétez un bloc enfant existant comme modèle tout en conservant les autres blocs éditoriaux.',
     'content_collection_source' => 'Source de la collection',

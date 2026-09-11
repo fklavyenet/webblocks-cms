@@ -107,11 +107,24 @@ class ContentSourceEditor
 
   public function supports(Block $block): bool
   {
+    $hasBindings = collect((array) $block->setting('content_bindings', []))
+      ->contains(fn (mixed $binding): bool => is_array($binding) && trim((string) ($binding['source'] ?? '')) !== '');
+
     if (in_array($block->typeSlug(), ['slider', 'grid', 'stack'], true)) {
-      return $this->sources->collections() !== [];
+      return $this->sources->collections() !== [] || is_array($block->setting('content_collection'));
     }
 
-    return $this->targets($block) !== [] && $this->sources->all() !== [];
+    if ($hasBindings) {
+      return true;
+    }
+
+    foreach ($this->targets($block) as $acceptedTypes) {
+      if ($this->choices($block, $acceptedTypes) !== []) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public function selectionIsAllowed(Block $block, string $target, string $selection): bool

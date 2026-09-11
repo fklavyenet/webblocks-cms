@@ -25,11 +25,14 @@
                 $selected = old('content_binding_selection.'.$target, $sourceEditor->selectedValue($block, $target));
             @endphp
 
-            @if ($choices !== [])
+            @if ($choices !== [] || $selected !== '')
                 <div class="wb-stack wb-gap-1">
                     <label for="content_binding_{{ $target }}">{{ $blockFormText('content_binding_field_'.$target) }}</label>
                     <select id="content_binding_{{ $target }}" name="content_binding_selection[{{ $target }}]" class="wb-select">
                         <option value="">{{ $blockFormText('content_binding_literal') }}</option>
+                        @if ($selected !== '' && ! collect($choices)->contains('value', $selected))
+                            <option value="{{ $selected }}" selected disabled>{{ $blockFormText('content_source_unavailable_selection') }}</option>
+                        @endif
                         @foreach ($choices as $choice)
                             <option value="{{ $choice['value'] }}" @selected($selected === $choice['value'])>{{ $choice['label'] }}</option>
                         @endforeach
@@ -53,7 +56,7 @@
         );
     @endphp
 
-    @if ($collectionChoices !== [])
+    @if ($collectionChoices !== [] || $selectedCollection !== '')
         <div class="wb-stack wb-gap-3 wb-mb-4">
             <div>
                 <strong>{{ $blockFormText('content_collection_title') }}</strong>
@@ -64,6 +67,9 @@
                 <label for="content_collection_source">{{ $blockFormText('content_collection_source') }}</label>
                 <select id="content_collection_source" name="content_collection_source" class="wb-select">
                     <option value="">{{ $blockFormText('content_collection_none') }}</option>
+                    @if ($selectedCollection !== '' && ! array_key_exists($selectedCollection, $collectionChoices))
+                        <option value="{{ $selectedCollection }}" selected disabled>{{ $blockFormText('content_source_unavailable_selection') }}</option>
+                    @endif
                     @foreach ($collectionChoices as $handle => $label)
                         <option value="{{ $handle }}" @selected($selectedCollection === $handle)>{{ $label }}</option>
                     @endforeach

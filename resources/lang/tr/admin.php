@@ -855,6 +855,7 @@ $translations = [
     'content_binding_field_image_source' => 'Görsel kaynağı',
     'content_binding_literal' => 'Bu blokta girilen editoryal değer',
     'content_source_current_item' => 'Geçerli koleksiyon öğesi',
+    'content_source_unavailable_selection' => 'Önceden seçilen kaynak (kullanılamıyor)',
     'content_collection_title' => 'Dinamik koleksiyon',
     'content_collection_help' => 'Diğer editoryal blokları korurken mevcut bir alt bloğu şablon olarak her kayıt için tekrarlayın.',
     'content_collection_source' => 'Koleksiyon kaynağı',

@@ -49,6 +49,39 @@ class ContentSourceBindingTest extends TestCase
   }
 
   #[Test]
+  public function source_settings_are_hidden_without_usable_sources_but_remain_for_existing_bindings(): void
+  {
+    $this->registerCatalogSource(enabled: false);
+    $editor = app(ContentSourceEditor::class);
+
+    $plainHeading = new Block(['type' => 'header']);
+    $plainGrid = new Block(['type' => 'grid']);
+
+    $this->assertFalse($editor->supports($plainHeading));
+    $this->assertFalse($editor->supports($plainGrid));
+
+    $boundHeading = $this->boundBlock('header', 'title', 'name', 'Editorial fallback');
+    $boundGrid = new Block(['type' => 'grid']);
+    $boundGrid->settings = ['content_collection' => ['source' => 'plugin-catalog::featured-plugins']];
+
+    $this->assertTrue($editor->supports($boundHeading));
+    $this->assertTrue($editor->supports($boundGrid));
+  }
+
+  #[Test]
+  public function an_unrelated_collection_source_does_not_show_entity_binding_controls(): void
+  {
+    $plugin = PluginDefinition::make('events')->contentSources([
+      ContentSourceDefinition::collection('events::upcoming')
+        ->resolver(FakeFeaturedPluginsSource::class)->fields(['name' => 'text']),
+    ]);
+    $this->registerPlugin($plugin, 'events');
+
+    $this->assertFalse(app(ContentSourceEditor::class)->supports(new Block(['type' => 'header'])));
+    $this->assertTrue(app(ContentSourceEditor::class)->supports(new Block(['type' => 'grid'])));
+  }
+
+  #[Test]
   public function a_collection_repeats_an_existing_slide_template_and_keeps_editorial_slides(): void
   {
     $this->registerCatalogSource(enabled: true);

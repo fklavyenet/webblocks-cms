@@ -855,6 +855,7 @@ $translations = [
     'content_binding_field_image_source' => 'Fuente de imagen',
     'content_binding_literal' => 'Valor editorial introducido en este bloque',
     'content_source_current_item' => 'Elemento actual de la colección',
+    'content_source_unavailable_selection' => 'Fuente seleccionada anteriormente (no disponible)',
     'content_collection_title' => 'Colección dinámica',
     'content_collection_help' => 'Repita un bloque secundario existente como plantilla y conserve los demás bloques editoriales.',
     'content_collection_source' => 'Fuente de la colección',
