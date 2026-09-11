@@ -8,7 +8,10 @@ use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
 
 class ContentBindingResolver
 {
-  public function __construct(private readonly ContentSourceRegistry $sources) {}
+  public function __construct(
+    private readonly ContentSourceRegistry $sources,
+    private readonly ContentSourceRuntime $runtime,
+  ) {}
 
   public function value(Block $block, string $targetField, mixed $fallback = null): mixed
   {
@@ -38,6 +41,18 @@ class ContentBindingResolver
       return $binding['fallback'] ?? $fallback;
     }
 
+    $context = new ContentSourceContext(
+      site: $block->renderSite(),
+      page: $block->renderPage(),
+      locale: $block->renderLocaleCode(),
+      preview: (bool) $block->getAttribute('render_preview'),
+      actor: auth()->user(),
+    );
+
+    if (! $this->runtime->allows($source, $context)) {
+      return $binding['fallback'] ?? $fallback;
+    }
+
     try {
       $resolver = app($resolverClass);
 
@@ -45,12 +60,12 @@ class ContentBindingResolver
         return $binding['fallback'] ?? $fallback;
       }
 
-      $record = $resolver->resolve($recordKey, new ContentSourceContext(
-        site: $block->renderSite(),
-        page: $block->renderPage(),
-        locale: $block->renderLocaleCode(),
-        preview: (bool) $block->getAttribute('render_preview'),
-      ));
+      $record = $this->runtime->remember(
+        $source,
+        $context,
+        ['record' => $recordKey],
+        fn () => $resolver->resolve($recordKey, $context),
+      );
       $value = is_array($record) ? data_get($record, $sourceField) : null;
 
       return $value !== null && $value !== '' ? $value : ($binding['fallback'] ?? $fallback);

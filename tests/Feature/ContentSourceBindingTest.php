@@ -5,13 +5,18 @@ namespace WebBlocks\Cms\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
+use WebBlocks\Cms\Support\ContentSources\ContentCollectionQuery;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
+use WebBlocks\Cms\Support\ContentSources\ContentCollectionResult;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceContext;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceRuntime;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
+use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceAccessPolicy;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
+use WebBlocks\Cms\Support\ContentSources\Contracts\QueryableContentCollectionSourceResolver;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Tests\TestCase;
@@ -149,6 +154,7 @@ class ContentSourceBindingTest extends TestCase
     ]);
     $this->assertSame('https://cdn.example.test/plugin.png', $image->boundPublicValue('image_source'));
     $this->assertSame('/plugins/seo', $image->boundPublicValue('url'));
+    $this->assertSame(['title' => ['text'], 'url' => ['url']], app(ContentSourceEditor::class)->targets(new Block(['type' => 'button_link'])));
   }
 
   #[Test]
@@ -184,6 +190,143 @@ class ContentSourceBindingTest extends TestCase
     $this->assertSame('WebBlocks Forms', $children[0]->boundPublicValue('title'));
     $this->assertSame(2, $stack->getAttribute('content_source_pagination')['current_page']);
     $this->assertCount(2, $preview);
+  }
+
+  #[Test]
+  public function access_policies_and_cache_are_enforced_before_entity_resolution(): void
+  {
+    CountingEntitySource::$calls = 0;
+    $plugin = PluginDefinition::make('secure-content')->contentSources([
+      ContentSourceDefinition::entity('secure-content::allowed')
+        ->resolver(CountingEntitySource::class)->cacheFor(60)->fields(['name' => 'text']),
+      ContentSourceDefinition::entity('secure-content::denied')
+        ->resolver(CountingEntitySource::class)->accessPolicy(DenyContentSourcePolicy::class)->fields(['name' => 'text']),
+    ]);
+    $this->registerPlugin($plugin, 'secure-content');
+
+    $allowed = $this->sourceBoundBlock('secure-content::allowed');
+    $denied = $this->sourceBoundBlock('secure-content::denied');
+
+    $this->assertSame('Resolved once', $allowed->boundPublicValue('title', 'fallback'));
+    $this->assertSame('Resolved once', $allowed->boundPublicValue('title', 'fallback'));
+    $this->assertSame('fallback', $denied->boundPublicValue('title', 'fallback'));
+    $this->assertSame(1, CountingEntitySource::$calls);
+
+    app(ContentSourceRuntime::class)->invalidate('secure-content::allowed');
+    $this->assertSame('Resolved once', $allowed->boundPublicValue('title', 'fallback'));
+    $this->assertSame(2, CountingEntitySource::$calls);
+  }
+
+  #[Test]
+  public function queryable_sources_receive_filter_sort_limit_and_page_without_loading_the_full_collection(): void
+  {
+    QueryableEventsSource::$lastQuery = null;
+    $plugin = PluginDefinition::make('events')->contentSources([
+      ContentSourceDefinition::collection('events::upcoming')
+        ->resolver(QueryableEventsSource::class)->fields(['title' => 'text']),
+    ]);
+    $this->registerPlugin($plugin, 'events');
+    $this->get('/?wb_collection_40_page=3');
+
+    $grid = new Block(['type' => 'grid']);
+    $grid->id = 40;
+    $grid->settings = ['content_collection' => [
+      'source' => 'events::upcoming', 'template_block_id' => 41, 'limit' => 100,
+      'filter_field' => 'category', 'filter_value' => 'workshop',
+      'sort_field' => 'starts_at', 'sort_direction' => 'desc',
+      'paginate' => true, 'per_page' => 10,
+    ]];
+    $template = new Block(['type' => 'header']);
+    $template->id = 41;
+    $template->settings = ['content_bindings' => ['title' => [
+      'source' => 'events::upcoming', 'record' => '@item', 'field' => 'title',
+    ]]];
+    $template->setRelation('children', collect());
+    $grid->setRelation('children', collect([$template]));
+
+    $children = app(ContentCollectionRenderer::class)->children($grid);
+
+    $this->assertSame('Server-paged event', $children->first()->boundPublicValue('title'));
+    $this->assertSame(50, QueryableEventsSource::$lastQuery?->limit);
+    $this->assertSame('category', QueryableEventsSource::$lastQuery?->filterField);
+    $this->assertSame('workshop', QueryableEventsSource::$lastQuery?->filterValue);
+    $this->assertSame('starts_at', QueryableEventsSource::$lastQuery?->sortField);
+    $this->assertSame('desc', QueryableEventsSource::$lastQuery?->sortDirection);
+    $this->assertSame(3, QueryableEventsSource::$lastQuery?->page);
+
+    $preview = app(ContentSourceEditor::class)->collectionPreview($grid, 'events::upcoming');
+    $this->assertCount(1, $preview);
+    $this->assertSame(1, QueryableEventsSource::$lastQuery?->page);
+    $this->assertSame(3, QueryableEventsSource::$lastQuery?->limit);
+  }
+
+  #[Test]
+  public function collection_resolver_errors_can_hide_the_template(): void
+  {
+    $plugin = PluginDefinition::make('broken')->contentSources([
+      ContentSourceDefinition::collection('broken::items')
+        ->resolver(ThrowingCollectionSource::class)->fields(['title' => 'text']),
+    ]);
+    $this->registerPlugin($plugin, 'broken');
+
+    $grid = new Block(['type' => 'grid']);
+    $grid->id = 45;
+    $grid->settings = ['content_collection' => [
+      'source' => 'broken::items', 'template_block_id' => 46, 'error_behavior' => 'hide_template',
+    ]];
+    $template = new Block(['type' => 'card']);
+    $template->id = 46;
+    $template->setRelation('children', collect());
+    $grid->setRelation('children', collect([$template]));
+
+    $this->assertCount(0, app(ContentCollectionRenderer::class)->children($grid));
+  }
+
+  #[Test]
+  public function empty_collections_and_removed_sources_have_safe_editor_outcomes(): void
+  {
+    $this->registerCatalogSource(enabled: true);
+    $grid = new Block(['type' => 'grid']);
+    $grid->id = 50;
+    $grid->settings = ['content_collection' => [
+      'source' => 'plugin-catalog::featured-plugins', 'template_block_id' => 51,
+      'filter_field' => 'category', 'filter_value' => 'missing', 'empty_behavior' => 'keep_template',
+    ]];
+    $template = new Block(['type' => 'card']);
+    $template->id = 51;
+    $template->setRelation('children', collect());
+    $grid->setRelation('children', collect([$template]));
+
+    $this->assertSame($template, app(ContentCollectionRenderer::class)->children($grid)->first());
+
+    $orphan = new Block(['type' => 'header']);
+    $orphan->settings = ['content_bindings' => ['title' => [
+      'source' => 'removed::source', 'record' => 'one', 'field' => 'title',
+    ]]];
+    $this->assertSame([[
+      'key' => 'content_source_warning_missing_source',
+      'params' => ['target' => 'title', 'source' => 'removed::source'],
+    ]], app(ContentSourceEditor::class)->warnings($orphan));
+  }
+
+  private function registerPlugin(PluginDefinition $plugin, string $handle): void
+  {
+    $registry = new PluginRegistry([$handle => true]);
+    $registry->register($plugin);
+    $this->app->instance(PluginRegistry::class, $registry);
+    $this->app->forgetInstance(ContentSourceRegistry::class);
+    $this->app->forgetInstance(ContentBindingResolver::class);
+    $this->app->forgetInstance(ContentCollectionRenderer::class);
+  }
+
+  private function sourceBoundBlock(string $source): Block
+  {
+    $block = new Block(['type' => 'header', 'title' => 'fallback']);
+    $block->settings = ['content_bindings' => ['title' => [
+      'source' => $source, 'record' => 'one', 'field' => 'name',
+    ]]];
+
+    return $block;
   }
 
   private function registerCatalogSource(bool $enabled): void
@@ -240,6 +383,48 @@ class ContentSourceBindingTest extends TestCase
   }
 }
 
+class DenyContentSourcePolicy implements ContentSourceAccessPolicy
+{
+  public function allows(ContentSourceContext $context): bool
+  {
+    return false;
+  }
+}
+
+class CountingEntitySource implements ContentSourceResolver
+{
+  public static int $calls = 0;
+
+  public function resolve(string $recordKey, ContentSourceContext $context): ?array
+  {
+    self::$calls++;
+
+    return ['name' => 'Resolved once'];
+  }
+
+  public function options(ContentSourceContext $context): array
+  {
+    return ['one' => 'One'];
+  }
+}
+
+class QueryableEventsSource implements QueryableContentCollectionSourceResolver
+{
+  public static ?ContentCollectionQuery $lastQuery = null;
+
+  public function resolveCollection(array $settings, ContentSourceContext $context): iterable
+  {
+    throw new \RuntimeException('The legacy collection method must not run.');
+  }
+
+  public function queryCollection(ContentCollectionQuery $query, array $settings, ContentSourceContext $context): ContentCollectionResult
+  {
+    self::$lastQuery = $query;
+
+    return new ContentCollectionResult([['title' => 'Server-paged event']], 25, 3, 10);
+  }
+}
+
 class FakeFeaturedPluginsSource implements ContentCollectionSourceResolver
 {
   public function resolveCollection(array $settings, ContentSourceContext $context): iterable
@@ -248,6 +433,14 @@ class FakeFeaturedPluginsSource implements ContentCollectionSourceResolver
       ['name' => 'WebBlocks SEO', 'description' => '<p>SEO metadata.</p>', 'category' => 'marketing'],
       ['name' => 'WebBlocks Forms', 'description' => '<p>Public forms.</p>', 'category' => 'forms'],
     ];
+  }
+}
+
+class ThrowingCollectionSource implements ContentCollectionSourceResolver
+{
+  public function resolveCollection(array $settings, ContentSourceContext $context): iterable
+  {
+    throw new \RuntimeException('Unavailable');
   }
 }
 

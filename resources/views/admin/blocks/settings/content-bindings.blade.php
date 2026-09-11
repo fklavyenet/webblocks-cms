@@ -1,7 +1,16 @@
 @php
     $sourceEditor = app(\WebBlocks\Cms\Support\ContentSources\ContentSourceEditor::class);
     $bindingTargets = $sourceEditor->targets($block);
+    $contentSourceWarnings = $sourceEditor->warnings($block);
 @endphp
+
+@if ($contentSourceWarnings !== [])
+    <div class="wb-alert wb-alert-warning wb-mb-4" role="alert">
+        <strong>{{ $blockFormText('content_source_warning_title') }}</strong>
+        <ul>@foreach ($contentSourceWarnings as $warning)<li>{{ $blockFormText($warning['key'], $warning['params']) }}</li>@endforeach</ul>
+        <div class="wb-text-sm">{{ $blockFormText('content_source_warning_help') }}</div>
+    </div>
+@endif
 
 @if ($bindingTargets !== [])
     <div class="wb-stack wb-gap-3 wb-mb-4">
@@ -37,6 +46,7 @@
         $selectedCollection = old('content_collection_source', $block->setting('content_collection.source', ''));
         $selectedTemplateId = (string) old('content_collection_template_id', $block->setting('content_collection.template_block_id', ''));
         $collectionPreview = $selectedCollection !== '' ? $sourceEditor->collectionPreview($block, $selectedCollection) : [];
+        $collectionFields = $sourceEditor->collectionFieldChoices($selectedCollection);
         $templateBlocks = $block->children->when(
             ($selectedBlockType?->slug ?? $block->typeSlug()) === 'slider',
             fn ($children) => $children->filter(fn ($child) => $child->typeSlug() === 'slide')
@@ -76,10 +86,29 @@
                 </div>
             </div>
 
+            <div class="wb-stack wb-gap-1">
+                <label for="content_collection_empty_behavior">{{ $blockFormText('content_collection_empty_behavior') }}</label>
+                <select id="content_collection_empty_behavior" name="content_collection_empty_behavior" class="wb-select">
+                    <option value="hide_template" @selected(old('content_collection_empty_behavior', $block->setting('content_collection.empty_behavior', 'hide_template')) === 'hide_template')>{{ $blockFormText('content_collection_empty_hide') }}</option>
+                    <option value="keep_template" @selected(old('content_collection_empty_behavior', $block->setting('content_collection.empty_behavior', 'hide_template')) === 'keep_template')>{{ $blockFormText('content_collection_empty_keep') }}</option>
+                </select>
+            </div>
+
+            <div class="wb-stack wb-gap-1">
+                <label for="content_collection_error_behavior">{{ $blockFormText('content_collection_error_behavior') }}</label>
+                <select id="content_collection_error_behavior" name="content_collection_error_behavior" class="wb-select">
+                    <option value="keep_template" @selected(old('content_collection_error_behavior', $block->setting('content_collection.error_behavior', 'keep_template')) === 'keep_template')>{{ $blockFormText('content_collection_error_keep') }}</option>
+                    <option value="hide_template" @selected(old('content_collection_error_behavior', $block->setting('content_collection.error_behavior', 'keep_template')) === 'hide_template')>{{ $blockFormText('content_collection_error_hide') }}</option>
+                </select>
+            </div>
+
             <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-1">
                     <label for="content_collection_filter_field">{{ $blockFormText('content_collection_filter_field') }}</label>
-                    <input id="content_collection_filter_field" name="content_collection_filter_field" class="wb-input" value="{{ old('content_collection_filter_field', $block->setting('content_collection.filter_field', '')) }}">
+                    <select id="content_collection_filter_field" name="content_collection_filter_field" class="wb-select">
+                        <option value="">{{ $blockFormText('content_collection_field_none') }}</option>
+                        @foreach ($collectionFields as $field => $label)<option value="{{ $field }}" @selected(old('content_collection_filter_field', $block->setting('content_collection.filter_field', '')) === $field)>{{ $label }}</option>@endforeach
+                    </select>
                 </div>
                 <div class="wb-stack wb-gap-1">
                     <label for="content_collection_filter_value">{{ $blockFormText('content_collection_filter_value') }}</label>
@@ -87,7 +116,10 @@
                 </div>
                 <div class="wb-stack wb-gap-1">
                     <label for="content_collection_sort_field">{{ $blockFormText('content_collection_sort_field') }}</label>
-                    <input id="content_collection_sort_field" name="content_collection_sort_field" class="wb-input" value="{{ old('content_collection_sort_field', $block->setting('content_collection.sort_field', '')) }}">
+                    <select id="content_collection_sort_field" name="content_collection_sort_field" class="wb-select">
+                        <option value="">{{ $blockFormText('content_collection_field_none') }}</option>
+                        @foreach ($collectionFields as $field => $label)<option value="{{ $field }}" @selected(old('content_collection_sort_field', $block->setting('content_collection.sort_field', '')) === $field)>{{ $label }}</option>@endforeach
+                    </select>
                 </div>
                 <div class="wb-stack wb-gap-1">
                     <label for="content_collection_sort_direction">{{ $blockFormText('content_collection_sort_direction') }}</label>

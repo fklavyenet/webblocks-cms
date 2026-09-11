@@ -61,6 +61,7 @@ use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceRuntime;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiRateLimit;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
@@ -1071,6 +1072,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(ContentBindingResolver::class);
     $this->app->singleton(ContentCollectionRenderer::class);
     $this->app->singleton(ContentSourceEditor::class);
+    $this->app->singleton(ContentSourceRuntime::class);
 
     /*
      * Deliberately not a singleton: it is resolved right after a plugin

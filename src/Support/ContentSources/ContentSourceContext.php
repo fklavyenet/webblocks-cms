@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\ContentSources;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 
@@ -12,5 +13,6 @@ readonly class ContentSourceContext
     public ?Page $page,
     public ?string $locale,
     public bool $preview,
+    public ?Authenticatable $actor = null,
   ) {}
 }

@@ -6,10 +6,14 @@ use Illuminate\Support\Collection;
 use Throwable;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
+use WebBlocks\Cms\Support\ContentSources\Contracts\QueryableContentCollectionSourceResolver;
 
 class ContentCollectionRenderer
 {
-  public function __construct(private readonly ContentSourceRegistry $sources) {}
+  public function __construct(
+    private readonly ContentSourceRegistry $sources,
+    private readonly ContentSourceRuntime $runtime,
+  ) {}
 
   /** @return Collection<int, Block> */
   public function sliderSlides(Block $slider): Collection
@@ -46,15 +50,57 @@ class ContentCollectionRenderer
       }
 
       $limit = min(max((int) ($configuration['limit'] ?? 12), 1), 50);
-      $records = collect($resolver->resolveCollection(
-        settings: is_array($configuration['source_settings'] ?? null) ? $configuration['source_settings'] : [],
-        context: new ContentSourceContext(
-          site: $container->renderSite(),
-          page: $container->renderPage(),
-          locale: $container->renderLocaleCode(),
-          preview: (bool) $container->getAttribute('render_preview'),
-        ),
-      ))->filter(fn (mixed $record): bool => is_array($record));
+      $paginate = ($configuration['paginate'] ?? false) === true && $container->typeSlug() !== 'slider';
+      $perPage = $paginate ? min(max((int) ($configuration['per_page'] ?? 12), 1), 50) : null;
+      $pageParameter = 'wb_collection_'.$container->getKey().'_page';
+      $page = $paginate ? max((int) request()->query($pageParameter, 1), 1) : 1;
+      $query = new ContentCollectionQuery(
+        limit: $limit,
+        filterField: ($value = trim((string) ($configuration['filter_field'] ?? ''))) !== '' ? $value : null,
+        filterValue: ($value = trim((string) ($configuration['filter_value'] ?? ''))) !== '' ? $value : null,
+        sortField: ($value = trim((string) ($configuration['sort_field'] ?? ''))) !== '' ? $value : null,
+        sortDirection: ($configuration['sort_direction'] ?? 'asc') === 'desc' ? 'desc' : 'asc',
+        page: $page,
+        perPage: $perPage,
+      );
+      $context = new ContentSourceContext(
+        site: $container->renderSite(),
+        page: $container->renderPage(),
+        locale: $container->renderLocaleCode(),
+        preview: (bool) $container->getAttribute('render_preview'),
+        actor: auth()->user(),
+      );
+
+      if (! $this->runtime->allows($source, $context)) {
+        return $children;
+      }
+
+      $settings = is_array($configuration['source_settings'] ?? null) ? $configuration['source_settings'] : [];
+
+      if ($resolver instanceof QueryableContentCollectionSourceResolver) {
+        $result = $this->runtime->remember(
+          $source,
+          $context,
+          ['query' => (array) $query, 'settings' => $settings],
+          fn () => $resolver->queryCollection($query, $settings, $context),
+        );
+
+        if (! $result instanceof ContentCollectionResult) {
+          return $children;
+        }
+        $records = collect($result->records)->filter(fn (mixed $record): bool => is_array($record))->values();
+        $this->setPagination($container, $pageParameter, $result->currentPage, $result->perPage, $result->total);
+
+        return $this->replaceTemplate($children, $template, $records, $container, $configuration);
+      }
+
+      $resolved = $this->runtime->remember(
+        $source,
+        $context,
+        ['settings' => $settings],
+        fn () => collect($resolver->resolveCollection($settings, $context))->filter(fn (mixed $record): bool => is_array($record))->all(),
+      );
+      $records = collect($resolved);
 
       $filterField = trim((string) ($configuration['filter_field'] ?? ''));
       $filterValue = trim((string) ($configuration['filter_value'] ?? ''));
@@ -78,17 +124,10 @@ class ContentCollectionRenderer
 
       $records = $records->take($limit)->values();
 
-      if (($configuration['paginate'] ?? false) === true && $container->typeSlug() !== 'slider') {
-        $perPage = min(max((int) ($configuration['per_page'] ?? 12), 1), 50);
-        $pageParameter = 'wb_collection_'.$container->getKey().'_page';
+      if ($paginate && $perPage !== null) {
         $lastPage = max((int) ceil($records->count() / $perPage), 1);
-        $currentPage = min(max((int) request()->query($pageParameter, 1), 1), $lastPage);
-        $container->setAttribute('content_source_pagination', [
-          'current_page' => $currentPage,
-          'last_page' => $lastPage,
-          'previous_url' => $currentPage > 1 ? request()->fullUrlWithQuery([$pageParameter => $currentPage - 1]) : null,
-          'next_url' => $currentPage < $lastPage ? request()->fullUrlWithQuery([$pageParameter => $currentPage + 1]) : null,
-        ]);
+        $currentPage = min($page, $lastPage);
+        $this->setPagination($container, $pageParameter, $currentPage, $perPage, $records->count());
         $records = $records->forPage($currentPage, $perPage)->values();
       } else {
         $container->setAttribute('content_source_pagination', null);
@@ -96,6 +135,17 @@ class ContentCollectionRenderer
     } catch (Throwable $exception) {
       report($exception);
 
+      return ($configuration['error_behavior'] ?? 'keep_template') === 'hide_template'
+        ? $this->replaceTemplate($children, $template, collect(), $container, [...$configuration, 'empty_behavior' => 'hide_template'])
+        : $children;
+    }
+
+    return $this->replaceTemplate($children, $template, $records, $container, $configuration);
+  }
+
+  private function replaceTemplate(Collection $children, Block $template, Collection $records, Block $container, array $configuration): Collection
+  {
+    if ($records->isEmpty() && ($configuration['empty_behavior'] ?? 'hide_template') === 'keep_template') {
       return $children;
     }
 
@@ -108,6 +158,18 @@ class ContentCollectionRenderer
         ->map(fn (array $record): Block => $this->cloneTreeForItem($template, $record, $container))
         ->all();
     })->values();
+  }
+
+  private function setPagination(Block $container, string $parameter, int $page, int $perPage, int $total): void
+  {
+    $lastPage = max((int) ceil($total / max($perPage, 1)), 1);
+    $page = min(max($page, 1), $lastPage);
+    $container->setAttribute('content_source_pagination', [
+      'current_page' => $page,
+      'last_page' => $lastPage,
+      'previous_url' => $page > 1 ? request()->fullUrlWithQuery([$parameter => $page - 1]) : null,
+      'next_url' => $page < $lastPage ? request()->fullUrlWithQuery([$parameter => $page + 1]) : null,
+    ]);
   }
 
   private function cloneTreeForItem(Block $block, array $record, ?Block $parent = null): Block

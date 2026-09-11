@@ -53,6 +53,7 @@ class BlockRequest extends FormRequest
     $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $block?->block_type_id ?: 0);
     $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
     $translationRegistry = app(BlockTranslationRegistry::class);
+    $collectionFieldOptions = array_keys(app(ContentSourceEditor::class)->collectionFieldChoices(trim((string) $this->input('content_collection_source', ''))));
     $isTranslatedBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'feature-item', 'link-list-item'], true)
       && $translationRegistry->isTranslatable($selectedBlockType?->slug)
       && $this->filled('locale');
@@ -252,12 +253,14 @@ class BlockRequest extends FormRequest
       'content_collection_source' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:160'],
       'content_collection_template_id' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'integer', 'min:1'],
       'content_collection_limit' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'integer', 'min:1', 'max:50'],
-      'content_collection_filter_field' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:120'],
+      'content_collection_filter_field' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:120', Rule::in(['', ...$collectionFieldOptions])],
       'content_collection_filter_value' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:255'],
-      'content_collection_sort_field' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:120'],
+      'content_collection_sort_field' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:120', Rule::in(['', ...$collectionFieldOptions])],
       'content_collection_sort_direction' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', Rule::in(['asc', 'desc'])],
       'content_collection_paginate' => [in_array($selectedBlockType?->slug, ['grid', 'stack'], true) ? 'nullable' : 'prohibited', 'boolean'],
       'content_collection_per_page' => [in_array($selectedBlockType?->slug, ['grid', 'stack'], true) ? 'nullable' : 'prohibited', 'integer', 'min:1', 'max:50'],
+      'content_collection_empty_behavior' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', Rule::in(['hide_template', 'keep_template'])],
+      'content_collection_error_behavior' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', Rule::in(['hide_template', 'keep_template'])],
       'media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'gallery_media_ids' => ['nullable', 'array'],
@@ -2451,6 +2454,8 @@ class BlockRequest extends FormRequest
       $sourceHandle = trim((string) ($data['content_collection_source'] ?? ''));
       $templateId = (int) ($data['content_collection_template_id'] ?? 0);
       $validSource = array_key_exists($sourceHandle, $sourceEditor->collectionChoices());
+      $filterField = trim((string) ($data['content_collection_filter_field'] ?? ''));
+      $sortField = trim((string) ($data['content_collection_sort_field'] ?? ''));
       $validTemplateQuery = Block::query()
         ->whereKey($templateId)
         ->where('parent_id', $existingBlock?->id);
@@ -2458,17 +2463,21 @@ class BlockRequest extends FormRequest
         && ($collectionContainerType !== 'slider' || (clone $validTemplateQuery)->where('type', 'slide')->exists())
         && ($collectionContainerType === 'slider' || $validTemplateQuery->exists());
 
-      if ($sourceHandle !== '' && $validSource && $validTemplate) {
+      if ($sourceHandle !== '' && $validSource && $validTemplate
+        && $sourceEditor->collectionFieldIsAllowed($sourceHandle, $filterField)
+        && $sourceEditor->collectionFieldIsAllowed($sourceHandle, $sortField)) {
         $settings['content_collection'] = [
           'source' => $sourceHandle,
           'template_block_id' => $templateId,
           'limit' => min(max((int) ($data['content_collection_limit'] ?? 12), 1), 50),
-          'filter_field' => trim((string) ($data['content_collection_filter_field'] ?? '')),
+          'filter_field' => $filterField,
           'filter_value' => trim((string) ($data['content_collection_filter_value'] ?? '')),
-          'sort_field' => trim((string) ($data['content_collection_sort_field'] ?? '')),
+          'sort_field' => $sortField,
           'sort_direction' => ($data['content_collection_sort_direction'] ?? 'asc') === 'desc' ? 'desc' : 'asc',
           'paginate' => in_array($collectionContainerType, ['grid', 'stack'], true) && (bool) ($data['content_collection_paginate'] ?? false),
           'per_page' => min(max((int) ($data['content_collection_per_page'] ?? 12), 1), 50),
+          'empty_behavior' => ($data['content_collection_empty_behavior'] ?? 'hide_template') === 'keep_template' ? 'keep_template' : 'hide_template',
+          'error_behavior' => ($data['content_collection_error_behavior'] ?? 'keep_template') === 'hide_template' ? 'hide_template' : 'keep_template',
         ];
       } else {
         unset($settings['content_collection']);
@@ -2481,6 +2490,8 @@ class BlockRequest extends FormRequest
     unset($data['content_collection_source'], $data['content_collection_template_id'], $data['content_collection_limit']);
     unset($data['content_collection_filter_field'], $data['content_collection_filter_value'], $data['content_collection_sort_field'], $data['content_collection_sort_direction']);
     unset($data['content_collection_paginate'], $data['content_collection_per_page']);
+    unset($data['content_collection_empty_behavior']);
+    unset($data['content_collection_error_behavior']);
 
     return $data;
   }

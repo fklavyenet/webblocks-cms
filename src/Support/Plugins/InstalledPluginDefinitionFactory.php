@@ -433,6 +433,14 @@ class InstalledPluginDefinitionFactory
         ? ContentSourceDefinition::collection($handle)
         : ContentSourceDefinition::entity($handle);
 
+      if (isset($item['cache_seconds']) && is_numeric($item['cache_seconds'])) {
+        $source->cacheFor((int) $item['cache_seconds']);
+      }
+
+      if (isset($item['access_policy']) && is_string($item['access_policy']) && $item['access_policy'] !== '') {
+        $source->accessPolicy($item['access_policy']);
+      }
+
       $sources[] = $source
         ->label(is_string($item['label'] ?? null) ? $item['label'] : $handle)
         ->resolver($resolver)

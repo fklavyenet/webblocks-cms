@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\ContentSources;
 
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
+use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceAccessPolicy;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
 use WebBlocks\Cms\Support\Plugins\PluginException;
 
@@ -17,6 +18,11 @@ class ContentSourceDefinition
 
   /** @var array<string, array{type: string, label: string}> */
   private array $fields = [];
+
+  /** @var class-string<ContentSourceAccessPolicy>|null */
+  private ?string $accessPolicy = null;
+
+  private int $cacheSeconds = 0;
 
   private function __construct(private readonly string $handle, private readonly string $kind)
   {
@@ -92,6 +98,36 @@ class ContentSourceDefinition
   public function isCollection(): bool
   {
     return $this->kind === 'collection';
+  }
+
+  /** @param class-string<ContentSourceAccessPolicy> $policy */
+  public function accessPolicy(string $policy): self
+  {
+    if (! is_a($policy, ContentSourceAccessPolicy::class, true)) {
+      throw new PluginException("Content source access policy [{$policy}] must implement ".ContentSourceAccessPolicy::class.'.');
+    }
+
+    $this->accessPolicy = $policy;
+
+    return $this;
+  }
+
+  /** @return class-string<ContentSourceAccessPolicy>|null */
+  public function accessPolicyClass(): ?string
+  {
+    return $this->accessPolicy;
+  }
+
+  public function cacheFor(int $seconds): self
+  {
+    $this->cacheSeconds = min(max($seconds, 0), 86400);
+
+    return $this;
+  }
+
+  public function cacheSeconds(): int
+  {
+    return $this->cacheSeconds;
   }
 
   /**

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
@@ -13,6 +14,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Pages\PageRevisionCandidateManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportDataBuilder;
 use WebBlocks\Cms\Tests\TestCase;
 
 class PageRevisionCandidateManagerTest extends TestCase
@@ -90,6 +92,32 @@ class PageRevisionCandidateManagerTest extends TestCase
     $this->assertSame('Original title', $page->fresh()->title);
     $this->assertDatabaseMissing('wbcms_pages', ['id' => $candidatePageId]);
     $this->assertDatabaseHas('wbcms_page_revision_candidates', ['id' => $candidate->id, 'status' => PageRevisionCandidate::STATUS_DISCARDED]);
+  }
+
+  #[Test]
+  public function content_source_configuration_survives_revisions_and_site_export(): void
+  {
+    [$page, $actor] = $this->pageAndActor();
+    $settings = [
+      'content_bindings' => ['title' => [
+        'source' => 'events::event', 'record' => 'event-1', 'field' => 'title',
+      ]],
+      'content_collection' => [
+        'source' => 'events::upcoming', 'template_block_id' => 999, 'limit' => 12,
+      ],
+    ];
+    $block = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'grid', 'slot' => 'main',
+      'sort_order' => 0, 'settings' => json_encode($settings, JSON_UNESCAPED_SLASHES), 'status' => 'published',
+    ]);
+
+    $revision = $this->app->make(PageRevisionManager::class)->capture($page->fresh(), $actor);
+    $revisionBlock = collect($revision->snapshot['blocks'])->firstWhere('snapshot_id', $block->id);
+    $export = $this->app->make(SiteExportDataBuilder::class)->build($page->site, false);
+    $exportBlock = collect($export['blocks'])->firstWhere('id', $block->id);
+
+    $this->assertSame($settings, json_decode($revisionBlock['settings'], true));
+    $this->assertSame($settings, json_decode($exportBlock['settings'], true));
   }
 
   private function pageAndActor(): array
