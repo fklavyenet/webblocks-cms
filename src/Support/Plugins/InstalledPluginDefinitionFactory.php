@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Plugins;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use SplFileInfo;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class InstalledPluginDefinitionFactory
@@ -97,6 +98,7 @@ class InstalledPluginDefinitionFactory
     $definition->permissions($permissions);
     $definition->menu($this->menuItems($manifest));
     $definition->blockTypes($this->blockTypes($manifest));
+    $definition->contentSources($this->contentSources($manifest));
     $definition->migrations($this->migrationPaths($manifest));
 
     if ($enabled) {
@@ -397,6 +399,43 @@ class InstalledPluginDefinitionFactory
     }
 
     return $blockTypes;
+  }
+
+  /**
+   * @param  array<string, mixed>  $manifest
+   * @return array<int, ContentSourceDefinition>
+   */
+  private function contentSources(array $manifest): array
+  {
+    $items = $manifest['content_sources'] ?? [];
+
+    if (! is_array($items)) {
+      return [];
+    }
+
+    $sources = [];
+
+    foreach ($items as $item) {
+      if (! is_array($item)) {
+        continue;
+      }
+
+      $handle = $item['handle'] ?? null;
+      $resolver = $item['resolver'] ?? null;
+      $fields = $item['fields'] ?? null;
+
+      if (! is_string($handle) || ! ContentSourceDefinition::isValidHandle($handle)
+        || ! is_string($resolver) || ! is_array($fields)) {
+        continue;
+      }
+
+      $sources[] = ContentSourceDefinition::entity($handle)
+        ->label(is_string($item['label'] ?? null) ? $item['label'] : $handle)
+        ->resolver($resolver)
+        ->fields($fields);
+    }
+
+    return $sources;
   }
 
   private function loadPluginSource(string $path, string $provider): void

@@ -3,4 +3,4 @@
     $classAttribute = $class ? ' class="'.$class.'"' : '';
 @endphp
 
-<p{!! $classAttribute !!}>{{ (string) ($block->content ?? '') }}</p>
+<p{!! $classAttribute !!}>{{ (string) $block->boundPublicValue('content', $block->content ?? '') }}</p>

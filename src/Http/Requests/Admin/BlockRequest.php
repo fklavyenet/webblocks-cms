@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -246,6 +247,8 @@ class BlockRequest extends FormRequest
       'application_min_height' => [$isApplication ? 'nullable' : 'prohibited', 'integer', 'min:0', 'max:2000'],
       'application_show_loading_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
       'application_show_failure_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
+      'content_binding_selection' => ['nullable', 'array'],
+      'content_binding_selection.*' => ['nullable', 'string', 'max:500'],
       'media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'gallery_media_ids' => ['nullable', 'array'],
@@ -2400,7 +2403,42 @@ class BlockRequest extends FormRequest
     unset($data['slider_autoplay'], $data['slider_pause_on_hover'], $data['slider_show_arrows'], $data['slider_show_dots'], $data['slider_loop'], $data['slider_swipe'], $data['slider_keyboard']);
     unset($data['slide_aria_label'], $data['slide_content_position'], $data['slide_content_width'], $data['slide_text_color'], $data['slide_background_fit']);
 
-    unset($data['plugin_settings']);
+    $settings = json_decode((string) ($data['settings'] ?? ''), true);
+    $settings = is_array($settings) ? $settings : [];
+    $existingBindings = $this->route('block') instanceof Block
+      ? $this->route('block')->setting('content_bindings', [])
+      : [];
+    $bindings = is_array($existingBindings) ? $existingBindings : [];
+    $bindingBlock = $this->route('block') instanceof Block ? $this->route('block') : new Block;
+    $bindingBlock->type = $data['type'] ?? $existingBlock?->type;
+    $bindingBlock->page_id = $data['page_id'] ?? $bindingBlock->page_id;
+    $sourceEditor = app(ContentSourceEditor::class);
+
+    foreach (($data['content_binding_selection'] ?? []) as $target => $selection) {
+      if (! in_array($target, ['title', 'content', 'url'], true)) {
+        continue;
+      }
+
+      $parts = explode('|', (string) $selection, 3);
+
+      if (count($parts) === 3
+        && $parts[0] !== '' && $parts[1] !== '' && $parts[2] !== ''
+        && $sourceEditor->selectionIsAllowed($bindingBlock, $target, (string) $selection)) {
+        $bindings[$target] = ['source' => $parts[0], 'record' => $parts[1], 'field' => $parts[2]];
+      } else {
+        unset($bindings[$target]);
+      }
+    }
+
+    if ($bindings !== []) {
+      $settings['content_bindings'] = $bindings;
+    } else {
+      unset($settings['content_bindings']);
+    }
+
+    $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+    unset($data['plugin_settings'], $data['content_binding_selection']);
 
     return $data;
   }

@@ -20,6 +20,7 @@
     $activeLocale = $activeLocale ?? null;
     $isDefaultLocale = $isDefaultLocale ?? (! $activeLocale || $activeLocale->is_default);
     $statusValue = old('status', $block->exists ? $block->status : ($block->status ?: 'published'));
+    $hasContentSourceSettings = app(\WebBlocks\Cms\Support\ContentSources\ContentSourceEditor::class)->supports($block);
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -109,12 +110,17 @@
                         <strong>{{ $blockFormText('settings_for', ['name' => $selectedBlockType?->name ?? $block->typeName()]) }}</strong>
                     </div>
                     <div class="wb-card-body">
+                        @include('webblocks-cms::admin.blocks.settings.content-bindings', [
+                            'block' => $block,
+                            'selectedBlockType' => $selectedBlockType,
+                        ])
+
                         @includeIf('webblocks-cms::admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug()), [
                             'block' => $block,
                             'selectedBlockType' => $selectedBlockType,
                         ])
 
-                        @unless (view()->exists('admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug())))
+                        @unless ($hasContentSourceSettings || view()->exists('admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug())))
                             @include('webblocks-cms::admin.blocks.settings.fallback')
                         @endunless
                     </div>

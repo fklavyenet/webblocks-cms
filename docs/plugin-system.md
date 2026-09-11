@@ -39,6 +39,8 @@ Expected plugin areas include:
 - custom block packs
 - appointments/booking
 
+Plugins may also expose typed domain records through the CMS Content Source contract. Content Sources feed fields on existing core blocks; they do not own replacement Header, Card, Grid, Slider, or other presentation renderers. See [Content Sources and Block Field Bindings](content-sources.md).
+
 Appointments is the first planned plugin to require a visitor-facing surface, and its design record — including the core extension points it depends on — is kept in [the appointments plugin plan](appointments-plugin-plan.md).
 
 ## Core Vs Plugin Boundary

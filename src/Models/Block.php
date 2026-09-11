@@ -16,6 +16,7 @@ use WebBlocks\Cms\Support\Applications\ApplicationDefinition;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState;
 use WebBlocks\Cms\Support\Pages\PageListItem;
@@ -1541,6 +1542,11 @@ class Block extends CmsModel
   public function setting(string $key, mixed $default = null): mixed
   {
     return data_get($this->decodedSettings(), $key, $default);
+  }
+
+  public function boundPublicValue(string $field, mixed $fallback = null): mixed
+  {
+    return app(ContentBindingResolver::class)->value($this, $field, $fallback);
   }
 
   public function applicationDefinition(): ?ApplicationDefinition

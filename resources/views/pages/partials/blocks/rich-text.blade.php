@@ -1,5 +1,5 @@
 @php
-    $content = trim((string) ($block->content ?? ''));
+    $content = trim((string) $block->boundPublicValue('content', $block->content ?? ''));
     $renderer = app(\WebBlocks\Cms\Support\Formatting\SafeRichTextRenderer::class);
     $rendered = $renderer->render($content)->toHtml();
 @endphp

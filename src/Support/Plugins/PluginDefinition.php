@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
+
 class PluginDefinition
 {
   /**
@@ -76,6 +78,9 @@ class PluginDefinition
   /** @var array<string, PluginBlockTypeDefinition> */
   private array $blockTypes = [];
 
+  /** @var array<string, ContentSourceDefinition> */
+  private array $contentSources = [];
+
   /** @var array<string, PluginBlockPackDefinition> */
   private array $blockPacks = [];
 
@@ -114,6 +119,10 @@ class PluginDefinition
 
     foreach ($this->blockTypes as $key => $blockType) {
       $this->blockTypes[$key] = clone $blockType;
+    }
+
+    foreach ($this->contentSources as $key => $source) {
+      $this->contentSources[$key] = clone $source;
     }
 
     foreach ($this->blockPacks as $key => $blockPack) {
@@ -776,6 +785,34 @@ class PluginDefinition
   public function blockTypeDefinitions(): array
   {
     return array_map(fn (PluginBlockTypeDefinition $blockType): PluginBlockTypeDefinition => clone $blockType, $this->blockTypes);
+  }
+
+  /** @param array<int, ContentSourceDefinition> $sources */
+  public function contentSources(array $sources): self
+  {
+    $indexed = [];
+
+    foreach ($sources as $source) {
+      if (! $source instanceof ContentSourceDefinition) {
+        throw new PluginException('Plugin content sources must be ContentSourceDefinition instances.');
+      }
+
+      if (! str_starts_with($source->handle(), $this->handle.'::')) {
+        throw PluginException::invalidExtensionOwnership($this->handle, $source->handle());
+      }
+
+      $indexed[$source->handle()] = $source->forPlugin($this->handle);
+    }
+
+    $this->contentSources = $indexed;
+
+    return $this;
+  }
+
+  /** @return array<string, ContentSourceDefinition> */
+  public function contentSourceDefinitions(): array
+  {
+    return array_map(fn (ContentSourceDefinition $source): ContentSourceDefinition => clone $source, $this->contentSources);
   }
 
   /**

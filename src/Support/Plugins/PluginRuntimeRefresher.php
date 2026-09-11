@@ -4,6 +4,9 @@ namespace WebBlocks\Cms\Support\Plugins;
 
 use Illuminate\Support\Facades\Artisan;
 use Throwable;
+use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 
 class PluginRuntimeRefresher
 {
@@ -55,6 +58,9 @@ class PluginRuntimeRefresher
       PluginAdminExtensionRegistry::class,
       PluginBlockCatalog::class,
       PluginBlockRegistry::class,
+      ContentSourceRegistry::class,
+      ContentSourceEditor::class,
+      ContentBindingResolver::class,
       PluginPublicAssetRegistry::class,
       PluginHealthMonitor::class,
     ] as $abstract) {

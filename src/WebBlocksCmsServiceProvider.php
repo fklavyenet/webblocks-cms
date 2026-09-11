@@ -57,6 +57,9 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiRateLimit;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
@@ -1060,6 +1063,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(PluginBlockCatalog::class, fn ($app): PluginBlockCatalog => new PluginBlockCatalog(
       $app->make(PluginRegistry::class)
     ));
+
+    $this->app->singleton(ContentSourceRegistry::class, fn ($app): ContentSourceRegistry => new ContentSourceRegistry(
+      $app->make(PluginRegistry::class)
+    ));
+    $this->app->singleton(ContentBindingResolver::class);
+    $this->app->singleton(ContentSourceEditor::class);
 
     /*
      * Deliberately not a singleton: it is resolved right after a plugin
