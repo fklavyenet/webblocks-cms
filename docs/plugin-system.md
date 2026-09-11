@@ -197,6 +197,21 @@ PluginDefinition::make('webblocks-ui-manager')
   ->health(WebBlocksUiManagerHealth::class);
 ```
 
+A plugin-owned container that should repeat one editorial child template from
+a CMS Content Source declares the capability on its block contract:
+
+```php
+PluginBlockTypeDefinition::make('events::event-list')
+  ->label('Event List')
+  ->contentCollectionTemplate(['card']);
+```
+
+Passing no child-type list accepts any child type already valid for that
+container. Its public view must iterate
+`ContentCollectionRenderer::children($block)` so the CMS can replace the saved
+template with source-backed clones without the plugin owning Card or Grid
+markup.
+
 The exact API may change during implementation, but the contract must preserve these rules:
 
 - declared metadata is inspectable before a plugin is enabled

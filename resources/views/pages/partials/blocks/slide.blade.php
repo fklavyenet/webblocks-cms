@@ -43,8 +43,9 @@
     @endif
 
     <div class="wb-slide-content">
-        @foreach ($block->children as $child)
+        @foreach (app(\WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer::class)->children($block) as $child)
             @include('webblocks-cms::pages.partials.block', ['block' => $child])
         @endforeach
     </div>
 </article>
+@include('webblocks-cms::pages.partials.blocks.content-collection-pagination', ['block' => $block])

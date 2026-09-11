@@ -82,6 +82,21 @@ class ContentSourceBindingTest extends TestCase
   }
 
   #[Test]
+  public function block_contracts_decide_which_children_can_be_collection_templates(): void
+  {
+    $editor = app(ContentSourceEditor::class);
+
+    $this->assertTrue($editor->supportsCollection('section'));
+    $this->assertTrue($editor->supportsCollection('columns'));
+    $this->assertTrue($editor->supportsCollection('link-list'));
+    $this->assertFalse($editor->supportsCollection('split'));
+    $this->assertTrue($editor->collectionTemplateIsAllowed('slider', 'slide'));
+    $this->assertFalse($editor->collectionTemplateIsAllowed('slider', 'card'));
+    $this->assertTrue($editor->collectionTemplateIsAllowed('columns', 'column_item'));
+    $this->assertFalse($editor->collectionTemplateIsAllowed('columns', 'card'));
+  }
+
+  #[Test]
   public function a_collection_repeats_an_existing_slide_template_and_keeps_editorial_slides(): void
   {
     $this->registerCatalogSource(enabled: true);

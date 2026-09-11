@@ -389,6 +389,11 @@ class InstalledPluginDefinitionFactory
         $blockType->metadata($item['metadata']);
       }
 
+      if (($item['content_collection']['enabled'] ?? false) === true) {
+        $childTypes = $item['content_collection']['child_types'] ?? null;
+        $blockType->contentCollectionTemplate(is_array($childTypes) ? $childTypes : null);
+      }
+
       $translatedFields = $item['translated_fields'] ?? null;
 
       if (is_array($translatedFields)) {

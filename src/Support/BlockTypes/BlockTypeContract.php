@@ -14,6 +14,7 @@ class BlockTypeContract
      * @param  array<int, string>  $childContainerBehavior
      * @param  array<int, string>  $knownGaps
      * @param  array<int, string>|null  $allowedChildTypeSlugs
+     * @param  array<int, string>|null  $contentCollectionChildTypeSlugs
      */
   public function __construct(
     public readonly string $slug,
@@ -39,6 +40,8 @@ class BlockTypeContract
     public readonly array $knownGaps,
     public readonly bool $supportsChildren,
     public readonly ?array $allowedChildTypeSlugs,
+    public readonly bool $supportsContentCollection,
+    public readonly ?array $contentCollectionChildTypeSlugs,
     public readonly bool $ownsPublicRootHelper,
     public readonly ?string $undocumentedMessage = null,
   ) {}
@@ -67,6 +70,8 @@ class BlockTypeContract
       'renderer_root_contract' => $this->rendererRootContract,
       'supports_children' => $this->supportsChildren,
       'allowed_child_type_slugs' => $this->allowedChildTypeSlugs,
+      'supports_content_collection' => $this->supportsContentCollection,
+      'content_collection_child_type_slugs' => $this->contentCollectionChildTypeSlugs,
       'owns_public_root_helper' => $this->ownsPublicRootHelper,
       'current_contract_status' => $this->currentContractStatus,
       'known_gaps' => $this->knownGaps,

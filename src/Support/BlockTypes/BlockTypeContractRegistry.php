@@ -78,6 +78,8 @@ class BlockTypeContractRegistry
       knownGaps: $contract['known_gaps'],
       supportsChildren: $block->canAcceptChildren(),
       allowedChildTypeSlugs: $block->allowedChildTypeSlugs(),
+      supportsContentCollection: (bool) ($contract['content_collection']['enabled'] ?? false),
+      contentCollectionChildTypeSlugs: $contract['content_collection']['child_types'] ?? null,
       ownsPublicRootHelper: $block->ownsPublicRoot(),
     );
   }
@@ -111,6 +113,8 @@ class BlockTypeContractRegistry
       knownGaps: [],
       supportsChildren: $block->canAcceptChildren(),
       allowedChildTypeSlugs: $block->allowedChildTypeSlugs(),
+      supportsContentCollection: (bool) data_get($definition->metadataValues(), 'content_collection.enabled', false),
+      contentCollectionChildTypeSlugs: $this->contentCollectionChildTypes($definition->metadataValues()),
       ownsPublicRootHelper: $block->ownsPublicRoot(),
     );
   }
@@ -141,6 +145,8 @@ class BlockTypeContractRegistry
       knownGaps: [],
       supportsChildren: false,
       allowedChildTypeSlugs: null,
+      supportsContentCollection: false,
+      contentCollectionChildTypeSlugs: null,
       ownsPublicRootHelper: false,
       undocumentedMessage: 'No shipped contract is documented for this block type yet.',
     );
@@ -163,6 +169,23 @@ class BlockTypeContractRegistry
     $block->setRelation('blockType', $blockType);
 
     return $block;
+  }
+
+  /** @param array<string, mixed> $metadata */
+  private function contentCollectionChildTypes(array $metadata): ?array
+  {
+    $types = data_get($metadata, 'content_collection.child_types');
+
+    if (! is_array($types)) {
+      return null;
+    }
+
+    return collect($types)
+      ->filter(fn (mixed $type): bool => is_string($type) && preg_match('/^[a-z0-9][a-z0-9:_-]*$/', $type) === 1)
+      ->map(fn (string $type): string => trim($type))
+      ->unique()
+      ->values()
+      ->all();
   }
 
   private function viewPath(string $relativePath): ?string
@@ -472,6 +495,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'section' => [
+        'content_collection' => ['enabled' => true, 'child_types' => null],
         'admin_form_fields' => ['Admin label', 'Spacing', 'Background media', 'Background position', 'Background overlay'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['media_id', 'settings.layout_name', 'settings.spacing', 'settings.background_position', 'settings.background_overlay'],
@@ -483,6 +507,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'container' => [
+        'content_collection' => ['enabled' => true, 'child_types' => null],
         'admin_form_fields' => ['Admin label', 'Width', 'Flow'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['settings.layout_name', 'settings.width', 'settings.flow'],
@@ -494,6 +519,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'stack' => [
+        'content_collection' => ['enabled' => true, 'child_types' => null],
         'admin_form_fields' => ['Admin label', 'Spacing'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['settings.layout_name', 'settings.spacing'],
@@ -516,6 +542,7 @@ class BlockTypeContractRegistry
         'known_gaps' => ['The current WebBlocks UI primitive does not provide a responsive stacking modifier.'],
       ],
       'cluster' => [
+        'content_collection' => ['enabled' => true, 'child_types' => null],
         'admin_form_fields' => ['Admin label', 'Gap', 'Justify', 'Align', 'Wrap', 'Width'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['settings.layout_name', 'settings.gap', 'settings.alignment', 'settings.items_alignment', 'settings.wrap', 'settings.width'],
@@ -527,6 +554,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'grid' => [
+        'content_collection' => ['enabled' => true, 'child_types' => null],
         'admin_form_fields' => ['Admin label', 'Columns', 'Gap', 'Alternate media/text sections', 'First section layout'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['settings.layout_name', 'settings.columns', 'settings.gap', 'settings.alternate_media_text_sections', 'settings.alternate_start'],
@@ -538,6 +566,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'slider' => [
+        'content_collection' => ['enabled' => true, 'child_types' => ['slide']],
         'admin_form_fields' => ['Admin label', 'Height', 'Custom min height', 'Aspect ratio', 'Autoplay interval', 'Overlay', 'Content position', 'Content width', 'Text color', 'Background fit', 'Autoplay', 'Pause on hover', 'Show arrows', 'Show dots', 'Loop', 'Swipe', 'Keyboard navigation'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['settings.layout_name', 'settings.height', 'settings.min_height', 'settings.aspect_ratio', 'settings.transition', 'settings.interval_ms', 'settings.autoplay', 'settings.pause_on_hover', 'settings.show_arrows', 'settings.show_dots', 'settings.loop', 'settings.swipe', 'settings.keyboard', 'settings.overlay', 'settings.content_position', 'settings.content_width', 'settings.text_color', 'settings.background_fit'],
@@ -553,6 +582,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'slide' => [
+        'content_collection' => ['enabled' => true, 'child_types' => null],
         'admin_form_fields' => ['Admin label', 'Accessible label', 'Background media', 'Background position', 'Background overlay', 'Content position', 'Content width', 'Text color', 'Background fit'],
         'translatable_fields' => [],
         'shared_settings_fields' => ['media_id', 'settings.layout_name', 'settings.aria_label', 'settings.background_position', 'settings.background_overlay', 'settings.content_position', 'settings.content_width', 'settings.text_color', 'settings.background_fit'],
@@ -601,6 +631,7 @@ class BlockTypeContractRegistry
         'known_gaps' => ['Public renderer still preserves legacy settings fallbacks for eyebrow, title, and body copy when canonical translated fields are empty.'],
       ],
       'columns' => [
+        'content_collection' => ['enabled' => true, 'child_types' => ['column_item']],
         'admin_form_fields' => ['Columns Title', 'Columns Subtitle', 'Columns Variant', 'Intro Text', 'Column Items'],
         'translatable_fields' => ['title', 'subtitle', 'content'],
         'shared_settings_fields' => ['variant'],
@@ -631,6 +662,7 @@ class BlockTypeContractRegistry
         'known_gaps' => ['Current stats-style presentation still reuses subtitle as the visible value because there is no dedicated numeric value field.'],
       ],
       'feature-grid' => [
+        'content_collection' => ['enabled' => true, 'child_types' => ['feature-item', 'column_item']],
         'admin_form_fields' => ['Feature Grid Title', 'Feature Grid Subtitle', 'Intro Text', 'Feature Items'],
         'translatable_fields' => ['title', 'subtitle', 'content'],
         'shared_settings_fields' => [],
@@ -691,6 +723,7 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'link-list' => [
+        'content_collection' => ['enabled' => true, 'child_types' => ['link-list-item']],
         'admin_form_fields' => ['Intro title', 'Intro subtitle', 'Intro content', 'Row layout', 'List frame', 'Thumbnail size', 'Link list items'],
         'translatable_fields' => ['title', 'subtitle', 'content'],
         'shared_settings_fields' => ['settings.row_layout', 'settings.list_frame', 'settings.thumb_size'],

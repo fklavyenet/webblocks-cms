@@ -67,7 +67,23 @@ Bindings live under `settings.content_bindings`, so existing page duplication, r
 
 ## Collection sources
 
-A plugin may register `ContentSourceDefinition::collection(...)` with a resolver implementing `ContentCollectionSourceResolver`. Slider, Grid, and Stack can select that collection and one existing direct child as the repeated template. At render time CMS clones that subtree for each record, supplies the record as the current collection item, and resolves descendant field bindings against it. Slider templates remain Slide blocks; Grid and Stack can repeat any child type they already accept, such as Card.
+A plugin may register `ContentSourceDefinition::collection(...)` with a resolver implementing `ContentCollectionSourceResolver`. Collection-capable containers can select that collection and one existing direct child as the repeated template. At render time CMS clones that subtree for each record, supplies the record as the current collection item, and resolves descendant field bindings against it.
+
+Collection support is a block contract capability rather than a CMS list of
+special-case block names. Core Section, Container, Stack, Cluster, Grid, and
+Slide accept any otherwise-valid direct child template. Slider accepts Slide;
+Columns accepts Column Item; Feature Grid accepts Feature Item or Column Item;
+and Link List accepts Link List Item. Split and semantic containers such as Card
+do not advertise the capability because repeating their structural children
+would violate their layout contract.
+
+Plugin block types can opt in with
+`->contentCollectionTemplate()` for any valid child type, or pass a list of
+allowed child catalog slugs. Installed manifests express the same contract as
+`content_collection.enabled` and optional `content_collection.child_types`.
+The plugin's public container view renders the resolved children through
+`ContentCollectionRenderer::children($block)` just like the core container
+views.
 
 Other children remain ordinary editorial content and keep their position. The selected template is replaced in place by its resolved records, so one container can deliberately mix manual and dynamic content without a plugin-owned carousel, grid, or card renderer. Editors can preview up to three source records, cap records, filter by one source field and value, sort by a source field in either direction, and paginate Grid or Stack results. Resolution is capped at 50 records. A missing source, disabled plugin, invalid template, or resolver failure safely restores the ordinary stored block tree.
 

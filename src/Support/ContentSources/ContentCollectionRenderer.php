@@ -13,6 +13,7 @@ class ContentCollectionRenderer
   public function __construct(
     private readonly ContentSourceRegistry $sources,
     private readonly ContentSourceRuntime $runtime,
+    private readonly ContentSourceEditor $editor,
   ) {}
 
   /** @return Collection<int, Block> */
@@ -38,7 +39,11 @@ class ContentCollectionRenderer
     $template = $children->first(fn (Block $child): bool => (int) $child->id === $templateId);
     $resolverClass = $source?->resolverClass();
 
-    if ($source?->isCollection() !== true || ! $template instanceof Block || $resolverClass === null) {
+    if (! $this->editor->supportsCollection($container)
+      || $source?->isCollection() !== true
+      || ! $template instanceof Block
+      || ! $this->editor->collectionTemplateIsAllowed($container, (string) $template->typeSlug())
+      || $resolverClass === null) {
       return $children;
     }
 

@@ -1,7 +1,8 @@
 @php
+  $resolvedChildren = app(\WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer::class)->children($block);
   $children = (bool) $block->getAttribute('render_preview')
-    ? $block->children->sortBy('sort_order')->values()
-    : $block->children->where('status', 'published')->sortBy('sort_order')->values();
+    ? $resolvedChildren->sortBy('sort_order')->values()
+    : $resolvedChildren->where('status', 'published')->sortBy('sort_order')->values();
   $columnsVariant = $block->variant ?: 'cards';
   $preferredColumns = isset($preferredColumns) && in_array((string) $preferredColumns, ['2', '3', '4'], true)
     ? (string) $preferredColumns
@@ -50,3 +51,4 @@
       </div>
     @endif
 </section>
+@include('webblocks-cms::pages.partials.blocks.content-collection-pagination', ['block' => $block])

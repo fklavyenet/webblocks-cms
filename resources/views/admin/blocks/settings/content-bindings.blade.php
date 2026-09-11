@@ -43,17 +43,16 @@
     </div>
 @endif
 
-@if (in_array(($selectedBlockType?->slug ?? $block->typeSlug()), ['slider', 'grid', 'stack'], true))
+@if ($sourceEditor->supportsCollection($selectedBlockType ?? $block))
     @php
         $collectionChoices = $sourceEditor->collectionChoices();
         $selectedCollection = old('content_collection_source', $block->setting('content_collection.source', ''));
         $selectedTemplateId = (string) old('content_collection_template_id', $block->setting('content_collection.template_block_id', ''));
         $collectionPreview = $selectedCollection !== '' ? $sourceEditor->collectionPreview($block, $selectedCollection) : [];
         $collectionFields = $sourceEditor->collectionFieldChoices($selectedCollection);
-        $templateBlocks = $block->children->when(
-            ($selectedBlockType?->slug ?? $block->typeSlug()) === 'slider',
-            fn ($children) => $children->filter(fn ($child) => $child->typeSlug() === 'slide')
-        );
+        $collectionContainer = $selectedBlockType ?? $block;
+        $templateBlocks = $block->children
+            ->filter(fn ($child) => $sourceEditor->collectionTemplateIsAllowed($collectionContainer, (string) $child->typeSlug()));
     @endphp
 
     @if ($collectionChoices !== [] || $selectedCollection !== '')

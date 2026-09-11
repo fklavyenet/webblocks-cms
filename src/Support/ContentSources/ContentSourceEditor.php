@@ -4,6 +4,8 @@ namespace WebBlocks\Cms\Support\ContentSources;
 
 use Throwable;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
 use WebBlocks\Cms\Support\ContentSources\Contracts\QueryableContentCollectionSourceResolver;
@@ -13,6 +15,7 @@ class ContentSourceEditor
   public function __construct(
     private readonly ContentSourceRegistry $sources,
     private readonly ContentSourceRuntime $runtime,
+    private readonly BlockTypeContractRegistry $blockTypes,
   ) {}
 
   /**
@@ -110,7 +113,7 @@ class ContentSourceEditor
     $hasBindings = collect((array) $block->setting('content_bindings', []))
       ->contains(fn (mixed $binding): bool => is_array($binding) && trim((string) ($binding['source'] ?? '')) !== '');
 
-    if (in_array($block->typeSlug(), ['slider', 'grid', 'stack'], true)) {
+    if ($this->supportsCollection($block)) {
       return $this->sources->collections() !== [] || is_array($block->setting('content_collection'));
     }
 
@@ -125,6 +128,21 @@ class ContentSourceEditor
     }
 
     return false;
+  }
+
+  public function supportsCollection(Block|BlockType|string $block): bool
+  {
+    return $this->blockTypes->resolve($block instanceof Block ? $block->blockType ?? $block->typeSlug() : $block)
+      ->supportsContentCollection;
+  }
+
+  public function collectionTemplateIsAllowed(Block|BlockType|string $container, string $childType): bool
+  {
+    $contract = $this->blockTypes->resolve($container instanceof Block ? $container->blockType ?? $container->typeSlug() : $container);
+
+    return $contract->supportsContentCollection
+      && ($contract->contentCollectionChildTypeSlugs === null
+        || in_array($childType, $contract->contentCollectionChildTypeSlugs, true));
   }
 
   public function selectionIsAllowed(Block $block, string $target, string $selection): bool
@@ -285,10 +303,12 @@ class ContentSourceEditor
     $current = $block;
 
     for ($depth = 0; $depth < 8; $depth++) {
-      if (in_array($current->typeSlug(), ['slider', 'grid', 'stack'], true)) {
+      if ($this->supportsCollection($current)) {
         $handle = trim((string) $current->setting('content_collection.source', ''));
 
-        return $this->sources->find($handle);
+        if ($handle !== '') {
+          return $this->sources->find($handle);
+        }
       }
 
       $parent = $current->relationLoaded('parent') ? $current->getRelation('parent') : $current->parent;

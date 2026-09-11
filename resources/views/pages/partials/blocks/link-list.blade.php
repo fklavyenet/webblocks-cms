@@ -1,5 +1,6 @@
 @php
-    $items = $block->children->where('status', 'published')->filter(fn ($child) => $child->isLinkListItem())->sortBy('sort_order')->values();
+    $items = app(\WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer::class)->children($block)
+        ->where('status', 'published')->filter(fn ($child) => $child->isLinkListItem())->sortBy('sort_order')->values();
     $introMeta = $block->stringValueOrNull($block->subtitle) ?? $block->translatedTextFieldValue('subtitle');
     $introTitle = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title');
     $introDescription = $block->stringValueOrNull($block->content) ?? $block->translatedTextFieldValue('content');
@@ -38,3 +39,4 @@
         </div>
     </div>
 @endif
+@include('webblocks-cms::pages.partials.blocks.content-collection-pagination', ['block' => $block])

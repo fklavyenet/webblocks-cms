@@ -179,4 +179,24 @@ class PluginBlockTypeDefinition implements PluginBlockExtension
   {
     return $this->metadata;
   }
+
+  /**
+   * Allow one direct child to act as the template for a CMS content collection.
+   * Null accepts any otherwise-valid child type; a list narrows the template.
+   *
+   * @param  list<string>|null  $childTypes
+   */
+  public function contentCollectionTemplate(?array $childTypes = null): self
+  {
+    $clean = $childTypes === null ? null : collect($childTypes)
+      ->filter(fn (mixed $type): bool => is_string($type) && preg_match('/^[a-z0-9][a-z0-9:_-]*$/', $type) === 1)
+      ->map(fn (string $type): string => trim($type))
+      ->unique()
+      ->values()
+      ->all();
+
+    $this->metadata['content_collection'] = ['enabled' => true, 'child_types' => $clean];
+
+    return $this;
+  }
 }
