@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.81.2
+
+- Localize the Visitor Reports page-view chart, chart values, accessibility guidance, and Report Info modal in German, Spanish, French, and Italian instead of falling back to English.
+- Keep every Visitor Insights translation catalog aligned across all six supported admin languages with regression coverage.
+
 ## 1.81.1
 
 - Document how local submission protection combines signed render proofs, privacy-preserving reputation, burst detection, and operator feedback across native and compatible plugin forms.
