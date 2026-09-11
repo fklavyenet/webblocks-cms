@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/media-image-variants
+cms_title: Media Image Variants
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/media-image-variants.md
+---
+
 # Media Image Variants
 
 WebBlocks CMS generates a fixed set of product-owned image variants from public JPEG, PNG, and WebP media. Editors continue to manage only the original media item; generated files are derivative cache artifacts and do not appear as separate library records.

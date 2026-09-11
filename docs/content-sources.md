@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/content-sources
+cms_title: Content Sources and Block Field Bindings
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/content-sources.md
+---
+
 # Content Sources and Block Field Bindings
 
 Content Sources let an enabled plugin expose typed domain data to existing CMS blocks without owning public markup. A catalog, commerce, events, or news plugin supplies records; CMS pages retain ownership of layout, block composition, translation, preview, and rendering.

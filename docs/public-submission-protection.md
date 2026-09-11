@@ -1,3 +1,13 @@
+---
+cms_sync: true
+cms_site: docs-site
+cms_locale: en
+cms_path: /docs/public-submission-protection
+cms_title: Public Submission Protection
+cms_layout: docs
+cms_source_id: webblocks-cms:docs/public-submission-protection.md
+---
+
 # Public submission protection
 
 WebBlocks CMS provides one local protection pipeline for visitor-facing forms. The
