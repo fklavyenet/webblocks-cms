@@ -104,3 +104,25 @@ Bindings and collection configuration live in the ordinary block `settings`
 payload. Page revisions and site export/import already copy that payload
 verbatim; no plugin-owned table or executable resolver output enters a CMS
 revision or transfer package.
+
+## Internal Content API
+
+API clients discover only enabled and accessible sources with
+`GET /webadmin/api/content-sources`. Passing `block_id` adds the compatible
+binding targets and whether that block can host the collection. Entity sources
+include their safe record choices; fields always come from the plugin's declared
+contract.
+
+`POST /webadmin/api/content-sources/{source}/preview` resolves an entity record
+or up to five collection records without changing content. Preview responses
+discard every value the source did not declare, and use the requested block,
+locale, authenticated actor, and source access policy as context.
+
+An existing structured block accepts `content_bindings` and
+`content_collection` at the top level of `PATCH /webadmin/api/blocks/{block}`;
+the same objects are also accepted beneath `settings`. Each object replaces its
+corresponding configuration, and `null` clears it. The API validates block
+targets, field types, source access, record choices, direct-child ownership, and
+the block contract's allowed collection template types before writing. Invalid
+configuration returns `422 invalid_content_source_configuration`. Render the
+owning draft or staged page after writing to verify the composed result.

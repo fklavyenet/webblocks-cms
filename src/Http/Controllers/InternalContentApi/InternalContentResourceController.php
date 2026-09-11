@@ -30,6 +30,9 @@ use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
@@ -68,6 +71,7 @@ class InternalContentResourceController extends Controller
     private readonly BlockTranslationRegistry $translationRegistry,
     private readonly BlockTranslationWriter $translationWriter,
     private readonly AdminAuthorization $adminAuthorization,
+    private readonly ContentSourceAuthoring $contentSourceAuthoring,
   ) {}
 
   public function sites(): JsonResponse
@@ -288,6 +292,8 @@ class InternalContentResourceController extends Controller
         'content' => '/webadmin/api/icon-catalog?context=content',
         'navigation' => '/webadmin/api/icon-catalog?context=navigation',
         'content_contract' => '/webadmin/api/content-contract',
+        'content_sources' => '/webadmin/api/content-sources',
+        'content_source_preview' => '/webadmin/api/content-sources/{source}/preview',
       ],
     ]);
   }
@@ -384,6 +390,8 @@ class InternalContentResourceController extends Controller
         'shared_slot_source_blocks_require_capability' => 'shared-slots.write',
         'purpose' => 'Update safe native fields on an existing structured block without changing the block tree.',
         'supported_native_fields' => [
+          'content_bindings or settings.content_bindings',
+          'content_collection or settings.content_collection',
           'media_id or asset_id for navbar-brand/sidebar-brand logo media',
           'media_id or asset_id for hero/section/card/cta/content_header/slide background media',
           'settings.url',
@@ -1254,7 +1262,7 @@ class InternalContentResourceController extends Controller
       ], 403);
     }
 
-    $block->loadMissing(['blockType', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations']);
+    $block->loadMissing(['blockType', 'page.site', 'children.blockType', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations']);
     $type = (string) $block->typeSlug();
     $mediaId = $request->has('media_id') ? $request->input('media_id') : $request->input('asset_id');
     $mediaChanged = $request->has('media_id') || $request->has('asset_id');
@@ -1303,6 +1311,22 @@ class InternalContentResourceController extends Controller
 
     $settings = $this->mergeSettings($block, $request);
 
+    try {
+      $settingsInput = is_array($request->input('settings')) ? $request->input('settings') : [];
+      $hasBindings = $request->has('content_bindings') || array_key_exists('content_bindings', $settingsInput);
+      $hasCollection = $request->has('content_collection') || array_key_exists('content_collection', $settingsInput);
+      $settings = $this->contentSourceAuthoring->merge(
+        $block,
+        $settings,
+        $request->has('content_bindings') ? $request->input('content_bindings') : ($settingsInput['content_bindings'] ?? null),
+        $hasBindings,
+        $request->has('content_collection') ? $request->input('content_collection') : ($settingsInput['content_collection'] ?? null),
+        $hasCollection,
+      );
+    } catch (ContentSourceAuthoringException $exception) {
+      return $this->validationError($exception->path, $exception->getMessage(), 'invalid_content_source_configuration');
+    }
+
     DB::transaction(function () use ($block, $request, $mediaChanged, $mediaId, $settings, $translationPayload, $locale): void {
       $updates = [];
 
@@ -1318,7 +1342,7 @@ class InternalContentResourceController extends Controller
         $updates['variant'] = trim((string) $request->input('variant')) ?: null;
       }
 
-      if ($request->has('settings')) {
+      if ($request->has('settings') || $request->has('content_bindings') || $request->has('content_collection')) {
         $updates['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
       }
 
@@ -1914,7 +1938,7 @@ class InternalContentResourceController extends Controller
     }
 
     $type = (string) $block->typeSlug();
-    $allowedSettings = ['url', 'target', 'aria_label'];
+    $allowedSettings = ['url', 'target', 'aria_label', 'content_bindings', 'content_collection'];
 
     if ($this->supportsBackgroundMediaBlockType($type)) {
       $allowedSettings[] = 'background_position';
@@ -2322,6 +2346,9 @@ class InternalContentResourceController extends Controller
       'is_container' => (bool) $blockType->is_container,
       'supports_children' => (bool) ($contract['supports_children'] ?? false),
       'allowed_child_handles' => $contract['allowed_child_type_slugs'] ?? null,
+      'supports_content_collection' => (bool) ($contract['supports_content_collection'] ?? false),
+      'content_collection_child_handles' => $contract['content_collection_child_type_slugs'] ?? null,
+      'content_source_binding_targets' => app(ContentSourceEditor::class)->targets(new Block(['type' => $blockType->slug])),
       'translatable_fields' => $contract['translatable_fields'] ?? [],
       'translation_family' => $contract['translation_family'] ?? null,
       'translation_family_fields' => $contract['translation_family_fields'] ?? [],

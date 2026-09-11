@@ -55,6 +55,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationControl
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalBackupCleanupController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentSourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalInventoryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalMaintenanceCleanupController;
@@ -127,6 +128,8 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::delete('/sites/{site}/applications/{application}/assets/{type}/{filename}', [InternalApplicationAssetController::class, 'destroy'])->middleware('internal-api.capability:applications.delete')->name('applications.assets.destroy');
     Route::get('/icon-catalog', [InternalContentResourceController::class, 'iconCatalog'])->name('icon-catalog.index');
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
+    Route::get('/content-sources', [InternalContentSourceController::class, 'index'])->middleware('internal-api.capability:content.read')->name('content-sources.index');
+    Route::post('/content-sources/{source}/preview', [InternalContentSourceController::class, 'preview'])->where('source', '[a-z0-9:-]+')->middleware('internal-api.capability:content.read')->name('content-sources.preview');
     Route::get('/plugins', [InternalPluginController::class, 'index'])->middleware('internal-api.capability:plugins.read')->name('plugins.index');
     Route::post('/plugins/install', [InternalPluginController::class, 'install'])->middleware('internal-api.capability:plugins.install')->name('plugins.install');
     Route::get('/plugins/catalog', [InternalPluginController::class, 'catalog'])->middleware('internal-api.capability:plugins.read')->name('plugins.catalog.index');
