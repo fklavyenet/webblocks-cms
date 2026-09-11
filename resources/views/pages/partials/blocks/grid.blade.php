@@ -1,7 +1,7 @@
 @php
     $alternateSections = $block->gridAlternatesMediaTextSections();
     $class = trim('wb-grid '.$block->gridColumnsClass().' '.($block->gridGapClass() ?? ''));
-    $children = $block->children;
+    $children = app(\WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer::class)->children($block);
 
     if ($alternateSections) {
         $children = collect();
@@ -30,7 +30,7 @@
             $pairIndex++;
         };
 
-        foreach ($block->children as $child) {
+        foreach ($children as $child) {
             if ($child->hasMediaTextLayoutContent()) {
                 $childPair->push($child);
 
@@ -53,3 +53,4 @@
         @include('webblocks-cms::pages.partials.block', ['block' => $child])
     @endforeach
 </div>
+@include('webblocks-cms::pages.partials.blocks.content-collection-pagination', ['block' => $block])

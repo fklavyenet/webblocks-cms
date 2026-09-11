@@ -1,15 +1,18 @@
 @php
   $image = $block->media;
-  $imageSource = $image?->transformUrl('content');
+  $boundImageSource = $block->boundPublicValue('image_source');
+  $imageSource = is_string($boundImageSource) && preg_match('/^(https?:\/\/|\/)/i', $boundImageSource)
+    ? $boundImageSource
+    : $image?->transformUrl('content');
   $responsiveCandidates = $image?->responsiveCandidates() ?? [];
   $srcset = count($responsiveCandidates) >= 2
     ? collect($responsiveCandidates)->map(fn ($candidate) => $candidate->url.' '.$candidate->width.'w')->implode(', ')
     : null;
-  $caption = trim((string) ($block->title ?? ''));
-  $altText = trim((string) ($block->subtitle ?? ''));
+  $caption = trim((string) $block->boundPublicValue('title', $block->title ?? ''));
+  $altText = trim((string) $block->boundPublicValue('subtitle', $block->subtitle ?? ''));
   $fallbackAltText = trim((string) ($image?->alt_text ?: $image?->title ?: $caption ?: 'Image'));
   $resolvedAltText = $altText !== '' ? $altText : $fallbackAltText;
-  $href = trim((string) ($block->url ?? ''));
+  $href = trim((string) $block->boundPublicValue('url', $block->url ?? ''));
   $linkAttributes = '';
 
   if ($href !== '' && preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $href)) {

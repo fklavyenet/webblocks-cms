@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'collection_pagination' => 'Koleksiyon sayfalama',
+  'collection_previous' => 'Önceki',
+  'collection_next' => 'Sonraki',
+  'collection_page' => 'Sayfa :current / :last',
   'stat_card' => [
     'learn_more' => 'Daha fazla bilgi',
   ],

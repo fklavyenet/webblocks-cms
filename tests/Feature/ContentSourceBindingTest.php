@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceContext;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
@@ -84,6 +85,107 @@ class ContentSourceBindingTest extends TestCase
     $this->assertSame('WebBlocks Forms', $slides[2]->children[0]->boundPublicValue('title', 'fallback'));
   }
 
+  #[Test]
+  public function a_grid_can_filter_sort_and_repeat_any_existing_child_template(): void
+  {
+    $this->registerCatalogSource(enabled: true);
+
+    $grid = new Block(['type' => 'grid']);
+    $grid->id = 20;
+    $grid->settings = [
+      'content_collection' => [
+        'source' => 'plugin-catalog::featured-plugins',
+        'template_block_id' => 22,
+        'limit' => 10,
+        'filter_field' => 'category',
+        'filter_value' => 'marketing',
+        'sort_field' => 'name',
+        'sort_direction' => 'desc',
+      ],
+    ];
+
+    $editorialCard = new Block(['type' => 'card']);
+    $editorialCard->id = 21;
+    $editorialCard->setRelation('children', collect());
+    $templateCard = new Block(['type' => 'card']);
+    $templateCard->id = 22;
+    $heading = $this->boundBlock('header', 'title', 'name', 'Plugin fallback');
+    $heading->settings = ['content_bindings' => ['title' => [
+      'source' => 'plugin-catalog::featured-plugins',
+      'record' => '@item',
+      'field' => 'name',
+    ]]];
+    $templateCard->setRelation('children', collect([$heading]));
+    $grid->setRelation('children', collect([$editorialCard, $templateCard]));
+
+    $children = app(ContentCollectionRenderer::class)->children($grid);
+
+    $this->assertCount(2, $children);
+    $this->assertSame($editorialCard, $children[0]);
+    $this->assertSame('WebBlocks SEO', $children[1]->children[0]->boundPublicValue('title', 'fallback'));
+  }
+
+  #[Test]
+  public function image_and_link_fields_can_use_the_same_collection_item(): void
+  {
+    $this->registerCatalogSource(enabled: true);
+
+    $image = $this->boundBlock('image', 'image_source', 'image_url', '');
+    $image->settings = ['content_bindings' => [
+      'image_source' => [
+        'source' => 'plugin-catalog::featured-plugins',
+        'record' => '@item',
+        'field' => 'image_url',
+      ],
+      'url' => [
+        'source' => 'plugin-catalog::featured-plugins',
+        'record' => '@item',
+        'field' => 'download_url',
+      ],
+    ]];
+    $image->setAttribute('content_source_item', [
+      'image_url' => 'https://cdn.example.test/plugin.png',
+      'download_url' => '/plugins/seo',
+    ]);
+    $this->assertSame('https://cdn.example.test/plugin.png', $image->boundPublicValue('image_source'));
+    $this->assertSame('/plugins/seo', $image->boundPublicValue('url'));
+  }
+
+  #[Test]
+  public function a_collection_can_be_previewed_and_paginated_without_plugin_specific_code(): void
+  {
+    $this->registerCatalogSource(enabled: true);
+    $this->get('/?wb_collection_30_page=2');
+
+    $stack = new Block(['type' => 'stack']);
+    $stack->id = 30;
+    $stack->settings = ['content_collection' => [
+      'source' => 'plugin-catalog::featured-plugins',
+      'template_block_id' => 31,
+      'limit' => 10,
+      'paginate' => true,
+      'per_page' => 1,
+    ]];
+    $template = new Block(['type' => 'header']);
+    $template->id = 31;
+    $template->settings = ['content_bindings' => ['title' => [
+      'source' => 'plugin-catalog::featured-plugins',
+      'record' => '@item',
+      'field' => 'name',
+    ]]];
+    $template->setRelation('children', collect());
+    $stack->setRelation('children', collect([$template]));
+
+    $children = app(ContentCollectionRenderer::class)->children($stack);
+    $preview = app(ContentSourceEditor::class)
+      ->collectionPreview($stack, 'plugin-catalog::featured-plugins');
+
+    $this->assertCount(1, $children);
+    $this->assertSame('WebBlocks Forms', $children[0]->boundPublicValue('title'));
+    $this->assertSame(2, $stack->getAttribute('content_source_pagination')['current_page']);
+    $this->assertCount(2, $preview);
+  }
+
   private function registerCatalogSource(bool $enabled): void
   {
     $plugin = PluginDefinition::make('plugin-catalog')
@@ -104,6 +206,9 @@ class ContentSourceBindingTest extends TestCase
           ->fields([
             'name' => ['type' => 'text', 'label' => 'Plugin name'],
             'description' => ['type' => 'rich_text', 'label' => 'Description'],
+            'category' => ['type' => 'text', 'label' => 'Category'],
+            'image_url' => ['type' => 'media', 'label' => 'Image'],
+            'download_url' => ['type' => 'url', 'label' => 'Download URL'],
           ]),
       ]);
 
@@ -140,8 +245,8 @@ class FakeFeaturedPluginsSource implements ContentCollectionSourceResolver
   public function resolveCollection(array $settings, ContentSourceContext $context): iterable
   {
     return [
-      ['name' => 'WebBlocks SEO', 'description' => '<p>SEO metadata.</p>'],
-      ['name' => 'WebBlocks Forms', 'description' => '<p>Public forms.</p>'],
+      ['name' => 'WebBlocks SEO', 'description' => '<p>SEO metadata.</p>', 'category' => 'marketing'],
+      ['name' => 'WebBlocks Forms', 'description' => '<p>Public forms.</p>', 'category' => 'forms'],
     ];
   }
 }

@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'collection_pagination' => 'Collection pagination',
+  'collection_previous' => 'Previous',
+  'collection_next' => 'Next',
+  'collection_page' => 'Page :current of :last',
   'stat_card' => [
     'learn_more' => 'Learn more',
   ],

@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'collection_pagination' => 'Paginazione raccolta',
+  'collection_previous' => 'Precedente',
+  'collection_next' => 'Successivo',
+  'collection_page' => 'Pagina :current di :last',
   'stat_card' => [
     'learn_more' => 'Scopri di più',
   ],

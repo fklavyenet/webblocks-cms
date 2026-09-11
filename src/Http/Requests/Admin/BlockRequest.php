@@ -249,9 +249,15 @@ class BlockRequest extends FormRequest
       'application_show_failure_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
       'content_binding_selection' => ['nullable', 'array'],
       'content_binding_selection.*' => ['nullable', 'string', 'max:500'],
-      'content_collection_source' => [$isSlider ? 'nullable' : 'prohibited', 'string', 'max:160'],
-      'content_collection_template_id' => [$isSlider ? 'nullable' : 'prohibited', 'integer', 'min:1'],
-      'content_collection_limit' => [$isSlider ? 'nullable' : 'prohibited', 'integer', 'min:1', 'max:50'],
+      'content_collection_source' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:160'],
+      'content_collection_template_id' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'integer', 'min:1'],
+      'content_collection_limit' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'integer', 'min:1', 'max:50'],
+      'content_collection_filter_field' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:120'],
+      'content_collection_filter_value' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:255'],
+      'content_collection_sort_field' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', 'string', 'max:120'],
+      'content_collection_sort_direction' => [in_array($selectedBlockType?->slug, ['slider', 'grid', 'stack'], true) ? 'nullable' : 'prohibited', Rule::in(['asc', 'desc'])],
+      'content_collection_paginate' => [in_array($selectedBlockType?->slug, ['grid', 'stack'], true) ? 'nullable' : 'prohibited', 'boolean'],
+      'content_collection_per_page' => [in_array($selectedBlockType?->slug, ['grid', 'stack'], true) ? 'nullable' : 'prohibited', 'integer', 'min:1', 'max:50'],
       'media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'gallery_media_ids' => ['nullable', 'array'],
@@ -2418,7 +2424,7 @@ class BlockRequest extends FormRequest
     $sourceEditor = app(ContentSourceEditor::class);
 
     foreach (($data['content_binding_selection'] ?? []) as $target => $selection) {
-      if (! in_array($target, ['title', 'content', 'url'], true)) {
+      if (! array_key_exists($target, $sourceEditor->targets($bindingBlock))) {
         continue;
       }
 
@@ -2439,21 +2445,30 @@ class BlockRequest extends FormRequest
       unset($settings['content_bindings']);
     }
 
-    if (($data['type'] ?? $existingBlock?->typeSlug()) === 'slider' && array_key_exists('content_collection_source', $data)) {
+    $collectionContainerType = $data['type'] ?? $existingBlock?->typeSlug();
+
+    if (in_array($collectionContainerType, ['slider', 'grid', 'stack'], true) && array_key_exists('content_collection_source', $data)) {
       $sourceHandle = trim((string) ($data['content_collection_source'] ?? ''));
       $templateId = (int) ($data['content_collection_template_id'] ?? 0);
       $validSource = array_key_exists($sourceHandle, $sourceEditor->collectionChoices());
-      $validTemplate = $templateId > 0 && Block::query()
+      $validTemplateQuery = Block::query()
         ->whereKey($templateId)
-        ->where('parent_id', $existingBlock?->id)
-        ->where('type', 'slide')
-        ->exists();
+        ->where('parent_id', $existingBlock?->id);
+      $validTemplate = $templateId > 0
+        && ($collectionContainerType !== 'slider' || (clone $validTemplateQuery)->where('type', 'slide')->exists())
+        && ($collectionContainerType === 'slider' || $validTemplateQuery->exists());
 
       if ($sourceHandle !== '' && $validSource && $validTemplate) {
         $settings['content_collection'] = [
           'source' => $sourceHandle,
           'template_block_id' => $templateId,
           'limit' => min(max((int) ($data['content_collection_limit'] ?? 12), 1), 50),
+          'filter_field' => trim((string) ($data['content_collection_filter_field'] ?? '')),
+          'filter_value' => trim((string) ($data['content_collection_filter_value'] ?? '')),
+          'sort_field' => trim((string) ($data['content_collection_sort_field'] ?? '')),
+          'sort_direction' => ($data['content_collection_sort_direction'] ?? 'asc') === 'desc' ? 'desc' : 'asc',
+          'paginate' => in_array($collectionContainerType, ['grid', 'stack'], true) && (bool) ($data['content_collection_paginate'] ?? false),
+          'per_page' => min(max((int) ($data['content_collection_per_page'] ?? 12), 1), 50),
         ];
       } else {
         unset($settings['content_collection']);
@@ -2464,6 +2479,8 @@ class BlockRequest extends FormRequest
 
     unset($data['plugin_settings'], $data['content_binding_selection']);
     unset($data['content_collection_source'], $data['content_collection_template_id'], $data['content_collection_limit']);
+    unset($data['content_collection_filter_field'], $data['content_collection_filter_value'], $data['content_collection_sort_field'], $data['content_collection_sort_direction']);
+    unset($data['content_collection_paginate'], $data['content_collection_per_page']);
 
     return $data;
   }

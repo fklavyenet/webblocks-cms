@@ -1,8 +1,8 @@
 @php
-    $href = $block->localizedPublicUrl($block->linkListItemUrl());
-    $title = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title');
-    $meta = $block->stringValueOrNull($block->subtitle) ?? $block->translatedTextFieldValue('subtitle');
-    $description = $block->stringValueOrNull($block->content) ?? $block->translatedTextFieldValue('content');
+    $href = $block->localizedPublicUrl($block->boundPublicValue('url', $block->linkListItemUrl()));
+    $title = $block->stringValueOrNull($block->boundPublicValue('title', $block->title)) ?? $block->translatedTextFieldValue('title');
+    $meta = $block->stringValueOrNull($block->boundPublicValue('subtitle', $block->subtitle)) ?? $block->translatedTextFieldValue('subtitle');
+    $description = $block->stringValueOrNull($block->boundPublicValue('content', $block->content)) ?? $block->translatedTextFieldValue('content');
     $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
     $iconClass = $iconPresenter->iconClass($block->publicContentIconSlug(), $block->publicIconTone());
     $badgeLabel = $block->publicBadgeLabel();

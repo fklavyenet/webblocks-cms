@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\ContentSources;
 
 use Throwable;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
 
 class ContentSourceEditor
@@ -78,13 +79,26 @@ class ContentSourceEditor
       'header' => ['title' => ['text']],
       'plain_text' => ['content' => ['text']],
       'rich-text' => ['content' => ['text', 'rich_text']],
+      'image' => [
+        'image_source' => ['media', 'url'],
+        'title' => ['text'],
+        'subtitle' => ['text'],
+        'url' => ['url'],
+      ],
+      'button', 'button-link' => ['title' => ['text'], 'url' => ['url']],
+      'link-list-item' => [
+        'title' => ['text'],
+        'subtitle' => ['text'],
+        'content' => ['text', 'rich_text'],
+        'url' => ['url'],
+      ],
       default => [],
     };
   }
 
   public function supports(Block $block): bool
   {
-    if ($block->typeSlug() === 'slider') {
+    if (in_array($block->typeSlug(), ['slider', 'grid', 'stack'], true)) {
       return $this->sources->collections() !== [];
     }
 
@@ -128,12 +142,56 @@ class ContentSourceEditor
     );
   }
 
+  /** @return array<int, array<string, string>> */
+  public function collectionPreview(Block $block, string $handle, int $limit = 3): array
+  {
+    $source = $this->sources->find($handle);
+    $resolverClass = $source?->resolverClass();
+
+    if ($source?->isCollection() !== true || $resolverClass === null) {
+      return [];
+    }
+
+    try {
+      $resolver = app($resolverClass);
+
+      if (! $resolver instanceof ContentCollectionSourceResolver) {
+        return [];
+      }
+
+      $records = collect($resolver->resolveCollection([], new ContentSourceContext(
+        site: $block->page?->site,
+        page: $block->page,
+        locale: $block->renderLocaleCode(),
+        preview: true,
+      )));
+
+      return $records
+        ->filter(fn (mixed $record): bool => is_array($record))
+        ->take(min(max($limit, 1), 5))
+        ->map(function (array $record) use ($source): array {
+          return collect($source->fieldDefinitions())->mapWithKeys(function (array $definition, string $field) use ($record): array {
+            $value = data_get($record, $field);
+            $text = is_scalar($value) ? strip_tags((string) $value) : '';
+
+            return [$definition['label'] => mb_strimwidth($text, 0, 100, '…')];
+          })->all();
+        })
+        ->values()
+        ->all();
+    } catch (Throwable $exception) {
+      report($exception);
+
+      return [];
+    }
+  }
+
   private function collectionSourceFor(Block $block): ?ContentSourceDefinition
   {
     $current = $block;
 
     for ($depth = 0; $depth < 8; $depth++) {
-      if ($current->typeSlug() === 'slider') {
+      if (in_array($current->typeSlug(), ['slider', 'grid', 'stack'], true)) {
         $handle = trim((string) $current->setting('content_collection.source', ''));
 
         return $this->sources->find($handle);
