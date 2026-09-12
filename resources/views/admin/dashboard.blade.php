@@ -28,6 +28,22 @@
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-stack-4">
+        @if ($canViewVisitorReports)
+            <div class="wb-stat">
+                <div class="wb-stat-label">{{ $adminText('dashboard.page_views') }}</div>
+                @if (! $visitorSummary['is_enabled'])
+                    <div class="wb-stat-value">&mdash;</div>
+                    <div class="wb-stat-meta">{{ $adminText('dashboard.visitor_disabled') }}</div>
+                @elseif (! $visitorSummary['table_exists'])
+                    <div class="wb-stat-value">&mdash;</div>
+                    <div class="wb-stat-meta">{{ $adminText('dashboard.visitor_missing') }}</div>
+                @else
+                    <div class="wb-stat-value">{{ number_format($visitorSummary['total_page_views']) }}</div>
+                    <div class="wb-stat-meta">{{ $visitorSummary['range_label'] }}</div>
+                @endif
+            </div>
+        @endif
+
         <div class="wb-grid wb-grid-2">
             <div class="wb-card wb-card-muted">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
@@ -157,53 +173,6 @@
                 </div>
             </div>
         </div>
-
-        @if ($canViewVisitorReports)
-        <div class="wb-grid wb-grid-1">
-            <div class="wb-card">
-                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                    <strong>{{ $adminText('dashboard.visitor_summary') }}</strong>
-                    <span class="wb-text-sm wb-text-muted">{{ $visitorSummary['range_label'] }}</span>
-                </div>
-
-                <div class="wb-card-body">
-                    @if (! $visitorSummary['is_enabled'])
-                        <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">{{ $adminText('dashboard.visitor_disabled') }}</div>
-                        </div>
-                    @elseif (! $visitorSummary['table_exists'])
-                        <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">{{ $adminText('dashboard.visitor_missing') }}</div>
-                        </div>
-                    @else
-                        <div class="wb-table-wrap">
-                            <table class="wb-table wb-table-striped">
-                                <tbody>
-                                    <tr>
-                                        <th scope="row" class="wb-table-key">{{ $adminText('dashboard.page_views') }}</th>
-                                        <td>{{ number_format($visitorSummary['total_page_views']) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row" class="wb-table-key">{{ $adminText('dashboard.unique_visitors') }}</th>
-                                        <td>{{ number_format($visitorSummary['unique_visitors']) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row" class="wb-table-key">{{ $adminText('dashboard.top_page') }}</th>
-                                        @if ($visitorSummary['top_page_path'])
-                                            <td><code>{{ $visitorSummary['top_page_path'] }}</code></td>
-                                            <td class="wb-text-muted">{{ $adminText('dashboard.views', ['count' => number_format($visitorSummary['top_page_views'])]) }}</td>
-                                        @else
-                                            <td colspan="2" class="wb-text-muted">{{ $adminText('dashboard.no_visits') }}</td>
-                                        @endif
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endif
 
         @if (! empty($pluginDashboardWidgets))
             <div class="wb-grid wb-grid-2">

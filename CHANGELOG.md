@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.83.1
+
+- Replace the low-visibility Visitor Summary table at the bottom of the Dashboard with a focused Page Views KPI card at the top, while preserving visitor-report permissions, site scope, and the existing seven-day reporting window.
+
 ## 1.83.0
 
 - Publish host-resolved XML sitemaps containing only canonical, indexable pages, with locale alternates and automatic sitemap indexes for large sites.

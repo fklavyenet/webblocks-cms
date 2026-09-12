@@ -18,7 +18,6 @@ wb-dropdown-end
 wb-empty-state
 wb-font-mono
 wb-gallery-picker-modal
-wb-grid-1
 wb-link
 wb-list-unstyled
 wb-overlay-layer--dialog
