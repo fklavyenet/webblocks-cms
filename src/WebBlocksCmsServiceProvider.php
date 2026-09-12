@@ -31,6 +31,7 @@ use WebBlocks\Cms\Console\PackageStatusCommand;
 use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
+use WebBlocks\Cms\Console\ResetPublicDemoCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
 use WebBlocks\Cms\Console\SiteCloneCommand;
 use WebBlocks\Cms\Console\SiteDeleteCommand;
@@ -792,6 +793,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     MaintenanceCleanupCommand::class,
     VisitorReportCleanupCommand::class,
     ResetPrimitiveBlocksCommand::class,
+    ResetPublicDemoCommand::class,
     SiteCloneCommand::class,
     SiteDeleteCommand::class,
     SiteExportCommand::class,
@@ -913,6 +915,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       return Limit::perMinute(30)->by($request->ip());
     });
 
+    RateLimiter::for('webblocks-public-demo-login', function (Request $request) {
+      return Limit::perMinute(max(1, (int) config('webblocks-cms.public_demo.login_rate_limit_per_minute', 10)))
+        ->by($request->ip());
+    });
+
     RateLimiter::for('contact-form-submissions', function (Request $request) {
       return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))
         ->by($request->ip().'|'.((string) $request->input('block_id')));
@@ -975,6 +982,14 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->dailyAt('03:30')
         ->withoutOverlapping()
         ->onOneServer();
+
+      if ((bool) config('webblocks-cms.public_demo.enabled') && (bool) config('webblocks-cms.public_demo.reset_enabled')) {
+        $this->app->make(Schedule::class)
+          ->command('public-demo:reset')
+          ->hourly()
+          ->withoutOverlapping(120)
+          ->onOneServer();
+      }
     });
   }
 

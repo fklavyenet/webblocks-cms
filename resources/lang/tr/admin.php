@@ -1,6 +1,9 @@
 <?php
 
 $translations = [
+  'public_demo' => [
+    'action_not_available' => 'Bu işlem herkese açık demoda kullanılamaz.',
+  ],
   'navigation' => [
     'aria' => 'Yönetim gezinmesi',
     'toggle' => 'Gezinmeyi aç/kapat',
@@ -2617,6 +2620,8 @@ $translations = [
     'remember' => 'Beni hatırla',
     'forgot_password' => 'Şifrenizi mi unuttunuz?',
     'continue' => 'Devam et',
+    'open_public_demo' => 'Demoyu Aç',
+    'public_demo_description' => 'Geçici bir çalışma alanını keşfedin. Değişiklikler otomatik sıfırlanır ve sistem yönetimi kullanılamaz.',
     'need_account' => 'Hesabınız yok mu?',
     'create_account' => 'Hesap oluştur',
     'reset_title' => 'Şifre sıfırlama',

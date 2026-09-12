@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.84.0
+
+- Add a fail-closed public demo mode with rate-limited one-click editor login, an explicit admin-write allowlist, read-only seeded media, blocked credentials and system administration, and crawler suppression across mutable demo output.
+- Add an hourly disposable-demo reset command guarded by the exact environment, hostname, database, database-backed runtime stores, host seeder, and storage marker; failed resets or health checks leave the demo in maintenance mode.
+- Document the isolated host configuration, demo identity contract, disabled outbound effects, and Herne scheduler setup required for a safe public installation.
+
 ## 1.83.3
 
 - Restore the Dashboard Page Views graph by giving its hidden semantic data table the required localized column headings used by the WebBlocks UI chart reader.

@@ -14,11 +14,12 @@ use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
 use WebBlocks\Cms\Http\Controllers\Public\RobotsController;
 use WebBlocks\Cms\Http\Controllers\Public\SitemapController;
 use WebBlocks\Cms\Http\Middleware\AddCmsIdentificationHeader;
+use WebBlocks\Cms\Http\Middleware\ProtectPublicDemoSurface;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
-$publicPageMiddleware = ['web', 'install.required', AddCmsIdentificationHeader::class];
+$publicPageMiddleware = ['web', 'install.required', ProtectPublicDemoSurface::class, AddCmsIdentificationHeader::class];
 
 Route::middleware($publicPageMiddleware)
   ->get('/cms/plugins/{plugin}/{path}', PluginAssetController::class)
@@ -88,19 +89,19 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     $siteDomainRoutes();
   });
 
-Route::middleware(['web', 'install.required'])->post('/contact-messages', [ContactMessageController::class, 'store'])
+Route::middleware(['web', 'install.required', ProtectPublicDemoSurface::class])->post('/contact-messages', [ContactMessageController::class, 'store'])
   ->middleware('throttle:contact-form-submissions')
   ->name('contact-messages.store');
 
-Route::middleware(['web', 'install.required'])->post('/content-ratings', [ContentRatingController::class, 'store'])
+Route::middleware(['web', 'install.required', ProtectPublicDemoSurface::class])->post('/content-ratings', [ContentRatingController::class, 'store'])
   ->middleware('throttle:engagement-ratings')
   ->name('content-ratings.store');
 
-Route::middleware(['web', 'install.required'])->post('/comment-entries', [CommentEntryController::class, 'store'])
+Route::middleware(['web', 'install.required', ProtectPublicDemoSurface::class])->post('/comment-entries', [CommentEntryController::class, 'store'])
   ->middleware('throttle:engagement-comments')
   ->name('comment-entries.store');
 
-Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
+Route::middleware(['web', 'install.required', ProtectPublicDemoSurface::class])->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
 });
 

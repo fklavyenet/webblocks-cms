@@ -1,6 +1,9 @@
 <?php
 
 $translations = [
+  'public_demo' => [
+    'action_not_available' => 'Diese Aktion ist in der öffentlichen Demo nicht verfügbar.',
+  ],
   'navigation' => [
     'aria' => 'Admin-Navigation',
     'toggle' => 'Navigation umschalten',
@@ -2604,6 +2607,8 @@ $translations = [
     'remember' => 'Angemeldet bleiben',
     'forgot_password' => 'Passwort vergessen?',
     'continue' => 'Weiter',
+    'open_public_demo' => 'Demo öffnen',
+    'public_demo_description' => 'Erkunden Sie einen temporären Arbeitsbereich. Änderungen werden automatisch zurückgesetzt und die Systemverwaltung ist nicht verfügbar.',
     'need_account' => 'Brauchen Sie ein Konto?',
     'create_account' => 'Konto erstellen',
     'reset_title' => 'Passwort vergessen',
