@@ -2,6 +2,10 @@
 
 **A modern block-based CMS.**
 
+An open-source Laravel-native CMS for structured, multi-site publishing and automation.
+
+[Website](https://cms.webblocksui.com/) · [Laravel CMS](https://cms.webblocksui.com/laravel-cms) · [Live Demo](https://demo.webblocksui.com/) · [Documentation](https://cms.webblocksui.com/docs) · [Installation](https://cms.webblocksui.com/docs/installation) · [Admin Tour](https://cms.webblocksui.com/guides/admin-tour)
+
 [![Package CI](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml)
 [![Latest Stable Version](https://img.shields.io/packagist/v/fklavyenet/webblocks-cms.svg)](https://packagist.org/packages/fklavyenet/webblocks-cms)
 [![Total Downloads](https://img.shields.io/packagist/dt/fklavyenet/webblocks-cms.svg)](https://packagist.org/packages/fklavyenet/webblocks-cms)
@@ -10,6 +14,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 WebBlocks CMS is a modern block-based CMS for content operations across multiple sites and locales. It adds structured pages, media, navigation, editorial workflows, and an operator admin under `/webadmin` to a host Laravel application.
+
+```bash
+composer require fklavyenet/webblocks-cms
+```
 
 > [!IMPORTANT]
 > This repository is Composer package source, not a complete deployable Laravel application. Install `fklavyenet/webblocks-cms` into a host Laravel 13 application; the host continues to own its bootstrap, `.env`, database, queues, mail, deployment, backups, and public document root.

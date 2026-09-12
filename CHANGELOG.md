@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.83.4
+
+- Improve package discovery with clearer Laravel-native positioning, a visible Composer install command, and links to the live public demo and core documentation.
+- Make Composer installation into a Laravel host the canonical onboarding path, while separating legacy source-maintained installs from package development and contributing.
+
 ## 1.83.3
 
 - Restore the Dashboard Page Views graph by giving its hidden semantic data table the required localized column headings used by the WebBlocks UI chart reader.

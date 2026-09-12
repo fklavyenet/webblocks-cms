@@ -12,11 +12,11 @@ cms_source_id: webblocks-cms:docs/installation.md
 
 ## Overview
 
-WebBlocks CMS supports a package-consumer install flow for fresh Laravel applications, a browser-based install wizard for fresh maintenance-repo installs, and a manual Laravel CLI install path.
+WebBlocks CMS is distributed as a Composer package installed into a Laravel host application. The host application remains responsible for its bootstrap, environment, database, queues, mail, deployment, backups, and public document root.
 
 Before provisioning a production server, review [Hosting Requirements](hosting-requirements.md), qualify the intended workload using [Hosting Capacity Validation](hosting-capacity-validation.md), compare it with the explicitly provisional [Hosting Capacity Results](hosting-capacity-results.md), and complete the [Hosting Readiness Checklist](hosting-readiness-checklist.md). Those pages separate the base install contract from optional image, mail, scheduler, backup, and package-native update dependencies; the current partial measurements are not a production certification.
 
-For a fresh install, start by getting the WebBlocks CMS source code onto your machine. Run Composer, create `.env`, use Artisan, and open the browser install wizard only after the source code exists locally.
+For a normal installation, start in a fresh or existing Laravel 13 application with its application key and database configured. Install the package with Composer, then run the CMS installer.
 
 An install is considered complete when the application has a working CMS baseline:
 
@@ -27,37 +27,16 @@ An install is considered complete when the application has a working CMS baselin
 - the first active `super_admin` exists
 - an install completion marker is stored in `system_settings`
 
-## Get the Source Code
+## Install into a Laravel application
 
-Before you run any install commands, make sure the WebBlocks CMS repository is present locally.
-
-Clone into a new directory:
-
-```bash
-git clone https://github.com/fklavyenet/webblocks-cms.git
-cd webblocks-cms
-git remote set-url --push origin DISABLED
-```
-
-Clone into an already-created empty directory:
-
-```bash
-git clone https://github.com/fklavyenet/webblocks-cms.git .
-git remote set-url --push origin DISABLED
-```
-
-After the source code is present locally, continue with one of the fresh install paths below.
-
-WebBlocks CMS installations are update consumers only. They may fetch, pull, or download CMS updates, but they must not push commits or tags back to the canonical CMS upstream. For existing local installation clones, run `git remote set-url --push origin DISABLED` once in the installation working copy.
-
-## Package Consumer Install
-
-Use this flow when WebBlocks CMS is installed into a fresh Laravel application through Composer.
+From the root of the Laravel host application, run:
 
 ```bash
 composer require fklavyenet/webblocks-cms
 php artisan webblocks:install --name="Admin User" --email="admin@example.com" --password="secret-password"
 ```
+
+Then open `/webadmin/login`. This is the primary and supported installation path for CMS users. Cloning this repository does not create a standalone Laravel application.
 
 Supported options:
 
@@ -110,7 +89,11 @@ php artisan webblocks:install --repair-partial --name="Admin User" --email="admi
 
 The repair mode only renames empty CMS-owned candidate tables. It does not drop tables, does not alter non-empty tables automatically, and does not assume CMS owns the host application.
 
-## Browser Install Wizard
+## Legacy source-maintained installations
+
+The browser wizard and manual CLI flows below apply only to historical source-maintained or maintenance-repository installations that already contain a complete Laravel host application. They are not alternatives for installing the current package repository by itself. New installations should use the Composer package flow above.
+
+### Browser Install Wizard
 
 Use the browser wizard for a fresh install.
 
@@ -139,7 +122,7 @@ Notes:
 - after completion, install routes are locked and normal auth/admin flow takes over
 - the installer writes the selected database configuration into `.env`
 
-## Manual CLI Installation
+### Manual CLI Installation
 
 Use the CLI flow when you prefer a standard Laravel setup path for a fresh install.
 
@@ -175,7 +158,7 @@ Then open:
 - admin login: `/webadmin/login`
 - admin: `/webadmin`
 
-After the source code is present locally:
+For development of an existing source-maintained Laravel installation:
 
 ```bash
 composer install
@@ -203,6 +186,21 @@ Then open:
 - installer on a fresh install: `https://webblocks-cms.test/install`
 
 Complete the fresh install in the browser wizard after those setup steps are done.
+
+## Package development and contributing
+
+Clone the repository only when developing or contributing to WebBlocks CMS itself:
+
+```bash
+git clone https://github.com/fklavyenet/webblocks-cms.git
+cd webblocks-cms
+composer install --no-interaction --prefer-dist
+composer validate --strict
+composer format:test
+composer test
+```
+
+The repository is package source, not a deployable Laravel application. See [Contributing](../CONTRIBUTING.md) and the [package testing strategy](testing-strategy.md) for the development workflow.
 
 ## Accessing the Install Wizard
 
