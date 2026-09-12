@@ -75,7 +75,9 @@ class VisitorReportInsightsTest extends TestCase
     $this->assertSame('not_tracked', $report['metric_states']['unique_visitors']);
     $this->assertSame(0, VisitorEvent::query()->whereNotNull('session_key')->count());
     $this->assertSame(3, VisitorEvent::query()->count());
-    $this->assertSame(3, app(VisitorReportsQuery::class)->dashboardSummary()['total_page_views']);
+    $dashboard = app(VisitorReportsQuery::class)->dashboardSummary();
+    $this->assertSame(3, $dashboard['total_page_views']);
+    $this->assertSame([1, 0, 0, 1, 0, 1, 0], array_column($dashboard['buckets'], 'views'));
   }
 
   #[Test]

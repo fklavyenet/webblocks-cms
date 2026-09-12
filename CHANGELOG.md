@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.83.2
+
+- Keep the Page Views chart on Visitor Reports and add a graph-only seven-day copy to the top of the Dashboard, without the values table, comparison text, or information controls.
+- Limit the Dashboard's Recent Pages and Recent Media lists to three entries each.
+
 ## 1.83.1
 
 - Replace the low-visibility Visitor Summary table at the bottom of the Dashboard with a focused Page Views KPI card at the top, while preserving visitor-report permissions, site scope, and the existing seven-day reporting window.

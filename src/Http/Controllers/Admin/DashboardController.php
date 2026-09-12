@@ -44,11 +44,11 @@ class DashboardController extends Controller
       'recentPages' => $this->authorization->scopePagesForUser(Page::query(), $request->user())
         ->with(['slots.slotType', 'translations'])
         ->latest()
-        ->limit(5)
+        ->limit(3)
         ->get(),
       'recentAssets' => $this->authorization->scopeMediaForUser(Media::query(), $request->user())
         ->latest()
-        ->limit(5)
+        ->limit(3)
         ->get(),
       'visitorSummary' => $canViewVisitorReports ? $this->visitorReports->dashboardSummary($request->user()) : null,
       'canViewVisitorReports' => $canViewVisitorReports,

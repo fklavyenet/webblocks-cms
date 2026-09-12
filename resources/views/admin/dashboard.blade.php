@@ -5,6 +5,8 @@
     $adminLocaleCode = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
+    $insightText = static fn (string $key, array $replace = []) => $adminTranslator->get('visitor_insights.'.$key, $adminLocaleCode, $replace);
+    $chartDate = static fn (string $date) => \Carbon\CarbonImmutable::parse($date)->locale($adminLocaleCode)->isoFormat('D MMM');
     $canViewVisitorReports = $canViewVisitorReports ?? false;
     $visitorSummary = $visitorSummary ?? [
         'is_enabled' => false,
@@ -14,6 +16,7 @@
         'unique_visitors' => 0,
         'top_page_path' => null,
         'top_page_views' => 0,
+        'buckets' => [],
     ];
 @endphp
 
@@ -29,17 +32,29 @@
 
     <div class="wb-stack wb-stack-4">
         @if ($canViewVisitorReports)
-            <div class="wb-stat">
-                <div class="wb-stat-label">{{ $adminText('dashboard.page_views') }}</div>
+            <div class="wb-card">
+                <div class="wb-card-header"><strong>{{ $adminText('dashboard.page_views') }}</strong></div>
                 @if (! $visitorSummary['is_enabled'])
-                    <div class="wb-stat-value">&mdash;</div>
-                    <div class="wb-stat-meta">{{ $adminText('dashboard.visitor_disabled') }}</div>
+                    <div class="wb-card-body"><div class="wb-empty wb-empty-sm"><div class="wb-empty-title">{{ $adminText('dashboard.visitor_disabled') }}</div></div></div>
                 @elseif (! $visitorSummary['table_exists'])
-                    <div class="wb-stat-value">&mdash;</div>
-                    <div class="wb-stat-meta">{{ $adminText('dashboard.visitor_missing') }}</div>
+                    <div class="wb-card-body"><div class="wb-empty wb-empty-sm"><div class="wb-empty-title">{{ $adminText('dashboard.visitor_missing') }}</div></div></div>
                 @else
-                    <div class="wb-stat-value">{{ number_format($visitorSummary['total_page_views']) }}</div>
-                    <div class="wb-stat-meta">{{ $visitorSummary['range_label'] }}</div>
+                    <div class="wb-card-body">
+                        <div class="wb-chart" data-wb-chart="line" data-wb-chart-table="dashboard-page-views-chart-data"
+                            aria-label="{{ $insightText('trend') }}" lang="{{ $adminLocaleCode }}"
+                            data-wb-chart-help="{{ $insightText('chart_help') }}"
+                            data-wb-chart-empty="{{ $insightText('no_data') }}"
+                            data-wb-chart-error="{{ $insightText('chart_error') }}">
+                            <p class="wb-chart-fallback wb-text-muted">{{ $insightText('chart_fallback') }}</p>
+                        </div>
+                        <table id="dashboard-page-views-chart-data" hidden>
+                            <tbody>
+                                @foreach ($visitorSummary['buckets'] as $bucket)
+                                    <tr><th scope="row" data-wb-chart-label="{{ $chartDate($bucket['from']) }}">{{ $bucket['from'] }}</th><td data-wb-chart-value="{{ $bucket['views'] }}">{{ $bucket['views'] }}</td></tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 @endif
             </div>
         @endif

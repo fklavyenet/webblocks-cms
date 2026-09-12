@@ -99,6 +99,8 @@ class VisitorReportsQuery
 
   public function dashboardSummary(?User $user = null): array
   {
+    $from = CarbonImmutable::today()->subDays(6)->startOfDay();
+    $to = CarbonImmutable::today()->endOfDay();
     $summary = [
       'is_enabled' => (bool) config('cms.visitor_reports.enabled', true),
       'table_exists' => $this->hasEventsTable(),
@@ -107,18 +109,43 @@ class VisitorReportsQuery
       'unique_visitors' => 0,
       'top_page_path' => null,
       'top_page_views' => 0,
+      'buckets' => collect(range(0, 6))->map(fn (int $offset): array => [
+        'from' => $from->addDays($offset)->toDateString(),
+        'to' => $from->addDays($offset)->toDateString(),
+        'views' => 0,
+      ])->all(),
     ];
 
     if (! $summary['is_enabled'] || ! $summary['table_exists']) {
       return $summary;
     }
 
-    $from = CarbonImmutable::today()->subDays(6)->startOfDay();
-    $to = CarbonImmutable::today()->endOfDay();
     $query = $this->filteredVisitorEvents($user)
       ->whereBetween('visited_at', [$from, $to]);
     $totals = $this->summary(clone $query);
     $topPage = $this->topPages(clone $query, 1)->first();
+    $daily = (clone $query)
+      ->selectRaw('DATE(visited_at) as day, COUNT(*) as views')
+      ->groupByRaw('DATE(visited_at)')
+      ->pluck('views', 'day')
+      ->map(fn ($views): int => (int) $views)
+      ->all();
+
+    if (Schema::hasTable('wbcms_visitor_daily_totals')) {
+      foreach ($this->archivedQuery(['from' => $from->toDateString(), 'to' => $to->toDateString(), 'site' => 'all', 'locale' => 'all', 'traffic' => 'all', 'user' => $user])
+        ->select('day')
+        ->selectRaw('SUM(page_views) as views')
+        ->groupBy('day')
+        ->get() as $row) {
+        $daily[$row->day] = (int) ($daily[$row->day] ?? 0) + (int) $row->views;
+      }
+    }
+
+    $buckets = collect($summary['buckets'])->map(function (array $bucket) use ($daily): array {
+      $bucket['views'] = $daily[$bucket['from']] ?? 0;
+
+      return $bucket;
+    })->all();
 
     return [
       ...$summary,
@@ -126,6 +153,7 @@ class VisitorReportsQuery
       'unique_visitors' => $totals['unique_visitors'] ?? 0,
       'top_page_path' => $topPage['path'] ?? null,
       'top_page_views' => $topPage['page_views'] ?? 0,
+      'buckets' => $buckets,
     ];
   }
 
