@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.83.0
+
+- Publish host-resolved XML sitemaps containing only canonical, indexable pages, with locale alternates and automatic sitemap indexes for large sites.
+- Serve a site-aware `robots.txt` sitemap declaration and invalidate cached sitemap output when page publication, paths, locales, or domains change.
+- Track whether operator-facing documentation is covered by the website docs workflow, with regression checks that keep coverage metadata current.
+
 ## 1.82.0
 
 - Let plugins declare secure, site-aware content sources whose fields operators can bind to core blocks without embedding host-specific application knowledge in CMS core.

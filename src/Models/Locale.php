@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Database\CmsTable;
+use WebBlocks\Cms\Support\Sitemap\SitemapCache;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class Locale extends CmsModel
@@ -40,6 +41,11 @@ class Locale extends CmsModel
 
     static::saved(function (self $locale): void {
       self::enforceDefaultInvariant($locale);
+      Site::query()->pluck('id')->each(fn ($siteId) => app(SitemapCache::class)->invalidateSite((int) $siteId));
+    });
+
+    static::deleted(function (): void {
+      Site::query()->pluck('id')->each(fn ($siteId) => app(SitemapCache::class)->invalidateSite((int) $siteId));
     });
   }
 

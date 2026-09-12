@@ -81,6 +81,11 @@ return [
         // the installed version. Hosts can opt out when policy requires it.
         'send_powered_by_header' => (bool) env('WEBBLOCKS_CMS_SEND_POWERED_BY_HEADER', true),
     ],
+    'sitemap' => [
+        'cache_seconds' => (int) env('WEBBLOCKS_CMS_SITEMAP_CACHE_SECONDS', 3600),
+        'max_urls' => (int) env('WEBBLOCKS_CMS_SITEMAP_MAX_URLS', 50000),
+        'robots_lines' => ['User-agent: *', 'Allow: /'],
+    ],
     'boundaries' => [
         'load_migrations' => env('WEBBLOCKS_CMS_LOAD_PACKAGE_MIGRATIONS', false),
     ],

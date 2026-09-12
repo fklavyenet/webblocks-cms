@@ -16,6 +16,7 @@ use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Support\Sitemap\SitemapCache;
 
 class Page extends CmsModel
 {
@@ -67,10 +68,12 @@ class Page extends CmsModel
       }
 
       static::refreshSearchForPage($page);
+      app(SitemapCache::class)->invalidateSite((int) $page->site_id);
     });
 
     static::deleted(function (self $page): void {
       app(PublicSearchIndexer::class)->deletePage($page);
+      app(SitemapCache::class)->invalidateSite((int) $page->site_id);
     });
 
     static::created(function (self $page): void {

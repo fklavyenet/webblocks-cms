@@ -11,6 +11,8 @@ use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PluginAssetController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
+use WebBlocks\Cms\Http\Controllers\Public\RobotsController;
+use WebBlocks\Cms\Http\Controllers\Public\SitemapController;
 use WebBlocks\Cms\Http\Middleware\AddCmsIdentificationHeader;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Pages\PagePath;
@@ -34,6 +36,12 @@ if (config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONF
     ->get(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH, PackagePublicStatusController::class)
     ->name(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME);
 }
+
+Route::middleware($publicPageMiddleware)->get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::middleware($publicPageMiddleware)->get('/sitemap/{page}.xml', SitemapController::class)
+  ->whereNumber('page')
+  ->name('sitemap.page');
+Route::middleware($publicPageMiddleware)->get('/robots.txt', RobotsController::class)->name('robots');
 
 Route::middleware($publicPageMiddleware)->get('/', [PageController::class, 'home'])->name('home');
 

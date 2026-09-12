@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Support\Sitemap\SitemapCache;
 
 class PageTranslation extends CmsModel
 {
@@ -81,6 +82,7 @@ class PageTranslation extends CmsModel
 
     static::saved(function (self $translation): void {
       static::refreshSearchForTranslation($translation->fresh(['page', 'locale']));
+      app(SitemapCache::class)->invalidateSite((int) $translation->site_id);
     });
 
     static::deleted(function (self $translation): void {
@@ -89,6 +91,8 @@ class PageTranslation extends CmsModel
       if ($page instanceof Page) {
         app(PublicSearchIndexer::class)->refreshPage($page);
       }
+
+      app(SitemapCache::class)->invalidateSite((int) $translation->site_id);
     });
   }
 

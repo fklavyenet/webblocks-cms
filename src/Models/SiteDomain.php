@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use WebBlocks\Cms\Support\Sitemap\SitemapCache;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 
 class SiteDomain extends CmsModel
@@ -37,6 +38,9 @@ class SiteDomain extends CmsModel
       $siteDomain->domain = app(SiteDomainNormalizer::class)->normalize($siteDomain->domain);
       $siteDomain->status = $siteDomain->normalizeStatus($siteDomain->status);
     });
+
+    static::saved(fn (self $siteDomain) => app(SitemapCache::class)->invalidateSite((int) $siteDomain->site_id));
+    static::deleted(fn (self $siteDomain) => app(SitemapCache::class)->invalidateSite((int) $siteDomain->site_id));
   }
 
   public function site(): BelongsTo
