@@ -1,9 +1,6 @@
 <?php
 
 return [
-  'public_demo' => [
-    'action_not_available' => 'This action is not available in the public demo.',
-  ],
   'common' => [
     'close_named' => 'Close :name',
   ],
@@ -2817,8 +2814,6 @@ return [
     'remember' => 'Remember me',
     'forgot_password' => 'Forgot password?',
     'continue' => 'Continue',
-    'open_public_demo' => 'Open Demo',
-    'public_demo_description' => 'Explore a disposable workspace. Changes are reset automatically and system administration is unavailable.',
     'need_account' => 'Need an account?',
     'create_account' => 'Create an account',
     'reset_title' => 'Forgot password',

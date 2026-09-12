@@ -1,13 +1,11 @@
 @php
     use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
     use WebBlocks\Cms\Support\Translations\CmsTranslator;
-    use WebBlocks\Cms\Support\PublicDemo\PublicDemoGuard;
     use WebBlocks\Cms\Support\WebBlocks;
 
     $authLocaleCode = app(AdminLocaleResolver::class)->locale();
     $authTranslator = app(CmsTranslator::class);
     $authText = static fn (string $key, array $replace = []) => $authTranslator->admin($key, $authLocaleCode, $replace);
-    $publicDemoEnabled = app(PublicDemoGuard::class)->isConfiguredFor(request());
 @endphp
 
 @extends('webblocks-cms::layouts.guest', [
@@ -50,16 +48,6 @@
                         </div>
                     @endif
 
-                    @if ($publicDemoEnabled)
-                        <div class="wb-alert wb-alert-info">
-                            <div>{{ $authText('auth.public_demo_description') }}</div>
-                        </div>
-
-                        <form method="POST" action="{{ route('webblocks.auth.public-demo') }}">
-                            @csrf
-                            <button type="submit" class="wb-btn wb-btn-primary wb-w-full">{{ $authText('auth.open_public_demo') }}</button>
-                        </form>
-                    @else
                     <form method="POST" action="{{ route('webblocks.auth.login') }}" class="wb-stack-4">
                         @csrf
 
@@ -104,7 +92,6 @@
 
                         <button type="submit" class="wb-btn wb-btn-primary wb-w-full">{{ $authText('auth.continue') }}</button>
                     </form>
-                    @endif
                 </div>
 
                 @if (Route::has('webblocks.auth.register'))
