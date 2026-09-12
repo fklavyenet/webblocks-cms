@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.83.3
+
+- Restore the Dashboard Page Views graph by giving its hidden semantic data table the required localized column headings used by the WebBlocks UI chart reader.
+
 ## 1.83.2
 
 - Keep the Page Views chart on Visitor Reports and add a graph-only seven-day copy to the top of the Dashboard, without the values table, comparison text, or information controls.

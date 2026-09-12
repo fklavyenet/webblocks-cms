@@ -19,6 +19,8 @@ class AdminDashboardTablePresentationTest extends TestCase
     $this->assertStringNotContainsString('dashboard.top_page', $dashboard);
     $this->assertStringContainsString('data-wb-chart="line"', $dashboard);
     $this->assertStringContainsString('data-wb-chart-table="dashboard-page-views-chart-data"', $dashboard);
+    $this->assertMatchesRegularExpression('/<table id="dashboard-page-views-chart-data" hidden>\s*<thead>/', $dashboard);
+    $this->assertStringContainsString("<th scope=\"col\">{{ \$insightText('views') }}</th>", $dashboard);
     $this->assertStringNotContainsString("insightText('information')", $dashboard);
     $this->assertStringNotContainsString("insightText('table')", $dashboard);
     $this->assertLessThan(strpos($dashboard, 'dashboard.actions_title'), strpos($dashboard, 'data-wb-chart="line"'));

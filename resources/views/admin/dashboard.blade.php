@@ -48,6 +48,9 @@
                             <p class="wb-chart-fallback wb-text-muted">{{ $insightText('chart_fallback') }}</p>
                         </div>
                         <table id="dashboard-page-views-chart-data" hidden>
+                            <thead>
+                                <tr><th scope="col">{{ $insightText('date') }}</th><th scope="col">{{ $insightText('views') }}</th></tr>
+                            </thead>
                             <tbody>
                                 @foreach ($visitorSummary['buckets'] as $bucket)
                                     <tr><th scope="row" data-wb-chart-label="{{ $chartDate($bucket['from']) }}">{{ $bucket['from'] }}</th><td data-wb-chart-value="{{ $bucket['views'] }}">{{ $bucket['views'] }}</td></tr>
