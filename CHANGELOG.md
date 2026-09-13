@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.84.1
+
+- Republish the design-direction contract, unframed content defaults, responsive Split behavior, asymmetric Grid ratios, full-bleed Hero, and controlled Section flow features under a fresh immutable source reference after the retired `1.84.0` version collided with Packagist history.
+
 ## 1.84.0
 
 - Add a machine-readable design-direction contract and canonical composition fixtures so AI-authored pages choose an explicit visual character, vary section rhythm, and justify card collections before selecting blocks.
