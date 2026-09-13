@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.85.0
+
+- Add an explicit framing strategy to the AI design-direction contract so open, restrained, framed, and dense UI compositions are deliberate art-direction choices.
+- Require a semantic or interaction-boundary justification for non-entity framed surfaces; visual section separation alone no longer qualifies, and open composition tools are preferred for heroes, CTA bands, stats, editorial splits, and navigation/footer groups.
+- Make the canonical Editorial Split Hero structurally open with an asymmetric Grid, copy Stack, action Cluster, and foreground Image while retaining bounded Cards for independently identifiable entities.
+- Keep existing published pages and legacy Hero/CTA renderer behavior unchanged; the new guidance applies only to newly generated or AI-redesigned content and adds no migration or persisted schema field.
+
 ## 1.84.1
 
 - Republish the design-direction contract, unframed content defaults, responsive Split behavior, asymmetric Grid ratios, full-bleed Hero, and controlled Section flow features under a fresh immutable source reference after the retired `1.84.0` version collided with Packagist history.
