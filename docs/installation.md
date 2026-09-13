@@ -77,7 +77,7 @@ What `webblocks:install` does:
 
 Package auth is Laravel-native and does not require Breeze, Jetstream, Laravel UI, or Fortify. After install, sign in at `/webadmin/login` when CMS package auth routes are active. CMS-owned auth views and admin guest redirects use package route names such as `webblocks.auth.login` and `webblocks.auth.logout`, so a host product can keep its own global `login` route, for example `/quiztem/login`, without stealing CMS form actions or `/webadmin` redirects.
 
-For the current `v1.32.x` package-consumer boundary, the host application's `App\Models\User` remains the auth model and install-time patch target.
+For the current package-consumer installation model, the host application's `App\Models\User` remains the auth model and install-time patch target.
 
 ### Partial Install Recovery
 
@@ -188,6 +188,8 @@ Then open:
 Complete the fresh install in the browser wizard after those setup steps are done.
 
 ## Package development and contributing
+
+Cloning the repository is not the normal installation path for application users.
 
 Clone the repository only when developing or contributing to WebBlocks CMS itself:
 
