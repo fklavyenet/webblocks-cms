@@ -962,22 +962,26 @@ The `anti_patterns` checks are about page-wide paint, so each one requires its t
 
 Application code should not be merged into a site's global `site.css` or
 `site.js`. A registered Embedded Application can own physical CSS, JavaScript,
-and a managed `index.html` entry
-files under its site-scoped public directory:
+and one managed `index.html` entry under its site-scoped public directory:
 
 ```text
 GET    /webadmin/api/sites/{site}/applications/{application}/assets
-GET    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js}/{filename}
-PUT    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js}/{filename}
-DELETE /webadmin/api/sites/{site}/applications/{application}/assets/{css|js}/{filename}
+GET    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js|html}/{filename}
+PUT    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js|html}/{filename}
+DELETE /webadmin/api/sites/{site}/applications/{application}/assets/{css|js|html}/{filename}
 ```
 
-The deterministic public path is
+CSS and JavaScript use the deterministic public path
 `/site/{site_handle}/applications/{application_handle}/{type}/{filename}`.
+The HTML type accepts only `index.html`, stores it at the application root, and
+returns the host-selected stable public path
+`/webblocks-applications/{application_handle}/index.html`. Writing this managed
+entry switches the definition to iframe mode and activates that URL.
 `GET`, `PUT`, and `DELETE` require `applications.read`, `applications.write`,
 and `applications.delete` respectively. Filenames are basenames only and must
-end in the selected `.css` or `.js` extension; traversal, nested paths, other
-file types, and remote URLs are rejected.
+end in the selected `.css`, `.js`, or `.html` extension. HTML accepts no
+filename other than `index.html`; traversal, nested paths, other file types,
+and remote URLs are rejected.
 
 `PUT` accepts `contents` and `expected_checksum`. Send `null` only when creating
 a missing file; read an existing file first and send its checksum when replacing

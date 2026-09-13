@@ -122,12 +122,16 @@ Use plugin lifecycle endpoints only with explicit plugin token capabilities. `PO
 
 Embedded Applications are discovered with `GET /webadmin/api/applications`; individual definitions and their dynamic instance-setting schemas are available at `/applications/{application}` and `/applications/{application}/schema`. These reads require `applications.read`. Database definitions can be created and updated with `applications.write`; deleting an unused definition requires the destructive `applications.delete` capability. Content tools may place an enabled application with the API-writable `application` block.
 
-Host-owned CSS and JavaScript for an Embedded Application are managed through
-`/sites/{site}/applications/{application}/assets`. Files use the deterministic
-same-origin `/site/{site_handle}/applications/{application_handle}` root,
-checksum-protected create/replace semantics, and revision snapshots. The three
-application capabilities protect read, write, and delete respectively. This
-keeps application code out of global `site.css` and `site.js`.
+Host-owned CSS, JavaScript, and the single managed `index.html` entry for an
+Embedded Application are managed through
+`/sites/{site}/applications/{application}/assets`. CSS and JavaScript use the
+deterministic same-origin `/site/{site_handle}/applications/{application_handle}`
+root. HTML accepts only `assets/html/index.html` and returns the stable,
+host-selected `/webblocks-applications/{application_handle}/index.html` URL.
+All writes use checksum-protected create/replace semantics and revision
+snapshots. The three application capabilities protect read, write, and delete
+respectively. This keeps application code out of global `site.css` and
+`site.js` while making managed iframe entries discoverable to API clients.
 
 Publish links require `content.publish`. `POST /webadmin/api/pages/{page}/publish` defaults to page-only publishing with `include_page_owned_blocks: false`; it does not publish draft blocks unless the request explicitly sets `include_page_owned_blocks: true`. Shared Slot cascade publishing is unsupported and returns JSON validation feedback. `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes eligible page-owned draft or in-review blocks without changing the page workflow status.
 

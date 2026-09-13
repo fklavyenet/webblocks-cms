@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.85.1
+
+- Publish the existing checksum-protected Embedded Application `html/index.html`
+  read/write contract in OpenAPI and the AI guide so API clients can update
+  managed iframe entry documents without using the browser admin.
+- Document the stable `/webblocks-applications/{application}/index.html` public
+  path, HTML filename restriction, automatic iframe activation, and revision
+  safety alongside the existing application CSS and JavaScript asset workflow.
+
 ## 1.85.0
 
 - Add an explicit framing strategy to the AI design-direction contract so open, restrained, framed, and dense UI compositions are deliberate art-direction choices.

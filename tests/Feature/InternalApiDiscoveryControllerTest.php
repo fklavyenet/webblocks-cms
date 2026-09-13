@@ -95,8 +95,12 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $this->assertSame('applications.read', $asset['get']['x-required-capability']);
     $this->assertSame('applications.write', $asset['put']['x-required-capability']);
     $this->assertSame('applications.delete', $asset['delete']['x-required-capability']);
+    $this->assertSame(['css', 'js', 'html'], $asset['get']['x-supported-types']);
+    $this->assertSame(['css', 'js', 'html'], $asset['put']['x-supported-types']);
     $this->assertContains('expected_checksum', $asset['put']['x-required-fields']);
     $this->assertStringContainsString('/site/{site_handle}/applications/', $asset['put']['x-public-path']);
+    $this->assertStringContainsString('/webblocks-applications/', $asset['put']['x-managed-html-public-path']);
+    $this->assertStringContainsString('index.html', $asset['put']['x-note']);
   }
 
   /**
