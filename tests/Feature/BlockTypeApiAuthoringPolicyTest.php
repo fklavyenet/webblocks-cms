@@ -248,12 +248,15 @@ class BlockTypeApiAuthoringPolicyTest extends TestCase
 
     $this->assertSame('required_before_page_planning', $direction['status']);
     $this->assertSame(
-      ['character', 'density', 'typography', 'geometry', 'imagery', 'corners', 'contrast'],
+      ['character', 'density', 'typography', 'geometry', 'imagery', 'corners', 'contrast', 'framing'],
       array_keys($direction['dimensions']),
     );
     $this->assertSame('plain', $direction['composition_policy']['columns_default']);
     $this->assertSame('opt_in', $direction['composition_policy']['cards']);
     $this->assertTrue($direction['composition_policy']['three_items_is_not_card_justification']);
+    $this->assertTrue($direction['composition_policy']['section_organization_is_not_framing_justification']);
+    $this->assertStringContainsString('semantic independence', $direction['composition_policy']['framing_rule']);
+    $this->assertArrayHasKey('framed_surface_audit', $direction['required_output']);
     $this->assertNotContains('ratio_based_asymmetric_grid', $direction['capability_gaps']);
     $this->assertNotContains('unframed_full_bleed_hero', $direction['capability_gaps']);
     $this->assertNotContains('overlap_or_offset_flow', $direction['capability_gaps']);
@@ -278,7 +281,9 @@ class BlockTypeApiAuthoringPolicyTest extends TestCase
     $this->assertSame('full-bleed', data_get($fixtures, 'full-bleed-photographic-hero.tree.settings.layout'));
     $this->assertSame('overlap-previous', data_get($fixtures, 'overlapping-editorial-band.tree.children.1.settings.flow'));
     $this->assertTrue($fixtures['bounded-entity-cards']['requires_card_justification']);
-    $this->assertSame('split', data_get($fixtures, 'editorial-split-hero.tree.children.0.children.0.settings.layout'));
+    $this->assertSame('lead-left', data_get($fixtures, 'editorial-split-hero.tree.children.0.children.0.settings.ratio'));
+    $this->assertSame('open', $fixtures['editorial-split-hero']['framing_strategy']);
+    $this->assertSame('bounded-entities', $fixtures['bounded-entity-cards']['framing_strategy']);
     $this->assertSame('lead-left', data_get($fixtures, 'alternating-image-story.tree.children.0.children.0.settings.ratio'));
 
     $published = BlockType::query()->where('status', 'published')->pluck('slug')->all();

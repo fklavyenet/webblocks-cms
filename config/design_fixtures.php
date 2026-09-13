@@ -9,9 +9,10 @@ return [
   'fixtures' => [
     'editorial-split-hero' => [
       'name' => 'Editorial Split Hero',
-      'purpose' => 'Lead with meaningful foreground media and an unequal copy/image relationship.',
+      'purpose' => 'Lead with meaningful foreground media and an unequal copy/image relationship without turning the opening band into a panel.',
       'directions' => ['editorial', 'calm-human', 'luxury'],
       'rhythm_role' => 'dominant',
+      'framing_strategy' => 'open',
       'tree' => [
         'type' => 'section',
         'settings' => ['spacing' => 'lg'],
@@ -19,21 +20,28 @@ return [
           'type' => 'container',
           'settings' => ['width' => 'xl'],
           'children' => [[
-            'type' => 'hero',
-            'settings' => ['layout' => 'split'],
-            'media_role' => 'foreground',
-            'children' => [['type' => 'button_link'], ['type' => 'button_link']],
+            'type' => 'grid',
+            'settings' => ['columns' => '2', 'ratio' => 'lead-left', 'gap' => '6'],
+            'children' => [[
+              'type' => 'stack',
+              'children' => [['type' => 'content_header'], ['type' => 'cluster', 'children' => [['type' => 'button_link'], ['type' => 'button_link']]]],
+            ], [
+              'type' => 'image',
+              'media_role' => 'foreground',
+            ]],
           ]],
         ]],
       ],
-      'expected_hooks' => ['[data-wb-public-block-type="hero"]', '.wb-promo--split', '.wb-promo-media'],
-      'avoid' => ['centered copy without a content reason', 'decorative duplicate imagery', 'extra card grid directly below'],
+      'expected_hooks' => ['[data-wb-public-block-type="grid"]', '.wb-public-grid--lead-left', '[data-wb-public-block-type="content-header"]', '[data-wb-public-block-type="image"]'],
+      'forbidden_hooks' => ['[data-wb-public-block-type="hero"].wb-card', '[data-wb-public-block-type="card"]'],
+      'avoid' => ['centered copy without a content reason', 'decorative duplicate imagery', 'framing the outer hero merely to hold the split', 'extra card grid directly below'],
     ],
     'full-bleed-photographic-hero' => [
       'name' => 'Full-bleed Photographic Hero',
       'purpose' => 'Create a dominant, unframed opening band when one meaningful image carries the page direction.',
       'directions' => ['editorial', 'calm-human', 'playful', 'luxury'],
       'rhythm_role' => 'dominant',
+      'framing_strategy' => 'open',
       'tree' => [
         'type' => 'hero',
         'settings' => ['layout' => 'full-bleed', 'background_overlay' => 'medium'],
@@ -49,6 +57,7 @@ return [
       'purpose' => 'Break uniform vertical rhythm by letting one contained content band overlap a dominant predecessor.',
       'directions' => ['editorial', 'calm-human', 'playful', 'luxury'],
       'rhythm_role' => 'dominant-to-structured',
+      'framing_strategy' => 'open-with-overlap',
       'tree' => [
         'type' => 'stack',
         'children' => [[
@@ -73,6 +82,7 @@ return [
       'purpose' => 'Present qualities, benefits, or values without turning every statement into a card.',
       'directions' => ['editorial', 'technical', 'institutional', 'calm-human', 'utilitarian'],
       'rhythm_role' => 'structured',
+      'framing_strategy' => 'open',
       'tree' => [
         'type' => 'section',
         'settings' => ['spacing' => 'lg'],
@@ -95,6 +105,7 @@ return [
       'purpose' => 'Create narrative rhythm with alternating foreground images and editable copy stacks.',
       'directions' => ['editorial', 'calm-human', 'playful', 'luxury'],
       'rhythm_role' => 'dominant',
+      'framing_strategy' => 'open',
       'tree' => [
         'type' => 'section',
         'children' => [[
@@ -115,7 +126,9 @@ return [
       'purpose' => 'Use cards only for entities with their own boundary or action.',
       'directions' => ['technical', 'institutional', 'playful', 'utilitarian'],
       'rhythm_role' => 'structured',
+      'framing_strategy' => 'bounded-entities',
       'requires_card_justification' => true,
+      'card_justification' => 'Each repeated item is an independently identifiable entity with its own details or action.',
       'tree' => [
         'type' => 'section',
         'children' => [[

@@ -204,6 +204,8 @@ A full-site translation pass is bulk work, so pace it: the installation API allo
 - Build block trees with nested `children` arrays only. Do not use flat `id`, `parent_id`, `block_id`, `slot_type_id`, or `block_type_id` fields in content plans; those are database implementation details and validation rejects them.
 - Put block translations directly under `translations` for the selected plan locale, such as `translations.title` or `translations.content`. Do not nest block copy under `translations.en`, `translations.tr`, or other locale keys.
 - Wrapper blocks such as `section`, `container`, `cluster`, `grid`, `card`, `card_body`, `card_footer`, `sticky-navbar`, and `sidebar-navigation` must contain meaningful child blocks. Creating wrappers without children is invalid because it renders empty chrome.
+- Do not use a Card or bordered panel merely to organize a section. Framing must communicate semantic independence, interaction, or entity boundaries. Hero outer containers, feature/principle groups, section wrappers, navigation/footer columns, CTA bands, decorative stats, and editorial splits should remain open by default.
+- Before applying any non-entity framed surface, record why it represents an independent semantic or interaction boundary. “To visually separate the section” is not a sufficient justification; use whitespace, typography hierarchy, asymmetry, dividers, background-tone changes, wide sections, alignment, offset/overlap, or restrained rules instead.
 
 ## Mode-Aware Site CSS
 
@@ -256,7 +258,7 @@ sticky-navbar -> container -> cluster -> navbar-brand + cluster -> navbar-naviga
 
 Use the CMS Navigation API for navbar links. Navigation item URLs must be safe paths or `http`/`https` URLs; for same-page anchors, use a path plus fragment such as `/#platform`, not a raw `#platform` value. If `GET /webadmin/api/sites` shows the target site rendering with the wrong `public_theme_preset`, update it with `POST /webadmin/api/sites/{site}/public-theme` instead of trying to force theme mode with page content.
 
-For most public pages, place wide promo blocks such as `hero` and `cta` inside `section -> container`. Direct full-width `hero` or `cta` blocks under `main` should be intentional edge-to-edge design choices, not the default.
+For most public pages, do not assume the framed `hero` or `cta` renderer is the default composition. Build open editorial openings with `section -> container -> grid(ratio: lead-left|lead-right) -> stack + image`, and open conversion bands with `section -> container -> split|cluster -> content_header + button_link`. Use `hero(layout: full-bleed)` for an intentional edge-to-edge photographic band. Use a framed `hero` or `cta` only when the promotion itself is an independently bounded offer or interaction.
 
 Contact page:
 

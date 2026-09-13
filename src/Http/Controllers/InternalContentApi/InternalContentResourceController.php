@@ -551,19 +551,21 @@ class InternalContentResourceController extends Controller
       ],
       'recommended_patterns' => [
         'marketing_homepage' => [
-          'section -> container -> hero(layout: split when foreground media supports the direction)',
+          'section -> container -> grid(ratio: lead-left|lead-right) -> stack + image for an open editorial hero',
           'hero(layout: full-bleed) for one deliberate edge-to-edge photographic opening band',
           'section(flow: overlap-previous) after one dominant band when the direction calls for a controlled rhythm break',
           'section -> container -> columns(variant: plain) -> column_item for qualities, principles, and benefits',
           'section -> container -> alternating grid -> image + stack for narrative content',
           'section -> container -> grid -> card -> card_body only for independently bounded entities',
-          'section -> container -> cta',
+          'section -> container -> split|cluster -> content_header + button_link for an open CTA band',
+          'section -> container -> cta only when the promotion is an independently bounded offer or interactive surface',
         ],
         'avoid' => [
           'single rich-text blob for a full page',
           'trusted html fallback when structured blocks can represent the content',
           'full-width hero/cta without a container unless intentionally edge-to-edge',
           'three cards merely because the source has three short items',
+          'card or bordered panel used merely to organize a hero, section, CTA, navigation group, footer column, stat, or editorial split',
           'repeating equally weighted section -> heading -> grid -> card bands',
         ],
       ],

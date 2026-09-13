@@ -12,6 +12,7 @@ Each fixture records:
 - its rhythm role and complete native block tree;
 - expected or forbidden stable public hooks;
 - composition-specific anti-patterns;
+- its framing strategy and, when Cards are present, the semantic entity-boundary justification;
 - deterministic desktop and mobile capture sizes.
 
 The initial catalog contains Editorial Split Hero, Full-bleed Photographic Hero,
@@ -19,7 +20,16 @@ Overlapping Editorial Band, Unframed Principles, Alternating Image Story, and
 Bounded Entity Cards. Unframed Principles is the
 normal repeated-copy reference. Bounded Entity Cards deliberately requires a
 card justification and must not be used merely because a source has three
-items.
+items. Editorial Split Hero deliberately uses an asymmetric Grid, copy Stack,
+and foreground Image instead of the legacy framed split-Hero renderer. This
+makes the open composition and bounded entity examples structurally different,
+not merely different in prose.
+
+Fixture review must reject framing whose only rationale is visual grouping.
+Whitespace, hierarchy, asymmetry, dividers, background-tone changes, alignment,
+and controlled offset/overlap are the default section-separation tools. A
+bordered or rounded surface is appropriate when it communicates an independent
+entity, action, download, form, plan, or other bounded interaction.
 
 ## Capture and approval
 
