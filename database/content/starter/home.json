@@ -76,28 +76,31 @@
             },
             "children": [
               {
-                "type": "feature-grid",
+                "type": "columns",
+                "settings": {
+                  "variant": "plain"
+                },
                 "translations": {
                   "title": "Where to start",
                   "subtitle": "Three things worth doing before you publish."
                 },
                 "children": [
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Edit this page",
                       "content": "The Pages screen in the admin lists this page at /. Open it in the block editor: every section you see here is a block you can rewrite, reorder, or delete."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Build with blocks",
                       "content": "Sections, containers, grids, and cards compose a layout. Add a block, choose its slot, and publish it when the content is ready."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Add your media",
                       "content": "Upload logos and images to the Media Library, then bind them to image, gallery, and hero blocks instead of hard-coding file paths."

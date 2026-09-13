@@ -72,6 +72,7 @@
                         'left' => $adminText('layout_left'),
                         'centered' => $adminText('layout_centered'),
                         'split' => $adminText('layout_split'),
+                        'full-bleed' => $adminText('layout_full_bleed'),
                     ] as $value => $label)
                         <option value="{{ $value }}" @selected(old('layout', $settings['layout'] ?? ($block->variant === 'centered' ? 'centered' : 'left')) === $value)>{{ $label }}</option>
                     @endforeach

@@ -2002,6 +2002,7 @@ class InternalContentPlanService
     $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
     $settings = $this->operations->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
     $settings = $this->operations->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
+    $settings = $this->operations->normalizeCompositionDefaults($settings, $blockType);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {
       if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {

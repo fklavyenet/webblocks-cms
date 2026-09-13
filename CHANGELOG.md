@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.84.0
+
+- Add a machine-readable design-direction contract and canonical composition fixtures so AI-authored pages choose an explicit visual character, vary section rhythm, and justify card collections before selecting blocks.
+- Make new Columns compositions unframed by default, add matching editor guidance, and replace card-heavy starter sections with plain Columns while preserving existing published content.
+- Add responsive Split stacking, asymmetric two-column Grid ratios, an unframed full-bleed Hero, and controlled Section offset/overlap flows to both the operator panel and Internal Content API.
+- Keep the new composition modifiers responsive and backward compatible: legacy blocks retain their current presentation, invalid setting combinations are normalized, and overlap effects return to normal document flow on small screens.
+
 ## 1.83.4
 
 - Improve package discovery with clearer Laravel-native positioning, a visible Composer install command, and links to the live public demo and core documentation.

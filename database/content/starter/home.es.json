@@ -76,28 +76,31 @@
             },
             "children": [
               {
-                "type": "feature-grid",
+                "type": "columns",
+                "settings": {
+                  "variant": "plain"
+                },
                 "translations": {
                   "title": "Por dónde empezar",
                   "subtitle": "Tres cosas que merece la pena hacer antes de publicar."
                 },
                 "children": [
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Edita esta página",
                       "content": "La pantalla Páginas del admin muestra esta página en /. Ábrela en el editor de bloques: cada sección que ves aquí es un bloque que puedes reescribir, reordenar o eliminar."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Construye con bloques",
                       "content": "Secciones, contenedores, cuadrículas y tarjetas componen un layout. Añade un bloque, elige su slot y publícalo cuando el contenido esté listo."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Añade tus medios",
                       "content": "Sube logotipos e imágenes a la biblioteca de medios y vincúlalos a bloques de imagen, galería y hero en lugar de escribir rutas de archivo a mano."

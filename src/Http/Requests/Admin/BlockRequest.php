@@ -149,18 +149,21 @@ class BlockRequest extends FormRequest
       'name' => [($isLayoutPrimitive || $isCard || $isCardRegion || $isStickyNavbar || $isSidebarNavigation || $isSidebarNavGroup) ? 'nullable' : 'prohibited', 'string', 'max:100'],
       'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
       'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
+      'section_flow' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['normal', 'offset-up', 'overlap-previous'])],
       'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
       'container_flow' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'stack'])],
       'stack_spacing' => [$isStack ? 'nullable' : 'prohibited', Rule::in(['', '1', '2', '3', '4', '6', '8'])],
       'split_gap' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', '0', '1', '2', '3', '4', '6', '8'])],
       'split_align' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'stretch'])],
       'split_width' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'full'])],
+      'split_responsive' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['stack', 'preserve'])],
       'cluster_gap' => [$supportsClusterGap ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'xs', 'sm', 'md', 'lg'])],
       'cluster_justify' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'between'])],
       'cluster_align' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'stretch'])],
       'cluster_wrap' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'wrap', 'nowrap'])],
       'cluster_width' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'full'])],
       'grid_columns' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4'])],
+      'grid_ratio' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['equal', 'lead-left', 'lead-right'])],
       'grid_gap' => [$supportsGridGap ? 'nullable' : 'prohibited', Rule::in(['', '3', '4', '6'])],
       'grid_alternate_media_text_sections' => [$supportsGridColumns ? 'nullable' : 'prohibited', 'boolean'],
       'grid_alternate_start' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['', 'media_left', 'text_left'])],
@@ -203,7 +206,7 @@ class BlockRequest extends FormRequest
       'image_align' => ['prohibited', Rule::in(['start', 'center', 'end', 'stretch'])],
       'image_aspect' => ['prohibited', Rule::in(['auto', 'square', 'wide', 'portrait'])],
       'alert_variant' => [$isAlert ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
-      'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
+      'layout' => [$isHero ? 'nullable' : 'nullable', Rule::in(['left', 'centered', 'split', 'full-bleed'])],
       'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
       'background_position' => [$supportsBackgroundMedia ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'top', 'bottom', 'left', 'right'])],
       'background_overlay' => [$supportsBackgroundMedia ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'soft', 'medium', 'strong'])],
@@ -1359,7 +1362,7 @@ class BlockRequest extends FormRequest
         $data['settings'] = null;
         $data['variant'] = $isTranslatedColumnsEdit
           ? ($this->route('block')?->getRawOriginal('variant'))
-          : (in_array(trim((string) ($data['variant'] ?? 'cards')), ['cards', 'plain', 'stats'], true) ? trim((string) ($data['variant'] ?? 'cards')) : 'cards');
+          : (in_array(trim((string) ($data['variant'] ?? 'plain')), ['cards', 'plain', 'stats'], true) ? trim((string) ($data['variant'] ?? 'plain')) : 'plain');
       }
 
       if ($blockType?->slug === 'feature-grid') {
@@ -2092,18 +2095,21 @@ class BlockRequest extends FormRequest
         $layoutName = trim((string) ($data['name'] ?? ''));
         $settings = $existingSettings;
         $spacing = trim((string) ($data['spacing'] ?? ''));
+        $sectionFlow = trim((string) ($data['section_flow'] ?? 'normal'));
         $width = trim((string) ($data['width'] ?? ''));
         $containerFlow = trim((string) ($data['container_flow'] ?? ''));
         $stackSpacing = trim((string) ($data['stack_spacing'] ?? ''));
         $splitGap = trim((string) ($data['split_gap'] ?? ''));
         $splitAlign = trim((string) ($data['split_align'] ?? ''));
         $splitWidth = trim((string) ($data['split_width'] ?? ''));
+        $splitResponsive = trim((string) ($data['split_responsive'] ?? 'stack'));
         $clusterGap = trim((string) ($data['cluster_gap'] ?? ''));
         $clusterJustify = trim((string) ($data['cluster_justify'] ?? ''));
         $clusterAlign = trim((string) ($data['cluster_align'] ?? ''));
         $clusterWrap = trim((string) ($data['cluster_wrap'] ?? ''));
         $clusterWidth = trim((string) ($data['cluster_width'] ?? ''));
         $gridColumns = trim((string) ($data['grid_columns'] ?? ''));
+        $gridRatio = trim((string) ($data['grid_ratio'] ?? 'equal'));
         $gridGap = trim((string) ($data['grid_gap'] ?? ''));
         $gridAlternateStart = trim((string) ($data['grid_alternate_start'] ?? ''));
         $sliderHeight = trim((string) ($data['slider_height'] ?? ''));
@@ -2131,6 +2137,12 @@ class BlockRequest extends FormRequest
             $settings['spacing'] = $spacing;
           } else {
             unset($settings['spacing']);
+          }
+
+          if (in_array($sectionFlow, ['offset-up', 'overlap-previous'], true)) {
+            $settings['flow'] = $sectionFlow;
+          } else {
+            unset($settings['flow']);
           }
 
           $settings = $this->applyBackgroundMediaSettings($settings, $data);
@@ -2182,6 +2194,12 @@ class BlockRequest extends FormRequest
             unset($settings['width']);
           }
 
+          if ($splitResponsive === 'stack') {
+            $settings['responsive'] = 'stack';
+          } else {
+            unset($settings['responsive']);
+          }
+
           unset($settings['spacing']);
         }
 
@@ -2230,6 +2248,12 @@ class BlockRequest extends FormRequest
             $settings['gap'] = $gridGap;
           } else {
             unset($settings['gap']);
+          }
+
+          if ($gridColumns === '2' && in_array($gridRatio, ['lead-left', 'lead-right'], true)) {
+            $settings['ratio'] = $gridRatio;
+          } else {
+            unset($settings['ratio']);
           }
 
           $settings['alternate_media_text_sections'] = (bool) ($data['grid_alternate_media_text_sections'] ?? false);
@@ -2411,7 +2435,7 @@ class BlockRequest extends FormRequest
     unset($data['show_button']);
     unset($data['icon_slug'], $data['icon_tone'], $data['badge_label'], $data['badge_tone']);
     unset($data['background_position'], $data['background_overlay']);
-    unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['stack_spacing'], $data['split_gap'], $data['split_align'], $data['split_width'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+    unset($data['name'], $data['alignment'], $data['spacing'], $data['section_flow'], $data['width'], $data['container_flow'], $data['stack_spacing'], $data['split_gap'], $data['split_align'], $data['split_width'], $data['split_responsive'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_ratio'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);
     unset($data['slider_height'], $data['slider_min_height'], $data['slider_aspect_ratio'], $data['slider_transition'], $data['slider_interval_ms']);
     unset($data['slider_overlay'], $data['slider_content_position'], $data['slider_content_width'], $data['slider_text_color'], $data['slider_background_fit']);
     unset($data['slider_autoplay'], $data['slider_pause_on_hover'], $data['slider_show_arrows'], $data['slider_show_dots'], $data['slider_loop'], $data['slider_swipe'], $data['slider_keyboard']);

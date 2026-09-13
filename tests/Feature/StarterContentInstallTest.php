@@ -48,9 +48,11 @@ class StarterContentInstallTest extends TestCase
     $this->assertCount($result->blocksCreated, $blocks);
     $this->assertNotEmpty($blocks);
 
-    foreach (['section', 'container', 'cluster', 'image', 'content_header', 'feature-grid', 'feature-item', 'cta', 'button_link'] as $type) {
+    foreach (['section', 'container', 'cluster', 'image', 'content_header', 'columns', 'column_item', 'cta', 'button_link'] as $type) {
       $this->assertTrue($blocks->contains('type', $type), 'Expected a ['.$type.'] starter block.');
     }
+
+    $this->assertSame('plain', Block::query()->where('type', 'columns')->firstOrFail()->variant);
 
     $this->assertTrue($blocks->every(fn (Block $block) => $block->status === 'published'));
     $this->assertTrue($blocks->every(fn (Block $block) => $block->slot === 'main'));

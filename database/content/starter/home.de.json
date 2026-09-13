@@ -76,28 +76,31 @@
             },
             "children": [
               {
-                "type": "feature-grid",
+                "type": "columns",
+                "settings": {
+                  "variant": "plain"
+                },
                 "translations": {
                   "title": "Womit anfangen",
                   "subtitle": "Drei Dinge, die sich vor der Veröffentlichung lohnen."
                 },
                 "children": [
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Diese Seite bearbeiten",
                       "content": "Der Bereich Seiten im Admin listet diese Seite unter / auf. Öffne sie im Block-Editor: Jeder Abschnitt hier ist ein Block, den du umschreiben, umsortieren oder löschen kannst."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Mit Blöcken bauen",
                       "content": "Abschnitte, Container, Raster und Karten ergeben ein Layout. Füge einen Block hinzu, wähle seinen Slot und veröffentliche ihn, sobald der Inhalt fertig ist."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Eigene Medien hinzufügen",
                       "content": "Lade Logos und Bilder in die Mediathek hoch und verknüpfe sie mit Bild-, Galerie- und Hero-Blöcken, statt Dateipfade fest zu verdrahten."

@@ -76,28 +76,31 @@
             },
             "children": [
               {
-                "type": "feature-grid",
+                "type": "columns",
+                "settings": {
+                  "variant": "plain"
+                },
                 "translations": {
                   "title": "Nereden başlamalı",
                   "subtitle": "Yayınlamadan önce yapmaya değer üç şey."
                 },
                 "children": [
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Bu sayfayı düzenle",
                       "content": "Yönetim panelindeki Sayfalar ekranı bu sayfayı / adresinde listeler. Blok düzenleyicide aç: burada gördüğün her bölüm yeniden yazabileceğin, sıralayabileceğin veya silebileceğin bir blok."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Bloklarla inşa et",
                       "content": "Bölümler, kapsayıcılar, ızgaralar ve kartlar bir düzen oluşturur. Bir blok ekle, slotunu seç ve içerik hazır olduğunda yayınla."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Medyanı ekle",
                       "content": "Logoları ve görselleri Medya Kitaplığına yükle, ardından dosya yollarını elle yazmak yerine görsel, galeri ve hero bloklarına bağla."

@@ -131,6 +131,7 @@ final class BlockSettingsPatchPolicy
     'grid' => [
       'layout_name' => ['text', 255],
       'columns' => ['enum', ['2', '3', '4']],
+      'ratio' => ['enum', ['equal', 'lead-left', 'lead-right']],
       'gap' => ['enum', ['3', '4', '6']],
       'alternate_media_text_sections' => ['bool'],
       'alternate_start' => ['enum', ['media_left', 'text_left']],
@@ -140,7 +141,7 @@ final class BlockSettingsPatchPolicy
       'anchor' => ['anchor'],
     ],
     'hero' => [
-      'layout' => ['enum', ['left', 'centered', 'split']],
+      'layout' => ['enum', ['left', 'centered', 'split', 'full-bleed']],
       'title_tag' => ['enum', ['h1', 'h2', 'h3']],
     ],
     'link-list' => [
@@ -176,12 +177,14 @@ final class BlockSettingsPatchPolicy
     'section' => [
       'layout_name' => ['text', 255],
       'spacing' => ['enum', ['sm', 'lg']],
+      'flow' => ['enum', ['normal', 'offset-up', 'overlap-previous']],
     ],
     'split' => [
       'layout_name' => ['text', 255],
       'gap' => ['enum', ['0', '1', '2', '3', '4', '6', '8']],
       'items_alignment' => ['enum', ['start', 'center', 'end', 'stretch']],
       'width' => ['enum', ['auto', 'full']],
+      'responsive' => ['enum', ['stack', 'preserve']],
     ],
     'stack' => [
       'layout_name' => ['text', 255],

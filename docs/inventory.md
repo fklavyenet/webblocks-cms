@@ -82,6 +82,9 @@ Source families inspected:
 8. Do not target database IDs, generated block IDs, sibling position selectors, or `:nth-child()` for essential design behavior. Prefer block-type attributes, native `wb-*` classes, page body classes, and documented settings.
 9. Keep every visible title, paragraph, label, button, badge, image, caption, menu, and form setting editable through its native CMS field or related record.
 10. Validate first, apply only after explicit user approval, create drafts first, and leave live system-update actions and live visual testing to the human operator unless separately authorized.
+11. Treat Card as opt-in presentation, not the default way to group related copy. Use a Card only for an independently actionable, repeatable, or bounded entity such as a product, plugin, price plan, download, or form.
+12. Before choosing blocks, state one site-level design direction covering character, density, typography, geometry, imagery, corners, and contrast. Make the block tree and site CSS implement that direction instead of choosing each section in isolation.
+13. Vary page rhythm deliberately. Combine narrow, regular, wide, and full-width regions; alternate quiet copy, dominant imagery, and structured collections rather than repeating equally weighted sections.
 
 ## HTML Block API Policy
 
@@ -125,10 +128,10 @@ A renderer may recognize a legacy or internal value that the normal admin form d
 | Horizontal actions or compact items | `cluster` | Do not use Grid for a single button row. |
 | Responsive repeated cells | `grid` with structured children | Do not use Grid to fake a semantic table. |
 | Page title, intro, badge, icon, metadata | `content_header` | It always owns an H1; do not use it for ordinary nested headings. |
-| Marketing intro | `hero` | Hero supports left, centered, and split layouts; split renders the hero media as a foreground image beside the copy. Report a gap when the design requires a second editable foreground image or arbitrary nested content. |
+| Marketing intro | `hero` | Hero supports left, centered, split, and full-bleed layouts; split renders foreground media while full-bleed creates an unframed photographic band. Report a gap when the design requires a second editable foreground image or arbitrary nested content. |
 | Conversion band | `cta` | Current CTA does not accept normal structured children other than managed legacy button children. |
 | Repeated feature or stat items | `columns` and `column_item` | Prefer `grid` and composable `card` when arbitrary nested content is needed. |
-| Composable card | `card` plus Card regions | There is no supported Card visual variant setting; report a gap if stable semantic card variants are required. |
+| Composable card | `card` plus Card regions | Use only for independently bounded/actionable content; variants are default, flat, muted, highlight, and accent. |
 | Single semantic image | `image` | Use Gallery for collections and background media fields for supported backgrounds. |
 | Image collection | `gallery` | Do not add a separate HTML lightbox. |
 | Slider/carousel | `slider` plus `slide` | Use Gallery when the content is only an image collection. |
@@ -219,11 +222,11 @@ The current published core catalog contains 52 rows:
 | --- | --- |
 | Purpose | Major semantic page band and child grouping. |
 | Admin-editable content | No visible copy. Optional `settings.layout_name` is editor metadata only. |
-| Settings | `spacing`: empty, `sm`, `lg`; optional background `media_id`; `background_position`: center, top, bottom, left, right; `background_overlay`: soft, medium, strong, none. |
+| Settings | `spacing`: empty, `sm`, `lg`; `flow`: normal, offset-up, overlap-previous; optional background `media_id`; `background_position`: center, top, bottom, left, right; `background_overlay`: soft, medium, strong, none. |
 | Children | Any supported published child type; at least one renderable child is required by API plans. |
-| HTML | Root-owning `<section class="wb-section [wb-section-sm or wb-section-lg] wb-stack" data-wb-public-block-type="section">…</section>`. Background media adds package-owned class/style hooks. |
-| Example appearance | A full-width themed band containing a constrained Container, heading, copy, cards, or media. |
-| Avoid | Visible text in settings, empty chrome, or using Section as a card. |
+| HTML | Root-owning `<section class="wb-section [wb-section-sm or wb-section-lg] [wb-public-section--offset-up or wb-public-section--overlap-previous] wb-stack" data-wb-public-block-type="section">…</section>`. Background media adds package-owned class/style hooks. Flow modifiers reset on small screens. |
+| Example appearance | A full-width themed band containing a constrained Container, or one deliberately shifted band that breaks uniform vertical rhythm. |
+| Avoid | Visible text in settings, empty chrome, using Section as a card, or overlapping several consecutive sections. |
 
 ### `container` — Container
 
@@ -255,9 +258,9 @@ The current published core catalog contains 52 rows:
 | --- | --- |
 | Purpose | Two-sided composition where the first child grows and the second stays content-sized. |
 | Admin-editable content | No visible copy; optional editor-only `layout_name`. |
-| Settings | `gap`: empty/default, 0, 1, 2, 3, 4, 6, 8; `items_alignment`: center/default, start, end, stretch; `width`: auto/default or full. |
+| Settings | `gap`: empty/default, 0, 1, 2, 3, 4, 6, 8; `items_alignment`: center/default, start, end, stretch; `width`: auto/default or full; `responsive`: stack or preserve. New admin/API blocks default to stack while existing empty settings preserve the legacy row. |
 | Children | Exactly two direct children. Put a Stack inside either side when that side needs multiple blocks. |
-| HTML | Root-owning `<div class="wb-split …" data-wb-public-block-type="split">…</div>` with allowlisted `wb-*` classes. |
+| HTML | Root-owning `<div class="wb-split …" data-wb-public-block-type="split">…</div>` with allowlisted `wb-*` classes. Responsive stack adds package-owned `.wb-public-split--stack-mobile` and changes to a full-width column at 48rem and below. |
 | Example appearance | Product identity on the left and a price plus buy action on the right. |
 | Avoid | Repeated equal columns, wrapping button groups, or more than two direct children. |
 
@@ -279,9 +282,9 @@ The current published core catalog contains 52 rows:
 | --- | --- |
 | Purpose | Responsive multi-column layout. |
 | Admin-editable content | No visible copy; optional editor-only `layout_name`. |
-| Settings | `columns`: 2, 3, 4; `gap`: empty, 3, 4, 6; `alternate_media_text_sections`: boolean; `alternate_start`: media_left or text_left. |
+| Settings | `columns`: 2, 3, 4; `ratio`: equal, lead-left, lead-right (asymmetric ratios apply only to two columns); `gap`: empty, 3, 4, 6; `alternate_media_text_sections`: boolean; `alternate_start`: media_left or text_left. |
 | Children | Any supported published child type; at least one child required by API plans. |
-| HTML | Root-owning `<div class="wb-grid wb-grid-{n} [wb-gap-{n}]" data-wb-public-block-type="grid">…</div>`. Alternating mode may change direct-child order without changing the root. |
+| HTML | Root-owning `<div class="wb-grid wb-grid-{n} [wb-gap-{n}] [wb-public-grid--lead-*]" data-wb-public-block-type="grid">…</div>`. Lead ratios render as 2:1 or 1:2 above the normal one-column mobile breakpoint. Alternating mode may change direct-child order without changing the root. |
 | Example appearance | Three Card blocks in a feature row, or paired Image/content groups alternating left and right. |
 | Avoid | Semantic tables or a compact action row. |
 
@@ -408,11 +411,11 @@ The current published core catalog contains 52 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`. Action buttons are separate child `button_link` blocks with their own admin form. |
-| Settings and variants | `variant`: default, muted, soft, accent; `layout`: left or centered; `title_tag`: h1, h2, h3; optional background image and overlay settings. |
-| Children/media | Actions are child `button_link` blocks, with no fixed count; direct image `media_id` is background media. |
-| HTML | Root-owning `<section class="wb-card wb-promo [wb-card-*]">` containing `.wb-card-body.wb-promo-copy`, eyebrow, promo title/text, and optional `.wb-promo-actions`. |
-| Example appearance | A contained promo-card hero with background media and up to two actions. |
-| Hard limitation | No structured foreground image, split column, product-price region, trust strip, or arbitrary nested content. Do not claim fidelity to a screenshot requiring those features. |
+| Settings and variants | `variant`: default, muted, soft, accent; `layout`: left, centered, split, or full-bleed; `title_tag`: h1, h2, h3; optional background image and overlay settings. |
+| Children/media | Actions are child `button_link` blocks, with no fixed count. In left/centered/full-bleed layouts `media_id` is background media; in split it renders as a foreground image beside the copy. |
+| HTML | Legacy layouts own `<section class="wb-card wb-promo [wb-card-*]">`; split adds `.wb-promo--split` and `.wb-promo-media`. Full-bleed deliberately drops the card class and uses `.wb-public-hero--full-bleed` with an aligned `.wb-public-hero__copy`. |
+| Example appearance | A contained promo, foreground image/copy split, or unframed viewport-wide photographic hero, plus actions. |
+| Hard limitation | No second foreground image, product-price/trust-strip region, or arbitrary nested content. |
 | Actions | Add `button_link` children; they render inside `.wb-promo-actions`. `primary_cta` / `secondary_cta` `{label, url}` objects remain accepted as a shorthand that writes the first two of those children. Do not reach for a sibling Cluster with Button Link — that renders outside the promo root. `allowed_child_handles` also lists legacy `button`, which has no published catalog row and stays in `unreachable_child_handles`. |
 
 ### `cta` — CTA
@@ -432,7 +435,7 @@ The current published core catalog contains 52 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle`, `translations.content`; child item title, badge, content, URL, icon, and tones. |
-| Settings and variants | `settings.variant`: cards, plain, stats. |
+| Settings and variants | `settings.variant`: cards, plain, stats. New Internal Content API plans default an omitted variant to `plain`; `cards` must be deliberate. Existing stored blocks with an empty variant retain the legacy cards renderer fallback. |
 | Children/media | Only `column_item`. Child count selects stack, 2-column, 3-column, or 4-column layout. |
 | HTML | Root-owning `<section class="wb-stack wb-gap-4">` with optional intro and a responsive item grid. |
 | Example appearance | Three benefit cards, four compact features, or a simple metric row. |
@@ -448,6 +451,8 @@ The current published core catalog contains 52 rows:
 | HTML | Cards: `.wb-card > .wb-card-body`; plain: `.wb-icon-card`; stats: `.wb-stat`. Optional safe link wraps cards/plain output. |
 | Example appearance | Icon-and-copy feature card with an optional badge. |
 | Avoid | Standalone use or relying on renderer-only subtitle for a stat value. |
+
+Use `plain` for qualities, principles, benefits, process summaries, and other copy that does not represent independent objects. Use `cards` only when every item has a meaningful boundary of its own. The number of items — especially the familiar set of three — is never by itself a reason to choose cards.
 
 ### `feature-grid` — Feature Grid
 
@@ -880,6 +885,33 @@ Rules:
 
 These are managed block trees, not fixed templates. Confirm all handles at runtime.
 
+Start from the least framed recipe that satisfies the content. Do not repeat the same recipe in adjacent page bands, and do not select the feature-card recipe merely because the source contains three short items.
+
+### Editorial introduction with foreground media
+
+```text
+section(spacing:lg)
+└── container(width:xl)
+    └── hero(layout:split, foreground media)
+        ├── button_link(primary)
+        └── button_link(secondary)
+```
+
+Use a large, meaningful image and restrained surface styling. Choose `layout:full-bleed` when the image should become a viewport-wide, unframed opening band; retain `split` when the image is semantic foreground content.
+
+### Unframed principles or benefits
+
+```text
+section(spacing:lg)
+└── container(width:xl)
+    └── columns(variant:plain)
+        ├── column_item
+        ├── column_item
+        └── column_item
+```
+
+This is the normal starting point for qualities such as experience, communication, care, speed, or reliability. Promote it to Cards only when the items are independently actionable or bounded.
+
 ### Marketing page intro with separate actions
 
 ```text
@@ -891,9 +923,9 @@ section(background optional)
         └── button_link(secondary)
 ```
 
-Use this only when the action row may sit outside the Hero promo root. If the screenshot requires buttons inside a Hero with a split foreground image, report the Hero contract gap.
+Use this only when the action row should sit outside the Hero promo root. Hero itself accepts Button Link children in every layout, including split; keep actions inside Hero when that is the intended composition.
 
-### Feature card grid
+### Bounded entity card grid
 
 ```text
 section(spacing:lg)
@@ -909,7 +941,7 @@ section(spacing:lg)
         └── card
 ```
 
-Every title, paragraph, and action remains independently editable. Use site CSS for a consistent site-specific Card skin through stable hooks; do not inject card HTML.
+Every title, paragraph, and action remains independently editable. Reserve this recipe for bounded entities such as products, plugins, plans, downloads, or services with their own actions. Use site CSS for a consistent site-specific Card skin through stable hooks; do not inject card HTML.
 
 ### Alternating image and copy rows
 
@@ -1035,7 +1067,8 @@ These are implementation findings, not permissions to invent behavior:
 11. WebBlocks UI ships a `wb-footer-*` anatomy (`wb-footer-grid`, `wb-footer-brand`, `wb-footer-nav`, `wb-footer-link`, `wb-footer-list`, `wb-footer-item`, `wb-footer-copy`, `wb-footer-meta`, `wb-footer-text`, `wb-footer-logo`) that no CMS renderer emits. A shared-slot footer composes generic `wb-section`/`wb-container`/`wb-grid`/`wb-stack`/`wb-cluster` instead, so the pattern is reachable only from hand-written layouts. Cosmetic since 1.50.0 gave `.wb-slot-footer` its own surface; a footer-composition block remains deliberately deferred rather than pending.
 12. Resolved: `GET /content-contract` derives its `media_library` section from the registered route table, so `supported_operations` and `unsupported_operations` cannot drift from what `openapi.json` publishes. Upload, remote fetch, delete, replace and move are published as supported with the capability each route enforces.
 13. Resolved: consent has a visitor-facing half. The System Settings banner toggle renders WebBlocks UI's Cookie Consent pattern on public pages and wires it to the existing `POST /privacy-consent/sync` endpoint, and `contact_form` gained `settings.consent_required` plus a translated `consent_label` recorded on each submission.
-14. The repository has dashboard and page-management screenshots, but no canonical per-block/per-variant visual fixture gallery. The “Example appearance” descriptions in this inventory are therefore source-derived, not screenshot-backed golden references.
+14. The repository has dashboard and page-management screenshots, but no canonical per-block/per-variant visual fixture gallery. The “Example appearance” descriptions in this inventory are therefore source-derived, not screenshot-backed golden references. Until that gallery exists, prefer documented neutral compositions and avoid claiming visual fidelity from prose alone.
+15. Resolved for planning: `GET /content-contract` now publishes a machine-readable design-direction contract covering character, density, typography, geometry, imagery, corners, contrast, rhythm roles, Card policy, and known composition gaps. It deliberately does not persist a hidden style record; AI tools state the direction in their plan/report and implement it through supported block choices, theme tokens, and stable site CSS.
 
 ## Recommended Inventory Freshness Checks
 

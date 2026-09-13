@@ -16,6 +16,16 @@
     </div>
 
     <div class="wb-stack wb-gap-1">
+        <label for="grid_ratio">{{ $adminText('ratio_label') }}</label>
+        <select id="grid_ratio" name="grid_ratio" class="wb-select">
+            <option value="equal" @selected(old('grid_ratio', $block->appearanceSetting('ratio') ?? 'equal') === 'equal')>{{ $adminText('ratio_equal') }}</option>
+            <option value="lead-left" @selected(old('grid_ratio', $block->appearanceSetting('ratio')) === 'lead-left')>{{ $adminText('ratio_lead_left') }}</option>
+            <option value="lead-right" @selected(old('grid_ratio', $block->appearanceSetting('ratio')) === 'lead-right')>{{ $adminText('ratio_lead_right') }}</option>
+        </select>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('ratio_help') }}</div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
         <label for="grid_gap">{{ $adminText('gap_label') }}</label>
         <select id="grid_gap" name="grid_gap" class="wb-select">
             <option value="" @selected(old('grid_gap', $block->appearanceSetting('gap')) === null)>{{ $adminText('default') }}</option>

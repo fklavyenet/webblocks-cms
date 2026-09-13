@@ -1,6 +1,6 @@
 @php
     $alternateSections = $block->gridAlternatesMediaTextSections();
-    $class = trim('wb-grid '.$block->gridColumnsClass().' '.($block->gridGapClass() ?? ''));
+    $class = trim('wb-grid '.$block->gridColumnsClass().' '.($block->gridGapClass() ?? '').' '.($block->gridRatioClass() ?? ''));
     $children = app(\WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer::class)->children($block);
 
     if ($alternateSections) {

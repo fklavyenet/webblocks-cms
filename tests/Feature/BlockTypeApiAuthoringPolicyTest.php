@@ -14,6 +14,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
@@ -238,6 +239,57 @@ class BlockTypeApiAuthoringPolicyTest extends TestCase
   }
 
   #[Test]
+  public function content_contract_requires_an_explicit_design_direction_before_page_planning(): void
+  {
+    $this->seedBlockTypes();
+
+    $payload = app(InternalContentResourceController::class)->contentContract()->getData(true);
+    $direction = $payload['design_direction'];
+
+    $this->assertSame('required_before_page_planning', $direction['status']);
+    $this->assertSame(
+      ['character', 'density', 'typography', 'geometry', 'imagery', 'corners', 'contrast'],
+      array_keys($direction['dimensions']),
+    );
+    $this->assertSame('plain', $direction['composition_policy']['columns_default']);
+    $this->assertSame('opt_in', $direction['composition_policy']['cards']);
+    $this->assertTrue($direction['composition_policy']['three_items_is_not_card_justification']);
+    $this->assertNotContains('ratio_based_asymmetric_grid', $direction['capability_gaps']);
+    $this->assertNotContains('unframed_full_bleed_hero', $direction['capability_gaps']);
+    $this->assertNotContains('overlap_or_offset_flow', $direction['capability_gaps']);
+    $this->assertStringContainsString(
+      'columns(variant: plain)',
+      implode(' ', $payload['recommended_patterns']['marketing_homepage']),
+    );
+  }
+
+  #[Test]
+  public function content_contract_publishes_canonical_desktop_and_mobile_fixture_trees(): void
+  {
+    app(CoreBlockTypeCatalogSyncer::class)->sync();
+
+    $payload = app(InternalContentResourceController::class)->contentContract()->getData(true);
+    $gallery = $payload['design_fixtures'];
+    $fixtures = collect($gallery['fixtures'])->keyBy('handle');
+
+    $this->assertSame(['desktop', 'mobile'], array_keys($gallery['viewports']));
+    $this->assertSame(['light', 'dark'], $gallery['capture_contract']['required_modes']);
+    $this->assertSame('plain', data_get($fixtures, 'unframed-principles.tree.children.0.children.0.settings.variant'));
+    $this->assertSame('full-bleed', data_get($fixtures, 'full-bleed-photographic-hero.tree.settings.layout'));
+    $this->assertSame('overlap-previous', data_get($fixtures, 'overlapping-editorial-band.tree.children.1.settings.flow'));
+    $this->assertTrue($fixtures['bounded-entity-cards']['requires_card_justification']);
+    $this->assertSame('split', data_get($fixtures, 'editorial-split-hero.tree.children.0.children.0.settings.layout'));
+    $this->assertSame('lead-left', data_get($fixtures, 'alternating-image-story.tree.children.0.children.0.settings.ratio'));
+
+    $published = BlockType::query()->where('status', 'published')->pluck('slug')->all();
+    foreach ($fixtures as $fixture) {
+      foreach ($this->fixtureTypes($fixture['tree']) as $type) {
+        $this->assertContains($type, $published, $fixture['handle'].' references an unpublished block type.');
+      }
+    }
+  }
+
+  #[Test]
   public function html_blocks_remain_readable_through_the_api(): void
   {
     $this->seedBlockTypes();
@@ -266,6 +318,14 @@ class BlockTypeApiAuthoringPolicyTest extends TestCase
     $request->attributes->set('cms_api_token', $token);
 
     return $request;
+  }
+
+  private function fixtureTypes(array $block): array
+  {
+    return [
+      $block['type'],
+      ...collect($block['children'] ?? [])->flatMap(fn (array $child) => $this->fixtureTypes($child))->all(),
+    ];
   }
 
   private function seedBlockTypes(): void

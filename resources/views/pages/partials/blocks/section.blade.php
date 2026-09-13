@@ -1,5 +1,5 @@
 @php
-    $class = collect(['wb-section', $block->sectionSpacingClass(), 'wb-stack', $block->publicBackgroundMediaClass()])->filter()->implode(' ');
+    $class = collect(['wb-section', $block->sectionSpacingClass(), $block->sectionFlowClass(), 'wb-stack', $block->publicBackgroundMediaClass()])->filter()->implode(' ');
     $backgroundStyle = $block->publicBackgroundMediaStyle();
 @endphp
 

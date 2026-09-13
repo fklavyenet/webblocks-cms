@@ -5,6 +5,10 @@
 @endphp
 
 <div class="wb-stack wb-gap-4">
+    <div class="wb-alert wb-alert-info">
+        <div>{{ $adminText('design_help') }}</div>
+    </div>
+
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
             <div>{{ $adminText('locale_help') }}</div>
@@ -31,7 +35,7 @@
                 'plain' => $adminText('variant_plain'),
                 'stats' => $adminText('variant_stats'),
             ] as $value => $label)
-                <option value="{{ $value }}" @selected(old('variant', $block->variant ?: 'cards') === $value)>{{ $label }}</option>
+                <option value="{{ $value }}" @selected(old('variant', $block->exists ? ($block->variant ?: 'cards') : 'plain') === $value)>{{ $label }}</option>
             @endforeach
         </select>
         <div class="wb-text-sm wb-text-muted">{{ $adminText('variant_help') }}</div>

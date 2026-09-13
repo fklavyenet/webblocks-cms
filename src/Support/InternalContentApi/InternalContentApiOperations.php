@@ -569,6 +569,7 @@ class InternalContentApiOperations
     $settings = $this->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizeApplicationSettings($settings, $blockType, $path, $errors);
+    $settings = $this->normalizeCompositionDefaults($settings, $blockType);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {
       if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {
@@ -698,6 +699,45 @@ class InternalContentApiOperations
       'message' => $message,
       'code' => $code,
     ], fn ($value) => $value !== null);
+  }
+
+  /**
+   * Keep new AI-authored repeated content visually neutral unless the caller
+   * deliberately opts into framed cards. Existing rows keep the renderer's
+   * legacy fallback, so this does not restyle published sites during upgrade.
+   */
+  public function normalizeCompositionDefaults(array $settings, BlockType $blockType): array
+  {
+    if ($blockType->slug === 'columns' && ! array_key_exists('variant', $settings)) {
+      $settings['variant'] = 'plain';
+    }
+
+    if ($blockType->slug === 'split' && ! array_key_exists('responsive', $settings)) {
+      $settings['responsive'] = 'stack';
+    }
+
+    if ($blockType->slug === 'grid') {
+      $ratio = $settings['ratio'] ?? null;
+      if (($settings['columns'] ?? null) !== '2' || ! in_array($ratio, ['lead-left', 'lead-right'], true)) {
+        unset($settings['ratio']);
+      }
+    }
+
+    if ($blockType->slug === 'hero' && array_key_exists('layout', $settings)) {
+      $layout = $settings['layout'];
+      if (! in_array($layout, ['left', 'centered', 'split', 'full-bleed'], true)) {
+        unset($settings['layout']);
+      }
+    }
+
+    if ($blockType->slug === 'section' && array_key_exists('flow', $settings)) {
+      $flow = $settings['flow'];
+      if (! in_array($flow, ['offset-up', 'overlap-previous'], true)) {
+        unset($settings['flow']);
+      }
+    }
+
+    return $settings;
   }
 
   private function parentAcceptsChild(BlockType $parentType, BlockType $childType): bool

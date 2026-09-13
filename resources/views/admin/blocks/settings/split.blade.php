@@ -6,6 +6,15 @@
 
 <div class="wb-stack wb-gap-3">
   <div class="wb-stack wb-gap-1">
+    <label for="split_responsive">{{ $adminText('responsive_label') }}</label>
+    <select id="split_responsive" name="split_responsive" class="wb-select">
+      <option value="stack" @selected(old('split_responsive', $block->exists ? $block->appearanceSetting('responsive') : 'stack') === 'stack')>{{ $adminText('responsive_stack') }}</option>
+      <option value="preserve" @selected(old('split_responsive', $block->exists && $block->appearanceSetting('responsive') !== 'stack' ? 'preserve' : null) === 'preserve')>{{ $adminText('responsive_preserve') }}</option>
+    </select>
+    <div class="wb-text-sm wb-text-muted">{{ $adminText('responsive_help') }}</div>
+  </div>
+
+  <div class="wb-stack wb-gap-1">
     <label for="split_width">{{ $adminText('width_label') }}</label>
     <select id="split_width" name="split_width" class="wb-select">
       <option value="" @selected(old('split_width', $block->appearanceSetting('width')) !== 'full')>{{ $adminText('auto') }}</option>

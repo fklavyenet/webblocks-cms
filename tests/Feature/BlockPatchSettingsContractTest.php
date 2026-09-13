@@ -161,6 +161,16 @@ class BlockPatchSettingsContractTest extends TestCase
   }
 
   #[Test]
+  public function patching_a_hero_accepts_the_full_bleed_layout(): void
+  {
+    $block = $this->seedBlock('hero');
+
+    $settings = $this->mergeSettings($block, ['layout' => 'full-bleed']);
+
+    $this->assertSame('full-bleed', $settings['layout'] ?? null);
+  }
+
+  #[Test]
   public function patching_a_hero_drops_a_layout_the_renderer_does_not_know(): void
   {
     $block = $this->seedBlock('hero', ['layout' => 'split']);
@@ -177,18 +187,43 @@ class BlockPatchSettingsContractTest extends TestCase
     $block = $this->seedBlock('grid');
 
     $settings = $this->mergeSettings($block, [
-      'columns' => '3',
+      'columns' => '2',
+      'ratio' => 'lead-left',
       'gap' => '6',
       'layout_name' => 'Feature row',
       'alternate_media_text_sections' => true,
       'alternate_start' => 'media_left',
     ]);
 
-    $this->assertSame('3', $settings['columns'] ?? null);
+    $this->assertSame('2', $settings['columns'] ?? null);
+    $this->assertSame('lead-left', $settings['ratio'] ?? null);
     $this->assertSame('6', $settings['gap'] ?? null);
     $this->assertSame('Feature row', $settings['layout_name'] ?? null);
     $this->assertTrue($settings['alternate_media_text_sections'] ?? false);
     $this->assertSame('media_left', $settings['alternate_start'] ?? null);
+  }
+
+  #[Test]
+  public function patching_a_split_stores_its_responsive_behavior(): void
+  {
+    $block = $this->seedBlock('split');
+
+    $settings = $this->mergeSettings($block, ['responsive' => 'stack']);
+    $this->assertSame('stack', $settings['responsive'] ?? null);
+
+    $settings = $this->mergeSettings($block, ['responsive' => 'preserve']);
+    $this->assertSame('preserve', $settings['responsive'] ?? null);
+  }
+
+  #[Test]
+  public function patching_a_grid_drops_an_asymmetric_ratio_outside_two_columns(): void
+  {
+    $block = $this->seedBlock('grid');
+
+    $settings = $this->mergeSettings($block, ['columns' => '3', 'ratio' => 'lead-left']);
+
+    $this->assertSame('3', $settings['columns'] ?? null);
+    $this->assertArrayNotHasKey('ratio', $settings);
   }
 
   #[Test]

@@ -4,6 +4,7 @@
     $block->splitGapClass(),
     $block->splitAlignClass(),
     $block->splitWidthClass(),
+    $block->splitResponsiveClass(),
   ])))
 )
 <div class="{{ $class }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">

@@ -36,6 +36,8 @@ use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
+use WebBlocks\Cms\Support\InternalContentApi\DesignDirectionContract;
+use WebBlocks\Cms\Support\InternalContentApi\DesignFixtureRegistry;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\InternalContentApi\MediaContractRegistry;
@@ -72,6 +74,8 @@ class InternalContentResourceController extends Controller
     private readonly BlockTranslationWriter $translationWriter,
     private readonly AdminAuthorization $adminAuthorization,
     private readonly ContentSourceAuthoring $contentSourceAuthoring,
+    private readonly DesignDirectionContract $designDirectionContract,
+    private readonly DesignFixtureRegistry $designFixtureRegistry,
   ) {}
 
   public function sites(): JsonResponse
@@ -458,6 +462,8 @@ class InternalContentResourceController extends Controller
           'one-off dark-mode palettes when public theme tokens can express the design',
         ],
       ],
+      'design_direction' => $this->designDirectionContract->section(),
+      'design_fixtures' => $this->designFixtureRegistry->section(),
       'published_page_staged_updates' => [
         'create_mode' => 'create_staged_update_for_published_page',
         'replace_mode' => 'replace_staged_page_update',
@@ -545,14 +551,20 @@ class InternalContentResourceController extends Controller
       ],
       'recommended_patterns' => [
         'marketing_homepage' => [
-          'section -> container -> hero',
-          'section -> container -> grid -> card -> card_body',
+          'section -> container -> hero(layout: split when foreground media supports the direction)',
+          'hero(layout: full-bleed) for one deliberate edge-to-edge photographic opening band',
+          'section(flow: overlap-previous) after one dominant band when the direction calls for a controlled rhythm break',
+          'section -> container -> columns(variant: plain) -> column_item for qualities, principles, and benefits',
+          'section -> container -> alternating grid -> image + stack for narrative content',
+          'section -> container -> grid -> card -> card_body only for independently bounded entities',
           'section -> container -> cta',
         ],
         'avoid' => [
           'single rich-text blob for a full page',
           'trusted html fallback when structured blocks can represent the content',
           'full-width hero/cta without a container unless intentionally edge-to-edge',
+          'three cards merely because the source has three short items',
+          'repeating equally weighted section -> heading -> grid -> card bands',
         ],
       ],
       'block_contracts' => $blockContracts,
@@ -2233,6 +2245,10 @@ class InternalContentResourceController extends Controller
       // The admin drops the alternating start whenever alternating is off, so an
       // API write cannot leave a start behind that nothing reads.
       unset($merged['alternate_media_text_sections'], $merged['alternate_start']);
+    }
+
+    if ($type === 'grid' && (($merged['columns'] ?? null) !== '2' || ($merged['ratio'] ?? 'equal') === 'equal')) {
+      unset($merged['ratio']);
     }
 
     return $merged;

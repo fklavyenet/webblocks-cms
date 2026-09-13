@@ -394,6 +394,78 @@ html[data-mode="dark"] body[data-wb-public-theme="graphite"] {
   min-block-size: inherit;
 }
 
+/* Public composition modifiers ------------------------------------------- */
+.wb-public-section--offset-up,
+.wb-public-section--overlap-previous {
+  position: relative;
+  z-index: 1;
+}
+
+.wb-public-section--offset-up {
+  transform: translateY(clamp(-3rem, -4vw, -1.5rem));
+  margin-block-end: clamp(-3rem, -4vw, -1.5rem);
+}
+
+.wb-public-section--overlap-previous {
+  margin-block-start: clamp(-7rem, -9vw, -4rem);
+}
+
+.wb-public-hero--full-bleed {
+  inline-size: 100vw;
+  min-block-size: clamp(28rem, 72vh, 52rem);
+  margin-inline: calc(50% - 50vw);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--wb-public-surface-strong, var(--wb-surface-2));
+  box-shadow: none;
+  display: flex;
+  align-items: end;
+}
+
+.wb-public-hero--full-bleed.wb-background-media {
+  background-image: var(--wb-background-media-overlay), var(--wb-background-media-image);
+  background-position: center, var(--wb-background-media-position, center);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.wb-public-hero--full-bleed .wb-public-hero__copy {
+  inline-size: 100%;
+  max-inline-size: var(--wb-container-xl, 90rem);
+  margin-inline: auto;
+  padding: clamp(2rem, 7vw, 6rem) clamp(1.25rem, 5vw, 4rem);
+}
+
+@media (min-width: 37.5625rem) {
+  .wb-grid-2.wb-public-grid--lead-left {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .wb-grid-2.wb-public-grid--lead-right {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+}
+
+@media (max-width: 48rem) {
+  .wb-public-section--offset-up,
+  .wb-public-section--overlap-previous {
+    transform: none;
+    margin-block: 0;
+  }
+
+  .wb-public-split--stack-mobile {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wb-public-split--stack-mobile > :first-child,
+  .wb-public-split--stack-mobile > :last-child {
+    inline-size: 100%;
+    flex: 0 1 auto;
+  }
+}
+
 .wb-application__frame-wrap {
   overflow: hidden;
 }

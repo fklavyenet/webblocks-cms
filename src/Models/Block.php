@@ -780,6 +780,15 @@ class Block extends CmsModel
     };
   }
 
+  public function sectionFlowClass(): ?string
+  {
+    return match ($this->appearanceSetting('flow')) {
+      'offset-up' => 'wb-public-section--offset-up',
+      'overlap-previous' => 'wb-public-section--overlap-previous',
+      default => null,
+    };
+  }
+
   public function containerWidthClass(): ?string
   {
     return match ($this->appearanceSetting('width')) {
@@ -831,6 +840,11 @@ class Block extends CmsModel
   public function splitWidthClass(): ?string
   {
     return $this->appearanceSetting('width') === 'full' ? 'wb-w-full' : null;
+  }
+
+  public function splitResponsiveClass(): ?string
+  {
+    return $this->appearanceSetting('responsive') === 'stack' ? 'wb-public-split--stack-mobile' : null;
   }
 
   public function clusterGapClass(): ?string
@@ -930,6 +944,19 @@ class Block extends CmsModel
       '3' => 'wb-gap-3',
       '4' => 'wb-gap-4',
       '6' => 'wb-gap-6',
+      default => null,
+    };
+  }
+
+  public function gridRatioClass(): ?string
+  {
+    if ($this->appearanceSetting('columns') !== '2') {
+      return null;
+    }
+
+    return match ($this->appearanceSetting('ratio')) {
+      'lead-left' => 'wb-public-grid--lead-left',
+      'lead-right' => 'wb-public-grid--lead-right',
       default => null,
     };
   }

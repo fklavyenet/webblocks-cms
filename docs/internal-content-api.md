@@ -810,7 +810,11 @@ AI/operator tools must not assume page publish makes all block content public. U
 
 ### Content Contract Endpoint
 
-`GET /webadmin/api/content-contract` is a read-only discovery endpoint for trusted AI/operator tools. It returns the API prefix, validate/apply URLs, admin preview URL template, safety flags, discovery URLs, recommended page-building patterns, and sanitized block contract metadata.
+`GET /webadmin/api/content-contract` is a read-only discovery endpoint for trusted AI/operator tools. It returns the API prefix, validate/apply URLs, admin preview URL template, safety flags, discovery URLs, recommended page-building patterns, a machine-readable design-direction contract, and sanitized block contract metadata.
+
+Before choosing a block tree, tools must read `design_direction`, select one value for each of `character`, `density`, `typography`, `geometry`, `imagery`, `corners`, and `contrast`, and explain how the composition map implements those choices. This is a planning contract rather than a hidden content store: the result is expressed through native block settings, public theme tokens, and stable site CSS. Its composition policy makes Columns plain by default for new API plans, keeps Cards opt-in, and requires a content-boundary/action justification for every Card collection. A source containing three short items is not such a justification.
+
+The adjacent `design_fixtures` section publishes canonical native block trees, compatible design directions, expected public hooks, anti-patterns, and deterministic desktop/mobile capture sizes. Its status distinguishes a source-backed render contract from human-approved screenshots. Tools may use a fixture tree as a composition reference, but must not claim visual approval while the registry reports `render_contract_ready_capture_pending`. The capture and review workflow is documented in [Canonical Visual Fixtures](visual-fixtures.md).
 
 The endpoint is generic CMS product behavior. It must not return install-specific secrets, token values, raw Blade contents, absolute filesystem paths, private server paths, or site-specific instructions. Block contract rows may include handle/slug, label, category, status, container and child support, translatable fields, shared settings fields, and public renderer root behavior.
 

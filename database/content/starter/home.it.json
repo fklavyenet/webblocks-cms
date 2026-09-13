@@ -76,28 +76,31 @@
             },
             "children": [
               {
-                "type": "feature-grid",
+                "type": "columns",
+                "settings": {
+                  "variant": "plain"
+                },
                 "translations": {
                   "title": "Da dove iniziare",
                   "subtitle": "Tre cose che vale la pena fare prima di pubblicare."
                 },
                 "children": [
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Modifica questa pagina",
                       "content": "La schermata Pagine nell'admin elenca questa pagina in /. Aprila nell'editor a blocchi: ogni sezione che vedi qui è un blocco che puoi riscrivere, riordinare o eliminare."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Costruisci con i blocchi",
                       "content": "Sezioni, contenitori, griglie e card compongono un layout. Aggiungi un blocco, scegli il suo slot e pubblicalo quando il contenuto è pronto."
                     }
                   },
                   {
-                    "type": "feature-item",
+                    "type": "column_item",
                     "translations": {
                       "title": "Aggiungi i tuoi media",
                       "content": "Carica loghi e immagini nella libreria media, poi collegali ai blocchi immagine, galleria e hero invece di scrivere i percorsi dei file a mano."

@@ -28,11 +28,13 @@ class StackSplitContractTest extends TestCase
       'gap' => '4',
       'items_alignment' => 'start',
       'width' => 'full',
+      'responsive' => 'stack',
     ])]);
 
     $this->assertSame('wb-gap-4', $block->splitGapClass());
     $this->assertSame('wb-items-start', $block->splitAlignClass());
     $this->assertSame('wb-w-full', $block->splitWidthClass());
+    $this->assertSame('wb-public-split--stack-mobile', $block->splitResponsiveClass());
   }
 
   #[Test]
@@ -43,6 +45,7 @@ class StackSplitContractTest extends TestCase
     $this->assertNull($block->splitGapClass());
     $this->assertNull($block->splitAlignClass());
     $this->assertNull($block->splitWidthClass());
+    $this->assertNull($block->splitResponsiveClass());
   }
 
   #[Test]
@@ -59,5 +62,29 @@ class StackSplitContractTest extends TestCase
     $block->setRelation('children', collect([new Block]));
 
     $this->assertTrue($block->canAcceptMoreChildren());
+  }
+
+  #[Test]
+  public function grid_exposes_asymmetric_ratios_only_for_two_columns(): void
+  {
+    $left = new Block(['settings' => json_encode(['columns' => '2', 'ratio' => 'lead-left'])]);
+    $right = new Block(['settings' => json_encode(['columns' => '2', 'ratio' => 'lead-right'])]);
+    $three = new Block(['settings' => json_encode(['columns' => '3', 'ratio' => 'lead-left'])]);
+
+    $this->assertSame('wb-public-grid--lead-left', $left->gridRatioClass());
+    $this->assertSame('wb-public-grid--lead-right', $right->gridRatioClass());
+    $this->assertNull($three->gridRatioClass());
+  }
+
+  #[Test]
+  public function section_exposes_only_the_bounded_flow_modifiers(): void
+  {
+    $offset = new Block(['settings' => json_encode(['flow' => 'offset-up'])]);
+    $overlap = new Block(['settings' => json_encode(['flow' => 'overlap-previous'])]);
+    $unknown = new Block(['settings' => json_encode(['flow' => 'float-anywhere'])]);
+
+    $this->assertSame('wb-public-section--offset-up', $offset->sectionFlowClass());
+    $this->assertSame('wb-public-section--overlap-previous', $overlap->sectionFlowClass());
+    $this->assertNull($unknown->sectionFlowClass());
   }
 }

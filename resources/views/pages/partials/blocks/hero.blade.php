@@ -6,8 +6,11 @@
   $variant = $block->variant ?: 'default';
   $layout = trim((string) ($settings['layout'] ?? ($variant === 'centered' ? 'centered' : 'left')));
   $headingTag = in_array($settings['title_tag'] ?? null, ['h1', 'h2', 'h3'], true) ? $settings['title_tag'] : 'h1';
-  $heroClasses = ['wb-card', 'wb-promo'];
-  $copyClasses = ['wb-card-body', 'wb-promo-copy', 'wb-stack', 'wb-gap-3'];
+  $isFullBleed = $layout === 'full-bleed';
+  $heroClasses = $isFullBleed ? ['wb-promo', 'wb-public-hero--full-bleed'] : ['wb-card', 'wb-promo'];
+  $copyClasses = $isFullBleed
+    ? ['wb-promo-copy', 'wb-stack', 'wb-gap-3']
+    : ['wb-card-body', 'wb-promo-copy', 'wb-stack', 'wb-gap-3'];
   $mediaUrl = $block->publicBackgroundMediaUrl();
   // The split layout renders the hero media as a foreground image beside the
   // copy, so the same media is never also painted as a background.
@@ -17,6 +20,10 @@
 
   if ($isSplit) {
     $heroClasses[] = 'wb-promo--split';
+  }
+
+  if ($isFullBleed) {
+    $copyClasses[] = 'wb-public-hero__copy';
   }
 
   if (in_array($variant, ['muted', 'soft'], true)) {

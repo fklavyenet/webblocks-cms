@@ -310,6 +310,39 @@ class ManagedCtaApiTest extends TestCase
     $this->assertStringNotContainsString('wb-promo-media', $html);
   }
 
+  #[Test]
+  public function hero_full_bleed_layout_uses_an_unframed_background_surface(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+
+    $media = Media::query()->create([
+      'disk' => 'public', 'path' => 'media/hero.jpg', 'filename' => 'hero.jpg',
+      'mime_type' => 'image/jpeg', 'kind' => Media::KIND_IMAGE, 'visibility' => 'public',
+    ]);
+
+    $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+    $hero = Block::query()->create([
+      'page_id' => $page->id, 'type' => 'hero', 'block_type_id' => $heroType->id,
+      'source_type' => 'static', 'slot' => $slotType->slug, 'slot_type_id' => $slotType->id,
+      'sort_order' => 0, 'status' => 'published', 'title' => 'Welcome',
+      'media_id' => $media->id, 'settings' => json_encode(['layout' => 'full-bleed']),
+    ]);
+
+    $html = view('webblocks-cms::pages.partials.blocks.hero', [
+      'block' => $hero->fresh(['children.blockType', 'blockType', 'media']),
+    ])->render();
+
+    $this->assertStringContainsString('wb-public-hero--full-bleed', $html);
+    $this->assertStringContainsString('--wb-background-media-image', $html);
+    $this->assertStringNotContainsString('class="wb-card wb-promo', $html);
+    $this->assertStringNotContainsString('wb-card-body', $html);
+
+    $css = file_get_contents(__DIR__.'/../../public/cms/css/public.css');
+    $this->assertStringContainsString('.wb-public-hero--full-bleed.wb-background-media', $css);
+    $this->assertStringContainsString('background-image: var(--wb-background-media-overlay), var(--wb-background-media-image)', $css);
+  }
+
   private function seedBlockTypes(): void
   {
     foreach ([
