@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.86.2
+
+- Upgrade the bundled WebBlocks UI runtime to 2.27.2 so Background Media remains visible on CTA and Hero promo blocks instead of being reset by the promo gradient shorthand. Section, Card, Content Header, overlay strengths, background positions, and ordinary media-free promos retain their existing behavior.
+
 ## 1.86.1
 
 - Expose immutable Embedded Application ZIP installation through the Internal

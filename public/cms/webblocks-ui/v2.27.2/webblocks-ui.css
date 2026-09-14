@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.27.1 (https://webblocksui.com/)
+ * WebBlocks UI v2.27.2 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -2907,7 +2907,7 @@ textarea::placeholder {
    WebBlocks UI — Background Media Primitive
    ============================================================ */
 
-.wb-background-media {
+.wb-background-media.wb-background-media {
   --wb-background-media-overlay: linear-gradient(
     color-mix(in srgb, var(--wb-surface) 48%, transparent),
     color-mix(in srgb, var(--wb-surface) 48%, transparent)
