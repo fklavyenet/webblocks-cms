@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.86.1
+
+- Expose immutable Embedded Application ZIP installation through the Internal
+  Content API with `applications.write`, multipart upload validation, refreshed
+  application metadata, and structured package errors.
+- Publish the version-increment, ZIP-upload, and automatic entry activation
+  workflow in OpenAPI, the AI Guide, and operator documentation so automated
+  site maintainers can migrate complete games without browser-admin access.
+
 ## 1.86.0
 
 - Add immutable, site-scoped ZIP releases for complete Embedded Applications,

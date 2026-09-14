@@ -969,6 +969,7 @@ GET    /webadmin/api/sites/{site}/applications/{application}/assets
 GET    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js|html}/{filename}
 PUT    /webadmin/api/sites/{site}/applications/{application}/assets/{css|js|html}/{filename}
 DELETE /webadmin/api/sites/{site}/applications/{application}/assets/{css|js|html}/{filename}
+POST   /webadmin/api/sites/{site}/applications/{application}/package
 ```
 
 CSS and JavaScript use the deterministic public path
@@ -990,6 +991,18 @@ the Embedded Application definition still references the asset's public path.
 After writing an asset, use its returned `public_path` in `css_assets` or
 `js_assets`; the Application Block then loads it only where the application is
 placed.
+
+Complete applications should use the package endpoint instead of writing files
+one by one. It requires `applications.write` and `multipart/form-data` with one
+`package` ZIP field (maximum upload size 50 MB). First increment the registered
+application's `version` with `PATCH /webadmin/api/applications/{application}`;
+then upload a ZIP containing `index.html` at its root and use relative asset URLs
+inside it. A successful response returns package version, activated immutable
+`entry_url`, file count and expanded byte size, plus the refreshed application
+definition. Installed versions cannot be overwritten. Validation and archive
+safety failures return structured JSON `422` errors under
+`errors[0].path = application_package` (or `application_package.package` for
+the multipart field).
 
 ### Content Validate / Apply Endpoints
 

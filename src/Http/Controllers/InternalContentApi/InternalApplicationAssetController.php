@@ -10,10 +10,16 @@ use RuntimeException;
 use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Applications\ApplicationAssetStore;
+use WebBlocks\Cms\Support\Applications\ApplicationPackageStore;
+use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 
 class InternalApplicationAssetController extends Controller
 {
-  public function __construct(private readonly ApplicationAssetStore $assets) {}
+  public function __construct(
+    private readonly ApplicationAssetStore $assets,
+    private readonly ApplicationPackageStore $packages,
+    private readonly ApplicationRegistry $registry,
+  ) {}
 
   public function index(Site $site, string $application): JsonResponse
   {
@@ -45,6 +51,30 @@ class InternalApplicationAssetController extends Controller
     }
 
     return $this->ok(['asset' => $this->present($asset), 'writes' => [['type' => 'application_asset', 'id' => $application.'/'.$filename]]]);
+  }
+
+  public function installPackage(Request $request, Site $site, string $application): JsonResponse
+  {
+    $validator = Validator::make($request->all(), [
+      'package' => ['required', 'file', 'max:51200', 'extensions:zip', 'mimetypes:application/zip,application/x-zip-compressed'],
+    ]);
+
+    if ($validator->fails()) {
+      return $this->invalid($validator->errors()->first(), 'application_package.package');
+    }
+
+    try {
+      $record = $this->application($application);
+      $package = $this->packages->install($site, $record, $request->file('package'));
+    } catch (RuntimeException $exception) {
+      return $this->invalid($exception->getMessage(), 'application_package');
+    }
+
+    return $this->ok([
+      'package' => $package,
+      'application' => $this->registry->find($record->handle)?->toArray(),
+      'writes' => [['type' => 'application_package', 'id' => $record->handle.'/'.$package['version']]],
+    ]);
   }
 
   public function destroy(Request $request, Site $site, string $application, string $type, string $filename): JsonResponse
@@ -96,8 +126,8 @@ class InternalApplicationAssetController extends Controller
     return response()->json(['ok' => true, ...$payload, 'warnings' => [], 'errors' => []]);
   }
 
-  private function invalid(string $message): JsonResponse
+  private function invalid(string $message, string $path = 'application_asset'): JsonResponse
   {
-    return response()->json(['ok' => false, 'warnings' => [], 'errors' => [['path' => 'application_asset', 'message' => $message]]], 422);
+    return response()->json(['ok' => false, 'warnings' => [], 'errors' => [['path' => $path, 'message' => $message]]], 422);
   }
 }

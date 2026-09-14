@@ -133,6 +133,14 @@ snapshots. The three application capabilities protect read, write, and delete
 respectively. This keeps application code out of global `site.css` and
 `site.js` while making managed iframe entries discoverable to API clients.
 
+Complete applications use
+`POST /webadmin/api/sites/{site}/applications/{application}/package` with
+`applications.write` and a multipart `package` ZIP field. Increment the
+definition version first, place `index.html` at the archive root, and keep all
+runtime asset URLs relative. A successful install activates and returns the
+immutable versioned entry URL; unsafe archives and attempts to overwrite an
+installed version return structured `422` errors.
+
 Publish links require `content.publish`. `POST /webadmin/api/pages/{page}/publish` defaults to page-only publishing with `include_page_owned_blocks: false`; it does not publish draft blocks unless the request explicitly sets `include_page_owned_blocks: true`. Shared Slot cascade publishing is unsupported and returns JSON validation feedback. `POST /webadmin/api/pages/{page}/publish-page-owned-blocks` publishes eligible page-owned draft or in-review blocks without changing the page workflow status.
 
 `GET /webadmin/api/examples/contact-page` demonstrates a native `contact_form` block. It intentionally avoids Trusted HTML, raw form markup, and `mailto:` fallbacks so tools can create safe draft contact pages through the same structured block contract operators use in the admin.

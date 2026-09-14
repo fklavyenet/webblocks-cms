@@ -101,6 +101,23 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $this->assertStringContainsString('/site/{site_handle}/applications/', $asset['put']['x-public-path']);
     $this->assertStringContainsString('/webblocks-applications/', $asset['put']['x-managed-html-public-path']);
     $this->assertStringContainsString('index.html', $asset['put']['x-note']);
+
+    $package = $paths['/sites/{site}/applications/{application}/package']['post'];
+    $this->assertSame('applications.write', $package['x-required-capability']);
+    $this->assertArrayHasKey('multipart/form-data', $package['requestBody']['content']);
+    $this->assertSame('binary', $package['requestBody']['content']['multipart/form-data']['schema']['properties']['package']['format']);
+    $this->assertContains('package', $package['requestBody']['content']['multipart/form-data']['schema']['required']);
+    $this->assertArrayHasKey('422', $package['responses']);
+  }
+
+  #[Test]
+  public function ai_guide_documents_the_application_package_release_workflow(): void
+  {
+    $text = $this->app->make(InternalApiDiscoveryController::class)->aiGuide()->getData(true)['content'];
+
+    $this->assertStringContainsString('/sites/{site}/applications/{application}/package', $text);
+    $this->assertStringContainsString('increment its version', $text);
+    $this->assertStringContainsString('relative URLs', $text);
   }
 
   /**
