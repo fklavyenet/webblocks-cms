@@ -161,9 +161,11 @@ signature over its checksum, or the update is refused.
   DNS lookup/connection race used by DNS-rebinding attacks. Remote fetching
   fails closed when PHP cURL address pinning is unavailable.
 - **Managed Embedded Application iframes are opaque-origin sandboxes.** Their
-  entry responses apply restrictive CSP and referrer headers, and the iframe
-  does not receive same-origin access to CMS cookies, storage, the parent page,
-  or authenticated panel requests.
+  entry responses apply restrictive CSP and referrer headers. CSP names the
+  current registered site origin explicitly so opaque-origin documents can load
+  their same-site scripts, styles, media, and `<base>` URL without granting the
+  iframe same-origin access to CMS cookies, storage, the parent page, or
+  authenticated panel requests.
 
 ## Telemetry and privacy
 

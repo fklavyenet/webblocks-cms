@@ -35,9 +35,12 @@ Managed iframe entries run as sandboxed, opaque-origin documents. They may execu
 scripts, but they do not receive same-origin access to CMS cookies, storage, the
 parent document, or authenticated panel requests. The entry response also applies
 a restrictive Content Security Policy: assets and network connections are
-same-origin by default, objects and forms are disabled, and referrer data is not
-sent. Applications that require cross-origin services must use a separately
-reviewed host integration rather than weakening the shared CMS origin.
+restricted to the explicitly named current site origin, same-site `<base>` URLs
+are allowed, objects and forms are disabled, and referrer data is not sent. The
+explicit origin is required because CSP `'self'` does not match network assets
+from an opaque sandbox origin. Applications that require cross-origin services
+must use a separately reviewed host integration rather than weakening the
+shared CMS origin.
 
 Application Block settings are managed as a compact table rather than a fixed collection of empty field cards. **Add Setting** opens a modal containing the typed schema fields; saving adds the draft setting to the table, while cancel closes the modal without changing the application. Existing rows use the same modal for editing and expose icon actions for editing and removal. The table is part of the parent application form, so these client-side changes are persisted only when the operator saves the application. The submitted `settings[*]` contract and API representation remain unchanged.
 

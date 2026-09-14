@@ -41,6 +41,10 @@ class SecurityHardeningContractTest extends TestCase
 
     $this->assertIsString($controller);
     $this->assertStringContainsString("'Content-Security-Policy'", $controller);
+    $this->assertStringContainsString('getSchemeAndHttpHost', $controller);
+    $this->assertStringContainsString("default-src 'none'", $controller);
+    $this->assertStringContainsString('base-uri {$origin}', $controller);
+    $this->assertStringNotContainsString("base-uri 'none'", $controller);
     $this->assertStringContainsString("object-src 'none'", $controller);
     $this->assertStringContainsString("form-action 'none'", $controller);
     $this->assertStringContainsString("'Referrer-Policy' => 'no-referrer'", $controller);

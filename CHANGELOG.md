@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.85.2
+
+- Let opaque-origin managed Embedded Application iframes load scripts, styles,
+  images, fonts, media, and connections only from the current registered site
+  origin while retaining the `allow-scripts` sandbox without same-origin
+  authority.
+- Permit managed entry documents to use a same-site `<base>` URL so relative
+  game assets resolve to their host-owned packages instead of broken paths
+  beneath `/webblocks-applications/`.
+
 ## 1.85.1
 
 - Publish the existing checksum-protected Embedded Application `html/index.html`
