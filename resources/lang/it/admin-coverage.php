@@ -298,6 +298,7 @@ return [
     'asset_uploaded' => 'File di applicazione caricato.',
     'asset_updated' => 'File di applicazione aggiornato.',
     'asset_deleted' => 'File di applicazione cancellato.',
+    'application_package' => 'Pacchetto applicazione', 'application_package_help' => 'Installa una versione ZIP immutabile con index.html e tutti gli script, stili, immagini, audio, font, dati e file di lingua. I percorsi relativi restano nel pacchetto isolato.', 'package_file' => 'Pacchetto ZIP', 'install_package' => 'Installa pacchetto', 'package_installed' => 'Pacchetto applicazione installato e attivato.',
     'created' => 'Applicazione incorporata creata.',
     'updated' => 'Applicazione integrata aggiornata.',
     'deleted' => 'Applicazione incorporata cancellato.',

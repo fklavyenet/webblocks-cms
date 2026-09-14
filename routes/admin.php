@@ -378,6 +378,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::resource('slot-types', SlotTypeController::class)->only(['index']);
       Route::resource('block-types', BlockTypeController::class)->except(['show']);
       Route::get('embedded-applications/{embedded_application}/assets', [EmbeddedApplicationAssetController::class, 'index'])->name('embedded-applications.assets.index');
+      Route::post('embedded-applications/{embedded_application}/package', [EmbeddedApplicationAssetController::class, 'storePackage'])->name('embedded-applications.package.store');
       Route::post('embedded-applications/{embedded_application}/assets', [EmbeddedApplicationAssetController::class, 'store'])->name('embedded-applications.assets.store');
       Route::put('embedded-applications/{embedded_application}/assets/{type}/{filename}', [EmbeddedApplicationAssetController::class, 'update'])->name('embedded-applications.assets.update');
       Route::delete('embedded-applications/{embedded_application}/assets/{type}/{filename}', [EmbeddedApplicationAssetController::class, 'destroy'])->name('embedded-applications.assets.destroy');

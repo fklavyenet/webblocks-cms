@@ -11,13 +11,14 @@ use WebBlocks\Cms\Http\Requests\Admin\EmbeddedApplicationAssetRequest;
 use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Applications\ApplicationAssetStore;
+use WebBlocks\Cms\Support\Applications\ApplicationPackageStore;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class EmbeddedApplicationAssetController extends Controller
 {
-  public function __construct(private readonly ApplicationAssetStore $assets) {}
+  public function __construct(private readonly ApplicationAssetStore $assets, private readonly ApplicationPackageStore $packages) {}
 
   public function index(Request $request, EmbeddedApplication $embeddedApplication): View
   {
@@ -66,6 +67,19 @@ class EmbeddedApplicationAssetController extends Controller
     }
 
     return $this->redirect($embeddedApplication, $site)->with('status', $this->message('asset_updated'));
+  }
+
+  public function storePackage(EmbeddedApplicationAssetRequest $request, EmbeddedApplication $embeddedApplication): RedirectResponse
+  {
+    $site = Site::query()->findOrFail($request->integer('site_id'));
+
+    try {
+      $this->packages->install($site, $embeddedApplication, $request->file('package'));
+    } catch (RuntimeException $exception) {
+      return back()->withErrors(['package' => $exception->getMessage()]);
+    }
+
+    return $this->redirect($embeddedApplication, $site)->with('status', $this->message('package_installed'));
   }
 
   public function destroy(EmbeddedApplicationAssetRequest $request, EmbeddedApplication $embeddedApplication, string $type, string $filename): RedirectResponse

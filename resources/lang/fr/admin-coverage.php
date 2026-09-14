@@ -298,6 +298,7 @@ return [
     'asset_uploaded' => '▁Fichier d\'application▁téléchargé.',
     'asset_updated' => '▁Dossier de▁demande mis à▁jour.',
     'asset_deleted' => '▁Dossier de▁demande▁supprimé.',
+    'application_package' => 'Paquet d’application', 'application_package_help' => 'Installez une version ZIP immuable contenant index.html ainsi que tous les scripts, styles, images, sons, polices, données et fichiers de langue. Les chemins relatifs restent dans le paquet isolé.', 'package_file' => 'Paquet ZIP', 'install_package' => 'Installer le paquet', 'package_installed' => 'Paquet d’application installé et activé.',
     'created' => 'Application▁intégrée▁créée.',
     'updated' => 'Application▁intégrée▁mise à▁jour.',
     'deleted' => 'Application▁intégrée▁supprimée.',

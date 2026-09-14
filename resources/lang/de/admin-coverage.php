@@ -294,6 +294,7 @@ return [
     'asset_uploaded' => 'Anwendungsdatei hochgeladen.',
     'asset_updated' => 'Antragsdatei aktualisiert.',
     'asset_deleted' => 'Antragsdatei gelöscht.',
+    'application_package' => 'Anwendungspaket', 'application_package_help' => 'Installieren Sie eine unveränderliche ZIP-Version mit index.html und allen Skripten, Stilen, Bildern, Audio-, Schrift-, Daten- und Sprachdateien. Relative Pfade bleiben im isolierten Anwendungspaket.', 'package_file' => 'ZIP-Paket', 'install_package' => 'Paket installieren', 'package_installed' => 'Anwendungspaket installiert und aktiviert.',
     'created' => 'Embedded Application erstellt.',
     'updated' => 'Embedded Application aktualisiert.',
     'deleted' => 'Embedded Application wird gelöscht.',

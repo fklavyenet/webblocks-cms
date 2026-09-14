@@ -10,6 +10,22 @@
     @include('webblocks-cms::admin.partials.flash')
     @if ($errors->any())<div class="wb-alert wb-alert-danger wb-mb-4"><div>{{ $errors->first() }}</div></div>@endif
 
+    @if($site)
+        <div class="wb-card wb-mb-4">
+            <div class="wb-card-header"><h2>{{ $text('application_package') }}</h2></div>
+            <div class="wb-card-body wb-stack wb-gap-2">
+                <p>{{ $text('application_package_help') }}</p>
+                <form method="POST" enctype="multipart/form-data" action="{{ route('admin.embedded-applications.package.store', $application) }}" class="wb-stack wb-gap-2">
+                    @csrf
+                    <input type="hidden" name="site_id" value="{{ $site->id }}">
+                    <label for="application_package">{{ $text('package_file') }}</label>
+                    <input class="wb-file" id="application_package" type="file" name="package" accept=".zip,application/zip" required>
+                    <button class="wb-btn wb-btn-primary" type="submit">{{ $text('install_package') }}</button>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <div class="wb-card">
         <div class="wb-card-header wb-flex wb-items-end wb-justify-between wb-gap-3 wb-flex-wrap">
             <form method="GET" action="{{ route('admin.embedded-applications.assets.index', $application) }}" class="wb-stack wb-gap-1">

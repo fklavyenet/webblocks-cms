@@ -6,6 +6,7 @@ use WebBlocks\Cms\Http\Controllers\Public\CommentEntryController;
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Public\ContentRatingController;
 use WebBlocks\Cms\Http\Controllers\Public\EmbeddedApplicationEntryController;
+use WebBlocks\Cms\Http\Controllers\Public\EmbeddedApplicationPackageController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PluginAssetController;
@@ -30,6 +31,13 @@ Route::middleware($publicPageMiddleware)
   ->get('/webblocks-applications/{application}/index.html', EmbeddedApplicationEntryController::class)
   ->where('application', '[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?')
   ->name('embedded-applications.entry');
+
+Route::middleware($publicPageMiddleware)
+  ->get('/webblocks-applications/{application}/{version}/{path}', EmbeddedApplicationPackageController::class)
+  ->where('application', '[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?')
+  ->where('version', '[0-9A-Za-z][0-9A-Za-z._-]{0,63}')
+  ->where('path', '.+')
+  ->name('embedded-applications.package');
 
 if (config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, false)) {
   Route::middleware($publicPageMiddleware)

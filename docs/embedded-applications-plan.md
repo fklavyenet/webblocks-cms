@@ -31,6 +31,20 @@ System → Embedded Applications provides create, list, edit, enable/disable, an
 
 After saving a definition, **Application files** opens its site-scoped file manager. A system administrator selects the host site and uploads `.css`, `.js`, or the single managed HTML entry named `index.html`. CSS and JavaScript live under `/site/{site_handle}/applications/{application_handle}/{type}`; the HTML entry lives at the application root and is served through `/webblocks-applications/{application_handle}/index.html`, where the request host selects the correct site copy. Uploading `index.html` switches the definition to iframe mode and assigns that stable entry URL. Updates use checksums and replacements/deletions retain revision snapshots; a referenced file cannot be deleted until its URL is removed.
 
+For complete browser applications, the same screen accepts an immutable ZIP
+release. The application definition's `version` selects the release namespace;
+the archive must contain `index.html` at its root and may contain nested scripts,
+styles, images, audio, fonts, JSON, and locale files. Installing it activates
+`/webblocks-applications/{application_handle}/{version}/index.html`. Relative
+URLs stay beneath that versioned route, whose public responses carry CORS and
+cross-origin resource headers required by an opaque sandbox. Installed versions
+are never overwritten: increment the definition version before installing a
+replacement. Archives reject traversal, ambiguous duplicate paths,
+server-executable extensions, excessive entry counts, and expanded-size limits.
+The package remains site-scoped under `public/site`, so ordinary site transfer
+and backup asset coverage includes it without teaching CMS core a host path or
+domain.
+
 Managed iframe entries run as sandboxed, opaque-origin documents. They may execute
 scripts, but they do not receive same-origin access to CMS cookies, storage, the
 parent document, or authenticated panel requests. The entry response also applies
@@ -41,6 +55,12 @@ explicit origin is required because CSP `'self'` does not match network assets
 from an opaque sandbox origin. Applications that require cross-origin services
 must use a separately reviewed host integration rather than weakening the
 shared CMS origin.
+
+Packaged applications are the preferred contract for games and other applications
+with runtime assets. They preserve the opaque sandbox and do not require
+`allow-same-origin`; public package assets instead opt into anonymous CORS. A
+package should use relative URLs such as `./assets/background.webp` and
+`./locales/tr/manifest.json`, never a host-owned absolute asset prefix.
 
 Application Block settings are managed as a compact table rather than a fixed collection of empty field cards. **Add Setting** opens a modal containing the typed schema fields; saving adds the draft setting to the table, while cancel closes the modal without changing the application. Existing rows use the same modal for editing and expose icon actions for editing and removal. The table is part of the parent application form, so these client-side changes are persisted only when the operator saves the application. The submitted `settings[*]` contract and API representation remain unchanged.
 

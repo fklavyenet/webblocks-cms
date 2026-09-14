@@ -19,7 +19,11 @@ class EmbeddedApplicationAssetRequest extends FormRequest
     ];
 
     if ($this->isMethod('post')) {
-      $rules['asset'] = ['required', 'file', 'max:1024', 'extensions:css,js,html'];
+      if ($this->routeIs('admin.embedded-applications.package.store')) {
+        $rules['package'] = ['required', 'file', 'max:51200', 'extensions:zip', 'mimetypes:application/zip,application/x-zip-compressed'];
+      } else {
+        $rules['asset'] = ['required', 'file', 'max:1024', 'extensions:css,js,html'];
+      }
     } elseif ($this->isMethod('put')) {
       $rules['contents'] = ['required', 'string', 'max:1000000'];
       $rules['expected_checksum'] = ['required', 'string', 'size:64'];

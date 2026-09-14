@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.86.0
+
+- Add immutable, site-scoped ZIP releases for complete Embedded Applications,
+  including nested scripts, styles, images, audio, fonts, data, and locale files.
+- Serve versioned application packages through a CMS-controlled public route
+  with anonymous CORS, cross-origin resource policy, strict CSP, immutable asset
+  caching, and the existing opaque-origin iframe sandbox.
+- Reject unsafe or ambiguous archive paths, server-executable files, excessive
+  file counts and expanded sizes, missing root entries, and attempts to replace
+  an installed application version.
+- Keep application packages inside the generic site asset boundary so backups
+  and site transfers remain portable without placing any host path or domain in
+  CMS core.
+
 ## 1.85.2
 
 - Let opaque-origin managed Embedded Application iframes load scripts, styles,

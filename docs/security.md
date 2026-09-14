@@ -166,6 +166,12 @@ signature over its checksum, or the update is refused.
   their same-site scripts, styles, media, and `<base>` URL without granting the
   iframe same-origin access to CMS cookies, storage, the parent page, or
   authenticated panel requests.
+- **Complete Embedded Application packages stay isolated.** Immutable,
+  versioned package files are served through an application-only public route
+  with anonymous CORS and cross-origin resource headers, allowing opaque-origin
+  games to load images, audio, fonts, JSON, and locale files without granting
+  `allow-same-origin`. ZIP installation rejects traversal, duplicate paths,
+  executable server files, and bounded-count or expanded-size violations.
 
 ## Telemetry and privacy
 

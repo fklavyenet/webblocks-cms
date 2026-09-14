@@ -51,6 +51,18 @@ class SecurityHardeningContractTest extends TestCase
   }
 
   #[Test]
+  public function packaged_application_assets_keep_the_opaque_sandbox_and_receive_public_cors_headers(): void
+  {
+    $controller = file_get_contents(dirname(__DIR__, 2).'/src/Http/Controllers/Public/EmbeddedApplicationPackageController.php');
+    $routes = file_get_contents(dirname(__DIR__, 2).'/routes/public.php');
+
+    $this->assertStringContainsString("'Access-Control-Allow-Origin' => '*'", $controller);
+    $this->assertStringContainsString("'Cross-Origin-Resource-Policy' => 'cross-origin'", $controller);
+    $this->assertStringContainsString("'Cache-Control' => 'public, max-age=31536000, immutable'", $controller);
+    $this->assertStringContainsString('/webblocks-applications/{application}/{version}/{path}', $routes);
+  }
+
+  #[Test]
   public function remote_media_fetches_pin_the_validated_dns_address(): void
   {
     $fetcher = file_get_contents(dirname(__DIR__, 2).'/src/Support/Media/RemoteMediaFetcher.php');
