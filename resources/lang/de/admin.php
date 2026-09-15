@@ -3710,6 +3710,7 @@ $translations = [
       'buttons_help' => 'Buttons sind eigene Button-Link-Blöcke innerhalb dieses CTA. Füge sie im Blockbaum hinzu oder bearbeite sie dort.',
       'shared_fields' => 'Gemeinsame Felder',
       'variant_label' => 'Variante',
+      'variant_help' => 'Steuert die CTA-Fläche und den Farbton über einem Hintergrundbild. Bild und Textinhalt werden nicht verändert.',
       'default' => 'Standard',
       'muted' => 'Gedimmt',
       'accent' => 'Akzent',

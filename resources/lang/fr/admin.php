@@ -3708,6 +3708,7 @@ $translations = [
       'buttons_help' => 'Les boutons sont des blocs Button Link distincts à l\'intérieur de cet appel à l\'action. Ajoutez-les ou modifiez-les depuis l\'arborescence des blocs.',
       'shared_fields' => 'Champs partagés',
       'variant_label' => 'Variante',
+      'variant_help' => 'Contrôle la surface de l’appel à l’action et la teinte sur une image d’arrière-plan. Ne modifie ni l’image ni le texte.',
       'default' => 'Par défaut',
       'muted' => 'Atténuée',
       'accent' => 'Accent',

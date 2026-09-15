@@ -3707,6 +3707,7 @@ $translations = [
       'buttons_help' => 'I pulsanti sono blocchi Button Link separati all\'interno di questa CTA. Aggiungili o modificali dall\'albero dei blocchi.',
       'shared_fields' => 'Campi condivisi',
       'variant_label' => 'Variante',
+      'variant_help' => 'Controlla la superficie della CTA e la tonalità sopra un’immagine di sfondo. Non modifica l’immagine né il testo.',
       'default' => 'Predefinita',
       'muted' => 'Attenuata',
       'accent' => 'Accento',

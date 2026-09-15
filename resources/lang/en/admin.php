@@ -3931,6 +3931,7 @@ return [
       'buttons_help' => 'Buttons are separate Button Link blocks inside this CTA. Add or edit them from the block tree.',
       'shared_fields' => 'Shared Fields',
       'variant_label' => 'Variant',
+      'variant_help' => 'Controls the CTA surface and the colour cast over a background image. It does not change the image or copy.',
       'default' => 'Default',
       'muted' => 'Muted',
       'accent' => 'Accent',

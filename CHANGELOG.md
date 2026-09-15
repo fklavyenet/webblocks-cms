@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.86.3
+
+- Make every CTA Variant choice visibly distinct instead of letting the shared
+  Promo background override Muted and Accent while Soft duplicated Muted.
+- Carry the selected CTA surface colour into background-image overlays so the
+  variant remains apparent with media, and explain in the localized editor
+  help that Variant changes presentation rather than the image or copy.
+
 ## 1.86.2
 
 - Upgrade the bundled WebBlocks UI runtime to 2.27.2 so Background Media remains visible on CTA and Hero promo blocks instead of being reset by the promo gradient shorthand. Section, Card, Content Header, overlay strengths, background positions, and ordinary media-free promos retain their existing behavior.

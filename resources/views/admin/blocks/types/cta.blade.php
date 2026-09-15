@@ -62,6 +62,7 @@
                         <option value="{{ $value }}" @selected(old('variant', $block->variant ?: 'default') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
+                <span class="wb-text-sm wb-text-muted">{{ $adminText('variant_help') }}</span>
             </div>
             </div>
         </div>

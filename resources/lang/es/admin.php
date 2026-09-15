@@ -3708,6 +3708,7 @@ $translations = [
       'buttons_help' => 'Los botones son bloques Button Link independientes dentro de esta CTA. Añádelos o edítalos desde el árbol de bloques.',
       'shared_fields' => 'Campos compartidos',
       'variant_label' => 'Variante',
+      'variant_help' => 'Controla la superficie de la CTA y el tono de color sobre una imagen de fondo. No cambia la imagen ni el texto.',
       'default' => 'Predeterminada',
       'muted' => 'Atenuada',
       'accent' => 'Acento',

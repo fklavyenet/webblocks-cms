@@ -395,6 +395,42 @@ html[data-mode="dark"] body[data-wb-public-theme="graphite"] {
 }
 
 /* Public composition modifiers ------------------------------------------- */
+.wb-public-cta--default {
+  --wb-public-cta-surface: var(--wb-public-surface);
+}
+
+.wb-public-cta--muted {
+  --wb-public-cta-surface: var(--wb-public-surface-muted);
+}
+
+.wb-public-cta--soft {
+  --wb-public-cta-surface: var(--wb-public-accent-softer);
+  border-color: var(--wb-accent-border);
+}
+
+.wb-public-cta--accent {
+  --wb-public-cta-surface: var(--wb-public-accent-soft);
+  border-color: var(--wb-accent);
+  box-shadow: 0 0 0 1px var(--wb-accent-border), var(--wb-shadow-sm);
+}
+
+/* wb-promo owns a gradient shorthand which otherwise wins over the generic
+   card variant classes. Give each CTA choice an explicit surface after the UI
+   runtime has loaded. Redefining --wb-surface on media-backed CTAs also feeds
+   that colour into the selected overlay strength, so the variants remain
+   visible without replacing the operator's image or overlay setting. */
+.wb-promo[class*="wb-public-cta--"] {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--wb-public-cta-surface) 88%, var(--wb-surface) 12%),
+    var(--wb-public-cta-surface)
+  );
+}
+
+.wb-promo.wb-background-media[class*="wb-public-cta--"] {
+  --wb-surface: var(--wb-public-cta-surface);
+}
+
 .wb-public-section--offset-up,
 .wb-public-section--overlap-previous {
   position: relative;

@@ -3723,6 +3723,7 @@ $translations = [
       'buttons_help' => 'Butonlar bu CTA’nın içindeki ayrı Button Link bloklarıdır. Blok ağacından ekleyip düzenleyebilirsin.',
       'shared_fields' => 'Ortak Alanlar',
       'variant_label' => 'Varyant',
+      'variant_help' => 'CTA yüzeyini ve zemin resmi üzerindeki renk tonunu belirler. Resmi veya metin içeriğini değiştirmez.',
       'default' => 'Varsayılan',
       'muted' => 'Muted',
       'accent' => 'Accent',

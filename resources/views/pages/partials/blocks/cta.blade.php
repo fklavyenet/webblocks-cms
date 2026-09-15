@@ -1,16 +1,9 @@
 @php
   $variant = $block->variant ?: 'default';
-  $ctaClasses = ['wb-card', 'wb-promo'];
+  $variant = in_array($variant, ['default', 'muted', 'soft', 'accent'], true) ? $variant : 'default';
+  $ctaClasses = ['wb-card', 'wb-promo', 'wb-public-cta--'.$variant];
   $backgroundClass = $block->publicBackgroundMediaClass();
   $backgroundStyle = $block->publicBackgroundMediaStyle();
-
-  if (in_array($variant, ['muted', 'soft'], true)) {
-    $ctaClasses[] = 'wb-card-muted';
-  }
-
-  if ($variant === 'accent') {
-    $ctaClasses[] = 'wb-card-accent';
-  }
 
   if ($backgroundClass !== null) {
     $ctaClasses[] = $backgroundClass;
