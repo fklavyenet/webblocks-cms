@@ -26,21 +26,20 @@
         return fallbackCopy(value);
     }
 
-    var feedback = document.querySelector('[data-wb-api-token-copy-feedback]');
-    var timer;
-
     Array.prototype.slice.call(document.querySelectorAll('[data-wb-copy-target]')).forEach(function (button) {
         button.addEventListener('click', function () {
             var target = document.getElementById(button.getAttribute('data-wb-copy-target'));
+            var feedback = button.parentElement.querySelector('[data-wb-api-token-copy-feedback]')
+                || document.querySelector('[data-wb-api-token-copy-feedback]');
 
-            if (!target) {
+            if (!target || !feedback) {
                 return;
             }
 
             copyText(target.value || target.textContent || '').then(function () {
                 feedback.textContent = feedback.getAttribute('data-copy-success');
-                window.clearTimeout(timer);
-                timer = window.setTimeout(function () { feedback.textContent = ''; }, 1600);
+                window.clearTimeout(feedback.wbCopyFeedbackTimer);
+                feedback.wbCopyFeedbackTimer = window.setTimeout(function () { feedback.textContent = ''; }, 1600);
             }).catch(function () {
                 feedback.textContent = feedback.getAttribute('data-copy-failed');
             });

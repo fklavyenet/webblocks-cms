@@ -4,6 +4,7 @@
     $children = app(\WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer::class)->children($block);
 
     if ($alternateSections) {
+        $sourceChildren = $children;
         $children = collect();
         $childPair = collect();
         $pairIndex = 0;
@@ -30,7 +31,7 @@
             $pairIndex++;
         };
 
-        foreach ($children as $child) {
+        foreach ($sourceChildren as $child) {
             if ($child->hasMediaTextLayoutContent()) {
                 $childPair->push($child);
 

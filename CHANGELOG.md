@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.86.4
+
+- Preserve and render every child of a Grid when alternating media/text sections
+  are enabled, instead of replacing the source collection before it is reordered.
+- Show CMS API token copy success or failure feedback beside the copy button that
+  triggered it, with independent feedback timing for each token field.
+
 ## 1.86.3
 
 - Make every CTA Variant choice visibly distinct instead of letting the shared

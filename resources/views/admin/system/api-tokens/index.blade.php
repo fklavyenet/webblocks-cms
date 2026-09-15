@@ -38,6 +38,7 @@
                         <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy-target="created_cms_api_token" aria-label="{{ $adminText('copy_full_token') }}" title="{{ $adminText('copy_full_token') }}">
                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                         </button>
+                        <span class="wb-text-sm" data-wb-api-token-copy-feedback data-copy-success="{{ $adminText('copied') }}" data-copy-failed="{{ $adminText('copy_failed') }}" role="status" aria-live="polite"></span>
                     </div>
                     <textarea id="created_cms_api_token" class="wb-textarea" rows="2" readonly>{{ $createdToken }}</textarea>
                 </div>
@@ -48,11 +49,11 @@
                         <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy-target="created_cms_api_token_env" aria-label="{{ $adminText('copy_env_example') }}" title="{{ $adminText('copy_env_example') }}">
                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                         </button>
+                        <span class="wb-text-sm" data-wb-api-token-copy-feedback data-copy-success="{{ $adminText('copied') }}" data-copy-failed="{{ $adminText('copy_failed') }}" role="status" aria-live="polite"></span>
                     </div>
                     <textarea id="created_cms_api_token_env" class="wb-textarea" rows="3" readonly>WEBBLOCKS_CMS_API_URL={{ $apiBaseUrl }}
 WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                 </div>
-                <div class="wb-text-sm" data-wb-api-token-copy-feedback data-copy-success="{{ $adminText('copied') }}" data-copy-failed="{{ $adminText('copy_failed') }}" role="status" aria-live="polite"></div>
             </div>
         </div>
 
