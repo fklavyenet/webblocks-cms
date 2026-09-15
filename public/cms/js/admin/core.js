@@ -218,6 +218,11 @@
             return;
         }
 
+        if (overlay.hasAttribute('data-wb-admin-close-history') && window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', closeUrl);
+            return;
+        }
+
         window.location.assign(closeUrl);
     }
 

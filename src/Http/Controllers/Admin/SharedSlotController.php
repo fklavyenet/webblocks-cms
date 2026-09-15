@@ -294,6 +294,7 @@ class SharedSlotController extends Controller
       ->where('slot_type_id', $slot->slot_type_id)
       ->orderBy('sort_order')
       ->get();
+    $this->hydrateSlotBlockTree($allBlocks);
     $resolvedBlocks = $this->blockTranslationResolver->resolveCollection($allBlocks, $activeLocale)->values();
     $rootBlocks = $this->blockTranslationResolver
       ->resolveCollection($allBlocks->whereNull('parent_id')->values(), $activeLocale)
@@ -305,6 +306,8 @@ class SharedSlotController extends Controller
     $pickerBlockTypes = $this->pickerBlockTypes($resolvedBlocks, $blockTypes, $pickerParentId);
     $pickerCategory = $this->pickerCategory($pickerBlockTypes);
     $modalState = $this->slotBlockModalState($sourcePage, $slot, $allBlocks, $blockTypes, $pickerBlockTypes, $pickerParentId);
+    $needsAssetPicker = $modalState['selectedBlockType']
+      && $this->blockTypeNeedsAssetPicker($modalState['selectedBlockType']);
     $deleteModalState = $this->slotBlockDeleteModalState($resolvedBlocks);
     $expandedBlockIds = $this->slotExpandedBlockIds($resolvedBlocks, $modalState['block']);
 
@@ -325,8 +328,8 @@ class SharedSlotController extends Controller
       'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
       'featureItemBlockType' => $blockTypes->firstWhere('slug', 'feature-item'),
       'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
-      'assetPickerAssets' => $this->assetPickerAssets(),
-      'assetPickerFolders' => $this->assetPickerFolders(),
+      'assetPickerAssets' => $needsAssetPicker ? $this->assetPickerAssets() : collect(),
+      'assetPickerFolders' => $needsAssetPicker ? $this->assetPickerFolders() : collect(),
       'slotModalSelectedAsset' => $modalState['selectedAsset'],
       'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
       'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
@@ -826,10 +829,46 @@ class SharedSlotController extends Controller
       'buttonTranslations',
       'imageTranslations',
       'contactFormTranslations',
-      'children' => fn ($query) => $query
-        ->with($this->slotBlockRelations())
-        ->orderBy('sort_order'),
     ];
+  }
+
+  private function hydrateSlotBlockTree($blocks): void
+  {
+    $childrenByParent = $blocks
+      ->groupBy(fn (Block $block) => (int) ($block->parent_id ?? 0));
+
+    foreach ($blocks as $block) {
+      $children = $childrenByParent->get((int) $block->id, collect())
+        ->sortBy([['sort_order', 'asc'], ['id', 'asc']])
+        ->values();
+
+      $block->setRelation('children', $children);
+
+      foreach ($children as $child) {
+        $child->setRelation('parent', $block);
+      }
+    }
+  }
+
+  private function blockTypeNeedsAssetPicker(BlockType $blockType): bool
+  {
+    return in_array($blockType->slug, [
+      'image',
+      'gallery',
+      'download',
+      'file',
+      'video',
+      'audio',
+      'navbar-brand',
+      'sidebar-brand',
+      'hero',
+      'section',
+      'card',
+      'cta',
+      'content_header',
+      'slide',
+      'link-list-item',
+    ], true);
   }
 
   private function slotExpandedBlockIds($blocks, ?Block $modalBlock = null)

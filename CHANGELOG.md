@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.86.6
+
+- Speed up page and Shared Slot block editors by hydrating their nested block
+  tree from the already-loaded flat collection instead of recursively querying
+  the same descendants, and load the Media Library only for block types whose
+  editor can select media.
+- Close block edit modals immediately without reloading the slot editor; normal
+  links and form redirects remain available as progressive-enhancement
+  fallbacks, and saving still captures the required page or Shared Slot
+  revision before returning to the now-lighter editor.
+
 ## 1.86.5
 
 - Add Default, Small, Large, and Extra Large icon sizing to the shared icon

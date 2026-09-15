@@ -23,7 +23,7 @@
 @endphp
 
 @if ($showModal && $slotModalBlock && $slotModalSelectedBlockType)
-    <div class="wb-modal wb-modal-xl" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title" data-wb-admin-close-url="{{ $closeUrl }}" data-wb-slot-block-modal-autoload data-wb-admin-autoload-overlay hidden>
+    <div class="wb-modal wb-modal-xl" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title" data-wb-admin-close-url="{{ $closeUrl }}" data-wb-admin-close-history data-wb-slot-block-modal-autoload data-wb-admin-autoload-overlay hidden>
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">

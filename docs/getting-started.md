@@ -133,6 +133,7 @@ In the slot editor:
 - the drag handle uses a plain fallback grip marker so sortable rows remain usable even if an icon font entry is unavailable
 - `Delete All Blocks` appears only when the current page slot or Shared Slot already contains blocks, and the confirmation modal shows how many top-level and nested blocks will be removed
 - Each block row has a status switch: on publishes the block and off moves it to draft without leaving the slot editor. The adjacent translated label always states the saved status; failed requests restore the previous state. The move-up and move-down controls likewise reorder in place when JavaScript is available, while both features retain normal form submissions as a fallback.
+- Block edit screens build their nested tree from one flat block query and only load the Media Library when the selected block type exposes a media field. Closing an open block modal updates the editor URL in place; saving keeps revision capture and returns through the normal form redirect, with the lighter editor request reducing the visible refresh time.
 
 When you reach a page from a filtered `Pages` list, the admin now keeps that Pages list context while you move through Edit Page, slot editing, translation editing, and save flows, so returning to `Pages` takes you back to the same filters and sort order.
 
