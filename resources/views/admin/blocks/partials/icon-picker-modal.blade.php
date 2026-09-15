@@ -8,6 +8,7 @@
   $iconPickerText = static fn (string $key) => $iconPickerTranslator->admin('icon_picker.'.$key, $iconPickerLocale);
   $iconPickerGroups = app(IconCatalog::class)->groupedPickerOptions('content');
   $iconPickerToneOptions = ['default', 'soft', 'brand', 'accent', 'highlight', 'bold', 'quiet'];
+  $iconPickerSizeOptions = ['default', 'sm', 'lg', 'xl'];
   $iconPickerBadgeToneOptions = ['neutral', 'info', 'success', 'warning', 'danger'];
   $iconPickerIsEmpty = $iconPickerGroups['suggested']->isEmpty() && $iconPickerGroups['all']->isEmpty();
 @endphp
@@ -20,7 +21,7 @@
        aria-labelledby="wb_icon_picker_title" data-wb-icon-picker-modal hidden>
     <div class="wb-modal-dialog">
       <div class="wb-modal-header">
-        <h2 class="wb-modal-title" id="wb_icon_picker_title">{{ $iconPickerText('title') }}</h2>
+        <h2 class="wb-modal-title" id="wb_icon_picker_title" data-wb-icon-picker-title data-icon-title="{{ $iconPickerText('title_icon') }}" data-icon-badge-title="{{ $iconPickerText('title') }}">{{ $iconPickerText('title') }}</h2>
 
         <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $iconPickerText('close') }}">
           <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
@@ -40,7 +41,7 @@
           </div>
         </div>
 
-        <div class="wb-grid wb-grid-2">
+        <div class="wb-grid wb-grid-3">
           <div class="wb-stack wb-gap-1">
             <label for="wb_icon_picker_tone">{{ $iconPickerText('icon_tone') }}</label>
             <select id="wb_icon_picker_tone" class="wb-select" data-wb-icon-picker-tone>
@@ -50,7 +51,16 @@
             </select>
           </div>
 
-          <div class="wb-stack wb-gap-1">
+          <div class="wb-stack wb-gap-1" data-wb-icon-picker-size-field>
+            <label for="wb_icon_picker_size">{{ $iconPickerText('icon_size') }}</label>
+            <select id="wb_icon_picker_size" class="wb-select" data-wb-icon-picker-size>
+              @foreach ($iconPickerSizeOptions as $iconPickerSize)
+                <option value="{{ $iconPickerSize }}">{{ $iconPickerText('size_'.$iconPickerSize) }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="wb-stack wb-gap-1" data-wb-icon-picker-badge-tone-field>
             <label for="wb_icon_picker_badge_tone">{{ $iconPickerText('badge_tone') }}</label>
             <select id="wb_icon_picker_badge_tone" class="wb-select" data-wb-icon-picker-badge-tone>
               @foreach ($iconPickerBadgeToneOptions as $iconPickerBadgeTone)

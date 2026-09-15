@@ -328,12 +328,12 @@ class BlockTypeContractRegistry
         'known_gaps' => ['Legacy fallback rendering remains only for older saved cards that have no region children yet.'],
       ],
       'card_header' => [
-        'admin_form_fields' => ['Admin label', 'Icon', 'Icon tone', 'Badge tone'],
+        'admin_form_fields' => ['Admin label', 'Icon', 'Icon tone', 'Icon size'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['settings.layout_name', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone'],
+        'shared_settings_fields' => ['settings.layout_name', 'settings.icon_slug', 'settings.icon_tone', 'settings.icon_size'],
         'storage_fields' => [
           'Card Header shell settings stay in block settings.',
-          'Optional icon slug, icon tone, and badge tone stay in shared block settings.',
+          'Optional icon slug, icon tone, and icon size stay in shared block settings.',
         ],
         'media_relationship_fields' => ['Child blocks are the primary relationship.'],
         'child_container_behavior' => ['Container-capable. Child types are not explicitly restricted beyond the generic block model, but this block may only be placed inside `card`.'],
@@ -598,9 +598,9 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'content_header' => [
-        'admin_form_fields' => ['Title', 'Intro text', 'Icon', 'Icon tone', 'Badge label', 'Badge tone', 'Background media', 'Background position', 'Background overlay', 'Meta items'],
+        'admin_form_fields' => ['Title', 'Intro text', 'Icon', 'Icon tone', 'Icon size', 'Badge label', 'Badge tone', 'Background media', 'Background position', 'Background overlay', 'Meta items'],
         'translatable_fields' => ['title', 'eyebrow as badge_label', 'subtitle', 'meta'],
-        'shared_settings_fields' => ['media_id', 'settings.alignment', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone', 'settings.background_position', 'settings.background_overlay'],
+        'shared_settings_fields' => ['media_id', 'settings.alignment', 'settings.icon_slug', 'settings.icon_tone', 'settings.icon_size', 'settings.badge_tone', 'settings.background_position', 'settings.background_overlay'],
         'storage_fields' => [
           'Translated title, badge label, intro, and meta copy live in block text translation rows.',
           'Content Header titles always render as H1.',
@@ -647,9 +647,9 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'column_item' => [
-        'admin_form_fields' => ['Column Title', 'Optional Link', 'Column Text', 'Icon', 'Icon tone', 'Badge label', 'Badge tone'],
+        'admin_form_fields' => ['Column Title', 'Optional Link', 'Column Text', 'Icon', 'Icon tone', 'Icon size', 'Badge label', 'Badge tone'],
         'translatable_fields' => ['title', 'eyebrow as badge_label', 'subtitle', 'content'],
-        'shared_settings_fields' => ['url', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone'],
+        'shared_settings_fields' => ['url', 'settings.icon_slug', 'settings.icon_tone', 'settings.icon_size', 'settings.badge_tone'],
         'storage_fields' => [
           'Translated item title, badge label, optional value/subtitle, and content live in block text translation rows.',
           'Shared optional link URL stays on the canonical block url field.',
@@ -677,9 +677,9 @@ class BlockTypeContractRegistry
         'known_gaps' => ['Feature Grid remains a first-class compatibility alias over the Columns cards presentation path.'],
       ],
       'feature-item' => [
-        'admin_form_fields' => ['Feature Title', 'Optional Link', 'Feature Text', 'Icon', 'Icon tone', 'Badge label', 'Badge tone'],
+        'admin_form_fields' => ['Feature Title', 'Optional Link', 'Feature Text', 'Icon', 'Icon tone', 'Icon size', 'Badge label', 'Badge tone'],
         'translatable_fields' => ['title', 'eyebrow as badge_label', 'content'],
-        'shared_settings_fields' => ['url', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone'],
+        'shared_settings_fields' => ['url', 'settings.icon_slug', 'settings.icon_tone', 'settings.icon_size', 'settings.badge_tone'],
         'storage_fields' => [
           'Translated feature title, badge label, and content live in block text translation rows.',
           'Shared optional link URL stays on the canonical block url field.',
@@ -739,9 +739,9 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'link-list-item' => [
-        'admin_form_fields' => ['Title', 'URL', 'Optional Meta', 'Optional Thumbnail', 'Icon', 'Icon tone', 'Badge label', 'Badge tone', 'Optional Description'],
+        'admin_form_fields' => ['Title', 'URL', 'Optional Meta', 'Optional Thumbnail', 'Icon', 'Icon tone', 'Icon size', 'Badge label', 'Badge tone', 'Optional Description'],
         'translatable_fields' => ['required title', 'optional eyebrow as badge_label', 'optional subtitle', 'optional content'],
-        'shared_settings_fields' => ['url', 'media_id', 'settings.icon_slug', 'settings.icon_tone', 'settings.badge_tone'],
+        'shared_settings_fields' => ['url', 'media_id', 'settings.icon_slug', 'settings.icon_tone', 'settings.icon_size', 'settings.badge_tone'],
         'storage_fields' => [
           'Translated row copy and badge label live in block text translation rows.',
           'Shared URL stays on the canonical block url field.',

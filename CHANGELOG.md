@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.86.5
+
+- Add Default, Small, Large, and Extra Large icon sizing to the shared icon
+  picker and public icon-enabled blocks, backed by safe WebBlocks UI classes and
+  the browser-admin and Internal Content API contracts.
+- Hide Badge Tone and use an icon-only modal title for Card Header, which does
+  not own badge copy and therefore cannot render a badge tone.
+
 ## 1.86.4
 
 - Preserve and render every child of a Grid when alternating media/text sections

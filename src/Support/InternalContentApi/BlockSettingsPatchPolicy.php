@@ -79,7 +79,7 @@ final class BlockSettingsPatchPolicy
    *   ['menu_key']     one of the navigation menu keys
    *   ['anchor']       same-page anchor ID, admin's format
    *
-   * icon_slug, icon_tone, and badge_tone are deliberately absent: they are
+   * icon_slug, icon_tone, icon_size, and badge_tone are deliberately absent: they are
    * handled by the normalizers InternalContentApiOperations already owns.
    *
    * @var array<string, array<string, array{0: string, 1?: mixed}>>

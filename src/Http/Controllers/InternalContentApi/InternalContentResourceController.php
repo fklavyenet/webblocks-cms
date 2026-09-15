@@ -2027,8 +2027,12 @@ class InternalContentResourceController extends Controller
         ...$allowedSettings,
         'icon_slug',
         'icon_tone',
-        'badge_tone',
+        'icon_size',
       ];
+
+      if (in_array($type, InternalContentApiOperations::PUBLIC_BADGE_BLOCK_TYPES, true)) {
+        $allowedSettings[] = 'badge_tone';
+      }
     }
 
     $unsupported = array_values(array_diff(array_keys($incoming), $allowedSettings));
@@ -2203,9 +2207,10 @@ class InternalContentResourceController extends Controller
       // create path, so PATCH cannot drift into a second set of icon rules.
       $operations = app(InternalContentApiOperations::class);
       $iconErrors = [];
-      $iconSettings = array_intersect_key($incoming, array_flip(['icon_slug', 'icon_tone']));
+      $iconSettings = array_intersect_key($incoming, array_flip(['icon_slug', 'icon_tone', 'icon_size']));
       $iconSettings = $operations->normalizePublicIconSlugSettings($iconSettings, $block->blockType, 'settings', $iconErrors);
       $iconSettings = $operations->normalizePublicIconToneSettings($iconSettings, $block->blockType, 'settings', $iconErrors);
+      $iconSettings = $operations->normalizePublicIconSizeSettings($iconSettings, $block->blockType, 'settings', $iconErrors);
 
       if ($iconErrors !== []) {
         abort(response()->json([
@@ -2218,13 +2223,13 @@ class InternalContentResourceController extends Controller
         ], 422));
       }
 
-      foreach (['icon_slug', 'icon_tone'] as $iconField) {
+      foreach (['icon_slug', 'icon_tone', 'icon_size'] as $iconField) {
         if (array_key_exists($iconField, $incoming)) {
           $safeIncoming[$iconField] = $iconSettings[$iconField] ?? null;
         }
       }
 
-      if (array_key_exists('badge_tone', $incoming)) {
+      if (in_array($type, InternalContentApiOperations::PUBLIC_BADGE_BLOCK_TYPES, true) && array_key_exists('badge_tone', $incoming)) {
         $badgeTone = trim((string) $incoming['badge_tone']);
         $safeIncoming['badge_tone'] = in_array($badgeTone, PublicIconPresenter::BADGE_TONES, true) ? $badgeTone : null;
       }

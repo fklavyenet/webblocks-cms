@@ -88,6 +88,23 @@ class PublicIconNormalizationTest extends TestCase
   }
 
   #[Test]
+  public function incremental_create_normalizes_a_supported_icon_size(): void
+  {
+    $type = new BlockType(['slug' => 'card_header']);
+    $errors = [];
+
+    $settings = app(InternalContentApiOperations::class)->normalizePublicIconSizeSettings(
+      ['icon_size' => 'xl'],
+      $type,
+      'block',
+      $errors,
+    );
+
+    $this->assertSame([], $errors);
+    $this->assertSame('xl', $settings['icon_size']);
+  }
+
+  #[Test]
   public function the_icon_enabled_block_type_list_has_one_owner(): void
   {
     $this->assertSame([

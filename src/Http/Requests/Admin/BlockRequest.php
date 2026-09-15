@@ -139,8 +139,9 @@ class BlockRequest extends FormRequest
       'eyebrow' => ['prohibited', 'string', 'max:255'],
       'icon_slug' => [$supportsPublicIcon ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'icon_tone' => [$supportsPublicIcon ? 'nullable' : 'prohibited', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
+      'icon_size' => [$supportsPublicIcon ? 'nullable' : 'prohibited', Rule::in(['', ...PublicIconPresenter::SIZES])],
       'badge_label' => [$supportsPublicBadgeLabel ? 'nullable' : 'prohibited', 'string', 'max:255'],
-      'badge_tone' => [$supportsPublicIcon ? 'nullable' : 'prohibited', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
+      'badge_tone' => [$supportsPublicBadgeLabel ? 'nullable' : 'prohibited', Rule::in(['', ...PublicIconPresenter::BADGE_TONES])],
       'subtitle' => ['nullable', 'string', 'max:255'],
       'content' => [($isAlert || $isTextRequiredBuilderChild || ($isLocaleRequest && $isTranslatedTextRequiredBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
       'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
@@ -297,6 +298,7 @@ class BlockRequest extends FormRequest
       'column_items.*.url' => ['nullable', 'string', 'max:2048'],
       'column_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
       'column_items.*.icon_tone' => ['nullable', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
+      'column_items.*.icon_size' => ['nullable', Rule::in(['', ...PublicIconPresenter::SIZES])],
       'column_items.*.badge_label' => ['nullable', 'string', 'max:255'],
       'column_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'column_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
@@ -311,6 +313,7 @@ class BlockRequest extends FormRequest
       'feature_items.*.url' => ['nullable', 'string', 'max:2048'],
       'feature_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
       'feature_items.*.icon_tone' => ['nullable', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
+      'feature_items.*.icon_size' => ['nullable', Rule::in(['', ...PublicIconPresenter::SIZES])],
       'feature_items.*.badge_label' => ['nullable', 'string', 'max:255'],
       'feature_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'feature_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
@@ -329,6 +332,7 @@ class BlockRequest extends FormRequest
       'link_list_items.*.url' => ['nullable', 'string', 'max:2048'],
       'link_list_items.*.icon_slug' => ['nullable', 'string', 'max:255'],
       'link_list_items.*.icon_tone' => ['nullable', Rule::in(['', ...PublicIconPresenter::VISUAL_TONES])],
+      'link_list_items.*.icon_size' => ['nullable', Rule::in(['', ...PublicIconPresenter::SIZES])],
       'link_list_items.*.badge_label' => ['nullable', 'string', 'max:255'],
       'link_list_items.*.badge_tone' => ['nullable', Rule::in(['', 'neutral', 'info', 'success', 'warning', 'danger'])],
       'link_list_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
@@ -2433,7 +2437,7 @@ class BlockRequest extends FormRequest
     unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
     unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
     unset($data['show_button']);
-    unset($data['icon_slug'], $data['icon_tone'], $data['badge_label'], $data['badge_tone']);
+    unset($data['icon_slug'], $data['icon_tone'], $data['icon_size'], $data['badge_label'], $data['badge_tone']);
     unset($data['background_position'], $data['background_overlay']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['section_flow'], $data['width'], $data['container_flow'], $data['stack_spacing'], $data['split_gap'], $data['split_align'], $data['split_width'], $data['split_responsive'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_ratio'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);
     unset($data['slider_height'], $data['slider_min_height'], $data['slider_aspect_ratio'], $data['slider_transition'], $data['slider_interval_ms']);
@@ -2587,6 +2591,7 @@ class BlockRequest extends FormRequest
   {
     $icon = app(IconCatalog::class)->normalizeSlug($data['icon_slug'] ?? null);
     $iconTone = app(PublicIconPresenter::class)->visualTone($data['icon_tone'] ?? null);
+    $iconSize = app(PublicIconPresenter::class)->iconSize($data['icon_size'] ?? null);
     $badgeTone = trim((string) ($data['badge_tone'] ?? 'neutral'));
 
     if ($icon !== null) {
@@ -2599,6 +2604,12 @@ class BlockRequest extends FormRequest
       $settings['icon_tone'] = $iconTone;
     } else {
       unset($settings['icon_tone']);
+    }
+
+    if ($iconSize !== null && $iconSize !== 'default') {
+      $settings['icon_size'] = $iconSize;
+    } else {
+      unset($settings['icon_size']);
     }
 
     if (in_array($badgeTone, ['info', 'success', 'warning', 'danger'], true)) {

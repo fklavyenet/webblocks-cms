@@ -8,15 +8,18 @@
     $settings = is_array($settings) ? $settings : [];
     $selectedIcon = old('icon_slug', $settings['icon_slug'] ?? '');
     $selectedIconTone = old('icon_tone', $settings['icon_tone'] ?? 'default');
+    $selectedIconSize = old('icon_size', $settings['icon_size'] ?? 'default');
     $selectedTone = old('badge_tone', $settings['badge_tone'] ?? 'neutral');
 @endphp
 
 @include('webblocks-cms::admin.blocks.partials.icon-picker-field', [
     'slugName' => 'icon_slug',
     'toneName' => 'icon_tone',
-    'badgeToneName' => 'badge_tone',
+    'sizeName' => 'icon_size',
+    'badgeToneName' => $supportsBadgeLabel ? 'badge_tone' : null,
     'slug' => $selectedIcon,
     'tone' => $selectedIconTone,
+    'size' => $selectedIconSize,
     'badgeTone' => $selectedTone,
     'label' => $adminText('icon'),
 ])

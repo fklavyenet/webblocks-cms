@@ -125,11 +125,13 @@ class BlockPatchSettingsContractTest extends TestCase
     $settings = $this->mergeSettings($block, [
       'icon_slug' => 'Rocket',
       'icon_tone' => 'brand',
+      'icon_size' => 'lg',
       'badge_tone' => 'success',
     ]);
 
     $this->assertSame('rocket', $settings['icon_slug'] ?? null, 'The slug must be normalized by the shared owner.');
     $this->assertSame('brand', $settings['icon_tone'] ?? null);
+    $this->assertSame('lg', $settings['icon_size'] ?? null);
     $this->assertSame('success', $settings['badge_tone'] ?? null);
   }
 
@@ -142,6 +144,19 @@ class BlockPatchSettingsContractTest extends TestCase
     try {
       $this->mergeSettings($block, ['icon_slug' => 'not-a-real-icon']);
       $this->fail('An unknown icon must be rejected rather than stored.');
+    } catch (HttpResponseException $exception) {
+      $this->assertSame(422, $exception->getResponse()->getStatusCode());
+    }
+  }
+
+  #[Test]
+  public function patching_a_card_header_rejects_badge_tone_because_it_has_no_badge(): void
+  {
+    $block = $this->seedBlock('card_header');
+
+    try {
+      $this->mergeSettings($block, ['badge_tone' => 'warning']);
+      $this->fail('Card Header must not accept a badge tone it cannot render.');
     } catch (HttpResponseException $exception) {
       $this->assertSame(422, $exception->getResponse()->getStatusCode());
     }

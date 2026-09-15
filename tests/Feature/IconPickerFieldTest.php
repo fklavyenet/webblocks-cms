@@ -32,6 +32,7 @@ class IconPickerFieldTest extends TestCase
 
     $this->assertStringContainsString('name="icon_slug" value="rocket"', $html);
     $this->assertStringContainsString('name="icon_tone" value="brand"', $html);
+    $this->assertStringContainsString('name="icon_size" value="default"', $html);
     $this->assertStringContainsString('name="badge_tone" value="success"', $html);
     $this->assertStringContainsString('data-wb-icon-picker-open', $html);
 
@@ -72,6 +73,7 @@ class IconPickerFieldTest extends TestCase
     $this->assertStringContainsString('data-wb-icon-picker-preview-icon', $html);
     $this->assertStringContainsString('data-wb-icon-picker-preview-badge', $html);
     $this->assertStringContainsString('data-wb-icon-picker-tone', $html);
+    $this->assertStringContainsString('data-wb-icon-picker-size', $html);
     $this->assertStringContainsString('data-wb-icon-picker-badge-tone', $html);
 
     foreach (['default', 'soft', 'brand', 'accent', 'highlight', 'bold', 'quiet'] as $tone) {
@@ -81,6 +83,25 @@ class IconPickerFieldTest extends TestCase
     foreach (['neutral', 'info', 'success', 'warning', 'danger'] as $badgeTone) {
       $this->assertStringContainsString('value="'.$badgeTone.'"', $html);
     }
+
+    foreach (['default', 'sm', 'lg', 'xl'] as $size) {
+      $this->assertStringContainsString('value="'.$size.'"', $html);
+    }
+  }
+
+  #[Test]
+  public function a_field_without_badge_support_does_not_expose_badge_tone_state(): void
+  {
+    $this->icon('rocket');
+
+    $html = $this->renderField(badgeToneName: null);
+
+    $this->assertStringNotContainsString('data-wb-icon-field-badge-tone', $html);
+    $this->assertStringContainsString('data-wb-icon-field-size', $html);
+
+    $script = file_get_contents(dirname(__DIR__, 2).'/public/cms/js/admin/icon-picker.js');
+    $this->assertStringContainsString('badgeToneField.hidden = !field.querySelector', $script);
+    $this->assertStringContainsString("classes.push('wb-icon-' + size)", $script);
   }
 
   #[Test]
@@ -89,8 +110,8 @@ class IconPickerFieldTest extends TestCase
     $this->icon('rocket');
 
     $html = Blade::render(<<<'BLADE'
-      @include('webblocks-cms::admin.blocks.partials.icon-picker-field', ['slugName' => 'items[0][icon_slug]', 'toneName' => 'items[0][icon_tone]', 'badgeToneName' => 'items[0][badge_tone]', 'slug' => '', 'tone' => 'default', 'badgeTone' => 'neutral'])
-      @include('webblocks-cms::admin.blocks.partials.icon-picker-field', ['slugName' => 'items[1][icon_slug]', 'toneName' => 'items[1][icon_tone]', 'badgeToneName' => 'items[1][badge_tone]', 'slug' => '', 'tone' => 'default', 'badgeTone' => 'neutral'])
+      @include('webblocks-cms::admin.blocks.partials.icon-picker-field', ['slugName' => 'items[0][icon_slug]', 'toneName' => 'items[0][icon_tone]', 'sizeName' => 'items[0][icon_size]', 'badgeToneName' => 'items[0][badge_tone]', 'slug' => '', 'tone' => 'default', 'size' => 'default', 'badgeTone' => 'neutral'])
+      @include('webblocks-cms::admin.blocks.partials.icon-picker-field', ['slugName' => 'items[1][icon_slug]', 'toneName' => 'items[1][icon_tone]', 'sizeName' => 'items[1][icon_size]', 'badgeToneName' => 'items[1][badge_tone]', 'slug' => '', 'tone' => 'default', 'size' => 'default', 'badgeTone' => 'neutral'])
       @stack('overlays')
       BLADE);
 
@@ -115,7 +136,7 @@ class IconPickerFieldTest extends TestCase
   private function renderField(
     string $slugName = 'icon_slug',
     string $toneName = 'icon_tone',
-    string $badgeToneName = 'badge_tone',
+    ?string $badgeToneName = 'badge_tone',
     string $slug = '',
     string $tone = 'default',
     string $badgeTone = 'neutral',
@@ -125,6 +146,7 @@ class IconPickerFieldTest extends TestCase
       ['data' => [
         'slugName' => $slugName,
         'toneName' => $toneName,
+        'sizeName' => 'icon_size',
         'badgeToneName' => $badgeToneName,
         'slug' => $slug,
         'tone' => $tone,

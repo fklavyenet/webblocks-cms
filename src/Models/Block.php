@@ -730,6 +730,13 @@ class Block extends CmsModel
     return $tone !== '' ? $tone : null;
   }
 
+  public function publicIconSize(): ?string
+  {
+    $size = trim((string) $this->setting('icon_size', ''));
+
+    return $size !== '' ? $size : null;
+  }
+
   public function publicBadgeLabel(): ?string
   {
     return $this->stringValueOrNull($this->eyebrow ?? null)

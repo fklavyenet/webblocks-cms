@@ -20,6 +20,7 @@
     $itemSettings = is_array($itemSettings) ? $itemSettings : [];
     $selectedIcon = $itemSettings['icon_slug'] ?? '';
     $selectedIconTone = $itemSettings['icon_tone'] ?? 'default';
+    $selectedIconSize = $itemSettings['icon_size'] ?? 'default';
     $selectedTone = $itemSettings['badge_tone'] ?? 'neutral';
     $summaryText = $showSubtitle
         ? ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder)
@@ -77,9 +78,11 @@
             @include('webblocks-cms::admin.blocks.partials.icon-picker-field', [
                 'slugName' => $rowPrefix.'[icon_slug]',
                 'toneName' => $rowPrefix.'[icon_tone]',
+                'sizeName' => $rowPrefix.'[icon_size]',
                 'badgeToneName' => $rowPrefix.'[badge_tone]',
                 'slug' => $selectedIcon,
                 'tone' => $selectedIconTone,
+                'size' => $selectedIconSize,
                 'badgeTone' => $selectedTone,
                 'label' => $columnItemRowText('icon'),
             ])

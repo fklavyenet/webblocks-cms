@@ -10,9 +10,11 @@
   // (icon_slug) and inside repeated item rows (column_items[3][icon_slug]).
   $iconFieldSlugName = $slugName;
   $iconFieldToneName = $toneName;
+  $iconFieldSizeName = $sizeName;
   $iconFieldBadgeToneName = $badgeToneName ?? null;
   $iconFieldSlug = (string) ($slug ?? '');
   $iconFieldTone = (string) ($tone ?? 'default');
+  $iconFieldSize = (string) ($size ?? 'default');
   $iconFieldBadgeTone = (string) ($badgeTone ?? 'neutral');
   $iconFieldLabel = $label ?? $iconFieldText('icon');
 @endphp
@@ -22,6 +24,7 @@
 
   <input type="hidden" name="{{ $iconFieldSlugName }}" value="{{ $iconFieldSlug }}" data-wb-icon-field-slug>
   <input type="hidden" name="{{ $iconFieldToneName }}" value="{{ $iconFieldTone }}" data-wb-icon-field-tone>
+  <input type="hidden" name="{{ $iconFieldSizeName }}" value="{{ $iconFieldSize }}" data-wb-icon-field-size>
   @if ($iconFieldBadgeToneName)
     <input type="hidden" name="{{ $iconFieldBadgeToneName }}" value="{{ $iconFieldBadgeTone }}" data-wb-icon-field-badge-tone>
   @endif

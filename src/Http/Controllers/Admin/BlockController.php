@@ -761,11 +761,13 @@ class BlockController extends Controller
         $url = trim((string) ($item['url'] ?? ''));
         $iconSlug = app(IconCatalog::class)->normalizeSlug($item['icon_slug'] ?? null);
         $iconTone = app(PublicIconPresenter::class)->visualTone($item['icon_tone'] ?? null);
+        $iconSize = app(PublicIconPresenter::class)->iconSize($item['icon_size'] ?? null);
         $badgeLabel = trim((string) ($item['badge_label'] ?? ''));
         $badgeTone = trim((string) ($item['badge_tone'] ?? ''));
         $settings = array_filter([
           'icon_slug' => $iconSlug,
           'icon_tone' => $iconTone !== 'default' ? $iconTone : null,
+          'icon_size' => $iconSize !== 'default' ? $iconSize : null,
           'badge_tone' => in_array($badgeTone, ['info', 'success', 'warning', 'danger'], true) ? $badgeTone : null,
         ], fn ($value) => $value !== null && $value !== '');
 

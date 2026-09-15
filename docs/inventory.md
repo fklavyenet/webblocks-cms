@@ -306,7 +306,7 @@ The current published core catalog contains 52 rows:
 | --- | --- |
 | Purpose | Header region inside Card. |
 | Admin-editable content | No direct copy; child blocks hold content. Optional editor-only `layout_name`. |
-| Settings | `icon_slug` from the active content icon catalog; `icon_tone`: default, soft, brand, accent, highlight, bold, quiet. |
+| Settings | `icon_slug` from the active content icon catalog; `icon_tone`: default, soft, brand, accent, highlight, bold, quiet; `icon_size`: default, sm, lg, xl. |
 | Children | Structured content children. Do not nest Card region blocks. Normal placement is directly under Card. |
 | HTML | Root-owning `<div class="wb-card-header" data-wb-public-block-type="card-header">[icon]…</div>`. |
 | Example appearance | Card title row with a catalog icon and nested Header/Plain Text. |
@@ -400,7 +400,7 @@ The current published core catalog contains 52 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle` as intro, `translations.eyebrow` as optional badge label, `translations.meta` as metadata items. |
-| Settings and variants | `alignment`: left, center, right; `icon_slug`; `icon_tone`; `badge_tone`: neutral, info, success, warning, danger; optional background image and overlay settings. |
+| Settings and variants | `alignment`: left, center, right; `icon_slug`; `icon_tone`; `icon_size`: default, sm, lg, xl; `badge_tone`: neutral, info, success, warning, danger; optional background image and overlay settings. |
 | Children/media | No children; direct image `media_id` is background media. |
 | HTML | Root-owning `<header class="wb-content-header …">` with optional icon/badge cluster, fixed `<h1 class="wb-content-title">`, subtitle, and metadata row. |
 | Example appearance | Page title with optional product badge/icon, concise lead text, and two metadata labels. |
@@ -445,7 +445,7 @@ The current published core catalog contains 52 rows:
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | `translations.title`, `translations.content`, optional `translations.eyebrow` badge; shared `settings.url`, `icon_slug`, `icon_tone`, `badge_tone`. |
+| Editable content | `translations.title`, `translations.content`, optional `translations.eyebrow` badge; shared `settings.url`, `icon_slug`, `icon_tone`, `icon_size`, `badge_tone`. |
 | Settings and variants | Presentation is controlled by the parent Columns variant: cards, plain, or stats. |
 | Children/media | None; intended only under Columns. |
 | HTML | Cards: `.wb-card > .wb-card-body`; plain: `.wb-icon-card`; stats: `.wb-stat`. Optional safe link wraps cards/plain output. |
@@ -614,7 +614,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | Required `translations.title`, optional `subtitle`, `content`, and `eyebrow` badge; shared required URL. |
-| Settings and variants | `icon_slug`, `icon_tone`, `badge_tone`. |
+| Settings and variants | `icon_slug`, `icon_tone`, `icon_size`, `badge_tone`. |
 | Children/media | Optional image `media_id` thumbnail; intended under Link List. |
 | HTML | `<a class="wb-link-list-item">` with an optional leading thumbnail or icon (adding `wb-link-list-item--media`), title/meta/badge, and optional description. |
 | Example appearance | Documentation/resource row marked “New”. |

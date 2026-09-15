@@ -35,6 +35,11 @@ class IconCatalogContextTest extends TestCase
       'wb-icon wb-icon-rocket',
       app(PublicIconPresenter::class)->iconClass('rocket'),
     );
+
+    $this->assertSame(
+      'wb-icon wb-icon-rocket wb-icon-tone-brand wb-icon-xl',
+      app(PublicIconPresenter::class)->iconClass('rocket', 'brand', 'xl'),
+    );
   }
 
   #[Test]

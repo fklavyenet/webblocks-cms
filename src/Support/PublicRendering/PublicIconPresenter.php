@@ -10,6 +10,8 @@ class PublicIconPresenter
 
   public const VISUAL_TONES = ['default', 'soft', 'brand', 'accent', 'highlight', 'bold', 'quiet'];
 
+  public const SIZES = ['default', 'sm', 'lg', 'xl'];
+
   public function __construct(private readonly IconCatalog $catalog) {}
 
   /**
@@ -19,7 +21,7 @@ class PublicIconPresenter
    * icon that was set but out of context left the block rendering without one
    * and nothing on the page, in the admin, or in a log said why.
    */
-  public function iconClass(?string $slug, ?string $tone = null): ?string
+  public function iconClass(?string $slug, ?string $tone = null, ?string $size = null): ?string
   {
     $slug = $this->catalog->activeIconSlug($slug);
 
@@ -27,7 +29,7 @@ class PublicIconPresenter
       return null;
     }
 
-    return trim('wb-icon wb-icon-'.$slug.' '.$this->iconToneClass($tone));
+    return trim('wb-icon wb-icon-'.$slug.' '.$this->iconToneClass($tone).' '.$this->iconSizeClass($size));
   }
 
   public function badgeTone(?string $tone): string
@@ -59,6 +61,22 @@ class PublicIconPresenter
 
     return $tone !== null && $tone !== 'default'
       ? 'wb-icon-tone-'.$tone
+      : null;
+  }
+
+  public function iconSize(?string $size): ?string
+  {
+    $size = trim((string) $size);
+
+    return in_array($size, self::SIZES, true) ? $size : null;
+  }
+
+  public function iconSizeClass(?string $size): ?string
+  {
+    $size = $this->iconSize($size);
+
+    return $size !== null && $size !== 'default'
+      ? 'wb-icon-'.$size
       : null;
   }
 }

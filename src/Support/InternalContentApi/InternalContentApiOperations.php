@@ -94,6 +94,14 @@ class InternalContentApiOperations
     'link-list-item',
   ];
 
+  /** @var list<string> */
+  public const PUBLIC_BADGE_BLOCK_TYPES = [
+    'content_header',
+    'column_item',
+    'feature-item',
+    'link-list-item',
+  ];
+
   /**
    * Block types that accept a direct Media Library assignment through media_id,
    * mapped to the media kinds each one allows. Single source of truth for both
@@ -568,6 +576,7 @@ class InternalContentApiOperations
     $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
+    $settings = $this->normalizePublicIconSizeSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizeApplicationSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizeCompositionDefaults($settings, $blockType);
 
@@ -856,6 +865,37 @@ class InternalContentApiOperations
     }
 
     $settings['icon_slug'] = $slug;
+
+    return $settings;
+  }
+
+  public function normalizePublicIconSizeSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
+  {
+    if (! array_key_exists('icon_size', $settings)) {
+      return $settings;
+    }
+
+    if (! in_array($blockType->slug, self::PUBLIC_ICON_BLOCK_TYPES, true)) {
+      $errors[] = $this->error($path.'.settings.icon_size', 'icon_size is only supported by public icon-enabled block types.');
+      unset($settings['icon_size']);
+
+      return $settings;
+    }
+
+    $size = app(PublicIconPresenter::class)->iconSize($settings['icon_size']);
+
+    if ($size === null) {
+      $errors[] = $this->error($path.'.settings.icon_size', 'icon_size must be one of: default, sm, lg, xl.');
+      unset($settings['icon_size']);
+
+      return $settings;
+    }
+
+    if ($size === 'default') {
+      unset($settings['icon_size']);
+    } else {
+      $settings['icon_size'] = $size;
+    }
 
     return $settings;
   }

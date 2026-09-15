@@ -14,15 +14,20 @@
         return {
             slug: (field.querySelector('[data-wb-icon-field-slug]') || {}).value || '',
             tone: (field.querySelector('[data-wb-icon-field-tone]') || {}).value || 'default',
+            size: (field.querySelector('[data-wb-icon-field-size]') || {}).value || 'default',
             badgeTone: (field.querySelector('[data-wb-icon-field-badge-tone]') || {}).value || 'neutral',
         };
     }
 
-    function iconClassFor(slug, tone) {
+    function iconClassFor(slug, tone, size) {
         var classes = ['wb-icon', 'wb-icon-' + slug];
 
         if (tone && tone !== 'default') {
             classes.push(TONE_CLASS_PREFIX + tone);
+        }
+
+        if (size && size !== 'default') {
+            classes.push('wb-icon-' + size);
         }
 
         return classes.join(' ');
@@ -57,7 +62,7 @@
 
         if (preview) {
             preview.hidden = state.slug === '';
-            preview.className = state.slug === '' ? '' : iconClassFor(state.slug, state.tone);
+            preview.className = state.slug === '' ? '' : iconClassFor(state.slug, state.tone, state.size);
         }
 
         if (label) {
@@ -67,14 +72,14 @@
         }
     }
 
-    function renderModalPreview(dialog, slug, tone, badgeTone, badgeLabel) {
+    function renderModalPreview(dialog, slug, tone, size, badgeTone, badgeLabel) {
         var icon = dialog.querySelector('[data-wb-icon-picker-preview-icon]');
         var badge = dialog.querySelector('[data-wb-icon-picker-preview-badge]');
         var empty = dialog.querySelector('[data-wb-icon-picker-preview-empty]');
 
         if (icon) {
             icon.hidden = !slug;
-            icon.className = slug ? iconClassFor(slug, tone) : '';
+            icon.className = slug ? iconClassFor(slug, tone, size) : '';
         }
 
         if (badge) {
@@ -100,11 +105,13 @@
     function currentDraft(dialog) {
         var selected = dialog.querySelector('[data-wb-icon-picker-option][aria-pressed="true"]');
         var tone = dialog.querySelector('[data-wb-icon-picker-tone]');
+        var size = dialog.querySelector('[data-wb-icon-picker-size]');
         var badgeTone = dialog.querySelector('[data-wb-icon-picker-badge-tone]');
 
         return {
             slug: selected ? selected.getAttribute('data-slug') : '',
             tone: tone ? tone.value : 'default',
+            size: size ? size.value : 'default',
             badgeTone: badgeTone ? badgeTone.value : 'neutral',
         };
     }
@@ -112,7 +119,7 @@
     function refreshPreview(dialog) {
         var draft = currentDraft(dialog);
 
-        renderModalPreview(dialog, draft.slug, draft.tone, draft.badgeTone, openField ? badgeLabelFor(openField) : '');
+        renderModalPreview(dialog, draft.slug, draft.tone, draft.size, draft.badgeTone, openField ? badgeLabelFor(openField) : '');
     }
 
     function filterOptions(dialog, term) {
@@ -151,15 +158,32 @@
 
         var state = fieldState(field);
         var tone = dialog.querySelector('[data-wb-icon-picker-tone]');
+        var size = dialog.querySelector('[data-wb-icon-picker-size]');
         var badgeTone = dialog.querySelector('[data-wb-icon-picker-badge-tone]');
+        var badgeToneField = dialog.querySelector('[data-wb-icon-picker-badge-tone-field]');
+        var title = dialog.querySelector('[data-wb-icon-picker-title]');
         var search = dialog.querySelector('[data-wb-icon-picker-search]');
 
         if (tone) {
             tone.value = state.tone;
         }
 
+        if (size) {
+            size.value = state.size;
+        }
+
         if (badgeTone) {
             badgeTone.value = state.badgeTone;
+        }
+
+        if (badgeToneField) {
+            badgeToneField.hidden = !field.querySelector('[data-wb-icon-field-badge-tone]');
+        }
+
+        if (title) {
+            title.textContent = field.querySelector('[data-wb-icon-field-badge-tone]')
+                ? title.getAttribute('data-icon-badge-title')
+                : title.getAttribute('data-icon-title');
         }
 
         if (search) {
@@ -206,6 +230,7 @@
         var draft = currentDraft(dialog);
         var slugInput = openField.querySelector('[data-wb-icon-field-slug]');
         var toneInput = openField.querySelector('[data-wb-icon-field-tone]');
+        var sizeInput = openField.querySelector('[data-wb-icon-field-size]');
         var badgeToneInput = openField.querySelector('[data-wb-icon-field-badge-tone]');
 
         if (slugInput) {
@@ -214,6 +239,10 @@
 
         if (toneInput) {
             toneInput.value = draft.tone;
+        }
+
+        if (sizeInput) {
+            sizeInput.value = draft.size;
         }
 
         if (badgeToneInput) {
@@ -295,7 +324,7 @@
             return;
         }
 
-        if (event.target.closest('[data-wb-icon-picker-tone], [data-wb-icon-picker-badge-tone]')) {
+        if (event.target.closest('[data-wb-icon-picker-tone], [data-wb-icon-picker-size], [data-wb-icon-picker-badge-tone]')) {
             refreshPreview(dialog);
         }
     });
