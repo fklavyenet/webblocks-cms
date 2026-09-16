@@ -157,8 +157,11 @@ Page and Shared Slot block edit links progressively enhance the normal editor
 URL by requesting only the server-rendered modal fragment. The fragment is
 mounted into the shared admin overlay root and initialized through the same
 CMS-owned overlay, dirty-form, busy-submit, and Rich Text hooks as an initial
-page render. A failed fragment request follows the original URL, while Cancel
-and close controls update browser history without reloading the block tree.
+page render. Existing-block fragment requests take a focused controller path
+that skips list-only picker, deletion, locale-status, expanded-tree, and return
+state work. A failed fragment request follows the original URL, while the
+editor's button-based Cancel and close controls update browser history without
+reloading the block tree.
 
 The Navigation tree uses the CMS-owned vanilla JavaScript module at
 `public/cms/js/admin/navigation-tree.js`. It supports pointer/touch movement and

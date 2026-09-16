@@ -479,6 +479,10 @@ class PageController extends Controller
 
     $activeLocale = $this->slotEditorLocale($page);
 
+    if (request()->header('X-WebBlocks-Modal-Fragment') === 'slot-block-editor' && request()->integer('edit') > 0) {
+      return $this->slotBlockEditorFragment($page, $slot, $activeLocale);
+    }
+
     $blocks = Block::query()
       ->with([
         ...$this->slotBlockRelations(),
@@ -544,6 +548,46 @@ class PageController extends Controller
     }
 
     return view('webblocks-cms::admin.pages.slot-blocks', $viewData);
+  }
+
+  private function slotBlockEditorFragment(Page $page, PageSlot $slot, Locale $activeLocale): View
+  {
+    $blocks = Block::query()
+      ->with($this->slotBlockRelations())
+      ->where('page_id', $page->id)
+      ->where('slot_type_id', $slot->slot_type_id)
+      ->orderBy('sort_order')
+      ->get();
+    $this->hydrateSlotBlockTree($blocks);
+
+    $blockTypes = app(PluginBlockCatalog::class)->filterDiscoverableBlockTypes(
+      BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get()
+    );
+    $resolvedBlocks = $this->blockTranslationResolver->resolveCollection($blocks, $activeLocale)->values();
+    $modalState = $this->slotBlockModalState($page, $slot, $blocks, $blockTypes, $blockTypes);
+
+    abort_unless($modalState['block'] && $modalState['selectedBlockType'], 404);
+
+    $needsAssetPicker = $this->blockTypeNeedsAssetPicker($modalState['selectedBlockType']);
+
+    return view('webblocks-cms::admin.pages.partials.slot-block-modal', [
+      'page' => $page,
+      'slot' => $slot,
+      'blockTypes' => $blockTypes,
+      'activeLocale' => $activeLocale,
+      'slotModalMode' => $modalState['mode'],
+      'slotModalBlock' => $modalState['block'],
+      'slotModalSelectedBlockType' => $modalState['selectedBlockType'],
+      'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
+      'featureItemBlockType' => $blockTypes->firstWhere('slug', 'feature-item'),
+      'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
+      'assetPickerAssets' => $needsAssetPicker ? $this->assetPickerAssets() : collect(),
+      'assetPickerFolders' => $needsAssetPicker ? $this->assetPickerFolders() : collect(),
+      'slotModalSelectedAsset' => $modalState['selectedAsset'],
+      'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
+      'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
+      'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
+    ]);
   }
 
   public function destroySlotBlocks(Request $request, Page $page, PageSlot $slot): RedirectResponse

@@ -17,6 +17,8 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -288,6 +290,11 @@ class SharedSlotController extends Controller
     $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
     $slot = $sourcePage->slots()->with('slotType')->firstOrFail();
     $activeLocale = $this->slotEditorLocale($sourcePage);
+
+    if (request()->header('X-WebBlocks-Modal-Fragment') === 'slot-block-editor' && request()->integer('edit') > 0) {
+      return $this->slotBlockEditorFragment($sharedSlot, $sourcePage, $slot, $activeLocale);
+    }
+
     $allBlocks = Block::query()
       ->with($this->slotBlockRelations())
       ->where('page_id', $sourcePage->id)
@@ -352,6 +359,49 @@ class SharedSlotController extends Controller
     }
 
     return view('webblocks-cms::admin.shared-slots.slot-blocks', $viewData);
+  }
+
+  private function slotBlockEditorFragment(SharedSlot $sharedSlot, Page $sourcePage, PageSlot $slot, Locale $activeLocale): View
+  {
+    $blocks = Block::query()
+      ->with($this->slotBlockRelations())
+      ->where('page_id', $sourcePage->id)
+      ->where('slot_type_id', $slot->slot_type_id)
+      ->orderBy('sort_order')
+      ->get();
+    $this->hydrateSlotBlockTree($blocks);
+
+    $blockTypes = app(PluginBlockCatalog::class)->filterDiscoverableBlockTypes(
+      BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get()
+    );
+    $resolvedBlocks = $this->blockTranslationResolver->resolveCollection($blocks, $activeLocale)->values();
+    $modalState = $this->slotBlockModalState($sourcePage, $slot, $blocks, $blockTypes, $blockTypes);
+
+    abort_unless($modalState['block'] && $modalState['selectedBlockType'], 404);
+
+    $needsAssetPicker = $this->blockTypeNeedsAssetPicker($modalState['selectedBlockType']);
+
+    return view('webblocks-cms::admin.pages.partials.slot-block-modal', [
+      'page' => $sourcePage,
+      'slot' => $slot,
+      'sharedSlot' => $sharedSlot,
+      'editorRouteName' => 'admin.shared-slots.blocks.edit',
+      'editorRouteParameters' => ['shared_slot' => $sharedSlot],
+      'blockTypes' => $blockTypes,
+      'activeLocale' => $activeLocale,
+      'slotModalMode' => $modalState['mode'],
+      'slotModalBlock' => $modalState['block'],
+      'slotModalSelectedBlockType' => $modalState['selectedBlockType'],
+      'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
+      'featureItemBlockType' => $blockTypes->firstWhere('slug', 'feature-item'),
+      'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
+      'assetPickerAssets' => $needsAssetPicker ? $this->assetPickerAssets() : collect(),
+      'assetPickerFolders' => $needsAssetPicker ? $this->assetPickerFolders() : collect(),
+      'slotModalSelectedAsset' => $modalState['selectedAsset'],
+      'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
+      'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
+      'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
+    ]);
   }
 
   public function destroyBlocks(Request $request, SharedSlot $sharedSlot): RedirectResponse

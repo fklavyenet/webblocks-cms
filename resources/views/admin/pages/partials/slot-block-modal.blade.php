@@ -31,9 +31,9 @@
                     <span class="wb-text-sm wb-text-muted">{{ $modalDescription }}</span>
                 </div>
 
-                <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $blockFormText('close_modal') }}">
+                <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $blockFormText('close_modal') }}">
                     <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                </a>
+                </button>
             </div>
 
             <form id="slot-block-editor-form" method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-modal-body wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $blockFormText('discard_changes') }}">
@@ -88,7 +88,8 @@
             </form>
 
             <x-webblocks-cms::admin.form-actions
-                :cancel-url="$closeUrl"
+                cancel-type="button"
+                :cancel-attributes="['data-wb-dismiss' => 'modal']"
                 :submit-label="$isCreateMode ? $blockFormText('save_new_block') : $blockFormText('save_block')"
                 form="slot-block-editor-form"
                 container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"

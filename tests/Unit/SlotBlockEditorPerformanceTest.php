@@ -41,6 +41,9 @@ class SlotBlockEditorPerformanceTest extends TestCase
     $this->assertStringContainsString("window.history.replaceState({}, '', closeUrl)", $script);
     $this->assertStringContainsString("event.target.closest('[data-wb-dismiss=\"modal\"]')", $script);
     $this->assertStringContainsString('event.preventDefault()', $script);
+    $this->assertStringContainsString('<button type="button" class="wb-modal-close"', $view);
+    $this->assertStringContainsString('cancel-type="button"', $view);
+    $this->assertStringContainsString("['data-wb-dismiss' => 'modal']", $view);
   }
 
   public function test_editor_links_load_a_modal_fragment_without_reloading_the_editor(): void
@@ -52,6 +55,20 @@ class SlotBlockEditorPerformanceTest extends TestCase
     $this->assertStringContainsString('replaceEditorModal(markup, url)', $script);
     $this->assertStringContainsString("window.history.replaceState({}, '', url)", $script);
     $this->assertStringContainsString('window.location.assign(url)', $script);
+  }
+
+  #[DataProvider('slotEditorControllers')]
+  public function test_edit_fragments_take_the_focused_controller_path_before_the_full_editor(string $controllerClass): void
+  {
+    $source = file_get_contents((new ReflectionClass($controllerClass))->getFileName());
+    $fragmentBranch = strpos($source, "request()->header('X-WebBlocks-Modal-Fragment') === 'slot-block-editor'");
+    $fullEditorQuery = strpos($source, '->with($this->slotBlockRelations())', $fragmentBranch);
+    $fragmentCall = strpos($source, 'slotBlockEditorFragment(', $fragmentBranch);
+
+    $this->assertNotFalse($fragmentBranch);
+    $this->assertNotFalse($fragmentCall);
+    $this->assertNotFalse($fullEditorQuery);
+    $this->assertLessThan($fullEditorQuery, $fragmentCall);
   }
 
   public static function slotEditorControllers(): array

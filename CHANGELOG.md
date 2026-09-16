@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.86.10
+
+- Serve existing-block editor fragments through a focused controller path
+  before the full slot list, picker, delete metadata, locale status, expanded
+  tree, and page-return state are prepared.
+- Render block editor Cancel and close controls as modal buttons instead of
+  fallback links, making dismissal local and immediate without relying on
+  default-navigation suppression.
+
 ## 1.86.9
 
 - Open Page and Shared Slot block edit modals through a focused HTML fragment
