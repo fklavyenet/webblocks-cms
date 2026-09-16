@@ -22,7 +22,89 @@
         runtime.open(modal, null);
     }
 
+    function modalFragmentUrl(link) {
+        return link.getAttribute('href') || '';
+    }
+
+    function replaceEditorModal(markup, url) {
+        var template = document.createElement('template');
+        var overlayRoot = document.getElementById('wb-overlay-root');
+        var existingModal = document.getElementById('slot-block-editor-modal');
+        var modal;
+
+        template.innerHTML = String(markup || '').trim();
+        modal = template.content.querySelector('#slot-block-editor-modal');
+
+        if (!overlayRoot || !modal) {
+            throw new Error('The block editor modal fragment is unavailable.');
+        }
+
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        overlayRoot.appendChild(modal);
+
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', url);
+        }
+
+        if (window.WebBlocksCmsAdmin && typeof window.WebBlocksCmsAdmin.initializeDynamicContent === 'function') {
+            window.WebBlocksCmsAdmin.initializeDynamicContent(modal);
+        } else if (modalApi()) {
+            modalApi().open(modal, null);
+        }
+    }
+
+    function loadEditorModal(link) {
+        var url = modalFragmentUrl(link);
+
+        if (!url || typeof window.fetch !== 'function') {
+            return;
+        }
+
+        link.setAttribute('aria-busy', 'true');
+
+        window.fetch(url, {
+            headers: {
+                Accept: 'text/html',
+                'X-WebBlocks-Modal-Fragment': 'slot-block-editor'
+            },
+            credentials: 'same-origin'
+        }).then(function (response) {
+            if (!response.ok) {
+                throw new Error('The block editor modal could not be loaded.');
+            }
+
+            return response.text();
+        }).then(function (markup) {
+            replaceEditorModal(markup, url);
+        }).catch(function () {
+            window.location.assign(url);
+        }).finally(function () {
+            link.removeAttribute('aria-busy');
+        });
+    }
+
     openAutoloadModal();
+
+    document.addEventListener('click', function (event) {
+        var link = event.target.closest('[data-wb-slot-block-link]');
+        var url;
+
+        if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+
+        url = modalFragmentUrl(link);
+
+        if (!url || (url.indexOf('edit=') === -1 && url.indexOf('block_type_id=') === -1)) {
+            return;
+        }
+
+        event.preventDefault();
+        loadEditorModal(link);
+    });
 
     document.addEventListener('wb:tabs:change', function (event) {
         var container = event.target;

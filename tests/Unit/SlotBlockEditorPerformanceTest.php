@@ -39,6 +39,19 @@ class SlotBlockEditorPerformanceTest extends TestCase
     $this->assertStringContainsString('data-wb-admin-close-history', $view);
     $this->assertStringContainsString("overlay.hasAttribute('data-wb-admin-close-history')", $script);
     $this->assertStringContainsString("window.history.replaceState({}, '', closeUrl)", $script);
+    $this->assertStringContainsString("event.target.closest('[data-wb-dismiss=\"modal\"]')", $script);
+    $this->assertStringContainsString('event.preventDefault()', $script);
+  }
+
+  public function test_editor_links_load_a_modal_fragment_without_reloading_the_editor(): void
+  {
+    $script = file_get_contents(__DIR__.'/../../public/cms/js/admin/page-builder-modals.js');
+
+    $this->assertStringContainsString("'X-WebBlocks-Modal-Fragment': 'slot-block-editor'", $script);
+    $this->assertStringContainsString('window.fetch(url', $script);
+    $this->assertStringContainsString('replaceEditorModal(markup, url)', $script);
+    $this->assertStringContainsString("window.history.replaceState({}, '', url)", $script);
+    $this->assertStringContainsString('window.location.assign(url)', $script);
   }
 
   public static function slotEditorControllers(): array

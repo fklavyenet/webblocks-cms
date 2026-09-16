@@ -98,6 +98,17 @@
         });
     }
 
+    function bindAdminHistoryModalLinks() {
+        document.addEventListener('click', function (event) {
+            var dismiss = event.target.closest('[data-wb-dismiss="modal"]');
+            var overlay = dismiss ? dismiss.closest('[data-wb-admin-close-history]') : null;
+
+            if (overlay && dismiss.tagName === 'A') {
+                event.preventDefault();
+            }
+        }, true);
+    }
+
     function redirectToLoginFromAdmin() {
         resetAdminTransientUiState();
         window.location.assign(admin.loginUrl || '/login');
@@ -499,8 +510,18 @@
     admin.normalizeSiteHandle = normalizeSiteHandle;
     admin.bindUpdateIndicator = bindUpdateIndicator;
     admin.bindBusySubmitButtons = bindBusySubmitButtons;
+    admin.initializeDynamicContent = function (root) {
+        bootstrapAdminAutoloadOverlays();
+        bindDirtyOverlayGuards();
+        bindBusySubmitButtons();
+
+        if (window.WebBlocksCmsAdminRichTextEditor && typeof window.WebBlocksCmsAdminRichTextEditor.init === 'function') {
+            window.WebBlocksCmsAdminRichTextEditor.init(root || document);
+        }
+    };
 
     bindAdminTransientUiReset();
+    bindAdminHistoryModalLinks();
     bindSiteHandleAutosuggest();
     bootstrapAdminAutoloadOverlays();
     bindDirtyCloseConfirmationActions();

@@ -153,6 +153,13 @@ The package admin layout keeps global JavaScript intentionally small: the pinned
 
 Examples of page-scoped feature assets include asset picker panels, media copy buttons, sortable builder rows, inline and structured builder editors, page-builder modals, slot block delete modals, page slot source modals, Embedded Application setting-table modals, Edit Page asset controls, Gallery item editing, Rich Text editing, and admin password visibility toggles. These remain CMS-owned static files under `public/cms/js/admin/` with matching package source copies under `packages/webblocks-cms/public/cms/js/admin/` where applicable. CMS admin assets do not use Vite, npm, Tailwind, `public/build`, hot files, or any frontend build chain.
 
+Page and Shared Slot block edit links progressively enhance the normal editor
+URL by requesting only the server-rendered modal fragment. The fragment is
+mounted into the shared admin overlay root and initialized through the same
+CMS-owned overlay, dirty-form, busy-submit, and Rich Text hooks as an initial
+page render. A failed fragment request follows the original URL, while Cancel
+and close controls update browser history without reloading the block tree.
+
 The Navigation tree uses the CMS-owned vanilla JavaScript module at
 `public/cms/js/admin/navigation-tree.js`. It supports pointer/touch movement and
 keyboard arrow movement without a third-party sortable runtime, vendored code,

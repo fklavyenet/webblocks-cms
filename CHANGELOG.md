@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.86.9
+
+- Open Page and Shared Slot block edit modals through a focused HTML fragment
+  request instead of reloading and re-rendering the complete block tree, while
+  preserving the normal edit URL as a no-JavaScript and failed-request fallback.
+- Close block editor modals without following their fallback Cancel or close
+  links after the URL is cleaned with browser history, eliminating the hidden
+  full-page reload that made dismissal feel delayed.
+
 ## 1.86.8
 
 - Localize the shared admin form-action and destructive-confirmation defaults

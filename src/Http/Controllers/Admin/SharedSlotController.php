@@ -311,7 +311,7 @@ class SharedSlotController extends Controller
     $deleteModalState = $this->slotBlockDeleteModalState($resolvedBlocks);
     $expandedBlockIds = $this->slotExpandedBlockIds($resolvedBlocks, $modalState['block']);
 
-    return view('webblocks-cms::admin.shared-slots.slot-blocks', [
+    $viewData = [
       'sharedSlot' => $sharedSlot,
       'sourcePage' => $sourcePage,
       'slot' => $slot,
@@ -340,7 +340,18 @@ class SharedSlotController extends Controller
       'slotDeleteModalBlock' => $deleteModalState['block'],
       'slotDeleteModalMeta' => $deleteModalState['meta'],
       'slotDeleteAllModalMeta' => $this->blockDeletionManager->slotMetadata($sourcePage->id, $slot->slot_type_id),
-    ]);
+    ];
+
+    if (request()->header('X-WebBlocks-Modal-Fragment') === 'slot-block-editor') {
+      abort_unless($modalState['block'] && $modalState['selectedBlockType'], 404);
+      $viewData['page'] = $sourcePage;
+      $viewData['editorRouteName'] = 'admin.shared-slots.blocks.edit';
+      $viewData['editorRouteParameters'] = ['shared_slot' => $sharedSlot];
+
+      return view('webblocks-cms::admin.pages.partials.slot-block-modal', $viewData);
+    }
+
+    return view('webblocks-cms::admin.shared-slots.slot-blocks', $viewData);
   }
 
   public function destroyBlocks(Request $request, SharedSlot $sharedSlot): RedirectResponse

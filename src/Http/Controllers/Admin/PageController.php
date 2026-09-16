@@ -505,7 +505,7 @@ class PageController extends Controller
       ->values();
     $expandedBlockIds = $this->slotExpandedBlockIds($resolvedBlocks, $modalState['block']);
 
-    return view('webblocks-cms::admin.pages.slot-blocks', [
+    $viewData = [
       'page' => $page,
       'slot' => $slot,
       'blocks' => $rootBlocks,
@@ -535,7 +535,15 @@ class PageController extends Controller
       'slotDeleteAllModalMeta' => $this->blockDeletionManager->slotMetadata($page->id, $slot->slot_type_id),
       'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
       'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
-    ]);
+    ];
+
+    if (request()->header('X-WebBlocks-Modal-Fragment') === 'slot-block-editor') {
+      abort_unless($modalState['block'] && $modalState['selectedBlockType'], 404);
+
+      return view('webblocks-cms::admin.pages.partials.slot-block-modal', $viewData);
+    }
+
+    return view('webblocks-cms::admin.pages.slot-blocks', $viewData);
   }
 
   public function destroySlotBlocks(Request $request, Page $page, PageSlot $slot): RedirectResponse
