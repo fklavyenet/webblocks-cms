@@ -163,6 +163,31 @@ state work. A failed fragment request follows the original URL, while the
 editor's button-based Cancel and close controls update browser history without
 reloading the block tree.
 
+### Block Editor Fragment Safety Contract
+
+The fragment endpoint is a read-only `GET` optimization. It may omit data and
+queries used only by the surrounding block list, picker, deletion controls,
+locale status, expanded tree, or return-state UI, but it must render the same
+`slot-block-editor-form` Blade partial as the full Page or Shared Slot editor.
+The form action, method override, field names, locked Page/slot identifiers,
+block identifier, locale, and Shared Slot context must therefore remain
+identical between the fragment and full-page responses.
+
+Fragment loading must never introduce a second create/update implementation.
+All submissions continue through the canonical `BlockController` store/update
+actions and their existing authorization, `BlockRequest` validation,
+transaction, translation-aware payload writer, child-item synchronization,
+Shared Slot assignment rebuild, and Page or Shared Slot revision capture. The
+browser fallback remains the ordinary editor URL, so disabling JavaScript or a
+failed fragment request changes presentation only, not persistence semantics.
+
+Changes to either fragment controller path or the shared modal form must keep
+`SlotBlockEditorFragmentSafetyTest` green. That feature test compares the
+rendered form contracts for Page and Shared Slot editors and performs real
+update round trips from fragment-derived hidden fields, asserting that the
+target translation and revision are written while sibling content and block
+placement remain unchanged.
+
 The Navigation tree uses the CMS-owned vanilla JavaScript module at
 `public/cms/js/admin/navigation-tree.js`. It supports pointer/touch movement and
 keyboard arrow movement without a third-party sortable runtime, vendored code,

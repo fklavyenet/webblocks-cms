@@ -121,6 +121,16 @@ Representative tests:
 
 Run with `composer test:admin-smoke` for layout, sidebar, shared admin partial, package admin route bootstrap changes, and admin preview route/link smoke coverage. Add specific admin feature tests when the changed area is deeper than route/layout smoke.
 
+Block editor fragment or modal changes require
+`tests/Feature/SlotBlockEditorFragmentSafetyTest.php` in addition to the admin
+smoke gate. It verifies Page and Shared Slot full-page/fragment form parity and
+submits real fragment-derived update payloads through the canonical block write
+path. Its round-trip assertions protect translation persistence, block
+placement, sibling isolation, Shared Slot assignments, and revision capture.
+Run that class first while implementing, then run the full suite before a
+release containing fragment-controller, modal-form, or block-persistence
+changes.
+
 ## Public-Rendering / Content
 
 Representative tests:
