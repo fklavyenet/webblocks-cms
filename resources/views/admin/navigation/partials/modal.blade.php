@@ -3,6 +3,7 @@
   $modalDescriptionId = $modalId.'Description';
   $navigationItemsLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
   $navigationItemsText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_items.'.$key, $navigationItemsLocale, $replace);
+  $navigationFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_form.'.$key, $navigationItemsLocale, $replace);
   $openModalId = old('_navigation_modal');
   $isOpen = $openModalId === $modalId || ($show ?? false);
   $closeUrl = $closeUrl ?? route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => $activeMenuKey]);
@@ -33,7 +34,7 @@
         </a>
       </div>
 
-      <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $navigationItemsText('discard_changes') }}">
+      <form id="{{ $modalId }}-form" method="POST" action="{{ $formAction }}" class="wb-modal-body wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $navigationItemsText('discard_changes') }}">
         @csrf
         @if ($formMethod !== 'POST')
           @method($formMethod)
@@ -41,27 +42,32 @@
 
         <input type="hidden" name="_navigation_modal" value="{{ $modalId }}">
 
-        <div class="wb-modal-body wb-stack wb-gap-4">
-          @if ($errors->any() && $isOpen)
-            <div class="wb-alert wb-alert-danger">
-              <div>
-                <div class="wb-alert-title">{{ $navigationItemsText('validation_error') }}</div>
-                <div>{{ $errors->first() }}</div>
-              </div>
+        @if ($errors->any() && $isOpen)
+          <div class="wb-alert wb-alert-danger">
+            <div>
+              <div class="wb-alert-title">{{ $navigationItemsText('validation_error') }}</div>
+              <div>{{ $errors->first() }}</div>
             </div>
-          @endif
+          </div>
+        @endif
 
-          @include('webblocks-cms::admin.navigation._form', [
-            'item' => $draftItem,
-            'pages' => $pages,
-            'parents' => $modalParents,
-            'menuOptions' => $menuOptions,
-            'site' => $site,
-            'cancelType' => 'link',
-            'cancelUrl' => $closeUrl,
-            'formActionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
-          ])
-        </div>
+        @include('webblocks-cms::admin.navigation._form', [
+          'item' => $draftItem,
+          'pages' => $pages,
+          'parents' => $modalParents,
+          'menuOptions' => $menuOptions,
+          'site' => $site,
+          'cancelType' => 'link',
+          'cancelUrl' => $closeUrl,
+          'formActionsContainerClass' => null,
+        ])
       </form>
+
+      <x-webblocks-cms::admin.form-actions
+        :cancel-url="$closeUrl"
+        :submit-label="$draftItem->exists ? $navigationFormText('save_changes') : $navigationFormText('create')"
+        :form="$modalId.'-form'"
+        container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
+      />
     </div>
 </div>

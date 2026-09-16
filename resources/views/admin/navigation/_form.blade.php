@@ -3,7 +3,6 @@
     $isUrl = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_CUSTOM_URL;
     $isGroup = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP;
     $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY)]);
-    $iconOptions = ($iconCatalog ?? app(\WebBlocks\Cms\Support\Icons\IconCatalog::class))->navigationPickerOptions(old('icon', $item->icon), $item->icon);
     $cancelType = $cancelType ?? 'link';
     $navigationFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $navigationFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('navigation_form.'.$key, $navigationFormLocale, $replace);
@@ -113,13 +112,12 @@
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="icon">{{ $navigationFormText('icon') }}</label>
-        <select id="icon" name="icon" class="wb-select">
-            <option value="">{{ $navigationFormText('no_icon') }}</option>
-            @foreach ($iconOptions as $icon)
-                <option value="{{ $icon['slug'] }}" @selected(old('icon', $item->icon) === $icon['slug'])>{{ $icon['label'] }}</option>
-            @endforeach
-        </select>
+        @include('webblocks-cms::admin.blocks.partials.icon-picker-field', [
+            'slugName' => 'icon',
+            'slug' => old('icon', $item->icon),
+            'label' => $navigationFormText('icon'),
+            'context' => 'navigation',
+        ])
         <div class="wb-text-sm wb-text-muted">{{ $navigationFormText('icon_help') }}</div>
     </div>
 

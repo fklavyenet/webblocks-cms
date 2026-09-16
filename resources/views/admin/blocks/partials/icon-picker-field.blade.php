@@ -9,22 +9,27 @@
   // Names are passed in because the same field appears both as a block field
   // (icon_slug) and inside repeated item rows (column_items[3][icon_slug]).
   $iconFieldSlugName = $slugName;
-  $iconFieldToneName = $toneName;
-  $iconFieldSizeName = $sizeName;
+  $iconFieldToneName = $toneName ?? null;
+  $iconFieldSizeName = $sizeName ?? null;
   $iconFieldBadgeToneName = $badgeToneName ?? null;
   $iconFieldSlug = (string) ($slug ?? '');
   $iconFieldTone = (string) ($tone ?? 'default');
   $iconFieldSize = (string) ($size ?? 'default');
   $iconFieldBadgeTone = (string) ($badgeTone ?? 'neutral');
   $iconFieldLabel = $label ?? $iconFieldText('icon');
+  $iconFieldContext = $context ?? 'content';
 @endphp
 
 <div class="wb-stack wb-gap-1" data-wb-icon-field>
   <span class="wb-label">{{ $iconFieldLabel }}</span>
 
   <input type="hidden" name="{{ $iconFieldSlugName }}" value="{{ $iconFieldSlug }}" data-wb-icon-field-slug>
-  <input type="hidden" name="{{ $iconFieldToneName }}" value="{{ $iconFieldTone }}" data-wb-icon-field-tone>
-  <input type="hidden" name="{{ $iconFieldSizeName }}" value="{{ $iconFieldSize }}" data-wb-icon-field-size>
+  @if ($iconFieldToneName)
+    <input type="hidden" name="{{ $iconFieldToneName }}" value="{{ $iconFieldTone }}" data-wb-icon-field-tone>
+  @endif
+  @if ($iconFieldSizeName)
+    <input type="hidden" name="{{ $iconFieldSizeName }}" value="{{ $iconFieldSize }}" data-wb-icon-field-size>
+  @endif
   @if ($iconFieldBadgeToneName)
     <input type="hidden" name="{{ $iconFieldBadgeToneName }}" value="{{ $iconFieldBadgeTone }}" data-wb-icon-field-badge-tone>
   @endif
@@ -38,5 +43,5 @@
 </div>
 
 @once
-  @include('webblocks-cms::admin.blocks.partials.icon-picker-modal')
+  @include('webblocks-cms::admin.blocks.partials.icon-picker-modal', ['context' => $iconFieldContext])
 @endonce

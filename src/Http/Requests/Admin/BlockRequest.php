@@ -501,19 +501,15 @@ class BlockRequest extends FormRequest
 
       if ($selectedBlockType?->slug === 'sidebar-nav-item') {
         $icon = app(IconCatalog::class)->normalizeSlug($this->input('sidebar_nav_item_icon'));
-        $currentIcon = $existingBlock ? app(IconCatalog::class)->normalizeSlug($existingBlock->sidebarNavItemIcon()) : null;
-
-        if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
-          $validator->errors()->add('sidebar_nav_item_icon', 'Select an active navigation icon from the catalog.');
+        if (! app(IconCatalog::class)->isActiveSelection($icon)) {
+          $validator->errors()->add('sidebar_nav_item_icon', 'Select an active icon from the catalog.');
         }
       }
 
       if ($selectedBlockType?->slug === 'sidebar-nav-group') {
         $icon = app(IconCatalog::class)->normalizeSlug($this->input('sidebar_nav_group_icon'));
-        $currentIcon = $existingBlock ? app(IconCatalog::class)->normalizeSlug($existingBlock->sidebarNavItemIcon()) : null;
-
-        if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
-          $validator->errors()->add('sidebar_nav_group_icon', 'Select an active navigation icon from the catalog.');
+        if (! app(IconCatalog::class)->isActiveSelection($icon)) {
+          $validator->errors()->add('sidebar_nav_group_icon', 'Select an active icon from the catalog.');
         }
       }
 

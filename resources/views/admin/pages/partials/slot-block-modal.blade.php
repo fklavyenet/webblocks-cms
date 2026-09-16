@@ -36,7 +36,7 @@
                 </a>
             </div>
 
-            <div class="wb-modal-body wb-stack wb-gap-4">
+            <form id="slot-block-editor-form" method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-modal-body wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $blockFormText('discard_changes') }}">
                 @if ($errors->any())
                     <div class="wb-alert wb-alert-danger">
                         <div>
@@ -46,11 +46,10 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $blockFormText('discard_changes') }}">
-                    @csrf
-                    @if ($isEditMode)
-                        @method('PUT')
-                    @endif
+                @csrf
+                @if ($isEditMode)
+                    @method('PUT')
+                @endif
 
                     <input type="hidden" name="_slot_block_mode" value="{{ $slotModalMode }}">
                     <input type="hidden" name="_slot_block_id" value="{{ $slotModalBlock->id }}">
@@ -80,14 +79,20 @@
                         'lockPage' => true,
                         'lockSlot' => true,
                         'cancelUrl' => $closeUrl,
-                        'actionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
+                        'actionsContainerClass' => null,
                         'submitLabel' => $isCreateMode ? $blockFormText('save_new_block') : $blockFormText('save_block'),
                         'modeLabel' => $isCreateMode ? $blockFormText('create') : $blockFormText('edit'),
                         'activeTab' => $activeTab,
                         'activeLocale' => $activeLocale,
                     ])
-                </form>
-            </div>
+            </form>
+
+            <x-webblocks-cms::admin.form-actions
+                :cancel-url="$closeUrl"
+                :submit-label="$isCreateMode ? $blockFormText('save_new_block') : $blockFormText('save_block')"
+                form="slot-block-editor-form"
+                container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
+            />
         </div>
     </div>
 @endif

@@ -122,7 +122,7 @@ $translations = [
     'hidden' => 'Gizli',
     'icon' => 'İkon',
     'no_icon' => 'İkon yok',
-    'icon_help' => 'Aktif navigasyon bağlamı kataloğundan isteğe bağlı ikon slug değeri. Tam ikon kataloğu Sistem -> İkonlar altında kalır.',
+    'icon_help' => 'Aktif katalog ikonlarından birini seçin. Navigasyon etiketli ikonlar öneri olarak önce gösterilir.',
   ],
   'locales_index' => [
     'title' => 'Diller',

@@ -68,7 +68,6 @@ class NavigationItemRequest extends FormRequest
       $menuKey = (string) $this->input('menu_key');
       $siteId = $this->integer('site_id') ?: Site::primary()?->id;
       $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon'));
-      $currentIcon = app(IconCatalog::class)->normalizeSlug($navigation?->icon);
 
       $localeCode = Locale::normalizeCode($this->input('locale'));
 
@@ -100,8 +99,8 @@ class NavigationItemRequest extends FormRequest
         $validator->errors()->add('title', 'A title is required for this link type.');
       }
 
-      if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
-        $validator->errors()->add('icon', 'Select an active navigation icon from the catalog.');
+      if (! app(IconCatalog::class)->isActiveSelection($icon)) {
+        $validator->errors()->add('icon', 'Select an active icon from the catalog.');
       }
 
       if (! $parentId) {

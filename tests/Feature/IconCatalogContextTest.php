@@ -102,15 +102,15 @@ class IconCatalogContextTest extends TestCase
   }
 
   #[Test]
-  public function navigation_selection_stays_bound_to_the_navigation_context(): void
+  public function navigation_selection_accepts_any_active_icon(): void
   {
     $this->icon('file-text', ['content']);
     $this->icon('rocket', ['navigation']);
 
     $catalog = app(IconCatalog::class);
 
-    $this->assertTrue($catalog->isValidNavigationSelection('rocket'));
-    $this->assertFalse($catalog->isValidNavigationSelection('file-text'));
+    $this->assertTrue($catalog->isActiveSelection('rocket'));
+    $this->assertTrue($catalog->isActiveSelection('file-text'));
   }
 
   /**

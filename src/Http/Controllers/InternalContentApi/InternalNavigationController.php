@@ -396,8 +396,8 @@ class InternalNavigationController extends Controller
     if (array_key_exists('icon', $payload)) {
       $icon = $this->iconCatalog->normalizeSlug($payload['icon']);
 
-      if (! $this->iconCatalog->isValidNavigationSelection($icon, $this->iconCatalog->normalizeSlug($item->icon))) {
-        $errors[] = $this->operations->error('navigation_item.icon', 'Select an active navigation icon from the catalog.');
+      if (! $this->iconCatalog->isActiveSelection($icon)) {
+        $errors[] = $this->operations->error('navigation_item.icon', 'Select an active icon from the catalog.');
       }
 
       $updates['icon'] = $icon;

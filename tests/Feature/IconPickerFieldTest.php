@@ -105,6 +105,28 @@ class IconPickerFieldTest extends TestCase
   }
 
   #[Test]
+  public function a_navigation_field_suggests_navigation_icons_and_still_offers_all_active_icons(): void
+  {
+    $this->icon('home', ['navigation'], 'Home');
+    $this->icon('rocket', ['content'], 'Rocket');
+
+    $html = Blade::render(
+      "@include('webblocks-cms::admin.blocks.partials.icon-picker-field', ['slugName' => 'icon', 'slug' => 'home', 'label' => 'Icon', 'context' => 'navigation'])\n@stack('overlays')",
+    );
+
+    $this->assertStringContainsString('name="icon" value="home"', $html);
+    $this->assertStringContainsString('data-wb-icon-picker-open', $html);
+    $this->assertStringContainsString('data-slug="home"', $html);
+    $this->assertStringContainsString('data-slug="rocket"', $html);
+    $this->assertStringNotContainsString('data-wb-icon-field-tone', $html);
+    $this->assertStringNotContainsString('data-wb-icon-field-size', $html);
+
+    $script = file_get_contents(dirname(__DIR__, 2).'/public/cms/js/admin/icon-picker.js');
+    $this->assertStringContainsString('toneField.hidden = !field.querySelector', $script);
+    $this->assertStringContainsString('sizeField.hidden = !field.querySelector', $script);
+  }
+
+  #[Test]
   public function repeated_rows_share_one_modal_but_keep_their_own_inputs(): void
   {
     $this->icon('rocket');

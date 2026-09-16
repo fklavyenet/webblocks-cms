@@ -4,7 +4,6 @@
     $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.sidebar_nav_item.'.$key, $adminLocale);
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
-    $allowedIcons = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->navigationPickerOptions(old('sidebar_nav_item_icon', $settings['icon'] ?? ''), $settings['icon'] ?? null);
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -27,15 +26,12 @@
     </div>
 
     <div class="wb-grid wb-grid-3">
-        <div class="wb-stack wb-gap-1">
-            <label for="sidebar_nav_item_icon">{{ $adminText('icon') }}</label>
-            <select id="sidebar_nav_item_icon" name="sidebar_nav_item_icon" class="wb-select">
-                <option value="">{{ $adminText('no_icon') }}</option>
-                @foreach ($allowedIcons as $icon)
-                    <option value="{{ $icon['slug'] }}" @selected(old('sidebar_nav_item_icon', $settings['icon'] ?? '') === $icon['slug'])>{{ $icon['label'] }}</option>
-                @endforeach
-            </select>
-        </div>
+        @include('webblocks-cms::admin.blocks.partials.icon-picker-field', [
+            'slugName' => 'sidebar_nav_item_icon',
+            'slug' => old('sidebar_nav_item_icon', $settings['icon'] ?? ''),
+            'label' => $adminText('icon'),
+            'context' => 'navigation',
+        ])
 
         <div class="wb-stack wb-gap-1">
             <label for="sidebar_nav_item_active_mode">{{ $adminText('active_matching') }}</label>

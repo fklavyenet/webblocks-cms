@@ -6,7 +6,8 @@
   $iconPickerLocale = app(AdminLocaleResolver::class)->locale();
   $iconPickerTranslator = app(CmsTranslator::class);
   $iconPickerText = static fn (string $key) => $iconPickerTranslator->admin('icon_picker.'.$key, $iconPickerLocale);
-  $iconPickerGroups = app(IconCatalog::class)->groupedPickerOptions('content');
+  $iconPickerContext = $context ?? 'content';
+  $iconPickerGroups = app(IconCatalog::class)->groupedPickerOptions($iconPickerContext);
   $iconPickerToneOptions = ['default', 'soft', 'brand', 'accent', 'highlight', 'bold', 'quiet'];
   $iconPickerSizeOptions = ['default', 'sm', 'lg', 'xl'];
   $iconPickerBadgeToneOptions = ['neutral', 'info', 'success', 'warning', 'danger'];
@@ -42,7 +43,7 @@
         </div>
 
         <div class="wb-grid wb-grid-3">
-          <div class="wb-stack wb-gap-1">
+          <div class="wb-stack wb-gap-1" data-wb-icon-picker-tone-field>
             <label for="wb_icon_picker_tone">{{ $iconPickerText('icon_tone') }}</label>
             <select id="wb_icon_picker_tone" class="wb-select" data-wb-icon-picker-tone>
               @foreach ($iconPickerToneOptions as $iconPickerTone)

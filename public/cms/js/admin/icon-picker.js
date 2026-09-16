@@ -160,6 +160,8 @@
         var tone = dialog.querySelector('[data-wb-icon-picker-tone]');
         var size = dialog.querySelector('[data-wb-icon-picker-size]');
         var badgeTone = dialog.querySelector('[data-wb-icon-picker-badge-tone]');
+        var toneField = dialog.querySelector('[data-wb-icon-picker-tone-field]');
+        var sizeField = dialog.querySelector('[data-wb-icon-picker-size-field]');
         var badgeToneField = dialog.querySelector('[data-wb-icon-picker-badge-tone-field]');
         var title = dialog.querySelector('[data-wb-icon-picker-title]');
         var search = dialog.querySelector('[data-wb-icon-picker-search]');
@@ -174,6 +176,14 @@
 
         if (badgeTone) {
             badgeTone.value = state.badgeTone;
+        }
+
+        if (toneField) {
+            toneField.hidden = !field.querySelector('[data-wb-icon-field-tone]');
+        }
+
+        if (sizeField) {
+            sizeField.hidden = !field.querySelector('[data-wb-icon-field-size]');
         }
 
         if (badgeToneField) {

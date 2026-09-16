@@ -208,7 +208,7 @@ return [
     'hidden' => 'Hidden',
     'icon' => 'Icon',
     'no_icon' => 'No icon',
-    'icon_help' => 'Optional icon slug from the active navigation-context catalog. The full icon catalog stays on System -> Icons.',
+    'icon_help' => 'Choose any active catalog icon. Navigation-tagged icons appear first as suggestions.',
   ],
   'locales_index' => [
     'title' => 'Locales',

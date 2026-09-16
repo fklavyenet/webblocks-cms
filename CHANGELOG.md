@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.86.7
+
+- Replace name-only Navigation Item and Sidebar Navigation icon dropdowns with
+  the shared visual, searchable icon picker; treat catalog contexts as
+  suggestions instead of allowlists so every active icon remains selectable in
+  content and navigation fields while inactive or unknown icons stay rejected.
+- Keep Block Editor and Navigation Item modal footers outside their scrollable
+  bodies, with shared form actions able to submit an explicitly associated
+  modal-body form, so header, body, and footer retain the WebBlocks UI modal
+  structure.
+
 ## 1.86.6
 
 - Speed up page and Shared Slot block editors by hydrating their nested block

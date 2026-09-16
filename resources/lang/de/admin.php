@@ -121,7 +121,7 @@ $translations = [
     'hidden' => 'Ausgeblendet',
     'icon' => 'Icon',
     'no_icon' => 'Kein Icon',
-    'icon_help' => 'Optionaler Icon-Slug aus dem aktiven Navigationskontext-Katalog. Der vollständige Icon-Katalog bleibt unter System -> Icons.',
+    'icon_help' => 'Wählen Sie ein beliebiges aktives Katalog-Icon. Für Navigation markierte Icons werden zuerst vorgeschlagen.',
   ],
   'locales_index' => [
     'title' => 'Sprachen',

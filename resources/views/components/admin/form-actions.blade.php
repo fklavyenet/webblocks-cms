@@ -8,6 +8,7 @@
   'submitType' => 'submit',
   'submitDisabled' => false,
   'submitAttributes' => [],
+  'form' => null,
   'deleteHref' => null,
   'deleteFormAction' => null,
   'deleteSubmit' => false,
@@ -51,7 +52,7 @@
 <div class="{{ $containerClass }}" data-admin-form-actions>
   <div class="{{ $mainGroupClass }}" data-admin-form-actions-main>
     @if ($showSubmit)
-      <button type="{{ $submitType }}" class="wb-btn wb-btn-primary" @disabled($submitDisabled){!! $submitAttributesString ? ' '.$submitAttributesString : '' !!}>{{ $submitLabel }}</button>
+      <button type="{{ $submitType }}" class="wb-btn wb-btn-primary" @if ($form) form="{{ $form }}" @endif @disabled($submitDisabled){!! $submitAttributesString ? ' '.$submitAttributesString : '' !!}>{{ $submitLabel }}</button>
     @elseif ($hasDeleteAction)
       @if ($deleteFormAction)
         <form method="POST" action="{{ $deleteFormAction }}">
@@ -62,7 +63,7 @@
           <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
         </form>
       @elseif ($deleteSubmit)
-        <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
+        <button type="submit" class="wb-btn wb-btn-danger" @if ($form) form="{{ $form }}" @endif @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref && $deleteDisabled)
         <button type="button" class="wb-btn wb-btn-danger" disabled{!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref)
@@ -92,7 +93,7 @@
           <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
         </form>
       @elseif ($deleteSubmit)
-        <button type="submit" class="wb-btn wb-btn-danger" @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
+        <button type="submit" class="wb-btn wb-btn-danger" @if ($form) form="{{ $form }}" @endif @disabled($deleteDisabled){!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref && $deleteDisabled)
         <button type="button" class="wb-btn wb-btn-danger" disabled{!! $deleteAttributesString ? ' '.$deleteAttributesString : '' !!}>{{ $deleteLabel }}</button>
       @elseif ($deleteHref)

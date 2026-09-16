@@ -120,7 +120,7 @@ $translations = [
     'hidden' => 'Masqué',
     'icon' => 'Icône',
     'no_icon' => 'Aucune icône',
-    'icon_help' => 'Identifiant d\'icône facultatif issu du catalogue du contexte de navigation actif. Le catalogue complet des icônes reste dans Système -> Icônes.',
+    'icon_help' => 'Choisissez une icône active du catalogue. Les icônes marquées pour la navigation sont suggérées en premier.',
   ],
   'locales_index' => [
     'title' => 'Langues',

@@ -269,12 +269,9 @@ class InternalContentResourceController extends Controller
       ], 422);
     }
 
-    // Content blocks accept any active icon, so listing only the context's own
-    // would under-report what apply() will take. Navigation stays curated, and
-    // there `suggested` is simply true for everything listed.
-    $groups = $context === 'navigation'
-      ? ['suggested' => $iconCatalog->navigationPickerOptions(), 'all' => collect()]
-      : $iconCatalog->groupedPickerOptions($context);
+    // Context tags rank suggestions; they do not prevent authors from choosing
+    // another active catalog icon that better fits their content.
+    $groups = $iconCatalog->groupedPickerOptions($context);
 
     $icons = $groups['suggested']
       ->map(fn (array $icon): array => $icon + ['suggested' => true])

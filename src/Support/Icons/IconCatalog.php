@@ -67,11 +67,6 @@ class IconCatalog
     return ['suggested' => $suggested, 'all' => $rest->values()];
   }
 
-  public function navigationPickerOptions(?string $selectedSlug = null, ?string $currentSlug = null): Collection
-  {
-    return $this->pickerOptions('navigation', $selectedSlug, $currentSlug);
-  }
-
   /**
    * Whether a slug names an icon the catalog currently has active.
    *
@@ -100,30 +95,9 @@ class IconCatalog
     return $slug !== null && $this->isActiveSelection($slug) ? $slug : null;
   }
 
-  public function isValidNavigationSelection(?string $slug, ?string $currentSlug = null): bool
-  {
-    $slug = $this->normalizeSlug($slug);
-    $currentSlug = $this->normalizeSlug($currentSlug);
-
-    if ($slug === null) {
-      return true;
-    }
-
-    if ($currentSlug !== null && $slug === $currentSlug) {
-      return true;
-    }
-
-    return $this->navigationIconsQuery()->where('slug', $slug)->exists();
-  }
-
   public function normalizeSlug(?string $slug): ?string
   {
     return IconCatalogItem::normalizeSlug($slug);
-  }
-
-  private function navigationIconsQuery(): Builder
-  {
-    return $this->activeContextQuery('navigation');
   }
 
   private function activeIconQuery(): Builder

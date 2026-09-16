@@ -120,7 +120,7 @@ $translations = [
     'hidden' => 'Nascosto',
     'icon' => 'Icona',
     'no_icon' => 'Nessuna icona',
-    'icon_help' => 'Slug icona opzionale dal catalogo attivo del contesto di navigazione. Il catalogo completo delle icone resta in Sistema -> Icone.',
+    'icon_help' => 'Scegli un\'icona attiva dal catalogo. Le icone contrassegnate per la navigazione vengono suggerite per prime.',
   ],
   'locales_index' => [
     'title' => 'Lingue',

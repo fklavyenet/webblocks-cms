@@ -120,7 +120,7 @@ $translations = [
     'hidden' => 'Oculto',
     'icon' => 'Icono',
     'no_icon' => 'Sin icono',
-    'icon_help' => 'Slug de icono opcional del catálogo activo del contexto de navegación. El catálogo completo de iconos está en Sistema -> Iconos.',
+    'icon_help' => 'Elige cualquier icono activo del catálogo. Los iconos etiquetados para navegación aparecen primero como sugerencias.',
   ],
   'locales_index' => [
     'title' => 'Idiomas',
