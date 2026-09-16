@@ -25,6 +25,21 @@ class AdminModalStructureTest extends TestCase
   }
 
   #[Test]
+  public function shared_form_actions_localize_default_labels_for_the_admin_locale(): void
+  {
+    config(['app.locale' => 'de']);
+
+    $html = $this->blade(<<<'BLADE'
+      <x-webblocks-cms::admin.form-actions cancel-url="/cancel" delete-href="/delete" />
+      BLADE);
+
+    $html->assertSee('Speichern');
+    $html->assertSee('Abbrechen');
+    $html->assertSee('Löschen');
+    $html->assertDontSee('>Cancel<', false);
+  }
+
+  #[Test]
   public function block_and_navigation_editors_keep_footer_outside_the_modal_body(): void
   {
     $root = dirname(__DIR__, 2).'/resources/views/admin';

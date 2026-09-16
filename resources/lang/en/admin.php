@@ -1,9 +1,6 @@
 <?php
 
 return [
-  'common' => [
-    'close_named' => 'Close :name',
-  ],
   'javascript' => [
     'new_block' => 'New Block',
     'block' => 'Block',
@@ -386,7 +383,10 @@ return [
   ],
   'common' => [
     'actions' => 'Actions',
+    'close_named' => 'Close :name',
     'close' => 'Close',
+    'save' => 'Save',
+    'delete' => 'Delete',
     'not_set' => 'Not set',
     'apply' => 'Apply',
     'clear_filters' => 'Clear Filters',

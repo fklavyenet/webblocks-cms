@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.86.8
+
+- Localize the shared admin form-action and destructive-confirmation defaults
+  through each operator's resolved admin locale, preventing English Save,
+  Cancel, and Delete labels from leaking into translated screens when a caller
+  relies on the component defaults.
+- Extend the strict admin translation audit to shared admin Blade components,
+  and distinguish internal report labels and CSS font-stack values from
+  user-facing hard-coded copy so this class of regression is caught by CI.
+
 ## 1.86.7
 
 - Replace name-only Navigation Item and Sidebar Navigation icon dropdowns with

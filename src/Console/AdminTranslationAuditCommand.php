@@ -27,6 +27,9 @@ class AdminTranslationAuditCommand extends Command
     'PATCH',
     'DELETE',
     'WebBlocks CMS',
+    'Direct / Unknown',
+    'Internal',
+    'Libre Baskerville, Georgia, serif',
   ];
 
   public function handle(): int
@@ -167,10 +170,15 @@ class AdminTranslationAuditCommand extends Command
   {
     $files = ['layouts/admin.blade.php'];
     $adminPath = $basePath.'/admin';
+    $adminComponentsPath = $basePath.'/components/admin';
 
-    if (is_dir($adminPath)) {
+    foreach ([$adminPath, $adminComponentsPath] as $viewPath) {
+      if (! is_dir($viewPath)) {
+        continue;
+      }
+
       $iterator = new \RecursiveIteratorIterator(
-        new \RecursiveDirectoryIterator($adminPath, \FilesystemIterator::SKIP_DOTS),
+        new \RecursiveDirectoryIterator($viewPath, \FilesystemIterator::SKIP_DOTS),
       );
 
       foreach ($iterator as $file) {

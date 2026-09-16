@@ -1,8 +1,10 @@
 @php
     $description = $description ?? null;
     $method = $method ?? 'DELETE';
-    $submitLabel = $submitLabel ?? 'Delete';
-    $cancelLabel = $cancelLabel ?? 'Cancel';
+    $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $submitLabel = $submitLabel ?? $adminTranslator->admin('common.delete', $adminLocale);
+    $cancelLabel = $cancelLabel ?? $adminTranslator->admin('common.cancel', $adminLocale);
     $formAttributes = $formAttributes ?? [];
     $submitAttributes = $submitAttributes ?? [];
 

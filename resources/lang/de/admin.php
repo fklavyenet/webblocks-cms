@@ -285,6 +285,9 @@ $translations = [
   ],
   'common' => [
     'actions' => 'Aktionen',
+    'close_named' => ':name schließen',
+    'save' => 'Speichern',
+    'delete' => 'Löschen',
     'close' => 'Schließen',
     'not_set' => 'Nicht gesetzt',
     'apply' => 'Anwenden',

@@ -286,6 +286,9 @@ $translations = [
   ],
   'common' => [
     'actions' => 'Aksiyonlar',
+    'close_named' => ':name penceresini kapat',
+    'save' => 'Kaydet',
+    'delete' => 'Sil',
     'apply' => 'Uygula',
     'clear_filters' => 'Filtreleri Temizle',
     'ascending' => 'Artan',

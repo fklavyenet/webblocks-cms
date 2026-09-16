@@ -1,10 +1,10 @@
 @props([
   'cancelUrl' => null,
-  'cancelLabel' => 'Cancel',
+  'cancelLabel' => null,
   'cancelType' => 'link',
   'cancelAttributes' => [],
   'showSubmit' => true,
-  'submitLabel' => 'Save',
+  'submitLabel' => null,
   'submitType' => 'submit',
   'submitDisabled' => false,
   'submitAttributes' => [],
@@ -12,7 +12,7 @@
   'deleteHref' => null,
   'deleteFormAction' => null,
   'deleteSubmit' => false,
-  'deleteLabel' => 'Delete',
+  'deleteLabel' => null,
   'deleteMethod' => 'DELETE',
   'deleteDisabled' => false,
   'deleteAttributes' => [],
@@ -22,6 +22,12 @@
 ])
 
 @php
+  $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+  $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+  $cancelLabel ??= $adminTranslator->admin('common.cancel', $adminLocale);
+  $submitLabel ??= $adminTranslator->admin('common.save', $adminLocale);
+  $deleteLabel ??= $adminTranslator->admin('common.delete', $adminLocale);
+
   $renderAttributes = static function (array $attributes): string {
     return collect($attributes)
       ->map(function ($value, $attribute) {
