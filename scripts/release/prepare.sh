@@ -149,7 +149,6 @@ fi
     -x '*/.*' \
     -x '.github/*' \
     -x 'CHANGELOG.md' \
-    -x 'LICENSE' \
     -x 'README.md' \
     -x 'UPGRADING.md'
 )
@@ -157,7 +156,8 @@ fi
 "${PHP_BIN}" -r '
 $zip = new ZipArchive();
 $path = $argv[1];
-$allowed = ["composer.json", "src", "routes", "resources", "database", "config", "public", "docs", "stubs"];
+$allowed = ["composer.json", "LICENSE", "src", "routes", "resources", "database", "config", "public", "docs", "stubs"];
+$required = ["composer.json" => false, "LICENSE" => false];
 
 if ($zip->open($path) !== true) {
   fwrite(STDERR, "[webblocks-release-prepare] Unable to inspect release ZIP.\n");
@@ -180,6 +180,17 @@ for ($index = 0; $index < $zip->numFiles; $index++) {
 
   if ($hasHiddenSegment || ! in_array($root, $allowed, true)) {
     fwrite(STDERR, "[webblocks-release-prepare] Release ZIP path is outside the CMS package allowlist: {$entry}\n");
+    exit(1);
+  }
+
+  if (array_key_exists($entry, $required)) {
+    $required[$entry] = true;
+  }
+}
+
+foreach ($required as $entry => $present) {
+  if (! $present) {
+    fwrite(STDERR, "[webblocks-release-prepare] Release ZIP is missing required package file: {$entry}\n");
     exit(1);
   }
 }

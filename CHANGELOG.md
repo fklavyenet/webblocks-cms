@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.86.11
+
+- Include the MIT license in Publisher update artifacts and make release preparation fail if either the package manifest or license is absent from the generated ZIP.
+
 ## 1.86.10
 
 - Serve existing-block editor fragments through a focused controller path
