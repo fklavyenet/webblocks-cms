@@ -24,7 +24,7 @@ composer require fklavyenet/webblocks-cms
 
 ![WebBlocks CMS operator dashboard](.github/assets/webblocks-cms-dashboard.png)
 
-_The operator dashboard brings publishing state, common actions, recent pages, and media into one package-owned admin._
+_The operator dashboard brings recent visitor activity, publishing state, common actions, recent pages, and media into one package-owned admin._
 
 ## What WebBlocks CMS provides
 
