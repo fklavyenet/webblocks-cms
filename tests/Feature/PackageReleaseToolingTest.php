@@ -23,8 +23,10 @@ class PackageReleaseToolingTest extends TestCase
     $this->assertStringContainsString('HEAD:src/Support/WebBlocks.php', $prepare);
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD', $prepare);
     $this->assertStringContainsString("-x 'CHANGELOG.md'", $prepare);
-    $this->assertStringNotContainsString("-x 'LICENSE'", $prepare);
-    $this->assertStringContainsString('"LICENSE" => false', $prepare);
+    $this->assertStringContainsString('cp "${PACKAGE_DIR}/LICENSE" "${PACKAGE_DIR}/docs/LICENSE"', $prepare);
+    $this->assertStringContainsString("-x 'LICENSE'", $prepare);
+    $this->assertStringContainsString('"docs/LICENSE" => false', $prepare);
+    $this->assertStringNotContainsString('$allowed = ["composer.json", "LICENSE"', $prepare);
     $this->assertStringContainsString('Release ZIP is missing required package file', $prepare);
     $this->assertStringContainsString("-x '*/.*'", $prepare);
     $this->assertStringContainsString('$hasHiddenSegment', $prepare);

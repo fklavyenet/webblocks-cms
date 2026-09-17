@@ -139,6 +139,13 @@ if [ ! -f "${PACKAGE_DIR}/composer.json" ]; then
   exit 1
 fi
 
+# CMS versions through 1.87.0 reject a root LICENSE before the new runtime can
+# be applied. Keep the notice in the Publisher artifact under the already
+# accepted docs root; the tagged Composer package retains its canonical root
+# LICENSE, and newer runtimes also accept that root for future artifacts.
+mkdir -p "${PACKAGE_DIR}/docs"
+cp "${PACKAGE_DIR}/LICENSE" "${PACKAGE_DIR}/docs/LICENSE"
+
 (
   cd "${PACKAGE_DIR}"
   zip -qr "${ARCHIVE_PATH}" . \
@@ -148,6 +155,7 @@ fi
     -x '.git*' \
     -x '*/.*' \
     -x '.github/*' \
+    -x 'LICENSE' \
     -x 'CHANGELOG.md' \
     -x 'README.md' \
     -x 'UPGRADING.md'
@@ -156,8 +164,8 @@ fi
 "${PHP_BIN}" -r '
 $zip = new ZipArchive();
 $path = $argv[1];
-$allowed = ["composer.json", "LICENSE", "src", "routes", "resources", "database", "config", "public", "docs", "stubs"];
-$required = ["composer.json" => false, "LICENSE" => false];
+$allowed = ["composer.json", "src", "routes", "resources", "database", "config", "public", "docs", "stubs"];
+$required = ["composer.json" => false, "docs/LICENSE" => false];
 
 if ($zip->open($path) !== true) {
   fwrite(STDERR, "[webblocks-release-prepare] Unable to inspect release ZIP.\n");

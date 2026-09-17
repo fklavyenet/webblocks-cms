@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.1
+
+- Restore Publisher updates from CMS 1.87.0 and earlier by placing the required MIT license notice under the legacy-compatible `docs` package root, while teaching the installed updater to accept the canonical root `LICENSE` path in future artifacts.
+- Validate release ZIP contents against the legacy updater allowlist so a package cannot be published successfully and then be rejected before its new runtime is applied.
+
 ## 1.87.0
 
 - Add PHP 8.3 and Laravel 12.55+ support alongside Laravel 13, backed by framework-specific Testbench dependencies, clean consumer and resolution-floor checks, and a PHP 8.3 CI matrix for both supported Laravel majors.

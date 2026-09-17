@@ -30,7 +30,7 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.apply.enforce_active_runtime_target', true);
     $config->set('publisher-client.apply.composer_install', false);
     $config->set('publisher-client.apply.package_validation.allowed_roots', [
-      'composer.json', 'src', 'routes', 'resources', 'database', 'config', 'public', 'docs', 'stubs',
+      'composer.json', 'LICENSE', 'src', 'routes', 'resources', 'database', 'config', 'public', 'docs', 'stubs',
     ]);
     $config->set('publisher-client.apply.package_validation.forbidden_content_patterns', []);
     $config->set('publisher-client.apply.package_validation.content_scan_excluded_paths', []);

@@ -27,9 +27,10 @@ class CmsPublisherClientCoexistenceTest extends TestCase
 
     $this->assertSame('webblocks-cms', config('publisher-client.product'));
     $this->assertSame(ConfigVersionResolver::class, config('publisher-client.version.resolver'));
-    $this->assertSame('1.87.0', app(VersionResolver::class)->current());
+    $this->assertSame('1.87.1', app(VersionResolver::class)->current());
     $this->assertNotSame('/wrong-product', config('publisher-client.apply.target_path'));
     $this->assertSame('app/system-updates', config('publisher-client.apply.workspace_root'));
+    $this->assertContains('LICENSE', config('publisher-client.apply.package_validation.allowed_roots'));
     $this->assertSame([], config('publisher-client.apply.package_validation.forbidden_content_patterns'));
     $this->assertSame([], config('publisher-client.apply.package_validation.content_scan_excluded_paths'));
     $this->assertInstanceOf(UpdateServerClient::class, app(UpdateServerClient::class));
