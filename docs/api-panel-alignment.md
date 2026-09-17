@@ -198,7 +198,7 @@ Read-only schema access is defensible: block types and layouts are structural co
 | Rebuild the search index | Yes | None | Missing |
 | Visitor reports | Yes | None | Missing |
 | Plugins: catalog browse and install, enable, disable, setup, uninstall, ZIP upload | Yes | `/plugins/*` | Aligned |
-| Plugins: update an installed plugin from the catalog | Yes | None | Missing |
+| Plugins: update an installed plugin from the catalog | Yes | `POST /plugins/catalog/{plugin}/update` | Aligned |
 | Plugins: read one plugin's detail | Yes | `index` only | Partial |
 
 ## Cross-Cutting: Unknown Plan Keys

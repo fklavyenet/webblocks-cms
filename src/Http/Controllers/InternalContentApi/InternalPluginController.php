@@ -137,6 +137,57 @@ class InternalPluginController extends Controller
     ], 201);
   }
 
+  public function catalogUpdate(string $plugin): JsonResponse
+  {
+    $definition = $this->requirePlugin($plugin);
+
+    if ($definition instanceof JsonResponse) {
+      return $definition;
+    }
+
+    $installedVersion = $definition->versionText();
+
+    if ($installedVersion === null) {
+      return $this->apiError('plugin_version_missing', 'The plugin does not declare an installed version.');
+    }
+
+    $result = $this->catalog->show($plugin);
+
+    if (! $result->available || $result->plugin === null) {
+      $status = str_contains(strtolower((string) $result->message), 'not found') ? 404 : 503;
+
+      return $this->apiError(
+        $status === 404 ? 'catalog_plugin_not_found' : 'plugin_catalog_unavailable',
+        $result->message ?? 'The requested catalog plugin could not be loaded for update.',
+        $status,
+      );
+    }
+
+    try {
+      $installed = $this->catalogInstaller->update($result->plugin, $installedVersion);
+      $this->runtime->refreshInstalledPackageAssets(
+        (string) $installed['handle'],
+        (string) $installed['version'],
+        (string) $installed['path'],
+      );
+      $this->runtime->clearCompiledViews();
+    } catch (RuntimeException $exception) {
+      return $this->apiError('catalog_plugin_update_failed', $exception->getMessage(), 422);
+    }
+
+    return $this->ok([
+      'updated' => [
+        'handle' => $installed['handle'],
+        'previous_version' => $installedVersion,
+        'version' => $installed['version'],
+      ],
+      '_links' => [
+        'plugin' => '/webadmin/api/plugins',
+        'setup' => '/webadmin/api/plugins/'.rawurlencode((string) $installed['handle']).'/setup',
+      ],
+    ]);
+  }
+
   public function enable(string $plugin): JsonResponse
   {
     $definition = $this->requirePlugin($plugin);

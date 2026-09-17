@@ -309,9 +309,10 @@ DELETE /webadmin/api/plugins/{plugin}
 GET /webadmin/api/plugins/catalog
 GET /webadmin/api/plugins/catalog/{plugin}
 POST /webadmin/api/plugins/catalog/{plugin}/install
+POST /webadmin/api/plugins/catalog/{plugin}/update
 ```
 
-These endpoints require `plugins.read`, `plugins.install`, `plugins.manage`, `plugins.setup`, or `plugins.uninstall` respectively. They work with bearer authentication and do not require an authenticated browser session. The manual install endpoint accepts a validated plugin ZIP artifact. Catalog list/detail requests require `plugins.read`; catalog installation requires `plugins.install` and reuses the CMS catalog client, compatibility checks, artifact size/ZIP validation, and SHA-256 verification. Both installation paths keep the plugin disabled by default. Setup runs the plugin-declared migrations. Uninstall is limited to disabled manually uploaded plugins and preserves plugin-owned tables.
+These endpoints require `plugins.read`, `plugins.install`, `plugins.manage`, `plugins.setup`, or `plugins.uninstall` respectively. They work with bearer authentication and do not require an authenticated browser session. The manual install endpoint accepts a validated plugin ZIP artifact. Catalog list/detail requests require `plugins.read`; catalog installation and update require `plugins.install` and reuse the CMS catalog client, compatibility checks, artifact size/ZIP validation, and SHA-256 verification. A catalog update must be newer than the installed version and preserves the plugin's enabled state. Both installation paths keep a newly installed plugin disabled by default. Setup runs the plugin-declared migrations. Uninstall is limited to disabled manually uploaded plugins and preserves plugin-owned tables.
 
 When WebBlocks Commerce is enabled and setup-ready, trusted tools can create/list products and read orders:
 

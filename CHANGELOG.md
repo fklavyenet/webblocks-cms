@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.87.3
+
+- Add a bearer-authenticated Internal API endpoint for updating an installed plugin from a newer checksum-verified Plugin Catalog release.
+- Reuse the existing catalog compatibility, artifact size, ZIP validation, and SHA-256 verification path while preserving the plugin's enabled state and refreshing its published assets and compiled views.
+- Document the update contract under `POST /webadmin/api/plugins/catalog/{plugin}/update` with the existing `plugins.install` capability.
+
 ## 1.87.2
 
 - Keep Publisher update artifacts directly installable by pre-1.87.1 clients without requiring an intermediate bridge release: the validated MIT notice travels as `docs/LICENSE`, then is atomically promoted to the canonical root `LICENSE` during installation.
