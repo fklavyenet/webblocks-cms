@@ -16,7 +16,7 @@ WebBlocks CMS is distributed as a Composer package installed into a Laravel host
 
 Before provisioning a production server, review [Hosting Requirements](hosting-requirements.md), qualify the intended workload using [Hosting Capacity Validation](hosting-capacity-validation.md), compare it with the explicitly provisional [Hosting Capacity Results](hosting-capacity-results.md), and complete the [Hosting Readiness Checklist](hosting-readiness-checklist.md). Those pages separate the base install contract from optional image, mail, scheduler, backup, and package-native update dependencies; the current partial measurements are not a production certification.
 
-For a normal installation, start in a fresh or existing Laravel 13 application with its application key and database configured. Install the package with Composer, then run the CMS installer.
+For a normal installation, start in a fresh or existing Laravel 12.55+ or Laravel 13 application with its application key and database configured. Install the package with Composer, then run the CMS installer.
 
 An install is considered complete when the application has a working CMS baseline:
 

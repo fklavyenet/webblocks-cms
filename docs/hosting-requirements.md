@@ -18,8 +18,8 @@ WebBlocks CMS is a Composer package installed into a Laravel host application. T
 
 | Area | Minimum requirement |
 | --- | --- |
-| PHP | PHP `8.4` or newer within the Composer-supported `^8.4` range, with CLI and the web runtime using the same compatible release |
-| Framework | Laravel Framework `13.x` |
+| PHP | PHP `8.3` or newer within the Composer-supported `^8.3` range, with CLI and the web runtime using the same compatible release |
+| Framework | Laravel Framework `12.55+` or `13.x` |
 | Dependency manager | Composer 2, available during install and package-native System Updates |
 | PHP extensions declared by the package | `mbstring`, `sodium`, and `zip` |
 | Production database baseline | MySQL 8.0 with InnoDB, a database and credentials the application may use for tables, indexes, foreign keys, and transactions |

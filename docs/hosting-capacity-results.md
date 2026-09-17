@@ -82,7 +82,7 @@ Until that guard exists, hosting documentation must state the supported media wo
 
 Before replacing “provisional” with “certified,” run and retain:
 
-- a production-like Laravel 13 consumer on MySQL 8.0 through the real HTTPS/FPM path;
+- production-like Laravel 12 and 13 consumers on MySQL 8.0 through the real HTTPS/FPM path;
 - the versioned core reference content fixture described by the validation protocol;
 - install, backup, restore, site transfer, and package-native update profiles;
 - disk low-water measurements and timeout measurements;

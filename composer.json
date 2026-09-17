@@ -22,15 +22,15 @@
     "source": "https://github.com/fklavyenet/webblocks-cms"
   },
   "require": {
-    "php": "^8.4",
+    "php": "^8.3",
     "ext-mbstring": "*",
     "ext-sodium": "*",
     "ext-zip": "*",
-    "laravel/framework": "^13.0"
+    "laravel/framework": "^12.55 || ^13.0"
   },
   "require-dev": {
     "laravel/pint": "^1.29",
-    "orchestra/testbench": "^11.1",
+    "orchestra/testbench": "^10.11 || ^11.1",
     "phpunit/phpunit": "^12.5.12"
   },
   "suggest": {

@@ -35,29 +35,69 @@ jobs:
       - run: composer format:test
       - run: composer test
 
-  current-laravel-consumer:
+  php83-framework-compatibility:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - major: '12'
+            laravel: '12.*'
+            testbench: '^10.11'
+          - major: '13'
+            laravel: '13.*'
+            testbench: '^11.1'
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.3'
+          extensions: mbstring, sodium, zip, sqlite3, pdo_sqlite, fileinfo
+          coverage: none
+          tools: composer:v2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-php83-laravel-${{ matrix.major }}-${{ hashFiles('composer.json') }}
+      - run: composer update --no-interaction --prefer-dist --no-progress --with="laravel/framework:${{ matrix.laravel }}" --with="orchestra/testbench:${{ matrix.testbench }}"
+      - run: composer check-platform-reqs
+      - run: composer test
+
+  current-laravel-consumer:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        laravel: ['12', '13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
           extensions: mbstring, sodium, zip, sqlite3, pdo_sqlite, fileinfo
           coverage: none
           tools: composer:v2
       - run: tests/Support/check-current-consumer.sh
+        env:
+          LARAVEL_VERSION: ${{ matrix.laravel }}
 
   laravel-floor-resolution:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        floor: ['12.55.*', '13.0.*']
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.3'
           extensions: mbstring, sodium, zip, fileinfo
           coverage: none
           tools: composer:v2
       - run: tests/Support/check-laravel-floor.sh
+        env:
+          LARAVEL_FLOOR: ${{ matrix.floor }}
 
   distribution:
     runs-on: ubuntu-latest

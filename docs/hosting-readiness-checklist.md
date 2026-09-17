@@ -16,7 +16,7 @@ The normative platform and feature requirements are in [Hosting Requirements](ho
 
 ## Provider questionnaire
 
-- [ ] PHP 8.4 is available for both web requests and CLI, and the provider states how patch releases are maintained.
+- [ ] PHP 8.3 or newer is available for both web requests and CLI, and the provider states how patch releases are maintained.
 - [ ] Composer 2 may run in the application directory without an artificial dependency-install timeout.
 - [ ] `mbstring`, `sodium`, `zip`, and `pdo_mysql` are enabled in both web and CLI PHP.
 - [ ] MySQL 8.0 with InnoDB is available, including permission to create and alter tables, indexes, and foreign keys.
@@ -34,7 +34,7 @@ Any “no” answer must be matched to a deliberately disabled feature or an ext
 
 ## Pre-deployment server checks
 
-- [ ] The production release is installed into a Laravel 13 host application, not served directly from the package source repository.
+- [ ] The production release is installed into a Laravel 12.55+ or Laravel 13 host application, not served directly from the package source repository.
 - [ ] Web and CLI report compatible PHP versions and extension sets.
 - [ ] `composer check-platform-reqs` passes in the deployed host application.
 - [ ] The database connection succeeds and uses the intended production database.

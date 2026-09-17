@@ -27,7 +27,7 @@ Do not collapse these profiles into one unexplained number. For example, a core-
 
 ## Controlled test environment
 
-Run the candidate release artifact in a fresh Laravel 13 consumer using the production PHP SAPI, web server, MySQL 8.0, filesystem type, and process restrictions of the target host. Do not use the package's SQLite testbench result as hosting evidence.
+Run the candidate release artifact in a fresh consumer on the supported Laravel major used by the target deployment, using the production PHP SAPI, web server, MySQL 8.0, filesystem type, and process restrictions of the target host. Do not use the package's SQLite testbench result as hosting evidence.
 
 Record:
 

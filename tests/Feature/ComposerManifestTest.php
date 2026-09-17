@@ -27,8 +27,8 @@ class ComposerManifestTest extends TestCase
     $this->assertSame('fklavyenet/webblocks-cms', $this->composer['name']);
     $this->assertSame('library', $this->composer['type']);
     $this->assertSame('MIT', $this->composer['license']);
-    $this->assertSame('^8.4', $this->composer['require']['php']);
-    $this->assertSame('^13.0', $this->composer['require']['laravel/framework']);
+    $this->assertSame('^8.3', $this->composer['require']['php']);
+    $this->assertSame('^12.55 || ^13.0', $this->composer['require']['laravel/framework']);
     $this->assertSame('*', $this->composer['require']['ext-mbstring']);
     $this->assertSame('*', $this->composer['require']['ext-zip']);
     $this->assertSame('*', $this->composer['require']['ext-sodium']);

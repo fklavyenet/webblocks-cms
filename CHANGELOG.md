@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.0
+
+- Add PHP 8.3 and Laravel 12.55+ support alongside Laravel 13, backed by framework-specific Testbench dependencies, clean consumer and resolution-floor checks, and a PHP 8.3 CI matrix for both supported Laravel majors.
+- Replace the only PHP 8.4-only runtime function with an equivalent PHP 8.3-compatible path-segment safety check while preserving plugin asset traversal and dotfile rejection.
+
 ## 1.86.11
 
 - Include the MIT license in Publisher update artifacts and make release preparation fail if either the package manifest or license is absent from the generated ZIP.

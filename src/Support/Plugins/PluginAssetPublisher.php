@@ -212,8 +212,10 @@ class PluginAssetPublisher
 
     $segments = explode('/', $relative);
 
-    if (array_any($segments, static fn (string $segment): bool => $segment === '' || $segment === '.' || $segment === '..' || str_starts_with($segment, '.'))) {
-      return null;
+    foreach ($segments as $segment) {
+      if ($segment === '' || $segment === '.' || $segment === '..' || str_starts_with($segment, '.')) {
+        return null;
+      }
     }
 
     $installPath = $plugin->installPathValue();

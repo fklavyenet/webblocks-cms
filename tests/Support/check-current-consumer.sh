@@ -3,6 +3,7 @@
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LARAVEL_VERSION="${LARAVEL_VERSION:-13}"
 TEMP_DIR="$(mktemp -d)"
 SOURCE_COPY="${TEMP_DIR}/package-source"
 CONSUMER="${TEMP_DIR}/consumer"
@@ -19,7 +20,7 @@ tar -C "${ROOT_DIR}" -cf - \
   CONTRIBUTING.md LICENSE README.md SECURITY.md SUPPORT.md UPGRADING.md composer.json \
   config database docs phpunit.xml.dist pint.json public resources routes src stubs tests \
   | tar -xf - -C "${SOURCE_COPY}"
-composer create-project 'laravel/laravel:^13.0' "${CONSUMER}" --no-interaction --prefer-dist --no-progress
+composer create-project "laravel/laravel:^${LARAVEL_VERSION}.0" "${CONSUMER}" --no-interaction --prefer-dist --no-progress
 composer config --working-dir="${CONSUMER}" --json repositories.webblocks "{\"type\":\"path\",\"url\":\"${SOURCE_COPY}\",\"options\":{\"symlink\":false}}"
 COMPOSER_MIRROR_PATH_REPOS=1 composer require --working-dir="${CONSUMER}" 'fklavyenet/webblocks-cms:@dev' --no-interaction --prefer-dist --no-progress -W
 

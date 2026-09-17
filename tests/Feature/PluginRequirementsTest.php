@@ -116,7 +116,7 @@ class PluginRequirementsTest extends TestCase
   public function test_an_installed_composer_package_is_not_mistaken_for_a_plugin(): void
   {
     $this->assertSame([], $this->unmet($this->plugin([
-      'laravel/framework' => '>=13.0',
+      'laravel/framework' => '>=12.55',
     ])));
   }
 

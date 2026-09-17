@@ -9,8 +9,8 @@ An open-source Laravel-native CMS for structured, multi-site publishing and auto
 [![Package CI](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml)
 [![Latest Stable Version](https://img.shields.io/packagist/v/fklavyenet/webblocks-cms.svg)](https://packagist.org/packages/fklavyenet/webblocks-cms)
 [![Total Downloads](https://img.shields.io/packagist/dt/fklavyenet/webblocks-cms.svg)](https://packagist.org/packages/fklavyenet/webblocks-cms)
-[![PHP 8.4+](https://img.shields.io/badge/PHP-8.4%2B-777bb4.svg)](composer.json)
-[![Laravel 13](https://img.shields.io/badge/Laravel-13-ff2d20.svg)](composer.json)
+[![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777bb4.svg)](composer.json)
+[![Laravel 12.55+ / 13](https://img.shields.io/badge/Laravel-12.55%2B%20%7C%2013-ff2d20.svg)](composer.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 WebBlocks CMS is a modern block-based CMS for content operations across multiple sites and locales. It adds structured pages, media, navigation, editorial workflows, and an operator admin under `/webadmin` to a host Laravel application.
@@ -20,7 +20,7 @@ composer require fklavyenet/webblocks-cms
 ```
 
 > [!IMPORTANT]
-> This repository is Composer package source, not a complete deployable Laravel application. Install `fklavyenet/webblocks-cms` into a host Laravel 13 application; the host continues to own its bootstrap, `.env`, database, queues, mail, deployment, backups, and public document root.
+> This repository is Composer package source, not a complete deployable Laravel application. Install `fklavyenet/webblocks-cms` into a supported Laravel 12.55+ or Laravel 13 host application; the host continues to own its bootstrap, `.env`, database, queues, mail, deployment, backups, and public document root.
 
 ![WebBlocks CMS operator dashboard](.github/assets/webblocks-cms-dashboard.png)
 
@@ -43,18 +43,18 @@ _The Pages listing combines site and status filters with publishing state, block
 
 ## Requirements
 
-- PHP `^8.4`
-- Laravel Framework `^13.0`
+- PHP `^8.3`
+- Laravel Framework `^12.55 || ^13.0`
 - Composer 2
 - PHP extensions: `mbstring`, `sodium`, and `zip`
 - A database supported by the host Laravel application
 - Optional: GD for CMS image and media transformations
 
-The supported ranges come from [`composer.json`](composer.json). CI runs the package suite, a current Laravel 13 consumer installation, a Laravel `13.0.*` resolution-floor check, distribution validation, and documentation checks.
+The supported ranges come from [`composer.json`](composer.json). CI runs the package suite on PHP 8.3 with Laravel 12 and 13, clean consumer installations for both framework majors, Laravel `12.55.*` and `13.0.*` resolution-floor checks, distribution validation, and documentation checks.
 
 ## Installation
 
-Start with a fresh or existing Laravel 13 host whose application key and database are configured. The normal host `App\Models\User` model must exist and be writable during initial CMS setup.
+Start with a fresh or existing Laravel 12.55+ or Laravel 13 host whose application key and database are configured. The normal host `App\Models\User` model must exist and be writable during initial CMS setup.
 
 ```bash
 composer require fklavyenet/webblocks-cms
