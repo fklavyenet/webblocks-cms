@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.87.2
+
+- Keep Publisher update artifacts directly installable by pre-1.87.1 clients without requiring an intermediate bridge release: the validated MIT notice travels as `docs/LICENSE`, then is atomically promoted to the canonical root `LICENSE` during installation.
+- Embed Publisher Client 1.1.12 with validated package-file promotion support, plus a one-time compatibility migration that produces the same installed root layout when an older embedded Client performs the first direct update.
+- Preserve release validation against the legacy package allowlist so users can press Update Now and move directly to the latest retained release.
+
 ## 1.87.1
 
 - Restore Publisher updates from CMS 1.87.0 and earlier by placing the required MIT license notice under the legacy-compatible `docs` package root, while teaching the installed updater to accept the canonical root `LICENSE` path in future artifacts.

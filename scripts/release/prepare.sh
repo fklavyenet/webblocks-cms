@@ -140,9 +140,9 @@ if [ ! -f "${PACKAGE_DIR}/composer.json" ]; then
 fi
 
 # CMS versions through 1.87.0 reject a root LICENSE before the new runtime can
-# be applied. Keep the notice in the Publisher artifact under the already
-# accepted docs root; the tagged Composer package retains its canonical root
-# LICENSE, and newer runtimes also accept that root for future artifacts.
+# be applied. Keep every Publisher artifact directly installable by those
+# clients by placing the notice under the already accepted docs root. The
+# tagged Composer package retains its canonical root LICENSE.
 mkdir -p "${PACKAGE_DIR}/docs"
 cp "${PACKAGE_DIR}/LICENSE" "${PACKAGE_DIR}/docs/LICENSE"
 

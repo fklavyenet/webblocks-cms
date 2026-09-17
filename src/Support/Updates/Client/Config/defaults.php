@@ -137,6 +137,11 @@ return [
         // Composer's lock/installed registries and regenerate installed.php.
         'sync_composer_metadata' => true,
 
+        // package: after the staged artifact passes validation, copy trusted
+        // files from legacy-compatible paths to their canonical installed
+        // locations. Map source-relative paths to destination-relative paths.
+        'package_file_promotions' => [],
+
         // Hard cap on artifact size before extraction.
         'max_artifact_bytes' => 26214400, // 25 MB
 

@@ -60,6 +60,9 @@ class PackageApplyStrategy extends AbstractApplyStrategy
     $this->assertStagedIdentity($stagedRoot);
     PackageArtifactValidator::fromConfig()->validate($stagedRoot);
 
+    $output = [];
+    $this->promoteConfiguredFiles($stagedRoot, $output);
+
     $enforceActive = (bool) config('publisher-client.apply.enforce_active_runtime_target', true);
 
     if ($enforceActive && ! File::isDirectory($target)) {
@@ -69,7 +72,6 @@ class PackageApplyStrategy extends AbstractApplyStrategy
       );
     }
 
-    $output = [];
     $this->replaceDirectory($target, $stagedRoot, $output);
 
     return [
@@ -77,6 +79,79 @@ class PackageApplyStrategy extends AbstractApplyStrategy
       'target' => $target,
       'output' => $output,
     ];
+  }
+
+  /**
+   * Materialize trusted package-root files only after the downloaded tree has
+   * passed the product allowlist. This lets a release keep a source under a
+   * legacy-compatible root while installing the canonical destination path.
+   *
+   * @param  array<int, string>  $output
+   */
+  private function promoteConfiguredFiles(string $stagedRoot, array &$output): void
+  {
+    $configured = config('publisher-client.apply.package_file_promotions', []);
+
+    if (! is_array($configured)) {
+      throw new UpdateException('The update package file-promotion configuration is invalid.');
+    }
+
+    foreach ($configured as $source => $destination) {
+      if (! is_string($source) || ! is_string($destination)) {
+        throw new UpdateException('The update package file-promotion configuration is invalid.');
+      }
+
+      $source = $this->safeRelativePromotionPath($source);
+      $destination = $this->safeRelativePromotionPath($destination);
+      $sourcePath = $stagedRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $source);
+      $destinationPath = $stagedRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $destination);
+
+      if (! File::isFile($sourcePath) || is_link($sourcePath)) {
+        throw new UpdateException(
+          'The downloaded update package is missing a required promoted file.',
+          'Package file-promotion source is missing or unsafe: '.$source.'.',
+        );
+      }
+
+      if (File::exists($destinationPath)) {
+        throw new UpdateException(
+          'The downloaded update package contains an ambiguous promoted file.',
+          'Package file-promotion destination already exists: '.$destination.'.',
+        );
+      }
+
+      File::ensureDirectoryExists(dirname($destinationPath));
+
+      if (! File::copy($sourcePath, $destinationPath)) {
+        throw new UpdateException(
+          'The downloaded update package could not materialize a required package file.',
+          'Failed to promote '.$source.' to '.$destination.'.',
+        );
+      }
+
+      $output[] = 'Promoted package file '.$source.' to '.$destination.'.';
+    }
+  }
+
+  private function safeRelativePromotionPath(string $path): string
+  {
+    $normalized = trim(str_replace('\\', '/', $path), '/');
+    $segments = explode('/', $normalized);
+
+    if ($normalized === ''
+      || preg_match('/^[A-Za-z]:/', $path) === 1
+      || str_starts_with($path, '/')
+      || in_array('.', $segments, true)
+      || in_array('..', $segments, true)
+      || collect($segments)->contains(fn (string $segment): bool => $segment === '' || str_starts_with($segment, '.'))
+    ) {
+      throw new UpdateException(
+        'The update package file-promotion configuration contains an unsafe path.',
+        'Unsafe package file-promotion path: '.$path.'.',
+      );
+    }
+
+    return $normalized;
   }
 
   /**
