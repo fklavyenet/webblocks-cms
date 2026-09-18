@@ -32,6 +32,11 @@
     $checksum = $release?->checksumSha256;
     $canInstallFromCatalog = $plugin?->hasInstallableArtifact() ?? false;
     $hasArtifactMetadata = $downloadUrl || $checksum || $release?->artifactFilename || $release?->artifactSize || $release?->artifactStatus || $release?->scanStatus;
+    $price = $plugin?->pricingType === 'paid'
+        ? ($plugin?->priceMinor !== null ? trim(($plugin->priceCurrency ?? '').' '.number_format($plugin->priceMinor / 100, 2)) : $adminText('not_provided'))
+        : $adminText('free');
+    $billingPeriod = $plugin?->billingPeriod ? $adminText('billing_'.$plugin->billingPeriod) : null;
+    $chartDate = static fn (string $date): string => \Carbon\CarbonImmutable::parse($date)->locale($adminLocale)->isoFormat('D MMM');
 @endphp
 
 @section('content')
@@ -56,6 +61,27 @@
             </div>
         </div>
     @else
+        <section class="wb-card wb-promo wb-promo--split">
+            <div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">
+                <div class="wb-cluster wb-cluster-2">
+                    <span class="wb-badge {{ $plugin->pricingType === 'paid' ? 'wb-badge-primary' : 'wb-badge-success' }}">{{ $price }}{{ $billingPeriod ? ' '.$billingPeriod : '' }}</span>
+                    <span class="wb-badge wb-badge-info">{{ $adminText('downloads_count', ['count' => number_format($plugin->downloadsTotal)]) }}</span>
+                </div>
+                <h2 class="wb-promo-title">{{ $plugin->label }}</h2>
+                <p class="wb-promo-text">{{ $plugin->summary ?? $adminText('not_provided') }}</p>
+                @if (count($plugin->categories) > 0)
+                    <div class="wb-cluster wb-cluster-2">
+                        @foreach ($plugin->categories as $category)
+                            <span class="wb-badge">{{ $category['name'] }}</span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+            @if ($plugin->artworkUrl)
+                <figure class="wb-promo-media"><img src="{{ $plugin->artworkUrl }}" alt="{{ $plugin->artworkAlt ?? '' }}"></figure>
+            @endif
+        </section>
+
         <div class="wb-grid wb-grid-2 wb-gap-4">
             <div class="wb-card">
                 <div class="wb-card-header">
@@ -131,6 +157,35 @@
                 </div>
             </div>
         </div>
+
+        <section class="wb-card">
+            <div class="wb-card-header">
+                <h2 class="wb-card-title">{{ $adminText('download_activity') }}</h2>
+            </div>
+            <div class="wb-card-body wb-stack wb-gap-3">
+                <p class="wb-text-muted">{{ $adminText('download_activity_help', ['count' => number_format($plugin->downloadsTotal)]) }}</p>
+                @if (count($plugin->dailyDownloads) > 0)
+                    <div class="wb-chart" data-wb-chart="line" aria-label="{{ $adminText('download_activity') }}" lang="{{ $adminLocale }}"
+                        data-wb-chart-help="{{ $adminText('chart_help') }}"
+                        data-wb-chart-empty="{{ $adminText('chart_empty') }}"
+                        data-wb-chart-error="{{ $adminText('chart_error') }}">
+                        <p class="wb-chart-fallback wb-text-muted">{{ $adminText('chart_fallback') }}</p>
+                        <div class="wb-table-wrap">
+                            <table class="wb-table">
+                                <thead><tr><th scope="col">{{ $adminText('date') }}</th><th scope="col">{{ $adminText('downloads') }}</th></tr></thead>
+                                <tbody>
+                                    @foreach ($plugin->dailyDownloads as $day)
+                                        <tr><th scope="row" data-wb-chart-label="{{ $chartDate($day['date']) }}">{{ $day['date'] }}</th><td data-wb-chart-value="{{ $day['downloads'] }}">{{ number_format($day['downloads']) }}</td></tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @else
+                    <div class="wb-empty"><div class="wb-empty-title">{{ $adminText('chart_empty') }}</div></div>
+                @endif
+            </div>
+        </section>
 
         <div class="wb-card">
             <div class="wb-card-header">

@@ -360,6 +360,21 @@ class InternalPluginController extends Controller
       'channel' => $plugin->displayChannel(),
       'status' => $plugin->displayStatus(),
       'installable' => $plugin->hasInstallableArtifact(),
+      'pricing' => [
+        'type' => $plugin->pricingType,
+        'price_minor' => $plugin->priceMinor,
+        'currency' => $plugin->priceCurrency,
+        'billing_period' => $plugin->billingPeriod,
+      ],
+      'downloads' => [
+        'total' => $plugin->downloadsTotal,
+        'daily' => $plugin->dailyDownloads,
+      ],
+      'artwork' => [
+        'card_url' => $plugin->artworkUrl,
+        'alt' => $plugin->artworkAlt,
+      ],
+      'categories' => $plugin->categories,
       'permissions' => $plugin->declaredPermissions,
       'routes' => $plugin->declaredRoutes,
       'migrations' => $plugin->declaredMigrations,

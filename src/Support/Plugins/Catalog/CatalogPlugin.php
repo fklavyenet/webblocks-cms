@@ -25,6 +25,15 @@ class CatalogPlugin
     public readonly ?string $supportUrl,
     public readonly ?string $detailsUrl,
     public readonly ?string $downloadUrl,
+    public readonly ?string $artworkUrl,
+    public readonly ?string $artworkAlt,
+    public readonly array $categories,
+    public readonly string $pricingType,
+    public readonly ?int $priceMinor,
+    public readonly ?string $priceCurrency,
+    public readonly ?string $billingPeriod,
+    public readonly int $downloadsTotal,
+    public readonly array $dailyDownloads,
     public readonly array $declaredPermissions,
     public readonly array $declaredRoutes,
     public readonly array $declaredMigrations,
@@ -79,6 +88,15 @@ class CatalogPlugin
       supportUrl: self::safeUrl(Arr::get($payload, 'support_url', Arr::get($payload, 'urls.support'))),
       detailsUrl: self::safeUrl(Arr::get($payload, 'details_url', Arr::get($payload, 'urls.details'))),
       downloadUrl: self::safeUrl(Arr::get($payload, 'download_url', Arr::get($payload, 'artifact_url', Arr::get($payload, 'urls.download')))),
+      artworkUrl: self::safeUrl(Arr::get($payload, 'artwork.card_url')),
+      artworkAlt: self::stringOrNull(Arr::get($payload, 'artwork.alt')),
+      categories: self::namedList(Arr::get($payload, 'categories')),
+      pricingType: self::stringOrNull(Arr::get($payload, 'pricing.type')) === 'paid' ? 'paid' : 'free',
+      priceMinor: self::integerOrNull(Arr::get($payload, 'pricing.price_minor')),
+      priceCurrency: self::stringOrNull(Arr::get($payload, 'pricing.currency')),
+      billingPeriod: self::stringOrNull(Arr::get($payload, 'pricing.billing_period')),
+      downloadsTotal: max(0, self::integerOrNull(Arr::get($payload, 'downloads.total')) ?? 0),
+      dailyDownloads: self::downloadSeries(Arr::get($payload, 'downloads.daily')),
       declaredPermissions: self::stringList(Arr::get($payload, 'permissions')),
       declaredRoutes: self::stringList(Arr::get($payload, 'routes')),
       declaredMigrations: self::stringList(Arr::get($payload, 'migrations')),
@@ -147,6 +165,49 @@ class CatalogPlugin
   private static function stringOrNull(mixed $value): ?string
   {
     return is_string($value) && trim($value) !== '' ? trim($value) : null;
+  }
+
+  private static function integerOrNull(mixed $value): ?int
+  {
+    return is_int($value) || (is_string($value) && ctype_digit($value)) ? (int) $value : null;
+  }
+
+  /** @return array<int, array{slug: string, name: string}> */
+  private static function namedList(mixed $value): array
+  {
+    if (! is_array($value)) {
+      return [];
+    }
+
+    return array_values(array_filter(array_map(function (mixed $item): ?array {
+      if (! is_array($item)) {
+        return null;
+      }
+
+      $slug = self::stringOrNull(Arr::get($item, 'slug'));
+      $name = self::stringOrNull(Arr::get($item, 'name'));
+
+      return $slug !== null && $name !== null ? ['slug' => $slug, 'name' => $name] : null;
+    }, $value)));
+  }
+
+  /** @return array<int, array{date: string, downloads: int}> */
+  private static function downloadSeries(mixed $value): array
+  {
+    if (! is_array($value)) {
+      return [];
+    }
+
+    return array_values(array_filter(array_map(function (mixed $item): ?array {
+      if (! is_array($item)) {
+        return null;
+      }
+
+      $date = self::stringOrNull(Arr::get($item, 'date'));
+      $downloads = self::integerOrNull(Arr::get($item, 'downloads'));
+
+      return $date !== null && $downloads !== null ? ['date' => $date, 'downloads' => max(0, $downloads)] : null;
+    }, $value)));
   }
 
   private static function safeUrl(mixed $value): ?string

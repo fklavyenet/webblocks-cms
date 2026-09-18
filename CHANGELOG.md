@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.87.4
+
+- Replace the Plugin Catalog table with visual discovery cards that surface catalog artwork, categories, compatibility, latest release, pricing, and total downloads.
+- Expand each CMS catalog plugin detail page with a pricing summary and an accessible 30-day download activity chart backed by the catalog API.
+- Preserve compatibility with older catalog responses by defaulting missing pricing metadata to free and missing download activity to zero.
+
 ## 1.87.3
 
 - Add a bearer-authenticated Internal API endpoint for updating an installed plugin from a newer checksum-verified Plugin Catalog release.
