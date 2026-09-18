@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.7
+
+- Rebuild sitemap entries when an older deployment's serialized cache object can no longer be restored, and cache plain entry arrays so deployments do not return a server error from stale framework objects.
+
 ## 1.87.6
 
 - Keep sitemap generation working for legacy pages whose page and translation timestamps are both empty by omitting the optional `lastmod` element instead of returning a server error.

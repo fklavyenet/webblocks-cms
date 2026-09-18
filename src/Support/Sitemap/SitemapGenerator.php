@@ -53,12 +53,22 @@ class SitemapGenerator
   {
     $version = $this->cache->version((int) $site->id);
     $fingerprint = $this->fingerprint($site);
+    $key = 'webblocks-cms:sitemap:site:'.$site->id.':entries:'.$version.':'.$fingerprint;
+    $cached = Cache::get($key);
 
-    return Cache::remember(
-      'webblocks-cms:sitemap:site:'.$site->id.':entries:'.$version.':'.$fingerprint,
+    if (is_array($cached)) {
+      return collect($cached);
+    }
+
+    $entries = $this->buildEntries($site);
+
+    Cache::put(
+      $key,
+      $entries->all(),
       now()->addSeconds(max(1, (int) config('webblocks-cms.sitemap.cache_seconds', 3600))),
-      fn (): Collection => $this->buildEntries($site),
     );
+
+    return $entries;
   }
 
   /** @return Collection<int, array{loc: string, lastmod: ?string, alternates: array<string, string>}> */

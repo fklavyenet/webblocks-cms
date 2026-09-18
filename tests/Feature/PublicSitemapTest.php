@@ -2,10 +2,13 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Sitemap\SitemapCache;
+use WebBlocks\Cms\Support\Sitemap\SitemapGenerator;
 use WebBlocks\Cms\Tests\TestCase;
 
 class PublicSitemapTest extends TestCase
@@ -67,6 +70,27 @@ class PublicSitemapTest extends TestCase
     $response->assertOk()
       ->assertSee('<loc>https://legacy.test/legacy</loc>', false)
       ->assertDontSee('<lastmod>', false);
+  }
+
+  #[Test]
+  public function an_unreadable_object_from_an_older_cache_is_rebuilt_as_plain_data(): void
+  {
+    $site = $this->site('stale-cache.test', true);
+    $this->page($site, 'published', Page::STATUS_PUBLISHED);
+    $generator = app(SitemapGenerator::class);
+    $fingerprint = (new \ReflectionMethod($generator, 'fingerprint'))->invoke($generator, $site);
+    $version = app(SitemapCache::class)->version((int) $site->id);
+    $key = 'webblocks-cms:sitemap:site:'.$site->id.':entries:'.$version.':'.$fingerprint;
+    $incomplete = unserialize('O:24:"Missing\\CachedCollection":0:{}');
+
+    $this->assertInstanceOf(\__PHP_Incomplete_Class::class, $incomplete);
+    Cache::put($key, $incomplete);
+
+    $this->get('https://stale-cache.test/sitemap.xml')
+      ->assertOk()
+      ->assertSee('<loc>https://stale-cache.test/published</loc>', false);
+
+    $this->assertIsArray(Cache::get($key));
   }
 
   #[Test]
