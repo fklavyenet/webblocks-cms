@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.87.5
+
+- Refocus Plugin Catalog detail pages on the information operators need to choose and install a plugin: artwork, pricing, category, compatibility, release version, installation state, description, and useful links.
+- Hide empty download charts and release-note sections, while retaining real download activity as a concise popularity signal when data exists.
+- Remove raw artifact URLs, checksums, file and scan metadata, declared runtime metadata, duplicated cards, and the long installation checklist from the operator interface without changing server-side package verification.
+
 ## 1.87.4
 
 - Replace the Plugin Catalog table with visual discovery cards that surface catalog artwork, categories, compatibility, latest release, pricing, and total downloads.

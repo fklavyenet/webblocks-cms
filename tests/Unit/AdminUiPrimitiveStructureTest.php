@@ -53,7 +53,6 @@ class AdminUiPrimitiveStructureTest extends TestCase
         foreach ([
             'resources/views/admin/locales/form.blade.php',
             'resources/views/admin/page-layout-slots/_form.blade.php',
-            'resources/views/admin/plugins/catalog/show.blade.php',
             'resources/views/admin/system/plugins/show.blade.php',
             'resources/views/pages/partials/blocks/fallback.blade.php',
         ] as $relativePath) {

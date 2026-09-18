@@ -36,4 +36,3 @@ wb-slider-prev
 wb-slot-block-picker-body
 wb-slot-block-picker-dialog
 wb-tabs-panels
-wb-text-break
