@@ -4,7 +4,7 @@
 
 An open-source Laravel-native CMS for structured, multi-site publishing and automation.
 
-[Website](https://cms.webblocksui.com/) · [Laravel CMS](https://cms.webblocksui.com/laravel-cms) · [Live Demo](https://demo.webblocksui.com/) · [Documentation](https://cms.webblocksui.com/docs) · [Installation](https://cms.webblocksui.com/docs/installation) · [Admin Tour](https://cms.webblocksui.com/guides/admin-tour)
+[Website](https://cms.webblocksui.com/) · [Live Demo](https://demo.webblocksui.com/) · [Documentation](https://cms.webblocksui.com/docs) · [Installation](https://cms.webblocksui.com/docs/installation) · [Admin Tour](https://cms.webblocksui.com/guides/admin-tour)
 
 [![Package CI](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/fklavyenet/webblocks-cms/actions/workflows/ci.yml)
 [![Latest Stable Version](https://img.shields.io/packagist/v/fklavyenet/webblocks-cms.svg)](https://packagist.org/packages/fklavyenet/webblocks-cms)
