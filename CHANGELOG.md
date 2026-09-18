@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.6
+
+- Keep sitemap generation working for legacy pages whose page and translation timestamps are both empty by omitting the optional `lastmod` element instead of returning a server error.
+
 ## 1.87.5
 
 - Refocus Plugin Catalog detail pages on the information operators need to choose and install a plugin: artwork, pricing, category, compatibility, release version, installation state, description, and useful links.

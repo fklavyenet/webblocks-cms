@@ -48,7 +48,7 @@ class SitemapGenerator
     return rtrim($this->pageRouteResolver->homeUrl(null, $site), '/').'/sitemap.xml';
   }
 
-  /** @return Collection<int, array{loc: string, lastmod: string, alternates: array<string, string>}> */
+  /** @return Collection<int, array{loc: string, lastmod: ?string, alternates: array<string, string>}> */
   private function entries(Site $site): Collection
   {
     $version = $this->cache->version((int) $site->id);
@@ -61,7 +61,7 @@ class SitemapGenerator
     );
   }
 
-  /** @return Collection<int, array{loc: string, lastmod: string, alternates: array<string, string>}> */
+  /** @return Collection<int, array{loc: string, lastmod: ?string, alternates: array<string, string>}> */
   private function buildEntries(Site $site): Collection
   {
     $enabledLocales = $site->enabledLocales()->orderByDesc('is_default')->orderBy('code')->get();
@@ -104,13 +104,14 @@ class SitemapGenerator
           return null;
         }
 
-        $updatedAt = $translation->updated_at && $translation->updated_at->greaterThan($page->updated_at)
-          ? $translation->updated_at
-          : $page->updated_at;
+        $updatedAt = collect([$page->updated_at, $translation->updated_at])
+          ->filter()
+          ->sortDesc()
+          ->first();
 
         return [
           'loc' => $url,
-          'lastmod' => $updatedAt->toAtomString(),
+          'lastmod' => $updatedAt?->toAtomString(),
           'alternates' => $alternates,
         ];
       })->filter()->all();
@@ -132,7 +133,7 @@ class SitemapGenerator
       && ! (is_string($redirect) && trim($redirect) !== '');
   }
 
-  /** @param Collection<int, array{loc: string, lastmod: string, alternates: array<string, string>}> $entries */
+  /** @param Collection<int, array{loc: string, lastmod: ?string, alternates: array<string, string>}> $entries */
   private function urlset(Collection $entries): string
   {
     $body = $entries->map(function (array $entry): string {
@@ -143,7 +144,7 @@ class SitemapGenerator
 
       return '  <url>'
         ."\n    <loc>".$this->escape($entry['loc']).'</loc>'
-        ."\n    <lastmod>".$this->escape($entry['lastmod']).'</lastmod>'
+        .($entry['lastmod'] === null ? '' : "\n    <lastmod>".$this->escape($entry['lastmod']).'</lastmod>')
         .$alternateXml
         ."\n  </url>";
     })->implode("\n");

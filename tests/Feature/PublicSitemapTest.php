@@ -55,6 +55,21 @@ class PublicSitemapTest extends TestCase
   }
 
   #[Test]
+  public function pages_without_timestamps_are_listed_without_an_optional_lastmod(): void
+  {
+    $site = $this->site('legacy.test', true);
+    $page = $this->page($site, 'legacy', Page::STATUS_PUBLISHED);
+    $page->translations()->update(['updated_at' => null]);
+    Page::query()->whereKey($page->id)->update(['updated_at' => null]);
+
+    $response = $this->get('https://legacy.test/sitemap.xml');
+
+    $response->assertOk()
+      ->assertSee('<loc>https://legacy.test/legacy</loc>', false)
+      ->assertDontSee('<lastmod>', false);
+  }
+
+  #[Test]
   public function request_host_selects_the_site_and_localized_urls_share_renderer_alternates(): void
   {
     $first = $this->site('first.test', true);
