@@ -10,8 +10,21 @@ class PackageReleaseToolingTest extends TestCase
   {
     $composer = json_decode((string) file_get_contents(__DIR__.'/../../composer.json'), true, 512, JSON_THROW_ON_ERROR);
 
+    $this->assertSame('scripts/release/push.sh', $composer['scripts']['release:push'] ?? null);
     $this->assertSame('scripts/release/prepare.sh', $composer['scripts']['release:prepare'] ?? null);
     $this->assertSame('scripts/release/publish-update.sh', $composer['scripts']['release:publish-update'] ?? null);
+  }
+
+  public function test_release_push_runs_pre_push_gates_once_and_verifies_both_remotes(): void
+  {
+    $push = (string) file_get_contents(__DIR__.'/../../scripts/release/push.sh');
+
+    $this->assertSame(1, substr_count($push, 'git push "${PRIMARY_REMOTE}"'));
+    $this->assertSame(1, substr_count($push, 'git push --no-verify "${BACKUP_REMOTE}"'));
+    $this->assertStringContainsString('refs/heads/${BRANCH}:refs/heads/${BRANCH}', $push);
+    $this->assertStringContainsString('refs/tags/${TAG_NAME}:refs/tags/${TAG_NAME}', $push);
+    $this->assertStringContainsString('for remote in "${PRIMARY_REMOTE}" "${BACKUP_REMOTE}"', $push);
+    $this->assertStringContainsString('git ls-remote', $push);
   }
 
   public function test_release_scripts_use_canonical_root_and_testbench_without_legacy_paths(): void

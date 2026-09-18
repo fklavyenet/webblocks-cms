@@ -85,10 +85,13 @@ GitHub Actions does not create release packages or publish update metadata; the 
 Maintainer commands:
 
 ```bash
+composer release:push
 composer release:prepare
 composer release:publish-update -- --dry-run
 composer release:publish-update
 ```
+
+`release:push` pushes the current release branch and annotated version tag to `origin` together, running the repository pre-push gates once. Only after that succeeds does it mirror those exact refs to `backup` with `--no-verify`; it then compares the branch and peeled tag commit on both remotes with the local release commit.
 
 Maintainer publishing uses `WEBBLOCKS_PUBLISHER_TOKEN` and, for signed releases, `WEBBLOCKS_PUBLISHER_SIGNING_KEY`. Installed CMS update checks use product defaults for `https://publisher.webblocksui.com`, product `webblocks-cms`, channel `stable`, and read path `/api/updates/latest`; maintainer publishing uses the same product-owned identity and publish path `/api/updates/publish`. The Composer publishing wrapper reads only these two Publisher secrets from the package project's `.env` and exports them to the isolated Testbench publishing process, while cached-config publish runs also refresh the same keys from the project `.env`; no manual shell export is required. Dry-run validates the signing key as well as artifact inputs without uploading. A real publish without a token reports a controlled non-published state, exits unsuccessfully, and must not be treated as a release publication.
 
