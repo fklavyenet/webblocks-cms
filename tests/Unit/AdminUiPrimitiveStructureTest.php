@@ -70,4 +70,16 @@ class AdminUiPrimitiveStructureTest extends TestCase
             }
         }
     }
+
+    #[Test]
+    public function plugin_detail_uses_table_based_sections_and_page_header_actions(): void
+    {
+        $view = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/system/plugins/show.blade.php');
+
+        $this->assertStringContainsString("'actions' => \$pageActions", $view);
+        $this->assertStringContainsString("@disabled(! \$plugin['migrations_pending'])", $view);
+        $this->assertStringNotContainsString('<div class="wb-grid wb-grid-2">', $view);
+        $this->assertSame(3, substr_count($view, '<details class="wb-card">'));
+        $this->assertGreaterThanOrEqual(4, substr_count($view, '<table class="wb-table">'));
+    }
 }

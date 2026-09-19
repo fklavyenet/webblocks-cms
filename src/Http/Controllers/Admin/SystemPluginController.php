@@ -306,6 +306,17 @@ class SystemPluginController extends Controller
     }
 
     $setupRequired = $enabled && ($health['status'] ?? null) === 'warning' && str_contains((string) ($health['message'] ?? ''), 'Setup required');
+    $hasMigrations = count($definition->migrationPaths()) > 0;
+    $migrationsPending = false;
+
+    if ($manual && $enabled && $compatible && $filesAvailable && $hasMigrations) {
+      try {
+        $migrationsPending = $setupRequired || $this->migrationRunner->hasPendingMigrations($definition);
+      } catch (RuntimeException) {
+        // Keep setup actionable so its normal error path can explain invalid migration declarations.
+        $migrationsPending = true;
+      }
+    }
     $lifecycleLabel = match (true) {
       ! $filesAvailable => 'Missing files',
       ! $compatible => 'Incompatible',
@@ -323,7 +334,8 @@ class SystemPluginController extends Controller
       'can_enable' => $manual && ! $enabled && $compatible && $filesAvailable,
       'can_disable' => $manual && $enabled,
       'can_uninstall' => $manual,
-      'can_setup' => $manual && $enabled && $compatible && $filesAvailable && count($definition->migrationPaths()) > 0,
+      'can_setup' => $manual && $enabled && $compatible && $filesAvailable && $hasMigrations,
+      'migrations_pending' => $migrationsPending,
       'setup_required' => $setupRequired,
       'settings' => $settings?->toArray(),
       'settings_route' => $settingsRoute,

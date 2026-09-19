@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.87.8
+
+- Simplify plugin detail pages around a compact table-based summary, prominent lifecycle actions, and a consistent page-header “Back to Plugins” button.
+- Present Capabilities and Technical Details as separate table-based accordions, omit empty settings surfaces, and keep health-check details compact until operators need them.
+- Disable the plugin migration action when every declared migration is recorded, and automatically make it actionable again when a plugin update adds a migration or setup repair is required.
+
 ## 1.87.7
 
 - Rebuild sitemap entries when an older deployment's serialized cache object can no longer be restored, and cache plain entry arrays so deployments do not return a server error from stale framework objects.

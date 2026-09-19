@@ -22,96 +22,96 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $plugin['label'], 'heading' => $plugin['label']])
 
 @section('content')
+    @php(ob_start())
+    <div class="wb-cluster wb-cluster-2">
+        <a href="{{ route('admin.system.plugins.index') }}" class="wb-btn wb-btn-secondary">
+            <i class="wb-icon wb-icon-arrow-left" aria-hidden="true"></i>
+            {{ $adminText('back_to_plugins') }}
+        </a>
+
+        @if ($plugin['settings_url'])
+            <a class="wb-btn wb-btn-primary" href="{{ $plugin['settings_url'] }}">
+                <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
+                {{ $adminText('open_settings') }}
+            </a>
+        @endif
+
+        @if ($plugin['can_enable'])
+            <form method="POST" action="{{ route('admin.system.plugins.enable', $plugin['handle']) }}">
+                @csrf
+                <button type="submit" class="wb-btn wb-btn-primary">
+                    <i class="wb-icon wb-icon-play" aria-hidden="true"></i>
+                    {{ $adminText('enable_plugin') }}
+                </button>
+            </form>
+        @endif
+
+        @if ($plugin['can_disable'])
+            <form method="POST" action="{{ route('admin.system.plugins.disable', $plugin['handle']) }}">
+                @csrf
+                <button type="submit" class="wb-btn wb-btn-secondary">
+                    <i class="wb-icon wb-icon-pause" aria-hidden="true"></i>
+                    {{ $adminText('disable_plugin') }}
+                </button>
+            </form>
+        @endif
+
+        @if ($plugin['can_setup'])
+            <form method="POST" action="{{ route('admin.system.plugins.setup', $plugin['handle']) }}">
+                @csrf
+                <button type="submit" class="wb-btn {{ $plugin['migrations_pending'] ? 'wb-btn-primary' : 'wb-btn-secondary' }}" @disabled(! $plugin['migrations_pending'])>
+                    <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
+                    {{ $plugin['migrations_pending'] ? $adminText('run_plugin_migrations') : $adminText('migrations_up_to_date') }}
+                </button>
+            </form>
+        @endif
+    </div>
+    @php($pageActions = ob_get_clean())
+
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $plugin['label'],
         'description' => $plugin['description'] ?? $adminText('description'),
+        'actions' => $pageActions,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <p><a href="{{ route('admin.system.plugins.index') }}">{{ $adminText('back_to_plugins') }}</a></p>
-
-    <div class="wb-grid wb-grid-2 wb-gap-4">
-        <div class="wb-card">
-            <div class="wb-card-header">
-                <strong>{{ $adminText('overview') }}</strong>
-            </div>
-
-            <div class="wb-card-body wb-stack wb-gap-3">
-                <div>
-                    <strong>{{ $plugin['label'] }}</strong>
-                    <div class="wb-text-sm wb-text-muted"><code>{{ $plugin['handle'] }}</code></div>
-                </div>
-                <div>{{ $plugin['description'] ?? $adminText('no_description') }}</div>
-                <div class="wb-grid wb-grid-2">
-                    <div>
-                        <strong>{{ $adminText('version') }}</strong>
-                        <div>{{ $plugin['version'] ?? $adminText('not_declared') }}</div>
-                    </div>
-                    <div>
-                        <strong>{{ $adminText('source') }}</strong>
-                        <div>{{ $plugin['source'] }}</div>
-                    </div>
-                </div>
-            </div>
+    <div class="wb-card">
+        <div class="wb-card-header">
+            <strong>{{ $adminText('overview') }}</strong>
         </div>
-
-        <div class="wb-card">
-            <div class="wb-card-header">
-                <strong>{{ $adminText('lifecycle') }}</strong>
-            </div>
-
-            <div class="wb-card-body wb-stack wb-gap-3">
-                <div>
-                    <span class="wb-status {{ $statusClass }}">{{ $plugin['lifecycle_label'] }}</span>
-                    @if (! $plugin['compatible'])
-                        <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
-                    @elseif ($plugin['setup_required'])
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('setup_required_help') }}</div>
-                    @elseif (! $plugin['enabled'])
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('disabled_help') }}</div>
-                    @endif
-                </div>
-
-                <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                    @if ($plugin['can_enable'])
-                        <form method="POST" action="{{ route('admin.system.plugins.enable', $plugin['handle']) }}">
-                            @csrf
-                            <button type="submit" class="wb-btn wb-btn-primary">
-                                <i class="wb-icon wb-icon-play" aria-hidden="true"></i>
-                                {{ $adminText('enable_plugin') }}
-                            </button>
-                        </form>
-                    @endif
-
-                    @if ($plugin['can_disable'])
-                        <form method="POST" action="{{ route('admin.system.plugins.disable', $plugin['handle']) }}">
-                            @csrf
-                            <button type="submit" class="wb-btn wb-btn-secondary">
-                                <i class="wb-icon wb-icon-pause" aria-hidden="true"></i>
-                                {{ $adminText('disable_plugin') }}
-                            </button>
-                        </form>
-                    @endif
-
-                    @if ($plugin['can_setup'])
-                        <form method="POST" action="{{ route('admin.system.plugins.setup', $plugin['handle']) }}">
-                            @csrf
-                            <button type="submit" class="wb-btn {{ $plugin['setup_required'] ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
-                                <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
-                                {{ $adminText('run_plugin_migrations') }}
-                            </button>
-                        </form>
-                    @endif
-                </div>
+        <div class="wb-card-body">
+            <div class="wb-table-wrap">
+                <table class="wb-table">
+                    <tbody>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('handle') }}</th><td><code>{{ $plugin['handle'] }}</code></td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('version') }}</th><td>{{ $plugin['version'] ?? $adminText('not_declared') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('source') }}</th><td>{{ $plugin['source'] }}</td></tr>
+                    <tr>
+                        <th scope="row" class="wb-table-key">{{ $adminText('lifecycle') }}</th>
+                        <td>
+                            <span class="wb-status {{ $statusClass }}">{{ $plugin['lifecycle_label'] }}</span>
+                            @if (! $plugin['compatible'])
+                                <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
+                            @elseif ($plugin['setup_required'])
+                                <div class="wb-text-sm wb-text-muted">{{ $adminText('setup_required_help') }}</div>
+                            @elseif (! $plugin['enabled'])
+                                <div class="wb-text-sm wb-text-muted">{{ $adminText('disabled_help') }}</div>
+                            @endif
+                        </td>
+                    </tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('health') }}</th><td><span class="wb-status {{ $healthClass }}">{{ $plugin['health']['status'] === 'inactive' ? $adminText('inactive') : ucfirst($plugin['health']['status']) }}</span> {{ $plugin['health']['message'] !== '' ? $plugin['health']['message'] : $adminText('no_health_details') }}</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <div class="wb-card">
-        <div class="wb-card-header">
+    <details class="wb-card">
+        <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <strong>{{ $adminText('capabilities') }}</strong>
-        </div>
+            <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
+        </summary>
 
         <div class="wb-card-body">
             <div class="wb-table-wrap">
@@ -130,7 +130,7 @@
                 </table>
             </div>
         </div>
-    </div>
+    </details>
 
     <details class="wb-card">
         <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
@@ -139,89 +139,58 @@
         </summary>
 
         <div class="wb-card-body">
-            <div class="wb-grid wb-grid-2">
-                <div>
-                    <strong>{{ $adminText('provider') }}</strong>
-                    <div>{{ $plugin['provider'] ?? $adminText('not_declared') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('required_cms') }}</strong>
-                    <div>{{ $plugin['required_cms_version'] ?? $adminText('not_declared') }}</div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('requires') }}</strong>
-                    <div>
+            <div class="wb-table-wrap">
+                <table class="wb-table">
+                    <tbody>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('provider') }}</th><td>{{ $plugin['provider'] ?? $adminText('not_declared') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('required_cms') }}</th><td>{{ $plugin['required_cms_version'] ?? $adminText('not_declared') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('requires') }}</th><td>
                         @forelse ($plugin['requires'] ?? [] as $requirement => $constraint)
                             <div><code>{{ $requirement }}</code> {{ $constraint }}</div>
                         @empty
                             {{ $adminText('not_declared') }}
                         @endforelse
-                    </div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('settings_namespace') }}</strong>
-                    <div><code>{{ $plugin['settings_namespace'] }}</code></div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('database_prefix') }}</strong>
-                    <div><code>{{ $plugin['database_prefix'] }}</code></div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('route_namespace') }}</strong>
-                    <div><code>{{ $plugin['route_name_prefix'] }}</code></div>
-                </div>
-                <div>
-                    <strong>{{ $adminText('install_path') }}</strong>
-                    <div>{{ $plugin['install_path'] ?? $adminText('not_installed_manual') }}</div>
-                </div>
+                    </td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('settings_namespace') }}</th><td><code>{{ $plugin['settings_namespace'] }}</code></td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('database_prefix') }}</th><td><code>{{ $plugin['database_prefix'] }}</code></td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('route_namespace') }}</th><td><code>{{ $plugin['route_name_prefix'] }}</code></td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('install_path') }}</th><td>{{ $plugin['install_path'] ?? $adminText('not_installed_manual') }}</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </details>
 
-    <div class="wb-grid wb-grid-2 wb-gap-4">
+    @if ($plugin['settings'])
         <div class="wb-card">
             <div class="wb-card-header">
                 <strong>{{ $adminText('settings') }}</strong>
             </div>
 
             <div class="wb-card-body">
-                @if ($plugin['settings'])
-                    <p>{{ $plugin['settings']['description'] ?? $adminText('settings_surface_declared') }}</p>
-                    <div><strong>{{ $adminText('route_label') }}</strong> {{ $plugin['settings_route'] ?? $adminText('available_after_enabling') }}</div>
-                @else
-                    <div class="wb-empty">
-                        <div class="wb-empty-title">{{ $adminText('no_settings_declared') }}</div>
-                        <div class="wb-empty-text">{{ $adminText('no_settings_help') }}</div>
-                    </div>
-                @endif
+                <div class="wb-table-wrap"><table class="wb-table"><tbody>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('description_label') }}</th><td>{{ $plugin['settings']['description'] ?? $adminText('settings_surface_declared') }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ $adminText('route_label') }}</th><td>{{ $plugin['settings_route'] ?? $adminText('available_after_enabling') }}</td></tr>
+                </tbody></table></div>
             </div>
-            @if ($plugin['settings_url'])
-                <div class="wb-card-footer">
-                    <a class="wb-btn wb-btn-secondary" href="{{ $plugin['settings_url'] }}">
-                        <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
-                        {{ $adminText('open_settings') }}
-                    </a>
-                </div>
-            @endif
         </div>
+    @endif
 
-        <div class="wb-card">
-            <div class="wb-card-header">
+    @if (($plugin['health']['checks'] ?? []) !== [])
+        <details class="wb-card">
+            <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
                 <strong>{{ $adminText('health') }}</strong>
-            </div>
+                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
+            </summary>
 
             <div class="wb-card-body wb-stack wb-gap-2">
-                <div>
-                    <span class="wb-status {{ $healthClass }}">{{ $plugin['health']['status'] === 'inactive' ? $adminText('inactive') : ucfirst($plugin['health']['status']) }}</span>
-                </div>
-                <div>{{ $plugin['health']['message'] !== '' ? $plugin['health']['message'] : $adminText('no_health_details') }}</div>
                 @include('webblocks-cms::admin.system.plugins.partials.health-checks', [
                     'health' => $plugin['health'],
                     'healthText' => static fn (string $key) => $adminText('health_'.$key),
                 ])
             </div>
-        </div>
-    </div>
+        </details>
+    @endif
 
     @if ($plugin['can_uninstall'])
         <div class="wb-card">

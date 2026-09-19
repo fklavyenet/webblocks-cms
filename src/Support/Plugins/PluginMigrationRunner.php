@@ -9,17 +9,33 @@ use Throwable;
 
 class PluginMigrationRunner
 {
+  public function hasPendingMigrations(PluginDefinition $plugin): bool
+  {
+    $paths = $this->resolvedMigrationPaths($plugin);
+
+    if ($paths === [] || ! DB::getSchemaBuilder()->hasTable('migrations')) {
+      return $paths !== [];
+    }
+
+    $declared = $this->migrationNames($paths);
+
+    if ($declared === []) {
+      return false;
+    }
+
+    $recorded = DB::table('migrations')
+      ->whereIn('migration', $declared)
+      ->pluck('migration')
+      ->all();
+
+    return array_diff($declared, $recorded) !== [];
+  }
+
   /**
    * @return array{ran: bool, paths: array<int, string>, message: string}
    */
   public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false): array
   {
-    $installPath = $plugin->installPathValue();
-
-    if ($installPath === null || ! is_dir($installPath)) {
-      throw new RuntimeException('Plugin install path is not available.');
-    }
-
     if ($plugin->migrationPaths() === []) {
       return [
         'ran' => false,
@@ -28,29 +44,8 @@ class PluginMigrationRunner
       ];
     }
 
-    $root = realpath($installPath);
-
-    if ($root === false) {
-      throw new RuntimeException('Plugin install path is not available.');
-    }
-
-    $paths = [];
-
-    foreach ($plugin->migrationPaths() as $path) {
-      $resolved = realpath($root.DIRECTORY_SEPARATOR.$path);
-
-      if ($resolved === false || ! is_dir($resolved)) {
-        throw new RuntimeException('Declared plugin migration path is not available.');
-      }
-
-      $resolved = rtrim($resolved, DIRECTORY_SEPARATOR);
-
-      if ($resolved !== $root && ! str_starts_with($resolved, $root.DIRECTORY_SEPARATOR)) {
-        throw new RuntimeException('Declared plugin migration path is outside the plugin install path.');
-      }
-
-      $paths[] = $resolved;
-    }
+    $paths = $this->resolvedMigrationPaths($plugin);
+    $root = (string) realpath((string) $plugin->installPathValue());
 
     try {
       if ($repairRecordedMigrations) {
@@ -91,6 +86,57 @@ class PluginMigrationRunner
       return;
     }
 
+    $migrations = $this->migrationNames($paths);
+
+    if ($migrations !== []) {
+      DB::table('migrations')->whereIn('migration', array_values(array_unique($migrations)))->delete();
+    }
+  }
+
+  /**
+   * @return array<int, string>
+   */
+  private function resolvedMigrationPaths(PluginDefinition $plugin): array
+  {
+    $installPath = $plugin->installPathValue();
+
+    if ($installPath === null || ! is_dir($installPath)) {
+      throw new RuntimeException('Plugin install path is not available.');
+    }
+
+    $root = realpath($installPath);
+
+    if ($root === false) {
+      throw new RuntimeException('Plugin install path is not available.');
+    }
+
+    $paths = [];
+
+    foreach ($plugin->migrationPaths() as $path) {
+      $resolved = realpath($root.DIRECTORY_SEPARATOR.$path);
+
+      if ($resolved === false || ! is_dir($resolved)) {
+        throw new RuntimeException('Declared plugin migration path is not available.');
+      }
+
+      $resolved = rtrim($resolved, DIRECTORY_SEPARATOR);
+
+      if ($resolved !== $root && ! str_starts_with($resolved, $root.DIRECTORY_SEPARATOR)) {
+        throw new RuntimeException('Declared plugin migration path is outside the plugin install path.');
+      }
+
+      $paths[] = $resolved;
+    }
+
+    return $paths;
+  }
+
+  /**
+   * @param  array<int, string>  $paths
+   * @return array<int, string>
+   */
+  private function migrationNames(array $paths): array
+  {
     $migrations = [];
 
     foreach ($paths as $path) {
@@ -99,8 +145,6 @@ class PluginMigrationRunner
       }
     }
 
-    if ($migrations !== []) {
-      DB::table('migrations')->whereIn('migration', array_values(array_unique($migrations)))->delete();
-    }
+    return array_values(array_unique($migrations));
   }
 }
