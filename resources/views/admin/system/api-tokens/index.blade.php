@@ -90,25 +90,6 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
         </section>
     @endif
 
-    <section class="wb-card">
-        <div class="wb-card-header">
-            <strong>{{ $adminText('quick_start') }}</strong>
-        </div>
-        <div class="wb-card-body wb-stack wb-gap-3">
-            <div class="wb-grid wb-grid-2 wb-gap-3">
-                <div class="wb-stack wb-gap-1">
-                    <span class="wb-text-sm wb-text-muted">{{ $adminText('api_base_url') }}</span>
-                    <code>/webadmin/api</code>
-                </div>
-                <div class="wb-stack wb-gap-1">
-                    <span class="wb-text-sm wb-text-muted">{{ $adminText('first_request') }}</span>
-                    <code>{{ $adminText('discovery_request') }}</code>
-                </div>
-            </div>
-            <div class="wb-text-sm wb-text-muted">{{ $adminText('quick_start_help') }}</div>
-        </div>
-    </section>
-
     <div class="wb-card">
         <div class="wb-card-header">
             <strong>{{ $adminText('create_token') }}</strong>
@@ -122,6 +103,20 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
         <form method="POST" action="{{ route('admin.system.api-tokens.store') }}">
             @csrf
             <div class="wb-card-body wb-stack wb-gap-4">
+                <div class="wb-stack wb-gap-3">
+                    <div class="wb-grid wb-grid-2 wb-gap-3">
+                        <div class="wb-stack wb-gap-1">
+                            <span class="wb-text-sm wb-text-muted">{{ $adminText('api_base_url') }}</span>
+                            <code>/webadmin/api</code>
+                        </div>
+                        <div class="wb-stack wb-gap-1">
+                            <span class="wb-text-sm wb-text-muted">{{ $adminText('first_request') }}</span>
+                            <code>{{ $adminText('discovery_request') }}</code>
+                        </div>
+                    </div>
+                    <div class="wb-text-sm wb-text-muted">{{ $adminText('quick_start_help') }}</div>
+                </div>
+
                 <div class="wb-field">
                     <label class="wb-label" for="api_token_name">{{ $adminText('name') }}</label>
                     <input id="api_token_name" name="name" type="text" class="wb-input" value="{{ old('name') }}" placeholder="{{ $adminText('name_placeholder') }}" required maxlength="120">

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.9
+
+- Fold API discovery guidance into the Create Token card so the CMS API Tokens page presents one focused token-creation flow instead of a separate quick-start card.
+
 ## 1.87.8
 
 - Simplify plugin detail pages around a compact table-based summary, prominent lifecycle actions, and a consistent page-header “Back to Plugins” button.

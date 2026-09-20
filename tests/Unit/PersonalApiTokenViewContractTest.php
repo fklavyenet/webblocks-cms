@@ -36,6 +36,18 @@ class PersonalApiTokenViewContractTest extends TestCase
   }
 
   #[Test]
+  public function system_token_discovery_guidance_is_part_of_the_create_form_card(): void
+  {
+    $source = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/system/api-tokens/index.blade.php');
+    $formPosition = strpos($source, 'route(\'admin.system.api-tokens.store\')');
+    $guidancePosition = strpos($source, "\$adminText('api_base_url')", $formPosition);
+
+    $this->assertNotFalse($formPosition);
+    $this->assertNotFalse($guidancePosition);
+    $this->assertStringNotContainsString("<strong>{{ \$adminText('quick_start') }}</strong>", $source);
+  }
+
+  #[Test]
   public function token_copy_feedback_is_rendered_beside_each_copy_button(): void
   {
     $systemView = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/system/api-tokens/index.blade.php');
