@@ -712,6 +712,32 @@ input.wb-admin-table-grid-input:focus {
     min-height: 1.25rem;
 }
 
+.wb-media-variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: var(--wb-space-3);
+}
+
+.wb-media-variant-card {
+    min-width: 0;
+}
+
+.wb-media-variant-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 12rem;
+    height: 12rem;
+    overflow: hidden;
+}
+
+.wb-media-variant-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 .wb-media-usage-list {
     max-height: 18rem;
     overflow: auto;

@@ -168,17 +168,23 @@
                         <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('regenerate_variants') }}</button>
                     </form>
                 </div>
-                <div class="wb-card-body wb-grid wb-grid-auto wb-gap-3">
+                <div class="wb-card-body wb-media-variant-grid">
                     @foreach ($transformVariants as $variant)
-                        <div class="wb-stack wb-gap-2">
-                            @if ($variant['available'])
-                                <img src="{{ $variant['url'] }}" alt="{{ $asset->thumbnailLabel() }}" loading="lazy">
-                            @else
-                                <span class="wb-alert wb-alert-info">{{ $adminText('not_generated_yet') }}</span>
-                            @endif
-                            <strong>{{ ucfirst($variant['name']) }}</strong>
-                            <span class="wb-text-sm wb-text-muted">{{ $variant['width'] }}@if($variant['height']) × {{ $variant['height'] }}@endif · {{ ucfirst($variant['fit']) }}</span>
-                        </div>
+                        <article class="wb-card wb-card-muted wb-media-variant-card">
+                            <div class="wb-card-header">
+                                <strong>{{ str($variant['name'])->headline() }}</strong>
+                            </div>
+                            <div class="wb-card-body wb-media-variant-preview">
+                                @if ($variant['available'])
+                                    <img src="{{ $variant['url'] }}" alt="{{ $asset->thumbnailLabel() }}" loading="lazy">
+                                @else
+                                    <span class="wb-text-sm wb-text-muted">{{ $adminText('not_generated_yet') }}</span>
+                                @endif
+                            </div>
+                            <div class="wb-card-footer wb-text-sm wb-text-muted">
+                                {{ $variant['width'] }}@if($variant['height']) × {{ $variant['height'] }}@endif · {{ ucfirst($variant['fit']) }}
+                            </div>
+                        </article>
                     @endforeach
                 </div>
             </section>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.11
+
+- Present every generated image variant in a consistent responsive card with a named header, fixed-size contained preview or clear not-generated state, and resolution/fit metadata in the footer.
+
 ## 1.87.10
 
 - Merge duplicate Media Library folder trees created by repeated site imports while preserving every media assignment, so folder filters and the Create Folder parent selector show each folder once.
