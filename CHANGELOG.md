@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.12
+
+- Separate Image Variant cards with the native WebBlocks UI responsive auto-grid and gap primitive, restoring consistent horizontal and vertical spacing at every viewport size.
+
 ## 1.87.11
 
 - Present every generated image variant in a consistent responsive card with a named header, fixed-size contained preview or clear not-generated state, and resolution/fit metadata in the footer.

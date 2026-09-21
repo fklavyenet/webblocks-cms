@@ -168,7 +168,7 @@
                         <button type="submit" class="wb-btn wb-btn-secondary">{{ $adminText('regenerate_variants') }}</button>
                     </form>
                 </div>
-                <div class="wb-card-body wb-media-variant-grid">
+                <div class="wb-card-body wb-grid-auto wb-grid-auto-sm wb-gap-3">
                     @foreach ($transformVariants as $variant)
                         <article class="wb-card wb-card-muted wb-media-variant-card">
                             <div class="wb-card-header">

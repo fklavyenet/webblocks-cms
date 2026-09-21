@@ -712,12 +712,6 @@ input.wb-admin-table-grid-input:focus {
     min-height: 1.25rem;
 }
 
-.wb-media-variant-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-    gap: var(--wb-space-3);
-}
-
 .wb-media-variant-card {
     min-width: 0;
 }
