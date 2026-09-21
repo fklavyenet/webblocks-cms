@@ -752,26 +752,44 @@ class ImportDataMapper
 
   private function importAssetFolders(array $payload, array &$output): array
   {
-    $folders = $payload['media_folders'] ?? [];
+    $folders = collect($payload['media_folders'] ?? [])->keyBy('id');
     $map = [];
 
-    foreach ($folders as $folderData) {
-      $folder = MediaFolder::query()->create([
-        'parent_id' => null,
-        'name' => $folderData['name'] ?? 'Imported Folder',
-        'slug' => $folderData['slug'] ?? Str::slug((string) ($folderData['name'] ?? 'imported-folder')),
-      ]);
-
-      $map[(int) $folderData['id']] = $folder->id;
-    }
-
-    foreach ($folders as $folderData) {
-      $newFolderId = $map[(int) $folderData['id']] ?? null;
-      $newParentId = $map[(int) ($folderData['parent_id'] ?? 0)] ?? null;
-
-      if ($newFolderId) {
-        MediaFolder::query()->whereKey($newFolderId)->update(['parent_id' => $newParentId]);
+    $resolveFolder = function (int $sourceId) use (&$resolveFolder, $folders, &$map): ?int {
+      if (array_key_exists($sourceId, $map)) {
+        return $map[$sourceId];
       }
+
+      $folderData = $folders->get($sourceId);
+      if (! is_array($folderData)) {
+        return null;
+      }
+
+      // Media folders are shared across sites. Reuse an existing sibling on
+      // import so importing another site cannot duplicate the global folder
+      // tree shown by the Media screen and its parent-folder selectors.
+      $parentId = isset($folderData['parent_id'])
+        ? $resolveFolder((int) $folderData['parent_id'])
+        : null;
+      $name = trim((string) ($folderData['name'] ?? 'Imported Folder'));
+      $folder = MediaFolder::query()
+        ->where('parent_id', $parentId)
+        ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+        ->first();
+
+      if (! $folder) {
+        $folder = MediaFolder::query()->create([
+          'parent_id' => $parentId,
+          'name' => $name,
+          'slug' => $folderData['slug'] ?? Str::slug($name),
+        ]);
+      }
+
+      return $map[$sourceId] = $folder->id;
+    };
+
+    foreach ($folders->keys() as $sourceId) {
+      $resolveFolder((int) $sourceId);
     }
 
     if ($map !== []) {

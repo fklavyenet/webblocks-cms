@@ -3120,6 +3120,7 @@ return [
     'remote_url_help' => 'Only public HTTP or HTTPS files are fetched. Private network targets are blocked.',
     'fetch_media' => 'Fetch media',
     'create_folder' => 'Create Folder',
+    'folder_name_exists' => 'A folder with this name already exists here.',
     'create_folder_help' => 'Organize shared assets into compact folders.',
     'name' => 'Name',
     'slug' => 'Slug',

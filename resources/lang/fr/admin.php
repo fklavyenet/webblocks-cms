@@ -2903,6 +2903,7 @@ $translations = [
     'remote_url_help' => 'Seuls les fichiers publics HTTP ou HTTPS sont récupérés. Les cibles sur réseau privé sont bloquées.',
     'fetch_media' => 'Récupérer le média',
     'create_folder' => 'Créer un dossier',
+    'folder_name_exists' => 'Un dossier portant ce nom existe déjà à cet emplacement.',
     'create_folder_help' => 'Organisez les ressources partagées dans des dossiers compacts.',
     'name' => 'Nom',
     'slug' => 'Identifiant',

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.10
+
+- Merge duplicate Media Library folder trees created by repeated site imports while preserving every media assignment, so folder filters and the Create Folder parent selector show each folder once.
+- Reuse shared media folders during future site imports and prevent operators from creating a same-named sibling folder from the Media screen.
+
 ## 1.87.9
 
 - Fold API discovery guidance into the Create Token card so the CMS API Tokens page presents one focused token-creation flow instead of a separate quick-start card.

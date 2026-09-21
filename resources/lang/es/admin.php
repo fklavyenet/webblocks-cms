@@ -2903,6 +2903,7 @@ $translations = [
     'remote_url_help' => 'Solo se obtienen archivos públicos HTTP o HTTPS. Los destinos de redes privadas están bloqueados.',
     'fetch_media' => 'Obtener medio',
     'create_folder' => 'Crear carpeta',
+    'folder_name_exists' => 'Ya existe una carpeta con este nombre en esta ubicación.',
     'create_folder_help' => 'Organiza los recursos compartidos en carpetas compactas.',
     'name' => 'Nombre',
     'slug' => 'Slug',

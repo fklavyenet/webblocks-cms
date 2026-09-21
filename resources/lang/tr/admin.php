@@ -2918,6 +2918,7 @@ $translations = [
     'remote_url_help' => 'Yalnızca herkese açık HTTP veya HTTPS dosyaları getirilir. Özel ağ hedefleri engellenir.',
     'fetch_media' => 'Medyayi getir',
     'create_folder' => 'Klasör Oluştur',
+    'folder_name_exists' => 'Bu konumda aynı ada sahip bir klasör zaten var.',
     'create_folder_help' => 'Ortak varlıkları kompakt klasorler halinde düzenleyin.',
     'name' => 'Ad',
     'slug' => 'Slug',

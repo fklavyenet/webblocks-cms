@@ -276,7 +276,20 @@ class MediaController extends Controller
 
   public function storeFolder(MediaFolderRequest $request): RedirectResponse
   {
-    $folder = MediaFolder::create($request->validated());
+    $data = $request->validated();
+    $name = trim($data['name']);
+    $existing = MediaFolder::query()
+      ->where('parent_id', $data['parent_id'] ?? null)
+      ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+      ->first();
+
+    if ($existing) {
+      return back()
+        ->withInput()
+        ->withErrors(['name' => __('webblocks-cms::admin.media_index.folder_name_exists')]);
+    }
+
+    $folder = MediaFolder::create([...$data, 'name' => $name]);
 
     return redirect()
       ->route('admin.media.index', ['folder_id' => $folder->id])

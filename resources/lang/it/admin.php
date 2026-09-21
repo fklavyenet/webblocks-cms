@@ -2902,6 +2902,7 @@ $translations = [
     'remote_url_help' => 'Vengono recuperati solo file HTTP o HTTPS pubblici. Le destinazioni di rete private sono bloccate.',
     'fetch_media' => 'Recupera media',
     'create_folder' => 'Crea cartella',
+    'folder_name_exists' => 'In questa posizione esiste già una cartella con questo nome.',
     'create_folder_help' => 'Organizza gli asset condivisi in cartelle compatte.',
     'name' => 'Nome',
     'slug' => 'Slug',

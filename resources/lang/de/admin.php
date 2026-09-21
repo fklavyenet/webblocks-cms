@@ -2905,6 +2905,7 @@ $translations = [
     'remote_url_help' => 'Nur öffentliche HTTP- oder HTTPS-Dateien werden abgerufen. Private Netzwerkziele werden blockiert.',
     'fetch_media' => 'Medien abrufen',
     'create_folder' => 'Ordner erstellen',
+    'folder_name_exists' => 'An diesem Ort ist bereits ein Ordner mit diesem Namen vorhanden.',
     'create_folder_help' => 'Organisieren Sie gemeinsame Assets in kompakten Ordnern.',
     'name' => 'Name',
     'slug' => 'Slug',
