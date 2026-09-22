@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.16
+
+- Register dynamic block-editor assets while the Edit Slot content section is being rendered, before layout script stacks are emitted, preserving the preload contract across supported Laravel and Testbench versions.
+
 ## 1.87.15
 
 - Keep dynamic block-editor asset coverage deterministic in the full CI suite by isolating Blade's per-request `@once` render state between simulated editor requests.

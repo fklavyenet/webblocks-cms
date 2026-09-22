@@ -12,6 +12,8 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
 
 @section('content')
+    @include('webblocks-cms::admin.blocks.partials.block-editor-assets')
+
     @php
         $slotBlockRoute = function (array $parameters = []) use ($sharedSlot, $activeLocale) {
             $resolved = $parameters;
@@ -125,8 +127,6 @@
         </div>
     </div>
 @endsection
-
-@include('webblocks-cms::admin.blocks.partials.block-editor-assets')
 
 @push('overlays')
     @include('webblocks-cms::admin.pages.partials.slot-block-picker', [
