@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.13
+
+- Show locale-resolved content previews in Edit Slot summaries for Rich Text, Plain Text, Code, Card, and other content-bearing blocks, so editors can identify the block they need without opening each one.
+
 ## 1.87.12
 
 - Separate Image Variant cards with the native WebBlocks UI responsive auto-grid and gap primitive, restoring consistent horizontal and vertical spacing at every viewport size.

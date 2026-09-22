@@ -32,9 +32,7 @@ class BlockAdminSummary
 
   public function primary(Block $block, int $maxLength = 80): string
   {
-    $preferred = $this->preferredPrimary($block);
-
-    return $this->truncate($preferred, $maxLength) ?? $this->label($block, $maxLength);
+    return $this->label($block, $maxLength);
   }
 
   public function summary(Block $block, int $maxLength = 120): ?string
@@ -68,30 +66,6 @@ class BlockAdminSummary
       'section', 'container', 'cluster', 'grid' => $this->layoutLines($block),
       default => $this->fallbackLines($block),
     };
-  }
-
-  private function preferredPrimary(Block $block): ?string
-  {
-    return match ($block->typeSlug()) {
-      'rich-text' => 'Rich Text',
-      'plain_text' => 'Plain Text',
-      'text' => 'Text',
-      'section', 'container', 'cluster', 'grid' => $this->sanitize($block->layoutAdminName()) ?? 'Layout wrapper',
-      'code' => $this->title($block) ?? $this->codeLanguage($block) ?? 'Code snippet',
-      default => $this->firstMeaningfulPrimary($block),
-    };
-  }
-
-  private function firstMeaningfulPrimary(Block $block): ?string
-  {
-    return collect([
-      $this->title($block),
-      $this->subtitle($block),
-      $this->sanitize($block->setting('label')),
-      $this->buttonUrl($block),
-      $this->linkListItemUrl($block),
-      $this->content($block),
-    ])->first(fn (?string $value) => $value !== null);
   }
 
   private function contentHeaderLines(Block $block): array
@@ -202,6 +176,13 @@ class BlockAdminSummary
 
     if ($value !== null && trim((string) $value) !== '') {
       return (string) $value;
+    }
+
+    // Slot editors pass locale-resolved block clones. A missing field on one of
+    // those clones is intentionally missing for that resolved locale; looking up
+    // the default translation again could produce a summary from another locale.
+    if ($block->getAttribute('resolved_locale_code') !== null) {
+      return null;
     }
 
     if ($block->translationFamily() !== 'text') {
