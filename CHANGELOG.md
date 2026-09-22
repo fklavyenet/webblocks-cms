@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.15
+
+- Keep dynamic block-editor asset coverage deterministic in the full CI suite by isolating Blade's per-request `@once` render state between simulated editor requests.
+
 ## 1.87.14
 
 - Initialize Rich Text, Table, Media, Gallery, Icon, repeated-item, and inline-block controls when an Edit Block modal is fetched dynamically, while carrying fragment-owned overlays into the active admin overlay root.

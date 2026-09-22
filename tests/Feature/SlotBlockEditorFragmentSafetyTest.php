@@ -87,6 +87,7 @@ namespace WebBlocks\Cms\Tests\Feature {
     public function page_slot_editor_preloads_rich_text_assets_for_dynamically_fetched_modals(): void
     {
       [$page, $slot] = $this->seedPageBlockContext();
+      view()->flushState();
 
       $response = $this->get(route('admin.pages.slots.blocks', [
         'page' => $page,
@@ -152,6 +153,7 @@ namespace WebBlocks\Cms\Tests\Feature {
     public function shared_slot_editor_preloads_rich_text_assets_for_dynamically_fetched_modals(): void
     {
       [$sharedSlot] = $this->seedSharedSlotBlockContext();
+      view()->flushState();
 
       $response = $this->get(route('admin.shared-slots.blocks.edit', [
         'shared_slot' => $sharedSlot,
