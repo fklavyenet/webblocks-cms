@@ -1,9 +1,5 @@
 (function () {
     function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
-    if (!document.querySelector('[data-wb-builder-items-editor]')) {
-        return;
-    }
-
     var admin = window.WebBlocksCmsAdmin || {};
     var escapeHtml = admin.escapeHtml || function (value) {
         return String(value || '');
@@ -122,9 +118,20 @@
         }
     }
 
-    document.querySelectorAll('[data-wb-builder-items-editor]').forEach(function (editor) {
-        syncBuilderItems(editor);
-    });
+    function initialize(context) {
+        var scope = context || document;
+        var editors = scope.matches && scope.matches('[data-wb-builder-items-editor]') ? [scope] : [];
+
+        if (scope.querySelectorAll) {
+            editors = editors.concat(Array.prototype.slice.call(scope.querySelectorAll('[data-wb-builder-items-editor]')));
+        }
+
+        editors.forEach(syncBuilderItems);
+    }
+
+    initialize(document);
+
+    window.WebBlocksCmsAdminBuilderItems = { init: initialize };
 
     document.addEventListener('admin-sortable-list:reordered', function (event) {
         var editor = event.target.closest('[data-wb-builder-items-editor]');

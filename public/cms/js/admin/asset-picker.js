@@ -1,9 +1,5 @@
 (function () {
     function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
-    if (!document.querySelector('[data-wb-asset-picker-panel]')) {
-        return;
-    }
-
     var admin = window.WebBlocksCmsAdmin || {};
     var escapeHtml = admin.escapeHtml || function (value) {
         return String(value || '');
@@ -541,7 +537,20 @@
         }
     }
 
-    document.querySelectorAll('[data-wb-asset-picker-panel]').forEach(initializePicker);
+    function initializePickers(context) {
+        var scope = context || document;
+        var pickers = scope.matches && scope.matches('[data-wb-asset-picker-panel]') ? [scope] : [];
+
+        if (scope.querySelectorAll) {
+            pickers = pickers.concat(Array.prototype.slice.call(scope.querySelectorAll('[data-wb-asset-picker-panel]')));
+        }
+
+        pickers.forEach(initializePicker);
+    }
+
+    initializePickers(document);
+
+    window.WebBlocksCmsAdminAssetPicker = { init: initializePickers };
 
     document.addEventListener('click', function (event) {
         var openButton = event.target.closest('[data-wb-picker-open]');

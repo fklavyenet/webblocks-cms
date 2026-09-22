@@ -27,7 +27,12 @@
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
-                    <h2 class="wb-modal-title" id="slot-block-editor-title">{{ $modalTitle }}</h2>
+                    <div class="wb-cluster wb-cluster-2">
+                        <h2 class="wb-modal-title" id="slot-block-editor-title">{{ $modalTitle }}</h2>
+                        @if ($isEditMode)
+                            <span class="wb-status-pill wb-status-info">#{{ $slotModalBlock->id }}</span>
+                        @endif
+                    </div>
                     <span class="wb-text-sm wb-text-muted">{{ $modalDescription }}</span>
                 </div>
 

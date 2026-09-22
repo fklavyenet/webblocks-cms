@@ -42,7 +42,7 @@
             ->values();
 @endphp
 
-@once
+@once('webblocks-builder-items-script')
     @push('admin-scripts')
         @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/builder-items.js'])
     @endpush

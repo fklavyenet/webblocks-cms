@@ -9,15 +9,7 @@
     $surfaceId = $inputId.'__surface';
 @endphp
 
-@once
-    @push('admin-scripts')
-        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/rich-text-editor.js'])
-    @endpush
-
-    @push('overlays')
-        @include('webblocks-cms::admin.blocks.types.partials.rich-text-link-modal')
-    @endpush
-@endonce
+@include('webblocks-cms::admin.blocks.types.partials.rich-text-editor-assets')
 
 <div class="wb-stack wb-gap-3">
     @if ($translationNotice)

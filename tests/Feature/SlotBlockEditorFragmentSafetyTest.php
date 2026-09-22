@@ -78,7 +78,25 @@ namespace WebBlocks\Cms\Tests\Feature {
 
       $this->assertSame($this->formContract($fullPage), $this->formContract($fragment));
       $fragment->assertSee('id="slot-block-editor-form"', false);
+      $fragment->assertSee('#'.$block->id);
+      $fragment->assertSee('data-wb-slot-block-fragment-overlays', false);
       $fragment->assertDontSee('data-wb-slot-block-list', false);
+    }
+
+    #[Test]
+    public function page_slot_editor_preloads_rich_text_assets_for_dynamically_fetched_modals(): void
+    {
+      [$page, $slot] = $this->seedPageBlockContext();
+
+      $response = $this->get(route('admin.pages.slots.blocks', [
+        'page' => $page,
+        'slot' => $slot,
+      ]))->assertOk();
+
+      foreach (['rich-text-editor', 'table-editor', 'asset-picker', 'gallery-items', 'icon-picker', 'builder-items', 'inline-block-builder'] as $script) {
+        $response->assertSee('cms/js/admin/'.$script.'.js', false);
+      }
+      $response->assertSee('data-wb-rich-text-link-modal', false);
     }
 
     #[Test]
@@ -125,7 +143,24 @@ namespace WebBlocks\Cms\Tests\Feature {
       $this->assertSame($this->formContract($fullPage), $this->formContract($fragment));
       $this->assertSame((string) $sharedSlot->id, $this->hiddenValues($fragment)['shared_slot_id']);
       $fragment->assertSee('id="slot-block-editor-form"', false);
+      $fragment->assertSee('#'.$block->id);
+      $fragment->assertSee('data-wb-slot-block-fragment-overlays', false);
       $fragment->assertDontSee('data-wb-slot-block-list', false);
+    }
+
+    #[Test]
+    public function shared_slot_editor_preloads_rich_text_assets_for_dynamically_fetched_modals(): void
+    {
+      [$sharedSlot] = $this->seedSharedSlotBlockContext();
+
+      $response = $this->get(route('admin.shared-slots.blocks.edit', [
+        'shared_slot' => $sharedSlot,
+      ]))->assertOk();
+
+      foreach (['rich-text-editor', 'table-editor', 'asset-picker', 'gallery-items', 'icon-picker', 'builder-items', 'inline-block-builder'] as $script) {
+        $response->assertSee('cms/js/admin/'.$script.'.js', false);
+      }
+      $response->assertSee('data-wb-rich-text-link-modal', false);
     }
 
     #[Test]

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.14
+
+- Initialize Rich Text, Table, Media, Gallery, Icon, repeated-item, and inline-block controls when an Edit Block modal is fetched dynamically, while carrying fragment-owned overlays into the active admin overlay root.
+- Show the block ID beside the Edit Block modal title so operators can match the form to its Edit Slot row.
+
 ## 1.87.13
 
 - Show locale-resolved content previews in Edit Slot summaries for Rich Text, Plain Text, Code, Card, and other content-bearing blocks, so editors can identify the block they need without opening each one.

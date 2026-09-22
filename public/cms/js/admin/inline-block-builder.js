@@ -1,9 +1,5 @@
 (function () {
     function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
-    if (!document.querySelector('[data-wb-inline-builder]')) {
-        return;
-    }
-
     function addInlineBlock(builder, payload) {
         var template = builder.querySelector('[data-wb-inline-template]');
         var list = builder.querySelector('[data-wb-inline-list]');
@@ -116,9 +112,20 @@
         }
     }
 
-    document.querySelectorAll('[data-wb-inline-builder]').forEach(function (builder) {
-        syncInlineBuilder(builder);
-    });
+    function initialize(context) {
+        var scope = context || document;
+        var builders = scope.matches && scope.matches('[data-wb-inline-builder]') ? [scope] : [];
+
+        if (scope.querySelectorAll) {
+            builders = builders.concat(Array.prototype.slice.call(scope.querySelectorAll('[data-wb-inline-builder]')));
+        }
+
+        builders.forEach(syncInlineBuilder);
+    }
+
+    initialize(document);
+
+    window.WebBlocksCmsAdminInlineBlockBuilder = { init: initialize };
 
     document.addEventListener('click', function (event) {
         var addButton = event.target.closest('[data-wb-inline-add]');

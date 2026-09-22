@@ -1,9 +1,5 @@
 (function () {
     function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
-    if (!document.querySelector('[data-wb-gallery-items-editor]')) {
-        return;
-    }
-
     var admin = window.WebBlocksCmsAdmin || {};
     var escapeHtml = admin.escapeHtml || function (value) {
         return String(value || '');
@@ -304,13 +300,26 @@
         }
     }
 
-    document.querySelectorAll('[data-wb-gallery-items-editor]').forEach(function (editor) {
-        syncEditor(editor);
-        Array.prototype.slice.call(editor.querySelectorAll('[data-wb-gallery-item-row]')).forEach(function (row) {
-            bindExistingRowModal(editor, row);
+    function initializeEditors(context) {
+        var scope = context || document;
+        var editors = scope.matches && scope.matches('[data-wb-gallery-items-editor]') ? [scope] : [];
+
+        if (scope.querySelectorAll) {
+            editors = editors.concat(Array.prototype.slice.call(scope.querySelectorAll('[data-wb-gallery-items-editor]')));
+        }
+
+        editors.forEach(function (editor) {
+            syncEditor(editor);
+            Array.prototype.slice.call(editor.querySelectorAll('[data-wb-gallery-item-row]')).forEach(function (row) {
+                bindExistingRowModal(editor, row);
+            });
+            syncEditor(editor);
         });
-        syncEditor(editor);
-    });
+    }
+
+    initializeEditors(document);
+
+    window.WebBlocksCmsAdminGalleryItems = { init: initializeEditors };
 
     document.addEventListener('admin-sortable-list:reordered', function (event) {
         var editor = event.target.closest('[data-wb-gallery-items-editor]');

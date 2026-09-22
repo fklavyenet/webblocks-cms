@@ -477,7 +477,7 @@
   </template>
 </div>
 
-@once
+@once('webblocks-gallery-items-script')
   @push('admin-scripts')
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin-sortable-list.js'])
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/gallery-items.js'])

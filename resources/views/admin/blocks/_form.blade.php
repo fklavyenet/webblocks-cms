@@ -23,6 +23,8 @@
     $hasContentSourceSettings = app(\WebBlocks\Cms\Support\ContentSources\ContentSourceEditor::class)->supports($block);
 @endphp
 
+@include('webblocks-cms::admin.blocks.partials.block-editor-assets')
+
 <div class="wb-stack wb-gap-4">
     <input type="hidden" name="block_type_id" value="{{ $selectedBlockTypeId }}">
     <input type="hidden" name="source_type" value="{{ $selectedBlockType?->source_type ?? $block->source_type ?? 'static' }}">

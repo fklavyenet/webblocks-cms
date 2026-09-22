@@ -30,10 +30,12 @@
         var template = document.createElement('template');
         var overlayRoot = document.getElementById('wb-overlay-root');
         var existingModal = document.getElementById('slot-block-editor-modal');
+        var fragmentOverlays;
         var modal;
 
         template.innerHTML = String(markup || '').trim();
         modal = template.content.querySelector('#slot-block-editor-modal');
+        fragmentOverlays = template.content.querySelector('[data-wb-slot-block-fragment-overlays]');
 
         if (!overlayRoot || !modal) {
             throw new Error('The block editor modal fragment is unavailable.');
@@ -41,6 +43,16 @@
 
         if (existingModal) {
             existingModal.remove();
+        }
+
+        if (fragmentOverlays && fragmentOverlays.content) {
+            Array.prototype.slice.call(fragmentOverlays.content.children).forEach(function (overlay) {
+                if (overlay.id && document.getElementById(overlay.id)) {
+                    return;
+                }
+
+                overlayRoot.appendChild(overlay);
+            });
         }
 
         overlayRoot.appendChild(modal);

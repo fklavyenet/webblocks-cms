@@ -22,7 +22,7 @@
     $inlineBlocksText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
 @endphp
 
-@once
+@once('webblocks-inline-block-builder-script')
     @push('admin-scripts')
         @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/inline-block-builder.js'])
     @endpush

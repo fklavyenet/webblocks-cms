@@ -96,7 +96,7 @@
   };
 @endphp
 
-@once
+@once('webblocks-asset-picker-script')
   @push('admin-scripts')
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/asset-picker.js'])
   @endpush

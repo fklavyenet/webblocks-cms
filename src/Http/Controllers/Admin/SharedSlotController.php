@@ -355,7 +355,7 @@ class SharedSlotController extends Controller
       $viewData['editorRouteName'] = 'admin.shared-slots.blocks.edit';
       $viewData['editorRouteParameters'] = ['shared_slot' => $sharedSlot];
 
-      return view('webblocks-cms::admin.pages.partials.slot-block-modal', $viewData);
+      return view('webblocks-cms::admin.pages.partials.slot-block-modal-fragment', $viewData);
     }
 
     return view('webblocks-cms::admin.shared-slots.slot-blocks', $viewData);
@@ -381,7 +381,7 @@ class SharedSlotController extends Controller
 
     $needsAssetPicker = $this->blockTypeNeedsAssetPicker($modalState['selectedBlockType']);
 
-    return view('webblocks-cms::admin.pages.partials.slot-block-modal', [
+    return view('webblocks-cms::admin.pages.partials.slot-block-modal-fragment', [
       'page' => $sourcePage,
       'slot' => $slot,
       'sharedSlot' => $sharedSlot,

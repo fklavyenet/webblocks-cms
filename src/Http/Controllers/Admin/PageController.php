@@ -544,7 +544,7 @@ class PageController extends Controller
     if (request()->header('X-WebBlocks-Modal-Fragment') === 'slot-block-editor') {
       abort_unless($modalState['block'] && $modalState['selectedBlockType'], 404);
 
-      return view('webblocks-cms::admin.pages.partials.slot-block-modal', $viewData);
+      return view('webblocks-cms::admin.pages.partials.slot-block-modal-fragment', $viewData);
     }
 
     return view('webblocks-cms::admin.pages.slot-blocks', $viewData);
@@ -570,7 +570,7 @@ class PageController extends Controller
 
     $needsAssetPicker = $this->blockTypeNeedsAssetPicker($modalState['selectedBlockType']);
 
-    return view('webblocks-cms::admin.pages.partials.slot-block-modal', [
+    return view('webblocks-cms::admin.pages.partials.slot-block-modal-fragment', [
       'page' => $page,
       'slot' => $slot,
       'blockTypes' => $blockTypes,

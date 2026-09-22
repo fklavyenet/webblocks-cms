@@ -518,6 +518,21 @@
         if (window.WebBlocksCmsAdminRichTextEditor && typeof window.WebBlocksCmsAdminRichTextEditor.init === 'function') {
             window.WebBlocksCmsAdminRichTextEditor.init(root || document);
         }
+
+        [
+            'WebBlocksCmsAdminTableEditor',
+            'WebBlocksCmsAdminAssetPicker',
+            'WebBlocksCmsAdminGalleryItems',
+            'WebBlocksCmsAdminIconPicker',
+            'WebBlocksCmsAdminBuilderItems',
+            'WebBlocksCmsAdminInlineBlockBuilder'
+        ].forEach(function (moduleName) {
+            var module = window[moduleName];
+
+            if (module && typeof module.init === 'function') {
+                module.init(root || document);
+            }
+        });
     };
 
     bindAdminTransientUiReset();

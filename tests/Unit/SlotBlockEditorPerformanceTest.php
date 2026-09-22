@@ -53,6 +53,8 @@ class SlotBlockEditorPerformanceTest extends TestCase
     $this->assertStringContainsString("'X-WebBlocks-Modal-Fragment': 'slot-block-editor'", $script);
     $this->assertStringContainsString('window.fetch(url', $script);
     $this->assertStringContainsString('replaceEditorModal(markup, url)', $script);
+    $this->assertStringContainsString('data-wb-slot-block-fragment-overlays', $script);
+    $this->assertStringContainsString('overlayRoot.appendChild(overlay)', $script);
     $this->assertStringContainsString("window.history.replaceState({}, '', url)", $script);
     $this->assertStringContainsString('window.location.assign(url)', $script);
   }

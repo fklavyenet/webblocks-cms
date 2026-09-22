@@ -267,9 +267,18 @@
         }
     }
 
-    function run() {
-        Array.prototype.slice.call(document.querySelectorAll('[data-wb-icon-field]')).forEach(renderTrigger);
+    function run(context) {
+        var scope = context && context.querySelectorAll ? context : document;
+        var fields = scope.matches && scope.matches('[data-wb-icon-field]') ? [scope] : [];
+
+        if (scope.querySelectorAll) {
+            fields = fields.concat(Array.prototype.slice.call(scope.querySelectorAll('[data-wb-icon-field]')));
+        }
+
+        fields.forEach(renderTrigger);
     }
+
+    window.WebBlocksCmsAdminIconPicker = { init: run };
 
     document.addEventListener('click', function (event) {
         var trigger = event.target.closest ? event.target.closest('[data-wb-icon-picker-open]') : null;

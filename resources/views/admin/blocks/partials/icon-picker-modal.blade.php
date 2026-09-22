@@ -17,6 +17,7 @@
 {{-- One modal serves every icon field on the page, including item rows added
      after load: a trigger carries its own state and the modal writes back to
      whichever one opened it. --}}
+@once('webblocks-icon-picker-assets')
 @push('overlays')
   <div class="wb-modal wb-modal-lg" id="wb_icon_picker_modal" role="dialog" aria-modal="true"
        aria-labelledby="wb_icon_picker_title" data-wb-icon-picker-modal hidden>
@@ -123,3 +124,4 @@
 @push('admin-scripts')
   @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/icon-picker.js'])
 @endpush
+@endonce

@@ -9,7 +9,7 @@
     ])->mapWithKeys(fn (string $key) => [$key => $adminText($key)])->all();
 @endphp
 
-@once
+@once('webblocks-table-editor-script')
     @push('admin-scripts')
         @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/table-editor.js'])
     @endpush
