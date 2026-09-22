@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.18
+
+- Make dynamic block-editor asset coverage portable by binding the fragment-safety test application to the package's public asset root, matching installed CMS behavior on local and GitHub runners.
+
 ## 1.87.17
 
 - Give the shared Rich Text editor asset bundle an explicit Blade `@once` key, preventing anonymous compiled-key collisions from omitting its script and link modal in full-suite and cross-version renders.

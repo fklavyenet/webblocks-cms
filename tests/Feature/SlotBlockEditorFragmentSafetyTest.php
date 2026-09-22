@@ -51,6 +51,8 @@ namespace WebBlocks\Cms\Tests\Feature {
     {
       parent::setUp();
 
+      $this->app->usePublicPath(dirname(__DIR__, 2).'/public');
+
       $user = new User;
       $user->forceFill([
         'name' => 'Fragment Safety Admin',
