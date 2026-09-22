@@ -1,4 +1,4 @@
-@once
+@once('webblocks-rich-text-editor-assets')
     @push('admin-scripts')
         @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/rich-text-editor.js'])
     @endpush
