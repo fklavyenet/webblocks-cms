@@ -30,9 +30,11 @@ class BlockAdminSummary
     return $this->present($block, $maxLength, self::summaryMaxLength())['label'];
   }
 
-  public function primary(Block $block, int $maxLength = 80): string
+  public function primary(Block $block, int $maxLength = 80): ?string
   {
-    return $this->label($block, $maxLength);
+    [$label] = $this->linesFor($block);
+
+    return $this->truncate($label, $maxLength);
   }
 
   public function summary(Block $block, int $maxLength = 120): ?string
@@ -53,15 +55,12 @@ class BlockAdminSummary
   private function linesFor(Block $block): array
   {
     return match ($block->typeSlug()) {
-      'rich-text' => [$this->content($block) ?? 'Rich Text', null],
-      'plain_text' => [$this->content($block) ?? 'Plain Text', null],
-      'text' => [$this->content($block) ?? 'Text', null],
-      'header' => [$this->title($block) ?? 'Header', $this->subtitle($block)],
+      'rich-text', 'plain_text', 'text' => [$this->content($block), null],
+      'header' => [$this->title($block) ?? $this->subtitle($block), null],
       'content_header', 'content-header' => $this->contentHeaderLines($block),
       'code' => $this->codeLines($block),
       'button_link', 'button-link', 'button' => $this->buttonLines($block),
-      'card' => $this->contentBlockLines($block, 'Card'),
-      'alert' => $this->contentBlockLines($block, 'Alert'),
+      'card', 'alert' => $this->contentBlockLines($block),
       'link-list-item', 'link_list_item' => $this->linkListItemLines($block),
       'section', 'container', 'cluster', 'grid' => $this->layoutLines($block),
       default => $this->fallbackLines($block),
@@ -77,7 +76,7 @@ class BlockAdminSummary
       return [$title, $intro ?? $this->subtitle($block)];
     }
 
-    return [$intro ?? $this->subtitle($block) ?? 'Content header', null];
+    return [$intro ?? $this->subtitle($block), null];
   }
 
   private function codeLines(Block $block): array
@@ -91,7 +90,7 @@ class BlockAdminSummary
       return [$title, $summary];
     }
 
-    return [$summary ?? 'Code snippet', null];
+    return [$firstLine !== null ? $summary : null, null];
   }
 
   private function buttonLines(Block $block): array
@@ -101,9 +100,9 @@ class BlockAdminSummary
     return [$label, $this->buttonUrl($block)];
   }
 
-  private function contentBlockLines(Block $block, string $fallback): array
+  private function contentBlockLines(Block $block): array
   {
-    $label = $this->title($block) ?? $this->content($block) ?? $fallback;
+    $label = $this->title($block) ?? $this->content($block);
     $summary = $block->children->isNotEmpty()
       ? $block->children->count().' '.Str::plural('child block', $block->children->count())
       : ($label === ($this->title($block) ?? null) ? $this->content($block) : null);
@@ -124,13 +123,7 @@ class BlockAdminSummary
 
   private function layoutLines(Block $block): array
   {
-    $label = $this->sanitize($block->layoutAdminName()) ?? 'Layout wrapper';
-    $childCount = $block->children->count();
-    $summary = $childCount > 0
-      ? $childCount.' '.Str::plural('child block', $childCount)
-      : 'Layout wrapper';
-
-    return [$label, $summary];
+    return [null, null];
   }
 
   private function fallbackLines(Block $block): array
@@ -142,7 +135,7 @@ class BlockAdminSummary
       $this->sanitize($block->setting('label')),
     ];
 
-    $label = collect($candidates)->first(fn (?string $value) => $value !== null) ?? $block->typeName();
+    $label = collect($candidates)->first(fn (?string $value) => $value !== null);
     $labelIndex = array_search($label, $candidates, true);
     $summary = collect(array_slice($candidates, is_int($labelIndex) ? $labelIndex + 1 : 0))
       ->first(fn (?string $value) => $value !== null);

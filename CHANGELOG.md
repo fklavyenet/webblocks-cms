@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.19
+
+- Make Edit Slot content faster to scan with meaningful-only summaries, persistent expand/collapse-all controls, ancestor-aware block search, compact locale tooling, denser rows, and removal of the informational Public Wrapper card.
+- Reduce mobile Pages height by combining page context with the heading, removing the repeated list heading and unknown-editor placeholders, hiding route lists and navbar breadcrumbs on narrow screens, and rendering locale badges without decorative status dots.
+
 ## 1.87.18
 
 - Make dynamic block-editor asset coverage portable by binding the fragment-safety test application to the package's public asset root, matching installed CMS behavior on local and GitHub runners.

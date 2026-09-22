@@ -88,10 +88,57 @@
         return row.getAttribute('data-slot-parent-id') || row.getAttribute('data-wb-slot-parent-id') || '';
     }
 
+    function setRowVisible(row, visible) {
+        var container = row.closest('[data-admin-sortable-item]');
+
+        row.hidden = !visible;
+
+        if (container) {
+            container.hidden = !visible;
+        }
+    }
+
+    function normalizedSearchValue(value) {
+        return String(value || '')
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase()
+            .trim();
+    }
+
     function setExpandedState(root, expandedIds) {
         rootToggles(root).forEach(function (button) {
             setToggleExpanded(button, expandedIds.indexOf(toggleId(button)) !== -1);
         });
+    }
+
+    function syncExpandAllButton(root) {
+        var button = root.querySelector('[data-wb-slot-block-expand-all]');
+        var toggles = rootToggles(root);
+
+        if (!button || toggles.length === 0) {
+            return;
+        }
+
+        var allExpanded = toggles.every(function (toggle) {
+            return toggle.getAttribute('aria-expanded') === 'true';
+        });
+        var label = button.getAttribute(allExpanded ? 'data-collapse-label' : 'data-expand-label') || '';
+        var labelNode = button.querySelector('[data-wb-slot-block-expand-all-label]');
+        var icon = button.querySelector('.wb-icon');
+
+        button.setAttribute('aria-pressed', allExpanded ? 'true' : 'false');
+        button.setAttribute('aria-label', label);
+        button.setAttribute('title', label);
+
+        if (labelNode) {
+            labelNode.textContent = label;
+        }
+
+        if (icon) {
+            icon.classList.toggle('wb-icon-maximize2', !allExpanded);
+            icon.classList.toggle('wb-icon-minimize2', allExpanded);
+        }
     }
 
     function uniqueIds(values) {
@@ -162,21 +209,94 @@
 
     function syncSlotBlockRows(root) {
         rootRows(root).forEach(function (row) {
-            var visible = rowVisible(root, row);
-            var container = row.closest('[data-admin-sortable-item]');
+            setRowVisible(row, rowVisible(root, row));
+        });
+    }
 
-            row.hidden = !visible;
+    function searchSlotBlocks(root) {
+        var input = root.querySelector('[data-wb-slot-block-search]');
 
-            if (container) {
-                container.hidden = !visible;
+        if (!input) {
+            return;
+        }
+
+        var query = normalizedSearchValue(input.value);
+        var rows = rootRows(root);
+        var clearButton = root.querySelector('[data-wb-slot-block-search-clear]');
+        var emptyMessage = root.querySelector('[data-wb-slot-block-search-empty]');
+
+        if (clearButton) {
+            clearButton.hidden = query === '';
+        }
+
+        if (query === '') {
+            if (Array.isArray(root._wbSlotBlockSearchExpanded)) {
+                setExpandedState(root, root._wbSlotBlockSearchExpanded);
+                delete root._wbSlotBlockSearchExpanded;
+            }
+
+            if (emptyMessage) {
+                emptyMessage.hidden = true;
+            }
+
+            syncSlotBlockExpandedState(root);
+
+            return;
+        }
+
+        if (!Array.isArray(root._wbSlotBlockSearchExpanded)) {
+            root._wbSlotBlockSearchExpanded = currentExpandedSlotBlocks(root);
+        }
+
+        var rowsById = {};
+        var visibleIds = [];
+        var matchingRows = rows.filter(function (row) {
+            rowsById[rowBlockId(row)] = row;
+
+            return normalizedSearchValue(row.getAttribute('data-wb-slot-block-search-text')).indexOf(query) !== -1;
+        });
+
+        matchingRows.forEach(function (row) {
+            var current = row;
+
+            while (current) {
+                visibleIds.push(rowBlockId(current));
+                current = rowsById[rowParentId(current)] || null;
             }
         });
+
+        visibleIds = uniqueIds(visibleIds);
+        setExpandedState(root, uniqueIds(root._wbSlotBlockSearchExpanded.concat(visibleIds)));
+        rows.forEach(function (row) {
+            setRowVisible(row, visibleIds.indexOf(rowBlockId(row)) !== -1);
+        });
+        syncExpandAllButton(root);
+
+        if (emptyMessage) {
+            emptyMessage.hidden = matchingRows.length !== 0;
+        }
+    }
+
+    function clearSlotBlockSearch(root, focus) {
+        var input = root.querySelector('[data-wb-slot-block-search]');
+
+        if (!input) {
+            return;
+        }
+
+        input.value = '';
+        searchSlotBlocks(root);
+
+        if (focus) {
+            input.focus();
+        }
     }
 
     function syncSlotBlockExpandedState(root) {
         var expanded = currentExpandedSlotBlocks(root);
 
         syncSlotBlockRows(root);
+        syncExpandAllButton(root);
 
         writeStoredExpanded(root, expanded);
     }
@@ -204,7 +324,34 @@
         }
 
         root.setAttribute('data-wb-cms-slot-block-tree-ready', 'true');
+        root.addEventListener('input', function (event) {
+            if (event.target.matches('[data-wb-slot-block-search]')) {
+                searchSlotBlocks(root);
+            }
+        });
         root.addEventListener('click', function (event) {
+            var clearSearchButton = event.target.closest('[data-wb-slot-block-search-clear]');
+
+            if (clearSearchButton && root.contains(clearSearchButton)) {
+                clearSlotBlockSearch(root, true);
+
+                return;
+            }
+
+            var expandAllButton = event.target.closest('[data-wb-slot-block-expand-all]');
+
+            if (expandAllButton && root.contains(expandAllButton)) {
+                clearSlotBlockSearch(root, false);
+                var expand = expandAllButton.getAttribute('aria-pressed') !== 'true';
+
+                rootToggles(root).forEach(function (button) {
+                    setToggleExpanded(button, expand);
+                });
+                syncSlotBlockExpandedState(root);
+
+                return;
+            }
+
             var slotBlockToggle = event.target.closest('[data-slot-block-toggle], [data-wb-slot-block-toggle]');
 
             if (!slotBlockToggle || !root.contains(slotBlockToggle)) {

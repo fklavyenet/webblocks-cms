@@ -6,12 +6,6 @@
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
     $siteContext = $activeSite?->name ?? $adminText('pages.all_sites');
-    $siteContextDescription = $showAllSites
-        ? $adminText('pages.all_sites_description')
-        : $adminText('pages.site_description', [
-            'site' => $activeSite->name,
-            'domain' => $activeSite->canonicalDomain() ? ' ('.$activeSite->canonicalDomain().')' : '',
-        ]);
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', ['reset' => 1]);
     // The site filter is a scope, not a narrowing filter: a site with no pages
@@ -34,15 +28,14 @@
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $adminText('pages.title'),
+        'title' => $adminText('pages.title').' · '.$siteContext,
         'description' => null,
-        'context' => '<span>'.e($siteContextDescription).'</span>',
-        'count' => $totalCount,
+        'count' => $filteredCount,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <div class="wb-card wb-card-muted">
+    <div class="wb-card wb-card-muted wb-admin-pages-index-filters">
         <div class="wb-card-body">
             @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.pages.index'),
@@ -109,12 +102,7 @@
 
     @if ($pages->isEmpty())
         <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('pages.for_site', ['site' => $siteContext]) }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
-                </div>
-
+            <div class="wb-card-header wb-cluster wb-cluster-end wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
                     <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
@@ -141,12 +129,7 @@
         </div>
     @else
         <div class="wb-card" data-wb-admin-bulk-listing>
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('pages.for_site', ['site' => $siteContext]) }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
-                </div>
-
+            <div class="wb-card-header wb-cluster wb-cluster-end wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
                     <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
@@ -211,7 +194,7 @@
 
                                             <div class="wb-admin-pages-locale-row wb-cluster wb-cluster-2 wb-flex-wrap wb-text-sm wb-text-muted">
                                                 @foreach ($translations as $translation)
-                                                    <span class="wb-status-pill {{ $translation->locale?->is_default ? 'wb-status-info' : 'wb-status-active' }}">
+                                                    <span class="wb-status-pill wb-admin-locale-pill {{ $translation->locale?->is_default ? 'wb-status-info' : 'wb-status-active' }}">
                                                         {{ $translation->locale?->code }}
                                                         @if ($translation->locale?->is_default)
                                                             {{ $adminText('common.default') }}
@@ -277,9 +260,9 @@
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-last-edited-cell">
                                         <div class="wb-admin-pages-last-edited wb-text-sm">
                                             <span>{{ $page->updated_at?->format('Y-m-d H:i') ?? '-' }}</span>
-                                            <span class="wb-text-muted">
-                                                {{ $page->updatedByUser?->name ?? $adminText('common.not_recorded') }}
-                                            </span>
+                                            @if ($page->updatedByUser?->name)
+                                                <span class="wb-text-muted">{{ $page->updatedByUser->name }}</span>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-actions-cell">

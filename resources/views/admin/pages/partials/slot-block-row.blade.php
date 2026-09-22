@@ -35,6 +35,7 @@
         @endif
         data-slot-depth="{{ $depth }}"
         data-wb-slot-depth="{{ $depth }}"
+        data-wb-slot-block-search-text="{{ \Illuminate\Support\Str::lower(implode(' ', array_filter([(string) $block->id, $block->typeName(), $rowSummary]))) }}"
     >
         <td class="wb-admin-slot-block-id-cell wb-text-sm wb-text-muted">{{ $block->id }}</td>
         <td class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell">
@@ -65,7 +66,9 @@
             </div>
         </td>
         <td class="wb-admin-slot-block-summary-cell">
-            <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong class="wb-cms-block-row-title">{{ $rowSummary }}</strong></a>
+            @if ($rowSummary !== null)
+                <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong class="wb-cms-block-row-title">{{ $rowSummary }}</strong></a>
+            @endif
         </td>
         <td class="wb-cms-block-children-cell">
             @if ($canAddChildren || $hasChildren)

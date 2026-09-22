@@ -32,6 +32,7 @@
 
             return route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot] + $parameters);
         };
+        $hasExpandableBlocks = $blocks->contains(fn ($block) => $block->children->isNotEmpty());
     @endphp
 
     @include('webblocks-cms::admin.partials.page-header', [
@@ -42,23 +43,26 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <div class="wb-card wb-card-muted">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>{{ $adminText('public_wrapper') }}</strong>
-            <span class="wb-text-sm wb-text-muted">{{ $adminText('public_wrapper_help') }}</span>
-        </div>
-        <div class="wb-card-body">
-            <p class="wb-text-sm wb-text-muted">{{ $adminText('inner_block_tree_help') }}</p>
-        </div>
-    </div>
-
     <div class="wb-card" data-wb-cms-slot-block-tree data-wb-shared-slot-id="{{ $sharedSlot->id }}" data-page-id="{{ $sourcePage->id }}" data-slot-type-id="{{ $slot->slot_type_id }}">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <div class="wb-stack wb-gap-1">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-admin-slot-block-toolbar">
+            <div class="wb-cluster wb-cluster-2">
                 <strong>{{ $adminText('blocks') }}</strong>
-                <span class="wb-text-sm wb-text-muted">{{ $adminText('editing_locale_help', ['locale' => strtoupper($activeLocale->code)]) }}</span>
+                @foreach ($availableLocales as $translationStatus)
+                    @php
+                        $locale = $translationStatus['locale'];
+                        $isActiveLocale = $locale->id === $activeLocale->id;
+                    @endphp
+                    <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_tab' => request('block_type_tab'), 'block_type_search' => request('block_type_search'), 'block_type_category' => request('block_type_category'), 'block_type_sort' => request('block_type_sort')]) }}" class="wb-btn wb-btn-sm {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">{{ strtoupper($locale->code) }}</a>
+                @endforeach
+                <span class="wb-action-btn" role="img" tabindex="0" aria-label="{{ $adminText('editing_locale_help', ['locale' => strtoupper($activeLocale->code)]) }} {{ $adminText('translations_help') }}" title="{{ $adminText('editing_locale_help', ['locale' => strtoupper($activeLocale->code)]) }} {{ $adminText('translations_help') }}"><i class="wb-icon wb-icon-info" aria-hidden="true"></i></span>
             </div>
             <div class="wb-cluster wb-cluster-2">
+                @if ($hasExpandableBlocks)
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-slot-block-expand-all data-expand-label="{{ $adminText('expand_all_blocks') }}" data-collapse-label="{{ $adminText('collapse_all_blocks') }}" aria-pressed="false">
+                        <i class="wb-icon wb-icon-maximize2" aria-hidden="true"></i>
+                        <span data-wb-slot-block-expand-all-label>{{ $adminText('expand_all_blocks') }}</span>
+                    </button>
+                @endif
                 @if (! $blocks->isEmpty())
                     <a href="{{ $slotBlockRoute(['delete_all' => 1]) }}" class="wb-btn wb-btn-ghost wb-text-danger" aria-haspopup="dialog">{{ $adminText('delete_all_blocks') }}</a>
                 @endif
@@ -66,20 +70,16 @@
             </div>
         </div>
 
-        <div class="wb-card-body wb-border-b">
-            <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <div class="wb-cluster wb-cluster-2">
-                    @foreach ($availableLocales as $translationStatus)
-                        @php
-                            $locale = $translationStatus['locale'];
-                            $isActiveLocale = $locale->id === $activeLocale->id;
-                        @endphp
-                        <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_tab' => request('block_type_tab'), 'block_type_search' => request('block_type_search'), 'block_type_category' => request('block_type_category'), 'block_type_sort' => request('block_type_sort')]) }}" class="wb-btn {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">{{ strtoupper($locale->code) }}</a>
-                    @endforeach
+        @unless ($blocks->isEmpty())
+            <div class="wb-admin-slot-block-search-row wb-border-b">
+                <div class="wb-search-bar wb-search-bar-sm wb-search-bar-full">
+                    <span class="wb-search-bar-icon"><i class="wb-icon wb-icon-search" aria-hidden="true"></i></span>
+                    <input type="search" class="wb-search-bar-input" data-wb-slot-block-search autocomplete="off" placeholder="{{ $adminText('search_placeholder') }}" aria-label="{{ $adminText('search_placeholder') }}">
+                    <button type="button" class="wb-search-bar-clear" data-wb-slot-block-search-clear aria-label="{{ $adminText('clear_search') }}" title="{{ $adminText('clear_search') }}" hidden><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>
                 </div>
-                <span class="wb-text-sm wb-text-muted">{{ $adminText('translations_help') }}</span>
+                <span class="wb-text-sm wb-text-muted" data-wb-slot-block-search-empty aria-live="polite" hidden>{{ $adminText('no_search_results') }}</span>
             </div>
-        </div>
+        @endunless
 
         @if ($blocks->isEmpty())
             <div class="wb-card-body">
@@ -91,7 +91,7 @@
         @else
             <div class="wb-card-body">
                 <div class="wb-table-wrap wb-admin-slot-blocks-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover wb-admin-slot-blocks-table" data-wb-slot-block-table data-admin-sortable-list data-admin-sortable-mode="slot-blocks" data-admin-sortable-reorder-url="{{ route('admin.shared-slots.blocks.reorder', $sharedSlot) }}">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-hover wb-admin-slot-blocks-table" data-wb-slot-block-table data-admin-sortable-list data-admin-sortable-mode="slot-blocks" data-admin-sortable-reorder-url="{{ route('admin.shared-slots.blocks.reorder', $sharedSlot) }}">
                         <thead>
                             <tr>
                                 <th class="wb-admin-slot-block-id-cell">{{ $adminText('block_id') }}</th>

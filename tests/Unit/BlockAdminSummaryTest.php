@@ -42,4 +42,27 @@ class BlockAdminSummaryTest extends TestCase
       ],
     ];
   }
+
+  #[DataProvider('structureOnlyProvider')]
+  public function test_primary_summary_is_empty_without_meaningful_content(array $attributes): void
+  {
+    $block = new Block($attributes);
+    $block->setAttribute('resolved_locale_code', 'en');
+    $block->setRelation('blockType', null);
+    $block->setRelation('children', new Collection);
+
+    $this->assertNull((new BlockAdminSummary)->primary($block));
+  }
+
+  public static function structureOnlyProvider(): array
+  {
+    return [
+      'section' => [['type' => 'section']],
+      'grid' => [['type' => 'grid']],
+      'card' => [['type' => 'card']],
+      'image' => [['type' => 'image']],
+      'empty rich text' => [['type' => 'rich-text']],
+      'code language without code' => [['type' => 'code', 'settings' => json_encode(['language' => 'bash'])]],
+    ];
+  }
 }
