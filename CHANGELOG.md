@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.25
+
+- Constrain the admin document to the dynamic viewport so the WebBlocks dashboard remains the sole scroll owner and Chromium cannot expose a second empty scroll range below the sidebar and main content.
+
 ## 1.87.24
 
 - Let the Edit Slot Summary column consume the table's remaining width while ID, Block Type, Children, Status, and Actions stay at their unwrapped content width.

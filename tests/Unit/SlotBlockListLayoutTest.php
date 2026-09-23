@@ -58,7 +58,11 @@ class SlotBlockListLayoutTest extends TestCase
   public function desktop_sidebar_scrolls_only_its_navigation_region(): void
   {
     $css = (string) file_get_contents(dirname(__DIR__, 2).'/public/cms/css/admin.css');
+    $layout = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/admin.blade.php');
 
+    $this->assertSame(1, substr_count($layout, 'class="wb-admin-dashboard-page"'));
+    $this->assertMatchesRegularExpression('/body\.wb-admin-dashboard-page\s*\{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s', $css);
+    $this->assertStringNotContainsString('body.wb-admin-dashboard-page > .wb-dashboard-shell', $css);
     $this->assertMatchesRegularExpression('/\.wb-dashboard-shell > \.wb-sidebar\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/s', $css);
     $this->assertMatchesRegularExpression('/\.wb-dashboard-shell > \.wb-sidebar > \.wb-sidebar-nav\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;[^}]*overscroll-behavior-y:\s*contain;/s', $css);
   }

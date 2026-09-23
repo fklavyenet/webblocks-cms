@@ -15,6 +15,14 @@
     --wb-accent-text: var(--wb-cms-brand-primary-hover);
 }
 
+/* The WebBlocks dashboard owns scrolling through .wb-dashboard-main. Keep the
+   document itself fixed to the viewport so Chromium does not expose a second,
+   empty page scroll range beside the dashboard scroller. */
+body.wb-admin-dashboard-page {
+    height: 100dvh;
+    overflow: hidden;
+}
+
 /* CMS overlay policy on top of the shipped overlay stack: backdrops are
    inert unless the runtime flags them interactive. (The shipped layer
    pointer-events chain and closed-drawer hiding live in WebBlocks UI.) */
