@@ -92,7 +92,7 @@
                 <label class="wb-switch wb-admin-block-status-switch">
                     <input type="checkbox" name="status" value="published" @checked($block->status === 'published') data-wb-block-status-toggle>
                     <span class="wb-switch-track" aria-hidden="true"></span>
-                    <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}" data-wb-block-status-label>
+                    <span class="wb-sr-only" data-wb-block-status-label>
                         {{ $block->status === 'published' ? $inlineBlocksText('published') : $inlineBlocksText('draft') }}
                     </span>
                 </label>

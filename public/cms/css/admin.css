@@ -318,30 +318,9 @@ input.wb-admin-table-grid-input:focus {
     row-gap: 0.5rem;
 }
 
-.wb-admin-slot-block-search-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.55rem 1rem;
-}
-
-.wb-admin-slot-block-search-row .wb-search-bar {
-    max-width: 34rem;
-}
-
-.wb-admin-slot-block-search-row [data-wb-slot-block-search-empty] {
-    white-space: nowrap;
-}
-
-@media (max-width: 720px) {
-    .wb-admin-slot-block-search-row {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .wb-admin-slot-block-search-row .wb-search-bar {
-        max-width: none;
-    }
+.wb-admin-slot-block-search-card [data-wb-slot-block-search-empty]:not([hidden]) {
+    display: block;
+    margin-top: var(--wb-s2);
 }
 
 .wb-admin-slot-blocks-table {
@@ -394,12 +373,12 @@ input.wb-admin-table-grid-input:focus {
     white-space: nowrap;
 }
 
-.wb-admin-slot-blocks-table .wb-admin-slot-block-status-cell .wb-status-pill {
-    white-space: nowrap;
-}
-
 .wb-admin-slot-blocks-table .wb-admin-slot-block-actions-cell .wb-action-group {
     flex-wrap: nowrap;
+}
+
+.wb-admin-slot-blocks-table .wb-admin-slot-block-actions-cell {
+    min-width: 11rem;
 }
 
 .wb-admin-pages-table {

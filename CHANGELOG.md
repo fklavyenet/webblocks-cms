@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.23
+
+- Keep every Edit Slot row action visible by replacing the redundant status text badge with an accessible switch label and reserving enough width for the complete action set.
+- Present the live block search in the standard muted filter card on page-owned and Shared Slot editors, with a labelled field and clear action consistent with other admin lists.
+
 ## 1.87.22
 
 - Make grouped standalone Image blocks open in the native Gallery Viewer instead of following their fallback image links, while preserving one previous/next sequence across separated article sections.

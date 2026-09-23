@@ -55,8 +55,33 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <div class="wb-card" data-wb-cms-slot-block-tree data-wb-slot-id="{{ $slot->id }}" data-page-id="{{ $page->id }}" data-slot-type-id="{{ $slot->slot_type_id }}">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-admin-slot-block-toolbar">
+    <div class="wb-stack wb-gap-4" data-wb-cms-slot-block-tree data-wb-slot-id="{{ $slot->id }}" data-page-id="{{ $page->id }}" data-slot-type-id="{{ $slot->slot_type_id }}">
+        @unless ($blocks->isEmpty())
+            <div class="wb-card wb-card-muted wb-admin-slot-block-search-card">
+                <div class="wb-card-body">
+                    <div class="wb-filter-bar wb-filter-bar--fields" role="search">
+                        <div class="wb-filter-bar-fields">
+                            <div class="wb-field wb-filter-bar-search">
+                                <label for="slot_block_search" class="wb-label">{{ $adminTranslator->admin('common.search', $adminLocale) }}</label>
+                                <input id="slot_block_search" type="search" class="wb-input" data-wb-slot-block-search autocomplete="off" placeholder="{{ $adminText('search_placeholder') }}">
+                            </div>
+                            <div class="wb-filter-bar-actions">
+                                <div class="wb-action-group">
+                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-slot-block-search-clear hidden>
+                                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                                        <span>{{ $adminText('clear_search') }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="wb-text-sm wb-text-muted" data-wb-slot-block-search-empty aria-live="polite" hidden>{{ $adminText('no_search_results') }}</span>
+                    </div>
+                </div>
+            </div>
+        @endunless
+
+        <div class="wb-card">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-admin-slot-block-toolbar">
             <div class="wb-cluster wb-cluster-2">
                 <strong>{{ $adminText('blocks') }}</strong>
                 @foreach ($availableLocales as $translationStatus)
@@ -80,18 +105,7 @@
                 @endif
                 <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">{{ $adminText('add_block') }}</a>
             </div>
-        </div>
-
-        @unless ($blocks->isEmpty())
-            <div class="wb-admin-slot-block-search-row wb-border-b">
-                <div class="wb-search-bar wb-search-bar-sm wb-search-bar-full">
-                    <span class="wb-search-bar-icon"><i class="wb-icon wb-icon-search" aria-hidden="true"></i></span>
-                    <input type="search" class="wb-search-bar-input" data-wb-slot-block-search autocomplete="off" placeholder="{{ $adminText('search_placeholder') }}" aria-label="{{ $adminText('search_placeholder') }}">
-                    <button type="button" class="wb-search-bar-clear" data-wb-slot-block-search-clear aria-label="{{ $adminText('clear_search') }}" title="{{ $adminText('clear_search') }}" hidden><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>
-                </div>
-                <span class="wb-text-sm wb-text-muted" data-wb-slot-block-search-empty aria-live="polite" hidden>{{ $adminText('no_search_results') }}</span>
             </div>
-        @endunless
 
         @if ($blocks->isEmpty())
             <div class="wb-card-body">
@@ -133,8 +147,9 @@
             </div>
         @endif
 
-        <div class="wb-card-footer">
-            <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-primary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">{{ $adminText('add_block') }}</a>
+            <div class="wb-card-footer">
+                <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-primary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">{{ $adminText('add_block') }}</a>
+            </div>
         </div>
     </div>
 
