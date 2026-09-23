@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.24
+
+- Let the Edit Slot Summary column consume the table's remaining width while ID, Block Type, Children, Status, and Actions stay at their unwrapped content width.
+- Keep the desktop admin sidebar brand and footer fixed while its navigation scrolls independently, preventing wheel input over the sidebar from exposing empty space below the footer.
+
 ## 1.87.23
 
 - Keep every Edit Slot row action visible by replacing the redundant status text badge with an accessible switch label and reserving enough width for the complete action set.

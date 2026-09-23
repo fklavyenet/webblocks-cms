@@ -37,6 +37,21 @@ svg.wb-sidebar-brand-logo {
     inline-size: 3rem;
 }
 
+/* Keep the fixed brand/footer chrome in place while only navigation scrolls. */
+@media (min-width: 769px) {
+    .wb-dashboard-shell > .wb-sidebar {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .wb-dashboard-shell > .wb-sidebar > .wb-sidebar-nav {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+    }
+}
+
 .wb-sidebar-link-label {
     width: 100%;
 }
@@ -375,10 +390,6 @@ input.wb-admin-table-grid-input:focus {
 
 .wb-admin-slot-blocks-table .wb-admin-slot-block-actions-cell .wb-action-group {
     flex-wrap: nowrap;
-}
-
-.wb-admin-slot-blocks-table .wb-admin-slot-block-actions-cell {
-    min-width: 11rem;
 }
 
 .wb-admin-pages-table {

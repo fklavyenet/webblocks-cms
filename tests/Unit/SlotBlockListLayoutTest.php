@@ -30,13 +30,36 @@ class SlotBlockListLayoutTest extends TestCase
   }
 
   #[Test]
-  public function actions_column_reserves_room_for_every_block_action(): void
+  public function summary_is_the_only_flexible_slot_block_column(): void
+  {
+    $css = (string) file_get_contents(dirname(__DIR__, 2).'/public/cms/css/admin.css');
+    $views = [
+      (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/pages/slot-blocks.blade.php'),
+      (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/shared-slots/slot-blocks.blade.php'),
+    ];
+
+    $this->assertStringContainsString('.wb-admin-slot-block-summary-cell {', $css);
+    $this->assertStringContainsString('width: 100%;', $css);
+    $this->assertDoesNotMatchRegularExpression(
+      '/\.wb-admin-slot-blocks-table \.wb-admin-slot-block-actions-cell\s*\{[^}]*min-width:/s',
+      $css,
+    );
+
+    foreach ($views as $view) {
+      foreach (['id', 'type', 'summary', 'status', 'actions'] as $column) {
+        $this->assertStringContainsString('<th class="wb-admin-slot-block-'.$column.'-cell">', $view);
+      }
+
+      $this->assertStringContainsString('<th class="wb-cms-block-children-cell">', $view);
+    }
+  }
+
+  #[Test]
+  public function desktop_sidebar_scrolls_only_its_navigation_region(): void
   {
     $css = (string) file_get_contents(dirname(__DIR__, 2).'/public/cms/css/admin.css');
 
-    $this->assertMatchesRegularExpression(
-      '/\.wb-admin-slot-blocks-table \.wb-admin-slot-block-actions-cell\s*\{[^}]*min-width:\s*11rem;/s',
-      $css,
-    );
+    $this->assertMatchesRegularExpression('/\.wb-dashboard-shell > \.wb-sidebar\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/s', $css);
+    $this->assertMatchesRegularExpression('/\.wb-dashboard-shell > \.wb-sidebar > \.wb-sidebar-nav\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;[^}]*overscroll-behavior-y:\s*contain;/s', $css);
   }
 }
