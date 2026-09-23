@@ -101,6 +101,8 @@ class PageRequest extends FormRequest
       'blocks.*.gallery_overlay_mode' => ['nullable', Rule::in(['none', 'gradient', 'solid'])],
       'blocks.*.gallery_lightbox_enabled' => ['nullable', 'boolean'],
       'blocks.*.gallery_viewer_title' => ['nullable', 'string', 'max:255'],
+      'blocks.*.image_viewer_enabled' => ['nullable', 'boolean'],
+      'blocks.*.image_viewer_group' => ['nullable', 'string', 'max:64', 'regex:/^[a-z0-9][a-z0-9_-]*$/'],
       'blocks.*.page_list_scope' => ['nullable', Rule::in(PageListSettings::scopes())],
       'blocks.*.page_list_page_type' => ['nullable', 'string', 'max:255'],
       'blocks.*.page_list_path_prefix' => ['nullable', 'string', 'max:2048'],
@@ -213,6 +215,22 @@ class PageRequest extends FormRequest
           ->filter(fn (array $item) => in_array($item['media_id'], $galleryAssetIds, true))
           ->values()
           ->all();
+
+        if (($blockType?->slug ?? null) === 'image') {
+          $settings = $decodedSettings;
+          $settings['viewer_enabled'] = array_key_exists('image_viewer_enabled', $block)
+            ? (bool) $block['image_viewer_enabled']
+            : (bool) ($settings['viewer_enabled'] ?? false);
+          $settings['viewer_group'] = trim((string) ($block['image_viewer_group'] ?? ($settings['viewer_group'] ?? ''))) ?: null;
+
+          if ($settings['viewer_enabled'] !== true) {
+            unset($settings['viewer_enabled'], $settings['viewer_group']);
+          }
+
+          $block['settings'] = $settings === []
+            ? null
+            : json_encode($settings, JSON_UNESCAPED_SLASHES);
+        }
 
         if (($blockType?->slug ?? null) === 'gallery') {
           $settings = $decodedSettings;
@@ -327,6 +345,8 @@ class PageRequest extends FormRequest
           $block['page_list_clickable_card'],
           $block['application_handle'],
           $block['application_settings'],
+          $block['image_viewer_enabled'],
+          $block['image_viewer_group'],
           $block['application_width'],
           $block['application_loading'],
           $block['application_aspect_ratio'],

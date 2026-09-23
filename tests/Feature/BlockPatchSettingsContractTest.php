@@ -176,6 +176,38 @@ class BlockPatchSettingsContractTest extends TestCase
   }
 
   #[Test]
+  public function patching_an_image_stores_and_clears_gallery_viewer_settings(): void
+  {
+    $block = $this->seedBlock('image');
+
+    $settings = $this->mergeSettings($block, [
+      'viewer_enabled' => true,
+      'viewer_group' => 'article-images',
+    ]);
+
+    $this->assertTrue($settings['viewer_enabled'] ?? false);
+    $this->assertSame('article-images', $settings['viewer_group'] ?? null);
+
+    $settings = $this->mergeSettings($block, ['viewer_enabled' => false]);
+
+    $this->assertArrayNotHasKey('viewer_enabled', $settings);
+    $this->assertArrayNotHasKey('viewer_group', $settings);
+  }
+
+  #[Test]
+  public function patching_an_image_rejects_an_invalid_gallery_viewer_group(): void
+  {
+    $block = $this->seedBlock('image');
+    $settings = $this->mergeSettings($block, [
+      'viewer_enabled' => true,
+      'viewer_group' => 'Article Images!',
+    ]);
+
+    $this->assertTrue($settings['viewer_enabled'] ?? false);
+    $this->assertSame('page-images', $settings['viewer_group'] ?? null);
+  }
+
+  #[Test]
   public function patching_a_hero_accepts_the_full_bleed_layout(): void
   {
     $block = $this->seedBlock('hero');

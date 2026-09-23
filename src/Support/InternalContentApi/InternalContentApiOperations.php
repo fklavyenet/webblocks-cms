@@ -578,6 +578,7 @@ class InternalContentApiOperations
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconSizeSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizeApplicationSettings($settings, $blockType, $path, $errors);
+    $settings = $this->normalizeImageViewerSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizeCompositionDefaults($settings, $blockType);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {
@@ -745,6 +746,35 @@ class InternalContentApiOperations
         unset($settings['flow']);
       }
     }
+
+    return $settings;
+  }
+
+  public function normalizeImageViewerSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
+  {
+    if ($blockType->slug !== 'image') {
+      return $settings;
+    }
+
+    $enabled = filter_var($settings['viewer_enabled'] ?? false, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+
+    if ($enabled !== true) {
+      unset($settings['viewer_enabled'], $settings['viewer_group']);
+
+      return $settings;
+    }
+
+    $group = trim((string) ($settings['viewer_group'] ?? 'page-images')) ?: 'page-images';
+
+    if (preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $group) !== 1) {
+      $errors[] = $this->error($path.'.settings.viewer_group', 'Viewer group must start with a lowercase letter or number and contain only lowercase letters, numbers, dashes, or underscores.');
+      unset($settings['viewer_enabled'], $settings['viewer_group']);
+
+      return $settings;
+    }
+
+    $settings['viewer_enabled'] = true;
+    $settings['viewer_group'] = $group;
 
     return $settings;
   }

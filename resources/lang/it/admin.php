@@ -3576,6 +3576,10 @@ $translations = [
       'alt_label' => 'Testo alternativo',
       'url_label' => 'URL del link',
       'caption_label' => 'Didascalia',
+      'viewer_enabled_label' => 'Apri nel Gallery Viewer',
+      'viewer_enabled_help' => 'Rende cliccabile un’immagine senza link e apre insieme tutte le immagini dello stesso gruppo.',
+      'viewer_group_label' => 'Gruppo del viewer',
+      'viewer_group_help' => 'Usa la stessa chiave di gruppo minuscola per le immagini da sfogliare insieme, ad esempio page-images.',
     ],
     'video' => [
       'locale_help' => 'Titolo e testo di supporto sono tradotti per lingua. L\'elemento media selezionato e l\'URL video esterno restano condivisi tra le lingue.',

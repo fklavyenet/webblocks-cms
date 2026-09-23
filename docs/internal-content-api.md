@@ -354,6 +354,7 @@ Supported fields are intentionally narrow:
 - `settings.show_language_switcher` for `header-actions`
 - text translations such as `title` and `subtitle`
 - image block translations through `translations.image.alt_text`, `translations.image.caption`, or the shorthand `translations.alt_text` and `translations.caption`
+- Image Gallery Viewer grouping through `settings.viewer_enabled` and a lowercase `settings.viewer_group`; enabled, unlinked Image blocks sharing a group render in one existing CMS Gallery Viewer while remaining independently positioned
 - contact form translations through `translations.contact_form.submit_label` and `translations.contact_form.success_message`, or the same names as shorthand, alongside `title` and `content`
 - `url`
 - `variant`

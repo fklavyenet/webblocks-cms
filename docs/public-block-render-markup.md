@@ -784,18 +784,20 @@ The renderer emits nothing without a safe URL. `_blank` target adds `target="_bl
 | --- | --- | --- |
 | media_id | selected media | Renders `<figure>` with `<img>` using media URL and dimensions. |
 | url | safe URL | Wraps only the image in an anchor. |
+| settings.viewer_enabled | true | When no explicit URL exists, turns the image into a `wb-gallery-trigger` and registers it with the existing Gallery Viewer. |
+| settings.viewer_group | lowercase group key | Image blocks with the same key share one viewer and previous/next sequence while remaining independently positioned in the page layout. Defaults to `page-images` when viewing is enabled. |
 | caption | translated text | Renders `<figcaption>` when present. |
 | alt text | translated or media fallback | Renders the image `alt` attribute. |
 
 ### Use for / Avoid for
 
-Use for: single semantic images with optional caption/link.
+Use for: single semantic images with optional caption/link, including independently composed images that should share one Gallery Viewer.
 
-Avoid for: image collections; use Gallery.
+Avoid for: image collections that should visibly render as one grid; use Gallery.
 
 ### Notes
 
-The block owns its `<figure>` root and emits nothing without media. Optional link wraps only the image when the URL is safe (`http`, `https`, `/`, `#`, `mailto`, or `tel`).
+The block owns its `<figure>` root and emits nothing without media. Optional link wraps only the image when the URL is safe (`http`, `https`, `/`, `#`, `mailto`, or `tel`) and takes precedence over viewer behavior. Unlinked viewer-enabled images emit the same trigger attributes used by Gallery, and their named group produces one viewer modal under `#wb-overlay-root` after all page slots render.
 
 ## Gallery (`gallery`)
 

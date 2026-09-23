@@ -3579,6 +3579,10 @@ $translations = [
       'alt_label' => 'Alt-Text',
       'url_label' => 'Link-URL',
       'caption_label' => 'Caption',
+      'viewer_enabled_label' => 'Im Gallery Viewer öffnen',
+      'viewer_enabled_help' => 'Macht ein unverlinktes Bild anklickbar und öffnet alle Bilder derselben Viewer-Gruppe gemeinsam.',
+      'viewer_group_label' => 'Viewer-Gruppe',
+      'viewer_group_help' => 'Verwende für gemeinsam durchsuchbare Bilder denselben kleingeschriebenen Gruppenschlüssel, zum Beispiel page-images.',
     ],
     'video' => [
       'locale_help' => 'Titel und Begleittext werden pro Sprache übersetzt. Das ausgewählte Medienobjekt und die externe Video-URL bleiben sprachübergreifend gemeinsam.',

@@ -206,6 +206,8 @@ class BlockRequest extends FormRequest
       'image_position' => ['prohibited', Rule::in(['none', 'top', 'middle', 'bottom'])],
       'image_align' => ['prohibited', Rule::in(['start', 'center', 'end', 'stretch'])],
       'image_aspect' => ['prohibited', Rule::in(['auto', 'square', 'wide', 'portrait'])],
+      'image_viewer_enabled' => [$isImage ? 'nullable' : 'prohibited', 'boolean'],
+      'image_viewer_group' => [$isImage ? 'nullable' : 'prohibited', 'string', 'max:64', 'regex:/^[a-z0-9][a-z0-9_-]*$/'],
       'alert_variant' => [$isAlert ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
       'layout' => [$isHero ? 'nullable' : 'nullable', Rule::in(['left', 'centered', 'split', 'full-bleed'])],
       'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -1108,6 +1110,28 @@ class BlockRequest extends FormRequest
         $data['settings'] = $settings === []
           ? null
           : json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== '' && $value !== []), JSON_UNESCAPED_SLASHES);
+      }
+
+      if ($blockType?->slug === 'image') {
+        $existingSettings = $existingBlock?->settings;
+        $existingSettings = is_array($existingSettings)
+          ? $existingSettings
+          : (json_decode((string) $existingSettings, true) ?: []);
+        $isTranslatedImageEdit = $data['locale'] !== null;
+        $settings = $existingSettings;
+
+        if (! $isTranslatedImageEdit) {
+          $settings['viewer_enabled'] = (bool) ($data['image_viewer_enabled'] ?? false);
+          $settings['viewer_group'] = trim((string) ($data['image_viewer_group'] ?? '')) ?: null;
+        }
+
+        if (($settings['viewer_enabled'] ?? false) !== true) {
+          unset($settings['viewer_enabled'], $settings['viewer_group']);
+        }
+
+        $data['settings'] = $settings === []
+          ? null
+          : json_encode($settings, JSON_UNESCAPED_SLASHES);
       }
 
       if ($blockType?->slug === 'code') {
@@ -2425,7 +2449,7 @@ class BlockRequest extends FormRequest
     unset($data['text'], $data['level'], $data['anchor']);
     unset($data['rating_scale'], $data['rating_allow_change'], $data['rating_show_summary'], $data['rating_title']);
     unset($data['comments_form_enabled'], $data['comments_show_approved'], $data['comments_show_author_name'], $data['comments_sort_order']);
-    unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['alert_variant']);
+    unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['image_viewer_enabled'], $data['image_viewer_group'], $data['alert_variant']);
     unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
     unset($data['sticky_navbar_mode'], $data['navbar_brand_aria_label'], $data['navbar_navigation_menu_key']);
     unset($data['navbar_navigation_active_indicator'], $data['navbar_navigation_active_matching']);

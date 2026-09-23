@@ -3577,6 +3577,10 @@ $translations = [
       'alt_label' => 'Texto alternativo',
       'url_label' => 'URL del enlace',
       'caption_label' => 'Leyenda',
+      'viewer_enabled_label' => 'Abrir en Gallery Viewer',
+      'viewer_enabled_help' => 'Hace clicable una imagen sin enlace y abre juntas todas las imágenes del mismo grupo.',
+      'viewer_group_label' => 'Grupo del visor',
+      'viewer_group_help' => 'Usa la misma clave de grupo en minúsculas para las imágenes que deben recorrerse juntas, por ejemplo page-images.',
     ],
     'video' => [
       'locale_help' => 'El título y el texto de apoyo se traducen por idioma. El elemento de Medios seleccionado y la URL de vídeo externa se comparten entre idiomas.',

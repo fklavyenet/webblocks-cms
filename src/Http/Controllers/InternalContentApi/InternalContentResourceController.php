@@ -2255,6 +2255,14 @@ class InternalContentResourceController extends Controller
       unset($merged['ratio']);
     }
 
+    if ($type === 'image' && ($merged['viewer_enabled'] ?? false) !== true) {
+      unset($merged['viewer_enabled'], $merged['viewer_group']);
+    }
+
+    if ($type === 'image' && ($merged['viewer_enabled'] ?? false) === true && ! isset($merged['viewer_group'])) {
+      $merged['viewer_group'] = 'page-images';
+    }
+
     return $merged;
   }
 
@@ -2274,6 +2282,9 @@ class InternalContentResourceController extends Controller
       'int' => is_numeric($value) ? max($rule[1], min($rule[2], (int) $value)) : null,
       'menu_key' => in_array(trim((string) $value), NavigationItem::menuKeys(), true) ? trim((string) $value) : null,
       'anchor' => preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', trim((string) $value)) === 1
+        ? trim((string) $value)
+        : null,
+      'viewer_group' => preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', trim((string) $value)) === 1
         ? trim((string) $value)
         : null,
       default => null,

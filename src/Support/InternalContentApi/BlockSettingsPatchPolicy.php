@@ -78,6 +78,7 @@ final class BlockSettingsPatchPolicy
    *   ['int', min, max] integer clamped into range, non-numeric clears
    *   ['menu_key']     one of the navigation menu keys
    *   ['anchor']       same-page anchor ID, admin's format
+   *   ['viewer_group'] lowercase page-local Gallery Viewer group key
    *
    * icon_slug, icon_tone, icon_size, and badge_tone are deliberately absent: they are
    * handled by the normalizers InternalContentApiOperations already owns.
@@ -143,6 +144,10 @@ final class BlockSettingsPatchPolicy
     'hero' => [
       'layout' => ['enum', ['left', 'centered', 'split', 'full-bleed']],
       'title_tag' => ['enum', ['h1', 'h2', 'h3']],
+    ],
+    'image' => [
+      'viewer_enabled' => ['bool'],
+      'viewer_group' => ['viewer_group'],
     ],
     'link-list' => [
       'row_layout' => ['enum', ['stacked']],

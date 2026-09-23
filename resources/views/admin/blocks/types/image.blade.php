@@ -46,4 +46,26 @@
         <label for="title">{{ $adminText('caption_label') }}</label>
         <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
     </div>
+
+    <div class="wb-stack wb-gap-2">
+        <label class="wb-cluster wb-cluster-2 wb-items-center" for="image_viewer_enabled">
+            <input id="image_viewer_enabled" name="image_viewer_enabled" type="hidden" value="0">
+            <input id="image_viewer_enabled" name="image_viewer_enabled" type="checkbox" value="1" @checked((bool) old('image_viewer_enabled', $block->setting('viewer_enabled', false)))>
+            <span>{{ $adminText('viewer_enabled_label') }}</span>
+        </label>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('viewer_enabled_help') }}</div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="image_viewer_group">{{ $adminText('viewer_group_label') }}</label>
+        <input
+            id="image_viewer_group"
+            name="image_viewer_group"
+            class="wb-input"
+            type="text"
+            value="{{ old('image_viewer_group', $block->setting('viewer_group', 'page-images')) }}"
+            placeholder="page-images"
+        >
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('viewer_group_help') }}</div>
+    </div>
 </div>

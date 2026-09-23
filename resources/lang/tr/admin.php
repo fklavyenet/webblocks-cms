@@ -3592,6 +3592,10 @@ $translations = [
       'alt_label' => 'Alt Metin',
       'url_label' => 'Link URL',
       'caption_label' => 'Caption',
+      'viewer_enabled_label' => 'Gallery Viewer’da Aç',
+      'viewer_enabled_help' => 'Linksiz görseli tıklanabilir yapar ve aynı viewer grubundaki tüm görselleri tek görüntüleyicide açar.',
+      'viewer_group_label' => 'Viewer Grubu',
+      'viewer_group_help' => 'Birlikte gezilecek görsellerde aynı küçük harfli grup anahtarını kullan; örneğin page-images.',
     ],
     'video' => [
       'locale_help' => 'Başlık ve destek metni dile göre çevrilir. Seçili Medya öğesi ve harici video URL’si diller arasında ortak kalır.',

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.21
+
+- Let independently positioned Image blocks opt into the native Gallery Viewer with a shared group key, preserving editorial layouts while providing one clickable previous/next image sequence.
+- Expose Image viewer enablement and grouping consistently in the admin form, content plans, live content contract, and existing-block Internal Content API updates.
+
 ## 1.87.20
 
 - Put Slots and Translations first on Edit Page by moving the less frequently used Page Management card to the end of the page.

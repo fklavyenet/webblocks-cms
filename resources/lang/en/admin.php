@@ -3797,6 +3797,10 @@ return [
       'alt_label' => 'Alt Text',
       'url_label' => 'Link URL',
       'caption_label' => 'Caption',
+      'viewer_enabled_label' => 'Open in Gallery Viewer',
+      'viewer_enabled_help' => 'Makes an unlinked image clickable and opens every image with the same viewer group in one viewer.',
+      'viewer_group_label' => 'Viewer Group',
+      'viewer_group_help' => 'Use the same lowercase group key on images that should be browsed together, for example page-images.',
     ],
     'video' => [
       'locale_help' => 'Title and supporting copy are translated per locale. The selected Media item and external video URL stay shared across locales.',

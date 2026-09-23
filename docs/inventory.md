@@ -492,11 +492,11 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | Locale-owned image `alt_text` and `caption`; shared optional URL. |
-| Settings and variants | No visual variant. Focal point and generated variants belong to the Media record. |
+| Settings and variants | `viewer_enabled` opts an unlinked image into the CMS Gallery Viewer; `viewer_group` joins independently placed Image blocks into one browsable viewer set. Focal point and generated variants belong to the Media record. |
 | Children/media | Direct image `media_id`; no children. |
-| HTML | Root-owning `<figure class="wb-stack wb-gap-2">` with responsive `<img>` output, optional linked image, and `<figcaption>`. |
+| HTML | Root-owning `<figure class="wb-stack wb-gap-2">` with responsive `<img>` output, optional linked or `wb-gallery-trigger` image, and `<figcaption>`. Enabled groups register one existing gallery-viewer modal under the canonical overlay root. |
 | Example appearance | Product or editorial image with an editable caption. |
-| Avoid | Background treatment, collections, or decorative layout HTML. |
+| Avoid | Background treatment or decorative layout HTML. Use Gallery when the collection itself should render as one grid; use viewer groups when independently composed images should share one viewer without changing layout. |
 
 ### `gallery` — Gallery
 
