@@ -50,6 +50,7 @@
           href="{{ $fullImageSource }}"
           class="wb-gallery-trigger"
           data-wb-gallery-target="#{{ $viewerId }}"
+          data-wb-gallery-group="{{ $viewerGroup }}"
           data-wb-gallery-full="{{ $fullImageSource }}"
           data-wb-gallery-alt="{{ $resolvedAltText }}"
           @if ($caption !== '') data-wb-gallery-caption="{{ $caption }}" @endif

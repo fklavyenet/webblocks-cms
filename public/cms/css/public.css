@@ -394,6 +394,14 @@ html[data-mode="dark"] body[data-wb-public-theme="graphite"] {
   min-block-size: inherit;
 }
 
+/* The UI gallery runtime resolves a trigger's sequence from its nearest
+   .wb-gallery ancestor. Grouped standalone Image blocks use the document as a
+   neutral lookup scope; undo the visual gallery layout on that scope. */
+body.wb-gallery.wb-gallery-document-scope {
+  display: block;
+  gap: 0;
+}
+
 /* Public composition modifiers ------------------------------------------- */
 .wb-public-cta--default {
   --wb-public-cta-surface: var(--wb-public-surface);

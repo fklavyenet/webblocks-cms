@@ -16,6 +16,7 @@
         $publicJsAssets = [
             'public-search-modal' => public_path('cms/js/public/public-search-modal.js'),
             'sidebar-navigation' => public_path('cms/js/public/sidebar-navigation.js'),
+            'grouped-image-viewer' => public_path('cms/js/public/grouped-image-viewer.js'),
             'privacy-consent-sync' => public_path('cms/js/privacy-consent-sync.js'),
         ];
 
@@ -132,6 +133,9 @@
         @endif
         @if (is_file($publicJsAssets['sidebar-navigation']))
             <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
+        @endif
+        @if (is_file($publicJsAssets['grouped-image-viewer']))
+            <script src="{{ asset('cms/js/public/grouped-image-viewer.js') }}?v={{ filemtime($publicJsAssets['grouped-image-viewer']) }}" defer></script>
         @endif
         @if ($consentBannerEnabled && is_file($publicJsAssets['privacy-consent-sync']))
             <script

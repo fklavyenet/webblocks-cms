@@ -44,6 +44,7 @@ class PublicOverlayRegistryTest extends TestCase
 
     $this->assertStringContainsString('class="wb-gallery-trigger"', $html);
     $this->assertStringContainsString('data-wb-gallery-target="#'.$viewerId.'"', $html);
+    $this->assertStringContainsString('data-wb-gallery-group="article-images"', $html);
     $this->assertStringContainsString('id="'.$viewerId.'"', $overlay);
     $this->assertStringContainsString('1 / 1', $overlay);
   }

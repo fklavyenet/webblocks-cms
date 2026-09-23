@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.22
+
+- Make grouped standalone Image blocks open in the native Gallery Viewer instead of following their fallback image links, while preserving one previous/next sequence across separated article sections.
+
 ## 1.87.21
 
 - Let independently positioned Image blocks opt into the native Gallery Viewer with a shared group key, preserving editorial layouts while providing one clickable previous/next image sequence.
