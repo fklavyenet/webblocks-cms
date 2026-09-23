@@ -59,23 +59,21 @@
         @unless ($blocks->isEmpty())
             <div class="wb-card wb-card-muted wb-admin-slot-block-search-card">
                 <div class="wb-card-body">
-                    <div class="wb-filter-bar wb-filter-bar--fields" role="search">
-                        <div class="wb-filter-bar-fields">
-                            <div class="wb-field wb-filter-bar-search">
-                                <label for="slot_block_search" class="wb-label">{{ $adminTranslator->admin('common.search', $adminLocale) }}</label>
-                                <input id="slot_block_search" type="search" class="wb-input" data-wb-slot-block-search autocomplete="off" placeholder="{{ $adminText('search_placeholder') }}">
-                            </div>
-                            <div class="wb-filter-bar-actions">
-                                <div class="wb-action-group">
-                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-slot-block-search-clear hidden>
-                                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                                        <span>{{ $adminText('clear_search') }}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="wb-text-sm wb-text-muted" data-wb-slot-block-search-empty aria-live="polite" hidden>{{ $adminText('no_search_results') }}</span>
-                    </div>
+                    @include('webblocks-cms::admin.partials.listing-filters', [
+                        'action' => $slotBlockRoute(),
+                        'search' => [
+                            'id' => 'slot_block_search',
+                            'name' => 'search',
+                            'label' => $adminTranslator->admin('common.search', $adminLocale),
+                            'value' => '',
+                            'placeholder' => $adminText('search_placeholder'),
+                        ],
+                        'showActions' => false,
+                        'liveSearch' => [
+                            'clearLabel' => $adminText('clear_search'),
+                            'emptyLabel' => $adminText('no_search_results'),
+                        ],
+                    ])
                 </div>
             </div>
         @endunless

@@ -329,6 +329,11 @@
                 searchSlotBlocks(root);
             }
         });
+        root.addEventListener('submit', function (event) {
+            if (event.target.matches('[data-wb-slot-block-search-form]')) {
+                event.preventDefault();
+            }
+        });
         root.addEventListener('click', function (event) {
             var clearSearchButton = event.target.closest('[data-wb-slot-block-search-clear]');
 

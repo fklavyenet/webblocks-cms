@@ -17,10 +17,14 @@ class SlotBlockTreeBulkToggleTest extends TestCase
       $this->assertStringContainsString('wb-icon-maximize2', $source);
       $this->assertStringContainsString('expand_all_blocks', $source);
       $this->assertStringContainsString('collapse_all_blocks', $source);
-      $this->assertStringContainsString('data-wb-slot-block-search', $source);
+      $this->assertStringContainsString("'liveSearch' => [", $source);
       $this->assertStringContainsString('wb-table-sm', $source);
       $this->assertStringContainsString('wb-card wb-card-muted wb-admin-slot-block-search-card', $source);
     }
+
+    $filters = (string) file_get_contents($root.'/resources/views/admin/partials/listing-filters.blade.php');
+    $this->assertStringContainsString('data-wb-slot-block-search', $filters);
+    $this->assertStringContainsString('data-wb-slot-block-search-clear', $filters);
   }
 
   public function test_tree_runtime_toggles_every_parent_and_persists_the_result(): void

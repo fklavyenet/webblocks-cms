@@ -335,6 +335,7 @@ input.wb-admin-table-grid-input:focus {
 
 .wb-admin-slot-blocks-table-wrap {
     overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .wb-admin-slot-block-toolbar {
@@ -374,7 +375,7 @@ input.wb-admin-table-grid-input:focus {
 
 .wb-admin-slot-blocks-table .wb-admin-slot-block-summary-cell {
     min-width: 0;
-    width: 100%;
+    width: auto;
 }
 
 .wb-admin-slot-blocks-table .wb-cms-block-row-title {

@@ -14,8 +14,8 @@ class SlotBlockListLayoutTest extends TestCase
       $contents = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/'.$view);
 
       $this->assertStringContainsString('wb-card wb-card-muted wb-admin-slot-block-search-card', $contents);
-      $this->assertStringContainsString('wb-filter-bar wb-filter-bar--fields', $contents);
-      $this->assertStringContainsString('class="wb-input" data-wb-slot-block-search', $contents);
+      $this->assertStringContainsString("@include('webblocks-cms::admin.partials.listing-filters'", $contents);
+      $this->assertStringContainsString("'liveSearch' => [", $contents);
       $this->assertStringNotContainsString('wb-admin-slot-block-search-row', $contents);
     }
   }
@@ -39,7 +39,8 @@ class SlotBlockListLayoutTest extends TestCase
     ];
 
     $this->assertStringContainsString('.wb-admin-slot-block-summary-cell {', $css);
-    $this->assertStringContainsString('width: 100%;', $css);
+    $this->assertMatchesRegularExpression('/\.wb-admin-slot-block-summary-cell\s*\{[^}]*width:\s*auto;/s', $css);
+    $this->assertMatchesRegularExpression('/\.wb-admin-slot-blocks-table-wrap\s*\{[^}]*overflow-x:\s*auto;[^}]*overflow-y:\s*hidden;/s', $css);
     $this->assertDoesNotMatchRegularExpression(
       '/\.wb-admin-slot-blocks-table \.wb-admin-slot-block-actions-cell\s*\{[^}]*min-width:/s',
       $css,

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.26
+
+- Bring Edit Slot live search onto the shared admin listing-filter pattern while preserving instant filtering and its clear action.
+- Prevent the block table's flexible Summary column from creating a few pixels of horizontal overflow and the resulting feedback vertical scrollbar, while retaining horizontal scrolling on genuinely narrow viewports.
+
 ## 1.87.25
 
 - Constrain the admin document to the dynamic viewport so the WebBlocks dashboard remains the sole scroll owner and Chromium cannot expose a second empty scroll range below the sidebar and main content.
