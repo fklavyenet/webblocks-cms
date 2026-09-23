@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.87.27
+
+- Render page-owned and Shared Slot live search directly as the standard WebBlocks UI filter bar, removing the redundant muted card and body wrapper that produced a visibly nested, oversized filter panel.
+- Guard the filter ownership contract with a structural regression test so Edit Slot filters cannot be wrapped in a second presentation card again.
+
 ## 1.87.26
 
 - Bring Edit Slot live search onto the shared admin listing-filter pattern while preserving instant filtering and its clear action.

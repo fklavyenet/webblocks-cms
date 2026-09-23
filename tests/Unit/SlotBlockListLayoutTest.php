@@ -8,14 +8,15 @@ use PHPUnit\Framework\TestCase;
 class SlotBlockListLayoutTest extends TestCase
 {
   #[Test]
-  public function slot_block_screens_use_the_standard_filter_card(): void
+  public function slot_block_screens_use_the_standard_filter_bar_without_a_nested_card(): void
   {
     foreach (['admin/pages/slot-blocks.blade.php', 'admin/shared-slots/slot-blocks.blade.php'] as $view) {
       $contents = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/'.$view);
 
-      $this->assertStringContainsString('wb-card wb-card-muted wb-admin-slot-block-search-card', $contents);
       $this->assertStringContainsString("@include('webblocks-cms::admin.partials.listing-filters'", $contents);
       $this->assertStringContainsString("'liveSearch' => [", $contents);
+      $this->assertStringNotContainsString('wb-admin-slot-block-search-card', $contents);
+      $this->assertDoesNotMatchRegularExpression('/wb-card[^>]*>\s*<div class="wb-card-body">\s*@include\(\'webblocks-cms::admin\.partials\.listing-filters\'/s', $contents);
       $this->assertStringNotContainsString('wb-admin-slot-block-search-row', $contents);
     }
   }

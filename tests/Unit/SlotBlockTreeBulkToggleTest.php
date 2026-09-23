@@ -19,7 +19,7 @@ class SlotBlockTreeBulkToggleTest extends TestCase
       $this->assertStringContainsString('collapse_all_blocks', $source);
       $this->assertStringContainsString("'liveSearch' => [", $source);
       $this->assertStringContainsString('wb-table-sm', $source);
-      $this->assertStringContainsString('wb-card wb-card-muted wb-admin-slot-block-search-card', $source);
+      $this->assertStringNotContainsString('wb-admin-slot-block-search-card', $source);
     }
 
     $filters = (string) file_get_contents($root.'/resources/views/admin/partials/listing-filters.blade.php');

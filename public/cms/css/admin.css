@@ -342,7 +342,7 @@ input.wb-admin-table-grid-input:focus {
     row-gap: 0.5rem;
 }
 
-.wb-admin-slot-block-search-card [data-wb-slot-block-search-empty]:not([hidden]) {
+[data-wb-slot-block-search-form] [data-wb-slot-block-search-empty]:not([hidden]) {
     display: block;
     margin-top: var(--wb-s2);
 }

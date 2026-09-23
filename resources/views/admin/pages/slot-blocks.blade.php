@@ -57,25 +57,21 @@
 
     <div class="wb-stack wb-gap-4" data-wb-cms-slot-block-tree data-wb-slot-id="{{ $slot->id }}" data-page-id="{{ $page->id }}" data-slot-type-id="{{ $slot->slot_type_id }}">
         @unless ($blocks->isEmpty())
-            <div class="wb-card wb-card-muted wb-admin-slot-block-search-card">
-                <div class="wb-card-body">
-                    @include('webblocks-cms::admin.partials.listing-filters', [
-                        'action' => $slotBlockRoute(),
-                        'search' => [
-                            'id' => 'slot_block_search',
-                            'name' => 'search',
-                            'label' => $adminTranslator->admin('common.search', $adminLocale),
-                            'value' => '',
-                            'placeholder' => $adminText('search_placeholder'),
-                        ],
-                        'showActions' => false,
-                        'liveSearch' => [
-                            'clearLabel' => $adminText('clear_search'),
-                            'emptyLabel' => $adminText('no_search_results'),
-                        ],
-                    ])
-                </div>
-            </div>
+            @include('webblocks-cms::admin.partials.listing-filters', [
+                'action' => $slotBlockRoute(),
+                'search' => [
+                    'id' => 'slot_block_search',
+                    'name' => 'search',
+                    'label' => $adminTranslator->admin('common.search', $adminLocale),
+                    'value' => '',
+                    'placeholder' => $adminText('search_placeholder'),
+                ],
+                'showActions' => false,
+                'liveSearch' => [
+                    'clearLabel' => $adminText('clear_search'),
+                    'emptyLabel' => $adminText('no_search_results'),
+                ],
+            ])
         @endunless
 
         <div class="wb-card">
