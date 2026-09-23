@@ -63,4 +63,17 @@ class PageEditTabsStructureTest extends TestCase
     $this->assertNotContains('cms/js/admin/page-assets.js', WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ASSET_FILES);
     $this->assertNotContains('cms/js/admin/page-assets.js', WebBlocksCmsServiceProvider::ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES);
   }
+
+  #[Test]
+  public function page_management_is_rendered_after_slots_and_translations(): void
+  {
+    $edit = $this->edit();
+
+    $this->assertStringContainsString("@push('page-management-card')", $edit);
+    $this->assertStringContainsString("@stack('page-management-card')", $edit);
+    $this->assertGreaterThan(
+      strpos($edit, "'translations'"),
+      strpos($edit, "@stack('page-management-card')")
+    );
+  }
 }

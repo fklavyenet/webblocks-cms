@@ -55,6 +55,7 @@
 
   @include('webblocks-cms::admin.partials.flash')
 
+  @push('page-management-card')
   <div class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
       <strong>{{ $adminText('page_management') }}</strong>
@@ -208,6 +209,7 @@
       </div>
     </div>
   </div>
+  @endpush
 
   @include('webblocks-cms::admin.pages.partials.slots-card', [
     'page' => $page,
@@ -371,6 +373,8 @@
       </div>
     </div>
   </div>
+
+  @stack('page-management-card')
 @endsection
 
 @push('overlays')

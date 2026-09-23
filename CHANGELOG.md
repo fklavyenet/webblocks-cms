@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.87.20
+
+- Put Slots and Translations first on Edit Page by moving the less frequently used Page Management card to the end of the page.
+
 ## 1.87.19
 
 - Make Edit Slot content faster to scan with meaningful-only summaries, persistent expand/collapse-all controls, ancestor-aware block search, compact locale tooling, denser rows, and removal of the informational Public Wrapper card.
