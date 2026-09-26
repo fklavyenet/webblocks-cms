@@ -25,7 +25,7 @@
         <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
             <span>{{ $adminText('site') }}: <strong>{{ $page->site?->name ?? $adminText('fallback_site') }}</strong></span>
             <span>{{ $adminText('current_workflow') }}: <strong>{{ $page->workflowLabel() }}</strong></span>
-            <span>{{ $adminText('total_revisions') }}: <strong>{{ $revisions->count() }}</strong></span>
+            <span>{{ $adminText('total_revisions') }}: <strong>{{ $revisions->total() }}</strong></span>
         </div>
     </div>
 
@@ -90,6 +90,7 @@
                         </tbody>
                     </table>
                 </div>
+                {{ $revisions->links() }}
             @endif
         </div>
     </div>

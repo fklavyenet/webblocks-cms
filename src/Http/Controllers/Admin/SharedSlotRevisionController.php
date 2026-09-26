@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotRevision;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -32,7 +33,7 @@ class SharedSlotRevisionController extends Controller
 
     return view('webblocks-cms::admin.shared-slots.revisions.index', [
       'sharedSlot' => $sharedSlot->loadMissing('site'),
-      'revisions' => $sharedSlot->revisions()->with(['actor', 'createdByUser', 'restoredFrom'])->get(),
+      'revisions' => $sharedSlot->revisions()->with(['actor', 'createdByUser', 'restoredFrom'])->paginate(AdminPagination::perPage()),
       'canRestoreRevisions' => $this->revisionManager->canRestore(request()->user(), $sharedSlot),
     ]);
   }

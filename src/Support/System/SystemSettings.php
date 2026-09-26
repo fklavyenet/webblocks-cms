@@ -78,6 +78,14 @@ class SystemSettings
 
   public const CLEANUP_TEMPORARY_WORKSPACE_HOURS = 'system.cleanup_temporary_workspace_hours';
 
+  public const CLEANUP_PAGE_REVISION_DAYS = 'system.cleanup_page_revision_days';
+
+  public const CLEANUP_KEEP_LATEST_PAGE_REVISIONS = 'system.cleanup_keep_latest_page_revisions';
+
+  public const CLEANUP_SHARED_SLOT_REVISION_DAYS = 'system.cleanup_shared_slot_revision_days';
+
+  public const CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS = 'system.cleanup_keep_latest_shared_slot_revisions';
+
   private const READABLE_KEYS = [
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
@@ -107,6 +115,10 @@ class SystemSettings
     self::CLEANUP_ASSET_REVISION_DAYS,
     self::CLEANUP_KEEP_LATEST_ASSET_REVISIONS,
     self::CLEANUP_TEMPORARY_WORKSPACE_HOURS,
+    self::CLEANUP_PAGE_REVISION_DAYS,
+    self::CLEANUP_KEEP_LATEST_PAGE_REVISIONS,
+    self::CLEANUP_SHARED_SLOT_REVISION_DAYS,
+    self::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS,
   ];
 
   public const MANAGED_KEYS = [
@@ -136,6 +148,10 @@ class SystemSettings
     self::CLEANUP_ASSET_REVISION_DAYS,
     self::CLEANUP_KEEP_LATEST_ASSET_REVISIONS,
     self::CLEANUP_TEMPORARY_WORKSPACE_HOURS,
+    self::CLEANUP_PAGE_REVISION_DAYS,
+    self::CLEANUP_KEEP_LATEST_PAGE_REVISIONS,
+    self::CLEANUP_SHARED_SLOT_REVISION_DAYS,
+    self::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS,
   ];
 
   public function all(): array
@@ -339,13 +355,17 @@ class SystemSettings
     ];
   }
 
-  /** @return array{asset_revision_days: int, keep_latest_asset_revisions: int, temporary_workspace_hours: int} */
+  /** @return array{asset_revision_days: int, keep_latest_asset_revisions: int, temporary_workspace_hours: int, page_revision_days: int, keep_latest_page_revisions: int, shared_slot_revision_days: int, keep_latest_shared_slot_revisions: int} */
   public function maintenanceCleanupSettings(): array
   {
     return [
       'asset_revision_days' => $this->boundedInt(self::CLEANUP_ASSET_REVISION_DAYS, 90, 1, 3650),
       'keep_latest_asset_revisions' => $this->boundedInt(self::CLEANUP_KEEP_LATEST_ASSET_REVISIONS, 20, 1, 1000),
       'temporary_workspace_hours' => $this->boundedInt(self::CLEANUP_TEMPORARY_WORKSPACE_HOURS, 24, 1, 8760),
+      'page_revision_days' => $this->boundedInt(self::CLEANUP_PAGE_REVISION_DAYS, 365, 1, 3650),
+      'keep_latest_page_revisions' => $this->boundedInt(self::CLEANUP_KEEP_LATEST_PAGE_REVISIONS, 50, 1, 1000),
+      'shared_slot_revision_days' => $this->boundedInt(self::CLEANUP_SHARED_SLOT_REVISION_DAYS, 365, 1, 3650),
+      'keep_latest_shared_slot_revisions' => $this->boundedInt(self::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS, 50, 1, 1000),
     ];
   }
 

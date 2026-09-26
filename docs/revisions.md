@@ -109,6 +109,19 @@ Because Shared Slots are reusable references, restoring one can affect every pag
 
 The same access pattern applies to Shared Slot revisions.
 
+## Retention and storage growth
+
+Revision snapshots contain the complete editorial state needed for a safe restore, including the page or Shared Slot block tree and its translations. They therefore grow with both edit frequency and content size.
+
+System administrators can review revision counts and stored snapshot bytes under **System → Cleanup**. Page and Shared Slot histories have separate retention controls. A revision is eligible for manual cleanup only when both safeguards are satisfied:
+
+- it is older than the configured minimum age; and
+- it falls outside the configured number of newest revisions retained for its page or Shared Slot.
+
+The source revision behind an active page restore preview is always protected. Cleanup presents the eligible row count and approximate snapshot bytes before an operator explicitly confirms deletion. It does not run as an implicit side effect of editing or viewing content.
+
+Version History screens are paginated, and the Internal Content API page-version collection accepts `page` and `per_page` (1–100) while returning pagination metadata.
+
 ## Revisions Vs Other Recovery Tools
 
 ### Revisions

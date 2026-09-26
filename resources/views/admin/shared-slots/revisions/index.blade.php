@@ -24,7 +24,7 @@
         <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
             <span>{{ $adminText('site_label') }}: <strong>{{ $sharedSlot->site?->name ?? $adminText('fallback_site') }}</strong></span>
             <span>{{ $adminText('handle_label') }}: <strong><code>{{ $sharedSlot->handle }}</code></strong></span>
-            <span>{{ $adminText('total_revisions') }}: <strong>{{ $revisions->count() }}</strong></span>
+            <span>{{ $adminText('total_revisions') }}: <strong>{{ $revisions->total() }}</strong></span>
             <span class="wb-text-danger">{{ $adminText('restore_warning') }}</span>
         </div>
     </div>
@@ -96,6 +96,7 @@
                         </tbody>
                     </table>
                 </div>
+                {{ $revisions->links() }}
             @endif
         </div>
     </div>

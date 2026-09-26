@@ -38,11 +38,19 @@ class InternalMaintenanceCleanupController extends Controller
       'asset_revision_days' => ['required', 'integer', 'min:1', 'max:3650'],
       'keep_latest_asset_revisions' => ['required', 'integer', 'min:1', 'max:1000'],
       'temporary_workspace_hours' => ['required', 'integer', 'min:1', 'max:8760'],
+      'page_revision_days' => ['required', 'integer', 'min:1', 'max:3650'],
+      'keep_latest_page_revisions' => ['required', 'integer', 'min:1', 'max:1000'],
+      'shared_slot_revision_days' => ['required', 'integer', 'min:1', 'max:3650'],
+      'keep_latest_shared_slot_revisions' => ['required', 'integer', 'min:1', 'max:1000'],
     ])->validate();
     $this->settings->save([
       SystemSettings::CLEANUP_ASSET_REVISION_DAYS => $validated['asset_revision_days'],
       SystemSettings::CLEANUP_KEEP_LATEST_ASSET_REVISIONS => $validated['keep_latest_asset_revisions'],
       SystemSettings::CLEANUP_TEMPORARY_WORKSPACE_HOURS => $validated['temporary_workspace_hours'],
+      SystemSettings::CLEANUP_PAGE_REVISION_DAYS => $validated['page_revision_days'],
+      SystemSettings::CLEANUP_KEEP_LATEST_PAGE_REVISIONS => $validated['keep_latest_page_revisions'],
+      SystemSettings::CLEANUP_SHARED_SLOT_REVISION_DAYS => $validated['shared_slot_revision_days'],
+      SystemSettings::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS => $validated['keep_latest_shared_slot_revisions'],
     ]);
 
     return $this->show();

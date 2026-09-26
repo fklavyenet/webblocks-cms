@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.88.0
+
+- Add guarded retention policies and explicit cleanup previews for Page and Shared Slot revisions, preserving both a configurable newest-version floor and the source of every active restore preview.
+- Report revision snapshot bytes, per-site page/block/revision growth, live block count versus allocated IDs, and original versus generated media storage on System Cleanup, with capacity warnings for material revision growth, sustained block churn, and disproportionate variant storage.
+- Paginate Page and Shared Slot version histories in the admin, and paginate Internal Content API page-version collections with bounded `per_page` input and response metadata, preventing long-lived editorial histories from being loaded in one request.
+- Document revision retention, media storage accounting, and the distinction between live blocks and normal auto-increment churn.
+
 ## 1.87.27
 
 - Render page-owned and Shared Slot live search directly as the standard WebBlocks UI filter bar, removing the redundant muted card and body wrapper that produced a visibly nested, oversized filter panel.

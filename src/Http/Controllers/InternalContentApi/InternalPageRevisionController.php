@@ -26,7 +26,12 @@ class InternalPageRevisionController extends Controller
   public function index(Request $request, Page $page): JsonResponse
   {
     $this->authorizeView($request, $page);
-    $versions = $page->revisions()->with(['createdByUser', 'restoredFrom'])->get();
+    $perPage = min(max($request->integer('per_page', 50), 1), 100);
+    $paginator = $page->revisions()->with(['createdByUser', 'restoredFrom'])->paginate($perPage);
+    $versions = $paginator->getCollection();
+    $nextOlder = $paginator->hasMorePages()
+      ? $page->revisions()->skip($paginator->currentPage() * $paginator->perPage())->first()
+      : null;
 
     return response()->json([
       'ok' => true,
@@ -38,9 +43,15 @@ class InternalPageRevisionController extends Controller
         'source' => $revision->source,
         'event' => $revision->event,
         'page_state' => data_get($revision->snapshot, 'page.status'),
-        'summary' => $this->inspector->listSummary($revision, $versions->get($index + 1)),
+        'summary' => $this->inspector->listSummary($revision, $versions->get($index + 1) ?? $nextOlder),
         'review_url' => route('internal-content-api.pages.versions.show', [$page, $revision], false),
       ])->values(),
+      'pagination' => [
+        'current_page' => $paginator->currentPage(),
+        'last_page' => $paginator->lastPage(),
+        'per_page' => $paginator->perPage(),
+        'total' => $paginator->total(),
+      ],
     ]);
   }
 

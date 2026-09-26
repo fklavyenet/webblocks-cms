@@ -45,3 +45,5 @@ php artisan webblocks:media-variants:regenerate --prune
 ```
 
 Generation is synchronous and intentionally does not require a queue. Large libraries should be regenerated during a maintenance window.
+
+The System Cleanup screen reports original Media Library bytes separately from generated variant file count and bytes. Its generated-variant cleanup preview includes only obsolete fingerprint directories; current variants and original files are never candidates. The same screen also reports live block count beside the highest allocated block id so an operator can distinguish stored content from normal auto-increment churn.

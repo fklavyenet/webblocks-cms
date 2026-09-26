@@ -10,6 +10,7 @@ use RuntimeException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Pages\PageRevisionCandidateManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionInspector;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -36,9 +37,13 @@ class PageRevisionController extends Controller
         ->throwResponse();
     }
 
-    $revisions = $page->revisions()->with(['actor', 'createdByUser', 'restoredFrom'])->get();
-    $revisions->each(function (PageRevision $revision, int $index) use ($revisions): void {
-      $revision->setAttribute('display_summary', $this->revisionInspector->listSummary($revision, $revisions->get($index + 1)));
+    $revisions = $page->revisions()->with(['actor', 'createdByUser', 'restoredFrom'])->paginate(AdminPagination::perPage());
+    $items = $revisions->getCollection();
+    $nextOlder = $revisions->hasMorePages()
+      ? $page->revisions()->skip($revisions->currentPage() * $revisions->perPage())->first()
+      : null;
+    $items->each(function (PageRevision $revision, int $index) use ($items, $nextOlder): void {
+      $revision->setAttribute('display_summary', $this->revisionInspector->listSummary($revision, $items->get($index + 1) ?? $nextOlder));
     });
 
     return view('webblocks-cms::admin.pages.revisions.index', [
