@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: downloads
 guide_series: D
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/downloads
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/downloads.md
 cms_title: Offer A Downloadable File
 card_description: A clear download action for a PDF or document, instead of a bare link.
 card_thumbnail: 01-form.png

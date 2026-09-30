@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: link-lists-and-tables
 guide_series: C
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/link-lists-and-tables
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/link-lists-and-tables.md
 cms_title: Link Lists And Tables
 card_description: A tidy list of links with descriptions, and real tabular data.
 card_thumbnail: 04-rendered.png

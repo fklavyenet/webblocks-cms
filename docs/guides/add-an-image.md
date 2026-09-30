@@ -1,12 +1,14 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: add-an-image
 guide_series: B
 guide_order: 7
-cms_site: docs-site
+cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/add-an-image
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/add-an-image.md
 cms_title: Add An Image
 card_description: Place a picture on a page from the Media Library, with alt text that describes it.
 card_thumbnail: 02-media-picker.png

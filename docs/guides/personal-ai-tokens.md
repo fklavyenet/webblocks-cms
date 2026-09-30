@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: personal-ai-tokens
 guide_series: H
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/personal-ai-tokens
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/personal-ai-tokens.md
 cms_title: 'Connect Your AI Safely'
 card_description: Create a personal token so an AI can work within your role and selected sites.
 card_thumbnail: 01-personal-ai-tokens.png

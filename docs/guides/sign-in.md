@@ -1,13 +1,15 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: sign-in
 guide_series: A
 guide_order: 1
-cms_site: docs-site
+cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/sign-in
 cms_title: Sign In To The Admin Panel
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/sign-in.md
 card_description: Open the admin panel, sign in, and find your way around the dashboard.
 card_thumbnail: 02-dashboard.png
 ---

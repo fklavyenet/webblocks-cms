@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: code-and-html
 guide_series: C
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/code-and-html
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/code-and-html.md
 cms_title: Code And HTML Blocks
 card_description: Show a code sample properly — and know when the HTML block is the wrong answer.
 card_thumbnail: 01-code-form.png

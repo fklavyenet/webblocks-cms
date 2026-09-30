@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: choose-a-page-layout
 guide_series: E
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/choose-a-page-layout
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/choose-a-page-layout.md
 cms_title: Choose And Change A Page Layout
 card_description: Pick the frame a page renders in, and change it later without losing content.
 card_thumbnail: 02-layout-slots.png

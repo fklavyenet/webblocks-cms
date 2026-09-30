@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: video-and-audio
 guide_series: D
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/video-and-audio
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/video-and-audio.md
 cms_title: Add A Video Or Audio Block
 card_description: Embed a hosted clip or point at one that lives somewhere else.
 card_thumbnail: 01-video-form.png

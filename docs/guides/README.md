@@ -1,41 +1,42 @@
-# Guide Drafts
+# Guide Sources
 
-These Markdown files are **drafts**, not the published copy.
+These Markdown files are the source of truth for the published guide pages.
 
-They exist so guide wording can be reviewed in a pull request before anything is created on the documentation site. Once a guide is built in the CMS through the Internal Content API, the CMS page is authoritative: later corrections are made there, and these files are not re-synced over the live pages.
+Changes are reviewed here first, then applied to the CMS as staged updates through the repository-owned documentation sync command. The CMS page is the published projection, not an independent editing source. If the live page has drifted from its source, synchronization must stop and report the difference instead of overwriting it silently.
 
-Do not add `cms_sync: true` front matter here. That flag belongs to the reference docs under `docs/`, which use the Markdown-to-CMS sync workflow. Guides use a different pipeline; see [`docs/user-guides-plan.md`](../user-guides-plan.md).
+Every guide carries `cms_sync: true` and a stable `cms_source_id`. See [`docs/user-guides-plan.md`](../user-guides-plan.md) for the publishing contract.
+
+The `webblocksui.com` sandbox is a separate content workspace for the main site and other site-owned properties. Guide sync must not read source content or media from that workspace, and sandbox tooling must not treat this directory as its own editable content store.
 
 ## Front Matter
 
 ```yaml
+cms_sync: true
 guide: true
 guide_slug: create-a-page
 guide_series: B
 guide_order: 5
-cms_site: docs-site
+cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/create-a-page
 cms_title: Create A Page
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/create-a-page.md
 card_description: Add a new page to a site and save it as a draft.
 card_thumbnail: 00-card.png
 ```
 
 `card_description` and `card_thumbnail` feed the card on the `/guides` index page.
 
-## Screenshot Placeholders
+## Screenshots
 
-Screenshots are not embedded as Markdown images, because the published page uses real Image blocks with a `media_id`. Mark the position and the intent instead:
+Screenshots live under `docs/guides/media/<guide-slug>/` and are embedded at their intended reading position with ordinary Markdown image syntax:
 
 ```markdown
-> **Screenshot** `01-pages-list.png` — Pages list with the New Page button visible.
-> Alt: Pages list in the WebBlocks CMS admin panel.
+![Pages list with the New Page button visible](media/create-a-page/01-pages-list.webp)
 ```
 
-The file name is relative to `webblocks-cms-videos/assets/screenshots/guides/<guide-slug>/`. The build step uploads that file, then inserts an Image block at that position with the given alt text.
-
-Screenshots deliberately do **not** live in this repository. `docs/` is not `export-ignore`d, so anything under it ships inside the Composer package to every install; a guide series' worth of PNGs has no business there. They sit with the capture script in the video project instead, and the published copies live in the CMS Media Library.
+The sync command uploads or replaces the file in the CMS Media Library, then inserts a native Image block with the Markdown alt text. Because these assets ship in the Composer package, keep only documentation media, prefer efficient WebP or PNG files, and avoid redundant full-screen captures.
 
 ## Verification Status
 

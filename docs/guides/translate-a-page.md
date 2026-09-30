@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: translate-a-page
 guide_series: J
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/translate-a-page
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/translate-a-page.md
 cms_title: Translate A Page
 card_description: Give a page a second language, with its own address and its own SEO.
 card_thumbnail: 02-add-translation.png

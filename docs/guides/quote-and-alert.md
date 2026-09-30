@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: quote-and-alert
 guide_series: C
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/quote-and-alert
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/quote-and-alert.md
 cms_title: Quote And Alert
 card_description: Pull out someone's words, or flag something the reader must not miss.
 card_thumbnail: 01-quote-form.png

@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: header-shared-slot
 guide_series: G
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/header-shared-slot
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/header-shared-slot.md
 cms_title: Build A Header As A Shared Slot
 card_description: Build the header once, then point every page at it.
 card_thumbnail: 02-header-blocks.png

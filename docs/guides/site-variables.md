@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: site-variables
 guide_series: J
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/site-variables
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/site-variables.md
 cms_title: Site Variables
 card_description: Write a value once, use it across the site, change it in one place.
 card_thumbnail: 01-variables.png

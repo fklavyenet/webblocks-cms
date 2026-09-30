@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: columns-and-grid
 guide_series: E
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/columns-and-grid
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/columns-and-grid.md
 cms_title: Columns And Grid
 card_description: Put things side by side — with copy of its own, or as a bare arrangement.
 card_thumbnail: 04-rendered.png

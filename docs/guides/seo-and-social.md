@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: seo-and-social
 guide_series: I
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/seo-and-social
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/seo-and-social.md
 cms_title: SEO Fields, Social Image, And Favicon
 card_description: What search results and shared links show, and where to set it.
 card_thumbnail: 01-page-seo.png

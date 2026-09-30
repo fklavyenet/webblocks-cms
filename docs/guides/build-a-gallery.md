@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: build-a-gallery
 guide_series: D
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/build-a-gallery
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/build-a-gallery.md
 cms_title: Build A Gallery
 card_description: Several images as one grid, with captions and an optional lightbox.
 card_thumbnail: 02-rendered.png

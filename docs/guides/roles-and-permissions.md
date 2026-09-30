@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: roles-and-permissions
 guide_series: H
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/roles-and-permissions
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/roles-and-permissions.md
 cms_title: 'Roles: Who Can Do What'
 card_description: The three roles, what each one reaches, and how to add a colleague.
 card_thumbnail: 02-add-user.png

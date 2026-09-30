@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: cluster-and-spacing
 guide_series: E
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/cluster-and-spacing
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/cluster-and-spacing.md
 cms_title: Cluster And Spacing
 card_description: Line a few things up in a row, and control the air between everything else.
 card_thumbnail: 01-cluster-form.png

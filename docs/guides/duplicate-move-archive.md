@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: duplicate-move-archive
 guide_series: H
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/duplicate-move-archive
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/duplicate-move-archive.md
 cms_title: Duplicate, Move, And Archive Pages
 card_description: Copy a page as a starting point, move it between sites, or take it down without deleting it.
 card_thumbnail: 01-duplicate.png

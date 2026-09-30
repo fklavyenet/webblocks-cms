@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: comments-and-ratings
 guide_series: I
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/comments-and-ratings
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/comments-and-ratings.md
 cms_title: Comments And Ratings
 card_description: Let readers respond, and review what they say before it appears.
 card_thumbnail: 03-comments-moderation.png

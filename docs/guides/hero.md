@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: hero
 guide_series: C
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/hero
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/hero.md
 cms_title: 'Hero: Build An Opening Section'
 card_description: The banner at the top of a page — title, intro, buttons, and a background image.
 card_thumbnail: 01-form.png

@@ -1,12 +1,14 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: create-a-page
 guide_series: B
 guide_order: 5
-cms_site: docs-site
+cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/create-a-page
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/create-a-page.md
 cms_title: Create A Page
 card_description: Add a new page to a site and save it as a draft.
 card_thumbnail: 00-card.png

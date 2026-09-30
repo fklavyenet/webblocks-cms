@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: change-a-page-address
 guide_series: B
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/change-a-page-address
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/change-a-page-address.md
 cms_title: Change A Page Address
 card_description: Rename the slug and path of a page, and set its SEO and social fields.
 card_thumbnail: 02-translation-routing.png

@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: admin-tour
 guide_series: A
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/admin-tour
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/admin-tour.md
 cms_title: The Admin Panel In Two Minutes
 card_description: What lives where in the sidebar, and which screens you will actually use.
 card_thumbnail: 02-pages-list.png

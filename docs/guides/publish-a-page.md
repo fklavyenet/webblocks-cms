@@ -1,12 +1,14 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: publish-a-page
 guide_series: B
 guide_order: 9
-cms_site: docs-site
+cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/publish-a-page
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/publish-a-page.md
 cms_title: Publish A Page
 card_description: Preview your work, then make the page visible to visitors.
 card_thumbnail: 01-preview.png

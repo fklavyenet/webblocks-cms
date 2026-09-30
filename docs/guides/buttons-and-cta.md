@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: buttons-and-cta
 guide_series: C
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/buttons-and-cta
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/buttons-and-cta.md
 cms_title: Buttons And CTA
 card_description: A single button, or a full call-to-action panel with heading and actions.
 card_thumbnail: 02-cta-form.png

@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: section-and-container
 guide_series: E
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/section-and-container
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/section-and-container.md
 cms_title: 'Section And Container: Control Page Width'
 card_description: The two wrappers that decide how wide your content sits and how much air it gets.
 card_thumbnail: 03-rendered.png

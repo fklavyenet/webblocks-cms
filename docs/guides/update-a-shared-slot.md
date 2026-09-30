@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: update-a-shared-slot
 guide_series: G
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/update-a-shared-slot
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/update-a-shared-slot.md
 cms_title: Update A Shared Slot Safely
 card_description: Editing a shared area changes every page at once. Here is how to do it without breaking things.
 card_thumbnail: 01-usage.png

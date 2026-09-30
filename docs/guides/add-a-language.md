@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: add-a-language
 guide_series: J
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/add-a-language
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/add-a-language.md
 cms_title: Add A Language To A Site
 card_description: Two steps — register the locale, then enable it on the site that needs it.
 card_thumbnail: 03-site-locales.png

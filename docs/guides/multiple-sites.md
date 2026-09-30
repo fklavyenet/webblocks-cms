@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: multiple-sites
 guide_series: J
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/multiple-sites
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/multiple-sites.md
 cms_title: Manage More Than One Site
 card_description: One installation, several sites — what is shared and what is not.
 card_thumbnail: 01-sites.png

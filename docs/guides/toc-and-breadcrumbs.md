@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: toc-and-breadcrumbs
 guide_series: F
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/toc-and-breadcrumbs
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/toc-and-breadcrumbs.md
 cms_title: Table Of Contents And Breadcrumbs
 card_description: Two small blocks that help readers find their place in a long page.
 card_thumbnail: 04-rendered.png

@@ -70,8 +70,11 @@ foreach ($markdownFiles as $file) {
 
     if (preg_match('/^cms_path:\s*(.+)$/m', $frontMatter, $cmsPathMatch) === 1) {
       $cmsPath = trim($cmsPathMatch[1]);
-      if (! str_starts_with($cmsPath, '/docs/')) {
-        $errors[] = 'CMS-synced documentation path must start with /docs/: '.str_replace($root.'/', '', $path);
+      $isGuide = preg_match('/^guide:\s*true\s*$/m', $frontMatter) === 1;
+      $isDocsPath = $cmsPath === '/docs' || str_starts_with($cmsPath, '/docs/');
+      $isGuidePath = $cmsPath === '/guides' || str_starts_with($cmsPath, '/guides/');
+      if (! $isDocsPath && ! ($isGuide && $isGuidePath)) {
+        $errors[] = 'CMS-synced documentation path must be under /docs or, for guides, /guides: '.str_replace($root.'/', '', $path);
       }
       if (isset($syncPaths[$cmsPath])) {
         $errors[] = 'Duplicate cms_path '.$cmsPath.' in '.str_replace($root.'/', '', $path).' and '.$syncPaths[$cmsPath];
@@ -82,6 +85,14 @@ foreach ($markdownFiles as $file) {
   }
 
   if (preg_match('/^guide:\s*true\s*$/m', $frontMatter) === 1) {
+    if (preg_match('/^cms_sync:\s*true\s*$/m', $frontMatter) !== 1) {
+      $errors[] = 'Guide must be a CMS sync source: '.str_replace($root.'/', '', $path);
+    }
+
+    if (preg_match('/^cms_source_id:\s*\S.*$/m', $frontMatter) !== 1) {
+      $errors[] = 'Guide is missing cms_source_id: '.str_replace($root.'/', '', $path);
+    }
+
     $guideFields = ['guide_slug', 'cms_site', 'cms_locale', 'cms_path', 'cms_title', 'cms_layout'];
     if (basename($path) !== 'index.md') {
       $guideFields = array_merge($guideFields, ['guide_series', 'guide_order', 'card_description']);
@@ -106,10 +117,11 @@ foreach ($markdownFiles as $file) {
       if (! str_starts_with($guidePath, '/guides')) {
         $errors[] = 'Guide cms_path must start with /guides: '.str_replace($root.'/', '', $path);
       }
-      if (isset($publicDocumentationPaths[$guidePath])) {
+      $relativePath = str_replace($root.'/', '', $path);
+      if (isset($publicDocumentationPaths[$guidePath]) && $publicDocumentationPaths[$guidePath] !== $relativePath) {
         $errors[] = 'Duplicate public documentation path '.$guidePath.' in '.str_replace($root.'/', '', $path).' and '.$publicDocumentationPaths[$guidePath];
       }
-      $publicDocumentationPaths[$guidePath] = str_replace($root.'/', '', $path);
+      $publicDocumentationPaths[$guidePath] = $relativePath;
     }
   }
 

@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: page-layout-slot-block
 guide_series: A
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/page-layout-slot-block
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/page-layout-slot-block.md
 cms_title: Page, Layout, Slot, Block
 card_description: The four words the CMS uses for everything, in plain language.
 card_thumbnail: 01-layout-slots.png

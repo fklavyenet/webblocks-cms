@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: media-folders
 guide_series: D
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/media-folders
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/media-folders.md
 cms_title: Organise Media In Folders
 card_description: Keep the library findable once it holds more than a screenful.
 card_thumbnail: 02-folders.png

@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: page-revisions
 guide_series: H
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/page-revisions
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/page-revisions.md
 cms_title: 'Revisions: See History And Restore'
 card_description: Find out what changed, who changed it, and put it back.
 card_thumbnail: 01-version-history.png

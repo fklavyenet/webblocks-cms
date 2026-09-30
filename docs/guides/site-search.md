@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: site-search
 guide_series: I
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/site-search
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/site-search.md
 cms_title: Site Search
 card_description: Put a search box on the site and keep the index honest.
 card_thumbnail: 01-search-block-form.png

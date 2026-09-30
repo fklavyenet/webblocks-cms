@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: rich-text
 guide_series: C
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/rich-text
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/rich-text.md
 cms_title: 'Rich Text: Formatting, Lists, And Links'
 card_description: Bold, italic, links, and nested lists in one editable block.
 card_thumbnail: 01-editor.png

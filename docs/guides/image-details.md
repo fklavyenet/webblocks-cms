@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: image-details
 guide_series: D
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/image-details
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/image-details.md
 cms_title: Alt Text, Captions, And Image Variants
 card_description: The details that make an image usable — and the sizes the CMS makes for you.
 card_thumbnail: 02-variants.png

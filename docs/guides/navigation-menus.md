@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: navigation-menus
 guide_series: G
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/navigation-menus
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/navigation-menus.md
 cms_title: Build A Navigation Menu
 card_description: Add, group, and reorder the links visitors click.
 card_thumbnail: 01-navigation.png

@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: index
 guide_index: true
@@ -6,6 +7,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/index.md
 cms_title: Guides
 ---
 

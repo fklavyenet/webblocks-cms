@@ -18,7 +18,7 @@ Both stay separate on purpose:
 | Audience | Operator, integrator, AI tooling | Editor, site owner |
 | Shape | Prose, contracts, field tables | Numbered steps, screenshots, sample content |
 | Length | As long as correctness needs | 1 screen, 3-7 steps, 2-4 screenshots |
-| Source | `docs/*.md` | `docs/guides/*.md` |
+| Source of truth | `docs/*.md` | `docs/guides/*.md` |
 
 Guides cross-link *down* to reference docs for detail. Reference docs do not depend on guides.
 
@@ -166,7 +166,7 @@ Screenshots are the expensive part and the reason this plan needs discipline.
 
 ### Source Installation
 
-Reuse the sanitized demo installation and the fictional brand already defined for the video series at `webblocks-cms-videos/demo-cms` (site: *Atlas Studio*, admin: *Alex Morgan*, domain: `atlas-studio.test`). Guides and videos then show the same content, which makes the two series reinforce each other.
+Use the disposable `webblocks-cms-showcase` consumer with a deterministic fictional fixture (site: *Atlas Studio*, admin: *Alex Morgan*, domain: `atlas-studio.test`). The capture environment may render the product, but it does not own guide source text or media; approved screenshots return to this repository under `docs/guides/media/`.
 
 Never capture from a customer install. No `.env`, tokens, real names, real addresses, production domains, local paths, or debug output.
 
@@ -181,14 +181,12 @@ Never capture from a customer install. No `.env`, tokens, real names, real addre
 
 ### Naming And Storage
 
-Screenshots live with the capture script in the video project, not in the CMS package repository: `docs/` is not `export-ignore`d, so anything stored there ships inside the Composer package to every install.
-
-Path: `webblocks-cms-videos/assets/screenshots/guides/<guide-slug>/<nn>-<what>.png`
+Screenshots live beside their guide sources under `docs/guides/media/<guide-slug>/`. They are product documentation assets and never belong to the site-content sandbox or another project.
 
 ```text
-webblocks-cms-videos/assets/screenshots/guides/create-a-page/01-pages-list.png
-webblocks-cms-videos/assets/screenshots/guides/create-a-page/02-new-page-form.png
-webblocks-cms-videos/assets/screenshots/guides/add-an-image/01-image-block-form.png
+docs/guides/media/create-a-page/01-pages-list.webp
+docs/guides/media/create-a-page/02-new-page-form.webp
+docs/guides/media/add-an-image/01-image-block-form.webp
 ```
 
 In the CMS, upload the same files into a Media Library folder named `guides` and set `alt_text` at upload time. Media upload is available through the Internal Content API with the `media.upload` capability, so the screenshot set can be pushed with the same token flow used for docs sync.
@@ -199,19 +197,19 @@ At 3 screenshots per guide, the full series is ~135 images. Assume every screens
 
 ## Authoring And Publishing Pipeline
 
-The CMS owns the content. Markdown files in the repository are a drafting and review step, not the long-term source of truth.
+The repository owns the content. CMS pages are reviewed, staged publishing projections of the Markdown sources.
 
-1. **Draft in Markdown.** Write `docs/guides/<slug>.md` as a working draft so the wording can be reviewed in a pull request before anything touches the site. Once the guide lives in the CMS, this file is history, not a mirror.
-2. **Capture screenshots** into `webblocks-cms-videos/assets/screenshots/guides/<slug>/`.
+1. **Edit Markdown.** Change `docs/guides/<slug>.md` and review the wording in a pull request before anything touches the site.
+2. **Capture screenshots** into `docs/guides/media/<slug>/`.
 3. **Upload screenshots** through `POST /webadmin/api/media` (`media.upload`) into the Media Library folder `guides`, setting `alt_text` at upload time. Keep the returned media ids.
 4. **Create the page** through the Internal Content API: one page per guide at `/guides/<slug>`, created as a draft.
 5. **Build the blocks** through the API - Header, Rich Text, Image (`media_id` from step 3), and so on - in the order the guide reads.
 6. **Review the draft** on the site, then publish explicitly. Publishing requires `content.publish` and is never implied.
-7. **Later edits happen in the CMS**, in the admin panel or through the API. Do not re-sync from Markdown and overwrite editor changes.
+7. **Later edits return to Git.** Change the Markdown or media file, then stage and review another sync. If the CMS page has been edited independently, stop on drift and reconcile it back into Git before continuing.
 
-Because pages are built block by block through the API, screenshots are ordinary Image blocks with a real `media_id`. There is no Markdown-image gap to solve and no need to extend the Markdown-to-CMS sync convention. Editors keep full control of every guide after publication, which is the point.
+Because pages are built block by block through the API, screenshots become ordinary Image blocks with a real `media_id`. The sync command resolves each repository image path, uploads or replaces its Media Library record, and writes the block at the Markdown position.
 
-Page settings should still record where a guide came from, using the allowlisted `source_sync` setting, so a guide can be traced back to its draft and its screenshot set. That is provenance, not a sync contract.
+Page settings record the stable `cms_source_id` through the allowlisted `source_sync` setting. That identity is both provenance and the synchronization contract.
 
 ## The Guides Index Page
 

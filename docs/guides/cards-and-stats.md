@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: cards-and-stats
 guide_series: E
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/cards-and-stats
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/cards-and-stats.md
 cms_title: Card, Feature Grid, And Stat Card
 card_description: Three ways to package a small unit of content — and when each one fits.
 card_thumbnail: 05-rendered.png

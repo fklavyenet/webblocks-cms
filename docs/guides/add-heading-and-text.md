@@ -1,12 +1,14 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: add-heading-and-text
 guide_series: B
 guide_order: 6
-cms_site: docs-site
+cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/add-heading-and-text
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/add-heading-and-text.md
 cms_title: Add A Heading And A Paragraph
 card_description: Put your first words on a page using the Header and Plain Text blocks.
 card_thumbnail: 02-block-picker.png

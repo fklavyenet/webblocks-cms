@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: draft-review-publish
 guide_series: H
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/draft-review-publish
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/draft-review-publish.md
 cms_title: Draft, Review, And Publish
 card_description: The four states a page moves through, and who moves it.
 card_thumbnail: 01-draft.png

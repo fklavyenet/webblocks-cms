@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: your-profile-and-language
 guide_series: A
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/your-profile-and-language
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/your-profile-and-language.md
 cms_title: Your Profile And Language
 card_description: Change your name, email, password, and the language of the admin panel.
 card_thumbnail: 01-profile.png

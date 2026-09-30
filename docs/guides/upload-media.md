@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: upload-media
 guide_series: D
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/upload-media
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/upload-media.md
 cms_title: Upload Files To The Media Library
 card_description: Get images and documents into the library once, then reuse them anywhere.
 card_thumbnail: 01-media-library.png

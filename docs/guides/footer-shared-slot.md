@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: footer-shared-slot
 guide_series: G
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/footer-shared-slot
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/footer-shared-slot.md
 cms_title: Build A Footer As A Shared Slot
 card_description: Create a reusable area from scratch and fill it with real blocks.
 card_thumbnail: 02-footer-blocks.png

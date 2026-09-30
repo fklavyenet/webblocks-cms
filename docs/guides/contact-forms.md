@@ -1,4 +1,5 @@
 ---
+cms_sync: true
 guide: true
 guide_slug: contact-forms
 guide_series: I
@@ -7,6 +8,7 @@ cms_site: cms-webblocksui-com
 cms_locale: en
 cms_path: /guides/contact-forms
 cms_layout: docs
+cms_source_id: webblocks-cms:docs/guides/contact-forms.md
 cms_title: Add A Contact Form And Read Messages
 card_description: Put a form on a page, then find what visitors sent.
 card_thumbnail: 02-inbox.png
