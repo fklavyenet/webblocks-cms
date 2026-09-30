@@ -35,10 +35,10 @@
                 <div class="wb-stack wb-gap-2">
                     <div class="wb-cluster wb-gap-2">
                         <label class="wb-label" for="created_cms_api_token">{{ $adminText('full_token') }}</label>
-                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy-target="created_cms_api_token" aria-label="{{ $adminText('copy_full_token') }}" title="{{ $adminText('copy_full_token') }}">
+                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy data-wb-target="#created_cms_api_token" data-wb-copy-status="#created_cms_api_token_copy_status" data-wb-copy-success="{{ $adminText('copied') }}" data-wb-copy-error="{{ $adminText('copy_failed') }}" aria-label="{{ $adminText('copy_full_token') }}" title="{{ $adminText('copy_full_token') }}">
                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                         </button>
-                        <span class="wb-text-sm" data-wb-api-token-copy-feedback data-copy-success="{{ $adminText('copied') }}" data-copy-failed="{{ $adminText('copy_failed') }}" role="status" aria-live="polite"></span>
+                        <span id="created_cms_api_token_copy_status" class="wb-text-sm" role="status" aria-live="polite" aria-atomic="true"></span>
                     </div>
                     <textarea id="created_cms_api_token" class="wb-textarea" rows="2" readonly>{{ $createdToken }}</textarea>
                 </div>
@@ -46,10 +46,10 @@
                 <div class="wb-stack wb-gap-2">
                     <div class="wb-cluster wb-gap-2">
                         <label class="wb-label" for="created_cms_api_token_env">{{ $adminText('env_example') }}</label>
-                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy-target="created_cms_api_token_env" aria-label="{{ $adminText('copy_env_example') }}" title="{{ $adminText('copy_env_example') }}">
+                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy data-wb-target="#created_cms_api_token_env" data-wb-copy-status="#created_cms_api_token_env_copy_status" data-wb-copy-success="{{ $adminText('copied') }}" data-wb-copy-error="{{ $adminText('copy_failed') }}" aria-label="{{ $adminText('copy_env_example') }}" title="{{ $adminText('copy_env_example') }}">
                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                         </button>
-                        <span class="wb-text-sm" data-wb-api-token-copy-feedback data-copy-success="{{ $adminText('copied') }}" data-copy-failed="{{ $adminText('copy_failed') }}" role="status" aria-live="polite"></span>
+                        <span id="created_cms_api_token_env_copy_status" class="wb-text-sm" role="status" aria-live="polite" aria-atomic="true"></span>
                     </div>
                     <textarea id="created_cms_api_token_env" class="wb-textarea" rows="3" readonly>WEBBLOCKS_CMS_API_URL={{ $apiBaseUrl }}
 WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
@@ -410,6 +410,5 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
 @endpush
 
 @push('scripts')
-    @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/api-token-copy.js'])
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/api-token-capabilities.js'])
 @endpush

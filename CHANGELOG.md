@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.88.1
+
+- Adopt WebBlocks UI 2.28.0 and add native secure password generation, confirmation synchronization, and copying to managed-user password fields with localized accessible feedback.
+- Move system and personal API token copying onto the shared WebBlocks UI clipboard runtime, removing the CMS-owned copy script while preserving localized success and failure feedback.
+
 ## 1.88.0
 
 - Add guarded retention policies and explicit cleanup previews for Page and Shared Slot revisions, preserving both a configurable newest-version floor and the source of every active restore preview.

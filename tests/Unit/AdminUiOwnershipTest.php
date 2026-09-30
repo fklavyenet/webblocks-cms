@@ -26,6 +26,18 @@ class AdminUiOwnershipTest extends TestCase
   }
 
   #[Test]
+  public function managed_user_password_generation_and_copy_are_owned_by_webblocks_ui(): void
+  {
+    $root = dirname(__DIR__, 2);
+    $source = (string) file_get_contents($root.'/resources/views/admin/users/form.blade.php');
+
+    $this->assertStringContainsString('data-wb-password-generate', $source);
+    $this->assertStringContainsString('data-wb-password-confirm="#password_confirmation"', $source);
+    $this->assertStringContainsString('data-wb-copy', $source);
+    $this->assertStringContainsString('data-wb-copy-status="#managed_user_password_status"', $source);
+  }
+
+  #[Test]
   public function slot_source_selection_uses_the_shipped_button_check_primitive(): void
   {
     $root = dirname(__DIR__, 2);

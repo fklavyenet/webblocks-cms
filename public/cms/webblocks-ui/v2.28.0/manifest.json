@@ -1,19 +1,19 @@
 {
     "product": "webblocks-ui",
-    "version": "v2.27.2",
-    "source_reference": "https://github.com/fklavyenet/webblocks-ui/tree/v2.27.2",
+    "version": "v2.28.0",
+    "source_reference": "https://github.com/fklavyenet/webblocks-ui/tree/v2.28.0",
     "artifacts": {
         "webblocks-ui.css": {
-            "sha256": "b659040743192458fb1c2b8d0e27eed663eb6541733e47ee060f023fbd2112fc",
+            "sha256": "a08705058513857fa6b1509d2c52f8f472ee6bff22b12f7248f7ef7b4b13bd2d",
             "bytes": 290477
         },
         "webblocks-icons.css": {
-            "sha256": "576804e7dc91fb88fd7eab4148cf216f49dceee492ff0a09a596c3abd0d2595a",
+            "sha256": "97c118af69d6db9eb67f2e2f077a9e9d6438f5a5f4e48342ec9c64118de33ce3",
             "bytes": 149906
         },
         "webblocks-ui.js": {
-            "sha256": "b5c95f4200e2de7ce4162eface65a6d8442f2025f12083da610dbf54f0d7106f",
-            "bytes": 184192
+            "sha256": "2b10751a71e022dfa3abc5eaff24f675b255c7363a1917d1d7ddfafef9785d6e",
+            "bytes": 196376
         },
         "webblocks-icons.json": {
             "sha256": "f9b7eb6dedc8bb2dbd9ca5f9ae8b3b502f3730136bd25a0220c99c4cd04a8c47",

@@ -50,6 +50,33 @@
                                     <button
                                         class="wb-btn wb-btn-secondary wb-input-addon-btn wb-btn-icon"
                                         type="button"
+                                        data-wb-password-generate
+                                        data-wb-target="#password"
+                                        data-wb-password-confirm="#password_confirmation"
+                                        data-wb-password-status="#managed_user_password_status"
+                                        data-wb-password-generated="{{ $adminText('password_generated') }}"
+                                        data-wb-password-generate-error="{{ $adminText('password_generate_failed') }}"
+                                        aria-label="{{ $adminText('generate_password') }}"
+                                        title="{{ $adminText('generate_password') }}"
+                                    >
+                                        <i class="wb-icon wb-icon-refresh-cw" aria-hidden="true"></i>
+                                    </button>
+                                    <button
+                                        class="wb-btn wb-btn-secondary wb-input-addon-btn wb-btn-icon"
+                                        type="button"
+                                        data-wb-copy
+                                        data-wb-target="#password"
+                                        data-wb-copy-status="#managed_user_password_status"
+                                        data-wb-copy-success="{{ $adminText('password_copied') }}"
+                                        data-wb-copy-error="{{ $adminText('password_copy_failed') }}"
+                                        aria-label="{{ $adminText('copy_password') }}"
+                                        title="{{ $adminText('copy_password') }}"
+                                    >
+                                        <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
+                                    </button>
+                                    <button
+                                        class="wb-btn wb-btn-secondary wb-input-addon-btn wb-btn-icon"
+                                        type="button"
                                         data-wb-password-toggle
                                         data-wb-target="#password"
                                         aria-label="{{ $adminText('show_password') }}"
@@ -58,6 +85,7 @@
                                         <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                     </button>
                                 </div>
+                                <div id="managed_user_password_status" class="wb-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
                                 @error('password')
                                     <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
