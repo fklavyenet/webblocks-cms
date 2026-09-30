@@ -40,3 +40,27 @@ Screenshots deliberately do **not** live in this repository. `docs/` is not `exp
 ## Verification Status
 
 Step wording was written from the source views and the English admin language file. Every step still has to be walked through on the demo installation while capturing screenshots. Anything that does not match the real screen is a bug in the draft, not in the product — fix the draft.
+
+## Maintenance And Recapture
+
+The repeatable capture environment is the separate `webblocks-cms-showcase`
+consumer application. Pin it to the exact published CMS release, reset its
+disposable database, and use its host-owned deterministic fixtures. Do not use
+a local path package for a published-product screenshot.
+
+Every guide or docs update must answer all of these before publication:
+
+- Did an admin label, control, workflow, permission, layout, or visible summary change?
+- Does each existing screenshot still describe the current screen accurately?
+- Does the showcase seeder produce every state needed for the capture after a clean reset?
+- Was the capture made at 1440x900, 2x scale, English, light theme, and the documented role?
+- Is the generated version/locale manifest present and do its hashes match the reviewed PNGs?
+- Are all names, domains, emails, messages, and tokens fictional and non-sensitive?
+- Were approved files uploaded to the `Guides` Media Library folder with useful alt text?
+- If the guide appears as a hand-built card on an index page, was its card header image added and publicly verified too?
+- Do the guide title and section headings carry explicit `h1`/`h2` variants so the standard intro divider and Goal/Time/You need panel render correctly?
+- Was the live page changed through a staged update, previewed, explicitly promoted, and publicly verified?
+
+Recapture only changed screens, but verify every reused screenshot. When the old
+image is materially wrong and a safe replacement is not ready, remove it rather
+than publishing misleading UI.

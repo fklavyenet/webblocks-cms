@@ -24,15 +24,16 @@ card_thumbnail: 01-personal-ai-tokens.png
 2. Under **Create a personal token**, enter a name that identifies the AI or job.
 3. Select only the sites the AI needs.
 4. Review the capability groups. Leave publish and destructive actions off unless the job explicitly requires them and your role permits them.
-5. Choose when the token expires.
-6. Under **Network controls**, optionally enter an exact client IP or CIDR network and choose the request limit.
+5. Choose when the token expires. Under **Network controls**, optionally enter an exact client IP or CIDR network and choose the request limit.
 
-> **Screenshot** `01-personal-ai-tokens.png` — Personal AI Tokens form with sites, capabilities, expiry, and Network controls.
-> Alt: Personal AI token creation form showing scoped site and permission controls.
+> **Screenshot** `01-personal-ai-tokens.png` — Personal AI Tokens screen with API discovery, token name, and allowed-site controls.
+> Alt: Personal AI Tokens screen showing API discovery and the start of the scoped token form.
 
-7. Select **Create Token**.
-8. Copy the full token or generated environment example immediately. The token is not shown again.
-9. Give the copy-ready setup prompt to the intended AI. Its first request should be `GET /webadmin/api`.
+> **Screenshot** `02-token-controls.png` — Capability, expiry, and Network controls near the end of the token form.
+> Alt: Personal AI token form showing capability, expiry, and network controls.
+
+6. Select **Create Token**.
+7. Copy the full token or generated environment example immediately, then give the copy-ready setup prompt to the intended AI. The token is not shown again; its first request should be `GET /webadmin/api`.
 
 ## After Connecting
 
