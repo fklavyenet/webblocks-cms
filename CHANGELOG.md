@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.89.4
+
+- Embed Publisher Client 1.1.14 and limit CMS update notes to the selected installation target, including intermediate bridge releases.
+
 ## 1.89.3
 
 - Embed Publisher Client 1.1.13 with compatible bridge metadata validation and a follow-up update check after successful bridge installation.

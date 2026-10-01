@@ -338,6 +338,7 @@ class UpdateServerClient
     }
 
     $installedNormalized = $this->normalizeVersion($installedVersion);
+    $targetNormalized = $this->normalizeVersion((string) $normalizedTarget['version']);
 
     $entries = collect($rawEntries)
       ->filter(fn ($entry): bool => is_array($entry))
@@ -354,12 +355,13 @@ class UpdateServerClient
           'released_at' => Arr::get($entry, 'published_at') ?? Arr::get($entry, 'release_date'),
         ];
       })
-      ->filter(function (array $entry) use ($installedNormalized): bool {
+      ->filter(function (array $entry) use ($installedNormalized, $targetNormalized): bool {
         if ($entry['version'] === '') {
           return true;
         }
 
-        return version_compare($this->normalizeVersion($entry['version']), $installedNormalized, '>');
+        return version_compare($this->normalizeVersion($entry['version']), $installedNormalized, '>')
+          && version_compare($this->normalizeVersion($entry['version']), $targetNormalized, '<=');
       })
       ->values()
       ->all();

@@ -37,6 +37,7 @@ class UpdateServerClientChangelogTest extends TestCase
         ['version' => '1.41.0', 'release_details' => ['summary' => 'First follow-up.', 'highlights' => ['One-click updates.']]],
         ['version' => '1.43.0', 'release_details' => ['summary' => 'Target release.', 'fixes' => ['A fix.']]],
         ['version' => 'v1.42.0'],
+        ['version' => '1.44.0', 'release_details' => ['summary' => 'Future release.']],
         ['version' => '1.39.0', 'release_details' => ['summary' => 'Ancient release.']],
       ],
     ]);

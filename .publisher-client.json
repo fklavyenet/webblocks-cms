@@ -1,10 +1,10 @@
 {
     "schema": 1,
     "source_package": "fklavyenet/webblocks-publisher-client",
-    "source_commit": "e4a2ccd19d5a95f592c9da13e3c76271bb8773c9",
+    "source_commit": "76f6d3adb21c089dfeb8b31a537ac6a9b663ecfb",
     "target_namespace": "WebBlocks\\Cms\\Support\\Updates\\Client",
     "output_path": "src/Support/Updates/Client",
-    "aggregate_sha256": "82b45511b001e52102569ee61406ce21a913d2340f7f7a1ac8c2a883a66ed449",
+    "aggregate_sha256": "34155a5f7e850202886165e5ff88f64ffd4438b41033bd6a9a73029b2363b443",
     "files": {
         "Apply/AbstractApplyStrategy.php": "34b4bad5c10c8c607328e7d01b2f4d348037fa6481c5a115d903f612c9f9a7d7",
         "Apply/FullRootApplyStrategy.php": "45a1f753004d59d9bb479d7b337bf9e0889a7dc5477c9d7419f0471e3a241c4e",
@@ -30,7 +30,7 @@
         "PostApply/ComposerPackageMetadataSynchronizer.php": "76e94f9f45bb785702d171336ad151a13409d44b6a5b14af4bd76dd9c10d4134",
         "PostApply/ConfiguredCommandsPostApplyRunner.php": "6990fcaf0f2a53256a3ffa6bb032329e3e91b4738dbd68931d99211380dcce15",
         "PostApply/MigratingPostApplyRunner.php": "eb158963e175f412d69f05623ebd0bc3d230b4d9183529a8e0864b9f53821921",
-        "PublisherClient.php": "9354c8d749c9be08cf3f379e3aa182cfaf925ab747766533838936afa5cee940",
+        "PublisherClient.php": "f5d6a7d2107b4025bf67dca7bee93938ccec2d9ffd15ade8a6fdbfd9f69fe566",
         "Publishing/SigningKeyGenerator.php": "9ae0f72f00fb20332334721004188752c64494b6a1523e52838e170b6ab94fe0",
         "Publishing/UpdatePublishResult.php": "ab54f22c243ba0e883d3b766819265be362eff1d06b02e4cfbf223815223968c",
         "Publishing/UpdatePublisher.php": "3449384007bee01da99e34c4c18f5d5a7353f3985a7c33bd53e46a8e9ae5b55f",
@@ -56,7 +56,7 @@
         "Updates/UpdatePackageDownloader.php": "4e1c07499502c00f3647f44ca5c27675256bb3056c161ea3bd3d83d6fbfc0391",
         "Updates/UpdatePackageExtractor.php": "1aefb638859b396403e01aaf5e96de83242d87e292a35910ea13a87e8a48b324",
         "Updates/UpdateResult.php": "c5ab3fd6975196b4e9862c35688a719364b02e649b6fe5b2a183deea22ce7c11",
-        "Updates/UpdateServerClient.php": "96e5520b5906d0a62b16babe3572cdd72978a924bb47ac97be30a6693ec5d3ab",
+        "Updates/UpdateServerClient.php": "4e13ee9733b40c2597d7f1b94a48ed3d96ffe3b2c03bc2cfeca8a655fa37e937",
         "Updates/UpdateSignatureVerifier.php": "ae9e5b565de1a1563725ba2cd7f3366b52297a62ac72a2a16f80370dcdbdb964",
         "Updates/UpdateWorkspaceManager.php": "28df8d160349d6f40f5afe9120dfdecbc824fdb35fd21e51750382c7de536890"
     }
