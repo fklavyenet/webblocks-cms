@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.89.2
+
+- Complete the license packaging transition after the 1.89.1 bridge release: Publisher ZIPs now carry root `LICENSE`, matching Composer and Git distributions, with no generated `docs/` directory.
+- Retain updater support for legacy `docs/LICENSE` packages and root-license preference; require older installations to obtain the 1.89.1 bridge before applying current Publisher packages.
+- Verify generated root-license artifacts against the frozen 1.89.1 updater while preserving historical pre-bridge consumer regression coverage and package boundary assertions.
+
 ## 1.89.1
 
 - Preserve System Updates compatibility for existing installations by generating only `docs/LICENSE` in Publisher ZIPs; keep root `LICENSE` in Composer and Git distributions.
