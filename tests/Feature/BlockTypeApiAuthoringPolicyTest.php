@@ -72,9 +72,10 @@ class BlockTypeApiAuthoringPolicyTest extends TestCase
     $this->assertSame(200, $response->getStatusCode());
     $this->assertTrue($payload['ok']);
     $this->assertSame('markdown', $payload['inventory']['format']);
-    $this->assertSame('docs/inventory.md', $payload['inventory']['document']);
+    $this->assertSame('resources/contracts/inventory.md', $payload['inventory']['document']);
     $this->assertStringContainsString('# WebBlocks CMS Inventory for AI Page Building', $payload['inventory']['content']);
     $this->assertStringContainsString('HTML Block API Policy', $payload['inventory']['content']);
+    $this->assertSame(hash_file('sha256', dirname(__DIR__, 2).'/resources/contracts/inventory.md'), $payload['inventory']['checksum_sha256']);
     $this->assertSame('/webadmin/api/inventory', $payload['_links']['self']);
     $this->assertStringNotContainsString('/Users/', $payload['inventory']['content']);
   }

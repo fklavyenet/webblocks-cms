@@ -31,8 +31,10 @@ class CmsPublisherClientCoexistenceTest extends TestCase
     $this->assertNotSame('/wrong-product', config('publisher-client.apply.target_path'));
     $this->assertSame('app/system-updates', config('publisher-client.apply.workspace_root'));
     $this->assertContains('LICENSE', config('publisher-client.apply.package_validation.allowed_roots'));
+    $this->assertNotContains('docs', config('publisher-client.apply.package_validation.allowed_roots'));
+    $this->assertContains('LICENSE', config('publisher-client.apply.package_validation.required_paths'));
     $this->assertSame(
-      ['docs/LICENSE' => 'LICENSE'],
+      [],
       config('publisher-client.apply.package_file_promotions'),
     );
     $this->assertSame([], config('publisher-client.apply.package_validation.forbidden_content_patterns'));

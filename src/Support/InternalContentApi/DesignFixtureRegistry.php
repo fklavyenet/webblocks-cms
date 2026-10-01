@@ -20,6 +20,7 @@ class DesignFixtureRegistry
         'required_modes' => ['light', 'dark'],
         'required_viewports' => ['desktop', 'mobile'],
         'required_states' => ['default'],
+        'storage_repository' => 'webblocks-cms-docs',
         'storage' => 'docs/visual-fixtures/{fixture}/{mode}-{viewport}.png',
         'approval' => 'Captured images become canonical only after human visual review.',
       ],

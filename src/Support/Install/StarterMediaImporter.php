@@ -14,7 +14,7 @@ use WebBlocks\Cms\Support\Media\MediaKindResolver;
  * become a real Media record before a block can use it — and serving it from
  * the site's own origin is the point. Hot-linking the product's brand assets
  * from a CDN would make every visitor of a customer's public page issue a
- * third-party request, which is exactly what `docs/ai-page-building-guide.md`
+ * third-party request, which is exactly what `https://cms.webblocksui.com/docs/ai-page-building-guide`
  * rules out when it says remote URLs do not belong in content.
  *
  * The record is an ordinary library entry: the operator can replace the file,

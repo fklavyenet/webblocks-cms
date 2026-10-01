@@ -10,7 +10,7 @@ namespace WebBlocks\Cms\Support\Media;
  * SVG is intentionally excluded unless an operator opts in via
  * `webblocks-cms.media.allow_svg_uploads`. An SVG can carry inline script, and
  * media is served from the same origin, so accepting arbitrary SVG uploads is a
- * deliberate, documented choice rather than a default (see docs/security.md).
+ * deliberate, documented choice rather than a default (see https://cms.webblocksui.com/docs/security).
  */
 class MediaMimeTypes
 {

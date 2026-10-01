@@ -1139,7 +1139,7 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 - **Shared Slots can be corrected and removed through the API.** `PATCH` and `DELETE /webadmin/api/shared-slots/{sharedSlot}` change the label, handle, slot type, layout and active status, or delete one — the latter behind the new destructive `shared-slots.delete` and the browser admin's own guard, which refuses to remove a Shared Slot any page slot still references and lists the referencing slots.
 - **Three site settings the API could not reach.** `PATCH /webadmin/api/sites/{site}/seo` writes the site SEO defaults every page inherits, `PATCH .../contact-recipient` sets where contact submissions are mailed — an API-built contact form did nothing useful without it — and `PUT .../locales` assigns locales to a site, without which a page translation for a new locale cannot be saved at all. Detaching a locale that still has page translations is refused rather than silently orphaning them.
 - **Media folders can be created.** Uploads could always be filed into a folder, but only one an operator had already made by hand. `GET`/`POST /webadmin/api/media/folders` closes that, and refuses a duplicate name under the same parent by returning the folder that already has it, so a retrying tool reuses it instead of leaving a copy per attempt.
-- [API and Panel Alignment](docs/api-panel-alignment.md) is a new document recording, domain by domain, where the API and the browser admin agree, where the API covers less, and which gaps are deliberate boundaries rather than unfinished work.
+- [API and Panel Alignment](https://cms.webblocksui.com/docs/api-panel-alignment) is a new document recording, domain by domain, where the API and the browser admin agree, where the API covers less, and which gaps are deliberate boundaries rather than unfinished work.
 
 ## 1.48.13
 
@@ -1445,8 +1445,8 @@ This file is a recent rolling changelog for WebBlocks CMS and keeps only the lat
 
 ## Archived releases
 
-- [1.32.x archive](docs/releases/changelog-1.32.md)
-- [1.31 and earlier archive](docs/releases/changelog-1.31-and-earlier.md)
+- 1.32.x archive: `docs/releases/changelog-1.32.md` in the independent `webblocks-cms-docs` repository.
+- 1.31 and earlier archive: `docs/releases/changelog-1.31-and-earlier.md` in the independent `webblocks-cms-docs` repository.
 
 ## 1.41.4
 

@@ -9,17 +9,9 @@ HEAD_VERSION="$(git -C "${ROOT_DIR}" show HEAD:src/Support/WebBlocks.php | "${PH
 RELEASE_ROOT="${WEBBLOCKS_CMS_RELEASE_ARTIFACT_DIR:-${ROOT_DIR}/storage/app/webblocks-cms-release/${VERSION}}"
 ARCHIVE_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}.zip"
 PAYLOAD_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}-update-server-payload.json"
-STAGING_DIR="$(mktemp -d)"
-PACKAGE_DIR="${STAGING_DIR}/webblocks-cms"
 CHANGELOG_PATH="${ROOT_DIR}/CHANGELOG.md"
 
-cleanup() {
-  rm -rf "${STAGING_DIR}"
-}
-
-trap cleanup EXIT
-
-mkdir -p "${RELEASE_ROOT}" "${PACKAGE_DIR}"
+mkdir -p "${RELEASE_ROOT}"
 rm -f "${ARCHIVE_PATH}" "${ARCHIVE_PATH}.sha256" "${PAYLOAD_PATH}"
 
 cd "${ROOT_DIR}"
@@ -132,79 +124,7 @@ if [ "${TAG_COMMIT}" != "${HEAD_COMMIT}" ]; then
   exit 1
 fi
 
-git archive --format=tar --worktree-attributes HEAD | tar -xf - -C "${PACKAGE_DIR}"
-
-if [ ! -f "${PACKAGE_DIR}/composer.json" ]; then
-  printf '[webblocks-release-prepare] Package composer.json not found at %s.\n' "${PACKAGE_DIR}" >&2
-  exit 1
-fi
-
-# CMS versions through 1.87.0 reject a root LICENSE before the new runtime can
-# be applied. Keep every Publisher artifact directly installable by those
-# clients by placing the notice under the already accepted docs root. The
-# tagged Composer package retains its canonical root LICENSE.
-mkdir -p "${PACKAGE_DIR}/docs"
-cp "${PACKAGE_DIR}/LICENSE" "${PACKAGE_DIR}/docs/LICENSE"
-
-(
-  cd "${PACKAGE_DIR}"
-  zip -qr "${ARCHIVE_PATH}" . \
-    -x '.DS_Store' \
-    -x '__MACOSX/*' \
-    -x '._*' \
-    -x '.git*' \
-    -x '*/.*' \
-    -x '.github/*' \
-    -x 'LICENSE' \
-    -x 'CHANGELOG.md' \
-    -x 'README.md' \
-    -x 'UPGRADING.md'
-)
-
-"${PHP_BIN}" -r '
-$zip = new ZipArchive();
-$path = $argv[1];
-$allowed = ["composer.json", "src", "routes", "resources", "database", "config", "public", "docs", "stubs"];
-$required = ["composer.json" => false, "docs/LICENSE" => false];
-
-if ($zip->open($path) !== true) {
-  fwrite(STDERR, "[webblocks-release-prepare] Unable to inspect release ZIP.\n");
-  exit(1);
-}
-
-for ($index = 0; $index < $zip->numFiles; $index++) {
-  $entry = trim(str_replace("\\", "/", (string) $zip->getNameIndex($index)), "/");
-  if ($entry === "") continue;
-  $segments = explode("/", $entry);
-  $root = $segments[0];
-
-  $hasHiddenSegment = false;
-  foreach ($segments as $segment) {
-    if ($segment === "." || $segment === ".." || str_starts_with($segment, ".")) {
-      $hasHiddenSegment = true;
-      break;
-    }
-  }
-
-  if ($hasHiddenSegment || ! in_array($root, $allowed, true)) {
-    fwrite(STDERR, "[webblocks-release-prepare] Release ZIP path is outside the CMS package allowlist: {$entry}\n");
-    exit(1);
-  }
-
-  if (array_key_exists($entry, $required)) {
-    $required[$entry] = true;
-  }
-}
-
-foreach ($required as $entry => $present) {
-  if (! $present) {
-    fwrite(STDERR, "[webblocks-release-prepare] Release ZIP is missing required package file: {$entry}\n");
-    exit(1);
-  }
-}
-
-$zip->close();
-' "${ARCHIVE_PATH}"
+bash "${ROOT_DIR}/scripts/release/build-package.sh" "${ARCHIVE_PATH}" HEAD
 
 CHECKSUM="$(shasum -a 256 "${ARCHIVE_PATH}" | cut -d' ' -f1)"
 printf '%s\n' "${CHECKSUM}" > "${ARCHIVE_PATH}.sha256"

@@ -10,7 +10,7 @@ Back up the application files, database, environment configuration, storage, and
 - In mounted mode the host owns root `robots.txt`; include the mounted sitemap there. Admin/API/assets/form endpoints stay in their existing dedicated areas. Legacy content redirects live only inside the active mount.
 - Normal host catch-alls still win. Independent host/CMS fallbacks require deliberate integration; they do not chain automatically. A colliding CMS page fallback name receives `webblocks.public.` so the host name and cached route serialization remain valid.
 
-See [Public Routing](docs/public-routing.md) for the complete contract.
+See [Public Routing](https://cms.webblocksui.com/docs/public-routing) for the complete contract.
 
 ## 1.49.0
 
@@ -57,3 +57,16 @@ Publisher artifacts and in-app System Updates are not GitHub source checkouts. C
 ## New Laravel hosts
 
 For a new Laravel 13 application, follow the Composer-first flow in [README.md](README.md). The package install command may patch the normal User model and remove only Laravel's untouched welcome route; review backups created by the command and keep host customization under host ownership.
+
+## Documentation repository separation
+
+User documentation is maintained in the independent `webblocks-cms-docs`
+repository and is excluded from CMS distributions. The runtime inventory endpoint
+now reads the packaged `resources/contracts/inventory.md` contract.
+
+Publisher artifacts include the root `LICENSE` and no `docs/` directory.
+CMS versions through 1.87.0 do not accept that root file: operators on those
+versions must first install a compatible 1.87.2-or-newer update client using a
+previous release, or update the Composer package through their host's normal
+maintenance process. A new artifact cannot change the validator already running
+on an older installation. No versions or release tags were changed by this split.

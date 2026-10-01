@@ -57,7 +57,7 @@ return [
     'media' => [
         // SVG files can embed inline script and are served from the same origin
         // as the admin, so they are rejected by default. Enable only if you
-        // trust every account that can upload media (see docs/security.md).
+        // trust every account that can upload media (see https://cms.webblocksui.com/docs/security).
         'allow_svg_uploads' => (bool) env('WEBBLOCKS_CMS_ALLOW_SVG_UPLOADS', false),
         'remote_fetch' => [
             'max_kilobytes' => env('WEBBLOCKS_CMS_REMOTE_MEDIA_MAX_KB', 51200),

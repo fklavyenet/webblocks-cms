@@ -12,7 +12,7 @@ use WebBlocks\Cms\Tests\TestCase;
 /**
  * Brand palette over the branding endpoint: the four colours and two font
  * stacks an operator picks, the derived tokens returned for preview, and the
- * public style block rendered from them. See docs/brand-palette.md.
+ * public style block rendered from them. See https://cms.webblocksui.com/docs/brand-palette.
  */
 class SiteBrandPaletteApiTest extends TestCase
 {

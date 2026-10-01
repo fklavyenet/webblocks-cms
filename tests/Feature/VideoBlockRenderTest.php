@@ -8,7 +8,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
- * Regression: the video block's own documented contract (docs/public-block-render-markup.md
+ * Regression: the video block's own documented contract (https://cms.webblocksui.com/docs/public-block-render-markup
  * and the block_contracts "video" entry) promises a native <video> for hosted media, safe
  * embeds for known providers, or an external link fallback for anything else. The renderer
  * used to compute $videoSource as $assetUrl ?: ($embedUrl ? null : $safeUrl), so any URL from

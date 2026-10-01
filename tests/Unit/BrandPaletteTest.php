@@ -8,7 +8,7 @@ use WebBlocks\Cms\Support\Theme\BrandPalette;
 
 /**
  * Brand palette derivation: four operator colours in, the full public token set
- * out, in both light and dark mode. See docs/brand-palette.md.
+ * out, in both light and dark mode. See https://cms.webblocksui.com/docs/brand-palette.
  */
 class BrandPaletteTest extends TestCase
 {

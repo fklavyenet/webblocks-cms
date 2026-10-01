@@ -10,7 +10,7 @@ namespace WebBlocks\Cms\Support\Theme;
  * All mixing happens in sRGB and foreground choices use WCAG relative
  * luminance, so nothing depends on browser colour support at render time.
  *
- * See docs/brand-palette.md for the product contract.
+ * See https://cms.webblocksui.com/docs/brand-palette for the product contract.
  */
 class BrandPalette
 {

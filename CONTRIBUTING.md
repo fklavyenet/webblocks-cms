@@ -20,7 +20,7 @@ composer test
 
 This checkout is a reusable package, not a runnable Laravel application. Use a separate temporary Laravel host when a change needs full consumer verification. Do not add Node, Vite, Tailwind, npm, host application files, project-specific code, plugins, secrets, or generated dependencies to package source.
 
-Keep changes focused, follow the existing two-space PHP style, add tests for behavior changes, and update user documentation when installation or supported behavior changes.
+Keep changes focused, follow the existing two-space PHP style, add tests for behavior changes, and update user documentation in the independent `webblocks-cms-docs` repository when installation or supported behavior changes. User documentation and documentation assets do not belong in this package. The runtime AI authoring inventory is a product contract in `resources/contracts/inventory.md`.
 
 Runtime code lives in `src/`; package configuration, migrations, assets, views, translations, routes, and stubs live in their matching root directories. Package-owned assets ship under `public/cms`. Do not introduce an outer `artisan`, `app/`, `project/`, `plugins/`, nested package path, Node build chain, or dependency on the private maintenance harness. Schema needed by runtime code must support fresh installs and package-native update migrations.
 

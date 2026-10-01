@@ -30,20 +30,22 @@ class PackageReleaseToolingTest extends TestCase
   public function test_release_scripts_use_canonical_root_and_testbench_without_legacy_paths(): void
   {
     $prepare = (string) file_get_contents(__DIR__.'/../../scripts/release/prepare.sh');
+    $builder = (string) file_get_contents(__DIR__.'/../../scripts/release/build-package.sh');
     $publish = (string) file_get_contents(__DIR__.'/../../scripts/release/publish-update.sh');
-    $surface = $prepare."\n".$publish;
+    $surface = $prepare."\n".$builder."\n".$publish;
 
     $this->assertStringContainsString('HEAD:src/Support/WebBlocks.php', $prepare);
-    $this->assertStringContainsString('git archive --format=tar --worktree-attributes HEAD', $prepare);
-    $this->assertStringContainsString("-x 'CHANGELOG.md'", $prepare);
-    $this->assertStringContainsString('cp "${PACKAGE_DIR}/LICENSE" "${PACKAGE_DIR}/docs/LICENSE"', $prepare);
-    $this->assertStringContainsString("-x 'LICENSE'", $prepare);
-    $this->assertStringContainsString('"docs/LICENSE" => false', $prepare);
-    $this->assertStringNotContainsString('$allowed = ["composer.json", "LICENSE"', $prepare);
-    $this->assertStringContainsString('Release ZIP is missing required package file', $prepare);
-    $this->assertStringContainsString("-x '*/.*'", $prepare);
-    $this->assertStringContainsString('$hasHiddenSegment', $prepare);
-    $this->assertStringContainsString('Release ZIP path is outside the CMS package allowlist', $prepare);
+    $this->assertStringContainsString('scripts/release/build-package.sh', $prepare);
+    $this->assertStringContainsString('git archive --format=tar --worktree-attributes "${TREE}"', $builder);
+    $this->assertStringContainsString("-x 'CHANGELOG.md'", $builder);
+    $this->assertStringNotContainsString('docs/LICENSE', $surface);
+    $this->assertStringNotContainsString("-x 'LICENSE'", $builder);
+    $this->assertStringContainsString('"LICENSE" => false', $builder);
+    $this->assertStringNotContainsString('"docs"', $builder);
+    $this->assertStringContainsString('Release ZIP is missing required package file', $builder);
+    $this->assertStringContainsString("-x '*/.*'", $builder);
+    $this->assertStringContainsString('$hasHiddenSegment', $builder);
+    $this->assertStringContainsString('Release ZIP path is outside the CMS package allowlist', $builder);
     $this->assertStringContainsString('vendor/bin/testbench webblocks:publish-update', $publish);
     $this->assertStringContainsString('${ROOT_DIR}/../publish.env', $publish);
     $this->assertStringNotContainsString('packages/webblocks-cms', $surface);
@@ -76,7 +78,7 @@ class PackageReleaseToolingTest extends TestCase
 
     // The guard is worthless if it runs after the artifact is already built.
     $this->assertLessThan(
-      (int) strpos($prepare, 'git archive --format=tar'),
+      (int) strpos($prepare, 'bash "${ROOT_DIR}/scripts/release/build-package.sh"'),
       (int) strpos($prepare, 'TAG_NAME="v${VERSION}"'),
       'The tag guard must run before the artifact is assembled.'
     );

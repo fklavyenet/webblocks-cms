@@ -18,7 +18,7 @@ mkdir -p "${SOURCE_COPY}"
 tar -C "${ROOT_DIR}" -cf - \
   .editorconfig .gitattributes .github .gitignore CHANGELOG.md CODE_OF_CONDUCT.md \
   CONTRIBUTING.md LICENSE README.md SECURITY.md SUPPORT.md UPGRADING.md composer.json \
-  config database docs phpunit.xml.dist pint.json public resources routes src stubs tests \
+  config database phpunit.xml.dist pint.json public resources routes src stubs tests \
   | tar -xf - -C "${SOURCE_COPY}"
 composer create-project "laravel/laravel:^${LARAVEL_VERSION}.0" "${CONSUMER}" --no-interaction --prefer-dist --no-progress
 composer config --working-dir="${CONSUMER}" --json repositories.webblocks "{\"type\":\"path\",\"url\":\"${SOURCE_COPY}\",\"options\":{\"symlink\":false}}"
@@ -62,3 +62,4 @@ composer dump-autoload --working-dir="${CONSUMER}" --no-interaction
 php "${CONSUMER}/artisan" package:discover
 php "${CONSUMER}/artisan" about --only=environment
 php "${CONSUMER}/artisan" route:list > /dev/null
+php "${ROOT_DIR}/tests/Support/check-consumer-inventory.php" "${CONSUMER}"

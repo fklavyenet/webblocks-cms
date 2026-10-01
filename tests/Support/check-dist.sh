@@ -14,11 +14,11 @@ trap cleanup EXIT
 TREE="$(git -C "${ROOT_DIR}" write-tree)"
 git -C "${ROOT_DIR}" archive --format=tar "${TREE}" | tar -xf - -C "${TEMP_DIR}"
 
-for path in composer.json src config database public resources routes stubs README.md LICENSE UPGRADING.md; do
+for path in resources/contracts/inventory.md composer.json src config database public resources routes stubs README.md LICENSE UPGRADING.md; do
   test -e "${TEMP_DIR}/${path}" || { printf 'Missing distribution path: %s\n' "${path}" >&2; exit 1; }
 done
 
-for path in .github .publisher-client.json tests scripts vendor composer.lock phpunit.xml.dist pint.json CONTRIBUTING.md CODE_OF_CONDUCT.md SUPPORT.md; do
+for path in docs storage AGENTS.md .DS_Store .claude .github .publisher-client.json tests scripts vendor composer.lock phpunit.xml.dist pint.json CONTRIBUTING.md CODE_OF_CONDUCT.md SUPPORT.md; do
   test ! -e "${TEMP_DIR}/${path}" || { printf 'Source-only path entered distribution: %s\n' "${path}" >&2; exit 1; }
 done
 

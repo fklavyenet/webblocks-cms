@@ -74,7 +74,7 @@ Laravel discovers `WebBlocks\Cms\WebBlocksCmsServiceProvider` through the packag
 - prepares storage and seeds the core CMS catalog; and
 - creates the first site and super administrator.
 
-Review [Hosting Requirements](docs/hosting-requirements.md), the qualification method in [Hosting Capacity Validation](docs/hosting-capacity-validation.md), the explicitly provisional [Hosting Capacity Results](docs/hosting-capacity-results.md), and the [Hosting Readiness Checklist](docs/hosting-readiness-checklist.md) before provisioning production hosting. Current measurements are workload evidence, not a production-certified universal minimum. Review [Installation](docs/installation.md) before using repair options or integrating with an application that already has data. For route and user-identity boundaries in an existing product, see [Laravel coexistence](docs/coexistence.md).
+Review [Hosting Requirements](https://cms.webblocksui.com/docs/hosting-requirements), the qualification method in [Hosting Capacity Validation](https://cms.webblocksui.com/docs/hosting-capacity-validation), the explicitly provisional [Hosting Capacity Results](https://cms.webblocksui.com/docs/hosting-capacity-results), and the [Hosting Readiness Checklist](https://cms.webblocksui.com/docs/hosting-readiness-checklist) before provisioning production hosting. Current measurements are workload evidence, not a production-certified universal minimum. Review [Installation](https://cms.webblocksui.com/docs/installation) before using repair options or integrating with an application that already has data. For route and user-identity boundaries in an existing product, see [Laravel coexistence](https://cms.webblocksui.com/docs/coexistence).
 
 ## Host integration
 
@@ -94,7 +94,7 @@ php artisan vendor:publish --tag=webblocks-cms-stubs
 
 Views, translations, and migrations load from the installed package and do not have separate publish tags. Avoid `--force` unless you intentionally want to replace package-owned published files in a controlled host environment.
 
-CMS static assets are published under `public/cms`. Site-owned overrides belong under `public/site/{site_handle}` in the host application. See [Public assets](docs/public-assets.md), [public themes and tones](docs/public-theme-and-tones.md), and [media image variants](docs/media-image-variants.md).
+CMS static assets are published under `public/cms`. Site-owned overrides belong under `public/site/{site_handle}` in the host application. See [Public assets](https://cms.webblocksui.com/docs/public-assets), [public themes and tones](https://cms.webblocksui.com/docs/public-theme-and-tones), and [media image variants](https://cms.webblocksui.com/docs/media-image-variants).
 
 ## Package development
 
@@ -108,7 +108,7 @@ composer format:test
 composer test
 ```
 
-Additional package checks are available as `composer test:consumer`, `composer test:dist`, `composer test:docs`, and `composer test:floor`. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [package testing strategy](docs/testing-strategy.md).
+Additional package checks are available as `composer test:consumer`, `composer test:dist`, `composer test:docs`, and `composer test:floor`. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [package testing strategy](https://cms.webblocksui.com/docs/testing-strategy).
 
 ## Upgrading
 
@@ -118,17 +118,17 @@ Existing full-repository clones must preserve host-owned `.env`, database, stora
 
 ## Documentation
 
-- Use the canonical product name, slogan, and package description from [Brand identity](docs/brand-identity.md).
-- Start with [Hosting Requirements](docs/hosting-requirements.md), [Hosting Capacity Validation](docs/hosting-capacity-validation.md), the provisional [Hosting Capacity Results](docs/hosting-capacity-results.md), [Installation](docs/installation.md), [Getting Started](docs/getting-started.md), and [Core Concepts](docs/core-concepts.md).
-- Build content with [Page Layouts](docs/page-layouts.md), [Block Type Contracts](docs/block-type-contracts.md), [Editorial Workflow](docs/editorial-workflow.md), and [Revisions](docs/revisions.md).
-- Operate sites with [Multisite](docs/multisite.md), [Localization](docs/localization.md), [Users and Permissions](docs/users-and-permissions.md), [Media Image Variants](docs/media-image-variants.md), and [Operations](docs/operations.md).
-- Connect user-owned assistants with [Personal AI Tokens](docs/personal-ai-tokens.md), integrate trusted tools through the [Internal Content API](docs/internal-content-api.md), [API Discovery](docs/api-discovery.md), and [AI Page Building Guide](docs/ai-page-building-guide.md), and check [API and Panel Alignment](docs/api-panel-alignment.md) for what the API deliberately does not cover.
-- Understand runtime boundaries in [Package Architecture](docs/package-architecture.md), [Laravel Coexistence](docs/coexistence.md), [Plugin System](docs/plugin-system.md), and [Updates](docs/updates.md).
-- Read planned work in the [Appointments Plugin Plan](docs/appointments-plugin-plan.md), which is a design record rather than shipped behavior.
+- Use the canonical product name, slogan, and package description from [Brand identity](https://cms.webblocksui.com/docs/brand-identity).
+- Start with [Hosting Requirements](https://cms.webblocksui.com/docs/hosting-requirements), [Hosting Capacity Validation](https://cms.webblocksui.com/docs/hosting-capacity-validation), the provisional [Hosting Capacity Results](https://cms.webblocksui.com/docs/hosting-capacity-results), [Installation](https://cms.webblocksui.com/docs/installation), [Getting Started](https://cms.webblocksui.com/docs/getting-started), and [Core Concepts](https://cms.webblocksui.com/docs/core-concepts).
+- Build content with [Page Layouts](https://cms.webblocksui.com/docs/page-layouts), [Block Type Contracts](https://cms.webblocksui.com/docs/block-type-contracts), [Editorial Workflow](https://cms.webblocksui.com/docs/editorial-workflow), and [Revisions](https://cms.webblocksui.com/docs/revisions).
+- Operate sites with [Multisite](https://cms.webblocksui.com/docs/multisite), [Localization](https://cms.webblocksui.com/docs/localization), [Users and Permissions](https://cms.webblocksui.com/docs/users-and-permissions), [Media Image Variants](https://cms.webblocksui.com/docs/media-image-variants), and [Operations](https://cms.webblocksui.com/docs/operations).
+- Connect user-owned assistants with [Personal AI Tokens](https://cms.webblocksui.com/docs/personal-ai-tokens), integrate trusted tools through the [Internal Content API](https://cms.webblocksui.com/docs/internal-content-api), [API Discovery](https://cms.webblocksui.com/docs/api-discovery), and [AI Page Building Guide](https://cms.webblocksui.com/docs/ai-page-building-guide), and check [API and Panel Alignment](https://cms.webblocksui.com/docs/api-panel-alignment) for what the API deliberately does not cover.
+- Understand runtime boundaries in [Package Architecture](https://cms.webblocksui.com/docs/package-architecture), [Laravel Coexistence](https://cms.webblocksui.com/docs/coexistence), [Plugin System](https://cms.webblocksui.com/docs/plugin-system), and [Updates](https://cms.webblocksui.com/docs/updates).
+- Read planned work in the [Appointments Plugin Plan](https://cms.webblocksui.com/docs/appointments-plugin-plan), which is a design record rather than shipped behavior.
 
 ## Security
 
-Do not disclose vulnerabilities in public issues. Follow [SECURITY.md](SECURITY.md) for private reporting and read the [security guide](docs/security.md) for host hardening, authorization, token, upload, and update-integrity boundaries.
+Do not disclose vulnerabilities in public issues. Follow [SECURITY.md](SECURITY.md) for private reporting and read the [security guide](https://cms.webblocksui.com/docs/security) for host hardening, authorization, token, upload, and update-integrity boundaries.
 
 ## Contributing and support
 
@@ -144,3 +144,5 @@ through OpenAI ChatGPT, with limited contributions from Anthropic Claude.
 ## License
 
 WebBlocks CMS is open-source software licensed under the [MIT License](LICENSE).
+
+Documentation source is maintained independently in the `webblocks-cms-docs` repository. This product repository contains no documentation publishing tree. The public documentation site is a publication target; it does not define the canonical source.

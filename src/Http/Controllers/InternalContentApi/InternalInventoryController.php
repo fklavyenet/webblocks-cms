@@ -11,7 +11,7 @@ use Illuminate\Routing\Controller;
  */
 class InternalInventoryController extends Controller
 {
-  private const DOCUMENT = 'docs/inventory.md';
+  private const DOCUMENT = 'resources/contracts/inventory.md';
 
   public function show(): JsonResponse
   {
