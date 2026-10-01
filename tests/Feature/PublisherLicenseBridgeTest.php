@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateException;
 use WebBlocks\Cms\Tests\Fixtures\PublisherV1881\CmsPublisherClientConfigurator as LegacyConfigurator;
 use WebBlocks\Cms\Tests\Fixtures\PublisherV1881\PackageApplyStrategy as LegacyStrategy;
+use WebBlocks\Cms\Tests\Fixtures\PublisherV1891\CmsPackageApplyStrategy as BridgeStrategy;
 use WebBlocks\Cms\Tests\TestCase;
 use ZipArchive;
 
@@ -15,6 +16,8 @@ use ZipArchive;
 require_once __DIR__.'/../fixtures/PublisherV1881/PackageArtifactValidator.php';
 require_once __DIR__.'/../fixtures/PublisherV1881/PackageApplyStrategy.php';
 require_once __DIR__.'/../fixtures/PublisherV1881/CmsPublisherClientConfigurator.php';
+// Freeze the bridge adapter so producers remain compatible with installed 1.89.1.
+require_once __DIR__.'/../fixtures/PublisherV1891/CmsPackageApplyStrategy.php';
 
 class PublisherLicenseBridgeTest extends TestCase
 {
@@ -52,7 +55,7 @@ class PublisherLicenseBridgeTest extends TestCase
     return $stage;
   }
 
-  public function test_generated_zip_applies_with_released_updater_then_future_zip_applies(): void
+  public function test_generated_root_license_zip_applies_with_bridge_updater_and_legacy_layout_remains_supported(): void
   {
     $repo = dirname(__DIR__, 2);
     // Snapshot tracked working files plus this new adapter without changing the
@@ -74,25 +77,33 @@ class PublisherLicenseBridgeTest extends TestCase
     $this->assertSame(0, $code, implode("\n", $output));
     $zip = new ZipArchive;
     $this->assertTrue($zip->open($this->work.'/update.zip'));
-    $this->assertFalse($zip->locateName('LICENSE'));
-    $this->assertNotFalse($zip->locateName('docs/LICENSE'));
+    $this->assertNotFalse($zip->locateName('LICENSE'));
+    $this->assertFalse($zip->locateName('docs/LICENSE'));
     $this->assertNotFalse($zip->locateName('src/Support/System/Updates/CmsPackageApplyStrategy.php'));
     for ($i = 0; $i < $zip->numFiles; $i++) {
-      $path = $zip->getNameIndex($i);
-      if (str_starts_with($path, 'docs/')) {
-        $this->assertContains($path, ['docs/', 'docs/LICENSE']);
-      }
+      $this->assertFalse(str_starts_with($zip->getNameIndex($i), 'docs/'));
     }
-    $zip->extractTo($this->work.'/transition');
+    $zip->extractTo($this->work.'/current');
+    $zip->extractTo($this->work.'/legacy');
     $zip->close();
+    app(CmsPublisherClientConfigurator::class)->configure();
+    $this->target();
+    app(BridgeStrategy::class)->apply($this->work.'/current');
+    $this->assertSame(File::get($repo.'/LICENSE'), File::get($this->work.'/installed/LICENSE'));
+    $this->assertDirectoryDoesNotExist($this->work.'/installed/docs');
+
+    // Preserve the historical pre-bridge consumer contract using a legacy fixture,
+    // without requiring today's producer to generate that obsolete layout.
+    File::ensureDirectoryExists($this->work.'/legacy/docs');
+    File::move($this->work.'/legacy/LICENSE', $this->work.'/legacy/docs/LICENSE');
     app(LegacyConfigurator::class)->configure();
     $this->target();
-    app(LegacyStrategy::class)->apply($this->work.'/transition');
+    app(LegacyStrategy::class)->apply($this->work.'/legacy');
     $this->assertSame(File::get($repo.'/LICENSE'), File::get($this->work.'/installed/LICENSE'));
 
     app(CmsPublisherClientConfigurator::class)->configure();
     $this->target();
-    app(CmsPackageApplyStrategy::class)->apply($this->stage('LICENSE'));
+    app(CmsPackageApplyStrategy::class)->apply($this->stage('docs/LICENSE'));
     $this->assertSame('license', File::get($this->work.'/installed/LICENSE'));
     $this->assertDirectoryDoesNotExist($this->work.'/installed/docs');
   }

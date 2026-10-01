@@ -38,9 +38,9 @@ class PackageReleaseToolingTest extends TestCase
     $this->assertStringContainsString('scripts/release/build-package.sh', $prepare);
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes "${TREE}"', $builder);
     $this->assertStringContainsString("-x 'CHANGELOG.md'", $builder);
-    $this->assertStringContainsString('docs/LICENSE', $surface);
+    $this->assertStringNotContainsString('docs/LICENSE', $surface);
     $this->assertStringNotContainsString("-x 'LICENSE'", $builder);
-    $this->assertStringContainsString('"docs/LICENSE" => false', $builder);
+    $this->assertStringContainsString('"LICENSE" => false', $builder);
     $this->assertStringContainsString('Release ZIP is missing required package file', $builder);
     $this->assertStringContainsString("-x '*/.*'", $builder);
     $this->assertStringContainsString('$hasHiddenSegment', $builder);

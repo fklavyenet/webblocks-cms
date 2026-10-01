@@ -2,7 +2,8 @@
   "preset": "laravel",
   "exclude": [
     "src/Support/Updates/Client",
-    "tests/fixtures/PublisherV1881"
+    "tests/fixtures/PublisherV1881",
+    "tests/fixtures/PublisherV1891"
   ],
   "rules": {
     "array_syntax": {

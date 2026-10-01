@@ -64,15 +64,11 @@ User documentation is maintained in the independent `webblocks-cms-docs`
 repository and is excluded from CMS distributions. The runtime inventory endpoint
 now reads the packaged `resources/contracts/inventory.md` contract.
 
-Publisher update ZIPs retain only `docs/LICENSE`, generated at packaging time
-from the source root `LICENSE`. No documentation content is included. Composer
-and Git source distributions retain root `LICENSE` and exclude `docs/`.
+Older Publisher packages used `docs/LICENSE`. Version 1.89.1 was the bridge
+release: its ZIP retained that legacy layout while installing an updater that
+accepts both layouts. Current Publisher, Composer, and Git distributions use
+root `LICENSE` and contain no documentation tree. The updater still accepts
+legacy `docs/LICENSE` packages and prefers root `LICENSE` when both are present.
 
-Released clients from 1.87.2 through 1.88.1 (and the locally prepared 1.89.0
-client) require `docs/LICENSE` for their mandatory promotion to root `LICENSE`; accepting the root path in their allowlist
-does not make root-only ZIPs installable. The 1.87.0 client rejects root
-`LICENSE`; 1.87.1 allows it without promotion, but is not a safe minimum for
-root-only artifacts because subsequent releases reinstated a legacy requirement.
-The 1.89.1 bridge updater accepts both layouts and installs root `LICENSE`. Keep the legacy Publisher layout until
-all supported installed clients have received this compatibility code. Root-only
-Publisher ZIPs are safe only for clients with that code, not merely 1.87.2 or newer.
+Installations using a pre-1.89.1 updater must first install the 1.89.1 bridge
+release, or upgrade through Composer, before applying current Publisher packages.

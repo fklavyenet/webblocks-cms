@@ -30,14 +30,6 @@ if [ ! -f "${PACKAGE_DIR}/composer.json" ]; then
   exit 1
 fi
 
-# Legacy updater compatibility: installed clients require docs/LICENSE and reject
-# an existing root destination. Generate only this license path while packaging;
-# it is not documentation content and never enters the source/Composer tree.
-# Temporary bridge: retire deliberately after supported clients have the new
-# updater, never automatically based only on a release version.
-mkdir -p "${PACKAGE_DIR}/docs"
-mv "${PACKAGE_DIR}/LICENSE" "${PACKAGE_DIR}/docs/LICENSE"
-
 (
   cd "${PACKAGE_DIR}"
   zip -qr "${ARCHIVE_PATH}" . \
@@ -55,8 +47,8 @@ mv "${PACKAGE_DIR}/LICENSE" "${PACKAGE_DIR}/docs/LICENSE"
 "${PHP_BIN}" -r '
 $zip = new ZipArchive();
 $path = $argv[1];
-$allowed = ["composer.json", "src", "routes", "resources", "database", "config", "public", "stubs", "docs/LICENSE"];
-$required = ["composer.json" => false, "docs/LICENSE" => false, "resources/contracts/inventory.md" => false];
+$allowed = ["composer.json", "src", "routes", "resources", "database", "config", "public", "stubs", "LICENSE"];
+$required = ["composer.json" => false, "LICENSE" => false, "resources/contracts/inventory.md" => false];
 
 if ($zip->open($path) !== true) {
   fwrite(STDERR, "[webblocks-release-prepare] Unable to inspect release ZIP.\n");
@@ -77,7 +69,7 @@ for ($index = 0; $index < $zip->numFiles; $index++) {
     }
   }
 
-  if ($hasHiddenSegment || (! in_array($root, $allowed, true) && $entry !== "docs" && $entry !== "docs/LICENSE")) {
+  if ($hasHiddenSegment || ! in_array($root, $allowed, true)) {
     fwrite(STDERR, "[webblocks-release-prepare] Release ZIP path is outside the CMS package allowlist: {$entry}\n");
     exit(1);
   }
