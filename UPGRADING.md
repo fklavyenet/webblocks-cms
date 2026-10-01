@@ -2,6 +2,16 @@
 
 Back up the application files, database, environment configuration, storage, and uploads before changing CMS versions or installation topology. Validate the result in a non-production environment. Do not delete host-owned files or data as a blanket migration step.
 
+## 1.89.0
+
+- CMS homepage, locale, nested page, and legacy page routes now use real Laravel fallback semantics. Ordinary host routes win; a host controller's 404 is not replaced by CMS content. Audit addresses that previously reached CMS only because of route shadowing.
+- Missing/empty `webblocks-cms.public.mount` preserves current integrated URLs and stored translation paths. Existing published config does not need forced replacement. Opt in through `WEBBLOCKS_CMS_PUBLIC_MOUNT=wb` or the config key when an isolated content mount is needed.
+- Treat mount activation/change as a site URL migration: rebuild config/route caches, reload long-lived processes as appropriate, run `search:rebuild`, review manual links, and select redirects without claiming host-owned addresses. No URL/data migration runs automatically.
+- In mounted mode the host owns root `robots.txt`; include the mounted sitemap there. Admin/API/assets/form endpoints stay in their existing dedicated areas. Legacy content redirects live only inside the active mount.
+- Normal host catch-alls still win. Independent host/CMS fallbacks require deliberate integration; they do not chain automatically. A colliding CMS page fallback name receives `webblocks.public.` so the host name and cached route serialization remain valid.
+
+See [Public Routing](docs/public-routing.md) for the complete contract.
+
 ## 1.49.0
 
 - **Site domain API endpoints now require capabilities.** The `/admin-api` domain routes previously checked only that a CMS API token was valid, so any token could add or remove a domain. Adding, updating, and promoting a domain now require the new `domains.write` capability, and deleting one requires the new destructive `domains.delete`. Reads require `content.read`, which normal tokens already have. Grant the new capabilities on the System > API Tokens screen to any provisioning tool that manages domains, before upgrading it.

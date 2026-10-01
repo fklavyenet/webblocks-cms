@@ -30,9 +30,24 @@ php "${CONSUMER}/artisan" about --only=environment
 php "${CONSUMER}/artisan" vendor:publish --tag=webblocks-cms-config
 php "${CONSUMER}/artisan" vendor:publish --tag=webblocks-cms-assets
 php "${CONSUMER}/artisan" vendor:publish --tag=webblocks-cms-stubs
+WEBBLOCKS_CMS_PUBLIC_MOUNT=wb php "${CONSUMER}/artisan" webblocks:install --name='CI Admin' --email='ci-admin@example.test' --password='CI-only-password!' --site-name='CI Site' --site-handle='ci-site' --no-interaction
+# Mounted installation must preserve the host's untouched welcome route.
+grep -q "return view('welcome');" "${CONSUMER}/routes/web.php"
 php "${CONSUMER}/artisan" webblocks:install --name='CI Admin' --email='ci-admin@example.test' --password='CI-only-password!' --site-name='CI Site' --site-handle='ci-site' --no-interaction
-php "${CONSUMER}/artisan" webblocks:install --name='CI Admin' --email='ci-admin@example.test' --password='CI-only-password!' --site-name='CI Site' --site-handle='ci-site' --no-interaction
-php "${CONSUMER}/artisan" route:cache
+# Exercise real host/controller ownership through fresh cached and uncached boots.
+cp "${ROOT_DIR}/tests/Support/Fixtures/RoutingConsumerController.php" "${CONSUMER}/app/Http/Controllers/RoutingConsumerController.php"
+cp "${ROOT_DIR}/tests/Support/Fixtures/routing-consumer-routes.php" "${CONSUMER}/routes/webblocks-routing-probe.php"
+cat >> "${CONSUMER}/routes/web.php" <<'PHP'
+
+require __DIR__.'/webblocks-routing-probe.php';
+PHP
+APP_URL=http://localhost php "${ROOT_DIR}/tests/Support/check-consumer-routing.php" "${CONSUMER}" seed
+for mount in '' wb; do
+  APP_URL=http://localhost WEBBLOCKS_CMS_PUBLIC_MOUNT="${mount}" php "${CONSUMER}/artisan" route:clear
+  APP_URL=http://localhost WEBBLOCKS_CMS_PUBLIC_MOUNT="${mount}" php "${ROOT_DIR}/tests/Support/check-consumer-routing.php" "${CONSUMER}" uncached
+  APP_URL=http://localhost WEBBLOCKS_CMS_PUBLIC_MOUNT="${mount}" php "${CONSUMER}/artisan" route:cache
+  APP_URL=http://localhost WEBBLOCKS_CMS_PUBLIC_MOUNT="${mount}" php "${ROOT_DIR}/tests/Support/check-consumer-routing.php" "${CONSUMER}" cached
+done
 php "${CONSUMER}/artisan" route:clear
 php "${CONSUMER}/artisan" migrate:status
 

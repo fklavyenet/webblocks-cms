@@ -17,7 +17,10 @@ use WebBlocks\Cms\Http\Controllers\Public\SitemapController;
 use WebBlocks\Cms\Http\Middleware\AddCmsIdentificationHeader;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Pages\PagePath;
+use WebBlocks\Cms\Support\Pages\PublicMount;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
+
+$publicMount = app(PublicMount::class);
 
 $publicPageMiddleware = ['web', 'install.required', AddCmsIdentificationHeader::class];
 
@@ -45,24 +48,28 @@ if (config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONF
     ->name(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME);
 }
 
-Route::middleware($publicPageMiddleware)->get('/sitemap.xml', SitemapController::class)->name('sitemap');
-Route::middleware($publicPageMiddleware)->get('/sitemap/{page}.xml', SitemapController::class)
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/sitemap.xml'), SitemapController::class)->name('sitemap');
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/sitemap/{page}.xml'), SitemapController::class)
   ->whereNumber('page')
   ->name('sitemap.page');
-Route::middleware($publicPageMiddleware)->get('/robots.txt', RobotsController::class)->name('robots');
+// Robots is a domain-root responsibility. Mounted hosts own their root response.
+if ($publicMount->prefix() === '') {
+  Route::middleware($publicPageMiddleware)->get('/robots.txt', RobotsController::class)->name('robots');
+}
 
-Route::middleware($publicPageMiddleware)->get('/', [PageController::class, 'home'])->name('home');
+// Real fallback routes: ordinary host routes win regardless of registration order.
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/'), [PageController::class, 'home'])->name('home')->fallback();
 
-Route::middleware($publicPageMiddleware)->get('/{locale}', [PageController::class, 'home'])
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}'), [PageController::class, 'home'])
   ->where('locale', Locale::routePattern())
-  ->name('localized.home');
+  ->name('localized.home')->fallback();
 
-Route::middleware($publicPageMiddleware)->get('/search', PublicSearchController::class)->name('search');
-Route::middleware($publicPageMiddleware)->get('/search.json', [PublicSearchController::class, 'json'])->name('search.json');
-Route::middleware($publicPageMiddleware)->get('/{locale}/search', PublicSearchController::class)
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/search'), PublicSearchController::class)->name('search');
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/search.json'), [PublicSearchController::class, 'json'])->name('search.json');
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/search'), PublicSearchController::class)
   ->where('locale', Locale::routePattern())
   ->name('localized.search');
-Route::middleware($publicPageMiddleware)->get('/{locale}/search.json', [PublicSearchController::class, 'json'])
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/search.json'), [PublicSearchController::class, 'json'])
   ->where('locale', Locale::routePattern())
   ->name('localized.search.json');
 
@@ -112,18 +119,18 @@ Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name(
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
 });
 
-Route::middleware($publicPageMiddleware)->get('/p/{path}', [PageController::class, 'legacy'])
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/p/{path}'), [PageController::class, 'legacy'])
   ->where('path', '.*')
-  ->name('pages.legacy');
-Route::middleware($publicPageMiddleware)->get('/{locale}/p/{path}', [PageController::class, 'legacy'])
+  ->name('pages.legacy')->fallback();
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/p/{path}'), [PageController::class, 'legacy'])
   ->where('locale', Locale::routePattern())
   ->where('path', '.*')
-  ->name('localized.pages.legacy');
+  ->name('localized.pages.legacy')->fallback();
 
-Route::middleware($publicPageMiddleware)->get('/{locale}/{slug}', [PageController::class, 'show'])
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/{slug}'), [PageController::class, 'show'])
   ->where('locale', Locale::routePattern())
   ->where('slug', PagePath::routePattern())
-  ->name('localized.pages.show');
-Route::middleware($publicPageMiddleware)->get('/{slug}', [PageController::class, 'show'])
+  ->name('localized.pages.show')->fallback();
+Route::middleware($publicPageMiddleware)->get($publicMount->path('/{slug}'), [PageController::class, 'show'])
   ->where('slug', PagePath::routePattern())
-  ->name('pages.show');
+  ->name('pages.show')->fallback();

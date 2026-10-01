@@ -18,6 +18,7 @@ class PageRouteResolver
     private readonly SiteResolver $siteResolver,
     private readonly LocaleResolver $localeResolver,
     private readonly SiteDomainNormalizer $siteDomainNormalizer,
+    private readonly PublicMount $publicMount,
   ) {}
 
   public function currentSite(?Request $request = null): Site
@@ -256,6 +257,8 @@ class PageRouteResolver
 
     $suffixStart = strcspn($url, '?#');
     $path = substr($url, 0, $suffixStart);
+    // Accept already-mounted page links as well as stored content-relative links.
+    $path = $this->publicMount->unmount($path) ?? $path;
     $suffix = substr($url, $suffixStart);
 
     // Authors may paste an already-prefixed path ("/tr/urunler"); strip the
@@ -383,12 +386,12 @@ class PageRouteResolver
     }
 
     if ($locale->is_default) {
-      return $normalizedPath;
+      return $this->publicMount->path($normalizedPath);
     }
 
-    return $normalizedPath === '/'
+    return $this->publicMount->path($normalizedPath === '/'
       ? '/'.$locale->code
-      : '/'.$locale->code.$normalizedPath;
+      : '/'.$locale->code.$normalizedPath);
   }
 
   private function canonicalPublicPath(PageTranslation $translation): string

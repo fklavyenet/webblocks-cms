@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Search;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PublicSearchIndex;
 use WebBlocks\Cms\Models\Site;
 
@@ -42,6 +43,8 @@ class PublicSearchQuery
     $like = '%'.mb_strtolower($normalizedQuery).'%';
 
     $results = PublicSearchIndex::query()
+      ->with(['page.site', 'page.translations.locale'])
+      ->whereHas('page', fn ($pages) => $pages->where('status', Page::STATUS_PUBLISHED))
       ->where('site_id', $site->id)
       ->where('locale_id', $locale->id)
       ->where(function ($queryBuilder) use ($terms) {
@@ -62,7 +65,10 @@ class PublicSearchQuery
       ->withQueryString();
 
     $results->setCollection(
-      $results->getCollection()->map(function (PublicSearchIndex $result) use ($normalizedQuery) {
+      $results->getCollection()->map(function (PublicSearchIndex $result) use ($normalizedQuery, $locale) {
+        // The index can predate a deployment mount change. Resolve outgoing URLs
+        // from page identity rather than returning a stale stored index URL.
+        $result->setAttribute('url', $result->page->publicPath($locale->code));
         $result->setAttribute('display_excerpt', $this->normalizer->excerpt($result->content, $normalizedQuery));
 
         return $result;

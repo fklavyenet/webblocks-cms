@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.89.0
+
+- Make CMS homepage, localized page, nested content, and legacy redirect routes true Laravel fallbacks so ordinary host routes, including health, product, and settings endpoints, win in both cached and uncached routing.
+- Add the optional global `WEBBLOCKS_CMS_PUBLIC_MOUNT` deployment setting for public pages, search, sitemap, and legacy content redirects, preserving integrated URLs when unset and keeping stored paths/revisions/export identity unchanged.
+- Preserve host route names when mounted CMS page fallbacks would otherwise duplicate them during route caching; retain dedicated admin/API/assets/form endpoints and leave root robots ownership to mounted hosts.
+- Resolve search-result links under the effective mount, include the public origin/mount in sitemap cache identity, and keep the host welcome route during mounted installation.
+- Add real Laravel consumer HTTP ownership probes for integrated/mounted and cached/uncached boots, and document migration steps, locale behavior, and host catch-all limitations.
+
 ## 1.88.1
 
 - Adopt WebBlocks UI 2.28.0 and add native secure password generation, confirmation synchronization, and copying to managed-user password fields with localized accessible feedback.

@@ -23,6 +23,7 @@ use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
 use WebBlocks\Cms\Support\Install\LaravelWelcomeRouteCleaner;
 use WebBlocks\Cms\Support\Install\PartialInstallState;
 use WebBlocks\Cms\Support\Install\StarterContentInstaller;
+use WebBlocks\Cms\Support\Pages\PublicMount;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
@@ -93,6 +94,10 @@ class InstallWebBlocksCmsCommand extends Command
 
   private function ensurePublicRoutesCanResolveToCms(): void
   {
+    if (app(PublicMount::class)->prefix() !== '') {
+      return;
+    }
+
     $result = $this->laravelWelcomeRouteCleaner->clean(config('webblocks-cms.install.web_routes_path'));
 
     if ($result->removedWelcomeRoute()) {

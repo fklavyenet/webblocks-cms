@@ -355,3 +355,7 @@ The diagnostic command must not print passwords, tokens, or mail secrets. Use `-
 10. Create your first page.
 11. Add media, navigation, and blocks.
 12. Publish content through the editorial workflow.
+
+## Public Content Mount
+
+The default integrated mode preserves root public URLs. To run beside a Laravel product, configure `WEBBLOCKS_CMS_PUBLIC_MOUNT=wb` before installation/deployment; public content, search, and sitemap then use `/wb`, while admin/API/assets/form endpoints retain their dedicated areas. Mounted installation keeps the host welcome route. This is an instance-wide config setting, not a panel or Site setting. Read [Public Routing](public-routing.md) before enabling or changing it, especially for cache rebuilding, host catch-alls, robots ownership, and URL migration.

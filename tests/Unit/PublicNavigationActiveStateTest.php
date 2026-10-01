@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Unit;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,18 @@ class PublicNavigationActiveStateTest extends TestCase
     $matcher = new PublicNavigationActiveState(Request::create($requestUri));
 
     $this->assertSame($expected, $matcher->matches($href));
+  }
+
+  #[Test]
+  public function a_disambiguated_cms_route_keeps_current_page_navigation_active(): void
+  {
+    $request = Request::create('/wb/de/about');
+    $route = (new Route('GET', 'wb/{locale}/{slug}', fn () => null))->name('webblocks.public.localized.pages.show');
+    $request->setRouteResolver(fn () => $route);
+    $matcher = new PublicNavigationActiveState($request);
+
+    $this->assertTrue($matcher->matches('/wb/de/about', 'current-page'));
+    $this->assertFalse($matcher->matches('/wb/de/other', 'current-page'));
   }
 
   public static function pathCases(): array

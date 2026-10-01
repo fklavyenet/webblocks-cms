@@ -74,6 +74,8 @@ return [
         'site_handle' => env('WEBBLOCKS_CMS_DEFAULT_SITE_HANDLE', 'default'),
     ],
     'public' => [
+        // Instance-wide deployment mount; null/empty preserves integrated URLs.
+        'mount' => env('WEBBLOCKS_CMS_PUBLIC_MOUNT'),
         'load_routes' => env('WEBBLOCKS_CMS_PUBLIC_LOAD_ROUTES', true),
         'load_status_route' => env('WEBBLOCKS_CMS_PUBLIC_LOAD_STATUS_ROUTE', false),
 

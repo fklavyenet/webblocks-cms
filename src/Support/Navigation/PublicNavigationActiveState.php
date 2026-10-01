@@ -33,7 +33,7 @@ class PublicNavigationActiveState
       'section' => $hrefPath === '/'
         ? $currentPath === '/'
         : $currentPath === $hrefPath || str_starts_with($currentPath, $hrefPath.'/'),
-      'current-page' => ($this->request->routeIs('pages.show') || $this->request->routeIs('localized.pages.show'))
+      'current-page' => $this->request->routeIs('pages.show', 'localized.pages.show', 'webblocks.public.pages.show', 'webblocks.public.localized.pages.show')
         && $hrefPath === $currentPath,
       default => $hrefPath === $currentPath,
     };

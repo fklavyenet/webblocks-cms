@@ -10,6 +10,7 @@ use WebBlocks\Cms\Http\Middleware\ServeCmsPageBeforeRedirectCatchAll;
 use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Pages\PublicMount;
 
 class PluginRouteRegistrar
 {
@@ -130,6 +131,12 @@ class PluginRouteRegistrar
       }
 
       $reservedPrefixes[] = preg_quote($firstSegment, '/');
+    }
+
+    $mount = app(PublicMount::class)->prefix();
+
+    if ($mount !== '') {
+      $reservedPrefixes[] = preg_quote(explode('/', $mount)[0], '/');
     }
 
     $reservedPrefixes = array_values(array_unique($reservedPrefixes));

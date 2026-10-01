@@ -134,3 +134,7 @@ Search V1 does not require destructive database reset commands.
 
 - destructive command guards remain in place
 - rebuilds clear and recreate only derived search rows in the requested scope
+
+## Public Mount Changes
+
+Search endpoints follow the global [public content mount](public-routing.md). Index writes use `Page::publicPath()`, and result URLs are resolved from page identity under the effective mount even if the stored index predates the deployment. Run `php artisan search:rebuild` after a mount change to refresh stored URL-based search matching as well. A mount change does not rewrite translation paths or custom content URLs.

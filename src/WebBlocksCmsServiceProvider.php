@@ -888,6 +888,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     // host app's own routes such as login/register) is registered and can be
     // reserved from plugin catch-all routes.
     $this->app->booted(function (): void {
+      $this->preserveHostPublicRouteNames();
       app(PluginRouteRegistrar::class)->protectCorePublicRoutesFromPluginCatchAlls();
     });
   }
@@ -1126,6 +1127,35 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     app(PluginPublicRouteRegistrar::class)->registerEnabledPublicRoutes();
   }
 
+  protected function preserveHostPublicRouteNames(): void
+  {
+    if ($this->app->routesAreCached()) {
+      return;
+    }
+
+    $routes = $this->app->make('router')->getRoutes();
+    $hostNames = [];
+
+    foreach ($routes->getRoutes() as $route) {
+      if (! $route->isFallback && $route->getName() !== null) {
+        $hostNames[$route->getName()] = true;
+      }
+    }
+
+    foreach ($routes->getRoutes() as $route) {
+      $name = $route->getName();
+
+      if ($route->isFallback && isset($hostNames[$name])
+        && str_starts_with(ltrim($route->getActionName(), '\\'), 'WebBlocks\\Cms\\Http\\Controllers\\Public\\PageController@')) {
+        // A mounted CMS homepage and a host's named home coexist as different
+        // URIs. Preserve the host name and avoid duplicate names in route:cache.
+        $route->setAction([...$route->getAction(), 'as' => 'webblocks.public.'.$name]);
+      }
+    }
+
+    $routes->refreshNameLookups();
+  }
+
   protected function diagnosticRoutesShouldLoad(): bool
   {
     return (bool) config(self::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false);
@@ -1179,7 +1209,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       return true;
     }
 
-    return app('router')->getRoutes()->getByName('home') === null;
+    // A host homepage must not disable CMS search, sitemap or content fallback.
+    return true;
   }
 
   /**

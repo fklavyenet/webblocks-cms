@@ -205,6 +205,8 @@ class SitemapGenerator
       ];
     })->all();
 
+    $state['public_origin_and_mount'] = $this->pageRouteResolver->homeUrl(null, $site);
+
     return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));
   }
 }

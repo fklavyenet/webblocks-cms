@@ -12,6 +12,8 @@ cms_source_id: webblocks-cms:docs/testing-strategy.md
 
 WebBlocks CMS release validation should be risk-based. The full suite remains available, but routine hotfixes should start with the smallest focused script that protects the changed surface.
 
+Public routing ownership is covered by `PublicRouteOwnershipTest`, feature/unit `PublicMountTest`, and the real-consumer routing probe invoked by `tests/Support/check-current-consumer.sh`. That probe verifies actual HTTP requests in integrated and mounted configurations before and after `route:cache`, including Laravel health and a host homepage named `home`. See [Public Routing](public-routing.md) and the historical [Routing and Coexistence Review](routing-coexistence-review.md#14-test-coverage).
+
 Use native Composer commands:
 
 ```bash

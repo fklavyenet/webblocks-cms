@@ -14,6 +14,12 @@ cms_source_id: webblocks-cms:docs/coexistence.md
 
 This document describes how WebBlocks CMS should coexist with another Laravel host product in the same application. It records architecture direction only; it does not implement route, config, migration, model, controller, installer, register, invite, or authentication changes by itself.
 
+For the current route-registration findings, verified host-route shadowing, test coverage gaps, and proposed 2.x alternatives, see [Routing and Coexistence Review](routing-coexistence-review.md). That review is a technical proposal, not an implemented routing guarantee or an accepted decision to move public URLs under `/wb`.
+
+## Current Public Routing Contract
+
+Since 1.89.0, CMS public content uses Laravel fallback semantics. Ordinary host routes take precedence. An optional instance-wide `webblocks-cms.public.mount` / `WEBBLOCKS_CMS_PUBLIC_MOUNT` deployment setting isolates content under a prefix such as `/wb`; missing or empty configuration preserves integrated URLs. See [Public Routing](public-routing.md) for endpoint ownership, locale paths, route-cache requirements, host catch-all limits, and migration steps. This is not a Site or panel setting, and stored page paths do not include the mount.
+
 ## Standalone CMS Vs Host Product Coexistence
 
 WebBlocks CMS can run as a standalone CMS where the CMS owns the main admin experience, public site rendering, and content operations for the application.
