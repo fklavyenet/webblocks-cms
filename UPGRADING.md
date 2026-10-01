@@ -73,7 +73,6 @@ client) require `docs/LICENSE` for their mandatory promotion to root `LICENSE`; 
 does not make root-only ZIPs installable. The 1.87.0 client rejects root
 `LICENSE`; 1.87.1 allows it without promotion, but is not a safe minimum for
 root-only artifacts because subsequent releases reinstated a legacy requirement.
-The unreleased transition code in this checkout accepts both layouts and installs root `LICENSE`. Keep the legacy Publisher layout until
+The 1.89.1 bridge updater accepts both layouts and installs root `LICENSE`. Keep the legacy Publisher layout until
 all supported installed clients have received this compatibility code. Root-only
 Publisher ZIPs are safe only for clients with that code, not merely 1.87.2 or newer.
-No version or release tag is assigned by this repair.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.89.1
+
+- Preserve System Updates compatibility for existing installations by generating only `docs/LICENSE` in Publisher ZIPs; keep root `LICENSE` in Composer and Git distributions.
+- Accept legacy and root-license update packages in the new CMS updater, prefer an existing root license, reject missing licenses and documentation content, and install the canonical root license.
+- Separate user documentation source into the independent `webblocks-cms-docs` repository; ship only the runtime inventory contract at `resources/contracts/inventory.md` with corrected source metadata and documentation ownership references.
+- Correct upgrade guidance and verify the release bridge against the actual published 1.88.1 updater, with explicit Composer, Git, and Publisher artifact boundary tests. Keep the Publisher license shim until supported installed clients have obtained the bridge updater.
+
 ## 1.89.0
 
 - Make CMS homepage, localized page, nested content, and legacy redirect routes true Laravel fallbacks so ordinary host routes, including health, product, and settings endpoints, win in both cached and uncached routing.
