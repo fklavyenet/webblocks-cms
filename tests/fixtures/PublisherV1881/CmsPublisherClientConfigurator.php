@@ -1,9 +1,8 @@
 <?php
 
-namespace WebBlocks\Cms\Support\System\Updates;
+namespace WebBlocks\Cms\Tests\Fixtures\PublisherV1881;
 
 use Illuminate\Contracts\Foundation\Application;
-use WebBlocks\Cms\Support\Updates\Client\Apply\PackageApplyStrategy;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -14,7 +13,6 @@ final class CmsPublisherClientConfigurator
 
   public function configure(): void
   {
-    $this->app->bind(PackageApplyStrategy::class, CmsPackageApplyStrategy::class);
     $config = $this->app['config'];
     $runtimeRoot = dirname(__DIR__, 4);
 
@@ -32,12 +30,14 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.apply.enforce_active_runtime_target', true);
     $config->set('publisher-client.apply.composer_install', false);
     $config->set('publisher-client.apply.package_validation.allowed_roots', [
-      'composer.json', 'LICENSE', 'src', 'routes', 'resources', 'database', 'config', 'public', 'stubs',
+      'composer.json', 'LICENSE', 'src', 'routes', 'resources', 'database', 'config', 'public', 'docs', 'stubs',
     ]);
     $config->set('publisher-client.apply.package_validation.forbidden_content_patterns', []);
     $config->set('publisher-client.apply.package_validation.content_scan_excluded_paths', []);
-    $config->set('publisher-client.apply.package_validation.required_paths', ['src', 'composer.json', 'LICENSE']);
-    $config->set('publisher-client.apply.package_file_promotions', []);
+    $config->set('publisher-client.apply.package_validation.required_paths', ['src']);
+    $config->set('publisher-client.apply.package_file_promotions', [
+      'docs/LICENSE' => 'LICENSE',
+    ]);
     $config->set('publisher-client.package.name', 'fklavyenet/webblocks-cms');
     $config->set('publisher-client.package.service_provider', WebBlocksCmsServiceProvider::class);
     $config->set('publisher-client.version.resolver', ConfigVersionResolver::class);

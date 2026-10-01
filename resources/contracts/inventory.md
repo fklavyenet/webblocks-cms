@@ -5,7 +5,7 @@ cms_locale: en
 cms_path: /docs/inventory
 cms_title: CMS Inventory
 cms_layout: docs
-cms_source_id: webblocks-cms:docs/inventory.md
+cms_source_id: webblocks-cms:resources/contracts/inventory.md
 ---
 
 # WebBlocks CMS Inventory for AI Page Building
@@ -49,7 +49,7 @@ outside this list as `1.40.2`-era and confirm it through live API discovery.
 - `link-list` (`1.40.10`): `settings.row_layout` and `settings.list_frame`.
 - `link-list-item` (`1.40.8`): optional `media_id` thumbnail.
 
-Historical repository note: the pre-package-only tree contained `docs/feature-inventory.md`, a broad product-feature discoverability matrix. It was removed when the package-only repository tree was constructed and was not a per-block AI authoring inventory. No `inventory.md` exists in the current tree or reachable repository history.
+Historical repository note: the pre-package-only CMS tree contained `docs/feature-inventory.md`, a broad product-feature discoverability matrix. It was removed when the package-only repository tree was constructed and was not a per-block AI authoring inventory. The runtime contract now lives at `resources/contracts/inventory.md`.
 
 Source families inspected:
 
@@ -1054,8 +1054,8 @@ Do not use site CSS to:
 
 These are implementation findings, not permissions to invent behavior:
 
-1. Resolved: this inventory now ships as `docs/inventory.md` and is served to tools by `GET /webadmin/api/inventory`.
-2. `docs/block-type-contracts.md` says 42 published core types, while the current catalog defines 51.
+1. Resolved: this inventory now ships as `resources/contracts/inventory.md` and is served to tools by `GET /webadmin/api/inventory`.
+2. `webblocks-cms-docs/docs/block-type-contracts.md` says 42 published core types, while the current catalog defines 51.
 3. Several existing docs still show pre-package-only renderer paths under `packages/webblocks-cms/...`; current package paths begin at `resources/views/...`.
 4. Resolved: Trusted HTML is no longer API-writable. `BlockTypeApiAuthoringPolicy` blocks every API mutation path, including generic normalization, existing-block PATCH, and the Shared Slot reorder, subtree-delete, clear-all, and publish operations.
 5. Resolved: Hero and CTA are plain containers for `button_link` children in both the admin and the API. The `primary_cta` / `secondary_cta` fields survive as a two-button shorthand. The unpublished legacy `button` catalog row is no longer an authoring blocker.
@@ -1088,14 +1088,14 @@ The long-term ideal is to generate the mechanical catalog data from one product-
 
 ## Related Detailed References
 
-- `docs/ai-page-building-guide.md`
-- `docs/internal-content-api.md`
-- `docs/api-discovery.md`
-- `docs/block-type-contracts.md`
-- `docs/public-block-render-markup.md`
-- `docs/block-ui-renderer-contract.md`
-- `docs/public-theme-and-tones.md`
-- `docs/public-assets.md`
-- `docs/media-image-variants.md`
+- `webblocks-cms-docs/docs/ai-page-building-guide.md`
+- `webblocks-cms-docs/docs/internal-content-api.md`
+- `webblocks-cms-docs/docs/api-discovery.md`
+- `webblocks-cms-docs/docs/block-type-contracts.md`
+- `webblocks-cms-docs/docs/public-block-render-markup.md`
+- `webblocks-cms-docs/docs/block-ui-renderer-contract.md`
+- `webblocks-cms-docs/docs/public-theme-and-tones.md`
+- `webblocks-cms-docs/docs/public-assets.md`
+- `webblocks-cms-docs/docs/media-image-variants.md`
 
 This inventory should be the first document an AI reads for page-design capability selection. The detailed references remain useful for endpoint workflows, historical compatibility, and full renderer notes.

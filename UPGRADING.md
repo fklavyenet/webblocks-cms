@@ -64,9 +64,16 @@ User documentation is maintained in the independent `webblocks-cms-docs`
 repository and is excluded from CMS distributions. The runtime inventory endpoint
 now reads the packaged `resources/contracts/inventory.md` contract.
 
-Publisher artifacts include the root `LICENSE` and no `docs/` directory.
-CMS versions through 1.87.0 do not accept that root file: operators on those
-versions must first install a compatible 1.87.2-or-newer update client using a
-previous release, or update the Composer package through their host's normal
-maintenance process. A new artifact cannot change the validator already running
-on an older installation. No versions or release tags were changed by this split.
+Publisher update ZIPs retain only `docs/LICENSE`, generated at packaging time
+from the source root `LICENSE`. No documentation content is included. Composer
+and Git source distributions retain root `LICENSE` and exclude `docs/`.
+
+Released clients from 1.87.2 through 1.88.1 (and the locally prepared 1.89.0
+client) require `docs/LICENSE` for their mandatory promotion to root `LICENSE`; accepting the root path in their allowlist
+does not make root-only ZIPs installable. The 1.87.0 client rejects root
+`LICENSE`; 1.87.1 allows it without promotion, but is not a safe minimum for
+root-only artifacts because subsequent releases reinstated a legacy requirement.
+The unreleased transition code in this checkout accepts both layouts and installs root `LICENSE`. Keep the legacy Publisher layout until
+all supported installed clients have received this compatibility code. Root-only
+Publisher ZIPs are safe only for clients with that code, not merely 1.87.2 or newer.
+No version or release tag is assigned by this repair.
