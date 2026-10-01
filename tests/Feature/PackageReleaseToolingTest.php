@@ -36,6 +36,7 @@ class PackageReleaseToolingTest extends TestCase
 
     $this->assertStringContainsString('HEAD:src/Support/WebBlocks.php', $prepare);
     $this->assertStringContainsString('scripts/release/build-package.sh', $prepare);
+    $this->assertStringContainsString('getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.89.1"', $prepare);
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes "${TREE}"', $builder);
     $this->assertStringContainsString("-x 'CHANGELOG.md'", $builder);
     $this->assertStringNotContainsString('docs/LICENSE', $surface);

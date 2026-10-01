@@ -180,7 +180,8 @@ $archivePath = $argv[2];
 $payloadPath = $argv[3];
 $changelogPath = $argv[4];
 $checksum = trim(file_get_contents($archivePath.".sha256"));
-$minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.32.18";
+// Root-license Publisher artifacts require the dual-layout 1.89.1 bridge client.
+$minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.89.1";
 $notes = releaseNoteItemsForVersion($changelogPath, $version);
 // The first note is the headline (rendered as the summary/trigger); the rest
 // are the supporting highlights. Splitting here keeps the summary out of the
