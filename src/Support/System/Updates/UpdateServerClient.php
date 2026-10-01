@@ -203,6 +203,13 @@ class UpdateServerClient
       return $this->invalidShape($serverUrl, $product, $channel, $installedVersion);
     }
 
+    $minimum = Arr::get($data, 'minimum_client_version');
+
+    if ($minimum !== null && $minimum !== ''
+      && (! is_string($minimum) || preg_match('/^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/i', $minimum) !== 1)) {
+      return $this->invalidShape($serverUrl, $product, $channel, $installedVersion);
+    }
+
     $normalizedRelease = $this->normalizeReleasePayload($data);
     $normalizedRelease['changelog_entries'] = $this->buildChangelogEntries($data, $installedVersion);
     $compatibility = $this->determineCompatibility($installedVersion, $normalizedRelease);
@@ -215,7 +222,15 @@ class UpdateServerClient
       : 'This install is already on the latest published release.';
     $badgeClass = 'wb-status-active';
 
-    if ($updateAvailable && $compatibility['status'] === 'incompatible') {
+    $globalLatest = Arr::get($normalizedRelease, 'update_path.latest_version');
+    $missingNextStep = ! $updateAvailable && is_string($globalLatest)
+      && version_compare($globalLatest, $installedVersion, '>');
+
+    if ($missingNextStep) {
+      $compatibility = ['status' => 'incompatible', 'reasons' => $compatibility['reasons']];
+    }
+
+    if ($missingNextStep || ($updateAvailable && $compatibility['status'] === 'incompatible')) {
       $state = 'incompatible';
       $label = 'Incompatible update available';
       $message = 'A newer release exists, but this install does not meet its compatibility requirements.';
@@ -261,6 +276,7 @@ class UpdateServerClient
     $releaseDetails = $this->normalizeReleaseDetails($release);
 
     return [
+      'update_path' => is_array(Arr::get($release, 'update_path')) ? Arr::get($release, 'update_path') : [],
       'version' => $version,
       'name' => $releaseDetails['title'] ?? ($version !== '' ? 'WebBlocks CMS '.$version : null),
       'description' => is_string($releaseNotes) && $releaseNotes !== '' ? $releaseNotes : null,

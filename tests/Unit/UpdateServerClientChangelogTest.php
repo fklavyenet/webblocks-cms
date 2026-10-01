@@ -149,6 +149,52 @@ class UpdateServerClientChangelogTest extends TestCase
     Http::fake(['*' => Http::response(['api_version' => '1', 'data' => $data])]);
   }
 
+  #[Test]
+  public function compatible_bridge_metadata_survives_the_cms_adapter(): void
+  {
+    $path = ['latest_version' => '1.89.3', 'selected_version' => '1.89.1', 'bridge_required' => true];
+    $this->fakeLatestResponse([
+      'version' => '1.89.1',
+      'artifact_url' => 'https://updates.example.test/bridge.zip',
+      'minimum_client_version' => '1.88.1',
+      'update_path' => $path,
+    ]);
+
+    $result = $this->client('1.88.1')->check();
+
+    $this->assertTrue($result->updateAvailable);
+    $this->assertSame('compatible', $result->compatibility['status']);
+    $this->assertSame($path, $result->release['update_path']);
+  }
+
+  #[Test]
+  public function malformed_minimum_product_versions_are_rejected(): void
+  {
+    $this->fakeLatestResponse([
+      'version' => '1.89.3',
+      'minimum_client_version' => ['1.89.1'],
+    ]);
+
+    $result = $this->client('1.89.1')->check();
+
+    $this->assertFalse($result->updateAvailable);
+    $this->assertNull($result->release);
+  }
+
+  #[Test]
+  public function a_missing_compatible_next_step_is_not_reported_as_up_to_date(): void
+  {
+    $this->fakeLatestResponse([
+      'version' => '1.89.1',
+      'update_path' => ['latest_version' => '1.89.3', 'selected_version' => '1.89.1', 'bridge_required' => true],
+    ]);
+
+    $result = $this->client('1.89.1')->check();
+
+    $this->assertSame('incompatible', $result->state);
+    $this->assertFalse($result->updateAvailable);
+  }
+
   private function client(string $installedVersion): UpdateServerClient
   {
     $store = Mockery::mock(InstalledVersionStore::class);

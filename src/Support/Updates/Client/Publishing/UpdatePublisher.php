@@ -82,8 +82,19 @@ final class UpdatePublisher
       );
     }
 
+    $minimumClientVersion = $this->payloadString($payload, 'minimum_client_version');
+    if ($minimumClientVersion !== null) {
+      $capabilities = Http::acceptJson()
+        ->timeout((int) config('publisher-client.timeout_seconds', 5))
+        ->connectTimeout((int) config('publisher-client.connect_timeout_seconds', 3))
+        ->get(rtrim((string) config('publisher-client.server_url'), '/').config('publisher-client.publisher.capabilities_path', '/api/updates/capabilities'));
+      if (! $capabilities->successful() || $capabilities->json('data.minimum_client_version') !== true) {
+        throw new RuntimeException('Publisher does not support minimum-client metadata. Upgrade the server before publishing this release.');
+      }
+    }
+
     $publishResponse = $this->sendPublishRequest($token, $artifactPath, $payload, $product, $channel, $version, $checksum, $signature);
-    $latestResponse = $this->verifyLatestRelease($product, $channel, $version, $checksum);
+    $latestResponse = $this->verifyLatestRelease($product, $channel, $version, $checksum, $this->payloadString($payload, 'minimum_client_version'));
 
     return new UpdatePublishResult(
       status: 'published',
@@ -272,7 +283,7 @@ final class UpdatePublisher
     return is_array($responsePayload) ? $responsePayload : [];
   }
 
-  private function verifyLatestRelease(string $product, string $channel, string $version, string $checksum): array
+  private function verifyLatestRelease(string $product, string $channel, string $version, string $checksum, ?string $minimumClientVersion = null): array
   {
     $serverUrl = rtrim((string) config('publisher-client.server_url', ''), '/');
     $latestPath = (string) config('publisher-client.latest_path', '/api/updates/latest');
@@ -302,6 +313,10 @@ final class UpdatePublisher
 
     if ($latestVersion !== $version || $latestProduct !== $product || $latestChannel !== $channel || $latestChecksum !== $checksum || $artifactUrl === '') {
       throw new RuntimeException("Update publisher latest verification failed. Expected {$product} {$channel} {$version} with matching checksum and artifact URL.");
+    }
+
+    if ($minimumClientVersion !== null && ($data['minimum_client_version'] ?? null) !== $minimumClientVersion) {
+      throw new RuntimeException('Update publisher latest verification failed: minimum client version was not preserved by the server.');
     }
 
     return $payload;

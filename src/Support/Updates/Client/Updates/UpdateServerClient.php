@@ -44,11 +44,16 @@ class UpdateServerClient
 
   public function check(): UpdateCheckResult
   {
+    return $this->checkForVersion($this->versions->current());
+  }
+
+  /** Query after an apply without relying on PHP's already-loaded version constant. */
+  public function checkForVersion(string $installedVersion): UpdateCheckResult
+  {
     $serverUrl = rtrim((string) config('publisher-client.server_url', ''), '/');
     $latestPath = (string) config('publisher-client.latest_path', '/api/updates/latest');
     $product = (string) config('publisher-client.product', '');
     $channel = (string) config('publisher-client.channel', 'stable');
-    $installedVersion = $this->versions->current();
 
     if (! config('publisher-client.enabled', true)) {
       return $this->configState(
@@ -200,9 +205,17 @@ class UpdateServerClient
       return $this->invalidShape($serverUrl, $product, $channel, $installedVersion);
     }
 
+    foreach (['minimum_client_version', 'supported_from_version', 'requirements.supported_from_version'] as $path) {
+      $floor = Arr::get($data, $path);
+      if ($floor !== null && $floor !== '' && (! is_string($floor) || preg_match('/^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/i', trim($floor)) !== 1)) {
+        return $this->invalidShape($serverUrl, $product, $channel, $installedVersion);
+      }
+    }
+
     $normalizedRelease = $this->normalizeReleasePayload($data);
     $normalizedRelease['changelog_entries'] = $this->buildChangelogEntries($data, $normalizedRelease, $installedVersion, $product);
 
+    $normalizedRelease['update_path'] = is_array($data['update_path'] ?? null) ? $data['update_path'] : [];
     $compatibility = $this->determineCompatibility($installedVersion, $normalizedRelease);
 
     $installedNormalized = $this->normalizeVersion($installedVersion);
@@ -231,6 +244,17 @@ class UpdateServerClient
       $label = 'Update available';
       $message = 'A newer published release is available from the configured update server.';
       $badgeClass = 'info';
+    }
+
+    if (! $updateAvailable && version_compare($this->normalizeVersion((string) ($normalizedRelease['update_path']['latest_version'] ?? $latestVersion)), $installedNormalized, '>')) {
+      $state = 'incompatible';
+      $label = 'No compatible update available';
+      $message = 'A newer release exists, but no compatible next step is currently available.';
+      $compatibility = ['status' => 'incompatible', 'reasons' => [$message]];
+    }
+
+    if ($state === 'update_available' && ($normalizedRelease['update_path']['bridge_required'] ?? false)) {
+      $message = 'An intermediate update is available before the latest release can be installed.';
     }
 
     return $this->result(

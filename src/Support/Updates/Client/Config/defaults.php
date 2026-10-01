@@ -282,6 +282,7 @@ return [
     | The Bearer token is the "only I can publish" gate. Held by the owner.
     */
     'publisher' => [
+        'capabilities_path' => '/api/updates/capabilities',
         'token' => env('WEBBLOCKS_PUBLISHER_TOKEN'),
         'timeout_seconds' => 120,
         'connect_timeout_seconds' => 5,

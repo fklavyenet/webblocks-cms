@@ -164,6 +164,18 @@ class SystemUpdater
       // now installed. Drop it here rather than relying on the product having
       // a cache-clearing command in its post-apply allowlist.
       $this->indicator->clear();
+      if (($release['update_path']['bridge_required'] ?? false) === true) {
+        // Follow-up is read-only. Never chain another apply or roll back a
+        // successful installation merely because the next check is unavailable.
+        try {
+          $next = $this->client->checkForVersion($toVersion);
+          $output[] = $next->serverReachable && $next->updateAvailable
+            ? 'Bridge update installed. Another compatible update is available; check updates to continue.'
+            : 'Bridge update installed. Check updates again to continue.';
+        } catch (\Throwable) {
+          $output[] = 'Bridge update installed. Check updates again to continue.';
+        }
+      }
 
       $finishedAt = CarbonImmutable::now();
       $durationMs = (int) round($startedAt->diffInMilliseconds($finishedAt));

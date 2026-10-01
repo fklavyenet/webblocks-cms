@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.89.3
+
+- Embed Publisher Client 1.1.13 with compatible bridge metadata validation and a follow-up update check after successful bridge installation.
+- Preserve update-path metadata in the CMS update adapter and reject malformed minimum product versions.
+- Retain the 1.89.1 Publisher compatibility floor and root-license packaging; Composer installations continue to update directly.
+
 ## 1.89.2
 
 - Complete the license packaging transition after the 1.89.1 bridge release: Publisher ZIPs now carry root `LICENSE`, matching Composer and Git distributions, with no generated `docs/` directory.
