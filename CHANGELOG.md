@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.89.5
+
+- Use a key icon for password generation and show localized password generation and copy feedback below the password field.
+- Disable assigned-site choices for Super Admin users, explain their access to every site, and restore site choices when switching to a site-scoped role.
+
 ## 1.89.4
 
 - Embed Publisher Client 1.1.14 and limit CMS update notes to the selected installation target, including intermediate bridge releases.

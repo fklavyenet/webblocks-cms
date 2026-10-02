@@ -535,6 +535,25 @@
         });
     };
 
+    document.querySelectorAll('[data-wb-user-role]').forEach(function (role) {
+        var form = role.closest('form');
+        if (!form) return;
+
+        function syncAssignedSites() {
+            var isSuperAdmin = role.value === role.dataset.wbSuperAdminRole;
+            form.querySelectorAll('[data-wb-user-site]').forEach(function (site) {
+                site.disabled = isSuperAdmin;
+            });
+            var help = form.querySelector('[data-wb-user-sites-help]');
+            if (help) {
+                help.textContent = isSuperAdmin ? help.dataset.wbSuperAdminHelp : help.dataset.wbAssignedSitesHelp;
+            }
+        }
+
+        role.addEventListener('change', syncAssignedSites);
+        syncAssignedSites();
+    });
+
     bindAdminTransientUiReset();
     bindAdminHistoryModalLinks();
     bindSiteHandleAutosuggest();

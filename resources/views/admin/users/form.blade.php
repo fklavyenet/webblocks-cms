@@ -59,7 +59,7 @@
                                         aria-label="{{ $adminText('generate_password') }}"
                                         title="{{ $adminText('generate_password') }}"
                                     >
-                                        <i class="wb-icon wb-icon-refresh-cw" aria-hidden="true"></i>
+                                        <i class="wb-icon wb-icon-key-round" aria-hidden="true"></i>
                                     </button>
                                     <button
                                         class="wb-btn wb-btn-secondary wb-input-addon-btn wb-btn-icon"
@@ -85,7 +85,7 @@
                                         <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                     </button>
                                 </div>
-                                <div id="managed_user_password_status" class="wb-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+                                <div id="managed_user_password_status" class="wb-text-sm wb-text-muted" role="status" aria-live="polite" aria-atomic="true"></div>
 
                                 @error('password')
                                     <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
@@ -130,7 +130,7 @@
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 <div class="wb-stack wb-gap-1">
                                     <label for="user_role">{{ $adminText('role') }}</label>
-                                    <select id="user_role" name="role" class="wb-select">
+                                    <select id="user_role" name="role" class="wb-select" data-wb-user-role data-wb-super-admin-role="{{ \App\Models\User::ROLE_SUPER_ADMIN }}">
                                         @foreach (\App\Models\User::roles() as $role)
                                             <option value="{{ $role }}" @selected(old('role', $managedUser->normalizedRole()) === $role)>{{ str($role)->replace('_', ' ')->title() }}</option>
                                         @endforeach
@@ -145,16 +145,12 @@
                                     <div class="wb-stack wb-gap-1">
                                         @foreach ($sites as $site)
                                             <label class="wb-nowrap">
-                                                <input type="checkbox" name="site_ids[]" value="{{ $site->id }}" @checked(in_array($site->id, old('site_ids', $managedUser->exists ? $managedUser->accessibleSiteIds()->all() : []), true))>
+                                                <input type="checkbox" data-wb-user-site @disabled($selectedRole === \App\Models\User::ROLE_SUPER_ADMIN) name="site_ids[]" value="{{ $site->id }}" @checked(in_array($site->id, old('site_ids', $managedUser->exists ? $managedUser->accessibleSiteIds()->all() : []), true))>
                                                 <span>{{ $site->name }}</span>
                                             </label>
                                         @endforeach
                                     </div>
-                                    @if ($selectedRole === \App\Models\User::ROLE_SUPER_ADMIN)
-                                        <div class="wb-text-sm wb-text-muted">{{ $adminText('super_admin_sites_help') }}</div>
-                                    @else
-                                        <div class="wb-text-sm wb-text-muted">{{ $adminText('assigned_sites_help') }}</div>
-                                    @endif
+                                    <div class="wb-text-sm wb-text-muted" data-wb-user-sites-help data-wb-super-admin-help="{{ $adminText('super_admin_sites_help') }}" data-wb-assigned-sites-help="{{ $adminText('assigned_sites_help') }}" aria-live="polite">{{ $selectedRole === \App\Models\User::ROLE_SUPER_ADMIN ? $adminText('super_admin_sites_help') : $adminText('assigned_sites_help') }}</div>
                                 </div>
 
                                 <label class="wb-nowrap">
