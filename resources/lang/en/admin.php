@@ -1674,6 +1674,7 @@ return [
   ],
   'api_tokens' => [
     'capabilities' => [
+      'system_updates_scope_required' => 'System update permissions require an installation-wide system token owned by an active system administrator.',
       'title' => 'Capabilities',
       'description' => 'Choose grouped permissions for this token.',
       'default_group' => 'Capabilities',
@@ -1682,6 +1683,10 @@ return [
       'advanced_description' => 'Grant only to trusted operator tools.',
       'selected_count' => ':selected/:total selected',
       'groups' => [
+        'system_updates' => [
+          'label' => 'System updates',
+          'description' => 'Installation-wide update checks and explicitly approved execution.',
+        ],
         'default' => [
           'label' => 'Capabilities',
           'description' => 'Choose what this token is allowed to do.',
@@ -1720,6 +1725,8 @@ return [
         ],
       ],
       'labels' => [
+        'system_updates_read' => 'Read system update status and results',
+        'system_updates_run' => 'Run an approved installation-wide system update',
         'content_read' => 'Read content metadata and contracts',
         'content_validate' => 'Validate content plans',
         'content_apply' => 'Apply draft content plans',

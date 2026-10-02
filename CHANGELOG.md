@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.90.0
+
+- Add installation-wide System Updates API checks, synchronous execution and durable result polling with separately granted `system-updates.read` and `system-updates.run` capabilities.
+- Require an active system administrator owner and an installation-wide system token; exclude default grants, personal and site-scoped credentials, and users without system access.
+- Pin explicit update approval to installed version, target version and checksum inside the existing updater lock; retain shared backup, signature verification and failure recovery behavior.
+- Prevent repeat execution with durable token-scoped idempotency receipts, preserve sanitized results across history pruning, and require operator attention for uncertain interrupted operations.
+- Share verified post-apply warning reconciliation between panel and API, and expose the update contract through API discovery and OpenAPI.
+
 ## 1.89.5
 
 - Use a key icon for password generation and show localized password generation and copy feedback below the password field.

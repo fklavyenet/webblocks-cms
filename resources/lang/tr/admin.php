@@ -1471,6 +1471,7 @@ $translations = [
   ],
   'api_tokens' => [
     'capabilities' => [
+      'system_updates_scope_required' => 'Sistem güncelleme yetkileri, etkin bir sistem yöneticisine ait kurulum kapsamlı sistem tokenı gerektirir.',
       'title' => 'Yetkiler',
       'description' => 'Bu token için gruplanmış izinleri seç.',
       'default_group' => 'Yetkiler',
@@ -1479,6 +1480,10 @@ $translations = [
       'advanced_description' => 'Yalnızca güvenilir operatör araçlarına ver.',
       'selected_count' => ':selected/:total seçili',
       'groups' => [
+        'system_updates' => [
+          'label' => 'Sistem güncellemeleri',
+          'description' => 'Kurulum genelinde güncelleme kontrolü ve açıkça onaylanmış çalıştırma.',
+        ],
         'default' => [
           'label' => 'Yetkiler',
           'description' => 'Bu tokenin ne yapabileceğini seç.',
@@ -1513,6 +1518,8 @@ $translations = [
         ],
       ],
       'labels' => [
+        'system_updates_read' => 'Sistem güncellemesi durumunu ve sonuçlarını oku',
+        'system_updates_run' => 'Onaylanmış bir sistem güncellemesini kurulum genelinde çalıştır',
         'content_read' => 'İçerik meta verilerini ve contract bilgilerini oku',
         'content_validate' => 'İçerik planlarını doğrula',
         'content_apply' => 'Taslak içerik planlarını uygula',

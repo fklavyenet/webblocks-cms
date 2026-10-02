@@ -7,6 +7,8 @@ use App\Models\User;
 class PersonalApiTokenPolicy
 {
   private const SYSTEM_ONLY = [
+    CmsApiTokenCapabilities::SYSTEM_UPDATES_READ,
+    CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN,
     CmsApiTokenCapabilities::ADMIN_RENDER,
     CmsApiTokenCapabilities::BACKUPS_CREATE,
     CmsApiTokenCapabilities::BACKUPS_READ,

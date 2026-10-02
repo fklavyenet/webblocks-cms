@@ -10,15 +10,14 @@ use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
-use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\Database\CmsTableCompatibilityViews;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunReconciler;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
-use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemUpdateController extends Controller
 {
@@ -87,47 +86,14 @@ class SystemUpdateController extends Controller
 
   private function reconcileVerifiedPostApplyFailure(): void
   {
-    if (! app(SystemUpdateRunRetention::class)->schemaReady()) {
-      return;
-    }
+    $run = app(SystemUpdateRunReconciler::class)->reconcile();
 
-    $run = SystemUpdateRun::query()->latest()->first();
+    if ($run !== null) {
+      $this->forgetSystemUpdateErrorFlash();
 
-    if (! $run || $run->status !== SystemUpdateRun::STATUS_FAILED) {
-      return;
-    }
-
-    $currentVersion = WebBlocks::version();
-
-    if ((string) $run->to_version !== $currentVersion) {
-      return;
-    }
-
-    $output = (string) $run->output;
-
-    if (! str_contains($output, 'Post-update version verified as '.$currentVersion.' from canonical WebBlocks version source.')) {
-      return;
-    }
-
-    $marker = 'Post-apply reconciliation: active CMS code still reports '.$currentVersion.'; the previous failure was recorded after the target version had been verified.';
-    $lines = trim($output) === '' ? [] : [$output];
-
-    if (! str_contains($output, $marker)) {
-      $lines[] = $marker;
-    }
-
-    $run->forceFill([
-      'status' => SystemUpdateRun::STATUS_SUCCESS_WITH_WARNINGS,
-      'summary' => 'Updated to '.$currentVersion.'; a post-apply finalization warning was reconciled.',
-      'output' => implode(PHP_EOL, $lines),
-      'warning_count' => max(1, (int) $run->warning_count),
-      'finished_at' => $run->finished_at ?? now(),
-    ])->save();
-
-    $this->forgetSystemUpdateErrorFlash();
-
-    if (! session()->has('status')) {
-      session()->flash('status', 'The update reached '.$currentVersion.'; a post-apply finalization warning was reconciled.');
+      if (! session()->has('status')) {
+        session()->flash('status', $run->summary);
+      }
     }
   }
 

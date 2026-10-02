@@ -1457,6 +1457,7 @@ $translations = [
   ],
   'api_tokens' => [
     'capabilities' => [
+      'system_updates_scope_required' => 'Los permisos de actualización requieren un token de sistema para toda la instalación cuyo propietario sea un administrador del sistema activo.',
       'title' => 'Capacidades',
       'description' => 'Elige permisos agrupados para este token.',
       'default_group' => 'Capacidades',
@@ -1465,6 +1466,10 @@ $translations = [
       'advanced_description' => 'Concédelas solo a herramientas de operador de confianza.',
       'selected_count' => ':selected/:total seleccionadas',
       'groups' => [
+        'system_updates' => [
+          'label' => 'Actualizaciones del sistema',
+          'description' => 'Comprobaciones de actualización para toda la instalación y ejecución expresamente aprobada.',
+        ],
         'default' => [
           'label' => 'Capacidades',
           'description' => 'Elige qué puede hacer este token.',
@@ -1499,6 +1504,8 @@ $translations = [
         ],
       ],
       'labels' => [
+        'system_updates_read' => 'Leer el estado y los resultados de las actualizaciones del sistema',
+        'system_updates_run' => 'Ejecutar una actualización aprobada para toda la instalación',
         'content_read' => 'Leer metadatos y contratos de contenido',
         'content_validate' => 'Validar planes de contenido',
         'content_apply' => 'Aplicar planes de contenido en borrador',

@@ -151,6 +151,12 @@ class CmsApiTokenController extends Controller
         'description' => 'Default draft content, navigation, Shared Slots, media discovery, and site presentation permissions.',
         'capabilities' => CmsApiTokenCapabilities::DEFAULT,
       ],
+      [
+        'key' => 'system-updates',
+        'label' => 'System updates',
+        'description' => 'Installation-wide update checks and explicitly approved execution.',
+        'capabilities' => [CmsApiTokenCapabilities::SYSTEM_UPDATES_READ, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN],
+      ],
       // Enabled plugins (e.g. WebBlocks Commerce) contribute their own groups below.
       [
         'key' => 'site-feedback',

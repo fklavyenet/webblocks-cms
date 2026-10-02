@@ -1457,6 +1457,7 @@ $translations = [
   ],
   'api_tokens' => [
     'capabilities' => [
+      'system_updates_scope_required' => 'Les autorisations de mise à jour exigent un jeton système couvrant toute l’installation et appartenant à un administrateur système actif.',
       'title' => 'Autorisations',
       'description' => 'Choisissez les autorisations groupées de ce jeton.',
       'default_group' => 'Autorisations',
@@ -1465,6 +1466,10 @@ $translations = [
       'advanced_description' => 'À n\'accorder qu\'à des outils d\'exploitation de confiance.',
       'selected_count' => ':selected/:total sélectionnée(s)',
       'groups' => [
+        'system_updates' => [
+          'label' => 'Mises à jour du système',
+          'description' => 'Vérifications des mises à jour pour toute l’installation et exécution expressément approuvée.',
+        ],
         'default' => [
           'label' => 'Autorisations',
           'description' => 'Choisissez ce que ce jeton est autorisé à faire.',
@@ -1499,6 +1504,8 @@ $translations = [
         ],
       ],
       'labels' => [
+        'system_updates_read' => 'Lire l’état et les résultats des mises à jour du système',
+        'system_updates_run' => 'Exécuter une mise à jour approuvée pour toute l’installation',
         'content_read' => 'Lire les métadonnées et les contrats de contenu',
         'content_validate' => 'Valider les plans de contenu',
         'content_apply' => 'Appliquer les plans de contenu en brouillon',

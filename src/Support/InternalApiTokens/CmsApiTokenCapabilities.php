@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalApiTokens;
 
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
 use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
 
 class CmsApiTokenCapabilities
@@ -32,6 +33,10 @@ class CmsApiTokenCapabilities
   public const BACKUPS_SETTINGS_WRITE = 'backups.settings.write';
 
   public const BACKUPS_DELETE = 'backups.delete';
+
+  public const SYSTEM_UPDATES_READ = 'system-updates.read';
+
+  public const SYSTEM_UPDATES_RUN = 'system-updates.run';
 
   public const MAINTENANCE_READ = 'maintenance.read';
 
@@ -113,6 +118,8 @@ class CmsApiTokenCapabilities
   ];
 
   public const ADVANCED = [
+    self::SYSTEM_UPDATES_READ,
+    self::SYSTEM_UPDATES_RUN,
     self::DOMAINS_WRITE,
     self::DOMAINS_DELETE,
     self::SITE_ASSETS_READ,
@@ -148,6 +155,7 @@ class CmsApiTokenCapabilities
   ];
 
   public const DESTRUCTIVE = [
+    self::SYSTEM_UPDATES_RUN,
     self::MEDIA_REPLACE,
     self::MEDIA_DELETE,
     self::NAVIGATION_DELETE,
@@ -162,6 +170,8 @@ class CmsApiTokenCapabilities
   ];
 
   public const ALL = [
+    self::SYSTEM_UPDATES_READ,
+    self::SYSTEM_UPDATES_RUN,
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
     self::CONTENT_APPLY,
@@ -205,6 +215,8 @@ class CmsApiTokenCapabilities
   ];
 
   public const LABELS = [
+    self::SYSTEM_UPDATES_READ => 'Read system update status and results',
+    self::SYSTEM_UPDATES_RUN => 'Run an approved installation-wide system update',
     self::CONTENT_READ => 'Read content metadata and contracts',
     self::CONTENT_VALIDATE => 'Validate content plans',
     self::CONTENT_APPLY => 'Apply draft content plans',
@@ -309,6 +321,10 @@ class CmsApiTokenCapabilities
       return false;
     }
 
+    if (in_array($capability, [self::SYSTEM_UPDATES_READ, self::SYSTEM_UPDATES_RUN], true)) {
+      return app(SystemUpdateApiPolicy::class)->allows($token);
+    }
+
     if (! $token?->isPersonal()) {
       return true;
     }
@@ -333,6 +349,8 @@ class CmsApiTokenCapabilities
       'destructive_capabilities' => array_values(array_intersect($capabilities, self::DESTRUCTIVE)),
       'destructive_requires_explicit_capability' => true,
       'can' => [
+        'read_system_updates' => $this->has($token, self::SYSTEM_UPDATES_READ),
+        'run_system_updates' => $this->has($token, self::SYSTEM_UPDATES_RUN),
         'read_content' => $this->has($token, self::CONTENT_READ),
         'validate_content_plans' => $this->has($token, self::CONTENT_VALIDATE),
         'apply_draft_content_plans' => $this->has($token, self::CONTENT_APPLY),

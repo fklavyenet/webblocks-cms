@@ -63,6 +63,7 @@ final class CmsTable
     'system_backups',
     'system_settings',
     'system_update_runs',
+    'system_update_requests',
     'visitor_events',
     'visitor_daily_totals',
   ];

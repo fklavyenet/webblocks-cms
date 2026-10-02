@@ -18,8 +18,7 @@ class SystemUpdateRun extends CmsModel
 
   public const STATUS_RESTORED = 'restored';
 
-  // Historic-only statuses: no code writes these anymore, but retained rows
-  // from the retired two-phase flow must keep rendering.
+  // Pending/cancelled remain historic; the shared engine writes running.
   public const STATUS_PENDING = 'pending';
 
   public const STATUS_RUNNING = 'running';

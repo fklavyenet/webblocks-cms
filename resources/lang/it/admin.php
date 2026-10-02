@@ -1456,6 +1456,7 @@ $translations = [
   ],
   'api_tokens' => [
     'capabilities' => [
+      'system_updates_scope_required' => 'Le autorizzazioni di aggiornamento richiedono un token di sistema per tutta l’installazione appartenente a un amministratore di sistema attivo.',
       'title' => 'Capacità',
       'description' => 'Scegli i permessi raggruppati per questo token.',
       'default_group' => 'Capacità',
@@ -1464,6 +1465,10 @@ $translations = [
       'advanced_description' => 'Concedile solo a strumenti operatore attendibili.',
       'selected_count' => ':selected/:total selezionate',
       'groups' => [
+        'system_updates' => [
+          'label' => 'Aggiornamenti del sistema',
+          'description' => 'Verifiche degli aggiornamenti per tutta l’installazione ed esecuzione esplicitamente approvata.',
+        ],
         'default' => [
           'label' => 'Capacità',
           'description' => 'Scegli cosa è consentito fare a questo token.',
@@ -1498,6 +1503,8 @@ $translations = [
         ],
       ],
       'labels' => [
+        'system_updates_read' => 'Leggere lo stato e i risultati degli aggiornamenti del sistema',
+        'system_updates_run' => 'Eseguire un aggiornamento approvato per tutta l’installazione',
         'content_read' => 'Leggere metadati e contratti dei contenuti',
         'content_validate' => 'Validare piani di contenuto',
         'content_apply' => 'Applicare piani di contenuto in bozza',

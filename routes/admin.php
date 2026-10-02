@@ -68,6 +68,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageTranslationCon
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPluginController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSystemUpdateController;
 use WebBlocks\Cms\Http\Middleware\AllowPagePreviewAccess;
 use WebBlocks\Cms\Http\Middleware\CoalesceSearchIndexing;
 use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
@@ -100,6 +101,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/examples/contact-page', [InternalApiDiscoveryController::class, 'contactPageExample'])->name('examples.contact-page');
     Route::get('/examples/landing-page', [InternalApiDiscoveryController::class, 'landingPageExample'])->name('examples.landing-page');
     Route::get('/admin-render/system-updates', [InternalAdminRenderController::class, 'systemUpdates'])->middleware('internal-api.capability:admin.render')->name('admin-render.system-updates');
+    Route::get('/system/updates/check', [InternalSystemUpdateController::class, 'check'])->middleware('internal-api.capability:system-updates.read')->name('system.updates.check');
+    Route::post('/system/updates', [InternalSystemUpdateController::class, 'store'])->middleware('internal-api.capability:system-updates.run')->name('system.updates.store');
+    Route::get('/system/updates/operations/{operation}', [InternalSystemUpdateController::class, 'show'])->middleware('internal-api.capability:system-updates.read')->name('system.updates.show');
     Route::get('/system/backup-cleanup', [InternalBackupCleanupController::class, 'show'])->middleware('internal-api.capability:backups.read')->name('system.backup-cleanup.show');
     Route::put('/system/backup-cleanup', [InternalBackupCleanupController::class, 'update'])->middleware('internal-api.capability:backups.settings.write')->name('system.backup-cleanup.update');
     Route::post('/system/backup-cleanup/run', [InternalBackupCleanupController::class, 'run'])->middleware('internal-api.capability:backups.delete')->name('system.backup-cleanup.run');

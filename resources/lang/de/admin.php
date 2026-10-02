@@ -1458,6 +1458,7 @@ $translations = [
   ],
   'api_tokens' => [
     'capabilities' => [
+      'system_updates_scope_required' => 'Berechtigungen für Systemaktualisierungen erfordern ein installationsweites Systemtoken eines aktiven Systemadministrators.',
       'title' => 'Berechtigungen',
       'description' => 'Wähle gruppierte Berechtigungen für diesen Token.',
       'default_group' => 'Berechtigungen',
@@ -1466,6 +1467,10 @@ $translations = [
       'advanced_description' => 'Nur vertrauenswürdigen Operator-Tools gewähren.',
       'selected_count' => ':selected/:total ausgewählt',
       'groups' => [
+        'system_updates' => [
+          'label' => 'Systemaktualisierungen',
+          'description' => 'Installationsweite Aktualisierungsprüfungen und ausdrücklich genehmigte Ausführung.',
+        ],
         'default' => [
           'label' => 'Berechtigungen',
           'description' => 'Wähle, was dieser Token tun darf.',
@@ -1500,6 +1505,8 @@ $translations = [
         ],
       ],
       'labels' => [
+        'system_updates_read' => 'Status und Ergebnisse von Systemaktualisierungen lesen',
+        'system_updates_run' => 'Eine genehmigte installationsweite Systemaktualisierung ausführen',
         'content_read' => 'Inhaltsmetadaten und Contracts lesen',
         'content_validate' => 'Inhaltspläne validieren',
         'content_apply' => 'Entwurfs-Inhaltspläne anwenden',

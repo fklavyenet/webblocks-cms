@@ -20,6 +20,10 @@ class CmsApiTokenIssuer
     ?array $allowedIpRanges = null,
     ?int $requestsPerMinute = null,
   ): IssuedCmsApiToken {
+    if (array_intersect($capabilities, [CmsApiTokenCapabilities::SYSTEM_UPDATES_READ, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN]) !== []) {
+      abort_unless($tokenType === 'system' && $allowedSiteIds === null && $creator?->can('access-system') && (bool) ($creator->is_active ?? true), 403);
+    }
+
     $plainToken = self::TOKEN_PREFIX.Str::random(64);
 
     $record = CmsApiToken::query()->create([
