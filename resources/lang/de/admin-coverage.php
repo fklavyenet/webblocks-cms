@@ -94,7 +94,7 @@ return [
       'any_network' => 'Jedes Netz',
       'revoke_confirm' => 'Widerrufen Sie dieses Token sofort?',
       'delete_confirm' => 'Löschen Sie dieses Token und seine Aktivitätsgeschichte dauerhaft?',
-      'updated' => 'Persönliche AI-Token aktualisiert.',
+      'updated' => 'Persönliches API-Token aktualisiert.',
     ],
   ],
   'page_revisions' => [

@@ -95,7 +95,7 @@ return [
       'any_network' => 'Qualsiasi rete',
       'revoke_confirm' => 'Revocare immediatamente questo token?',
       'delete_confirm' => 'Eliminare permanentemente questo token e la sua storia di attività?',
-      'updated' => 'Token personale AI aggiornato.',
+      'updated' => 'Token personale API aggiornato.',
     ],
   ],
   'page_revisions' => [

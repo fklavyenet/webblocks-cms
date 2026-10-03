@@ -90,7 +90,7 @@ return [
       'allowed_ips_help' => 'Seçmeli. Bir IP adresi veya CIDR ağı hattı başına girin. Herhangi bir ağa izin vermek için boş bırakın.',
       'rate_limit' => 'Dakikada İstekler',
       'any_network' => 'Herhangi bir ağ ağı',
-      'updated' => 'Kişisel AI token güncellendi.',
+      'updated' => 'Kişisel API tokenı güncellendi.',
     ],
   ],
   'page_revisions' => [

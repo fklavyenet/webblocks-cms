@@ -95,7 +95,7 @@ return [
       'any_network' => 'Cualquier red',
       'revoke_confirm' => '¿Rechazar esta ficha inmediatamente?',
       'delete_confirm' => '¿Permanecer permanentemente esta ficha y su historia de actividad?',
-      'updated' => 'Personal AI token actualizado.',
+      'updated' => 'Token personal de API actualizado.',
     ],
   ],
   'page_revisions' => [

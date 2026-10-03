@@ -936,6 +936,10 @@ input.wb-admin-table-grid-input:focus {
     gap: var(--wb-s3, 1rem);
 }
 
+.wb-personal-api-token-sites .wb-api-token-capability-groups {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .wb-api-token-capability-group {
     border: 1px solid var(--wb-border);
     border-radius: var(--wb-radius-md, 0.5rem);

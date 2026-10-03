@@ -95,7 +95,7 @@ return [
       'any_network' => '▁Tout▁réseau',
       'revoke_confirm' => 'Revoquer ce jeton▁immédiatement ?',
       'delete_confirm' => '▁Supprimer▁définitivement ce jeton et son▁historique d\'activité?',
-      'updated' => 'Jeton personnel AI mis à▁jour.',
+      'updated' => 'Jeton personnel API mis à jour.',
     ],
   ],
   'page_revisions' => [

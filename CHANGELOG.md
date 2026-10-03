@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.90.2
+
+- Rename Personal AI Tokens to Personal API Tokens across profile links, page headings and status messages in all supported admin languages.
+- Place personal token expiry and request rate controls beside allowed sites in the create form, with expiry above the request limit and a stacked layout on small screens.
+
 ## 1.90.1
 
 - Explain the fixed system token type and installation scope in token creation and editing forms, and warn before saving tokens that are ineligible for system updates.
