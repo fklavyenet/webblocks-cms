@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
@@ -57,6 +58,12 @@ class CmsApiTokenController extends Controller
     }
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.api-tokens.index', [
+      'systemUpdateEligibility' => $tokens->getCollection()->mapWithKeys(function (CmsApiToken $token): array {
+        $candidate = clone $token;
+        $candidate->token_type ??= 'system';
+
+        return [$token->id => app(SystemUpdateApiPolicy::class)->allows($candidate)];
+      })->all(),
       'title' => 'CMS API Tokens',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('CMS API Tokens'),
@@ -106,6 +113,7 @@ class CmsApiTokenController extends Controller
   public function update(CmsApiTokenRequest $request, CmsApiToken $token): RedirectResponse
   {
     $token->forceFill([
+      'token_type' => $token->token_type ?? 'system',
       'name' => $request->tokenName(),
       'capabilities' => $request->tokenCapabilities(),
     ])->save();

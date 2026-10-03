@@ -15,6 +15,12 @@ class CmsApiTokenRequest extends FormRequest
     return $this->user()?->can('access-system') === true;
   }
 
+  protected function prepareForValidation(): void
+  {
+    $token = $this->route('token');
+    $this->merge(['_editing_token' => $token instanceof CmsApiToken ? (string) $token->id : null]);
+  }
+
   public function rules(): array
   {
     return [
@@ -34,6 +40,12 @@ class CmsApiTokenRequest extends FormRequest
       }
 
       $token = $this->route('token');
+      // Older system tokens predate the token_type column. Validate the explicit
+      // save against their normalized type without changing site or owner scope.
+      if ($token instanceof CmsApiToken) {
+        $token = clone $token;
+        $token->token_type ??= 'system';
+      }
       if ($token instanceof CmsApiToken && ! app(SystemUpdateApiPolicy::class)->allows($token)) {
         $validator->errors()->add('capabilities', __('webblocks-cms::admin.api_tokens.capabilities.system_updates_scope_required'));
       }

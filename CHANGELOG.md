@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.90.1
+
+- Explain the fixed system token type and installation scope in token creation and editing forms, and warn before saving tokens that are ineligible for system updates.
+- Normalize legacy system token types on explicit saves while retaining active-owner, site-scope, expiry and revocation checks for system update permissions.
+- Preserve failed edits and validation messages in the token edit modal without populating the Create Token form.
+- Align capability group chevrons, titles and count badges consistently.
+
 ## 1.90.0
 
 - Add installation-wide System Updates API checks, synchronous execution and durable result polling with separately granted `system-updates.read` and `system-updates.run` capabilities.

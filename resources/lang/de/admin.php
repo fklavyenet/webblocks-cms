@@ -1539,6 +1539,8 @@ $translations = [
       ],
     ],
     'index' => [
+      'system_updates_unavailable' => 'Dieses Token ist nicht für Systemupdates geeignet. Lassen Sie diese Berechtigungen deaktiviert oder erstellen Sie mit einem aktiven Systemadministratorkonto ein neues installationsweites Token.',
+      'system_token_help' => 'Tokentyp: System. Hier erstellte Tokens gelten für die Installation. Systemupdates erfordern einen aktiven Systemadministrator als Besitzer und keine Website-Einschränkungen. Persönliche Tokens werden im Profil verwaltet.',
       'title' => 'CMS-API-Token',
       'description' => 'Bearer-Token für vertrauenswürdige lokale KI- und Operator-Tools erstellen und widerrufen.',
       'storage_not_ready' => 'API-Token-Speicher ist nicht bereit.',

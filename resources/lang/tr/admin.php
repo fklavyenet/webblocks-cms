@@ -1552,6 +1552,8 @@ $translations = [
       ],
     ],
     'index' => [
+      'system_updates_unavailable' => 'Bu token Sistem güncellemeleri için uygun değil. Bu yetkileri seçmeden bırakın veya aktif bir sistem yöneticisi hesabıyla yeni bir kurulum kapsamlı token oluşturun.',
+      'system_token_help' => 'Token türü: Sistem. Burada oluşturulan tokenlar kurulum kapsamındadır. Sistem güncelleme yetkileri ayrıca aktif bir sistem yöneticisi sahibi ve site kısıtlaması olmamasını gerektirir. Kişisel tokenlar profilinizden yönetilir.',
       'title' => 'CMS API Tokenları',
       'description' => 'Güvenilir yerel AI ve operatör araçları için bearer token oluştur ve iptal et.',
       'storage_not_ready' => 'API token depolamasi hazır değil.',

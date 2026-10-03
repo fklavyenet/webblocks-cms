@@ -7,6 +7,7 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
+    @php($editingTokenId = (string) old('_editing_token', ''))
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
         'description' => $adminText('description'),
@@ -98,7 +99,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
         {{-- New tokens start with every grantable capability checked so operators can
              uncheck what a token must not have instead of hunting through each group. --}}
         @php($grantableCapabilities = collect($capabilityGroups)->pluck('capabilities')->flatten()->unique()->values()->all())
-        @php($selectedCapabilities = old('capabilities', $grantableCapabilities))
+        @php($selectedCapabilities = $editingTokenId === '' ? old('capabilities', $grantableCapabilities) : $grantableCapabilities)
 
         <form method="POST" action="{{ route('admin.system.api-tokens.store') }}">
             @csrf
@@ -119,16 +120,20 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
 
                 <div class="wb-field">
                     <label class="wb-label" for="api_token_name">{{ $adminText('name') }}</label>
-                    <input id="api_token_name" name="name" type="text" class="wb-input" value="{{ old('name') }}" placeholder="{{ $adminText('name_placeholder') }}" required maxlength="120">
-                    @error('name')
-                        <div class="wb-field-error">{{ $message }}</div>
-                    @enderror
+                    <input id="api_token_name" name="name" type="text" class="wb-input" value="{{ $editingTokenId === '' ? old('name') : '' }}" placeholder="{{ $adminText('name_placeholder') }}" required maxlength="120">
+                    @if ($editingTokenId === '')
+                        @error('name')
+                            <div class="wb-field-error">{{ $message }}</div>
+                        @enderror
+                    @endif
                 </div>
+
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('system_token_help') }}</div>
 
                 @include('webblocks-cms::admin.system.api-tokens.partials.capability-checkboxes', [
                     'fieldPrefix' => 'api_token_capability',
                     'selectedCapabilities' => $selectedCapabilities,
-                    'showErrors' => true,
+                    'showErrors' => $editingTokenId === '',
                 ])
             </div>
 
@@ -254,7 +259,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
 
 @push('overlays')
     @foreach ($tokens as $token)
-        <div class="wb-modal wb-modal-lg" id="edit-cms-api-token-{{ $token->id }}" role="dialog" aria-modal="true" aria-labelledby="edit-cms-api-token-{{ $token->id }}-title">
+        <div class="wb-modal wb-modal-lg {{ $editingTokenId === (string) $token->id ? 'is-open' : '' }}" id="edit-cms-api-token-{{ $token->id }}" role="dialog" aria-modal="true" aria-labelledby="edit-cms-api-token-{{ $token->id }}-title">
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div>
@@ -274,13 +279,24 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                     <div class="wb-modal-body wb-stack wb-gap-4 wb-api-token-modal-body">
                         <div class="wb-field">
                             <label class="wb-label" for="edit_cms_api_token_name_{{ $token->id }}">{{ $adminText('name') }}</label>
-                            <input id="edit_cms_api_token_name_{{ $token->id }}" name="name" type="text" class="wb-input" value="{{ $token->name }}" required maxlength="120">
+                            <input id="edit_cms_api_token_name_{{ $token->id }}" name="name" type="text" class="wb-input" value="{{ $editingTokenId === (string) $token->id ? old('name', $token->name) : $token->name }}" required maxlength="120">
                         </div>
+
+                        @if ($editingTokenId === (string) $token->id)
+                            @error('name')
+                                <div class="wb-field-error">{{ $message }}</div>
+                            @enderror
+                        @endif
+
+                        <div class="wb-text-sm wb-text-muted">{{ $adminText('system_token_help') }}</div>
+                        @if (! ($systemUpdateEligibility[$token->id] ?? false))
+                            <div class="wb-alert wb-alert-warning">{{ $adminText('system_updates_unavailable') }}</div>
+                        @endif
 
                         @include('webblocks-cms::admin.system.api-tokens.partials.capability-checkboxes', [
                             'fieldPrefix' => 'edit_cms_api_token_'.$token->id.'_capability',
-                            'selectedCapabilities' => $capabilitiesPresenter->capabilitiesFor($token),
-                            'showErrors' => false,
+                            'selectedCapabilities' => $editingTokenId === (string) $token->id ? old('capabilities', []) : $capabilitiesPresenter->capabilitiesFor($token),
+                            'showErrors' => $editingTokenId === (string) $token->id,
                         ])
                     </div>
 

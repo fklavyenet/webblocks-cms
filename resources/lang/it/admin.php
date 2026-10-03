@@ -1537,6 +1537,8 @@ $translations = [
       ],
     ],
     'index' => [
+      'system_updates_unavailable' => 'Questo token non può ricevere i permessi di aggiornamento del sistema. Lasciarli deselezionati o creare un nuovo token per tutta l’installazione con un account amministratore di sistema attivo.',
+      'system_token_help' => 'Tipo di token: Sistema. I token creati qui coprono l’installazione. Gli aggiornamenti richiedono un amministratore di sistema attivo come proprietario e nessuna restrizione di sito. I token personali si gestiscono nel profilo.',
       'title' => 'Token API del CMS',
       'description' => 'Crea e revoca token bearer per strumenti AI e operatore locali attendibili.',
       'storage_not_ready' => 'L\'archiviazione dei token API non è pronta.',

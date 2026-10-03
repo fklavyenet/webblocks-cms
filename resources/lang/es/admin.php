@@ -1538,6 +1538,8 @@ $translations = [
       ],
     ],
     'index' => [
+      'system_updates_unavailable' => 'Este token no admite permisos de actualización del sistema. Déjelos sin marcar o cree un nuevo token para toda la instalación con una cuenta de administrador del sistema activa.',
+      'system_token_help' => 'Tipo de token: Sistema. Los tokens creados aquí cubren la instalación. Las actualizaciones requieren un administrador del sistema activo como propietario y ninguna restricción de sitio. Los tokens personales se gestionan en el perfil.',
       'title' => 'Tokens de la API del CMS',
       'description' => 'Crea y revoca tokens bearer para herramientas locales de IA y de operador de confianza.',
       'storage_not_ready' => 'El almacenamiento de tokens de API no está listo.',

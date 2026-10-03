@@ -943,9 +943,9 @@ input.wb-admin-table-grid-input:focus {
 }
 
 .wb-api-token-capability-summary {
-    display: flex;
+    display: grid;
+    grid-template-columns: 0.55rem minmax(0, 1fr) auto;
     align-items: flex-start;
-    justify-content: space-between;
     gap: var(--wb-s3, 1rem);
     min-block-size: 4.5rem;
     padding: var(--wb-s3, 1rem);

@@ -1762,6 +1762,8 @@ return [
       ],
     ],
     'index' => [
+      'system_updates_unavailable' => 'This token is not eligible for System updates. Leave those permissions unchecked, or create a new installation-wide token with an active system administrator account.',
+      'system_token_help' => 'Token type: System. Tokens created here cover the installation. System update permissions also require an active system administrator owner and no site restrictions. Personal tokens are managed in your profile.',
       'title' => 'CMS API Tokens',
       'description' => 'Create and revoke bearer tokens for trusted local AI and operator tools.',
       'storage_not_ready' => 'API token storage is not ready.',

@@ -1538,6 +1538,8 @@ $translations = [
       ],
     ],
     'index' => [
+      'system_updates_unavailable' => 'Ce jeton ne peut pas recevoir les permissions de mise à jour du système. Laissez-les décochées ou créez un nouveau jeton global avec un compte administrateur système actif.',
+      'system_token_help' => 'Type de jeton : Système. Les jetons créés ici couvrent l’installation. Les mises à jour exigent un propriétaire administrateur système actif et aucune restriction de site. Les jetons personnels se gèrent dans votre profil.',
       'title' => 'Jetons d\'API du CMS',
       'description' => 'Créez et révoquez des jetons bearer pour des outils d\'IA locaux et d\'exploitation de confiance.',
       'storage_not_ready' => 'Le stockage des jetons d\'API n\'est pas prêt.',

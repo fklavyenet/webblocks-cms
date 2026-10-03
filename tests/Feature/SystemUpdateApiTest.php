@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use WebBlocks\Cms\Actions\System\RunApiSystemUpdate;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
+use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\SystemUpdateRequest;
 use WebBlocks\Cms\Models\SystemUpdateRun;
@@ -159,6 +161,36 @@ class SystemUpdateApiTest extends TestCase
     $this->assertTrue($capabilities->has($token, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN));
     $token->creator->systemAccess = false;
     $this->assertFalse($capabilities->has($token, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN));
+  }
+
+  #[Test]
+  public function editing_legacy_system_tokens_normalizes_type_without_relaxing_scope_checks(): void
+  {
+    $tokens = [
+      [$this->token(['token_type' => 'system']), true],
+      [$this->token(['token_type' => 'system', 'allowed_site_ids' => [1]]), false],
+      [$this->token(['token_type' => 'system'], false), false],
+      [$this->token(['token_type' => 'personal']), false],
+      [$this->token(['token_type' => 'system', 'revoked_at' => now()]), false],
+      [$this->token(['token_type' => 'system', 'expires_at' => now()->subMinute()]), false],
+      [$this->token(['token_type' => 'system'])->setRelation('creator', new UpdateApiTestCreator(['is_active' => false])), false],
+    ];
+    foreach ($tokens as [$token, $allowed]) {
+      if ($token->token_type === 'system') {
+        $token->token_type = null;
+      }
+      $originalType = $token->token_type;
+      $request = new CmsApiTokenRequest;
+      $request->replace(['name' => 'Edited token', 'capabilities' => [CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN]]);
+      $route = new \Illuminate\Routing\Route('PUT', 'tokens/{token}', fn () => null);
+      $route->bind($request);
+      $route->setParameter('token', $token);
+      $request->setRouteResolver(fn () => $route);
+      $validator = Validator::make($request->all(), []);
+      $request->withValidator($validator);
+      $this->assertSame($allowed, $validator->passes());
+      $this->assertSame($originalType, $token->token_type);
+    }
   }
 
   #[Test]
