@@ -55,14 +55,13 @@ class PublisherLicenseBridgeTest extends TestCase
     return $stage;
   }
 
-  public function test_generated_root_license_zip_applies_with_bridge_updater_and_legacy_layout_remains_supported(): void
+  public function test_generated_root_license_zip_applies_with_bridge_updater(): void
   {
     $repo = dirname(__DIR__, 2);
-    // Snapshot tracked working files plus this new adapter without changing the
-    // real repository index, HEAD, tags, or branches.
+    // Snapshot tracked working files without changing the real repository
+    // index, HEAD, tags, or branches.
     $snapshot = $this->work.'/source';
     exec('git -C '.escapeshellarg($repo).' ls-files', $paths);
-    $paths[] = 'src/Support/System/Updates/CmsPackageApplyStrategy.php';
     foreach ($paths as $path) {
       if (is_file($repo.'/'.$path)) {
         File::ensureDirectoryExists(dirname($snapshot.'/'.$path));
@@ -83,28 +82,12 @@ class PublisherLicenseBridgeTest extends TestCase
     for ($i = 0; $i < $zip->numFiles; $i++) {
       $this->assertFalse(str_starts_with($zip->getNameIndex($i), 'docs/'));
     }
-    $zip->extractTo($this->work.'/current');
-    $zip->extractTo($this->work.'/legacy');
+    $this->assertTrue($zip->extractTo($this->work.'/current'));
     $zip->close();
     app(CmsPublisherClientConfigurator::class)->configure();
     $this->target();
     app(BridgeStrategy::class)->apply($this->work.'/current');
     $this->assertSame(File::get($repo.'/LICENSE'), File::get($this->work.'/installed/LICENSE'));
-    $this->assertDirectoryDoesNotExist($this->work.'/installed/docs');
-
-    // Preserve the historical pre-bridge consumer contract using a legacy fixture,
-    // without requiring today's producer to generate that obsolete layout.
-    File::ensureDirectoryExists($this->work.'/legacy/docs');
-    File::move($this->work.'/legacy/LICENSE', $this->work.'/legacy/docs/LICENSE');
-    app(LegacyConfigurator::class)->configure();
-    $this->target();
-    app(LegacyStrategy::class)->apply($this->work.'/legacy');
-    $this->assertSame(File::get($repo.'/LICENSE'), File::get($this->work.'/installed/LICENSE'));
-
-    app(CmsPublisherClientConfigurator::class)->configure();
-    $this->target();
-    app(CmsPackageApplyStrategy::class)->apply($this->stage('docs/LICENSE'));
-    $this->assertSame('license', File::get($this->work.'/installed/LICENSE'));
     $this->assertDirectoryDoesNotExist($this->work.'/installed/docs');
   }
 
@@ -137,6 +120,17 @@ class PublisherLicenseBridgeTest extends TestCase
     app(CmsPackageApplyStrategy::class)->apply($this->stage('docs/LICENSE'));
     $this->assertSame('license', File::get($this->work.'/installed/LICENSE'));
     $this->assertDirectoryDoesNotExist($this->work.'/installed/docs');
+  }
+
+  public function test_released_updater_accepts_legacy_license(): void
+  {
+    // The historical layout needs only a synthetic package, not another copy
+    // of today's full release archive.
+    app(LegacyConfigurator::class)->configure();
+    $this->target();
+    app(LegacyStrategy::class)->apply($this->stage('docs/LICENSE'));
+    $this->assertSame('license', File::get($this->work.'/installed/LICENSE'));
+    $this->assertSame('<?php', File::get($this->work.'/installed/src/runtime.php'));
   }
 
   public function test_root_license_wins_when_both_exist(): void

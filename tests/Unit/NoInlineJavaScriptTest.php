@@ -1,12 +1,12 @@
 <?php
 
-namespace WebBlocks\Cms\Tests\Feature;
+namespace WebBlocks\Cms\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
-use WebBlocks\Cms\Tests\TestCase;
 
 class NoInlineJavaScriptTest extends TestCase
 {

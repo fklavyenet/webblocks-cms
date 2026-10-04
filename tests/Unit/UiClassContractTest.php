@@ -16,8 +16,8 @@ use WebBlocks\Cms\Support\WebBlocks;
  * had been unstyled, and it took a table of seventy of them collapsing into
  * wrapped text for anyone to notice.
  *
- * The admin loads the UI from a CDN, so this compares against a snapshot of
- * the pinned runtime's class names rather than the stylesheet itself.
+ * Read the package's pinned local runtime so UI upgrades need no separate
+ * class snapshot and removed classes cannot hide behind a stale fixture.
  */
 class UiClassContractTest extends TestCase
 {
@@ -41,14 +41,18 @@ class UiClassContractTest extends TestCase
    */
   private function definedClasses(): array
   {
-    $defined = array_values(array_filter(
-      $this->lines('webblocks-ui-classes.txt'),
-      static fn (string $line) => ! str_starts_with($line, 'ui-version:')
-    ));
+    $runtimeDirectory = dirname(__DIR__, 2).'/public/cms/webblocks-ui/'.WebBlocks::UI_VERSION;
+    $runtimeStylesheets = [$runtimeDirectory.'/webblocks-ui.css', $runtimeDirectory.'/webblocks-icons.css'];
+    foreach ($runtimeStylesheets as $stylesheet) {
+      $this->assertFileExists($stylesheet);
+    }
+    $stylesheets = array_merge($runtimeStylesheets, glob(dirname(__DIR__, 2).'/public/cms/css/*.css') ?: []);
+    $defined = [];
 
     // The CMS ships its own admin stylesheets on top of the UI runtime.
-    foreach (glob(dirname(__DIR__, 2).'/public/cms/css/*.css') ?: [] as $stylesheet) {
-      preg_match_all('/\.(wb-[a-zA-Z0-9_-]+)/', (string) file_get_contents($stylesheet), $matches);
+    foreach ($stylesheets as $stylesheet) {
+      $css = (string) preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents($stylesheet));
+      preg_match_all('/\.(wb-[a-zA-Z0-9_-]+)/', $css, $matches);
       $defined = array_merge($defined, $matches[1]);
     }
 
@@ -82,27 +86,6 @@ class UiClassContractTest extends TestCase
     }
 
     return $used;
-  }
-
-  #[Test]
-  public function the_class_snapshot_matches_the_pinned_ui_runtime(): void
-  {
-    $recorded = null;
-
-    foreach ($this->lines('webblocks-ui-classes.txt') as $line) {
-      if (str_starts_with($line, 'ui-version:')) {
-        $recorded = trim(substr($line, strlen('ui-version:')));
-        break;
-      }
-    }
-
-    // Moving the pinned runtime without regenerating the snapshot would leave
-    // this test checking the admin against a stylesheet it no longer loads.
-    $this->assertSame(
-      WebBlocks::UI_VERSION,
-      $recorded,
-      'tests/fixtures/webblocks-ui-classes.txt was built for a different UI runtime; regenerate it.'
-    );
   }
 
   #[Test]

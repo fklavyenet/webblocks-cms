@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Tests\Unit;
 
+use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use RuntimeException;
 use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
-use WebBlocks\Cms\Tests\TestCase;
 
 class PluginTranslationCoverageTest extends TestCase
 {

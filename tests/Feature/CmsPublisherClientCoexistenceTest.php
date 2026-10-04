@@ -7,6 +7,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\VersionResolver;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\TestCase;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -27,7 +28,7 @@ class CmsPublisherClientCoexistenceTest extends TestCase
 
     $this->assertSame('webblocks-cms', config('publisher-client.product'));
     $this->assertSame(ConfigVersionResolver::class, config('publisher-client.version.resolver'));
-    $this->assertSame('1.90.2', app(VersionResolver::class)->current());
+    $this->assertSame(WebBlocks::version(), app(VersionResolver::class)->current());
     $this->assertNotSame('/wrong-product', config('publisher-client.apply.target_path'));
     $this->assertSame('app/system-updates', config('publisher-client.apply.workspace_root'));
     $this->assertContains('LICENSE', config('publisher-client.apply.package_validation.allowed_roots'));

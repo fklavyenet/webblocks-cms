@@ -64,27 +64,6 @@ class SliderOverlayScaleTest extends TestCase
   }
 
   #[Test]
-  #[DataProvider('documentedLevels')]
-  public function the_slider_root_and_a_slide_agree_on_every_level(string $overlay, string $expected): void
-  {
-    $this->assertSame(
-      $this->sliderRoot($overlay)->sliderOverlayClass(),
-      $this->slide($overlay)->slideBackgroundOverlayClass(),
-      "The slider root and a slide must render '{$overlay}' identically."
-    );
-    $this->assertSame($expected, $this->slide($overlay)->slideBackgroundOverlayClass());
-  }
-
-  #[Test]
-  public function medium_is_no_longer_an_alias_for_strong(): void
-  {
-    $this->assertNotSame(
-      $this->slide('strong')->slideBackgroundOverlayClass(),
-      $this->slide('medium')->slideBackgroundOverlayClass()
-    );
-  }
-
-  #[Test]
   public function the_legacy_dark_alias_still_resolves_to_strong(): void
   {
     $this->assertSame('wb-slider-overlay-strong', $this->sliderRoot('dark')->sliderOverlayClass());

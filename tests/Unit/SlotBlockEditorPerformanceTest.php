@@ -4,11 +4,11 @@ namespace WebBlocks\Cms\Tests\Unit;
 
 use Illuminate\Support\Collection;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use WebBlocks\Cms\Http\Controllers\Admin\PageController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
 use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Tests\TestCase;
 
 class SlotBlockEditorPerformanceTest extends TestCase
 {

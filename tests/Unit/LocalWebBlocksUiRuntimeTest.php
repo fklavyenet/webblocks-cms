@@ -1,9 +1,9 @@
 <?php
 
-namespace WebBlocks\Cms\Tests\Feature;
+namespace WebBlocks\Cms\Tests\Unit;
 
+use PHPUnit\Framework\TestCase;
 use WebBlocks\Cms\Support\WebBlocks;
-use WebBlocks\Cms\Tests\TestCase;
 
 class LocalWebBlocksUiRuntimeTest extends TestCase
 {

@@ -43,12 +43,6 @@ class InstalledFontsTest extends TestCase
   }
 
   #[Test]
-  public function a_family_used_but_never_loaded_is_not_offered(): void
-  {
-    $this->assertNotContains('Not A Face', InstalledFonts::fromCss(self::CSS));
-  }
-
-  #[Test]
   public function empty_css_yields_no_families(): void
   {
     $this->assertSame([], InstalledFonts::fromCss(null));

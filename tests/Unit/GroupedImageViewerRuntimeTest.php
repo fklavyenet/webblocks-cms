@@ -1,9 +1,9 @@
 <?php
 
-namespace WebBlocks\Cms\Tests\Feature;
+namespace WebBlocks\Cms\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
-use WebBlocks\Cms\Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class GroupedImageViewerRuntimeTest extends TestCase
 {

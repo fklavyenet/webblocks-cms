@@ -11,9 +11,11 @@ class CanonicalVersionTest extends TestCase
   #[Test]
   public function canonical_version_matches_the_current_package_release(): void
   {
-    $this->assertSame('1.90.2', WebBlocks::VERSION);
+    $changelog = (string) file_get_contents(dirname(__DIR__, 2).'/CHANGELOG.md');
+    $this->assertSame(1, preg_match('/^## (\d+\.\d+\.\d+)\s*$/m', $changelog, $release));
+    $this->assertSame($release[1], WebBlocks::VERSION);
     $this->assertSame(WebBlocks::VERSION, WebBlocks::version());
-    $this->assertSame('v2.28.0', WebBlocks::UI_VERSION);
+    $this->assertMatchesRegularExpression('/^v\d+\.\d+\.\d+$/', WebBlocks::UI_VERSION);
     $this->assertSame(WebBlocks::UI_VERSION, WebBlocks::uiVersion());
   }
 }

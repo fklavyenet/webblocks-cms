@@ -3,7 +3,7 @@
 namespace WebBlocks\Cms\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
-use WebBlocks\Cms\Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 
 /**
  * The v3 System Updates screen vocabulary must stay complete in every admin

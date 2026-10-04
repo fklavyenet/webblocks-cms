@@ -1,8 +1,8 @@
 <?php
 
-namespace WebBlocks\Cms\Tests\Feature;
+namespace WebBlocks\Cms\Tests\Unit;
 
-use WebBlocks\Cms\Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class PackageReleaseToolingTest extends TestCase
 {
