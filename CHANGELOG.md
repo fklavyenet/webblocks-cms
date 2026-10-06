@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.92.2
+
+- Bundle WebBlocks UI 2.30.0 with persistent non-modal popovers, shared overlay layering and the public repositioning API needed by Live Chat.
+- Restore readable primary-button foregrounds in dark and system-dark Auto modes for Canvas, Atlas, Pulse and Prism while preserving the bright-accent Graphite and Horizon palettes.
+
 ## 1.92.1
 
 - Bundle WebBlocks UI 2.29.0 with 16 additional icons for chat, scheduling, links, education, blocks, shared components, navigation, engagement and recovery; include upstream icon license notices.

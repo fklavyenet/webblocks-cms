@@ -257,6 +257,13 @@ html[data-mode="dark"] body[data-wb-public-theme="horizon"] {
     --wb-public-tone-bold-value: #e8eef8;
 }
 
+html[data-mode="dark"] body[data-wb-public-theme="canvas"],
+html[data-mode="dark"] body[data-wb-public-theme="atlas"],
+html[data-mode="dark"] body[data-wb-public-theme="pulse"],
+html[data-mode="dark"] body[data-wb-public-theme="prism"] {
+    --wb-public-accent-on: #ffffff;
+}
+
 html[data-mode="dark"] body[data-wb-public-theme="graphite"] {
     --wb-public-page-bg: #090d12;
     --wb-public-surface: #111822;
@@ -302,6 +309,13 @@ html[data-mode="dark"] body[data-wb-public-theme="graphite"] {
         --wb-public-accent-on: #07111c;
         --wb-public-tone-soft-value: #75879c;
         --wb-public-tone-bold-value: #e8eef8;
+    }
+
+    html[data-mode="auto"] body[data-wb-public-theme="canvas"],
+    html[data-mode="auto"] body[data-wb-public-theme="atlas"],
+    html[data-mode="auto"] body[data-wb-public-theme="pulse"],
+    html[data-mode="auto"] body[data-wb-public-theme="prism"] {
+        --wb-public-accent-on: #ffffff;
     }
 
     html[data-mode="auto"] body[data-wb-public-theme="graphite"] {

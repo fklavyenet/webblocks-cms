@@ -1,5 +1,5 @@
 /*!
- * WebBlocks UI v2.29.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.30.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -4390,6 +4390,10 @@
    Placement modifiers (on .wb-popover wrapper):
      wb-popover-top | wb-popover-right | wb-popover-left | wb-popover-end
 
+   Persistent panels:
+     data-wb-popover-persistent keeps the panel open on outside clicks and
+     while other anchored toggles open. Escape and dismiss remain available.
+
    Dismiss:
      <button data-wb-dismiss="popover">Close</button>
 
@@ -4397,6 +4401,7 @@
      WBPopover.open(wrapperEl)
      WBPopover.close(wrapperEl)
      WBPopover.closeAll()
+     WBPopover.update(wrapperEl) // Reposition after host content changes.
    ============================================================ */
 
 (function () {
@@ -4461,8 +4466,12 @@
   }
 
   function ensureInstance(wrapper, trigger, panel) {
+    var persistent = wrapper.hasAttribute('data-wb-popover-persistent');
     var instance = instances.get(panel);
     if (instance) {
+      instance.group = persistent ? 'anchored-persistent' : 'anchored-toggle';
+      instance.exclusive = !persistent;
+      instance.outsideClose = !persistent;
       instance.trigger = trigger || instance.trigger;
       instance.placement = getPlacement(wrapper, instance.trigger, panel);
       syncWrapperState(wrapper, panel, instance.active);
@@ -4472,7 +4481,9 @@
 
     instance = WBDom.overlay.create({
       kind: 'popover',
-      group: 'anchored-toggle',
+      group: persistent ? 'anchored-persistent' : 'anchored-toggle',
+      exclusive: !persistent,
+      outsideClose: !persistent,
       layer: 'anchored',
       element: panel,
       panel: panel,
@@ -4556,6 +4567,14 @@
     });
   }
 
+  function update(wrapper) {
+    wrapper = getWrapper(wrapper);
+    if (!wrapper) return;
+    var panel = getPanel(wrapper);
+    var instance = panel && instances.get(panel);
+    if (instance) WBDom.overlay.update(instance);
+  }
+
   function closeAll() {
     WBDom.overlay.closeAll(function (instance) {
       return instance.kind === 'popover';
@@ -4594,7 +4613,9 @@
   window.WBPopover = {
     open:     open,
     close:    close,
-    closeAll: closeAll
+    closeAll: closeAll,
+    update:   update,
+    supportsPersistent: true
   };
 
   init();
