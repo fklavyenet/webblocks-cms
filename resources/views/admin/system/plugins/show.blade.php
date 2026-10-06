@@ -7,7 +7,7 @@
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('system_plugins_show.'.$key, $adminLocale, $replace);
     $pluginSetupText = fn (string $key, array $replace = []) => $adminTranslator->admin('plugin_setup.'.$key, $adminLocale, $replace);
     $statusClass = match ($plugin['lifecycle_label']) {
-        $pluginSetupText('enabled') => 'wb-status-active',
+        $pluginSetupText('enabled') => $plugin['migrations_pending'] ? 'wb-status-pending' : 'wb-status-active',
         $pluginSetupText('incompatible'), $pluginSetupText('missing_files'), $pluginSetupText('error') => 'wb-status-danger',
         default => 'wb-status-pending',
     };
@@ -59,7 +59,7 @@
         @if ($plugin['can_setup'])
             <form method="POST" action="{{ route('admin.system.plugins.setup', $plugin['handle']) }}">
                 @csrf
-                <button type="submit" class="wb-btn {{ $plugin['migrations_pending'] ? 'wb-btn-primary' : 'wb-btn-secondary' }}" @disabled(! $plugin['migrations_pending'])>
+                <button id="plugin-database-update" type="submit" class="wb-btn {{ $plugin['migrations_pending'] ? 'wb-btn-primary' : 'wb-btn-secondary' }}" @disabled(! $plugin['migrations_pending'])>
                     <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
                     {{ $plugin['migrations_pending'] ? $adminText('run_plugin_migrations') : $adminText('migrations_up_to_date') }}
                 </button>
@@ -76,6 +76,13 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @if ($plugin['migrations_pending'])
+        <div class="wb-alert wb-alert-warning" role="status">
+            <strong>{{ $adminText('database_update_required') }}</strong>
+            <p>{{ $adminText('database_update_help') }}</p>
+        </div>
+    @endif
+
     <div class="wb-card">
         <div class="wb-card-header">
             <strong>{{ $adminText('overview') }}</strong>
@@ -90,7 +97,7 @@
                     <tr>
                         <th scope="row" class="wb-table-key">{{ $adminText('lifecycle') }}</th>
                         <td>
-                            <span class="wb-status {{ $statusClass }}">{{ $plugin['lifecycle_label'] }}</span>
+                            <span class="wb-status {{ $statusClass }}">{{ $plugin['migrations_pending'] ? $adminText('database_update_required') : $plugin['lifecycle_label'] }}</span>
                             @if (! $plugin['compatible'])
                                 <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
                             @elseif ($plugin['setup_required'])

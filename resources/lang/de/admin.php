@@ -1092,6 +1092,9 @@ $translations = [
     'pagination' => 'Block-Typen-Paginierung',
   ],
   'system_plugins_index' => [
+    'database_update_required' => 'Datenbankaktualisierung erforderlich',
+    'complete_database_update' => 'Datenbankaktualisierung abschließen',
+    'database_update_help' => 'Datenbankänderungen werden nicht automatisch angewendet. Prüfen Sie nach dem Update diese Liste und öffnen Sie bei Bedarf die Plugin-Details.',
     'plugins' => 'Plugins',
     'description' => 'Manuell installierte WebBlocks-CMS-Plugins verwalten und den Plugin-Host-Status prüfen.',
     'browse_plugin_catalog' => 'Plugin-Katalog durchsuchen',
@@ -1726,6 +1729,8 @@ $translations = [
     ],
   ],
   'system_plugins_show' => [
+    'database_update_required' => 'Datenbankaktualisierung erforderlich',
+    'database_update_help' => 'Für das Plugin stehen Datenbankänderungen aus. Wenden Sie sie über Plugin-Migrationen ausführen oben an. Ein Terminalbefehl ist nicht erforderlich.',
     'description' => 'Prüfen Sie Plugin-Lebenszyklus, Fähigkeiten und manuelle Paketdetails dieses Plugins.',
     'back_to_plugins' => 'Zurück zu Plugins',
     'overview' => 'Übersicht',

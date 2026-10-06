@@ -71,7 +71,7 @@
                                 @php
                                     $statusClass = ! $plugin['files_available'] || ! $plugin['compatible']
                                         ? 'wb-status-danger'
-                                        : ($plugin['enabled'] ? 'wb-status-active' : 'wb-status-pending');
+                                        : ($plugin['enabled'] && ! $plugin['migrations_pending'] ? 'wb-status-active' : 'wb-status-pending');
                                     $healthClass = match ($plugin['health']['status']) {
                                         'healthy' => 'wb-status-active',
                                         'warning', 'error', 'incompatible' => 'wb-status-danger',
@@ -95,10 +95,15 @@
                                     <td class="wb-plugins-cell-tight">{{ $plugin['source'] }}</td>
                                     <td class="wb-plugins-cell-tight">
                                         <span class="wb-status {{ $statusClass }}">
-                                            {{ $plugin['lifecycle_label'] }}
+                                            {{ $plugin['migrations_pending'] ? $systemPluginsIndexText('database_update_required') : $plugin['lifecycle_label'] }}
                                         </span>
                                         @if (! $plugin['compatible'])
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
+                                        @endif
+                                        @if ($plugin['migrations_pending'])
+                                            <div class="wb-text-sm">
+                                                <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}#plugin-database-update">{{ $systemPluginsIndexText('complete_database_update') }}</a>
+                                            </div>
                                         @endif
                                     </td>
                                     <td class="wb-plugins-cell-health">
@@ -165,6 +170,9 @@
 
                                                         <div class="wb-modal-body wb-stack wb-gap-4">
                                                             <p id="{{ $updateModalId }}-body">{{ $systemPluginsIndexText('update_confirm_body', ['label' => $plugin['label'], 'current' => $plugin['version'] ?? $systemPluginsIndexText('unknown'), 'version' => $plugin['catalog_update']['version']]) }}</p>
+                                                            @if ($plugin['can_setup'])
+                                                                <p class="wb-text-sm">{{ $systemPluginsIndexText('database_update_help') }}</p>
+                                                            @endif
 
                                                             <section class="wb-stack wb-gap-2" aria-labelledby="{{ $updateModalId }}-release-notes">
                                                                 <h3 id="{{ $updateModalId }}-release-notes">{{ $systemPluginsIndexText('update_release_notes') }}</h3>

@@ -1091,6 +1091,9 @@ $translations = [
     'pagination' => 'Paginación de tipos de bloque',
   ],
   'system_plugins_index' => [
+    'database_update_required' => 'Actualización de base de datos necesaria',
+    'complete_database_update' => 'Completar actualización de base de datos',
+    'database_update_help' => 'Los cambios de base de datos no se aplican automáticamente. Después de actualizar, revise esta lista y abra los detalles del plugin si necesita actualizar la base de datos.',
     'plugins' => 'Plugins',
     'description' => 'Gestiona los plugins de WebBlocks CMS instalados manualmente y revisa el estado del host de plugins.',
     'browse_plugin_catalog' => 'Explorar catálogo de plugins',
@@ -1725,6 +1728,8 @@ $translations = [
     ],
   ],
   'system_plugins_show' => [
+    'database_update_required' => 'Actualización de base de datos necesaria',
+    'database_update_help' => 'El plugin tiene cambios de base de datos pendientes. Aplíquelos con Ejecutar migraciones del plugin arriba. No necesita un comando de terminal.',
     'description' => 'Revisa el ciclo de vida, las capacidades y los detalles del paquete manual de este plugin.',
     'back_to_plugins' => 'Volver a plugins',
     'overview' => 'Resumen',

@@ -1091,6 +1091,9 @@ $translations = [
     'pagination' => 'Pagination des types de bloc',
   ],
   'system_plugins_index' => [
+    'database_update_required' => 'Mise à jour de la base de données requise',
+    'complete_database_update' => 'Terminer la mise à jour de la base de données',
+    'database_update_help' => 'Les changements de base de données ne sont pas appliqués automatiquement. Après la mise à jour, consultez cette liste et ouvrez les détails de l’extension si nécessaire.',
     'plugins' => 'Extensions',
     'description' => 'Gérez les extensions WebBlocks CMS installées manuellement et consultez l\'état de l\'hôte d\'extensions.',
     'browse_plugin_catalog' => 'Parcourir le catalogue d\'extensions',
@@ -1725,6 +1728,8 @@ $translations = [
     ],
   ],
   'system_plugins_show' => [
+    'database_update_required' => 'Mise à jour de la base de données requise',
+    'database_update_help' => 'L’extension a des changements de base de données en attente. Appliquez-les avec Exécuter les migrations de l’extension ci-dessus. Aucune commande de terminal n’est nécessaire.',
     'description' => 'Consultez le cycle de vie, les capacités et les détails du paquet manuel de cette extension.',
     'back_to_plugins' => 'Retour aux extensions',
     'overview' => 'Vue d\'ensemble',

@@ -1294,6 +1294,9 @@ return [
     'pagination' => 'Block types pagination',
   ],
   'system_plugins_index' => [
+    'database_update_required' => 'Database update required',
+    'complete_database_update' => 'Complete database update',
+    'database_update_help' => 'Database changes are not applied automatically. After updating, check this list and open the plugin details if a database update is required.',
     'plugins' => 'Plugins',
     'description' => 'Manage manually installed WebBlocks CMS plugins and review the plugin host status.',
     'browse_plugin_catalog' => 'Browse Plugin Catalog',
@@ -1949,6 +1952,8 @@ return [
     ],
   ],
   'system_plugins_show' => [
+    'database_update_required' => 'Database update required',
+    'database_update_help' => 'The plugin has pending database changes. Use Run Plugin Migrations above to apply them. No terminal command is needed.',
     'description' => 'Review this plugin lifecycle, capabilities, and manual package details.',
     'back_to_plugins' => 'Back to Plugins',
     'overview' => 'Overview',
