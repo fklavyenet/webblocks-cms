@@ -1090,6 +1090,17 @@ $translations = [
     'core_catalog' => 'Catalogue central',
     'pagination' => 'Pagination des types de bloc',
   ],
+  'plugin_appearance' => [
+    'title' => 'Apparence du menu',
+    'help' => 'Choisissez l’icône de la barre latérale de cette extension. Ce choix s’applique à tous les opérateurs et est conservé lors des mises à jour.',
+    'sidebar_icon' => 'Icône de la barre latérale',
+    'current_icon' => 'Icône actuelle de la barre latérale',
+    'reset_help' => 'Effacez la sélection dans le sélecteur d’icônes et enregistrez pour restaurer l’icône par défaut de l’extension.',
+    'save' => 'Enregistrer l’icône du menu',
+    'saved' => 'Icône du menu enregistrée.',
+    'invalid_icon' => 'Sélectionnez une icône active du catalogue.',
+    'invalid_declaration' => 'Les extensions avec des menus d’administration doivent déclarer une icône WebBlocks UI. Utilisez le slug d’une icône incluse dans le champ icon du manifeste.',
+  ],
   'system_plugins_index' => [
     'retry_database_update' => 'Réessayer la mise à jour de la base de données',
     'database_update_failed' => 'Échec de la mise à jour de la base de données',

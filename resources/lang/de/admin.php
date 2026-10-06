@@ -1091,6 +1091,17 @@ $translations = [
     'core_catalog' => 'Core-Katalog',
     'pagination' => 'Block-Typen-Paginierung',
   ],
+  'plugin_appearance' => [
+    'title' => 'Menüdarstellung',
+    'help' => 'Wählen Sie das Sidebar-Symbol dieses Plugins. Die Auswahl gilt für alle Verwaltungsbenutzer und bleibt bei Plugin-Updates erhalten.',
+    'sidebar_icon' => 'Sidebar-Symbol',
+    'current_icon' => 'Aktuelles Sidebar-Symbol',
+    'reset_help' => 'Leeren Sie die Auswahl im Symbolwähler und speichern Sie, um das Standardsymbol des Plugins wiederherzustellen.',
+    'save' => 'Menüsymbol speichern',
+    'saved' => 'Menüsymbol gespeichert.',
+    'invalid_icon' => 'Wählen Sie ein aktives Symbol aus dem Katalog.',
+    'invalid_declaration' => 'Plugins mit Verwaltungsmenüs müssen ein WebBlocks UI-Symbol deklarieren. Verwenden Sie im Feld icon des Manifests den Slug eines mitgelieferten Symbols.',
+  ],
   'system_plugins_index' => [
     'retry_database_update' => 'Datenbankaktualisierung erneut versuchen',
     'database_update_failed' => 'Datenbankaktualisierung fehlgeschlagen',

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
@@ -13,6 +14,8 @@ use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
 use WebBlocks\Cms\Support\Plugins\PluginPublicRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginSettingsDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginSidebarGroups;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -52,10 +55,20 @@ class PluginPublicSurfaceTest extends TestCase
 
   public function test_admin_layout_uses_each_plugin_menu_route_family_for_active_state(): void
   {
+    $plugin = $this->pluginDefinition()->menu([
+      PluginMenuItem::make('appointments')->route('appointments.index')->group('Appointments'),
+      PluginMenuItem::make('settings')->route('appointments.settings')->group('Appointments'),
+    ]);
+    Route::get('/test-appointments', fn () => 'Appointments')->name('appointments.index');
+    Route::get('/test-appointment-settings', fn () => 'Settings')->name('appointments.settings');
+    Route::getRoutes()->refreshNameLookups();
+    $groups = (new PluginSidebarGroups(
+      $this->registryWith($plugin), app(PluginAppearance::class), app(CmsTranslator::class),
+    ))->appendTo([], null, 'en');
+    $this->assertSame(['appointments.*'], $groups[0]['items'][0]['active']);
+    $this->assertSame(['appointments.settings'], $groups[0]['items'][1]['active']);
     $layout = (string) file_get_contents(__DIR__.'/../../resources/views/layouts/admin.blade.php');
 
-    $this->assertStringContainsString("Str::beforeLast(\$pluginRouteName, '.').'.*'", $layout);
-    $this->assertStringNotContainsString("routeNamePrefix().'.*'", $layout);
     $this->assertStringContainsString("\$activeGroup['item']['label'] ?? \$activeTopItem['label']", $layout);
   }
 

@@ -49,6 +49,7 @@ class PluginZipInstaller
       [$manifestPath, $stripPrefix] = $this->locateManifest($entries);
       $manifest = $this->manifest($zip, $manifestPath);
       $this->validateManifest($manifest);
+      app(PluginIconDeclaration::class)->validate($manifest);
       $this->validateAdminTranslations($entries, $stripPrefix);
 
       $handle = (string) $manifest['handle'];

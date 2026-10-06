@@ -57,6 +57,7 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
@@ -71,6 +72,7 @@ use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
@@ -1047,6 +1049,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
       return $registry;
     });
+    $this->app->scoped(PluginAppearance::class);
 
     $this->app->singleton(PluginPermissionRegistry::class, fn ($app): PluginPermissionRegistry => new PluginPermissionRegistry(
       $app->make(PluginRegistry::class)
@@ -1260,6 +1263,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
 
     $this->loadViewsFrom($this->viewsPath(), self::VIEW_NAMESPACE);
+    $this->app->make('view')->composer(self::VIEW_NAMESPACE.'::layouts.admin', PluginAppearanceComposer::class);
   }
 
   /**

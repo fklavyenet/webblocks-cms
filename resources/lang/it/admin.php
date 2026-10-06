@@ -1089,6 +1089,17 @@ $translations = [
     'core_catalog' => 'Catalogo core',
     'pagination' => 'Paginazione dei tipi di blocco',
   ],
+  'plugin_appearance' => [
+    'title' => 'Aspetto del menu',
+    'help' => 'Scegli l’icona della barra laterale di questo plugin. La scelta vale per tutti gli operatori e viene conservata durante gli aggiornamenti.',
+    'sidebar_icon' => 'Icona della barra laterale',
+    'current_icon' => 'Icona attuale della barra laterale',
+    'reset_help' => 'Cancella la selezione nel selettore di icone e salva per ripristinare l’icona predefinita del plugin.',
+    'save' => 'Salva icona del menu',
+    'saved' => 'Icona del menu salvata.',
+    'invalid_icon' => 'Seleziona un’icona attiva dal catalogo.',
+    'invalid_declaration' => 'I plugin con menu di amministrazione devono dichiarare un’icona WebBlocks UI. Usa lo slug di un’icona inclusa nel campo icon del manifest.',
+  ],
   'system_plugins_index' => [
     'retry_database_update' => 'Riprova aggiornamento del database',
     'database_update_failed' => 'Aggiornamento del database non riuscito',

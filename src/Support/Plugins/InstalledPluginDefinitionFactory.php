@@ -40,7 +40,7 @@ class InstalledPluginDefinitionFactory
         $definition->publicAssets($declared);
       }
 
-      return $definition
+      return $this->applyManifestIcon($definition, $manifest)
         /*
          * Applied to the provider's own definition too. A provider builds its
          * definition in code and has no reason to restate `requires`, which lives in
@@ -60,6 +60,8 @@ class InstalledPluginDefinitionFactory
       ->publicAssets($this->publicAssets($manifest))
       ->source('manual upload')
       ->installPath($path);
+
+    $this->applyManifestIcon($definition, $manifest);
 
     $settings = $manifest['settings'] ?? null;
 
@@ -150,6 +152,16 @@ class InstalledPluginDefinitionFactory
     if (is_dir($langPath)) {
       app('translator')->addNamespace($handle, $langPath);
     }
+  }
+
+  private function applyManifestIcon(PluginDefinition $definition, array $manifest): PluginDefinition
+  {
+    $icon = $manifest['icon'] ?? null;
+    if (is_string($icon) && PluginDefinition::iconSlug($icon) !== null) {
+      $definition->icon($icon);
+    }
+
+    return $definition;
   }
 
   /**

@@ -1293,6 +1293,17 @@ return [
     'core_catalog' => 'Core catalog',
     'pagination' => 'Block types pagination',
   ],
+  'plugin_appearance' => [
+    'title' => 'Menu appearance',
+    'help' => 'Choose this plugin’s sidebar icon. This installation-wide choice applies to all operators and is preserved when the plugin is updated.',
+    'sidebar_icon' => 'Sidebar icon',
+    'current_icon' => 'Current sidebar icon',
+    'reset_help' => 'Clear the selection in the icon picker and save to restore the plugin default.',
+    'save' => 'Save menu icon',
+    'saved' => 'Menu icon saved.',
+    'invalid_icon' => 'Select an active icon from the catalog.',
+    'invalid_declaration' => 'Plugins with admin menus must declare a WebBlocks UI icon. Use a bundled icon slug in the manifest icon field.',
+  ],
   'system_plugins_index' => [
     'retry_database_update' => 'Retry database update',
     'database_update_failed' => 'Database update failed',

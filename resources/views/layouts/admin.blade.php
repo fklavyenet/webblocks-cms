@@ -138,46 +138,7 @@
 
             $sidebarGroups[] = $helpSidebarGroup;
 
-            foreach (app(\WebBlocks\Cms\Support\Plugins\PluginRegistry::class)->menuItems($user) as $pluginMenuItem) {
-                $item = $pluginMenuItem['item'];
-
-                if ($item->routeName() === null || ! Route::has($item->routeName())) {
-                    continue;
-                }
-
-                $pluginHandle = $pluginMenuItem['plugin']->handle();
-                $groupName = $item->groupName() ?: 'System';
-                $groupKey = $groupName === 'System' ? 'system' : 'plugin-'.\Illuminate\Support\Str::slug($groupName);
-                $groupIndex = collect($sidebarGroups)->search(
-                    fn ($group) => ($group['key'] ?? null) === $groupKey || $group['label'] === $groupName
-                );
-
-                if ($groupIndex === false) {
-                    $sidebarGroups[] = [
-                        'key' => $groupKey,
-                        // Plugin-provided group label, localized via the plugin's lang catalog (falls back to the literal).
-                        'label' => $adminTranslator->plugin($pluginHandle, 'admin.menu_group.'.\Illuminate\Support\Str::slug($groupName), $adminLocale, [], $groupName),
-                        'icon' => 'wb-icon-plug',
-                        'items' => [],
-                    ];
-                    $groupIndex = array_key_last($sidebarGroups);
-                }
-
-                $pluginRouteName = $item->routeName();
-                $pluginRouteSuffix = Illuminate\Support\Str::afterLast($pluginRouteName, '.');
-                $pluginRouteActive = in_array($pluginRouteSuffix, ['index', 'create', 'store', 'edit', 'update', 'show', 'destroy'], true)
-                    ? [Illuminate\Support\Str::beforeLast($pluginRouteName, '.').'.*']
-                    : [$pluginRouteName];
-
-                $sidebarGroups[$groupIndex]['items'][] = [
-                    // Plugin-provided menu label, localized via the plugin's lang catalog (falls back to the literal).
-                    'label' => $adminTranslator->plugin($pluginHandle, 'admin.menu.'.$item->key(), $adminLocale, [], $item->labelText()),
-                    'route' => $item->routeName(),
-                    'url' => route($item->routeName(), [], false),
-                    'active' => $pluginRouteActive,
-                    'icon' => $item->iconClass(),
-                ];
-            }
+            $sidebarGroups = app(\WebBlocks\Cms\Support\Plugins\PluginSidebarGroups::class)->appendTo($sidebarGroups, $user, $adminLocale);
 
             $matchesActiveRoute = static fn (array $item): bool => collect($item['active'] ?? [])->contains(
                 fn (string $pattern) => request()->routeIs($pattern)
@@ -440,6 +401,9 @@
                 <main class="wb-dashboard-main">
                     <div class="wb-stack wb-stack-6">
                         @yield('content')
+                        @if ($pluginAppearanceCard)
+                            @include('webblocks-cms::admin.system.plugins.partials.appearance')
+                        @endif
                     </div>
                 </main>
             </div>

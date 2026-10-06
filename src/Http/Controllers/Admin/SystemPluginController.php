@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Actions\Plugins\UpdatePluginAppearance;
+use WebBlocks\Cms\Http\Requests\Admin\PluginAppearanceRequest;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
@@ -134,6 +137,21 @@ class SystemPluginController extends Controller
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
       ->with('status', 'Plugin disabled. Routes, commands, menus, settings, health checks, and contributions are inactive.');
+  }
+
+  public function updateAppearance(PluginAppearanceRequest $request, string $plugin, UpdatePluginAppearance $action, PluginAppearance $appearance): RedirectResponse
+  {
+    $definition = $this->plugins->get($plugin);
+    abort_if($definition === null, 404);
+    $data = $request->validated();
+    $action->execute($definition, $data['sidebar_icon'] ?? null);
+    $routeName = $appearance->settingsRouteName($definition);
+    $destination = $data['origin'] === 'settings' && Route::has($routeName)
+      ? route($routeName, isset($data['site_id']) ? ['site_id' => $data['site_id']] : [])
+      : route('admin.system.plugins.show', $plugin);
+
+    return redirect($destination.'#plugin-menu-appearance')
+      ->with('plugin_appearance_status', __('webblocks-cms::admin.plugin_appearance.saved'));
   }
 
   public function setup(string $plugin): RedirectResponse

@@ -436,6 +436,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::post('system/plugins/{plugin}/enable', [SystemPluginController::class, 'enable'])->name('system.plugins.enable');
       Route::post('system/plugins/{plugin}/setup', [SystemPluginController::class, 'setup'])->name('system.plugins.setup');
       Route::post('system/plugins/{plugin}/disable', [SystemPluginController::class, 'disable'])->name('system.plugins.disable');
+      Route::put('system/plugins/{plugin}/appearance', [SystemPluginController::class, 'updateAppearance'])->name('system.plugins.appearance.update');
       Route::delete('system/plugins/{plugin}/uninstall', [SystemPluginController::class, 'uninstall'])->name('system.plugins.uninstall');
       Route::get('system/plugins/{plugin}', [SystemPluginController::class, 'show'])->name('system.plugins.show');
       Route::get('system/search', [SystemSearchController::class, 'index'])->name('system.search.index');

@@ -1090,6 +1090,17 @@ $translations = [
     'core_catalog' => 'Catálogo del núcleo',
     'pagination' => 'Paginación de tipos de bloque',
   ],
+  'plugin_appearance' => [
+    'title' => 'Apariencia del menú',
+    'help' => 'Elija el icono de la barra lateral de este plugin. Se aplica a todos los operadores y se conserva al actualizar el plugin.',
+    'sidebar_icon' => 'Icono de la barra lateral',
+    'current_icon' => 'Icono actual de la barra lateral',
+    'reset_help' => 'Borre la selección en el selector de iconos y guarde para restaurar el icono predeterminado del plugin.',
+    'save' => 'Guardar icono del menú',
+    'saved' => 'Icono del menú guardado.',
+    'invalid_icon' => 'Seleccione un icono activo del catálogo.',
+    'invalid_declaration' => 'Los plugins con menús de administración deben declarar un icono de WebBlocks UI. Use el slug de un icono incluido en el campo icon del manifiesto.',
+  ],
   'system_plugins_index' => [
     'retry_database_update' => 'Reintentar actualización de base de datos',
     'database_update_failed' => 'Error al actualizar la base de datos',

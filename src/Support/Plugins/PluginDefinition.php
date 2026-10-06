@@ -15,6 +15,8 @@ class PluginDefinition
 
   private string $label = '';
 
+  private ?string $icon = null;
+
   private ?string $version = null;
 
   private ?string $providerClass = null;
@@ -156,6 +158,37 @@ class PluginDefinition
   public function handle(): string
   {
     return $this->handle;
+  }
+
+  public function icon(string $icon): self
+  {
+    $slug = self::iconSlug($icon);
+    if ($slug === null) {
+      throw new PluginException('Plugin icons must name a WebBlocks UI icon.');
+    }
+    $this->icon = $slug;
+
+    return $this;
+  }
+
+  public function defaultIconSlug(): ?string
+  {
+    if ($this->icon !== null) {
+      return $this->icon;
+    }
+    foreach ($this->menuItems as $item) {
+      $slug = self::iconSlug($item->iconClass());
+      if ($slug !== null) {
+        return $slug;
+      }
+    }
+
+    return null;
+  }
+
+  public static function iconSlug(?string $icon): ?string
+  {
+    return preg_match('/^(?:wb-icon-)?([a-z0-9]+(?:-[a-z0-9]+)*)$/', trim((string) $icon), $matches) === 1 ? $matches[1] : null;
   }
 
   public function routeNamePrefix(): string
@@ -899,6 +932,7 @@ class PluginDefinition
     return [
       'handle' => $this->handle,
       'label' => $this->labelText(),
+      'icon' => $this->defaultIconSlug(),
       'version' => $this->version,
       'provider' => $this->providerClass,
       'description' => $this->description,

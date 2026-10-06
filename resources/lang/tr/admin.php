@@ -1090,6 +1090,17 @@ $translations = [
     'core_catalog' => 'Core katalog',
     'pagination' => 'Blok türleri sayfalama',
   ],
+  'plugin_appearance' => [
+    'title' => 'Menü görünümü',
+    'help' => 'Bu eklentinin sidebar ikonunu seçin. Seçim tüm panel kullanıcıları için geçerlidir ve eklenti güncellemelerinde korunur.',
+    'sidebar_icon' => 'Sidebar ikonu',
+    'current_icon' => 'Kullanılan sidebar ikonu',
+    'reset_help' => 'Eklentinin varsayılan ikonuna dönmek için ikon seçicide seçimi temizleyip kaydedin.',
+    'save' => 'Menü ikonunu kaydet',
+    'saved' => 'Menü ikonu kaydedildi.',
+    'invalid_icon' => 'Listeden etkin bir ikon seçin.',
+    'invalid_declaration' => 'Yönetim menüsü olan eklentiler bir WebBlocks UI ikonu tanımlamalıdır. Manifest dosyasının icon alanında paketle gelen bir ikonun adını kullanın.',
+  ],
   'system_plugins_index' => [
     'retry_database_update' => 'Veritabanı güncellemesini tekrar dene',
     'database_update_failed' => 'Veritabanı güncellemesi başarısız',
