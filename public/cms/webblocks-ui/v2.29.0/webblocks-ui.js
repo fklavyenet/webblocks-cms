@@ -1,5 +1,5 @@
 /*!
- * WebBlocks UI v2.28.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.29.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Database\Seeders\IconCatalogSeeder;
 use WebBlocks\Cms\Models\IconCatalogItem;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Support\Catalog\CatalogRepairer;
 use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -71,9 +72,20 @@ class BundledIconManifestTest extends TestCase
       ]);
     }
 
+    SystemSetting::query()->create(['key' => 'plugins.sidebar_icon.example-chat', 'value' => 'message-square']);
+    $homeId = IconCatalogItem::query()->where('slug', 'home')->value('id');
+
     app(CatalogRepairer::class)->repair(['icons'], dryRun: false);
 
-    $this->assertGreaterThan(100, IconCatalogItem::query()->count());
+    $this->assertSame(200, IconCatalogItem::query()->count());
+    $this->assertSame($homeId, IconCatalogItem::query()->where('slug', 'home')->value('id'));
+    $this->assertSame('message-square', SystemSetting::query()->where('key', 'plugins.sidebar_icon.example-chat')->value('value'));
+    foreach (['message-circle', 'message-circle-more', 'clock', 'tag', 'link', 'unlink', 'graduation-cap', 'blocks', 'component', 'network', 'mouse-pointer-click', 'database-backup', 'archive-restore', 'clipboard-list', 'list-checks', 'headset'] as $slug) {
+      $this->assertTrue(IconCatalogItem::query()->active()->tagged('navigation')->where('slug', $slug)->exists(), $slug.' must be selectable after an automatic catalog repair.');
+    }
     $this->assertTrue(IconCatalogItem::query()->active()->tagged('content')->exists());
+
+    app(CatalogRepairer::class)->repair(['icons'], dryRun: false);
+    $this->assertSame(200, IconCatalogItem::query()->count());
   }
 }

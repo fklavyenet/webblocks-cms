@@ -17,6 +17,26 @@
     ]
   },
   {
+    "slug": "archive-restore",
+    "label": "Archive Restore",
+    "css_class": "wb-icon-archive-restore",
+    "source": "webblocks-ui",
+    "categories": [
+      "files"
+    ],
+    "contexts": [
+      "files",
+      "navigation"
+    ],
+    "keywords": [
+      "archive",
+      "restore",
+      "file",
+      "folder",
+      "recovery"
+    ]
+  },
+  {
     "slug": "area-chart",
     "label": "Area Chart",
     "css_class": "wb-icon-area-chart",
@@ -342,6 +362,26 @@
       "ring",
       "message",
       "communication"
+    ]
+  },
+  {
+    "slug": "blocks",
+    "label": "Blocks",
+    "css_class": "wb-icon-blocks",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation"
+    ],
+    "keywords": [
+      "blocks",
+      "layout",
+      "structure",
+      "builder",
+      "content"
     ]
   },
   {
@@ -716,6 +756,49 @@
     ]
   },
   {
+    "slug": "clipboard-list",
+    "label": "Clipboard List",
+    "css_class": "wb-icon-clipboard-list",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content",
+      "navigation"
+    ],
+    "keywords": [
+      "clipboard",
+      "list",
+      "content",
+      "document",
+      "form",
+      "submission",
+      "answers"
+    ]
+  },
+  {
+    "slug": "clock",
+    "label": "Clock",
+    "css_class": "wb-icon-clock",
+    "source": "webblocks-ui",
+    "categories": [
+      "analytics"
+    ],
+    "contexts": [
+      "analytics",
+      "navigation"
+    ],
+    "keywords": [
+      "clock",
+      "analytics",
+      "reporting",
+      "time",
+      "availability",
+      "waiting"
+    ]
+  },
+  {
     "slug": "cloud",
     "label": "Cloud",
     "css_class": "wb-icon-cloud",
@@ -771,6 +854,26 @@
       "2",
       "layout",
       "structure"
+    ]
+  },
+  {
+    "slug": "component",
+    "label": "Component",
+    "css_class": "wb-icon-component",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation"
+    ],
+    "keywords": [
+      "component",
+      "layout",
+      "structure",
+      "shared",
+      "reusable"
     ]
   },
   {
@@ -879,6 +982,26 @@
       "database",
       "system",
       "settings"
+    ]
+  },
+  {
+    "slug": "database-backup",
+    "label": "Database Backup",
+    "css_class": "wb-icon-database-backup",
+    "source": "webblocks-ui",
+    "categories": [
+      "system"
+    ],
+    "contexts": [
+      "system",
+      "navigation"
+    ],
+    "keywords": [
+      "database",
+      "backup",
+      "system",
+      "settings",
+      "storage"
     ]
   },
   {
@@ -1276,6 +1399,28 @@
     ]
   },
   {
+    "slug": "graduation-cap",
+    "label": "Graduation Cap",
+    "css_class": "wb-icon-graduation-cap",
+    "source": "webblocks-ui",
+    "categories": [
+      "editorial"
+    ],
+    "contexts": [
+      "editorial",
+      "navigation"
+    ],
+    "keywords": [
+      "graduation",
+      "cap",
+      "content",
+      "editorial",
+      "education",
+      "quiz",
+      "learning"
+    ]
+  },
+  {
     "slug": "grip-vertical",
     "label": "Grip Vertical",
     "css_class": "wb-icon-grip-vertical",
@@ -1347,6 +1492,27 @@
       "heading",
       "content",
       "document"
+    ]
+  },
+  {
+    "slug": "headset",
+    "label": "Headset",
+    "css_class": "wb-icon-headset",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication",
+      "navigation"
+    ],
+    "keywords": [
+      "headset",
+      "message",
+      "communication",
+      "support",
+      "operator",
+      "help"
     ]
   },
   {
@@ -1666,6 +1832,26 @@
     ]
   },
   {
+    "slug": "link",
+    "label": "Link",
+    "css_class": "wb-icon-link",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions",
+      "navigation"
+    ],
+    "keywords": [
+      "link",
+      "action",
+      "command",
+      "url",
+      "redirect"
+    ]
+  },
+  {
     "slug": "linkedin",
     "label": "Linkedin",
     "css_class": "wb-icon-linkedin",
@@ -1697,6 +1883,28 @@
       "list",
       "content",
       "document"
+    ]
+  },
+  {
+    "slug": "list-checks",
+    "label": "List Checks",
+    "css_class": "wb-icon-list-checks",
+    "source": "webblocks-ui",
+    "categories": [
+      "content"
+    ],
+    "contexts": [
+      "content",
+      "navigation"
+    ],
+    "keywords": [
+      "list",
+      "checks",
+      "content",
+      "document",
+      "poll",
+      "choices",
+      "checklist"
     ]
   },
   {
@@ -1887,6 +2095,49 @@
     ]
   },
   {
+    "slug": "message-circle",
+    "label": "Message Circle",
+    "css_class": "wb-icon-message-circle",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication",
+      "navigation"
+    ],
+    "keywords": [
+      "message",
+      "circle",
+      "communication",
+      "chat",
+      "conversation",
+      "reply"
+    ]
+  },
+  {
+    "slug": "message-circle-more",
+    "label": "Message Circle More",
+    "css_class": "wb-icon-message-circle-more",
+    "source": "webblocks-ui",
+    "categories": [
+      "communication"
+    ],
+    "contexts": [
+      "communication",
+      "navigation"
+    ],
+    "keywords": [
+      "message",
+      "circle",
+      "more",
+      "communication",
+      "chat",
+      "conversations",
+      "inbox"
+    ]
+  },
+  {
     "slug": "message-square",
     "label": "Message Square",
     "css_class": "wb-icon-message-square",
@@ -2009,6 +2260,28 @@
     ]
   },
   {
+    "slug": "mouse-pointer-click",
+    "label": "Mouse Pointer Click",
+    "css_class": "wb-icon-mouse-pointer-click",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation"
+    ],
+    "keywords": [
+      "mouse",
+      "pointer",
+      "click",
+      "layout",
+      "structure",
+      "engagement",
+      "interaction"
+    ]
+  },
+  {
     "slug": "mouse-pointer2",
     "label": "Mouse Pointer 2",
     "css_class": "wb-icon-mouse-pointer2",
@@ -2043,6 +2316,27 @@
       "music",
       "media",
       "asset"
+    ]
+  },
+  {
+    "slug": "network",
+    "label": "Network",
+    "css_class": "wb-icon-network",
+    "source": "webblocks-ui",
+    "categories": [
+      "layout"
+    ],
+    "contexts": [
+      "layout",
+      "navigation"
+    ],
+    "keywords": [
+      "network",
+      "layout",
+      "structure",
+      "navigation",
+      "hierarchy",
+      "tree"
     ]
   },
   {
@@ -2943,6 +3237,26 @@
     ]
   },
   {
+    "slug": "tag",
+    "label": "Tag",
+    "css_class": "wb-icon-tag",
+    "source": "webblocks-ui",
+    "categories": [
+      "commerce"
+    ],
+    "contexts": [
+      "commerce",
+      "navigation"
+    ],
+    "keywords": [
+      "tag",
+      "commerce",
+      "billing",
+      "service",
+      "category"
+    ]
+  },
+  {
     "slug": "target",
     "label": "Target",
     "css_class": "wb-icon-target",
@@ -3121,6 +3435,26 @@
       "type",
       "content",
       "document"
+    ]
+  },
+  {
+    "slug": "unlink",
+    "label": "Unlink",
+    "css_class": "wb-icon-unlink",
+    "source": "webblocks-ui",
+    "categories": [
+      "actions"
+    ],
+    "contexts": [
+      "actions",
+      "navigation"
+    ],
+    "keywords": [
+      "unlink",
+      "action",
+      "command",
+      "detach",
+      "url"
     ]
   },
   {

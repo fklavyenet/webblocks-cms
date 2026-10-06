@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.92.1
+
+- Bundle WebBlocks UI 2.29.0 with 16 additional icons for chat, scheduling, links, education, blocks, shared components, navigation, engagement and recovery; include upstream icon license notices.
+- Give Blocks, Shared Slots, Navigation and Engagement their dedicated sidebar glyphs. New icons become available to icon pickers through the existing automatic catalog repair after a System Update.
+
 ## 1.92.0
 
 - Apply plugin database changes automatically during installation, updates and activation; keep a plugin disabled after a failed setup and offer a clear retry action.

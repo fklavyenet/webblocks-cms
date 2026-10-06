@@ -56,15 +56,15 @@
                 ['label' => $adminText('navigation.dashboard'), 'route' => 'admin.dashboard', 'active' => ['admin.dashboard'], 'icon' => 'wb-icon-layout-dashboard'],
                 ['label' => $adminText('navigation.sites'), 'route' => 'admin.sites.index', 'active' => ['admin.sites.index', 'admin.sites.create', 'admin.sites.store', 'admin.sites.edit', 'admin.sites.update', 'admin.sites.clone', 'admin.sites.clone.prefill', 'admin.sites.clone.store', 'admin.sites.promote', 'admin.sites.promote.*', 'admin.sites.delete', 'admin.sites.destroy'], 'icon' => 'wb-icon-globe'],
                 ['label' => $adminText('navigation.pages'), 'route' => 'admin.pages.index', 'active' => ['admin.pages.*'], 'icon' => 'wb-icon-file-text'],
-                ['label' => $adminText('navigation.shared_slots'), 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-layers'],
-                ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
+                ['label' => $adminText('navigation.shared_slots'), 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-component'],
+                ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-network'],
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
                 ['label' => $adminText('navigation.assets'), 'route' => 'admin.site-assets.index', 'active' => ['admin.site-assets.*'], 'icon' => 'wb-icon-code'],
             ];
 
             if ($user?->can('manage-site-operations')) {
                 $menuItems[] = ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'];
-                $menuItems[] = ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-star'];
+                $menuItems[] = ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-mouse-pointer-click'];
             }
 
             if ($user?->can('view-visitor-reports')) {
@@ -76,7 +76,7 @@
                     'label' => $adminText('navigation.blocks'),
                     'route' => 'admin.blocks.index',
                     'active' => ['admin.blocks.index'],
-                    'icon' => 'wb-icon-box',
+                    'icon' => 'wb-icon-blocks',
                 ]]);
             }
 
