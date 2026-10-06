@@ -55,7 +55,7 @@ class SearchTextNormalizer
     $matchPosition = mb_stripos(mb_strtolower($text), mb_strtolower($normalizedQuery));
 
     if ($matchPosition === false) {
-      return Str::limit($text, $length)->toString();
+      return Str::limit($text, $length);
     }
 
     $start = max($matchPosition - 60, 0);

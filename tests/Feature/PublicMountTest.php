@@ -7,6 +7,7 @@ use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PublicSearchIndex;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
@@ -102,6 +103,27 @@ class PublicMountTest extends TestCase
     $this->assertStringContainsString('https://mounted.test/content/about', $generator->sitemap($first));
     $results = app(PublicSearchQuery::class)->search($first, $english, 'About');
     $this->assertSame('/content/about', $results->first()->url);
+  }
+
+  #[Test]
+  public function multiword_search_returns_html_and_json_when_terms_are_separated(): void
+  {
+    [$site, $english] = $this->site('mounted.test', true);
+    $page = $this->page($site, $english, '/visitor-support');
+    PublicSearchIndex::query()->updateOrCreate(
+      ['site_id' => $site->id, 'locale_id' => $english->id, 'page_id' => $page->id],
+      ['title' => 'Visitor support', 'url' => '/wb/visitor-support', 'content' => 'Live help and visitor chat', 'indexed_at' => now()],
+    );
+
+    $this->get('https://mounted.test/wb/search.json?q=live%20chat')
+      ->assertOk()
+      ->assertJsonPath('count', 1)
+      ->assertJsonPath('results.0.url', '/wb/visitor-support')
+      ->assertJsonPath('results.0.excerpt', 'Live help and visitor chat');
+    $this->get('https://mounted.test/wb/search?q=live%20chat')
+      ->assertOk()
+      ->assertSee('Visitor support')
+      ->assertSee('Live help and visitor chat');
   }
 
   private function site(string $domain, bool $primary = false): array

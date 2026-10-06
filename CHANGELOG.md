@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.91.2
+
+- Fix public search returning HTTP 500 when all search words match a result but the exact phrase is absent from its content. Keep the truncated excerpt as a string instead of calling a method on it.
+
 ## 1.91.1
 
 - Complete the nine content positions for Slide and Slider by adding Center Left and Center Right in all admin languages, content API updates and public rendering.
