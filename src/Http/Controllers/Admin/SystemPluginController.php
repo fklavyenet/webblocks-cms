@@ -13,6 +13,7 @@ use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -106,7 +107,12 @@ class SystemPluginController extends Controller
 
     abort_if($version === null, 422);
 
-    $this->installedPlugins->enable($plugin, $version);
+    try {
+      app(PluginDatabaseSetup::class)->run($definition, repairRecordedMigrations: $this->setupRequired($definition));
+      $this->installedPlugins->enable($plugin, $version);
+    } catch (RuntimeException $exception) {
+      return back()->withErrors(['plugin' => $exception->getMessage()]);
+    }
     $this->runtimeRefresher->refresh();
 
     return redirect()
@@ -147,18 +153,8 @@ class SystemPluginController extends Controller
     abort_if($version === null, 422);
 
     try {
-      $result = $this->migrationRunner->run($definition, repairRecordedMigrations: $this->setupRequired($definition));
-      $this->installedPlugins->recordSetupResult($plugin, $version, [
-        'status' => 'completed',
-        'message' => $result['message'],
-        'paths_count' => count($result['paths']),
-      ]);
+      app(PluginDatabaseSetup::class)->run($definition, repairRecordedMigrations: $this->setupRequired($definition));
     } catch (RuntimeException $exception) {
-      $this->installedPlugins->recordSetupResult($plugin, $version, [
-        'status' => 'failed',
-        'message' => $exception->getMessage(),
-      ]);
-
       return back()->withErrors(['plugin' => $exception->getMessage()]);
     }
 
@@ -166,7 +162,7 @@ class SystemPluginController extends Controller
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
-      ->with('status', $result['message']);
+      ->with('status', __('webblocks-cms::admin.system_plugins_show.database_update_completed'));
   }
 
   public function uninstall(string $plugin): RedirectResponse
@@ -308,6 +304,9 @@ class SystemPluginController extends Controller
     $setupRequired = $enabled && ($health['status'] ?? null) === 'warning' && str_contains((string) ($health['message'] ?? ''), 'Setup required');
     $hasMigrations = count($definition->migrationPaths()) > 0;
     $migrationsPending = false;
+    $databaseSetup = $manual && $definition->versionText() !== null
+      ? $this->installedPlugins->setupResult($definition->handle(), $definition->versionText())
+      : [];
 
     if ($manual && $enabled && $compatible && $filesAvailable && $hasMigrations) {
       try {
@@ -336,6 +335,7 @@ class SystemPluginController extends Controller
       'can_uninstall' => $manual,
       'can_setup' => $manual && $enabled && $compatible && $filesAvailable && $hasMigrations,
       'migrations_pending' => $migrationsPending,
+      'database_setup_failed' => ($databaseSetup['status'] ?? null) === 'failed',
       'setup_required' => $setupRequired,
       'settings' => $settings?->toArray(),
       'settings_route' => $settingsRoute,

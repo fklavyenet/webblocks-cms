@@ -53,11 +53,14 @@ class PluginMigrationRunner
       }
 
       foreach ($paths as $path) {
-        Artisan::call('migrate', [
+        $exitCode = Artisan::call('migrate', [
           '--path' => $path,
           '--realpath' => true,
           '--force' => true,
         ]);
+        if ($exitCode !== 0) {
+          throw new RuntimeException('Migration command did not complete.');
+        }
       }
     } catch (Throwable $exception) {
       throw new RuntimeException('Plugin migrations failed: '.$this->safeMessage($exception->getMessage(), $root), previous: $exception);

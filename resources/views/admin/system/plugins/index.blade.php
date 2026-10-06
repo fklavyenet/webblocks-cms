@@ -69,7 +69,7 @@
                         <tbody>
                             @foreach ($plugins as $plugin)
                                 @php
-                                    $statusClass = ! $plugin['files_available'] || ! $plugin['compatible']
+                                    $statusClass = ! $plugin['files_available'] || ! $plugin['compatible'] || $plugin['database_setup_failed']
                                         ? 'wb-status-danger'
                                         : ($plugin['enabled'] && ! $plugin['migrations_pending'] ? 'wb-status-active' : 'wb-status-pending');
                                     $healthClass = match ($plugin['health']['status']) {
@@ -95,7 +95,7 @@
                                     <td class="wb-plugins-cell-tight">{{ $plugin['source'] }}</td>
                                     <td class="wb-plugins-cell-tight">
                                         <span class="wb-status {{ $statusClass }}">
-                                            {{ $plugin['migrations_pending'] ? $systemPluginsIndexText('database_update_required') : $plugin['lifecycle_label'] }}
+                                            {{ $plugin['database_setup_failed'] ? $systemPluginsIndexText('database_update_failed') : ($plugin['migrations_pending'] ? $systemPluginsIndexText('database_update_required') : $plugin['lifecycle_label']) }}
                                         </span>
                                         @if (! $plugin['compatible'])
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
@@ -104,6 +104,9 @@
                                             <div class="wb-text-sm">
                                                 <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}#plugin-database-update">{{ $systemPluginsIndexText('complete_database_update') }}</a>
                                             </div>
+                                        @endif
+                                        @if ($plugin['database_setup_failed'])
+                                            <div class="wb-text-sm"><a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}">{{ $systemPluginsIndexText('retry_database_update') }}</a></div>
                                         @endif
                                     </td>
                                     <td class="wb-plugins-cell-health">

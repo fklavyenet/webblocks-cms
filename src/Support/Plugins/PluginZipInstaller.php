@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use ZipArchive;
@@ -37,6 +38,7 @@ class PluginZipInstaller
   private function installPackage(string $zipPath, ?string $expectedHandle = null, ?string $currentVersion = null): array
   {
     $zip = new ZipArchive;
+    $installLock = null;
 
     if ($zip->open($zipPath) !== true) {
       throw new RuntimeException('The uploaded plugin package is not a readable ZIP archive.');
@@ -51,6 +53,10 @@ class PluginZipInstaller
 
       $handle = (string) $manifest['handle'];
       $version = (string) $manifest['version'];
+      $installLock = Cache::lock('webblocks-plugin-install-'.hash('sha256', $this->plugins->rootPath().'/'.$handle), max(1, (int) config('webblocks-plugins.install.database_timeout_seconds', 120)) + 60);
+      if (! $installLock->get()) {
+        throw new RuntimeException(__('webblocks-cms::admin.system_plugins_show.database_update_busy'));
+      }
 
       if ($expectedHandle !== null && $handle !== $expectedHandle) {
         throw new RuntimeException('The catalog artifact does not match the installed plugin handle.');
@@ -72,16 +78,26 @@ class PluginZipInstaller
 
       $this->extract($zip, $entries, $stripPrefix, $target);
 
+      $wasEnabled = $currentVersion !== null && $this->plugins->enabledVersion($handle) === $currentVersion;
       if ($expectedHandle !== null && $currentVersion !== null) {
+        $this->plugins->disable($handle);
         $this->plugins->replaceVersion($handle, $currentVersion, $version);
+      }
+
+      $definition = app(InstalledPluginDefinitionFactory::class)->make($manifest, $target, false);
+      $setup = app(PluginDatabaseSetup::class)->run($definition);
+      if ($wasEnabled) {
+        $this->plugins->enable($handle, $version);
       }
 
       return [
         'handle' => $handle,
         'version' => $version,
         'path' => $target,
+        'database_setup' => $setup,
       ];
     } finally {
+      $installLock?->release();
       $zip->close();
     }
   }

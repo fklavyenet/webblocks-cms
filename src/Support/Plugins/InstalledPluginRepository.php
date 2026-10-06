@@ -107,16 +107,26 @@ class InstalledPluginRepository
   {
     $this->assertValidCoordinates($handle, $version);
 
-    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'enabled.json';
-    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
-    $state = is_array($state) ? $state : [];
+    $directory = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version;
+    File::ensureDirectoryExists($directory);
+    $path = $directory.DIRECTORY_SEPARATOR.'setup.json';
 
-    file_put_contents($path, json_encode(array_merge($state, [
+    file_put_contents($path, json_encode([
       'version' => $version,
       'setup' => array_merge($result, [
         'ran_at' => now()->toIso8601String(),
       ]),
-    ]), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+  }
+
+  /** @return array<string, mixed> */
+  public function setupResult(string $handle, string $version): array
+  {
+    $this->assertValidCoordinates($handle, $version);
+    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'setup.json';
+    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
+
+    return is_array($state) && is_array($state['setup'] ?? null) ? $state['setup'] : [];
   }
 
   public function disable(string $handle): void

@@ -41,7 +41,7 @@
                 @csrf
                 <button type="submit" class="wb-btn wb-btn-primary">
                     <i class="wb-icon wb-icon-play" aria-hidden="true"></i>
-                    {{ $adminText('enable_plugin') }}
+                    {{ $plugin['database_setup_failed'] ? $adminText('retry_database_update') : $adminText('enable_plugin') }}
                 </button>
             </form>
         @endif
@@ -76,7 +76,9 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    @if ($plugin['migrations_pending'])
+    @if ($plugin['database_setup_failed'])
+        <div class="wb-alert wb-alert-danger" role="status">{{ $adminText('database_update_failed') }}</div>
+    @elseif ($plugin['migrations_pending'])
         <div class="wb-alert wb-alert-warning" role="status">
             <strong>{{ $adminText('database_update_required') }}</strong>
             <p>{{ $adminText('database_update_help') }}</p>

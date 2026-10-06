@@ -28,6 +28,7 @@ use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\MaintenanceCleanupCommand;
 use WebBlocks\Cms\Console\MediaVariantsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
+use WebBlocks\Cms\Console\PluginMigrateCommand;
 use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
@@ -775,6 +776,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
   public const PACKAGE_CONSOLE_COMMANDS = [
+    PluginMigrateCommand::class,
     PackageStatusCommand::class,
     PublishUpdateCommand::class,
     PrunePromotedStagedUpdatesCommand::class,
@@ -1038,8 +1040,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       foreach ($repository->installed() as $installed) {
         $handle = (string) ($installed['manifest']['handle'] ?? '');
         $enabledByConfig = $handle !== '' && (bool) config("webblocks-plugins.enabled.{$handle}", false);
+        $databaseReady = ! in_array($repository->setupResult($handle, (string) ($installed['manifest']['version'] ?? ''))['status'] ?? null, ['running', 'failed'], true);
 
-        $registry->register($factory->make($installed['manifest'], $installed['path'], $installed['enabled'] || $enabledByConfig));
+        $registry->register($factory->make($installed['manifest'], $installed['path'], $databaseReady && ($installed['enabled'] || $enabledByConfig)));
       }
 
       return $registry;

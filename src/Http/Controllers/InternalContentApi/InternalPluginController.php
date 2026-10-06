@@ -11,6 +11,7 @@ use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogRelease;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -63,6 +64,7 @@ class InternalPluginController extends Controller
       'installed' => [
         'handle' => $result['handle'],
         'version' => $result['version'],
+        'database_setup' => $result['database_setup'],
       ],
       'warnings' => [],
       'errors' => [],
@@ -131,6 +133,7 @@ class InternalPluginController extends Controller
         'handle' => $installed['handle'],
         'version' => $installed['version'],
         'enabled' => false,
+        'database_setup' => $installed['database_setup'],
       ],
       'warnings' => [],
       'errors' => [],
@@ -180,6 +183,7 @@ class InternalPluginController extends Controller
         'handle' => $installed['handle'],
         'previous_version' => $installedVersion,
         'version' => $installed['version'],
+        'database_setup' => $installed['database_setup'],
       ],
       '_links' => [
         'plugin' => '/webadmin/api/plugins',
@@ -203,6 +207,7 @@ class InternalPluginController extends Controller
     }
 
     try {
+      app(PluginDatabaseSetup::class)->run($definition);
       $this->plugins->enable($definition->handle(), $version);
       $this->runtime->refresh(registerRoutes: true);
     } catch (RuntimeException $exception) {
@@ -233,8 +238,7 @@ class InternalPluginController extends Controller
     }
 
     try {
-      $result = $this->migrations->run($definition);
-      $this->plugins->recordSetupResult($definition->handle(), $version, $result);
+      $result = app(PluginDatabaseSetup::class)->run($definition);
       $this->runtime->refresh(registerRoutes: true);
     } catch (RuntimeException $exception) {
       return $this->apiError('plugin_setup_failed', $exception->getMessage());
@@ -427,7 +431,7 @@ class InternalPluginController extends Controller
   {
     return [
       'ran' => (bool) ($result['ran'] ?? false),
-      'paths_count' => count($result['paths'] ?? []),
+      'paths_count' => $result['paths_count'] ?? count($result['paths'] ?? []),
       'message' => $result['message'] ?? null,
     ];
   }
