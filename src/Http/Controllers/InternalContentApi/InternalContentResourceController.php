@@ -2192,7 +2192,7 @@ class InternalContentResourceController extends Controller
     if (in_array($type, ['slider', 'slide'], true)) {
       if (array_key_exists('content_position', $incoming)) {
         $contentPosition = trim((string) $incoming['content_position']);
-        $safeIncoming['content_position'] = in_array($contentPosition, ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)
+        $safeIncoming['content_position'] = in_array($contentPosition, ['center-left', 'center-right', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)
           ? $contentPosition
           : null;
       }

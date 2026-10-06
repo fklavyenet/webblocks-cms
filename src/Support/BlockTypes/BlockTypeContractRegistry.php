@@ -583,6 +583,7 @@ class BlockTypeContractRegistry
         'shared_settings_fields' => ['settings.layout_name', 'settings.height', 'settings.min_height', 'settings.aspect_ratio', 'settings.transition', 'settings.interval_ms', 'settings.autoplay', 'settings.pause_on_hover', 'settings.show_arrows', 'settings.show_dots', 'settings.loop', 'settings.swipe', 'settings.keyboard', 'settings.overlay', 'settings.content_position', 'settings.content_width', 'settings.text_color', 'settings.background_fit'],
         'storage_fields' => [
           'Slider presentation and interaction settings stay in block settings.',
+          'Content position accepts center/default, center-left, center-right, top-left, top-center, top-right, bottom-left, bottom-center, and bottom-right.',
           'Slides are stored as nested `slide` child block relationships.',
           'Slider does not own direct media; slide children own background media.',
         ],
@@ -599,6 +600,7 @@ class BlockTypeContractRegistry
         'shared_settings_fields' => ['media_id', 'settings.layout_name', 'settings.aria_label', 'settings.background_position', 'settings.background_overlay', 'settings.content_position', 'settings.content_width', 'settings.text_color', 'settings.background_fit'],
         'storage_fields' => [
           'Slide presentation settings stay in block settings.',
+          'Content position accepts center/default, center-left, center-right, top-left, top-center, top-right, bottom-left, bottom-center, and bottom-right.',
           'Optional background image ownership stays on the canonical block media_id column.',
           'Visible slide content is composed from nested child blocks.',
         ],

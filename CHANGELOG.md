@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.91.1
+
+- Complete the nine content positions for Slide and Slider by adding Center Left and Center Right in all admin languages, content API updates and public rendering.
+
 ## 1.91.0
 
 - Add optional mobile images to Slide, Image, Hero, Section, Card, CTA, Content Header and Link List Item blocks, editable in the admin and through the content API.

@@ -15,6 +15,8 @@
             <select id="slide_content_position" name="slide_content_position" class="wb-select">
                 @foreach ([
                     'center' => $adminText('center'),
+                    'center-left' => $adminText('center_left'),
+                    'center-right' => $adminText('center_right'),
                     'top-left' => $adminText('top_left'),
                     'top-center' => $adminText('top_center'),
                     'top-right' => $adminText('top_right'),

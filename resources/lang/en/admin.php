@@ -4262,6 +4262,8 @@ return [
       'dark' => 'Dark',
       'content_position' => 'Content Position',
       'center' => 'Center',
+      'center_left' => 'Center Left',
+      'center_right' => 'Center Right',
       'top_left' => 'Top Left',
       'top_center' => 'Top Center',
       'top_right' => 'Top Right',
@@ -4411,6 +4413,8 @@ return [
     'slide_settings' => [
       'content_position' => 'Content Position',
       'center' => 'Center',
+      'center_left' => 'Center Left',
+      'center_right' => 'Center Right',
       'top_left' => 'Top Left',
       'top_center' => 'Top Center',
       'top_right' => 'Top Right',

@@ -176,7 +176,7 @@ class BlockRequest extends FormRequest
       'slider_transition' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'slide', 'fade'])],
       'slider_interval_ms' => [$isSlider ? 'nullable' : 'prohibited', 'integer', 'min:1000', 'max:30000'],
       'slider_overlay' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'soft', 'medium', 'dark', 'strong'])],
-      'slider_content_position' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'])],
+      'slider_content_position' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'center-left', 'center-right', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'])],
       'slider_content_width' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'narrow', 'medium', 'wide', 'full'])],
       'slider_text_color' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'light', 'dark'])],
       'slider_background_fit' => [$isSlider ? 'nullable' : 'prohibited', Rule::in(['', 'cover', 'contain'])],
@@ -188,7 +188,7 @@ class BlockRequest extends FormRequest
       'slider_swipe' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
       'slider_keyboard' => [$isSlider ? 'nullable' : 'prohibited', 'boolean'],
       'slide_aria_label' => [$isSlide ? 'nullable' : 'prohibited', 'string', 'max:255'],
-      'slide_content_position' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'])],
+      'slide_content_position' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'center', 'center-left', 'center-right', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'])],
       'slide_content_width' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'narrow', 'medium', 'wide', 'full'])],
       'slide_text_color' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'light', 'dark'])],
       'slide_background_fit' => [$isSlide ? 'nullable' : 'prohibited', Rule::in(['', 'cover', 'contain'])],
@@ -2342,7 +2342,7 @@ class BlockRequest extends FormRequest
             unset($settings['overlay']);
           }
 
-          if (in_array($sliderContentPosition, ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)) {
+          if (in_array($sliderContentPosition, ['center-left', 'center-right', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)) {
             $settings['content_position'] = $sliderContentPosition;
           } else {
             unset($settings['content_position']);
@@ -2378,7 +2378,7 @@ class BlockRequest extends FormRequest
             unset($settings['aria_label']);
           }
 
-          if (in_array($slideContentPosition, ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)) {
+          if (in_array($slideContentPosition, ['center-left', 'center-right', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)) {
             $settings['content_position'] = $slideContentPosition;
           } else {
             unset($settings['content_position']);

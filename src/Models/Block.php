@@ -1132,6 +1132,8 @@ class Block extends CmsModel
   public function sliderContentPositionClass(): string
   {
     return match ($this->appearanceSetting('content_position')) {
+      'center-left' => 'wb-slider-content-start',
+      'center-right' => 'wb-slider-content-end',
       'top-left' => 'wb-slider-content-top-start',
       'top-center' => 'wb-slider-content-top-center',
       'top-right' => 'wb-slider-content-top-end',

@@ -355,7 +355,7 @@ The current published core catalog contains 52 rows:
 | --- | --- |
 | Purpose | Composable carousel that fills its placed container. |
 | Admin-editable content | No visible parent copy; optional editor-only `layout_name`. |
-| Settings | `height`: auto, fill, viewport, large, medium, small, custom; optional `min_height`; `aspect_ratio`: 16/9, 4/3, 1/1; `interval_ms`: 1000–30000; booleans `autoplay`, `pause_on_hover`, `show_arrows`, `show_dots`, `loop`, `swipe`, `keyboard`; `overlay`: none/default, soft, medium, dark, strong; `content_position`: center/default or six corner positions; `content_width`: medium/default, narrow, wide, full; `text_color`: auto/default, light, dark; `background_fit`: cover/default or contain. Transition is currently normalized to slide. |
+| Settings | `height`: auto, fill, viewport, large, medium, small, custom; optional `min_height`; `aspect_ratio`: 16/9, 4/3, 1/1; `interval_ms`: 1000–30000; booleans `autoplay`, `pause_on_hover`, `show_arrows`, `show_dots`, `loop`, `swipe`, `keyboard`; `overlay`: none/default, soft, medium, dark, strong; `content_position`: center/default, center-left, center-right, top-left, top-center, top-right, bottom-left, bottom-center, bottom-right; `content_width`: medium/default, narrow, wide, full; `text_color`: auto/default, light, dark; `background_fit`: cover/default or contain. Transition is currently normalized to slide. |
 | Children | Only `slide`; at least one Slide required. |
 | HTML | Root-owning `<section class="wb-slider …" data-wb-slider data-wb-public-block-type="slider">` with viewport, track, optional arrows, and dots. |
 | Example appearance | Full-width hero carousel, card-contained slider, or background-media panels with editable child content. |
@@ -367,7 +367,7 @@ The current published core catalog contains 52 rows:
 | --- | --- |
 | Purpose | One panel inside Slider. |
 | Admin-editable content | No direct visible copy; optional editor-only `layout_name` and shared `aria_label`. |
-| Settings | Background image `media_id`; `background_position`; `background_overlay` (`none`, `soft`, `medium`, `strong` — each renders a distinct scrim since WebBlocks UI 2.22.0; before that `medium` collapsed onto `strong`); `content_position`; `content_width`; `text_color`; `background_fit`. |
+| Settings | Background image `media_id`; `background_position`; `background_overlay` (`none`, `soft`, `medium`, `strong` — each renders a distinct scrim since WebBlocks UI 2.22.0; before that `medium` collapsed onto `strong`); `content_position`: center/default, center-left, center-right, top-left, top-center, top-right, bottom-left, bottom-center, bottom-right; `content_width`; `text_color`; `background_fit`. |
 | Children | Any supported structured child type; a background-only Slide is allowed. Normal parent is Slider. |
 | HTML | Root-owning `<article class="wb-slide …" data-wb-public-block-type="slide">[img.wb-slide-media]<div class="wb-slide-content">…</div></article>`. |
 | Example appearance | Background product photo with nested Header, Plain Text, and Button Link content. |
