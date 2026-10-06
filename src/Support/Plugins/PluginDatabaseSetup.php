@@ -18,6 +18,8 @@ class PluginDatabaseSetup
   /** @return array{status: string, ran: bool, paths_count: int} */
   public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false): array
   {
+    app(PluginCompatibility::class)->assertCompatible($plugin);
+
     $version = $plugin->versionText();
     if ($version === null) {
       throw new RuntimeException('Plugin version is missing.');

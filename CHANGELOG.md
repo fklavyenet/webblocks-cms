@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.92.3
+
+- Apply the same CMS compatibility gate to panel and API plugin activation. API enable and setup reject incompatible plugins with HTTP 409 and a stable `plugin_incompatible` error before changing state.
+- Guard database setup and direct migration execution before writes, repair or subprocess execution; reject incompatible CLI migration requests before loading the plugin provider. Preserve existing dependency-warning policy.
+
 ## 1.92.2
 
 - Bundle WebBlocks UI 2.30.0 with persistent non-modal popovers, shared overlay layering and the public repositioning API needed by Live Chat.

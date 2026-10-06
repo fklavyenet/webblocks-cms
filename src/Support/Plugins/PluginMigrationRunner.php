@@ -36,6 +36,8 @@ class PluginMigrationRunner
    */
   public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false): array
   {
+    app(PluginCompatibility::class)->assertCompatible($plugin);
+
     if ($plugin->migrationPaths() === []) {
       return [
         'ran' => false,

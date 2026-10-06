@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use RuntimeException;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class PluginCompatibility
@@ -20,6 +21,19 @@ class PluginCompatibility
     }
 
     return $this->matchesConstraint($this->cmsVersion(), $constraint);
+  }
+
+  public function assertCompatible(PluginDefinition $plugin): void
+  {
+    try {
+      $message = $this->incompatibilityMessage($plugin);
+    } catch (PluginException $exception) {
+      throw new RuntimeException($exception->getMessage(), previous: $exception);
+    }
+
+    if ($message !== null) {
+      throw new RuntimeException($message);
+    }
   }
 
   public function incompatibilityMessage(PluginDefinition $plugin): ?string

@@ -34,4 +34,14 @@ class InternalPluginApiContractTest extends TestCase
     $this->assertSame('plugins.install', $paths['/plugins/catalog/{plugin}/update']['post']['x-required-capability']);
     $this->assertArrayHasKey('422', $paths['/plugins/catalog/{plugin}/update']['post']['responses']);
   }
+
+  #[Test]
+  public function discovery_documents_compatibility_rejection_for_enable_and_setup(): void
+  {
+    $paths = $this->app->make(InternalApiDiscoveryController::class)->openapi()->getData(true)['paths'];
+    foreach (['/plugins/{plugin}/enable', '/plugins/{plugin}/setup'] as $path) {
+      $this->assertArrayHasKey('409', $paths[$path]['post']['responses']);
+      $this->assertStringContainsString('incompatible', $paths[$path]['post']['responses']['409']['description']);
+    }
+  }
 }

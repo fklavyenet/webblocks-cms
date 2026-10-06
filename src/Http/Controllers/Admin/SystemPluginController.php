@@ -16,6 +16,7 @@ use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAppearance;
+use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
@@ -102,8 +103,8 @@ class SystemPluginController extends Controller
       return back()->withErrors(['plugin' => 'Plugin files are missing. Reinstall the plugin package before enabling it.']);
     }
 
-    if (! $this->plugins->isCompatible($plugin)) {
-      return back()->withErrors(['plugin' => $this->plugins->incompatibilityMessage($plugin) ?? 'Plugin is not compatible with this CMS version.']);
+    if ($error = $this->cmsCompatibilityError($definition)) {
+      return $error;
     }
 
     $version = $definition->versionText();
@@ -161,6 +162,10 @@ class SystemPluginController extends Controller
     $definition = $this->plugins->get($plugin);
 
     abort_if($definition === null || $definition->installPathValue() === null, 404);
+
+    if ($error = $this->cmsCompatibilityError($definition)) {
+      return $error;
+    }
 
     if (! $this->plugins->isConfiguredEnabled($plugin)) {
       return back()->withErrors(['plugin' => 'Enable this plugin before running setup.']);
@@ -265,6 +270,17 @@ class SystemPluginController extends Controller
   /**
    * @return array<int, array<string, mixed>>
    */
+  private function cmsCompatibilityError(PluginDefinition $plugin): ?RedirectResponse
+  {
+    try {
+      app(PluginCompatibility::class)->assertCompatible($plugin);
+    } catch (RuntimeException $exception) {
+      return back()->withErrors(['plugin' => $exception->getMessage()]);
+    }
+
+    return null;
+  }
+
   private function pluginSummaries(array $catalogUpdatesByHandle = []): array
   {
     return array_map(

@@ -11,6 +11,7 @@ use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogRelease;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -200,6 +201,10 @@ class InternalPluginController extends Controller
       return $definition;
     }
 
+    if ($error = $this->cmsCompatibilityError($definition)) {
+      return $error;
+    }
+
     $version = $definition->versionText();
 
     if ($version === null) {
@@ -225,6 +230,10 @@ class InternalPluginController extends Controller
 
     if ($definition instanceof JsonResponse) {
       return $definition;
+    }
+
+    if ($error = $this->cmsCompatibilityError($definition)) {
+      return $error;
     }
 
     if (! $this->registry->isConfiguredEnabled($definition->handle())) {
@@ -305,6 +314,17 @@ class InternalPluginController extends Controller
         'version' => $version,
       ],
     ]);
+  }
+
+  private function cmsCompatibilityError(PluginDefinition $plugin): ?JsonResponse
+  {
+    try {
+      app(PluginCompatibility::class)->assertCompatible($plugin);
+    } catch (RuntimeException $exception) {
+      return $this->apiError('plugin_incompatible', $exception->getMessage(), 409);
+    }
+
+    return null;
   }
 
   private function requirePlugin(string $handle): PluginDefinition|JsonResponse

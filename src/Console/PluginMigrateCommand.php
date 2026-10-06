@@ -3,9 +3,11 @@
 namespace WebBlocks\Cms\Console;
 
 use Illuminate\Console\Command;
+use RuntimeException;
 use Throwable;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 
 class PluginMigrateCommand extends Command
@@ -25,6 +27,14 @@ class PluginMigrateCommand extends Command
       try {
         // Disabled installations also need their own classes for migrations.
         // Loading their definition here does not enable them in the host.
+        $plugin = $factory->make($installed['manifest'], $installed['path'], false);
+        try {
+          app(PluginCompatibility::class)->assertCompatible($plugin);
+        } catch (RuntimeException $exception) {
+          $this->error($exception->getMessage());
+
+          return self::FAILURE;
+        }
         $plugin = $factory->make($installed['manifest'], $installed['path'], true);
         $migrations->run($plugin, repairRecordedMigrations: (bool) $this->option('repair'));
 
