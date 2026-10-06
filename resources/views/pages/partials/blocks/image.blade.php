@@ -61,6 +61,10 @@
         @endif
       >
     @endif
+    @if ($block->publicMobileMediaUrl('content') !== null)
+      <picture>
+        @include('webblocks-cms::pages.partials.blocks._mobile-image-source', ['mobileVariant' => 'content'])
+    @endif
     <img
       src="{{ $imageSource }}"
       @if ($srcset) srcset="{{ $srcset }}" sizes="(max-width: 800px) 100vw, 1280px" @endif
@@ -70,6 +74,9 @@
       @if ($image?->width) width="{{ $image->width }}" @endif
       @if ($image?->height) height="{{ $image->height }}" @endif
     >
+    @if ($block->publicMobileMediaUrl('content') !== null)
+      </picture>
+    @endif
     @if ($href !== '' || $opensViewer)
       </a>
     @endif

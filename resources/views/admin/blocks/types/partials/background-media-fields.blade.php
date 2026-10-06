@@ -70,3 +70,5 @@
         </div>
     </div>
 </div>
+
+@include('webblocks-cms::admin.blocks.types.partials.mobile-media-fields')

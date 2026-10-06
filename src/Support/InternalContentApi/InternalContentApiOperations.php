@@ -4,7 +4,9 @@ namespace WebBlocks\Cms\Support\InternalContentApi;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
@@ -19,6 +21,7 @@ use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
+use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -958,6 +961,19 @@ class InternalContentApiOperations
         } else {
           $payload['media_id'] = (int) $media->id;
         }
+      }
+    }
+
+    if (array_key_exists('mobile_media_id', $block)) {
+      $validator = Validator::make(
+        ['mobile_media_id' => $block['mobile_media_id']],
+        ['mobile_media_id' => BlockMobileMediaRequest::rulesForType($blockType->slug)],
+      );
+
+      if ($validator->fails()) {
+        $errors[] = $this->error($path.'.mobile_media_id', $validator->errors()->first('mobile_media_id'));
+      } elseif (! empty($block['mobile_media_id'])) {
+        $payload['_block_media'][MobileBlockMedia::ROLE] = [(int) $block['mobile_media_id']];
       }
     }
 

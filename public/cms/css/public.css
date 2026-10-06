@@ -531,3 +531,12 @@ body.wb-gallery.wb-gallery-document-scope {
   block-size: 100%;
   border: 0;
 }
+
+/* Optional art direction for image-backed blocks. Keep the default background
+   as the fallback for blocks without a public mobile image. */
+@media (max-width: 768px) {
+  .wb-background-media.wb-background-media,
+  .wb-public-hero--full-bleed.wb-background-media {
+    background-image: var(--wb-background-media-overlay), var(--wb-background-media-mobile-image, var(--wb-background-media-image));
+  }
+}

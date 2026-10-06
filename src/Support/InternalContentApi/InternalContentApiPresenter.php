@@ -290,6 +290,8 @@ class InternalContentApiPresenter
       'variant' => $block->variant,
       'url' => $block->url,
       'media_id' => $block->media_id,
+      'mobile_media_id' => $block->mobileMedia()?->id,
+      'mobile_media' => $block->mobileMedia() ? $this->media($block->mobileMedia()) : null,
       'media' => $block->relationLoaded('media') && $block->media ? $this->media($block->media) : null,
       'translations' => [
         'text' => $block->relationLoaded('textTranslations') ? $block->textTranslations->values()->all() : [],

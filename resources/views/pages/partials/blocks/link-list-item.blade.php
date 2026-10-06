@@ -25,7 +25,14 @@
 @if ($href !== null && $title !== null)
     <a href="{{ $href }}" @class(['wb-link-list-item', 'wb-link-list-item--media' => $hasLeadingVisual])>
         @if ($thumbnailUrl !== null)
+            @if ($block->publicMobileMediaUrl('thumbnail') !== null)
+                <picture>
+                    @include('webblocks-cms::pages.partials.blocks._mobile-image-source', ['mobileVariant' => 'thumbnail'])
+            @endif
             <img src="{{ $thumbnailUrl }}" alt="{{ $thumbnail->alt_text ?: '' }}" class="wb-link-list-thumb" loading="lazy" decoding="async">
+            @if ($block->publicMobileMediaUrl('thumbnail') !== null)
+                </picture>
+            @endif
         @elseif ($iconClass !== null)
             <i class="{{ $iconClass }} wb-link-list-icon" aria-hidden="true"></i>
         @endif

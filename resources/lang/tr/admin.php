@@ -3633,6 +3633,13 @@ $translations = [
       'author_label' => 'Yazar',
       'source_label' => 'Kaynak',
     ],
+    'mobile_media' => [
+      'title' => 'Mobil görsel (isteğe bağlı)',
+      'choose' => 'Mobil görsel seç',
+      'replace' => 'Mobil görseli değiştir',
+      'remove' => 'Mobil görseli kaldır',
+      'help' => '768 px ve altındaki ekranlarda kullanılır. Boş bırakılırsa varsayılan görsel gösterilir. Aynı görselin farklı bir kadrajını seçin; alternatif metin ve açıklamalar ortak kalır.',
+    ],
     'background_media' => [
       'title' => 'Arka Plan Medyası',
       'choose_media' => 'Medyadan Seç',

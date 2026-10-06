@@ -58,3 +58,5 @@
         <textarea id="content" name="content" class="wb-textarea" rows="6">{{ old('content', $block->content) }}</textarea>
     </div>
 </div>
+
+@include('webblocks-cms::admin.blocks.types.partials.mobile-media-fields')

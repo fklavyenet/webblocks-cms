@@ -3618,6 +3618,13 @@ $translations = [
       'author_label' => 'Auteur',
       'source_label' => 'Source',
     ],
+    'mobile_media' => [
+      'title' => 'Image mobile (facultative)',
+      'choose' => 'Choisir une image mobile',
+      'replace' => 'Remplacer l’image mobile',
+      'remove' => 'Retirer l’image mobile',
+      'help' => 'Utilisée sur les écrans jusqu’à 768 px de large. Sans sélection, l’image par défaut est affichée. Choisissez un autre cadrage du même visuel ; le texte alternatif et les légendes restent communs.',
+    ],
     'background_media' => [
       'title' => 'Média d\'arrière-plan',
       'choose_media' => 'Choisir depuis les médias',

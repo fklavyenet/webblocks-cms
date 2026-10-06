@@ -174,6 +174,19 @@ Content-plan conventions:
 - Put locale-owned copy directly under `translations` for the selected plan locale.
 - Put URL, target, presentation variant, and other shared options under `settings`.
 - Put direct Media Library assignment in `media_id`.
+- `slide`, `image`, `hero`, `section`, `card`, `cta`, `content_header`, and
+  `link-list-item` also accept an optional top-level `mobile_media_id` referencing
+  an image Media Library record. It is stored in `block_media` with role
+  `mobile_image`, shared across locales, and editable through the admin media
+  picker and `PATCH /blocks/{block}`. On screens up to 768 px wide it replaces
+  the default image; an absent, deleted, or private mobile image falls back to
+  the default. Send `null` to clear it; omitting it in PATCH preserves it.
+  Foreground images use `<picture><source media="(max-width: 768px)">`;
+  background blocks use a responsive CSS background. Use another crop of the
+  same visual: alt text, captions, position, fit, overlays, and links stay
+  shared. The Image block's Gallery Viewer continues to open the default
+  full-resolution image. Gallery items, brand logos, video, and audio do not
+  accept this field.
 - Put Gallery items in `gallery_items` or `gallery_media_ids`.
 - Use only nested `children`; do not send `id`, `parent_id`, `block_id`, `slot_type_id`, or `block_type_id`.
 - The API currently accepts a broadly shaped `settings` object. That permissiveness is not permission to invent settings; use only the keys listed below.

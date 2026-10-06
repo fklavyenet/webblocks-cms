@@ -69,3 +69,5 @@
         <div class="wb-text-sm wb-text-muted">{{ $adminText('viewer_group_help') }}</div>
     </div>
 </div>
+
+@include('webblocks-cms::admin.blocks.types.partials.mobile-media-fields')

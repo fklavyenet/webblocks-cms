@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.91.0
+
+- Add optional mobile images to Slide, Image, Hero, Section, Card, CTA, Content Header and Link List Item blocks, editable in the admin and through the content API.
+- Select mobile images on screens up to 768 px wide and retain the default image when no public mobile image is available; preserve media tracking, copying and export through canonical block media relations.
+
 ## 1.90.2
 
 - Rename Personal AI Tokens to Personal API Tokens across profile links, page headings and status messages in all supported admin languages.

@@ -3620,6 +3620,13 @@ $translations = [
       'author_label' => 'Autor',
       'source_label' => 'Quelle',
     ],
+    'mobile_media' => [
+      'title' => 'Mobiles Bild (optional)',
+      'choose' => 'Mobiles Bild auswählen',
+      'replace' => 'Mobiles Bild ersetzen',
+      'remove' => 'Mobiles Bild entfernen',
+      'help' => 'Wird bei Bildschirmbreiten bis 768 px verwendet. Ohne Auswahl wird das Standardbild angezeigt. Wählen Sie einen anderen Ausschnitt desselben Motivs; Alternativtext und Bildunterschriften bleiben gemeinsam.',
+    ],
     'background_media' => [
       'title' => 'Hintergrundmedium',
       'choose_media' => 'Aus Medien wählen',

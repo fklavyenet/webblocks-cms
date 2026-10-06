@@ -79,6 +79,7 @@
                         'assetPickerAssets' => $assetPickerAssets,
                         'assetPickerFolders' => $assetPickerFolders,
                         'selectedAsset' => $slotModalSelectedAsset,
+                        'selectedMobileAsset' => $slotModalSelectedMobileAsset ?? null,
                         'selectedGalleryAssets' => $slotModalSelectedGalleryAssets,
                         'selectedAttachmentAsset' => $slotModalSelectedAttachmentAsset,
                         'lockPage' => true,

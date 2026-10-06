@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
@@ -18,6 +19,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
@@ -270,6 +272,7 @@ class BlockRequest extends FormRequest
       'content_collection_empty_behavior' => [$supportsContentCollection ? 'nullable' : 'prohibited', Rule::in(['hide_template', 'keep_template'])],
       'content_collection_error_behavior' => [$supportsContentCollection ? 'nullable' : 'prohibited', Rule::in(['hide_template', 'keep_template'])],
       'media_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
+      'mobile_media_id' => BlockMobileMediaRequest::rulesForType($selectedBlockType?->slug),
       'asset_id' => ['nullable', 'integer', 'exists:wbcms_media,id'],
       'gallery_media_ids' => ['nullable', 'array'],
       'gallery_media_ids.*' => ['integer', 'exists:wbcms_media,id'],
@@ -1034,6 +1037,17 @@ class BlockRequest extends FormRequest
       'gallery_item' => $galleryAssetIds,
       'attachment' => $attachmentAssetId ? [$attachmentAssetId] : [],
     ];
+    $selectedType = BlockType::query()->find($data['block_type_id'] ?? null)?->slug;
+
+    if (MobileBlockMedia::supports($selectedType)) {
+      $mobileMediaId = $this->has('mobile_media_id')
+        ? $authorization->normalizeAllowedMediaId($this->user(), ! empty($data['mobile_media_id']) ? (int) $data['mobile_media_id'] : null)
+        : $existingBlock?->mobileMedia()?->id;
+      $data['_block_media'][MobileBlockMedia::ROLE] = $mobileMediaId ? [$mobileMediaId] : [];
+    }
+
+    unset($data['mobile_media_id']);
+
     $data['_gallery_items'] = $submittedGalleryItems
       ->filter(fn (array $item) => in_array($item['media_id'], $galleryAssetIds, true))
       ->values()

@@ -16,6 +16,7 @@ use WebBlocks\Cms\Support\Applications\ApplicationDefinition;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState;
@@ -1480,6 +1481,34 @@ class Block extends CmsModel
     return $this->settings;
   }
 
+  public function supportsMobileMedia(): bool
+  {
+    return MobileBlockMedia::supports($this->typeSlug());
+  }
+
+  public function mobileMedia(): ?Media
+  {
+    if (! $this->exists && ! $this->relationLoaded('blockAssets')) {
+      return null;
+    }
+
+    if (! $this->supportsMobileMedia()) {
+      return null;
+    }
+
+    // Public page queries already eager-load blockAssets.asset.
+    $media = $this->blockAssets->firstWhere('role', MobileBlockMedia::ROLE)?->asset;
+
+    return $media?->isImage() ? $media : null;
+  }
+
+  public function publicMobileMediaUrl(?string $variant = null): ?string
+  {
+    $media = $this->mobileMedia();
+
+    return $variant !== null ? $media?->transformUrl($variant) : $media?->url();
+  }
+
   public function supportsBackgroundMedia(): bool
   {
     return in_array($this->typeSlug(), ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
@@ -1570,7 +1599,15 @@ class Block extends CmsModel
 
     $escapedUrl = str_replace(['\\', '\''], ['\\\\', '\\\''], $url);
 
-    return "--wb-background-media-image: url('".$escapedUrl."'); --wb-background-media-position: ".$this->backgroundPosition().';';
+    $style = "--wb-background-media-image: url('".$escapedUrl."'); --wb-background-media-position: ".$this->backgroundPosition().';';
+    $mobileUrl = $this->publicMobileMediaUrl();
+
+    if ($mobileUrl !== null) {
+      $escapedMobileUrl = str_replace(['\\', "'"], ['\\\\', "\\'"], $mobileUrl);
+      $style .= " --wb-background-media-mobile-image: url('".$escapedMobileUrl."');";
+    }
+
+    return $style;
   }
 
   public function setting(string $key, mixed $default = null): mixed

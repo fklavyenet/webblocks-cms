@@ -6,6 +6,7 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 
@@ -51,6 +52,15 @@ class BlockTypeContractRegistry
     }
 
     $contract = $this->documentedContracts()[$slug];
+
+    if (MobileBlockMedia::supports($slug)) {
+      $contract['admin_form_fields'][] = 'Mobile image (optional)';
+      $contract['shared_settings_fields'][] = 'mobile_media_id';
+      $contract['storage_fields'][] = 'Optional mobile image is stored in block_media with role mobile_image; it is shared across locales.';
+      $contract['media_relationship_fields'][] = 'mobile_media_id assigns an image Media Library record through block_media.mobile_image. Send null to clear the override.';
+      $contract['renderer_root_contract'] .= ' At viewport widths up to 768px, a public mobile image overrides the default visual through picture/source or the background image; absent or unavailable overrides use the default image.';
+    }
+
     $translationFamily = $this->translationRegistry->familyFor($slug);
     $block = $this->contractBlock($catalog);
 

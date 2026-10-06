@@ -32,6 +32,10 @@
     @if ($label !== '') aria-label="{{ $label }}"@endif
 >
     @if ($mediaUrl !== null)
+        @if ($block->publicMobileMediaUrl() !== null)
+            <picture>
+                @include('webblocks-cms::pages.partials.blocks._mobile-image-source', ['mobileVariant' => null])
+        @endif
         <img
             class="{{ $mediaClasses }}"
             src="{{ $mediaUrl }}"
@@ -40,6 +44,9 @@
             @if ($media?->height) height="{{ $media->height }}"@endif
             style="{{ $block->publicBackgroundMediaPositionStyle() }}"
         >
+        @if ($block->publicMobileMediaUrl() !== null)
+            </picture>
+        @endif
     @endif
 
     <div class="wb-slide-content">

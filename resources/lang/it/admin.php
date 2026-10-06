@@ -3617,6 +3617,13 @@ $translations = [
       'author_label' => 'Autore',
       'source_label' => 'Fonte',
     ],
+    'mobile_media' => [
+      'title' => 'Immagine mobile (facoltativa)',
+      'choose' => 'Scegli immagine mobile',
+      'replace' => 'Sostituisci immagine mobile',
+      'remove' => 'Rimuovi immagine mobile',
+      'help' => 'Usata su schermi fino a 768 px di larghezza. Se vuota, viene mostrata l’immagine predefinita. Scegli un’altra inquadratura della stessa immagine; testo alternativo e didascalie restano condivisi.',
+    ],
     'background_media' => [
       'title' => 'Media di sfondo',
       'choose_media' => 'Scegli dai media',

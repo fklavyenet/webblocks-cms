@@ -86,6 +86,9 @@ class BlockPayloadWriter
         $blockMedia->delete();
       });
 
+    $block->unsetRelation('blockAssets');
+    $block->unsetRelation('blockMedia');
+
     return $syncedAssets;
   }
 

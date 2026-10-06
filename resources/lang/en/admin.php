@@ -3861,6 +3861,13 @@ return [
       'author_label' => 'Author',
       'source_label' => 'Source',
     ],
+    'mobile_media' => [
+      'title' => 'Mobile image (optional)',
+      'choose' => 'Choose mobile image',
+      'replace' => 'Replace mobile image',
+      'remove' => 'Remove mobile image',
+      'help' => 'Used on screens up to 768 px wide. If left empty, the default image is used. Choose another crop of the same visual; alt text and captions stay shared.',
+    ],
     'background_media' => [
       'title' => 'Background Media',
       'choose_media' => 'Choose from Media',

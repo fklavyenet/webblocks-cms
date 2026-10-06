@@ -8,6 +8,9 @@ use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class MediaUsageResolver
 {
@@ -16,6 +19,7 @@ class MediaUsageResolver
     return $this->blockUsages($media)
       ->concat($this->galleryUsages($media))
       ->concat($this->attachmentUsages($media))
+      ->concat($this->mobileImageUsages($media))
       ->concat($this->siteBrandingUsages($media))
       ->concat($this->pageSeoUsages($media))
       ->values();
@@ -81,6 +85,29 @@ class MediaUsageResolver
         return [
           'type' => 'Block',
           'context' => 'Button attachment',
+          'label' => $block?->title ?: $block?->typeName(),
+          'admin_url' => $block ? route('admin.blocks.edit', $block) : null,
+          'page_title' => $block?->page?->title,
+        ];
+      });
+  }
+
+  private function mobileImageUsages(Media $media): Collection
+  {
+    $locale = app(AdminLocaleResolver::class)->locale();
+    $context = app(CmsTranslator::class)->get('admin.blocks.mobile_media.title', $locale);
+
+    return BlockMedia::query()
+      ->with(['block.page', 'block.blockType'])
+      ->where('media_id', $media->id)
+      ->where('role', MobileBlockMedia::ROLE)
+      ->get()
+      ->map(function (BlockMedia $blockMedia) use ($context): array {
+        $block = $blockMedia->block;
+
+        return [
+          'type' => 'Block',
+          'context' => $context,
           'label' => $block?->title ?: $block?->typeName(),
           'admin_url' => $block ? route('admin.blocks.edit', $block) : null,
           'page_title' => $block?->page?->title,

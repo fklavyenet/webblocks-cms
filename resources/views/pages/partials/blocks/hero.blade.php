@@ -72,7 +72,14 @@
 
   @if ($isSplit)
     <figure class="wb-promo-media">
+      @if ($block->publicMobileMediaUrl() !== null)
+        <picture>
+          @include('webblocks-cms::pages.partials.blocks._mobile-image-source', ['mobileVariant' => null])
+      @endif
       <img src="{{ $mediaUrl }}" alt="" loading="lazy" decoding="async">
+      @if ($block->publicMobileMediaUrl() !== null)
+        </picture>
+      @endif
     </figure>
   @endif
 </section>

@@ -530,6 +530,7 @@ class PageController extends Controller
       'featureItemBlockType' => $blockTypes->firstWhere('slug', 'feature-item'),
       'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
       'slotModalSelectedAsset' => $modalState['selectedAsset'],
+      'slotModalSelectedMobileAsset' => $modalState['selectedMobileAsset'],
       'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
       'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
       'expandedBlockIds' => $expandedBlockIds,
@@ -584,6 +585,7 @@ class PageController extends Controller
       'assetPickerAssets' => $needsAssetPicker ? $this->assetPickerAssets() : collect(),
       'assetPickerFolders' => $needsAssetPicker ? $this->assetPickerFolders() : collect(),
       'slotModalSelectedAsset' => $modalState['selectedAsset'],
+      'slotModalSelectedMobileAsset' => $modalState['selectedMobileAsset'],
       'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
       'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
       'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
@@ -987,6 +989,7 @@ class PageController extends Controller
         'block' => $editingBlock,
         'selectedBlockType' => $selectedBlockType,
         'selectedAsset' => $this->resolveSelectedAsset(old('media_id', old('asset_id', $editingBlock->media_id))),
+        'selectedMobileAsset' => $this->resolveSelectedAsset(old('mobile_media_id', $editingBlock->mobileMedia()?->id)),
         'selectedGalleryAssets' => $this->resolveGalleryAssets(old('gallery_media_ids', old('gallery_asset_ids', $editingBlock->galleryMediaIds()))),
         'selectedAttachmentAsset' => $this->resolveSelectedAsset(old('attachment_media_id', old('attachment_asset_id', $editingBlock->attachmentMedia()?->id))),
       ];
@@ -1001,6 +1004,7 @@ class PageController extends Controller
         'block' => null,
         'selectedBlockType' => null,
         'selectedAsset' => null,
+        'selectedMobileAsset' => null,
         'selectedGalleryAssets' => collect(),
         'selectedAttachmentAsset' => null,
       ];
@@ -1027,6 +1031,7 @@ class PageController extends Controller
       'block' => $block,
       'selectedBlockType' => $selectedBlockType,
       'selectedAsset' => $this->resolveSelectedAsset(old('media_id', old('asset_id'))),
+      'selectedMobileAsset' => $this->resolveSelectedAsset(old('mobile_media_id')),
       'selectedGalleryAssets' => $this->resolveGalleryAssets(old('gallery_media_ids', old('gallery_asset_ids', []))),
       'selectedAttachmentAsset' => $this->resolveSelectedAsset(old('attachment_media_id', old('attachment_asset_id'))),
     ];

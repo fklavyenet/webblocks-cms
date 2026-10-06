@@ -191,6 +191,10 @@ class BlockController extends Controller
     $selectedAsset = $block->media_id
       ? $this->authorization->scopeMediaForUser(Media::query(), $request->user())->find($block->media_id)
       : null;
+    $mobileMediaId = old('mobile_media_id', $block->mobileMedia()?->id);
+    $selectedMobileAsset = $mobileMediaId
+      ? $this->authorization->scopeMediaForUser(Media::query(), $request->user())->find($mobileMediaId)
+      : null;
     $selectedGalleryAssets = $block->galleryAssets();
     $selectedAttachmentAsset = $block->attachmentAsset();
     $selectedBlockType = $this->selectedBlockType($request, $block, $blockTypes);
@@ -213,6 +217,7 @@ class BlockController extends Controller
       'assetPickerAssets' => $assetPickerAssets,
       'assetPickerFolders' => $this->assetPickerFolders(),
       'selectedAsset' => $selectedAsset,
+      'selectedMobileAsset' => $selectedMobileAsset,
       'selectedGalleryAssets' => $selectedGalleryAssets,
       'selectedAttachmentAsset' => $selectedAttachmentAsset,
       'selectedBlockType' => $selectedBlockType,
@@ -330,6 +335,10 @@ class BlockController extends Controller
     $selectedAsset = $block->media_id
       ? $this->authorization->scopeMediaForUser(Media::query(), $request->user())->find($block->media_id)
       : null;
+    $mobileMediaId = old('mobile_media_id', $block->mobileMedia()?->id);
+    $selectedMobileAsset = $mobileMediaId
+      ? $this->authorization->scopeMediaForUser(Media::query(), $request->user())->find($mobileMediaId)
+      : null;
     $selectedGalleryAssets = $block->galleryAssets();
     $selectedAttachmentAsset = $block->attachmentAsset();
     $selectedBlockType = $this->selectedBlockType($request, $block, $blockTypes);
@@ -353,6 +362,7 @@ class BlockController extends Controller
       'assetPickerAssets' => $assetPickerAssets,
       'assetPickerFolders' => $this->assetPickerFolders(),
       'selectedAsset' => $selectedAsset,
+      'selectedMobileAsset' => $selectedMobileAsset,
       'selectedGalleryAssets' => $selectedGalleryAssets,
       'selectedAttachmentAsset' => $selectedAttachmentAsset,
       'selectedBlockType' => $selectedBlockType,

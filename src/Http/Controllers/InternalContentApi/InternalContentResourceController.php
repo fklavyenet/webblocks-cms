@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Actions\Blocks\SetBlockMobileMedia;
+use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\CmsApiToken;
@@ -395,6 +397,7 @@ class InternalContentResourceController extends Controller
           'content_collection or settings.content_collection',
           'media_id or asset_id for navbar-brand/sidebar-brand logo media',
           'media_id or asset_id for hero/section/card/cta/content_header/slide background media',
+          'mobile_media_id for slide/image/hero/section/card/cta/content_header/link-list-item; null clears the mobile override',
           'settings.url',
           'settings.target',
           'settings.aria_label',
@@ -600,6 +603,7 @@ class InternalContentResourceController extends Controller
       'translations.locale',
       'slots.slotType',
       'blocks.blockType',
+      'blocks.blockAssets.asset',
       'blocks.slotType',
       'blocks.textTranslations',
       'blocks.buttonTranslations',
@@ -797,7 +801,7 @@ class InternalContentResourceController extends Controller
   {
     $blocks = Block::query()
       ->when($request->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereHas('page', fn ($pageQuery) => $pageQuery->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids'))))
-      ->with(['blockType', 'slotType', 'media', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+      ->with(['blockType', 'slotType', 'media', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
       ->when($request->filled('page'), fn ($query) => $query->where('page_id', (int) $request->query('page')))
       ->whereNull('parent_id')
       ->orderBy('sort_order')
@@ -816,6 +820,7 @@ class InternalContentResourceController extends Controller
       'blockType',
       'slotType',
       'media',
+      'blockAssets.asset',
       'textTranslations',
       'buttonTranslations',
       'imageTranslations',
@@ -823,6 +828,7 @@ class InternalContentResourceController extends Controller
       'children.blockType',
       'children.slotType',
       'children.media',
+      'children.blockAssets.asset',
       'children.textTranslations',
       'children.buttonTranslations',
       'children.imageTranslations',
@@ -1296,6 +1302,15 @@ class InternalContentResourceController extends Controller
       }
     }
 
+    $mobileMediaValidator = Validator::make(
+      $request->only('mobile_media_id'),
+      ['mobile_media_id' => BlockMobileMediaRequest::rulesForType($type)],
+    );
+
+    if ($mobileMediaValidator->fails()) {
+      return $this->validationError('mobile_media_id', $mobileMediaValidator->errors()->first('mobile_media_id'));
+    }
+
     $locale = $this->resolveLocale($request);
     $translations = $request->input('translations', []);
 
@@ -1362,6 +1377,10 @@ class InternalContentResourceController extends Controller
         $block->save();
       }
 
+      if ($request->has('mobile_media_id')) {
+        app(SetBlockMobileMedia::class)->execute($block, $request->input('mobile_media_id') ? (int) $request->input('mobile_media_id') : null);
+      }
+
       if ($translationPayload !== []) {
         $block->load(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations']);
 
@@ -1373,6 +1392,7 @@ class InternalContentResourceController extends Controller
       'blockType',
       'slotType',
       'media',
+      'blockAssets.asset',
       'textTranslations',
       'buttonTranslations',
       'imageTranslations',
@@ -1380,6 +1400,7 @@ class InternalContentResourceController extends Controller
       'children.blockType',
       'children.slotType',
       'children.media',
+      'children.blockAssets.asset',
       'children.textTranslations',
       'children.buttonTranslations',
       'children.imageTranslations',
