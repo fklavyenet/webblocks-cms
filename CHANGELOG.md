@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.92.0
+
+- Apply plugin database changes automatically during installation, updates and activation; keep a plugin disabled after a failed setup and offer a clear retry action.
+- Let plugins declare their own sidebar icons and let system administrators choose an override through the existing icon picker on plugin settings and detail pages. Preserve choices across updates and provide an independent Save action.
+- Keep shared core menu group icons stable and show pending or failed database setup with actionable status.
+
 ## 1.91.2
 
 - Fix public search returning HTTP 500 when all search words match a result but the exact phrase is absent from its content. Keep the truncated excerpt as a string instead of calling a method on it.
