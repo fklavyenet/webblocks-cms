@@ -160,7 +160,8 @@
 
                                         @if ($plugin['can_update_from_catalog'])
                                             <div class="wb-modal wb-modal-lg" id="{{ $updateModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $updateModalId }}-title" aria-describedby="{{ $updateModalId }}-body">
-                                                <div class="wb-modal-dialog">
+                                                <form class="wb-modal-dialog" method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}">
+                                                    @csrf
                                                     <div class="wb-modal-header">
                                                         <h2 class="wb-modal-title" id="{{ $updateModalId }}-title">{{ $systemPluginsIndexText('update_confirm_title', ['label' => $plugin['label']]) }}</h2>
                                                         <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $systemPluginsIndexText('update_confirm_cancel') }}">
@@ -168,52 +169,25 @@
                                                         </button>
                                                     </div>
 
-                                                    <form method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}">
-                                                        @csrf
+                                                    <div class="wb-modal-body wb-stack wb-stack-4">
+                                                        <p class="wb-m-0" id="{{ $updateModalId }}-body">{{ $systemPluginsIndexText('update_confirm_body', ['label' => $plugin['label'], 'current' => $plugin['version'] ?? $systemPluginsIndexText('unknown'), 'version' => $plugin['catalog_update']['version']]) }}</p>
 
-                                                        <div class="wb-modal-body wb-stack wb-gap-4">
-                                                            <p id="{{ $updateModalId }}-body">{{ $systemPluginsIndexText('update_confirm_body', ['label' => $plugin['label'], 'current' => $plugin['version'] ?? $systemPluginsIndexText('unknown'), 'version' => $plugin['catalog_update']['version']]) }}</p>
-                                                            @if ($plugin['can_setup'])
-                                                                <p class="wb-text-sm">{{ $systemPluginsIndexText('database_update_help') }}</p>
-                                                            @endif
+                                                        @include('webblocks-cms::admin.system.plugins.partials.update-release-notes')
 
-                                                            <section class="wb-stack wb-gap-2" aria-labelledby="{{ $updateModalId }}-release-notes">
-                                                                <h3 id="{{ $updateModalId }}-release-notes">{{ $systemPluginsIndexText('update_release_notes') }}</h3>
+                                                        @if ($plugin['can_setup'])
+                                                            <p class="wb-text-sm wb-text-muted wb-mb-0">{{ $systemPluginsIndexText('database_update_help') }}</p>
+                                                        @endif
+                                                    </div>
 
-                                                                @if (! empty($plugin['catalog_update']['summary']))
-                                                                    <p>{{ $plugin['catalog_update']['summary'] }}</p>
-                                                                @endif
-
-                                                                @if (! empty($plugin['catalog_update']['highlights']))
-                                                                    <ul>
-                                                                        @foreach ($plugin['catalog_update']['highlights'] as $highlight)
-                                                                            <li>{{ $highlight }}</li>
-                                                                        @endforeach
-                                                                    </ul>
-                                                                @elseif (! empty($plugin['catalog_update']['notes']) && $plugin['catalog_update']['notes'] !== $plugin['catalog_update']['summary'])
-                                                                    <p class="wb-text-sm">{{ $plugin['catalog_update']['notes'] }}</p>
-                                                                @elseif (empty($plugin['catalog_update']['summary']))
-                                                                    <p class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('update_release_notes_unavailable') }}</p>
-                                                                @endif
-
-                                                                @if (! empty($plugin['catalog_update']['details_url']))
-                                                                    <a class="wb-btn wb-btn-secondary" href="{{ $plugin['catalog_update']['details_url'] }}" target="_blank" rel="noopener noreferrer">
-                                                                        <i class="wb-icon wb-icon-external-link" aria-hidden="true"></i>{{ $systemPluginsIndexText('update_release_notes_link') }}
-                                                                    </a>
-                                                                @endif
-                                                            </section>
+                                                    <div class="wb-modal-footer">
+                                                        <div class="wb-cluster wb-cluster-2">
+                                                            <button type="submit" class="wb-btn wb-btn-primary" data-wb-busy data-wb-busy-label="{{ $systemPluginsIndexText('update_in_progress') }}">
+                                                                <span data-wb-busy-text>{{ $systemPluginsIndexText('update_confirm_submit') }}</span>
+                                                            </button>
+                                                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $systemPluginsIndexText('update_confirm_cancel') }}</button>
                                                         </div>
-
-                                                        <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                                                            <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                                                                <button type="submit" class="wb-btn wb-btn-primary" data-wb-busy data-wb-busy-label="{{ $systemPluginsIndexText('update_in_progress') }}">
-                                                                    <span data-wb-busy-text>{{ $systemPluginsIndexText('update_confirm_submit') }}</span>
-                                                                </button>
-                                                                <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $systemPluginsIndexText('update_confirm_cancel') }}</button>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
+                                                    </div>
+                                                </form>
                                             </div>
                                         @endif
 

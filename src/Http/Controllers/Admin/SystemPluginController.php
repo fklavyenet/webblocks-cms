@@ -416,6 +416,7 @@ class SystemPluginController extends Controller
         'summary' => $plugin->latestCompatibleRelease->summary,
         'notes' => $plugin->latestCompatibleRelease->notes,
         'highlights' => $plugin->latestCompatibleRelease->highlights,
+        'note_items' => $plugin->latestCompatibleRelease->noteItems(),
         'details_url' => $plugin->latestCompatibleRelease->detailsUrl,
       ];
     }

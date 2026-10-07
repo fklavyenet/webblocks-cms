@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.92.4
+
+- Make plugin update release notes readable as separate summary and bullet items. Prefer structured highlights, preserve list items and wrapped lines from plain release notes, and avoid repeating the summary or duplicate items.
+- Use shared WebBlocks UI list and spacing primitives in the update modal. Keep its header and action footer visible while long notes scroll within the body; continue escaping catalog text and validating release detail links.
+
 ## 1.92.3
 
 - Apply the same CMS compatibility gate to panel and API plugin activation. API enable and setup reject incompatible plugins with HTTP 409 and a stable `plugin_incompatible` error before changing state.

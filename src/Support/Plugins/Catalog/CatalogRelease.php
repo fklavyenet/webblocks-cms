@@ -54,6 +54,51 @@ class CatalogRelease
     );
   }
 
+  /** @return array<int, string> */
+  public function noteItems(): array
+  {
+    $items = $this->highlights;
+    if ($items === [] && $this->notes !== null) {
+      $current = '';
+      foreach (preg_split('/\R/u', $this->notes) ?: [] as $line) {
+        $line = trim($line);
+        if ($line === '' || preg_match('/^#{1,6}\s/', $line)) {
+          if ($current !== '') {
+            $items[] = $current;
+            $current = '';
+          }
+
+          continue;
+        }
+        if (preg_match('/^(?:[-*+]\s+|\d+[.)]\s+)(.+)$/u', $line, $match)) {
+          if ($current !== '') {
+            $items[] = $current;
+          }
+          $current = trim($match[1]);
+        } else {
+          $current = trim($current.' '.$line);
+        }
+      }
+      if ($current !== '') {
+        $items[] = $current;
+      }
+    }
+    $normalize = static fn (string $text): string => mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $text)));
+    $summary = $normalize($this->summary ?? '');
+    $seen = [];
+
+    return array_values(array_filter(array_map(static function ($item) use (&$seen, $normalize, $summary): ?string {
+      $item = is_string($item) ? trim($item) : '';
+      $key = $normalize($item);
+      if ($key === '' || $key === $summary || isset($seen[$key])) {
+        return null;
+      }
+      $seen[$key] = true;
+
+      return $item;
+    }, $items)));
+  }
+
   public function displaySummary(): ?string
   {
     return $this->summary ?? $this->notes;
