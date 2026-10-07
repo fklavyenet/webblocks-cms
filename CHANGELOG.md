@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.92.5
+
+- Restore readable icon choices in dark and system-dark Auto modes, including plugin sidebar icon selection. Keep normal and selected cards on the active theme's surface.
+- Fix the same contrast issue on selected media picker rows and use the supported muted-text token for media previews, navigation labels, block indicators and editor text. Make slot preview tints follow the active theme.
+
 ## 1.92.4
 
 - Make plugin update release notes readable as separate summary and bullet items. Prefer structured highlights, preserve list items and wrapped lines from plain release notes, and avoid repeating the summary or duplicate items.

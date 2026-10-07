@@ -69,19 +69,19 @@ svg.wb-sidebar-brand-logo {
 }
 
 .wb-slot-visual-header {
-    background: color-mix(in srgb, var(--wb-accent-soft) 55%, white);
+    background: color-mix(in srgb, var(--wb-accent-soft) 55%, var(--wb-surface));
 }
 
 .wb-slot-visual-main {
-    background: color-mix(in srgb, #2563eb 10%, white);
+    background: color-mix(in srgb, #2563eb 10%, var(--wb-surface));
 }
 
 .wb-slot-visual-sidebar {
-    background: color-mix(in srgb, #7c3aed 10%, white);
+    background: color-mix(in srgb, #7c3aed 10%, var(--wb-surface));
 }
 
 .wb-slot-visual-footer {
-    background: color-mix(in srgb, #ea580c 10%, white);
+    background: color-mix(in srgb, #ea580c 10%, var(--wb-surface));
 }
 
 
@@ -124,7 +124,7 @@ svg.wb-sidebar-brand-logo {
 
 .wb-admin-rich-text-surface:empty::before {
     content: "Write body copy...";
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
 }
 
 .wb-admin-rich-text-surface p,
@@ -167,7 +167,7 @@ svg.wb-sidebar-brand-logo {
     border-inline-start: 3px solid var(--wb-border);
     border-radius: var(--wb-r-md);
     background: var(--wb-surface-2);
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
 }
 
 .wb-admin-rich-text-surface blockquote:last-child {
@@ -223,7 +223,7 @@ table.wb-admin-table-grid td {
 table.wb-admin-table-grid thead th,
 table.wb-admin-table-grid .wb-admin-table-grid-rowhead {
     background: var(--wb-surface-2);
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
     font-size: 0.8125rem;
     font-weight: 600;
 }
@@ -283,7 +283,7 @@ input.wb-admin-table-grid-input:focus {
 }
 
 .wb-admin-table-grid-row.is-header .wb-admin-table-grid-rowhead {
-    color: var(--wb-accent-text, var(--wb-text-muted));
+    color: var(--wb-accent-text, var(--wb-muted));
 }
 
 .wb-cms-block-tree-item {
@@ -330,7 +330,7 @@ input.wb-admin-table-grid-input:focus {
     font-weight: 600;
     line-height: 1.2;
     background: var(--wb-surface-2);
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
 }
 
 .wb-admin-slot-blocks-table-wrap {
@@ -357,7 +357,7 @@ input.wb-admin-table-grid-input:focus {
     width: 1%;
     white-space: nowrap;
     overflow-wrap: normal;
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
     font-variant-numeric: tabular-nums;
 }
 
@@ -714,7 +714,7 @@ input.wb-admin-table-grid-input:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
 }
 
 .wb-media-preview-box img {
@@ -745,7 +745,7 @@ input.wb-admin-table-grid-input:focus {
     align-items: center;
     justify-content: center;
     margin-bottom: var(--wb-s3);
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
 }
 
 .wb-media-grid-preview img {
@@ -879,7 +879,7 @@ input.wb-admin-table-grid-input:focus {
     padding: 0.15rem 0.5rem;
     font-size: 0.75rem;
     background: var(--wb-surface-2);
-    color: var(--wb-text-muted);
+    color: var(--wb-muted);
 }
 
 .wb-navigation-actions {
@@ -1109,7 +1109,7 @@ input.wb-admin-table-grid-input:focus {
 .wb-picker-asset-row[data-wb-asset-selected="true"] {
     border-color: var(--wb-primary, #2563eb);
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-primary, #2563eb) 35%, transparent);
-    background: color-mix(in srgb, var(--wb-primary, #2563eb) 6%, var(--wb-surface-0, #fff));
+    background: color-mix(in srgb, var(--wb-primary, #2563eb) 6%, var(--wb-surface));
 }
 
 .wb-picker-asset-row__body {
@@ -1261,7 +1261,7 @@ input.wb-admin-table-grid-input:focus {
     padding: 0.75rem 0.5rem;
     border: 1px solid var(--wb-border);
     border-radius: var(--wb-r-lg);
-    background: var(--wb-surface-0, #fff);
+    background: var(--wb-surface);
     color: var(--wb-text);
     cursor: pointer;
     text-align: center;
@@ -1290,7 +1290,7 @@ input.wb-admin-table-grid-input:focus {
 .wb-picker-icon-option[aria-pressed="true"] {
     border-color: var(--wb-primary, #2563eb);
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-primary, #2563eb) 35%, transparent);
-    background: color-mix(in srgb, var(--wb-primary, #2563eb) 6%, var(--wb-surface-0, #fff));
+    background: color-mix(in srgb, var(--wb-primary, #2563eb) 6%, var(--wb-surface));
 }
 
 .wb-picker-icon-preview .wb-icon {
