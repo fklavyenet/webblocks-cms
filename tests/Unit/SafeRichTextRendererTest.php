@@ -134,12 +134,36 @@ class SafeRichTextRendererTest extends TestCase
       'script' => ['<p>a</p><script>alert(1)</script>', '<p>a</p>'],
       'iframe' => ['<iframe src="https://example.com"></iframe><p>a</p>', '<p>a</p>'],
       'image' => ['<p>a</p><img src="x.png">', '<p>a</p>'],
-      'table' => ['<table><tr><td>a</td></tr></table><p>b</p>', '<p>b</p>'],
-      'heading' => ['<h2>Title</h2><p>a</p>', '<p>a</p>'],
-      'heading inside a quote' => ['<blockquote><h2>Title</h2><p>a</p></blockquote>', '<blockquote><p>a</p></blockquote>'],
+      'table' => ['<table><tr><td>a</td></tr></table><p>b</p>', '<p>a</p><p>b</p>'],
+      'heading' => ['<h2>Title</h2><p>a</p>', '<p>Title</p><p>a</p>'],
+      'heading inside a quote' => ['<blockquote><h2>Title</h2><p>a</p></blockquote>', '<blockquote><p>Title</p><p>a</p></blockquote>'],
       'button' => ['<button>go</button><p>a</p>', '<p>a</p>'],
       'style' => ['<style>p{color:red}</style><p>a</p>', '<p>a</p>'],
     ];
+  }
+
+  #[Test]
+  public function it_preserves_editorial_text_and_boundaries_inside_pasted_wrappers(): void
+  {
+    $this->assertSame(
+      '<p>Title <em>here</em></p><p>First</p><ul><li>Item</li></ul><p>Last</p>',
+      $this->render('<section><div><h2>Title <em>here</em></h2><p>First</p><ul><li>Item</li></ul><div>Last</div></div></section>'),
+    );
+  }
+
+  #[Test]
+  public function it_preserves_table_cell_copy_without_table_markup(): void
+  {
+    $this->assertSame(
+      '<p>Name</p><p>Value</p><p>Alpha</p><p><strong>42</strong></p>',
+      $this->render('<table><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody><tr><td>Alpha</td><td><strong>42</strong></td></tr></tbody></table>'),
+    );
+  }
+
+  #[Test]
+  public function it_preserves_preformatted_text_lines_without_a_code_block(): void
+  {
+    $this->assertSame('<p><code>one<br>two</code></p>', $this->render("<pre><code>one\ntwo</code></pre>"));
   }
 
   #[Test]

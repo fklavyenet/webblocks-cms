@@ -401,8 +401,8 @@ The current published core catalog contains 52 rows:
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | `translations.content` through the safe Rich Text editor and sanitizer. |
-| Settings and variants | None. Unsupported tags, attributes, and classes are stripped. |
+| Editable content | `translations.content` through the safe Rich Text editor and sanitizer; editor history supports undo/redo, with a word counter and optional focus mode. |
+| Settings and variants | None. Unsupported formatting, attributes, and classes are stripped; pasted headings and table cells retain their text as paragraphs, and executable/media markup is removed. |
 | Children/media | None. |
 | HTML | Generic wrapper plus `<div class="wb-rich-text">[sanitized editorial markup]</div>`. |
 | Example appearance | Several paragraphs with safe inline emphasis, links, and simple lists. |

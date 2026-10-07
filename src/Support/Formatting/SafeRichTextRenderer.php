@@ -12,10 +12,6 @@ class SafeRichTextRenderer
 {
   private const ROOT_MARKER = 'data-wb-rich-text-root';
 
-  private const ALLOWED_BLOCK_TAGS = [
-    'p', 'ul', 'ol', 'li', 'blockquote',
-  ];
-
   private const ALLOWED_INLINE_TAGS = [
     'strong', 'em', 'code', 's',
   ];
@@ -33,8 +29,8 @@ class SafeRichTextRenderer
   ];
 
   private const DANGEROUS_TAGS = [
-    'button', 'embed', 'figure', 'iframe', 'img', 'object', 'script', 'style',
-    'table', 'tbody', 'td', 'template', 'tfoot', 'th', 'thead', 'tr',
+    'button', 'embed', 'iframe', 'img', 'object', 'script', 'style',
+    'template', 'svg', 'math', 'input', 'select', 'textarea',
   ];
 
   public function render(?string $content): HtmlString
@@ -113,12 +109,16 @@ class SafeRichTextRenderer
       return;
     }
 
-    // `div` is not a rich-text block, but pasted and imported markup is full of
-    // them wrapping a paragraph's worth of copy. Treated as one, the way the
-    // editor's own sanitizer treats it, instead of dropping the copy with it.
-    if ($tag === 'p' || $tag === 'div') {
+    // Unsupported editorial structure loses its formatting, never its copy.
+    // Semantic headings still belong to Header blocks; pasted headings become
+    // paragraphs, and table cells become paragraphs rather than embedded tables.
+    if (in_array($tag, ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', 'td', 'th', 'caption'], true)) {
       $this->flushInlineBuffer($blocks, $inlineBuffer);
       $content = $this->sanitizeInlineChildren($node);
+
+      if ($tag === 'pre') {
+        $content = str_replace(["\r\n", "\r", "\n"], '<br>', $content);
+      }
 
       if ($this->hasMeaningfulInlineContent($content)) {
         $blocks[] = '<p>'.$content.'</p>';
@@ -167,10 +167,8 @@ class SafeRichTextRenderer
       return;
     }
 
-    if (! in_array($tag, self::ALLOWED_BLOCK_TAGS, true)) {
-      return;
-    }
-
+    // Containers from Word, Google Docs and other websites can wrap several
+    // paragraphs or lists. Traverse them rather than flattening their children.
     foreach ($this->childNodes($node) as $child) {
       $this->consumeRootNode($child, $blocks, $inlineBuffer, $allowQuote);
     }

@@ -97,10 +97,13 @@ svg.wb-sidebar-brand-logo {
     padding: var(--wb-s2) var(--wb-s3);
     border-bottom: 1px solid var(--wb-border);
     background: var(--wb-surface-2);
+    flex-wrap: wrap;
+    gap: var(--wb-s2);
 }
 
 .wb-admin-rich-text-toolbar .wb-toolbar-start {
     gap: var(--wb-s2);
+    flex-wrap: wrap;
 }
 
 .wb-admin-rich-text-toolbar .wb-action-group {
@@ -112,10 +115,14 @@ svg.wb-sidebar-brand-logo {
 }
 
 .wb-admin-rich-text-surface {
-    min-height: 12rem;
-    padding: var(--wb-s3);
+    min-height: 18rem;
+    max-height: 32rem;
+    overflow-y: auto;
+    padding: var(--wb-s4);
     outline: none;
     white-space: normal;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
 }
 
 .wb-admin-rich-text-surface:focus {
@@ -123,7 +130,7 @@ svg.wb-sidebar-brand-logo {
 }
 
 .wb-admin-rich-text-surface:empty::before {
-    content: "Write body copy...";
+    content: attr(data-placeholder);
     color: var(--wb-muted);
 }
 
@@ -187,6 +194,58 @@ svg.wb-sidebar-brand-logo {
 
 .wb-admin-rich-text-input {
     display: none;
+}
+
+.wb-admin-rich-text-status {
+    padding: var(--wb-s2) var(--wb-s4);
+    border-top: 1px solid var(--wb-border);
+    background: var(--wb-surface-2);
+}
+
+.wb-admin-rich-text-focus-modal .wb-modal-dialog {
+    width: min(72rem, calc(100vw - 2rem));
+    max-width: none;
+    height: calc(100dvh - 2rem);
+    max-height: none;
+}
+
+.wb-admin-rich-text-focus-modal .wb-modal-body {
+    display: flex;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.wb-admin-rich-text-editor.is-focused {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+.wb-admin-rich-text-editor.is-focused .wb-admin-rich-text-surface {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    padding: var(--wb-s5) max(var(--wb-s4), calc((100% - 48rem) / 2));
+}
+
+.wb-admin-rich-text-editor.is-focused .wb-admin-rich-text-toolbar,
+.wb-admin-rich-text-editor.is-focused .wb-admin-rich-text-status {
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .wb-admin-rich-text-focus-modal {
+        padding: 0;
+    }
+    .wb-admin-rich-text-focus-modal .wb-modal-dialog {
+        width: 100%;
+        height: 100dvh;
+        border-radius: 0;
+    }
 }
 
 .wb-admin-table-toolbar {

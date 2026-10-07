@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.93.0
+
+- Make Rich Text undo and redo consistent across multi-paragraph paste, typing, lists, quotes, inline code, and link creation, editing and removal. Each field keeps bounded editing history, including caret and selection restoration, with toolbar buttons and keyboard shortcuts.
+- Preserve pasted headings, table-cell text and wrapped paragraphs as safe body copy instead of discarding their text. Keep semantic headings, tables and media in their existing dedicated CMS blocks; executable markup stays excluded.
+- Add a spacious Rich Text focus mode with a persistent toolbar and word count, a larger normal writing area, compact labelled formatting controls, and localized placeholders in all six admin languages. Changes stay attached to the original block form while writing in focus mode.
+- Preserve the selected phrase when returning from the link dialog, and support composition input and safe HTML drops without splitting editor history or bypassing clipboard sanitation.
+
 ## 1.92.5
 
 - Restore readable icon choices in dark and system-dark Auto modes, including plugin sidebar icon selection. Keep normal and selected cards on the active theme's surface.

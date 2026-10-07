@@ -5,5 +5,6 @@
 
     @push('overlays')
         @include('webblocks-cms::admin.blocks.types.partials.rich-text-link-modal')
+        @include('webblocks-cms::admin.blocks.types.partials.rich-text-focus-modal')
     @endpush
 @endonce

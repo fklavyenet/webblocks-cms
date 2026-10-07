@@ -4,7 +4,7 @@
     // the other is silently dropped on the way to the page. Change both together.
     var INLINE_TAGS = ['strong', 'em', 'code', 's'];
     var INLINE_TAG_ALIASES = { b: 'strong', i: 'em', strike: 's', del: 's' };
-    var DROPPED_TAG_PATTERN = /^(script|style|iframe|img|figure|table|thead|tbody|tfoot|tr|td|th|button|h[1-6])$/;
+    var DROPPED_TAG_PATTERN = /^(script|style|iframe|img|embed|object|template|svg|math|input|select|textarea|button)$/;
     var LIST_TAGS = ['ul', 'ol'];
 
     var KEYBOARD_SHORTCUTS = { b: 'bold', i: 'italic', k: 'link' };
@@ -19,6 +19,7 @@
 
     var activeEditor = null;
     var linkContext = null;
+    var focusContext = null;
 
     function dispatchEditorEvents(input) {
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -261,10 +262,14 @@
                 return;
             }
 
-            if (tag === 'p' || tag === 'div') {
+            if (/^(p|h[1-6]|pre|td|th|caption)$/.test(tag)) {
                 flushInlineBuffer();
 
                 var paragraph = sanitizeInlineChildren(node, doc);
+
+                if (tag === 'pre') {
+                    paragraph = paragraph.replace(/\r\n?|\n/g, '<br>');
+                }
 
                 if (hasMeaningfulText(paragraph)) {
                     blocks.push('<p>' + paragraph + '</p>');
@@ -311,7 +316,14 @@
                 return;
             }
 
-            inlineBuffer += sanitizeInlineNode(node, doc);
+            if (INLINE_TAGS.indexOf(INLINE_TAG_ALIASES[tag] || tag) !== -1 || tag === 'a' || tag === 'br') {
+                inlineBuffer += sanitizeInlineNode(node, doc);
+                return;
+            }
+
+            // Pasted containers may hold multiple paragraphs, lists, headings,
+            // or table cells. Preserve their copy and block boundaries.
+            Array.prototype.slice.call(node.childNodes).forEach(consumeNode);
         }
 
         nodes.forEach(consumeNode);
@@ -449,6 +461,185 @@
         return sanitized;
     }
 
+    // Count text plus element boundaries, rather than child-node paths: HTML
+    // reparsing merges adjacent text nodes and drops empty text nodes created by
+    // Range operations. Boundary units retain empty paragraphs and line breaks.
+    function nodeUnits(node) {
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent.length;
+        return 2 + Array.prototype.reduce.call(node.childNodes, function (sum, child) { return sum + nodeUnits(child); }, 0);
+    }
+
+    function selectionBookmark(editor) {
+        var range = getSelectionRange(editor.surface) || editor.savedRange;
+        function point(target, offset) {
+            var cursor = 0;
+            var result = null;
+            function walk(node) {
+                if (node === target) {
+                    result = cursor + (node.nodeType === Node.TEXT_NODE ? offset : (node === editor.surface ? 0 : 1) + Array.prototype.slice.call(node.childNodes, 0, offset).reduce(function (sum, child) { return sum + nodeUnits(child); }, 0));
+                    return;
+                }
+                if (node.nodeType === Node.TEXT_NODE) { cursor += node.textContent.length; return; }
+                if (node !== editor.surface) cursor++;
+                Array.prototype.forEach.call(node.childNodes, function (child) { if (result === null) walk(child); });
+                if (node !== editor.surface) cursor++;
+            }
+            walk(editor.surface);
+            return result;
+        }
+        if (!range) return null;
+        var start = point(range.startContainer, range.startOffset);
+        var end = point(range.endContainer, range.endOffset);
+        return start !== null && end !== null ? { start: start, end: end } : null;
+    }
+
+    function restoreBookmark(editor, bookmark) {
+        if (!bookmark) return;
+        function point(saved) {
+            var cursor = 0;
+            var result = null;
+            function walk(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    if (saved >= cursor && saved <= cursor + node.textContent.length) result = { node: node, offset: saved - cursor };
+                    cursor += node.textContent.length;
+                    return;
+                }
+                if (node !== editor.surface) cursor++;
+                for (var i = 0; i <= node.childNodes.length && !result; i++) {
+                    if (saved === cursor) { result = { node: node, offset: i }; break; }
+                    if (i < node.childNodes.length) walk(node.childNodes[i]);
+                }
+                if (node !== editor.surface) cursor++;
+            }
+            walk(editor.surface);
+            return result;
+        }
+        try {
+            var range = document.createRange();
+            var start = point(bookmark.start);
+            var end = point(bookmark.end);
+            range.setStart(start.node, start.offset);
+            range.setEnd(end.node, end.offset);
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            editor.savedRange = range.cloneRange();
+        } catch (error) {
+            placeCaretInside(editor.surface, true);
+            saveSelection(editor);
+        }
+    }
+
+    function snapshot(editor) {
+        return { html: editor.surface.innerHTML, selection: selectionBookmark(editor) };
+    }
+
+    function rememberSelection(editor) {
+        var current = editor.history[editor.historyIndex];
+        var selection = selectionBookmark(editor);
+        if (JSON.stringify(current.selection) !== JSON.stringify(selection)) editor.historyKind = null;
+        if (current.html === editor.surface.innerHTML) current.selection = selection;
+    }
+
+    function recordHistory(editor, kind) {
+        if (editor.mutating || editor.composing) return;
+        var state = snapshot(editor);
+        var current = editor.history[editor.historyIndex];
+        var now = Date.now();
+        if (current.html === state.html) {
+            current.selection = state.selection;
+            refreshToolbarState(editor);
+            return;
+        }
+        var merge = kind && kind === editor.historyKind && now - editor.historyTime < 750;
+        editor.history = editor.history.slice(0, editor.historyIndex + 1);
+        if (merge && editor.historyIndex > 0) {
+            editor.history[editor.historyIndex] = state;
+        } else {
+            editor.history.push(state);
+            editor.historyIndex++;
+        }
+        // Bound both entry count and HTML storage; always retain one undo step.
+        var size = editor.history.reduce(function (sum, item) { return sum + item.html.length * 2; }, 0);
+        while (editor.history.length > 2 && (editor.history.length > 100 || size > 8 * 1024 * 1024)) {
+            size -= editor.history.shift().html.length * 2;
+            editor.historyIndex--;
+        }
+        editor.historyKind = kind || null;
+        editor.historyTime = now;
+        refreshToolbarState(editor);
+    }
+
+    function mutate(editor, callback) {
+        rememberSelection(editor);
+        editor.historyKind = null;
+        editor.mutating = true;
+        try { callback(); } finally {
+            editor.mutating = false;
+            recordHistory(editor, null);
+        }
+    }
+
+    function moveHistory(editor, direction) {
+        if (editor.composing) return;
+        var index = editor.historyIndex + direction;
+        if (index < 0 || index >= editor.history.length) return;
+        editor.historyIndex = index;
+        editor.historyKind = null;
+        editor.savedRange = null;
+        editor.surface.innerHTML = editor.history[index].html;
+        focusSurface(editor.surface);
+        restoreBookmark(editor, editor.history[index].selection);
+        syncEditor(editor);
+    }
+
+    function updateWordCount(editor) {
+        var counter = editor.root.querySelector('[data-wb-rich-text-word-count]');
+        if (!counter) return;
+        var text = editor.input.value.replace(/<[^>]*>/g, ' ');
+        var plain = document.createElement('div');
+        plain.innerHTML = text;
+        text = (plain.textContent || '').trim();
+        var count = text ? text.split(/\s+/u).length : 0;
+        var label = count === 1 ? editor.root.dataset.wordCountSingular : editor.root.dataset.wordCountPlural;
+        counter.textContent = (label || ':count').replace(':count', String(count));
+    }
+
+    function toggleFocus(editor) {
+        var dialog = document.querySelector('[data-wb-rich-text-focus-modal]');
+        var runtime = modalRuntime();
+        if (!dialog || !runtime) return;
+        if (focusContext) {
+            runtime.close(dialog);
+            return;
+        }
+        saveSelection(editor);
+        var placeholder = document.createElement('div');
+        editor.root.before(placeholder);
+        // Keep the successful control in its original form, even while WBModal
+        // portals the visual editor outside that form. Dirty tracking stays put.
+        placeholder.appendChild(editor.input);
+        focusContext = { editor: editor, placeholder: placeholder };
+        dialog.querySelector('[data-wb-rich-text-focus-body]').appendChild(editor.root);
+        editor.root.classList.add('is-focused');
+        editor.root.querySelector('[data-wb-rich-text-action="focus"]').setAttribute('aria-pressed', 'true');
+        runtime.open(dialog, null);
+        restoreSelection(editor);
+    }
+
+    function leaveFocus() {
+        if (!focusContext) return;
+        var editor = focusContext.editor;
+        var placeholder = focusContext.placeholder;
+        placeholder.before(editor.root);
+        editor.root.appendChild(editor.input);
+        placeholder.remove();
+        editor.root.classList.remove('is-focused');
+        editor.root.querySelector('[data-wb-rich-text-action="focus"]').setAttribute('aria-pressed', 'false');
+        focusContext = null;
+        restoreSelection(editor);
+    }
+
     function saveSelection(editor) {
         var range = getSelectionRange(editor.surface);
 
@@ -469,11 +660,13 @@
             return false;
         }
 
+        var saved = editor.savedRange.cloneRange();
         focusSurface(editor.surface);
 
         try {
             selection.removeAllRanges();
-            selection.addRange(editor.savedRange.cloneRange());
+            selection.addRange(saved);
+            editor.savedRange = saved.cloneRange();
             activeEditor = editor;
 
             return true;
@@ -505,21 +698,12 @@
         return getSelectionRange(editor.surface);
     }
 
-    // Rewriting the surface is what a full normalize costs: the browser's undo
-    // stack is dropped and the caret is rebuilt. So it happens only at the edges
-    // of editing -- paste, blur, submit -- and never after a toolbar command,
-    // which is why Ctrl+Z survives a bold or a list now. Between those points the
-    // hidden input still receives sanitized HTML on every keystroke, so what gets
-    // saved is clean regardless of what the surface is holding.
+    // Store clean markup without rebuilding the editing DOM on blur or submit.
+    // History owns DOM restoration; sanitation must not move the writer's caret.
     function normalizeEditor(editor, options) {
         options = options || {};
 
         var sanitized = sanitizeHtmlFragment(editor.surface.innerHTML, document);
-
-        if (editor.surface.innerHTML !== (sanitized || '<p><br></p>')) {
-            editor.surface.innerHTML = sanitized || '<p><br></p>';
-            editor.savedRange = null;
-        }
 
         syncInput(editor, sanitized);
 
@@ -534,12 +718,14 @@
         }
 
         refreshToolbarState(editor);
+        updateWordCount(editor);
     }
 
     function syncEditor(editor) {
         syncInput(editor);
         saveSelection(editor);
         refreshToolbarState(editor);
+        updateWordCount(editor);
     }
 
     function queryCommandState(command) {
@@ -570,6 +756,11 @@
 
         editor.buttons.forEach(function (button) {
             var action = button.getAttribute('data-wb-rich-text-action');
+
+            if (action === 'undo' || action === 'redo') {
+                button.disabled = action === 'undo' ? editor.historyIndex === 0 : editor.historyIndex === editor.history.length - 1;
+                return;
+            }
 
             if (!Object.prototype.hasOwnProperty.call(states, action)) {
                 return;
@@ -726,7 +917,15 @@
     }
 
     function handleKeydown(editor, event) {
+        if (event.isComposing || editor.composing) return;
         if ((event.metaKey || event.ctrlKey) && !event.altKey) {
+            var key = String(event.key || '').toLowerCase();
+            if (key === 'z' || key === 'y') {
+                event.preventDefault();
+                event.stopPropagation();
+                moveHistory(editor, key === 'y' || event.shiftKey ? 1 : -1);
+                return;
+            }
             var shortcutAction = KEYBOARD_SHORTCUTS[String(event.key || '').toLowerCase()];
 
             if (shortcutAction) {
@@ -741,13 +940,13 @@
         // browser's focus key, so the field never becomes a keyboard trap.
         if (event.key === 'Tab' && !event.metaKey && !event.ctrlKey && isInsideList(editor)) {
             event.preventDefault();
-            execAndSync(editor, event.shiftKey ? 'outdent' : 'indent');
+            mutate(editor, function () { execAndSync(editor, event.shiftKey ? 'outdent' : 'indent'); });
 
             return;
         }
 
         if (event.key === ' ') {
-            applyMarkdownShortcut(editor, event);
+            mutate(editor, function () { applyMarkdownShortcut(editor, event); });
         }
     }
 
@@ -797,7 +996,7 @@
         var removeButton = dialog.querySelector('[data-wb-rich-text-link-remove]');
         var runtime = modalRuntime();
 
-        linkContext = { editor: editor, link: existingLink, selectedText: range.toString() };
+        linkContext = { editor: editor, link: existingLink, selection: range.cloneRange() };
 
         if (urlInput) {
             urlInput.value = existingLink ? existingLink.getAttribute('href') || '' : '';
@@ -829,19 +1028,24 @@
     }
 
     function commitLink(dialog) {
+        if (linkContext) mutate(linkContext.editor, function () { performCommitLink(dialog); });
+    }
+
+    function performCommitLink(dialog) {
         if (!linkContext) {
             return;
         }
 
         var editor = linkContext.editor;
         var existingLink = linkContext.link;
+        var pendingSelection = linkContext.selection.cloneRange();
         var urlInput = dialog.querySelector('[data-wb-rich-text-link-url]');
         var textInput = dialog.querySelector('[data-wb-rich-text-link-text]');
         var href = urlInput ? urlInput.value.trim() : '';
         var label = textInput ? textInput.value.trim() : '';
 
         if (!isSafeHref(href)) {
-            setLinkError(dialog, dialog.getAttribute('data-invalid-url-message') || 'Enter a valid URL.');
+            setLinkError(dialog, dialog.getAttribute('data-invalid-url-message'));
 
             if (urlInput) {
                 urlInput.focus();
@@ -852,6 +1056,7 @@
 
         closeLinkModal(dialog);
         linkContext = null;
+        editor.savedRange = pendingSelection;
 
         var range = ensureSelection(editor);
 
@@ -899,6 +1104,10 @@
     }
 
     function removeLink(dialog) {
+        if (linkContext) mutate(linkContext.editor, function () { performRemoveLink(dialog); });
+    }
+
+    function performRemoveLink(dialog) {
         if (!linkContext) {
             return;
         }
@@ -924,12 +1133,8 @@
         syncEditor(editor);
     }
 
-    // The sanitizer always answers in blocks, so a clipboard holding a few words
-    // comes back as `<p>words</p>`. Inserted as a block it splits the paragraph
-    // it lands in, and the browser's resulting DOM no longer matches the
-    // sanitizer's canonical form -- which forces a full rewrite of the field and
-    // takes the undo stack with it. Content worth a single paragraph is inline
-    // content, so it is inserted as inline content.
+    // A single pasted paragraph belongs inline at the caret; several paragraphs
+    // retain their block boundaries. Both are one editor-history transaction.
     function inlinePasteContent(html) {
         var match = /^<p>([\s\S]*)<\/p>$/.exec(html || '');
 
@@ -941,12 +1146,18 @@
     }
 
     function handlePaste(editor, event) {
+        mutate(editor, function () { pasteContent(editor, event); });
+    }
+
+    function pasteContent(editor, event) {
         event.preventDefault();
 
-        var clipboard = event.clipboardData || window.clipboardData;
+        var clipboard = event.clipboardData || event.dataTransfer || window.clipboardData;
         var html = clipboard && clipboard.getData ? clipboard.getData('text/html') : '';
         var text = clipboard && clipboard.getData ? clipboard.getData('text/plain') : '';
         var safeHtml = html ? sanitizeHtmlFragment(html, document) : convertTextToHtml(text);
+
+        if (!safeHtml && !text) return;
 
         if (!ensureSelection(editor)) {
             return;
@@ -956,19 +1167,28 @@
 
         document.execCommand('insertHTML', false, (inline === null ? safeHtml : inline) || escapeHtml(text));
 
-        if (inline !== null) {
-            syncEditor(editor);
-
-            return;
-        }
-
-        // A paste that really does carry several blocks can restructure the
-        // field, so it is normalized -- which still only rewrites when the
-        // browser's DOM and the sanitized form actually disagree.
-        normalizeEditor(editor);
+        syncEditor(editor);
     }
 
     function handleAction(editor, action) {
+        if (action === 'undo' || action === 'redo') {
+            moveHistory(editor, action === 'undo' ? -1 : 1);
+            return;
+        }
+        if (action === 'focus') {
+            toggleFocus(editor);
+            return;
+        }
+        // Commands may synchronously emit input events. Commit one complete
+        // transaction, including direct DOM operations such as code and links.
+        if (editor.mutating) {
+            performAction(editor, action);
+        } else {
+            mutate(editor, function () { performAction(editor, action); });
+        }
+    }
+
+    function performAction(editor, action) {
         if (!editor || !action) {
             return;
         }
@@ -1064,6 +1284,12 @@
             input: input,
             savedRange: null,
             buttons: Array.prototype.slice.call(root.querySelectorAll('[data-wb-rich-text-action]')),
+            history: [],
+            historyIndex: 0,
+            historyKind: null,
+            historyTime: 0,
+            mutating: false,
+            composing: false,
         };
 
         var initialHtml = sanitizeHtmlFragment(input.value, document);
@@ -1075,6 +1301,32 @@
         if (input.value !== initialHtml) {
             input.value = initialHtml;
         }
+        editor.history.push(snapshot(editor));
+        refreshToolbarState(editor);
+        updateWordCount(editor);
+
+        surface.addEventListener('beforeinput', function (event) {
+            if (editor.mutating || editor.composing) return;
+            if (event.inputType === 'historyUndo' || event.inputType === 'historyRedo') {
+                if (event.cancelable) {
+                    event.preventDefault();
+                    moveHistory(editor, event.inputType === 'historyUndo' ? -1 : 1);
+                }
+                return;
+            }
+            rememberSelection(editor);
+        });
+
+        surface.addEventListener('compositionstart', function () {
+            rememberSelection(editor);
+            editor.historyKind = null;
+            editor.composing = true;
+        });
+        surface.addEventListener('compositionend', function () {
+            editor.composing = false;
+            syncEditor(editor);
+            recordHistory(editor, null);
+        });
 
         surface.addEventListener('focus', function () {
             activeEditor = editor;
@@ -1082,11 +1334,17 @@
             refreshToolbarState(editor);
         });
 
-        surface.addEventListener('input', function () {
+        surface.addEventListener('input', function (event) {
             activeEditor = editor;
-            syncInput(editor);
-            saveSelection(editor);
-            refreshToolbarState(editor);
+            if (!editor.mutating && (event.inputType === 'historyUndo' || event.inputType === 'historyRedo')) {
+                moveHistory(editor, event.inputType === 'historyUndo' ? -1 : 1);
+                // A non-cancelable native history event may have modified the
+                // DOM even when there is no corresponding editor history step.
+                editor.surface.innerHTML = editor.history[editor.historyIndex].html;
+                restoreBookmark(editor, editor.history[editor.historyIndex].selection);
+            }
+            syncEditor(editor);
+            recordHistory(editor, /^(insertText|deleteContentBackward|deleteContentForward)$/.test(event.inputType || '') ? event.inputType : null);
         });
 
         surface.addEventListener('keydown', function (event) {
@@ -1111,10 +1369,22 @@
             handlePaste(editor, event);
         });
 
+        surface.addEventListener('drop', function (event) {
+            // Dropped HTML uses the same safe insertion path as clipboard HTML.
+            event.preventDefault();
+            var range = document.caretRangeFromPoint ? document.caretRangeFromPoint(event.clientX, event.clientY) : null;
+            if (range && surface.contains(range.startContainer)) {
+                var selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                saveSelection(editor);
+            }
+            handlePaste(editor, event);
+        });
+
         surface.addEventListener('blur', function () {
-            // Opening the link dialog blurs the surface. Normalizing here would
-            // rebuild the very nodes the dialog is about to write into, so the
-            // pending dialog owns the field until it closes.
+            editor.historyKind = null;
+            // The pending link dialog owns the field until it closes.
             if (linkContext && linkContext.editor === editor) {
                 return;
             }
@@ -1279,6 +1549,7 @@
     });
 
     document.addEventListener('wb:modal:close', function (event) {
+        if (event.target && event.target.matches('[data-wb-rich-text-focus-modal]')) leaveFocus();
         if (event.target && event.target.closest && event.target.closest('[data-wb-rich-text-link-modal]')) {
             linkContext = null;
         }
