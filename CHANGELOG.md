@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.93.1
+
+- Keep media library results inert until their picker is opened, and load thumbnails lazily. Opening a block editor no longer downloads every library thumbnail from hidden pickers.
+- Prevent media picker initialization from moving focus to its trigger and scrolling the block editor to its last media field. Preserve focus restoration when a picker is explicitly closed.
+
 ## 1.93.0
 
 - Make Rich Text undo and redo consistent across multi-paragraph paste, typing, lists, quotes, inline code, and link creation, editing and removal. Each field keeps bounded editing history, including caret and selection restoration, with toolbar buttons and keyboard shortcuts.

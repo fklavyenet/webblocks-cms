@@ -460,7 +460,9 @@
         if (!isOpen) {
             if (openButton) {
                 window.setTimeout(function () {
-                    openButton.focus();
+                    if (openButton.isConnected) {
+                        openButton.focus({ preventScroll: true });
+                    }
                 }, 0);
             }
 
@@ -482,6 +484,14 @@
 
     function openPickerPanel(root) {
         setPickerPanelOpen(root, true);
+        var context = pickerContext(root);
+        var template = context ? context.querySelector('[data-wb-picker-assets-template]') : null;
+
+        if (template) {
+            template.replaceWith(template.content.cloneNode(true));
+            syncPickerSelection(root);
+        }
+
         filterPickerAssets(root);
     }
 
@@ -519,8 +529,27 @@
 
     function initializePicker(root) {
         updatePickerSummary(root);
-        filterPickerAssets(root);
-        closePickerPanel(root);
+        // Initializing a hidden picker must not close a runtime modal or move
+        // focus to its trigger, which scrolls the enclosing block editor.
+        var panel = pickerPanelElement(root);
+        var openButton = root.querySelector('[data-wb-picker-open]');
+
+        if (panel) {
+            panel.hidden = true;
+            panel.classList.remove('is-open');
+        }
+
+        if (openButton) {
+            openButton.setAttribute('aria-expanded', 'false');
+        }
+
+        syncPickerSelection(root);
+    }
+
+    function syncPickerSelection(root) {
+        if (!root) {
+            return;
+        }
 
         if (root.getAttribute('data-wb-picker-mode') === 'multiple') {
             var selectedIds = Array.prototype.slice.call(root.querySelectorAll('[data-wb-picker-selected-input]')).map(function (input) {

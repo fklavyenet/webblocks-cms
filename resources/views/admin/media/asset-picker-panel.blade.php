@@ -362,9 +362,11 @@
             @endunless
 
             <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
-              @foreach ($pickerVisibleAssets as $asset)
-                @include('webblocks-cms::admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
-              @endforeach
+              <template data-wb-picker-assets-template>
+                @foreach ($pickerVisibleAssets as $asset)
+                  @include('webblocks-cms::admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
+                @endforeach
+              </template>
             </div>
 
             <div class="wb-empty" data-wb-picker-empty @if ($pickerHasVisibleAssets) hidden @endif>
@@ -443,9 +445,11 @@
         </div>
 
         <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
-          @foreach ($pickerVisibleAssets as $asset)
-            @include('webblocks-cms::admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
+          <template data-wb-picker-assets-template>
+            @foreach ($pickerVisibleAssets as $asset)
+              @include('webblocks-cms::admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
             @endforeach
+          </template>
         </div>
 
         <div class="wb-empty" data-wb-picker-empty @if ($pickerHasVisibleAssets) hidden @endif>
