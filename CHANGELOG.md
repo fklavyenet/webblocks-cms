@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.93.2
+
+- Show the selected media's title, alt text, caption or filename in Image block summaries when the block has no localized caption or alt text. Load attached media in one batch for page and Shared Slot editors without loading library thumbnails.
+
 ## 1.93.1
 
 - Keep media library results inert until their picker is opened, and load thumbnails lazily. Opening a block editor no longer downloads every library thumbnail from hidden pickers.

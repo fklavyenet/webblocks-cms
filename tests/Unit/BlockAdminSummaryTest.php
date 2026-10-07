@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Support\Blocks\BlockAdminSummary;
 
 class BlockAdminSummaryTest extends TestCase
@@ -17,6 +18,7 @@ class BlockAdminSummaryTest extends TestCase
     $block->setAttribute('resolved_locale_code', 'en');
     $block->setRelation('blockType', null);
     $block->setRelation('children', new Collection);
+    $block->setRelation('media', null);
 
     $this->assertSame($expected, (new BlockAdminSummary)->primary($block));
   }
@@ -50,6 +52,7 @@ class BlockAdminSummaryTest extends TestCase
     $block->setAttribute('resolved_locale_code', 'en');
     $block->setRelation('blockType', null);
     $block->setRelation('children', new Collection);
+    $block->setRelation('media', null);
 
     $this->assertNull((new BlockAdminSummary)->primary($block));
   }
@@ -63,6 +66,32 @@ class BlockAdminSummaryTest extends TestCase
       'image' => [['type' => 'image']],
       'empty rich text' => [['type' => 'rich-text']],
       'code language without code' => [['type' => 'code', 'settings' => json_encode(['language' => 'bash'])]],
+    ];
+  }
+
+  #[DataProvider('imageSummaryProvider')]
+  public function test_image_summary_uses_localized_copy_then_media_metadata(array $attributes, array $mediaAttributes, ?string $expected): void
+  {
+    $block = new Block(['type' => 'image'] + $attributes);
+    $block->setAttribute('resolved_locale_code', 'de');
+    $block->setRelation('blockType', null);
+    $block->setRelation('media', $mediaAttributes === [] ? null : new Media($mediaAttributes));
+
+    $this->assertSame($expected, (new BlockAdminSummary)->primary($block));
+  }
+
+  public static function imageSummaryProvider(): array
+  {
+    return [
+      'caption takes precedence' => [['title' => 'Localized caption', 'subtitle' => 'Localized alt'], ['title' => 'Media title'], 'Localized caption'],
+      'alt without caption' => [['subtitle' => 'Localized alt'], ['title' => 'Media title'], 'Localized alt'],
+      'media title' => [[], ['title' => 'Gallery cover', 'alt_text' => 'Shared alt', 'filename' => 'cover.jpg'], 'Gallery cover'],
+      'media alt' => [[], ['title' => ' ', 'alt_text' => 'Shared alt', 'filename' => 'cover.jpg'], 'Shared alt'],
+      'media caption' => [[], ['caption' => 'Shared caption', 'filename' => 'cover.jpg'], 'Shared caption'],
+      'filename' => [[], ['filename' => 'cover.jpg'], 'cover.jpg'],
+      'missing media' => [[], [], null],
+      'empty fields' => [['title' => ' ', 'subtitle' => ' '], ['title' => ' ', 'filename' => 'cover.jpg'], 'cover.jpg'],
+      'safe plain text' => [[], ['title' => '<b>Cover</b> &amp; detail'], 'Cover & detail'],
     ];
   }
 }

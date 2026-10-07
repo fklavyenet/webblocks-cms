@@ -60,6 +60,7 @@ class BlockAdminSummary
       'content_header', 'content-header' => $this->contentHeaderLines($block),
       'code' => $this->codeLines($block),
       'button_link', 'button-link', 'button' => $this->buttonLines($block),
+      'image' => $this->imageLines($block),
       'card', 'alert' => $this->contentBlockLines($block),
       'link-list-item', 'link_list_item' => $this->linkListItemLines($block),
       'section', 'container', 'cluster', 'grid' => $this->layoutLines($block),
@@ -108,6 +109,23 @@ class BlockAdminSummary
       : ($label === ($this->title($block) ?? null) ? $this->content($block) : null);
 
     return [$label, $summary];
+  }
+
+  private function imageLines(Block $block): array
+  {
+    [$label, $summary] = $this->fallbackLines($block);
+
+    if ($label !== null) {
+      return [$label, $summary];
+    }
+
+    $media = $block->media;
+    $label = $this->sanitize($media?->title)
+      ?? $this->sanitize($media?->alt_text)
+      ?? $this->sanitize($media?->caption)
+      ?? $this->sanitize($media?->filename);
+
+    return [$label, null];
   }
 
   private function linkListItemLines(Block $block): array

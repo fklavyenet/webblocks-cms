@@ -19,11 +19,15 @@ namespace WebBlocks\Cms\Tests\Feature {
   use DOMDocument;
   use DOMElement;
   use DOMXPath;
+  use Illuminate\Support\Facades\DB;
   use Illuminate\Testing\TestResponse;
+  use PHPUnit\Framework\Attributes\DataProvider;
   use PHPUnit\Framework\Attributes\Test;
   use WebBlocks\Cms\Models\Block;
+  use WebBlocks\Cms\Models\BlockImageTranslation;
   use WebBlocks\Cms\Models\BlockType;
   use WebBlocks\Cms\Models\Locale;
+  use WebBlocks\Cms\Models\Media;
   use WebBlocks\Cms\Models\Page;
   use WebBlocks\Cms\Models\PageSlot;
   use WebBlocks\Cms\Models\SharedSlot;
@@ -199,6 +203,83 @@ namespace WebBlocks\Cms\Tests\Feature {
       ]);
       $this->assertSame($sourcePage->id, $block->fresh()->page_id);
       $this->assertSame($slot->slot_type_id, $block->fresh()->slot_type_id);
+    }
+
+    #[Test]
+    #[DataProvider('imageSummaryEditors')]
+    public function image_rows_keep_media_summaries_and_localized_copy_without_loading_picker_images(bool $shared): void
+    {
+      if ($shared) {
+        [$sharedSlot, $page, $slot] = $this->seedSharedSlotBlockContext();
+        $routeName = 'admin.shared-slots.blocks.edit';
+        $parameters = ['shared_slot' => $sharedSlot];
+      } else {
+        [$page, $slot] = $this->seedPageBlockContext();
+        $routeName = 'admin.pages.slots.blocks';
+        $parameters = ['page' => $page, 'slot' => $slot];
+      }
+
+      $german = Locale::query()->create([
+        'code' => 'de', 'name' => 'German', 'is_default' => false, 'is_enabled' => true,
+      ]);
+      $page->site->locales()->syncWithoutDetaching([$german->id => ['is_enabled' => true]]);
+      $imageType = BlockType::query()->firstOrCreate(['slug' => 'image'], [
+        'name' => 'Image', 'category' => 'content', 'source_type' => 'static',
+        'is_system' => false, 'is_container' => false, 'sort_order' => 0, 'status' => 'published',
+      ]);
+      $expected = [];
+
+      foreach (['Gallery cover', null, 'Shared media title', 'Fallback media title'] as $index => $title) {
+        $media = Media::query()->create([
+          'disk' => 'public', 'path' => 'media/summary-'.$index.'.jpg',
+          'filename' => 'summary-'.$index.'.jpg', 'original_name' => 'summary-'.$index.'.jpg',
+          'kind' => Media::KIND_IMAGE, 'mime_type' => 'image/jpeg',
+          'visibility' => 'public', 'title' => $title,
+        ]);
+        $image = $this->createBlock($page, $slot->slotType, $imageType, '', $index + 1);
+        $image->update(['media_id' => $media->id]);
+
+        if ($index === 2) {
+          BlockImageTranslation::query()->create([
+            'block_id' => $image->id, 'locale_id' => $german->id,
+            'caption' => 'Lokale Bildunterschrift', 'alt_text' => 'Lokaler Alternativtext',
+          ]);
+        } elseif ($index === 3) {
+          // A translated row with blank copy must still identify the media.
+          BlockImageTranslation::query()->create([
+            'block_id' => $image->id, 'locale_id' => $german->id,
+            'caption' => '', 'alt_text' => '',
+          ]);
+        }
+
+        $expected[$image->id] = $index === 2 ? 'Lokale Bildunterschrift' : ($title ?? $media->filename);
+      }
+
+      $mediaQueries = [];
+      DB::listen(function ($query) use (&$mediaQueries): void {
+        if (str_contains($query->sql, 'from "wbcms_media"')) {
+          $mediaQueries[] = $query->sql;
+        }
+      });
+      $response = $this->get(route($routeName, $parameters + ['locale' => 'de']))->assertOk();
+      $document = new DOMDocument;
+      @$document->loadHTML($response->getContent());
+      $xpath = new DOMXPath($document);
+
+      foreach ($expected as $id => $summary) {
+        $cell = $xpath->query('//*[@id="slot-block-row-'.$id.'"]/td[contains(@class, "wb-admin-slot-block-summary-cell")]')->item(0);
+        $this->assertInstanceOf(DOMElement::class, $cell);
+        $this->assertSame($summary, trim($cell->textContent));
+        $this->assertSame(1, $xpath->query('.//a[@data-wb-slot-block-link]', $cell)->length);
+      }
+
+      $this->assertCount(1, $mediaQueries, 'Image summaries must batch media reads instead of issuing one query per image.');
+      $this->assertSame(0, $xpath->query('//img')->length, 'Listing image summaries must not download picker thumbnails.');
+    }
+
+    public static function imageSummaryEditors(): array
+    {
+      return ['page slot' => [false], 'shared slot' => [true]];
     }
 
     private function getFragment(string $url): TestResponse

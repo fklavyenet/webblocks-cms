@@ -890,6 +890,7 @@ class SharedSlotController extends Controller
     return [
       'blockType',
       'slotType',
+      'media',
       'blockAssets.asset',
       'textTranslations',
       'buttonTranslations',
