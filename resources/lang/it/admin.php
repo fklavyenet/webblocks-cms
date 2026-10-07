@@ -851,6 +851,7 @@ $translations = [
     'block_fields' => 'Campi del blocco',
     'settings' => 'Impostazioni',
     'parent_block' => 'Blocco padre',
+    'parent_help' => 'Le opzioni seguono l’albero dei blocchi. Usa l’ID, l’anteprima del contenuto e il percorso degli antenati per identificare la destinazione.',
     'no_parent' => 'Nessun padre',
     'sort_order' => 'Ordinamento',
     'status' => 'Stato',

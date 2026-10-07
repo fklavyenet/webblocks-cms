@@ -345,7 +345,7 @@ class Block extends CmsModel
 
   public function layoutAdminName(): ?string
   {
-    if (! in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'slider', 'slide', 'sticky-navbar'], true)) {
+    if (! in_array($this->typeSlug(), ['section', 'container', 'stack', 'split', 'cluster', 'grid', 'slider', 'slide', 'sticky-navbar', 'card_header', 'card_body', 'card_footer'], true)) {
       return null;
     }
 

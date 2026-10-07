@@ -853,6 +853,7 @@ $translations = [
     'block_fields' => 'Block-Felder',
     'settings' => 'Einstellungen',
     'parent_block' => 'Übergeordneter Block',
+    'parent_help' => 'Die Optionen folgen dem Blockbaum. ID, Inhaltsvorschau und übergeordneter Pfad helfen bei der Auswahl des Ziels.',
     'no_parent' => 'Kein Elternblock',
     'sort_order' => 'Sortierung',
     'status' => 'Status',

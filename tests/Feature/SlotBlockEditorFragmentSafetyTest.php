@@ -25,6 +25,7 @@ namespace WebBlocks\Cms\Tests\Feature {
   use PHPUnit\Framework\Attributes\Test;
   use WebBlocks\Cms\Models\Block;
   use WebBlocks\Cms\Models\BlockImageTranslation;
+  use WebBlocks\Cms\Models\BlockTextTranslation;
   use WebBlocks\Cms\Models\BlockType;
   use WebBlocks\Cms\Models\Locale;
   use WebBlocks\Cms\Models\Media;
@@ -282,6 +283,79 @@ namespace WebBlocks\Cms\Tests\Feature {
       return ['page slot' => [false], 'shared slot' => [true]];
     }
 
+    #[Test]
+    #[DataProvider('imageSummaryEditors')]
+    public function full_and_fragment_parent_options_identify_repeated_localized_branches(bool $shared): void
+    {
+      if ($shared) {
+        [$sharedSlot, $page, $slot, $edited] = $this->seedSharedSlotBlockContext();
+        $routeName = 'admin.shared-slots.blocks.edit';
+        $parameters = ['shared_slot' => $sharedSlot];
+      } else {
+        [$page, $slot, $edited] = $this->seedPageBlockContext();
+        $routeName = 'admin.pages.slots.blocks';
+        $parameters = ['page' => $page, 'slot' => $slot];
+      }
+
+      $german = Locale::query()->create([
+        'code' => 'de', 'name' => 'German', 'is_default' => false, 'is_enabled' => true,
+      ]);
+      $page->site->locales()->syncWithoutDetaching([$german->id => ['is_enabled' => true]]);
+      $types = collect(['section', 'card', 'card_body', 'stack', 'header'])->mapWithKeys(fn ($slug) => [$slug => BlockType::query()->firstOrCreate(['slug' => $slug], [
+        'name' => str($slug)->replace('_', ' ')->title()->toString(), 'category' => 'layout',
+        'source_type' => 'static', 'is_system' => false, 'is_container' => $slug !== 'header',
+        'sort_order' => 0, 'status' => 'published',
+      ])]);
+      $root = $this->createBlock($page, $slot->slotType, $types['section'], '');
+      $expectedIds = [$root->id];
+      $stacks = [];
+
+      foreach (['Beige · verstellbar', 'Schwarz · verstellbar'] as $index => $heading) {
+        $card = $this->createBlock($page, $slot->slotType, $types['card'], '', $index);
+        $card->update(['parent_id' => $root->id]);
+        $body = $this->createBlock($page, $slot->slotType, $types['card_body'], '');
+        $body->update(['parent_id' => $card->id]);
+        $stack = $this->createBlock($page, $slot->slotType, $types['stack'], '');
+        $stack->update(['parent_id' => $body->id]);
+        $header = $this->createBlock($page, $slot->slotType, $types['header'], '', 1);
+        $header->update(['parent_id' => $stack->id]);
+        BlockTextTranslation::query()->create([
+          'block_id' => $header->id, 'locale_id' => $german->id, 'title' => $heading,
+        ]);
+        $expectedIds = [...$expectedIds, $body->id, $stack->id];
+        $stacks[] = $stack;
+      }
+
+      $edited->update(['parent_id' => $stacks[0]->id]);
+      $url = route($routeName, $parameters + ['edit' => $edited->id, 'locale' => 'de']);
+      $full = $this->get($url)->assertOk();
+      $fragment = $this->getFragment($url)->assertOk();
+
+      foreach ([$full, $fragment] as $response) {
+        $xpath = $this->formXPath($response);
+        $options = $xpath->query('//*[@id="parent_id"]/option[@value!=""]');
+        $actualIds = [];
+        $labels = [];
+
+        foreach ($options as $option) {
+          $id = (int) $option->getAttribute('value');
+          $actualIds[] = $id;
+          $labels[$id] = trim($option->textContent);
+        }
+
+        $this->assertSame($expectedIds, $actualIds);
+        $this->assertStringContainsString('#'.$stacks[0]->id.' Stack — Beige · verstellbar', $labels[$stacks[0]->id]);
+        $this->assertStringContainsString('Card Body #'.$stacks[0]->parent_id, $labels[$stacks[0]->id]);
+        $this->assertStringContainsString('Schwarz · verstellbar', $labels[$stacks[1]->id]);
+        $selected = $xpath->query('//*[@id="parent_id"]/option[@selected]')->item(0);
+        $this->assertSame((string) $stacks[0]->id, $selected->getAttribute('value'));
+      }
+
+      if (! $shared && ($fixturePath = getenv('WEBBLOCKS_PARENT_FIXTURE'))) {
+        file_put_contents($fixturePath, $fragment->getContent());
+      }
+    }
+
     private function getFragment(string $url): TestResponse
     {
       return $this->withHeader('X-WebBlocks-Modal-Fragment', 'slot-block-editor')->get($url);
@@ -355,7 +429,7 @@ namespace WebBlocks\Cms\Tests\Feature {
     private function formXPath(TestResponse $response): DOMXPath
     {
       $document = new DOMDocument;
-      @$document->loadHTML($response->getContent());
+      @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
 
       return new DOMXPath($document);
     }

@@ -31,6 +31,7 @@ use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
 use WebBlocks\Cms\Support\Pages\PageBulkDeleter;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
@@ -1075,7 +1076,7 @@ class PageController extends Controller
       $ignoredIds = $this->descendantIdsFor($blocks, $editedBlock->id)->prepend($editedBlock->id);
     }
 
-    return $blocks
+    $candidates = $blocks
       ->reject(fn (Block $block) => $block->isColumnItem())
       ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
       ->filter(fn (Block $block) => $block->canAcceptChildren())
@@ -1086,13 +1087,9 @@ class PageController extends Controller
       ->filter(fn (Block $block) => $editedBlock
         ? (int) $editedBlock->parent_id === (int) $block->id
           || ($block->canAcceptMoreChildren() && $block->canAcceptChildType($editedBlock->typeSlug()))
-        : $block->canAcceptMoreChildren())
-      ->map(fn (Block $block) => [
-        'id' => $block->id,
-        'label' => str_repeat('— ', $this->blockDepth($block)).$block->parentCandidateLabel(),
-        'slot_page_id' => $this->pageSlotRouteId($block->page_id, $block->slot_type_id),
-      ])
-      ->values();
+        : $block->canAcceptMoreChildren());
+
+    return app(ParentBlockOptionPresenter::class)->present($blocks, $candidates);
   }
 
   private function slotBlockDeleteModalState($blocks): array

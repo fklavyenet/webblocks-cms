@@ -42,7 +42,7 @@
                 <input type="hidden" name="page_id" value="{{ $selectedPageId }}">
                 <input type="hidden" name="slot_type_id" value="{{ $selectedSlotTypeId }}">
 
-                <div class="wb-grid wb-grid-3">
+                <div class="wb-stack wb-gap-3">
                     <div class="wb-stack wb-gap-1">
                         <label for="parent_id">{{ $blockFormText('parent_block') }}</label>
                         <select id="parent_id" name="parent_id" class="wb-select">
@@ -53,19 +53,24 @@
                                 </option>
                             @endforeach
                         </select>
+                        @if ($lockSlot)
+                            <div class="wb-text-sm wb-text-muted">{{ $blockFormText('parent_help') }}</div>
+                        @endif
                     </div>
 
-                    <div class="wb-stack wb-gap-1">
-                        <label for="sort_order">{{ $blockFormText('sort_order') }}</label>
-                        <input id="sort_order" name="sort_order" class="wb-input" type="number" min="0" value="{{ old('sort_order', $block->sort_order ?? 0) }}" required>
-                    </div>
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-stack wb-gap-1">
+                            <label for="sort_order">{{ $blockFormText('sort_order') }}</label>
+                            <input id="sort_order" name="sort_order" class="wb-input" type="number" min="0" value="{{ old('sort_order', $block->sort_order ?? 0) }}" required>
+                        </div>
 
-                    <div class="wb-stack wb-gap-1">
-                        <label for="status">{{ $blockFormText('status') }}</label>
-                        <select id="status" name="status" class="wb-select">
-                            <option value="draft" @selected($statusValue === 'draft')>{{ $blockFormText('draft') }}</option>
-                            <option value="published" @selected($statusValue === 'published')>{{ $blockFormText('published') }}</option>
-                        </select>
+                        <div class="wb-stack wb-gap-1">
+                            <label for="status">{{ $blockFormText('status') }}</label>
+                            <select id="status" name="status" class="wb-select">
+                                <option value="draft" @selected($statusValue === 'draft')>{{ $blockFormText('draft') }}</option>
+                                <option value="published" @selected($statusValue === 'published')>{{ $blockFormText('published') }}</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>

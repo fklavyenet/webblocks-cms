@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.93.3
+
+- Make slot editor parent options follow the block tree and show block IDs, explicit admin names or localized content previews, and ancestor paths. Give the Parent Block field its own row and preserve existing placement restrictions.
+- Read saved admin names for Stack, Split and Card sections so operators can identify those destinations without repeated type-only labels.
+
 ## 1.93.2
 
 - Show the selected media's title, alt text, caption or filename in Image block summaries when the block has no localized caption or alt text. Load attached media in one batch for page and Shared Slot editors without loading library thumbnails.

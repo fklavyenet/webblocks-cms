@@ -852,6 +852,7 @@ $translations = [
     'block_fields' => 'Blok Alanları',
     'settings' => 'Ayarlar',
     'parent_block' => 'Üst Blok',
+    'parent_help' => 'Seçenekler blok ağacı sırasındadır. Hedefi belirlemek için kimlik numarasını, içerik özetini ve üst blok yolunu kullanın.',
     'no_parent' => 'Üst yok',
     'sort_order' => 'Sıralama',
     'status' => 'Durum',

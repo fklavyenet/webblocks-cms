@@ -25,6 +25,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -733,7 +734,7 @@ class SharedSlotController extends Controller
       $ignoredIds = $this->descendantIdsFor($blocks, $editedBlock->id)->prepend($editedBlock->id);
     }
 
-    return $blocks
+    $candidates = $blocks
       ->reject(fn (Block $block) => $block->isColumnItem())
       ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
       ->filter(fn (Block $block) => $block->canAcceptChildren())
@@ -742,12 +743,9 @@ class SharedSlotController extends Controller
       ->filter(fn (Block $block) => $editedBlock
         ? (int) $editedBlock->parent_id === (int) $block->id
           || ($block->canAcceptMoreChildren() && $block->canAcceptChildType($editedBlock->typeSlug()))
-        : $block->canAcceptMoreChildren())
-      ->map(fn (Block $block) => [
-        'id' => $block->id,
-        'label' => str_repeat('— ', $this->blockDepth($block)).$block->parentCandidateLabel(),
-      ])
-      ->values();
+        : $block->canAcceptMoreChildren());
+
+    return app(ParentBlockOptionPresenter::class)->present($blocks, $candidates);
   }
 
   private function slotBlockDeleteModalState($blocks): array

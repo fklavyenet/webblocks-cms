@@ -1055,6 +1055,7 @@ return [
     'block_fields' => 'Block Fields',
     'settings' => 'Settings',
     'parent_block' => 'Parent Block',
+    'parent_help' => 'Options follow the block tree. Use the ID, content preview and ancestor path to identify the destination.',
     'no_parent' => 'No parent',
     'sort_order' => 'Sort Order',
     'status' => 'Status',
