@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.94.1
+
+- Protect the administration panel from broken plugin updates with mandatory startup checks, retained working packages, automatic plugin quarantine and an authenticated recovery screen at /webadmin/plugin-recovery.
+- Run the candidate plugin as active inside its isolated startup check, while keeping other installed plugins unloaded. Catch failures in providers that condition their startup work on the plugin’s enabled state.
+- Preserve the previous version after rejected updates, keep plugins disabled after failed database changes, and allow recovery without SSH. Restore retained packages only when no database migration ran.
+
+
 ## 1.94.0
 
 - Validate every plugin install, update and activation in a fresh PHP process before enabling it, including releases without database migrations. Reject missing classes, invalid PHP, startup or route errors, early process exit and timeouts while preserving the current working version.

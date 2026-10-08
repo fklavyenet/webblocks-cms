@@ -48,6 +48,8 @@ class PluginSafetyTest extends TestCase
       'missing parent' => ['<?php namespace SafetyFixture; class Provider extends MissingParent {}'],
       'parse error' => ['<?php namespace SafetyFixture; class Provider { broken php syntax'],
       'provider boot error' => ['<?php namespace SafetyFixture; class Provider extends \Illuminate\Support\ServiceProvider { public function boot(): void { throw new \RuntimeException("synthetic-secret"); } }'],
+      'conditional provider boot error' => ['<?php namespace SafetyFixture; class Provider extends \Illuminate\Support\ServiceProvider { public function boot(): void { if (app(\WebBlocks\Cms\Support\Plugins\PluginRegistry::class)->isActive("safety-example")) { throw new \RuntimeException("synthetic-secret"); } } }'],
+      'conditional source error' => ['<?php namespace SafetyFixture; if (app(\WebBlocks\Cms\Support\Plugins\PluginRegistry::class)->isActive("safety-example")) { throw new \RuntimeException("synthetic-secret"); } class Provider {}'],
       'early successful exit' => ['<?php exit(0);'],
       'timeout' => ['<?php sleep(5);'],
       'route registration error' => ['<?php namespace SafetyFixture; class Provider { public static function definition() { return \WebBlocks\Cms\Support\Plugins\PluginDefinition::make("safety-example")->version("2.0.0")->provider(self::class)->adminRoutes(function () { throw new \RuntimeException("synthetic-secret"); }); } }'],

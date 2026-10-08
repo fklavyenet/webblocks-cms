@@ -25,6 +25,7 @@ class PluginRegistry
     private readonly array $enabledConfig = [],
     private readonly bool $useLiveConfig = false,
     private readonly ?PluginCompatibility $compatibility = null,
+    private readonly bool $respectRecoveryMode = true,
   ) {}
 
   public function register(PluginDefinition $plugin): self
@@ -93,7 +94,7 @@ class PluginRegistry
 
   public function isConfiguredEnabled(string $handle): bool
   {
-    if (isset($this->suppressed[$handle]) || app(PluginRecoveryMode::class)->active()) {
+    if (isset($this->suppressed[$handle]) || ($this->respectRecoveryMode && app(PluginRecoveryMode::class)->active())) {
       return false;
     }
     if ($this->useLiveConfig) {
