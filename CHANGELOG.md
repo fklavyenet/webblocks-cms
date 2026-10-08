@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.94.2
+
+- Protect the administration panel from broken plugin updates with mandatory startup checks, retained working packages, automatic plugin quarantine and authenticated recovery at /webadmin/plugin-recovery.
+- Apply the normal admin access check to recovery as well as Super admin authorization. Inactive accounts with an existing session cannot view recovery information or change plugin state.
+- Include isolated validation of conditional plugin startup, retained-package recovery when no migration ran, and controlled failure notices in six languages.
+
+
 ## 1.94.1
 
 - Protect the administration panel from broken plugin updates with mandatory startup checks, retained working packages, automatic plugin quarantine and an authenticated recovery screen at /webadmin/plugin-recovery.

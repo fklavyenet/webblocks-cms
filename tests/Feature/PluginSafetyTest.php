@@ -173,6 +173,11 @@ class PluginSafetyTest extends TestCase
     $this->actingAs($this->user(false));
     $this->get('/webadmin/plugin-recovery')->assertForbidden();
     $this->post('/webadmin/plugin-recovery/safety-example', ['operation' => 'disable'])->assertForbidden();
+    $inactive = $this->user(true);
+    $inactive->forceFill(['is_active' => false]);
+    $this->actingAs($inactive);
+    $this->get('/webadmin/plugin-recovery')->assertForbidden();
+    $this->post('/webadmin/plugin-recovery/safety-example', ['operation' => 'disable'])->assertForbidden();
     $this->actingAs($this->user(true));
     $this->get('/webadmin/plugin-recovery')->assertOk()->assertSee('Plugin recovery');
     $this->assertTrue(app(PluginRecoveryMode::class)->active());
@@ -218,6 +223,11 @@ class PluginSafetyTest extends TestCase
       public function __construct(private bool $super = false)
       {
       parent::__construct();
+      }
+
+      public function canAccessAdmin(): bool
+      {
+        return $this->super && (bool) ($this->is_active ?? true);
       }
 
       public function isSuperAdmin(): bool
