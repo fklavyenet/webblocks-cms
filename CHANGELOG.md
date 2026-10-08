@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.94.3
+
+- Correct the runtime AI authoring inventory to list all 55 published core blocks, including Stack and Split, and clarify mobile media, Rich Text, content positions, and active-account plugin recovery requirements.
+- Require explicit inventory review after runtime or version changes; verify generated documentation snapshots with version and checksum provenance before source pushes and release preparation.
+- Check the selected Git tree during artifact and distribution builds, preserve historical release builds, and add regression coverage for stale contracts and snapshots. Installed CMS packages remain independent of the documentation repository.
+
 ## 1.94.2
 
 - Protect the administration panel from broken plugin updates with mandatory startup checks, retained working packages, automatic plugin quarantine and authenticated recovery at /webadmin/plugin-recovery.

@@ -16,6 +16,16 @@ rm -f "${ARCHIVE_PATH}" "${ARCHIVE_PATH}.sha256" "${PAYLOAD_PATH}"
 
 cd "${ROOT_DIR}"
 
+# Refuse a release whose authoring contract has not been reviewed against its
+# runtime sources. This runs before network checks, tags or archive creation.
+"${PHP_BIN}" "${ROOT_DIR}/tests/Support/check-inventory.php"
+DOCS_ROOT="${WEBBLOCKS_CMS_DOCS_ROOT:-${ROOT_DIR}/../webblocks-cms-docs}"
+if [ ! -f "${DOCS_ROOT}/tools/inventory-snapshot.php" ]; then
+  printf '[webblocks-release-prepare] A checked documentation snapshot is required. Set WEBBLOCKS_CMS_DOCS_ROOT to the documentation checkout.\n' >&2
+  exit 1
+fi
+"${PHP_BIN}" "${DOCS_ROOT}/tools/inventory-snapshot.php" --check --product-root="${ROOT_DIR}"
+
 if [ "${VERSION}" != "${HEAD_VERSION}" ]; then
   printf '[webblocks-release-prepare] Working tree version %s does not match committed HEAD version %s.\n' "${VERSION}" "${HEAD_VERSION}" >&2
   exit 1

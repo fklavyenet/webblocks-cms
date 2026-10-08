@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use WebBlocks\Cms\Tests\Support\InventoryReview;
 
 $root = dirname(__DIR__, 2);
 $required = ['README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md', 'CODE_OF_CONDUCT.md', 'UPGRADING.md', 'CHANGELOG.md'];
@@ -56,6 +57,13 @@ foreach (['format:test', 'test'] as $script) {
 
 if (preg_match('/git clone.*\n.*php artisan serve/s', $readme) === 1) {
   $errors[] = 'README presents a cloned package as a runnable application.';
+}
+
+require_once __DIR__.'/InventoryReview.php';
+try {
+  $errors = array_merge($errors, InventoryReview::errors($root));
+} catch (Throwable $exception) {
+  $errors[] = $exception->getMessage();
 }
 
 if ($errors !== []) {

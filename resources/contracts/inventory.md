@@ -48,6 +48,10 @@ outside this list as `1.40.2`-era and confirm it through live API discovery.
   from `1.40.5` onward.
 - `link-list` (`1.40.10`): `settings.row_layout` and `settings.list_frame`.
 - `link-list-item` (`1.40.8`): optional `media_id` thumbnail.
+- `1.91.0`: optional mobile-image relationships on eight native media blocks.
+- `1.91.1`: all nine Slide and Slider content positions.
+- `1.93.0`: Rich Text undo/redo, focus mode, word count, and safe paste behavior.
+- `1.94.0–1.94.2`: managed-plugin startup validation, quarantine, retained packages, and active-account recovery checks.
 
 Historical repository note: the pre-package-only CMS tree contained `docs/feature-inventory.md`, a broad product-feature discoverability matrix. It was removed when the package-only repository tree was constructed and was not a per-block AI authoring inventory. The runtime contract now lives at `resources/contracts/inventory.md`.
 
@@ -217,11 +221,11 @@ Underscores normalize to hyphens in `data-wb-public-block-type`; for example `co
 
 ## Quick Catalog Index
 
-The current published core catalog contains 52 rows:
+The current published core catalog contains 55 rows:
 
 | Group | Handles |
 | --- | --- |
-| Layout and composition | `section`, `container`, `cluster`, `grid`, `card`, `card_header`, `card_body`, `card_footer`, `slider`, `slide` |
+| Layout and composition | `section`, `container`, `stack`, `split`, `cluster`, `grid`, `card`, `card_header`, `card_body`, `card_footer`, `slider`, `slide` |
 | Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `audio`, `code`, `button_link`, `table`, `quote`, `page-list`, `application` |
 | Navigation | `link-list`, `link-list-item`, `navigation-auto`, `toc`, `breadcrumb`, `header-actions`, `sticky-navbar`, `navbar-brand`, `navbar-navigation`, `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, `search-form`, `sidebar-footer` |
 | Pattern, form, and engagement | `alert`, `contact_form`, `rating`, `comments` |
@@ -1083,21 +1087,17 @@ These are implementation findings, not permissions to invent behavior:
 14. The repository has dashboard and page-management screenshots, but no canonical per-block/per-variant visual fixture gallery. The “Example appearance” descriptions in this inventory are therefore source-derived, not screenshot-backed golden references. Until that gallery exists, prefer documented neutral compositions and avoid claiming visual fidelity from prose alone.
 15. Resolved for planning: `GET /content-contract` now publishes a machine-readable design-direction contract covering character, density, typography, geometry, imagery, corners, contrast, rhythm roles, Card policy, and known composition gaps. It deliberately does not persist a hidden style record; AI tools state the direction in their plan/report and implement it through supported block choices, theme tokens, and stable site CSS.
 
-## Recommended Inventory Freshness Checks
+## Inventory Review And Freshness Checks
 
-When this file is added to the project, automated documentation checks should fail on:
+The product owns this runtime contract. The documentation repository keeps a generated version snapshot with a distinct source identity; edits start in the product contract.
 
-- a published core catalog handle missing from this inventory;
-- an inventory handle no longer present or no longer published;
-- a documented renderer or admin form path that does not exist;
-- a documented child rule differing from `Block::allowedChildTypeSlugs()`;
-- a documented root-ownership claim differing from `Block::ownsPublicRoot()`;
-- an API-write policy differing from discovery and mutation guards;
-- an enum documented here but rejected by the admin request or ignored by the renderer;
-- a new admin-visible setting absent from this inventory;
-- a new visual variant without a canonical fixture or explicit fixture-gap note.
+From CMS 1.94.3, `composer test:inventory` and `composer test:docs` validate `resources/contracts/inventory-review.json` against the current contract and runtime source fingerprints. Changed, added, or removed runtime files and product version changes require a new explicit review. CI and pre-push run the same check; release preparation checks the working tree, and the artifact builder checks the selected Git tree.
 
-The long-term ideal is to generate the mechanical catalog data from one product-owned registry and keep the prose, examples, and design guidance reviewed by humans.
+After reviewing supported fields, enums, children, media, rendering, editor behavior, permissions, and plugin lifecycle, update this prose and record the review with `composer inventory:review -- --reviewed --note="review summary"`. An unchanged contract after a source change is accepted only with an explicit `--no-authoring-impact="reason"` explanation. Review records must never be refreshed automatically by CI or release scripts.
+
+The mechanical record captures the published core catalog, child rules, renderer-root ownership, API write policy, and mobile-media support from actual product helpers. PHPUnit compares this record with the current helpers, and the source check requires a unique inventory heading for every published core block. Fingerprints and mechanical comparisons enforce review and structural consistency; they do not prove every sentence's meaning. Prose and no-impact explanations remain the contributor's and reviewer's responsibility.
+
+The documentation repository's `tools/inventory-snapshot.php` regenerates the snapshot and its `inventory-source.json` provenance. Its checks reject manual snapshot edits and compare product version, source fingerprint, review checksum, and document content against a selected product checkout. Isolated documentation checks verify recorded provenance without requiring the product at runtime. Snapshot generation and CMS publication remain separate operations.
 
 ## Related Detailed References
 
@@ -1128,7 +1128,7 @@ Runtime source/route failures quarantine the plugin; an explicit disable overrid
 configuration-based enablement. Lifecycle JSON records use atomic replacement.
 
 `/webadmin/plugin-recovery` and its login form load without installed plugin source,
-routes, or commands. Existing CMS login controls, Super admin authorization, and CSRF
+routes, or commands. Existing CMS login controls, active admin-access and Super admin authorization, and CSRF
 protection apply. Recovery can disable a plugin or restore the retained package when
 no migration ran, after another startup probe. A restore also republishes its assets.
 This is recovery for CMS-managed packages; it does not isolate arbitrary host providers

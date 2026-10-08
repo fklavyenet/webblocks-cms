@@ -25,6 +25,16 @@ cd "${ROOT_DIR}"
 
 git archive --format=tar --worktree-attributes "${TREE}" | tar -xf - -C "${PACKAGE_DIR}"
 
+# Validate the selected archive tree, not the caller's working copy. Historical
+# trees predating the review gate keep their original distribution behavior.
+if git cat-file -e "${TREE}:tests/Support/check-inventory.php" 2>/dev/null; then
+  mkdir -p "${STAGING_DIR}/contract-check"
+  for CHECK_FILE in InventoryReview.php check-inventory.php; do
+    git show "${TREE}:tests/Support/${CHECK_FILE}" > "${STAGING_DIR}/contract-check/${CHECK_FILE}"
+  done
+  "${PHP_BIN}" "${STAGING_DIR}/contract-check/check-inventory.php" --root="${PACKAGE_DIR}"
+fi
+
 if [ ! -f "${PACKAGE_DIR}/composer.json" ]; then
   printf '[webblocks-release-prepare] Package composer.json not found at %s.\n' "${PACKAGE_DIR}" >&2
   exit 1
@@ -49,6 +59,9 @@ $zip = new ZipArchive();
 $path = $argv[1];
 $allowed = ["composer.json", "src", "routes", "resources", "database", "config", "public", "stubs", "LICENSE"];
 $required = ["composer.json" => false, "LICENSE" => false, "resources/contracts/inventory.md" => false];
+if (is_file($argv[2]."/resources/contracts/inventory-review.json")) {
+  $required["resources/contracts/inventory-review.json"] = false;
+}
 
 if ($zip->open($path) !== true) {
   fwrite(STDERR, "[webblocks-release-prepare] Unable to inspect release ZIP.\n");
@@ -87,7 +100,7 @@ foreach ($required as $entry => $present) {
 }
 
 $zip->close();
-' "${ARCHIVE_PATH}"
+' "${ARCHIVE_PATH}" "${PACKAGE_DIR}"
 
 
 mv "${ARCHIVE_PATH}" "${OUTPUT_PATH}"

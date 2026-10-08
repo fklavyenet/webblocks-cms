@@ -56,4 +56,15 @@ if [ -f tests/Support/check-docs.php ]; then
     php tests/Support/check-docs.php
 fi
 
+# Source-workspace integration only. Isolated product CI and installed packages
+# do not acquire a dependency on the documentation checkout.
+DOCS_ROOT="${WEBBLOCKS_CMS_DOCS_ROOT:-../webblocks-cms-docs}"
+if [ -d "${DOCS_ROOT}" ]; then
+    if [ ! -f "${DOCS_ROOT}/tools/inventory-snapshot.php" ]; then
+        echo "pre-push: documentation checkout has no inventory snapshot gate" >&2
+        exit 1
+    fi
+    php "${DOCS_ROOT}/tools/inventory-snapshot.php" --check --product-root="$(pwd)"
+fi
+
 echo "pre-push: all gates passed"
