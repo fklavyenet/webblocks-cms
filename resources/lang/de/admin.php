@@ -1,6 +1,22 @@
 <?php
 
 $translations = [
+  'plugin_recovery' => [
+    'title' => 'Plugin-Wiederherstellung',
+    'description' => 'Diese Ansicht lädt keinen Plugin-Code. Deaktivieren Sie ein fehlerhaftes Plugin oder stellen Sie die vorherige Version wieder her, wenn keine Datenbankmigration ausgeführt wurde.',
+    'probe_failed' => 'Das Plugin hat die Startprüfung nicht bestanden. Die aktuelle Version wurde beibehalten.',
+    'quarantined' => 'Nach einem Startfehler automatisch deaktiviert.',
+    'enabled' => 'Aktiviert',
+    'disabled' => 'Deaktiviert',
+    'disable' => 'Plugin deaktivieren',
+    'restore' => ':version wiederherstellen',
+    'restore_unsafe' => 'Die Wiederherstellung ist wegen möglicher Datenbankänderungen gesperrt. Lassen Sie das Plugin deaktiviert und installieren Sie eine korrigierte Aktualisierung.',
+    'saved' => 'Wiederherstellung abgeschlossen.',
+    'empty' => 'Keine installierten Plugins.',
+    'return' => 'Zur Verwaltung zurückkehren',
+    'failure_notice' => ':plugin wurde nach einem Startfehler deaktiviert. Andere CMS-Funktionen bleiben verfügbar.',
+  ],
+
   'navigation' => [
     'aria' => 'Admin-Navigation',
     'toggle' => 'Navigation umschalten',

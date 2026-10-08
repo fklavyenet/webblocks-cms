@@ -16,13 +16,17 @@ class PluginDatabaseSetup
   ) {}
 
   /** @return array{status: string, ran: bool, paths_count: int} */
-  public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false): array
+  public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false, bool $verifyBoot = true): array
   {
     app(PluginCompatibility::class)->assertCompatible($plugin);
 
     $version = $plugin->versionText();
     if ($version === null) {
       throw new RuntimeException('Plugin version is missing.');
+    }
+
+    if ($verifyBoot) {
+      app(PluginBootProbe::class)->check($plugin);
     }
 
     $timeout = max(1, (int) config('webblocks-plugins.install.database_timeout_seconds', 120));
@@ -38,7 +42,7 @@ class PluginDatabaseSetup
         // already present in the PHP request that replaced the package.
         $result = Process::path(base_path())
           ->timeout($timeout)
-          ->env(['WEBBLOCKS_PLUGIN_INSTALL_ROOT' => $this->plugins->rootPath()])
+          ->env(['WEBBLOCKS_PLUGIN_INSTALL_ROOT' => $this->plugins->rootPath(), 'WEBBLOCKS_PLUGIN_SAFE_MODE' => '1'])
           ->run((new UpdateCommandRunner)->artisanCommand([
             'cms:plugin-migrate', $plugin->handle(), $version, '--no-interaction',
             ...($repairRecordedMigrations ? ['--repair'] : []),

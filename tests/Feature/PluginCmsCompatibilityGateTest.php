@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginBootProbe;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -96,6 +97,7 @@ class PluginCmsCompatibilityGateTest extends TestCase
   #[Test]
   public function compatible_plugins_can_still_be_enabled_through_the_api(): void
   {
+    $this->mock(PluginBootProbe::class)->shouldReceive('check')->once();
     $this->register('^'.WebBlocks::version());
     $this->mock(PluginRuntimeRefresher::class)->shouldReceive('refresh')->once()->with(registerRoutes: true);
 

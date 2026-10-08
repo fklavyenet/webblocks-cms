@@ -1112,3 +1112,25 @@ The long-term ideal is to generate the mechanical catalog data from one product-
 - `webblocks-cms-docs/docs/media-image-variants.md`
 
 This inventory should be the first document an AI reads for page-design capability selection. The detailed references remain useful for endpoint workflows, historical compatibility, and full renderer notes.
+
+
+## Plugin startup and recovery contract
+
+Catalog and ZIP installation, updates, and panel/API activation validate plugin source,
+provider startup, commands, and routes in a fresh PHP process through `cms:plugin-probe`.
+Validation is required even when no migration is pending. A failed or timed-out probe
+leaves the current package active; subprocess diagnostics are not exposed in responses.
+The default startup timeout is 30 seconds (`webblocks-plugins.install.boot_timeout_seconds`).
+
+Successful updates retain the previous package and record whether migrations ran.
+Database setup failures leave the plugin disabled and preserve its tables and packages.
+Runtime source/route failures quarantine the plugin; an explicit disable overrides
+configuration-based enablement. Lifecycle JSON records use atomic replacement.
+
+`/webadmin/plugin-recovery` and its login form load without installed plugin source,
+routes, or commands. Existing CMS login controls, Super admin authorization, and CSRF
+protection apply. Recovery can disable a plugin or restore the retained package when
+no migration ran, after another startup probe. A restore also republishes its assets.
+This is recovery for CMS-managed packages; it does not isolate arbitrary host providers
+or sandbox executable PHP. Uncatchable process termination still requires the separate
+recovery request rather than an in-process error handler.

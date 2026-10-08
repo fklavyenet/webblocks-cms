@@ -42,6 +42,11 @@ class PluginRouteRegistrar
       }
     }
 
+    $this->finishRegistration();
+  }
+
+  public function finishRegistration(): void
+  {
     $this->protectCorePublicRoutesFromPluginCatchAlls();
     $this->registerPluginFallbackRoute();
 

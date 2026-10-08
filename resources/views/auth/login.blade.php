@@ -48,7 +48,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('webblocks.auth.login') }}" class="wb-stack-4">
+                    <form method="POST" action="{{ route(($pluginRecoveryMode ?? false) ? 'admin.plugins.recovery.login.store' : 'webblocks.auth.login') }}" class="wb-stack-4">
                         @csrf
 
                         <div class="wb-field">

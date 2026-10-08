@@ -1,6 +1,22 @@
 <?php
 
 $translations = [
+  'plugin_recovery' => [
+    'title' => 'Eklenti kurtarma',
+    'description' => 'Bu ekran eklenti kodlarını yüklemez. Sorunlu eklentiyi kapatın veya veritabanı değişikliği uygulanmadıysa önceki sürümünü geri yükleyin.',
+    'probe_failed' => 'Eklenti açılış kontrolünü geçemedi. Mevcut sürüm korundu.',
+    'quarantined' => 'Açılış hatası nedeniyle otomatik olarak devre dışı bırakıldı.',
+    'enabled' => 'Etkin',
+    'disabled' => 'Devre dışı',
+    'disable' => 'Eklentiyi devre dışı bırak',
+    'restore' => ':version sürümünü geri yükle',
+    'restore_unsafe' => 'Veritabanı değişiklikleri uygulanmış olabileceği için geri yükleme kullanılamıyor. Eklentiyi kapalı tutun ve düzeltilmiş güncellemeyi kurun.',
+    'saved' => 'Kurtarma işlemi tamamlandı.',
+    'empty' => 'Kurulu eklenti yok.',
+    'return' => 'Yönetim paneline dön',
+    'failure_notice' => ':plugin açılış hatası nedeniyle devre dışı bırakıldı. Diğer CMS işlevleri kullanılabilir.',
+  ],
+
   'navigation' => [
     'aria' => 'Yönetim gezinmesi',
     'toggle' => 'Gezinmeyi aç/kapat',

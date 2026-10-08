@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use WebBlocks\Cms\Support\Plugins\PluginRecoveryMode;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
@@ -23,7 +24,7 @@ class LoginController extends Controller
 
   public function create(): View
   {
-    return view('webblocks-cms::auth.login');
+    return view('webblocks-cms::auth.login', ['pluginRecoveryMode' => app(PluginRecoveryMode::class)->active()]);
   }
 
   public function store(Request $request): RedirectResponse
@@ -59,6 +60,12 @@ class LoginController extends Controller
 
     $request->session()->regenerate();
     $request->user()?->forceFill(['last_login_at' => now()])->save();
+
+    if (app(PluginRecoveryMode::class)->active()) {
+      $request->session()->forget('url.intended');
+
+      return to_route('admin.plugins.recovery.index');
+    }
 
     return redirect()->intended(route('admin.dashboard'));
   }

@@ -1,6 +1,22 @@
 <?php
 
 $translations = [
+  'plugin_recovery' => [
+    'title' => 'Recuperación de plugins',
+    'description' => 'Esta pantalla no carga código de plugins. Desactive un plugin defectuoso o restaure la versión anterior si no se ejecutó una migración de base de datos.',
+    'probe_failed' => 'El plugin no superó la comprobación de inicio. Se conservó la versión actual.',
+    'quarantined' => 'Desactivado automáticamente tras un error de inicio.',
+    'enabled' => 'Activado',
+    'disabled' => 'Desactivado',
+    'disable' => 'Desactivar plugin',
+    'restore' => 'Restaurar :version',
+    'restore_unsafe' => 'La restauración está bloqueada por posibles cambios en la base de datos. Mantenga el plugin desactivado e instale una actualización corregida.',
+    'saved' => 'Recuperación completada.',
+    'empty' => 'No hay plugins instalados.',
+    'return' => 'Volver al panel de administración',
+    'failure_notice' => ':plugin se desactivó tras un error de inicio. Las demás funciones del CMS siguen disponibles.',
+  ],
+
   'navigation' => [
     'aria' => 'Navegación de administración',
     'toggle' => 'Alternar navegación',

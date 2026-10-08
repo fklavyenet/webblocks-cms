@@ -17,6 +17,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 use WebBlocks\Cms\Console\AdminTranslationAuditCommand;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
@@ -29,6 +30,7 @@ use WebBlocks\Cms\Console\MaintenanceCleanupCommand;
 use WebBlocks\Cms\Console\MediaVariantsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
 use WebBlocks\Cms\Console\PluginMigrateCommand;
+use WebBlocks\Cms\Console\PluginProbeCommand;
 use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
@@ -71,20 +73,22 @@ use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
-use WebBlocks\Cms\Support\Plugins\PluginApiRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
-use WebBlocks\Cms\Support\Plugins\PluginPublicRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginRecoveryMode;
+use WebBlocks\Cms\Support\Plugins\PluginRecoveryNoticeComposer;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
+use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
@@ -157,10 +161,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'diagnostics.php',
     'install.php',
     'public.php',
+    'plugin-recovery.php',
   ];
 
   public const PACKAGE_VIEW_FILES = [
     'admin/runtime-status.blade.php',
+    'admin/system/plugins/recovery.blade.php',
     'auth/forgot-password.blade.php',
     'auth/login.blade.php',
     'auth/reset-password.blade.php',
@@ -779,6 +785,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const PACKAGE_CONSOLE_COMMANDS = [
     PluginMigrateCommand::class,
+    PluginProbeCommand::class,
     PackageStatusCommand::class,
     PublishUpdateCommand::class,
     PrunePromotedStagedUpdatesCommand::class,
@@ -893,7 +900,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     // reserved from plugin catch-all routes.
     $this->app->booted(function (): void {
       $this->preserveHostPublicRouteNames();
-      app(PluginRouteRegistrar::class)->protectCorePublicRoutesFromPluginCatchAlls();
+      if (! app(PluginRecoveryMode::class)->active()) {
+        app(PluginRouteRegistrar::class)->protectCorePublicRoutesFromPluginCatchAlls();
+      }
     });
   }
 
@@ -1039,12 +1048,31 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       $repository = app(InstalledPluginRepository::class);
       $factory = app(InstalledPluginDefinitionFactory::class);
 
+      if (app(PluginRecoveryMode::class)->active()) {
+        return $registry;
+      }
+
       foreach ($repository->installed() as $installed) {
         $handle = (string) ($installed['manifest']['handle'] ?? '');
         $enabledByConfig = $handle !== '' && (bool) config("webblocks-plugins.enabled.{$handle}", false);
         $databaseReady = ! in_array($repository->setupResult($handle, (string) ($installed['manifest']['version'] ?? ''))['status'] ?? null, ['running', 'failed'], true);
 
-        $registry->register($factory->make($installed['manifest'], $installed['path'], $databaseReady && ($installed['enabled'] || $enabledByConfig)));
+        $shouldLoad = $databaseReady && ! $repository->isDisabled($handle) && ($installed['enabled'] || $enabledByConfig);
+        try {
+          $registry->register($factory->make($installed['manifest'], $installed['path'], $shouldLoad));
+        } catch (Throwable) {
+          try {
+            $repository->quarantine($handle, (string) $installed['manifest']['version']);
+          } catch (Throwable) {
+            // Read-only installations still suppress the plugin for this request.
+          }
+          $registry->suppress($handle);
+          $registry->register(PluginDefinition::make($handle)
+            ->label((string) ($installed['manifest']['label'] ?? $handle))
+            ->version((string) $installed['manifest']['version'])
+            ->requiresCms($installed['manifest']['required_cms_version'] ?? null)
+            ->source('manual upload')->installPath($installed['path']));
+        }
       }
 
       return $registry;
@@ -1128,9 +1156,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       $this->publicRouteFiles()
     );
 
-    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
-    app(PluginApiRouteRegistrar::class)->registerEnabledApiRoutes();
-    app(PluginPublicRouteRegistrar::class)->registerEnabledPublicRoutes();
+    if (! $this->app->routesAreCached()) {
+      require __DIR__.'/../routes/plugin-recovery.php';
+    }
+    if (! app(PluginRecoveryMode::class)->active()) {
+      app(PluginRuntimeRegistrar::class)->register();
+    }
   }
 
   protected function preserveHostPublicRouteNames(): void
@@ -1255,6 +1286,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function bootViews(): void
   {
+    $this->app->make('view')->composer('webblocks-cms::admin.partials.flash', PluginRecoveryNoticeComposer::class);
     $this->loadTranslationsFrom($this->langPath(), self::VIEW_NAMESPACE);
     $this->bootPluginTranslations();
 

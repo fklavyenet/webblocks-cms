@@ -11,6 +11,13 @@ class PluginRegistry
   /** @var array<string, PluginDefinition> */
   private array $plugins = [];
 
+  private array $suppressed = [];
+
+  public function suppress(string $handle): void
+  {
+    $this->suppressed[$handle] = true;
+  }
+
   /**
    * @param  array<string, bool>  $enabledConfig
    */
@@ -86,7 +93,13 @@ class PluginRegistry
 
   public function isConfiguredEnabled(string $handle): bool
   {
+    if (isset($this->suppressed[$handle]) || app(PluginRecoveryMode::class)->active()) {
+      return false;
+    }
     if ($this->useLiveConfig) {
+      if (app(InstalledPluginRepository::class)->isDisabled($handle)) {
+        return false;
+      }
       $plugin = $this->plugins[$handle] ?? null;
       if ($plugin?->installPathValue() !== null && $plugin->versionText() !== null
         && in_array(app(InstalledPluginRepository::class)->setupResult($handle, $plugin->versionText())['status'] ?? null, ['running', 'failed'], true)) {

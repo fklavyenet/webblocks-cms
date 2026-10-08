@@ -18,34 +18,29 @@ class PluginMigrateCommand extends Command
 
   public function handle(InstalledPluginRepository $plugins, InstalledPluginDefinitionFactory $factory, PluginMigrationRunner $migrations): int
   {
-    foreach ($plugins->installed() as $installed) {
-      if (($installed['manifest']['handle'] ?? null) !== $this->argument('handle')
-        || ($installed['manifest']['version'] ?? null) !== $this->argument('version')) {
-        continue;
+    try {
+      $installed = $plugins->findVersion((string) $this->argument('handle'), (string) $this->argument('version'));
+      if ($installed === null) {
+        return self::FAILURE;
       }
-
+      // Disabled installations also need their own classes for migrations.
+      // Loading their definition here does not enable them in the host.
+      $plugin = $factory->make($installed['manifest'], $installed['path'], false);
       try {
-        // Disabled installations also need their own classes for migrations.
-        // Loading their definition here does not enable them in the host.
-        $plugin = $factory->make($installed['manifest'], $installed['path'], false);
-        try {
-          app(PluginCompatibility::class)->assertCompatible($plugin);
-        } catch (RuntimeException $exception) {
-          $this->error($exception->getMessage());
-
-          return self::FAILURE;
-        }
-        $plugin = $factory->make($installed['manifest'], $installed['path'], true);
-        $migrations->run($plugin, repairRecordedMigrations: (bool) $this->option('repair'));
-
-        return $migrations->hasPendingMigrations($plugin) ? self::FAILURE : self::SUCCESS;
-      } catch (Throwable) {
-        $this->error(__('webblocks-cms::admin.system_plugins_show.database_update_failed'));
+        app(PluginCompatibility::class)->assertCompatible($plugin);
+      } catch (RuntimeException $exception) {
+        $this->error($exception->getMessage());
 
         return self::FAILURE;
       }
-    }
+      $plugin = $factory->make($installed['manifest'], $installed['path'], true);
+      $migrations->run($plugin, repairRecordedMigrations: (bool) $this->option('repair'));
 
-    return self::FAILURE;
+      return $migrations->hasPendingMigrations($plugin) ? self::FAILURE : self::SUCCESS;
+    } catch (Throwable) {
+      $this->error(__('webblocks-cms::admin.system_plugins_show.database_update_failed'));
+
+      return self::FAILURE;
+    }
   }
 }

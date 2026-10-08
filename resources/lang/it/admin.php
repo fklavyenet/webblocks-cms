@@ -1,6 +1,22 @@
 <?php
 
 $translations = [
+  'plugin_recovery' => [
+    'title' => 'Ripristino dei plugin',
+    'description' => 'Questa schermata non carica codice dei plugin. Disattiva un plugin difettoso o ripristina la versione precedente se non è stata eseguita una migrazione del database.',
+    'probe_failed' => 'Il plugin non ha superato il controllo di avvio. La versione attuale è stata mantenuta.',
+    'quarantined' => 'Disattivato automaticamente dopo un errore di avvio.',
+    'enabled' => 'Attivato',
+    'disabled' => 'Disattivato',
+    'disable' => 'Disattiva plugin',
+    'restore' => 'Ripristina :version',
+    'restore_unsafe' => 'Il ripristino è bloccato per possibili modifiche al database. Mantieni il plugin disattivato e installa un aggiornamento corretto.',
+    'saved' => 'Ripristino completato.',
+    'empty' => 'Nessun plugin installato.',
+    'return' => 'Torna al pannello di amministrazione',
+    'failure_notice' => ':plugin è stato disattivato dopo un errore di avvio. Le altre funzioni del CMS restano disponibili.',
+  ],
+
   'navigation' => [
     'aria' => 'Navigazione admin',
     'toggle' => 'Mostra/nascondi navigazione',

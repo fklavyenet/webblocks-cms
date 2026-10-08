@@ -489,16 +489,32 @@ class InstalledPluginDefinitionFactory
       ->sortBy(fn (SplFileInfo $file): string => $this->pluginSourceLoadPriority($file).':'.$file->getPathname())
       ->values();
 
+    // Catalog packages are not in the host Composer map. Resolve source
+    // dependencies before eager loading so inheritance never depends on filenames.
+    $classes = [];
     foreach ($files as $file) {
-      $declaredClass = $this->fileDeclaredClass($file->getPathname());
-
-      if ($declaredClass !== null && $this->declaredSymbolLoaded($declaredClass)) {
-        continue;
+      if ($file->getExtension() === 'php' && ($class = $this->fileDeclaredClass($file->getPathname())) !== null) {
+        $classes[$class] = $file->getPathname();
       }
-
-      if ($file->getExtension() === 'php') {
-        require_once $file->getPathname();
+    }
+    $loader = static function (string $class) use ($classes): void {
+      if (isset($classes[$class])) {
+        require_once $classes[$class];
       }
+    };
+    spl_autoload_register($loader, true, true);
+    try {
+      foreach ($files as $file) {
+        $declaredClass = $this->fileDeclaredClass($file->getPathname());
+        if ($declaredClass !== null && $this->declaredSymbolLoaded($declaredClass)) {
+          continue;
+        }
+        if ($file->getExtension() === 'php') {
+          require_once $file->getPathname();
+        }
+      }
+    } finally {
+      spl_autoload_unregister($loader);
     }
   }
 

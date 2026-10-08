@@ -83,7 +83,7 @@ class PluginRuntimeRefresher
     app(PluginAuthorizationRegistrar::class)->register();
 
     if ($registerRoutes) {
-      app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+      app(PluginRuntimeRegistrar::class)->register();
     }
 
     /*

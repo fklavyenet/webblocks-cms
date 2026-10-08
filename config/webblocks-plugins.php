@@ -13,6 +13,7 @@ return [
     'install' => [
         'root' => env('WEBBLOCKS_PLUGIN_INSTALL_ROOT'),
         'database_timeout_seconds' => 120,
+        'boot_timeout_seconds' => 30,
     ],
 
     'public_routes' => [

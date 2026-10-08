@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.94.0
+
+- Validate every plugin install, update and activation in a fresh PHP process before enabling it, including releases without database migrations. Reject missing classes, invalid PHP, startup or route errors, early process exit and timeouts while preserving the current working version.
+- Keep the previous plugin package after a successful update. Publish lifecycle state atomically, prevent stale update requests from replacing a newer version, and leave plugins disabled after a failed database update while preserving their data.
+- Quarantine plugins that fail source loading or route registration so core pages and other plugins remain available. Resolve plugin source dependencies without relying on filename order, and remove partially registered routes after a failure.
+- Add an authenticated Super admin recovery screen at /webadmin/plugin-recovery that loads without plugin code. Disable a failing plugin without SSH, or restore the previous package only when the update applied no database migrations. Restore its static assets too.
+- Show controlled failure notices in the admin and localize recovery actions in all six languages. Keep plugin subprocess output and exception details out of operator-facing errors and lifecycle records.
+
+
 ## 1.93.3
 
 - Make slot editor parent options follow the block tree and show block IDs, explicit admin names or localized content previews, and ancestor paths. Give the Parent Block field its own row and preserve existing placement restrictions.

@@ -3,7 +3,9 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use RuntimeException;
+use Throwable;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use ZipArchive;
 
@@ -71,6 +73,13 @@ class PluginZipInstaller
         throw new RuntimeException('A plugin with this handle is already installed.');
       }
 
+      if ($expectedHandle !== null && $currentVersion !== null) {
+        $current = collect($this->plugins->installed())->first(fn (array $installed): bool => ($installed['manifest']['handle'] ?? null) === $expectedHandle);
+        if (($current['manifest']['version'] ?? null) !== $currentVersion) {
+          throw new RuntimeException(__('webblocks-cms::admin.system_plugins_show.database_update_busy'));
+        }
+      }
+
       $target = $this->plugins->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version;
 
       if (file_exists($target)) {
@@ -79,16 +88,28 @@ class PluginZipInstaller
 
       $this->extract($zip, $entries, $stripPrefix, $target);
 
-      $wasEnabled = $currentVersion !== null && $this->plugins->enabledVersion($handle) === $currentVersion;
-      if ($expectedHandle !== null && $currentVersion !== null) {
-        $this->plugins->disable($handle);
-        $this->plugins->replaceVersion($handle, $currentVersion, $version);
-      }
-
-      $definition = app(InstalledPluginDefinitionFactory::class)->make($manifest, $target, false);
-      $setup = app(PluginDatabaseSetup::class)->run($definition);
-      if ($wasEnabled) {
-        $this->plugins->enable($handle, $version);
+      $wasEnabled = $currentVersion !== null && ($this->plugins->enabledVersion($handle) === $currentVersion || (! $this->plugins->isDisabled($handle) && (bool) config("webblocks-plugins.enabled.{$handle}", false)));
+      $setupStarted = false;
+      try {
+        $definition = app(InstalledPluginDefinitionFactory::class)->make($manifest, $target, false);
+        app(PluginBootProbe::class)->check($definition);
+        if ($expectedHandle !== null && $currentVersion !== null) {
+          $this->plugins->recordPrevious($handle, $currentVersion, $version, false);
+          $this->plugins->disable($handle);
+        }
+        $setupStarted = true;
+        $setup = app(PluginDatabaseSetup::class)->run($definition, verifyBoot: false);
+        if ($wasEnabled) {
+          $this->plugins->enable($handle, $version);
+        }
+        if ($expectedHandle !== null && $currentVersion !== null) {
+          $this->plugins->recordPrevious($handle, $currentVersion, $version, ! $setup['ran']);
+        }
+      } catch (Throwable $exception) {
+        if (! $setupStarted) {
+          File::deleteDirectory($target);
+        }
+        throw $exception;
       }
 
       return [

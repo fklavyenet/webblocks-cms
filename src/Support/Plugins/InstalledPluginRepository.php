@@ -53,6 +53,16 @@ class InstalledPluginRepository
       }
     }
 
+    $selected = [];
+    foreach ($plugins as $plugin) {
+      $handle = (string) $plugin['manifest']['handle'];
+      $current = $selected[$handle] ?? null;
+      if ($current === null || $plugin['enabled'] || (! $current['enabled'] && version_compare((string) $plugin['manifest']['version'], (string) $current['manifest']['version'], '>'))) {
+        $selected[$handle] = $plugin;
+      }
+    }
+    $plugins = array_values($selected);
+
     usort($plugins, fn (array $left, array $right): int => strcmp((string) $left['manifest']['label'], (string) $right['manifest']['label']));
 
     return $plugins;
@@ -94,10 +104,12 @@ class InstalledPluginRepository
     $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
     $state = is_array($state) ? $state : [];
 
-    file_put_contents($path, json_encode(array_merge($state, [
+    $this->writeState($path, array_merge($state, [
       'version' => $version,
       'enabled_at' => $state['enabled_at'] ?? now()->toIso8601String(),
-    ]), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    ]));
+    File::delete($directory.DIRECTORY_SEPARATOR.'disabled.json');
+    File::delete($directory.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'runtime-failure.json');
   }
 
   /**
@@ -111,12 +123,12 @@ class InstalledPluginRepository
     File::ensureDirectoryExists($directory);
     $path = $directory.DIRECTORY_SEPARATOR.'setup.json';
 
-    file_put_contents($path, json_encode([
+    $this->writeState($path, [
       'version' => $version,
       'setup' => array_merge($result, [
         'ran_at' => now()->toIso8601String(),
       ]),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    ]);
   }
 
   /** @return array<string, mixed> */
@@ -137,6 +149,7 @@ class InstalledPluginRepository
 
     $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'enabled.json';
 
+    $this->writeState(dirname($path).DIRECTORY_SEPARATOR.'disabled.json', ['disabled_at' => now()->toIso8601String()]);
     if (is_file($path)) {
       File::delete($path);
     }
@@ -153,16 +166,18 @@ class InstalledPluginRepository
     $this->assertPathInsideRoot($versionPath, $root);
     $this->disable($handle);
 
-    if (file_exists($versionPath)) {
-      if (! is_dir($versionPath) || is_link($versionPath)) {
+    if (is_dir($pluginPath)) {
+      $this->assertPathInsideRoot($pluginPath, $root);
+      if (is_link($pluginPath)) {
         throw new RuntimeException('Plugin install path is not a removable plugin directory.');
       }
-
-      File::deleteDirectory($versionPath);
-    }
-
-    if (is_dir($pluginPath) && count(File::allFiles($pluginPath)) === 0 && count(File::directories($pluginPath)) === 0) {
-      $this->assertPathInsideRoot($pluginPath, $root);
+      foreach (File::directories($pluginPath) as $directory) {
+        $this->assertPathInsideRoot($directory, $root);
+        if (is_link($directory)) {
+          throw new RuntimeException('Plugin install path is not a removable plugin directory.');
+        }
+      }
+      // An uninstall removes retained code packages too, never database tables.
       File::deleteDirectory($pluginPath);
     }
 
@@ -198,7 +213,78 @@ class InstalledPluginRepository
         throw new RuntimeException('Plugin install path is not a removable plugin directory.');
       }
 
-      File::deleteDirectory($oldVersionPath);
+      // Keep the last working package available for recovery.
+      return;
+    }
+  }
+
+  public function findVersion(string $handle, string $version): ?array
+  {
+    $this->assertValidCoordinates($handle, $version);
+    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version;
+    $this->assertPathInsideRoot($path, $this->canonicalRootPath());
+    foreach (['webblocks-plugin.json', 'manifest.json'] as $filename) {
+      if (! is_file($path.DIRECTORY_SEPARATOR.$filename)) {
+        continue;
+      }
+      $manifest = json_decode((string) file_get_contents($path.DIRECTORY_SEPARATOR.$filename), true);
+      if (is_array($manifest) && ($manifest['handle'] ?? null) === $handle && ($manifest['version'] ?? null) === $version) {
+        return ['manifest' => $manifest, 'path' => $path];
+      }
+    }
+
+    return null;
+  }
+
+  public function isDisabled(string $handle): bool
+  {
+    return PluginDefinition::isValidHandle($handle) && is_file($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'disabled.json');
+  }
+
+  public function quarantine(string $handle, string $version): void
+  {
+    $this->assertValidCoordinates($handle, $version);
+    $this->writeState($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'runtime-failure.json', ['failed_at' => now()->toIso8601String()]);
+    $this->disable($handle);
+  }
+
+  public function runtimeFailed(string $handle, string $version): bool
+  {
+    $this->assertValidCoordinates($handle, $version);
+
+    return is_file($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'runtime-failure.json');
+  }
+
+  public function recordPrevious(string $handle, string $version, string $replacement, bool $rollbackSafe): void
+  {
+    $this->assertValidCoordinates($handle, $version);
+    $this->assertValidCoordinates($handle, $replacement);
+    $this->writeState($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'previous.json', ['version' => $version, 'replacement' => $replacement, 'rollback_safe' => $rollbackSafe]);
+  }
+
+  public function previous(string $handle): array
+  {
+    if (! PluginDefinition::isValidHandle($handle)) {
+      return [];
+    }
+    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'previous.json';
+    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+
+    return is_array($state) ? $state : [];
+  }
+
+  private function writeState(string $path, array $state): void
+  {
+    File::ensureDirectoryExists(dirname($path));
+    $temporary = $path.'.'.bin2hex(random_bytes(8)).'.tmp';
+    try {
+      if (file_put_contents($temporary, json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), LOCK_EX) === false || ! rename($temporary, $path)) {
+        throw new RuntimeException('Unable to write plugin lifecycle state.');
+      }
+    } finally {
+      if (is_file($temporary)) {
+        File::delete($temporary);
+      }
     }
   }
 

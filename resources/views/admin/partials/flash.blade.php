@@ -87,3 +87,10 @@
         </div>
     </div>
 @endif
+
+@foreach($pluginRuntimeFailures ?? [] as $failedPlugin)
+    <div class="wb-alert wb-alert-danger" role="alert">
+        <div>{{ $adminTranslator->admin('plugin_recovery.failure_notice', $adminLocale, ['plugin' => $failedPlugin['manifest']['label'] ?? $failedPlugin['manifest']['handle']]) }}</div>
+        <a class="wb-link" href="{{ route('admin.plugins.recovery.index') }}">{{ $adminTranslator->admin('plugin_recovery.title', $adminLocale) }}</a>
+    </div>
+@endforeach

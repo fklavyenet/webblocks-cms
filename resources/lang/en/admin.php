@@ -1,6 +1,22 @@
 <?php
 
 return [
+    'plugin_recovery' => [
+        'title' => 'Plugin recovery',
+        'description' => 'This screen opens without loading plugin code. Disable a failing plugin or restore its last working version when no database migration was applied.',
+        'probe_failed' => 'The plugin failed its startup check. The current version was kept.',
+        'quarantined' => 'Automatically disabled after a startup error.',
+        'enabled' => 'Enabled',
+        'disabled' => 'Disabled',
+        'disable' => 'Disable plugin',
+        'restore' => 'Restore :version',
+        'restore_unsafe' => 'Automatic restore is unavailable because database changes may have been applied. Keep the plugin disabled and install a corrected update.',
+        'saved' => 'Recovery action completed.',
+        'empty' => 'No installed plugins.',
+        'return' => 'Return to the administration panel',
+        'failure_notice' => ':plugin was disabled after a startup error. Other CMS functions remain available.',
+    ],
+
   'javascript' => [
     'new_block' => 'New Block',
     'block' => 'Block',

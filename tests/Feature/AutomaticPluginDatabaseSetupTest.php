@@ -13,6 +13,7 @@ use Monolog\Handler\NullHandler;
 use RuntimeException;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
+use WebBlocks\Cms\Support\Plugins\PluginBootProbe;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -76,6 +77,7 @@ class AutomaticPluginDatabaseSetupTest extends TestCase
     $installer = app(PluginZipInstaller::class);
     // Exercise real migrations via the registered command; the separate test
     // above covers actual PHP process isolation with a shared SQLite file.
+    $this->mock(PluginBootProbe::class)->shouldReceive('check');
     Process::fake(fn () => $this->runMigrationCommand('1.0.0'));
     $installer->install($this->zip('1.0.0'));
     $repository = app(InstalledPluginRepository::class);
@@ -112,6 +114,7 @@ class AutomaticPluginDatabaseSetupTest extends TestCase
 
   public function test_successful_process_with_pending_migrations_is_still_a_failure(): void
   {
+    $this->mock(PluginBootProbe::class)->shouldReceive('check');
     Process::fake();
     try {
       app(PluginZipInstaller::class)->install($this->zip('1.0.0'));
@@ -123,11 +126,12 @@ class AutomaticPluginDatabaseSetupTest extends TestCase
     }
   }
 
-  public function test_plugin_without_migrations_needs_no_cli_process_and_stays_disabled(): void
+  public function test_plugin_without_migrations_still_requires_a_startup_probe_and_stays_disabled(): void
   {
     Process::fake();
+    Process::fake(['*' => Process::result(output: PluginBootProbe::SUCCESS)]);
     $result = app(PluginZipInstaller::class)->install($this->zip('1.0.0', migrations: false));
-    Process::assertNothingRan();
+    Process::assertRan(fn ($process) => in_array('cms:plugin-probe', $process->command, true));
     $this->assertFalse($result['database_setup']['ran']);
     $this->assertNull(app(InstalledPluginRepository::class)->enabledVersion('example-auto'));
   }
