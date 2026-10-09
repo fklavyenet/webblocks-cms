@@ -61,6 +61,7 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
@@ -1313,6 +1314,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     $this->loadViewsFrom($this->viewsPath(), self::VIEW_NAMESPACE);
     $this->app->make('view')->composer(self::VIEW_NAMESPACE.'::layouts.admin', PluginAppearanceComposer::class);
+    $this->app->make('view')->composer(self::VIEW_NAMESPACE.'::layouts.admin', PanelNotificationsComposer::class);
   }
 
   /**

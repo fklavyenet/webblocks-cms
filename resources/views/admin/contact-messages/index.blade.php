@@ -9,7 +9,8 @@
     $statusLabel = static fn (string $status) => $adminText('status_'.$status);
     $hasActiveFilters = ($filters['search'] ?? '') !== ''
         || ($filters['status'] ?? '') !== ''
-        || ($filters['notification'] ?? '') !== '';
+        || ($filters['notification'] ?? '') !== ''
+        || ($filters['site'] ?? '') !== '';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
@@ -45,6 +46,14 @@
                     'placeholder' => $adminText('search_placeholder'),
                 ],
                 'selects' => [
+                    [
+                        'id' => 'contact_messages_site',
+                        'name' => 'site',
+                        'label' => __('webblocks-cms::notifications.panel_site'),
+                        'selected' => $filters['site'] ?? '',
+                        'placeholder' => __('webblocks-cms::notifications.panel_all_sites'),
+                        'options' => collect($sites ?? [])->mapWithKeys(fn ($site) => [$site->id => $site->publicDisplayName() ?: $site->name])->all(),
+                    ],
                     [
                         'id' => 'contact_messages_status',
                         'name' => 'status',

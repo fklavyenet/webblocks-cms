@@ -291,6 +291,7 @@
 
                     <div class="wb-navbar-end wb-ms-auto">
                         <div class="wb-cluster">
+                            @include('webblocks-cms::admin.partials.panel-notifications-indicator')
                             @if ($user?->can('access-system') && Route::has('admin.system.updates.indicator'))
                                 <a
                                     href="{{ route('admin.system.updates.index') }}"

@@ -1,6 +1,7 @@
 @php($schedulerHealth = $schedulerHealth ?? app(\WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth::class)->forSite($site))
 <div class="wb-alert {{ $schedulerHealth['required'] && in_array($schedulerHealth['status'], ['unverified', 'delayed', 'failed', 'unavailable'], true) ? 'wb-alert-warning' : 'wb-alert-info' }}">
 <strong>{{ __('webblocks-cms::notifications.health_title') }}: {{ __('webblocks-cms::notifications.health_'.$schedulerHealth['status']) }}</strong>
+<p>{{ __('webblocks-cms::notifications.panel_delivery_help') }}</p>
 @if ($schedulerHealth['required'] && in_array($schedulerHealth['status'], ['unverified', 'delayed', 'failed', 'unavailable'], true))
 <p>{{ __('webblocks-cms::notifications.health_impact') }}</p>
 @endif

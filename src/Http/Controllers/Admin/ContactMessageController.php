@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteContactMessagesRequest;
+use WebBlocks\Cms\Http\Requests\Admin\ContactMessageIndexRequest;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -25,11 +26,12 @@ class ContactMessageController extends Controller
     private readonly PublicSubmissionProtection $submissionProtection,
   ) {}
 
-  public function index(Request $request): View
+  public function index(ContactMessageIndexRequest $request): View
   {
     $search = trim((string) $request->string('search'));
     $status = $request->string('status')->toString();
     $notification = $request->string('notification')->toString();
+    $siteId = (int) $request->validated('site', 0);
 
     if (! in_array($status, ContactMessage::statuses(), true)) {
       $status = '';
@@ -44,6 +46,7 @@ class ContactMessageController extends Controller
 
     $filteredQuery = ContactMessage::query()
       ->tap(fn ($query) => $this->authorization->scopeContactMessagesForUser($query, $request->user()))
+      ->when($siteId > 0, fn ($query) => $query->whereHas('page', fn ($pages) => $pages->where('site_id', $siteId)))
       ->when($search !== '', function ($query) use ($search) {
         $query->where(function ($inner) use ($search) {
           $inner->where('name', 'like', "%{$search}%")
@@ -105,8 +108,10 @@ class ContactMessageController extends Controller
     AdminPagination::redirectOutOfRange($messages);
 
     return view('webblocks-cms::admin.contact-messages.index', [
+      'sites' => $this->authorization->scopeSitesForUser(Site::query(), $request->user())->orderBy('name')->get(),
       'messages' => $messages,
       'filters' => [
+        'site' => $siteId ?: '',
         'search' => $search,
         'status' => $status,
         'notification' => $notification,

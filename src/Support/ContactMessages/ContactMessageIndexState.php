@@ -11,6 +11,7 @@ class ContactMessageIndexState
    * @var array<int, string>
    */
   private const ALLOWED_QUERY_KEYS = [
+    'site',
     'search',
     'status',
     'notification',
@@ -124,6 +125,10 @@ class ContactMessageIndexState
       }
 
       if ($key === 'page' && (! ctype_digit($stringValue) || (int) $stringValue < 2)) {
+        continue;
+      }
+
+      if ($key === 'site' && (! ctype_digit($stringValue) || (int) $stringValue < 1)) {
         continue;
       }
 

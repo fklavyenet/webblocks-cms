@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.96.0
+
+- Show saved contact-message work in a Dashboard panel and a shared admin notification indicator without requiring a scheduler, outbound mail or email opt-in. Count unread and awaiting-reply messages separately and restrict counts and links to the operator's accessible sites.
+- Link each site summary to its filtered contact inbox, with validated site selection and preserved filters after deletion. Panel reads do not send email, mark messages read, consume delivery events or create scheduler execution evidence.
+- Explain in the panel that only batched/daily email and daily reminders require scheduling; immediate email and panel notifications remain independent of the scheduler.
+- Align the notification bell with WebBlocks UI 2.30.0 icon actions and numeric button badges. Cap visual counts at 99+ while retaining exact accessible counts; no custom alignment CSS is required.
+
 ## 1.95.2
 
 - Keep the Dashboard scheduler card visible for accessible sites using immediate notifications with daily summaries disabled. Upgraded installations no longer hide their unverified or delayed scheduler status simply because scheduled notification delivery is optional.

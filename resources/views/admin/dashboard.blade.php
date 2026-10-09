@@ -30,7 +30,8 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <div class="wb-stack wb-stack-4">
+    <div class="wb-stack wb-stack-4" id="panel-notifications">
+        @include('webblocks-cms::admin.partials.dashboard-panel-notifications')
         @include('webblocks-cms::admin.partials.dashboard-scheduler-health')
         @if ($canViewVisitorReports)
             <div class="wb-card">

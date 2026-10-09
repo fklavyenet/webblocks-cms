@@ -10,7 +10,7 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SlotType;
-use WebBlocks\Cms\Queries\SiteNotificationHealthQuery;
+use WebBlocks\Cms\Queries\PanelNotificationQuery;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -23,14 +23,17 @@ class DashboardController extends Controller
     private readonly AdminAuthorization $authorization,
     private readonly SystemSettings $systemSettings,
     private readonly PluginAdminExtensionRegistry $pluginAdminExtensions,
+    private readonly PanelNotificationQuery $notifications,
   ) {}
 
   public function __invoke(Request $request): View
   {
     $canViewVisitorReports = (bool) $request->user()?->can('view-visitor-reports');
-    $schedulerDashboard = app(SiteNotificationHealthQuery::class)->dashboardForUser($request->user());
+    $panelNotifications = $this->notifications->forUser($request->user());
+    $schedulerDashboard = $panelNotifications['scheduler'] ?? ['sites' => collect(), 'health' => null];
 
     return view('webblocks-cms::admin.dashboard', [
+      'panelNotifications' => $panelNotifications,
       'notificationHealthSites' => $schedulerDashboard['sites'],
       'dashboardSchedulerHealth' => $schedulerDashboard['health'],
       'title' => 'Admin Dashboard',
