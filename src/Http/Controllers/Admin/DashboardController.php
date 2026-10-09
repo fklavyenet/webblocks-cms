@@ -28,9 +28,11 @@ class DashboardController extends Controller
   public function __invoke(Request $request): View
   {
     $canViewVisitorReports = (bool) $request->user()?->can('view-visitor-reports');
+    $schedulerDashboard = app(SiteNotificationHealthQuery::class)->dashboardForUser($request->user());
 
     return view('webblocks-cms::admin.dashboard', [
-      'notificationHealthSites' => app(SiteNotificationHealthQuery::class)->forUser($request->user()),
+      'notificationHealthSites' => $schedulerDashboard['sites'],
+      'dashboardSchedulerHealth' => $schedulerDashboard['health'],
       'title' => 'Admin Dashboard',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Admin Dashboard'),

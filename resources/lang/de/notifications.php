@@ -55,4 +55,5 @@ return [
   'health_install_title' => 'Vor geplanten Benachrichtigungen',
   'health_install_help' => 'Neue Websites verwenden standardmäßig Sammelbenachrichtigungen und tägliche Zusammenfassungen. Erforderlich sind ein funktionierender Mailtransport, die korrekte APP_URL, der Laravel-Zeitplaner jede Minute und bei mehreren Prozessen ein gemeinsamer Cache mit atomaren Sperren. Nach der Installation den Zeitplaner prüfen.',
   'health_dispatch_failed' => 'Benachrichtigungsverarbeitung fehlgeschlagen. Prüfen Sie Zeitplaner und Versandresultate.',
+  'health_notifications_optional' => 'Sofortige Benachrichtigungen ohne tägliche Zusammenfassungen benötigen keinen geplanten Versand. Der Zeitplanerstatus bleibt für Hintergrundwartung sichtbar.',
 ];

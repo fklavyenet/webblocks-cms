@@ -55,4 +55,5 @@ return [
   'health_install_title' => 'Antes de usar notificaciones programadas',
   'health_install_help' => 'Los sitios nuevos usan notificaciones agrupadas y un resumen diario. Requieren correo saliente operativo, APP_URL correcta, el programador Laravel cada minuto y caché compartida con bloqueos atómicos si hay varios procesos. Verifica el programador después de instalar.',
   'health_dispatch_failed' => 'Error al procesar notificaciones. Revisa el programador y los resultados de envío.',
+  'health_notifications_optional' => 'Las notificaciones inmediatas sin resumen diario no requieren envío programado. El estado sigue visible para el mantenimiento en segundo plano.',
 ];

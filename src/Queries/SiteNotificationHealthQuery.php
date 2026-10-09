@@ -17,10 +17,22 @@ class SiteNotificationHealthQuery
       return collect();
     }
 
-    $sites = Site::query()->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, $user))->get()
-      ->filter(fn (Site $site) => $this->health->requiredForSite($site));
+    $sites = Site::query()->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, $user))->get();
     $snapshot = $sites->isNotEmpty() ? $this->health->snapshot() : [];
 
-    return $sites->map(fn (Site $site) => ['site' => $site, 'health' => $snapshot + ['required' => true]]);
+    return $sites->map(fn (Site $site) => ['site' => $site, 'health' => $snapshot + ['required' => $this->health->requiredForSite($site)]]);
+  }
+
+  public function dashboardForUser($user): array
+  {
+    $sites = $this->forUser($user);
+    $health = $sites->first()['health'] ?? null;
+    if ($health !== null) {
+      // A legacy/immediate site must not hide another accessible site's need
+      // for scheduling, and inaccessible sites must not influence the warning.
+      $health['required'] = $sites->contains(fn (array $row) => $row['health']['required']);
+    }
+
+    return ['sites' => $sites, 'health' => $health];
   }
 }

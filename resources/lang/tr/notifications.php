@@ -55,4 +55,5 @@ return [
   'health_install_title' => 'Zamanlanmış bildirimleri kullanmadan önce',
   'health_install_help' => 'Yeni siteler varsayılan olarak toplu bildirim ve günlük özet kullanır. Bunlar çalışan bir e-posta taşıyıcısı, doğru APP_URL, her dakika çalışan Laravel zamanlayıcısı ve birden çok işleyicide atomik kilit destekleyen ortak cache gerektirir. Kurulumdan sonra zamanlayıcı sağlığını doğrulayın.',
   'health_dispatch_failed' => 'Bildirim işleme başarısız. Zamanlayıcı sağlığını ve gönderim sonuçlarını kontrol edin.',
+  'health_notifications_optional' => 'Günlük özet kapalıyken yalnızca anlık bildirimler zamanlanmış gönderim gerektirmez. Arka plan bakım işleri için zamanlayıcı durumu görünür kalır.',
 ];

@@ -55,4 +55,5 @@ return [
   'health_install_title' => 'Avant les notifications planifiées',
   'health_install_help' => 'Les nouveaux sites utilisent des notifications regroupées et un résumé quotidien. Ils nécessitent un transport mail fonctionnel, une APP_URL correcte, le planificateur Laravel chaque minute et un cache partagé avec verrous atomiques pour plusieurs processus. Vérifiez le planificateur après installation.',
   'health_dispatch_failed' => 'Échec du traitement des notifications. Vérifiez le planificateur et les résultats d’envoi.',
+  'health_notifications_optional' => 'Les notifications immédiates sans résumé quotidien ne nécessitent pas d’envoi planifié. Le statut reste visible pour la maintenance en arrière-plan.',
 ];

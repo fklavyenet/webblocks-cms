@@ -55,4 +55,5 @@ return [
   'health_install_title' => 'Prima delle notifiche pianificate',
   'health_install_help' => 'I nuovi siti usano notifiche raggruppate e un riepilogo giornaliero. Servono posta in uscita funzionante, APP_URL corretta, il pianificatore Laravel ogni minuto e cache condivisa con blocchi atomici per più processi. Verifica il pianificatore dopo l’installazione.',
   'health_dispatch_failed' => 'Elaborazione delle notifiche non riuscita. Verifica il pianificatore e i risultati di invio.',
+  'health_notifications_optional' => 'Le notifiche immediate senza riepilogo giornaliero non richiedono invii pianificati. Lo stato resta visibile per la manutenzione in background.',
 ];

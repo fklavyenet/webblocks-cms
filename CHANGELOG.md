@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.95.2
+
+- Keep the Dashboard scheduler card visible for accessible sites using immediate notifications with daily summaries disabled. Upgraded installations no longer hide their unverified or delayed scheduler status simply because scheduled notification delivery is optional.
+- Explain when scheduling is optional for the selected notification policy. Aggregate warnings across all accessible sites so a legacy first site cannot mask another site's scheduling requirement, while inaccessible sites remain excluded.
+- Add regression coverage for upgraded immediate-only sites, mixed policies, site restrictions and non-manager access. Notification settings and delivery behavior are unchanged.
+
 ## 1.95.1
 
 - Make scheduled notification requirements visible before installation and in the Dashboard, Site settings and notification API, with clear server-administrator ownership of the one-time Laravel scheduler setup.

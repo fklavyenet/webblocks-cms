@@ -4,6 +4,9 @@
 @if ($schedulerHealth['required'] && in_array($schedulerHealth['status'], ['unverified', 'delayed', 'failed', 'unavailable'], true))
 <p>{{ __('webblocks-cms::notifications.health_impact') }}</p>
 @endif
+@if (! $schedulerHealth['required'])
+<p>{{ __('webblocks-cms::notifications.health_notifications_optional') }}</p>
+@endif
 <p>{{ __('webblocks-cms::notifications.health_last_seen') }}: {{ $schedulerHealth['last_seen_at'] ?? __('webblocks-cms::notifications.health_no_record') }}</p>
 <p>{{ __('webblocks-cms::notifications.health_last_completed') }}: {{ $schedulerHealth['last_completed_at'] ?? __('webblocks-cms::notifications.health_no_record') }}</p>
 <p>{{ __('webblocks-cms::notifications.health_setup') }}</p>

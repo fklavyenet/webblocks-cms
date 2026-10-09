@@ -55,4 +55,5 @@ return [
   'health_install_title' => 'Before using scheduled notifications',
   'health_install_help' => 'New sites default to batched notifications and a daily summary. They require a working outbound mail transport, a correct APP_URL, the Laravel scheduler every minute, and a shared cache with atomic locks when multiple workers run. Verify scheduler health after installation.',
   'health_dispatch_failed' => 'Notification processing failed. Check recorded scheduler health and delivery outcomes.',
+  'health_notifications_optional' => 'Immediate-only notifications with daily summaries disabled do not require scheduled delivery. Scheduler status remains visible for background maintenance.',
 ];
