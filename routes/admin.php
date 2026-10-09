@@ -68,6 +68,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageTranslationCon
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPluginController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteNotificationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSystemUpdateController;
 use WebBlocks\Cms\Http\Middleware\AllowPagePreviewAccess;
 use WebBlocks\Cms\Http\Middleware\CoalesceSearchIndexing;
@@ -206,6 +207,8 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::patch('/sites/{site}/branding', [InternalSiteController::class, 'updateBranding'])->middleware('internal-api.capability:site-settings.write')->name('sites.branding.update');
     Route::patch('/sites/{site}/head', [InternalSiteController::class, 'updateCustomHead'])->middleware('internal-api.capability:site-settings.write')->name('sites.head.update');
     Route::patch('/sites/{site}/seo', [InternalSiteController::class, 'updateSeoDefaults'])->middleware('internal-api.capability:site-settings.write')->name('sites.seo.update');
+    Route::get('/sites/{site}/notifications', [InternalSiteNotificationController::class, 'show'])->middleware('internal-api.capability:content.read')->name('sites.notifications.show');
+    Route::patch('/sites/{site}/notifications', [InternalSiteNotificationController::class, 'update'])->middleware('internal-api.capability:site-settings.write')->name('sites.notifications.update');
     Route::patch('/sites/{site}/contact-recipient', [InternalSiteController::class, 'updateContactRecipient'])->middleware('internal-api.capability:site-settings.write')->name('sites.contact-recipient.update');
     Route::put('/sites/{site}/locales', [InternalSiteController::class, 'updateLocales'])->middleware('internal-api.capability:site-settings.write')->name('sites.locales.update');
     Route::patch('/sites/{site}/timezone', [InternalSiteController::class, 'updateTimezone'])->middleware('internal-api.capability:site-settings.write')->name('sites.timezone.update');

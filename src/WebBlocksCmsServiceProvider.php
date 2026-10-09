@@ -22,6 +22,7 @@ use WebBlocks\Cms\Console\AdminTranslationAuditCommand;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
+use WebBlocks\Cms\Console\DispatchSiteNotificationsCommand;
 use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
 use WebBlocks\Cms\Console\GenerateUpdateSigningKeyCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
@@ -89,6 +90,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
+use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
@@ -784,6 +786,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
   public const PACKAGE_CONSOLE_COMMANDS = [
+    DispatchSiteNotificationsCommand::class,
     PluginMigrateCommand::class,
     PluginProbeCommand::class,
     PackageStatusCommand::class,
@@ -870,6 +873,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     $this->registerClassAliases();
     $this->registerConfig();
+    $this->app->singleton(SiteNotificationChannels::class);
     $this->registerNativeLocalDoctor();
     $this->registerPlugins();
 
@@ -976,6 +980,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       if (! $this->app->bound(Schedule::class)) {
         return;
       }
+
+      $this->app->make(Schedule::class)
+        ->command('webblocks:notifications:dispatch')
+        ->everyMinute()
+        ->withoutOverlapping(5);
 
       $this->app->make(Schedule::class)
         ->command('visitors:cleanup')

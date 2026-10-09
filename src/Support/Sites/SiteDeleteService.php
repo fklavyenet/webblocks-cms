@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Sites;
 
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use WebBlocks\Cms\Models\Block;
@@ -219,6 +220,11 @@ class SiteDeleteService
     }
 
     NavigationItem::query()->where('site_id', $site->id)->delete();
+    foreach (['wbcms_site_notification_events', 'wbcms_site_notification_states'] as $table) {
+      if (Schema::hasTable($table)) {
+        DB::table($table)->where('site_id', $site->id)->delete();
+      }
+    }
     SiteLocale::query()->where('site_id', $site->id)->delete();
   }
 

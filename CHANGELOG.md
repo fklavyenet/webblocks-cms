@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.95.0
+
+- Choose full message emails or privacy-preserving alerts through shared site settings and the authorized site notification API. Contact forms and participating plugins use the same policy.
+- Keep visitor names, email addresses, subjects, message bodies, source URLs, IP addresses and browser details out of alert emails, including Reply-To, custom headers and attachments. Inbox links require normal CMS authentication and site access.
+- Configure immediate delivery, first-alert-then-batch delivery or one combined daily message summary, with site-timezone scheduling and separate unread and awaiting-reply counts.
+- Default new sites to alert-only notifications, ten-minute batches and a 09:00 daily summary. Preserve existing sites' full, immediate emails without enabling reminders on upgrade.
+- Record pending and failed delivery outcomes without retaining SMTP exceptions or copying message contents into notification jobs. Prevent automatic retries of ambiguous delivery attempts and keep 30 days of notification bookkeeping.
+- Share an extension contract with Live Chat and future notification plugins; plugins inherit site privacy settings and retain their own opt-in and recipient configuration.
+
 ## 1.94.3
 
 - Correct the runtime AI authoring inventory to list all 55 published core blocks, including Stack and Split, and clarify mobile media, Rich Text, content positions, and active-account plugin recovery requirements.

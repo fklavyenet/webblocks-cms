@@ -306,6 +306,7 @@
                     <input id="site_contact_recipient_email" name="contact_recipient_email" class="wb-input" type="email" value="{{ old('contact_recipient_email', $site->contact_recipient_email) }}" autocomplete="email" @disabled($isReadOnly)>
                     <div class="wb-text-sm wb-text-muted">{{ $adminText('default_recipient_email_help') }}</div>
                   </div>
+                  @include('webblocks-cms::admin.sites.partials.notifications')
                 </div>
               </div>
             </div>

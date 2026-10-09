@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -84,6 +85,7 @@ class Site extends CmsModel
     'social_image_media_id',
     'social_image_asset_id',
     'contact_recipient_email',
+    'notification_settings',
     'timezone',
     'public_theme_preset',
     'custom_head_html',
@@ -99,6 +101,7 @@ class Site extends CmsModel
   {
     return [
       'is_primary' => 'boolean',
+      'notification_settings' => 'array',
     ];
   }
 
@@ -168,6 +171,12 @@ class Site extends CmsModel
 
   protected static function booted(): void
   {
+    static::creating(function (self $site): void {
+      if (Schema::hasColumn('wbcms_sites', 'notification_settings')) {
+        $site->notification_settings = array_replace(SiteNotificationPolicy::DEFAULTS, is_array($site->notification_settings) ? $site->notification_settings : []);
+      }
+    });
+
     static::saving(function (self $site): void {
       $site->handle = SiteHandle::normalize($site->handle);
       $site->domain = app(SiteDomainNormalizer::class)->normalize($site->domain);

@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
 use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
@@ -255,6 +256,9 @@ class SiteController extends Controller
       unset($data['locale_ids']);
       $data = $this->runtimeSafeSiteData($data);
 
+      if (isset($data['notification_settings'])) {
+        $data['notification_settings'] = array_replace(SiteNotificationPolicy::forSite($site), $data['notification_settings']);
+      }
       $site->update($data);
 
       Site::enforcePrimaryInvariant($site);
@@ -290,6 +294,10 @@ class SiteController extends Controller
 
   private function runtimeSafeSiteData(array $data): array
   {
+    if (! Schema::hasColumn('wbcms_sites', 'notification_settings')) {
+      unset($data['notification_settings']);
+    }
+
     if (! Schema::hasColumn('wbcms_sites', 'public_theme_preset')) {
       unset($data['public_theme_preset']);
     }

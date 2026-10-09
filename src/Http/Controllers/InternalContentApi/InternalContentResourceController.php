@@ -2458,7 +2458,10 @@ class InternalContentResourceController extends Controller
       $payload['storage_behavior'] = 'Legitimate submissions are stored in contact_messages before email notification is attempted; notification status fields do not change the editorial message status.';
       $payload['notification_behavior'] = [
         'recipient_order' => ['block recipient_email', 'site contact_recipient_email', 'CONTACT_RECIPIENT_EMAIL', 'MAIL_FROM_ADDRESS'],
-        'failure_detail' => 'safe redacted delivery error stored on the message',
+        'failure_detail' => 'generic delivery outcome stored on the message; SMTP payloads and exceptions are never retained',
+        'site_policy' => '/webadmin/api/sites/{site}/notifications: full or alert_only; immediate, batched or daily; plugins inherit the same policy',
+        'privacy' => 'alert_only contains only trusted site copy, counts and an authenticated CMS inbox link; no visitor-derived bodies, subjects, headers or attachments',
+        'scheduler' => 'webblocks:notifications:dispatch runs every minute through the Laravel scheduler; daily summaries distinguish unread and awaiting reply and never contain visitor details',
       ];
       $payload['admin_review_behavior'] = 'Stored messages appear under /webadmin/contact-messages with editorial status, spam score/reasons, notification status, and safe failure detail.';
     }

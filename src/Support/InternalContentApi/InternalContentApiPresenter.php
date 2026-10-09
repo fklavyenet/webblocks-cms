@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
+use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 
 class InternalContentApiPresenter
 {
@@ -46,6 +47,7 @@ class InternalContentApiPresenter
       'seo_description' => $site->seo_description,
       'seo_keywords' => $site->seo_keywords,
       'contact_recipient_email' => $site->contact_recipient_email,
+      'notification_settings' => SiteNotificationPolicy::forSite($site),
       'timezone' => $site->timezone,
       'brand_accent' => $site->brand_accent ?? null,
       'brand_accent_secondary' => $site->brand_accent_secondary ?? null,

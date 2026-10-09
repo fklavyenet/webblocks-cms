@@ -9,6 +9,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -71,7 +72,8 @@ class SiteRequest extends FormRequest
     $site = $site instanceof Site ? $site : null;
     $preservedLocaleIds = $site?->locales()->pluck((new Locale)->qualifyColumn('id'))->map(fn ($id) => (int) $id)->all() ?? [];
 
-    return [
+    return array_merge(SiteNotificationPolicy::rules('notification_settings.'), [
+      'notification_settings' => ['sometimes', 'array:notification_mode,notification_frequency,batch_minutes,daily_summary,summary_hour'],
       'name' => ['required', 'string', 'max:255'],
       'handle' => ['required', 'string', 'max:255', 'regex:'.SiteHandle::validationPattern(), Rule::unique(Site::class, 'handle')->ignore($site?->id)],
       'domain' => ['nullable', 'string', 'max:255', Rule::unique(SiteDomain::class, 'domain')->ignore($site?->primaryDomain()?->id)],
@@ -104,7 +106,7 @@ class SiteRequest extends FormRequest
       'brand_font_heading' => ['nullable', 'string', 'max:180'],
       'brand_font_body' => ['nullable', 'string', 'max:180'],
       '_site_tab' => ['nullable', 'string', 'max:255'],
-    ];
+    ]);
   }
 
   protected function getRedirectUrl(): string
