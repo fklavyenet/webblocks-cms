@@ -42,6 +42,8 @@ return [
     'storage' => 'Mesajınız önce kaydedilir, ardından e-posta bildirimi denenir.',
   ],
   'comments' => [
+    'list_title' => 'Yorumlar',
+    'form_title' => 'Yorum yaz',
     'approved_count' => ':count onaylanmış yorum',
     'unavailable' => 'Yorumlar geçici olarak kullanılamıyor.',
     'no_approved' => 'Henüz onaylanmış yorum yok.',

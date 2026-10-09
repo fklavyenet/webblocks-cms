@@ -42,6 +42,8 @@ return [
     'storage' => 'Il tuo messaggio viene prima salvato, poi viene tentata la notifica email.',
   ],
   'comments' => [
+    'list_title' => 'Commenti',
+    'form_title' => 'Lascia un commento',
     'approved_count' => ':count commenti approvati',
     'unavailable' => 'I commenti non sono temporaneamente disponibili.',
     'no_approved' => 'Ancora nessun commento approvato.',

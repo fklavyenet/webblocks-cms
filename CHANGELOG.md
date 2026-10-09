@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.97.1
+
+- Separate public Comments into clearly named reading and writing regions, with an approved-count badge and a theme-aware form surface.
+- Keep author and date together, tighten comment spacing, and use a three-row textarea with a compact name field that fills the width on phones. Localize both region headings in all six visitor languages.
+- Preserve feedback scope, author visibility, independent form/list controls, pagination, escaped multiline text, submission protection, and moderation behavior.
+
+
 ## 1.97.0
 
 - Add explicit block/page feedback scope for Rating and Comments in the editor and Content API; page scope preserves public feedback across block replacement and keeps new visitor-session votes stable across replacements.

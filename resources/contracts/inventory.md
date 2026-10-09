@@ -844,7 +844,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Editable content | No block-authored visitor copy; product translations supply labels and messages. |
 | Settings and variants | `form_enabled`, `show_approved`, `show_author_name`; `sort_order`: newest or oldest; `data_scope` (CMS 1.97.0): `block` (default) or `page`. Page scope includes approved records with the same persisted site/page, including records whose original block was deleted; neighboring pages and sites remain excluded. |
 | Children/media | Uses moderated `comment_entries`; no children. |
-| HTML | Root-owning `<section class="wb-card wb-public-comments">` with approved comment list with dates and escaped multiline text, 25-per-page pagination (`comments_page_{block_id}` with fragment and query preservation), native CSRF form, anti-spam field, validation state, and submit action. |
+| HTML | Root-owning `<section class="wb-card wb-public-comments">` with separately labeled Comments/list and Leave a comment/form regions (CMS 1.97.1), localized product headings and an approved-count badge. Author/date share a wrapping metadata row; escaped multiline text uses compact spacing. The form has a theme-aware muted surface, a three-row textarea, and a compact name field that expands on phones. Retains 25-per-page pagination (`comments_page_{block_id}` with fragment and query preservation), native CSRF protection, anti-spam fields, targeted validation state, and submit action. List and form visibility remain independent. |
 | Example appearance | Moderated comments below an article or product guide. |
 | Avoid | Custom comment storage or raw form markup. |
 

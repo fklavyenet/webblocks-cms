@@ -42,6 +42,8 @@ return [
     'storage' => 'Votre message est d\'abord enregistré, puis la notification par e-mail est tentée.',
   ],
   'comments' => [
+    'list_title' => 'Commentaires',
+    'form_title' => 'Laisser un commentaire',
     'approved_count' => ':count commentaires approuvés',
     'unavailable' => 'Les commentaires sont temporairement indisponibles.',
     'no_approved' => 'Aucun commentaire approuvé pour le moment.',

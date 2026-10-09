@@ -277,4 +277,70 @@ class EngagementManagementTest extends TestCase
     $this->assertStringContainsString('wb-pagination', $html);
     $this->assertStringNotContainsString('Approved 0<', $html);
   }
+
+  #[Test]
+  public function public_comments_separate_named_regions_and_keep_metadata_inline_without_leaking_unapproved_text(): void
+  {
+    $page = $this->page();
+    $block = $this->block($page, 'comments', ['data_scope' => 'page', 'show_author_name' => true]);
+    $this->comment($page, 'approved')->update(['author_name' => 'Test Reader', 'body' => "<script>unsafe</script>\nSecond line"]);
+    $this->comment($page)->update(['body' => 'Private pending feedback']);
+    $html = view('webblocks-cms::pages.partials.blocks.comments', compact('block', 'page') + ['errors' => new ViewErrorBag])->render();
+    $document = new \DOMDocument;
+    $this->assertTrue($document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING));
+    $xpath = new \DOMXPath($document);
+    $list = $xpath->query('//section[@aria-labelledby="comments-list-title-'.$block->id.'"]')->item(0);
+    $formRegion = $xpath->query('//section[@aria-labelledby="comments-form-title-'.$block->id.'"]')->item(0);
+    $this->assertNotNull($list);
+    $this->assertNotNull($formRegion);
+    $this->assertSame($list->parentNode, $formRegion->parentNode);
+    $this->assertSame(0, $xpath->query('.//form', $list)->length);
+    $this->assertSame(1, $xpath->query('.//form', $formRegion)->length);
+    $this->assertSame(1, $xpath->query('.//article/div[strong and time]', $list)->length);
+    $this->assertSame('Comments', $xpath->query('.//h3', $list)->item(0)->textContent);
+    $this->assertSame('Leave a comment', $xpath->query('.//h3', $formRegion)->item(0)->textContent);
+    $this->assertSame('1', $xpath->query('.//header/span', $list)->item(0)->textContent);
+    $this->assertSame(0, $xpath->query('.//script', $list)->length);
+    $this->assertStringContainsString('&lt;script&gt;unsafe&lt;/script&gt;', $html);
+    $this->assertStringContainsString('Second line', $html);
+    $this->assertStringNotContainsString('Private pending feedback', $html);
+    $this->assertSame('3', $xpath->query('.//textarea', $formRegion)->item(0)->getAttribute('rows'));
+    foreach (['_token', 'block_id', 'page_id', 'source_url', '_form_stamp', '_form_check_name'] as $field) {
+      $this->assertSame(1, $xpath->query('.//input[@name="'.$field.'"]', $formRegion)->length);
+    }
+  }
+
+  #[Test]
+  public function compact_comments_keep_list_form_and_author_visibility_independent(): void
+  {
+    $page = $this->page();
+    $block = $this->block($page, 'comments', ['data_scope' => 'page', 'form_enabled' => false, 'show_author_name' => false]);
+    $this->comment($page, 'approved')->update(['author_name' => 'Private Author Name', 'body' => 'Approved visible text']);
+    $render = fn () => view('webblocks-cms::pages.partials.blocks.comments', ['block' => $block, 'page' => $page, 'errors' => new ViewErrorBag])->render();
+    $html = $render();
+    $this->assertStringContainsString('Approved visible text', $html);
+    $this->assertStringNotContainsString('Private Author Name', $html);
+    $this->assertStringNotContainsString('comments-form-title-', $html);
+    $this->assertStringContainsString('New comments are closed.', $html);
+    $block->settings = json_encode(['data_scope' => 'page', 'show_approved' => false]);
+    $html = $render();
+    $this->assertStringNotContainsString('Approved visible text', $html);
+    $this->assertStringNotContainsString('comments-list-title-', $html);
+    $this->assertStringContainsString('comments-form-title-', $html);
+    $this->assertStringContainsString('<form', $html);
+  }
+
+  #[Test]
+  public function compact_comment_region_headings_use_the_render_locale(): void
+  {
+    $page = $this->page();
+    $block = $this->block($page, 'comments');
+    foreach (['en', 'de', 'fr', 'it', 'es', 'tr'] as $locale) {
+      $block->setAttribute('render_locale_code', $locale);
+      $catalog = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/blocks.php';
+      $html = view('webblocks-cms::pages.partials.blocks.comments', compact('block', 'page') + ['errors' => new ViewErrorBag])->render();
+      $this->assertStringContainsString('>'.$catalog['comments']['list_title'].'</h3>', $html);
+      $this->assertStringContainsString('>'.$catalog['comments']['form_title'].'</h3>', $html);
+    }
+  }
 }

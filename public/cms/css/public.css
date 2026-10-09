@@ -554,3 +554,69 @@ body.wb-gallery.wb-gallery-document-scope {
     background-image: var(--wb-background-media-overlay), var(--wb-background-media-mobile-image, var(--wb-background-media-image));
   }
 }
+
+/* Native Comments keeps reading and writing as distinct, compact regions. */
+.wb-public-comments {
+  overflow: hidden;
+}
+
+.wb-public-comments__list,
+.wb-public-comments__form-region {
+  padding: var(--wb-s4) var(--wb-s5);
+}
+
+.wb-public-comments__items,
+.wb-public-comments__form-region {
+  display: grid;
+  gap: var(--wb-s3);
+}
+
+.wb-public-comments__items {
+  margin-block-start: var(--wb-s3);
+}
+
+.wb-public-comments__items p {
+  margin: 0;
+}
+
+.wb-public-comments__item + .wb-public-comments__item {
+  border-block-start: 1px solid var(--wb-border);
+  padding-block-start: var(--wb-s3);
+}
+
+.wb-public-comments__meta {
+  font-size: var(--wb-font-size-sm);
+}
+
+.wb-public-comments__body {
+  margin-block-start: var(--wb-s1);
+  overflow-wrap: anywhere;
+}
+
+.wb-public-comments__form-region {
+  background-color: var(--wb-surface-2);
+}
+
+.wb-public-comments__list + .wb-public-comments__form-region {
+  border-block-start: 1px solid var(--wb-border);
+}
+
+.wb-public-comments__name {
+  inline-size: 100%;
+  max-inline-size: 20rem;
+}
+
+.wb-public-comments__form :is(.wb-input, .wb-textarea) {
+  font-size: var(--wb-font-size-md);
+}
+
+@media (max-width: 36rem) {
+  .wb-public-comments__list,
+  .wb-public-comments__form-region {
+    padding-inline: var(--wb-s4);
+  }
+
+  .wb-public-comments__name {
+    max-inline-size: none;
+  }
+}
