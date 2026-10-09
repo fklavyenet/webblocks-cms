@@ -57,8 +57,8 @@ return [
   'health_dispatch_failed' => 'Bildirim işleme başarısız. Zamanlayıcı sağlığını ve gönderim sonuçlarını kontrol edin.',
   'health_notifications_optional' => 'Günlük özet kapalıyken yalnızca anlık bildirimler zamanlanmış gönderim gerektirmez. Arka plan bakım işleri için zamanlayıcı durumu görünür kalır.',
   'panel_title' => 'Panel bildirimleri',
-  'panel_indicator' => 'Panel bildirimleri: :awaiting yanıt bekleyen, :unread okunmamış, :warnings sistem uyarısı.',
-  'panel_help' => 'Kayıtlı iletişim mesajları, e-posta kapalıyken de burada görünür. Okunmamış mesajlar yanıt bekleyen sayısına dahildir. Paneli açmak mesajları okundu saymaz.',
+  'panel_indicator' => 'Panel bildirimleri: :unread okunmamış mesaj.',
+  'panel_help' => 'Zil yalnızca okunmamış iletişim mesajlarını sayar. Yanıt bekleyen sayısına okunmuş mesajlar da dahildir. Paneli açmak mesajları okundu saymaz.',
   'panel_delivery_help' => 'Panel bildirimleri için zamanlayıcı veya e-posta gönderimi gerekmez. Anlık e-posta mesaj alındığında gönderilir; toplu/günlük e-posta ve günlük hatırlatmalar Laravel zamanlayıcısı gerektirir.',
   'panel_unavailable' => 'Mesaj bildirimlerini görüntülemeden önce CMS veritabanı geçişlerini uygulayın.',
   'panel_empty' => 'Yanıt bekleyen iletişim mesajı yok.',
@@ -67,4 +67,5 @@ return [
   'panel_unread' => 'Okunmamış',
   'panel_awaiting' => 'Yanıt bekleyen',
   'panel_actions' => 'İşlemler',
+  'panel_review_awaiting' => 'Yanıt bekleyen mesajları incele',
 ];

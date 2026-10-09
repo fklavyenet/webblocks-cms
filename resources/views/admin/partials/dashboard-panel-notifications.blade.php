@@ -24,7 +24,15 @@
                                 <tr>
                                     <th scope="row">{{ $inbox['site']->publicDisplayName() ?: $inbox['site']->name }}</th>
                                     <td>{{ $inbox['unread'] }}</td><td>{{ $inbox['awaiting'] }}</td>
-                                    <td><a class="wb-link" href="{{ $inbox['url'] }}">{{ __('webblocks-cms::notifications.open_inbox') }}</a></td>
+                                    <td class="wb-table-actions">
+                                        <div class="wb-action-group">
+                                            <a class="wb-action-btn wb-action-btn-view" href="{{ $inbox['url'] }}"
+                                                title="{{ __('webblocks-cms::notifications.panel_review_awaiting') }}"
+                                                aria-label="{{ __('webblocks-cms::notifications.panel_review_awaiting') }}">
+                                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

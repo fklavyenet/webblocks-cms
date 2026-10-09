@@ -45,6 +45,7 @@ return [
     'storage' => 'Your message is stored first, then email notification is attempted.',
   ],
   'comments' => [
+    'approved_count' => ':count approved comments',
     'unavailable' => 'Comments are temporarily unavailable.',
     'no_approved' => 'No approved comments yet.',
     'review_title' => 'Please review the comment',

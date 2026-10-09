@@ -5,12 +5,11 @@
     $ratingCount = 0;
     $ratingAverage = null;
     if ($tableReady) {
-        $ratings = \WebBlocks\Cms\Models\ContentRating::query()
-            ->where('block_id', $block->id)
-            ->where('status', 'active');
+        $ratings = app(\WebBlocks\Cms\Queries\PublicEngagementQuery::class)->ratings($block);
         $ratingCount = (clone $ratings)->count();
         $ratingAverage = $ratingCount > 0 ? round((float) (clone $ratings)->avg('rating_value'), 1) : null;
     }
+    $visitorRating = $tableReady ? app(\WebBlocks\Cms\Queries\PublicEngagementQuery::class)->visitorRating($block, request()) : null;
     $showSummary = (bool) $block->setting('show_summary', true);
     $title = trim((string) ($block->title ?: $block->setting('title', '')));
     $subtitle = trim((string) $block->subtitle);
@@ -51,7 +50,7 @@
                 <input type="hidden" name="source_url" value="{{ request()->getRequestUri() }}">
 
                 @for ($rating = 1; $rating <= 5; $rating++)
-                    <button type="submit" name="rating_value" value="{{ $rating }}" aria-label="{{ $translator->get('blocks.rating.option_label', $localeCode, ['rating' => $rating]) }}">★</button>
+                    <button type="submit" name="rating_value" value="{{ $rating }}" aria-pressed="{{ $visitorRating?->rating_value === $rating ? 'true' : 'false' }}" @disabled($visitorRating && ! (bool) $block->setting('allow_change', true)) aria-label="{{ $translator->get('blocks.rating.option_label', $localeCode, ['rating' => $rating]) }}">★</button>
                 @endfor
             </form>
         @else

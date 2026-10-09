@@ -26,6 +26,11 @@ class EngagementVisitor
     ]));
   }
 
+  public function pageHash(Request $request, int $siteId, int $pageId): string
+  {
+    return hash('sha256', 'page|'.$this->visitorHash($request, $siteId, $pageId));
+  }
+
   public function ipHash(?string $ipAddress): ?string
   {
     if (! $ipAddress) {

@@ -57,8 +57,8 @@ return [
   'health_dispatch_failed' => 'Notification processing failed. Check recorded scheduler health and delivery outcomes.',
   'health_notifications_optional' => 'Immediate-only notifications with daily summaries disabled do not require scheduled delivery. Scheduler status remains visible for background maintenance.',
   'panel_title' => 'Panel notifications',
-  'panel_indicator' => 'Panel notifications: :awaiting awaiting reply, :unread unread, :warnings system warning(s).',
-  'panel_help' => 'Stored contact messages appear here even when email is disabled. Unread messages are included in the awaiting-reply count. Opening the panel does not mark messages as read.',
+  'panel_indicator' => 'Panel notifications: :unread unread message(s).',
+  'panel_help' => 'The bell counts unread contact messages only. Awaiting reply includes messages already read. Opening the panel does not mark messages as read.',
   'panel_delivery_help' => 'Panel notifications need neither a scheduler nor outgoing email. Immediate email is sent on submission; batched/daily email and daily reminders need the Laravel scheduler.',
   'panel_unavailable' => 'Apply the CMS database migrations before viewing message notifications.',
   'panel_empty' => 'No contact messages await a reply.',
@@ -67,4 +67,5 @@ return [
   'panel_unread' => 'Unread',
   'panel_awaiting' => 'Awaiting reply',
   'panel_actions' => 'Actions',
+  'panel_review_awaiting' => 'Review messages awaiting reply',
 ];

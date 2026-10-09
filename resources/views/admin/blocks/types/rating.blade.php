@@ -8,6 +8,15 @@
 @endphp
 
 <div class="wb-stack wb-gap-4">
+    <div class="wb-field">
+        <label for="rating_data_scope" class="wb-label">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('engagement.data_scope', $adminLocale) }}</label>
+        <select id="rating_data_scope" name="rating_data_scope" class="wb-select" @disabled($isNonDefaultLocale ?? false)>
+            @foreach (['block', 'page'] as $scope)
+                <option value="{{ $scope }}" @selected(old('rating_data_scope', $settings['data_scope'] ?? 'block') === $scope)>{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('engagement.scope_'.$scope, $adminLocale) }}</option>
+            @endforeach
+        </select>
+    </div>
+
     <div class="wb-alert wb-alert-info">
         <div>
             <div class="wb-alert-title">{{ $adminText('system_title') }}</div>

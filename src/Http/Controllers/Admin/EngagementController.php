@@ -2,214 +2,108 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\Engagement\DeleteComment;
+use WebBlocks\Cms\Actions\Engagement\ModerateComments;
+use WebBlocks\Cms\Http\Requests\Admin\EngagementIndexRequest;
+use WebBlocks\Cms\Http\Requests\Admin\ModerateCommentsRequest;
 use WebBlocks\Cms\Models\CommentEntry;
-use WebBlocks\Cms\Models\ContentRating;
+use WebBlocks\Cms\Policies\EngagementPolicy;
+use WebBlocks\Cms\Queries\EngagementQuery;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class EngagementController extends Controller
 {
-  public function __construct(
-    private readonly AdminLocaleResolver $localeResolver,
-    private readonly CmsTranslator $translator,
-  ) {}
+  public function __construct(private readonly EngagementQuery $query, private readonly AdminLocaleResolver $localeResolver, private readonly CmsTranslator $translator) {}
 
-  public function index(Request $request): View
+  public function index(EngagementIndexRequest $request): View
   {
-    $commentsReady = Schema::hasTable('wbcms_comment_entries');
-    $ratingsReady = Schema::hasTable('wbcms_content_ratings');
+    $filters = array_intersect_key($request->filters(), array_flip(['site', 'sort']));
+    $pages = $this->query->pageSummary($request->user(), $filters);
+    AdminPagination::redirectOutOfRange($pages, $request);
 
-    $commentsCount = $commentsReady
-      ? (clone $this->scopeCommentsForUser(CommentEntry::query(), $request->user()))->count()
-      : 0;
-    $pendingCommentsCount = $commentsReady
-      ? (clone $this->scopeCommentsForUser(CommentEntry::query(), $request->user()))->where('status', 'pending')->count()
-      : 0;
-    $ratingsCount = $ratingsReady
-      ? (clone $this->scopeRatingsForUser(ContentRating::query(), $request->user()))->count()
-      : 0;
-    $averageRating = $ratingsReady && $ratingsCount > 0
-      ? round((float) $this->scopeRatingsForUser(ContentRating::query(), $request->user())->avg('rating_value'), 1)
-      : null;
-
-    return view('webblocks-cms::admin.engagement.index', [
-      'tableReady' => $commentsReady && $ratingsReady,
-      'commentsCount' => $commentsCount,
-      'pendingCommentsCount' => $pendingCommentsCount,
-      'ratingsCount' => $ratingsCount,
-      'averageRating' => $averageRating,
-    ]);
+    return view('webblocks-cms::admin.engagement.index', $this->query->overview($request->user(), $filters) + $this->options($request, $filters) + ['pageSummary' => $pages]);
   }
 
-  public function comments(Request $request): View
+  public function comments(EngagementIndexRequest $request): View
   {
-    if (! Schema::hasTable('wbcms_comment_entries')) {
-      return view('webblocks-cms::admin.engagement.comments', [
-        'comments' => new LengthAwarePaginator([], 0, AdminPagination::perPage()),
-        'filters' => [
-          'search' => '',
-          'status' => '',
-        ],
-        'totalCount' => 0,
-        'filteredCount' => 0,
-        'statuses' => CommentEntry::statuses(),
-        'tableReady' => false,
-      ]);
-    }
-
-    $search = trim((string) $request->string('search'));
-    $status = $request->string('status')->toString();
-
-    if (! in_array($status, CommentEntry::statuses(), true)) {
-      $status = '';
-    }
-
-    $baseQuery = $this->scopeCommentsForUser(CommentEntry::query(), $request->user());
-    $filteredQuery = $this->scopeCommentsForUser(CommentEntry::query(), $request->user())
-      ->when($search !== '', function (Builder $query) use ($search): void {
-        $query->where(function (Builder $inner) use ($search): void {
-          $inner->where('author_name', 'like', "%{$search}%")
-            ->orWhere('body', 'like', "%{$search}%")
-            ->orWhereHas('page.translations', fn (Builder $translationQuery) => $translationQuery
-              ->where('name', 'like', "%{$search}%")
-              ->orWhere('slug', 'like', "%{$search}%")
-              ->orWhere('path', 'like', "%{$search}%"));
-        });
-      })
-      ->when($status !== '', fn (Builder $query) => $query->where('status', $status));
-
-    $comments = $filteredQuery
-      ->with(['page.site', 'page.translations', 'block.blockType'])
-      ->latest()
-      ->paginate(AdminPagination::perPage())
-      ->withQueryString();
-
+    $filters = $request->filters();
+    $ready = Schema::hasTable('wbcms_comment_entries');
+    $query = $ready ? $this->query->comments($request->user(), $filters) : null;
+    $comments = $query ? (clone $query)->with(['site', 'page.site', 'page.translations', 'block.blockType'])->latest()->orderByDesc('id')->paginate(AdminPagination::perPage())->withQueryString() : $this->emptyPaginator();
     AdminPagination::redirectOutOfRange($comments, $request);
 
-    return view('webblocks-cms::admin.engagement.comments', [
-      'comments' => $comments,
-      'filters' => [
-        'search' => $search,
-        'status' => $status,
-      ],
-      'totalCount' => (clone $baseQuery)->count(),
-      'filteredCount' => (clone $filteredQuery)->count(),
-      'statuses' => CommentEntry::statuses(),
-      'tableReady' => true,
+    return view('webblocks-cms::admin.engagement.comments', $this->options($request, $filters) + [
+      'comments' => $comments, 'tableReady' => $ready, 'statuses' => CommentEntry::statuses(),
+      'totalCount' => $ready ? $this->query->comments($request->user())->count() : 0, 'filteredCount' => $comments->total(),
+      'commentStatuses' => $ready ? $this->query->comments($request->user(), array_diff_key($filters, ['status' => true]))->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status')->all() : [],
     ]);
   }
 
-  public function ratings(Request $request): View
+  public function ratings(EngagementIndexRequest $request): View
   {
-    if (! Schema::hasTable('wbcms_content_ratings')) {
-      return view('webblocks-cms::admin.engagement.ratings', [
-        'ratings' => new LengthAwarePaginator([], 0, AdminPagination::perPage()),
-        'filters' => ['search' => '', 'rating' => ''],
-        'ratingOptions' => [],
-        'totalCount' => 0,
-        'filteredCount' => 0,
-        'tableReady' => false,
-      ]);
-    }
-
-    $search = trim((string) $request->string('search'));
-    $rating = $request->string('rating')->toString();
-
-    if ($rating !== '' && ! ctype_digit($rating)) {
-      $rating = '';
-    }
-
-    $baseQuery = $this->scopeRatingsForUser(ContentRating::query(), $request->user());
-    $maxRating = (int) (clone $baseQuery)->max('rating_max') ?: 5;
-    $ratingOptions = range(1, max($maxRating, 1));
-
-    $filteredQuery = $this->scopeRatingsForUser(ContentRating::query(), $request->user())
-      ->when($search !== '', fn (Builder $query) => $query->whereHas('page.translations', fn (Builder $translationQuery) => $translationQuery
-        ->where('name', 'like', "%{$search}%")
-        ->orWhere('slug', 'like', "%{$search}%")
-        ->orWhere('path', 'like', "%{$search}%")))
-      ->when($rating !== '', fn (Builder $query) => $query->where('rating_value', (int) $rating));
-
-    $ratings = (clone $filteredQuery)
-      ->with(['page.site', 'page.translations', 'block.blockType'])
-      ->latest()
-      ->paginate(AdminPagination::perPage())
-      ->withQueryString();
-
+    $filters = $request->filters();
+    $ready = Schema::hasTable('wbcms_content_ratings');
+    $query = $ready ? $this->query->ratings($request->user(), $filters) : null;
+    $ratings = $query ? (clone $query)->with(['site', 'page.site', 'page.translations', 'block.blockType'])->latest()->orderByDesc('id')->paginate(AdminPagination::perPage())->withQueryString() : $this->emptyPaginator();
     AdminPagination::redirectOutOfRange($ratings, $request);
 
-    return view('webblocks-cms::admin.engagement.ratings', [
-      'ratings' => $ratings,
-      'filters' => ['search' => $search, 'rating' => $rating],
-      'ratingOptions' => $ratingOptions,
-      'totalCount' => (clone $baseQuery)->count(),
-      'filteredCount' => (clone $filteredQuery)->count(),
-      'tableReady' => true,
-    ]);
+    return view('webblocks-cms::admin.engagement.ratings', array_replace($this->query->overview($request->user(), $filters), $this->options($request, $filters), [
+      'ratings' => $ratings, 'tableReady' => $ready, 'ratingOptions' => $ready ? range(1, max(1, min(255, (int) $this->query->ratings($request->user())->max('rating_max') ?: 5))) : [],
+      'totalCount' => $ready ? $this->query->ratings($request->user())->count() : 0, 'filteredCount' => $ratings->total(),
+    ]));
   }
 
-  public function updateCommentStatus(Request $request, CommentEntry $commentEntry): RedirectResponse
+  public function showComment(Request $request, CommentEntry $commentEntry): View
   {
-    $this->abortUnlessCommentAccess($request, $commentEntry);
+    abort_unless(app(EngagementPolicy::class)->update($request->user(), $commentEntry), 403);
 
-    $validated = $request->validate([
-      'status' => ['required', Rule::in(CommentEntry::statuses())],
-    ]);
+    return view('webblocks-cms::admin.engagement.comment', ['comment' => $commentEntry->load(['site', 'page.translations', 'block']), 'returnQuery' => http_build_query(array_intersect_key($request->query(), array_flip(['search', 'site', 'page_id', 'status', 'from', 'until', 'page', 'sort'])))]);
+  }
 
-    $commentEntry->update([
-      'status' => $validated['status'],
-      'approved_at' => $validated['status'] === 'approved' ? now() : null,
-      'approved_by_user_id' => $validated['status'] === 'approved' ? $request->user()?->id : null,
-    ]);
+  public function updateCommentStatus(ModerateCommentsRequest $request, CommentEntry $commentEntry): RedirectResponse
+  {
+    return $this->moderate($request, [$commentEntry->id]);
+  }
 
-    return redirect()->back()->with('status', $this->adminText('comment_status_updated'));
+  public function bulkCommentStatus(ModerateCommentsRequest $request): RedirectResponse
+  {
+    return $this->moderate($request, $request->validated('comment_ids'));
   }
 
   public function destroyComment(Request $request, CommentEntry $commentEntry): RedirectResponse
   {
-    $this->abortUnlessCommentAccess($request, $commentEntry);
-    $commentEntry->delete();
+    app(DeleteComment::class)->execute($request->user(), $commentEntry);
 
     return redirect()->route('admin.engagement.comments.index')->with('status', $this->adminText('comment_deleted'));
+  }
+
+  private function moderate(ModerateCommentsRequest $request, array $ids): RedirectResponse
+  {
+    app(ModerateComments::class)->execute($request->user(), $ids, $request->validated('status'));
+
+    return redirect()->route('admin.engagement.comments.index', $request->returnFilters())->with('status', $this->adminText('comment_status_updated'));
+  }
+
+  private function options(EngagementIndexRequest $request, array $filters): array
+  {
+    return ['filters' => $filters, 'sites' => $this->query->sites($request->user()), 'pages' => $this->query->pages($request->user(), $filters)];
+  }
+
+  private function emptyPaginator(): LengthAwarePaginator
+  {
+    return new LengthAwarePaginator([], 0, AdminPagination::perPage());
   }
 
   private function adminText(string $key): string
   {
     return $this->translator->admin('engagement.'.$key, $this->localeResolver->locale());
-  }
-
-  private function scopeCommentsForUser(Builder $query, User $user): Builder
-  {
-    if ($user->isSuperAdmin()) {
-      return $query;
-    }
-
-    return $query->whereIn('site_id', $user->accessibleSiteIds());
-  }
-
-  private function scopeRatingsForUser(Builder $query, User $user): Builder
-  {
-    if ($user->isSuperAdmin()) {
-      return $query;
-    }
-
-    return $query->whereIn('site_id', $user->accessibleSiteIds());
-  }
-
-  private function abortUnlessCommentAccess(Request $request, CommentEntry $commentEntry): void
-  {
-    $user = $request->user();
-
-    abort_unless($user?->isSuperAdmin() || ($commentEntry->site_id && $user?->hasSiteAccess($commentEntry->site_id)), 403);
   }
 }

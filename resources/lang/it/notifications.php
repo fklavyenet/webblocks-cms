@@ -57,8 +57,8 @@ return [
   'health_dispatch_failed' => 'Elaborazione delle notifiche non riuscita. Verifica il pianificatore e i risultati di invio.',
   'health_notifications_optional' => 'Le notifiche immediate senza riepilogo giornaliero non richiedono invii pianificati. Lo stato resta visibile per la manutenzione in background.',
   'panel_title' => 'Notifiche del pannello',
-  'panel_indicator' => 'Notifiche del pannello: :awaiting in attesa di risposta, :unread non lette, :warnings avviso/i di sistema.',
-  'panel_help' => 'I messaggi di contatto salvati compaiono qui anche se le e-mail sono disattivate. I messaggi non letti sono inclusi nel conteggio di quelli in attesa di risposta. Aprire il pannello non contrassegna i messaggi come letti.',
+  'panel_indicator' => 'Notifiche del pannello: :unread messaggio/i non letto/i.',
+  'panel_help' => 'La campana conta solo i messaggi di contatto non letti. Quelli in attesa di risposta includono messaggi già letti. Aprire il pannello non contrassegna i messaggi come letti.',
   'panel_delivery_help' => 'Le notifiche del pannello non richiedono né pianificatore né invio di e-mail. Le e-mail immediate vengono inviate alla ricezione del messaggio; quelle raggruppate o giornaliere e i promemoria giornalieri richiedono il pianificatore Laravel.',
   'panel_unavailable' => 'Esegui le migrazioni del database del CMS prima di visualizzare le notifiche dei messaggi.',
   'panel_empty' => 'Nessun messaggio di contatto è in attesa di risposta.',
@@ -67,4 +67,5 @@ return [
   'panel_unread' => 'Non letti',
   'panel_awaiting' => 'In attesa di risposta',
   'panel_actions' => 'Azioni',
+  'panel_review_awaiting' => 'Esamina i messaggi in attesa di risposta',
 ];

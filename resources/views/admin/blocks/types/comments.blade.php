@@ -4,9 +4,19 @@
     $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.comments.'.$key, $adminLocale);
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
+    $isNonDefaultLocale = isset($activeLocale) && ! $isDefaultLocale;
 @endphp
 
 <div class="wb-stack wb-gap-4">
+    <div class="wb-field">
+        <label for="comments_data_scope" class="wb-label">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('engagement.data_scope', $adminLocale) }}</label>
+        <select id="comments_data_scope" name="comments_data_scope" class="wb-select" @disabled($isNonDefaultLocale ?? false)>
+            @foreach (['block', 'page'] as $scope)
+                <option value="{{ $scope }}" @selected(old('comments_data_scope', $settings['data_scope'] ?? 'block') === $scope)>{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('engagement.scope_'.$scope, $adminLocale) }}</option>
+            @endforeach
+        </select>
+    </div>
+
     <div class="wb-alert wb-alert-info">
         <div>
             <div class="wb-alert-title">{{ $adminText('system_title') }}</div>

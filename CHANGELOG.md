@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.97.0
+
+- Add explicit block/page feedback scope for Rating and Comments in the editor and Content API; page scope preserves public feedback across block replacement and keeps new visitor-session votes stable across replacements.
+- Paginate approved public comments and mark the current visitor-session rating; preserve existing block scope and legacy records without automatic deduplication.
+- Expand Engagement with authorized site/page summaries, backlog and recent submission counts, active 5-point rating distributions, shared filters, complete comment review, standard action icons, and atomic bulk moderation.
+
+
+- Count only unread contact messages in the notification bell. Read messages awaiting reply and scheduler warnings remain visible separately on the Dashboard and no longer appear as new messages in the navbar.
+- Use the standard WebBlocks UI view action icon for each site's pending-message inbox link, with translated tooltip and accessible text explaining that the inbox includes messages awaiting reply.
+
 ## 1.96.0
 
 - Show saved contact-message work in a Dashboard panel and a shared admin notification indicator without requiring a scheduler, outbound mail or email opt-in. Count unread and awaiting-reply messages separately and restrict counts and links to the operator's accessible sites.

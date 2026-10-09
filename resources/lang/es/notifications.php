@@ -57,8 +57,8 @@ return [
   'health_dispatch_failed' => 'Error al procesar notificaciones. Revisa el programador y los resultados de envío.',
   'health_notifications_optional' => 'Las notificaciones inmediatas sin resumen diario no requieren envío programado. El estado sigue visible para el mantenimiento en segundo plano.',
   'panel_title' => 'Notificaciones del panel',
-  'panel_indicator' => 'Notificaciones del panel: :awaiting pendientes de respuesta, :unread sin leer, :warnings aviso(s) del sistema.',
-  'panel_help' => 'Los mensajes de contacto guardados aparecen aquí aunque el correo esté desactivado. Los mensajes sin leer también cuentan como pendientes de respuesta. Abrir el panel no marca los mensajes como leídos.',
+  'panel_indicator' => 'Notificaciones del panel: :unread mensaje(s) sin leer.',
+  'panel_help' => 'La campana cuenta solo los mensajes de contacto sin leer. Los pendientes de respuesta incluyen mensajes ya leídos. Abrir el panel no marca los mensajes como leídos.',
   'panel_delivery_help' => 'Las notificaciones del panel no necesitan planificador ni envío de correo. El correo inmediato se envía al recibir el mensaje; el correo agrupado o diario y los recordatorios diarios necesitan el planificador de Laravel.',
   'panel_unavailable' => 'Ejecute las migraciones de la base de datos del CMS antes de ver las notificaciones de mensajes.',
   'panel_empty' => 'No hay mensajes de contacto pendientes de respuesta.',
@@ -67,4 +67,5 @@ return [
   'panel_unread' => 'Sin leer',
   'panel_awaiting' => 'Pendientes de respuesta',
   'panel_actions' => 'Acciones',
+  'panel_review_awaiting' => 'Revisar mensajes pendientes de respuesta',
 ];

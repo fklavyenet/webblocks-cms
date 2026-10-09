@@ -5,10 +5,8 @@
     $tableReady = \Illuminate\Support\Facades\Schema::hasTable('wbcms_comment_entries');
     $comments = collect();
     if ($tableReady) {
-        $commentsQuery = \WebBlocks\Cms\Models\CommentEntry::query()
-            ->where('block_id', $block->id)
-            ->where('status', 'approved');
-        $comments = ($sortOrder === 'oldest' ? $commentsQuery->oldest() : $commentsQuery->latest())->limit(25)->get();
+        $commentsQuery = app(\WebBlocks\Cms\Queries\PublicEngagementQuery::class)->comments($block);
+        $comments = ($sortOrder === 'oldest' ? $commentsQuery->oldest() : $commentsQuery->latest())->orderBy('id', $sortOrder === 'oldest' ? 'asc' : 'desc')->paginate(25, ['*'], 'comments_page_'.$block->id)->withQueryString()->fragment('comments-'.$block->id);
     }
     $showApproved = (bool) $block->setting('show_approved', true);
     $showAuthorName = (bool) $block->setting('show_author_name', false);
@@ -34,17 +32,22 @@
         @endif
 
         @if ($tableReady && $showApproved)
+            <div class="wb-text-sm wb-text-muted">{{ $translator->get('blocks.comments.approved_count', $localeCode, ['count' => $comments->total()]) }}</div>
             <div class="wb-stack wb-gap-3">
                 @forelse ($comments as $comment)
                     <article class="wb-stack wb-gap-2">
                         @if ($showAuthorName && $comment->author_name)
                             <strong>{{ $comment->author_name }}</strong>
                         @endif
-                        <p>{{ $comment->body }}</p>
+                        <time class="wb-text-sm wb-text-muted" datetime="{{ $comment->created_at?->toIso8601String() }}">{{ $comment->created_at?->format('Y-m-d') }}</time>
+                        @foreach (preg_split('/\R/', $comment->body) as $line)<p>{{ $line }}</p>@endforeach
                     </article>
                 @empty
                     <div class="wb-text-sm wb-text-muted">{{ $translator->get('blocks.comments.no_approved', $localeCode) }}</div>
                 @endforelse
+                @if ($comments instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator && $comments->hasPages())
+                    @include('webblocks-cms::pages.partials.blocks.engagement-pagination', ['paginator' => $comments])
+                @endif
             </div>
         @endif
 

@@ -47,8 +47,6 @@ class PanelNotificationQuery
       'unread' => $inboxes->sum('unread'),
       'awaiting' => $inboxes->sum('awaiting'),
       'warnings' => $warnings,
-      // Unread is a subset of awaiting; do not count the same message twice.
-      'attention' => $inboxes->sum('awaiting') + $warnings,
       'scheduler' => $scheduler,
     ];
   }

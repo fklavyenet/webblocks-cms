@@ -42,6 +42,7 @@ return [
     'storage' => 'Tu mensaje se guarda primero y luego se intenta enviar la notificación por correo.',
   ],
   'comments' => [
+    'approved_count' => ':count comentarios aprobados',
     'unavailable' => 'Los comentarios no están disponibles temporalmente.',
     'no_approved' => 'Aún no hay comentarios aprobados.',
     'review_title' => 'Revisa el comentario',

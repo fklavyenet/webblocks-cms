@@ -341,6 +341,8 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->middleware('can:manage-site-operations')->name('contact-messages.destroy');
     Route::get('engagement', [EngagementController::class, 'index'])->middleware('can:manage-site-operations')->name('engagement.index');
     Route::get('engagement/comments', [EngagementController::class, 'comments'])->middleware('can:manage-site-operations')->name('engagement.comments.index');
+    Route::post('engagement/comments/bulk-status', [EngagementController::class, 'bulkCommentStatus'])->middleware('can:manage-site-operations')->name('engagement.comments.bulk-status');
+    Route::get('engagement/comments/{commentEntry}', [EngagementController::class, 'showComment'])->middleware('can:manage-site-operations')->name('engagement.comments.show');
     Route::patch('engagement/comments/{commentEntry}/status', [EngagementController::class, 'updateCommentStatus'])->middleware('can:manage-site-operations')->name('engagement.comments.status');
     Route::delete('engagement/comments/{commentEntry}', [EngagementController::class, 'destroyComment'])->middleware('can:manage-site-operations')->name('engagement.comments.destroy');
     Route::get('engagement/ratings', [EngagementController::class, 'ratings'])->middleware('can:manage-site-operations')->name('engagement.ratings.index');

@@ -57,8 +57,8 @@ return [
   'health_dispatch_failed' => 'Benachrichtigungsverarbeitung fehlgeschlagen. Prüfen Sie Zeitplaner und Versandresultate.',
   'health_notifications_optional' => 'Sofortige Benachrichtigungen ohne tägliche Zusammenfassungen benötigen keinen geplanten Versand. Der Zeitplanerstatus bleibt für Hintergrundwartung sichtbar.',
   'panel_title' => 'Panel-Benachrichtigungen',
-  'panel_indicator' => 'Panel-Benachrichtigungen: :awaiting warten auf Antwort, :unread ungelesen, :warnings Systemwarnung(en).',
-  'panel_help' => 'Gespeicherte Kontaktmeldungen erscheinen hier auch bei deaktivierter E-Mail. Ungelesene Meldungen zählen auch als auf Antwort wartend. Das Öffnen des Panels markiert keine Meldungen als gelesen.',
+  'panel_indicator' => 'Panel-Benachrichtigungen: :unread ungelesene Nachricht(en).',
+  'panel_help' => 'Die Glocke zählt nur ungelesene Kontaktmeldungen. Auf Antwort wartende Meldungen schließen bereits gelesene ein. Das Öffnen des Panels markiert keine Meldungen als gelesen.',
   'panel_delivery_help' => 'Panel-Benachrichtigungen benötigen weder Scheduler noch E-Mail-Versand. Sofortige E-Mails werden beim Eingang versendet; gebündelte und tägliche E-Mails sowie tägliche Erinnerungen benötigen den Laravel-Scheduler.',
   'panel_unavailable' => 'Führen Sie die CMS-Datenbankmigrationen aus, bevor Sie Nachrichtenbenachrichtigungen anzeigen.',
   'panel_empty' => 'Keine Kontaktmeldungen warten auf eine Antwort.',
@@ -67,4 +67,5 @@ return [
   'panel_unread' => 'Ungelesen',
   'panel_awaiting' => 'Warten auf Antwort',
   'panel_actions' => 'Aktionen',
+  'panel_review_awaiting' => 'Auf Antwort wartende Meldungen ansehen',
 ];

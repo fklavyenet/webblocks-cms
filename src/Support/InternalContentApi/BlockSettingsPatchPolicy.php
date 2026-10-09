@@ -119,6 +119,7 @@ final class BlockSettingsPatchPolicy
     ],
     'code' => ['language' => ['text', 255]],
     'comments' => [
+      'data_scope' => ['enum', ['block', 'page']],
       'form_enabled' => ['bool'],
       'show_approved' => ['bool'],
       'sort_order' => ['enum', ['newest', 'oldest']],
@@ -175,6 +176,7 @@ final class BlockSettingsPatchPolicy
     ],
     'plain_text' => ['alignment' => ['enum', ['left', 'center', 'right']]],
     'rating' => [
+      'data_scope' => ['enum', ['block', 'page']],
       'allow_change' => ['bool'],
       'show_summary' => ['bool'],
     ],

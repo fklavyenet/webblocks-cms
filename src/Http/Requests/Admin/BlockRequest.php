@@ -218,6 +218,8 @@ class BlockRequest extends FormRequest
       'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
       'breadcrumb_home_label' => [$isBreadcrumb ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'breadcrumb_include_current' => [$isBreadcrumb ? 'nullable' : 'prohibited', Rule::in(['0', '1'])],
+      'rating_data_scope' => [$isRating ? 'nullable' : 'prohibited', Rule::in(['block', 'page'])],
+      'comments_data_scope' => [$isComments ? 'nullable' : 'prohibited', Rule::in(['block', 'page'])],
       'rating_scale' => [$isRating ? 'required' : 'prohibited', Rule::in(['5'])],
       'rating_allow_change' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
       'rating_show_summary' => [$isRating ? 'nullable' : 'prohibited', 'boolean'],
@@ -1721,6 +1723,7 @@ class BlockRequest extends FormRequest
         $settings = is_array($existingSettings) ? $existingSettings : [];
 
         if (! $isLocaleRequest) {
+          $settings['data_scope'] = $data['rating_data_scope'] ?? $settings['data_scope'] ?? 'block';
           $settings['scale'] = 5;
           $settings['allow_change'] = (bool) ($data['rating_allow_change'] ?? true);
           $settings['show_summary'] = (bool) ($data['rating_show_summary'] ?? true);
@@ -1739,6 +1742,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'comments') {
         $settings = [
+          'data_scope' => $data['comments_data_scope'] ?? ($this->route('block') instanceof Block ? $this->route('block')->setting('data_scope', 'block') : 'block'),
           'form_enabled' => (bool) ($data['comments_form_enabled'] ?? true),
           'show_approved' => (bool) ($data['comments_show_approved'] ?? true),
           'show_author_name' => (bool) ($data['comments_show_author_name'] ?? false),
@@ -2461,8 +2465,8 @@ class BlockRequest extends FormRequest
     unset($data['language']);
     unset($data['navigation_menu_key']);
     unset($data['text'], $data['level'], $data['anchor']);
-    unset($data['rating_scale'], $data['rating_allow_change'], $data['rating_show_summary'], $data['rating_title']);
-    unset($data['comments_form_enabled'], $data['comments_show_approved'], $data['comments_show_author_name'], $data['comments_sort_order']);
+    unset($data['rating_data_scope'], $data['rating_scale'], $data['rating_allow_change'], $data['rating_show_summary'], $data['rating_title']);
+    unset($data['comments_data_scope'], $data['comments_form_enabled'], $data['comments_show_approved'], $data['comments_show_author_name'], $data['comments_sort_order']);
     unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['image_viewer_enabled'], $data['image_viewer_group'], $data['alert_variant']);
     unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
     unset($data['sticky_navbar_mode'], $data['navbar_brand_aria_label'], $data['navbar_navigation_menu_key']);

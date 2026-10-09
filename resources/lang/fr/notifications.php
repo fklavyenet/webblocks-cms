@@ -57,8 +57,8 @@ return [
   'health_dispatch_failed' => 'Échec du traitement des notifications. Vérifiez le planificateur et les résultats d’envoi.',
   'health_notifications_optional' => 'Les notifications immédiates sans résumé quotidien ne nécessitent pas d’envoi planifié. Le statut reste visible pour la maintenance en arrière-plan.',
   'panel_title' => 'Notifications du panneau',
-  'panel_indicator' => 'Notifications du panneau : :awaiting en attente de réponse, :unread non lues, :warnings avertissement(s) système.',
-  'panel_help' => 'Les messages de contact enregistrés apparaissent ici même si les e-mails sont désactivés. Les messages non lus sont inclus dans le nombre de messages en attente de réponse. Ouvrir le panneau ne marque aucun message comme lu.',
+  'panel_indicator' => 'Notifications du panneau : :unread message(s) non lu(s).',
+  'panel_help' => 'La cloche compte uniquement les messages de contact non lus. Les messages en attente de réponse incluent ceux déjà lus. Ouvrir le panneau ne marque aucun message comme lu.',
   'panel_delivery_help' => 'Les notifications du panneau ne nécessitent ni planificateur ni envoi d’e-mails. Les e-mails immédiats sont envoyés à la réception du message ; les e-mails groupés ou quotidiens et les rappels quotidiens nécessitent le planificateur Laravel.',
   'panel_unavailable' => 'Exécutez les migrations de la base de données du CMS avant d’afficher les notifications de messages.',
   'panel_empty' => 'Aucun message de contact n’attend de réponse.',
@@ -67,4 +67,5 @@ return [
   'panel_unread' => 'Non lus',
   'panel_awaiting' => 'En attente de réponse',
   'panel_actions' => 'Actions',
+  'panel_review_awaiting' => 'Consulter les messages en attente de réponse',
 ];

@@ -42,6 +42,7 @@ return [
     'storage' => 'Ihre Nachricht wird gespeichert, anschließend wird die E-Mail-Benachrichtigung versucht.',
   ],
   'comments' => [
+    'approved_count' => ':count freigegebene Kommentare',
     'unavailable' => 'Kommentare sind voruebergehend nicht verfuegbar.',
     'no_approved' => 'Noch keine freigegebenen Kommentare.',
     'review_title' => 'Bitte pruefen Sie den Kommentar',

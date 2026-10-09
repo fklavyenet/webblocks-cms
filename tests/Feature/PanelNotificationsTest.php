@@ -56,7 +56,7 @@ class PanelNotificationsTest extends TestCase
     $user->shouldReceive('can')->andReturn(false)->byDefault();
     $user->shouldReceive('can')->with('manage-site-operations')->andReturn($manager);
     $user->shouldReceive('isSuperAdmin')->andReturn($super);
-    $user->shouldReceive('accessibleSiteIds')->andReturn($sites);
+    $user->shouldReceive('accessibleSiteIds')->andReturn(collect($sites));
 
     return $user;
   }
@@ -88,7 +88,6 @@ class PanelNotificationsTest extends TestCase
     $this->assertTrue($data['inbox_available']);
     $this->assertSame(1, $data['unread']);
     $this->assertSame(2, $data['awaiting']);
-    $this->assertSame(2, $data['attention']);
     $this->assertSame(0, $data['warnings']);
     $this->assertSame('unverified', $data['scheduler']['health']['status']);
     $this->assertSame(route('admin.contact-messages.index', ['site' => $site->id]), $data['inboxes']->first()['url']);
@@ -119,9 +118,8 @@ class PanelNotificationsTest extends TestCase
       $data = app(PanelNotificationQuery::class)->forUser($user);
       $this->assertSame(1, $data['awaiting']);
       $this->assertSame(1, $data['warnings']);
-      $this->assertSame(2, $data['attention']);
       $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
-        ->assertSee('1 awaiting reply, 1 unread, 1 system warning(s).');
+        ->assertSee('1 unread message(s).')->assertSee('class="wb-btn-badge"', false);
     }
     $this->assertSame($before, $message->fresh()->getAttributes());
     $this->assertSame('pending', DB::table('wbcms_site_notification_events')->value('status'));
@@ -140,7 +138,7 @@ class PanelNotificationsTest extends TestCase
     $this->message($private);
     $query = app(PanelNotificationQuery::class);
     $data = $query->forUser($this->user([$allowed->id]));
-    $this->assertSame(1, $data['attention']);
+    $this->assertSame(1, $data['unread']);
     $this->assertSame(0, $data['warnings']);
     $this->assertSame([$allowed->id], $data['inboxes']->pluck('site.id')->all());
     $this->view('webblocks-cms::admin.partials.dashboard-panel-notifications', ['panelNotifications' => $data])
@@ -149,8 +147,8 @@ class PanelNotificationsTest extends TestCase
     $this->assertNull($query->forUser(null));
     $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => null])
       ->assertDontSee('data-wb-panel-notifications');
-    $this->assertSame(0, $query->forUser($this->user([]))['attention']);
-    $this->assertSame(3, $query->forUser($this->user([], true, true))['attention']);
+    $this->assertSame(0, $query->forUser($this->user([]))['unread']);
+    $this->assertSame(2, $query->forUser($this->user([], true, true))['unread']);
   }
 
   #[Test]
@@ -167,7 +165,7 @@ class PanelNotificationsTest extends TestCase
     $this->assertSame(1, $data['awaiting']);
     $message->update(['status' => 'replied']);
     $data = $query->forUser($user);
-    $this->assertSame(0, $data['attention']);
+    $this->assertSame(0, $data['awaiting']);
     $this->view('webblocks-cms::admin.partials.dashboard-panel-notifications', ['panelNotifications' => $data])
       ->assertSee('No contact messages await a reply.');
   }
@@ -214,11 +212,45 @@ class PanelNotificationsTest extends TestCase
     $dashboard = app(DashboardController::class)(request())->render();
     $this->assertStringContainsString('data-wb-panel-notifications', $dashboard);
     $this->assertStringContainsString('data-wb-panel-notification-summary', $dashboard);
-    $this->assertStringContainsString('1 awaiting reply, 1 unread', $dashboard);
+    $this->assertStringContainsString('1 unread message(s).', $dashboard);
     $this->assertStringNotContainsString('PrivateBody', $dashboard);
     $layout = view('webblocks-cms::layouts.admin')->render();
     $this->assertStringContainsString('data-wb-panel-notifications', $layout);
     $this->assertSame('new', $message->fresh()->status);
+  }
+
+  #[Test]
+  public function read_messages_and_scheduler_warnings_do_not_create_an_unread_badge(): void
+  {
+    $site = $this->site('reported-case', true);
+    $message = $this->message($site, 'read');
+    $data = app(PanelNotificationQuery::class)->forUser($this->user([$site->id]));
+    $this->assertSame(0, $data['unread']);
+    $this->assertSame(1, $data['awaiting']);
+    $this->assertSame(1, $data['warnings']);
+    $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
+      ->assertSee('0 unread message(s).')->assertDontSee('wb-btn-badge');
+    $this->view('webblocks-cms::admin.partials.dashboard-panel-notifications', ['panelNotifications' => $data])
+      ->assertSee('Review messages awaiting reply')->assertSee('reported-case');
+    $this->assertSame('read', $message->fresh()->status);
+  }
+
+  #[Test]
+  public function opening_a_message_clears_its_unread_badge_while_pending_reply_and_health_remain(): void
+  {
+    $site = $this->site('read-message', true);
+    $message = $this->message($site);
+    $user = $this->user([$site->id]);
+    request()->setUserResolver(fn () => $user);
+    $query = app(PanelNotificationQuery::class);
+    $this->assertSame(1, $query->forUser($user)['unread']);
+    app(ContactMessageController::class)->show($message);
+    $data = $query->forUser($user);
+    $this->assertSame(0, $data['unread']);
+    $this->assertSame(1, $data['awaiting']);
+    $this->assertSame(1, $data['warnings']);
+    $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
+      ->assertDontSee('wb-btn-badge');
   }
 
   #[Test]
