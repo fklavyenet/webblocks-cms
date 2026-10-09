@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use WebBlocks\Cms\Actions\Sites\UpdateSiteNotifications;
 use WebBlocks\Cms\Http\Requests\SiteNotificationSettingsRequest;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 
 class InternalSiteNotificationController
@@ -15,6 +16,7 @@ class InternalSiteNotificationController
     return response()->json([
       'ok' => true,
       'notification_settings' => SiteNotificationPolicy::forSite($site),
+      'scheduler_health' => app(SchedulerHealth::class)->forSite($site),
       'delivery_status' => SiteNotificationPolicy::deliveryStatus($site),
       'summary_delivery_status' => SiteNotificationPolicy::summaryDeliveryStatus($site),
     ]);

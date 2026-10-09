@@ -35,6 +35,7 @@ use WebBlocks\Cms\Console\PluginProbeCommand;
 use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
+use WebBlocks\Cms\Console\SchedulerStatusCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
 use WebBlocks\Cms\Console\SiteCloneCommand;
 use WebBlocks\Cms\Console\SiteDeleteCommand;
@@ -90,6 +91,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
+use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
@@ -786,6 +788,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
   public const PACKAGE_CONSOLE_COMMANDS = [
+    SchedulerStatusCommand::class,
     DispatchSiteNotificationsCommand::class,
     PluginMigrateCommand::class,
     PluginProbeCommand::class,
@@ -980,6 +983,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       if (! $this->app->bound(Schedule::class)) {
         return;
       }
+
+      $this->app->make(Schedule::class)
+        ->call(fn () => app(SchedulerHealth::class)->scheduledHeartbeat())
+        ->name('webblocks-scheduler-heartbeat')
+        ->everyMinute();
 
       $this->app->make(Schedule::class)
         ->command('webblocks:notifications:dispatch')

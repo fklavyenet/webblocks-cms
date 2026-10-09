@@ -12,6 +12,12 @@
                     <p class="wb-text-muted">Run the package installer before opening the admin or public site.</p>
                 </div>
 
+                <div class="wb-alert wb-alert-warning">
+                    <strong>{{ __('webblocks-cms::notifications.health_install_title') }}</strong>
+                    <p>{{ __('webblocks-cms::notifications.health_install_help') }}</p>
+                    <p>{{ __('webblocks-cms::notifications.health_setup') }}</p>
+                </div>
+
                 <div class="wb-card wb-card-muted">
                     <div class="wb-card-body">
                         <pre><code>php artisan webblocks:install</code></pre>

@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Console;
 
 use Illuminate\Console\Command;
 use WebBlocks\Cms\Services\SiteNotifications\SiteNotificationDispatcher;
+use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 
 class DispatchSiteNotificationsCommand extends Command
 {
@@ -13,8 +14,18 @@ class DispatchSiteNotificationsCommand extends Command
 
   public function handle(SiteNotificationDispatcher $dispatcher): int
   {
-    $dispatcher->run();
+    $health = app(SchedulerHealth::class);
+    $health->dispatchStarted();
+    try {
+      $dispatcher->run();
+      $health->dispatchCompleted();
 
-    return self::SUCCESS;
+      return self::SUCCESS;
+    } catch (\Throwable) {
+      $health->dispatchFailed();
+      $this->error(__('webblocks-cms::notifications.health_dispatch_failed'));
+
+      return self::FAILURE;
+    }
   }
 }

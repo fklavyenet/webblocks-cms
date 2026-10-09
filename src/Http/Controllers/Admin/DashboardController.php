@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Queries\SiteNotificationHealthQuery;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -29,6 +30,7 @@ class DashboardController extends Controller
     $canViewVisitorReports = (bool) $request->user()?->can('view-visitor-reports');
 
     return view('webblocks-cms::admin.dashboard', [
+      'notificationHealthSites' => app(SiteNotificationHealthQuery::class)->forUser($request->user()),
       'title' => 'Admin Dashboard',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Admin Dashboard'),

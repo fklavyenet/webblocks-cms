@@ -68,6 +68,8 @@ class InstallWebBlocksCmsCommand extends Command
   public function handle(): int
   {
     $this->components->info('Installing WebBlocks CMS');
+    $this->components->warn(__('webblocks-cms::notifications.health_install_help'));
+    $this->components->warn(__('webblocks-cms::notifications.health_setup'));
 
     $this->ensureCmsConfigIsResolvable();
     $this->publishPackageConfigIfMissing();

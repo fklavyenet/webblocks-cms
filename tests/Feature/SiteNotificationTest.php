@@ -321,7 +321,7 @@ class SiteNotificationTest extends TestCase
     $site = $this->site();
     $other = $this->site();
     $token = app(CmsApiTokenIssuer::class)->issue('Synthetic settings', capabilities: ['content.read', 'site-settings.write'], allowedSiteIds: [$site->id])->plainToken;
-    $this->withToken($token)->getJson('/webadmin/api/sites/'.$site->id.'/notifications')->assertOk()->assertJsonPath('notification_settings.notification_mode', 'alert_only');
+    $this->withToken($token)->getJson('/webadmin/api/sites/'.$site->id.'/notifications')->assertOk()->assertJsonPath('notification_settings.notification_mode', 'alert_only')->assertJsonPath('scheduler_health.required', true)->assertJsonPath('scheduler_health.status', 'unverified');
     $this->getJson('/webadmin/api/sites/'.$other->id.'/notifications')->assertForbidden();
     $this->patchJson('/webadmin/api/sites/'.$other->id.'/notifications', ['notification_mode' => 'full'])->assertForbidden();
     $this->patchJson('/webadmin/api/sites/'.$site->id.'/notifications', ['notification_mode' => 'bad'])->assertUnprocessable();

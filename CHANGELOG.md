@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.95.1
+
+- Make scheduled notification requirements visible before installation and in the Dashboard, Site settings and notification API, with clear server-administrator ownership of the one-time Laravel scheduler setup.
+- Record real scheduled heartbeats separately from completed notification runs. Show unverified, delayed, failed and missing-schema states; manual dispatch and read-only health requests never claim the scheduler is running.
+- Warn prominently when batched/daily notifications or daily summaries depend on unverified or delayed scheduling. Treat execution evidence older than five minutes as delayed and keep customer data and raw exceptions out of health records.
+- Add a read-only scheduler status command and share the same evidence with participating plugins. Update hosting requirements, installation instructions and the production readiness checklist.
+
 ## 1.95.0
 
 - Choose full message emails or privacy-preserving alerts through shared site settings and the authorized site notification API. Contact forms and participating plugins use the same policy.

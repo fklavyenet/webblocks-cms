@@ -1,4 +1,5 @@
 @php($notificationPolicy = \WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy::forSite($site))
+@include('webblocks-cms::admin.partials.scheduler-health', ['site' => $site])
 <h3>{{ __('webblocks-cms::notifications.settings_title') }}</h3>
 <p class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::notifications.settings_help') }}</p>
 @foreach (['notification_mode' => ['alert_only', 'full'], 'notification_frequency' => ['immediate', 'batched', 'daily']] as $field => $choices)
