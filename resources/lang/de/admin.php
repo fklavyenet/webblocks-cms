@@ -1538,6 +1538,7 @@ $translations = [
         ],
       ],
       'labels' => [
+        'system_health_read' => 'Installationsweiten Systemzustand lesen',
         'system_updates_read' => 'Status und Ergebnisse von Systemaktualisierungen lesen',
         'system_updates_run' => 'Eine genehmigte installationsweite Systemaktualisierung ausführen',
         'content_read' => 'Inhaltsmetadaten und Contracts lesen',

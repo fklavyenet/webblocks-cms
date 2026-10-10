@@ -1758,6 +1758,7 @@ return [
         ],
       ],
       'labels' => [
+        'system_health_read' => 'Read installation-wide system health',
         'system_updates_read' => 'Read system update status and results',
         'system_updates_run' => 'Run an approved installation-wide system update',
         'content_read' => 'Read content metadata and contracts',

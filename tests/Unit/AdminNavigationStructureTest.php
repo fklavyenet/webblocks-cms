@@ -25,15 +25,18 @@ class AdminNavigationStructureTest extends TestCase
   }
 
   #[Test]
-  public function help_is_appended_after_the_system_and_maintenance_groups(): void
+  public function help_is_a_direct_link_after_the_groups_and_system_information_remains_available(): void
   {
     $layout = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/admin.blade.php');
     $maintenance = strpos($layout, "'key' => 'maintenance'");
-    $appendHelp = strpos($layout, '$sidebarGroups[] = $helpSidebarGroup;');
+    $appendHelp = strpos($layout, 'href="{{ app(DocumentationUrlResolver::class)->url($adminLocale) }}"');
 
     $this->assertNotFalse($maintenance);
     $this->assertNotFalse($appendHelp);
     $this->assertGreaterThan($maintenance, $appendHelp);
+    $this->assertStringNotContainsString("'key' => 'help'", $layout);
+    $this->assertStringContainsString("'route' => 'admin.system.information'", $layout);
+    $this->assertStringContainsString("'route' => 'admin.system.health.index'", $layout);
   }
 
   #[Test]

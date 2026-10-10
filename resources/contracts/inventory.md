@@ -1144,3 +1144,31 @@ no migration ran, after another startup probe. A restore also republishes its as
 This is recovery for CMS-managed packages; it does not isolate arbitrary host providers
 or sandbox executable PHP. Uncatchable process termination still requires the separate
 recovery request rather than an in-process error handler.
+
+
+## System Health read authority
+
+`GET /webadmin/api/system/health` requires the opt-in `system-health.read`
+capability and an installation-wide system token (`allowed_site_ids: null`)
+owned by an active operator with `access-system`. Personal and site-scoped
+credentials cannot read installation health. An optional validated `site_id`
+filters site checks while installation-wide checks remain visible.
+
+The endpoint returns safe message keys/parameters, ordered issues, category
+statuses (`healthy`, `warning`, `critical`, `unknown`, `not_applicable`), site
+summaries, system information, and recent operation outcomes.
+Site, backup, storage, plugin, update-readiness, and history observations are
+cached for five minutes; scheduler evidence is read on each request. Unknown
+and optional checks remain distinct from successful checks. Reading or
+refreshing health does not mutate content, reconcile backup records, send mail,
+run cleanup or updates, fetch release metadata, or create scheduler evidence.
+Plugin reporters retain their existing health-reporter contract; raw reporter
+messages and exception details are excluded from this overview.
+
+Existing operational routes remain available. Plugin Help destinations join
+System and plugin Maintenance destinations merge by the stable maintenance
+group key; the core Help item links directly to documentation. Health status is
+evidence for review, not authority to publish content, restore a backup, or update a host.
+Search checks compare eligible published page/locale scopes with index rows;
+they do not prove text freshness. Backup availability does not prove restore
+integrity. Update readiness remains separate from normal site operation.

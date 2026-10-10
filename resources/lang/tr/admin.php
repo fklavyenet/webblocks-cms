@@ -1551,6 +1551,7 @@ $translations = [
         ],
       ],
       'labels' => [
+        'system_health_read' => 'Kurulum genelindeki sistem sağlığını oku',
         'system_updates_read' => 'Sistem güncellemesi durumunu ve sonuçlarını oku',
         'system_updates_run' => 'Onaylanmış bir sistem güncellemesini kurulum genelinde çalıştır',
         'content_read' => 'İçerik meta verilerini ve contract bilgilerini oku',

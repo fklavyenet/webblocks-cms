@@ -33,6 +33,7 @@ class DashboardController extends Controller
     $schedulerDashboard = $panelNotifications['scheduler'] ?? ['sites' => collect(), 'health' => null];
 
     return view('webblocks-cms::admin.dashboard', [
+      'canViewSystemHealth' => (bool) $request->user()?->can('access-system'),
       'panelNotifications' => $panelNotifications,
       'notificationHealthSites' => $schedulerDashboard['sites'],
       'dashboardSchedulerHealth' => $schedulerDashboard['health'],

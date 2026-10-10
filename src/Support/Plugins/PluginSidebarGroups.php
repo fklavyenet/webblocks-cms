@@ -26,7 +26,13 @@ class PluginSidebarGroups
         continue;
       }
       $groupName = $item->groupName() ?: 'System';
-      $groupKey = $groupName === 'System' ? 'system' : 'plugin-'.Str::slug($groupName);
+      // Core Help is a direct documentation link. Keep plugin destinations
+      // reachable under System, and merge maintenance by its stable key even
+      // when the operator-facing heading has been translated or renamed.
+      $groupName = $groupName === 'Help' ? 'System' : $groupName;
+      $groupKey = match ($groupName) {
+      'System' => 'system', 'Maintenance' => 'maintenance', default => 'plugin-'.Str::slug($groupName)
+      };
       $index = collect($groups)->search(fn ($group) => ($group['key'] ?? null) === $groupKey || $group['label'] === $groupName);
       if ($index === false) {
         $groups[] = [

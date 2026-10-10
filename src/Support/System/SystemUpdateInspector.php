@@ -39,6 +39,20 @@ class SystemUpdateInspector
     return $this->report();
   }
 
+  /** Read readiness without fetching releases, creating workspaces or probing writes. */
+  public function readOnlyChecks(): array
+  {
+    return [
+      $this->databaseCheck(),
+      $this->archiveSupportCheck(),
+      $this->signatureSupportCheck(),
+      $this->commandExecutionCheck(),
+      $this->freeDiskSpaceCheck(),
+      $this->check('Application root write access', is_writable((string) config('webblocks-updates.installer.target_path', base_path())) ? 'pass' : 'fail', ''),
+      $this->check('Storage write access', is_writable(storage_path()) ? 'pass' : 'fail', ''),
+    ];
+  }
+
   private function reportFromStatus(array $version): array
   {
     $installedVersion = $this->installedVersionStore->currentVersion();

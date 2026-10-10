@@ -133,6 +133,24 @@ class PluginAppearanceTest extends TestCase
     $this->assertCount(4, $groups[0]['items']);
   }
 
+  public function test_help_contributions_remain_reachable_and_maintenance_merges_by_stable_key(): void
+  {
+    $registry = new PluginRegistry(['alpha' => true, 'beta' => true]);
+    $registry->register($this->plugin('alpha', 'Help', 'calendar'));
+    $registry->register($this->plugin('beta', 'Maintenance', 'message-square'));
+    $core = [
+      ['key' => 'system', 'label' => 'Sistem', 'icon' => 'wb-icon-palette', 'items' => []],
+      ['key' => 'maintenance', 'label' => 'Bakım ve Sağlık', 'icon' => 'wb-icon-heart', 'items' => []],
+    ];
+    $groups = (new PluginSidebarGroups($registry, new PluginAppearance, app(CmsTranslator::class)))->appendTo($core, null, 'en');
+    $this->assertSame(['system', 'maintenance'], array_column($groups, 'key'));
+    $this->assertSame(['Sistem', 'Bakım ve Sağlık'], array_column($groups, 'label'));
+    $this->assertSame('webblocks.plugins.alpha.items.index', $groups[0]['items'][0]['route']);
+    $this->assertSame('webblocks.plugins.beta.items.index', $groups[1]['items'][0]['route']);
+    $this->assertCount(2, $groups[0]['items']);
+    $this->assertCount(2, $groups[1]['items']);
+  }
+
   public function test_two_plugins_sharing_a_custom_group_use_a_neutral_group_icon(): void
   {
     $shared = new PluginRegistry(['alpha' => true, 'beta' => true]);

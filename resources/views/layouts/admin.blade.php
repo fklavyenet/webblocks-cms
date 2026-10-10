@@ -82,27 +82,7 @@
 
             $sidebarGroups = [];
 
-            $helpSidebarGroup = [
-                'key' => 'help',
-                'label' => $adminText('navigation.help'),
-                'icon' => 'wb-icon-help-circle',
-                'items' => [
-                    [
-                        'label' => $adminText('navigation.documentation'),
-                        'url' => app(DocumentationUrlResolver::class)->url($adminLocale),
-                        'active' => [],
-                        'external' => true,
-                    ],
-                ],
-            ];
-
             if ($user?->can('access-system')) {
-                $helpSidebarGroup['items'][] = [
-                    'label' => $adminText('navigation.system_information'),
-                    'route' => 'admin.system.information',
-                    'active' => ['admin.system.information'],
-                ];
-
                 $sidebarGroups[] = [
                     'key' => 'system',
                     'label' => $adminText('navigation.system'),
@@ -116,6 +96,7 @@
                             ['label' => $adminText('navigation.slot_types'), 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
                             ['label' => $adminText('navigation.block_types'), 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
                             ['label' => $adminText('navigation.embedded_applications'), 'route' => 'admin.embedded-applications.index', 'active' => ['admin.embedded-applications.*']],
+                            ['label' => $adminText('navigation.system_information'), 'route' => 'admin.system.information', 'active' => ['admin.system.information']],
                             ['label' => $adminText('navigation.settings'), 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
                             ['label' => $adminText('navigation.api_tokens'), 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*']],
                             ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*']],
@@ -124,9 +105,10 @@
 
                 $sidebarGroups[] = [
                     'key' => 'maintenance',
-                    'label' => $adminText('navigation.maintenance'),
+                    'label' => $adminTranslator->get('system_health.navigation', $adminLocale),
                     'icon' => 'wb-icon-file',
                     'items' => [
+                        ['label' => $adminTranslator->get('system_health.title', $adminLocale), 'route' => 'admin.system.health.index', 'active' => ['admin.system.health.*']],
                         ['label' => $adminText('navigation.search_rebuild'), 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*']],
                         ['label' => $adminText('navigation.backups'), 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*']],
                         ['label' => $adminText('navigation.cleanup'), 'route' => 'admin.system.cleanup.index', 'active' => ['admin.system.cleanup.*']],
@@ -135,8 +117,6 @@
                     ],
                 ];
             }
-
-            $sidebarGroups[] = $helpSidebarGroup;
 
             $sidebarGroups = app(\WebBlocks\Cms\Support\Plugins\PluginSidebarGroups::class)->appendTo($sidebarGroups, $user, $adminLocale);
 
@@ -259,6 +239,10 @@
                             </div>
                         </div>
                     @endforeach
+                    <a href="{{ app(DocumentationUrlResolver::class)->url($adminLocale) }}" class="wb-sidebar-link" target="_blank" rel="noopener noreferrer">
+                        <i class="wb-icon wb-icon-help-circle wb-sidebar-icon" aria-hidden="true"></i>
+                        <span>{{ $adminText('navigation.help') }}</span>
+                    </a>
                 </nav>
 
                 <div class="wb-sidebar-footer">

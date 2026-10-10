@@ -33,6 +33,12 @@
     <div class="wb-stack wb-stack-4" id="panel-notifications">
         @include('webblocks-cms::admin.partials.dashboard-panel-notifications')
         @include('webblocks-cms::admin.partials.dashboard-scheduler-health')
+        @if ($canViewSystemHealth ?? false)
+            <div class="wb-card"><div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-4 wb-flex-wrap">
+                <div class="wb-stack wb-stack-1"><strong>{{ $adminTranslator->get('system_health.title', $adminLocaleCode) }}</strong><span class="wb-text-sm wb-text-muted">{{ $adminTranslator->get('system_health.description', $adminLocaleCode) }}</span></div>
+                <a href="{{ route('admin.system.health.index') }}" class="wb-btn wb-btn-secondary">{{ $adminTranslator->get('system_health.review', $adminLocaleCode) }}</a>
+            </div></div>
+        @endif
         @if ($canViewVisitorReports)
             <div class="wb-card">
                 <div class="wb-card-header"><strong>{{ $adminText('dashboard.page_views') }}</strong></div>

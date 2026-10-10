@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalApiTokens;
 
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Policies\SystemHealthPolicy;
 use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
 use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
 
@@ -37,6 +38,8 @@ class CmsApiTokenCapabilities
   public const SYSTEM_UPDATES_READ = 'system-updates.read';
 
   public const SYSTEM_UPDATES_RUN = 'system-updates.run';
+
+  public const SYSTEM_HEALTH_READ = 'system-health.read';
 
   public const MAINTENANCE_READ = 'maintenance.read';
 
@@ -148,6 +151,7 @@ class CmsApiTokenCapabilities
     self::BACKUPS_READ,
     self::BACKUPS_SETTINGS_WRITE,
     self::BACKUPS_DELETE,
+    self::SYSTEM_HEALTH_READ,
     self::MAINTENANCE_READ,
     self::MAINTENANCE_SETTINGS_WRITE,
     self::MAINTENANCE_DELETE,
@@ -196,6 +200,7 @@ class CmsApiTokenCapabilities
     self::BACKUPS_READ,
     self::BACKUPS_SETTINGS_WRITE,
     self::BACKUPS_DELETE,
+    self::SYSTEM_HEALTH_READ,
     self::MAINTENANCE_READ,
     self::MAINTENANCE_SETTINGS_WRITE,
     self::MAINTENANCE_DELETE,
@@ -253,6 +258,7 @@ class CmsApiTokenCapabilities
     self::BACKUPS_READ => 'Read backup cleanup policy and preview',
     self::BACKUPS_SETTINGS_WRITE => 'Change the automatic backup cleanup policy',
     self::BACKUPS_DELETE => 'Run destructive automatic backup cleanup',
+    self::SYSTEM_HEALTH_READ => 'Read installation-wide system health',
     self::MAINTENANCE_READ => 'Read maintenance cleanup policy and previews',
     self::MAINTENANCE_SETTINGS_WRITE => 'Change maintenance cleanup retention policy',
     self::MAINTENANCE_DELETE => 'Run destructive maintenance cleanup categories',
@@ -321,6 +327,10 @@ class CmsApiTokenCapabilities
       return false;
     }
 
+    if ($capability === self::SYSTEM_HEALTH_READ) {
+      return app(SystemHealthPolicy::class)->readApi($token);
+    }
+
     if (in_array($capability, [self::SYSTEM_UPDATES_READ, self::SYSTEM_UPDATES_RUN], true)) {
       return app(SystemUpdateApiPolicy::class)->allows($token);
     }
@@ -349,6 +359,7 @@ class CmsApiTokenCapabilities
       'destructive_capabilities' => array_values(array_intersect($capabilities, self::DESTRUCTIVE)),
       'destructive_requires_explicit_capability' => true,
       'can' => [
+        'read_system_health' => $this->has($token, self::SYSTEM_HEALTH_READ),
         'read_system_updates' => $this->has($token, self::SYSTEM_UPDATES_READ),
         'run_system_updates' => $this->has($token, self::SYSTEM_UPDATES_RUN),
         'read_content' => $this->has($token, self::CONTENT_READ),

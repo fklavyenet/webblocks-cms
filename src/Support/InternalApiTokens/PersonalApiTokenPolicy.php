@@ -14,6 +14,7 @@ class PersonalApiTokenPolicy
     CmsApiTokenCapabilities::BACKUPS_READ,
     CmsApiTokenCapabilities::BACKUPS_SETTINGS_WRITE,
     CmsApiTokenCapabilities::BACKUPS_DELETE,
+    CmsApiTokenCapabilities::SYSTEM_HEALTH_READ,
     CmsApiTokenCapabilities::MAINTENANCE_READ,
     CmsApiTokenCapabilities::MAINTENANCE_SETTINGS_WRITE,
     CmsApiTokenCapabilities::MAINTENANCE_DELETE,

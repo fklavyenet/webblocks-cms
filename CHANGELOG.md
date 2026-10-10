@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.98.0
+
+- Add a Super admin System Health overview with prioritized issues, site filtering, backup freshness and archive availability, live scheduled notification evidence, cached storage/cleanup previews, search coverage, plugin health and recovery, and separate update readiness.
+- Keep health reads free of maintenance execution, release-server requests, write probes, backup reconciliation, and mail delivery. Isolate unavailable checks, use controlled messages without private exception text, and distinguish unverified or optional checks from successful checks.
+- Preserve existing operational screens and links, move System Information into System, and expose its values in a folded System Health section. Replace the Help submenu with a direct documentation link and add a Dashboard shortcut.
+- Add the read-only system-health.read API capability for installation-wide system tokens owned by active system administrators, with site-filter validation and discovery documentation. Localize the new interface in all six admin languages.
+
 ## 1.97.1
 
 - Separate public Comments into clearly named reading and writing regions, with an approved-count badge and a theme-aware form surface.

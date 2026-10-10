@@ -9,18 +9,18 @@ use WebBlocks\Cms\Tests\TestCase;
 class DocumentationUrlResolverTest extends TestCase
 {
   #[Test]
-  public function it_resolves_every_supported_admin_locale_to_the_documentation_site(): void
+  public function help_links_to_documentation_without_appending_the_admin_locale(): void
   {
     config()->set('webblocks-cms.admin.documentation_url', 'https://cms.webblocksui.com/');
 
     $resolver = app(DocumentationUrlResolver::class);
 
-    $this->assertSame('https://cms.webblocksui.com', $resolver->url('en'));
-    $this->assertSame('https://cms.webblocksui.com/de', $resolver->url('de'));
-    $this->assertSame('https://cms.webblocksui.com/tr', $resolver->url('tr'));
-    $this->assertSame('https://cms.webblocksui.com/es', $resolver->url('es'));
-    $this->assertSame('https://cms.webblocksui.com/it', $resolver->url('it'));
-    $this->assertSame('https://cms.webblocksui.com/fr', $resolver->url('fr'));
+    $this->assertSame('https://cms.webblocksui.com/docs', $resolver->url('en'));
+    $this->assertSame('https://cms.webblocksui.com/docs', $resolver->url('de'));
+    $this->assertSame('https://cms.webblocksui.com/docs', $resolver->url('tr'));
+    $this->assertSame('https://cms.webblocksui.com/docs', $resolver->url('es'));
+    $this->assertSame('https://cms.webblocksui.com/docs', $resolver->url('it'));
+    $this->assertSame('https://cms.webblocksui.com/docs', $resolver->url('fr'));
   }
 
   #[Test]
@@ -40,7 +40,7 @@ class DocumentationUrlResolverTest extends TestCase
     config()->set('webblocks-cms.admin.documentation_url', 'javascript:alert(1)');
 
     $this->assertSame(
-      'https://cms.webblocksui.com/fr',
+      'https://cms.webblocksui.com/docs',
       app(DocumentationUrlResolver::class)->url('fr'),
     );
   }
