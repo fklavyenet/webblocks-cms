@@ -3,9 +3,9 @@
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use WebBlocks\Cms\Http\Requests\PublicSearchRequest;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Search\PublicSearchQuery;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
@@ -19,7 +19,7 @@ class PublicSearchController extends Controller
     private readonly CmsTranslator $translator,
   ) {}
 
-  public function __invoke(Request $request): View
+  public function __invoke(PublicSearchRequest $request): View
   {
     $search = $this->resolveSearch($request);
 
@@ -34,7 +34,7 @@ class PublicSearchController extends Controller
     ]);
   }
 
-  public function json(Request $request): JsonResponse
+  public function json(PublicSearchRequest $request): JsonResponse
   {
     $search = $this->resolveSearch($request);
     $query = $search['query'];
@@ -60,11 +60,11 @@ class PublicSearchController extends Controller
     ]);
   }
 
-  private function resolveSearch(Request $request): array
+  private function resolveSearch(PublicSearchRequest $request): array
   {
     $site = $this->pageRouteResolver->currentSite($request);
     $locale = $this->pageRouteResolver->currentLocale($request);
-    $query = $this->search->normalize($request->query('q'));
+    $query = $this->search->normalize($request->validated('q'));
     $results = null;
     $minimumLength = 2;
     $state = $query === '' ? 'empty' : 'short';

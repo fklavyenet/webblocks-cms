@@ -257,7 +257,11 @@ class VisitorEventLogger
 
   private function truncate(mixed $value, int $limit = 255): ?string
   {
-    $normalized = trim((string) $value);
+    if (! is_string($value)) {
+      return null;
+    }
+
+    $normalized = trim($value);
 
     if ($normalized === '') {
       return null;

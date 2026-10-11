@@ -90,6 +90,8 @@ Source families inspected:
 12. Before choosing blocks, state one site-level design direction covering character, density, typography, geometry, imagery, corners, and contrast. Make the block tree and site CSS implement that direction instead of choosing each section in isolation.
 13. Vary page rhythm deliberately. Combine narrow, regular, wide, and full-width regions; alternate quiet copy, dominant imagery, and structured collections rather than repeating equally weighted sections.
 
+Internal Content API clients must honour both budgets advertised by `openapi.json` under `x-rate-limit`: `requests_per_minute` applies per client IP and normalized bearer token (default 120), while `ip_requests_per_minute` is an independent IP backstop across tokens and API paths (default 300). Canonical and legacy API routes share these budgets. Exceeding either returns `429` with `Retry-After`; rotating a supplied token does not reset the IP budget.
+
 ## HTML Block API Policy
 
 The target product contract is:
@@ -783,6 +785,8 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Settings and variants | `settings.variant`: primary or secondary; `show_button`: boolean. |
 | Children/media | None; requires a resolvable site search route. |
 | HTML | Generic wrapper plus `<form role="search" class="wb-cluster …">`, native input, and optional WebBlocks button. |
+| Query contract | HTML and JSON search accept an optional text `q` of at most 200 characters and 20 normalized words. Invalid type, length or word count returns localized validation JSON with `422`, including for HTML requests, without redirecting to the invalid GET URL. Missing or empty queries retain the empty-search state. |
+| Request budgets | Search endpoints share IP-based minute/hour limits across HTML, JSON and locales (defaults 30/minute and 300/hour). Public CMS pages and legacy page redirects share separate defaults of 120/minute and 1800/hour, including CMS pages served before a redirect plugin catch-all. Host-owned routes, static/plugin assets, robots and sitemaps do not consume these budgets. Limits are configured under `cms.public_rate_limits`; nonpositive values fall back to defaults. Exceeding a budget returns `429` with `Retry-After`. |
 | Example appearance | Site search field in a header or page. |
 
 ### `sidebar-footer` — Sidebar Footer

@@ -1,6 +1,11 @@
 <?php
 
 return [
+  'search' => [
+    'string' => 'Saisissez une recherche textuelle valide.',
+    'max' => 'La recherche peut contenir au maximum :count caractères.',
+    'terms' => 'La recherche peut contenir au maximum :count mots.',
+  ],
   'ip_or_cidr' => 'Saisissez une adresse IP ou un réseau CIDR valide.',
   'contact_form' => [
     'name_required' => 'Saisissez votre nom.',

@@ -1,6 +1,11 @@
 <?php
 
 return [
+  'search' => [
+    'string' => 'Enter a valid text search query.',
+    'max' => 'The search query may contain at most :count characters.',
+    'terms' => 'The search query may contain at most :count words.',
+  ],
   'ip_or_cidr' => 'Enter a valid IP address or CIDR network.',
   'contact_form' => [
     'name_required' => 'Enter your name.',

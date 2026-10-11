@@ -948,8 +948,24 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     });
 
     RateLimiter::for('internal-content-api', function (Request $request) {
-      return Limit::perMinute(InternalApiRateLimit::perMinute())->by($request->ip().'|'.((string) $request->bearerToken()));
+      return [
+        Limit::perMinute(InternalApiRateLimit::perIpPerMinute())->by('ip:'.$request->ip()),
+        Limit::perMinute(InternalApiRateLimit::perMinute())
+          ->by('token:'.$request->ip().'|'.hash('sha256', trim((string) $request->bearerToken()))),
+      ];
     });
+
+    foreach (['pages' => [120, 1800], 'search' => [30, 300]] as $surface => [$minuteDefault, $hourDefault]) {
+      RateLimiter::for('cms-public-'.$surface, function (Request $request) use ($surface, $minuteDefault, $hourDefault) {
+        $minute = (int) config('cms.public_rate_limits.'.$surface.'_per_minute', $minuteDefault);
+        $hour = (int) config('cms.public_rate_limits.'.$surface.'_per_hour', $hourDefault);
+
+        return [
+          Limit::perMinute($minute > 0 ? $minute : $minuteDefault)->by('minute:'.$request->ip()),
+          Limit::perHour($hour > 0 ? $hour : $hourDefault)->by('hour:'.$request->ip()),
+        ];
+      });
+    }
 
     // Group backstop for every plugin-owned public route. It is deliberately
     // loose enough not to break a read endpoint a block polls, and a plugin

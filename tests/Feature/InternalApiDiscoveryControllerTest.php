@@ -179,6 +179,7 @@ class InternalApiDiscoveryControllerTest extends TestCase
     $documented = $this->app->make(InternalApiDiscoveryController::class)->openapi()->getData(true)['x-rate-limit'];
 
     $this->assertSame(InternalApiRateLimit::perMinute(), $documented['requests_per_minute']);
+    $this->assertSame(InternalApiRateLimit::perIpPerMinute(), $documented['ip_requests_per_minute']);
     $this->assertSame(429, $documented['exceeded_status']);
     $this->assertStringContainsString(
       (string) InternalApiRateLimit::perMinute(),

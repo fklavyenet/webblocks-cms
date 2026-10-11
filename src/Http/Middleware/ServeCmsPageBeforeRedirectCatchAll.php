@@ -4,6 +4,8 @@ namespace WebBlocks\Cms\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Pipeline\Pipeline;
+use Illuminate\Routing\Router;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
@@ -20,7 +22,9 @@ class ServeCmsPageBeforeRedirectCatchAll
     $path = (string) $request->route('webblocksRedirectManagerPath', '');
 
     if ($path !== '' && $this->routeResolver->findPublishedPageByPath($request, $path)) {
-      return response($this->pageController->show($request, $path));
+      return app(Pipeline::class)->send($request)
+        ->through(app(Router::class)->resolveMiddleware(['throttle:cms-public-pages']))
+        ->then(fn (Request $request) => response($this->pageController->show($request, $path)));
     }
 
     return $next($request);

@@ -1,6 +1,11 @@
 <?php
 
 return [
+  'search' => [
+    'string' => 'Geçerli bir metin arama sorgusu girin.',
+    'max' => 'Arama sorgusu en fazla :count karakter içerebilir.',
+    'terms' => 'Arama sorgusu en fazla :count kelime içerebilir.',
+  ],
   'ip_or_cidr' => 'Geçerli bir IP adresi veya CIDR ağı girin.',
   'contact_form' => [
     'name_required' => 'Adinizi girin.',

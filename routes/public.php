@@ -23,6 +23,8 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 $publicMount = app(PublicMount::class);
 
 $publicPageMiddleware = ['web', 'install.required', AddCmsIdentificationHeader::class];
+$publicContentMiddleware = [...$publicPageMiddleware, 'throttle:cms-public-pages'];
+$publicSearchMiddleware = [...$publicPageMiddleware, 'throttle:cms-public-search'];
 
 Route::middleware($publicPageMiddleware)
   ->get('/cms/plugins/{plugin}/{path}', PluginAssetController::class)
@@ -58,18 +60,18 @@ if ($publicMount->prefix() === '') {
 }
 
 // Real fallback routes: ordinary host routes win regardless of registration order.
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/'), [PageController::class, 'home'])->name('home')->fallback();
+Route::middleware($publicContentMiddleware)->get($publicMount->path('/'), [PageController::class, 'home'])->name('home')->fallback();
 
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}'), [PageController::class, 'home'])
+Route::middleware($publicContentMiddleware)->get($publicMount->path('/{locale}'), [PageController::class, 'home'])
   ->where('locale', Locale::routePattern())
   ->name('localized.home')->fallback();
 
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/search'), PublicSearchController::class)->name('search');
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/search.json'), [PublicSearchController::class, 'json'])->name('search.json');
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/search'), PublicSearchController::class)
+Route::middleware($publicSearchMiddleware)->get($publicMount->path('/search'), PublicSearchController::class)->name('search');
+Route::middleware($publicSearchMiddleware)->get($publicMount->path('/search.json'), [PublicSearchController::class, 'json'])->name('search.json');
+Route::middleware($publicSearchMiddleware)->get($publicMount->path('/{locale}/search'), PublicSearchController::class)
   ->where('locale', Locale::routePattern())
   ->name('localized.search');
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/search.json'), [PublicSearchController::class, 'json'])
+Route::middleware($publicSearchMiddleware)->get($publicMount->path('/{locale}/search.json'), [PublicSearchController::class, 'json'])
   ->where('locale', Locale::routePattern())
   ->name('localized.search.json');
 
@@ -119,18 +121,18 @@ Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name(
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
 });
 
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/p/{path}'), [PageController::class, 'legacy'])
+Route::middleware($publicContentMiddleware)->get($publicMount->path('/p/{path}'), [PageController::class, 'legacy'])
   ->where('path', '.*')
   ->name('pages.legacy')->fallback();
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/p/{path}'), [PageController::class, 'legacy'])
+Route::middleware($publicContentMiddleware)->get($publicMount->path('/{locale}/p/{path}'), [PageController::class, 'legacy'])
   ->where('locale', Locale::routePattern())
   ->where('path', '.*')
   ->name('localized.pages.legacy')->fallback();
 
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/{locale}/{slug}'), [PageController::class, 'show'])
+Route::middleware($publicContentMiddleware)->get($publicMount->path('/{locale}/{slug}'), [PageController::class, 'show'])
   ->where('locale', Locale::routePattern())
   ->where('slug', PagePath::routePattern())
   ->name('localized.pages.show')->fallback();
-Route::middleware($publicPageMiddleware)->get($publicMount->path('/{slug}'), [PageController::class, 'show'])
+Route::middleware($publicContentMiddleware)->get($publicMount->path('/{slug}'), [PageController::class, 'show'])
   ->where('slug', PagePath::routePattern())
   ->name('pages.show')->fallback();

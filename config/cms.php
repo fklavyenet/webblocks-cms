@@ -18,6 +18,13 @@ return [
     ],
     'internal_api' => [
         'rate_limit_per_minute' => (int) env('CMS_INTERNAL_API_RATE_LIMIT_PER_MINUTE', 120),
+        'ip_rate_limit_per_minute' => (int) env('CMS_INTERNAL_API_IP_RATE_LIMIT_PER_MINUTE', 300),
+    ],
+    'public_rate_limits' => [
+        'pages_per_minute' => (int) env('CMS_PUBLIC_PAGES_PER_MINUTE', 120),
+        'pages_per_hour' => (int) env('CMS_PUBLIC_PAGES_PER_HOUR', 1800),
+        'search_per_minute' => (int) env('CMS_PUBLIC_SEARCH_PER_MINUTE', 30),
+        'search_per_hour' => (int) env('CMS_PUBLIC_SEARCH_PER_HOUR', 300),
     ],
     'multisite' => [
         'unknown_host_fallback' => env('CMS_MULTISITE_UNKNOWN_HOST_FALLBACK', env('APP_ENV', 'production') !== 'production'),

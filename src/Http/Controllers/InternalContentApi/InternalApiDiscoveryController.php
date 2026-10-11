@@ -98,7 +98,8 @@ class InternalApiDiscoveryController extends Controller
       ],
       'x-rate-limit' => [
         'requests_per_minute' => InternalApiRateLimit::perMinute(),
-        'scope' => 'client IP and bearer token',
+        'ip_requests_per_minute' => InternalApiRateLimit::perIpPerMinute(),
+        'scope' => 'client IP and bearer token, plus an independent client IP backstop',
         'exceeded_status' => 429,
         'note' => 'Hosting or CDN layers in front of the site may enforce a lower limit than this one. Back off on 429 and honour Retry-After.',
       ],
@@ -143,8 +144,9 @@ class InternalApiDiscoveryController extends Controller
         'For existing structured blocks, do not use HTML fallbacks or invented URL settings to set native fields. Use slider -> slide for composable carousel sections; slide supports Media Library background media and nested content blocks. Discover or upload media, then use `PATCH /webadmin/api/blocks/{block}` for supported fields such as `media_id`, `mobile_media_id` (optional image for screens up to 768px on slide/image/hero/section/card/cta/content_header/link-list-item; null clears), `settings.url`, `settings.target`, `settings.aria_label`, `settings.background_position`, `settings.background_overlay`, and text translations.',
         "Translated block text is written per translation family, and `PATCH /webadmin/api/blocks/{block}` accepts only the fields its family owns. Send `locale` with the request; without it the write lands on the site default locale. The families are:\n\n- text (header, hero, rich-text, columns, cta, and most content blocks): `title`, `eyebrow`, `subtitle`, `content`, `meta`.\n- button: `title`.\n- image: `caption` and `alt_text` (the `title`/`subtitle` spellings are accepted as aliases).\n- contact_form: `title`, `content`, `submit_label`, `success_message`. This is the only way to translate a contact form's button and confirmation text; they are not settings.\n\nA field the family does not own is refused with `422` and code `unsupported_block_translation_fields` rather than stored where nothing reads it. Stored rows come back under `block.translations` keyed by family, so read the block first to see which locales already exist.",
         sprintf(
-          'The API is rate limited to %d requests per minute per token and IP, and a burst over it returns `429` with a `Retry-After` header. Hosting or CDN layers in front of the site may enforce a lower limit than this one. Pace bulk work such as a full-site translation pass, and back off on `429` instead of retrying immediately.',
+          'The API is rate limited to %d requests per minute per token and IP, with an independent backstop of %d requests per minute per IP across all tokens. Exceeding either budget returns `429` with a `Retry-After` header. Hosting or CDN layers in front of the site may enforce a lower limit than these budgets. Pace bulk work such as a full-site translation pass, and back off on `429` instead of retrying immediately.',
           InternalApiRateLimit::perMinute(),
+          InternalApiRateLimit::perIpPerMinute(),
         ),
         'For Media Library cleanup, use dedicated media endpoints and capabilities: metadata PATCH, replace, move, and delete are separate. Delete keeps the admin usage guard and returns a usage report instead of deleting media referenced by blocks, site branding, or page SEO. For approved public remote files, use only the discovered `POST /webadmin/api/media/fetch` endpoint; do not put remote URLs directly in content plans.',
         'For admin UI visual QA, use only allowlisted render snapshots. `GET /webadmin/api/admin-render/system-updates` requires `admin.render` and returns JSON with the rendered HTML. `GET /webadmin/api/admin-render/system-updates?format=html` returns direct `text/html` for local browser screenshot capture. This endpoint is read-only and does not click, install, publish, or mutate admin state.',

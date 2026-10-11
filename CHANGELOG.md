@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.98.2
+
+- Add an independent IP request limit to the Internal Content API so rotating invalid tokens cannot bypass throttling. Normalize token whitespace consistently with authentication and advertise both live budgets in API discovery.
+- Ignore malformed UTM query values without failing public page rendering. Validate public HTML and JSON search queries with localized errors and limits of 200 characters and 20 normalized words; invalid queries return 422 instead of a server error or redirect loop.
+- Limit public CMS pages and search with separate configurable IP budgets per minute and hour. Cover localized routes, legacy page redirects and CMS pages served before a redirect plugin catch-all; return 429 with Retry-After when a budget is exceeded.
+
 ## 1.98.1
 
 - Hide the admin notification bell when there are no unread contact messages; awaiting replies remain visible on the Dashboard.
