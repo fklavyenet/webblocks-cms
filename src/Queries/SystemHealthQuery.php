@@ -51,6 +51,13 @@ class SystemHealthQuery
     Cache::forget($this->cacheKey());
   }
 
+  public function dashboardSummary(): array
+  {
+    $report = $this->report();
+
+    return ['counts' => array_intersect_key($report['counts'], array_flip(['critical', 'warning', 'unknown']))];
+  }
+
   public function report(?int $siteId = null): array
   {
     try {
@@ -83,7 +90,9 @@ class SystemHealthQuery
     $fallbackMessage = $snapshot['sites_available'] ? 'no_sites' : 'check_unavailable';
     $categories['sites'] = $siteChecks ?: [Health::check('sites', $fallback, $fallbackMessage, 'admin.sites.index')];
     $categories['search'] = $searchChecks ?: [Health::check('search', $fallback, $fallbackMessage, 'admin.system.search.index')];
-    $categories['scheduling'] = [$this->schedulingCheck($scheduler, collect($sites)->contains('scheduler_required', true))];
+    $scheduler['required'] = collect($sites)->contains('scheduler_required', true);
+    $categories['scheduling'] = [$this->schedulingCheck($scheduler, $scheduler['required'])];
+    $categories['scheduling'][0]['route_parameters'] = $siteId === null ? [] : ['site_id' => $siteId];
 
     $categories = array_replace(array_fill_keys(['system', 'sites', 'backups', 'scheduling', 'storage', 'search', 'plugins', 'updates'], []), $categories);
     $issues = [];
@@ -100,7 +109,7 @@ class SystemHealthQuery
     unset($checks);
     usort($issues, fn (array $a, array $b) => Health::ORDER[$a['status']] <=> Health::ORDER[$b['status']]);
 
-    return ['checked_at' => $snapshot['checked_at'], 'scheduler_checked_at' => now()->toIso8601String(), 'cache_seconds' => self::TTL_SECONDS, 'selected_site_id' => $siteId, 'site_options' => $siteOptions, 'sites' => $sites, 'categories' => $categories, 'counts' => $counts, 'issues' => $issues, 'information' => $this->information->rows(), 'operations' => $snapshot['operations']];
+    return ['checked_at' => $snapshot['checked_at'], 'scheduler_checked_at' => now()->toIso8601String(), 'scheduler' => $scheduler, 'cache_seconds' => self::TTL_SECONDS, 'selected_site_id' => $siteId, 'site_options' => $siteOptions, 'sites' => $sites, 'categories' => $categories, 'counts' => $counts, 'issues' => $issues, 'information' => $this->information->rows(), 'operations' => $snapshot['operations']];
   }
 
   private function snapshot(): array
@@ -137,7 +146,7 @@ class SystemHealthQuery
     $debug = app()->environment('production') && config('app.debug');
 
     return [
-      Health::check('database', 'healthy', 'database_ready', 'admin.system.information'),
+      Health::check('database', 'healthy', 'database_ready', 'admin.system.health.index'),
       Health::check('debug', $debug ? 'warning' : 'healthy', $debug ? 'debug_review' : 'debug_ready', 'admin.system.settings.edit'),
       Health::check('primary_site', $primary === 1 ? 'healthy' : 'warning', $primary === 1 ? 'primary_ready' : 'primary_review', 'admin.sites.index'),
     ];
@@ -243,7 +252,7 @@ class SystemHealthQuery
     try {
       return $this->scheduler->snapshot();
     } catch (Throwable) {
-      return ['status' => 'unavailable'];
+      return ['status' => 'unavailable', 'scheduler_status' => 'unavailable', 'notification_status' => 'unavailable', 'last_seen_at' => null, 'last_completed_at' => null, 'last_failed_at' => null, 'stale_after_seconds' => SchedulerHealth::STALE_AFTER_SECONDS];
     }
   }
 
@@ -254,7 +263,7 @@ class SystemHealthQuery
     'healthy' => 'healthy', 'failed' => $required ? 'critical' : 'warning', 'delayed' => $required ? 'warning' : 'not_applicable', default => $required ? 'unknown' : 'not_applicable'
     };
 
-    return Health::check('scheduling', $status, $status === 'not_applicable' ? 'scheduler_optional' : 'scheduler_'.$status, 'admin.dashboard');
+    return Health::check('scheduling', $status, $status === 'not_applicable' ? 'scheduler_optional' : 'scheduler_'.$status, 'admin.system.health.index');
   }
 
   private function operations(): array
@@ -279,7 +288,7 @@ class SystemHealthQuery
   private function categoryRoute(string $category): string
   {
     return match ($category) {
-    'system' => 'admin.system.information', 'storage' => 'admin.system.cleanup.index', default => 'admin.system.'.$category.'.index'
+    'system' => 'admin.system.health.index', 'storage' => 'admin.system.cleanup.index', default => 'admin.system.'.$category.'.index'
     };
   }
 

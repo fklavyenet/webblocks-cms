@@ -10,7 +10,9 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Policies\SystemHealthPolicy;
 use WebBlocks\Cms\Queries\PanelNotificationQuery;
+use WebBlocks\Cms\Queries\SystemHealthQuery;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -24,6 +26,8 @@ class DashboardController extends Controller
     private readonly SystemSettings $systemSettings,
     private readonly PluginAdminExtensionRegistry $pluginAdminExtensions,
     private readonly PanelNotificationQuery $notifications,
+    private readonly SystemHealthPolicy $healthPolicy,
+    private readonly SystemHealthQuery $health,
   ) {}
 
   public function __invoke(Request $request): View
@@ -33,7 +37,7 @@ class DashboardController extends Controller
     $schedulerDashboard = $panelNotifications['scheduler'] ?? ['sites' => collect(), 'health' => null];
 
     return view('webblocks-cms::admin.dashboard', [
-      'canViewSystemHealth' => (bool) $request->user()?->can('access-system'),
+      'dashboardSystemHealth' => $this->healthPolicy->view($request->user()) ? $this->health->dashboardSummary() : null,
       'panelNotifications' => $panelNotifications,
       'notificationHealthSites' => $schedulerDashboard['sites'],
       'dashboardSchedulerHealth' => $schedulerDashboard['health'],

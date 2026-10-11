@@ -2,7 +2,7 @@
 
 return [
   'title' => 'Systemzustand',
-  'navigation' => 'Wartung und Zustand',
+  'navigation' => 'Wartung',
   'description' => 'Sehen Sie, was bei Ihren Websites Aufmerksamkeit braucht, und finden Sie den nächsten Schritt.',
   'checked_at' => 'Zuletzt geprüft: :time',
   'snapshot_help' => 'Website- und Speicherprüfungen werden fünf Minuten gespeichert. Geplante Aufgaben werden bei jedem Besuch geprüft.',

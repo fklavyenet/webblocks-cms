@@ -2,7 +2,7 @@
 
 return [
   'title' => 'État du système',
-  'navigation' => 'Maintenance et état',
+  'navigation' => 'Maintenance',
   'description' => 'Repérez les points à vérifier sur vos sites et trouvez la prochaine étape.',
   'checked_at' => 'Dernière vérification : :time',
   'snapshot_help' => 'Les vérifications des sites et du stockage sont conservées cinq minutes. Les tâches planifiées sont vérifiées à chaque visite.',

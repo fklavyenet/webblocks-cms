@@ -2,7 +2,7 @@
 
 return [
   'title' => 'Sistem Sağlığı',
-  'navigation' => 'Bakım ve Sağlık',
+  'navigation' => 'Bakım',
   'description' => 'Sitelerinizde dikkat gerektiren konuları görün ve ilgili işlemlere ulaşın.',
   'checked_at' => 'Son kontrol: :time',
   'snapshot_help' => 'Site ve depolama kontrolleri beş dakika saklanır. Zamanlanmış işler her ziyarette kontrol edilir.',

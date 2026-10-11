@@ -32,12 +32,28 @@
 
     <div class="wb-stack wb-stack-4" id="panel-notifications">
         @include('webblocks-cms::admin.partials.dashboard-panel-notifications')
-        @include('webblocks-cms::admin.partials.dashboard-scheduler-health')
-        @if ($canViewSystemHealth ?? false)
-            <div class="wb-card"><div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-4 wb-flex-wrap">
-                <div class="wb-stack wb-stack-1"><strong>{{ $adminTranslator->get('system_health.title', $adminLocaleCode) }}</strong><span class="wb-text-sm wb-text-muted">{{ $adminTranslator->get('system_health.description', $adminLocaleCode) }}</span></div>
-                <a href="{{ route('admin.system.health.index') }}" class="wb-btn wb-btn-secondary">{{ $adminTranslator->get('system_health.review', $adminLocaleCode) }}</a>
-            </div></div>
+        @if ($dashboardSystemHealth !== null)
+            <section class="wb-card" data-wb-system-health-summary aria-labelledby="dashboard-health-title">
+                <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-4 wb-flex-wrap">
+                    <div class="wb-stack wb-stack-2">
+                        <strong id="dashboard-health-title">{{ $adminTranslator->get('system_health.title', $adminLocaleCode) }}</strong>
+                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                            @if (array_sum($dashboardSystemHealth['counts']) === 0)
+                                <span class="wb-status-pill wb-status-active">{{ $adminTranslator->get('system_health.no_attention', $adminLocaleCode) }}</span>
+                            @else
+                                @foreach (['critical' => 'wb-status-error', 'warning' => 'wb-status-pending', 'unknown' => 'wb-status-inactive'] as $status => $class)
+                                    @if ($dashboardSystemHealth['counts'][$status] > 0)
+                                        <span class="wb-status-pill {{ $class }}">{{ number_format($dashboardSystemHealth['counts'][$status]) }} {{ $adminTranslator->get('system_health.summary.'.$status, $adminLocaleCode) }}</span>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                    <a href="{{ route('admin.system.health.index') }}" class="wb-btn wb-btn-secondary">{{ $adminTranslator->get('system_health.details', $adminLocaleCode) }}</a>
+                </div>
+            </section>
+        @else
+            @include('webblocks-cms::admin.partials.dashboard-scheduler-health')
         @endif
         @if ($canViewVisitorReports)
             <div class="wb-card">

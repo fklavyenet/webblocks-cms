@@ -2,7 +2,7 @@
 
 return [
   'title' => 'Estado del sistema',
-  'navigation' => 'Mantenimiento y estado',
+  'navigation' => 'Mantenimiento',
   'description' => 'Consulte qué necesita atención en sus sitios y encuentre el siguiente paso.',
   'checked_at' => 'Última comprobación: :time',
   'snapshot_help' => 'Las comprobaciones de sitios y almacenamiento se guardan cinco minutos. Las tareas programadas se comprueban en cada visita.',

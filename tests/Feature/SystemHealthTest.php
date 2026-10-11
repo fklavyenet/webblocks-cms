@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
+use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemHealthController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Models\CmsApiToken;
@@ -49,6 +50,7 @@ class SystemHealthTest extends TestCase
   protected function defineRoutes($router): void
   {
     Route::get('/test-health', [SystemHealthController::class, 'index']);
+    Route::get('/test-dashboard', DashboardController::class);
   }
 
   protected function setUp(): void
@@ -61,10 +63,12 @@ class SystemHealthTest extends TestCase
 
   private function user(bool $system = true): AuthenticatableUser
   {
-    $user = Mockery::mock(AuthenticatableUser::class)->makePartial();
+    $user = Mockery::mock('App\\Models\\User')->makePartial();
     $user->forceFill(['id' => 99, 'name' => 'Synthetic Operator', 'is_active' => true]);
     $user->shouldReceive('can')->andReturn(false)->byDefault();
     $user->shouldReceive('can')->with('access-system')->andReturn($system);
+    $user->shouldReceive('isSuperAdmin')->andReturn($system);
+    $user->shouldReceive('accessibleSiteIds')->andReturn(collect());
 
     return $user;
   }
@@ -106,7 +110,47 @@ class SystemHealthTest extends TestCase
   {
     $this->site();
     $this->actingAs($this->user());
-    $this->get('/test-health')->assertOk()->assertSee('System Health')->assertSee('What needs attention')->assertSee('System details')->assertSee('https://cms.webblocksui.com/docs')->assertSee(route('admin.system.information'))->assertSee(route('admin.system.backups.index'))->assertDontSee('data-wb-nav-group-open="help"');
+    $this->get('/test-health')->assertOk()->assertSee('System Health')->assertSee('Maintenance')->assertDontSee('Maintenance & Health')->assertSee('What needs attention')->assertSee('System details')->assertSee('https://cms.webblocksui.com/docs')->assertDontSee(route('admin.system.information'))->assertSee(route('admin.system.backups.index'))->assertDontSee('data-wb-nav-group-open="help"');
+  }
+
+  #[Test]
+  public function the_health_screen_preserves_scheduler_warning_details_and_links_to_its_own_section(): void
+  {
+    $this->site();
+    $this->actingAs($this->user());
+    $this->get('/test-health')->assertOk()
+      ->assertSee('Scheduler and notification worker: Not yet verified')
+      ->assertSee('Scheduled message batches and daily summaries may remain pending.')
+      ->assertSee('Last scheduled heartbeat (UTC): No recorded run')
+      ->assertSee('Last completed notification run (UTC): No recorded run')
+      ->assertSee('must configure Laravel schedule:run every minute')
+      ->assertSee('href="https://cms.webblocksui.com/docs/installation#scheduled-notifications-and-scheduler-health"', false)
+      ->assertSee('href="'.route('admin.system.health.index').'#health-scheduling"', false)
+      ->assertSee('id="health-scheduling"', false);
+    $this->assertSame('admin.system.health.index', $this->report()['categories']['scheduling']['lead']['route']);
+  }
+
+  #[Test]
+  public function system_operators_get_a_compact_dashboard_summary_instead_of_the_scheduler_card(): void
+  {
+    $this->site();
+    $this->actingAs($this->user());
+    $counts = $this->report()['counts'];
+    $summary = app(SystemHealthQuery::class)->dashboardSummary();
+    $this->assertSame(['critical' => $counts['critical'], 'warning' => $counts['warning'], 'unknown' => $counts['unknown']], $summary['counts']);
+    $this->get('/test-dashboard')->assertOk()->assertSee('data-wb-system-health-summary', false)
+      ->assertSee('View checks')->assertSee('Not yet verified')
+      ->assertDontSee('Scheduler and notification worker')
+      ->assertDontSee('See what needs attention across your sites and find the next step.');
+  }
+
+  #[Test]
+  public function a_clear_dashboard_summary_only_claims_no_issues_in_available_checks(): void
+  {
+    $this->actingAs($this->user());
+    $this->mock(SystemHealthQuery::class, fn ($mock) => $mock->shouldReceive('dashboardSummary')->once()->andReturn(['counts' => ['critical' => 0, 'warning' => 0, 'unknown' => 0]]));
+    $this->get('/test-dashboard')->assertOk()->assertSee('No issues were found in the available checks.')
+      ->assertDontSee('Scheduler and notification worker');
   }
 
   #[Test]
@@ -145,11 +189,16 @@ class SystemHealthTest extends TestCase
     $this->assertSame([$allowed->id], array_column($report['sites'], 'id'));
     $this->assertCount(2, $report['site_options']);
     $this->assertSame('not_applicable', $report['categories']['scheduling']['status']);
+    $this->assertFalse($report['scheduler']['required']);
     $this->assertArrayHasKey('backups', $report['categories']);
     foreach ($report['issues'] as $issue) {
       $this->assertNotSame($other->id, $issue['site_id'] ?? null);
     }
     $this->assertSame('unknown', $this->report()['categories']['scheduling']['status']);
+    $this->assertTrue($this->report()['scheduler']['required']);
+    $this->actingAs($this->user())->get('/test-health?site_id='.$allowed->id)->assertOk()
+      ->assertSee('do not require scheduled delivery')->assertDontSee('may remain pending')
+      ->assertSee('href="'.route('admin.system.health.index', ['site_id' => $allowed->id]).'#health-scheduling"', false);
   }
 
   #[Test]
@@ -163,6 +212,8 @@ class SystemHealthTest extends TestCase
     $second = $this->report();
     $this->assertSame($first['checked_at'], $second['checked_at']);
     $this->assertSame('healthy', $second['categories']['scheduling']['status']);
+    $this->assertSame($health->snapshot()['last_seen_at'], $second['scheduler']['last_seen_at']);
+    $this->assertSame($health->snapshot()['last_completed_at'], $second['scheduler']['last_completed_at']);
     $this->travel(6)->minutes();
     $this->assertSame('warning', $this->report()['categories']['scheduling']['status']);
   }

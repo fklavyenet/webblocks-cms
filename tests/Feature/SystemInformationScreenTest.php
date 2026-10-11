@@ -49,9 +49,16 @@ class SystemInformationScreenTest extends TestCase
   }
 
   #[Test]
-  public function the_screen_uses_a_semantically_scoped_table(): void
+  public function the_old_screen_redirects_to_system_health(): void
   {
-    $view = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/system/information.blade.php');
+    $this->withoutMiddleware()->get('/webadmin/system/information')
+      ->assertRedirect(route('admin.system.health.index'));
+  }
+
+  #[Test]
+  public function system_health_preserves_the_semantically_scoped_information_table(): void
+  {
+    $view = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/system/health.blade.php');
 
     $this->assertStringContainsString('<table ', $view);
     $this->assertStringContainsString('<th scope="col">', $view);

@@ -14,7 +14,7 @@ class AdminUiPrimitiveStructureTest extends TestCase
 
         foreach ([
             'resources/views/admin/embedded-applications/index.blade.php',
-            'resources/views/admin/system/information.blade.php',
+            'resources/views/admin/system/health.blade.php',
         ] as $relativePath) {
             $view = file_get_contents($root.'/'.$relativePath);
 
@@ -35,7 +35,7 @@ class AdminUiPrimitiveStructureTest extends TestCase
             'resources/views/admin/contact-messages/show.blade.php',
             'resources/views/admin/dashboard.blade.php',
             'resources/views/admin/pages/partials/details-modal.blade.php',
-            'resources/views/admin/system/information.blade.php',
+            'resources/views/admin/system/health.blade.php',
             'resources/views/admin/system/plugins/show.blade.php',
             'resources/views/admin/system/settings.blade.php',
         ] as $relativePath) {

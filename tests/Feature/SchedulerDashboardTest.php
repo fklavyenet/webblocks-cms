@@ -52,6 +52,8 @@ class SchedulerDashboardTest extends TestCase
     $this->view('webblocks-cms::admin.partials.dashboard-scheduler-health', ['notificationHealthSites' => $data['sites'], 'dashboardSchedulerHealth' => $data['health']])
       ->assertSee('Scheduler and notification worker')->assertSee('Not yet verified')
       ->assertSee('wb-alert-info', false)->assertSee('do not require scheduled delivery')
+      ->assertSee('href="https://cms.webblocksui.com/docs/installation#scheduled-notifications-and-scheduler-health"', false)
+      ->assertDontSee('/docs/docs/installation')
       ->assertDontSee('may remain pending');
   }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.98.1
+
+- Hide the admin notification bell when there are no unread contact messages; awaiting replies remain visible on the Dashboard.
+- Consolidate full scheduler warnings, UTC execution times and setup instructions in System Health. Fix the scheduler guide link and preserve the selected site in scheduling Review links.
+- Replace the Dashboard scheduler and System Health shortcut cards with a compact issue summary for operators with System Health access. Site-operation managers without that access retain their scoped scheduler details.
+- Simplify the sidebar group to Maintenance in all six admin languages. Remove the duplicate System Information screen and sidebar link; its existing URL redirects to System Health, where all information fields remain available.
+
 ## 1.98.0
 
 - Add a Super admin System Health overview with prioritized issues, site filtering, backup freshness and archive availability, live scheduled notification evidence, cached storage/cleanup previews, search coverage, plugin health and recovery, and separate update readiness.

@@ -2,7 +2,7 @@
 
 return [
   'title' => 'System Health',
-  'navigation' => 'Maintenance & Health',
+  'navigation' => 'Maintenance',
   'description' => 'See what needs attention across your sites and find the next step.',
   'checked_at' => 'Last checked: :time',
   'snapshot_help' => 'Site and storage checks are saved for five minutes. Scheduled work is checked on every visit.',

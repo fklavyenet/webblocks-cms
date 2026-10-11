@@ -11,5 +11,5 @@
 <p>{{ __('webblocks-cms::notifications.health_last_seen') }}: {{ $schedulerHealth['last_seen_at'] ?? __('webblocks-cms::notifications.health_no_record') }}</p>
 <p>{{ __('webblocks-cms::notifications.health_last_completed') }}: {{ $schedulerHealth['last_completed_at'] ?? __('webblocks-cms::notifications.health_no_record') }}</p>
 <p>{{ __('webblocks-cms::notifications.health_setup') }}</p>
-<p><a class="wb-link" href="{{ rtrim(config('webblocks-cms.admin.documentation_url', 'https://cms.webblocksui.com'), '/') }}/docs/installation#scheduled-notifications-and-scheduler-health">{{ __('webblocks-cms::notifications.health_guide') }}</a></p>
+<p><a class="wb-link" href="{{ app(\WebBlocks\Cms\Support\Admin\DocumentationUrlResolver::class)->url(app()->getLocale()) }}/installation#scheduled-notifications-and-scheduler-health">{{ __('webblocks-cms::notifications.health_guide') }}</a></p>
 </div>

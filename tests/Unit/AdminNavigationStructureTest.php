@@ -25,7 +25,7 @@ class AdminNavigationStructureTest extends TestCase
   }
 
   #[Test]
-  public function help_is_a_direct_link_after_the_groups_and_system_information_remains_available(): void
+  public function help_is_a_direct_link_after_the_groups_and_health_replaces_system_information(): void
   {
     $layout = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/admin.blade.php');
     $maintenance = strpos($layout, "'key' => 'maintenance'");
@@ -35,7 +35,7 @@ class AdminNavigationStructureTest extends TestCase
     $this->assertNotFalse($appendHelp);
     $this->assertGreaterThan($maintenance, $appendHelp);
     $this->assertStringNotContainsString("'key' => 'help'", $layout);
-    $this->assertStringContainsString("'route' => 'admin.system.information'", $layout);
+    $this->assertStringNotContainsString("'route' => 'admin.system.information'", $layout);
     $this->assertStringContainsString("'route' => 'admin.system.health.index'", $layout);
   }
 

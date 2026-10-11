@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Queries\PanelNotificationQuery;
+use WebBlocks\Cms\Queries\SystemHealthQuery;
 use WebBlocks\Cms\Services\SiteNotifications\SiteNotificationDispatcher;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
@@ -166,6 +167,8 @@ class PanelNotificationsTest extends TestCase
     $message->update(['status' => 'replied']);
     $data = $query->forUser($user);
     $this->assertSame(0, $data['awaiting']);
+    $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
+      ->assertDontSee('data-wb-panel-notifications')->assertDontSee('wb-icon-bell');
     $this->view('webblocks-cms::admin.partials.dashboard-panel-notifications', ['panelNotifications' => $data])
       ->assertSee('No contact messages await a reply.');
   }
@@ -217,10 +220,37 @@ class PanelNotificationsTest extends TestCase
     $layout = view('webblocks-cms::layouts.admin')->render();
     $this->assertStringContainsString('data-wb-panel-notifications', $layout);
     $this->assertSame('new', $message->fresh()->status);
+
+    $message->update(['status' => 'read']);
+    $dashboard = app(DashboardController::class)(request())->render();
+    $this->assertStringNotContainsString('data-wb-panel-notifications', $dashboard);
+    $this->assertStringContainsString('data-wb-panel-notification-summary', $dashboard);
+    $this->assertStringNotContainsString('data-wb-panel-notifications', view('webblocks-cms::layouts.admin')->render());
   }
 
   #[Test]
-  public function read_messages_and_scheduler_warnings_do_not_create_an_unread_badge(): void
+  public function site_managers_keep_scoped_scheduler_details_without_querying_installation_health(): void
+  {
+    $allowed = $this->site('manager-site', true);
+    $this->site('inaccessible-site', true);
+    $user = $this->user([$allowed->id]);
+    $this->actingAs($user);
+    request()->setUserResolver(fn () => $user);
+    $this->mock(SystemHealthQuery::class, function ($mock) {
+      $mock->shouldNotReceive('dashboardSummary');
+      $mock->shouldNotReceive('report');
+    });
+    $dashboard = app(DashboardController::class)(request())->render();
+    $this->assertStringContainsString('Scheduler and notification worker', $dashboard);
+    $this->assertStringContainsString('may remain pending', $dashboard);
+    $this->assertStringContainsString('manager-site', $dashboard);
+    $this->assertStringNotContainsString('inaccessible-site', $dashboard);
+    $this->assertStringNotContainsString('data-wb-system-health-summary', $dashboard);
+    $this->assertStringNotContainsString(route('admin.system.health.index'), $dashboard);
+  }
+
+  #[Test]
+  public function read_messages_and_scheduler_warnings_do_not_show_the_notification_bell(): void
   {
     $site = $this->site('reported-case', true);
     $message = $this->message($site, 'read');
@@ -229,14 +259,14 @@ class PanelNotificationsTest extends TestCase
     $this->assertSame(1, $data['awaiting']);
     $this->assertSame(1, $data['warnings']);
     $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
-      ->assertSee('0 unread message(s).')->assertDontSee('wb-btn-badge');
+      ->assertDontSee('data-wb-panel-notifications')->assertDontSee('wb-icon-bell')->assertDontSee('wb-btn-badge');
     $this->view('webblocks-cms::admin.partials.dashboard-panel-notifications', ['panelNotifications' => $data])
       ->assertSee('Review messages awaiting reply')->assertSee('reported-case');
     $this->assertSame('read', $message->fresh()->status);
   }
 
   #[Test]
-  public function opening_a_message_clears_its_unread_badge_while_pending_reply_and_health_remain(): void
+  public function opening_the_last_unread_message_hides_the_bell_while_pending_reply_and_health_remain(): void
   {
     $site = $this->site('read-message', true);
     $message = $this->message($site);
@@ -250,7 +280,7 @@ class PanelNotificationsTest extends TestCase
     $this->assertSame(1, $data['awaiting']);
     $this->assertSame(1, $data['warnings']);
     $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
-      ->assertDontSee('wb-btn-badge');
+      ->assertDontSee('data-wb-panel-notifications')->assertDontSee('wb-icon-bell')->assertDontSee('wb-btn-badge');
   }
 
   #[Test]

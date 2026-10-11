@@ -2,7 +2,7 @@
 
 return [
   'title' => 'Stato del sistema',
-  'navigation' => 'Manutenzione e stato',
+  'navigation' => 'Manutenzione',
   'description' => 'Scopri cosa richiede attenzione nei tuoi siti e trova il prossimo passo.',
   'checked_at' => 'Ultimo controllo: :time',
   'snapshot_help' => 'I controlli di siti e spazio vengono conservati per cinque minuti. Le attività pianificate vengono controllate a ogni visita.',

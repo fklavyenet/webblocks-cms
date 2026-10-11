@@ -6,7 +6,7 @@
     $badge = static fn (string $status) => match ($status) {
         'healthy' => 'wb-status-active', 'critical' => 'wb-status-error', 'warning' => 'wb-status-pending', default => 'wb-status-inactive',
     };
-    $link = static fn (array $check) => route($check['route'], $check['route_parameters']);
+    $link = static fn (array $check) => route($check['route'], $check['route_parameters']).($check['code'] === 'scheduling' && $check['route'] === 'admin.system.health.index' ? '#health-scheduling' : '');
     $date = static fn (string $value) => \Carbon\CarbonImmutable::parse($value)->setTimezone(config('app.timezone', 'UTC'))->format('Y-m-d H:i');
     $siteOptions = collect($health['site_options'])->pluck('name', 'id')->all();
     $priority = array_slice($health['issues'], 0, 6);
@@ -82,10 +82,13 @@
         <div class="wb-grid wb-grid-2 wb-gap-4">
             @foreach ($health['categories'] as $category => $result)
                 @php($lead = $result['lead'])
-                <section class="wb-card">
+                <section class="wb-card" id="health-{{ $category }}">
                     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><h2 class="wb-card-title">{{ $text('categories.'.$category) }}</h2><span class="wb-status-pill {{ $badge($result['status']) }}">{{ $text('statuses.'.$result['status']) }}</span></div>
                     <div class="wb-card-body wb-stack wb-stack-3">
                         <p>{{ $message($lead) }}</p>
+                        @if ($category === 'scheduling')
+                            @include('webblocks-cms::admin.partials.scheduler-health', ['schedulerHealth' => $health['scheduler']])
+                        @endif
                         <div class="wb-accordion" data-wb-accordion>
                             <div class="wb-accordion-item">
                                 <button type="button" class="wb-accordion-trigger" aria-expanded="false" aria-controls="health-{{ $category }}-details"><span>{{ $text('details') }}</span><i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i></button>
@@ -143,7 +146,7 @@
                     <div class="wb-accordion-content" id="health-information"><div class="wb-accordion-body">
                         <div class="wb-table-wrap"><table class="wb-table wb-table-striped"><thead><tr><th scope="col">{{ $translator->admin('system_information.property', $locale) }}</th><th scope="col">{{ $translator->admin('system_information.value', $locale) }}</th></tr></thead><tbody>
                             @foreach ($health['information'] as $key => $value)
-                                <tr><th scope="row">{{ $translator->admin('system_information.'.$key, $locale) }}</th><td>{{ $key === 'debug_mode' ? $translator->admin('system_information.'.($value ? 'enabled' : 'disabled'), $locale) : $value }}</td></tr>
+                                <tr><th scope="row" class="wb-table-key">{{ $translator->admin('system_information.'.$key, $locale) }}</th><td>{{ $key === 'debug_mode' ? $translator->admin('system_information.'.($value ? 'enabled' : 'disabled'), $locale) : $value }}</td></tr>
                             @endforeach
                         </tbody></table></div>
                     </div></div>
