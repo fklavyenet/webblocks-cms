@@ -11,15 +11,18 @@
         'project' => $systemText('project_identity'),
         'mail' => $systemText('mail'),
         'privacy' => $systemText('privacy'),
+        'security' => $systemText('security'),
         'runtime' => $systemText('runtime_information'),
     ];
     $systemTab = old('section', request()->query('tab', 'general'));
 
     if ($errors->has('recipient_email')) {
         $systemTab = 'mail';
+    } elseif ($errors->hasAny([...array_keys($securityDefinitions), 'mode'])) {
+        $systemTab = 'security';
     }
 
-    if (! array_key_exists($systemTab, $systemTabs)) {
+    if (! is_string($systemTab) || ! array_key_exists($systemTab, $systemTabs)) {
         $systemTab = 'general';
     }
 @endphp
@@ -328,6 +331,42 @@
         </div>
 
         </div>
+
+                    <div class="wb-tabs-panel {{ $systemTab === 'security' ? 'is-active' : '' }}" id="system-settings-security-panel">
+                        <form method="POST" action="{{ route('admin.system.settings.security.update') }}" class="wb-card wb-card-muted wb-stack wb-gap-0">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="section" value="security">
+                            <div class="wb-card-header"><strong>{{ $systemText('security') }}</strong></div>
+                            <div class="wb-card-body wb-stack wb-gap-4">
+                                <p class="wb-text-sm wb-text-muted">{{ $systemText('security_help') }}</p>
+                                <p class="wb-text-sm wb-text-muted">{{ $systemText($securityHasOverrides ? 'security_custom_active' : 'security_defaults_active') }}</p>
+                                @foreach ([
+                                    'pages' => ['pages_per_minute', 'pages_per_hour'],
+                                    'search' => ['search_per_minute', 'search_per_hour'],
+                                    'api' => ['api_per_minute', 'api_ip_per_minute'],
+                                    'query' => ['search_max_characters', 'search_max_words'],
+                                ] as $securityGroup => $securityFields)
+                                    <fieldset class="wb-stack wb-gap-3">
+                                        <legend class="wb-text-lg wb-font-semibold">{{ $systemText('security_group_'.$securityGroup) }}</legend>
+                                        <div class="wb-grid wb-grid-2 wb-gap-4">
+                                            @foreach ($securityFields as $securityField)
+                                                <div class="wb-field wb-stack wb-gap-2">
+                                                    <label class="wb-label" for="settings_security_{{ $securityField }}">{{ $systemText('security_'.$securityField) }}</label>
+                                                    <input id="settings_security_{{ $securityField }}" name="{{ $securityField }}" type="number" class="wb-input" min="1" max="{{ $securityDefinitions[$securityField]['max'] }}" step="1" required value="{{ is_scalar($securityValue = old($securityField, $securityLimits[$securityField])) ? $securityValue : $securityLimits[$securityField] }}">
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </fieldset>
+                                @endforeach
+                                <p class="wb-text-sm wb-text-muted">{{ $systemText('security_positive_help') }}</p>
+                            </div>
+                            <div class="wb-card-footer wb-cluster wb-gap-3">
+                                <button type="submit" name="mode" value="custom" class="wb-btn wb-btn-primary">{{ $systemText('save_changes') }}</button>
+                                <button type="submit" name="mode" value="defaults" formnovalidate class="wb-btn wb-btn-secondary">{{ $systemText('security_restore_defaults') }}</button>
+                            </div>
+                        </form>
+                    </div>
 
                     <div class="wb-tabs-panel {{ $systemTab === 'runtime' ? 'is-active' : '' }}" id="system-settings-runtime-panel">
         <div class="wb-card wb-card-muted">

@@ -30,6 +30,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
 use WebBlocks\Cms\Http\Controllers\Admin\PersonalApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\ProfileController;
+use WebBlocks\Cms\Http\Controllers\Admin\RequestSecuritySettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotRevisionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteAssetController;
@@ -431,6 +432,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::post('system/health/refresh', [SystemHealthController::class, 'refresh'])->middleware('throttle:6,1')->name('system.health.refresh');
       Route::get('system/information', SystemInformationController::class)->name('system.information');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+      Route::put('system/settings/security', [RequestSecuritySettingsController::class, 'update'])->name('system.settings.security.update');
       Route::post('system/settings/mail/test', [SystemSettingsController::class, 'sendMailTest'])->name('system.settings.mail.test');
       Route::get('system/api-tokens', [CmsApiTokenController::class, 'index'])->name('system.api-tokens.index');
       Route::post('system/api-tokens', [CmsApiTokenController::class, 'store'])->name('system.api-tokens.store');

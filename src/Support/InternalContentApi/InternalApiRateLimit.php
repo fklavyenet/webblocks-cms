@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
+use WebBlocks\Cms\Support\System\RequestSecuritySettings;
+
 /**
  * One source for the Internal Content API request budgets, so the throttle that
  * enforces it and the discovery documents that advertise it cannot drift apart.
@@ -16,15 +18,18 @@ class InternalApiRateLimit
 
   public static function perMinute(): int
   {
-    $configured = (int) config('cms.internal_api.rate_limit_per_minute', self::DEFAULT_PER_MINUTE);
-
-    return $configured > 0 ? $configured : self::DEFAULT_PER_MINUTE;
+    return self::budgets()['per_minute'];
   }
 
   public static function perIpPerMinute(): int
   {
-    $configured = (int) config('cms.internal_api.ip_rate_limit_per_minute', self::DEFAULT_IP_PER_MINUTE);
+    return self::budgets()['ip_per_minute'];
+  }
 
-    return $configured > 0 ? $configured : self::DEFAULT_IP_PER_MINUTE;
+  public static function budgets(): array
+  {
+    $limits = app(RequestSecuritySettings::class)->values();
+
+    return ['per_minute' => $limits['api_per_minute'], 'ip_per_minute' => $limits['api_ip_per_minute']];
   }
 }

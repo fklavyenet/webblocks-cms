@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -51,6 +52,9 @@ class SystemSettingsController extends Controller
         'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
       ],
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
+      'securityLimits' => app(RequestSecuritySettings::class)->values(),
+      'securityDefinitions' => RequestSecuritySettings::DEFINITIONS,
+      'securityHasOverrides' => app(RequestSecuritySettings::class)->hasOverrides(),
       'cmsMailMailerOptions' => array_combine(CmsMailSettingsResolver::SUPPORTED_MAILERS, CmsMailSettingsResolver::SUPPORTED_MAILERS),
       'localeOptions' => $this->systemSettings->enabledLocaleOptions(),
       'adminLocaleOptions' => $this->adminLocaleResolver->options(),

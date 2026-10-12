@@ -8,6 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Search\SearchTextNormalizer;
+use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class PublicSearchRequest extends FormRequest
@@ -15,6 +16,8 @@ class PublicSearchRequest extends FormRequest
   public const MAX_LENGTH = 200;
 
   public const MAX_TERMS = 20;
+
+  private ?array $securityLimits = null;
 
   public function authorize(): bool
   {
@@ -28,13 +31,15 @@ class PublicSearchRequest extends FormRequest
 
   public function rules(): array
   {
+    $limits = $this->limits();
+
     return [
-      'q' => ['bail', 'nullable', 'string', 'max:'.self::MAX_LENGTH, function (string $attribute, mixed $value, Closure $fail): void {
+      'q' => ['bail', 'nullable', 'string', 'max:'.$limits['search_max_characters'], function (string $attribute, mixed $value, Closure $fail) use ($limits): void {
         $query = app(SearchTextNormalizer::class)->query($value);
         $terms = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
-        if (count($terms) > self::MAX_TERMS) {
-          $fail($this->validationText('terms', ['count' => self::MAX_TERMS]));
+        if (count($terms) > $limits['search_max_words']) {
+          $fail($this->validationText('terms', ['count' => $limits['search_max_words']]));
         }
       }],
     ];
@@ -44,8 +49,13 @@ class PublicSearchRequest extends FormRequest
   {
     return [
       'q.string' => $this->validationText('string'),
-      'q.max' => $this->validationText('max', ['count' => self::MAX_LENGTH]),
+      'q.max' => $this->validationText('max', ['count' => $this->limits()['search_max_characters']]),
     ];
+  }
+
+  private function limits(): array
+  {
+    return $this->securityLimits ??= app(RequestSecuritySettings::class)->values();
   }
 
   private function validationText(string $key, array $replacements = []): string

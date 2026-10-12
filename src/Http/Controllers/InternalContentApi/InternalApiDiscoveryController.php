@@ -76,6 +76,8 @@ class InternalApiDiscoveryController extends Controller
 
   public function openapi(): JsonResponse
   {
+    $rateLimits = InternalApiRateLimit::budgets();
+
     return response()->json([
       'openapi' => '3.1.0',
       'info' => [
@@ -97,8 +99,8 @@ class InternalApiDiscoveryController extends Controller
         ['BearerToken' => []],
       ],
       'x-rate-limit' => [
-        'requests_per_minute' => InternalApiRateLimit::perMinute(),
-        'ip_requests_per_minute' => InternalApiRateLimit::perIpPerMinute(),
+        'requests_per_minute' => $rateLimits['per_minute'],
+        'ip_requests_per_minute' => $rateLimits['ip_per_minute'],
         'scope' => 'client IP and bearer token, plus an independent client IP backstop',
         'exceeded_status' => 429,
         'note' => 'Hosting or CDN layers in front of the site may enforce a lower limit than this one. Back off on 429 and honour Retry-After.',
@@ -109,6 +111,8 @@ class InternalApiDiscoveryController extends Controller
 
   public function aiGuide(): JsonResponse
   {
+    $rateLimits = InternalApiRateLimit::budgets();
+
     return response()->json([
       'product' => WebBlocks::NAME,
       'format' => 'markdown',
@@ -145,8 +149,8 @@ class InternalApiDiscoveryController extends Controller
         "Translated block text is written per translation family, and `PATCH /webadmin/api/blocks/{block}` accepts only the fields its family owns. Send `locale` with the request; without it the write lands on the site default locale. The families are:\n\n- text (header, hero, rich-text, columns, cta, and most content blocks): `title`, `eyebrow`, `subtitle`, `content`, `meta`.\n- button: `title`.\n- image: `caption` and `alt_text` (the `title`/`subtitle` spellings are accepted as aliases).\n- contact_form: `title`, `content`, `submit_label`, `success_message`. This is the only way to translate a contact form's button and confirmation text; they are not settings.\n\nA field the family does not own is refused with `422` and code `unsupported_block_translation_fields` rather than stored where nothing reads it. Stored rows come back under `block.translations` keyed by family, so read the block first to see which locales already exist.",
         sprintf(
           'The API is rate limited to %d requests per minute per token and IP, with an independent backstop of %d requests per minute per IP across all tokens. Exceeding either budget returns `429` with a `Retry-After` header. Hosting or CDN layers in front of the site may enforce a lower limit than these budgets. Pace bulk work such as a full-site translation pass, and back off on `429` instead of retrying immediately.',
-          InternalApiRateLimit::perMinute(),
-          InternalApiRateLimit::perIpPerMinute(),
+          $rateLimits['per_minute'],
+          $rateLimits['ip_per_minute'],
         ),
         'For Media Library cleanup, use dedicated media endpoints and capabilities: metadata PATCH, replace, move, and delete are separate. Delete keeps the admin usage guard and returns a usage report instead of deleting media referenced by blocks, site branding, or page SEO. For approved public remote files, use only the discovered `POST /webadmin/api/media/fetch` endpoint; do not put remote URLs directly in content plans.',
         'For admin UI visual QA, use only allowlisted render snapshots. `GET /webadmin/api/admin-render/system-updates` requires `admin.render` and returns JSON with the rendered HTML. `GET /webadmin/api/admin-render/system-updates?format=html` returns direct `text/html` for local browser screenshot capture. This endpoint is read-only and does not click, install, publish, or mutate admin state.',

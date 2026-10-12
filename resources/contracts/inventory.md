@@ -92,6 +92,8 @@ Source families inspected:
 
 Internal Content API clients must honour both budgets advertised by `openapi.json` under `x-rate-limit`: `requests_per_minute` applies per client IP and normalized bearer token (default 120), while `ip_requests_per_minute` is an independent IP backstop across tokens and API paths (default 300). Canonical and legacy API routes share these budgets. Exceeding either returns `429` with `Retry-After`; rotating a supplied token does not reset the IP budget.
 
+An active Super admin can manage request budgets and public search query bounds under System → Settings → Security. The eight installation-wide controls cover page and search requests per minute/hour, API requests per token-IP and per IP per minute, and search query characters/words. Saved database values override installation configuration on subsequent requests without changing server files or resetting active counters. Request budgets must be integers from 1 to 1,000,000; search query bounds are 1–2,000 characters and 1–100 words. Use installation defaults removes only these overrides and preserves existing positive environment/configuration budgets; default search bounds remain 200 characters and 20 words. Site admins, editors and inactive users cannot save or restore these settings. No Internal Content API security-settings write endpoint is introduced.
+
 ## HTML Block API Policy
 
 The target product contract is:
@@ -785,8 +787,8 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Settings and variants | `settings.variant`: primary or secondary; `show_button`: boolean. |
 | Children/media | None; requires a resolvable site search route. |
 | HTML | Generic wrapper plus `<form role="search" class="wb-cluster …">`, native input, and optional WebBlocks button. |
-| Query contract | HTML and JSON search accept an optional text `q` of at most 200 characters and 20 normalized words. Invalid type, length or word count returns localized validation JSON with `422`, including for HTML requests, without redirecting to the invalid GET URL. Missing or empty queries retain the empty-search state. |
-| Request budgets | Search endpoints share IP-based minute/hour limits across HTML, JSON and locales (defaults 30/minute and 300/hour). Public CMS pages and legacy page redirects share separate defaults of 120/minute and 1800/hour, including CMS pages served before a redirect plugin catch-all. Host-owned routes, static/plugin assets, robots and sitemaps do not consume these budgets. Limits are configured under `cms.public_rate_limits`; nonpositive values fall back to defaults. Exceeding a budget returns `429` with `Retry-After`. |
+| Query contract | HTML and JSON search accept an optional text `q`, defaulting to at most 200 characters and 20 normalized words. An active Super admin can change both bounds under System → Settings → Security (1–2,000 characters; 1–100 words). Invalid type, length or word count returns localized validation JSON with `422`, including for HTML requests, using the effective bounds without redirecting to the invalid GET URL. Missing or empty queries retain the empty-search state. |
+| Request budgets | Search endpoints share IP-based minute/hour limits across HTML, JSON and locales (defaults 30/minute and 300/hour). Public CMS pages and legacy page redirects share separate defaults of 120/minute and 1800/hour, including CMS pages served before a redirect plugin catch-all. Host-owned routes, static/plugin assets, robots and sitemaps do not consume these budgets. Saved Super admin Security settings take precedence over `cms.public_rate_limits`; removing overrides restores installation configuration. Invalid saved values and nonpositive configuration fall back without disabling protection. Exceeding a budget returns `429` with `Retry-After`. |
 | Example appearance | Site search field in a header or page. |
 
 ### `sidebar-footer` — Sidebar Footer

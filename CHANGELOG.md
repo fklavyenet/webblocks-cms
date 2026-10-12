@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.98.3
+
+- Let active Super admins manage public page/search minute and hour budgets, both shared Internal Content API budgets, and public search character/word limits under System Settings → Security. Preserve all existing defaults and installation configuration until custom values are saved.
+- Apply saved database settings to request throttling, localized search validation and live API discovery without editing server configuration or resetting active request counters. Restore installation defaults with one action while preserving unrelated settings.
+- Reject nonpositive, malformed, missing or excessive values before any write, and enforce Super admin authorization for both saving and restoring. Translate the Security tab in all six admin languages and cover panel rendering, role isolation, fallback behavior and runtime limits with regression tests.
+
 ## 1.98.2
 
 - Add an independent IP request limit to the Internal Content API so rotating invalid tokens cannot bypass throttling. Normalize token whitespace consistently with authentication and advertise both live budgets in API discovery.

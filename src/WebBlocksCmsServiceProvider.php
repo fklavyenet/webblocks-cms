@@ -69,7 +69,6 @@ use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRuntime;
-use WebBlocks\Cms\Support\InternalContentApi\InternalApiRateLimit;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
@@ -95,6 +94,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
+use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as ClientInstalledVersionStore;
@@ -948,21 +948,22 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     });
 
     RateLimiter::for('internal-content-api', function (Request $request) {
+      $limits = app(RequestSecuritySettings::class)->values();
+
       return [
-        Limit::perMinute(InternalApiRateLimit::perIpPerMinute())->by('ip:'.$request->ip()),
-        Limit::perMinute(InternalApiRateLimit::perMinute())
+        Limit::perMinute($limits['api_ip_per_minute'])->by('ip:'.$request->ip()),
+        Limit::perMinute($limits['api_per_minute'])
           ->by('token:'.$request->ip().'|'.hash('sha256', trim((string) $request->bearerToken()))),
       ];
     });
 
-    foreach (['pages' => [120, 1800], 'search' => [30, 300]] as $surface => [$minuteDefault, $hourDefault]) {
-      RateLimiter::for('cms-public-'.$surface, function (Request $request) use ($surface, $minuteDefault, $hourDefault) {
-        $minute = (int) config('cms.public_rate_limits.'.$surface.'_per_minute', $minuteDefault);
-        $hour = (int) config('cms.public_rate_limits.'.$surface.'_per_hour', $hourDefault);
+    foreach (['pages', 'search'] as $surface) {
+      RateLimiter::for('cms-public-'.$surface, function (Request $request) use ($surface) {
+        $limits = app(RequestSecuritySettings::class)->values();
 
         return [
-          Limit::perMinute($minute > 0 ? $minute : $minuteDefault)->by('minute:'.$request->ip()),
-          Limit::perHour($hour > 0 ? $hour : $hourDefault)->by('hour:'.$request->ip()),
+          Limit::perMinute($limits[$surface.'_per_minute'])->by('minute:'.$request->ip()),
+          Limit::perHour($limits[$surface.'_per_hour'])->by('hour:'.$request->ip()),
         ];
       });
     }
