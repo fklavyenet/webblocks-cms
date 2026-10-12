@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.98.4
+
+- Preserve all localized Gallery item alt text, captions, overlay titles and descriptions, plus Contact Form consent wording, when creating and promoting staged page updates. Keep media order and independent item records intact.
+- Carry Contact Form consent wording consistently through content plans, page/shared-slot block creation and block translation PATCH. Accept an explicitly blank notice to clear that locale while preserving omitted fields and other locales. Honor native Image alt text and caption names during API creation.
+- Resolve Gallery item copy in the requested visitor language independently of optional Gallery heading translations, with the existing default-language fallback. Add staging, promotion, rendering and API regression coverage.
+- Align System Settings → Security with the standard WebBlocks UI form groups, accessible headings, field spacing and responsive action layout; replace browser-default fieldset borders without changing limits or authorization.
+
 ## 1.98.3
 
 - Let active Super admins manage public page/search minute and hour budgets, both shared Internal Content API budgets, and public search character/word limits under System Settings → Security. Preserve all existing defaults and installation configuration until custom values are saved.

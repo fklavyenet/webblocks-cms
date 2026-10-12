@@ -27,6 +27,7 @@ class BlockTranslationResolver
     $requestedLocale = $this->resolveLocale($locale);
     $defaultLocale = $this->localeResolver->default();
     $resolved = clone $block;
+    $resolved->setAttribute('requested_locale_code', $requestedLocale->code);
     $family = $this->registry->familyFor($block);
 
     if ($resolved->relationLoaded('children')) {

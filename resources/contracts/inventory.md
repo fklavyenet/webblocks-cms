@@ -512,7 +512,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | Locale-owned image `alt_text` and `caption`; shared optional URL. |
+| Editable content | Locale-owned image `alt_text` and `caption`; shared optional URL. Content plans and page/shared-slot block creation accept these native names, with `title` (caption) and `subtitle` (alt text) aliases; native names take precedence. |
 | Settings and variants | `viewer_enabled` opts an unlinked image into the CMS Gallery Viewer; `viewer_group` joins independently placed Image blocks into one browsable viewer set. Focal point and generated variants belong to the Media record. |
 | Children/media | Direct image `media_id`; no children. |
 | HTML | Root-owning `<figure class="wb-stack wb-gap-2">` with responsive `<img>` output, optional linked or `wb-gallery-trigger` image, and `<figcaption>`. Enabled groups register one existing gallery-viewer modal under the canonical overlay root. |
@@ -523,7 +523,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | Ordered Gallery items with locale-owned `alt_text`, `caption`, `overlay_title`, `overlay_text`; optional shared viewer title. Gallery intro copy is intentionally separate. |
+| Editable content | Ordered Gallery items with locale-owned `alt_text`, `caption`, `overlay_title`, `overlay_text`; optional shared viewer title. Gallery intro copy is intentionally separate. Item translations resolve in the requested visitor locale with default-locale fallback, independently of missing Gallery heading translations. Staged creation and promotion preserve every item translation, media relationship, and position. |
 | Settings and variants | `variant`: grid, masonry, collage; `columns`: 2–5; `gap`: none, sm, md, lg; `aspect_ratio`: auto, square, 4:3, 16:9, portrait; `captions_mode`: hidden, below, overlay, on-hover; `overlay_mode`: none, gradient, solid; `lightbox_enabled`: boolean. |
 | Children/media | `gallery_items` or `gallery_media_ids` referencing image Media records; no block children. |
 | HTML | Root-owning `.wb-gallery.wb-gallery--{variant}` with gallery items, responsive media, captions, and optional registry-owned viewer under the canonical overlay root. |
@@ -818,7 +818,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | Locale-owned `title`, `content`, `submit_label`, `success_message`, `consent_label`. |
+| Editable content | Locale-owned `title`, `content`, `submit_label`, `success_message`, `consent_label`. Consent wording is writable through content plans, page/shared-slot block creation, and flat or family-nested block translation PATCH. Omitted PATCH wording is preserved; an explicitly blank `consent_label` clears only that locale. Staged creation and promotion preserve wording in all locales. |
 | Settings and variants | `recipient_email`; `send_email_notification`; `store_submissions` remains product-owned true in the native contract; `consent_required` (boolean, default false). |
 | Consent | Set `consent_required` and give the locale a `consent_label` to render a required consent checkbox. The wording is translated because it *is* the notice. An accepted submission stores `consent_accepted_at` plus a copy of the wording, so editing the block later cannot change what a past visitor is recorded as having agreed to. A required consent with no wording for the resolved locale renders no checkbox rather than an unlabelled one. `consent_required` is closed to PATCH: removing a legal notice from a live form is an operator decision. |
 | Site notification policy | Contact forms and participating plugins share `Site.notification_settings`, read through `GET /webadmin/api/sites/{site}/notifications` (`content.read`) and changed through PATCH (`site-settings.write`, site-scoped). Fields: `notification_mode` (`full`, `alert_only`), `notification_frequency` (`immediate`, `batched`, `daily`), `batch_minutes` (1–60), `daily_summary` (boolean), `summary_hour` (0–23 in the site timezone). Omitted PATCH fields are preserved; invalid, null and unknown values are rejected. These are site settings, never block PATCH fields. |

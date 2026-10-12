@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
@@ -81,6 +82,7 @@ class InternalContentApiOperations
     'alt_text',
     'submit_label',
     'success_message',
+    'consent_label',
   ];
 
   /**
@@ -475,10 +477,13 @@ class InternalContentApiOperations
       'media_id' => $payload['media_id'] ?? null,
       '_block_media' => $payload['_block_media'] ?? [],
       '_gallery_items' => $payload['_gallery_items'] ?? [],
-      'title' => $translations['title'] ?? null,
-      'subtitle' => $translations['subtitle'] ?? null,
+      'title' => $blockType->slug === 'image' ? ($translations['caption'] ?? $translations['title'] ?? null) : ($translations['title'] ?? null),
+      'subtitle' => $blockType->slug === 'image' ? ($translations['alt_text'] ?? $translations['subtitle'] ?? null) : ($translations['subtitle'] ?? null),
       'content' => $translations['content'] ?? null,
       'meta' => $translations['meta'] ?? null,
+      'submit_label' => $translations['submit_label'] ?? null,
+      'success_message' => $translations['success_message'] ?? null,
+      ...Arr::only($translations, ['consent_label']),
     ], $localeCode);
 
     $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);
@@ -522,13 +527,14 @@ class InternalContentApiOperations
       'media_id' => $payload['media_id'] ?? null,
       '_block_media' => $payload['_block_media'] ?? [],
       '_gallery_items' => $payload['_gallery_items'] ?? [],
-      'title' => $translations['title'] ?? null,
+      'title' => $blockType->slug === 'image' ? ($translations['caption'] ?? $translations['title'] ?? null) : ($translations['title'] ?? null),
       'eyebrow' => $translations['eyebrow'] ?? null,
-      'subtitle' => $translations['subtitle'] ?? null,
+      'subtitle' => $blockType->slug === 'image' ? ($translations['alt_text'] ?? $translations['subtitle'] ?? null) : ($translations['subtitle'] ?? null),
       'content' => $translations['content'] ?? null,
       'meta' => $translations['meta'] ?? null,
       'submit_label' => $translations['submit_label'] ?? null,
       'success_message' => $translations['success_message'] ?? null,
+      ...Arr::only($translations, ['consent_label']),
     ], $localeCode);
 
     $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);

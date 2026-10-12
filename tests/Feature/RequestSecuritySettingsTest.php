@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Foundation\Auth\User as AuthenticatableUser;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -61,7 +62,8 @@ class RequestSecuritySettingsTest extends TestCase
 
   private function user(string $role = 'super_admin', bool $active = true): AuthenticatableUser
   {
-    $user = Mockery::mock('App\\Models\\User')->makePartial();
+    $userClass = method_exists('App\\Models\\User', 'canAccessAdmin') ? 'App\\Models\\User' : RequestSecuritySettingsUser::class;
+    $user = Mockery::mock($userClass)->makePartial();
     $user->forceFill(['id' => 99, 'name' => 'Synthetic Operator', 'role' => $role, 'is_active' => $active]);
     $user->setRelation('sites', Site::all());
     $user->shouldReceive('isSuperAdmin')->andReturn($role === 'super_admin');
@@ -133,7 +135,12 @@ class RequestSecuritySettingsTest extends TestCase
     $this->actingAs($this->user())->get('/webadmin/system/settings?tab=security')->assertOk()
       ->assertSee('id="system-settings-security-panel"', false)->assertSee('Installation defaults are active.')
       ->assertSee('name="pages_per_hour"', false)->assertSee('name="api_ip_per_minute"', false)
-      ->assertSee('name="search_max_characters"', false)->assertSee('Use installation defaults');
+      ->assertSee('name="search_max_characters"', false)->assertSee('Use installation defaults')
+      ->assertDontSee('<fieldset', false)->assertDontSee('<legend', false)
+      ->assertSee('role="group" aria-labelledby="settings-security-pages-title"', false)
+      ->assertSee('role="group" aria-labelledby="settings-security-search-title"', false)
+      ->assertSee('role="group" aria-labelledby="settings-security-api-title"', false)
+      ->assertSee('role="group" aria-labelledby="settings-security-query-title"', false);
     $this->from('/webadmin/system/settings?tab=security')->put('/webadmin/system/settings/security', ['section' => ['project'], 'mode' => 'custom'] + array_replace($this->defaults(), ['pages_per_hour' => 0]))
       ->assertRedirect('/webadmin/system/settings?tab=security')->assertSessionHasErrors('pages_per_hour');
     $this->get('/webadmin/system/settings?tab=security')->assertOk()->assertSee('value="0"', false);
@@ -285,5 +292,28 @@ class RequestSecuritySettingsTest extends TestCase
       }
       $this->assertNotEmpty($catalog['system_settings']['security_restore_defaults'] ?? null);
     }
+  }
+}
+
+class RequestSecuritySettingsUser extends AuthenticatableUser
+{
+  public function isSuperAdmin(): bool
+  {
+    return $this->role === 'super_admin';
+  }
+
+  public function normalizedRole(): string
+  {
+    return $this->role;
+  }
+
+  public function canAccessAdmin(): bool
+  {
+    return (bool) $this->is_active;
+  }
+
+  public function accessibleSiteIds(): Collection
+  {
+    return Site::pluck('id');
   }
 }

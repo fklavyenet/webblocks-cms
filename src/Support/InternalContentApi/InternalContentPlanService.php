@@ -228,6 +228,7 @@ class InternalContentPlanService
     'alt_text',
     'submit_label',
     'success_message',
+    'consent_label',
   ];
 
   public function __construct(
@@ -650,13 +651,14 @@ class InternalContentPlanService
       'media_id' => $payload['media_id'] ?? null,
       '_block_media' => $payload['_block_media'] ?? [],
       '_gallery_items' => $payload['_gallery_items'] ?? [],
-      'title' => $translations['title'] ?? null,
+      'title' => $blockType->slug === 'image' ? ($translations['caption'] ?? $translations['title'] ?? null) : ($translations['title'] ?? null),
       'eyebrow' => $translations['eyebrow'] ?? null,
-      'subtitle' => $translations['subtitle'] ?? null,
+      'subtitle' => $blockType->slug === 'image' ? ($translations['alt_text'] ?? $translations['subtitle'] ?? null) : ($translations['subtitle'] ?? null),
       'content' => $translations['content'] ?? null,
       'meta' => $translations['meta'] ?? null,
       'submit_label' => $translations['submit_label'] ?? null,
       'success_message' => $translations['success_message'] ?? null,
+      ...Arr::only($translations, ['consent_label']),
     ];
 
     $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
@@ -844,7 +846,7 @@ class InternalContentPlanService
     $blocks = Block::query()
       ->where('page_id', $sourcePage->id)
       ->when($slotTypeIds !== null, fn ($query) => $query->whereIn('slot_type_id', $slotTypeIds))
-      ->with(['blockAssets', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+      ->with(['blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
       ->orderBy('id')
       ->lockForUpdate()
       ->get();
@@ -863,12 +865,19 @@ class InternalContentPlanService
       $blockMap[$block->id] = $newBlock->id;
 
       foreach ($block->blockAssets as $blockAsset) {
-        BlockAsset::query()->create([
+        $newBlockAsset = BlockAsset::query()->create([
           'block_id' => $newBlock->id,
           'media_id' => $blockAsset->media_id,
           'role' => $blockAsset->role,
           'position' => $blockAsset->position,
         ]);
+
+        foreach ($blockAsset->galleryItemTranslations as $translation) {
+          $newBlockAsset->galleryItemTranslations()->create(Arr::except(
+            $translation->getAttributes(),
+            ['id', 'block_media_id', 'created_at', 'updated_at'],
+          ));
+        }
       }
 
       $this->cloneBlockTranslations($block, $newBlock);
@@ -924,6 +933,7 @@ class InternalContentPlanService
         'content' => $translation->content,
         'submit_label' => $translation->submit_label,
         'success_message' => $translation->success_message,
+        'consent_label' => $translation->consent_label,
       ]);
     }
   }

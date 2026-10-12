@@ -300,6 +300,11 @@ class BlockTranslationWriter
 
   private function submittedContactTranslationValue(array $data, string $field): ?string
   {
+    // An explicitly blank notice clears only this locale; omission preserves it.
+    if ($field === 'consent_label' && array_key_exists($field, $data)) {
+      return trim((string) $data[$field]);
+    }
+
     $value = trim((string) ($data[$field] ?? ''));
 
     if ($value === '') {

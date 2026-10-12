@@ -103,6 +103,24 @@ class BlockPatchTranslationFamilyTest extends TestCase
   }
 
   #[Test]
+  public function consent_wording_can_be_patched_read_and_cleared_without_changing_other_locales(): void
+  {
+    $block = $this->seedBlock('contact_form');
+    $this->patchBlock($block, ['locale' => 'en', 'translations' => ['consent_label' => 'I agree.']]);
+    $response = $this->patchBlock($block->fresh(), ['locale' => 'de', 'translations' => ['contact_form' => ['consent_label' => 'Ich stimme zu.']]]);
+    $this->assertSame(200, $response->getStatusCode());
+    $rows = collect(app(InternalContentResourceController::class)->block($block->fresh())->getData(true)['block']['translations']['contact_form']);
+    $this->assertContains('Ich stimme zu.', $rows->pluck('consent_label')->all());
+
+    $this->patchBlock($block->fresh(), ['locale' => 'de', 'translations' => ['title' => 'Kontakt']]);
+    $this->assertSame('Ich stimme zu.', $block->contactFormTranslations()->where('locale_id', $this->locale('de')->id)->value('consent_label'));
+    $cleared = $this->patchBlock($block->fresh(), ['locale' => 'de', 'translations' => ['consent_label' => '']]);
+    $this->assertSame(200, $cleared->getStatusCode());
+    $this->assertNull($block->contactFormTranslations()->where('locale_id', $this->locale('de')->id)->value('consent_label'));
+    $this->assertSame('I agree.', $block->contactFormTranslations()->where('locale_id', $this->locale('en')->id)->value('consent_label'));
+  }
+
+  #[Test]
   public function patching_a_button_writes_the_button_translation_row(): void
   {
     $block = $this->seedBlock('button');

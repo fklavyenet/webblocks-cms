@@ -347,21 +347,21 @@
                                     'api' => ['api_per_minute', 'api_ip_per_minute'],
                                     'query' => ['search_max_characters', 'search_max_words'],
                                 ] as $securityGroup => $securityFields)
-                                    <fieldset class="wb-stack wb-gap-3">
-                                        <legend class="wb-text-lg wb-font-semibold">{{ $systemText('security_group_'.$securityGroup) }}</legend>
+                                    <section class="wb-stack wb-gap-3" role="group" aria-labelledby="settings-security-{{ $securityGroup }}-title">
+                                        <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="settings-security-{{ $securityGroup }}-title">{{ $systemText('security_group_'.$securityGroup) }}</h3>
                                         <div class="wb-grid wb-grid-2 wb-gap-4">
                                             @foreach ($securityFields as $securityField)
-                                                <div class="wb-field wb-stack wb-gap-2">
-                                                    <label class="wb-label" for="settings_security_{{ $securityField }}">{{ $systemText('security_'.$securityField) }}</label>
+                                                <div class="wb-stack-2 wb-field">
+                                                    <label for="settings_security_{{ $securityField }}">{{ $systemText('security_'.$securityField) }}</label>
                                                     <input id="settings_security_{{ $securityField }}" name="{{ $securityField }}" type="number" class="wb-input" min="1" max="{{ $securityDefinitions[$securityField]['max'] }}" step="1" required value="{{ is_scalar($securityValue = old($securityField, $securityLimits[$securityField])) ? $securityValue : $securityLimits[$securityField] }}">
                                                 </div>
                                             @endforeach
                                         </div>
-                                    </fieldset>
+                                    </section>
                                 @endforeach
                                 <p class="wb-text-sm wb-text-muted">{{ $systemText('security_positive_help') }}</p>
                             </div>
-                            <div class="wb-card-footer wb-cluster wb-gap-3">
+                            <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                                 <button type="submit" name="mode" value="custom" class="wb-btn wb-btn-primary">{{ $systemText('save_changes') }}</button>
                                 <button type="submit" name="mode" value="defaults" formnovalidate class="wb-btn wb-btn-secondary">{{ $systemText('security_restore_defaults') }}</button>
                             </div>

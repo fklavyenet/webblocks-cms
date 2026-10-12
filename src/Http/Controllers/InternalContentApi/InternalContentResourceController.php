@@ -1889,7 +1889,7 @@ class InternalContentResourceController extends Controller
       'text' => ['title' => 'title', 'eyebrow' => 'eyebrow', 'subtitle' => 'subtitle', 'content' => 'content', 'meta' => 'meta'],
       'button' => ['title' => 'title'],
       'image' => ['caption' => 'title', 'alt_text' => 'subtitle', 'title' => 'title', 'subtitle' => 'subtitle'],
-      'contact_form' => ['title' => 'title', 'content' => 'content', 'submit_label' => 'submit_label', 'success_message' => 'success_message'],
+      'contact_form' => ['title' => 'title', 'content' => 'content', 'submit_label' => 'submit_label', 'success_message' => 'success_message', 'consent_label' => 'consent_label'],
     };
 
     if ($family === 'image') {

@@ -1950,7 +1950,8 @@ class Block extends CmsModel
       ? $item->galleryItemTranslations
       : $item->galleryItemTranslations()->get();
 
-    $resolvedLocaleCode = $this->getAttribute('resolved_locale_code');
+    // Item copy is independent of the Gallery's optional introductory text.
+    $resolvedLocaleCode = $this->getAttribute('requested_locale_code') ?? $this->getAttribute('resolved_locale_code');
     $resolvedLocaleId = is_string($resolvedLocaleCode) && $resolvedLocaleCode !== ''
       ? Locale::query()->where('code', $resolvedLocaleCode)->value('id')
       : null;
