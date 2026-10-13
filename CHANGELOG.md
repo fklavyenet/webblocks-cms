@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.98.7
+
+### Fixed
+
+- Prepare remaining CMS content, revision, import/export, recovery and operation data in relational records while retaining existing JSON columns for the running updater's completion. Preserve complete independent snapshots, legacy values and API field contracts.
+- Store plugin lifecycle and promotion-plan state in SQL, retaining legacy files until the final cutover. Keep plain emergency disable markers available during database failures.
+- Show elapsed update time and the current operation in the update modal, and duration in Update History. Record phase timings to distinguish backup, download, extraction, application, dependencies, migrations, cache, catalog and assets.
+- Avoid repeated cache-clear subprocesses and individual writes for unchanged icons during catalog repair. Skip already prepared relational backfills and batch typed snapshot records.
+
+
 ## 1.98.6
 
 - Store remaining Block settings in relational records: finite typed core appearance, media, navigation and content fields, content bindings and collection configuration, plus typed application instance values. Preserve nested historical/plugin extensions without writing JSON documents to the new tables.

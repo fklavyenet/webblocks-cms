@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
@@ -172,7 +173,7 @@ class Site extends CmsModel
   protected static function booted(): void
   {
     static::creating(function (self $site): void {
-      if (Schema::hasColumn('wbcms_sites', 'notification_settings')) {
+      if ((Schema::hasColumn('wbcms_sites', 'notification_settings') || app(PersistentDocuments::class)->retired(new Site, 'notification_settings'))) {
         $site->notification_settings = array_replace(SiteNotificationPolicy::DEFAULTS, is_array($site->notification_settings) ? $site->notification_settings : []);
       }
     });

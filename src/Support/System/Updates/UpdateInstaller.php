@@ -169,6 +169,7 @@ class UpdateInstaller
    */
   public function syncRuntimeAssets(array &$output): void
   {
+    app(CmsUpdateProgress::class)->stage('assets');
     $targetPath = $this->targetPath();
 
     foreach ($this->packageRuntimePaths($targetPath) as $packageRuntimePath) {
@@ -178,6 +179,7 @@ class UpdateInstaller
 
   public function installDependencies(array &$output): void
   {
+    app(CmsUpdateProgress::class)->stage('dependencies');
     $targetPath = $this->targetPath();
 
     $this->normalizeComposerPackageMetadata($targetPath, $output);
@@ -198,15 +200,11 @@ class UpdateInstaller
 
   public function runPostInstallCommands(array &$output): void
   {
+    app(CmsUpdateProgress::class)->stage('migrations');
     $this->migrationRunner->run($this->targetPath(), $output);
 
-    foreach ([
-      ['config:clear'],
-      ['view:clear'],
-      ['cache:clear'],
-      ['route:clear'],
-      ['optimize:clear'],
-    ] as $artisanCommand) {
+    app(CmsUpdateProgress::class)->stage('cache');
+    foreach ([['optimize:clear']] as $artisanCommand) {
       $this->commandRunner->run(
         $this->commandRunner->artisanCommand($artisanCommand),
         $this->targetPath(),
@@ -214,6 +212,7 @@ class UpdateInstaller
       );
     }
 
+    app(CmsUpdateProgress::class)->stage('catalog');
     $this->syncShippedCatalog($output);
 
     $this->installationGitRemoteGuard->protectCurrentInstall($this->targetPath(), $output);

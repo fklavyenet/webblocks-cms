@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use WebBlocks\Cms\Support\Sitemap\SitemapCache;
@@ -144,7 +145,7 @@ class Page extends CmsModel
 
   public static function supportsSettingsColumn(): bool
   {
-    return Schema::hasColumn((new self)->getTable(), 'settings');
+    return Schema::hasColumn((new self)->getTable(), 'settings') || app(PersistentDocuments::class)->retired(new self, 'settings');
   }
 
   public static function allowedPublicShellPresets(): array

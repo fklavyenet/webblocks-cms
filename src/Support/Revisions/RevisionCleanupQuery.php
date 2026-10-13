@@ -65,9 +65,8 @@ class RevisionCleanupQuery
       $unmeasured = array_keys(array_filter($eligible, fn (array $row): bool => $row['bytes'] === null));
       if ($unmeasured !== []) {
         // Legacy/directly inserted revisions are measured in a bounded, unsorted query.
-        $sizes = DB::table($table)->whereIn('id', $unmeasured)->select('id')->selectRaw('LENGTH(snapshot) as snapshot_bytes')->get();
-        foreach ($sizes as $size) {
-          $eligible[(int) $size->id]['bytes'] = (int) $size->snapshot_bytes;
+        foreach (RevisionPayloadSizes::forIds($table, $unmeasured) as $id => $bytes) {
+          $eligible[(int) $id]['bytes'] = (int) $bytes;
         }
       }
       if ($eligible !== []) {

@@ -3,7 +3,11 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
+use WebBlocks\Cms\Models\PluginLifecycle;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
+use WebBlocks\Cms\Support\Relational\PersistentSchema;
 
 class InstalledPluginRepository
 {
@@ -81,13 +85,21 @@ class InstalledPluginRepository
 
   public function enabledVersion(string $handle): ?string
   {
-    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'enabled.json';
-
-    if (! is_file($path)) {
+    if (is_file($this->rootPath().'/'.$handle.'/.disabled')) {
       return null;
     }
-
-    $state = json_decode((string) file_get_contents($path), true);
+    try {
+      if (Schema::hasTable('wbcms_plugin_lifecycles')) {
+        $state = $this->findState($handle);
+        if ($state !== null) {
+          return $state->disabled_at ? null : ($state->enabled_version ?: null);
+        }
+      }
+    } catch (\Throwable) {
+      return null; // A database outage must never reactivate plugin code.
+    }
+    $path = $this->rootPath().'/'.$handle.'/enabled.json';
+    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
     $version = is_array($state) ? ($state['version'] ?? null) : null;
 
     return is_string($version) && $version !== '' ? $version : null;
@@ -96,20 +108,10 @@ class InstalledPluginRepository
   public function enable(string $handle, string $version): void
   {
     $this->assertValidCoordinates($handle, $version);
-
-    $directory = $this->rootPath().DIRECTORY_SEPARATOR.$handle;
-    File::ensureDirectoryExists($directory);
-
-    $path = $directory.DIRECTORY_SEPARATOR.'enabled.json';
-    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
-    $state = is_array($state) ? $state : [];
-
-    $this->writeState($path, array_merge($state, [
-      'version' => $version,
-      'enabled_at' => $state['enabled_at'] ?? now()->toIso8601String(),
-    ]));
-    File::delete($directory.DIRECTORY_SEPARATOR.'disabled.json');
-    File::delete($directory.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'runtime-failure.json');
+    $state = $this->state($handle);
+    $state->forceFill(['enabled_version' => $version, 'enabled_at' => $state->enabled_at ?? now()->toIso8601String(), 'disabled_at' => null])->save();
+    $this->state($handle, $version)->forceFill(['failed_at' => null])->save();
+    File::delete([$this->rootPath().'/'.$handle.'/.disabled', $this->rootPath().'/'.$handle.'/'.$version.'/.runtime-failure']);
   }
 
   /**
@@ -118,27 +120,23 @@ class InstalledPluginRepository
   public function recordSetupResult(string $handle, string $version, array $result): void
   {
     $this->assertValidCoordinates($handle, $version);
-
-    $directory = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version;
-    File::ensureDirectoryExists($directory);
-    $path = $directory.DIRECTORY_SEPARATOR.'setup.json';
-
-    $this->writeState($path, [
-      'version' => $version,
-      'setup' => array_merge($result, [
-        'ran_at' => now()->toIso8601String(),
-      ]),
-    ]);
+    $this->state($handle, $version)->forceFill(['setup_result' => array_merge($result, ['ran_at' => now()->toIso8601String()])])->save();
   }
 
   /** @return array<string, mixed> */
   public function setupResult(string $handle, string $version): array
   {
     $this->assertValidCoordinates($handle, $version);
-    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'setup.json';
+    if (Schema::hasTable('wbcms_plugin_lifecycles')) {
+      $state = $this->findState($handle, $version);
+      if ($state !== null) {
+        return is_array($state->setup_result) ? $state->setup_result : [];
+      }
+    }
+    $path = $this->rootPath().'/'.$handle.'/'.$version.'/setup.json';
     $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
 
-    return is_array($state) && is_array($state['setup'] ?? null) ? $state['setup'] : [];
+    return is_array($state['setup'] ?? null) ? $state['setup'] : [];
   }
 
   public function disable(string $handle): void
@@ -146,12 +144,14 @@ class InstalledPluginRepository
     if (! PluginDefinition::isValidHandle($handle)) {
       throw PluginException::invalidHandle($handle);
     }
-
-    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'enabled.json';
-
-    $this->writeState(dirname($path).DIRECTORY_SEPARATOR.'disabled.json', ['disabled_at' => now()->toIso8601String()]);
-    if (is_file($path)) {
-      File::delete($path);
+    $directory = $this->rootPath().'/'.$handle;
+    File::ensureDirectoryExists($directory);
+    // Minimal plain-text emergency switch also works without a database.
+    File::put($directory.'/.disabled', now()->toIso8601String());
+    try {
+      $this->state($handle)->forceFill(['enabled_version' => null, 'disabled_at' => now()->toIso8601String()])->save();
+    } catch (\Throwable) {
+      // The durable emergency switch already prevents booting this plugin.
     }
   }
 
@@ -238,28 +238,64 @@ class InstalledPluginRepository
 
   public function isDisabled(string $handle): bool
   {
-    return PluginDefinition::isValidHandle($handle) && is_file($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'disabled.json');
+    if (! PluginDefinition::isValidHandle($handle)) {
+      return false;
+    }
+    if (is_file($this->rootPath().'/'.$handle.'/.disabled')) {
+      return true;
+    }
+    try {
+      if (Schema::hasTable('wbcms_plugin_lifecycles')) {
+        $state = $this->findState($handle);
+        if ($state !== null) {
+          return $state->disabled_at !== null;
+        }
+      }
+    } catch (\Throwable) {
+      return true;
+    }
+
+    return is_file($this->rootPath().'/'.$handle.'/disabled.json');
   }
 
   public function quarantine(string $handle, string $version): void
   {
     $this->assertValidCoordinates($handle, $version);
-    $this->writeState($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'runtime-failure.json', ['failed_at' => now()->toIso8601String()]);
+    $directory = $this->rootPath().'/'.$handle.'/'.$version;
+    File::ensureDirectoryExists($directory);
+    File::put($directory.'/.runtime-failure', now()->toIso8601String());
     $this->disable($handle);
+    try {
+      $this->state($handle, $version)->forceFill(['failed_at' => now()->toIso8601String()])->save();
+    } catch (\Throwable) {
+    }
   }
 
   public function runtimeFailed(string $handle, string $version): bool
   {
     $this->assertValidCoordinates($handle, $version);
+    if (is_file($this->rootPath().'/'.$handle.'/'.$version.'/.runtime-failure')) {
+      return true;
+    }
+    try {
+      if (Schema::hasTable('wbcms_plugin_lifecycles')) {
+        $state = $this->findState($handle, $version);
+        if ($state !== null) {
+          return $state->failed_at !== null;
+        }
+      }
+    } catch (\Throwable) {
+      return true;
+    }
 
-    return is_file($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.$version.DIRECTORY_SEPARATOR.'runtime-failure.json');
+    return is_file($this->rootPath().'/'.$handle.'/'.$version.'/runtime-failure.json');
   }
 
   public function recordPrevious(string $handle, string $version, string $replacement, bool $rollbackSafe): void
   {
     $this->assertValidCoordinates($handle, $version);
     $this->assertValidCoordinates($handle, $replacement);
-    $this->writeState($this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'previous.json', ['version' => $version, 'replacement' => $replacement, 'rollback_safe' => $rollbackSafe]);
+    $this->state($handle)->forceFill(['previous_state' => ['version' => $version, 'replacement' => $replacement, 'rollback_safe' => $rollbackSafe]])->save();
   }
 
   public function previous(string $handle): array
@@ -267,23 +303,115 @@ class InstalledPluginRepository
     if (! PluginDefinition::isValidHandle($handle)) {
       return [];
     }
-    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'previous.json';
-    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+    if (Schema::hasTable('wbcms_plugin_lifecycles')) {
+      $state = $this->findState($handle);
+      if ($state !== null) {
+        return is_array($state->previous_state) ? $state->previous_state : [];
+      }
+    }
+    $path = $this->rootPath().'/'.$handle.'/previous.json';
+    $value = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
 
-    return is_array($state) ? $state : [];
+    return is_array($value) ? $value : [];
   }
 
-  private function writeState(string $path, array $state): void
+  private function rootHash(): string
   {
-    File::ensureDirectoryExists(dirname($path));
-    $temporary = $path.'.'.bin2hex(random_bytes(8)).'.tmp';
-    try {
-      if (file_put_contents($temporary, json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), LOCK_EX) === false || ! rename($temporary, $path)) {
-        throw new RuntimeException('Unable to write plugin lifecycle state.');
+    return hash('sha256', realpath($this->rootPath()) ?: $this->rootPath());
+  }
+
+  private function findState(string $handle, string $version = ''): ?PluginLifecycle
+  {
+    return PluginLifecycle::where('root_hash', $this->rootHash())->where('handle', $handle)->where('version', $version)->first();
+  }
+
+  private function state(string $handle, string $version = ''): PluginLifecycle
+  {
+    File::ensureDirectoryExists($this->rootPath().'/'.$handle);
+    if (! app(PersistentDocuments::class)->available()) {
+      PersistentSchema::ensure();
+    }
+
+    return $this->findState($handle, $version) ?? PluginLifecycle::create(['root_hash' => $this->rootHash(), 'handle' => $handle, 'version' => $version]);
+  }
+
+  public function migrateLegacyState(bool $remove = false): void
+  {
+    if (! is_dir($this->rootPath())) {
+      return;
+    }
+    foreach (File::directories($this->rootPath()) as $directory) {
+      $handle = basename($directory);
+      if (! PluginDefinition::isValidHandle($handle) || is_link($directory)) {
+        continue;
       }
-    } finally {
-      if (is_file($temporary)) {
-        File::delete($temporary);
+      $main = $this->state($handle);
+      $legacy = $main->legacy_state ?? [];
+      foreach (['enabled', 'disabled', 'previous'] as $type) {
+        $path = $directory.'/'.$type.'.json';
+        if (! is_file($path)) {
+        continue;
+        }
+        if (array_key_exists($type, $legacy)) {
+          if ($remove) {
+          File::delete($path);
+          }
+
+          continue;
+        }
+        $raw = (string) file_get_contents($path);
+        $value = json_decode($raw, true);
+        $legacy[$type] = json_last_error() === JSON_ERROR_NONE ? $value : $raw;
+        if ($type === 'enabled' && is_array($value)) {
+          $main->enabled_version = is_string($value['version'] ?? null) ? $value['version'] : null;
+          $main->enabled_at = is_string($value['enabled_at'] ?? null) ? $value['enabled_at'] : null;
+        } elseif ($type === 'disabled') {
+          $main->disabled_at = is_string($value['disabled_at'] ?? null) ? $value['disabled_at'] : now()->toIso8601String();
+        } elseif ($type === 'previous') {
+          $main->previous_state = is_array($value) ? $value : [];
+        }
+      }
+      $main->legacy_state = $legacy;
+      $main->save();
+      foreach (File::directories($directory) as $versionPath) {
+        if (is_link($versionPath)) {
+        continue;
+        }
+        $version = basename($versionPath);
+        if (! preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version)) {
+        continue;
+        }
+        foreach (['setup', 'runtime-failure'] as $type) {
+          $path = $versionPath.'/'.$type.'.json';
+          if (! is_file($path)) {
+          continue;
+          }
+          $raw = (string) file_get_contents($path);
+          $value = json_decode($raw, true);
+          $state = $this->state($handle, $version);
+          if (array_key_exists($type, $state->legacy_state ?? [])) {
+            if ($remove) {
+            File::delete($path);
+            }
+
+            continue;
+          }
+          $state->legacy_state = array_replace($state->legacy_state ?? [], [$type => json_last_error() === JSON_ERROR_NONE ? $value : $raw]);
+          if ($type === 'setup') {
+            $state->setup_result = is_array($value['setup'] ?? null) ? $value['setup'] : [];
+          } else {
+            $state->failed_at = is_string($value['failed_at'] ?? null) ? $value['failed_at'] : now()->toIso8601String();
+          }
+          $state->save();
+          if ($remove) {
+          File::delete($path);
+          }
+        }
+      }
+      if ($remove) {
+        foreach (['enabled', 'disabled', 'previous'] as $type) {
+        File::delete($directory.'/'.$type.'.json');
+        }
       }
     }
   }

@@ -12,6 +12,7 @@ class CmsPackageApplyStrategy extends PackageApplyStrategy
 {
   public function apply(string $stagedRoot): array
   {
+    app(CmsUpdateProgress::class)->stage('apply');
     // Validate the whole legacy tree before materializing any trusted root file.
     // Permit only the license file, never the former documentation subtree.
     $this->assertSafeStagedContents($stagedRoot);

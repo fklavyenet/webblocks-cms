@@ -68,7 +68,7 @@ class RevisionCaptureRecorder
   private function measure(CmsModel $revision, string $hash): void
   {
     // Measure the database representation once, outside any ordered query.
-    $bytes = (int) DB::table($revision->getTable())->where('id', $revision->id)->selectRaw('LENGTH(snapshot) as bytes')->value('bytes');
+    $bytes = (int) (RevisionPayloadSizes::forIds($revision->getTable(), [$revision->id])[$revision->id] ?? 0);
     $revision->forceFill(['snapshot_hash' => $hash, 'snapshot_bytes' => $bytes])->saveQuietly();
   }
 }

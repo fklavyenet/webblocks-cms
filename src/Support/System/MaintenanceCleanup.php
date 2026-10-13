@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Revisions\RevisionCleanupQuery;
+use WebBlocks\Cms\Support\Revisions\RevisionPayloadSizes;
 
 class MaintenanceCleanup
 {
@@ -431,9 +432,9 @@ class MaintenanceCleanup
       $unmeasured->whereNull('snapshot_bytes');
     }
     $unmeasured->chunkById(500, function ($rows) use ($table, $totals): void {
-      $sizes = DB::table($table)->whereIn('id', $rows->pluck('id'))->select('id')->selectRaw('LENGTH(snapshot) as bytes')->get()->keyBy('id');
+      $sizes = RevisionPayloadSizes::forIds($table, $rows->pluck('id'));
       foreach ($rows as $row) {
-        $totals->get($row->site_id)->bytes += (int) ($sizes->get($row->id)?->bytes ?? 0);
+        $totals->get($row->site_id)->bytes += (int) ($sizes[$row->id] ?? 0);
       }
     });
 

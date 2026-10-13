@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
 use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
@@ -294,7 +295,7 @@ class SiteController extends Controller
 
   private function runtimeSafeSiteData(array $data): array
   {
-    if (! Schema::hasColumn('wbcms_sites', 'notification_settings')) {
+    if (! (Schema::hasColumn('wbcms_sites', 'notification_settings') || app(PersistentDocuments::class)->retired(new Site, 'notification_settings'))) {
       unset($data['notification_settings']);
     }
 

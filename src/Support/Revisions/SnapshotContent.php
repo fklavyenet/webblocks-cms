@@ -17,7 +17,7 @@ final class SnapshotContent
       ksort($value);
     }
     foreach ($value as $key => &$item) {
-      if ($key === 'settings' && is_string($item)) {
+      if (in_array($key, ['settings', 'meta'], true) && is_string($item)) {
         $decoded = json_decode($item, true);
         if (is_array($decoded)) {
           $item = $decoded;

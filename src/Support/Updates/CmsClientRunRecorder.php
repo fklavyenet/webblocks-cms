@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Updates;
 
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder;
 
@@ -12,7 +13,7 @@ final class CmsClientRunRecorder implements RunRecorder
 
   public function start(string $fromVersion, string $toVersion, ?int $userId): mixed
   {
-    return SystemUpdateRun::query()->create([
+    $run = SystemUpdateRun::query()->create([
       'from_version' => $fromVersion,
       'to_version' => $toVersion,
       'status' => SystemUpdateRun::STATUS_RUNNING,
@@ -20,6 +21,9 @@ final class CmsClientRunRecorder implements RunRecorder
       'started_at' => now(),
       'triggered_by_user_id' => $userId,
     ]);
+    app(CmsUpdateProgress::class)->start($run);
+
+    return $run;
   }
 
   public function finish(mixed $ref, string $status, string $summary, string $output, int $warningCount, int $durationMs): void
@@ -28,6 +32,7 @@ final class CmsClientRunRecorder implements RunRecorder
       return;
     }
 
+    app(CmsUpdateProgress::class)->finish();
     $ref->forceFill([
       'status' => $status,
       'summary' => $summary,

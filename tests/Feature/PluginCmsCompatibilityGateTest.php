@@ -74,13 +74,13 @@ class PluginCmsCompatibilityGateTest extends TestCase
     $repository = app(InstalledPluginRepository::class);
     $repository->enable('compatibility-example', '1.0.0');
     $repository->recordSetupResult('compatibility-example', '1.0.0', ['status' => 'completed', 'ran' => false, 'paths_count' => 0]);
-    $before = File::get($this->pluginPath().'/setup.json');
+    $before = $repository->setupResult('compatibility-example', '1.0.0');
     $this->mock(PluginDatabaseSetup::class)->shouldNotReceive('run');
 
     $this->postJson(self::API.'/setup')->assertStatus(409)->assertJsonPath('code', 'plugin_incompatible');
 
     $this->assertSame('1.0.0', $repository->enabledVersion('compatibility-example'));
-    $this->assertSame($before, File::get($this->pluginPath().'/setup.json'));
+    $this->assertSame($before, $repository->setupResult('compatibility-example', '1.0.0'));
     Process::assertNothingRan();
   }
 
@@ -116,7 +116,7 @@ class PluginCmsCompatibilityGateTest extends TestCase
     $repository = app(InstalledPluginRepository::class);
     $repository->enable('compatibility-example', '1.0.0');
     $repository->recordSetupResult('compatibility-example', '1.0.0', ['status' => 'completed']);
-    $before = File::get($this->pluginPath().'/setup.json');
+    $before = $repository->setupResult('compatibility-example', '1.0.0');
 
     try {
       app(PluginDatabaseSetup::class)->run($plugin);
@@ -125,7 +125,7 @@ class PluginCmsCompatibilityGateTest extends TestCase
       $this->assertStringContainsString('Requires WebBlocks CMS >=99.0.0', $exception->getMessage());
     }
 
-    $this->assertSame($before, File::get($this->pluginPath().'/setup.json'));
+    $this->assertSame($before, $repository->setupResult('compatibility-example', '1.0.0'));
     $this->assertSame('1.0.0', $repository->enabledVersion('compatibility-example'));
     Process::assertNothingRan();
   }

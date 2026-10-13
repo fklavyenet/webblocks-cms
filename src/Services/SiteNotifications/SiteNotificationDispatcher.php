@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Mail\SiteMessageAlert;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 
@@ -39,7 +40,7 @@ class SiteNotificationDispatcher
 
   public function run(): void
   {
-    if (! Schema::hasTable('wbcms_site_notification_events') || ! Schema::hasColumn('wbcms_sites', 'notification_settings')) {
+    if (! Schema::hasTable('wbcms_site_notification_events') || ! (Schema::hasColumn('wbcms_sites', 'notification_settings') || app(PersistentDocuments::class)->retired(new Site, 'notification_settings'))) {
       return;
     }
     $this->recoverInterruptedAttempts();

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use Throwable;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 
 class SchedulerHealth
 {
@@ -119,6 +120,13 @@ class SchedulerHealth
       return;
     }
     DB::transaction(function () use ($updates): void {
+      if (Schema::hasTable('wbcms_scheduler_health') && app(PersistentDocuments::class)->retired(new Site, 'notification_settings')) {
+        DB::table('wbcms_scheduler_health')->insertOrIgnore(['key' => 'notifications']);
+        DB::table('wbcms_scheduler_health')->where('key', 'notifications')->lockForUpdate()->first();
+        DB::table('wbcms_scheduler_health')->where('key', 'notifications')->update($updates);
+
+        return;
+      }
       SystemSetting::query()->firstOrCreate(['key' => self::STATE_KEY], ['value' => '{}']);
       $row = SystemSetting::query()->where('key', self::STATE_KEY)->lockForUpdate()->firstOrFail();
       $state = json_decode((string) $row->value, true);

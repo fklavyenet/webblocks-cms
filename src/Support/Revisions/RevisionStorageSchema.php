@@ -43,8 +43,9 @@ final class RevisionStorageSchema
       // Upgrade historical rows without loading or sorting their JSON payloads.
       $highWater = (int) DB::table($name)->max('id');
       DB::table($name)->whereNull('snapshot_bytes')->where('id', '<=', $highWater)->select('id')->chunkById(500, function ($rows) use ($name): void {
-        DB::table($name)->whereIn('id', $rows->pluck('id'))->whereNull('snapshot_bytes')
-          ->update(['snapshot_bytes' => DB::raw('LENGTH(snapshot)')]);
+        foreach (RevisionPayloadSizes::forIds($name, $rows->pluck('id')) as $id => $bytes) {
+          DB::table($name)->where('id', $id)->whereNull('snapshot_bytes')->update(['snapshot_bytes' => $bytes]);
+        }
       });
     }
 

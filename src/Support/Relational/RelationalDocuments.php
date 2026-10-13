@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Relational;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\CmsModel;
@@ -37,12 +38,12 @@ class RelationalDocuments
     return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
   }
 
-  public function read(CmsModel $model, array $definition, mixed $legacy): mixed
+  public function read(CmsModel $model, array $definition, mixed $legacy, ?object $row = null, ?Collection $prefetchedItems = null): mixed
   {
     if (! $model->exists || ! $this->available($definition)) {
       return $legacy;
     }
-    $row = DB::table($definition['table'])->where($definition['owner'], $model->getKey())->first();
+    $row = func_num_args() >= 4 ? $row : DB::table($definition['table'])->where($definition['owner'], $model->getKey())->first();
     if ($row === null || $row->document_kind === 'legacy') {
       return $legacy;
     }
@@ -72,7 +73,7 @@ class RelationalDocuments
       }
     }
     if ($definition['lists'] !== []) {
-      $items = DB::table('wbcms_page_runtime_items')->where('page_id', $model->getKey())->orderBy('position')->get()->groupBy('collection');
+      $items = ($prefetchedItems ?? DB::table('wbcms_page_runtime_items')->where('page_id', $model->getKey())->orderBy('position')->get())->groupBy('collection');
       foreach ($definition['lists'] as $path) {
         $column = str_replace('.', '_', $path);
         $kind = $row->{$column.'_kind'};
@@ -180,6 +181,34 @@ class RelationalDocuments
     return $value !== null && Schema::hasTable($table) ? DB::table($table)->where($key, $value)->value('id') : null;
   }
 
+  private function wherePreservedPath($query, array $definition, string $ownerTable, string $path, mixed $value, bool $null): void
+  {
+    $parts = explode('.', $path);
+    $leaf = 'n'.count($parts);
+    $nodes = function ($row) use ($definition, $ownerTable, $parts): void {
+      $row->selectRaw('1')->from('wbcms_persistent_documents as d')
+        ->join('wbcms_persistent_nodes as n0', fn ($join) => $join->on('n0.document_id', '=', 'd.id')->whereNull('n0.parent_index'))
+        ->whereColumn('d.'.$definition['owner'], $ownerTable.'.id')->where('d.attribute', 'settings');
+      foreach ($parts as $index => $part) {
+        $current = 'n'.($index + 1);
+        $parent = 'n'.$index;
+        $row->join('wbcms_persistent_nodes as '.$current, fn ($join) => $join->on($current.'.document_id', '=', 'd.id')->on($current.'.parent_index', '=', $parent.'.node_index')->where($current.'.key_text', $part));
+      }
+    };
+    if ($null) {
+      $query->whereNotExists(function ($row) use ($nodes, $leaf): void {
+        $nodes($row);
+        $row->where(fn ($present) => $present->where($leaf.'.kind', '!=', 'value')->orWhere($leaf.'.value_kind', '!=', 'null'));
+      });
+    } else {
+      $query->whereExists(function ($row) use ($nodes, $leaf, $value): void {
+        $nodes($row);
+        $column = is_bool($value) ? 'value_boolean' : (is_int($value) ? 'value_integer' : 'value');
+        $row->where($leaf.'.kind', 'value')->where($leaf.'.'.$column, $value);
+      });
+    }
+  }
+
   public function where(Builder $query, array $definition, string $path, mixed $value, bool $null = false): Builder
   {
     $group = in_array($path, $definition['groups'], true);
@@ -190,10 +219,11 @@ class RelationalDocuments
     $ownerTable = $query->getModel()->getTable();
     $table = $definition['table'];
 
+    $retired = app(PersistentDocuments::class)->retired($query->getModel(), 'settings');
     $legacyPath = 'settings->'.str_replace('.', '->', $path);
     $groupColumn = str_contains($path, '.') ? explode('.', $path)[0].'_kind' : null;
 
-    return $query->where(function ($scope) use ($table, $definition, $ownerTable, $column, $value, $null, $legacyPath, $groupColumn): void {
+    return $query->where(function ($scope) use ($table, $definition, $ownerTable, $column, $value, $null, $legacyPath, $groupColumn, $retired, $path): void {
       $owner = fn ($row) => $row->selectRaw('1')->from($table)->whereColumn($table.'.'.$definition['owner'], $ownerTable.'.id');
       $scope->whereExists(function ($row) use ($owner, $column, $value, $null, $groupColumn): void {
         $owner($row)->where('document_kind', '!=', 'legacy');
@@ -203,7 +233,7 @@ class RelationalDocuments
         $null ? $row->where(function ($missing) use ($column): void {
           $missing->whereNull($column.'_kind')->orWhere($column.'_kind', 'null');
         }) : $row->where($column, $value)->whereNotNull($column.'_kind')->where($column.'_kind', '!=', 'legacy');
-      })->orWhere(function ($legacy) use ($owner, $column, $groupColumn, $null, $legacyPath, $value): void {
+      })->orWhere(function ($legacy) use ($owner, $column, $groupColumn, $null, $legacyPath, $value, $retired, $path, $definition, $ownerTable): void {
         $legacy->where(function ($fallback) use ($owner, $column, $groupColumn): void {
           $fallback->whereNotExists(fn ($row) => $owner($row))->orWhereExists(function ($row) use ($owner, $column, $groupColumn): void {
             $owner($row)->where(function ($invalid) use ($column, $groupColumn): void {
@@ -214,7 +244,11 @@ class RelationalDocuments
             });
           });
         });
-        $null ? $legacy->whereNull($legacyPath) : $legacy->where($legacyPath, $value);
+        if ($retired) {
+          $this->wherePreservedPath($legacy, $definition, $ownerTable, $path, $value, $null);
+        } else {
+          $null ? $legacy->whereNull($legacyPath) : $legacy->where($legacyPath, $value);
+        }
       });
     });
   }

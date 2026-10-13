@@ -54,7 +54,7 @@ class SystemHealthSiteQuery
       $historyBytes = 0;
       foreach (['wbcms_page_revisions', 'wbcms_shared_slot_revisions'] as $table) {
         if (Schema::hasTable($table)) {
-          $historyBytes += (int) DB::table($table)->where('site_id', $site->id)->selectRaw('COALESCE(SUM(LENGTH(snapshot)), 0) as bytes')->value('bytes');
+          $historyBytes += (int) DB::table($table)->where('site_id', $site->id)->selectRaw((Schema::hasColumn($table, 'snapshot_bytes') ? 'COALESCE(SUM(snapshot_bytes), 0)' : 'COALESCE(SUM(LENGTH(snapshot)), 0)').' as bytes')->value('bytes');
         }
       }
 

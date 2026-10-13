@@ -24,6 +24,7 @@ use WebBlocks\Cms\Services\SiteNotifications\SiteNotificationDispatcher;
 use WebBlocks\Cms\Services\SiteNotifications\SiteNotificationMailer;
 use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+use WebBlocks\Cms\Support\Relational\PersistentSchema;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -286,6 +287,7 @@ class SiteNotificationTest extends TestCase
   {
     $site = $this->site();
     $this->assertSame(SiteNotificationPolicy::DEFAULTS, $site->notification_settings);
+    PersistentSchema::dropFreshTables();
     DB::table('wbcms_site_notification_policies')->where('site_id', $site->id)->delete();
     Schema::table('wbcms_sites', fn ($table) => $table->dropColumn('notification_settings'));
     (require dirname(__DIR__, 2).'/database/migrations/updates/2026_10_09_090000_add_site_notification_policy.php')->up();

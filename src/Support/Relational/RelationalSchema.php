@@ -120,7 +120,9 @@ final class RelationalSchema
         continue;
       }
       $highWater = (int) DB::table($model->getTable())->max('id');
-      DB::table($model->getTable())->where('id', '<=', $highWater)->select('id')->chunkById(200, function ($ids) use ($modelClass, $model, $definition, $attribute): void {
+      DB::table($model->getTable())->where('id', '<=', $highWater)->whereNotExists(function ($row) use ($definition, $model): void {
+        $row->selectRaw('1')->from($definition['table'])->whereColumn($definition['owner'], $model->getTable().'.id');
+      })->select('id')->chunkById(200, function ($ids) use ($modelClass, $model, $definition, $attribute): void {
         DB::transaction(function () use ($ids, $modelClass, $model, $definition, $attribute): void {
           $rows = DB::table($model->getTable())->whereIn('id', $ids->pluck('id'))->lockForUpdate()->get(['id', $attribute]);
           foreach ($rows as $row) {

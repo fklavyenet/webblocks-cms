@@ -66,15 +66,16 @@ class WebBlocksIconManifestSyncer
     $unchanged = 0;
     $sources = [];
 
+    $existing = IconCatalogItem::query()->get()->keyBy(fn ($icon) => $icon->source.'\0'.$icon->slug);
+    $unchangedIds = [];
     foreach ($entries as $entry) {
       $attributes = $this->normalizeEntry($entry);
       $sources[] = $attributes['source'];
       $seenSlugs[$attributes['source']][] = $attributes['slug'];
 
-      $icon = IconCatalogItem::query()->firstOrNew([
-        'source' => $attributes['source'],
-        'slug' => $attributes['slug'],
-      ]);
+      $key = $attributes['source'].'\0'.$attributes['slug'];
+      $icon = $existing->get($key) ?? new IconCatalogItem(['source' => $attributes['source'], 'slug' => $attributes['slug']]);
+      $existing->put($key, $icon);
 
       $icon->fill([
         'label' => $attributes['label'],
@@ -82,10 +83,10 @@ class WebBlocksIconManifestSyncer
         'categories' => $attributes['categories'],
         'contexts' => $attributes['contexts'],
         'keywords' => $attributes['keywords'],
-        'synced_at' => $syncedAt,
       ]);
 
       if (! $icon->exists) {
+        $icon->synced_at = $syncedAt;
         $icon->save();
         $created++;
 
@@ -93,15 +94,19 @@ class WebBlocksIconManifestSyncer
       }
 
       if ($icon->isDirty()) {
+        $icon->synced_at = $syncedAt;
         $icon->save();
         $updated++;
 
         continue;
       }
 
-      $icon->touch();
-      $icon->forceFill(['synced_at' => $syncedAt])->saveQuietly();
+      $unchangedIds[] = $icon->id;
       $unchanged++;
+    }
+
+    foreach (array_chunk($unchangedIds, 500) as $ids) {
+      IconCatalogItem::query()->whereIn('id', $ids)->update(['synced_at' => $syncedAt, 'updated_at' => $syncedAt]);
     }
 
     $deactivated = 0;

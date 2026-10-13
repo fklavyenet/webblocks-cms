@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Updates;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager;
 
 final class CmsClientBackupManager implements BackupManager
@@ -16,6 +17,8 @@ final class CmsClientBackupManager implements BackupManager
 
   public function create(string $label, ?int $userId = null): ?string
   {
+    app(CmsUpdateProgress::class)->stage('backup');
+
     return (string) $this->backups->createPreUpdateBackup($userId, $label)->getKey();
   }
 

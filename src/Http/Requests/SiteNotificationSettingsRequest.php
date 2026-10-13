@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\SiteNotificationSettingsPolicy;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 
 class SiteNotificationSettingsRequest extends FormRequest
@@ -28,7 +29,7 @@ class SiteNotificationSettingsRequest extends FormRequest
   public function after(): array
   {
     return [function ($validator): void {
-      if (! $this->isMethod('GET') && ! Schema::hasColumn('wbcms_sites', 'notification_settings')) {
+      if (! $this->isMethod('GET') && ! (Schema::hasColumn('wbcms_sites', 'notification_settings') || app(PersistentDocuments::class)->retired(new Site, 'notification_settings'))) {
         $validator->errors()->add('notification_settings', __('webblocks-cms::notifications.schema_required'));
       }
       $keys = array_keys(SiteNotificationPolicy::DEFAULTS);

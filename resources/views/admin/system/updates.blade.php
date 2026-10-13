@@ -238,6 +238,7 @@
                         <th>{{ $adminText('updates.history.from') }}</th>
                         <th>{{ $adminText('updates.history.to') }}</th>
                         <th>{{ $adminText('updates.history.status') }}</th>
+                        <th>{{ $adminText('updates.duration') }}</th>
                         <th>{{ $adminText('updates.history.when') }}</th>
                         <th class="wb-table-actions">{{ $adminText('updates.history.actions') }}</th>
                       </tr>
@@ -248,6 +249,7 @@
                           <td><strong>{{ $run->from_version ?: '—' }}</strong></td>
                           <td><strong>{{ $run->to_version ?: '—' }}</strong></td>
                           <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $adminText('updates.statuses.'.$run->status) }}</span></td>
+                          <td class="wb-text-sm">{{ $run->durationLabel() }}</td>
                           <td class="wb-text-sm">{{ optional($run->finished_at)->format('Y-m-d H:i') ?? optional($run->started_at)->format('Y-m-d H:i') ?? '—' }}</td>
                           <td class="wb-table-actions">
                             @if ($run->output)
@@ -302,6 +304,7 @@
       data-webblocks-update-progress-modal
       data-wb-health-url="{{ route('admin.system.updates.indicator') }}"
       data-wb-return-url="{{ route('admin.system.updates.index') }}"
+      data-wb-elapsed-label="{{ $adminText('updates.elapsed') }}"
       data-wb-waiting-label="{{ $adminText('updates.waiting_body') }}"
       hidden
     >
@@ -314,6 +317,7 @@
             <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
             <div class="wb-stack wb-stack-1">
               <strong id="wb-update-progress-status">{{ $adminText('updates.updating_body') }}</strong>
+              <span id="wb-update-elapsed" class="wb-text-sm" role="timer" aria-live="off"></span>
               <span class="wb-text-sm wb-text-muted">{{ $adminText('updates.keep_open') }}</span>
             </div>
           </div>

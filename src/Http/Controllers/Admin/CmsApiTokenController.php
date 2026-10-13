@@ -14,6 +14,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -139,7 +140,7 @@ class CmsApiTokenController extends Controller
     }
 
     foreach (['id', 'name', 'token_hash', 'token_preview', 'token_type', 'capabilities', 'allowed_site_ids', 'expires_at', 'created_by_user_id', 'last_used_at', 'last_used_ip', 'last_used_user_agent', 'revoked_at', 'created_at', 'updated_at'] as $column) {
-      if (! Schema::hasColumn('wbcms_cms_api_tokens', $column)) {
+      if (! Schema::hasColumn('wbcms_cms_api_tokens', $column) && ! app(PersistentDocuments::class)->retired(new CmsApiToken, $column)) {
         return false;
       }
     }

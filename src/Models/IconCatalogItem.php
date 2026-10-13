@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 
 class IconCatalogItem extends CmsModel
 {
@@ -65,8 +66,12 @@ class IconCatalogItem extends CmsModel
       $builder
         ->where('label', 'like', '%'.$term.'%')
         ->orWhere('slug', 'like', '%'.$term.'%')
-        ->orWhere('css_class', 'like', '%'.$term.'%')
-        ->orWhere('keywords', 'like', '%'.$term.'%');
+        ->orWhere('css_class', 'like', '%'.$term.'%');
+      if (app(PersistentDocuments::class)->retired(new self, 'keywords')) {
+        $builder->orWhereExists(fn ($items) => $items->selectRaw('1')->from('wbcms_persistent_documents as d')->join('wbcms_persistent_items as i', 'i.document_id', '=', 'd.id')->whereColumn('d.icon_id', 'wbcms_icon_catalog_items.id')->where('d.attribute', 'keywords')->where('i.value', 'like', '%'.$term.'%'));
+      } else {
+        $builder->orWhere('keywords', 'like', '%'.$term.'%');
+      }
     });
   }
 
@@ -90,9 +95,11 @@ class IconCatalogItem extends CmsModel
     }
 
     return $query->where(function (Builder $builder) use ($tag): void {
-      $builder
-        ->where('categories', 'like', '%"'.$tag.'"%')
-        ->orWhere('contexts', 'like', '%"'.$tag.'"%');
+      if (app(PersistentDocuments::class)->retired(new self, 'categories')) {
+        $builder->whereExists(fn ($items) => $items->selectRaw('1')->from('wbcms_persistent_documents as d')->join('wbcms_persistent_items as i', 'i.document_id', '=', 'd.id')->whereColumn('d.icon_id', 'wbcms_icon_catalog_items.id')->whereIn('d.attribute', ['categories', 'contexts'])->where('i.value', $tag));
+      } else {
+        $builder->where('categories', 'like', '%"'.$tag.'"%')->orWhere('contexts', 'like', '%"'.$tag.'"%');
+      }
     });
   }
 

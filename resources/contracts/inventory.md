@@ -1223,3 +1223,22 @@ JSON columns are synchronized rollback copies. Update migration rollback retains
 SQL data; drift written by an older package must be reconciled before returning
 to SQL authority. Full revision snapshot and remaining legacy content/runtime
 storage are outside this phase.
+
+
+CMS 1.98.7 prepares the remaining persistence in SQL: page/slot/layout settings,
+block and translated metadata, full page/shared-slot snapshots, import/export
+summaries and manifests, import continuation maps, backup-restore data, update
+request receipts, icon lists and moderation reasons. Snapshots remain independent
+complete restoration documents, represented by historical typed records and
+ordered structure nodes. Historical identifiers are independent of live content
+lifetimes. Existing wire field names and nested serialized settings remain intact.
+Plugin lifecycle state and promotion plans now write SQL; plain emergency disable
+markers remain available if the database cannot be reached. Legacy files are
+imported once, preserving newer SQL changes on repeated migrations.
+
+This is the preparation bridge for column retirement. The previous updater's
+in-flight API request still needs its physical result column to finish, so 1.98.7
+retains physical copies. Runtime adapters also support their absence on the next
+update. Update History displays duration, and the update modal shows elapsed time
+and the active operation. These observations do not initiate updates or grant any
+new API capability.

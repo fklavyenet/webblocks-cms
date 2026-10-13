@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 
 final class SiteNotificationPolicy
 {
@@ -17,7 +18,7 @@ final class SiteNotificationPolicy
   {
     $raw = $site->notification_settings;
     if ($raw === null) {
-      return $site->exists && ! Schema::hasColumn('wbcms_sites', 'notification_settings') ? self::LEGACY : self::DEFAULTS;
+      return $site->exists && ! (Schema::hasColumn('wbcms_sites', 'notification_settings') || app(PersistentDocuments::class)->retired(new Site, 'notification_settings')) ? self::LEGACY : self::DEFAULTS;
     }
     $raw = is_array($raw) ? $raw : [];
 

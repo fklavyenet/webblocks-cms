@@ -97,7 +97,7 @@ final class StructuredSettingsSchema
       $attributes = array_values(array_filter(SettingDefinitions::attributes($model), fn (string $attribute) => Schema::hasColumn($model->getTable(), $attribute)));
       $owner = $model instanceof Block ? 'block_id' : 'application_id';
       $highWater = (int) DB::table($model->getTable())->max('id');
-      DB::table($model->getTable())->where('id', '<=', $highWater)->select('id')->chunkById(200, function ($ids) use ($model, $class, $attributes, $owner): void {
+      DB::table($model->getTable())->where('id', '<=', $highWater)->whereRaw('(select count(*) from wbcms_setting_documents where '.$owner.' = '.$model->getTable().'.id) < ?', [count($attributes)])->select('id')->chunkById(200, function ($ids) use ($model, $class, $attributes, $owner): void {
         DB::transaction(function () use ($ids, $model, $class, $attributes, $owner): void {
           foreach ($ids as $identity) {
             // Read one payload at a time: no sorted JSON or growing payload batch.

@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Relational\PersistentSchema;
 use WebBlocks\Cms\Support\Relational\RelationalSchema;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
@@ -56,6 +57,7 @@ class RelationalRuntimeStorageTest extends TestCase
   {
     $page = $this->page();
     $token = $this->token();
+    PersistentSchema::dropFreshTables();
     RelationalSchema::dropFreshTables();
     $document = ['public_shell' => 'default', 'shared_slot_id' => '99999', 'source_sync' => ['type' => 'markdown', 'source_id' => 'abc', 'source_path' => '/docs', 'managed_slots' => ['body', 'body']], 'staged_update' => null, 'revision_restore_candidate' => 'broken', 'seo' => ['title' => 'Keep']];
     $raw = json_encode($document);
@@ -86,6 +88,7 @@ class RelationalRuntimeStorageTest extends TestCase
   public function migration_crosses_batch_boundaries_without_skipping_or_overwriting_rows(): void
   {
     $first = $this->page();
+    PersistentSchema::dropFreshTables();
     RelationalSchema::dropFreshTables();
     $rows = [];
     for ($i = 0; $i < 405; $i++) {

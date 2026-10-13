@@ -14,6 +14,7 @@ use WebBlocks\Cms\Support\Database\CmsTableCompatibilityViews;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunReconciler;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
@@ -80,6 +81,7 @@ class SystemUpdateController extends Controller
     $this->publisherClient->configure();
     $payload = app(AdminUpdateIndicator::class)->payload();
     $payload['url'] = route('admin.system.updates.index');
+    $payload['progress'] = app(CmsUpdateProgress::class)->payload();
 
     return response()->json($payload);
   }

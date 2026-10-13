@@ -116,15 +116,12 @@ class StructuredSettings
     if (! $this->available()) {
       return;
     }
-    $attributes = array_values(array_filter(array_diff(SettingDefinitions::attributes($model), array_keys($model->getAttributes())), function (string $attribute) use ($model): bool {
-      $key = $model->getTable().'.'.$attribute;
-
-      return $this->columns[$key] ??= Schema::hasColumn($model->getTable(), $attribute);
-    }));
+    $attributes = array_diff(SettingDefinitions::attributes($model), array_keys($model->getAttributes()));
     if ($attributes === []) {
       return;
     }
-    $raw = DB::table($model->getTable())->where('id', $model->getKey())->first(['id', ...$attributes]);
+    $physical = array_values(array_filter($attributes, fn ($attribute) => Schema::hasColumn($model->getTable(), $attribute)));
+    $raw = DB::table($model->getTable())->where('id', $model->getKey())->first(['id', ...$physical]);
     $record = $model->newFromBuilder((array) $raw);
     foreach ($attributes as $attribute) {
       [$exists] = $this->read($record, $attribute);
