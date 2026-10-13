@@ -71,7 +71,7 @@ class SiteExportDataBuilder
     $applicationHandles = $blocks->map(function (Block $block): string {
       $settings = $block->settings;
       if (! is_array($settings)) {
-        $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+        $settings = json_decode((string) $block->serializedSettings(), true);
       }
 
       return trim((string) data_get($settings, 'application_handle', ''));
@@ -245,7 +245,7 @@ class SiteExportDataBuilder
           ? $slot->sharedSlot()->value('handle')
           : null,
         'sort_order' => $slot->sort_order,
-        'settings' => $slot->getRawOriginal('settings'),
+        'settings' => $slot->serializedSettings(),
         'created_at' => $slot->created_at?->toDateTimeString(),
         'updated_at' => $slot->updated_at?->toDateTimeString(),
       ])->all(),
@@ -297,7 +297,7 @@ class SiteExportDataBuilder
         'media_id' => $includesMedia ? $block->media_id : null,
         'variant' => $block->getRawOriginal('variant'),
         'meta' => $block->getRawOriginal('meta'),
-        'settings' => $block->getRawOriginal('settings'),
+        'settings' => $block->serializedSettings(),
         'status' => $block->status,
         'is_system' => (bool) $block->is_system,
         'created_at' => $block->created_at?->toDateTimeString(),

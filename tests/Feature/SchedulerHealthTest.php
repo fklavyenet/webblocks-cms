@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
@@ -77,7 +78,7 @@ class SchedulerHealthTest extends TestCase
   #[Test]
   public function future_or_relative_timestamps_are_not_accepted_as_health_evidence(): void
   {
-    SystemSetting::create(['key' => SchedulerHealth::STATE_KEY, 'value' => json_encode(['scheduler_last_seen_at' => 'now', 'notifications_completed_at' => now()->addDays(2)->toIso8601String()])]);
+    DB::table('wbcms_scheduler_health')->insert(['key' => 'notifications', 'scheduler_last_seen_at' => 'now', 'notifications_completed_at' => now()->addDays(2)->toIso8601String()]);
     $snapshot = $this->health()->snapshot();
     $this->assertSame('unverified', $snapshot['status']);
     $this->assertNull($snapshot['last_seen_at']);

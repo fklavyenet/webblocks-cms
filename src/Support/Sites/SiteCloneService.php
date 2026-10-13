@@ -385,7 +385,7 @@ class SiteCloneService
       ->get();
 
     foreach ($blocks as $block) {
-      $attributes = Arr::except($block->getAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
+      $attributes = Arr::except($block->portableAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
       $attributes['page_id'] = $pageMap[$block->page_id];
       $attributes['parent_id'] = null;
       $attributes['created_at'] = $block->created_at;

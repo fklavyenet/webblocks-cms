@@ -144,7 +144,7 @@ class PageDuplicator
       $blockMap = [];
 
       foreach ($blocks as $block) {
-        $attributes = Arr::except($block->getAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
+        $attributes = Arr::except($block->portableAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
         $attributes['page_id'] = $newPage->id;
         $attributes['parent_id'] = null;
 

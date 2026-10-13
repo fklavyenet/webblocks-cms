@@ -916,7 +916,7 @@ class BlockController extends Controller
 
       if ($localeCode !== null && $columnItem->exists) {
         $itemData['url'] = $columnItem->getRawOriginal('url');
-        $itemData['settings'] = $columnItem->getRawOriginal('settings');
+        $itemData['settings'] = $columnItem->serializedSettings();
       }
 
       $payload = $itemData + [
@@ -982,7 +982,7 @@ class BlockController extends Controller
 
       if ($localeCode !== null && $itemId && $existingItems->has($itemId)) {
         $itemData['url'] = $existingItems[$itemId]->getRawOriginal('url');
-        $itemData['settings'] = $existingItems[$itemId]->getRawOriginal('settings');
+        $itemData['settings'] = $existingItems[$itemId]->serializedSettings();
       }
 
       $payload = $itemData + [

@@ -94,6 +94,14 @@ Internal Content API clients must honour both budgets advertised by `openapi.jso
 
 An active Super admin can manage request budgets and public search query bounds under System → Settings → Security. The eight installation-wide controls cover page and search requests per minute/hour, API requests per token-IP and per IP per minute, and search query characters/words. Saved database values override installation configuration on subsequent requests without changing server files or resetting active counters. Request budgets must be integers from 1 to 1,000,000; search query bounds are 1–2,000 characters and 1–100 words. Use installation defaults removes only these overrides and preserves existing positive environment/configuration budgets; default search bounds remain 200 characters and 20 words. Site admins, editors and inactive users cannot save or restore these settings. No Internal Content API security-settings write endpoint is introduced.
 
+## Revision Capture and Bulk Plans
+
+Page and Shared Slot versions remain complete JSON safety snapshots. Consecutive captures of the same owner reuse the latest content version when a canonical content hash matches; root capture time and object key order do not create a content change. Block/list order and editorial/workflow fields remain significant. Every capture still records its actor, source, event, label, reason and time in a separate capture event linked to the version. Existing historical versions are not merged or deleted by this change. Explicit pre-change safety checkpoints and restore/publication checkpoints remain distinct versions.
+
+A content plan captures one completed page state after all its page-owned blocks and Shared Slot assignments, plus one completed state per newly created Shared Slot. Existing-page assignment plans preserve one pre-change safety checkpoint per affected page. Destructive replacement and promotion keep their pre-change checkpoint. Independent HTTP requests remain separate logical operations. Existing Shared Slot assignment targets are checked against the human-only block policy during validation and again before assignment; rejected plans create no versions or capture events. Failed transactions roll back both content and capture events.
+
+The page-version detail API includes bounded `inspection.capture_history` with up to 100 recent events and a `has_more` flag; access uses the existing version-read permission. Historical rows retain their original revision metadata when no capture events exist. Snapshot size metadata is measured outside ordered queries. Cleanup scans fixed-size metadata batches through an ordered continuation key, preserves the age/newest-version rules, and rechecks active restore sources and the newest-version floor under owner locks before deleting each batch.
+
 ## HTML Block API Policy
 
 The target product contract is:
@@ -1185,3 +1193,16 @@ evidence for review, not authority to publish content, restore a backup, or upda
 Search checks compare eligible published page/locale scopes with index rows;
 they do not prove text freshness. Backup availability does not prove restore
 integrity. Update readiness remains separate from normal site operation.
+
+## Relational runtime fields and compatibility
+
+CMS 1.98.5 stores page layout/shared-slot references, staged-update and restore
+markers, source-sync fields and managed-slot lists in relational tables. Block
+application references, token capability/site/network lists, site notification
+policy and scheduler health also use SQL as their authority. The existing API
+field names, nested structures, list order and null/empty distinctions are
+unchanged. Existing JSON fields remain compatibility copies during this
+transition; they are refreshed from authoritative values on supported model
+writes. Unmapped block settings and full revision snapshots retain their
+existing storage contract for later migration. Historical malformed values and
+unresolved references are preserved, rather than silently normalized or dropped.

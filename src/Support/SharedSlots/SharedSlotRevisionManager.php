@@ -14,6 +14,7 @@ use WebBlocks\Cms\Models\SharedSlotRevision;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
+use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
 
 class SharedSlotRevisionManager
 {
@@ -25,6 +26,7 @@ class SharedSlotRevisionManager
     private readonly SharedSlotSchema $schema,
     private readonly CurrentActorResolver $currentActorResolver,
     private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
+    private readonly RevisionCaptureRecorder $recorder,
   ) {}
 
   public function canView(User $user, SharedSlot $sharedSlot): bool
@@ -59,25 +61,9 @@ class SharedSlotRevisionManager
       throw new \RuntimeException('Shared Slot revisions are not ready. Run the latest migrations before using revisions.');
     }
 
-    $sharedSlot = $sharedSlot->fresh(['site']) ?? $sharedSlot->loadMissing('site');
-    $snapshot = $this->snapshot($sharedSlot);
-
-    if (! $force) {
-      $latest = SharedSlotRevision::query()
-        ->where('shared_slot_id', $sharedSlot->id)
-        ->latest('id')
-        ->first();
-
-      if ($latest && ($latest->snapshot ?? []) == $snapshot) {
-        return $latest;
-      }
-    }
-
     $resolvedActor = $this->currentActorResolver->resolve($actor, $source);
 
-    return SharedSlotRevision::query()->create([
-      'shared_slot_id' => $sharedSlot->id,
-      'site_id' => $sharedSlot->site_id,
+    return $this->recorder->record($sharedSlot, SharedSlotRevision::class, 'shared_slot_id', fn (SharedSlot $lockedSlot): array => $this->snapshot($lockedSlot), [
       'user_id' => $resolvedActor['user_id'],
       'created_by_user_id' => $resolvedActor['user_id'],
       'source' => $resolvedActor['source'],
@@ -85,9 +71,8 @@ class SharedSlotRevisionManager
       'source_event' => $sourceEvent,
       'label' => $label,
       'summary' => $summary,
-      'snapshot' => $snapshot,
       'restored_from_shared_slot_revision_id' => $restoredFrom?->id,
-    ]);
+    ], $force || $restoredFrom !== null);
   }
 
   public function restore(SharedSlot $sharedSlot, SharedSlotRevision $revision, User $actor): void
@@ -162,7 +147,7 @@ class SharedSlotRevisionManager
       'source_page' => [
         'slug' => $sourcePage->slug,
         'page_type' => $sourcePage->page_type,
-        'settings' => $sourcePage->getRawOriginal('settings'),
+        'settings' => $sourcePage->serializedSettings(),
         'slot_type_id' => $sourcePage->slots->first()?->slot_type_id,
       ],
       'blocks' => $blocks
@@ -182,7 +167,7 @@ class SharedSlotRevisionManager
           'media_id' => $block->media_id,
           'variant' => $block->variant,
           'meta' => $block->meta,
-          'settings' => $block->getRawOriginal('settings'),
+          'settings' => $block->serializedSettings(),
           'status' => $block->status,
           'is_system' => $block->is_system,
           'block_media' => $block->blockAssets

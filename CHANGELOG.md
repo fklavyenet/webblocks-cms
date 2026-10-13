@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.98.5
+
+- Fix Cleanup failures on large revision histories by sorting indexed revision metadata in bounded keyset batches, measuring snapshot sizes once, and rechecking protected restore sources before deletion. Keep every historical snapshot and the configured retention floor.
+- Reuse the latest full snapshot when content has not changed, while recording every capture event separately. Capture complete final content-plan results once per affected page or shared slot and retain explicit restore/promotion safety checkpoints.
+- Move page runtime references, staging/source metadata and managed-slot lists, block application references, API token access lists, site notification policy and scheduler state into relational tables. Backfill existing data in bounded batches and preserve API fields, ordering, null/empty distinctions and existing JSON compatibility copies for package rollback.
+- Use relational values consistently in queries, rendering, cloning, exports and revisions. Keep malformed historical values and unresolved references intact; apply foreign-key cleanup to resolved pointers without deleting their original reference values.
+
 ## 1.98.4
 
 - Preserve all localized Gallery item alt text, captions, overlay titles and descriptions, plus Contact Form consent wording, when creating and promoting staged page updates. Keep media order and independent item records intact.

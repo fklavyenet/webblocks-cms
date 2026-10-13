@@ -91,6 +91,8 @@ use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
+use WebBlocks\Cms\Support\Relational\RelationalDocuments;
+use WebBlocks\Cms\Support\Relational\TokenRelations;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
@@ -884,6 +886,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->bind(ClientBackupManager::class, CmsClientBackupManager::class);
     $this->app->bind(ClientInstalledVersionStore::class, CmsClientInstalledVersionStore::class);
     $this->app->bind(ClientPostApplyRunner::class, CmsClientPostApplyRunner::class);
+    $this->app->singleton(RelationalDocuments::class);
+    $this->app->singleton(TokenRelations::class);
     $this->app->bind(ClientRunRecorder::class, CmsClientRunRecorder::class);
   }
 

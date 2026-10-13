@@ -102,6 +102,11 @@ class SchedulerHealth
     if (! Schema::hasTable((new SystemSetting)->getTable())) {
       return [];
     }
+    if (Schema::hasTable('wbcms_scheduler_health')) {
+      $row = DB::table('wbcms_scheduler_health')->where('key', 'notifications')->first();
+
+      return $row === null ? [] : array_diff_key((array) $row, ['key' => true]);
+    }
     $raw = SystemSetting::query()->where('key', self::STATE_KEY)->value('value');
     $state = is_string($raw) ? json_decode($raw, true) : null;
 
@@ -117,6 +122,12 @@ class SchedulerHealth
       SystemSetting::query()->firstOrCreate(['key' => self::STATE_KEY], ['value' => '{}']);
       $row = SystemSetting::query()->where('key', self::STATE_KEY)->lockForUpdate()->firstOrFail();
       $state = json_decode((string) $row->value, true);
+      if (Schema::hasTable('wbcms_scheduler_health')) {
+        DB::table('wbcms_scheduler_health')->insertOrIgnore(['key' => 'notifications']);
+        $current = DB::table('wbcms_scheduler_health')->where('key', 'notifications')->lockForUpdate()->first();
+        DB::table('wbcms_scheduler_health')->where('key', 'notifications')->update($updates);
+        $updates = array_replace(array_diff_key((array) $current, ['key' => true]), $updates);
+      }
       $row->update(['value' => json_encode(array_replace(is_array($state) ? $state : [], $updates), JSON_THROW_ON_ERROR)]);
     });
   }

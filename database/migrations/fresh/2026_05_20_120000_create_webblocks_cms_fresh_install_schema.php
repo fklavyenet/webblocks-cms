@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\Revisions\RevisionStorageSchema;
 
 return new class extends Migration
 {
@@ -15,11 +16,13 @@ return new class extends Migration
     $this->createLayoutAndPageTables();
     $this->createBlockAndNavigationTables();
     $this->createOperationalTables();
+    RevisionStorageSchema::ensure();
   }
 
   public function down(): void
   {
     foreach ([
+      'wbcms_revision_capture_events',
       'wbcms_navigation_item_translations',
       'wbcms_block_gallery_item_translations',
       'wbcms_block_contact_form_translations',
@@ -45,10 +48,11 @@ return new class extends Migration
       'wbcms_page_revision_candidates',
       'wbcms_shared_slot_revisions',
       'wbcms_shared_slot_blocks',
+      'wbcms_page_slots',
+      'wbcms_navigation_items',
       'wbcms_shared_slots',
       'wbcms_page_revisions',
       'wbcms_block_media',
-      'wbcms_page_slots',
       'wbcms_blocks',
       'wbcms_page_translations',
       'wbcms_pages',
@@ -63,7 +67,6 @@ return new class extends Migration
       'wbcms_sites',
       'wbcms_media',
       'wbcms_media_folders',
-      'wbcms_navigation_items',
       'wbcms_system_settings',
       'wbcms_block_types',
       'wbcms_slot_types',

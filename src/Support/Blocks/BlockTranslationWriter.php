@@ -104,7 +104,7 @@ class BlockTranslationWriter
     $updates = array_fill_keys($this->canonicalBlockFieldsForFamily($family), null);
 
     if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
-      $settings = $this->decodeSettings($block->getRawOriginal('settings'));
+      $settings = $this->decodeSettings($block->serializedSettings());
 
       foreach ($this->registry->translatedFieldsFor($block) as $field) {
         unset($settings[$field]);
@@ -116,7 +116,7 @@ class BlockTranslationWriter
     }
 
     if ($family === 'contact_form') {
-      $settings = $this->decodeSettings($block->getRawOriginal('settings'));
+      $settings = $this->decodeSettings($block->serializedSettings());
 
       unset($settings['submit_label'], $settings['success_message'], $settings['consent_label']);
 
@@ -257,7 +257,7 @@ class BlockTranslationWriter
       return $existing;
     }
 
-    $rawSettings = $this->decodeSettings($block->getRawOriginal('settings'));
+    $rawSettings = $this->decodeSettings($block->serializedSettings());
 
     return trim((string) ($rawSettings[$field] ?? '')) ?: $default;
   }
@@ -354,7 +354,7 @@ class BlockTranslationWriter
   {
     $posted = $data['plugin_settings'] ?? null;
     $posted = is_array($posted) ? $posted : [];
-    $stored = $this->decodeSettings($block->getRawOriginal('settings'));
+    $stored = $this->decodeSettings($block->serializedSettings());
     $payload = [];
 
     foreach ($this->registry->translatedFieldsFor($block) as $field) {

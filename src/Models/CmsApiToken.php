@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CmsApiToken extends CmsModel
 {
+  protected $hidden = ['capabilities_mode', 'allowed_site_ids_mode', 'allowed_ip_ranges_mode'];
+
   protected $fillable = [
     'name',
     'token_hash',

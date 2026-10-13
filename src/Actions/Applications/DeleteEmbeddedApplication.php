@@ -10,7 +10,7 @@ class DeleteEmbeddedApplication
 {
   public function handle(EmbeddedApplication $application): void
   {
-    $used = Block::query()->where('settings->application_handle', $application->handle)->exists();
+    $used = Block::query()->whereRuntimeSetting('application_handle', $application->handle)->exists();
     if ($used) {
       throw ValidationException::withMessages(['application' => 'Disable applications that are in use; remove their blocks before deleting them.']);
     }

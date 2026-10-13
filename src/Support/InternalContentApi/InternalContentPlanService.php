@@ -263,6 +263,7 @@ class InternalContentPlanService
       $data = [];
       $page = null;
       $sharedSlotsByHandle = [];
+      $assignmentPages = [];
 
       if ($plan['mode'] === self::MODE_CREATE_STAGED_UPDATE) {
         $sourcePage = Page::query()
@@ -344,6 +345,7 @@ class InternalContentPlanService
             ? 'internal_content_api_staged_update_replace'
             : 'internal_content_api_replace',
           source: 'internal-content-api',
+          force: true,
         );
 
         $slotTypes = SlotType::query()->whereIn('slug', array_keys($plan['replace_slots']))->get()->keyBy('slug');
@@ -442,6 +444,7 @@ class InternalContentPlanService
           reason: 'Published page state was saved before staged content promotion.',
           event: 'internal_content_api_staged_update_promote',
           source: 'internal-content-api',
+          force: true,
         );
 
         $deletedCount = $this->promoteStagedSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots']);
@@ -470,6 +473,7 @@ class InternalContentPlanService
           reason: 'Staged page-owned content was promoted onto the published page.',
           event: 'internal_content_api_staged_update_promote',
           source: 'internal-content-api',
+          force: true,
         );
 
         $stagedPageId = $stagedPage->id;
@@ -580,6 +584,17 @@ class InternalContentPlanService
           throw new \InvalidArgumentException('Page slot Shared Slot assignment references an unresolved page or Shared Slot.');
         }
 
+        if (! isset($assignmentPages[$targetPage->id]) && $targetPage->id !== $page?->id) {
+          $this->pageRevisionManager->capture(
+            $targetPage,
+            label: 'Pre Internal Content API Shared Slot assignments',
+            reason: 'Existing page state was saved before the complete assignment plan.',
+            event: 'internal_content_api_slot_assignments',
+            source: 'internal-content-api',
+            force: true,
+          );
+        }
+        $assignmentPages[$targetPage->id] = $targetPage;
         $pageSlot = $this->operations->assignSharedSlot($targetPage, $assignment['slot'], $sharedSlot, 'plan.page_slot_shared_slots', $errors);
 
         if ($errors !== [] || ! $pageSlot) {
@@ -587,6 +602,23 @@ class InternalContentPlanService
         }
 
         $writes[] = ['type' => 'page_slot_shared_slot', 'id' => $pageSlot->id];
+      }
+
+      if ($page) {
+        $assignmentPages[$page->id] = $page;
+      }
+      foreach ($assignmentPages as $changedPage) {
+        $revision = $this->pageRevisionManager->capture(
+          $changedPage,
+          label: 'Internal Content API plan applied',
+          reason: 'The complete page state was saved after all plan blocks and slot assignments.',
+          event: 'internal_content_api_plan_applied',
+          source: 'internal-content-api',
+        );
+        $writes[] = ['type' => 'page_revision', 'id' => $revision->id];
+      }
+      if ($page) {
+        $data['page'] = $this->presenter->page($page->fresh(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot', 'blocks.blockType', 'blocks.slotType']), true);
       }
 
         return ['writes' => $writes, 'data' => $data];
@@ -777,9 +809,9 @@ class InternalContentPlanService
     return Page::query()
       ->where('site_id', $sourcePage->site_id)
       ->where('status', Page::STATUS_DRAFT)
-      ->where('settings->staged_update->type', self::STAGED_UPDATE_TYPE)
-      ->where('settings->staged_update->source_page_id', $sourcePage->id)
-      ->where('settings->staged_update->state', 'draft')
+      ->whereRuntimeSetting('staged_update.type', self::STAGED_UPDATE_TYPE)
+      ->whereRuntimeSetting('staged_update.source_page_id', $sourcePage->id)
+      ->whereRuntimeSetting('staged_update.state', 'draft')
       ->orderByDesc('id')
       ->lockForUpdate()
       ->first();
@@ -853,7 +885,7 @@ class InternalContentPlanService
     $blockMap = [];
 
     foreach ($blocks as $block) {
-      $attributes = Arr::except($block->getAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
+      $attributes = Arr::except($block->portableAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
       $attributes['page_id'] = $targetPage->id;
       $attributes['parent_id'] = null;
 
@@ -1069,7 +1101,7 @@ class InternalContentPlanService
   private function pageHasHumanOnlyBlock(Page $page): bool
   {
     $pageIds = Page::query()
-      ->where('settings->staged_update->source_page_id', $page->id)
+      ->whereRuntimeSetting('staged_update.source_page_id', $page->id)
       ->pluck('id')
       ->map(fn ($id): int => (int) $id)
       ->push($page->id)
@@ -1960,6 +1992,13 @@ class InternalContentPlanService
         $errors[] = $this->error('plan.page_slot_shared_slots.'.$index.'.page', 'Page must be an existing page ID or the page created by this plan.');
       }
 
+      $existingSharedSlot = $site && $sharedSlot !== ''
+        ? SharedSlot::query()->where('site_id', $site->id)->where('handle', $sharedSlot)->first()
+        : null;
+      if ($existingSharedSlot && $this->operations->sharedSlotHasHumanOnlyBlock($existingSharedSlot)) {
+        $errors[] = $this->apiAuthoringPolicy->error('plan.page_slot_shared_slots.'.$index.'.shared_slot');
+      }
+
       if ($pageId !== null && $slot !== '' && $sharedSlot !== '') {
         $normalized[] = [
           'page_id' => $pageId,
@@ -2376,7 +2415,8 @@ class InternalContentPlanService
     foreach ($data as $key => $value) {
       $keyString = strtolower((string) $key);
 
-      if (! in_array($keyString, $allowedKeys, true) && in_array($keyString, self::FORBIDDEN_KEYS, true)) {
+      $assignmentReference = $keyString === 'shared_slot' && preg_match('/^plan\.page_slot_shared_slots\.\d+$/D', $path) === 1;
+      if (! in_array($keyString, $allowedKeys, true) && in_array($keyString, self::FORBIDDEN_KEYS, true) && ! $assignmentReference) {
         $errors[] = $this->error($path.'.'.$key, 'This operation is outside Internal Content API Phase 1.');
       }
 

@@ -27,6 +27,7 @@ use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class InternalContentApiOperations
@@ -137,6 +138,7 @@ class InternalContentApiOperations
     private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
     private readonly ApplicationRegistry $applicationRegistry,
     private readonly ApplicationSettingsValidator $applicationSettingsValidator,
+    private readonly SharedSlotRevisionManager $revisionManager,
   ) {}
 
   public function resolveSite(mixed $value, string $path, array &$errors): ?Site
@@ -446,6 +448,13 @@ class InternalContentApiOperations
       }
 
       $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+      $this->revisionManager->capture(
+        $sharedSlot,
+        sourceEvent: 'shared_slot_created',
+        label: 'Internal Content API Shared Slot created',
+        summary: 'The complete Shared Slot block tree was saved after creation.',
+        source: 'internal-content-api',
+      );
 
       return $sharedSlot->fresh(['site', 'slotBlocks.block.blockType', 'slotBlocks.block.slotType']);
     });
@@ -653,6 +662,11 @@ class InternalContentApiOperations
 
   public function assignSharedSlot(Page $page, string $slotName, SharedSlot $sharedSlot, string $path, array &$errors): ?PageSlot
   {
+    if ($this->sharedSlotHasHumanOnlyBlock($sharedSlot)) {
+      $errors[] = $this->apiAuthoringPolicy->error($path.'.shared_slot');
+
+      return null;
+    }
     if ((int) $sharedSlot->site_id !== (int) $page->site_id) {
       $errors[] = $this->error($path.'.shared_slot', 'Shared Slot must belong to the same site as the page.');
 
@@ -694,6 +708,17 @@ class InternalContentApiOperations
     ]);
 
     return $slot->fresh(['slotType', 'sharedSlot']);
+  }
+
+  public function sharedSlotHasHumanOnlyBlock(SharedSlot $sharedSlot): bool
+  {
+    // Validation must inspect existing content without creating/repairing a source page.
+    $sourcePage = $this->sharedSlotSourcePages->findFor($sharedSlot);
+    $blocks = $sourcePage
+      ? $sourcePage->blocks()->with('blockType')->get(['id', 'type', 'block_type_id'])
+      : Block::query()->whereIn('id', $sharedSlot->slotBlocks()->select('block_id'))->with('blockType')->get(['id', 'type', 'block_type_id']);
+
+    return $this->apiAuthoringPolicy->scopeHasHumanOnlyBlock($blocks);
   }
 
   public function rejectForbiddenKeys(array $data, string $path, array &$errors): void

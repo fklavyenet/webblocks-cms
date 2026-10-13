@@ -1945,7 +1945,7 @@ class InternalContentResourceController extends Controller
 
   private function mergeSettings(Block $block, Request $request): array
   {
-    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+    $settings = json_decode((string) $block->serializedSettings(), true);
     $settings = is_array($settings) ? $settings : [];
 
     if (! $request->has('settings')) {

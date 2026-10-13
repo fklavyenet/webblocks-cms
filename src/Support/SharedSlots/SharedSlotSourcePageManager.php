@@ -17,7 +17,7 @@ class SharedSlotSourcePageManager
   {
     return Page::query()
       ->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)
-      ->where('settings->shared_slot_id', $sharedSlot->id)
+      ->whereRuntimeSetting('shared_slot_id', $sharedSlot->id)
       ->first();
   }
 

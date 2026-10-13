@@ -16,8 +16,8 @@ class PrunePromotedStagedUpdatesCommand extends Command
   {
     $query = Page::query()
       ->where('status', Page::STATUS_ARCHIVED)
-      ->where('settings->staged_update->type', 'published_page_update')
-      ->where('settings->staged_update->state', 'promoted')
+      ->whereRuntimeSetting('staged_update.type', 'published_page_update')
+      ->whereRuntimeSetting('staged_update.state', 'promoted')
       ->orderBy('id');
 
     $count = (clone $query)->count();

@@ -1072,7 +1072,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'hero') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedHeroEdit = $data['locale'] !== null;
@@ -1102,7 +1102,7 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'cta') {
         $isTranslatedCtaEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1152,7 +1152,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'code') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedCodeEdit = $data['locale'] !== null;
@@ -1243,7 +1243,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'contact_form') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedContactFormEdit = $data['locale'] !== null;
@@ -1302,7 +1302,7 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'header') {
         $isTranslatedHeaderEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1342,7 +1342,7 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'content_header') {
         $isTranslatedContentHeaderEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1419,7 +1419,7 @@ class BlockRequest extends FormRequest
       if (in_array($blockType?->slug, ['column_item', 'feature-item'], true)) {
         $isTranslatedStructuredChildEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1457,7 +1457,7 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'button_link') {
         $isTranslatedButtonLinkEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1487,7 +1487,7 @@ class BlockRequest extends FormRequest
 
       if (in_array($blockType?->slug, ['card', 'card_header', 'card_body', 'card_footer'], true)) {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1529,7 +1529,7 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'alert') {
         $isTranslatedAlertEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1558,7 +1558,7 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'link-list-item') {
         $isTranslatedLinkListItemEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1612,7 +1612,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'gallery') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedGalleryEdit = $data['locale'] !== null;
@@ -1691,7 +1691,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'breadcrumb') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -1718,7 +1718,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'rating') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $settings = is_array($existingSettings) ? $existingSettings : [];
 
@@ -1782,7 +1782,7 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'link-list') {
         $isTranslatedLinkListEdit = $data['locale'] !== null;
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $settings = is_array($existingSettings) ? $existingSettings : [];
 
@@ -1816,7 +1816,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'header-actions') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedHeaderActionsEdit = $data['locale'] !== null;
@@ -1841,7 +1841,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'sticky-navbar') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedStickyNavbarEdit = $data['locale'] !== null;
@@ -1877,7 +1877,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'navbar-brand') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedNavbarBrandEdit = $data['locale'] !== null;
@@ -1901,7 +1901,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'navbar-navigation') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedNavbarNavigationEdit = $data['locale'] !== null;
@@ -1929,7 +1929,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'sidebar-brand') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedSidebarBrandEdit = $data['locale'] !== null;
@@ -1953,7 +1953,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'sidebar-navigation') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedSidebarNavigationEdit = $data['locale'] !== null;
@@ -1994,7 +1994,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'sidebar-nav-item') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedSidebarNavItemEdit = $data['locale'] !== null;
@@ -2031,7 +2031,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'sidebar-nav-group') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedSidebarNavGroupEdit = $data['locale'] !== null;
@@ -2068,7 +2068,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'sidebar-footer') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedSidebarFooterEdit = $data['locale'] !== null;
@@ -2092,7 +2092,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'plain_text') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $settings = $existingSettings;
@@ -2131,7 +2131,7 @@ class BlockRequest extends FormRequest
 
       if (in_array($blockType?->slug, ['section', 'container', 'stack', 'split', 'cluster', 'grid', 'slider', 'slide'], true)) {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $layoutName = trim((string) ($data['name'] ?? ''));
@@ -2426,7 +2426,7 @@ class BlockRequest extends FormRequest
 
       if ($blockType?->slug === 'search-form') {
         $existingSettings = $this->route('block') instanceof Block
-          ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+          ? json_decode((string) $this->route('block')->serializedSettings(), true)
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedSearchFormEdit = $data['locale'] !== null;

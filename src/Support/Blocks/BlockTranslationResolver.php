@@ -249,7 +249,7 @@ class BlockTranslationResolver
   {
     $settings = is_array($block->settings)
       ? $block->settings
-      : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
+      : (json_decode((string) $block->serializedSettings(), true) ?: []);
 
     unset($settings['submit_label'], $settings['success_message'], $settings['consent_label']);
 

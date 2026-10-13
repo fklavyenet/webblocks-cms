@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Support\Revisions\RevisionCaptureHistory;
 
 class PageRevisionInspector
 {
@@ -22,6 +23,7 @@ class PageRevisionInspector
       'changes' => $this->changes($current, $selected),
       'health' => $this->health($selected),
       'snapshot' => $this->snapshotSummary($selected),
+      'capture_history' => app(RevisionCaptureHistory::class)->for($revision),
     ];
   }
 

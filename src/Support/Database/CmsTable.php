@@ -10,6 +10,14 @@ final class CmsTable
    * @var array<int, string>
    */
   public const TABLES = [
+    'api_token_capabilities',
+    'api_token_sites',
+    'api_token_networks',
+    'block_application_references',
+    'page_runtime_settings',
+    'page_runtime_items',
+    'site_notification_policies',
+    'scheduler_health',
     'asset_folders',
     'assets',
     'block_assets',
@@ -48,6 +56,7 @@ final class CmsTable
     'page_types',
     'pages',
     'public_search_index',
+    'revision_capture_events',
     'shared_slot_blocks',
     'shared_slot_revisions',
     'shared_slots',

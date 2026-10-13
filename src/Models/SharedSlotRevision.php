@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
 class SharedSlotRevision extends CmsModel
@@ -23,6 +24,8 @@ class SharedSlotRevision extends CmsModel
     'label',
     'summary',
     'snapshot',
+    'snapshot_hash',
+    'snapshot_bytes',
     'restored_from_shared_slot_revision_id',
   ];
 
@@ -30,6 +33,7 @@ class SharedSlotRevision extends CmsModel
   {
     return [
       'snapshot' => 'array',
+      'snapshot_bytes' => 'integer',
     ];
   }
 
@@ -56,6 +60,11 @@ class SharedSlotRevision extends CmsModel
   public function restoredFrom(): BelongsTo
   {
     return $this->belongsTo(self::class, 'restored_from_shared_slot_revision_id');
+  }
+
+  public function captureEvents(): HasMany
+  {
+    return $this->hasMany(RevisionCaptureEvent::class, 'shared_slot_revision_id')->orderByDesc('id');
   }
 
   public function labelText(): string

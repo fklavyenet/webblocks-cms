@@ -7,7 +7,7 @@ use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 
 class MaintenanceCleanupCommand extends Command
 {
-  protected $signature = 'system:cleanup {category? : asset-revisions, media-variants, or temporary-workspaces} {--dry-run : Preview without deleting}';
+  protected $signature = 'system:cleanup {category? : asset-revisions, media-variants, temporary-workspaces, page-revisions, or shared-slot-revisions} {--dry-run : Preview without deleting}';
 
   protected $description = 'Preview or run safe WebBlocks CMS maintenance cleanup categories';
 
@@ -19,7 +19,7 @@ class MaintenanceCleanupCommand extends Command
         if (is_object($result)) {
           $this->line($name.': candidates='.$result->candidateCount.' bytes='.$result->candidateBytes);
         } else {
-          $this->line($name.': retained='.$result);
+          $this->line($name.': retained='.(is_array($result) ? json_encode($result, JSON_THROW_ON_ERROR) : $result));
         }
       }
 
@@ -31,7 +31,7 @@ class MaintenanceCleanupCommand extends Command
       return self::INVALID;
     }
 
-    $result = $this->option('dry-run') ? $cleanup->overview()[str_replace('-', '_', $category)] : $cleanup->run($category);
+    $result = $this->option('dry-run') ? $cleanup->preview($category) : $cleanup->run($category);
     $this->line('candidates='.$result->candidateCount.' bytes='.$result->candidateBytes.' deleted='.$result->deletedCount.' freed='.$result->deletedBytes.' failures='.count($result->failures));
 
     return count($result->failures) > 0 ? self::FAILURE : self::SUCCESS;

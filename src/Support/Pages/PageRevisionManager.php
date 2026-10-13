@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
+use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
 
 class PageRevisionManager
 {
@@ -28,6 +29,7 @@ class PageRevisionManager
     private readonly BlockTranslationWriter $blockTranslationWriter,
     private readonly CurrentActorResolver $currentActorResolver,
     private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
+    private readonly RevisionCaptureRecorder $recorder,
   ) {}
 
   public function canView(User $user, Page $page): bool
@@ -60,42 +62,23 @@ class PageRevisionManager
     ?PageRevision $restoredFrom = null,
     ?string $event = null,
     ?string $source = null,
+    bool $force = false,
   ): PageRevision {
     if (! $this->revisionsTableExists()) {
       throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
     }
 
-    $page->loadMissing([
-      'site',
-      'translations.locale',
-      'slots.slotType',
-      'pageAssets',
-      'blocks' => fn ($query) => $query
-        ->with([
-          'blockAssets.galleryItemTranslations',
-          'textTranslations',
-          'buttonTranslations',
-          'imageTranslations',
-          'contactFormTranslations',
-        ])
-        ->orderBy('sort_order')
-        ->orderBy('id'),
-    ]);
-
     $resolvedActor = $this->currentActorResolver->resolve($actor, $source);
 
-    return PageRevision::create([
-      'page_id' => $page->id,
-      'site_id' => $page->site_id,
+    return $this->recorder->record($page, PageRevision::class, 'page_id', fn (Page $lockedPage): array => $this->snapshotForInspection($lockedPage), [
       'created_by' => $resolvedActor['user_id'],
       'created_by_user_id' => $resolvedActor['user_id'],
       'source' => $resolvedActor['source'],
       'event' => $event,
       'label' => $label,
       'reason' => $reason,
-      'snapshot' => $this->snapshot($page),
       'restored_from_page_revision_id' => $restoredFrom?->id,
-    ]);
+    ], $force || $restoredFrom !== null);
   }
 
   public function restore(Page $page, PageRevision $revision, User $actor): void
@@ -115,6 +98,7 @@ class PageRevisionManager
         'Current page state was saved before restore.',
         event: 'revision_restored',
         source: 'restore',
+        force: true,
       );
 
       $this->applySnapshot($page->fresh(), $revision->snapshot ?? []);
@@ -188,7 +172,7 @@ class PageRevisionManager
         'page_type_id' => $page->page_type_id,
         'layout_id' => $page->layout_id,
         'status' => $page->status,
-        'settings' => $page->getRawOriginal('settings'),
+        'settings' => $page->serializedSettings(),
         'published_at' => $page->published_at?->toIso8601String(),
         'review_requested_at' => $page->review_requested_at?->toIso8601String(),
       ],
@@ -255,7 +239,7 @@ class PageRevisionManager
           'media_id' => $block->media_id,
           'variant' => $block->variant,
           'meta' => $block->meta,
-          'settings' => $block->getRawOriginal('settings'),
+          'settings' => $block->serializedSettings(),
           'status' => $block->status,
           'is_system' => $block->is_system,
           'block_media' => $block->blockAssets
@@ -333,7 +317,7 @@ class PageRevisionManager
       'page_type_id' => Arr::get($pageData, 'page_type_id', $page->page_type_id),
       'layout_id' => Arr::get($pageData, 'layout_id', $page->layout_id),
       'status' => Arr::get($pageData, 'status', $page->status),
-      'settings' => Arr::get($pageData, 'settings', $page->getRawOriginal('settings')),
+      'settings' => Arr::get($pageData, 'settings', $page->serializedSettings()),
       'published_at' => $this->dateOrNull(Arr::get($pageData, 'published_at')),
       'review_requested_at' => $this->dateOrNull(Arr::get($pageData, 'review_requested_at')),
     ])->save();

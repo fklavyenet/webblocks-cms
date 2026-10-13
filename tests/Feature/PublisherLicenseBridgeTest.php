@@ -58,10 +58,12 @@ class PublisherLicenseBridgeTest extends TestCase
   public function test_generated_root_license_zip_applies_with_bridge_updater(): void
   {
     $repo = dirname(__DIR__, 2);
-    // Snapshot tracked working files without changing the real repository
-    // index, HEAD, tags, or branches.
+    // Include reviewed new runtime files before commit, without changing the
+    // real repository index, HEAD, tags, or branches.
     $snapshot = $this->work.'/source';
     exec('git -C '.escapeshellarg($repo).' ls-files', $paths);
+    $review = json_decode(File::get($repo.'/resources/contracts/inventory-review.json'), true, flags: JSON_THROW_ON_ERROR);
+    $paths = array_unique([...$paths, ...array_keys($review['sources'])]);
     foreach ($paths as $path) {
       if (is_file($repo.'/'.$path)) {
         File::ensureDirectoryExists(dirname($snapshot.'/'.$path));

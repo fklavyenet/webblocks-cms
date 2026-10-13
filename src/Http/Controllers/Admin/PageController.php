@@ -109,12 +109,12 @@ class PageController extends Controller
       ->pluck('locales_count', 'id');
 
     $totalCount = $this->authorization->scopePagesForUser(Page::query(), $request->user())
-      ->whereNull('settings->revision_restore_candidate')
+      ->whereRuntimeSettingNull('revision_restore_candidate')
       ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
       ->count();
 
     $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
-      ->whereNull('settings->revision_restore_candidate')
+      ->whereRuntimeSettingNull('revision_restore_candidate')
       ->with([
         'site',
         'translations.locale',

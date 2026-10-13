@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PageRevision extends CmsModel
 {
@@ -20,6 +21,8 @@ class PageRevision extends CmsModel
     'label',
     'reason',
     'snapshot',
+    'snapshot_hash',
+    'snapshot_bytes',
     'restored_from_page_revision_id',
   ];
 
@@ -27,6 +30,7 @@ class PageRevision extends CmsModel
   {
     return [
       'snapshot' => 'array',
+      'snapshot_bytes' => 'integer',
     ];
   }
 
@@ -53,6 +57,11 @@ class PageRevision extends CmsModel
   public function restoredFrom(): BelongsTo
   {
     return $this->belongsTo(self::class, 'restored_from_page_revision_id');
+  }
+
+  public function captureEvents(): HasMany
+  {
+    return $this->hasMany(RevisionCaptureEvent::class, 'page_revision_id')->orderByDesc('id');
   }
 
   public function labelText(): string
