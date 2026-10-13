@@ -1,0 +1,188 @@
+<?php
+
+namespace WebBlocks\Cms\Tests\Feature;
+
+use Carbon\CarbonImmutable;
+use Illuminate\Process\Exceptions\ProcessTimedOutException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Mockery;
+use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
+use WebBlocks\Cms\Models\AdminUpdateOperation;
+use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\System\Updates\AdminApprovedUpdateClient;
+use WebBlocks\Cms\Support\System\Updates\AdminUpdateLauncher;
+use WebBlocks\Cms\Support\System\Updates\ApprovedUpdateTargetChanged;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
+use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
+use WebBlocks\Cms\Support\System\Updates\UpdateException;
+use WebBlocks\Cms\Support\Updates\Client\Updates\RunHeartbeat;
+use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
+use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCheckResult;
+use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateResult;
+use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\WebBlocks;
+use WebBlocks\Cms\Tests\TestCase;
+
+class AdminUpdateOperationTest extends TestCase
+{
+  protected function defineEnvironment($app): void
+  {
+    parent::defineEnvironment($app);
+    $app['config']->set('webblocks-cms.routes.admin', true);
+  }
+
+  protected function defineDatabaseMigrations(): void
+  {
+    $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  private function operation(array $attributes = []): AdminUpdateOperation
+  {
+    return AdminUpdateOperation::create(array_merge([
+      'id' => (string) Str::uuid(), 'user_id' => 1, 'from_version' => '1.0.0',
+      'target_version' => WebBlocks::version(), 'checksum_sha256' => str_repeat('a', 64),
+      'status' => 'queued', 'started_at' => now(),
+    ], $attributes));
+  }
+
+  public function test_schema_migration_is_repeatable_and_keeps_receipts(): void
+  {
+    $operation = $this->operation();
+    foreach (['fresh', 'updates'] as $directory) {
+      $migration = require dirname(__DIR__, 2).'/database/migrations/'.$directory.'/2026_10_13_180000_create_admin_update_operations.php';
+      $migration->up();
+      $migration->up();
+      $migration->down();
+    }
+    $this->assertNotNull($operation->fresh());
+    $this->assertFalse(Schema::hasColumn('wbcms_admin_update_operations', 'result'));
+  }
+
+  public function test_a_lost_worker_is_unconfirmed_and_never_a_success(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'started_at' => now()->subHour(), 'heartbeat_at' => now()->subMinutes(5)]);
+    $payload = app(CmsUpdateProgress::class)->payload($operation->id);
+    $this->assertSame('interrupted', $payload['state']);
+    $this->assertFalse($payload['terminal']);
+    $this->assertFalse($payload['running']);
+    $this->assertSame('running', $operation->fresh()->status);
+    $this->assertSame('unknown', app(CmsUpdateProgress::class)->payload((string) Str::uuid())['state']);
+  }
+
+  public function test_long_runs_survive_cache_clear_and_keep_their_exact_result(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'started_at' => now()->subHour(), 'heartbeat_at' => now()]);
+    Cache::flush();
+    $progress = app(CmsUpdateProgress::class);
+    $progress->operation($operation->id);
+    $run = SystemUpdateRun::create(['from_version' => '1.0.0', 'to_version' => WebBlocks::version(), 'status' => 'running', 'started_at' => now()->subHour()]);
+    $progress->start($run);
+    $progress->stage('migrations');
+    $payload = $progress->payload($operation->id);
+    $this->assertTrue($payload['running']);
+    $this->assertGreaterThanOrEqual(3600000, $payload['elapsed_ms']);
+    $this->assertSame($run->id, $payload['run_id']);
+    $this->assertSame('migrations', $payload['stage']);
+    $run->update(['status' => 'restored', 'duration_ms' => 3600123, 'finished_at' => now()]);
+    $progress->completed('restored', 'Backup restored.');
+    $payload = $progress->payload($operation->id);
+    $this->assertTrue($payload['terminal']);
+    $this->assertSame('restored', $payload['state']);
+    $this->assertSame(3600123, $payload['duration_ms']);
+  }
+
+  public function test_backup_heartbeat_keeps_tracking_alive_without_sql_phase_changes(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'heartbeat_at' => now()->subMinutes(5)]);
+    app(RunHeartbeat::class)->beat();
+    $this->assertTrue(app(CmsUpdateProgress::class)->payload($operation->id)['running']);
+  }
+
+  public function test_duplicate_admission_does_not_spawn_another_worker(): void
+  {
+    $operation = $this->operation();
+    $launcher = Mockery::mock(AdminUpdateLauncher::class);
+    $launcher->shouldNotReceive('launch');
+    $this->app->instance(AdminUpdateLauncher::class, $launcher);
+    $this->assertSame($operation->id, app(StartAdminSystemUpdate::class)->execute(1)->id);
+    $this->assertSame(1, AdminUpdateOperation::count());
+  }
+
+  public function test_worker_records_completion_and_cannot_reexecute_receipt(): void
+  {
+    $operation = $this->operation();
+    $engine = Mockery::mock(SystemUpdater::class);
+    $engine->expects('run')->with(1)->once()->andReturn(new UpdateResult(
+      '1.0.0', WebBlocks::version(), 'success', 'Done.', '', 0,
+      CarbonImmutable::now(), CarbonImmutable::now(), 10, null,
+    ));
+    $this->app->bind(SystemUpdater::class, fn () => $engine);
+    $this->artisan('webblocks:updates:work', ['operation' => $operation->id])->assertSuccessful();
+    $this->assertSame('success', $operation->fresh()->status);
+    $this->assertNotNull($operation->fresh()->finished_at);
+    $this->artisan('webblocks:updates:work', ['operation' => $operation->id])->assertSuccessful();
+  }
+
+  public function test_launcher_failure_is_an_explicit_terminal_error(): void
+  {
+    $engine = Mockery::mock(SystemUpdater::class);
+    $engine->expects('isLocked')->andReturn(false);
+    $this->app->instance(SystemUpdater::class, $engine);
+    $client = Mockery::mock(UpdateServerClient::class);
+    $client->expects('check')->andReturn(new UpdateCheckResult('update_available', '', '', '', true, null, '', '', '', '1.0.0', '1.1.0', true,
+      ['status' => 'compatible'], ['version' => '1.1.0', 'checksum_sha256' => str_repeat('b', 64)], null, null, CarbonImmutable::now()));
+    $this->app->instance(UpdateServerClient::class, $client);
+    $launcher = Mockery::mock(AdminUpdateLauncher::class);
+    $launcher->expects('launch')->andThrow(new \RuntimeException('Launcher failed.'));
+    $this->app->instance(AdminUpdateLauncher::class, $launcher);
+    try {
+    app(StartAdminSystemUpdate::class)->execute(1);
+    $this->fail('Expected launch failure.');
+    } catch (UpdateException $exception) {
+    $this->assertStringContainsString('could not be started', $exception->userMessage());
+    }
+    $this->assertSame('failed', AdminUpdateOperation::first()->status);
+    $this->assertTrue(app(CmsUpdateProgress::class)->payload()['terminal']);
+  }
+
+  public function test_silent_subprocess_keeps_sql_heartbeat_alive_and_timeout_is_enforced(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'heartbeat_at' => now()->subMinutes(5)]);
+    app(CmsUpdateProgress::class)->operation($operation->id);
+    config(['webblocks-updates.installer.command_timeout_seconds' => 1]);
+    $output = [];
+    try {
+      app(UpdateCommandRunner::class)->run([PHP_BINARY, '-r', 'usleep(3000000);'], base_path(), $output);
+      $this->fail('Expected bounded subprocess timeout.');
+    } catch (ProcessTimedOutException) {
+      $this->assertTrue($operation->fresh()->heartbeat_at->gt(now()->subSeconds(5)));
+    }
+  }
+
+  public function test_maintenance_exempts_only_authenticated_update_status(): void
+  {
+    $this->withoutMiddleware('install.required');
+    try {
+      $this->artisan('down', ['--render' => 'errors::503'])->assertSuccessful();
+      $this->getJson('/arbitrary-public-path')->assertStatus(503);
+      $this->getJson(route('admin.system.updates.indicator'))->assertUnauthorized();
+      $this->getJson(route('admin.system.updates.index'))->assertStatus(503);
+      $down = json_decode(file_get_contents(storage_path('framework/down')), true);
+      $this->assertContains(ltrim(route('admin.system.updates.indicator', [], false), '/'), $down['except']);
+    } finally {
+    $this->artisan('up')->assertSuccessful();
+    }
+  }
+
+  public function test_worker_rejects_a_changed_release_before_applying(): void
+  {
+    $operation = $this->operation();
+    $client = Mockery::mock(UpdateServerClient::class);
+    $client->expects('check')->andReturn(new UpdateCheckResult('update_available', '', '', '', true, null, '', '', '', '1.0.0', WebBlocks::version(), true,
+      ['status' => 'compatible'], ['version' => WebBlocks::version(), 'checksum_sha256' => str_repeat('b', 64)], null, null, CarbonImmutable::now()));
+    $this->expectException(ApprovedUpdateTargetChanged::class);
+    (new AdminApprovedUpdateClient($client, $operation))->check();
+  }
+}

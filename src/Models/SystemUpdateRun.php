@@ -23,6 +23,8 @@ class SystemUpdateRun extends CmsModel
 
   public const STATUS_RUNNING = 'running';
 
+  public const STATUS_INTERRUPTED = 'interrupted';
+
   public const STATUS_CANCELLED = 'cancelled';
 
   protected $fillable = [
@@ -62,7 +64,7 @@ class SystemUpdateRun extends CmsModel
       self::STATUS_SUCCESS => 'wb-status-active',
       self::STATUS_SUCCESS_WITH_WARNINGS => 'wb-status-pending',
       self::STATUS_PENDING => 'wb-status-pending',
-      self::STATUS_RUNNING => 'wb-status-pending',
+      self::STATUS_RUNNING, self::STATUS_INTERRUPTED => 'wb-status-pending',
       self::STATUS_RESTORED => 'wb-status-danger',
       default => 'wb-status-danger',
     };

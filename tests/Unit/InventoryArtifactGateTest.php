@@ -85,7 +85,10 @@ class InventoryArtifactGateTest extends TestCase
 
   private function executeCommand(array $command, string $directory): array
   {
-    $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $directory);
+    // Git hooks export repository-local variables. A fixture must never inherit
+    // the real checkout's GIT_DIR/GIT_WORK_TREE or commit into that repository.
+    $environment = array_filter(getenv(), static fn ($key) => ! str_starts_with($key, 'GIT_'), ARRAY_FILTER_USE_KEY);
+    $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $directory, $environment);
     $this->assertIsResource($process);
     $output = stream_get_contents($pipes[1]).stream_get_contents($pipes[2]);
     fclose($pipes[1]);

@@ -44,14 +44,14 @@ return [
         'target_path' => base_path(),
         'workspace_root' => 'app/system-updates',
         'download_timeout_seconds' => 120,
-        'command_timeout_seconds' => 600,
+        'command_timeout_seconds' => (int) env('WEBBLOCKS_UPDATES_COMMAND_TIMEOUT', 3600),
         'package_update_migrations_path' => 'vendor/fklavyenet/webblocks-cms/database/migrations/updates',
         // Optional absolute path to a Composer entry point (binary shim or
         // .phar), for hosts where auto-detection (PATH lookup, common
         // install locations) can't find it.
         'composer_binary' => env('WEBBLOCKS_UPDATES_COMPOSER_BINARY'),
         'lock_name' => 'system-updates:run',
-        'lock_ttl_seconds' => 900,
+        'lock_ttl_seconds' => 7200,
         'excluded_paths' => [
             '.git',
             '.github',

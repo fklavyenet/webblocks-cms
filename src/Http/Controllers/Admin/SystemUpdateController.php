@@ -6,16 +6,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Collection;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
 use WebBlocks\Cms\Support\Database\CmsTableCompatibilityViews;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
-use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunReconciler;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
@@ -35,7 +36,7 @@ class SystemUpdateController extends Controller
 
     return view('webblocks-cms::admin.system.updates', [
       'report' => $report,
-      'runs' => app(SystemUpdateRunRetention::class)->retainedRuns(),
+      'runs' => $this->displayRuns(),
       'preflight' => $report['checks'] ?? [],
       'checkedAt' => is_string($checkedAt)
         ? now()->parse($checkedAt)
@@ -56,19 +57,21 @@ class SystemUpdateController extends Controller
       ->with('system_updates_checked_at', ($report['checked_at'] ?? now())->toIso8601String());
   }
 
-  public function store(RunSystemUpdateRequest $request): RedirectResponse
+  public function store(RunSystemUpdateRequest $request): RedirectResponse|JsonResponse
   {
     $this->publisherClient->configure();
     try {
-      $result = app(SystemUpdater::class)->run($request->user());
-      app(AdminUpdateIndicator::class)->clear();
-      app(SystemUpdateRunRetention::class)->prune();
+      $operation = app(StartAdminSystemUpdate::class)->execute((int) $request->user()->getKey());
+      if ($request->expectsJson()) {
+        return response()->json(['operation_id' => $operation->id], 202)->header('Cache-Control', 'no-store');
+      }
 
-      return redirect()
-        ->route('admin.system.updates.index')
-        ->with('status', $result->summary)
-        ->with('system_updates_checked_at', $result->finishedAt->toIso8601String());
+      return redirect()->route('admin.system.updates.index')->with('status', __('webblocks-cms::admin.updates.waiting_body'));
     } catch (UpdateException $exception) {
+      if ($request->expectsJson()) {
+      return response()->json(['error' => $exception->userMessage()], 409);
+      }
+
       return redirect()
         ->route('admin.system.updates.index')
         ->withErrors(['system_update' => $exception->userMessage()])
@@ -76,14 +79,29 @@ class SystemUpdateController extends Controller
     }
   }
 
-  public function indicator(): JsonResponse
+  public function indicator(Request $request): JsonResponse
   {
     $this->publisherClient->configure();
-    $payload = app(AdminUpdateIndicator::class)->payload();
+    $request->validate(['operation' => ['nullable', 'uuid']]);
+    $progress = app(CmsUpdateProgress::class)->payload($request->query('operation'));
+    $payload = $request->has('operation') ? [] : app(AdminUpdateIndicator::class)->payload();
     $payload['url'] = route('admin.system.updates.index');
-    $payload['progress'] = app(CmsUpdateProgress::class)->payload();
+    $payload['progress'] = $progress;
 
-    return response()->json($payload);
+    return response()->json($payload)->header('Cache-Control', 'no-store');
+  }
+
+  private function displayRuns(): Collection
+  {
+    $progress = app(CmsUpdateProgress::class)->payload();
+
+    return app(SystemUpdateRunRetention::class)->retainedRuns()->map(function ($run) use ($progress) {
+      if ($run->status === 'running' && (! $progress['running'] || $progress['run_id'] !== $run->id)) {
+        $run->status = 'interrupted';
+      }
+
+      return $run;
+    });
   }
 
   private function reconcileVerifiedPostApplyFailure(): void

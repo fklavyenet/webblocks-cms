@@ -26,7 +26,7 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.apply.workspace_root', (string) config('webblocks-updates.installer.workspace_root', 'app/system-updates'));
     $config->set('publisher-client.apply.download_timeout_seconds', (int) config('webblocks-updates.installer.download_timeout_seconds', 120));
     $config->set('publisher-client.lock.name', (string) config('webblocks-updates.installer.lock_name', 'system-updates:run'));
-    $config->set('publisher-client.lock.ttl_seconds', (int) config('webblocks-updates.installer.lock_ttl_seconds', 900));
+    $config->set('publisher-client.lock.ttl_seconds', (int) config('webblocks-updates.installer.lock_ttl_seconds', 7200));
     $config->set('publisher-client.apply.strategy', 'package');
     $config->set('publisher-client.apply.target_path', $runtimeRoot);
     $config->set('publisher-client.apply.enforce_active_runtime_target', true);

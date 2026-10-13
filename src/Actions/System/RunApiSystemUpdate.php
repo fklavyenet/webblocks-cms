@@ -3,8 +3,10 @@
 namespace WebBlocks\Cms\Actions\System;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
+use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\SystemUpdateRequest;
 use WebBlocks\Cms\Support\System\Updates\ApiUpdateRunRecorder;
@@ -49,6 +51,10 @@ class RunApiSystemUpdate
         return ['http_status' => 409, 'ok' => false, 'code' => 'system_update_requires_attention'];
       }
 
+      if (Schema::hasTable('wbcms_admin_update_operations')
+        && AdminUpdateOperation::whereIn('status', ['queued', 'running'])->exists()) {
+        return ['http_status' => 409, 'ok' => false, 'code' => 'system_update_in_progress'];
+      }
       $engine = app(SystemUpdater::class);
 
       if ($engine->isLocked()) {

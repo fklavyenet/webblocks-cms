@@ -6,6 +6,7 @@ use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Process\ExecutableFinder;
+use WebBlocks\Cms\Support\Updates\Client\Updates\RunHeartbeat;
 
 class UpdateCommandRunner
 {
@@ -13,9 +14,16 @@ class UpdateCommandRunner
   {
     $output[] = '$ '.$this->formatCommand($command);
 
-    $result = Process::path($workingDirectory)
-      ->timeout((int) config('webblocks-updates.installer.command_timeout_seconds', 600))
-      ->run($command);
+    $process = Process::path($workingDirectory)
+      ->timeout(max(1, min(86400, (int) config('webblocks-updates.installer.command_timeout_seconds', 3600))))
+      ->start($command);
+    while ($process->running()) {
+      $process->ensureNotTimedOut();
+      app(RunHeartbeat::class)->beat();
+      app(CmsUpdateProgress::class)->beat();
+      usleep(100000);
+    }
+    $result = $process->wait();
 
     $this->appendProcessOutput($result, $output);
 

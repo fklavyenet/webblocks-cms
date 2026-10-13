@@ -1258,3 +1258,26 @@ the preparation bridge first. Full pre-update backups remain necessary for
 rollback to a package that requires the removed columns/files; reverse migrations
 retain SQL data instead of recreating empty compatibility copies. Immutable
 package/backup/export formats and API serialization remain protocol contracts.
+
+
+## Reliable System Update Tracking (1.98.9)
+
+Panel updates are admitted as typed SQL operation records and executed by a detached
+CLI worker. The admission pins the release version/checksum and rejects overlapping
+or repeated execution. The Internal Content API retains its synchronous receipt
+and authorization contract. No content-authoring or snapshot format changes occur.
+
+The modal tracks the operation identity, elapsed time and most recent phase,
+reconnects after transient HTTP/transport failures, and resumes on returning to the
+screen. Only a terminal server result ends tracking; success also requires the
+installed target version. Missing/stale worker evidence is **Status unconfirmed**,
+not proof of success or failure. Historic unfinished runs remain stored unchanged
+and are shown as unconfirmed when no current run heartbeat identifies them.
+
+Only the existing authenticated, system-authorized status route is exempted from
+rendered maintenance mode. Public pages and other admin paths remain in maintenance.
+Workers require a POSIX host with a CLI PHP executable and process execution;
+launch failures are recorded and shown. Large backfills have a configurable bounded
+one-hour subprocess limit (`WEBBLOCKS_UPDATES_COMMAND_TIMEOUT`). The first upgrade
+from an older package still starts with that package's updater; installing this fix
+does not retroactively replace a running older HTTP request.

@@ -103,7 +103,7 @@
               <form method="POST" action="{{ route('admin.system.updates.store') }}" data-wb-update-form>
                 @csrf
                 <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit>
-                  {{ $adminText('updates.update_button', ['version' => $latestVersion]) }}
+                  {{ $adminText('updates.update_button', ['version' => $latestVersion ?? ($version['current_version'] ?? '')]) }}
                 </button>
               </form>
             @endif
@@ -293,7 +293,7 @@
     @endif
   @endforeach
 
-  @if ($updateAvailable && $canUpdate)
+  @if ($canUpdate || auth()->user()?->can('access-system'))
     {{-- Progress modal: shown while the update runs. No dismiss — a live update cannot be cancelled. --}}
     <div
       class="wb-modal"
@@ -305,18 +305,22 @@
       data-wb-health-url="{{ route('admin.system.updates.indicator') }}"
       data-wb-return-url="{{ route('admin.system.updates.index') }}"
       data-wb-elapsed-label="{{ $adminText('updates.elapsed') }}"
+      data-wb-reconnecting-label="{{ $adminText('updates.reconnecting') }}"
+      data-wb-unconfirmed-label="{{ $adminText('updates.unconfirmed') }}"
+      data-wb-baseline-run="{{ $runs->first()?->id ?? 0 }}"
       data-wb-waiting-label="{{ $adminText('updates.waiting_body') }}"
       hidden
     >
       <div class="wb-modal-dialog">
         <div class="wb-modal-header">
-          <h3 class="wb-modal-title" id="wb-update-progress-title">{{ $adminText('updates.updating_title', ['version' => $latestVersion]) }}</h3>
+          <h3 class="wb-modal-title" id="wb-update-progress-title">{{ $adminText('updates.updating_title', ['version' => $latestVersion ?? ($version['current_version'] ?? '')]) }}</h3>
         </div>
         <div class="wb-modal-body">
           <div class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
             <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
             <div class="wb-stack wb-stack-1">
               <strong id="wb-update-progress-status">{{ $adminText('updates.updating_body') }}</strong>
+              <a id="wb-update-history-link" href="{{ route('admin.system.updates.index') }}" hidden>{{ $adminText('updates.view_history') }}</a>
               <span id="wb-update-elapsed" class="wb-text-sm" role="timer" aria-live="off"></span>
               <span class="wb-text-sm wb-text-muted">{{ $adminText('updates.keep_open') }}</span>
             </div>
@@ -327,7 +331,7 @@
   @endif
 @endsection
 
-@if ($updateAvailable && $canUpdate)
+@if ($canUpdate || auth()->user()?->can('access-system'))
 @push('admin-scripts')
   @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/system-update.js'])
 @endpush

@@ -61,7 +61,7 @@ class PublisherLicenseBridgeTest extends TestCase
     // Include reviewed new runtime files before commit, without changing the
     // real repository index, HEAD, tags, or branches.
     $snapshot = $this->work.'/source';
-    exec('git -C '.escapeshellarg($repo).' ls-files', $paths);
+    $this->executeFixtureCommand('git -C '.escapeshellarg($repo).' ls-files', $paths);
     $review = json_decode(File::get($repo.'/resources/contracts/inventory-review.json'), true, flags: JSON_THROW_ON_ERROR);
     $paths = array_unique([...$paths, ...array_keys($review['sources'])]);
     foreach ($paths as $path) {
@@ -70,11 +70,11 @@ class PublisherLicenseBridgeTest extends TestCase
         File::copy($repo.'/'.$path, $snapshot.'/'.$path);
       }
     }
-    exec('git -C '.escapeshellarg($snapshot).' init -q');
-    exec('git -C '.escapeshellarg($snapshot).' add .');
-    exec('git -C '.escapeshellarg($snapshot).' write-tree', $trees, $code);
+    $this->executeFixtureCommand('git -C '.escapeshellarg($snapshot).' init -q');
+    $this->executeFixtureCommand('git -C '.escapeshellarg($snapshot).' add .');
+    $this->executeFixtureCommand('git -C '.escapeshellarg($snapshot).' write-tree', $trees, $code);
     $this->assertSame(0, $code);
-    exec('bash '.escapeshellarg($snapshot.'/scripts/release/build-package.sh').' '.escapeshellarg($this->work.'/update.zip').' '.escapeshellarg($trees[0]).' 2>&1', $output, $code);
+    $this->executeFixtureCommand('bash '.escapeshellarg($snapshot.'/scripts/release/build-package.sh').' '.escapeshellarg($this->work.'/update.zip').' '.escapeshellarg($trees[0]).' 2>&1', $output, $code);
     $this->assertSame(0, $code, implode("\n", $output));
     $zip = new ZipArchive;
     $this->assertTrue($zip->open($this->work.'/update.zip'));
@@ -101,7 +101,7 @@ class PublisherLicenseBridgeTest extends TestCase
       $command = $kind === 'composer'
         ? 'composer archive --working-dir='.escapeshellarg($repo).' --format=zip --dir='.escapeshellarg($this->work).' --file=composer'
         : 'git -C '.escapeshellarg($repo).' archive --format=zip --output='.escapeshellarg($zipPath).' HEAD';
-      exec($command.' 2>&1', $output, $code);
+      $this->executeFixtureCommand($command.' 2>&1', $output, $code);
       $this->assertSame(0, $code, implode("\n", $output));
       $zip = new ZipArchive;
       $this->assertTrue($zip->open($zipPath));
@@ -183,5 +183,17 @@ class PublisherLicenseBridgeTest extends TestCase
     $this->expectException(UpdateException::class);
     $this->expectExceptionMessage('Required package path missing');
     app(CmsPackageApplyStrategy::class)->apply($this->stage('missing'));
+  }
+
+  private function executeFixtureCommand(string $command, ?array &$output = null, ?int &$code = null): void
+  {
+    $environment = array_filter(getenv(), static fn ($key) => ! str_starts_with($key, 'GIT_'), ARRAY_FILTER_USE_KEY);
+    $process = proc_open(['sh', '-c', $command], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $environment);
+    $this->assertIsResource($process);
+    $text = stream_get_contents($pipes[1]).stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    $output = trim($text) === '' ? [] : explode("\n", trim($text));
+    $code = proc_close($process);
   }
 }

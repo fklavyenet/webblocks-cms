@@ -7,6 +7,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
+use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
@@ -53,6 +54,7 @@ use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
 use WebBlocks\Cms\Console\SystemUpdatePruneRunsCommand;
 use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
 use WebBlocks\Cms\Console\VisitorReportCleanupCommand;
+use WebBlocks\Cms\Console\WorkAdminSystemUpdateCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
@@ -108,9 +110,11 @@ use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as Clie
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner as ClientPostApplyRunner;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder as ClientRunRecorder;
 use WebBlocks\Cms\Support\Updates\Client\EmbeddedRuntimeServiceProvider;
+use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdatePackageDownloader;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdatePackageExtractor;
 use WebBlocks\Cms\Support\Updates\CmsClientBackupManager;
+use WebBlocks\Cms\Support\Updates\CmsClientCommandRunner;
 use WebBlocks\Cms\Support\Updates\CmsClientInstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\CmsClientPostApplyRunner;
 use WebBlocks\Cms\Support\Updates\CmsClientRunRecorder;
@@ -831,6 +835,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     SystemBackupRestoreCommand::class,
     SystemBackupCleanupCommand::class,
     SystemUpdateRunsCommand::class,
+    WorkAdminSystemUpdateCommand::class,
     SystemUpdatePruneRunsCommand::class,
   ];
 
@@ -890,6 +895,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->registerNativeLocalDoctor();
     $this->registerPlugins();
 
+    $this->app->bind(UpdateCommandRunner::class, CmsClientCommandRunner::class);
     $this->app->bind(ClientBackupManager::class, CmsClientBackupManager::class);
     $this->app->bind(ClientInstalledVersionStore::class, CmsClientInstalledVersionStore::class);
     $this->app->bind(ClientPostApplyRunner::class, CmsClientPostApplyRunner::class);
@@ -913,6 +919,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootSchedule();
     $this->bootInternalApiCsrfExclusions();
     $this->bootRoutes();
+    if (Route::has('admin.system.updates.indicator')) {
+      PreventRequestsDuringMaintenance::except([
+        ltrim(route('admin.system.updates.indicator', [], false), '/'),
+      ]);
+    }
     $this->bootViews();
     $this->bootNotFoundView();
     $this->bootMigrations();

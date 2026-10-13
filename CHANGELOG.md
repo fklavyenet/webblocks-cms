@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.98.9
+
+### Fixed
+
+- Run admitted panel updates in a detached CLI worker so browser, proxy and PHP-FPM request timeouts do not terminate long upgrades. Pin the target version and checksum at admission, prevent duplicate workers, and preserve the synchronous Internal Content API contract.
+- Track the exact update operation through temporary 503/502/504 responses, network timeouts and screen reloads. Confirm terminal results and the installed target before returning to Update History; display unresolved historical runs as status unconfirmed instead of running forever.
+- Keep the authenticated, system-authorized status endpoint available during rendered Laravel maintenance mode. Preserve public maintenance responses and all status-route authorization.
+- Store worker state and heartbeat in relational SQL records; keep elapsed time and phase timings. Refresh heartbeat during silent subprocesses, preserve it across cache clearing, and use a configurable bounded one-hour command timeout for large backfills.
+
+
 ## 1.98.8
 
 ### Fixed

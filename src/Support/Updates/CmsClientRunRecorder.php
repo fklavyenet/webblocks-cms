@@ -41,6 +41,7 @@ final class CmsClientRunRecorder implements RunRecorder
       'duration_ms' => $durationMs,
       'finished_at' => now(),
     ])->save();
+    app(CmsUpdateProgress::class)->completed($status, $summary);
   }
 
   public function prune(): void
