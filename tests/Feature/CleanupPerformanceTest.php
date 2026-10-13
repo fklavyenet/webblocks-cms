@@ -24,7 +24,7 @@ class CleanupPerformanceTest extends TestCase
 
   protected function defineDatabaseMigrations(): void
   {
-    $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+    $this->loadRelationalBridgeFixtureMigrations();
   }
 
   private function page(): Page

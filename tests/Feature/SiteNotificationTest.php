@@ -289,7 +289,9 @@ class SiteNotificationTest extends TestCase
     $this->assertSame(SiteNotificationPolicy::DEFAULTS, $site->notification_settings);
     PersistentSchema::dropFreshTables();
     DB::table('wbcms_site_notification_policies')->where('site_id', $site->id)->delete();
-    Schema::table('wbcms_sites', fn ($table) => $table->dropColumn('notification_settings'));
+    if (Schema::hasColumn('wbcms_sites', 'notification_settings')) {
+      Schema::table('wbcms_sites', fn ($table) => $table->dropColumn('notification_settings'));
+    }
     (require dirname(__DIR__, 2).'/database/migrations/updates/2026_10_09_090000_add_site_notification_policy.php')->up();
     $this->assertSame(SiteNotificationPolicy::LEGACY, $site->refresh()->notification_settings);
     (require dirname(__DIR__, 2).'/database/migrations/updates/2026_10_09_090000_add_site_notification_policy.php')->up();

@@ -130,11 +130,11 @@ final class PersistentSchema
               }
               $model = (new $class)->newFromBuilder((array) $raw);
               [$found, $snapshot] = app(PersistentDocuments::class)->read($model, 'snapshot');
-              if (! $found || ! is_array($snapshot)) {
+              if (! $found) {
                 throw new \RuntimeException('Revision snapshot is unavailable; legacy storage was retained.');
               }
               $bytes = strlen(json_encode($snapshot, JSON_THROW_ON_ERROR));
-              DB::table($table)->where('id', $identity->id)->update(['snapshot_hash' => SnapshotContent::hash($snapshot), 'snapshot_bytes' => $bytes]);
+              DB::table($table)->where('id', $identity->id)->update(['snapshot_hash' => is_array($snapshot) ? SnapshotContent::hash($snapshot) : null, 'snapshot_bytes' => $bytes]);
               DB::table('wbcms_persistent_documents')->where($owner, $identity->id)->where('attribute', 'snapshot')->update(['payload_bytes' => $bytes]);
             });
           }

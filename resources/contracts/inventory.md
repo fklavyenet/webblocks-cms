@@ -1242,3 +1242,19 @@ retains physical copies. Runtime adapters also support their absence on the next
 update. Update History displays duration, and the update modal shows elapsed time
 and the active operation. These observations do not initiate updates or grant any
 new API capability.
+
+
+CMS 1.98.8 completes the cutover after the 1.98.7 preparation bridge. Remaining
+persistent JSON columns, encoded metadata/continuation fields, imported mutable
+plugin/plan files and the scheduler copy are removed. New and existing records
+use SQL, including complete independent page and shared-slot snapshots. Virtual
+model attributes preserve the existing API and transfer contracts. Known runtime
+references and core settings continue using their dedicated relational tables;
+ordered nodes preserve legacy shapes and extension values. Snapshot byte counts
+measure the logical restoration payload, excluding SQL row/index overhead.
+
+In-app updates to 1.98.8 require CMS 1.98.7 or later. Earlier installations receive
+the preparation bridge first. Full pre-update backups remain necessary for
+rollback to a package that requires the removed columns/files; reverse migrations
+retain SQL data instead of recreating empty compatibility copies. Immutable
+package/backup/export formats and API serialization remain protocol contracts.

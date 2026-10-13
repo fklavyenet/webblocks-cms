@@ -221,6 +221,9 @@ abstract class CmsModel extends Model
   {
     $attributes = parent::attributesToArray();
     foreach (array_unique(['settings', 'notification_settings', ...array_keys(TokenRelations::LISTS), ...SettingDefinitions::attributes($this), ...PersistentFields::attributes($this)]) as $key) {
+      if (in_array($key, $this->getHidden(), true) || ($this->getVisible() !== [] && ! in_array($key, $this->getVisible(), true))) {
+        continue;
+      }
       if ((array_key_exists($key, $attributes) || ($this->exists && app(PersistentDocuments::class)->retired($this, $key))) && (DocumentFields::for($this, $key) !== null || ($this instanceof CmsApiToken && isset(TokenRelations::LISTS[$key])) || in_array($key, SettingDefinitions::attributes($this), true) || in_array($key, PersistentFields::attributes($this), true))) {
         $attributes[$key] = $this->getAttribute($key);
       }

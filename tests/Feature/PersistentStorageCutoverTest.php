@@ -13,6 +13,7 @@ use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\IconCatalogItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SystemUpdateRequest;
@@ -32,7 +33,7 @@ class PersistentStorageCutoverTest extends TestCase
 {
   protected function defineDatabaseMigrations(): void
   {
-    $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+    $this->loadRelationalBridgeFixtureMigrations();
   }
 
   private function page(): Page
@@ -91,6 +92,20 @@ class PersistentStorageCutoverTest extends TestCase
     $this->assertSame(strlen(json_encode($actual, JSON_THROW_ON_ERROR)), $first->fresh()->snapshot_bytes);
     $first->delete();
     $this->assertDatabaseMissing('wbcms_persistent_documents', ['page_revision_id' => $first->id]);
+  }
+
+  #[Test]
+  public function historical_null_snapshot_is_preserved_without_blocking_column_retirement(): void
+  {
+    $page = $this->page();
+    $revision = PageRevision::create(['page_id' => $page->id, 'site_id' => $page->site_id, 'snapshot' => []]);
+    PersistentSchema::dropFreshTables();
+    DB::table($revision->getTable())->where('id', $revision->id)->update(['snapshot' => 'null']);
+    PersistentSchema::migrateAndRetire();
+    $this->assertNull($revision->fresh()->snapshot);
+    $this->assertNull($revision->fresh()->snapshot_hash);
+    $this->assertSame(4, $revision->fresh()->snapshot_bytes);
+    $this->assertFalse(Schema::hasColumn($revision->getTable(), 'snapshot'));
   }
 
   #[Test]

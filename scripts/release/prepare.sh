@@ -190,8 +190,14 @@ $archivePath = $argv[2];
 $payloadPath = $argv[3];
 $changelogPath = $argv[4];
 $checksum = trim(file_get_contents($archivePath.".sha256"));
-// Root-license Publisher artifacts require the dual-layout 1.89.1 bridge client.
-$minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.89.1";
+// Persist the retirement bridge floor for this and subsequent releases.
+$minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.98.7";
+if (! preg_match("/^[0-9]+\\.[0-9]+\\.[0-9]+$/", $minimumClientVersion)
+  || version_compare($minimumClientVersion, "1.98.7", "<")
+  || version_compare($minimumClientVersion, $version, ">")) {
+  fwrite(STDERR, "[webblocks-release-prepare] Minimum client version must preserve the 1.98.7 retirement bridge floor and not exceed this release.\n");
+  exit(1);
+}
 $notes = releaseNoteItemsForVersion($changelogPath, $version);
 // The first note is the headline (rendered as the summary/trigger); the rest
 // are the supporting highlights. Splitting here keeps the summary out of the

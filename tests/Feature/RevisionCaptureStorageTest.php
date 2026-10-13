@@ -71,7 +71,7 @@ class RevisionCaptureStorageTest extends TestCase
     $this->assertSame('Reason second', $events->first()->reason);
     $this->assertSame('first', $second->event);
     $this->assertSame($first->snapshot['captured_at'], $second->snapshot['captured_at']);
-    $this->assertSame((int) DB::table($first->getTable())->where('id', $first->id)->selectRaw('LENGTH(snapshot) as bytes')->value('bytes'), $second->snapshot_bytes);
+    $this->assertSame(strlen(json_encode($second->snapshot, JSON_THROW_ON_ERROR)), $second->snapshot_bytes);
     $history = app(RevisionCaptureHistory::class)->for($second);
     $this->assertSame('second', $history['events'][0]['event']);
     $this->assertFalse($history['has_more']);

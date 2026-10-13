@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Catalog;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageLayoutSlot;
@@ -18,12 +19,9 @@ class CoreLayoutCatalogSyncer
       'layout_slots' => 0,
     ];
 
-    $now = now();
-
-    PageLayout::query()->upsert(
-      collect(PageLayoutCatalog::definitions())
-        ->map(fn (array $layout) => [
-          'handle' => $layout['handle'],
+    DB::transaction(function (): void {
+      foreach (PageLayoutCatalog::definitions() as $layout) {
+        PageLayout::query()->updateOrCreate(['handle' => $layout['handle']], [
           'name' => $layout['name'],
           'description' => $layout['description'] ?? null,
           'is_system' => $layout['is_system'] ?? false,
@@ -31,15 +29,11 @@ class CoreLayoutCatalogSyncer
           'sort_order' => $layout['sort_order'] ?? 0,
           'body_class' => $layout['body_class'] ?? null,
           'shell_type' => $layout['shell_type'] ?? 'default',
-          'slot_schema' => isset($layout['slot_schema']) ? json_encode($layout['slot_schema'], JSON_UNESCAPED_SLASHES) : null,
-          'wrapper_schema' => isset($layout['wrapper_schema']) ? json_encode($layout['wrapper_schema'], JSON_UNESCAPED_SLASHES) : null,
-          'created_at' => $now,
-          'updated_at' => $now,
-        ])
-        ->all(),
-      ['handle'],
-      ['name', 'description', 'is_system', 'is_active', 'sort_order', 'body_class', 'shell_type', 'slot_schema', 'wrapper_schema', 'updated_at']
-    );
+          'slot_schema' => $layout['slot_schema'] ?? null,
+          'wrapper_schema' => $layout['wrapper_schema'] ?? null,
+        ]);
+      }
+    });
 
     $summary['layouts'] = count(PageLayoutCatalog::definitions());
 

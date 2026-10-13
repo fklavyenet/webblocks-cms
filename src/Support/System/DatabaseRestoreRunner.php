@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
+use WebBlocks\Cms\Support\Relational\RelationalDocuments;
+use WebBlocks\Cms\Support\Relational\StructuredSettings;
+use WebBlocks\Cms\Support\Relational\TokenRelations;
 
 class DatabaseRestoreRunner
 {
@@ -25,11 +29,19 @@ class DatabaseRestoreRunner
 
     $output[] = 'Preparing database restore for driver '.$driver.'.';
 
-    return match ($driver) {
-      'sqlite' => $this->restoreSqlite($connection, $sqlPath, $output),
-      'mysql', 'mariadb' => $this->restoreMysqlFamily($connection, $sqlPath, $output),
-      default => throw new RuntimeException('Database restore currently supports sqlite, mysql, and mariadb drivers. Active driver: '.$driver.'.'),
-    };
+    try {
+      return match ($driver) {
+        'sqlite' => $this->restoreSqlite($connection, $sqlPath, $output),
+        'mysql', 'mariadb' => $this->restoreMysqlFamily($connection, $sqlPath, $output),
+        default => throw new RuntimeException('Database restore currently supports sqlite, mysql, and mariadb drivers. Active driver: '.$driver.'.'),
+      };
+    } finally {
+      // A restored backup can replace both the schema and its persistence authority.
+      app(PersistentDocuments::class)->clear();
+      app(StructuredSettings::class)->clearAvailability();
+      app(RelationalDocuments::class)->clearAvailability();
+      app(TokenRelations::class)->clearAvailability();
+    }
   }
 
   private function restoreSqlite(Connection $connection, string $sqlPath, array &$output): array

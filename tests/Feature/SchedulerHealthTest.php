@@ -67,7 +67,8 @@ class SchedulerHealthTest extends TestCase
     $this->mock(SiteNotificationDispatcher::class, fn ($mock) => $mock->shouldReceive('run')->once()->andThrow(new \RuntimeException('private-payload-and-credentials')));
     $this->assertSame(1, Artisan::call('webblocks:notifications:dispatch'));
     $this->assertSame('failed', $this->health()->snapshot()['status']);
-    $state = SystemSetting::where('key', SchedulerHealth::STATE_KEY)->value('value');
+    $state = json_encode(DB::table('wbcms_scheduler_health')->where('key', 'notifications')->first(), JSON_THROW_ON_ERROR);
+    $this->assertDatabaseMissing('wbcms_system_settings', ['key' => SchedulerHealth::STATE_KEY]);
     $this->assertStringNotContainsString('private-payload-and-credentials', $state);
     $this->assertStringNotContainsString('private-payload-and-credentials', Artisan::output());
     $this->app->forgetInstance(SiteNotificationDispatcher::class);

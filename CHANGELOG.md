@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.98.8
+
+### Fixed
+
+- Complete relational persistence cutover: remove remaining CMS JSON columns, JSON-encoded metadata/continuation columns and the scheduler compatibility copy after SQL preparation and readback checks. Preserve independent full snapshots, API field names and wire formats.
+- Preserve model visibility filters, catalog seeding and restored legacy database availability after column removal.
+- Remove imported mutable plugin lifecycle and promotion-plan JSON files while retaining SQL state, immutable package manifests and plain emergency disable markers.
+- Require the 1.98.7 preparation bridge for in-app updates so a running updater can finish its API result after column retirement. Rollback requires the matching database backup and package; pre-bridge rollback also requires the original local/plugin state files.
+
+
 ## 1.98.7
 
 ### Fixed
