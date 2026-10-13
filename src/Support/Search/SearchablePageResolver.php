@@ -7,12 +7,13 @@ use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 
 class SearchablePageResolver
 {
   public function query(?Site $site = null, ?int $pageId = null): Builder
   {
-    return Page::query()
+    return app(PublicPageAccess::class)->scopePublic(Page::query())
       ->where('status', Page::STATUS_PUBLISHED)
       ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
       ->when($site, fn (Builder $query) => $query->where('site_id', $site->id))
@@ -21,7 +22,7 @@ class SearchablePageResolver
 
   public function shouldIndex(Page $page): bool
   {
-    return $page->isPublished() && ! $page->isSharedSlotSourcePage();
+    return $page->isPublished() && ! $page->isSharedSlotSourcePage() && ! app(PublicPageAccess::class)->protected($page);
   }
 
   public function loadForIndexing(Page $page): Page

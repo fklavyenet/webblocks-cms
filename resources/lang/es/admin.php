@@ -1,6 +1,19 @@
 <?php
 
 $translations = [
+  'plugin_dependencies' => [
+    'invalid' => 'Las dependencias deben indicar versiones válidas de plugins obligatorios u opcionales.',
+    'unavailable' => 'El plugin :plugin :version debe estar instalado, ser compatible y estar activado.',
+    'cycle' => 'Las dependencias obligatorias contienen un ciclo.',
+    'in_use' => 'Desactive primero estos plugins dependientes: :plugins.',
+    'update_blocked' => 'El plugin :plugin requiere la versión :version e impide esta actualización.',
+    'title' => 'Dependencias',
+    'required' => 'Obligatorio',
+    'optional' => 'Opcional',
+    'dependents' => 'Plugins dependientes activos',
+    'invalid_access' => 'La regla de acceso importada requiere el esquema CMS actual y datos válidos.',
+    'optional_unavailable' => 'La integración opcional con :plugin :version no está disponible.',
+  ],
   'plugin_recovery' => [
     'title' => 'Recuperación de plugins',
     'description' => 'Esta pantalla no carga código de plugins. Desactive un plugin defectuoso o restaure la versión anterior si no se ejecutó una migración de base de datos.',

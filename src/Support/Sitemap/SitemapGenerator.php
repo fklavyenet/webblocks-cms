@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Models\SiteLocale;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 
 class SitemapGenerator
 {
@@ -77,7 +78,7 @@ class SitemapGenerator
     $enabledLocales = $site->enabledLocales()->orderByDesc('is_default')->orderBy('code')->get();
     $enabledLocaleIds = $enabledLocales->pluck('id')->map(fn ($id): int => (int) $id)->all();
 
-    $pages = Page::query()
+    $pages = app(PublicPageAccess::class)->scopePublic(Page::query())
       ->with(['site', 'translations.locale'])
       ->where('site_id', $site->id)
       ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)

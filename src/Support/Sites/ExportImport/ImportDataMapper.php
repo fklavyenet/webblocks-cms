@@ -37,6 +37,7 @@ use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Sites\SiteDomainManager;
@@ -884,6 +885,7 @@ class ImportDataMapper
         'created_at' => $pageData['created_at'] ?? null,
         'updated_at' => $pageData['updated_at'] ?? null,
       ]);
+      app(PublicPageAccess::class)->importRule($page, $pageData['access_rule'] ?? null);
 
       $page->translations()->delete();
       $map[(int) $pageData['id']] = $page->id;

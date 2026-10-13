@@ -13,7 +13,7 @@
 
   $filterVisibleItems = function ($items) use (&$filterVisibleItems) {
     return $items
-      ->filter(fn ($item) => $item->isVisible())
+      ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)))
       ->map(function ($item) use (&$filterVisibleItems) {
         $item->setRelation('children', $filterVisibleItems($item->children ?? collect()));
 

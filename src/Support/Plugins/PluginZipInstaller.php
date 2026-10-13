@@ -51,6 +51,7 @@ class PluginZipInstaller
       [$manifestPath, $stripPrefix] = $this->locateManifest($entries);
       $manifest = $this->manifest($zip, $manifestPath);
       $this->validateManifest($manifest);
+      PluginDependencies::normalize($manifest['dependencies'] ?? [], (string) $manifest['handle']);
       app(PluginIconDeclaration::class)->validate($manifest);
       $this->validateAdminTranslations($entries, $stripPrefix);
 
@@ -86,6 +87,9 @@ class PluginZipInstaller
         throw new RuntimeException('A plugin with this handle and version is already installed.');
       }
 
+      if ($currentVersion !== null) {
+        app(PluginDependencyManager::class)->assertReplacement($manifest);
+      }
       $this->extract($zip, $entries, $stripPrefix, $target);
 
       $wasEnabled = $currentVersion !== null && ($this->plugins->enabledVersion($handle) === $currentVersion || (! $this->plugins->isDisabled($handle) && (bool) config("webblocks-plugins.enabled.{$handle}", false)));
@@ -95,7 +99,7 @@ class PluginZipInstaller
         app(PluginBootProbe::class)->check($definition);
         if ($expectedHandle !== null && $currentVersion !== null) {
           $this->plugins->recordPrevious($handle, $currentVersion, $version, false);
-          $this->plugins->disable($handle);
+          $this->plugins->disable($handle, force: true);
         }
         $setupStarted = true;
         $setup = app(PluginDatabaseSetup::class)->run($definition, verifyBoot: false);

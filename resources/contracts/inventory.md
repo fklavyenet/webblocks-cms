@@ -1281,3 +1281,67 @@ launch failures are recorded and shown. Large backfills have a configurable boun
 one-hour subprocess limit (`WEBBLOCKS_UPDATES_COMMAND_TIMEOUT`). The first upgrade
 from an older package still starts with that package's updater; installing this fix
 does not retroactively replace a running older HTTP request.
+
+## Plugin dependencies and member access — CMS 1.99.0
+
+New plugin manifests may declare `dependencies.required` and
+`dependencies.optional` as plugin-handle to Composer-semver constraint maps.
+Legacy `requires` entries remain advisory. Required dependencies are enforced
+transitively at runtime and before activation. Cycles and incompatible provider
+versions are rejected. Missing or disabled optional integrations do not deactivate
+the consumer. Summaries expose `dependencies`, `dependency_problems`,
+`optional_dependency_problems`, `dependents` and active `service_contracts`.
+The plugin detail screen shows both declaration kinds and unavailable integrations.
+
+Normal disable/uninstall operations reject providers used by configured required
+consumers. Updates and recovery activation check incoming version constraints as
+well as the candidate's requirements. Recovery disable and automatic quarantine
+can force a safe stop; dependent consumers then become inactive. Lifecycle state
+mutations share a dependency lock. Candidate checks use manifest metadata without
+executing replacement code, including before running activation migrations.
+
+A plugin definition can expose a core-owned PHP interface through
+`services([Contract::class => Implementation::class])`. Consumers resolve it at
+call time through `PluginServiceRegistry::resolve(handle, contract, constraint)`.
+Only a compatible active provider can supply the implementation. This works with
+ZIP-installed plugins through their static definition; it does not require a
+Composer provider boot side effect. Service discovery does not grant API token
+capabilities or bypass plugin/site authorization.
+
+`MemberDirectory` is the first shared visitor contract: current site-scoped
+`MemberIdentity`, active package membership and site package options. Visitor
+accounts and membership grants belong to the separate Memberships plugin; CMS
+administrator accounts remain distinct. The first plugin stage supports verified
+accounts, free self-enrollment and manual membership periods; no recurring billing
+or payment-provider integration is included.
+
+CMS page access requirements use the relational `wbcms_page_access_rules` table.
+No rule means public. A rule with null package_id requires a verified site member;
+a non-null package_id also requires an active grant for that site/package. Missing,
+disabled or quarantined membership providers deny protected content. Protected
+HTML responses are private/no-store and noindex/noarchive. Responses that include
+logged-in member form data are also private/no-store. Public search indexing and
+queries, sitemap, page-list blocks, fallback related-page lists and automatic
+navigation exclude protected pages regardless of visitor membership.
+
+Access rules are security policy outside content snapshots: restoring an older
+content revision leaves current protection intact. Page duplicates, revision
+candidates, staged updates and site clones carry protection forward. Site export
+includes an `access_rule` projection and exports protected pages as drafts for
+older consumers. Import/promotion preserves protection and does not treat foreign
+package IDs as local authorization: a package requirement becomes unresolved
+(package_id 0) until the operator explicitly selects a local package. Import does
+not loosen an existing target rule. Shared Slot source pages cannot be assigned
+member access rules.
+
+Page protection does not revoke URLs of files already stored publicly. The
+Memberships private download endpoint checks a published protected page, current
+member access, a published block's media association, private media visibility and
+private filesystem visibility. Confidential files must use a non-public storage
+disk. Public media and confidential downloads remain separate authoring choices.
+
+Appointments can declare Memberships as an optional integration. Its service
+fields `members_only` and nullable `required_package_id` default to guest access;
+restricted services deny bookings and slot discovery without the matching member
+rights. Verified member bookings retain nullable `member_id` plus the existing
+customer snapshot. Operator manual bookings retain their existing authority.

@@ -83,7 +83,7 @@ class PageListQuery
     ?string $pathPrefix,
     ?int $currentPageId,
   ): Builder {
-    $query = Page::query()
+    $query = app(PublicPageAccess::class)->scopePublic(Page::query())
       ->where('site_id', $site->id)
       ->where('status', Page::STATUS_PUBLISHED)
       // Shared Slot source pages are internal: never routed, never listed.

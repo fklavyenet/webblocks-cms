@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Sites;
 
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -274,6 +275,9 @@ class SiteCloneService
         'review_requested_by_user_id' => null,
       ]);
 
+      if (Schema::hasTable('wbcms_page_access_rules') && ($rule = $page->accessRule()->first())) {
+        $newPage->accessRule()->create(['package_id' => $rule->package_id]);
+      }
       $pageMap[$page->id] = $newPage->id;
       $counts['pages_cloned']++;
 

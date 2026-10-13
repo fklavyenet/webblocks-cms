@@ -47,6 +47,7 @@ class InstalledPluginDefinitionFactory
          * the manifest the installer and the catalog both read.
          */
         ->requires($this->requirements($manifest))
+        ->dependencies($manifest['dependencies'] ?? [])
         ->migrations($this->migrationPaths($manifest));
     }
 
@@ -57,6 +58,7 @@ class InstalledPluginDefinitionFactory
       ->description($manifest['description'] ?? null)
       ->requiresCms($manifest['required_cms_version'] ?? null)
       ->requires($this->requirements($manifest))
+        ->dependencies($manifest['dependencies'] ?? [])
       ->publicAssets($this->publicAssets($manifest))
       ->source('manual upload')
       ->installPath($path);

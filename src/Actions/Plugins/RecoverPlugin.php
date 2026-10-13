@@ -21,7 +21,7 @@ class RecoverPlugin
     try {
       abort_unless($plugins->hasHandle($handle), 404);
       if ($operation === 'disable') {
-        $plugins->disable($handle);
+        $plugins->disable($handle, force: true);
 
         return;
       }

@@ -751,6 +751,9 @@ class InternalContentPlanService
       'review_requested_at' => null,
     ]);
 
+    if (Schema::hasTable('wbcms_page_access_rules') && ($rule = $sourcePage->accessRule()->first())) {
+      $stagedPage->accessRule()->create(['package_id' => $rule->package_id]);
+    }
     $stagedPage->translations()->delete();
 
     $basePath = '/staged-updates/page-'.$sourcePage->id.'/update-'.$stagedPage->id;

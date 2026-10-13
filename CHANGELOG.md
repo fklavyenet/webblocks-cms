@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.99.0
+
+### Added
+
+- Enforced required and optional plugin dependencies, transitive runtime checks, safe lifecycle guards and shared PHP service contracts.
+- A visitor MemberDirectory contract and relational page access rules that remain closed when their provider is unavailable.
+- Protected-page discovery filtering and protection preservation during copies, staged updates and site transfers.
+
+
 ## 1.98.9
 
 ### Fixed
@@ -8,6 +17,7 @@
 - Track the exact update operation through temporary 503/502/504 responses, network timeouts and screen reloads. Confirm terminal results and the installed target before returning to Update History; display unresolved historical runs as status unconfirmed instead of running forever.
 - Keep the authenticated, system-authorized status endpoint available during rendered Laravel maintenance mode. Preserve public maintenance responses and all status-route authorization.
 - Store worker state and heartbeat in relational SQL records; keep elapsed time and phase timings. Refresh heartbeat during silent subprocesses, preserve it across cache clearing, and use a configurable bounded one-hour command timeout for large backfills.
+
 
 
 ## 1.98.8

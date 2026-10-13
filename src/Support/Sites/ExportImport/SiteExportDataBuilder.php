@@ -23,6 +23,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteVariable;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class SiteExportDataBuilder
@@ -211,7 +212,8 @@ class SiteExportDataBuilder
         'page_type' => $page->page_type,
         'page_type_slug' => $page->page_type_id ? optional($page->pageType)->slug : null,
         'layout_slug' => $page->layout_id ? optional($page->layout)->slug : null,
-        'status' => $page->status,
+        'status' => app(PublicPageAccess::class)->protected($page) ? Page::STATUS_DRAFT : $page->status,
+        'access_rule' => app(PublicPageAccess::class)->exportRule($page),
         'public_shell' => $page->publicShellPreset(),
         'settings' => Page::sanitizeSettings($page->settings),
         'created_at' => $page->created_at?->toDateTimeString(),

@@ -1,6 +1,6 @@
 @php
     $label = trim((string) $item->resolvedTitle());
-    $children = $item->children->filter(fn ($child) => $child->isVisible())->values();
+    $children = $item->children->filter(fn ($child) => $child->isVisible() && (! $child->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($child->page)))->values();
     $isGroup = $item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty();
     $isActive = $isNavigationItemActive($item);
     $href = $item->resolvedUrl();

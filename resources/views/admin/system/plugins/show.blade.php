@@ -170,6 +170,24 @@
         </div>
     </details>
 
+    <section class="wb-card">
+        <div class="wb-card-header">{{ __('webblocks-cms::admin.plugin_dependencies.title') }}</div>
+        <div class="wb-card-body wb-stack wb-gap-2">
+            @foreach (['required', 'optional'] as $kind)
+                <strong>{{ __('webblocks-cms::admin.plugin_dependencies.'.$kind) }}</strong>
+                @foreach ($plugin['dependencies'][$kind] ?? [] as $handle => $constraint)
+                    <div><code>{{ $handle }}</code> {{ $constraint }}</div>
+                @endforeach
+            @endforeach
+            @foreach (array_merge($plugin['dependency_problems'] ?? [], $plugin['optional_dependency_problems'] ?? []) as $problem)
+                <p class="wb-alert wb-alert-warning">{{ $problem }}</p>
+            @endforeach
+            @if (($plugin['dependents'] ?? []) !== [])
+                <p>{{ __('webblocks-cms::admin.plugin_dependencies.dependents') }}: {{ implode(', ', $plugin['dependents']) }}</p>
+            @endif
+        </div>
+    </section>
+
     @if ($plugin['settings'])
         <div class="wb-card">
             <div class="wb-card-header">

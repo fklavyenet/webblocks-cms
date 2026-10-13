@@ -28,6 +28,10 @@ class PluginDefinition
   /** @var array<string, string> */
   private array $requirements = [];
 
+  private array $dependencies = ['required' => [], 'optional' => []];
+
+  private array $services = [];
+
   private string $source = 'core';
 
   private ?string $installPath = null;
@@ -317,6 +321,31 @@ class PluginDefinition
     $this->requirements = $clean;
 
     return $this;
+  }
+
+  public function dependencies(mixed $dependencies): self
+  {
+    $this->dependencies = PluginDependencies::normalize($dependencies, $this->handle);
+
+    return $this;
+  }
+
+  public function dependencyDefinitions(): array
+  {
+    return $this->dependencies;
+  }
+
+  /** @param array<class-string, class-string> $services */
+  public function services(array $services): self
+  {
+    $this->services = $services;
+
+    return $this;
+  }
+
+  public function serviceDefinitions(): array
+  {
+    return $this->services;
   }
 
   public function requiredCmsVersion(): ?string
@@ -938,6 +967,8 @@ class PluginDefinition
       'description' => $this->description,
       'required_cms_version' => $this->requiredCmsVersion,
       'requires' => $this->requirements,
+      'dependencies' => $this->dependencies,
+      'service_contracts' => array_keys($this->services),
       'source' => $this->source,
       'install_path' => $this->installPath,
       'settings_namespace' => $this->settingsNamespaceValue(),

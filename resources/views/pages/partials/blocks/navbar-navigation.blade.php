@@ -12,10 +12,10 @@
   };
   $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
     ->buildMenuTree($menuKey, $site?->id)
-    ->filter(fn ($item) => $item->isVisible())
+    ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)))
     ->map(function ($item) {
       $item->setRelation('children', $item->children
-        ->filter(fn ($child) => $child->isVisible())
+        ->filter(fn ($child) => $child->isVisible() && (! $child->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($child->page)))
         ->filter(function ($child) {
           if ($child->link_type !== \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
             return $child->resolvedUrl() !== null;

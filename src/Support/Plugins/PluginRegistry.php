@@ -13,6 +13,8 @@ class PluginRegistry
 
   private array $suppressed = [];
 
+  private array $checkingDependencies = [];
+
   public function suppress(string $handle): void
   {
     $this->suppressed[$handle] = true;
@@ -84,7 +86,15 @@ class PluginRegistry
 
   public function isEnabled(string $handle): bool
   {
-    return $this->isConfiguredEnabled($handle) && $this->isCompatible($handle);
+    if (! $this->has($handle) || ! $this->isConfiguredEnabled($handle) || ! $this->isCompatible($handle) || isset($this->checkingDependencies[$handle])) {
+      return false;
+    }
+    $this->checkingDependencies[$handle] = true;
+    try {
+      return (new PluginDependencies)->problems($this->plugins[$handle], $this->all(), fn ($dependency) => $this->isActive($dependency)) === [];
+    } finally {
+      unset($this->checkingDependencies[$handle]);
+    }
   }
 
   public function isActive(string $handle): bool
@@ -136,8 +146,7 @@ class PluginRegistry
   /**
    * Requirements this install does not meet, as sentences for an operator.
    *
-   * Reported, never enforced: see PluginRequirements for why a hard dependency
-   * graph is the wrong shape for a manually installed plugin system.
+   * Legacy requires entries remain advisory; dependencies are enforced separately.
    *
    * @return list<string>
    */
@@ -429,6 +438,9 @@ class PluginRegistry
       'lifecycle_status' => $this->lifecycleStatus($configuredEnabled, $compatible),
       'incompatibility_message' => $this->incompatibilityMessage($plugin->handle()),
       'unmet_requirements' => $this->unmetRequirements($plugin->handle()),
+      'dependency_problems' => (new PluginDependencies)->problems($plugin, $this->all(), fn ($handle) => $this->isActive($handle)),
+      'optional_dependency_problems' => (new PluginDependencies)->problems($plugin, $this->all(), fn ($handle) => $this->isActive($handle), 'optional'),
+      'dependents' => (new PluginDependencies)->dependents($plugin->handle(), $this->all(), fn ($handle) => $this->isConfiguredEnabled($handle)),
     ]);
   }
 

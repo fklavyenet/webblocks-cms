@@ -1,6 +1,19 @@
 <?php
 
 return [
+    'plugin_dependencies' => [
+        'invalid_access' => 'The imported page access rule requires the current CMS schema and valid policy data.',
+        'optional_unavailable' => 'Optional integration with :plugin :version is unavailable.',
+        'invalid' => 'Dependency declarations must contain valid required or optional plugin version constraints.',
+        'unavailable' => 'Plugin :plugin :version must be installed, compatible and enabled.',
+        'cycle' => 'Required plugin dependencies contain a cycle.',
+        'in_use' => 'Disable these dependent plugins first: :plugins.',
+        'update_blocked' => 'Plugin :plugin requires version :version and prevents this update.',
+        'title' => 'Dependencies',
+        'required' => 'Required',
+        'optional' => 'Optional',
+        'dependents' => 'Active dependents',
+    ],
     'plugin_recovery' => [
         'title' => 'Plugin recovery',
         'description' => 'This screen opens without loading plugin code. Disable a failing plugin or restore its last working version when no database migration was applied.',

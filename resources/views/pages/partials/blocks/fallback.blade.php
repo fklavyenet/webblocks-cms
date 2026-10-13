@@ -11,7 +11,7 @@
     $asset = $block->downloadAsset() ?? $block->attachmentAsset() ?? $block->asset;
     $assetUrl = $asset?->url();
     $page = $block->renderPage();
-    $publishedPages = \WebBlocks\Cms\Models\Page::query()
+    $publishedPages = app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->scopePublic(\WebBlocks\Cms\Models\Page::query())
         ->where('status', 'published')
         ->with(['translations', 'site'])
         ->orderBy('title')

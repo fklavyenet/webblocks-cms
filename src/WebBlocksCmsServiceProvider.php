@@ -1114,12 +1114,29 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         return $registry;
       }
 
-      foreach ($repository->installed() as $installed) {
+      $selected = $repository->installed();
+      $configured = [];
+      foreach ($selected as $entry) {
+        $manifest = $entry['manifest'];
+        $handle = (string) $manifest['handle'];
+        $configured[$handle] = ! $repository->isDisabled($handle)
+          && ! in_array($repository->setupResult($handle, (string) $manifest['version'])['status'] ?? null, ['running', 'failed'], true)
+          && ($entry['enabled'] || (bool) config("webblocks-plugins.enabled.{$handle}", false));
+      }
+      $metadata = new PluginRegistry($configured, respectRecoveryMode: false);
+      foreach ($selected as $entry) {
+        try {
+          $metadata->register($factory->make($entry['manifest'], $entry['path'], false));
+        } catch (Throwable) {
+          $metadata->suppress((string) $entry['manifest']['handle']);
+        }
+      }
+      foreach ($selected as $installed) {
         $handle = (string) ($installed['manifest']['handle'] ?? '');
         $enabledByConfig = $handle !== '' && (bool) config("webblocks-plugins.enabled.{$handle}", false);
         $databaseReady = ! in_array($repository->setupResult($handle, (string) ($installed['manifest']['version'] ?? ''))['status'] ?? null, ['running', 'failed'], true);
 
-        $shouldLoad = $databaseReady && ! $repository->isDisabled($handle) && ($installed['enabled'] || $enabledByConfig);
+        $shouldLoad = $metadata->isActive($handle) && $databaseReady && ! $repository->isDisabled($handle) && ($installed['enabled'] || $enabledByConfig);
         try {
           $registry->register($factory->make($installed['manifest'], $installed['path'], $shouldLoad));
         } catch (Throwable) {

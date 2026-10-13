@@ -30,6 +30,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
@@ -310,6 +311,7 @@ class SitePromotionApplier
         'review_requested_by_user_id' => null,
       ]);
       $page->save();
+      app(PublicPageAccess::class)->importRule($page, $row['access_rule'] ?? null);
 
       $sourcePageMap[(int) ($row['id'] ?? 0)] = $page->id;
     }

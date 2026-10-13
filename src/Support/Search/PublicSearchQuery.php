@@ -8,6 +8,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PublicSearchIndex;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 
 class PublicSearchQuery
 {
@@ -44,7 +45,7 @@ class PublicSearchQuery
 
     $results = PublicSearchIndex::query()
       ->with(['page.site', 'page.translations.locale'])
-      ->whereHas('page', fn ($pages) => $pages->where('status', Page::STATUS_PUBLISHED))
+      ->whereHas('page', fn ($pages) => app(PublicPageAccess::class)->scopePublic($pages)->where('status', Page::STATUS_PUBLISHED))
       ->where('site_id', $site->id)
       ->where('locale_id', $locale->id)
       ->where(function ($queryBuilder) use ($terms) {

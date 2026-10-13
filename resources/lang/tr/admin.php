@@ -1,6 +1,19 @@
 <?php
 
 $translations = [
+  'plugin_dependencies' => [
+    'invalid' => 'Bağımlılıklar geçerli zorunlu veya isteğe bağlı eklenti sürümlerini belirtmelidir.',
+    'unavailable' => ':plugin :version eklentisi kurulu, uyumlu ve etkin olmalıdır.',
+    'cycle' => 'Zorunlu eklenti bağımlılıklarında döngü var.',
+    'in_use' => 'Önce şu bağımlı eklentileri devre dışı bırakın: :plugins.',
+    'update_blocked' => ':plugin eklentisi :version sürümünü gerektiriyor ve bu güncellemeyi engelliyor.',
+    'title' => 'Bağımlılıklar',
+    'required' => 'Zorunlu',
+    'optional' => 'İsteğe bağlı',
+    'dependents' => 'Etkin bağımlı eklentiler',
+    'invalid_access' => 'İçe aktarılan sayfa erişim kuralı güncel CMS şemasını ve geçerli ilke verilerini gerektirir.',
+    'optional_unavailable' => ':plugin :version ile isteğe bağlı entegrasyon kullanılamıyor.',
+  ],
   'plugin_recovery' => [
     'title' => 'Eklenti kurtarma',
     'description' => 'Bu ekran eklenti kodlarını yüklemez. Sorunlu eklentiyi kapatın veya veritabanı değişikliği uygulanmadıysa önceki sürümünü geri yükleyin.',

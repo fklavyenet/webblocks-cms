@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -119,6 +120,11 @@ class Page extends CmsModel
     'archived_by_user_id',
     'review_requested_by_user_id',
   ];
+
+  public function accessRule(): HasOne
+  {
+    return $this->hasOne(PageAccessRule::class);
+  }
 
   protected $appends = [
     'name',

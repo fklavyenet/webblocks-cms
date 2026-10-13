@@ -24,7 +24,11 @@ class ServeCmsPageBeforeRedirectCatchAll
     if ($path !== '' && $this->routeResolver->findPublishedPageByPath($request, $path)) {
       return app(Pipeline::class)->send($request)
         ->through(app(Router::class)->resolveMiddleware(['throttle:cms-public-pages']))
-        ->then(fn (Request $request) => response($this->pageController->show($request, $path)));
+        ->then(function (Request $request) use ($path): Response {
+          $result = $this->pageController->show($request, $path);
+
+          return $result instanceof Response ? $result : response($result);
+        });
     }
 
     return $next($request);

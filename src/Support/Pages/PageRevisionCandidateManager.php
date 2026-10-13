@@ -62,6 +62,9 @@ class PageRevisionCandidateManager
         'created_by_user_id' => $actor->id,
         'updated_by_user_id' => $actor->id,
       ]);
+      if (Schema::hasTable('wbcms_page_access_rules') && ($rule = $page->accessRule()->first())) {
+        $candidatePage->accessRule()->create(['package_id' => $rule->package_id]);
+      }
 
       $candidate = PageRevisionCandidate::query()->create([
         'page_id' => $page->id,

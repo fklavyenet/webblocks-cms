@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
@@ -11,6 +12,25 @@ use WebBlocks\Cms\Support\Relational\PersistentSchema;
 
 class InstalledPluginRepository
 {
+  private bool $dependencyLockHeld = false;
+
+  private function withDependencyLock(callable $action): void
+  {
+    if ($this->dependencyLockHeld) {
+    $action();
+
+    return;
+    }
+    Cache::lock('webblocks-plugin-dependencies-'.hash('sha256', $this->rootPath()), 180)->block(5, function () use ($action): void {
+      $this->dependencyLockHeld = true;
+      try {
+      $action();
+      } finally {
+      $this->dependencyLockHeld = false;
+      }
+    });
+  }
+
   public function rootPath(): string
   {
     $configured = config('webblocks-plugins.install.root');
@@ -107,7 +127,16 @@ class InstalledPluginRepository
 
   public function enable(string $handle, string $version): void
   {
+    $this->withDependencyLock(fn () => $this->enableUnlocked($handle, $version));
+  }
+
+  private function enableUnlocked(string $handle, string $version): void
+  {
     $this->assertValidCoordinates($handle, $version);
+    $candidate = $this->findVersion($handle, $version);
+    if ($candidate !== null) {
+      app(PluginDependencyManager::class)->assertEnable($candidate['manifest']);
+    }
     $state = $this->state($handle);
     $state->forceFill(['enabled_version' => $version, 'enabled_at' => $state->enabled_at ?? now()->toIso8601String(), 'disabled_at' => null])->save();
     $this->state($handle, $version)->forceFill(['failed_at' => null])->save();
@@ -139,10 +168,23 @@ class InstalledPluginRepository
     return is_array($state['setup'] ?? null) ? $state['setup'] : [];
   }
 
-  public function disable(string $handle): void
+  public function disable(string $handle, bool $force = false): void
+  {
+    if ($force) {
+    $this->disableUnlocked($handle, true);
+
+    return;
+    }
+    $this->withDependencyLock(fn () => $this->disableUnlocked($handle, false));
+  }
+
+  private function disableUnlocked(string $handle, bool $force): void
   {
     if (! PluginDefinition::isValidHandle($handle)) {
       throw PluginException::invalidHandle($handle);
+    }
+    if (! $force) {
+      app(PluginDependencyManager::class)->assertRemoval($handle);
     }
     $directory = $this->rootPath().'/'.$handle;
     File::ensureDirectoryExists($directory);
@@ -156,6 +198,11 @@ class InstalledPluginRepository
   }
 
   public function uninstall(string $handle, string $version): void
+  {
+    $this->withDependencyLock(fn () => $this->uninstallUnlocked($handle, $version));
+  }
+
+  private function uninstallUnlocked(string $handle, string $version): void
   {
     $this->assertValidCoordinates($handle, $version);
 
@@ -264,7 +311,7 @@ class InstalledPluginRepository
     $directory = $this->rootPath().'/'.$handle.'/'.$version;
     File::ensureDirectoryExists($directory);
     File::put($directory.'/.runtime-failure', now()->toIso8601String());
-    $this->disable($handle);
+    $this->disable($handle, force: true);
     try {
       $this->state($handle, $version)->forceFill(['failed_at' => now()->toIso8601String()])->save();
     } catch (\Throwable) {
@@ -445,7 +492,7 @@ class InstalledPluginRepository
     $real = realpath($path);
     $candidate = $real !== false
       ? rtrim($real, DIRECTORY_SEPARATOR)
-      : rtrim(dirname($path), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.basename($path);
+      : rtrim(realpath(dirname($path)) ?: dirname($path), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.basename($path);
 
     if ($candidate !== $root && ! str_starts_with($candidate, $root.DIRECTORY_SEPARATOR)) {
       throw new RuntimeException('Plugin install path is outside the configured plugin root.');

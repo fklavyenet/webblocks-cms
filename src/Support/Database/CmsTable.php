@@ -15,6 +15,7 @@ final class CmsTable
     'api_token_networks',
     'block_application_references',
     'page_runtime_settings',
+    'page_access_rules',
     'page_runtime_items',
     'site_notification_policies',
     'scheduler_health',

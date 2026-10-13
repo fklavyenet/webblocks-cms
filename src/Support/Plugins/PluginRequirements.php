@@ -3,21 +3,8 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 /**
- * What a plugin says it needs, checked against what this install has.
- *
- * The manifest's `requires` key has been documented and written by every catalog
- * plugin since the beginning, and read by nothing. A plugin depending on another one
- * therefore degraded in silence: the operator who disabled the dependency saw a
- * feature stop working with nothing anywhere to say why.
- *
- * This reports; it never blocks. Refusing to enable a plugin until its dependencies
- * are enabled needs a resolver the CMS does not have, in an install model where
- * plugins arrive as manually uploaded ZIPs — and it produces the deadlock where A
- * cannot be enabled because B is disabled and B cannot be disabled because A is
- * enabled. A warning an operator can read is worth more than a rule that traps them.
- *
- * Every cross-plugin dependency is therefore expected to stay soft at runtime: the
- * depending plugin must keep working with the dependency absent, and say so itself.
+ * Advisory checks for legacy requires declarations. New plugins declare enforced
+ * required and optional relationships using dependencies; see PluginDependencies.
  */
 class PluginRequirements
 {

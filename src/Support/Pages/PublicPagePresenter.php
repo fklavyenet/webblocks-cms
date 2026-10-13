@@ -31,6 +31,9 @@ class PublicPagePresenter
    */
   public function present(Page $page, bool $preview = false, Locale|string|null $locale = null): array
   {
+    if (! $preview) {
+      abort_unless(app(PublicPageAccess::class)->allows($page, request()), 403);
+    }
     $topLevelBlocks = $page->blocks
       ->whereNull('parent_id')
       ->when(! $preview, fn (Collection $blocks) => $blocks->where('status', 'published'))

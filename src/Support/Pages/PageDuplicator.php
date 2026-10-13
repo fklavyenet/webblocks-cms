@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockButtonTranslation;
 use WebBlocks\Cms\Models\BlockContactFormTranslation;
@@ -82,6 +83,9 @@ class PageDuplicator
         'review_requested_at' => null,
       ]);
 
+      if (Schema::hasTable('wbcms_page_access_rules') && ($rule = $lockedPage->accessRule()->first())) {
+        $newPage->accessRule()->create(['package_id' => $rule->package_id]);
+      }
       $newPage->translations()->delete();
 
       foreach ($translations as $translation) {

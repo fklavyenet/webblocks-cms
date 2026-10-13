@@ -4,10 +4,12 @@ namespace WebBlocks\Cms\Http\Controllers\Public;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Visitors\VisitorEventLogger;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -20,7 +22,7 @@ class PageController extends Controller
     private readonly VisitorEventLogger $visitorEventLogger,
   ) {}
 
-  public function home(Request $request): View
+  public function home(Request $request): View|Response
   {
     $homePage = $this->routeResolver->findPublishedPage($request);
 
@@ -48,7 +50,7 @@ class PageController extends Controller
     return view('welcome');
   }
 
-  public function show(Request $request, string $localeOrPath, ?string $path = null): View
+  public function show(Request $request, string $localeOrPath, ?string $path = null): View|Response
   {
     $resolvedPath = $path ?? $localeOrPath;
 
@@ -69,9 +71,10 @@ class PageController extends Controller
     return redirect($canonicalPath, 301);
   }
 
-  private function renderPage(Request $request, Page $page): View
+  private function renderPage(Request $request, Page $page): View|Response
   {
     abort_if($page->isSharedSlotSourcePage(), 404);
+    abort_unless(app(PublicPageAccess::class)->allows($page, $request), 403);
 
     $page->load([
       'site',
@@ -87,7 +90,16 @@ class PageController extends Controller
 
     $this->visitorEventLogger->logPageView($request, $page);
 
-    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', $this->presenter->present($page));
+    $view = view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', $this->presenter->present($page));
+
+    if (app(PublicPageAccess::class)->protected($page)) {
+      return response($view)->header('Cache-Control', 'private, no-store')->header('Vary', 'Cookie')->header('X-Robots-Tag', 'noindex, noarchive');
+    }
+    if ($request->hasSession() && collect($request->session()->all())->has('webblocks_memberships')) {
+      return response($view)->header('Cache-Control', 'private, no-store')->header('Vary', 'Cookie');
+    }
+
+    return $view;
   }
 
   private function publishedBlockRelations(): array

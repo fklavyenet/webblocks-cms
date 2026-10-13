@@ -19,6 +19,7 @@ use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginDependencyManager;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -112,6 +113,10 @@ class SystemPluginController extends Controller
     abort_if($version === null, 422);
 
     try {
+      app(PluginDependencyManager::class)->assertEnable([
+        'handle' => $definition->handle(), 'label' => $definition->labelText(), 'version' => $definition->versionText(),
+        'required_cms_version' => $definition->requiredCmsVersion(), 'dependencies' => $definition->dependencyDefinitions(),
+      ]);
       app(PluginDatabaseSetup::class)->run($definition, repairRecordedMigrations: $this->setupRequired($definition));
       $this->installedPlugins->enable($plugin, $version);
     } catch (RuntimeException $exception) {
@@ -132,7 +137,11 @@ class SystemPluginController extends Controller
 
     abort_if($definition === null || $definition->installPathValue() === null, 404);
 
-    $this->installedPlugins->disable($plugin);
+    try {
+      $this->installedPlugins->disable($plugin);
+    } catch (RuntimeException $exception) {
+      return back()->withErrors(['plugin' => $exception->getMessage()]);
+    }
     $this->runtimeRefresher->refresh();
 
     return redirect()
@@ -365,7 +374,7 @@ class SystemPluginController extends Controller
       'files_available' => $filesAvailable,
       'manual_upload' => $manual,
       'can_enable' => $manual && ! $enabled && $compatible && $filesAvailable,
-      'can_disable' => $manual && $enabled,
+      'can_disable' => $manual && (bool) $summary['configured_enabled'],
       'can_uninstall' => $manual,
       'can_setup' => $manual && $enabled && $compatible && $filesAvailable && $hasMigrations,
       'migrations_pending' => $migrationsPending,

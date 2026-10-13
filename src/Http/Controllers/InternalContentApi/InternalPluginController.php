@@ -14,6 +14,7 @@ use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginDependencyManager;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
@@ -212,6 +213,10 @@ class InternalPluginController extends Controller
     }
 
     try {
+      app(PluginDependencyManager::class)->assertEnable([
+        'handle' => $definition->handle(), 'label' => $definition->labelText(), 'version' => $definition->versionText(),
+        'required_cms_version' => $definition->requiredCmsVersion(), 'dependencies' => $definition->dependencyDefinitions(),
+      ]);
       app(PluginDatabaseSetup::class)->run($definition);
       $this->plugins->enable($definition->handle(), $version);
       $this->runtime->refresh(registerRoutes: true);
