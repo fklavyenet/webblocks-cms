@@ -1203,6 +1203,23 @@ policy and scheduler health also use SQL as their authority. The existing API
 field names, nested structures, list order and null/empty distinctions are
 unchanged. Existing JSON fields remain compatibility copies during this
 transition; they are refreshed from authoritative values on supported model
-writes. Unmapped block settings and full revision snapshots retain their
+writes. In 1.98.5, unmapped block settings and full revision snapshots retain their
 existing storage contract for later migration. Historical malformed values and
 unresolved references are preserved, rather than silently normalized or dropped.
+
+From CMS 1.98.6, remaining Block settings use relational records. Core appearance,
+media, navigation and content fields have finite typed column schemas; content
+bindings, collection configuration and application instance values have their own
+records. Typed nodes preserve document structure, key/list order and historical
+or plugin extensions, including malformed values, without storing a JSON document
+in a new column. Collections batch-load these records rather than issuing a
+settings query for every block.
+
+Embedded Application CSS/JavaScript declarations, supported context flags,
+setting field definitions/defaults/bounds and enum options also use relational
+records. Existing API names and structures, ordered duplicate values, legacy
+script strings and omitted/null/empty distinctions remain compatible. Existing
+JSON columns are synchronized rollback copies. Update migration rollback retains
+SQL data; drift written by an older package must be reconciled before returning
+to SQL authority. Full revision snapshot and remaining legacy content/runtime
+storage are outside this phase.

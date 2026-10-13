@@ -1891,8 +1891,8 @@ class Block extends CmsModel
   /**
    * Settings exposed to core and plugin renderers as a defensive array.
    *
-   * Database-backed blocks store JSON, while translated render clones and tests
-   * may already carry an array. A plugin view must not need to duplicate those
+   * Database-backed blocks expose compatible serialized settings from relational
+   * records, while translated render clones and tests may already carry an array. A plugin view must not need to duplicate those
    * storage details or fail when an API-authored block has null settings.
    *
    * @return array<string, mixed>

@@ -2,22 +2,33 @@
 
 namespace WebBlocks\Cms\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Relational\DocumentFields;
 use WebBlocks\Cms\Support\Relational\RelationalDocuments;
+use WebBlocks\Cms\Support\Relational\SettingDefinitions;
+use WebBlocks\Cms\Support\Relational\StructuredSettings;
 use WebBlocks\Cms\Support\Relational\TokenRelations;
 
 abstract class CmsModel extends Model
 {
   private array $pendingRelationalValues = [];
 
+  private array $pendingStructuredValues = [];
+
   private array $relationalValueCache = [];
+
+  private bool $structuredSettingsPrimed = false;
 
   public function setAttribute($key, $value)
   {
     parent::setAttribute($key, $value);
     unset($this->relationalValueCache[$key]);
+    if (in_array($key, SettingDefinitions::attributes($this), true) && app(StructuredSettings::class)->available()) {
+      $this->structuredSettingsPrimed = false;
+      $this->pendingStructuredValues[$key] = $this instanceof Block ? $value : parent::getAttribute($key);
+    }
     if (is_string($key) && DocumentFields::for($this, $key) !== null) {
       $definition = DocumentFields::for($this, $key);
       if (app(RelationalDocuments::class)->available($definition)) {
@@ -33,6 +44,9 @@ abstract class CmsModel extends Model
 
   public function getAttribute($key)
   {
+    if (array_key_exists($key, $this->pendingStructuredValues)) {
+      return $this->pendingStructuredValues[$key];
+    }
     if (array_key_exists($key, $this->pendingRelationalValues)) {
       return $this->relationalCompatibleValue($key, $this->pendingRelationalValues[$key]);
     }
@@ -40,6 +54,12 @@ abstract class CmsModel extends Model
       return $this->relationalValueCache[$key];
     }
     $value = parent::getAttribute($key);
+    if (! $this->structuredSettingsPrimed && in_array($key, SettingDefinitions::attributes($this), true)) {
+      [$found, $canonical] = app(StructuredSettings::class)->read($this, $key);
+      if ($found) {
+        return $this->relationalValueCache[$key] = $canonical;
+      }
+    }
     $definition = is_string($key) ? DocumentFields::for($this, $key) : null;
     if ($definition !== null) {
       $legacy = $this instanceof Block ? app(RelationalDocuments::class)->decoded($value) : $value;
@@ -62,7 +82,7 @@ abstract class CmsModel extends Model
 
   public function save(array $options = [])
   {
-    if (! ($this instanceof Page || $this instanceof Block || $this instanceof Site || $this instanceof CmsApiToken)) {
+    if (! ($this instanceof Page || $this instanceof Block || $this instanceof Site || $this instanceof CmsApiToken || $this instanceof EmbeddedApplication)) {
       return parent::save($options);
     }
 
@@ -70,9 +90,9 @@ abstract class CmsModel extends Model
       $locked = $this->exists
         ? $this->newQueryWithoutScopes()->whereKey($this->getKey())->lockForUpdate()->first() : null;
       // Refresh rollback copies from the authoritative values before every write.
-      foreach (['settings', 'notification_settings', ...array_keys(TokenRelations::LISTS)] as $key) {
-        if (array_key_exists($key, $this->getAttributes()) && (DocumentFields::for($this, $key) !== null || ($this instanceof CmsApiToken && isset(TokenRelations::LISTS[$key])))) {
-          $value = $locked !== null && ! array_key_exists($key, $this->pendingRelationalValues) && ! $this->isDirty($key)
+      foreach (array_unique(['settings', 'notification_settings', ...array_keys(TokenRelations::LISTS), ...SettingDefinitions::attributes($this)]) as $key) {
+        if (array_key_exists($key, $this->getAttributes()) && (DocumentFields::for($this, $key) !== null || ($this instanceof CmsApiToken && isset(TokenRelations::LISTS[$key])) || in_array($key, SettingDefinitions::attributes($this), true))) {
+          $value = $locked !== null && ! array_key_exists($key, $this->pendingRelationalValues) && ! array_key_exists($key, $this->pendingStructuredValues) && ! $this->isDirty($key)
             ? $locked->getAttribute($key) : $this->getAttribute($key);
           if ($this instanceof Block && is_array($value)) {
             $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
@@ -95,6 +115,14 @@ abstract class CmsModel extends Model
         app(TokenRelations::class)->write($this, $key, $value);
       }
     }
+    foreach ($this->pendingStructuredValues as $key => $value) {
+      app(StructuredSettings::class)->write($this, $key, $value);
+    }
+    if ($this->wasRecentlyCreated && SettingDefinitions::attributes($this) !== []) {
+      app(StructuredSettings::class)->captureDefaults($this);
+    }
+    $this->structuredSettingsPrimed = false;
+    $this->pendingStructuredValues = [];
     $this->pendingRelationalValues = [];
     $this->relationalValueCache = [];
     parent::finishSave($options);
@@ -102,8 +130,10 @@ abstract class CmsModel extends Model
 
   public function setRawAttributes(array $attributes, $sync = false)
   {
+    $this->structuredSettingsPrimed = false;
     $this->relationalValueCache = [];
     $this->pendingRelationalValues = [];
+    $this->pendingStructuredValues = [];
 
     return parent::setRawAttributes($attributes, $sync);
   }
@@ -118,8 +148,8 @@ abstract class CmsModel extends Model
   public function attributesToArray()
   {
     $attributes = parent::attributesToArray();
-    foreach (['settings', 'notification_settings', ...array_keys(TokenRelations::LISTS)] as $key) {
-      if (array_key_exists($key, $attributes) && (DocumentFields::for($this, $key) !== null || ($this instanceof CmsApiToken && isset(TokenRelations::LISTS[$key])))) {
+    foreach (array_unique(['settings', 'notification_settings', ...array_keys(TokenRelations::LISTS), ...SettingDefinitions::attributes($this)]) as $key) {
+      if (array_key_exists($key, $attributes) && (DocumentFields::for($this, $key) !== null || ($this instanceof CmsApiToken && isset(TokenRelations::LISTS[$key])) || in_array($key, SettingDefinitions::attributes($this), true))) {
         $attributes[$key] = $this->getAttribute($key);
       }
     }
@@ -130,8 +160,8 @@ abstract class CmsModel extends Model
   public function portableAttributes(): array
   {
     $attributes = $this->getAttributes();
-    foreach (['settings', 'notification_settings'] as $key) {
-      if (DocumentFields::for($this, $key) !== null && array_key_exists($key, $attributes)) {
+    foreach (array_unique(['settings', 'notification_settings', ...SettingDefinitions::attributes($this)]) as $key) {
+      if ((DocumentFields::for($this, $key) !== null || in_array($key, SettingDefinitions::attributes($this), true)) && array_key_exists($key, $attributes)) {
         $value = $this->getAttribute($key);
         $attributes[$key] = is_array($value) ? json_encode($value, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) : $value;
       }
@@ -148,6 +178,31 @@ abstract class CmsModel extends Model
   public function scopeWhereRuntimeSettingNull($query, string $path)
   {
     return app(RelationalDocuments::class)->where($query, DocumentFields::for($this, 'settings'), $path, null, true);
+  }
+
+  public function structuredSettingsPrimed(): bool
+  {
+    return $this->structuredSettingsPrimed;
+  }
+
+  public function markStructuredSettingsPrimed(): void
+  {
+    $this->structuredSettingsPrimed = true;
+  }
+
+  public function seedRelationalValue(string $attribute, mixed $value): void
+  {
+    $this->relationalValueCache[$attribute] = $value;
+  }
+
+  public function newCollection(array $models = []): Collection
+  {
+    $collection = parent::newCollection($models);
+    if (SettingDefinitions::attributes($this) !== []) {
+      app(StructuredSettings::class)->prime($collection);
+    }
+
+    return $collection;
   }
 
   public function getTable()

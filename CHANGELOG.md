@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.98.6
+
+- Store remaining Block settings in relational records: finite typed core appearance, media, navigation and content fields, content bindings and collection configuration, plus typed application instance values. Preserve nested historical/plugin extensions without writing JSON documents to the new tables.
+- Move Embedded Application CSS/JavaScript declarations, supported context flags, setting definitions, typed defaults/bounds and ordered enum options into relational records. Keep existing API structures, ordered duplicates, legacy script forms, omitted/null/empty values and unknown historical data.
+- Backfill existing records in bounded metadata batches with one payload read at a time, and batch-load settings for block/application collections. Keep existing JSON columns as synchronized rollback copies; retain canonical SQL data when the update migration is rolled back.
+- Preserve newer settings and application definitions during unrelated saves from stale model instances, and roll back settings rows, nested values and compatibility copies together on transaction failures. Keep rendering, translations, cloning, export/import and complete revision snapshots compatible.
+
 ## 1.98.5
 
 - Fix Cleanup failures on large revision histories by sorting indexed revision metadata in bounded keyset batches, measuring snapshot sizes once, and rechecking protected restore sources before deletion. Keep every historical snapshot and the configured retention floor.
