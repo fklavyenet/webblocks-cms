@@ -1861,6 +1861,7 @@ $translations = [
     'duration' => 'Duración',
     'elapsed' => 'Tiempo transcurrido',
     'phases' => [
+      'rollback' => 'Restoring package and backup',
       'backup' => 'Copia de seguridad',
       'download' => 'Descargando paquete',
       'extract' => 'Extrayendo paquete',

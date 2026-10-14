@@ -4,16 +4,23 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Mockery;
 use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\System\DatabaseDumpWriter;
+use WebBlocks\Cms\Support\System\DatabaseRestoreRunner;
+use WebBlocks\Cms\Support\System\SqlDumpContentValidator;
 use WebBlocks\Cms\Support\System\Updates\AdminApprovedUpdateClient;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateLauncher;
 use WebBlocks\Cms\Support\System\Updates\ApprovedUpdateTargetChanged;
+use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
@@ -184,5 +191,101 @@ class AdminUpdateOperationTest extends TestCase
       ['status' => 'compatible'], ['version' => WebBlocks::version(), 'checksum_sha256' => str_repeat('b', 64)], null, null, CarbonImmutable::now()));
     $this->expectException(ApprovedUpdateTargetChanged::class);
     (new AdminApprovedUpdateClient($client, $operation))->check();
+  }
+
+  public function test_a_cleared_web_environment_can_run_composer_commands(): void
+  {
+    $home = getenv('HOME');
+    $composerHome = getenv('COMPOSER_HOME');
+    putenv('HOME');
+    putenv('COMPOSER_HOME');
+    try {
+      $output = [];
+      app(UpdateCommandRunner::class)->run([PHP_BINARY, '-r', 'exit(getenv("COMPOSER_HOME") && is_dir(getenv("COMPOSER_HOME")) ? 0 : 1);'], base_path(), $output);
+      $this->assertDirectoryExists(storage_path('app/private/system-updates/composer-home'));
+    } finally {
+      $home === false ? putenv('HOME') : putenv('HOME='.$home);
+      $composerHome === false ? putenv('COMPOSER_HOME') : putenv('COMPOSER_HOME='.$composerHome);
+    }
+  }
+
+  public function test_automatic_restore_keeps_the_current_receipt_and_phase_durations(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'heartbeat_at' => now()]);
+    $progress = app(CmsUpdateProgress::class);
+    $progress->operation($operation->id);
+    $run = SystemUpdateRun::create(['from_version' => '1.0.0', 'to_version' => WebBlocks::version(), 'status' => 'running', 'started_at' => now()]);
+    $progress->start($run);
+    $progress->stage('backup');
+    $this->travel(2)->minutes();
+    $progress->stage('migrations');
+    $this->travel(2)->minutes();
+    $progress->restorePreservingProgress(function () use ($operation, $run): void {
+      DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $run->id)->delete();
+      DB::table('wbcms_admin_update_operations')->where('id', $operation->id)->delete();
+      DB::table('wbcms_system_update_runs')->where('id', $run->id)->delete();
+    });
+    $progress->finish();
+    $this->assertNotNull($operation->fresh());
+    $steps = DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $run->id)->orderBy('id')->get();
+    $this->assertSame(['backup', 'migrations', 'rollback'], $steps->pluck('stage')->all());
+    $this->assertSame(120000, $steps[1]->duration_ms);
+    $this->assertSame($run->id, $operation->fresh()->system_update_run_id);
+  }
+
+  public function test_failed_post_apply_restores_the_original_package_tree(): void
+  {
+    $root = sys_get_temp_dir().'/cms-package-rollback-'.Str::uuid();
+    File::ensureDirectoryExists($root.'/package/src');
+    File::put($root.'/package/src/version.php', 'old');
+    try {
+      $rollback = new CmsPackageRollback;
+      $rollback->capture($root.'/package');
+      File::put($root.'/package/src/version.php', 'new');
+      File::put($root.'/package/src/new-file.php', 'new');
+      $this->assertTrue($rollback->restore());
+      $this->assertSame('old', file_get_contents($root.'/package/src/version.php'));
+      $this->assertFileDoesNotExist($root.'/package/src/new-file.php');
+      $this->assertFalse($rollback->restore());
+      $this->assertSame([], glob($root.'/package.cms-*'));
+    } finally {
+      File::deleteDirectory($root);
+    }
+  }
+
+  public function test_first_future_update_does_not_depend_on_a_retired_license_helper(): void
+  {
+    $root = dirname(__DIR__, 2);
+    $before = hash_file('sha256', $root.'/LICENSE');
+    $migration = require $root.'/database/migrations/updates/2026_09_17_090000_promote_package_license.php';
+    $migration->up();
+    $migration->up();
+    $this->assertSame($before, hash_file('sha256', $root.'/LICENSE'));
+  }
+
+  public function test_sqlite_backup_round_trips_multiline_update_logs_with_sql_and_quotes(): void
+  {
+    $text = "Migration SQL ends here;\nNext line contains 'quotes' and\r\nmore output;\nComplete.";
+    $run = SystemUpdateRun::create(['from_version' => '1.0.0', 'to_version' => WebBlocks::version(), 'status' => 'failed', 'started_at' => now(), 'output' => $text]);
+    $path = sys_get_temp_dir().'/cms-update-log-dump-'.Str::uuid().'.sql';
+    try {
+      $output = [];
+      app(DatabaseDumpWriter::class)->dumpTo($path, $output);
+      app(SqlDumpContentValidator::class)->assertValidFile($path);
+      $run->update(['output' => 'changed']);
+      app(DatabaseRestoreRunner::class)->restoreFrom($path, $output);
+      $this->assertSame($text, $run->fresh()->output);
+    } finally {
+    @unlink($path);
+    }
+  }
+
+  public function test_a_fresh_install_can_run_pending_historical_update_migrations(): void
+  {
+    $code = Artisan::call('migrate', ['--path' => dirname(__DIR__, 2).'/database/migrations/updates', '--realpath' => true, '--force' => true]);
+    $this->assertSame(0, $code, Artisan::output());
+    $this->assertFalse(Schema::hasTable('comment_entries'));
+    $this->assertFalse(Schema::hasTable('content_ratings'));
+    $this->assertTrue(Schema::hasTable('wbcms_admin_update_operations'));
   }
 }

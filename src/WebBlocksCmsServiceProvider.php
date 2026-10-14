@@ -101,6 +101,7 @@ use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
+use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateExtractor;
@@ -110,6 +111,7 @@ use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as Clie
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner as ClientPostApplyRunner;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder as ClientRunRecorder;
 use WebBlocks\Cms\Support\Updates\Client\EmbeddedRuntimeServiceProvider;
+use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdatePackageDownloader;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdatePackageExtractor;
@@ -118,6 +120,7 @@ use WebBlocks\Cms\Support\Updates\CmsClientCommandRunner;
 use WebBlocks\Cms\Support\Updates\CmsClientInstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\CmsClientPostApplyRunner;
 use WebBlocks\Cms\Support\Updates\CmsClientRunRecorder;
+use WebBlocks\Cms\Support\Updates\CmsClientSystemUpdater;
 use WebBlocks\Cms\Support\Updates\CmsRuntimeAssetSynchronizer;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -895,11 +898,13 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->registerNativeLocalDoctor();
     $this->registerPlugins();
 
+    $this->app->bind(SystemUpdater::class, CmsClientSystemUpdater::class);
     $this->app->bind(UpdateCommandRunner::class, CmsClientCommandRunner::class);
     $this->app->bind(ClientBackupManager::class, CmsClientBackupManager::class);
     $this->app->bind(ClientInstalledVersionStore::class, CmsClientInstalledVersionStore::class);
     $this->app->bind(ClientPostApplyRunner::class, CmsClientPostApplyRunner::class);
     $this->app->singleton(CmsUpdateProgress::class);
+    $this->app->singleton(CmsPackageRollback::class);
     $this->app->bind(UpdatePackageDownloader::class, CmsUpdateDownloader::class);
     $this->app->bind(UpdatePackageExtractor::class, CmsUpdateExtractor::class);
     $this->app->singleton(PersistentDocuments::class);

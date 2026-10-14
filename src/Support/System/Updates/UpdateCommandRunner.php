@@ -14,7 +14,15 @@ class UpdateCommandRunner
   {
     $output[] = '$ '.$this->formatCommand($command);
 
+    $environment = [];
+    // PHP-FPM may clear both variables Composer requires, including for dump-autoload.
+    if (! getenv('HOME') && ! getenv('COMPOSER_HOME')) {
+      $directory = storage_path('app/private/system-updates/composer-home');
+      File::ensureDirectoryExists($directory, 0700);
+      $environment['COMPOSER_HOME'] = $directory;
+    }
     $process = Process::path($workingDirectory)
+      ->env($environment)
       ->timeout(max(1, min(86400, (int) config('webblocks-updates.installer.command_timeout_seconds', 3600))))
       ->start($command);
     while ($process->running()) {

@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
@@ -68,6 +69,34 @@ class CmsUpdateProgress
     }
   }
 
+  /** Keep the current operation's audit trail when its own backup replaces the database. */
+  public function restorePreservingProgress(callable $restore): void
+  {
+    $this->stage('rollback');
+    $rows = [];
+    foreach (['wbcms_system_update_runs', 'wbcms_admin_update_operations', 'wbcms_system_update_requests', 'wbcms_system_update_run_steps'] as $table) {
+      if ($this->runId === null || ! Schema::hasTable($table)) {
+        continue;
+      }
+      $column = $table === 'wbcms_system_update_runs' ? 'id' : 'system_update_run_id';
+      $rows[$table] = DB::table($table)->where($column, $this->runId)->get()->map(fn ($row) => (array) $row)->all();
+    }
+    try {
+      $restore();
+    } finally {
+      foreach ($rows as $table => $records) {
+        if (! Schema::hasTable($table)) {
+          continue;
+        }
+        $columns = array_flip(Schema::getColumnListing($table));
+        foreach ($records as $record) {
+          DB::table($table)->updateOrInsert(['id' => $record['id']], array_intersect_key($record, $columns));
+        }
+      }
+      $this->beat();
+    }
+  }
+
   public function payload(?string $operationId = null): array
   {
     $operation = Schema::hasTable('wbcms_admin_update_operations')
@@ -99,11 +128,33 @@ class CmsUpdateProgress
       'state' => $state, 'running' => $active && $alive, 'terminal' => $terminal,
       'operation_id' => $operation?->id, 'run_id' => $run?->id,
       'target_version' => $operation?->target_version ?? $run?->to_version,
-      'installed_version' => WebBlocks::version(),
+      'installed_version' => $this->installedVersion($terminal),
       'duration_ms' => $run?->duration_ms,
       'elapsed_ms' => $run?->duration_ms ?? ($started ? max(0, (int) $started->diffInMilliseconds($operation?->finished_at ?? $run?->finished_at ?? now())) : null),
       'stage' => $step?->stage,
       'stage_label' => $step?->stage ? __('webblocks-cms::admin.updates.phases.'.$step->stage) : null,
     ];
+  }
+
+  private function installedVersion(bool $terminal): string
+  {
+    $root = dirname(__DIR__, 4);
+    $source = File::get($root.'/src/Support/WebBlocks.php');
+    if (! preg_match("/const VERSION = '([0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?)'/", $source, $match)) {
+      return WebBlocks::version();
+    }
+    if ($terminal && $match[1] !== WebBlocks::version() && function_exists('opcache_invalidate')) {
+      // This executes in the web worker's opcode cache, not the detached CLI's.
+      foreach (File::allFiles($root) as $file) {
+        if ($file->getExtension() === 'php') {
+          opcache_invalidate($file->getPathname(), true);
+        }
+      }
+      foreach (glob(base_path('vendor/composer/*.php')) ?: [] as $file) {
+        opcache_invalidate($file, true);
+      }
+    }
+
+    return $match[1];
   }
 }

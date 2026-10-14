@@ -21,7 +21,7 @@ class PublicPageAccess
     if (! $rule) {
       return true;
     }
-    $directory = app(PluginServiceRegistry::class)->resolve('webblocks-memberships', MemberDirectory::class, '^0.1');
+    $directory = app(PluginServiceRegistry::class)->resolve('webblocks-memberships', MemberDirectory::class, '^0.1 || ^0.2');
     if (! $directory instanceof MemberDirectory) {
       return false;
     }

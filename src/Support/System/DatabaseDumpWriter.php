@@ -241,6 +241,8 @@ class DatabaseDumpWriter
       return (string) $value;
     }
 
-    return $pdo->quote((string) $value);
+    // Keep values on one SQL line: update logs can contain lines ending in a
+    // semicolon, which must never look like the end of their enclosing INSERT.
+    return str_replace(["\r", "\n"], ["'||char(13)||'", "'||char(10)||'"], $pdo->quote((string) $value));
   }
 }

@@ -1345,3 +1345,32 @@ fields `members_only` and nullable `required_package_id` default to guest access
 restricted services deny bookings and slot discovery without the matching member
 rights. Verified member bookings retain nullable `member_id` plus the existing
 customer snapshot. Operator manual bookings retain their existing authority.
+
+## Shared payment contracts and update recovery — CMS 1.100.0
+
+`PaymentProviderDirectory` is a provider-independent service contract for safe
+provider metadata, authenticated API requests and signed webhook verification.
+`PaymentWebhookListener` lets another active plugin consume payment notifications.
+The contracts contain no credentials or subscription storage. Commerce supplies
+its existing PayPal/SumUp configuration; Memberships owns plans, consent, payment
+attempts, subscription periods and renewals. Both integrations remain optional for
+free/manual accounts. Paid package rights use verified, non-voided payment periods
+through the existing `MemberDirectory`, including Appointments and protected pages.
+Approval, a browser return, and reimbursed card setup are not paid access evidence.
+
+The updater retains the previous package tree until the complete operation,
+including migrations, succeeds. Automatic rollback restores package files along
+with the pre-update database/uploads, removes tables introduced by that attempt,
+and preserves the current operation, receipt and phase durations across the
+restore. Rollback refreshes restored PHP timestamps; terminal status polling reads
+the canonical version source and invalidates stale package opcode entries in the
+web process when its loaded version differs. History reports the real outcome and
+duration, including a failed migration followed by restoration.
+
+Composer subprocesses obtain a private local Composer home if a cleared web
+process supplies neither HOME nor COMPOSER_HOME. Pending historical migrations on
+fresh installations recognize already-prefixed engagement tables and do not depend
+on the retired license-promotion helper. SQLite backups serialize multiline scalar
+text as one SQL expression, preserving update logs with quotes and semicolons.
+These changes do not change block authoring, full revision snapshots, API token
+capabilities or the maintenance exemption for the authorized status route.

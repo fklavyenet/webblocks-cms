@@ -40,6 +40,8 @@ class CmsPackageApplyStrategy extends PackageApplyStrategy
       File::deleteDirectory($stagedRoot.'/docs');
     }
 
+    app(CmsPackageRollback::class)->capture($this->targetRoot());
+
     return parent::apply($stagedRoot);
   }
 }

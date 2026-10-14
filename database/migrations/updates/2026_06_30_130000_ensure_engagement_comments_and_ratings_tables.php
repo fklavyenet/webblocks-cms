@@ -8,7 +8,7 @@ return new class extends Migration
 {
   public function up(): void
   {
-    if (! Schema::hasTable('comment_entries')) {
+    if (! Schema::hasTable('comment_entries') && ! Schema::hasTable('wbcms_comment_entries')) {
       Schema::create('comment_entries', function (Blueprint $table): void {
         $table->id();
         $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();
@@ -37,7 +37,7 @@ return new class extends Migration
       });
     }
 
-    if (! Schema::hasTable('content_ratings')) {
+    if (! Schema::hasTable('content_ratings') && ! Schema::hasTable('wbcms_content_ratings')) {
       Schema::create('content_ratings', function (Blueprint $table): void {
         $table->id();
         $table->foreignId('site_id')->nullable()->constrained('wbcms_sites')->nullOnDelete();

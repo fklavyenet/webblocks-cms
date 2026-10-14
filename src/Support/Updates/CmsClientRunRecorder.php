@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Updates;
 
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder;
@@ -32,6 +33,10 @@ final class CmsClientRunRecorder implements RunRecorder
       return;
     }
 
+    $rollback = app(CmsPackageRollback::class);
+    if (! in_array($status, ['success', 'success_with_warnings'], true)) {
+      $rollback->restore();
+    }
     app(CmsUpdateProgress::class)->finish();
     $ref->forceFill([
       'status' => $status,

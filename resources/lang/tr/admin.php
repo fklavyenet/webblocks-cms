@@ -1875,6 +1875,7 @@ $translations = [
     'duration' => 'Süre',
     'elapsed' => 'Geçen süre',
     'phases' => [
+      'rollback' => 'Paket ve yedeği geri yükleme',
       'backup' => 'Yedekleme',
       'download' => 'Paket indiriliyor',
       'extract' => 'Paket açılıyor',

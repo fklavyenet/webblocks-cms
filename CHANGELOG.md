@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.100.0
+
+
+- Add shared, credential-free payment provider and webhook consumer contracts for optional Commerce/Memberships integration.
+- Preserve the previous package until migrations and verification finish; restore package files, database and the current operation's complete phase history on update failure.
+- Handle cleared Composer environments and restored PHP opcode freshness; keep multiline SQLite update logs restorable.
+- Make pending historical engagement/license migrations safe for an already-prefixed fresh installation's first future update.
+
 ## 1.99.0
 
 ### Added

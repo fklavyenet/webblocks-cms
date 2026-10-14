@@ -2085,6 +2085,7 @@ return [
     'duration' => 'Duration',
     'elapsed' => 'Elapsed',
     'phases' => [
+      'rollback' => 'Restoring package and backup',
       'backup' => 'Backup',
       'download' => 'Downloading package',
       'extract' => 'Extracting package',
