@@ -100,6 +100,10 @@ Page and Shared Slot versions remain complete JSON safety snapshots. Consecutive
 
 A content plan captures one completed page state after all its page-owned blocks and Shared Slot assignments, plus one completed state per newly created Shared Slot. Existing-page assignment plans preserve one pre-change safety checkpoint per affected page. Destructive replacement and promotion keep their pre-change checkpoint. Independent HTTP requests remain separate logical operations. Existing Shared Slot assignment targets are checked against the human-only block policy during validation and again before assignment; rejected plans create no versions or capture events. Failed transactions roll back both content and capture events.
 
+From CMS 1.103.1, page-version API operations without an authenticated delegated
+user return 403 rather than a server error; system tokens do not acquire additional
+revision permissions.
+
 The page-version detail API includes bounded `inspection.capture_history` with up to 100 recent events and a `has_more` flag; access uses the existing version-read permission. Historical rows retain their original revision metadata when no capture events exist. Snapshot size metadata is measured outside ordered queries. Cleanup scans fixed-size metadata batches through an ordered continuation key, preserves the age/newest-version rules, and rechecks active restore sources and the newest-version floor under owner locks before deleting each batch.
 
 ## HTML Block API Policy
@@ -1497,7 +1501,10 @@ page is created for a new source record.
 Only active rules own the matching site/base-path detail range. Host Laravel
 routes retain normal precedence and existing CMS middleware/quotas apply. The
 site resolves from the incoming host, and an unknown host cannot bypass that
-resolver. Public rendering includes published blocks and published Shared Slot
+resolver. From CMS 1.103.1, the Redirect Manager catch-all bridge recognizes active
+automatic detail ranges as CMS-owned and applies the shared public-page limiter
+before resolving source data; withdrawn records cannot fall through to a redirect
+or a retained native page. Public rendering includes published blocks and published Shared Slot
 content only and rechecks access/source policies. Missing/withdrawn records
 return 404; source failure/incomplete records return 503. The retained native
 page never becomes a fallback for an owned path. Public automatic responses are

@@ -13,6 +13,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use WebBlocks\Cms\Actions\AutomaticPages\ActivateAutomaticPageRule;
 use WebBlocks\Cms\Actions\AutomaticPages\PauseAutomaticPageRule;
 use WebBlocks\Cms\Actions\AutomaticPages\SaveAutomaticPageRule;
+use WebBlocks\Cms\Http\Middleware\ServeCmsPageBeforeRedirectCatchAll;
 use WebBlocks\Cms\Models\AutomaticPageAdoption;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -133,6 +134,36 @@ class AutomaticPageRoutingTest extends TestCase
     $this->get('http://library.test/test/route/second')->assertOk();
     $this->get('http://unknown.test/test/route/second')->assertNotFound();
     $this->get('http://library.test/test/zz/route/second')->assertNotFound();
+  }
+
+  #[Test]
+  public function redirect_manager_bridge_serves_adopted_and_new_records_and_owns_withdrawn_urls(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    Route::get('/{webblocksRedirectManagerPath}', fn () => response('redirect fallback'))
+      ->where('webblocksRedirectManagerPath', '.+')
+      ->middleware(ServeCmsPageBeforeRedirectCatchAll::class);
+    $this->activate($rule);
+    $this->get('http://library.test/library/second')->assertOk()->assertSee('second en')->assertHeader('Cache-Control', 'no-store, private');
+    $this->get('http://library.test/library/brand-new')->assertOk()->assertSee('brand-new en');
+    $this->get('http://library.test/unrelated')->assertSee('redirect fallback');
+    RoutingPublicationFixture::$mode = 'missing';
+    $this->get('http://library.test/library/second')->assertNotFound()->assertDontSee('redirect fallback');
+    RoutingPublicationFixture::$mode = 'unavailable';
+    $this->get('http://library.test/library/brand-new')->assertStatus(503)->assertDontSee('redirect fallback');
+  }
+
+  #[Test]
+  public function automatic_routes_through_redirect_bridge_share_the_public_page_budget(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    Route::get('/{webblocksRedirectManagerPath}', fn () => response('redirect fallback'))
+      ->where('webblocksRedirectManagerPath', '.+')
+      ->middleware(ServeCmsPageBeforeRedirectCatchAll::class);
+    $this->activate($rule);
+    config(['cms.public_rate_limits.pages_per_minute' => 1]);
+    $this->get('http://library.test/library/second')->assertOk();
+    $this->get('http://library.test/library/brand-new')->assertStatus(429)->assertHeader('Retry-After');
   }
 
   #[Test]

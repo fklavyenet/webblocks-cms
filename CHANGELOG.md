@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.103.1
+
+- Resolve active automatic detail URLs before the Redirect Manager catch-all, preserving source availability checks and the shared public-page request limits.
+- Return an authorization denial instead of a server error when page-revision API operations have no delegated user. No token permissions are expanded.
+
 ## 1.103.0
 
 - Resolve active automatic detail routes from the public source without creating native page copies; validate all six languages, distinguish withdrawn records from source failures and preserve site isolation.

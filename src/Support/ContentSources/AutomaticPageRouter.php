@@ -19,21 +19,13 @@ final class AutomaticPageRouter
 {
   public function response(Request $request, string $path): ?Response
   {
-    if (! Schema::hasTable('wbcms_automatic_page_rules')) {
+    $rule = $this->ruleFor($request, $path);
+    if (! $rule) {
       return null;
     }
     $routes = app(PageRouteResolver::class);
     $site = $routes->currentSite($request);
-    try {
-      $path = PagePath::canonicalize('/'.ltrim($path, '/'));
-    } catch (\InvalidArgumentException) {
-      return null;
-    }
-    $rule = AutomaticPageRule::query()->where('site_id', $site->id)->where('status', 'active')->get()
-      ->first(fn ($rule) => str_starts_with($path, $rule->base_path.'/'));
-    if (! $rule) {
-      return null;
-    }
+    $path = PagePath::canonicalize('/'.ltrim($path, '/'));
     // An active prefix owns its detail URLs. Never resurrect a retained native copy.
     $slug = substr($path, strlen($rule->base_path) + 1);
     abort_unless(preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug) === 1, 404);
@@ -65,5 +57,29 @@ final class AutomaticPageRouter
     $html = app(AutomaticPagePreview::class)->render($rule, $key, $locale, null, true, $page);
 
     return response($html)->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', app(PublicPageAccess::class)->protected($page) ? 'noindex, noarchive' : 'all');
+  }
+
+  public function ownsPath(Request $request, string $path): bool
+  {
+    return $this->ruleFor($request, $path) !== null;
+  }
+
+  private function ruleFor(Request $request, string $path): ?AutomaticPageRule
+  {
+    if (! Schema::hasTable('wbcms_automatic_page_rules')) {
+      return null;
+    }
+    try {
+      $path = PagePath::canonicalize('/'.ltrim($path, '/'));
+    } catch (\InvalidArgumentException) {
+      return null;
+    }
+    $rules = AutomaticPageRule::query()->where('status', 'active')->get();
+    if ($rules->isEmpty()) {
+      return null;
+    }
+    $site = app(PageRouteResolver::class)->currentSite($request);
+
+    return $rules->first(fn ($rule) => (int) $rule->site_id === (int) $site->id && str_starts_with($path, $rule->base_path.'/'));
   }
 }

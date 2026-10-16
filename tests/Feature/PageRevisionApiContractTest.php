@@ -2,9 +2,15 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRevisionController;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Models\PageRevisionCandidate;
 use WebBlocks\Cms\Tests\TestCase;
 
 class PageRevisionApiContractTest extends TestCase
@@ -13,6 +19,24 @@ class PageRevisionApiContractTest extends TestCase
   {
     parent::defineEnvironment($app);
     $app['config']->set('webblocks-cms.routes.admin', true);
+  }
+
+  #[Test]
+  public function revision_operations_without_a_delegated_user_fail_closed_instead_of_crashing(): void
+  {
+    $controller = app(InternalPageRevisionController::class);
+    $request = Request::create('/webadmin/api/pages/1/versions');
+    $page = new Page;
+    $revision = new PageRevision;
+    $candidate = new PageRevisionCandidate;
+    foreach (['index' => [$page], 'show' => [$page, $revision], 'prepare' => [$page, $revision], 'apply' => [$page, $candidate], 'discard' => [$page, $candidate]] as $method => $arguments) {
+      try {
+        $controller->$method($request, ...$arguments);
+        $this->fail('Expected authorization denial for '.$method);
+      } catch (HttpException $exception) {
+        $this->assertSame(403, $exception->getStatusCode());
+      }
+    }
   }
 
   #[Test]

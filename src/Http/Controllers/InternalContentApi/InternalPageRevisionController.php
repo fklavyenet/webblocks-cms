@@ -107,12 +107,14 @@ class InternalPageRevisionController extends Controller
 
   private function authorizeView(Request $request, Page $page): void
   {
+    abort_unless($request->user(), 403);
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
     abort_unless($this->revisions->canView($request->user(), $page), 403);
   }
 
   private function authorizeRestore(Request $request, Page $page): void
   {
+    abort_unless($request->user(), 403);
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
     abort_unless($this->revisions->canRestore($request->user(), $page), 403);
   }
