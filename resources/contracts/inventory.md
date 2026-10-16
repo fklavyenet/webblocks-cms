@@ -1424,7 +1424,7 @@ the CMS editor language when the block has no public render context yet. This
 keeps locale-aware providers selectable in the panel and Internal Content API.
 
 
-## Automatic Pages (CMS 1.103.0 candidate)
+## Automatic Pages (CMS 1.103.0)
 
 **Dynamic Content → Automatic Pages** configures a site-owned detail-design page,
 optional catalogue page, collection source, canonical non-reserved base path and
