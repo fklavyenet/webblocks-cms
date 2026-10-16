@@ -327,6 +327,32 @@ class AutomaticPageRoutingTest extends TestCase
   }
 
   #[Test]
+  public function turkish_source_search_matches_both_dotted_and_dotless_case_pairs(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    RoutingPublicationFixture::$mode = 'turkish_case';
+    foreach (['ihtiyacınız', 'İHTİYACINIZ', 'ışık', 'IŞIK'] as $query) {
+      $this->getJson('http://library.test/tr/search.json?q='.urlencode($query))
+        ->assertOk()->assertJsonPath('count', 2)->assertJsonPath('results.0.url', '/tr/library/brand-new');
+    }
+    $this->getJson('http://library.test/search.json?q='.urlencode('ışık'))->assertOk()->assertJsonPath('count', 0);
+    $this->getJson('http://library.test/tr/search.json?q=MEMBERSHIPS')->assertOk()->assertJsonPath('count', 1);
+  }
+
+  #[Test]
+  public function german_source_search_uses_unicode_case_folding_for_sharp_s_and_umlauts(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    RoutingPublicationFixture::$mode = 'german_case';
+    foreach (['STRASSE', 'straße', 'ÄPFEL', 'äpfel'] as $query) {
+      $this->getJson('http://library.test/de/search.json?q='.urlencode($query))
+        ->assertOk()->assertJsonPath('count', 2);
+    }
+  }
+
+  #[Test]
   public function native_and_automatic_search_share_relevance_count_and_pagination_without_duplicates(): void
   {
     [$site, $page, $rule] = $this->prepared();
@@ -446,7 +472,13 @@ class RoutingPublicationFixture implements ContentCollectionSourceResolver, Cont
 
   public function resolve(string $recordKey, ContentSourceContext $context): ?array
   {
-    return ['_locale' => self::$mode === 'wrong_locale' && $context->locale === 'tr' ? 'en' : $context->locale, 'id' => $recordKey, 'slug' => $recordKey, 'title' => $recordKey.' '.$context->locale, 'summary' => 'Translated description Only'.$context->locale, 'image' => '/images/'.$recordKey.'.png', 'alt' => 'Second image '.$context->locale];
+    $summary = match (true) {
+      self::$mode === 'turkish_case' && $context->locale === 'tr' => 'İhtiyacınız için IŞIK',
+      self::$mode === 'german_case' && $context->locale === 'de' => 'Straße und Äpfel',
+      default => 'Translated description Only'.$context->locale,
+    };
+
+    return ['_locale' => self::$mode === 'wrong_locale' && $context->locale === 'tr' ? 'en' : $context->locale, 'id' => $recordKey, 'slug' => $recordKey, 'title' => self::$mode === 'turkish_case' && $recordKey === 'brand-new' ? 'Memberships' : $recordKey.' '.$context->locale, 'summary' => $summary, 'image' => '/images/'.$recordKey.'.png', 'alt' => 'Second image '.$context->locale];
   }
 
   public function options(ContentSourceContext $context): array

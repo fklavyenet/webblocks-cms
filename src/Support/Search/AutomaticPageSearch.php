@@ -31,7 +31,14 @@ final class AutomaticPageSearch
   public function results(Collection $rules, Locale $locale, string $query): Collection
   {
     $results = collect();
-    $terms = array_filter(preg_split('/\s+/u', mb_strtolower($query)) ?: []);
+    // Turkish has two distinct I/i pairs; Unicode's language-neutral lowercase
+    // mapping leaves a combining dot after İ and cannot match typed lowercase.
+    $fold = fn (string $text, bool $localized = false): string => mb_convert_case($localized && $locale->code === 'tr' ? strtr($text, ['I' => 'ı', 'İ' => 'i']) : $text, MB_CASE_FOLD, 'UTF-8');
+    // Retain standard Unicode matching for international names (MEMBERSHIPS),
+    // alongside Turkish matching for translated prose (İhtiyacınız / IŞIK).
+    $contains = fn (string $text, string $needle): bool => str_contains($fold($text), $fold($needle))
+      || ($locale->code === 'tr' && str_contains($fold($text, true), $fold($needle, true)));
+    $terms = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
     foreach ($rules as $rule) {
       if (! $rule->site->enabledLocales()->whereKey($locale->id)->exists()) {
         continue;
@@ -64,13 +71,12 @@ final class AutomaticPageSearch
         $title = $this->normalizer->normalize(data_get($values, $fields['title_field']));
         $content = $fields['description_field'] === null ? '' : $this->normalizer->normalize(data_get($values, $fields['description_field']));
         $url = parse_url(app(AutomaticPageInspector::class)->url($rule, $record['slug'], $locale->code), PHP_URL_PATH);
-        $haystack = mb_strtolower($this->normalizer->join([$title, $url, $content]));
-        if (collect($terms)->contains(fn ($term) => ! str_contains($haystack, $term))) {
+        $haystack = $this->normalizer->join([$title, $url, $content]);
+        if (collect($terms)->contains(fn ($term) => ! $contains($haystack, $term))) {
           continue;
         }
         $result = new PublicSearchIndex(['title' => $title, 'content' => $content, 'url' => $url]);
-        $like = mb_strtolower($query);
-        $result->setAttribute('search_rank', str_contains(mb_strtolower($title), $like) ? 0 : (str_contains(mb_strtolower($url), $like) ? 1 : (str_contains(mb_strtolower($content), $like) ? 2 : 3)));
+        $result->setAttribute('search_rank', $contains($title, $query) ? 0 : ($contains($url, $query) ? 1 : ($contains($content, $query) ? 2 : 3)));
         $result->setAttribute('display_excerpt', $this->normalizer->excerpt($content, $query));
         $results->push($result);
       }

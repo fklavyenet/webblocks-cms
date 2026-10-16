@@ -1512,7 +1512,8 @@ title, description and public URL in the requested enabled language. Both source
 policies and all six actual translations are validated in a public context with
 no admin actor. Protected designs and inactive rules are excluded. Active owned
 prefixes suppress native search copies even if republished. Matching uses all
-normalized query terms; relevance prioritizes title, URL, description and then
+normalized query terms with Unicode case folding and Turkish dotted/dotless
+I case pairs for Turkish source metadata; relevance prioritizes title, URL, description and then
 multi-field matches, with native recency/title order winning equal-rank ties and
 stable title/URL order for source results. One result count and paginator cover
 both result types without loading preceding native result pages. Source results
