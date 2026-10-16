@@ -14,15 +14,15 @@ final class AutomaticPageInspector
 {
   public function __construct(private readonly PublicationSources $sources, private readonly AutomaticPageDesign $design) {}
 
-  public function entries(AutomaticPageRule $rule, ?Authenticatable $actor, ?string $cursor = null): array
+  public function entries(AutomaticPageRule $rule, ?Authenticatable $actor, ?string $cursor = null, bool $preview = true): array
   {
     $page = $this->design->page($rule);
-    $config = $page ? $this->sources->find($rule->source_handle, $rule->site, $actor, $page) : null;
+    $config = $page ? $this->sources->find($rule->source_handle, $rule->site, $actor, $page, $preview) : null;
     if (! $config) {
       return ['status' => 'unavailable', 'page' => null];
     }
     try {
-      $context = new ContentSourceContext($rule->site, $page, 'en', true, $actor);
+      $context = new ContentSourceContext($rule->site, $page, 'en', $preview, $actor);
       $page = app($config['source']->resolverClass())->publicationPage($cursor, 20, $context);
       if (count($page->entries) > 20 || ($cursor !== null && $cursor === $page->nextCursor)) {
         throw new \RuntimeException('Non-advancing publication page.');
@@ -36,10 +36,10 @@ final class AutomaticPageInspector
     }
   }
 
-  public function record(AutomaticPageRule $rule, string $key, ?Authenticatable $actor): array
+  public function record(AutomaticPageRule $rule, string $key, ?Authenticatable $actor, bool $preview = true): array
   {
     $page = $this->design->page($rule);
-    $config = $page ? $this->sources->find($rule->source_handle, $rule->site, $actor, $page) : null;
+    $config = $page ? $this->sources->find($rule->source_handle, $rule->site, $actor, $page, $preview) : null;
     if (! $config) {
       return ['status' => 'unavailable', 'records' => [], 'locales' => []];
     }
@@ -47,7 +47,7 @@ final class AutomaticPageInspector
     $states = [];
     foreach (ContentSourceContract::languages() as $locale) {
       try {
-        $context = new ContentSourceContext($rule->site, $page, $locale, true, $actor);
+        $context = new ContentSourceContext($rule->site, $page, $locale, $preview, $actor);
         $result = app($config['source']->resolverClass())->publicationRecord($key, $context);
         $states[$locale] = $result->status;
         if ($result->status === 'available') {

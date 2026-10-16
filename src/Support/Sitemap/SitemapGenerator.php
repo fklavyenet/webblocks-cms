@@ -5,12 +5,18 @@ namespace WebBlocks\Cms\Support\Sitemap;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Models\AutomaticPageAdoption;
+use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\CmsModel;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Models\SiteLocale;
+use WebBlocks\Cms\Support\ContentSources\AutomaticPageCatalogue;
+use WebBlocks\Cms\Support\ContentSources\AutomaticPageDesign;
+use WebBlocks\Cms\Support\ContentSources\AutomaticPageInspector;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 
@@ -51,6 +57,55 @@ class SitemapGenerator
 
   /** @return Collection<int, array{loc: string, lastmod: ?string, alternates: array<string, string>}> */
   private function entries(Site $site): Collection
+  {
+    $native = $this->nativeEntries($site);
+    if (! Schema::hasTable('wbcms_automatic_page_rules')) {
+      return $native;
+    }
+    $rules = AutomaticPageRule::query()->where('site_id', $site->id)->where('status', 'active')->get();
+    $native = $native->reject(function ($entry) use ($rules, $site) {
+      foreach ($rules as $rule) {
+        foreach ($site->enabledLocales()->get() as $locale) {
+          if (str_starts_with($entry['loc'], rtrim($this->pageRouteResolver->homeUrl($locale->code, $site), '/').$rule->base_path.'/')) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+    foreach ($rules as $rule) {
+      try {
+        $records = app(AutomaticPageCatalogue::class)->records($rule);
+      } catch (\Throwable $exception) {
+        report($exception);
+        abort(503);
+      }
+      foreach ($records as $key => $record) {
+        $adoption = AutomaticPageAdoption::query()->where('automatic_page_rule_id', $rule->id)->where('record_key', $key)->first();
+        $design = $adoption ? Page::query()->visibleInAdmin()->where('site_id', $site->id)->find($adoption->page_id) : app(AutomaticPageDesign::class)->page($rule);
+        if (! $design || app(PublicPageAccess::class)->protected($design) || ! $this->isIndexable($design)) {
+        continue;
+        }
+        $alternates = [];
+        foreach ($site->enabledLocales()->get() as $locale) {
+          $alternates[$locale->code] = app(AutomaticPageInspector::class)->url($rule, $record['slug'], $locale->code);
+        }
+        $urls = $alternates;
+        $default = $site->enabledLocales()->where('is_default', true)->first();
+        if ($default && isset($alternates[$default->code])) {
+        $alternates['x-default'] = $alternates[$default->code];
+        }
+        foreach ($urls as $url) {
+          $native->push(['loc' => $url, 'lastmod' => null, 'alternates' => $alternates]);
+        }
+      }
+    }
+
+    return $native->unique('loc')->values();
+  }
+
+  private function nativeEntries(Site $site): Collection
   {
     $version = $this->cache->version((int) $site->id);
     $fingerprint = $this->fingerprint($site);

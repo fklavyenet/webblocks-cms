@@ -17,7 +17,7 @@ class RevisionCleanupQuery
       return;
     }
     $hasBytes = Schema::hasColumn($table, 'snapshot_bytes');
-    $hasCandidates = $protectRestoreSources && Schema::hasTable('wbcms_page_revision_candidates');
+    $hasCandidates = $protectRestoreSources && (Schema::hasTable('wbcms_page_revision_candidates') || Schema::hasTable('wbcms_automatic_page_adoptions'));
     $cutoff = now()->subDays($days);
     $highWater = (int) DB::table($table)->max('id');
     $cursor = null;
@@ -78,11 +78,15 @@ class RevisionCleanupQuery
 
   public function protectedIds(array $ids): array
   {
-    if (! Schema::hasTable('wbcms_page_revision_candidates')) {
-      return [];
+    $protected = [];
+    if (Schema::hasTable('wbcms_page_revision_candidates')) {
+      $protected = DB::table('wbcms_page_revision_candidates')->where('status', PageRevisionCandidate::STATUS_READY)
+        ->whereIn('page_revision_id', $ids)->pluck('page_revision_id')->all();
+    }
+    if (Schema::hasTable('wbcms_automatic_page_adoptions')) {
+      $protected = array_merge($protected, DB::table('wbcms_automatic_page_adoptions')->whereIn('page_revision_id', $ids)->pluck('page_revision_id')->all());
     }
 
-    return DB::table('wbcms_page_revision_candidates')->where('status', PageRevisionCandidate::STATUS_READY)
-      ->whereIn('page_revision_id', $ids)->pluck('page_revision_id')->all();
+    return array_values(array_unique($protected));
   }
 }

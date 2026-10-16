@@ -19,7 +19,7 @@
 @if (! $ready)<div class="wb-alert wb-alert-warning">{{ $ap('schema_missing') }}</div>@else
 <section class="wb-card"><div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table">
 <thead><tr><th>{{ $ap('name') }}</th><th>{{ $ap('site') }}</th><th>{{ $ap('source') }}</th><th>{{ $ap('base_path') }}</th><th>{{ $ap('status') }}</th><th>{{ $ap('inspect') }}</th></tr></thead>
-<tbody>@forelse ($rules as $rule)<tr><td><a href="{{ route('admin.automatic-pages.edit', $rule) }}">{{ $rule->name }}</a></td><td>{{ $rule->site->name }}</td><td><code>{{ $rule->source_handle }}</code></td><td><code>{{ $rule->base_path }}/{slug}</code></td><td><span class="wb-status-pill wb-status-info">{{ $ap('draft') }}</span></td><td><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.automatic-pages.records', $rule) }}">{{ $ap('inspect') }}</a></td></tr>@empty<tr><td colspan="6">{{ $ap('no_rules') }}</td></tr>@endforelse</tbody>
+<tbody>@forelse ($rules as $rule)<tr><td><a href="{{ route('admin.automatic-pages.edit', $rule) }}">{{ $rule->name }}</a></td><td>{{ $rule->site->name }}</td><td><code>{{ $rule->source_handle }}</code></td><td><code>{{ $rule->base_path }}/{slug}</code></td><td><span class="wb-status-pill wb-status-info">{{ $ap($rule->status) }}</span></td><td><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.automatic-pages.records', $rule) }}">{{ $ap('inspect') }}</a></td></tr>@empty<tr><td colspan="6">{{ $ap('no_rules') }}</td></tr>@endforelse</tbody>
 </table></div></div>@include('webblocks-cms::admin.partials.pagination', ['paginator' => $rules])</section>
 @endif
 @endsection

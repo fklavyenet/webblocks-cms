@@ -20,10 +20,10 @@ final class AutomaticPageRule extends Model
   protected static function booted(): void
   {
     self::saving(function (self $rule): void {
-      if (($rule->status ?? 'draft') !== 'draft') {
-        throw new LogicException('Automatic page rules are draft-only in this phase.');
+      if (! in_array($rule->status ?? 'draft', ['draft', 'active', 'paused'], true)) {
+        throw new LogicException('Invalid automatic page rule state.');
       }
-      $rule->status = 'draft';
+      $rule->status ??= 'draft';
     });
   }
 

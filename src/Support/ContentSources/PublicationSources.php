@@ -23,7 +23,7 @@ final class PublicationSources
     return $options;
   }
 
-  public function find(string $handle, Site $site, ?Authenticatable $actor, ?Page $page = null): ?array
+  public function find(string $handle, Site $site, ?Authenticatable $actor, ?Page $page = null, bool $preview = true): ?array
   {
     $source = $this->registry->find($handle);
     $publication = $source?->publication();
@@ -42,7 +42,7 @@ final class PublicationSources
       }
     }
     foreach (ContentSourceContract::languages() as $locale) {
-      $context = new ContentSourceContext($site, $page, $locale, true, $actor);
+      $context = new ContentSourceContext($site, $page, $locale, $preview, $actor);
       if (! $this->runtime->allows($source, $context) || ! $this->runtime->allows($entity, $context)) {
         return null;
       }

@@ -25,6 +25,7 @@ final class SaveAutomaticPageRule
         abort_unless(app(AutomaticPagePolicy::class)->create($actor, $site), 403);
         $rule = new AutomaticPageRule;
       }
+      abort_if($rule->exists && $rule->status !== 'draft', 409);
       $rule->fill(collect($data)->except('revision')->all());
       $rule->revision = $rule->exists ? $rule->revision + 1 : 1;
       $rule->save();

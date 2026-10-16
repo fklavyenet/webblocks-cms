@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 
 /** Renders a selected record in memory; never creates pages or rewrites bindings. */
@@ -13,18 +14,19 @@ final class AutomaticPagePreview
 {
   public function __construct(private readonly AutomaticPageInspector $inspector, private readonly PublicPagePresenter $presenter) {}
 
-  public function render(AutomaticPageRule $rule, string $key, string $locale, ?Authenticatable $actor): string
+  public function render(AutomaticPageRule $rule, string $key, string $locale, ?Authenticatable $actor, bool $public = false, ?Page $design = null): string
   {
-    $inspection = $this->inspector->record($rule, $key, $actor);
+    $inspection = $this->inspector->record($rule, $key, $public ? null : $actor, ! $public);
     abort_unless($inspection['status'] === 'available', 422, __('webblocks-cms::automatic-pages.preview_unavailable'));
-    $page = app(AutomaticPageDesign::class)->page($rule);
+    $page = $design ?? app(AutomaticPageDesign::class)->page($rule);
+    abort_unless($page && (int) $page->site_id === (int) $rule->site_id, 404);
     abort_unless($page && ! $page->isSharedSlotSourcePage(), 422);
     $page->load(['site', 'translations.locale', 'slots.slotType', 'slots.sharedSlot', 'pageAssets',
-      'blocks' => fn ($query) => $query->with($this->blockRelations())->orderBy('sort_order')->orderBy('id')]);
+      'blocks' => fn ($query) => $query->when($public, fn ($q) => $q->where('status', 'published'))->with($this->blockRelations($public))->orderBy('sort_order')->orderBy('id')]);
     $translation = $page->translations->first(fn ($item) => $item->locale?->code === $locale);
     abort_unless($translation && $rule->site->enabledLocales()->where('code', $locale)->exists(), 422);
     $page->setRelation('currentTranslation', $translation);
-    $data = $this->presenter->present($page, true, $locale);
+    $data = $this->presenter->present($page, ! $public, $locale);
     $config = $inspection['configuration'];
     $record = $inspection['records'][$locale];
     // The existing design stays intact in storage. Its in-memory identity must
@@ -41,7 +43,7 @@ final class AutomaticPagePreview
     $page->setRelation('currentTranslation', $translations->first(fn ($item) => $item->locale->code === $locale));
     $localeLinks = [];
     foreach ($rule->site->enabledLocales()->get() as $language) {
-      $localeLinks[$language->code] = route('admin.automatic-pages.preview', ['automaticPage' => $rule, 'record' => $key, 'locale' => $language->code]);
+      $localeLinks[$language->code] = $public ? $this->inspector->url($rule, $inspection['slug'], $language->code) : route('admin.automatic-pages.preview', ['automaticPage' => $rule, 'record' => $key, 'locale' => $language->code]);
     }
     foreach ($data['slots'] as $slot) {
       foreach ($slot['blocks'] as $block) {
@@ -59,20 +61,20 @@ final class AutomaticPagePreview
         ? Media::find($image)?->transformUrl('social') : $image;
     }
 
-    return view('webblocks-cms::public.pages.show', [...$data, 'previewMode' => true])->render();
+    return view('webblocks-cms::public.pages.show', [...$data, 'previewMode' => ! $public])->render();
   }
 
   private function bind(Block $block, string $source, array $record, array $localeLinks, int $pageId): void
   {
-    $block->setAttribute('automatic_page_preview', ['source' => (int) $block->page_id === $pageId ? $source : null, 'record' => $record, 'locale_links' => $localeLinks]);
+    $block->setAttribute('automatic_page_record', ['source' => (int) $block->page_id === $pageId ? $source : null, 'record' => $record, 'locale_links' => $localeLinks]);
     foreach ($block->children as $child) {
       $this->bind($child, $source, $record, $localeLinks, $pageId);
     }
   }
 
-  private function blockRelations(): array
+  private function blockRelations(bool $public = false): array
   {
     return ['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations',
-      'children' => fn ($query) => $query->with($this->blockRelations())->orderBy('sort_order')->orderBy('id')];
+      'children' => fn ($query) => $query->when($public, fn ($q) => $q->where('status', 'published'))->with($this->blockRelations($public))->orderBy('sort_order')->orderBy('id')];
   }
 }

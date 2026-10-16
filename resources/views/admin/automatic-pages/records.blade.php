@@ -6,7 +6,7 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $ap('records'), 'heading' => $ap('records')])
 @section('content')
 @include('webblocks-cms::admin.partials.page-header', ['title' => $automaticPage->name, 'description' => $ap('select_record')])
-<div class="wb-alert wb-alert-info">{{ $ap('draft_notice') }}</div>
+<div class="wb-alert wb-alert-info">{{ $ap(in_array(($rule ?? $automaticPage)->status, ['active', 'paused'], true) ? ($rule ?? $automaticPage)->status : 'draft_notice') }}</div>
 <div class="wb-cluster wb-cluster-2 wb-mb-4"><a class="wb-btn wb-btn-secondary" href="{{ route('admin.automatic-pages.edit', $automaticPage) }}">{{ $ap('edit') }}</a><code>{{ $automaticPage->source_handle }}</code></div>
 @if ($inspection['status'] !== 'available')<div class="wb-alert wb-alert-warning">{{ $ap($inspection['status']) }}</div>@else
 <section class="wb-card wb-mb-4"><div class="wb-card-header">{{ $ap('records') }} @if ($inspection['page']->total !== null)· {{ $ap('total', ['count' => $inspection['page']->total]) }}@endif</div><div class="wb-card-body">

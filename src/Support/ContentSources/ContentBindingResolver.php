@@ -53,10 +53,9 @@ class ContentBindingResolver
       return $binding['fallback'] ?? $fallback;
     }
 
-    // Transient data is attached by the authenticated automatic-page preview only.
-    // It never changes the stored binding and is ignored on public renders.
-    $preview = $block->getAttribute('automatic_page_preview');
-    if ($context->preview && is_array($preview) && ($preview['source'] ?? null) === $source->handle()) {
+    // Server-validated record data is transient; stored bindings remain intact.
+    $preview = $block->getAttribute('automatic_page_record');
+    if (is_array($preview) && ($preview['source'] ?? null) === $source->handle()) {
       $value = data_get($preview['record'] ?? [], $sourceField);
 
       return $value !== null && $value !== '' ? $value : ($binding['fallback'] ?? $fallback);

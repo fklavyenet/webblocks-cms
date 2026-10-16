@@ -24,6 +24,11 @@ final class AutomaticPagePolicy
     return $this->viewAny($user) && app(AdminAuthorization::class)->canViewSiteSettings($user, $site);
   }
 
+  public function activate(User $user, AutomaticPageRule $rule): bool
+  {
+    return $this->viewAny($user) && app(AdminAuthorization::class)->canMutateSiteSettings($user, $rule->site);
+  }
+
   public function update(User $user, AutomaticPageRule $rule): bool
   {
     return $this->view($user, $rule);

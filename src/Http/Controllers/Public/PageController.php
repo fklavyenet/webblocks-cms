@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\ContentSources\AutomaticPageRouter;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
@@ -53,6 +54,10 @@ class PageController extends Controller
   public function show(Request $request, string $localeOrPath, ?string $path = null): View|Response
   {
     $resolvedPath = $path ?? $localeOrPath;
+
+    if ($automatic = app(AutomaticPageRouter::class)->response($request, $resolvedPath)) {
+      return $automatic;
+    }
 
     $page = $this->routeResolver->findPublishedPageByPath($request, $resolvedPath);
 

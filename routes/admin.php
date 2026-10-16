@@ -279,6 +279,9 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('/dynamic-content/automatic-pages/{automaticPage}/edit', [AutomaticPageController::class, 'edit'])->name('automatic-pages.edit');
     Route::put('/dynamic-content/automatic-pages/{automaticPage}', [AutomaticPageController::class, 'update'])->name('automatic-pages.update');
     Route::get('/dynamic-content/automatic-pages/{automaticPage}/records', [AutomaticPageController::class, 'records'])->name('automatic-pages.records');
+    Route::get('/dynamic-content/automatic-pages/{automaticPage}/transition', [AutomaticPageController::class, 'transition'])->name('automatic-pages.transition');
+    Route::post('/dynamic-content/automatic-pages/{automaticPage}/pause', [AutomaticPageController::class, 'pause'])->name('automatic-pages.pause');
+    Route::post('/dynamic-content/automatic-pages/{automaticPage}/activate', [AutomaticPageController::class, 'activate'])->name('automatic-pages.activate');
     Route::get('/dynamic-content/automatic-pages/{automaticPage}/preview', [AutomaticPageController::class, 'preview'])->name('automatic-pages.preview');
 
     Route::get('/', DashboardController::class)->name('dashboard');

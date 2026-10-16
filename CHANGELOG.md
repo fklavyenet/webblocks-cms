@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.103.0
+
+Unreleased candidate; not published or deployed.
+
+- Resolve active automatic detail routes from the public source without creating native page copies; validate all six languages, distinguish withdrawn records from source failures and preserve site isolation.
+- Review and adopt existing detail pages with their original designs, translations and images, retaining independent revisions and a guarded return to the previous publication state.
+- Generate source-driven sitemap entries outside the native page cache; missing records never fall back to retained native copies.
+
 ## 1.102.0
 
 - Configure draft automatic detail pages from Dynamic Content, with source, existing design, base path and visible block field mappings. Saving and previewing preserve current published pages and URLs.
