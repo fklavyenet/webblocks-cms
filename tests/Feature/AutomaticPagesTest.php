@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Auth\User as BaseUser;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Actions\AutomaticPages\SaveAutomaticPageRule;
 use WebBlocks\Cms\Http\Controllers\Admin\AutomaticPageController;
@@ -62,6 +63,20 @@ class AutomaticPagesTest extends TestCase
     PublicationFixture::$mode = 'ready';
     PublicationFixture::$calls = [];
     $this->register();
+  }
+
+  #[Test]
+  public function existing_installations_receive_the_draft_table_through_the_update_path(): void
+  {
+    Schema::drop('wbcms_automatic_page_rules');
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_10_16_150000_create_automatic_page_rules.php';
+    $migration->up();
+    $migration->up();
+    [$site, $page] = $this->fixture();
+    $rule = app(SaveAutomaticPageRule::class)->handle($this->data($site, $page), $this->actor());
+    $migration->down();
+    $this->assertSame('draft', $rule->fresh()->status);
+    $this->assertSame('published', $page->fresh()->status);
   }
 
   #[Test]
