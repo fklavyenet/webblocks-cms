@@ -11,6 +11,7 @@
     @foreach (['sources', 'loops', 'bindings', 'issues'] as $view)
         <a class="wb-btn {{ $tab === $view ? 'wb-btn-primary' : 'wb-btn-secondary' }}" href="{{ $link(['tab' => $view]) }}" @if ($tab === $view) aria-current="page" @endif>{{ $dc($view) }}</a>
     @endforeach
+    <a class="wb-btn wb-btn-secondary" href="{{ route('admin.automatic-pages.index', ['site' => $siteId]) }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('automatic-pages.title', $dcLocale) }}</a>
 </nav>
 <form method="GET" class="wb-filter-bar wb-filter-bar--fields" action="{{ route('admin.dynamic-content.index') }}">
     <input type="hidden" name="tab" value="{{ $tab }}">
@@ -36,6 +37,7 @@
         @if ($selected['capabilities']['collection'] ?? false)<p><strong>{{ $dc('query_execution') }}:</strong> {{ $dc('execution_'.$selected['capabilities']['query_execution']) }}</p>@endif
         <div class="wb-table-wrap"><table class="wb-table"><thead><tr><th>{{ $dc('field') }}</th><th>{{ $dc('key') }}</th><th>{{ $dc('type') }}</th></tr></thead><tbody>@forelse ($selected['fields'] as $key => $field)<tr><td>{{ $field['label'] }}</td><td><code>{{ $key }}</code></td><td>{{ $dc('type_'.$field['type']) }}</td></tr>@empty<tr><td colspan="3">{{ $dc('no_fields') }}</td></tr>@endforelse</tbody></table></div>
         <p class="wb-text-sm wb-text-muted">{{ $dc('passive_inventory') }}</p>
+        @if ($selected['publication'] ?? null)<a class="wb-btn wb-btn-secondary" href="{{ route('admin.automatic-pages.create', ['site' => $siteId, 'source' => $selected['handle']]) }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('automatic-pages.create', $dcLocale) }}</a>@endif
         <a class="wb-btn wb-btn-secondary" href="{{ $link(['tab' => 'bindings']) }}">{{ $dc('used_here') }}</a>
     </div>
 </section>

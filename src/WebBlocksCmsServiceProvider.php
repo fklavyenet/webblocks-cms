@@ -62,7 +62,9 @@ use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
+use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Policies\AutomaticPagePolicy;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
@@ -1464,6 +1466,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function bootAuthorization(): void
   {
+    Gate::policy(AutomaticPageRule::class, AutomaticPagePolicy::class);
     Gate::define('access-admin', fn ($user) => is_object($user) && method_exists($user, 'canAccessAdmin') && $user->canAccessAdmin());
     Gate::define('manage-users', fn ($user) => app(PluginAccessResolver::class)->isSuperAdmin($user));
     Gate::define('access-system', fn ($user) => app(PluginAccessResolver::class)->canAccessSystem($user));

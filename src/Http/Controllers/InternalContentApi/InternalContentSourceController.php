@@ -129,6 +129,7 @@ class InternalContentSourceController extends Controller
       'label' => $source->labelText(),
       'kind' => $source->isCollection() ? 'collection' : 'entity',
       'standard' => $source->contract(),
+      'publication' => $source->publication(),
       'capabilities' => $source->capabilities(),
       'standard_status' => $source->contract() ? 'declared' : 'legacy',
       'required_locales' => ContentSourceContract::languages(),

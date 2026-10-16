@@ -1,0 +1,27 @@
+@php
+  $apLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+  $ap = fn ($key, $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('automatic-pages.'.$key, $apLocale, $replace);
+@endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $ap('title'), 'heading' => $ap('title')])
+@section('content')
+@include('webblocks-cms::admin.partials.page-header', ['title' => $ap($rule->exists ? 'edit' : 'create'), 'description' => $ap('intro')])
+<div class="wb-alert wb-alert-info">{{ $ap('draft_notice') }}</div>
+@if (session('status'))<div class="wb-alert wb-alert-success">{{ session('status') }}</div>@endif
+@if ($errors->any())<div class="wb-alert wb-alert-danger" role="alert"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+@if (! $rule->exists && $sites->count() > 1)<form method="GET" action="{{ route('admin.automatic-pages.create') }}" class="wb-filter-bar"><div class="wb-field"><label for="site-choice">{{ $ap('site') }}</label><select name="site" id="site-choice" class="wb-select">@foreach ($sites as $site)<option value="{{ $site->id }}" @selected($site->id === $rule->site_id)>{{ $site->name }}</option>@endforeach</select></div><button type="submit" class="wb-btn wb-btn-secondary">{{ $ap('choose_site') }}</button></form>@endif
+<form method="POST" action="{{ $rule->exists ? route('admin.automatic-pages.update', $rule) : route('admin.automatic-pages.store') }}" class="wb-card">
+@csrf @if ($rule->exists) @method('PUT') <input type="hidden" name="revision" value="{{ $rule->revision }}"> @endif
+<input type="hidden" name="site_id" value="{{ $rule->site_id }}">
+<div class="wb-card-body wb-stack wb-stack-4">
+<p><strong>{{ $ap('site') }}:</strong> {{ $rule->site->name }} · <strong>{{ $ap('languages') }}:</strong> {{ strtoupper($locales->pluck('code')->implode(' · ')) }}</p>
+<div class="wb-field"><label for="ap-name">{{ $ap('name') }}</label><input id="ap-name" name="name" class="wb-input" required maxlength="160" value="{{ old('name', $rule->name) }}"></div>
+<div class="wb-field"><label for="ap-source">{{ $ap('source') }}</label><select id="ap-source" name="source_handle" class="wb-select" required><option value="">{{ $ap('none') }}</option>@if ($rule->source_handle && ! isset($choices[$rule->source_handle]))<option value="{{ $rule->source_handle }}" selected disabled>{{ $rule->source_handle }} — {{ $ap('unavailable') }}</option>@endif @foreach ($choices as $handle => $choice)<option value="{{ $handle }}" @selected(old('source_handle', $rule->source_handle) === $handle)>{{ $choice['source']->labelText() }} ({{ $handle }})</option>@endforeach</select><p class="wb-text-sm wb-text-muted">{{ $ap('source_help') }}</p>@if (! $choices)<p class="wb-text-danger">{{ $ap('no_sources') }}</p>@endif</div>
+@foreach (['template_page_id' => 'template', 'catalogue_page_id' => 'catalogue'] as $field => $label)<div class="wb-field"><label for="ap-{{ $field }}">{{ $ap($label) }}</label><select id="ap-{{ $field }}" name="{{ $field }}" class="wb-select" @if ($field === 'template_page_id') required @endif><option value="">{{ $ap('none') }}</option>@foreach ($pages as $page)<option value="{{ $page->id }}" @selected((int) old($field, $rule->$field) === $page->id)>#{{ $page->id }} · {{ $page->defaultTranslation()?->name ?? $page->slug }} · {{ $page->defaultTranslation()?->path }}</option>@endforeach</select>@if ($field === 'template_page_id')<p class="wb-text-sm wb-text-muted">{{ $ap('template_help') }}</p>@endif</div>@endforeach
+<div class="wb-field"><label for="ap-path">{{ $ap('base_path') }}</label><input id="ap-path" name="base_path" class="wb-input" required maxlength="190" value="{{ old('base_path', $rule->base_path) }}"><p class="wb-text-sm wb-text-muted">{{ $ap('path_help') }}</p></div>
+@php($definition = $choices[old('source_handle', $rule->source_handle)] ?? null)
+@if ($definition)<section class="wb-card"><div class="wb-card-header">{{ $ap('definition') }}</div><div class="wb-card-body"><dl>@foreach (['entity_source' => 'entity', 'slug_field' => 'slug_field', 'title_field' => 'title_field', 'description_field' => 'description_field', 'image_field' => 'image_field'] as $field => $label)<dt>{{ $ap($label) }}</dt><dd><code>{{ $definition['publication'][$field] ?? '—' }}</code></dd>@endforeach</dl></div></section>@endif
+@if ($design)<section class="wb-card"><div class="wb-card-header">{{ $ap('connections') }}</div><div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table"><thead><tr><th>{{ $ap('block') }}</th><th>{{ $ap('target') }}</th><th>{{ $ap('source_field') }}</th></tr></thead><tbody>@forelse ($connections as $connection)<tr><td>#{{ $connection['block']->id }} · {{ $connection['block']->typeName() }}</td><td><code>{{ $connection['target'] }}</code></td><td>{{ $connection['label'] }} <code>{{ $connection['field'] }}</code></td></tr>@empty<tr><td colspan="3">{{ $ap('no_connections') }}</td></tr>@endforelse</tbody></table></div></div></section>@endif
+</div><div class="wb-card-footer wb-cluster wb-cluster-2"><button type="submit" class="wb-btn wb-btn-primary">{{ $ap('save') }}</button>@if ($rule->exists)<a class="wb-btn wb-btn-secondary" href="{{ route('admin.automatic-pages.records', $rule) }}">{{ $ap('inspect') }}</a>@endif<a class="wb-btn wb-btn-secondary" href="{{ route('admin.automatic-pages.index', ['site' => $rule->site_id]) }}">{{ $ap('back') }}</a></div>
+</form>
+@endsection

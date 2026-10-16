@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.102.0
+
+- Configure draft automatic detail pages from Dynamic Content, with source, existing design, base path and visible block field mappings. Saving and previewing preserve current published pages and URLs.
+- Add optional provider publication contract 1.0 with paginated public identities, explicit availability outcomes and actual record validation in every CMS language.
+- Preview a selected source record through the native multilingual design without copying pages or changing stored translations. Preserve source artwork, localized alt text and record identity in canonical and language links.
+- Enforce site-scoped design references and stale-edit protection. This release introduces draft configuration only; automatic public routing and page migration are not activated.
+
 ## 1.101.1
 
 ### Fixed

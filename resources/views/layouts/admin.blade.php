@@ -56,7 +56,7 @@
                 ['label' => $adminText('navigation.dashboard'), 'route' => 'admin.dashboard', 'active' => ['admin.dashboard'], 'icon' => 'wb-icon-layout-dashboard'],
                 ['label' => $adminText('navigation.sites'), 'route' => 'admin.sites.index', 'active' => ['admin.sites.index', 'admin.sites.create', 'admin.sites.store', 'admin.sites.edit', 'admin.sites.update', 'admin.sites.clone', 'admin.sites.clone.prefill', 'admin.sites.clone.store', 'admin.sites.promote', 'admin.sites.promote.*', 'admin.sites.delete', 'admin.sites.destroy'], 'icon' => 'wb-icon-globe'],
                 ['label' => $adminText('navigation.pages'), 'route' => 'admin.pages.index', 'active' => ['admin.pages.*'], 'icon' => 'wb-icon-file-text'],
-                ['label' => $adminTranslator->get('dynamic-content.title', $adminLocale), 'route' => 'admin.dynamic-content.index', 'active' => ['admin.dynamic-content.*'], 'icon' => 'wb-icon-database'],
+                ['label' => $adminTranslator->get('dynamic-content.title', $adminLocale), 'route' => 'admin.dynamic-content.index', 'active' => ['admin.dynamic-content.*', 'admin.automatic-pages.*'], 'icon' => 'wb-icon-database'],
                 ['label' => $adminText('navigation.shared_slots'), 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-component'],
                 ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-network'],
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],

@@ -87,6 +87,7 @@ final class DynamicContentInventory
         'plugin' => $source?->pluginHandle(), 'provider_label' => $providerLabels[$handle] ?? null, 'kind' => $source?->isCollection() ? 'collection' : 'entity',
         'state' => ! $source ? 'missing' : (! ($active[$handle] ?? false) ? 'disabled' : (! $visible ? 'restricted' : ($source->contract() ? 'declared' : 'legacy'))),
         'capabilities' => $visible ? $source->capabilities() : null,
+        'publication' => $visible ? $source->publication() : null,
         'fields' => $visible ? $source->fieldDefinitions() : [], 'contract' => $visible ? $source->contract() : null, 'usages' => $usages->values(),
         'blocks_count' => $usages->pluck('block.id')->unique()->count(), 'loops_count' => $usages->where('kind', 'loop')->count()]);
     }

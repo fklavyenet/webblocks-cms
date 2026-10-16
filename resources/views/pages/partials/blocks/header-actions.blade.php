@@ -18,11 +18,13 @@
     // Each locale links to the current page's real translated path (e.g. the
     // ES link on /products goes to /es/productos), falling back to that
     // locale's home page when the page has no resolvable translation.
+    $previewLocaleLinks = $block->getAttribute('render_preview') ? ($block->getAttribute('automatic_page_preview')['locale_links'] ?? []) : [];
     $localeLinks = $availableLocales
-        ->map(function ($locale) use ($routeResolver, $currentPage, $currentSite) {
+        ->map(function ($locale) use ($routeResolver, $currentPage, $currentSite, $previewLocaleLinks) {
             $path = $currentPage
                 ? $routeResolver->pathFor($currentPage, $locale, $currentSite)
                 : null;
+            $path = $previewLocaleLinks[$locale->code] ?? $path;
             $path ??= $routeResolver->homePath($locale->code, $currentSite);
 
             return $path ? ['locale' => $locale, 'path' => $path] : null;

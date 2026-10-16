@@ -27,6 +27,8 @@ class ContentSourceDefinition
 
   private ?array $standard = null;
 
+  private ?array $publication = null;
+
   private function __construct(private readonly string $handle, private readonly string $kind)
   {
     if (! self::isValidHandle($handle)) {
@@ -168,12 +170,34 @@ class ContentSourceDefinition
     return $this;
   }
 
+  /** Optional publication 1.0 capability; does not create or publish routes. */
+  public function publishesPages(string $entitySource, string $slugField, string $titleField, ?string $descriptionField = null, ?string $imageField = null): self
+  {
+    if (! $this->isCollection() || ! self::isValidHandle($entitySource)) {
+      throw new PluginException('Only collections can declare an entity publication source.');
+    }
+    foreach ([$slugField, $titleField, $descriptionField, $imageField] as $field) {
+      if ($field !== null && preg_match('/^[a-z][a-z0-9_.]*$/D', $field) !== 1) {
+        throw new PluginException('Invalid publication field name.');
+      }
+    }
+    $this->publication = ['version' => '1.0', 'entity_source' => $entitySource, 'slug_field' => $slugField,
+      'title_field' => $titleField, 'description_field' => $descriptionField, 'image_field' => $imageField];
+
+    return $this;
+  }
+
+  public function publication(): ?array
+  {
+    return $this->publication;
+  }
+
   public function capabilities(): array
   {
     return ['entity' => ! $this->isCollection(), 'collection' => $this->isCollection(),
       'filter_sort_pagination' => $this->isCollection(),
       'query_execution' => $this->isCollection() && $this->resolver !== null && is_subclass_of($this->resolver, QueryableContentCollectionSourceResolver::class) ? 'provider' : 'cms',
-      'cache_seconds' => $this->cacheSeconds];
+      'automatic_pages' => $this->publication !== null, 'cache_seconds' => $this->cacheSeconds];
   }
 
   public function contract(): ?array

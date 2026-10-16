@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use WebBlocks\Cms\Http\Controllers\Admin\AutomaticPageController;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
@@ -272,6 +273,14 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     };
 
     Route::get('/dynamic-content', [DynamicContentController::class, 'index'])->name('dynamic-content.index');
+    Route::get('/dynamic-content/automatic-pages', [AutomaticPageController::class, 'index'])->name('automatic-pages.index');
+    Route::get('/dynamic-content/automatic-pages/create', [AutomaticPageController::class, 'create'])->name('automatic-pages.create');
+    Route::post('/dynamic-content/automatic-pages', [AutomaticPageController::class, 'store'])->name('automatic-pages.store');
+    Route::get('/dynamic-content/automatic-pages/{automaticPage}/edit', [AutomaticPageController::class, 'edit'])->name('automatic-pages.edit');
+    Route::put('/dynamic-content/automatic-pages/{automaticPage}', [AutomaticPageController::class, 'update'])->name('automatic-pages.update');
+    Route::get('/dynamic-content/automatic-pages/{automaticPage}/records', [AutomaticPageController::class, 'records'])->name('automatic-pages.records');
+    Route::get('/dynamic-content/automatic-pages/{automaticPage}/preview', [AutomaticPageController::class, 'preview'])->name('automatic-pages.preview');
+
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

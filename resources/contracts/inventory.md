@@ -1422,3 +1422,81 @@ including when editorial fallback or a slot owner uses the default language.
 Authoring choices and collection previews use the requested block language, or
 the CMS editor language when the block has no public render context yet. This
 keeps locale-aware providers selectable in the panel and Internal Content API.
+
+
+## Automatic Pages — draft configuration (CMS 1.102.0)
+
+This optional phase adds **Dynamic Content → Automatic Pages** at
+`/webadmin/dynamic-content/automatic-pages`, with the Dynamic Content sidebar entry
+remaining active throughout rule editing and inspection. It does not activate public routes,
+generate or copy detail pages, change existing paths or translations, add
+sitemap/search entries, or migrate existing pages. There is no publish action or
+Internal Content API rule-write endpoint in this phase. Existing native pages
+continue to determine public availability independently of these draft rules.
+
+### Provider publication contract 1.0
+
+A standard-1.0 collection may declare
+`publishesPages($entitySource, $slugField, $titleField, $descriptionField, $imageField)`.
+Its paired enabled standard-1.0 entity must belong to the same plugin and use
+the same stable record-key field. Slug/title fields are declared text fields;
+optional description fields are text/rich-text and images URL/media fields.
+The collection resolver implements `ContentPublicationSource`:
+
+- `publicationPage(?string $cursor, int $limit, ContentSourceContext $context)`
+  returns `ContentPublicationPage`: public `{key, label}` identities, an opaque
+  optional next cursor and optional total. Each page contains at most 100 unique,
+  nonempty keys (190 bytes) with nonempty labels (300 characters). A continuation
+  requires at least one entry. The panel requests at most 20 entries and rejects
+  a cursor that does not advance. Enumeration is independent of block collection
+  limits, filtering or pagination; totals are provider-reported.
+- `publicationRecord(string $key, ContentSourceContext $context)` returns
+  `ContentPublicationRecord::available($record)`, `missing()`, `unavailable()`
+  or `incomplete()`. Missing includes withdrawn/nonpublic records; source errors
+  must not masquerade as deletion or return stale successful content. Every
+  inspection validates actual entity-schema values, requested `_locale`, stable
+  identity and nonempty title for all six CMS languages. In this phase the
+  lower-case hyphenated slug is at most 190 bytes and identical across languages.
+  Images, captions, alt text and translated record fields remain provider-owned.
+
+Declaration metadata is exposed as `publication` in source discovery and the
+inventory; `capabilities.automatic_pages` indicates a declaration, not a live
+availability certification. A compatible pair must pass both source policies
+for every CMS language in the selected site/design context. Legacy providers
+without this optional capability continue to serve existing bindings.
+
+### Draft rules and previews
+
+A draft rule stores its name, site, collection handle, existing detail-design
+page reference, optional catalogue-page reference, canonical non-reserved base
+path and revision in relational `wbcms_automatic_page_rules`. The site's base
+path is unique. Source records and page translations are not persisted by the
+rule. The detail design must be a visible, same-site native page, translated for
+each enabled site language, with at least one existing field binding to the
+paired entity source. Shared Slot source pages cannot be selected as designs. Design visibility and
+same-site ownership are revalidated on form, record and preview reads; a moved,
+removed or hidden design cannot expose content through an old rule.
+The form lists the matching blocks, target fields and provider fields so the
+operator can inspect what the selected record will supply. Existing page
+addresses overlapping a proposed record address are reported for a later,
+explicit migration; they are not deleted, overwritten or shadowed.
+
+Active CMS administrators with access to the site may view and edit these
+**draft-only** rules. Cross-site access and site reassignment are rejected.
+Updates use a locked optimistic revision; stale saves fail. Unexpected fields,
+including publication status, are rejected. Indexing rules and opening the form
+are passive database/configuration reads; inspecting records explicitly calls
+the provider. Ineligible or disabled sources remain visible on existing rules
+and cannot be used for new saves or previews.
+
+The authenticated preview endpoint renders the selected record through the
+native public presenter and a read-only design reference, including existing
+locale blocks, images and site shell. Only page-owned entity bindings receive
+the transient selected-record override; current-item loops, other sources and
+Shared Slot field content retain their original behavior. The header language
+switcher keeps the same record within the private preview. Head canonical and
+alternate-language URLs describe the selected record using transient translation
+clones; the design page’s stored identity and paths are untouched. This server-only
+transient context is ignored on normal public renders and is never stored in
+block settings. The response is `private, no-store` with
+`X-Robots-Tag: noindex, nofollow`. Preview and saving a rule do not publish it.
