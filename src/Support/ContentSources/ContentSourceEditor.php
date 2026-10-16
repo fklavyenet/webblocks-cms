@@ -27,7 +27,7 @@ class ContentSourceEditor
     $context = new ContentSourceContext(
       site: $block->page?->site,
       page: $block->page,
-      locale: $block->renderLocaleCode(),
+      locale: $block->renderLocaleCode() ?? app()->getLocale(),
       preview: true,
       actor: auth()->user(),
     );
@@ -234,7 +234,7 @@ class ContentSourceEditor
     $context = new ContentSourceContext(
       site: $block->page?->site,
       page: $block->page,
-      locale: $block->renderLocaleCode(),
+      locale: $block->renderLocaleCode() ?? app()->getLocale(),
       preview: true,
       actor: auth()->user(),
     );

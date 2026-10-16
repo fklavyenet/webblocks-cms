@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.101.1
+
+### Fixed
+
+- Give content source authoring choices and collection previews the CMS editor language when no public render context exists. Preserve an explicitly requested content language so locale-aware providers can be selected and saved through the panel and Internal Content API.
+
 ## 1.101.0
 
 - Add provider-owned multilingual Content Source standard 1.0 with every CMS language, stable identities and actual locale/schema validation. Require the standard for new connections while preserving existing legacy bindings.

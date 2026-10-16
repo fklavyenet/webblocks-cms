@@ -24,6 +24,26 @@ use WebBlocks\Cms\Tests\TestCase;
 class ContentSourceBindingTest extends TestCase
 {
   #[Test]
+  public function authoring_choices_and_collection_previews_have_a_locale_before_public_rendering(): void
+  {
+    $this->registerPlugin(PluginDefinition::make('localized')->contentSources([
+      ContentSourceDefinition::entity('localized::item')->standard(['en', 'tr', 'de', 'es', 'it', 'fr'], 'Localized entity', 'Test provider', 'id')->resolver(LocaleRequiredAuthoringSource::class)->fields(['id' => 'text', 'name' => 'text']),
+      ContentSourceDefinition::collection('localized::items')->standard(['en', 'tr', 'de', 'es', 'it', 'fr'], 'Localized collection', 'Test provider', 'id')->resolver(LocaleRequiredAuthoringSource::class)->fields(['id' => 'text', 'name' => 'text']),
+    ]), 'localized');
+    app()->setLocale('en');
+    $editor = app(ContentSourceEditor::class);
+    $heading = new Block(['type' => 'header']);
+    $grid = new Block(['type' => 'grid']);
+    $this->assertNull($heading->renderLocaleCode());
+    $this->assertTrue($editor->selectionIsAllowed($heading, 'title', 'localized::item|one|name'));
+    $this->assertContains('en', array_values($editor->collectionPreview($grid, 'localized::items')[0]));
+    $heading->setAttribute('requested_locale_code', 'tr');
+    $grid->setAttribute('requested_locale_code', 'tr');
+    $this->assertStringContainsString(' / tr / ', $editor->choices($heading, ['text'])[0]['label']);
+    $this->assertContains('tr', array_values($editor->collectionPreview($grid, 'localized::items')[0]));
+  }
+
+  #[Test]
   public function an_enabled_plugin_source_can_feed_existing_core_block_fields(): void
   {
     $this->registerCatalogSource(enabled: true);
@@ -510,5 +530,27 @@ class FakePluginCatalogSource implements ContentSourceResolver
   public function options(ContentSourceContext $context): array
   {
     return ['webblocks-seo' => 'WebBlocks SEO'];
+  }
+}
+
+class LocaleRequiredAuthoringSource implements ContentCollectionSourceResolver, ContentSourceResolver
+{
+  public function options(ContentSourceContext $context): array
+  {
+    if (! in_array($context->locale, ['en', 'tr', 'de', 'es', 'it', 'fr'], true)) {
+      throw new \RuntimeException('The source requires a concrete locale.');
+    }
+
+    return ['one' => $context->locale];
+  }
+
+  public function resolve(string $recordKey, ContentSourceContext $context): ?array
+  {
+    return ['_locale' => $context->locale, 'id' => 'one', 'name' => $this->options($context)['one']];
+  }
+
+  public function resolveCollection(array $settings, ContentSourceContext $context): iterable
+  {
+    return [$this->resolve('one', $context)];
   }
 }

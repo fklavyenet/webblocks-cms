@@ -1376,7 +1376,7 @@ These changes do not change block authoring, full revision snapshots, API token
 capabilities or the maintenance exemption for the authorized status route.
 
 
-## Dynamic Content source standard and inventory — CMS 1.101.0
+## Dynamic Content source standard and inventory — CMS 1.101.1
 
 The native admin entry is `/webadmin/dynamic-content`. Sources, loops, field
 connections and issues are read-only projections of existing relational block
@@ -1418,3 +1418,7 @@ Block trees expose loop owners, repeated template IDs, current-item and fixed
 record field connections, and collapsed ancestors containing dynamic content.
 The requested block translation locale is authoritative for source resolution,
 including when editorial fallback or a slot owner uses the default language.
+
+Authoring choices and collection previews use the requested block language, or
+the CMS editor language when the block has no public render context yet. This
+keeps locale-aware providers selectable in the panel and Internal Content API.
