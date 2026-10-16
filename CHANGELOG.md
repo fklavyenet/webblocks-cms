@@ -7,6 +7,7 @@ Unreleased candidate; not published or deployed.
 - Resolve active automatic detail routes from the public source without creating native page copies; validate all six languages, distinguish withdrawn records from source failures and preserve site isolation.
 - Review and adopt existing detail pages with their original designs, translations and images, retaining independent revisions and a guarded return to the previous publication state.
 - Generate source-driven sitemap entries outside the native page cache; missing records never fall back to retained native copies.
+- Include current automatic records in native HTML and JSON search using the requested language's declared public title and description. Merge relevance and pagination with native pages; withdrawn records disappear without index rebuilds and source failures never return stale copies.
 
 ## 1.102.0
 

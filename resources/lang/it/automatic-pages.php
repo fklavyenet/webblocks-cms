@@ -64,6 +64,7 @@ return [
   'template_binding' => 'Il modello non ha campi collegati a questa fonte singola.',
   'transition' => 'Esamina la transizione',
   'transition_intro' => 'Verifica i dati attuali e ogni modello conservato prima di attivare le rotte.',
+  'search_discovery' => 'Dopo l’attivazione, la ricerca del sito include i titoli e le descrizioni pubblici attuali della fonte nella lingua del visitatore. I record ritirati scompaiono alla ricerca successiva. Non serve ricostruire manualmente l’indice; la fonte deve essere disponibile.',
   'transition_notice' => 'Solo anteprima: pagine e rotte esistenti non sono cambiate.',
   'retained_pages' => 'Conserva :count pagine esistenti',
   'detail_urls' => ':count indirizzi di dettaglio',

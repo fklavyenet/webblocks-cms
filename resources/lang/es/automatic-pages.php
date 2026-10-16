@@ -64,6 +64,7 @@ return [
   'template_binding' => 'El diseño no tiene campos vinculados a esta fuente individual.',
   'transition' => 'Revisar transición',
   'transition_intro' => 'Valida los datos actuales y cada diseño conservado antes de activar las rutas.',
+  'search_discovery' => 'Tras la activación, la búsqueda del sitio incluye los títulos y las descripciones públicos actuales de la fuente en el idioma del visitante. Los registros retirados desaparecen en la siguiente búsqueda. No es necesario reconstruir el índice manualmente; la fuente debe estar disponible.',
   'transition_notice' => 'Solo vista previa: las páginas y rutas existentes no han cambiado.',
   'retained_pages' => 'Conservar :count páginas existentes',
   'detail_urls' => ':count direcciones de detalle',

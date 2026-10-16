@@ -64,6 +64,7 @@ return [
   'template_binding' => 'Le modèle ne possède aucun champ lié à cette source individuelle.',
   'transition' => 'Examiner la transition',
   'transition_intro' => 'Validez les données actuelles et chaque modèle conservé avant d’activer les routes.',
+  'search_discovery' => 'Après activation, la recherche du site inclut les titres et descriptions publics actuels de la source dans la langue du visiteur. Les enregistrements retirés disparaissent dès la recherche suivante. Aucune reconstruction manuelle de l’index n’est nécessaire ; la source doit être disponible.',
   'transition_notice' => 'Aperçu uniquement : les pages et routes existantes restent inchangées.',
   'retained_pages' => 'Conserver :count pages existantes',
   'detail_urls' => ':count adresses de détail',

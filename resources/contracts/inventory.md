@@ -1506,9 +1506,19 @@ private,no-store. Protected designs cannot appear in sitemap discovery.
 Sitemaps merge current validated automatic record URLs and all enabled-language
 alternates outside the native page cache. They deduplicate native addresses,
 remove withdrawn records immediately and return 503 on source failure rather
-than serving stale source entries. Native search copies leave discovery when
-the native page becomes draft; source-driven search indexing is not implemented
-in this candidate.
+than serving stale source entries. Native HTML and JSON search also merge current
+automatic records with native page results, using only declared publication
+title, description and public URL in the requested enabled language. Both source
+policies and all six actual translations are validated in a public context with
+no admin actor. Protected designs and inactive rules are excluded. Active owned
+prefixes suppress native search copies even if republished. Matching uses all
+normalized query terms; relevance prioritizes title, URL, description and then
+multi-field matches, with native recency/title order winning equal-rank ties and
+stable title/URL order for source results. One result count and paginator cover
+both result types without loading preceding native result pages. Source results
+are read per request with no persistent source search index or stale fallback:
+withdrawal and republication apply on the next search; unavailable or incomplete
+source content returns 503. The transition review explains this discovery effect.
 
 **Restore previous publication** first verifies all retained content hashes,
 restores original native publication statuses and pauses the rule in a locked

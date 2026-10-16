@@ -64,6 +64,7 @@ return [
   'template_binding' => 'Tasarımın bu tekil kayıt kaynağına bağlı alanı yok.',
   'transition' => 'Geçişi incele',
   'transition_intro' => 'Otomatik rotaları etkinleştirmeden önce güncel kaynak içeriğini ve korunacak tasarımları doğrulayın.',
+  'search_discovery' => 'Etkinleştirmeden sonra site araması, kaynağın güncel ve herkese açık başlıklarını ve açıklamalarını ziyaretçinin dilinde gösterir. Yayından kaldırılan kayıtlar bir sonraki aramada görünmez. Elle indeks yenilemek gerekmez; kaynak erişilebilir olmalıdır.',
   'transition_notice' => 'Yalnızca önizleme: mevcut sayfalar ve rotalar değişmedi.',
   'retained_pages' => ':count mevcut sayfa korunacak',
   'detail_urls' => ':count detay adresi',

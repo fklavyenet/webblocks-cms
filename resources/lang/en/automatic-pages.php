@@ -64,6 +64,7 @@ return [
   'template_binding' => 'The design has no field bound to this publication entity source.',
   'transition' => 'Review transition',
   'transition_intro' => 'Validate current source content and review every retained design before activating automatic routes.',
+  'search_discovery' => 'After activation, site search includes current public source titles and descriptions in the visitor’s language. Withdrawn records disappear on the next search. No manual index rebuild is needed; the source must be available.',
   'transition_notice' => 'Preview only: existing pages and routes have not changed.',
   'retained_pages' => 'Retain :count existing pages',
   'detail_urls' => ':count detail URLs',

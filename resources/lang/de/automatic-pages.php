@@ -64,6 +64,7 @@ return [
   'template_binding' => 'Die Vorlage hat kein Feld mit dieser Einzelquelle verbunden.',
   'transition' => 'Umstellung prüfen',
   'transition_intro' => 'Aktuelle Quelldaten und alle beibehaltenen Designs vor der Aktivierung prüfen.',
+  'search_discovery' => 'Nach der Aktivierung durchsucht die Website die aktuellen öffentlichen Titel und Beschreibungen der Quelle in der Sprache des Besuchers. Zurückgezogene Einträge verschwinden bei der nächsten Suche. Ein manueller Indexaufbau ist nicht nötig; die Quelle muss erreichbar sein.',
   'transition_notice' => 'Nur Vorschau: bestehende Seiten und Routen bleiben unverändert.',
   'retained_pages' => ':count bestehende Seiten beibehalten',
   'detail_urls' => ':count Detailadressen',

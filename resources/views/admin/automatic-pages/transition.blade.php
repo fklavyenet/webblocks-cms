@@ -6,6 +6,7 @@
 @section('content')
 @include('webblocks-cms::admin.partials.page-header', ['title' => $automaticPage->name, 'description' => $ap('transition_intro')])
 <div class="wb-alert wb-alert-info">{{ $ap('transition_notice') }}</div>
+<div class="wb-alert wb-alert-info">{{ $ap('search_discovery') }}</div>
 <div class="wb-cluster wb-cluster-2 wb-mb-4"><span class="wb-badge">{{ $ap('retained_pages', ['count' => $plan['pages']]) }}</span><span class="wb-badge">{{ $ap('detail_urls', ['count' => $plan['urls']]) }}</span><code>{{ $automaticPage->base_path }}/{slug}</code></div>
 @foreach ($plan['errors'] as $error)<div class="wb-alert wb-alert-danger">{{ $ap($error) }}</div>@endforeach
 <section class="wb-card"><div class="wb-card-header">{{ $ap('transition') }}</div><div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table"><thead><tr><th>{{ $ap('key') }}</th><th>{{ $ap('retained_design') }}</th><th>{{ $ap('proposed_url') }}</th><th>{{ $ap('preview') }}</th></tr></thead><tbody>

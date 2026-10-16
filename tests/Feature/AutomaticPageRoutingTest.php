@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\User as BaseUser;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,9 +19,11 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Concerns\HasCmsAdminAccess;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAccessRule;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\PublicSearchIndex;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\ContentSources\AutomaticPageRouter;
@@ -39,6 +42,7 @@ use WebBlocks\Cms\Support\Pages\PageSiteMoveValidator;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Revisions\RevisionCleanupQuery;
+use WebBlocks\Cms\Support\Search\PublicSearchQuery;
 use WebBlocks\Cms\Support\Sitemap\SitemapGenerator;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -240,6 +244,138 @@ class AutomaticPageRoutingTest extends TestCase
     $this->assertSame($site->id, $page->fresh()->site_id);
   }
 
+  #[Test]
+  public function automatic_search_uses_actual_translated_titles_and_descriptions_in_all_six_languages(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    foreach (ContentSourceContract::languages() as $locale) {
+      $prefix = $locale === 'en' ? '' : '/'.$locale;
+      $this->getJson('http://library.test'.$prefix.'/search.json?q=Only'.$locale)
+        ->assertOk()->assertJsonPath('count', 2)
+        ->assertJsonPath('results.0.title', 'brand-new '.$locale)
+        ->assertJsonPath('results.0.url', $prefix.'/library/brand-new')
+        ->assertJsonPath('results.0.excerpt', 'Translated description Only'.$locale);
+      $this->getJson('http://library.test'.$prefix.'/search.json?q=Only'.($locale === 'en' ? 'tr' : 'en'))
+        ->assertOk()->assertJsonPath('count', 0);
+    }
+    $this->get('http://library.test/tr/search?q=Onlytr')->assertOk()->assertSee('brand-new tr')->assertSee('/tr/library/brand-new')->assertDontSee('Existing tr');
+    $this->assertSame(1, Page::count());
+    RoutingPublicationFixture::$calls = [];
+    $this->getJson('http://library.test/search.json')->assertOk()->assertJsonPath('count', 0);
+    $this->getJson('http://library.test/search.json?q=x')->assertOk()->assertJsonPath('count', 0);
+    $this->assertSame([], RoutingPublicationFixture::$calls);
+  }
+
+  #[Test]
+  public function search_immediately_follows_withdrawal_and_republication_and_never_uses_an_old_native_copy(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    // Even an accidentally republished copy must not bypass prefix ownership.
+    $page->update(['status' => 'published']);
+    PublicSearchIndex::updateOrCreate(['page_id' => $page->id, 'locale_id' => Locale::where('code', 'en')->firstOrFail()->id], ['site_id' => $site->id, 'title' => 'Old native Onlyen', 'content' => 'Stale Onlyen', 'url' => '/library/second', 'indexed_at' => now()]);
+    $this->getJson('http://library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 2);
+    RoutingPublicationFixture::$mode = 'missing';
+    $this->getJson('http://library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 0);
+    RoutingPublicationFixture::$mode = 'ready';
+    $this->getJson('http://library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 2)->assertDontSee('Old native');
+    RoutingPublicationFixture::$mode = 'withdraw_second';
+    $this->getJson('http://library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 1)->assertJsonPath('results.0.url', '/library/brand-new');
+    $this->get('http://library.test/test/route/second')->assertNotFound();
+  }
+
+  #[Test]
+  public function search_source_failure_or_incomplete_translation_returns_503_instead_of_stale_results(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    foreach (['unavailable', 'wrong_locale'] as $mode) {
+      RoutingPublicationFixture::$mode = $mode;
+      $this->getJson('http://library.test/search.json?q=Onlyen')->assertStatus(503)->assertDontSee('Existing en');
+    }
+  }
+
+  #[Test]
+  public function automatic_search_is_site_scoped_and_excludes_protected_and_inactive_rules(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->getJson('http://library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 0);
+    $this->activate($rule);
+    $other = Site::create(['handle' => 'other-library', 'name' => 'Other', 'domain' => 'other-library.test']);
+    $other->locales()->syncWithoutDetaching([Locale::where('code', 'en')->firstOrFail()->id => ['is_enabled' => true]]);
+    $this->getJson('http://other-library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 0);
+    PageAccessRule::create(['page_id' => $page->id, 'package_id' => null]);
+    $this->getJson('http://library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 0);
+    PageAccessRule::query()->delete();
+    $rule->forceFill(['status' => 'paused'])->save();
+    $this->getJson('http://library.test/search.json?q=Onlyen')->assertOk()->assertJsonPath('count', 0);
+    $this->getJson('http://unknown.test/search.json?q=Onlyen')->assertNotFound();
+  }
+
+  #[Test]
+  public function automatic_search_keeps_mounts_and_omits_a_disabled_site_language(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    config(['webblocks-cms.public.mount' => 'wb']);
+    $turkish = Locale::where('code', 'tr')->firstOrFail();
+    $results = app(PublicSearchQuery::class)->search($site, $turkish, 'Onlytr');
+    $this->assertSame('/wb/tr/library/brand-new', $results->items()[0]->url);
+    $site->locales()->updateExistingPivot($turkish->id, ['is_enabled' => false]);
+    $this->assertSame(0, app(PublicSearchQuery::class)->search($site->fresh(), $turkish, 'Onlytr')->total());
+  }
+
+  #[Test]
+  public function native_and_automatic_search_share_relevance_count_and_pagination_without_duplicates(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    $english = Locale::where('code', 'en')->firstOrFail();
+    $native = Page::create(['site_id' => $site->id, 'slug' => 'native', 'status' => 'published']);
+    $native->translations()->create(['site_id' => $site->id, 'locale_id' => $english->id, 'name' => 'Native brand-new', 'slug' => 'native', 'path' => '/native']);
+    PublicSearchIndex::updateOrCreate(['page_id' => $native->id, 'locale_id' => $english->id], ['site_id' => $site->id, 'title' => 'Native brand-new', 'content' => 'Onlyen native description', 'url' => '/old-mount/native', 'indexed_at' => now()]);
+    $search = app(PublicSearchQuery::class);
+    $first = $search->search($site, $english, 'brand-new', 1);
+    $this->assertSame(2, $first->total());
+    $this->assertSame('/native', $first->items()[0]->url);
+    Paginator::currentPageResolver(fn () => 2);
+    $second = $search->search($site, $english, 'brand-new', 1);
+    $this->assertSame(2, $second->total());
+    $this->assertSame('/library/brand-new', $second->items()[0]->url);
+    Paginator::currentPageResolver(fn () => 3);
+    $this->assertCount(0, $search->search($site, $english, 'brand-new', 1)->items());
+    Paginator::currentPageResolver(fn () => 1);
+    // All terms may match separate fields; source-specific alt text is not indexed.
+    $this->assertSame(2, $search->search($site, $english, 'brand-new Onlyen')->total());
+    $this->assertSame(0, $search->search($site, $english, 'Second image')->total());
+  }
+
+  #[Test]
+  public function mixed_search_pagination_handles_bucket_boundaries_and_large_page_numbers(): void
+  {
+    [$site, $page, $rule] = $this->prepared();
+    $this->activate($rule);
+    $english = Locale::where('code', 'en')->firstOrFail();
+    foreach (range(1, 4) as $number) {
+      $native = Page::create(['site_id' => $site->id, 'slug' => 'native-'.$number, 'status' => 'published']);
+      $native->translations()->create(['site_id' => $site->id, 'locale_id' => $english->id, 'name' => 'Onlyen '.$number, 'slug' => 'native-'.$number, 'path' => '/native-'.$number]);
+      PublicSearchIndex::updateOrCreate(['page_id' => $native->id, 'locale_id' => $english->id], ['site_id' => $site->id, 'title' => 'Onlyen '.$number, 'content' => 'Native', 'url' => '/native-'.$number, 'indexed_at' => now()]);
+    }
+    $urls = [];
+    foreach (range(1, 3) as $number) {
+      Paginator::currentPageResolver(fn () => $number);
+      $results = app(PublicSearchQuery::class)->search($site, $english, 'Onlyen', 2);
+      $this->assertSame(6, $results->total());
+      $this->assertCount(2, $results->items());
+      $urls = [...$urls, ...collect($results->items())->pluck('url')->all()];
+    }
+    $this->assertSame(['/native-1', '/native-2', '/native-3', '/native-4', '/library/brand-new', '/library/second'], $urls);
+    Paginator::currentPageResolver(fn () => 1000000);
+    $this->assertCount(0, app(PublicSearchQuery::class)->search($site, $english, 'Onlyen', 2)->items());
+    Paginator::currentPageResolver(fn () => 1);
+  }
+
   private function actor(string $role = 'super_admin'): User
   {
     return User::find(1) ?? User::forceCreate(['id' => 1, 'name' => 'Test editor', 'email' => 'editor@example.test', 'password' => 'local-fixture', 'role' => $role, 'is_active' => true]);
@@ -252,10 +388,10 @@ class AutomaticPageRoutingTest extends TestCase
 
   private function register(bool $active = true): void
   {
-    $fields = ['id' => 'text', 'slug' => 'text', 'title' => 'text', 'image' => 'url', 'alt' => 'text'];
+    $fields = ['id' => 'text', 'slug' => 'text', 'title' => 'text', 'summary' => 'text', 'image' => 'url', 'alt' => 'text'];
     $registry = new PluginRegistry(['library' => $active]);
     $registry->register(PluginDefinition::make('library')->contentSources([
-      ContentSourceDefinition::collection('library::books')->standard(ContentSourceContract::languages(), 'Public books', 'Library API', 'id')->resolver(RoutingPublicationFixture::class)->fields($fields)->publishesPages('library::book', 'slug', 'title', null, 'image'),
+      ContentSourceDefinition::collection('library::books')->standard(ContentSourceContract::languages(), 'Public books', 'Library API', 'id')->resolver(RoutingPublicationFixture::class)->fields($fields)->publishesPages('library::book', 'slug', 'title', 'summary', 'image'),
       ContentSourceDefinition::entity('library::book')->standard(ContentSourceContract::languages(), 'Public book', 'Library API', 'id')->resolver(RoutingPublicationFixture::class)->fields($fields),
     ]));
     $this->app->instance(PluginRegistry::class, $registry);
@@ -289,6 +425,13 @@ class AutomaticPageRoutingTest extends TestCase
 class AutomaticPagesRoutingActor extends BaseUser
 {
  use HasCmsAdminAccess;
+
+ protected $table = 'users';
+
+ public function getForeignKey()
+ {
+   return 'user_id';
+ }
  }
 class RoutingPublicationFixture implements ContentCollectionSourceResolver, ContentPublicationRouteSource, ContentSourceResolver
 {
@@ -303,7 +446,7 @@ class RoutingPublicationFixture implements ContentCollectionSourceResolver, Cont
 
   public function resolve(string $recordKey, ContentSourceContext $context): ?array
   {
-    return ['_locale' => self::$mode === 'wrong_locale' && $context->locale === 'tr' ? 'en' : $context->locale, 'id' => $recordKey, 'slug' => $recordKey, 'title' => $recordKey.' '.$context->locale, 'image' => '/images/'.$recordKey.'.png', 'alt' => 'Second image '.$context->locale];
+    return ['_locale' => self::$mode === 'wrong_locale' && $context->locale === 'tr' ? 'en' : $context->locale, 'id' => $recordKey, 'slug' => $recordKey, 'title' => $recordKey.' '.$context->locale, 'summary' => 'Translated description Only'.$context->locale, 'image' => '/images/'.$recordKey.'.png', 'alt' => 'Second image '.$context->locale];
   }
 
   public function options(ContentSourceContext $context): array
@@ -313,7 +456,12 @@ class RoutingPublicationFixture implements ContentCollectionSourceResolver, Cont
 
   public function publicationPage(?string $cursor, int $limit, ContentSourceContext $context): ContentPublicationPage
   {
-    return new ContentPublicationPage(self::$mode === 'missing' ? [] : [['key' => 'second', 'label' => 'Second book'], ['key' => 'brand-new', 'label' => 'New book']], null, self::$mode === 'missing' ? 0 : 2);
+    $entries = [['key' => 'second', 'label' => 'Second book'], ['key' => 'brand-new', 'label' => 'New book']];
+    $entries = match (self::$mode) {
+      'missing' => [], 'withdraw_second' => [$entries[1]], default => $entries,
+    };
+
+    return new ContentPublicationPage($entries, null, count($entries));
   }
 
   public function publicationKey(string $slug, ContentSourceContext $context): ?string
@@ -322,7 +470,7 @@ class RoutingPublicationFixture implements ContentCollectionSourceResolver, Cont
     throw new \RuntimeException('Upstream failure');
     }
 
-    return self::$mode === 'missing' || $slug === 'unknown' ? null : $slug;
+    return self::$mode === 'missing' || (self::$mode === 'withdraw_second' && $slug === 'second') || $slug === 'unknown' ? null : $slug;
   }
 
   public function publicationRecord(string $key, ContentSourceContext $context): ContentPublicationRecord
