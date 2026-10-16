@@ -66,6 +66,7 @@ class ContentBindingResolver
         ['record' => $recordKey],
         fn () => $resolver->resolve($recordKey, $context),
       );
+      $record = is_array($record) ? ContentSourceContract::record($source, $record, $context) : null;
       $value = is_array($record) ? data_get($record, $sourceField) : null;
 
       return $value !== null && $value !== '' ? $value : ($binding['fallback'] ?? $fallback);

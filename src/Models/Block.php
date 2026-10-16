@@ -1421,7 +1421,8 @@ class Block extends CmsModel
 
   public function renderLocaleCode(): ?string
   {
-    $localeCode = $this->renderPage()?->currentTranslation?->locale?->code
+    $localeCode = $this->getAttribute('requested_locale_code')
+      ?? $this->renderPage()?->currentTranslation?->locale?->code
       ?? $this->getAttribute('render_locale_code')
       ?? $this->getAttribute('resolved_locale_code');
 

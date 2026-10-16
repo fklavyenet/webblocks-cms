@@ -81,7 +81,7 @@ class ContentSourceAuthoring
     $source = $this->sources->find($sourceHandle);
     $context = new ContentSourceContext($block->renderSite(), $block->renderPage(), $block->renderLocaleCode(), true, auth()->user());
 
-    if ($source?->isCollection() !== true || ! $this->runtime->allows($source, $context)) {
+    if (! $this->editor->collectionSelectionIsAllowed($block, $sourceHandle) || ! $this->runtime->allows($source, $context)) {
       throw new ContentSourceAuthoringException('content_collection.source', 'Select an accessible collection returned by the content-sources endpoint.');
     }
 

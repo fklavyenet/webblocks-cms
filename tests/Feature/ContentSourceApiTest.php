@@ -101,10 +101,10 @@ class ContentSourceApiTest extends TestCase
   private function registerSources(): void
   {
     $plugin = PluginDefinition::make('catalog')->contentSources([
-      ContentSourceDefinition::entity('catalog::plugin')->resolver(ApiPluginSource::class)->fields([
+      ContentSourceDefinition::entity('catalog::plugin')->resolver(ApiPluginSource::class)->standard(['en', 'de', 'tr', 'es', 'it', 'fr'], 'Example records', 'Example application', 'name')->fields([
         'name' => 'text', 'url' => 'url',
       ]),
-      ContentSourceDefinition::collection('catalog::featured')->resolver(ApiFeaturedSource::class)->fields([
+      ContentSourceDefinition::collection('catalog::featured')->resolver(ApiFeaturedSource::class)->standard(['en', 'de', 'tr', 'es', 'it', 'fr'], 'Example collection', 'Example application', 'name')->fields([
         'name' => 'text', 'url' => 'url',
       ]),
     ]);
@@ -148,7 +148,7 @@ class ApiPluginSource implements ContentSourceResolver
 {
   public function resolve(string $recordKey, ContentSourceContext $context): ?array
   {
-    return $recordKey === 'seo' ? ['name' => 'SEO Plugin', 'url' => '/plugins/seo', 'secret' => 'hidden'] : null;
+    return $recordKey === 'seo' ? ['_locale' => $context->locale, 'name' => 'SEO Plugin', 'url' => '/plugins/seo', 'secret' => 'hidden'] : null;
   }
 
   public function options(ContentSourceContext $context): array
@@ -161,6 +161,6 @@ class ApiFeaturedSource implements ContentCollectionSourceResolver
 {
   public function resolveCollection(array $settings, ContentSourceContext $context): iterable
   {
-    return [['name' => 'SEO Plugin', 'url' => '/plugins/seo', 'secret' => 'hidden']];
+    return [['_locale' => $context->locale, 'name' => 'SEO Plugin', 'url' => '/plugins/seo', 'secret' => 'hidden']];
   }
 }

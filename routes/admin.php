@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
+use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
@@ -270,6 +271,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       abort(404);
     };
 
+    Route::get('/dynamic-content', [DynamicContentController::class, 'index'])->name('dynamic-content.index');
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

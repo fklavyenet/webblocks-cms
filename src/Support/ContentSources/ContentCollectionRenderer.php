@@ -93,7 +93,7 @@ class ContentCollectionRenderer
         if (! $result instanceof ContentCollectionResult) {
           return $children;
         }
-        $records = collect($result->records)->filter(fn (mixed $record): bool => is_array($record))->values();
+        $records = collect(ContentSourceContract::records($source, $result->records, $context));
         $this->setPagination($container, $pageParameter, $result->currentPage, $result->perPage, $result->total);
 
         return $this->replaceTemplate($children, $template, $records, $container, $configuration);
@@ -105,7 +105,7 @@ class ContentCollectionRenderer
         ['settings' => $settings],
         fn () => collect($resolver->resolveCollection($settings, $context))->filter(fn (mixed $record): bool => is_array($record))->all(),
       );
-      $records = collect($resolved);
+      $records = collect(ContentSourceContract::records($source, $resolved, $context));
 
       $filterField = trim((string) ($configuration['filter_field'] ?? ''));
       $filterValue = trim((string) ($configuration['filter_value'] ?? ''));

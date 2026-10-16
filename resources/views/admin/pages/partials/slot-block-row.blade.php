@@ -8,6 +8,8 @@
     $blockAdminSummary = app(\WebBlocks\Cms\Support\Blocks\BlockAdminSummary::class);
     $rowSummary = $blockAdminSummary->primary($block);
     $childCount = $block->children->count();
+    if ($parentBlock instanceof \WebBlocks\Cms\Models\Block) $block->setRelation('parent', $parentBlock);
+    $dynamicLabels = app(\WebBlocks\Cms\Support\ContentSources\ContentSourceIndicators::class)->labels($block);
     $sharedSlot = $sharedSlot ?? null;
     $inlineBlocksLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $inlineBlocksText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
@@ -35,7 +37,7 @@
         @endif
         data-slot-depth="{{ $depth }}"
         data-wb-slot-depth="{{ $depth }}"
-        data-wb-slot-block-search-text="{{ \Illuminate\Support\Str::lower(implode(' ', array_filter([(string) $block->id, $block->typeName(), $rowSummary]))) }}"
+        data-wb-slot-block-search-text="{{ \Illuminate\Support\Str::lower(implode(' ', array_filter([(string) $block->id, $block->typeName(), $rowSummary, ...$dynamicLabels]))) }}"
     >
         <td class="wb-admin-slot-block-id-cell wb-text-sm wb-text-muted">{{ $block->id }}</td>
         <td class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell">
@@ -66,6 +68,7 @@
             </div>
         </td>
         <td class="wb-admin-slot-block-summary-cell">
+            @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block, 'indicatorLabels' => $dynamicLabels])
             @if ($rowSummary !== null)
                 <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong class="wb-cms-block-row-title">{{ $rowSummary }}</strong></a>
             @endif

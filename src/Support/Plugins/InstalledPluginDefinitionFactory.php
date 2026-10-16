@@ -460,6 +460,14 @@ class InstalledPluginDefinitionFactory
         $source->accessPolicy($item['access_policy']);
       }
 
+      if (isset($item['standard']) && is_array($item['standard'])) {
+        $standard = $item['standard'];
+        if (($standard['version'] ?? null) !== '1.0') {
+          throw new PluginException('Unsupported content source standard.');
+        }
+        $source->standard($standard['locales'] ?? [], $standard['description'] ?? '', $standard['origin'] ?? '', $standard['record_key'] ?? '');
+      }
+
       $sources[] = $source
         ->label(is_string($item['label'] ?? null) ? $item['label'] : $handle)
         ->resolver($resolver)

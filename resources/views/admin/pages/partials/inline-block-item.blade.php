@@ -19,6 +19,7 @@
         </div>
     </div>
 
+    @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block])
     <div class="wb-card-body" data-wb-inline-body>
         @include('webblocks-cms::admin.pages.partials.inline-block-fields', [
             'block' => $block,

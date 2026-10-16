@@ -61,6 +61,7 @@
                 </div>
             </div>
 
+    @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $item['block']])
             {{-- The outline recurses, so each level registers its own confirmation. --}}
             @push('overlays')
                 @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [

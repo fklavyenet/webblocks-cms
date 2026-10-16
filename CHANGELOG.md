@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.101.0
+
+- Add provider-owned multilingual Content Source standard 1.0 with every CMS language, stable identities and actual locale/schema validation. Require the standard for new connections while preserving existing legacy bindings.
+- Add the site-scoped Dynamic Content inventory for sources, loops, field connections and configuration issues, including Shared Slots and links to their existing editors.
+- Identify loop owners, repeated templates and field connections in block outlines without fetching remote records. Preserve the requested locale when resolving dynamic content through default-language slot owners.
+
 ## 1.100.0
 
 

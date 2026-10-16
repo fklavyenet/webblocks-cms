@@ -21,10 +21,12 @@ use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class BlockRequest extends FormRequest
@@ -261,8 +263,21 @@ class BlockRequest extends FormRequest
       'application_show_loading_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
       'application_show_failure_state' => [$isApplication ? 'nullable' : 'prohibited', 'boolean'],
       'content_binding_selection' => ['nullable', 'array'],
-      'content_binding_selection.*' => ['nullable', 'string', 'max:500'],
-      'content_collection_source' => [$supportsContentCollection ? 'nullable' : 'prohibited', 'string', 'max:160'],
+      'content_binding_selection.*' => ['bail', 'nullable', 'string', 'max:500', function ($attribute, $value, $fail) use ($sourceEditor, $block): void {
+        if ($value === null || $value === '') {
+        return;
+        }
+        $source = app(ContentSourceRegistry::class)->find(explode('|', $value, 2)[0]);
+        $target = substr($attribute, strlen('content_binding_selection.'));
+        if ($source && $source->contract() === null && (! $block || $sourceEditor->selectedValue($block, $target) !== $value)) {
+          $fail(app(CmsTranslator::class)->get('dynamic-content.standard_required'));
+        }
+      }],
+      'content_collection_source' => ['bail', $supportsContentCollection ? 'nullable' : 'prohibited', 'string', 'max:160', function ($attribute, $value, $fail) use ($sourceEditor, $block): void {
+        if ($value !== null && $value !== '' && ! $sourceEditor->collectionSelectionIsAllowed($block ?? new Block, $value)) {
+          $fail(app(CmsTranslator::class)->get('dynamic-content.standard_required'));
+        }
+      }],
       'content_collection_template_id' => [$supportsContentCollection ? 'nullable' : 'prohibited', 'integer', 'min:1'],
       'content_collection_limit' => [$supportsContentCollection ? 'nullable' : 'prohibited', 'integer', 'min:1', 'max:50'],
       'content_collection_filter_field' => [$supportsContentCollection ? 'nullable' : 'prohibited', 'string', 'max:120', Rule::in(['', ...$collectionFieldOptions])],

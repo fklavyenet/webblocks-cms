@@ -1374,3 +1374,47 @@ on the retired license-promotion helper. SQLite backups serialize multiline scal
 text as one SQL expression, preserving update logs with quotes and semicolons.
 These changes do not change block authoring, full revision snapshots, API token
 capabilities or the maintenance exemption for the authorized status route.
+
+
+## Dynamic Content source standard and inventory — CMS 1.101.0
+
+The native admin entry is `/webadmin/dynamic-content`. Sources, loops, field
+connections and issues are read-only projections of existing relational block
+settings, including Shared Slot source pages. Site access is enforced before
+projection. Opening the inventory or block outline does not fetch provider
+records. Links open the existing page-slot or Shared Slot block editor; the
+inventory has no independent write state. Counts describe stored block
+configuration, not live provider record totals or generated cards.
+
+Source standard 1.0 is declared with
+`ContentSourceDefinition::standard($locales, $description, $origin, $recordKey)`.
+The provider must support every `AdminLocaleResolver::SUPPORTED_LOCALES` code:
+`en`, `de`, `tr`, `es`, `it`, `fr`. Translations belong to the provider. CMS does
+not create or maintain record translations. The immutable descriptor is exposed
+as `standard` in Internal Content API source discovery, with `capabilities`
+reporting collection query execution in CMS or provider code, together with
+`standard_status` and `required_locales`. Installed plugin manifests may declare
+these values under each `content_sources[].standard` with `version: "1.0"`.
+
+Every standard-1.0 record must return `_locale` exactly matching the requested
+render/preview locale, a nonempty stable string record key, and each declared
+field (explicit null is allowed). Text, rich-text and URL values are strings;
+CMS media references are positive integer IDs. URLs must be internal paths,
+fragments, or HTTP(S) URLs, never protocol-relative or executable schemes.
+A collection must not return duplicate record keys. Schema/language errors use
+existing resolver-error handling; no silent language substitution is performed
+by this contract. Discovery labels denote a provider declaration, not a live
+availability or translation-quality certification. Undeclared values remain
+excluded from API previews.
+
+Unversioned providers remain readable as legacy and are shown as requiring a
+standard update. New connections require standard 1.0; an existing legacy
+selection may be saved unchanged, but cannot be assigned to a new block. Disabled and missing sources retain stored usage references.
+The compatibility path does not certify legacy language coverage or rewrite
+records, media, translations or bindings. No automatic record-detail routes or
+new page-publication lifecycle is introduced.
+
+Block trees expose loop owners, repeated template IDs, current-item and fixed
+record field connections, and collapsed ancestors containing dynamic content.
+The requested block translation locale is authoritative for source resolution,
+including when editorial fallback or a slot owner uses the default language.

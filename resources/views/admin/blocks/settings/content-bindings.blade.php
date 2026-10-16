@@ -34,7 +34,7 @@
                             <option value="{{ $selected }}" selected disabled>{{ $blockFormText('content_source_unavailable_selection') }}</option>
                         @endif
                         @foreach ($choices as $choice)
-                            <option value="{{ $choice['value'] }}" @selected($selected === $choice['value'])>{{ $choice['label'] }}</option>
+                            <option value="{{ $choice['value'] }}" @selected($selected === $choice['value']) @disabled(! $sourceEditor->bindingStandardIsAllowed($block, $target, $choice['value']))>{{ $choice['label'] }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -70,9 +70,13 @@
                         <option value="{{ $selectedCollection }}" selected disabled>{{ $blockFormText('content_source_unavailable_selection') }}</option>
                     @endif
                     @foreach ($collectionChoices as $handle => $label)
-                        <option value="{{ $handle }}" @selected($selectedCollection === $handle)>{{ $label }}</option>
+                        <option value="{{ $handle }}" @selected($selectedCollection === $handle) @disabled(! $sourceEditor->collectionSelectionIsAllowed($block, $handle))>{{ $label }}</option>
                     @endforeach
                 </select>
+                @if ($selectedCollection !== '')
+                    <a href="{{ route('admin.dynamic-content.index', ['source' => $selectedCollection, 'site' => $block->page?->site_id]) }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-content.source_details', app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale()) }}</a>
+                @endif
+                <p class="wb-text-sm wb-text-muted">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get(app(\WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry::class)->find($selectedCollection)?->contract() ? 'dynamic-content.source_translation_help' : 'dynamic-content.standard_required', app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale()) }}</p>
             </div>
 
             <div class="wb-grid wb-grid-2">

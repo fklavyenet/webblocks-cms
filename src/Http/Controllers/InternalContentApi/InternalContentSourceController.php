@@ -9,6 +9,7 @@ use Throwable;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionQuery;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceContext;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceContract;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
@@ -77,6 +78,7 @@ class InternalContentSourceController extends Controller
         $resolved = $resolver instanceof QueryableContentCollectionSourceResolver
           ? $resolver->queryCollection($query, $settings, $context)->records
           : $resolver->resolveCollection($settings, $context);
+        $resolved = ContentSourceContract::records($definition, $resolved, $context);
         $records = collect($resolved)->filter(fn (mixed $record): bool => is_array($record))->take($limit)
           ->map(fn (array $record): array => $this->record($definition, $record))->values()->all();
 
@@ -91,6 +93,7 @@ class InternalContentSourceController extends Controller
         }
 
         $record = $resolver->resolve($recordKey, $context);
+        $record = is_array($record) ? ContentSourceContract::record($definition, $record, $context) : null;
 
         return response()->json(['ok' => true, 'source' => $source, 'record_key' => $recordKey, 'record' => is_array($record) ? $this->record($definition, $record) : null, 'warnings' => [], 'errors' => []]);
       }
@@ -125,6 +128,10 @@ class InternalContentSourceController extends Controller
       'plugin' => $source->pluginHandle(),
       'label' => $source->labelText(),
       'kind' => $source->isCollection() ? 'collection' : 'entity',
+      'standard' => $source->contract(),
+      'capabilities' => $source->capabilities(),
+      'standard_status' => $source->contract() ? 'declared' : 'legacy',
+      'required_locales' => ContentSourceContract::languages(),
       'fields' => $source->fieldDefinitions(),
       'records' => $options,
       'compatible_binding_targets' => $source->isCollection() ? [] : $targets,

@@ -117,6 +117,7 @@
                         <strong>{{ $blockFormText('settings_for', ['name' => $selectedBlockType?->name ?? $block->typeName()]) }}</strong>
                     </div>
                     <div class="wb-card-body">
+                        @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block])
                         @include('webblocks-cms::admin.blocks.settings.content-bindings', [
                             'block' => $block,
                             'selectedBlockType' => $selectedBlockType,

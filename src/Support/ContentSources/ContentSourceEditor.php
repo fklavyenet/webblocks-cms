@@ -153,6 +153,11 @@ class ContentSourceEditor
       return false;
     }
 
+    $source = $this->sources->find(explode('|', $selection, 2)[0]);
+    if ($source && $source->contract() === null && $this->selectedValue($block, $target) !== $selection) {
+      return false;
+    }
+
     return collect($this->choices($block, $acceptedTypes))->contains(
       fn (array $choice): bool => hash_equals($choice['value'], $selection)
     );
@@ -171,6 +176,20 @@ class ContentSourceEditor
       (string) ($binding['record'] ?? ''),
       (string) ($binding['field'] ?? ''),
     ]);
+  }
+
+  public function bindingStandardIsAllowed(Block $block, string $target, string $selection): bool
+  {
+    $source = $this->sources->find(explode('|', $selection, 2)[0]);
+
+    return $source !== null && ($source->contract() !== null || $this->selectedValue($block, $target) === $selection);
+  }
+
+  public function collectionSelectionIsAllowed(Block $block, string $source): bool
+  {
+    $definition = $this->sources->find($source);
+
+    return $definition?->isCollection() === true && ($definition->contract() !== null || $block->setting('content_collection.source') === $source);
   }
 
   /** @return array<string, string> */
@@ -243,6 +262,8 @@ class ContentSourceEditor
           perPage: $previewLimit,
         ), [], $context)->records)
         : collect($resolver->resolveCollection([], $context));
+
+      $records = collect(ContentSourceContract::records($source, $records, $context));
 
       return $records
         ->filter(fn (mixed $record): bool => is_array($record))
