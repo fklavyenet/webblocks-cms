@@ -257,7 +257,7 @@ class ContentSourceBindingTest extends TestCase
     $this->assertCount(1, $children);
     $this->assertSame('WebBlocks Forms', $children[0]->boundPublicValue('title'));
     $this->assertSame(2, $stack->getAttribute('content_source_pagination')['current_page']);
-    $this->assertCount(2, $preview);
+    $this->assertCount(1, $preview);
   }
 
   #[Test]
@@ -324,8 +324,10 @@ class ContentSourceBindingTest extends TestCase
 
     $preview = app(ContentSourceEditor::class)->collectionPreview($grid, 'events::upcoming');
     $this->assertCount(1, $preview);
-    $this->assertSame(1, QueryableEventsSource::$lastQuery?->page);
-    $this->assertSame(3, QueryableEventsSource::$lastQuery?->limit);
+    $this->assertSame(3, QueryableEventsSource::$lastQuery?->page);
+    $this->assertSame(50, QueryableEventsSource::$lastQuery?->limit);
+    $this->assertSame('category', QueryableEventsSource::$lastQuery?->filterField);
+    $this->assertSame('starts_at', QueryableEventsSource::$lastQuery?->sortField);
   }
 
   #[Test]

@@ -8,6 +8,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
+use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentAuthoringController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
@@ -273,6 +274,11 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     };
 
     Route::get('/dynamic-content', [DynamicContentController::class, 'index'])->name('dynamic-content.index');
+    Route::get('/dynamic-content/use', [DynamicContentAuthoringController::class, 'edit'])->name('dynamic-content.author');
+    Route::post('/dynamic-content/use', [DynamicContentAuthoringController::class, 'save'])->name('dynamic-content.save');
+    Route::post('/dynamic-content/use/stage', [DynamicContentAuthoringController::class, 'stage'])->name('dynamic-content.stage');
+    Route::post('/dynamic-content/use/starter', [DynamicContentAuthoringController::class, 'starter'])->name('dynamic-content.starter');
+    Route::post('/dynamic-content/use/preview', [DynamicContentAuthoringController::class, 'preview'])->name('dynamic-content.preview');
     Route::get('/dynamic-content/automatic-pages', [AutomaticPageController::class, 'index'])->name('automatic-pages.index');
     Route::get('/dynamic-content/automatic-pages/create', [AutomaticPageController::class, 'create'])->name('automatic-pages.create');
     Route::post('/dynamic-content/automatic-pages', [AutomaticPageController::class, 'store'])->name('automatic-pages.store');

@@ -26,3 +26,9 @@
 
 @include('webblocks-cms::admin.blocks.types.partials.rich-text-editor-assets')
 @include('webblocks-cms::admin.blocks.partials.icon-picker-modal', ['context' => 'content'])
+
+@once('webblocks-dynamic-authoring-script')
+    @push('admin-scripts')
+        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/dynamic-content-authoring.js'])
+    @endpush
+@endonce

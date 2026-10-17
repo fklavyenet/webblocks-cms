@@ -19,7 +19,7 @@
     $editorRouteName = $editorRouteName ?? 'admin.pages.slots.blocks';
     $editorRouteParameters = $editorRouteParameters ?? [$page, $slot];
     $closeUrl = route($editorRouteName, $editorRouteParameters + ['picker' => $isCreateMode ? 1 : null, 'parent_id' => $isCreateMode ? (request()->integer('parent_id') ?: null) : null, 'locale' => $activeLocale->is_default ? null : $activeLocale->code]);
-    $activeTab = old('_slot_block_tab', 'block-fields');
+    $activeTab = old('_slot_block_tab', in_array(request('block_tab'), ['dynamic-content', 'settings'], true) ? request('block_tab') : 'block-fields');
 @endphp
 
 @if ($showModal && $slotModalBlock && $slotModalSelectedBlockType)

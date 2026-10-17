@@ -137,7 +137,7 @@
         var hiddenInput = container.querySelector('[data-wb-slot-block-tab-input]');
 
         if (hiddenInput && event.detail && event.detail.tabId) {
-            hiddenInput.value = event.detail.tabId === 'slot-block-info-panel' ? 'block-info' : 'block-fields';
+            hiddenInput.value = ({'slot-block-info-panel': 'block-info', 'slot-block-fields-panel': 'block-fields', 'slot-block-settings-panel': 'settings', 'slot-block-dynamic-content-panel': 'dynamic-content'})[event.detail.tabId] || 'block-fields';
         }
     });
 }());

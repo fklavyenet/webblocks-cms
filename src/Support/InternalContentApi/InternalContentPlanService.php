@@ -2,11 +2,13 @@
 
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
+use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockButtonTranslation;
 use WebBlocks\Cms\Models\BlockContactFormTranslation;
@@ -704,6 +706,28 @@ class InternalContentPlanService
     return $block;
   }
 
+  public function prepareAuthoringDraft(Page $page, User $actor): Page
+  {
+    return DB::transaction(function () use ($page, $actor): Page {
+      $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+      abort_unless($page->status === Page::STATUS_PUBLISHED, 409);
+      $draft = $this->findReusableStagedPage($page);
+      if ($draft) {
+        if ($draft->setting('staged_update.source_updated_at') !== $page->updated_at?->toIso8601String()) {
+          throw ValidationException::withMessages(['page_id' => __('webblocks-cms::dynamic-authoring.stale')]);
+        }
+
+        return $draft;
+      }
+      $slots = $page->slots()->with('slotType')->get()->filter(fn ($slot) => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_PAGE)->map(fn ($slot) => $slot->slotType->slug)->values()->all();
+      $draft = $this->createStagedPage($page, ['staged_update' => ['managed_slots' => $slots]]);
+      $draft->forceFill(['created_by_user_id' => $actor->id, 'updated_by_user_id' => $actor->id])->save();
+      $this->pageRevisionManager->capture($draft, $actor, event: 'dynamic_content_draft_prepared');
+
+      return $draft;
+    });
+  }
+
   private function createStagedPage(Page $sourcePage, array $plan): Page
   {
     $sourcePage = Page::query()
@@ -919,13 +943,15 @@ class InternalContentPlanService
     }
 
     foreach ($blocks as $block) {
-      if (! $block->parent_id || ! isset($blockMap[$block->id], $blockMap[$block->parent_id])) {
-        continue;
+      $copy = Block::query()->findOrFail($blockMap[$block->id]);
+      $copy->parent_id = $blockMap[$block->parent_id] ?? null;
+      $settings = $copy->decodedSettings();
+      $templateId = (int) data_get($settings, 'content_collection.template_block_id');
+      if ($templateId && isset($blockMap[$templateId])) {
+        $settings['content_collection']['template_block_id'] = $blockMap[$templateId];
+        $copy->settings = $settings;
       }
-
-      Block::query()->whereKey($blockMap[$block->id])->update([
-        'parent_id' => $blockMap[$block->parent_id],
-      ]);
+      $copy->save();
     }
   }
 

@@ -6,7 +6,7 @@
 @if ($indicatorLabels !== [])
     <div class="wb-stack wb-stack-1 wb-text-sm" aria-label="{{ $indicatorTitle }}">
         @foreach ($indicatorLabels as $indicatorLabel)
-            <a href="{{ route('admin.dynamic-content.index', ['site' => $indicatorBlock->page?->site_id, 'tab' => 'bindings', 'search' => '#'.$indicatorBlock->id]) }}">{{ $indicatorLabel }}</a>
+            <a href="{{ app(\WebBlocks\Cms\Support\ContentSources\ContentSourceIndicators::class)->authoringUrl($indicatorBlock) }}">{{ $indicatorLabel }}</a>
         @endforeach
     </div>
 @endif

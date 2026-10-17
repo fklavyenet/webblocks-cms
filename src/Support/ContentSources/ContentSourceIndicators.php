@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\ContentSources;
 
+use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
@@ -42,6 +43,29 @@ final class ContentSourceIndicators
     }
 
     return $items;
+  }
+
+  public function authoringUrl(Block $block): string
+  {
+    if (! Route::has('admin.dynamic-content.author') || $block->page?->isSharedSlotSourcePage()) {
+      return route('admin.dynamic-content.index', ['site' => $block->page?->site_id, 'tab' => $block->setting('content_collection.source') ? 'loops' : 'bindings', 'search' => '#'.$block->id]);
+    }
+    $owner = app(ContentSourceEditor::class)->loopOwner($block);
+    $source = $block->setting('content_collection.source') ?: $owner?->setting('content_collection.source');
+    if (! $source) {
+      foreach ((array) $block->setting('content_bindings', []) as $binding) {
+        $source = $binding['source'] ?? null;
+        if ($source) {
+        break;
+        }
+      }
+    }
+    if (! $source || ! $this->sources->find($source)?->contract()) {
+      return route('admin.dynamic-content.index', ['site' => $block->page?->site_id, 'tab' => 'bindings', 'search' => '#'.$block->id]);
+    }
+    $target = $block->setting('content_collection.source') ? $block : ($owner ?? $block);
+
+    return route('admin.dynamic-content.author', ['source' => $source, 'site' => $block->page?->site_id, 'page_id' => $block->page_id, 'block_id' => $target->id]).'#mapping-'.$block->id;
   }
 
   private function hasDynamicDescendant(Block $block, int $depth = 0, array &$seen = []): bool

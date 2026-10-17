@@ -14,6 +14,6 @@ final class DynamicContentRequest extends FormRequest
 
   public function rules(): array
   {
-    return ['site' => ['nullable', 'integer', 'min:1'], 'source' => ['nullable', 'string', 'max:160'], 'search' => ['nullable', 'string', 'max:160'], 'tab' => ['nullable', Rule::in(['sources', 'loops', 'bindings', 'issues'])], 'page' => ['nullable', 'integer', 'min:1']];
+    return ['site' => ['nullable', 'integer', 'min:1'], 'source' => ['nullable', 'string', 'max:160'], 'search' => ['nullable', 'string', 'max:160'], 'tab' => ['nullable', Rule::in(['sources', 'loops', 'bindings', 'issues'])], 'state' => ['nullable', Rule::in(['draft', 'published', 'in_review', 'scheduled', 'archived'])], 'page' => ['nullable', 'integer', 'min:1']];
   }
 }

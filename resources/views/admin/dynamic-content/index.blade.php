@@ -1,7 +1,7 @@
 @php
     $dcLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $dc = fn ($key, $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-content.'.$key, $dcLocale, $replace);
-    $link = fn ($query = []) => route('admin.dynamic-content.index', array_filter(array_merge(['site' => $siteId, 'source' => $handle, 'search' => $search], $query), fn ($value) => $value !== null && $value !== ''));
+    $link = fn ($query = []) => route('admin.dynamic-content.index', array_filter(array_merge(['site' => $siteId, 'source' => $handle, 'search' => $search, 'state' => $state], $query), fn ($value) => $value !== null && $value !== ''));
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $dc('title'), 'heading' => $dc('title')])
 @section('content')
@@ -19,6 +19,7 @@
     <div class="wb-filter-bar-fields">
         <div class="wb-field"><label for="dc-site">{{ $dc('site') }}</label><select id="dc-site" name="site" class="wb-select"><option value="">{{ $dc('all_sites') }}</option>@foreach ($sites as $site)<option value="{{ $site->id }}" @selected($siteId === $site->id)>{{ $site->name }}</option>@endforeach</select></div>
         <div class="wb-field wb-filter-bar-search"><label for="dc-search">{{ $dc('search') }}</label><input id="dc-search" name="search" class="wb-input" value="{{ $search }}"></div>
+        <div class="wb-field"><label for="dc-state">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-authoring.state_filter', $dcLocale) }}</label><select class="wb-select" id="dc-state" name="state"><option value="">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-authoring.all_states', $dcLocale) }}</option>@foreach (['draft', 'published', 'in_review', 'scheduled', 'archived'] as $workflow)<option value="{{ $workflow }}" @selected($state === $workflow)>{{ $dc('workflow_'.$workflow) }}</option>@endforeach</select></div>
         <div class="wb-filter-bar-actions"><button class="wb-btn wb-btn-primary" type="submit">{{ $dc('filter') }}</button>@if ($siteId || $search !== '' || $handle !== '')<a class="wb-btn wb-btn-secondary" href="{{ route('admin.dynamic-content.index', ['tab' => $tab]) }}">{{ $dc('clear') }}</a>@endif</div>
     </div>
 </form>
@@ -38,6 +39,7 @@
         <div class="wb-table-wrap"><table class="wb-table"><thead><tr><th>{{ $dc('field') }}</th><th>{{ $dc('key') }}</th><th>{{ $dc('type') }}</th></tr></thead><tbody>@forelse ($selected['fields'] as $key => $field)<tr><td>{{ $field['label'] }}</td><td><code>{{ $key }}</code></td><td>{{ $dc('type_'.$field['type']) }}</td></tr>@empty<tr><td colspan="3">{{ $dc('no_fields') }}</td></tr>@endforelse</tbody></table></div>
         <p class="wb-text-sm wb-text-muted">{{ $dc('passive_inventory') }}</p>
         @if ($selected['publication'] ?? null)<a class="wb-btn wb-btn-secondary" href="{{ route('admin.automatic-pages.create', ['site' => $siteId, 'source' => $selected['handle']]) }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('automatic-pages.create', $dcLocale) }}</a>@endif
+        @if ($selected['state'] === 'declared')<a class="wb-btn wb-btn-primary" href="{{ route('admin.dynamic-content.author', ['source' => $selected['handle'], 'site' => $siteId]) }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-authoring.use') }}</a>@endif
         <a class="wb-btn wb-btn-secondary" href="{{ $link(['tab' => 'bindings']) }}">{{ $dc('used_here') }}</a>
     </div>
 </section>

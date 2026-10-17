@@ -11,7 +11,7 @@
     $submitLabel = $submitLabel ?? $blockFormText('save');
     $modeLabel = $modeLabel ?? ($block->exists ? $blockFormText('edit') : $blockFormText('create'));
     $actionsContainerClass = $actionsContainerClass ?? null;
-    $activeTab = $activeTab ?? old('_slot_block_tab', 'block-fields');
+    $activeTab = $activeTab ?? old('_slot_block_tab', in_array(request('block_tab'), ['dynamic-content', 'settings'], true) ? request('block_tab') : 'block-fields');
     $assetPickerAssets = $assetPickerAssets ?? collect();
     $assetPickerFolders = $assetPickerFolders ?? collect();
     $columnItemBlockType = $columnItemBlockType ?? null;
@@ -34,6 +34,7 @@
         <div class="wb-tabs-nav" role="tablist" aria-label="{{ $blockFormText('tabs_label') }}">
             <button type="button" class="wb-tabs-btn {{ $activeTab === 'block-info' ? 'is-active' : '' }}" data-wb-tab="slot-block-info-panel" aria-selected="{{ $activeTab === 'block-info' ? 'true' : 'false' }}" @if ($activeTab !== 'block-info') tabindex="-1" @endif>{{ $blockFormText('block_info') }}</button>
             <button type="button" class="wb-tabs-btn {{ $activeTab === 'block-fields' ? 'is-active' : '' }}" data-wb-tab="slot-block-fields-panel" aria-selected="{{ $activeTab === 'block-fields' ? 'true' : 'false' }}" @if ($activeTab !== 'block-fields') tabindex="-1" @endif>{{ $blockFormText('block_fields') }}</button>
+            @if ($hasContentSourceSettings)<button class="wb-tabs-btn {{ $activeTab === 'dynamic-content' ? 'is-active' : '' }}" type="button" role="tab" data-wb-tab="slot-block-dynamic-content-panel" aria-controls="slot-block-dynamic-content-panel" aria-selected="{{ $activeTab === 'dynamic-content' ? 'true' : 'false' }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-content.title', $blockFormLocale) }}</button>@endif
             <button type="button" class="wb-tabs-btn {{ $activeTab === 'settings' ? 'is-active' : '' }}" data-wb-tab="slot-block-settings-panel" aria-selected="{{ $activeTab === 'settings' ? 'true' : 'false' }}" @if ($activeTab !== 'settings') tabindex="-1" @endif>{{ $blockFormText('settings') }}</button>
         </div>
 
@@ -76,6 +77,7 @@
             </div>
 
             <div class="wb-tabs-panel {{ $activeTab === 'block-fields' ? 'is-active' : '' }}" id="slot-block-fields-panel">
+                @if ($block->setting('content_bindings'))<div class="wb-alert wb-alert-info">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-authoring.fallback_help', $blockFormLocale) }} @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block])</div>@endif
                 @if (($selectedBlockType?->slug ?? $block->typeSlug()) === 'gallery')
                     @include($block->adminFormView(), [
                         'block' => $block,
@@ -111,17 +113,18 @@
                 @endif
             </div>
 
+            @if ($hasContentSourceSettings)
+            <div class="wb-tabs-panel {{ $activeTab === 'dynamic-content' ? 'is-active' : '' }}" id="slot-block-dynamic-content-panel">
+                @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block])
+                @include('webblocks-cms::admin.blocks.settings.content-bindings', ['block' => $block, 'selectedBlockType' => $selectedBlockType])
+            </div>
+            @endif
             <div class="wb-tabs-panel {{ $activeTab === 'settings' ? 'is-active' : '' }}" id="slot-block-settings-panel">
                 <div class="wb-card wb-card-accent">
                     <div class="wb-card-header">
                         <strong>{{ $blockFormText('settings_for', ['name' => $selectedBlockType?->name ?? $block->typeName()]) }}</strong>
                     </div>
                     <div class="wb-card-body">
-                        @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block])
-                        @include('webblocks-cms::admin.blocks.settings.content-bindings', [
-                            'block' => $block,
-                            'selectedBlockType' => $selectedBlockType,
-                        ])
 
                         @includeIf('webblocks-cms::admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug()), [
                             'block' => $block,

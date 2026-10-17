@@ -20,12 +20,15 @@ use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
+use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -403,6 +406,40 @@ class BlockRequest extends FormRequest
   public function after(): array
   {
     return [function (Validator $validator): void {
+      if (! $validator->errors()->any()) {
+        $bindingBlock = $this->route('block') instanceof Block ? clone $this->route('block') : new Block;
+        $bindingBlock->block_type_id = $this->integer('block_type_id');
+        $bindingBlock->page_id = $this->integer('page_id');
+        $bindingBlock->parent_id = $this->input('parent_id', $bindingBlock->parent_id);
+        $bindingBlock->unsetRelation('parent');
+        $bindingBlock->unsetRelation('page');
+        $bindingBlock->unsetRelation('blockType');
+        $bindings = (array) $bindingBlock->setting('content_bindings', []);
+        foreach ((array) $this->input('content_binding_selection', []) as $target => $selection) {
+          if ($selection === null || $selection === '') {
+            unset($bindings[$target]);
+          } else {
+            $parts = explode('|', (string) $selection);
+            $bindings[$target] = ['source' => $parts[0] ?? '', 'record' => $parts[1] ?? '', 'field' => $parts[2] ?? ''];
+          }
+        }
+        $collection = $this->filled('content_collection_source') ? [
+          'source' => $this->input('content_collection_source'),
+          'template_block_id' => $this->integer('content_collection_template_id'),
+          'filter_field' => $this->input('content_collection_filter_field', ''),
+          'sort_field' => $this->input('content_collection_sort_field', ''),
+        ] : null;
+        try {
+          $validatedSettings = app(ContentSourceAuthoring::class)->merge(
+            $bindingBlock, $bindingBlock->decodedSettings(), $bindings, $this->has('content_binding_selection'), $collection, $this->has('content_collection_source'),
+          );
+          $bindingBlock->settings = $validatedSettings;
+          app(ContentSourceAuthoring::class)->assertPlacement($bindingBlock);
+        } catch (ContentSourceAuthoringException $exception) {
+          $path = str_replace(['content_collection.template_block_id', 'content_collection.', 'content_bindings.'], ['content_collection_template_id', 'content_collection_', 'content_binding_selection.'], $exception->path);
+          $validator->errors()->add($path, app(CmsTranslator::class)->get('dynamic-authoring.'.$exception->reason, app(AdminLocaleResolver::class)->locale()));
+        }
+      }
       $page = Page::query()->with('site.locales')->find($this->integer('page_id'));
       $localeCode = Locale::normalizeCode($this->input('locale'));
 
@@ -2519,7 +2556,7 @@ class BlockRequest extends FormRequest
       if (count($parts) === 3
         && $parts[0] !== '' && $parts[1] !== '' && $parts[2] !== ''
         && $sourceEditor->selectionIsAllowed($bindingBlock, $target, (string) $selection)) {
-        $bindings[$target] = ['source' => $parts[0], 'record' => $parts[1], 'field' => $parts[2]];
+        $bindings[$target] = array_replace($bindings[$target] ?? [], ['source' => $parts[0], 'record' => $parts[1], 'field' => $parts[2]]);
       } else {
         unset($bindings[$target]);
       }
@@ -2549,7 +2586,7 @@ class BlockRequest extends FormRequest
       if ($sourceHandle !== '' && $validSource && $validTemplate
         && $sourceEditor->collectionFieldIsAllowed($sourceHandle, $filterField)
         && $sourceEditor->collectionFieldIsAllowed($sourceHandle, $sortField)) {
-        $settings['content_collection'] = [
+        $settings['content_collection'] = array_replace((array) $existingBlock?->setting('content_collection', []), [
           'source' => $sourceHandle,
           'template_block_id' => $templateId,
           'limit' => min(max((int) ($data['content_collection_limit'] ?? 12), 1), 50),
@@ -2561,7 +2598,7 @@ class BlockRequest extends FormRequest
           'per_page' => min(max((int) ($data['content_collection_per_page'] ?? 12), 1), 50),
           'empty_behavior' => ($data['content_collection_empty_behavior'] ?? 'hide_template') === 'keep_template' ? 'keep_template' : 'hide_template',
           'error_behavior' => ($data['content_collection_error_behavior'] ?? 'keep_template') === 'hide_template' ? 'hide_template' : 'keep_template',
-        ];
+        ]);
       } else {
         unset($settings['content_collection']);
       }

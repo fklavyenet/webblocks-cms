@@ -24,6 +24,7 @@ class ContentSourceAuthoring
     }
 
     if ($hasCollection) {
+      $this->assertLoopChange($block, is_array($collection) ? $collection : []);
       if ($collection === null || $collection === []) {
         unset($settings['content_collection']);
       } else {
@@ -32,6 +33,76 @@ class ContentSourceAuthoring
     }
 
     return $settings;
+  }
+
+  public function assertPlacement(Block $block): void
+  {
+    if (! $block->exists || ((int) $block->getOriginal('parent_id') === (int) $block->parent_id
+      && (int) $block->getOriginal('page_id') === (int) $block->page_id
+      && (int) $block->getOriginal('block_type_id') === (int) $block->block_type_id)) {
+      return;
+    }
+    $previousParent = Block::query()->find($block->getOriginal('parent_id'));
+    if ($previousParent && (int) $previousParent->setting('content_collection.template_block_id') === (int) $block->id
+      && ((int) $previousParent->id !== (int) $block->parent_id || (int) $previousParent->page_id !== (int) $block->page_id)) {
+      throw new ContentSourceAuthoringException('parent_id', 'Reassign the repeated template before moving this block.', 'orphaned');
+    }
+    $walk = function (Block $node, int $depth = 0) use (&$walk): void {
+      if ($depth > 32) {
+        throw new ContentSourceAuthoringException('parent_id', 'Invalid block tree.');
+      }
+      foreach ((array) $node->setting('content_bindings', []) as $binding) {
+        if (($binding['record'] ?? '') === '@item' && $this->editor->collectionSourceFor($node)?->handle() !== ($binding['source'] ?? '')) {
+          throw new ContentSourceAuthoringException('parent_id', 'Moving this block would orphan current-record mappings.', 'orphaned');
+        }
+      }
+      foreach ($node->children as $child) {
+        $child->setRelation('parent', $node);
+        $walk($child, $depth + 1);
+      }
+    };
+    $walk($block);
+  }
+
+  public function assertLoopChange(Block $block, array $configuration): void
+  {
+    if (! $block->exists || ($block->setting('content_collection.source', '') === ($configuration['source'] ?? '')
+      && (int) $block->setting('content_collection.template_block_id') === (int) ($configuration['template_block_id'] ?? 0))) {
+      return;
+    }
+    $seen = [];
+    $tree = function (Block $parent, int $depth = 0) use (&$tree, &$seen): void {
+      if ($depth > 32 || isset($seen[$parent->id])) {
+        throw new ContentSourceAuthoringException('content_collection', 'Invalid block tree.');
+      }
+      $seen[$parent->id] = true;
+      $parent->loadMissing('children');
+      foreach ($parent->children as $child) {
+        $child->setRelation('parent', $parent);
+        $tree($child, $depth + 1);
+      }
+    };
+    $tree($block);
+    $original = $block->decodedSettings();
+    $settings = $original;
+    $settings['content_collection'] = $configuration;
+    $block->settings = $settings;
+    try {
+      $check = function (Block $parent) use (&$check): void {
+        foreach ($parent->children as $child) {
+          foreach ((array) $child->setting('content_bindings', []) as $binding) {
+            if (($binding['record'] ?? '') === '@item'
+              && $this->editor->collectionSourceFor($child)?->handle() !== ($binding['source'] ?? '')) {
+              throw new ContentSourceAuthoringException('content_collection.template_block_id', 'Changing this loop would orphan current-record mappings. Remove or reassign the affected mappings first.', 'orphaned');
+            }
+          }
+          $check($child);
+        }
+      };
+      $check($block);
+    } finally {
+      $block->settings = $original;
+    }
   }
 
   private function bindings(Block $block, mixed $input): array
@@ -58,10 +129,10 @@ class ContentSourceAuthoring
       $selection = implode('|', [$source, $record, $field]);
 
       if ($source === '' || $record === '' || $field === '' || ! $this->editor->selectionIsAllowed($block, $target, $selection)) {
-        throw new ContentSourceAuthoringException('content_bindings.'.$target, 'Select an accessible source, record, and type-compatible field returned by the content-sources endpoint.');
+        throw new ContentSourceAuthoringException('content_bindings.'.$target, 'Select an accessible source, record, and type-compatible field returned by the content-sources endpoint.', 'invalid_binding');
       }
 
-      $normalized[$target] = compact('source', 'record', 'field');
+      $normalized[$target] = array_replace((array) $block->setting('content_bindings.'.$target, []), compact('source', 'record', 'field'));
     }
 
     return $normalized;
@@ -89,7 +160,7 @@ class ContentSourceAuthoring
     $template = $block->children->first(fn (Block $child): bool => (int) $child->getKey() === $templateId);
 
     if (! $template instanceof Block || ! $this->editor->collectionTemplateIsAllowed($block, (string) $template->typeSlug())) {
-      throw new ContentSourceAuthoringException('content_collection.template_block_id', 'Select a compatible direct child returned by the block contract.');
+      throw new ContentSourceAuthoringException('content_collection.template_block_id', 'Select a compatible direct child returned by the block contract.', 'invalid_template');
     }
 
     foreach (['filter_field', 'sort_field'] as $key) {

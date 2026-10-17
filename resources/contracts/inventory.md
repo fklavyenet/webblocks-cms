@@ -1380,6 +1380,46 @@ These changes do not change block authoring, full revision snapshots, API token
 capabilities or the maintenance exemption for the authorized status route.
 
 
+## Dynamic Content authoring workflow
+
+`/webadmin/dynamic-content/use` connects an existing standard-compliant provider
+source to an authorized site/page, compatible loop container and direct-child
+template. It does not register arbitrary API endpoints or credentials. Provider
+installation and configuration remain integration responsibilities. Page-owned
+slots support a starter Grid/Card template without overwriting existing blocks.
+Shared Slot source pages remain managed through their existing block editor.
+
+Collection and binding validation is shared with API authoring. Invalid source,
+record, field type, template ownership or loop context must fail before a write;
+only an explicit empty selection removes a binding. A current-record binding is
+available only in the selected template branch. A loop cannot be changed or
+removed while leaving current-record fields orphaned. Existing provider settings
+and binding fallbacks survive unrelated updates.
+
+The workspace edits draft pages only. Published pages can prepare/reuse a staged
+copy with existing CMS staging metadata, media, translations and remapped loop
+references. The source page is unchanged. Draft saves are transactional, capture
+a complete revision and reject an outdated content fingerprint. Publication and
+staged promotion remain separate approved operations. This workflow does not
+change automatic-detail routing or automatically publish a page.
+
+Supported blocks expose a dedicated Dynamic Content tab. Binding controls
+separate editorial fallback, current loop record, and fixed source record, then
+source/record/type-compatible field. The tree and central mapping groups link to
+the relevant authoring context. Inventory filtering includes publication state.
+
+An explicit authenticated POST preview applies proposed mappings in memory and
+renders the actual block tree. It shares collection filter/sort/limit/pagination
+semantics with public rendering, uses the selected enabled locale, checks source
+contracts and distinguishes empty, denied, invalid and unavailable results.
+Preview responses are private/no-store/noindex; they do not persist content.
+Private preview pagination posts the same unsaved design to the next window;
+ordinary public pagination retains its existing GET links.
+Image source, alt text, optional caption and link retain independent mappings.
+The inventory stays passive; the editor's record-choice lists may consult entity
+providers, and the explicit preview resolves current records. Providers retain
+responsibility for bounded transport timeouts and six-language record content.
+
 ## Dynamic Content source standard and inventory — CMS 1.101.1
 
 The native admin entry is `/webadmin/dynamic-content`. Sources, loops, field

@@ -6,12 +6,12 @@ use Throwable;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
-use WebBlocks\Cms\Support\ContentSources\Contracts\ContentCollectionSourceResolver;
 use WebBlocks\Cms\Support\ContentSources\Contracts\ContentSourceResolver;
-use WebBlocks\Cms\Support\ContentSources\Contracts\QueryableContentCollectionSourceResolver;
 
 class ContentSourceEditor
 {
+  private array $recordOptions = [];
+
   public function __construct(
     private readonly ContentSourceRegistry $sources,
     private readonly ContentSourceRuntime $runtime,
@@ -34,12 +34,13 @@ class ContentSourceEditor
 
     $collectionSource = $this->collectionSourceFor($block);
 
-    if ($collectionSource instanceof ContentSourceDefinition) {
+    if ($collectionSource instanceof ContentSourceDefinition && $this->runtime->allows($collectionSource, $context)) {
       foreach ($collectionSource->fieldDefinitions() as $field => $definition) {
         if (in_array($definition['type'], $acceptedTypes, true)) {
           $choices[] = [
             'value' => implode('|', [$collectionSource->handle(), '@item', $field]),
             'label' => $collectionSource->labelText().' / '.__('webblocks-cms::admin.block_form.content_source_current_item').' / '.$definition['label'],
+            'source_label' => $collectionSource->labelText(), 'record_label' => __('webblocks-cms::admin.block_form.content_source_current_item'), 'field_label' => $definition['label'],
           ];
         }
       }
@@ -61,7 +62,8 @@ class ContentSourceEditor
 
       try {
         $resolver = app($resolverClass);
-        $records = $resolver instanceof ContentSourceResolver ? $resolver->options($context) : [];
+        $cacheKey = $source->handle().'|'.$context->site?->id.'|'.$context->page?->id.'|'.$context->locale;
+        $records = $this->recordOptions[$cacheKey] ??= ($resolver instanceof ContentSourceResolver ? $resolver->options($context) : []);
       } catch (Throwable $exception) {
         report($exception);
         $records = [];
@@ -76,6 +78,7 @@ class ContentSourceEditor
           $choices[] = [
             'value' => implode('|', [$source->handle(), $recordKey, $field]),
             'label' => $source->labelText().' / '.$recordLabel.' / '.$definition['label'],
+            'source_label' => $source->labelText(), 'record_label' => $recordLabel, 'field_label' => $definition['label'],
           ];
         }
       }
@@ -189,7 +192,9 @@ class ContentSourceEditor
   {
     $definition = $this->sources->find($source);
 
-    return $definition?->isCollection() === true && ($definition->contract() !== null || $block->setting('content_collection.source') === $source);
+    return $definition?->isCollection() === true
+      && $this->runtime->allows($definition, new ContentSourceContext($block->page?->site, $block->page, $block->renderLocaleCode() ?? app()->getLocale(), true, auth()->user()))
+      && ($definition->contract() !== null || $block->setting('content_collection.source') === $source);
   }
 
   /** @return array<string, string> */
@@ -244,26 +249,9 @@ class ContentSourceEditor
     }
 
     try {
-      $resolver = app($resolverClass);
-
-      if (! $resolver instanceof ContentCollectionSourceResolver) {
-        return [];
-      }
-
+      $configuration = array_replace((array) $block->setting('content_collection', []), ['source' => $handle]);
+      $records = collect(app(ContentCollectionLoader::class)->load($block, $configuration, true)->records);
       $previewLimit = min(max($limit, 1), 5);
-      $records = $resolver instanceof QueryableContentCollectionSourceResolver
-        ? collect($resolver->queryCollection(new ContentCollectionQuery(
-          limit: $previewLimit,
-          filterField: null,
-          filterValue: null,
-          sortField: null,
-          sortDirection: 'asc',
-          page: 1,
-          perPage: $previewLimit,
-        ), [], $context)->records)
-        : collect($resolver->resolveCollection([], $context));
-
-      $records = collect(ContentSourceContract::records($source, $records, $context));
 
       return $records
         ->filter(fn (mixed $record): bool => is_array($record))
@@ -319,26 +307,29 @@ class ContentSourceEditor
     return $warnings;
   }
 
-  private function collectionSourceFor(Block $block): ?ContentSourceDefinition
+  public function collectionSourceFor(Block $block): ?ContentSourceDefinition
   {
-    $current = $block;
+    $owner = $this->loopOwner($block);
 
-    for ($depth = 0; $depth < 8; $depth++) {
-      if ($this->supportsCollection($current)) {
-        $handle = trim((string) $current->setting('content_collection.source', ''));
+    return $owner ? $this->sources->find((string) $owner->setting('content_collection.source')) : null;
+  }
 
-        if ($handle !== '') {
-          return $this->sources->find($handle);
-        }
-      }
-
-      $parent = $current->relationLoaded('parent') ? $current->getRelation('parent') : $current->parent;
-
-      if (! $parent instanceof Block) {
+  public function loopOwner(Block $block): ?Block
+  {
+    $child = $block;
+    $seen = [];
+    for ($depth = 0; $depth < 32; $depth++) {
+      $parent = $child->parent;
+      if (! $parent instanceof Block || $parent->page_id !== $block->page_id || isset($seen[$parent->id])) {
         return null;
       }
-
-      $current = $parent;
+      $seen[$parent->id] = true;
+      if ($this->supportsCollection($parent)
+        && (int) $parent->setting('content_collection.template_block_id') === (int) $child->id
+        && $parent->setting('content_collection.source')) {
+        return $parent;
+      }
+      $child = $parent;
     }
 
     return null;

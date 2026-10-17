@@ -23,6 +23,10 @@ final class DynamicContentController extends Controller
     abort_if($handle !== '' && ! $selected, 404);
     $rows = $data['usages']->filter(fn ($row) => ($handle === '' || $row['source'] === $handle)
       && ($search === '' || str_contains(mb_strtolower($row['path'].' '.$row['source'].' '.$row['owner'].' '.$row['field']), mb_strtolower($search))));
+    $state = $request->input('state', '');
+    if ($state !== '') {
+    $rows = $rows->where('status', $state);
+    }
     $rows = match ($tab) {
       'loops' => $rows->where('kind', 'loop'),
       'bindings' => $rows->where('kind', 'binding'),
@@ -38,6 +42,6 @@ final class DynamicContentController extends Controller
     $paginator = new LengthAwarePaginator($items->forPage($request->integer('page', 1), 25)->values(), $items->count(), 25, $request->integer('page', 1), ['path' => $request->url(), 'query' => $request->query()]);
     AdminPagination::redirectOutOfRange($paginator);
 
-    return view('webblocks-cms::admin.dynamic-content.index', $data + compact('selected', 'search', 'handle', 'tab', 'paginator') + ['rows' => $tab === 'sources' ? collect() : $paginator, 'filteredSources' => $tab === 'sources' ? $paginator : collect()]);
+    return view('webblocks-cms::admin.dynamic-content.index', $data + compact('selected', 'search', 'handle', 'tab', 'paginator', 'state') + ['rows' => $tab === 'sources' ? collect() : $paginator, 'filteredSources' => $tab === 'sources' ? $paginator : collect()]);
   }
 }
