@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.104.2
+
+- Simplify Contact Message details while preserving the Visitor message table: combine submission, notification and spam information in a collapsed Technical details section.
+- Keep email replies, replied status and archiving easy to reach; group the remaining status actions and confirmed deletion under More actions without changing message status when opening an email reply.
+- Remove mail-server setup commands from the message reading screen, retain visible spam and notification-failure warnings, and localize the revised controls in all six panel languages.
+
 ## 1.104.1
 
 - Allow Image captions and alt text to be cleared through the panel and Content API while preserving omitted fields, other languages, media references and dynamic bindings.

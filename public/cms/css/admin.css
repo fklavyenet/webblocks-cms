@@ -722,6 +722,29 @@ input.wb-admin-table-grid-input:focus {
     overflow-wrap: anywhere;
 }
 
+.wb-contact-message-detail {
+    overflow-wrap: anywhere;
+}
+
+.wb-contact-message-detail > summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.wb-contact-message-detail > summary::-webkit-details-marker {
+    display: none;
+}
+
+.wb-contact-message-detail[open] > summary .wb-icon-chevron-down {
+    transform: rotate(180deg);
+}
+
+.wb-contact-message-subject {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
 .wb-contact-message-body {
     min-height: 12rem;
     overflow-wrap: anywhere;

@@ -58,6 +58,7 @@ class PanelNotificationsTest extends TestCase
     $user->shouldReceive('can')->with('manage-site-operations')->andReturn($manager);
     $user->shouldReceive('isSuperAdmin')->andReturn($super);
     $user->shouldReceive('accessibleSiteIds')->andReturn(collect($sites));
+    $user->shouldReceive('hasSiteAccess')->andReturnUsing(fn ($siteId) => $super || in_array($siteId, $sites, true));
 
     return $user;
   }
