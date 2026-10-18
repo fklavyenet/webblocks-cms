@@ -197,6 +197,33 @@ class BlockPatchTranslationFamilyTest extends TestCase
   }
 
   #[Test]
+  public function image_metadata_can_be_cleared_without_changing_other_fields_locales_or_bindings(): void
+  {
+    $block = $this->seedBlock('image');
+    $block->settings = ['content_bindings' => ['title' => ['source' => 'catalog::items', 'record' => '@item', 'field' => 'caption', 'fallback' => 'Provider fallback']]];
+    $block->save();
+    $settings = $block->fresh()->settings;
+    $this->patchBlock($block, ['locale' => 'en', 'translations' => ['caption' => 'English caption', 'alt_text' => 'English description']]);
+    $this->patchBlock($block->fresh(), ['locale' => 'de', 'translations' => ['caption' => 'German caption', 'alt_text' => 'German description']]);
+
+    $response = $this->patchBlock($block->fresh(), ['locale' => 'de', 'translations' => ['caption' => '']]);
+    $this->assertSame(200, $response->getStatusCode());
+    $translation = $block->fresh()->imageTranslations()->where('locale_id', $this->locale('de')->id)->first();
+    $this->assertSame('', (string) $translation->caption);
+    $this->assertSame('German description', $translation->alt_text);
+
+    // Block-field aliases and JSON null have the same explicit-clear meaning.
+    $response = $this->patchBlock($block->fresh(), ['locale' => 'de', 'translations' => ['subtitle' => null]]);
+    $this->assertSame(200, $response->getStatusCode());
+    $translation = $block->fresh()->imageTranslations()->where('locale_id', $this->locale('de')->id)->first();
+    $this->assertSame('', (string) $translation->alt_text);
+    $english = $block->fresh()->imageTranslations()->where('locale_id', $this->locale('en')->id)->first();
+    $this->assertSame('English caption', $english->caption);
+    $this->assertSame('English description', $english->alt_text);
+    $this->assertSame($settings, $block->fresh()->settings);
+  }
+
+  #[Test]
   public function a_field_the_family_does_not_own_is_refused_instead_of_stored(): void
   {
     $block = $this->seedBlock('contact_form');

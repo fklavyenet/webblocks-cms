@@ -3110,7 +3110,7 @@ $translations = [
     'cancel' => 'Annulla',
     'publish' => 'Pubblica',
     'translations' => 'Traduzioni',
-    'translations_help' => 'Solo titolo della pagina e routing',
+    'translations_help' => 'Le traduzioni della pagina coprono titoli e percorsi, non la completezza delle traduzioni di blocchi o fonti.',
     'locale' => 'Lingua',
     'slug' => 'Slug',
     'path' => 'Percorso',
@@ -3123,6 +3123,8 @@ $translations = [
     'locked_by_workflow' => 'Bloccato dal workflow',
     'edit_translation' => 'Modifica traduzione',
     'add_translation' => 'Aggiungi traduzione',
+    'translation_record_present' => 'Traduzione della pagina presente',
+    'preview_locale_unavailable' => 'Scegli una lingua attiva sul sito con una traduzione della pagina.',
   ],
   'engagement' => [
     'data_scope' => 'Ambito dei feedback',

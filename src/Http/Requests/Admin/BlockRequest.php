@@ -1651,8 +1651,12 @@ class BlockRequest extends FormRequest
       if ($blockType?->slug === 'image') {
         $isTranslatedImageEdit = $data['locale'] !== null;
 
-        $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-        $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+        foreach (['title', 'subtitle'] as $field) {
+          if (array_key_exists($field, $data)) {
+            $value = trim((string) $data[$field]);
+            $data[$field] = $value === '' ? null : $value;
+          }
+        }
         $data['content'] = null;
         $data['url'] = $isTranslatedImageEdit
           ? ($this->route('block')?->getRawOriginal('url'))

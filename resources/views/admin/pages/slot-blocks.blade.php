@@ -8,6 +8,9 @@
   $slotName = $slot->slotType?->name ?? $adminText('fallback_slot');
   $slotTitle = $adminText('title', ['slot' => $slotName, 'page' => $page->title]);
   $activePreviewUrl = $page->isPublished() ? $page->publicUrl($activeLocale->code) : null;
+  $draftPreviewUrl = $page->translationForLocale($activeLocale)
+    ? route('admin.pages.preview', ['page' => $page, 'locale' => $activeLocale->code])
+    : null;
   $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
   $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
   $siteName = $page->site?->name ?? $adminText('fallback_site');
@@ -50,7 +53,7 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="'.e($adminText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($adminText('pages')).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.e($siteName).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.e($page->title).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($slotName).'</span></li></ol></nav>',
         'title' => $slotTitle,
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_page_slots')).'</a>'.($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>'.e($adminText('view_page')).'</span></a>' : '').'</div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_page_slots')).'</a>'.($draftPreviewUrl ? '<a href="'.$draftPreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i> <span>'.e($adminTranslator->admin('page_edit.preview', $adminLocale)).'</span></a>' : '').($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>'.e($adminText('view_page')).'</span></a>' : '').'</div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')

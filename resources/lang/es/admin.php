@@ -3111,7 +3111,7 @@ $translations = [
     'cancel' => 'Cancelar',
     'publish' => 'Publicar',
     'translations' => 'Traducciones',
-    'translations_help' => 'Solo título de la página y enrutamiento',
+    'translations_help' => 'Los registros de traducción de página cubren títulos y rutas, no la integridad de las traducciones de bloques o fuentes.',
     'locale' => 'Idioma',
     'slug' => 'Slug',
     'path' => 'Ruta',
@@ -3124,6 +3124,8 @@ $translations = [
     'locked_by_workflow' => 'Bloqueada por el flujo de trabajo',
     'edit_translation' => 'Editar traducción',
     'add_translation' => 'Añadir traducción',
+    'translation_record_present' => 'Existe un registro de traducción',
+    'preview_locale_unavailable' => 'Elija un idioma habilitado en el sitio que tenga una traducción de la página.',
   ],
   'engagement' => [
     'data_scope' => 'Alcance de las opiniones',

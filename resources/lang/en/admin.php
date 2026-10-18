@@ -3354,7 +3354,7 @@ return [
     'cancel' => 'Cancel',
     'publish' => 'Publish',
     'translations' => 'Translations',
-    'translations_help' => 'Page title and routing only',
+    'translations_help' => 'Page translation records cover titles and routing, not block or source translation completeness.',
     'locale' => 'Locale',
     'slug' => 'Slug',
     'path' => 'Path',
@@ -3367,6 +3367,8 @@ return [
     'locked_by_workflow' => 'Locked by workflow',
     'edit_translation' => 'Edit translation',
     'add_translation' => 'Add translation',
+    'translation_record_present' => 'Page translation record exists',
+    'preview_locale_unavailable' => 'Choose an enabled site language with a page translation.',
   ],
   'engagement' => [
     'data_scope' => 'Feedback scope',

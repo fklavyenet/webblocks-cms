@@ -19,11 +19,9 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
  *
  * The admin preview route already accepts a Bearer token with content.read
  * (see AllowPagePreviewAccess), so this is not what made rendering reachable.
- * What it adds is locale selection -- the admin preview always renders the
- * default translation, which stopped being sufficient once second locales
- * became writable -- along with a JSON envelope and a place in discovery and
- * the OpenAPI document, so a tool finds it without knowing about a route that
- * lives outside /webadmin/api.
+ * Both previews accept a locale selection. This endpoint also offers a JSON
+ * envelope and discovery/OpenAPI links, so tools do not need to know a route
+ * outside /webadmin/api.
  */
 class InternalPageRenderController extends Controller
 {

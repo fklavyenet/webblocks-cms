@@ -3111,7 +3111,7 @@ $translations = [
     'cancel' => 'Annuler',
     'publish' => 'Publier',
     'translations' => 'Traductions',
-    'translations_help' => 'Titre de page et routage uniquement',
+    'translations_help' => 'Les traductions de page couvrent les titres et le routage, sans garantir la traduction complète des blocs ou des sources.',
     'locale' => 'Langue',
     'slug' => 'Identifiant',
     'path' => 'Chemin',
@@ -3124,6 +3124,8 @@ $translations = [
     'locked_by_workflow' => 'Verrouillé par le flux de travail',
     'edit_translation' => 'Modifier la traduction',
     'add_translation' => 'Ajouter une traduction',
+    'translation_record_present' => 'Traduction de page présente',
+    'preview_locale_unavailable' => 'Choisissez une langue activée sur le site avec une traduction de la page.',
   ],
   'engagement' => [
     'data_scope' => 'Portée des avis',

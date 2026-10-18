@@ -272,8 +272,13 @@ class BlockTranslationWriter
       default => $field === 'caption' ? $block->getRawOriginal('title') : $block->getRawOriginal('subtitle'),
     };
 
-    return $this->submittedString($data, $sourceField)
-      ?? $this->existingTranslationValue($block, 'imageTranslations', $localeId, $field, $fallback);
+    if (array_key_exists($sourceField, $data)) {
+      $value = trim((string) $data[$sourceField]);
+
+      return $value === '' ? null : $value;
+    }
+
+    return $this->existingTranslationValue($block, 'imageTranslations', $localeId, $field, $fallback);
   }
 
   private function existingTranslationValue(Block $block, string $relation, int $localeId, string $field, mixed $fallback = null): mixed

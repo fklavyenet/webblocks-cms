@@ -343,12 +343,17 @@
                 </td>
                 <td>
                   <span class="wb-status-pill {{ $translationStatus['is_missing'] ? 'wb-status-pending' : 'wb-status-active' }}">
-                    {{ $translationStatus['is_missing'] ? $adminText('missing') : $adminText('ready') }}
+                    {{ $translationStatus['is_missing'] ? $adminText('missing') : $adminText('translation_record_present') }}
                   </span>
                 </td>
                 <td>{{ $translation?->slug ?? $adminText('missing') }}</td>
                 <td>{{ $translationStatus['public_path'] ?? $adminText('missing') }}</td>
                 <td>
+                  @if ($translation)
+                    <a href="{{ route('admin.pages.preview', ['page' => $page, 'locale' => $locale->code]) }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn" title="{{ $adminText('preview') }}" aria-label="{{ $adminText('preview') }}">
+                      <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                    </a>
+                  @endif
                   @if ($page->isPublished() && $translationStatus['public_url'])
                     <a href="{{ $translationStatus['public_url'] }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('open_translation') }}" aria-label="{{ $adminText('open_translation') }}">
                       <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>

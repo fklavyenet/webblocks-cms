@@ -3126,7 +3126,7 @@ $translations = [
     'cancel' => 'İptal',
     'publish' => 'Yayınla',
     'translations' => 'Çeviriler',
-    'translations_help' => 'Yalnızca sayfa başlığı ve yönlendirme',
+    'translations_help' => 'Sayfa çeviri kayıtları başlık ve adresi kapsar; blok veya kaynak çevirilerinin tamamlandığını göstermez.',
     'locale' => 'Dil',
     'slug' => 'Slug',
     'path' => 'Path',
@@ -3139,6 +3139,8 @@ $translations = [
     'locked_by_workflow' => 'Workflow tarafından kilitli',
     'edit_translation' => 'Çeviriyi düzenle',
     'add_translation' => 'Çeviri ekle',
+    'translation_record_present' => 'Sayfa çeviri kaydı mevcut',
+    'preview_locale_unavailable' => 'Sayfa çevirisi bulunan ve sitede etkin olan bir dil seçin.',
   ],
   'engagement' => [
     'data_scope' => 'Değerlendirme kapsamı',

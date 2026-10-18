@@ -3113,7 +3113,7 @@ $translations = [
     'cancel' => 'Abbrechen',
     'publish' => 'Veröffentlichen',
     'translations' => 'Übersetzungen',
-    'translations_help' => 'Nur Seitentitel und Routing',
+    'translations_help' => 'Seitenübersetzungen erfassen Titel und Routing, nicht die Vollständigkeit von Block- oder Quellenübersetzungen.',
     'locale' => 'Sprache',
     'slug' => 'Slug',
     'path' => 'Pfad',
@@ -3126,6 +3126,8 @@ $translations = [
     'locked_by_workflow' => 'Durch Workflow gesperrt',
     'edit_translation' => 'Übersetzung bearbeiten',
     'add_translation' => 'Übersetzung hinzufügen',
+    'translation_record_present' => 'Seitenübersetzung vorhanden',
+    'preview_locale_unavailable' => 'Wählen Sie eine auf der Site aktivierte Sprache mit einer Seitenübersetzung.',
   ],
   'engagement' => [
     'data_scope' => 'Umfang der Rückmeldungen',

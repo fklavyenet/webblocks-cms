@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeletePagesRequest;
+use WebBlocks\Cms\Http\Requests\Admin\PagePreviewRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PageRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -355,6 +356,8 @@ class PageController extends Controller
 
     abort_if($page->isSharedSlotSourcePage(), 404);
 
+    $request = app(PagePreviewRequest::class);
+
     $page->load([
       'site',
       'translations.locale',
@@ -367,13 +370,17 @@ class PageController extends Controller
         ->orderBy('id'),
     ]);
 
-    if ($defaultTranslation = $page->defaultTranslation()) {
-      $page->setRelation('currentTranslation', $defaultTranslation);
+    $translation = $request->filled('locale')
+      ? $page->translationForLocale($request->validated('locale'))
+      : $page->defaultTranslation();
+
+    if ($translation) {
+      $page->setRelation('currentTranslation', $translation);
     }
 
     return response()
       ->view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', [
-        ...$presenter->present($page, preview: true),
+        ...$presenter->present($page, preview: true, locale: $translation?->locale),
         'previewMode' => true,
       ])
       ->header('X-Robots-Tag', 'noindex, nofollow');

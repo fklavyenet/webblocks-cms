@@ -524,7 +524,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | Locale-owned image `alt_text` and `caption`; shared optional URL. Content plans and page/shared-slot block creation accept these native names, with `title` (caption) and `subtitle` (alt text) aliases; native names take precedence. |
+| Editable content | Locale-owned image `alt_text` and `caption`; shared optional URL. Content plans and page/shared-slot block creation accept these native names, with `title` (caption) and `subtitle` (alt text) aliases; native names take precedence. Admin saves and existing-block PATCH preserve omitted image translation fields; an explicitly blank or null field clears only that locale's stored value. Clearing a caption removes the editorial figcaption; the existing Media/dynamic-source alt-text fallback still applies. Clearing editorial text does not remove bindings or their explicit fallback configuration. |
 | Settings and variants | `viewer_enabled` opts an unlinked image into the CMS Gallery Viewer; `viewer_group` joins independently placed Image blocks into one browsable viewer set. Focal point and generated variants belong to the Media record. |
 | Children/media | Direct image `media_id`; no children. |
 | HTML | Root-owning `<figure class="wb-stack wb-gap-2">` with responsive `<img>` output, optional linked or `wb-gallery-trigger` image, and `<figcaption>`. Enabled groups register one existing gallery-viewer modal under the canonical overlay root. |
@@ -1577,3 +1577,22 @@ to another site while their adoption is retained; these operations return an
 explicit validation message instead of a foreign-key error. A paused rule may be reviewed
 again and activated only after a new valid digest; its configuration remains
 immutable. This is an explicit publication operation, never automatic recovery.
+
+
+### General page preview and translation-record labels (1.104.1)
+
+The browser admin page preview accepts an optional `locale` code. A specified
+locale must be enabled globally and for the page's site and have a page
+translation; invalid, disabled or missing choices are validation errors rather
+than silent default-language previews. Without a locale it retains the default
+translation. The selected locale is passed explicitly to the public presenter
+for page identity, page-owned and Shared Slot blocks, image text and existing
+dynamic bindings. Preview includes draft page-owned blocks, retains existing
+access checks and noindex output, and never saves or publishes content. Page
+translation rows, their edit forms and slot block editors link to this localized
+preview. Dynamic Content's configured preview and automatic-page routes are
+unchanged.
+
+The page translation table reports that a page translation record exists. This
+is a title/routing record, not evidence of complete or current block/provider
+translations. API translation-status fields and fallback behavior are unchanged.

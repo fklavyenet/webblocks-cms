@@ -14,6 +14,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -135,6 +136,40 @@ class BlockMediaPersistenceTest extends TestCase
     $block = app(BlockPayloadWriter::class)->save(new Block, $page, $data, null);
 
     $this->assertNull($block->fresh()->media_id, 'A block type without media must not store a media assignment.');
+  }
+
+  #[Test]
+  public function an_admin_image_save_clears_submitted_metadata_and_preserves_omitted_metadata(): void
+  {
+    [$page, $slotType] = $this->seedPage();
+    $type = $this->seedBlockType('image', false);
+    $media = $this->seedImage();
+    $payload = ['page_id' => $page->id, 'slot_type_id' => $slotType->id, 'block_type_id' => $type->id, 'sort_order' => 0, 'status' => 'published', 'asset_id' => $media->id];
+    $writer = app(BlockPayloadWriter::class);
+    $block = $writer->save(new Block, $page, $this->validatedDataFor($payload + ['title' => 'Old caption', 'subtitle' => 'Old description']));
+
+    $writer->save($block->fresh(), $page, $this->validatedDataFor($payload + ['title' => '']));
+    $translation = $block->fresh()->imageTranslations()->first();
+    $this->assertSame('', (string) $translation->caption);
+    $this->assertSame('Old description', $translation->alt_text);
+
+    $writer->save($block->fresh(), $page, $this->validatedDataFor($payload + ['subtitle' => '  ']));
+    $translation = $block->fresh()->imageTranslations()->first();
+    $this->assertSame('', (string) $translation->caption);
+    $this->assertSame('', (string) $translation->alt_text);
+    $this->assertSame($media->id, $block->fresh()->media_id);
+
+    $resolved = app(BlockTranslationResolver::class)->resolve($block->fresh(), 'en');
+    $media->forceFill(['alt_text' => 'Media description'])->save();
+    $resolved->setRelation('media', $media->fresh());
+    $html = view('webblocks-cms::pages.partials.blocks.image', ['block' => $resolved])->render();
+    $this->assertStringNotContainsString('<figcaption>', $html);
+    $this->assertStringContainsString('alt="Media description"', $html);
+
+    $writer->save($block->fresh(), $page, $this->validatedDataFor($payload + ['title' => '0', 'subtitle' => '0']));
+    $translation = $block->fresh()->imageTranslations()->first();
+    $this->assertSame('0', $translation->caption);
+    $this->assertSame('0', $translation->alt_text);
   }
 
   /**

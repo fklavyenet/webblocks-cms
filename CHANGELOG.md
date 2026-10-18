@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.104.1
+
+- Allow Image captions and alt text to be cleared through the panel and Content API while preserving omitted fields, other languages, media references and dynamic bindings.
+- Keep the selected language in general page previews, including localized page identity, block text and image metadata; reject unavailable translations without changing content or publication state.
+- Describe page translation records accurately in all six panel languages without implying that block or source translations are complete.
+
 ## 1.104.0
 
 - Connect installed content sources to page loops through a guided workspace with site, page and template selection, central field mappings and searchable source fields.

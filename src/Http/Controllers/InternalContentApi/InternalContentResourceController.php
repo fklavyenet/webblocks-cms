@@ -1917,7 +1917,7 @@ class InternalContentResourceController extends Controller
     // The writer reads an empty string as "not submitted" for these fields and
     // keeps the stored value, so accepting one would be a silent no-op.
     $rejectsEmpty = match ($family) {
-      'button', 'image' => array_keys($accepted),
+      'button' => array_keys($accepted),
       'contact_form' => ['submit_label', 'success_message'],
       default => [],
     };
