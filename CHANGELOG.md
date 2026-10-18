@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.104.0
+
+- Connect installed content sources to page loops through a guided workspace with site, page and template selection, central field mappings and searchable source fields.
+- Make dynamic bindings discoverable in the block tree and a dedicated editor tab, with separate current-item, fixed-record and editorial fallback modes.
+- Reject invalid or orphaned source, template and field bindings consistently in the panel and API; preserve provider settings, images and all language content.
+- Prepare staged drafts before changing published pages, with transactional saves, revisions and stale-edit protection.
+- Preview the actual configured blocks in any CMS language using the public collection loader, with explicit source checks, distinct failure states and private pagination that retains unsaved mappings.
+
 ## 1.103.1
 
 - Resolve active automatic detail URLs before the Redirect Manager catch-all, preserving source availability checks and the shared public-page request limits.
