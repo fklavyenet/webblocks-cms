@@ -100,7 +100,7 @@
           </div>
           <div class="wb-stack wb-stack-2">
             @if ($canUpdate)
-              <form method="POST" action="{{ route('admin.system.updates.store') }}" data-wb-update-form>
+              <form method="POST" action="{{ route('admin.system.updates.store') }}" data-pc-update-form>
                 @csrf
                 <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit>
                   {{ $adminText('updates.update_button', ['version' => $latestVersion ?? ($version['current_version'] ?? '')]) }}
@@ -293,46 +293,61 @@
     @endif
   @endforeach
 
-  @if ($canUpdate || auth()->user()?->can('access-system'))
+  @php
+    $updateProgress = app(\WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress::class)->payload();
+    $modalVersion = $latestVersion ?? ($version['current_version'] ?? '');
+    $healthRoute = route('admin.system.updates.indicator');
+  @endphp
+@if ($canUpdate || auth()->user()?->can('access-system'))
     {{-- Progress modal: shown while the update runs. No dismiss — a live update cannot be cancelled. --}}
-    <div
-      class="wb-modal"
-      id="wb-update-progress"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="wb-update-progress-title"
-      data-webblocks-update-progress-modal
-      data-wb-health-url="{{ route('admin.system.updates.indicator') }}"
-      data-wb-return-url="{{ route('admin.system.updates.index') }}"
-      data-wb-elapsed-label="{{ $adminText('updates.elapsed') }}"
-      data-wb-reconnecting-label="{{ $adminText('updates.reconnecting') }}"
-      data-wb-unconfirmed-label="{{ $adminText('updates.unconfirmed') }}"
-      data-wb-baseline-run="{{ $runs->first()?->id ?? 0 }}"
-      data-wb-waiting-label="{{ $adminText('updates.waiting_body') }}"
-      hidden
-    >
-      <div class="wb-modal-dialog">
-        <div class="wb-modal-header">
-          <h3 class="wb-modal-title" id="wb-update-progress-title">{{ $adminText('updates.updating_title', ['version' => $latestVersion ?? ($version['current_version'] ?? '')]) }}</h3>
-        </div>
-        <div class="wb-modal-body">
-          <div class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
-            <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
-            <div class="wb-stack wb-stack-1">
-              <strong id="wb-update-progress-status">{{ $adminText('updates.updating_body') }}</strong>
-              <a id="wb-update-history-link" href="{{ route('admin.system.updates.index') }}" hidden>{{ $adminText('updates.view_history') }}</a>
-              <span id="wb-update-elapsed" class="wb-text-sm" role="timer" aria-live="off"></span>
-              <span class="wb-text-sm wb-text-muted">{{ $adminText('updates.keep_open') }}</span>
+    <div id="pc-update-progress" data-pc-update-modal class="wb-modal wb-modal-lg" role="dialog" aria-modal="true" aria-labelledby="pc-update-progress-title">
+        <div class="wb-modal-dialog">
+            <div class="wb-modal-header">
+                <h3 class="wb-modal-title" id="pc-update-progress-title">{{ __('publisher-client::updates.updating_title', ['version' => $modalVersion]) }}</h3>
             </div>
-          </div>
+            <div class="wb-modal-body wb-stack wb-stack-3">
+                <div data-update-loading class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
+                    <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
+                    <div class="wb-stack wb-stack-1">
+                        <strong id="pc-update-progress-status">{{ __('publisher-client::updates.updating_body') }}</strong>
+                        <span class="wb-text-sm wb-text-muted">{{ __('publisher-client::updates.keep_open') }}</span>
+                    </div>
+                </div>
+                <p class="wb-text-sm"><span>{{ __('publisher-client::updates.elapsed') }}</span>: <span data-update-elapsed role="timer" aria-live="off">0:00</span></p>
+                <p data-update-message role="status" aria-live="polite">{{ __('publisher-client::updates.progress.running') }}</p>
+                <ol data-update-steps class="wb-stack wb-stack-2"></ol>
+                <p class="wb-text-sm wb-text-muted">{{ __('publisher-client::updates.progress.scope') }}</p>
+            </div>
+            <div class="wb-modal-footer" data-update-footer hidden>
+                <a href="{{ $healthRoute ?? '' }}" data-update-recheck class="wb-btn wb-btn-secondary" hidden>{{ __('publisher-client::updates.progress.recheck') }}</a>
+                <a href="{{ route('admin.system.updates.index') }}" data-update-return class="wb-btn wb-btn-secondary" hidden>{{ __('publisher-client::updates.progress.return') }}</a>
+            </div>
+            <button type="button" hidden id="pc-update-progress-dismiss" data-wb-dismiss="modal" aria-hidden="true" tabindex="-1"></button>
         </div>
-      </div>
     </div>
-  @endif
+    <button type="button" hidden id="pc-update-progress-open"
+            data-wb-toggle="modal" data-wb-target="#pc-update-progress"
+            data-active-operation="{{ in_array($updateProgress['state'] ?? '', ['queued', 'running', 'interrupted'], true) ? ($updateProgress['operation_id'] ?? '') : '' }}"
+            data-pc-admission="server" data-pc-health-url="{{ $healthRoute ?? '' }}"
+            data-progress-unknown="{{ __('publisher-client::updates.progress.unknown') }}"
+            data-progress-interrupted="{{ __('publisher-client::updates.progress.interrupted') }}"
+            data-progress-auth="{{ __('publisher-client::updates.progress.auth') }}"
+            data-progress-unreachable="{{ __('publisher-client::updates.progress.unreachable') }}"
+            data-progress-running="{{ __('publisher-client::updates.progress.running') }}"
+            data-progress-complete="{{ __('publisher-client::updates.progress.complete') }}"
+            data-progress-failed="{{ __('publisher-client::updates.progress.failed') }}"
+            data-progress-step-interrupted="{{ __('publisher-client::updates.progress.step_interrupted') }}"
+            data-progress-step-running="{{ __('publisher-client::updates.progress.step_running') }}"
+            data-pc-waiting-label="{{ __('publisher-client::updates.waiting_body') }}"
+            data-pc-error-label="{{ __('publisher-client::updates.update_failed_generic') }}"
+            aria-hidden="true" tabindex="-1"></button>
+
+@endif
+
 @endsection
 
 @if ($canUpdate || auth()->user()?->can('access-system'))
 @push('admin-scripts')
-  @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/system-update.js'])
+  <script src="{{ \WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets::url() }}" defer></script>
 @endpush
 @endif

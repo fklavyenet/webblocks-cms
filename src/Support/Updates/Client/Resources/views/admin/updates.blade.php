@@ -8,7 +8,7 @@
 
   Behavior note: opening a modal on form submit is not yet a UI-runtime feature
   (proposed upstream — see standards/publisher-client-backlog.md); the small
-  script below is the shared, single-source interim until that lands.
+  external progress script is shared; WebBlocks UI still owns the modal.
 
   Contract (products @include this inside their own layout):
     'check'       => UpdateCheckResult->toArray()
@@ -20,11 +20,11 @@
     $runs = $runs ?? [];
     $checkRoute = $checkRoute ?? '#';
     $updateRoute = $updateRoute ?? '#';
-    // Optional lightweight GET endpoint the interstitial polls to detect when the
-    // app is back after a self-update restarts php-fpm. Defaults to the current
-    // page; a product may pass its JSON indicator route (which does not consume the
-    // flash) so the reloaded screen can still show the success/failure message.
+    // Optional authenticated JSON progress endpoint. Without it, keep normal POST
+    // behavior; HTTP availability alone must never confirm an update result.
     $healthRoute = $healthRoute ?? null;
+    $updateProgress = $updateProgress ?? [];
+    $modalVersion = $check['latest_version'] ?? ($updateProgress['target_version'] ?? '');
     // Optional pre-run advisory check (ComposerRepoPreflight->check()); absent
     // on product controllers that have not adopted it yet.
     $preflight = $preflight ?? null;
@@ -279,116 +279,50 @@
     @endforeach
 @endif
 
-@if ($updateAvailable)
+@if ($updateAvailable || in_array($updateProgress['state'] ?? '', ['running', 'interrupted'], true))
     {{-- Progress modal: shown while the update runs. No dismiss — a live update cannot be cancelled. --}}
-    <div id="pc-update-progress" class="wb-modal" role="dialog" aria-modal="true" aria-labelledby="pc-update-progress-title">
+    <div id="pc-update-progress" data-pc-update-modal class="wb-modal wb-modal-lg" role="dialog" aria-modal="true" aria-labelledby="pc-update-progress-title">
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
-                <h3 class="wb-modal-title" id="pc-update-progress-title">{{ __('publisher-client::updates.updating_title', ['version' => $check['latest_version']]) }}</h3>
+                <h3 class="wb-modal-title" id="pc-update-progress-title">{{ __('publisher-client::updates.updating_title', ['version' => $modalVersion]) }}</h3>
             </div>
-            <div class="wb-modal-body">
-                <div class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
+            <div class="wb-modal-body wb-stack wb-stack-3">
+                <div data-update-loading class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
                     <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
                     <div class="wb-stack wb-stack-1">
                         <strong id="pc-update-progress-status">{{ __('publisher-client::updates.updating_body') }}</strong>
                         <span class="wb-text-sm wb-text-muted">{{ __('publisher-client::updates.keep_open') }}</span>
                     </div>
                 </div>
+                <p class="wb-text-sm"><span>{{ __('publisher-client::updates.elapsed') }}</span>: <span data-update-elapsed role="timer" aria-live="off">0:00</span></p>
+                <p data-update-message role="status" aria-live="polite">{{ __('publisher-client::updates.progress.running') }}</p>
+                <ol data-update-steps class="wb-stack wb-stack-2"></ol>
+                <p class="wb-text-sm wb-text-muted">{{ __('publisher-client::updates.progress.scope') }}</p>
             </div>
-            {{-- Invisible dismiss control the script clicks when a rejection/
-                 failure comes back directly and the overlay must close. --}}
+            <div class="wb-modal-footer" data-update-footer hidden>
+                <a href="{{ $healthRoute ?? '' }}" data-update-recheck class="wb-btn wb-btn-secondary" hidden>{{ __('publisher-client::updates.progress.recheck') }}</a>
+                <a href="{{ $returnRoute ?? url()->current() }}" data-update-return class="wb-btn wb-btn-secondary" hidden>{{ __('publisher-client::updates.progress.return') }}</a>
+            </div>
             <button type="button" hidden id="pc-update-progress-dismiss" data-wb-dismiss="modal" aria-hidden="true" tabindex="-1"></button>
         </div>
     </div>
     <button type="button" hidden id="pc-update-progress-open"
             data-wb-toggle="modal" data-wb-target="#pc-update-progress"
+            data-active-operation="{{ in_array($updateProgress['state'] ?? '', ['running', 'interrupted'], true) ? ($updateProgress['operation_id'] ?? '') : '' }}"
             data-pc-health-url="{{ $healthRoute ?? '' }}"
+            data-progress-unknown="{{ __('publisher-client::updates.progress.unknown') }}"
+            data-progress-interrupted="{{ __('publisher-client::updates.progress.interrupted') }}"
+            data-progress-auth="{{ __('publisher-client::updates.progress.auth') }}"
+            data-progress-unreachable="{{ __('publisher-client::updates.progress.unreachable') }}"
+            data-progress-running="{{ __('publisher-client::updates.progress.running') }}"
+            data-progress-complete="{{ __('publisher-client::updates.progress.complete') }}"
+            data-progress-failed="{{ __('publisher-client::updates.progress.failed') }}"
+            data-progress-step-interrupted="{{ __('publisher-client::updates.progress.step_interrupted') }}"
+            data-progress-step-running="{{ __('publisher-client::updates.progress.step_running') }}"
             data-pc-waiting-label="{{ __('publisher-client::updates.waiting_body') }}"
             data-pc-error-label="{{ __('publisher-client::updates.update_failed_generic') }}"
             aria-hidden="true" tabindex="-1"></button>
-    <script>
-        (function () {
-            var form = document.querySelector('[data-pc-update-form]');
-            var opener = document.getElementById('pc-update-progress-open');
-            if (!form || !opener) { return; }
 
-            // No fetch (very old browser): fall back to a plain submit + spinner.
-            if (!window.fetch) {
-                form.addEventListener('submit', function () { opener.click(); });
-                return;
-            }
-
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                opener.click(); // show the progress overlay
-
-                var action = form.getAttribute('action');
-                var body = new FormData(form);
-                var here = window.location.href;
-                var health = opener.getAttribute('data-pc-health-url') || here;
-                var status = document.getElementById('pc-update-progress-status');
-                var waiting = opener.getAttribute('data-pc-waiting-label');
-                var started = Date.now();
-                var done = false;
-
-                function goHome() { if (done) return; done = true; window.location.assign(here); }
-
-                // A successful full-root self-update swaps the app's own code and
-                // restarts php-fpm, so the request that triggers it (and the next few)
-                // can drop with a 502 while fresh workers spin up. Fire the update,
-                // then poll a lightweight endpoint until the app answers again, and
-                // only then navigate — the reload window stays hidden behind the
-                // overlay instead of surfacing as a 502.
-                function poll() {
-                    if (done) { return; }
-                    if (Date.now() - started > 180000) { goHome(); return; } // 3-min safety net
-                    fetch(health, { method: 'GET', cache: 'no-store', credentials: 'same-origin' })
-                        .then(function (res) {
-                            if (res && res.status >= 200 && res.status < 500) { goHome(); }
-                            else { setTimeout(poll, 1500); }
-                        })
-                        .catch(function () { setTimeout(poll, 1500); });
-                }
-
-                // The submit asks for JSON so a direct rejection ("already
-                // running", disabled, a failed run that answered normally)
-                // comes back as a readable 409 instead of a redirect whose
-                // flash the health-poll used to consume silently.
-                function showError(message) {
-                    done = true; // never navigate away from the visible error
-                    var dismiss = document.getElementById('pc-update-progress-dismiss');
-                    if (dismiss) { dismiss.click(); }
-                    var box = document.querySelector('[data-pc-inline-error]');
-                    if (!box) { window.location.assign(here); return; }
-                    var text = box.querySelector('[data-pc-inline-error-text]');
-                    if (text) { text.textContent = message || opener.getAttribute('data-pc-error-label') || ''; }
-                    box.hidden = false;
-                    if (box.scrollIntoView) { box.scrollIntoView({ block: 'nearest' }); }
-                }
-
-                function proceed() {
-                    if (waiting && status) { status.textContent = waiting; }
-                    poll();
-                }
-
-                fetch(action, {
-                    method: 'POST',
-                    body: body,
-                    redirect: 'manual',
-                    credentials: 'same-origin',
-                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                    .then(function (res) {
-                        if (res && res.status === 409) {
-                            res.json().then(
-                                function (data) { showError(data && data.message); },
-                                function () { showError(null); }
-                            );
-                            return;
-                        }
-                        proceed();
-                    }, proceed);
-            });
-        }());
-    </script>
 @endif
+
+<script src="{{ \WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets::url() }}" defer></script>

@@ -1596,3 +1596,8 @@ unchanged.
 The page translation table reports that a page translation record exists. This
 is a title/routing record, not evidence of complete or current block/provider
 translations. API translation-status fields and fallback behavior are unchanged.
+
+
+## Shared Publisher Client progress (1.104.3)
+
+The embedded Client 1.2.0 supplies the shared release-detail normalizer, phase reporter contract and external versioned modal asset. CMS binds the reporter to its existing SQL operation and step records; the Client file journal is not used for CMS operations. The modal now lists all reached steps with their durations and explicit recorded failure state; a nullable step-state migration is additive and repeatable. Existing admission, backup restoration with receipt preservation, role/API capability checks and installed-target verification remain authoritative. Structured notes suppress their raw duplicate and repeated summary/group items; detailed procedures remain in the Updates handbook. No public authoring fields, block schemas, rendering contracts or content API permissions change.

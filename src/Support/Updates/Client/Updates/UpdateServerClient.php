@@ -27,16 +27,6 @@ use WebBlocks\Cms\Support\Updates\Client\Support\Version\VersionResolver;
  */
 class UpdateServerClient
 {
-  private const RELEASE_DETAIL_GROUPS = [
-    'highlights' => 'Highlights',
-    'fixes' => 'Fixes',
-    'compatibility_notes' => 'Compatibility notes',
-    'migration_notes' => 'Migration notes',
-    'asset_notes' => 'Asset notes',
-    'operator_notes' => 'Operator notes',
-    'technical_notes' => 'Technical notes',
-  ];
-
   public function __construct(
     private readonly VersionResolver $versions,
     private readonly TelemetryProvider $telemetry,
@@ -393,102 +383,7 @@ class UpdateServerClient
 
   private function normalizeReleaseDetails(array $release): array
   {
-    $title = $this->releaseTextValue($release, 'title');
-    $summary = $this->releaseTextValue($release, 'summary');
-    $fallbackNotes = $this->releaseNoteItems(Arr::get($release, 'release_notes'));
-    $groups = [];
-
-    foreach (self::RELEASE_DETAIL_GROUPS as $key => $label) {
-      $items = $this->releaseNoteItems($this->releaseValue($release, $key));
-
-      if ($items !== []) {
-        $groups[] = [
-          'key' => $key,
-          'label' => $label,
-          'items' => $items,
-        ];
-      }
-    }
-
-    $engineNote = sprintf(
-      'Installed update engine: Publisher Client %s (%s).',
-      PublisherClient::VERSION,
-      (string) config('publisher-client.distribution', 'composer'),
-    );
-    $technicalIndex = array_search('technical_notes', array_column($groups, 'key'), true);
-
-    if ($technicalIndex === false) {
-      $groups[] = [
-        'key' => 'technical_notes',
-        'label' => self::RELEASE_DETAIL_GROUPS['technical_notes'],
-        'items' => [$engineNote],
-      ];
-    } else {
-      $groups[$technicalIndex]['items'][] = $engineNote;
-    }
-
-    if ($summary === null && $groups === [] && $fallbackNotes !== []) {
-      $summary = array_shift($fallbackNotes);
-    }
-
-    return [
-      'title' => $title,
-      'summary' => $summary,
-      'groups' => $groups,
-      'fallback_notes' => $fallbackNotes,
-      'has_notes' => $title !== null || $summary !== null || $groups !== [] || $fallbackNotes !== [],
-    ];
-  }
-
-  private function releaseTextValue(array $release, string $key): ?string
-  {
-    $value = $this->releaseValue($release, $key);
-
-    if (! is_string($value)) {
-      return null;
-    }
-
-    $value = trim($value);
-
-    return $value !== '' ? $value : null;
-  }
-
-  private function releaseValue(array $release, string $key): mixed
-  {
-    foreach (['release_details.'.$key, 'details.'.$key, 'meta.release_details.'.$key, 'meta.details.'.$key, $key] as $path) {
-      if (Arr::has($release, $path)) {
-        return Arr::get($release, $path);
-      }
-    }
-
-    return null;
-  }
-
-  private function releaseNoteItems(mixed $value): array
-  {
-    if (is_string($value)) {
-      return collect(preg_split('/\r\n|\r|\n/', $value) ?: [])
-        ->map(fn ($line) => $this->cleanReleaseNoteLine((string) $line))
-        ->filter()
-        ->values()
-        ->all();
-    }
-
-    if (! is_array($value)) {
-      return [];
-    }
-
-    return collect($value)
-      ->flatMap(fn ($item) => $this->releaseNoteItems($item))
-      ->map(fn ($line) => $this->cleanReleaseNoteLine((string) $line))
-      ->filter()
-      ->values()
-      ->all();
-  }
-
-  private function cleanReleaseNoteLine(string $line): string
-  {
-    return trim((string) preg_replace('/^\s*(?:[-*]|\d+[.)])\s+/', '', trim($line)));
+    return ReleaseDetails::normalize($release);
   }
 
   private function determineCompatibility(string $installedVersion, array $release): array

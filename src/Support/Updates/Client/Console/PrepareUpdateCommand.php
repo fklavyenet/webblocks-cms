@@ -147,6 +147,17 @@ final class PrepareUpdateCommand extends Command
             return null;
         }
 
+        $section = [];
+        foreach (array_slice($lines, $headingStart + 1) as $line) {
+            if (preg_match('/^(#{1,6})\s/', $line, $m) === 1 && strlen($m[1]) <= $headingLevel) { break; }
+            $section[] = $line;
+        }
+        $concise = \WebBlocks\Cms\Support\Updates\Client\Updates\ReleaseNotes::conciseSection(implode("\n", $section));
+        if ($concise !== null) {
+            $bullets = \WebBlocks\Cms\Support\Updates\Client\Updates\ReleaseNotes::bullets($concise);
+            if ($bullets === []) { throw new \RuntimeException('The Release notes section must contain concise bullet notes.'); }
+            return implode("\n", array_map(static fn ($item) => '- '.$item, $bullets));
+        }
         $body = [];
 
         foreach (array_slice($lines, $headingStart + 1) as $line) {

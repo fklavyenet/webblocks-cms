@@ -25,6 +25,12 @@ class RunHeartbeat
 
   public function beat(): void
   {
+    try {
+      app(\WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter::class)->beat();
+    } catch (\Throwable) {
+      // A broken progress journal must not abort backup copy or recovery streams.
+      // Lock liveness remains independent; a missing progress beat stays unconfirmed.
+    }
     $now = microtime(true);
 
     if ($now - $this->lastBeatAt < $this->throttleSeconds()) {

@@ -42,7 +42,7 @@ class SystemUpdatesScreenTest extends TestCase
 
     // One-click update button (no confirm step) + microcopy + backup advisory link.
     $this->assertStringContainsString('Update to 1.41.0', $html);
-    $this->assertStringContainsString('data-wb-update-form', $html);
+    $this->assertStringContainsString('data-pc-update-form', $html);
     $this->assertStringContainsString('Backed up first · restored automatically on failure', $html);
     $this->assertStringContainsString('open the Backups screen', $html);
     $this->assertStringContainsString(route('admin.system.backups.index'), $html);
@@ -55,7 +55,7 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertStringContainsString('wb-list-item', $html);
 
     // Progress modal wired to the indicator poll.
-    $this->assertStringContainsString('data-webblocks-update-progress-modal', $html);
+    $this->assertStringContainsString('data-pc-update-modal', $html);
     $this->assertStringContainsString(route('admin.system.updates.indicator'), $html);
     $this->assertStringContainsString('Updating to 1.41.0', $html);
 
@@ -85,8 +85,8 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertStringContainsString('<h4 class="wb-text-sm"><strong>Highlights</strong></h4>', $html);
 
     // No update action in this state.
-    $this->assertStringNotContainsString('data-wb-update-form', $html);
-    $this->assertStringNotContainsString('data-webblocks-update-progress-modal', $html);
+    $this->assertStringNotContainsString('data-pc-update-form', $html);
+    $this->assertStringNotContainsString('data-pc-update-modal', $html);
 
     // No recorded runs → the history accordion is not rendered at all.
     $this->assertStringNotContainsString('Update history', $html);
@@ -112,7 +112,7 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertStringContainsString('data-webblocks-updates-preflight', $html);
     $this->assertStringContainsString('Preflight checks need attention', $html);
     $this->assertStringContainsString('Only 100 MB free; at least 500 MB is required.', $html);
-    $this->assertStringNotContainsString('data-wb-update-form', $html);
+    $this->assertStringNotContainsString('data-pc-update-form', $html);
   }
 
   private function renderScreen(array $report, $runs): string

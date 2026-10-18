@@ -111,6 +111,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as ClientInstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner as ClientPostApplyRunner;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder as ClientRunRecorder;
 use WebBlocks\Cms\Support\Updates\Client\EmbeddedRuntimeServiceProvider;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
@@ -123,6 +124,7 @@ use WebBlocks\Cms\Support\Updates\CmsClientInstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\CmsClientPostApplyRunner;
 use WebBlocks\Cms\Support\Updates\CmsClientRunRecorder;
 use WebBlocks\Cms\Support\Updates\CmsClientSystemUpdater;
+use WebBlocks\Cms\Support\Updates\CmsProgressReporter;
 use WebBlocks\Cms\Support\Updates\CmsRuntimeAssetSynchronizer;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -906,6 +908,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->bind(ClientInstalledVersionStore::class, CmsClientInstalledVersionStore::class);
     $this->app->bind(ClientPostApplyRunner::class, CmsClientPostApplyRunner::class);
     $this->app->singleton(CmsUpdateProgress::class);
+    $this->app->singleton(ProgressReporter::class, CmsProgressReporter::class);
     $this->app->singleton(CmsPackageRollback::class);
     $this->app->bind(UpdatePackageDownloader::class, CmsUpdateDownloader::class);
     $this->app->bind(UpdatePackageExtractor::class, CmsUpdateExtractor::class);

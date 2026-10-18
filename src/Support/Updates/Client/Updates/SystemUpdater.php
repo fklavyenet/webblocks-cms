@@ -61,6 +61,7 @@ class SystemUpdater
     private readonly SystemUpdateRunOutputSanitizer $sanitizer,
     private readonly RunHeartbeat $heartbeat,
     private readonly AdminUpdateIndicator $indicator,
+    private readonly ?\WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter $progress = null,
   ) {}
 
   public function run(?int $userId = null): UpdateResult
@@ -88,6 +89,8 @@ class SystemUpdater
     $toVersion = $fromVersion;
 
     try {
+      $this->reporter()->beginRun();
+      $this->reporter()->phase('check');
       $check = $this->client->check();
       $release = $check->release;
 
@@ -117,6 +120,7 @@ class SystemUpdater
 
       if ((bool) config('publisher-client.backup.enabled', true)) {
         $label = sprintf('Pre-update backup before %s -> %s', $fromVersion, $toVersion);
+        $this->reporter()->phase('filesystem_backup');
         $backupHandle = $this->backupManager->create($label, $userId);
         $output[] = $backupHandle !== null
           ? 'Pre-update backup created.'
@@ -127,13 +131,16 @@ class SystemUpdater
       $workspace = $this->workspaceManager->create();
       $output[] = 'Workspace ready at '.$workspace['root'];
 
+      $this->reporter()->phase('download');
       $this->downloader->download($downloadUrl, $workspace['archive']);
       $output[] = 'Package downloaded.';
       $this->heartbeat->beat();
 
+      $this->reporter()->phase('verify');
       $warningCount += $this->verifyChecksum($workspace['archive'], $release, $output);
       $this->signatureVerifier->verify((string) ($release['checksum_sha256'] ?? ''), $release, $output);
 
+      $this->reporter()->phase('extract');
       $stagedRoot = $this->extractor->extract($workspace['archive'], $workspace['extract']);
       $output[] = 'Package extracted.';
       $this->heartbeat->beat();
@@ -143,6 +150,7 @@ class SystemUpdater
       $this->enterMaintenance($commandDir, $output);
       $maintenanceEnabled = true;
 
+      $this->reporter()->phase('apply');
       $applyResult = $this->applyStrategy->apply($stagedRoot);
       $warningCount += $this->mergeStrategyOutput($applyResult, $output);
       $this->heartbeat->beat();
@@ -150,9 +158,11 @@ class SystemUpdater
       $this->composerMetadata->synchronize($commandDir, $output);
       $this->heartbeat->beat();
 
+      $this->reporter()->phase('post_apply');
       $this->postApplyRunner->run($commandDir, $output);
       $this->heartbeat->beat();
 
+      $this->reporter()->phase('verify_version');
       $warningCount += $this->verifyAppliedVersion($toVersion, $output);
 
       $this->leaveMaintenance($commandDir, $output);
@@ -190,6 +200,7 @@ class SystemUpdater
       $this->runRecorder->finish($runRef, $status, $summary, $outputText, $warningCount, $durationMs);
       $this->runRecorder->prune();
       $this->composerMetadata->commit();
+      $this->reporter()->endRun($status);
 
       Log::info('Publisher client update completed.', [
         'from_version' => $fromVersion,
@@ -211,13 +222,15 @@ class SystemUpdater
         preUpdateBackup: $backupHandle,
       );
     } catch (Throwable $throwable) {
+      $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
       $this->composerMetadata->rollback($output);
 
       if ($maintenanceEnabled) {
         try {
-          $this->leaveMaintenance(base_path(), $output);
+          $this->leaveMaintenance(base_path(), $output, recovering: true);
           $output[] = 'Maintenance mode recovered after failure.';
         } catch (Throwable $recovery) {
+          $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
           $output[] = 'Maintenance recovery failed: '.$recovery->getMessage();
         }
       }
@@ -230,13 +243,16 @@ class SystemUpdater
 
       if ($backupHandle !== null) {
         try {
+          $this->recordRecoveryProgress(fn () => $this->reporter()->phase('rollback'));
           if ($this->backupManager->restore($backupHandle)) {
             $status = RunStatus::RESTORED;
             $output[] = 'Pre-update backup restored after failure.';
           } else {
+            $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
             $output[] = 'Pre-update backup restore did not complete.';
           }
         } catch (Throwable $restore) {
+          $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
           $output[] = 'Pre-update backup restore failed: '.$restore->getMessage();
         }
       }
@@ -264,6 +280,7 @@ class SystemUpdater
         'error' => $failure->getMessage(),
       ]);
 
+      $this->recordRecoveryProgress(fn () => $this->reporter()->endRun($status));
       throw $failure;
     } finally {
       $this->workspaceManager->cleanup($workspace['root'] ?? null);
@@ -407,6 +424,7 @@ class SystemUpdater
       return;
     }
 
+    $this->reporter()->phase('maintenance_down');
     $this->commandRunner->run(
       $this->commandRunner->artisanCommand(['down', '--render=errors::503']),
       $commandDir,
@@ -414,12 +432,17 @@ class SystemUpdater
     );
   }
 
-  private function leaveMaintenance(string $commandDir, array &$output): void
+  private function leaveMaintenance(string $commandDir, array &$output, bool $recovering = false): void
   {
     if (! (bool) config('publisher-client.apply.maintenance_mode', true)) {
       return;
     }
 
+    if ($recovering) {
+      $this->recordRecoveryProgress(fn () => $this->reporter()->phase('maintenance_up'));
+    } else {
+      $this->reporter()->phase('maintenance_up');
+    }
     $this->commandRunner->run($this->commandRunner->artisanCommand(['up']), $commandDir, $output);
   }
 
@@ -448,6 +471,19 @@ class SystemUpdater
     }
 
     return $version;
+  }
+
+  /** Observability failure must never prevent maintenance recovery or backup restoration. */
+  private function recordRecoveryProgress(callable $record): void
+  {
+    try { $record(); } catch (Throwable) {
+      // Recovery must continue even when the journal and log storage are unavailable.
+    }
+  }
+
+  private function reporter(): \WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter
+  {
+    return $this->progress ?? app(\WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter::class);
   }
 
   private function lockName(): string

@@ -58,6 +58,8 @@ final class EmbeddedRuntimeServiceProvider extends ServiceProvider
 
         $this->app->bind(BackupManager::class, FilesystemBackupManager::class);
         $this->app->singleton(RunHeartbeat::class);
+        $this->app->singleton(\WebBlocks\Cms\Support\Updates\Client\Updates\UpdateProgress::class);
+        $this->app->singleton(\WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter::class, fn ($app) => $app->make(\WebBlocks\Cms\Support\Updates\Client\Updates\UpdateProgress::class));
         $this->app->bind(RunRecorder::class, FileRunRecorder::class);
         $this->app->bind(InstalledVersionStore::class, NullInstalledVersionStore::class);
         $this->app->bind(PostApplyRunner::class, MigratingPostApplyRunner::class);
@@ -65,6 +67,7 @@ final class EmbeddedRuntimeServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        \WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets::register();
         $this->loadViewsFrom(__DIR__.'/Resources/views', 'publisher-client');
         $this->loadTranslationsFrom(__DIR__.'/Resources/lang', 'publisher-client');
 

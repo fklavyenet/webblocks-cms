@@ -22,6 +22,9 @@ use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 
 return [
 
+    // The host owns authenticated, authorized routes to the reference controller.
+    'progress' => ['indicator_route' => null, 'return_route' => null],
+
     // How this runtime entered the product. Embedded consumers override this
     // in EmbeddedRuntimeServiceProvider; Composer installs keep this default.
     'distribution' => 'composer',

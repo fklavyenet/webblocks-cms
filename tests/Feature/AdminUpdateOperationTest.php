@@ -24,6 +24,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter;
 use WebBlocks\Cms\Support\Updates\Client\Updates\RunHeartbeat;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCheckResult;
@@ -52,6 +53,39 @@ class AdminUpdateOperationTest extends TestCase
       'target_version' => WebBlocks::version(), 'checksum_sha256' => str_repeat('a', 64),
       'status' => 'queued', 'started_at' => now(),
     ], $attributes));
+  }
+
+  public function test_shared_reporter_exposes_durable_step_durations_and_failure_state(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'heartbeat_at' => now()]);
+    $run = SystemUpdateRun::create(['from_version' => '1.0.0', 'to_version' => WebBlocks::version(), 'status' => 'running', 'started_at' => now()]);
+    $progress = app(CmsUpdateProgress::class);
+    $progress->operation($operation->id);
+    $progress->start($run);
+    $this->freezeTime();
+    $reporter = app(ProgressReporter::class);
+    $reporter->phase('download');
+    $this->travel(2)->seconds();
+    $reporter->phase('verify');
+    $reporter->phase('verify');
+    $this->travel(3)->seconds();
+    $reporter->failStep();
+    Cache::flush();
+    $payload = $progress->payload($operation->id);
+    $this->assertSame(['download', 'verify'], array_column($payload['steps'], 'phase'));
+    $this->assertSame([2000, 3000], array_column($payload['steps'], 'elapsed_ms'));
+    $this->assertSame(['complete', 'failed'], array_column($payload['steps'], 'state'));
+    $reporter->endRun('success');
+    $this->assertFalse($progress->payload($operation->id)['terminal']);
+    $progress->completed('failed', 'Synthetic failure.');
+    $this->assertSame(__('publisher-client::updates.progress.failure_message'), $progress->payload($operation->id)['message']);
+    foreach (['fresh', 'updates'] as $folder) {
+      $migration = require dirname(__DIR__, 2).'/database/migrations/'.$folder.'/2026_10_18_200000_add_state_to_update_run_steps.php';
+      $migration->up();
+      $migration->up();
+      $migration->down();
+    }
+    $this->assertSame('failed', $progress->payload($operation->id)['steps'][1]['state']);
   }
 
   public function test_schema_migration_is_repeatable_and_keeps_receipts(): void

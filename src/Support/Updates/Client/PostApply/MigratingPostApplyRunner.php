@@ -26,6 +26,7 @@ class MigratingPostApplyRunner extends ConfiguredCommandsPostApplyRunner
     // Full-root source-only apps refresh vendor/ + the autoloader from the new
     // lock before anything boots the updated code (migrations, artisan commands).
     if ((bool) config('publisher-client.apply.composer_install', false)) {
+      app(\WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter::class)->phase('dependencies');
       $args = config('publisher-client.apply.composer_install_args', ['install', '--no-interaction']);
       $this->commandRunner()->run(
         $this->commandRunner()->composerCommand(is_array($args) ? $args : ['install']),
@@ -35,6 +36,7 @@ class MigratingPostApplyRunner extends ConfiguredCommandsPostApplyRunner
     }
 
     if ((bool) config('publisher-client.migrations.enabled', true)) {
+      app(\WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter::class)->phase('migrations');
       $this->migrationRunner->run($commandDir, $output);
     }
 

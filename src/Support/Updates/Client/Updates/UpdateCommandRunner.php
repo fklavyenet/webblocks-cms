@@ -21,6 +21,11 @@ class UpdateCommandRunner
 
   public function run(array $command, string $workingDirectory, array &$output): void
   {
+    $artisan = array_search('artisan', $command, true);
+    $name = $artisan !== false ? ($command[$artisan + 1] ?? '') : '';
+    if (in_array($name, ['optimize:clear', 'optimize', 'config:clear', 'config:cache', 'route:clear', 'route:cache', 'view:clear', 'view:cache', 'event:clear', 'event:cache'], true)) {
+      app(\WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter::class)->phase('cache');
+    }
     $output[] = '$ '.$this->formatCommand($command);
 
     // Long subprocesses (composer install, migrations) are exactly where a

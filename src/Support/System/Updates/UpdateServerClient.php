@@ -7,21 +7,11 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
-use WebBlocks\Cms\Support\Updates\Client\PublisherClient;
+use WebBlocks\Cms\Support\Updates\Client\Updates\ReleaseDetails;
 use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 
 class UpdateServerClient
 {
-  private const RELEASE_DETAIL_GROUPS = [
-    'highlights' => 'Highlights',
-    'fixes' => 'Fixes',
-    'compatibility_notes' => 'Compatibility notes',
-    'migration_notes' => 'Migration notes',
-    'asset_notes' => 'Asset notes',
-    'operator_notes' => 'Operator notes',
-    'technical_notes' => 'Technical notes',
-  ];
-
   public function __construct(
     private readonly InstalledVersionStore $installedVersionStore,
     private readonly InstallationTelemetry $installationTelemetry,
@@ -384,125 +374,7 @@ class UpdateServerClient
 
   private function normalizeReleaseDetails(array $release): array
   {
-    $title = $this->releaseTextValue($release, 'title');
-    $summary = $this->releaseTextValue($release, 'summary');
-    $fallbackNotes = $this->releaseNoteItems(Arr::get($release, 'release_notes'));
-    $groups = [];
-
-    foreach (self::RELEASE_DETAIL_GROUPS as $key => $label) {
-      $items = $this->releaseNoteItems($this->releaseValue($release, $key));
-
-      // A single-bullet release sets summary and highlights from the same
-      // changelog line. The summary already shows in the trigger, so drop any
-      // group item that merely repeats it — otherwise it renders twice.
-      if ($summary !== null) {
-        $items = array_values(array_filter(
-          $items,
-          fn (string $item): bool => ! $this->sameText($item, $summary)
-        ));
-      }
-
-      if ($items !== []) {
-        $groups[] = [
-          'key' => $key,
-          'label' => $label,
-          'items' => $items,
-        ];
-      }
-    }
-
-    if ($summary !== null || $groups !== []) {
-      // Structured details are present; `release_notes` is the raw, unstructured
-      // duplicate of the same content, so it must not render a second time.
-      $fallbackNotes = [];
-    } elseif ($fallbackNotes !== []) {
-      // Degraded payload with only raw notes: promote the first line to the
-      // summary and keep the remainder as fallback body copy.
-      $summary = array_shift($fallbackNotes);
-    }
-
-    if ($title !== null || $summary !== null || $groups !== [] || $fallbackNotes !== []) {
-      $engineNote = sprintf(
-        'Installed update engine: Publisher Client %s (%s).',
-        PublisherClient::VERSION,
-        (string) config('publisher-client.distribution', 'embedded'),
-      );
-      $technicalIndex = array_search('technical_notes', array_column($groups, 'key'), true);
-
-      if ($technicalIndex === false) {
-        $groups[] = [
-          'key' => 'technical_notes',
-          'label' => self::RELEASE_DETAIL_GROUPS['technical_notes'],
-          'items' => [$engineNote],
-        ];
-      } else {
-        $groups[$technicalIndex]['items'][] = $engineNote;
-      }
-    }
-
-    return [
-      'title' => $title,
-      'summary' => $summary,
-      'groups' => $groups,
-      'fallback_notes' => $fallbackNotes,
-      'has_notes' => $title !== null || $summary !== null || $groups !== [] || $fallbackNotes !== [],
-    ];
-  }
-
-  private function releaseTextValue(array $release, string $key): ?string
-  {
-    $value = $this->releaseValue($release, $key);
-
-    if (! is_string($value)) {
-      return null;
-    }
-
-    $value = trim($value);
-
-    return $value !== '' ? $value : null;
-  }
-
-  private function releaseValue(array $release, string $key): mixed
-  {
-    foreach (['release_details.'.$key, 'details.'.$key, 'meta.release_details.'.$key, 'meta.details.'.$key, $key] as $path) {
-      if (Arr::has($release, $path)) {
-        return Arr::get($release, $path);
-      }
-    }
-
-    return null;
-  }
-
-  private function releaseNoteItems(mixed $value): array
-  {
-    if (is_string($value)) {
-      return collect(preg_split('/\r\n|\r|\n/', $value) ?: [])
-        ->map(fn ($line) => $this->cleanReleaseNoteLine((string) $line))
-        ->filter()
-        ->values()
-        ->all();
-    }
-
-    if (! is_array($value)) {
-      return [];
-    }
-
-    return collect($value)
-      ->flatMap(fn ($item) => $this->releaseNoteItems($item))
-      ->map(fn ($line) => $this->cleanReleaseNoteLine((string) $line))
-      ->filter()
-      ->values()
-      ->all();
-  }
-
-  private function cleanReleaseNoteLine(string $line): string
-  {
-    return trim((string) preg_replace('/^\s*(?:[-*]|\d+[.)])\s+/', '', trim($line)));
-  }
-
-  private function sameText(string $a, string $b): bool
-  {
-    return mb_strtolower(trim($a)) === mb_strtolower(trim($b));
+    return ReleaseDetails::normalize($release);
   }
 
   private function determineCompatibility(string $installedVersion, array $release): array

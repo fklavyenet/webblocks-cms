@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+## 1.104.3
+
+- Show recorded update steps, total elapsed time and per-step durations with Publisher Client 1.2.0.
+- Present concise release notes without repeated summaries or raw-note copies.
+- Preserve approved SQL operations, verified backups and recovery receipts; refresh status without submitting another update.
+- Run the additive step-state migration through the normal package update; detailed procedures remain in the Updates handbook.
+
 ## 1.104.2
 
 - Simplify Contact Message details while preserving the Visitor message table: combine submission, notification and spam information in a collapsed Technical details section.

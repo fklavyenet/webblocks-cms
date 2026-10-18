@@ -72,3 +72,7 @@ legacy `docs/LICENSE` packages and prefers root `LICENSE` when both are present.
 
 Installations using a pre-1.89.1 updater must first install the 1.89.1 bridge
 release, or upgrade through Composer, before applying current Publisher packages.
+
+## 1.104.3 — shared update progress
+
+Version 1.104.3 includes released Publisher Client 1.2.0 sources and an additive nullable `state` column on SQL update steps. Run the normal package update migrations; the migration is repeatable and preserves receipts on rollback. Earlier schemas remain readable. CMS keeps its existing approved asynchronous operation admission and SQL backup/recovery tracking. The modal uses the shared external asset and lists reached steps with durations; a matching terminal operation and installed-version verification are still required. Refresh an active update to resume its operation, or recheck status without resubmitting the update. Detailed procedures stay in the Updates handbook. Publishing this release does not update live installations.

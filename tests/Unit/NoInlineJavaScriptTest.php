@@ -46,7 +46,6 @@ class NoInlineJavaScriptTest extends TestCase
       'navigation-form.js' => 'admin/navigation/_form.blade.php',
       'site-export-page-picker.js' => 'admin/site-transfers/partials/export-modal.blade.php',
       'site-import.js' => 'admin/site-transfers/imports/show.blade.php',
-      'system-update.js' => 'admin/system/updates.blade.php',
     ];
 
     foreach ($assets as $asset => $view) {
@@ -56,6 +55,9 @@ class NoInlineJavaScriptTest extends TestCase
         (string) file_get_contents($root.'/resources/views/'.$view)
       );
     }
+    $this->assertFileExists($root.'/src/Support/Updates/Client/Resources/js/update-progress.js');
+    $this->assertStringContainsString('ProgressAssets::url()', (string) file_get_contents($root.'/resources/views/admin/system/updates.blade.php'));
+
   }
 
   #[Test]

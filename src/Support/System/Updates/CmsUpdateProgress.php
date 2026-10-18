@@ -54,18 +54,23 @@ class CmsUpdateProgress
     if ($this->runId === null || ! Schema::hasTable('wbcms_system_update_run_steps')) {
       return;
     }
+    $existing = DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $this->runId)->whereNull('finished_at')->first();
+    if ($existing && $existing->stage === $stage) {
+    return;
+    }
     $this->finish();
     DB::table('wbcms_system_update_run_steps')->insert(['system_update_run_id' => $this->runId, 'stage' => $stage, 'started_at' => now()->format('Y-m-d H:i:s.v'), 'finished_at' => null, 'duration_ms' => null]);
   }
 
-  public function finish(): void
+  public function finish(string $state = 'complete'): void
   {
     if ($this->runId === null || ! Schema::hasTable('wbcms_system_update_run_steps')) {
       return;
     }
     $step = DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $this->runId)->whereNull('finished_at')->first();
     if ($step !== null) {
-      DB::table('wbcms_system_update_run_steps')->where('id', $step->id)->update(['finished_at' => now()->format('Y-m-d H:i:s.v'), 'duration_ms' => max(0, (int) Carbon::parse($step->started_at)->diffInMilliseconds(now()))]);
+      $extra = Schema::hasColumn('wbcms_system_update_run_steps', 'state') ? ['state' => $state] : [];
+      DB::table('wbcms_system_update_run_steps')->where('id', $step->id)->update($extra + ['finished_at' => now()->format('Y-m-d H:i:s.v'), 'duration_ms' => max(0, (int) Carbon::parse($step->started_at)->diffInMilliseconds(now()))]);
     }
   }
 
@@ -126,11 +131,20 @@ class CmsUpdateProgress
 
     return [
       'state' => $state, 'running' => $active && $alive, 'terminal' => $terminal,
+      'message' => __('publisher-client::updates.progress.'.($state === 'failed' ? 'failure_message' : ($state === 'queued' ? 'running' : $state))),
       'operation_id' => $operation?->id, 'run_id' => $run?->id,
       'target_version' => $operation?->target_version ?? $run?->to_version,
       'installed_version' => $this->installedVersion($terminal),
       'duration_ms' => $run?->duration_ms,
       'elapsed_ms' => $run?->duration_ms ?? ($started ? max(0, (int) $started->diffInMilliseconds($operation?->finished_at ?? $run?->finished_at ?? now())) : null),
+      'steps' => $run && Schema::hasTable('wbcms_system_update_run_steps') ? DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $run->id)->orderBy('id')->get()->map(function ($row) use ($state, $terminal, $operation, $run): array {
+        $labelKey = 'webblocks-cms::admin.updates.phases.'.$row->stage;
+        $sharedKey = 'publisher-client::updates.phases.'.$row->stage;
+
+        return ['phase' => $row->stage, 'label' => trans()->has($labelKey) ? __($labelKey) : (trans()->has($sharedKey) ? __($sharedKey) : __('publisher-client::updates.progress.step_running')),
+          'state' => $row->state ?? ($row->finished_at ? 'complete' : ($state === 'interrupted' ? 'interrupted' : ($terminal ? 'failed' : 'running'))),
+          'elapsed_ms' => $row->duration_ms ?? max(0, (int) Carbon::parse($row->started_at)->diffInMilliseconds($operation?->finished_at ?? $run?->finished_at ?? now()))];
+      })->all() : [],
       'stage' => $step?->stage,
       'stage_label' => $step?->stage ? __('webblocks-cms::admin.updates.phases.'.$step->stage) : null,
     ];

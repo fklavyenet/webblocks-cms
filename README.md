@@ -146,3 +146,5 @@ through OpenAI ChatGPT, with limited contributions from Anthropic Claude.
 WebBlocks CMS is open-source software licensed under the [MIT License](LICENSE).
 
 Documentation source is maintained independently in the `webblocks-cms-docs` repository. This product repository contains no documentation publishing tree. The public documentation site is a publication target; it does not define the canonical source.
+
+System Updates uses the shared Publisher Client progress modal with recorded step durations and elapsed time. CMS retains SQL operation admission, backups and recovery receipts; release summaries and raw notes are not rendered twice. Publisher availability and installation remain separate; publishing does not update an installed application.
