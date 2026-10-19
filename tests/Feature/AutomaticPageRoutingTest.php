@@ -414,10 +414,12 @@ class AutomaticPageRoutingTest extends TestCase
     [$site, $page, $rule] = $this->prepared();
     $this->activate($rule);
     $english = Locale::where('code', 'en')->firstOrFail();
+    // Equal recency keeps this pagination fixture ordered by its title tie-breaker.
+    $indexedAt = now()->toDateTimeString();
     foreach (range(1, 4) as $number) {
       $native = Page::create(['site_id' => $site->id, 'slug' => 'native-'.$number, 'status' => 'published']);
       $native->translations()->create(['site_id' => $site->id, 'locale_id' => $english->id, 'name' => 'Onlyen '.$number, 'slug' => 'native-'.$number, 'path' => '/native-'.$number]);
-      PublicSearchIndex::updateOrCreate(['page_id' => $native->id, 'locale_id' => $english->id], ['site_id' => $site->id, 'title' => 'Onlyen '.$number, 'content' => 'Native', 'url' => '/native-'.$number, 'indexed_at' => now()]);
+      PublicSearchIndex::updateOrCreate(['page_id' => $native->id, 'locale_id' => $english->id], ['site_id' => $site->id, 'title' => 'Onlyen '.$number, 'content' => 'Native', 'url' => '/native-'.$number, 'indexed_at' => $indexedAt]);
     }
     $urls = [];
     foreach (range(1, 3) as $number) {
