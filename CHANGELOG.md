@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.2
+
+- Align role creation, editing and copying with the API Tokens form layout, using grouped operation permissions and live selection counts.
+- Match built-in role detail modals to the API Tokens modal layout with contextual titles, grouped read-only permissions and standard actions.
+- Preserve cleared selections after validation errors and retain existing role grants, authorization checks and plugin permissions.
+
 ## 1.105.1
 
 - Align Roles and permissions with the shared CMS list layout, including search, role-type filters, independent pagination, clear empty states and read-only detail modals.

@@ -2,7 +2,12 @@
     var SCOPE_SELECTOR = '[data-wb-capability-scope]';
 
     function checkboxesIn(element) {
-        return Array.prototype.slice.call(element.querySelectorAll('input[type="checkbox"][name="capabilities[]"]'));
+        var scope = element.closest(SCOPE_SELECTOR);
+        var field = scope && scope.getAttribute('data-wb-capability-field') || 'capabilities[]';
+
+        return Array.prototype.slice.call(element.querySelectorAll('input[type="checkbox"]')).filter(function (checkbox) {
+            return checkbox.name === field;
+        });
     }
 
     function selectedCount(checkboxes) {
@@ -48,18 +53,18 @@
         Array.prototype.slice.call(document.querySelectorAll(SCOPE_SELECTOR)).forEach(refreshScope);
     }
 
-    // Delegated so the Create Token card and every Edit API Token modal are covered
+    // Delegated so token and role permission selectors are covered
     // by one listener, including modals rendered into the overlay root.
     document.addEventListener('change', function (event) {
         var target = event.target;
 
-        if (!target || target.type !== 'checkbox' || target.name !== 'capabilities[]') {
+        if (!target || target.type !== 'checkbox') {
             return;
         }
 
         var scope = target.closest(SCOPE_SELECTOR);
 
-        if (!scope) {
+        if (!scope || target.name !== (scope.getAttribute('data-wb-capability-field') || 'capabilities[]')) {
             return;
         }
 

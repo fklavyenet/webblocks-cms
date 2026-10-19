@@ -1,6 +1,12 @@
 <?php
 
 return [
+  'role_title' => 'Role: :name', 'copy_title' => 'Copy role: :name', 'delete_title' => 'Delete role: :name',
+  'permissions_selected' => ':selected of :total selected', 'permissions_granted' => ':count granted',
+  'permissions_readonly_help' => 'Granted operation permissions, grouped by area.',
+  'permissions_title' => 'Permissions', 'back_to_roles' => 'Back to roles',
+  'form_description' => 'Define a role and its operation permissions. Assign roles to users separately for each site.',
+  'permissions_empty' => 'No operation permissions granted', 'assignments_empty' => 'This role has no site assignments',
   'roles' => 'Roles', 'role_type' => 'Role type', 'built_in' => 'Built-in', 'all_types' => 'All role types',
   'search' => 'Search', 'search_placeholder' => 'Search role names or descriptions', 'apply' => 'Apply', 'reset' => 'Clear filters',
   'actions' => 'Actions', 'view_role' => 'View role', 'close' => 'Close',
