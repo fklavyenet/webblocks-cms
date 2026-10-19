@@ -31,6 +31,9 @@ $translations = [
   ],
 
   'navigation' => [
+    'content_tools' => 'İçerik Araçları',
+    'communication_analytics' => 'İletişim ve Analiz',
+    'users_access' => 'Kullanıcılar ve Erişim',
     'aria' => 'Yönetim gezinmesi',
     'toggle' => 'Gezinmeyi aç/kapat',
     'dashboard' => 'Pano',

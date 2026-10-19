@@ -87,25 +87,52 @@
 
             $menuItems = array_values(array_filter($menuItems, fn ($item) => app(\WebBlocks\Cms\Policies\CmsNavigationPolicy::class)->visible($user, $item['route'])));
 
+            $contentRoutes = ['admin.blocks.index', 'admin.dynamic-content.index', 'admin.shared-slots.index', 'admin.navigation.index'];
+            $audienceRoutes = ['admin.contact-messages.index', 'admin.engagement.index', 'admin.reports.visitors.index'];
+            $coreGroups = [
+                [
+                    'key' => 'content-tools',
+                    'label' => $adminText('navigation.content_tools'),
+                    'icon' => 'wb-icon-blocks',
+                    'items' => array_values(array_filter($menuItems, fn ($item) => in_array($item['route'], $contentRoutes, true))),
+                ],
+                [
+                    'key' => 'audience',
+                    'label' => $adminText('navigation.communication_analytics'),
+                    'icon' => 'wb-icon-bar-chart',
+                    'items' => array_values(array_filter($menuItems, fn ($item) => in_array($item['route'], $audienceRoutes, true))),
+                ],
+                [
+                    'key' => 'access',
+                    'label' => $adminText('navigation.users_access'),
+                    'icon' => 'wb-icon-users',
+                    'items' => array_values(array_filter($menuItems, fn ($item) => $item['route'] === 'admin.access.roles.index')),
+                ],
+            ];
+            $menuItems = array_values(array_filter($menuItems, fn ($item) => in_array($item['route'], ['admin.dashboard', 'admin.sites.index', 'admin.pages.index', 'admin.media.index', 'admin.site-assets.index'], true)));
             $sidebarGroups = [];
 
             if ($user?->can('access-system')) {
+                $coreGroups[2]['items'] = [
+                    ['label' => $adminText('navigation.users'), 'route' => 'admin.users.index', 'active' => ['admin.users.*'], 'icon' => 'wb-icon-user-round'],
+                    ...$coreGroups[2]['items'],
+                    ['label' => $adminText('navigation.api_tokens'), 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*'], 'icon' => 'wb-icon-key-round'],
+                ];
+
                 $sidebarGroups[] = [
                     'key' => 'system',
                     'label' => $adminText('navigation.system'),
                     'icon' => 'wb-icon-palette',
                         'items' => [
-                            ['label' => $adminText('navigation.domains'), 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*']],
-                            ['label' => $adminText('navigation.icons'), 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*']],
-                            ['label' => $adminText('navigation.users'), 'route' => 'admin.users.index', 'active' => ['admin.users.*']],
-                            ['label' => $adminText('navigation.locales'), 'route' => 'admin.locales.index', 'active' => ['admin.locales.*']],
-                            ['label' => $adminText('navigation.page_layouts'), 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*']],
-                            ['label' => $adminText('navigation.slot_types'), 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
-                            ['label' => $adminText('navigation.block_types'), 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
-                            ['label' => $adminText('navigation.embedded_applications'), 'route' => 'admin.embedded-applications.index', 'active' => ['admin.embedded-applications.*']],
-                            ['label' => $adminText('navigation.settings'), 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
-                            ['label' => $adminText('navigation.api_tokens'), 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*']],
-                            ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*']],
+                            ['label' => $adminText('navigation.domains'), 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*'], 'icon' => 'wb-icon-globe'],
+                            ['label' => $adminText('navigation.icons'), 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*'], 'icon' => 'wb-icon-sparkles'],
+                            ['label' => $adminText('navigation.locales'), 'route' => 'admin.locales.index', 'active' => ['admin.locales.*'], 'icon' => 'wb-icon-languages'],
+                            ['label' => $adminText('navigation.page_layouts'), 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*'], 'icon' => 'wb-icon-layout'],
+                            ['label' => $adminText('navigation.slot_types'), 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*'], 'icon' => 'wb-icon-columns2'],
+                            ['label' => $adminText('navigation.block_types'), 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*'], 'icon' => 'wb-icon-box'],
+                            ['label' => $adminText('navigation.embedded_applications'), 'route' => 'admin.embedded-applications.index', 'active' => ['admin.embedded-applications.*'], 'icon' => 'wb-icon-square-terminal'],
+                            ['label' => $adminText('navigation.settings'), 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*'], 'icon' => 'wb-icon-settings'],
+                            ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*'], 'icon' => 'wb-icon-plug'],
                         ],
                     ];
 
@@ -114,17 +141,19 @@
                     'label' => $adminTranslator->get('system_health.navigation', $adminLocale),
                     'icon' => 'wb-icon-file',
                     'items' => [
-                        ['label' => $adminTranslator->get('system_health.title', $adminLocale), 'route' => 'admin.system.health.index', 'active' => ['admin.system.health.*']],
-                        ['label' => $adminText('navigation.search_rebuild'), 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*']],
-                        ['label' => $adminText('navigation.backups'), 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*']],
-                        ['label' => $adminText('navigation.cleanup'), 'route' => 'admin.system.cleanup.index', 'active' => ['admin.system.cleanup.*']],
-                        ['label' => $adminText('navigation.export_import'), 'route' => 'admin.site-transfers.exports.index', 'active' => ['admin.site-transfers.*']],
-                        ['label' => $adminText('navigation.update'), 'route' => 'admin.system.updates.index', 'active' => ['admin.system.updates.*']],
+                        ['label' => $adminTranslator->get('system_health.title', $adminLocale), 'route' => 'admin.system.health.index', 'active' => ['admin.system.health.*'], 'icon' => 'wb-icon-activity'],
+                        ['label' => $adminText('navigation.search_rebuild'), 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*'], 'icon' => 'wb-icon-search'],
+                        ['label' => $adminText('navigation.backups'), 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*'], 'icon' => 'wb-icon-database-backup'],
+                        ['label' => $adminText('navigation.cleanup'), 'route' => 'admin.system.cleanup.index', 'active' => ['admin.system.cleanup.*'], 'icon' => 'wb-icon-trash2'],
+                        ['label' => $adminText('navigation.export_import'), 'route' => 'admin.site-transfers.exports.index', 'active' => ['admin.site-transfers.*'], 'icon' => 'wb-icon-arrow-up-down'],
+                        ['label' => $adminText('navigation.update'), 'route' => 'admin.system.updates.index', 'active' => ['admin.system.updates.*'], 'icon' => 'wb-icon-download'],
                     ],
                 ];
             }
 
+            // Keep the established plugin buckets independent of the new core headings.
             $sidebarGroups = app(\WebBlocks\Cms\Support\Plugins\PluginSidebarGroups::class)->appendTo($sidebarGroups, $user, $adminLocale);
+            $sidebarGroups = array_values(array_filter([...$coreGroups, ...$sidebarGroups], fn ($group) => $group['items'] !== []));
 
             $matchesActiveRoute = static fn (array $item): bool => collect($item['active'] ?? [])->contains(
                 fn (string $pattern) => request()->routeIs($pattern)
@@ -239,7 +268,8 @@
                                         @if ($item['external'] ?? false) target="_blank" rel="noopener noreferrer" @endif
                                         @if ($matchesActiveRoute($item)) aria-current="page" @endif
                                     >
-                                        {{ $item['label'] }}
+                                        <i class="wb-icon {{ ($item['icon'] ?? null) ?: $group['icon'] }}" aria-hidden="true"></i>
+                                        <span>{{ $item['label'] }}</span>
                                     </a>
                                 @endforeach
                             </div>

@@ -1,5 +1,9 @@
 # Upgrading and Installation Topologies
 
+## Admin navigation and ACL screens in 1.105.1
+
+Version 1.105.1 reorganizes existing sidebar destinations and aligns the Roles and permissions listing with shared CMS controls. Dashboard, Sites, Pages, Media and Assets remain direct links. Users, Roles and permissions, and API Tokens are under Users & access. Grouped links show icons and the active destination's group opens automatically. Existing authorization checks, plugin groups, SQL role grants and API capabilities are unchanged; no new database migration is introduced. Installations overriding the admin layout or ACL index should review their view overrides.
+
 ## SQL roles and permissions in 1.105.0
 
 Run the normal package update migrations. Existing Site Admin and Editor site assignments are imported into protected SQL compatibility roles, and existing Super Admins receive a separate system membership. Existing rights are preserved, including Editor page deletion and moving published pages back to draft. Re-running the ACL migration does not restore revoked membership or grants.

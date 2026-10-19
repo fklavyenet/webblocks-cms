@@ -1,6 +1,16 @@
 <?php
 
 return [
+  'roles' => 'Roles', 'role_type' => 'Role type', 'built_in' => 'Built-in', 'all_types' => 'All role types',
+  'search' => 'Search', 'search_placeholder' => 'Search role names or descriptions', 'apply' => 'Apply', 'reset' => 'Clear filters',
+  'actions' => 'Actions', 'view_role' => 'View role', 'close' => 'Close',
+  'roles_empty' => 'No roles match these filters', 'roles_empty_help' => 'Try another search or clear the filters to see all roles.',
+  'history_description' => 'Role, permission and site assignment changes, newest first.',
+  'history_empty' => 'No access changes yet', 'history_empty_help' => 'Changes to roles, permissions and site assignments will appear here.',
+  'history_context' => 'Context', 'history_view' => 'View change', 'history_details' => 'Access change',
+  'role' => 'Role', 'permission' => 'Permission', 'before' => 'Previous value', 'after' => 'New value',
+  'unknown_actor' => 'Unknown actor', 'no_context' => 'No linked role, user or site',
+  'roles_pagination' => 'Roles pagination', 'history_pagination' => 'Access history pagination',
   'edit_locked' => 'Your role does not allow editing this page in its current state.',
   'events' => ['role_saved' => 'Role saved', 'permission_granted' => 'Permission granted', 'permission_revoked' => 'Permission removed', 'role_deleted' => 'Role deleted', 'assignment_changed' => 'Site role changed', 'user_access_saved' => 'User access saved', 'user_deleted' => 'User deleted'],
   'site_roles' => 'Per-site roles',

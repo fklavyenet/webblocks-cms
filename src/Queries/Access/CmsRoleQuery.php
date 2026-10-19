@@ -5,12 +5,23 @@ namespace WebBlocks\Cms\Queries\Access;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 
 final class CmsRoleQuery
 {
-  public function listing()
+  public function listing(array $filters = [])
   {
-    return CmsRole::query()->select('wbcms_acl_roles.*')->selectSub(DB::table('wbcms_site_user')->selectRaw('count(*)')->whereColumn('role_id', 'wbcms_acl_roles.id'), 'assignment_count')->orderByDesc('is_protected')->orderBy('name')->get();
+    return CmsRole::query()->select('wbcms_acl_roles.*')
+      ->selectSub(DB::table('wbcms_site_user')->selectRaw('count(*)')->whereColumn('role_id', 'wbcms_acl_roles.id'), 'assignment_count')
+      ->when(($filters['q'] ?? '') !== '', fn ($query) => $query->where(fn ($q) => $q->where('name', 'like', '%'.$filters['q'].'%')->orWhere('description', 'like', '%'.$filters['q'].'%')))
+      ->when($filters['type'] ?? '', fn ($query, $type) => $query->where('is_protected', $type === 'protected'))
+      ->orderByDesc('is_protected')->orderBy('name')->orderBy('id')
+      ->paginate(AdminPagination::perPage(), ['*'], 'roles_page')->withQueryString();
+  }
+
+  public function total(): int
+  {
+    return CmsRole::query()->count();
   }
 
   public function permissions(CmsRole $role): array
@@ -20,6 +31,6 @@ final class CmsRoleQuery
 
   public function history()
   {
-    return DB::table('wbcms_acl_events as e')->leftJoin('users as actor', 'actor.id', '=', 'e.actor_id')->leftJoin('users as target', 'target.id', '=', 'e.user_id')->leftJoin('wbcms_sites as site', 'site.id', '=', 'e.site_id')->leftJoin('wbcms_acl_roles as role', 'role.id', '=', 'e.role_id')->select('e.*', 'actor.name as actor_name', 'target.name as user_name', 'site.name as site_name', 'role.name as role_name')->orderByDesc('e.id')->paginate(30);
+    return DB::table('wbcms_acl_events as e')->leftJoin('users as actor', 'actor.id', '=', 'e.actor_id')->leftJoin('users as target', 'target.id', '=', 'e.user_id')->leftJoin('wbcms_sites as site', 'site.id', '=', 'e.site_id')->leftJoin('wbcms_acl_roles as role', 'role.id', '=', 'e.role_id')->select('e.*', 'actor.name as actor_name', 'target.name as user_name', 'site.name as site_name', 'role.name as role_name')->orderByDesc('e.id')->paginate(AdminPagination::perPage(), ['*'], 'history_page')->withQueryString();
   }
 }

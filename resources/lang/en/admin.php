@@ -77,6 +77,9 @@ return [
     'draft' => 'Draft',
   ],
   'navigation' => [
+    'content_tools' => 'Content tools',
+    'communication_analytics' => 'Contact & analytics',
+    'users_access' => 'Users & access',
     'aria' => 'Admin navigation',
     'toggle' => 'Toggle navigation',
     'dashboard' => 'Dashboard',

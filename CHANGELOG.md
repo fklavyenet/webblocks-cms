@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.1
+
+- Align Roles and permissions with the shared CMS list layout, including search, role-type filters, independent pagination, clear empty states and read-only detail modals.
+- Group sidebar destinations by task while keeping Dashboard, Sites, Pages, Media and Assets directly accessible; open the active destination's group automatically.
+- Restore icons on grouped links and add icons to every submenu, preserving existing authorization checks, plugin groups and declared plugin icons.
+
 ## 1.105.0
 
 - Add SQL-backed custom roles and per-site assignments with protected built-in compatibility grants and separate Super Admin membership.

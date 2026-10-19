@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Actions\Access\WriteCmsAccess;
+use WebBlocks\Cms\Http\Requests\Admin\CmsRoleIndexRequest;
 use WebBlocks\Cms\Http\Requests\Admin\CmsRoleRequest;
 use WebBlocks\Cms\Http\Requests\Admin\DeleteCmsRoleRequest;
 use WebBlocks\Cms\Models\CmsRole;
@@ -15,14 +16,23 @@ use WebBlocks\Cms\Policies\CmsRolePolicy;
 use WebBlocks\Cms\Queries\Access\CmsRoleQuery;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 
 class CmsRoleController extends Controller
 {
-  public function index(CmsRoleQuery $query)
+  public function index(CmsRoleIndexRequest $request, CmsRoleQuery $query)
   {
-    $this->authorize();
+    $filters = ['q' => trim((string) $request->validated('q', '')), 'type' => $request->validated('type', '') ?? ''];
+    $roles = $query->listing($filters);
+    $history = $query->history();
+    AdminPagination::redirectOutOfRange($roles, $request, 'roles_page');
+    AdminPagination::redirectOutOfRange($history, $request, 'history_page');
 
-    return view('webblocks-cms::admin.access.index', ['roles' => $query->listing(), 'history' => $query->history()]);
+    return view('webblocks-cms::admin.access.index', [
+      'roles' => $roles, 'history' => $history, 'filters' => $filters, 'totalCount' => $query->total(),
+      'permissions' => app(PermissionCatalog::class)->editable(),
+      'protectedRolePermissions' => $roles->getCollection()->where('is_protected', true)->mapWithKeys(fn (CmsRole $role) => [$role->id => $query->permissions($role)]),
+    ]);
   }
 
   public function create(Request $request, CmsRoleQuery $query)

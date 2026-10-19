@@ -31,6 +31,9 @@ $translations = [
   ],
 
   'navigation' => [
+    'content_tools' => 'Contenido y medios',
+    'communication_analytics' => 'Contacto y análisis',
+    'users_access' => 'Usuarios y acceso',
     'aria' => 'Navegación de administración',
     'toggle' => 'Alternar navegación',
     'dashboard' => 'Panel',
