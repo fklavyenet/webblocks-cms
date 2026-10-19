@@ -14,6 +14,10 @@ set -e
 # Move to repo root so the hook works regardless of where git invokes it.
 cd "$(git rev-parse --show-toplevel)"
 
+# CMS-only gate: preserve this block when re-syncing the shared hook template.
+echo "pre-push: check-node-dependencies"
+php tests/Support/check-node-dependencies.php
+
 # Plain `validate` (not --strict): --strict escalates the "version field is
 # present" recommendation to an error, but standard §11 mandates that field
 # (version is single-sourced from composer.json). Plain validate still fails on

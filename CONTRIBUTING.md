@@ -13,6 +13,7 @@ git clone https://github.com/fklavyenet/webblocks-cms.git
 cd webblocks-cms
 composer install --no-interaction --prefer-dist
 composer validate --strict
+php tests/Support/check-node-dependencies.php
 composer check-platform-reqs
 composer format:test
 composer test
@@ -27,6 +28,8 @@ Runtime code lives in `src/`; package configuration, migrations, assets, views, 
 The package CI exercises the source tree, exported distribution, current Laravel consumer, and Laravel `13.0.*` resolution floor. Its reusable checks live under `tests/Support/` and clean their temporary directories.
 
 PHPUnit checks the rendered System Updates screen and serves its shared progress asset through the real route. These checks run in CI and the local pre-push hook without Node.js. They do not execute browser JavaScript.
+
+The standalone PHP Node/npm guard runs before the long tests in pre-push and CI, without Composer dependencies. It checks Git-tracked and non-ignored untracked files for package manifests/lockfiles, Node configuration, CommonJS tools, literal Node/npm commands, declared CI/container runtimes and Node/bare-package JavaScript imports. It ignores installed Git-ignored dependencies and prose/comments; native browser JavaScript, relative/URL module imports and package exclusion lists remain valid. Findings name files and lines without printing command arguments. This is a static dependency guard, not an interpreter for dynamically constructed commands.
 
 ## Optional browser fixtures
 

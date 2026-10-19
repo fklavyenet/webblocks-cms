@@ -24,6 +24,8 @@ jobs:
           extensions: mbstring, sodium, zip, sqlite3, pdo_sqlite, fileinfo
           coverage: none
           tools: composer:v2
+      - name: No Node/npm dependencies
+        run: php tests/Support/check-node-dependencies.php
       - uses: actions/cache@v4
         with:
           path: ~/.composer/cache/files
