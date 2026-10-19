@@ -34,11 +34,6 @@ jobs:
       - run: composer audit
       - run: composer format:test
       - run: composer test
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Update UI behavior
-        run: node tests/Support/check-system-update-ui.cjs
 
   php83-framework-compatibility:
     runs-on: ubuntu-latest

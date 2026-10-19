@@ -3,8 +3,13 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Carbon\CarbonImmutable;
+use DOMDocument;
+use DOMElement;
+use DOMXPath;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -66,6 +71,41 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertStringContainsString('Applied 1.40.0', $html);
 
     $this->assertRetiredSurfaceAbsent($html);
+  }
+
+  #[Test]
+  public function the_update_screen_loads_the_shared_progress_asset_and_server_admission_contract(): void
+  {
+    $html = $this->renderScreen($this->updateAvailableReport(), runs: collect());
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+
+    $scripts = $xpath->query('//script[@src="'.ProgressAssets::url().'"]');
+    $this->assertCount(1, $scripts);
+    $script = $scripts->item(0);
+    $this->assertInstanceOf(DOMElement::class, $script);
+    $this->assertTrue($script->hasAttribute('defer'));
+
+    $response = $this->get($script->getAttribute('src'));
+    $response->assertOk()
+      ->assertHeader('Content-Type', 'application/javascript; charset=UTF-8')
+      ->assertHeader('X-Content-Type-Options', 'nosniff');
+    $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
+    $asset = dirname(__DIR__, 2).'/src/Support/Updates/Client/Resources/js/update-progress.js';
+    $this->assertFileExists($asset);
+    $this->assertSame(realpath($asset), $response->baseResponse->getFile()->getRealPath());
+    $this->assertNotEmpty($response->baseResponse->getFile()->getContent());
+
+    $opener = $xpath->query('//*[@id="pc-update-progress-open"]')->item(0);
+    $this->assertInstanceOf(DOMElement::class, $opener);
+    $this->assertSame('server', $opener->getAttribute('data-pc-admission'));
+    $this->assertSame(route('admin.system.updates.indicator'), $opener->getAttribute('data-pc-health-url'));
+    $this->assertSame('#pc-update-progress', $opener->getAttribute('data-wb-target'));
+    $this->assertCount(1, $xpath->query('//*[@id="pc-update-progress" and @data-pc-update-modal]'));
+    $forms = $xpath->query('//form[@data-pc-update-form]');
+    $this->assertCount(1, $forms);
+    $this->assertSame(route('admin.system.updates.store'), $forms->item(0)->getAttribute('action'));
   }
 
   #[Test]
