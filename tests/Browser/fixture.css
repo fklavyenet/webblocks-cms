@@ -1,0 +1,10 @@
+#spacer { height: 1800px; }
+#test-status {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 999999;
+    background: white;
+    color: black;
+    padding: 8px;
+}

@@ -167,6 +167,15 @@ class SafeRichTextRendererTest extends TestCase
   }
 
   #[Test]
+  public function it_preserves_the_browser_fixture_paste_copy_and_rejects_unsafe_markup(): void
+  {
+    $this->assertSame(
+      '<p>Heading</p><p>First <em>paragraph</em></p><ul><li>List<ul><li>Nested</li></ul></li></ul><p>Cell one</p><p>Cell two</p><p>Last 日本語</p>',
+      $this->render('<section><h2>Heading</h2><p>First <em>paragraph</em></p><ul><li>List<ul><li>Nested</li></ul></li></ul><table><tr><td>Cell one</td><td>Cell two</td></tr></table><p>Last 日本語</p><script>unsafe()</script><img src="x" onerror="unsafe()"></section>'),
+    );
+  }
+
+  #[Test]
   public function it_strips_a_javascript_href_but_keeps_the_text(): void
   {
     $this->assertSame('<p>click</p>', $this->render('<p><a href="javascript:alert(1)">click</a></p>'));

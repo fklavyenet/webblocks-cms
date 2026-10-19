@@ -1,0 +1,130 @@
+<?php
+
+namespace WebBlocks\Cms\Tests\Support;
+
+use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Process\Process;
+use WebBlocks\Cms\Support\WebBlocks;
+
+final class BrowserFixtureServer
+{
+  private const SCENARIOS = [
+    'parent' => ['SlotBlockEditorFragmentSafetyTest', 'WEBBLOCKS_PARENT_FIXTURE', 'full_and_fragment_parent_options'],
+    'asset-picker' => ['AssetPickerViewTest', 'WEBBLOCKS_ASSET_PICKER_FIXTURE', 'picker_results_remain_inert'],
+    'rich-text' => ['RichTextEditorViewTest', 'WEBBLOCKS_RICH_TEXT_FIXTURE', 'editor_controls_and_shared_dialogs'],
+  ];
+
+  public static function run(string $scenario): void
+  {
+    if (PHP_SAPI !== 'cli-server') {
+      fwrite(STDERR, "Use PHP's local server: php -S 127.0.0.1:8089 tests/Browser/<fixture>.php\n");
+      exit(1);
+    }
+
+    self::forRequest($scenario, Request::createFromGlobals())->send();
+  }
+
+  public static function forRequest(string $scenario, Request $request): Response
+  {
+    // PHP's built-in router can set SCRIPT_NAME to an existing requested file.
+    // getPathInfo() then becomes "/"; route by the actual URI instead.
+    $path = parse_url($request->getRequestUri(), PHP_URL_PATH) ?: '/';
+    $response = in_array($request->getHost(), ['localhost', '127.0.0.1'], true)
+      ? self::response($scenario, $request->getMethod(), $path)
+      : new Response('Local fixtures only.', 403);
+    $response->headers->set('Cache-Control', 'no-store');
+    $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+    return $response->prepare($request);
+  }
+
+  public static function response(string $scenario, string $method, string $path): Response
+  {
+    if (! isset(self::SCENARIOS[$scenario])) {
+      return new Response('Unknown fixture.', 404);
+    }
+    if (! in_array($method, ['GET', 'HEAD'], true)) {
+      return new Response('Read-only fixture.', 405, ['Allow' => 'GET, HEAD']);
+    }
+    if ($path === '/') {
+      try {
+        return new Response(self::document($scenario), 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+      } catch (RuntimeException) {
+        return new Response('Fixture generation failed. Run its PHP test for details.', 500);
+      }
+    }
+
+    $root = dirname(__DIR__, 2);
+    $version = WebBlocks::UI_VERSION;
+    $assets = [
+      "/cms/webblocks-ui/{$version}/webblocks-ui.css",
+      "/cms/webblocks-ui/{$version}/webblocks-icons.css",
+      "/cms/webblocks-ui/{$version}/webblocks-ui.js",
+      '/cms/css/admin.css',
+    ];
+    $script = match ($scenario) {
+      'asset-picker' => '/cms/js/admin/asset-picker.js',
+      'rich-text' => '/cms/js/admin/rich-text-editor.js',
+      default => null,
+    };
+    if ($script !== null) {
+      $assets[] = $script;
+    }
+    $file = match (true) {
+      in_array($path, $assets, true) => $root.'/public'.$path,
+      in_array($path, ['/fixture.css', '/fixture.js'], true) => $root.'/tests/Browser'.$path,
+      default => null,
+    };
+    if ($file !== null && is_file($file)) {
+      return new BinaryFileResponse($file, 200, [
+        'Content-Type' => str_ends_with($file, '.css') ? 'text/css; charset=UTF-8' : 'application/javascript; charset=UTF-8',
+      ]);
+    }
+    if ($scenario === 'asset-picker' && preg_match('~^/storage/media/image-([1-9][0-9]{0,2})\.jpg$~', $path, $match) && (int) $match[1] <= 250) {
+      return new Response('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="lightblue"/></svg>', 200, ['Content-Type' => 'image/svg+xml']);
+    }
+
+    return new Response('Not found.', 404);
+  }
+
+  private static function document(string $scenario): string
+  {
+    [$test, $environmentKey, $filter] = self::SCENARIOS[$scenario];
+    $fixture = tempnam(sys_get_temp_dir(), 'wb-browser-');
+    if ($fixture === false) {
+      throw new RuntimeException('Cannot create fixture file.');
+    }
+    try {
+      $process = new Process([PHP_BINARY, 'vendor/bin/phpunit', 'tests/Feature/'.$test.'.php', '--filter', $filter], dirname(__DIR__, 2), [$environmentKey => $fixture]);
+      $process->setTimeout(120)->mustRun();
+      $html = file_get_contents($fixture);
+      if ($html === false || $html === '') {
+        throw new RuntimeException('The PHP test did not export a fixture.');
+      }
+    } finally {
+      unlink($fixture);
+    }
+
+    if ($scenario === 'parent') {
+      $html = '<!doctype html><html lang="en" data-wb-theme="light"><body><button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#slot-block-editor-modal">Open block</button>'.$html.'</body></html>';
+    }
+    $version = WebBlocks::UI_VERSION;
+    $head = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CMS browser fixture</title>';
+    foreach (["/cms/webblocks-ui/{$version}/webblocks-ui.css", "/cms/webblocks-ui/{$version}/webblocks-icons.css", '/cms/css/admin.css', '/fixture.css'] as $css) {
+      $head .= '<link rel="stylesheet" href="'.$css.'">';
+    }
+    $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
+    if ($scenario !== 'parent') {
+      $script = $scenario === 'asset-picker' ? 'asset-picker' : 'rich-text-editor';
+      $head .= '<script src="/cms/js/admin/'.$script.'.js" defer></script>';
+    }
+    $head .= '<script src="/fixture.js" defer></script></head>';
+    $html = str_replace('<body', $head.'<body data-fixture-scenario="'.$scenario.'"', $html);
+    $html = str_replace('http://localhost/storage/', '/storage/', $html);
+
+    return str_replace('</body>', '<output id="test-status" aria-live="off"></output></body>', $html);
+  }
+}

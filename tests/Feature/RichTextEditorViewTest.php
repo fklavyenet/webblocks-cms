@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Support\Facades\Blade;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -32,8 +34,42 @@ BLADE);
     $this->assertStringContainsString('data-wb-rich-text-action="redo"', $html);
     $this->assertStringContainsString('data-placeholder="Write body copy…"', $html);
 
-    // Optional export for the headless interaction suite: use the actual Blade
-    // views and translations rather than maintaining a second toolbar fixture.
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+    foreach (['content' => ['editor-form', '<p>Original <strong>copy</strong>.</p>'], 'other_content' => ['other-form', '<p>Independent editor</p>']] as $id => [$form, $value]) {
+      $input = $xpath->query('//textarea[@id="'.$id.'"]')->item(0);
+      $this->assertSame($id, $input->getAttribute('name'));
+      $this->assertSame($value, $input->textContent);
+      $this->assertTrue($input->hasAttribute('hidden'));
+      $this->assertSame($form, $xpath->query('ancestor::form', $input)->item(0)->getAttribute('id'));
+      $root = $input->parentNode;
+      $surface = $xpath->query('.//*[@data-wb-rich-text-surface]', $root)->item(0);
+      $this->assertSame($id.'__surface', $surface->getAttribute('id'));
+      $this->assertSame('true', $surface->getAttribute('contenteditable'));
+      $this->assertSame('textbox', $surface->getAttribute('role'));
+      $this->assertSame('true', $surface->getAttribute('aria-multiline'));
+      $actions = [];
+      foreach ($xpath->query('.//button[@data-wb-rich-text-action]', $root) as $button) {
+        $this->assertSame('button', $button->getAttribute('type'));
+        $actions[] = $button->getAttribute('data-wb-rich-text-action');
+        if (in_array($button->getAttribute('data-wb-rich-text-action'), ['undo', 'redo'], true)) {
+          $this->assertTrue($button->hasAttribute('disabled'));
+        }
+      }
+      $this->assertEqualsCanonicalizing(['undo', 'redo', 'bold', 'italic', 'strikethrough', 'code', 'link', 'bullet-list', 'numbered-list', 'outdent', 'indent', 'quote', 'clear', 'focus'], $actions);
+    }
+    foreach (['link', 'focus'] as $name) {
+      $dialog = $xpath->query('//*[@data-wb-rich-text-'.$name.'-modal]')->item(0);
+      $this->assertSame(0, $xpath->query('ancestor::form', $dialog)->length);
+      $this->assertTrue($dialog->hasAttribute('hidden'));
+      $this->assertSame('dialog', $dialog->getAttribute('role'));
+      foreach ($xpath->query('.//button', $dialog) as $button) {
+        $this->assertSame('button', $button->getAttribute('type'));
+      }
+    }
+
+    // Export the actual Blade fixture for the optional PHP browser router.
     if ($fixturePath = getenv('WEBBLOCKS_RICH_TEXT_FIXTURE')) {
       file_put_contents($fixturePath, $html);
     }
