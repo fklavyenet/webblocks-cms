@@ -103,8 +103,8 @@
             </div>
         </div>
 
-        <div class="wb-card">
-            <div class="wb-card-header"><strong>{{ $adminText('seo') }}</strong></div>
+        <fieldset class="wb-card" @disabled(! ($canEditSeo ?? true))>
+            <legend class="wb-card-header"><strong>{{ $adminText('seo') }}</strong></legend>
 
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-text-sm wb-text-muted">{{ $adminText('seo_help') }}</div>
@@ -158,7 +158,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </fieldset>
 
         <div class="wb-card-footer">
             <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl])" />

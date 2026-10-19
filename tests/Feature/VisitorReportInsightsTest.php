@@ -4,12 +4,10 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
@@ -20,6 +18,7 @@ use WebBlocks\Cms\Support\Visitors\VisitorConsent;
 use WebBlocks\Cms\Support\Visitors\VisitorEventLogger;
 use WebBlocks\Cms\Support\Visitors\VisitorReportRetention;
 use WebBlocks\Cms\Support\Visitors\VisitorReportsQuery;
+use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class VisitorReportInsightsTest extends TestCase
@@ -97,11 +96,10 @@ class VisitorReportInsightsTest extends TestCase
   public function summaries_charts_comparisons_health_and_page_details_respect_site_access(): void
   {
     if (! class_exists('App\\Models\\User')) {
-      class_alias(AuthenticatableUser::class, 'App\\Models\\User');
+      class_alias(CmsSqlTestUser::class, 'App\\Models\\User');
     }
-    $user = Mockery::mock('App\\Models\\User');
-    $user->shouldReceive('isSuperAdmin')->andReturn(false);
-    $user->shouldReceive('accessibleSiteIds')->andReturn([$this->site->id]);
+    $class = 'App\\Models\\User';
+    $user = $this->cmsActor((new $class)->forceFill(['name' => 'Report operator', 'role' => 'site_admin', 'is_active' => true]), [$this->site->id]);
     $other = Site::query()->create(['name' => 'Other', 'handle' => 'other']);
     $this->event('2026-09-01 12:00:00');
     $this->event('2026-09-03 23:00:00', ['site_id' => $other->id, 'path' => '/private-other']);

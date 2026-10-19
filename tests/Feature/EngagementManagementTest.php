@@ -2,11 +2,9 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
-use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ViewErrorBag;
-use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Actions\Engagement\StoreRating;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
@@ -23,6 +21,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Queries\EngagementQuery;
 use WebBlocks\Cms\Queries\PublicEngagementQuery;
 use WebBlocks\Cms\Support\Engagement\EngagementVisitor;
+use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class EngagementManagementTest extends TestCase
@@ -58,18 +57,11 @@ class EngagementManagementTest extends TestCase
   private function operator(Site $site)
   {
     if (! class_exists('App\\Models\\User')) {
-      class_alias(AuthenticatableUser::class, 'App\\Models\\User');
+    class_alias(CmsSqlTestUser::class, 'App\\Models\\User');
     }
-    $user = Mockery::mock('App\\Models\\User')->makePartial();
-    // No approver FK for a synthetic operator. Real installations retain IDs.
-    $user->forceFill(['id' => null, 'name' => 'Test Operator']);
-    $user->shouldReceive('can')->andReturn(false)->byDefault();
-    $user->shouldReceive('can')->with('manage-site-operations')->andReturn(true);
-    $user->shouldReceive('isSuperAdmin')->andReturn(false);
-    $user->shouldReceive('accessibleSiteIds')->andReturn(collect([$site->id]));
-    $user->shouldReceive('hasSiteAccess')->andReturnUsing(fn ($id) => (int) $id === $site->id);
+    $class = 'App\\Models\\User';
 
-    return $user;
+    return $this->cmsActor((new $class)->forceFill(['name' => 'Test Operator', 'role' => 'site_admin', 'is_active' => true]), [$site->id]);
   }
 
   private function page(string $handle = 'studio'): Page

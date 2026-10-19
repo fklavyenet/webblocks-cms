@@ -2,12 +2,11 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
-use Illuminate\Foundation\Auth\User as AuthenticatableUser;
-use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Queries\SiteNotificationHealthQuery;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
+use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class SchedulerDashboardTest extends TestCase
@@ -26,14 +25,11 @@ class SchedulerDashboardTest extends TestCase
   private function user(array $sites, bool $manager = true)
   {
     if (! class_exists('App\\Models\\User')) {
-      class_alias(AuthenticatableUser::class, 'App\\Models\\User');
+    class_alias(CmsSqlTestUser::class, 'App\\Models\\User');
     }
-    $user = Mockery::mock('App\\Models\\User');
-    $user->shouldReceive('can')->with('manage-site-operations')->andReturn($manager);
-    $user->shouldReceive('isSuperAdmin')->andReturn(false);
-    $user->shouldReceive('accessibleSiteIds')->andReturn($sites);
+    $class = 'App\\Models\\User';
 
-    return $user;
+    return $this->cmsActor((new $class)->forceFill(['id' => 99, 'name' => 'Test Operator', 'role' => $manager ? 'site_admin' : 'editor', 'is_active' => true]), $sites);
   }
 
   private function site(string $handle, bool $scheduled): Site

@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Support\InternalApiTokens;
 
 use App\Models\User;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Support\Access\PermissionCatalog;
 
 class PersonalApiTokenPolicy
 {
@@ -40,6 +42,14 @@ class PersonalApiTokenPolicy
 
   public function grantable(User $user): array
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+      return array_values(array_filter(array_diff(CmsApiTokenCapabilities::ALL, self::SYSTEM_ONLY), function ($capability) use ($acl, $user) {
+        $permissions = app(PermissionCatalog::class)->capabilityGrantPermissions($capability);
+
+        return collect($permissions)->contains(fn ($permission) => $acl->allows($user, $permission)) || $acl->allows($user, 'cms.legacy-api.'.$capability);
+      }));
+    }
     $capabilities = array_values(array_diff(CmsApiTokenCapabilities::ALL, self::SYSTEM_ONLY));
 
     if ($user->isEditor()) {
@@ -47,6 +57,11 @@ class PersonalApiTokenPolicy
     }
 
     return $capabilities;
+  }
+
+  public static function legacyCapabilities(string $role): array
+  {
+    return array_values(array_diff(CmsApiTokenCapabilities::ALL, self::SYSTEM_ONLY, $role === 'editor' ? self::SITE_ADMIN_ONLY : []));
   }
 
   public function canUse(User $user, string $capability): bool

@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Support\Users;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 
 class UserLifecycleGuard
 {
@@ -55,6 +57,10 @@ class UserLifecycleGuard
 
     if ($nextRole === User::ROLE_SUPER_ADMIN && $nextIsActive) {
       return false;
+    }
+
+    if (app(CmsAuthorization::class)->ready()) {
+      return DB::table('wbcms_acl_system_administrators as a')->join('users as u', 'u.id', '=', 'a.user_id')->where('u.is_active', true)->count() <= 1;
     }
 
     return User::query()

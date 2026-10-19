@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -43,6 +44,7 @@ class PageTranslationController extends Controller
       'page' => $page->loadMissing(['site', 'translations.locale']),
       'translation' => $translation,
       'locale' => $locale,
+      'canEditSeo' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.seo.update', $page->site_id),
       'assetPickerAssets' => $this->assetPickerAssets(),
       'assetPickerFolders' => $this->assetPickerFolders(),
       'formAction' => route('admin.pages.translations.store', [$page, $locale]),
@@ -97,6 +99,7 @@ class PageTranslationController extends Controller
       'page' => $page->loadMissing(['site', 'translations.locale']),
       'translation' => $translation->loadMissing(['locale', 'ogImage']),
       'locale' => $translation->locale,
+      'canEditSeo' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.seo.update', $page->site_id),
       'assetPickerAssets' => $this->assetPickerAssets(),
       'assetPickerFolders' => $this->assetPickerFolders(),
       'formAction' => route('admin.pages.translations.update', [$page, $translation]),

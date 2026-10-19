@@ -43,6 +43,8 @@ class UserUpdateRequest extends FormRequest
       'role' => ['required', 'string', Rule::in(User::roles())],
       'is_active' => ['nullable', 'boolean'],
       'site_ids' => ['nullable', 'array'],
+      'site_roles' => ['nullable', 'array'],
+      'site_roles.*' => ['nullable', 'integer', Rule::exists('wbcms_acl_roles', 'id')],
       'site_ids.*' => ['integer', 'distinct', Rule::exists(Site::class, 'id')],
     ];
   }

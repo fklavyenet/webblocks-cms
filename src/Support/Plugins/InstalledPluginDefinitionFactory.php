@@ -96,6 +96,7 @@ class InstalledPluginDefinitionFactory
         $pluginPermission->roles($permission['roles']);
       }
 
+      $pluginPermission->siteDelegable(($permission['scope'] ?? null) === 'site' && ($permission['delegable'] ?? false) === true);
       $permissions[] = $pluginPermission;
     }
 

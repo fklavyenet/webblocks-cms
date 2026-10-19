@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
-use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +22,7 @@ use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
+use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class PanelNotificationsTest extends TestCase
@@ -50,17 +50,11 @@ class PanelNotificationsTest extends TestCase
   private function user(array $sites, bool $manager = true, bool $super = false)
   {
     if (! class_exists('App\\Models\\User')) {
-      class_alias(AuthenticatableUser::class, 'App\\Models\\User');
+    class_alias(CmsSqlTestUser::class, 'App\\Models\\User');
     }
-    $user = Mockery::mock('App\\Models\\User')->makePartial();
-    $user->forceFill(['id' => 99, 'name' => 'Test Operator']);
-    $user->shouldReceive('can')->andReturn(false)->byDefault();
-    $user->shouldReceive('can')->with('manage-site-operations')->andReturn($manager);
-    $user->shouldReceive('isSuperAdmin')->andReturn($super);
-    $user->shouldReceive('accessibleSiteIds')->andReturn(collect($sites));
-    $user->shouldReceive('hasSiteAccess')->andReturnUsing(fn ($siteId) => $super || in_array($siteId, $sites, true));
+    $class = 'App\\Models\\User';
 
-    return $user;
+    return $this->cmsActor((new $class)->forceFill(['id' => 99, 'name' => 'Test Operator', 'role' => $super ? 'super_admin' : ($manager ? 'site_admin' : 'editor'), 'is_active' => true]), $sites);
   }
 
   private function site(string $handle, bool $scheduled = false): Site
@@ -149,7 +143,7 @@ class PanelNotificationsTest extends TestCase
     $this->assertNull($query->forUser(null));
     $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => null])
       ->assertDontSee('data-wb-panel-notifications');
-    $this->assertSame(0, $query->forUser($this->user([]))['unread']);
+    $this->assertNull($query->forUser($this->user([])));
     $this->assertSame(2, $query->forUser($this->user([], true, true))['unread']);
   }
 

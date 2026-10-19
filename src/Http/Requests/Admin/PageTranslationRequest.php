@@ -9,6 +9,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -107,7 +108,7 @@ class PageTranslationRequest extends FormRequest
   {
     $data = $this->validated();
 
-    return [
+    $translation = [
       'name' => $data['name'],
       'slug' => $data['slug'],
       'path' => PagePath::canonicalize($data['path']),
@@ -119,6 +120,12 @@ class PageTranslationRequest extends FormRequest
       'og_description' => $data['og_description'] ?? null,
       'og_image_media_id' => $data['og_image_media_id'] ?? null,
     ];
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready() && ! $acl->allows($this->user(), 'cms.seo.update', $this->route('page')?->site_id)) {
+      $translation = array_intersect_key($translation, array_flip(['name', 'slug', 'path', 'list_excerpt']));
+    }
+
+    return $translation;
   }
 
   private function normalizePathInput(string $path): string

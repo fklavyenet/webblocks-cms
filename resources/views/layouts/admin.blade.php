@@ -63,6 +63,10 @@
                 ['label' => $adminText('navigation.assets'), 'route' => 'admin.site-assets.index', 'active' => ['admin.site-assets.*'], 'icon' => 'wb-icon-code'],
             ];
 
+            if ($user?->can('manage-users')) {
+                $menuItems[] = ['label' => __('webblocks-cms::acl.title'), 'route' => 'admin.access.roles.index', 'active' => ['admin.access.*'], 'icon' => 'wb-icon-users'];
+            }
+
             if ($user?->can('manage-site-operations')) {
                 $menuItems[] = ['label' => $adminText('navigation.contact_messages'), 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'];
                 $menuItems[] = ['label' => $adminText('navigation.engagement'), 'route' => 'admin.engagement.index', 'active' => ['admin.engagement.*'], 'icon' => 'wb-icon-mouse-pointer-click'];
@@ -80,6 +84,8 @@
                     'icon' => 'wb-icon-blocks',
                 ]]);
             }
+
+            $menuItems = array_values(array_filter($menuItems, fn ($item) => app(\WebBlocks\Cms\Policies\CmsNavigationPolicy::class)->visible($user, $item['route'])));
 
             $sidebarGroups = [];
 

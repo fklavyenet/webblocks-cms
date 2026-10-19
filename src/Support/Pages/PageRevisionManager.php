@@ -15,6 +15,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
@@ -34,6 +35,11 @@ class PageRevisionManager
 
   public function canView(User $user, Page $page): bool
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+    return $acl->allows($user, 'cms.revisions.read', $page->site_id);
+    }
+
     return $user->canAccessAdmin()
       && $user->hasSiteAccess($page->site_id)
       && ($user->isSuperAdmin() || $user->isSiteAdmin() || $user->isEditor());
@@ -41,6 +47,11 @@ class PageRevisionManager
 
   public function canRestore(User $user, Page $page): bool
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+    return $acl->allows($user, 'cms.revisions.apply', $page->site_id);
+    }
+
     return ($user->isSuperAdmin() || $user->isSiteAdmin())
       && $user->hasSiteAccess($page->site_id);
   }

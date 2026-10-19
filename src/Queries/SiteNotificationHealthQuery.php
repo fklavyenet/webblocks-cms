@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Queries;
 
 use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -18,6 +19,10 @@ class SiteNotificationHealthQuery
     }
 
     $sites = Site::query()->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, $user))->get();
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+    $sites = $sites->whereIn('id', $acl->siteIds($user, 'cms.messages.read'));
+    }
     $snapshot = $sites->isNotEmpty() ? $this->health->snapshot() : [];
 
     return $sites->map(fn (Site $site) => ['site' => $site, 'health' => $snapshot + ['required' => $this->health->requiredForSite($site)]]);

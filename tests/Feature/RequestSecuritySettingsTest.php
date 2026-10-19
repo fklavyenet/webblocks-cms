@@ -71,7 +71,7 @@ class RequestSecuritySettingsTest extends TestCase
     $user->shouldReceive('canAccessAdmin')->andReturn($active);
     $user->shouldReceive('accessibleSiteIds')->andReturn(Site::pluck('id'));
 
-    return $user;
+    return $this->cmsActor($user, Site::pluck('id')->all());
   }
 
   private function defaults(): array

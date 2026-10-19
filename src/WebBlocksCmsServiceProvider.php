@@ -64,7 +64,10 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\AutomaticPagePolicy;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
@@ -1473,9 +1476,15 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     Gate::define('access-admin', fn ($user) => is_object($user) && method_exists($user, 'canAccessAdmin') && $user->canAccessAdmin());
     Gate::define('manage-users', fn ($user) => app(PluginAccessResolver::class)->isSuperAdmin($user));
     Gate::define('access-system', fn ($user) => app(PluginAccessResolver::class)->canAccessSystem($user));
-    Gate::define('manage-site-operations', fn ($user) => app(PluginAccessResolver::class)->isSuperAdmin($user) || (method_exists($user, 'isSiteAdmin') ? $user->isSiteAdmin() : ($user->role ?? null) === 'site_admin'));
-    Gate::define('view-visitor-reports', fn ($user) => app(PluginAccessResolver::class)->isSuperAdmin($user) || (method_exists($user, 'isSiteAdmin') ? $user->isSiteAdmin() : ($user->role ?? null) === 'site_admin'));
+    Gate::define('manage-site-operations', fn ($user) => app(CmsAuthorization::class)->allows($user, 'cms.messages.read') || app(CmsAuthorization::class)->allows($user, 'cms.engagement.read'));
+    Gate::define('view-visitor-reports', fn ($user) => app(CmsAuthorization::class)->allows($user, 'cms.reports.read'));
 
+    foreach (PermissionCatalog::GROUPS as $group => $actions) {
+      foreach ($actions as $action) {
+        $permission = 'cms.'.$group.'.'.$action;
+        Gate::define($permission, fn ($user, $site = null) => app(CmsAuthorization::class)->allows($user, $permission, $site instanceof Site ? $site->id : $site));
+      }
+    }
     app(PluginAuthorizationRegistrar::class)->register();
   }
 

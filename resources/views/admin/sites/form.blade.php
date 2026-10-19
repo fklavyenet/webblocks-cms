@@ -260,17 +260,17 @@
 
                   <div class="wb-stack-2 wb-field">
                     <label for="site_seo_title">{{ $adminText('default_meta_title') }}</label>
-                    <input id="site_seo_title" name="seo_title" class="wb-input" type="text" value="{{ old('seo_title', $site->seo_title) }}" @disabled($isReadOnly)>
+                    <input id="site_seo_title" name="seo_title" class="wb-input" type="text" value="{{ old('seo_title', $site->seo_title) }}" @disabled($isReadOnly || ! ($canEditSiteSeo ?? true))>
                   </div>
 
                   <div class="wb-stack-2 wb-field">
                     <label for="site_seo_description">{{ $adminText('default_meta_description') }}</label>
-                    <textarea id="site_seo_description" name="seo_description" class="wb-input" rows="5" @disabled($isReadOnly)>{{ old('seo_description', $site->seo_description) }}</textarea>
+                    <textarea id="site_seo_description" name="seo_description" class="wb-input" rows="5" @disabled($isReadOnly || ! ($canEditSiteSeo ?? true))>{{ old('seo_description', $site->seo_description) }}</textarea>
                   </div>
 
                   <div class="wb-stack-2 wb-field">
                     <label for="site_seo_keywords">{{ $adminText('meta_keywords') }}</label>
-                    <input id="site_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $site->seo_keywords) }}" @disabled($isReadOnly)>
+                    <input id="site_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $site->seo_keywords) }}" @disabled($isReadOnly || ! ($canEditSiteSeo ?? true))>
                   </div>
                 </div>
               </div>
@@ -288,7 +288,7 @@
 
                   <div class="wb-stack-2 wb-field">
                     <label for="site_custom_head_html">{{ $adminText('custom_head_html') }}</label>
-                    <textarea id="site_custom_head_html" name="custom_head_html" class="wb-input" rows="10" spellcheck="false" placeholder="{{ $adminText('custom_head_html_placeholder') }}" @disabled($isReadOnly)>{{ old('custom_head_html', $site->custom_head_html) }}</textarea>
+                    <textarea id="site_custom_head_html" name="custom_head_html" class="wb-input" rows="10" spellcheck="false" placeholder="{{ $adminText('custom_head_html_placeholder') }}" @disabled($isReadOnly || ! ($canEditCustomHead ?? true))>{{ old('custom_head_html', $site->custom_head_html) }}</textarea>
                   </div>
                 </div>
               </div>

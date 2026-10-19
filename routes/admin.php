@@ -6,6 +6,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\AutomaticPageController;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
+use WebBlocks\Cms\Http\Controllers\Admin\CmsRoleController;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentAuthoringController;
@@ -383,6 +384,8 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::delete('sites/{site}/variables/{site_variable}', [SiteVariableController::class, 'destroy'])->name('sites.variables.destroy');
 
     Route::middleware('can:access-system')->group(function () {
+      Route::get('access/inspect', [CmsRoleController::class, 'inspect'])->name('access.inspect');
+      Route::resource('access/roles', CmsRoleController::class)->parameters(['roles' => 'cmsRole'])->names('access.roles')->except(['show']);
       Route::delete('users/bulk', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy')->middleware('can:manage-users');
       Route::resource('users', UserController::class)->except(['show'])->middleware('can:manage-users');
       Route::get('sites/clone', [SiteController::class, 'cloneForm'])->name('sites.clone');

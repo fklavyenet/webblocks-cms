@@ -1,5 +1,11 @@
 # Upgrading and Installation Topologies
 
+## SQL roles and permissions in 1.105.0
+
+Run the normal package update migrations. Existing Site Admin and Editor site assignments are imported into protected SQL compatibility roles, and existing Super Admins receive a separate system membership. Existing rights are preserved, including Editor page deletion and moving published pages back to draft. Re-running the ACL migration does not restore revoked membership or grants.
+
+Active Super Admins can create narrower roles at `/webadmin/access/roles`, assign one role per user/site and inspect effective grants. Custom roles use explicit operation permissions; publishing, unpublishing, archiving and deletion are separate. Personal API tokens remain limited by both token capabilities/sites and current user grants. Enabled plugins must explicitly opt site permissions into custom-role delegation. CMS permissions do not bypass the host application's authorization rules. Publishing the package does not apply it to installed sites.
+
 Back up the application files, database, environment configuration, storage, and uploads before changing CMS versions or installation topology. Validate the result in a non-production environment. Do not delete host-owned files or data as a blanket migration step.
 
 ## 1.89.0

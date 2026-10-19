@@ -8,13 +8,14 @@ use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class MediaUsageResolver
 {
-  public function resolve(Media $media): Collection
+  public function resolve(Media $media, $actor = null): Collection
   {
     return $this->blockUsages($media)
       ->concat($this->galleryUsages($media))
@@ -22,6 +23,17 @@ class MediaUsageResolver
       ->concat($this->mobileImageUsages($media))
       ->concat($this->siteBrandingUsages($media))
       ->concat($this->pageSeoUsages($media))
+      ->filter(function (array $usage) use ($actor): bool {
+        $acl = app(CmsAuthorization::class);
+
+        return ! $actor || ! $acl->ready() || $acl->isSuperAdmin($actor) || $acl->usesLegacyRoles($actor)
+          || (isset($usage['_site_id']) && $acl->allows($actor, 'cms.media.read', $usage['_site_id']));
+      })
+      ->map(function (array $usage): array {
+      unset($usage['_site_id']);
+
+      return $usage;
+      })
       ->values();
   }
 
@@ -44,6 +56,7 @@ class MediaUsageResolver
       ->map(function (Block $block) {
         return [
           'type' => 'Block',
+          '_site_id' => $block?->page?->site_id,
           'context' => $block->typeSlug() === 'download' ? 'Download block' : $block->typeName(),
           'label' => $block->title ?: $block->typeName(),
           'admin_url' => route('admin.blocks.edit', $block),
@@ -64,6 +77,7 @@ class MediaUsageResolver
 
         return [
           'type' => 'Block',
+          '_site_id' => $block?->page?->site_id,
           'context' => 'Gallery block',
           'label' => $block?->title ?: $block?->typeName(),
           'admin_url' => $block ? route('admin.blocks.edit', $block) : null,
@@ -84,6 +98,7 @@ class MediaUsageResolver
 
         return [
           'type' => 'Block',
+          '_site_id' => $block?->page?->site_id,
           'context' => 'Button attachment',
           'label' => $block?->title ?: $block?->typeName(),
           'admin_url' => $block ? route('admin.blocks.edit', $block) : null,
@@ -107,6 +122,7 @@ class MediaUsageResolver
 
         return [
           'type' => 'Block',
+          '_site_id' => $block?->page?->site_id,
           'context' => $context,
           'label' => $block?->title ?: $block?->typeName(),
           'admin_url' => $block ? route('admin.blocks.edit', $block) : null,
@@ -130,6 +146,7 @@ class MediaUsageResolver
 
         return [
           'type' => 'Site',
+          '_site_id' => $site->id,
           'context' => $context,
           'label' => $site->name,
           'admin_url' => route('admin.sites.edit', $site),
@@ -149,6 +166,7 @@ class MediaUsageResolver
 
         return [
           'type' => 'Page translation',
+          '_site_id' => $page?->site_id,
           'context' => 'SEO social image',
           'label' => $translation->name ?: $page?->title,
           'admin_url' => $page ? route('admin.pages.translations.edit', [$page, $translation]) : null,

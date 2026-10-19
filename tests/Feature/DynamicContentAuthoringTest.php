@@ -169,7 +169,7 @@ class DynamicContentAuthoringTest extends TestCase
     $title->textTranslations()->create(['locale_id' => $locale->id, 'title' => 'Title '.$locale->code]);
     }
     $before = $page->fresh()->updated_at->toISOString();
-    $actor = (new User)->forceFill(['role' => 'super_admin', 'is_active' => true]);
+    $actor = $this->cmsActor((new User)->forceFill(['role' => 'super_admin', 'is_active' => true]));
     $draft = app(InternalContentPlanService::class)->prepareAuthoringDraft($page, $actor);
     $copiedGrid = $draft->blocks()->where('type', 'grid')->firstOrFail();
     $copiedCard = $draft->blocks()->where('type', 'card')->firstOrFail();
@@ -185,7 +185,7 @@ class DynamicContentAuthoringTest extends TestCase
   public function saving_a_draft_preserves_translations_and_provider_configuration_and_rejects_stale_or_published_writes(): void
   {
     [$page, $grid, $card, $title] = $this->fixture();
-    $actor = (new User)->forceFill(['role' => 'super_admin', 'is_active' => true]);
+    $actor = $this->cmsActor((new User)->forceFill(['role' => 'super_admin', 'is_active' => true]));
     $design = app(DynamicContentDesign::class);
     $input = ['source' => 'authoring::items', 'block_id' => $grid->id, 'version' => $design->fingerprint($page), 'collection' => ['template_block_id' => $card->id, 'limit' => 8]];
     $action = app(SaveDynamicContent::class);
@@ -216,7 +216,7 @@ class DynamicContentAuthoringTest extends TestCase
       BlockType::firstOrCreate(['slug' => $slug], ['name' => ucfirst($slug), 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => in_array($slug, ['card_body', 'card_footer']), 'sort_order' => 0, 'status' => 'published']);
     }
     $before = $grid->fresh()->settings;
-    $actor = (new User)->forceFill(['role' => 'super_admin', 'is_active' => true]);
+    $actor = $this->cmsActor((new User)->forceFill(['role' => 'super_admin', 'is_active' => true]));
     $starter = app(CreateDynamicContentStarter::class)->handle($page, $page->slots()->first()->id, $actor);
     $this->assertSame('grid', $starter->typeSlug());
     $this->assertSame('card', $starter->children()->first()->typeSlug());
@@ -257,7 +257,7 @@ class DynamicContentAuthoringTest extends TestCase
   public function explicit_preview_distinguishes_empty_invalid_and_failed_sources_without_saving_or_exposing_errors(): void
   {
     [$page, $grid] = $this->fixture();
-    $this->actingAs((new User)->forceFill(['role' => 'super_admin', 'is_active' => true]));
+    $this->actingAs($this->cmsActor((new User)->forceFill(['role' => 'super_admin', 'is_active' => true])));
     $before = $grid->fresh()->settings;
     try {
       foreach (['empty' => 'Source responded; no matching records', 'invalid' => 'Source response does not match the contract', 'failed' => 'Source unavailable; retry'] as $mode => $message) {
@@ -309,7 +309,7 @@ class DynamicContentAuthoringTest extends TestCase
     $request = BlockRequest::create('/blocks/'.$block->id, 'PUT', $overrides + ['page_id' => $block->page_id, 'block_type_id' => $block->block_type_id, 'slot_type_id' => $block->slot_type_id, 'parent_id' => $block->parent_id, 'sort_order' => 0, 'status' => 'published']);
     $request->setContainer($this->app);
     $request->setRedirector(app('redirect'));
-    $request->setUserResolver(fn () => (new User)->forceFill(['role' => 'super_admin', 'is_active' => true]));
+    $request->setUserResolver(fn () => $this->cmsActor((new User)->forceFill(['role' => 'super_admin', 'is_active' => true])));
     $route = new Route(['PUT'], '/blocks/{block}', []);
     $route->bind($request);
     $route->setParameter('block', $block);

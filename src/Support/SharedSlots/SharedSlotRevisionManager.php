@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotRevision;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
@@ -31,6 +32,11 @@ class SharedSlotRevisionManager
 
   public function canView(User $user, SharedSlot $sharedSlot): bool
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+    return $acl->allows($user, 'cms.shared-slots.read', $sharedSlot->site_id);
+    }
+
     return $user->canAccessAdmin()
       && $user->hasSiteAccess($sharedSlot->site_id)
       && ($user->isSuperAdmin() || $user->isSiteAdmin() || $user->isEditor());
@@ -38,6 +44,11 @@ class SharedSlotRevisionManager
 
   public function canRestore(User $user, SharedSlot $sharedSlot): bool
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+    return $acl->allows($user, 'cms.shared-slots.restore', $sharedSlot->site_id);
+    }
+
     return ($user->isSuperAdmin() || $user->isSiteAdmin())
       && $user->hasSiteAccess($sharedSlot->site_id);
   }

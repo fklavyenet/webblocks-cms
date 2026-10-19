@@ -15,6 +15,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
@@ -163,6 +164,8 @@ class SiteController extends Controller
       'siteDeleteReport' => $deleteReport,
       'assetPickerAssets' => $this->assetPickerAssets(),
       'assetPickerFolders' => $this->assetPickerFolders(),
+      'canEditSiteSeo' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.seo.update', $site->id),
+      'canEditCustomHead' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.legacy.site-assets.write', $site->id),
       'canManageSiteSettings' => $canManageSiteSettings,
       'canManageDomains' => $canManageDomains,
       'siteTab' => $siteTab,
@@ -295,6 +298,12 @@ class SiteController extends Controller
 
   private function runtimeSafeSiteData(array $data): array
   {
+    $acl = app(CmsAuthorization::class);
+    $site = request()->route('site');
+    if ($acl->ready() && $site instanceof Site && ! $acl->allows(request()->user(), 'cms.seo.update', $site->id)) {
+      unset($data['seo_title'], $data['seo_description'], $data['seo_keywords']);
+    }
+
     if (! (Schema::hasColumn('wbcms_sites', 'notification_settings') || app(PersistentDocuments::class)->retired(new Site, 'notification_settings'))) {
       unset($data['notification_settings']);
     }

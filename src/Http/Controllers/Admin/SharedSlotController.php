@@ -21,6 +21,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
@@ -561,11 +562,15 @@ class SharedSlotController extends Controller
 
   private function canManageSharedSlots($user): bool
   {
-    return $user?->isSuperAdmin() || $user?->isSiteAdmin();
+    return app(CmsAuthorization::class)->allows($user, 'cms.shared-slots.manage');
   }
 
   private function canEditSharedSlot($user, SharedSlot $sharedSlot): bool
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+    return $acl->allows($user, 'cms.shared-slots.update-content', $sharedSlot->site_id);
+    }
     $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
 
     return $this->workflowManager->canEditContent($user, $sourcePage);

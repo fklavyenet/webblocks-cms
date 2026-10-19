@@ -232,7 +232,7 @@ class AutomaticPagesTest extends TestCase
 
   private function actor(string $role = 'super_admin'): User
   {
-    return (new User)->forceFill(['id' => 1, 'name' => 'Test editor', 'role' => $role, 'is_active' => true]);
+    return $this->cmsActor((new User)->forceFill(['id' => 1, 'name' => 'Test editor', 'role' => $role, 'is_active' => true]));
   }
 
   private function data(Site $site, Page $page): array

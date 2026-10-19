@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class VisitorReportsQuery
@@ -163,7 +164,7 @@ class VisitorReportsQuery
       ->whereBetween('day', [$filters['from'], $filters['to']]);
     $user = $filters['user'] ?? null;
     if ($user && ! $user->isSuperAdmin()) {
-      $query->whereIn('site_id', $user->accessibleSiteIds());
+      $query->whereIn('site_id', (app(CmsAuthorization::class)->ready() ? app(CmsAuthorization::class)->siteIds($user, 'cms.reports.read') : $user->accessibleSiteIds()));
     }
 
     return $query
@@ -535,7 +536,7 @@ class VisitorReportsQuery
     $query = VisitorEvent::query();
 
     if ($user) {
-      $siteIds = $user->accessibleSiteIds();
+      $siteIds = (app(CmsAuthorization::class)->ready() ? app(CmsAuthorization::class)->siteIds($user, 'cms.reports.read') : $user->accessibleSiteIds());
 
       if (! $user->isSuperAdmin()) {
         $query->whereIn('site_id', $siteIds);

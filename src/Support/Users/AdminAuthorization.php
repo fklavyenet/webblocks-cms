@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteVariable;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 
 class AdminAuthorization
 {
@@ -48,12 +49,12 @@ class AdminAuthorization
 
   public function canViewSiteSettings(User $user, Site $site): bool
   {
-    return $user->isSuperAdmin() || $user->hasSiteAccess($site);
+    return app(CmsAuthorization::class)->allows($user, 'cms.site-settings.read', $site->id);
   }
 
   public function canMutateSiteSettings(User $user, Site $site): bool
   {
-    return $user->isSuperAdmin() || ($user->isSiteAdmin() && $user->hasSiteAccess($site));
+    return app(CmsAuthorization::class)->allows($user, 'cms.site-settings.update', $site->id);
   }
 
   public function abortUnlessMediaAccess(User $user, Media $media): void
@@ -134,7 +135,7 @@ class AdminAuthorization
       return $query;
     }
 
-    return $query->whereIn('site_id', $user->accessibleSiteIds());
+    return $query->whereIn('site_id', $this->readSiteIds($user, 'cms.pages.read'));
   }
 
   public function scopeNavigationForUser(Builder $query, User $user): Builder
@@ -143,7 +144,7 @@ class AdminAuthorization
       return $query;
     }
 
-    return $query->whereIn('site_id', $user->accessibleSiteIds());
+    return $query->whereIn('site_id', $this->readSiteIds($user, 'cms.navigation.read'));
   }
 
   public function scopeSharedSlotsForUser(Builder $query, User $user): Builder
@@ -152,7 +153,7 @@ class AdminAuthorization
       return $query;
     }
 
-    return $query->whereIn('site_id', $user->accessibleSiteIds());
+    return $query->whereIn('site_id', $this->readSiteIds($user, 'cms.shared-slots.read'));
   }
 
   public function scopeBlocksForUser(Builder $query, User $user): Builder
@@ -161,7 +162,7 @@ class AdminAuthorization
       return $query;
     }
 
-    return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
+    return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $this->readSiteIds($user, $query->getModel() instanceof Block ? 'cms.pages.read' : 'cms.messages.read')));
   }
 
   public function scopeMediaForUser(Builder $query, User $user): Builder
@@ -170,14 +171,20 @@ class AdminAuthorization
       return $query;
     }
 
-    return $query->where(function (Builder $mediaQuery) use ($user): void {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready() && ! $acl->allows($user, 'cms.media.read')) {
+    return $query->whereRaw('1 = 0');
+    }
+    $mediaSiteIds = $acl->ready() ? $acl->siteIds($user, 'cms.media.read')->intersect($user->accessibleSiteIds()) : $user->accessibleSiteIds();
+
+    return $query->where(function (Builder $mediaQuery) use ($user, $mediaSiteIds): void {
       $mediaQuery
         ->where('uploaded_by', $user->id)
-        ->orWhereHas('blocks.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()))
-        ->orWhereHas('blockMedia.block.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()))
-        ->orWhereHas('sitesUsingAsFavicon', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $user->accessibleSiteIds()))
-        ->orWhereHas('sitesUsingAsSocialImage', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $user->accessibleSiteIds()))
-        ->orWhereHas('pageTranslationsUsingAsOgImage.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
+        ->orWhereHas('blocks.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $mediaSiteIds))
+        ->orWhereHas('blockMedia.block.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $mediaSiteIds))
+        ->orWhereHas('sitesUsingAsFavicon', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $mediaSiteIds))
+        ->orWhereHas('sitesUsingAsSocialImage', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $mediaSiteIds))
+        ->orWhereHas('pageTranslationsUsingAsOgImage.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $mediaSiteIds));
     });
   }
 
@@ -192,7 +199,14 @@ class AdminAuthorization
       return $query;
     }
 
-    return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
+    return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $this->readSiteIds($user, $query->getModel() instanceof Block ? 'cms.pages.read' : 'cms.messages.read')));
+  }
+
+  private function readSiteIds(User $user, string $permission)
+  {
+    $acl = app(CmsAuthorization::class);
+
+    return $acl->ready() ? $acl->siteIds($user, $permission)->intersect(collect($user->accessibleSiteIds())) : $user->accessibleSiteIds();
   }
 
   private function siteIdFor(Site|Page|NavigationItem|Block|ContactMessage|SharedSlot|SiteVariable|int|null $resource): ?int

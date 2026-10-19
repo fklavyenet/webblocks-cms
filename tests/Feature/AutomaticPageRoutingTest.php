@@ -236,6 +236,7 @@ class AutomaticPageRoutingTest extends TestCase
     [$site, $page, $rule] = $this->prepared();
     $actor = $this->actor();
     $actor->role = 'editor';
+    $this->cmsActor($actor);
     $this->expectException(AuthorizationException::class);
     app(ActivateAutomaticPageRule::class)->handle($rule, $actor, str_repeat('a', 64));
   }

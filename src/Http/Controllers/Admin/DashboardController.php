@@ -13,6 +13,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Policies\SystemHealthPolicy;
 use WebBlocks\Cms\Queries\PanelNotificationQuery;
 use WebBlocks\Cms\Queries\SystemHealthQuery;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -37,6 +38,8 @@ class DashboardController extends Controller
     $schedulerDashboard = $panelNotifications['scheduler'] ?? ['sites' => collect(), 'health' => null];
 
     return view('webblocks-cms::admin.dashboard', [
+      'dashboardAccess' => collect(['pages' => 'cms.pages.read', 'create' => 'cms.pages.create', 'shared' => 'cms.shared-slots.read', 'media' => 'cms.media.read'])
+        ->map(fn ($permission) => app(CmsAuthorization::class)->allows($request->user(), $permission))->all(),
       'dashboardSystemHealth' => $this->healthPolicy->view($request->user()) ? $this->health->dashboardSummary() : null,
       'panelNotifications' => $panelNotifications,
       'notificationHealthSites' => $schedulerDashboard['sites'],

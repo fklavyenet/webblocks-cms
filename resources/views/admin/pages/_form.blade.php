@@ -29,17 +29,17 @@
             </div>
             <div class="wb-stack-2 wb-field">
                 <label for="title">{{ $pageFormText('title') }}</label>
-                <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $page->title) }}" required>
+                <input id="title" name="title" @disabled(! $canEditContent) class="wb-input" type="text" value="{{ old('title', $page->title) }}" required>
             </div>
             <div class="wb-stack-2 wb-field">
                 <label for="slug">{{ $pageFormText('slug') }}</label>
-                <input id="slug" name="slug" class="wb-input" type="text" value="{{ old('slug', $page->slug) }}">
+                <input id="slug" name="slug" @disabled(! $canEditContent) class="wb-input" type="text" value="{{ old('slug', $page->slug) }}">
             </div>
         </div>
         <div class="wb-stack wb-gap-2">
             <div class="wb-stack-2 wb-field">
                 <label for="public_shell">{{ $pageFormText('page_layout') }}</label>
-                <select id="public_shell" name="public_shell" class="wb-select">
+                <select id="public_shell" name="public_shell" @disabled(! $canEditContent) class="wb-select">
                     @foreach ($pageLayoutOptions as $layoutOption)
                         <option value="{{ $layoutOption['value'] }}" @selected(old('public_shell', $page->publicShellPreset()) === $layoutOption['value'])>{{ $layoutOption['label'] }}</option>
                     @endforeach
@@ -61,7 +61,7 @@
 
     @if (! $canEditContent)
         <div class="wb-alert wb-alert-info">
-            {{ $pageFormText('content_locked', ['workflow' => strtolower($page->workflowLabel())]) }}
+            {{ __('webblocks-cms::acl.edit_locked') }}
         </div>
     @endif
 </div>

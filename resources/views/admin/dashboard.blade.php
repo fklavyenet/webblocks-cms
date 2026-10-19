@@ -97,9 +97,15 @@
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-text-sm wb-text-muted">{{ $adminText('dashboard.quick_actions') }}</div>
                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                            @if ($dashboardAccess['create'])
                             <a href="{{ route('admin.pages.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('dashboard.new_page') }}</a>
+                            @endif
+                            @if ($dashboardAccess['pages'])
                             <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('dashboard.pages') }}</a>
+                            @endif
+                            @if ($dashboardAccess['shared'])
                             <a href="{{ route('admin.shared-slots.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('dashboard.shared_slots') }}</a>
+                            @endif
                             @can('access-system')
                                 <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('dashboard.sites') }}</a>
                                 <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('dashboard.backups') }}</a>
@@ -159,7 +165,9 @@
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
                     <strong>{{ $adminText('dashboard.recent_pages') }}</strong>
+                    @if ($dashboardAccess['pages'])
                     <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('dashboard.view_all') }}</a>
+                    @endif
                 </div>
 
                 <div class="wb-card-body">
@@ -168,7 +176,9 @@
                             <div class="wb-empty-title">{{ $adminText('dashboard.no_pages') }}</div>
                             <div class="wb-empty-text">{{ $adminText('dashboard.no_pages_help') }}</div>
                             <div class="wb-empty-action">
+                                @if ($dashboardAccess['create'])
                                 <a href="{{ route('admin.pages.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('dashboard.create_page') }}</a>
+                                @endif
                             </div>
                         </div>
                     @else
@@ -192,7 +202,9 @@
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
                     <strong>{{ $adminText('dashboard.recent_media') }}</strong>
+                    @if ($dashboardAccess['media'])
                     <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('dashboard.manage') }}</a>
+                    @endif
                 </div>
 
                 <div class="wb-card-body">

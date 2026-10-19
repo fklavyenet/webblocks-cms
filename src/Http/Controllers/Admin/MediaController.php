@@ -91,7 +91,7 @@ class MediaController extends Controller
     AdminPagination::redirectOutOfRange($mediaPaginator);
 
     $mediaPaginator->getCollection()->transform(function (Media $media) {
-      $usages = $this->mediaUsageResolver->resolve($media);
+      $usages = $this->mediaUsageResolver->resolve($media, request()->user());
       $media->setRelation('resolvedUsages', $usages);
       $media->setAttribute('resolved_usage_count', $usages->count());
 
@@ -111,7 +111,7 @@ class MediaController extends Controller
     }
 
     if ($usageMedia instanceof Media && ! $usageMedia->relationLoaded('resolvedUsages')) {
-      $usageMedia->setRelation('resolvedUsages', $this->mediaUsageResolver->resolve($usageMedia));
+      $usageMedia->setRelation('resolvedUsages', $this->mediaUsageResolver->resolve($usageMedia, request()->user()));
     }
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.media.index', [
@@ -149,7 +149,7 @@ class MediaController extends Controller
   {
     $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
 
-    $usages = $this->mediaUsageResolver->resolve($media);
+    $usages = $this->mediaUsageResolver->resolve($media, request()->user());
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.media.edit', [
       'asset' => $media->load('folder'),

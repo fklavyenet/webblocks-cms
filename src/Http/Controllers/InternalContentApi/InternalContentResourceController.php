@@ -49,6 +49,7 @@ use WebBlocks\Cms\Support\Media\MediaInUseException;
 use WebBlocks\Cms\Support\Media\MediaMimeTypes;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
+use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
@@ -1020,7 +1021,7 @@ class InternalContentResourceController extends Controller
 
     return $this->ok([
       'media' => $this->presenter->media($media),
-      'usages' => $media->usages()->values()->all(),
+      'usages' => app(MediaUsageResolver::class)->resolve($media, request()->user())->values()->all(),
       'usage_count' => $media->usageCount(),
     ]);
   }
@@ -1164,7 +1165,7 @@ class InternalContentResourceController extends Controller
 
     return $this->ok([
       'media' => $this->presenter->media($media),
-      'usages' => $media->usages()->values()->all(),
+      'usages' => app(MediaUsageResolver::class)->resolve($media, request()->user())->values()->all(),
       'usage_count' => $media->usageCount(),
       'writes' => [['type' => 'media_replace', 'id' => $media->id]],
     ]);

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use WebBlocks\Cms\Policies\CmsResourcePolicy;
 
 class RequireAdminAccess
 {
@@ -19,6 +20,8 @@ class RequireAdminAccess
     if (! method_exists($user, 'canAccessAdmin') || ! $user->canAccessAdmin()) {
       abort(403);
     }
+
+    app(CmsResourcePolicy::class)->authorizeRequest($request);
 
     return $next($request);
   }

@@ -10,6 +10,11 @@ final class CmsTable
    * @var array<int, string>
    */
   public const TABLES = [
+    'acl_roles',
+    'acl_role_permissions',
+    'acl_system_administrators',
+    'acl_events',
+    'acl_locks',
     'api_token_capabilities',
     'api_token_sites',
     'api_token_networks',

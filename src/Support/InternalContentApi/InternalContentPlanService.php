@@ -26,6 +26,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
@@ -258,6 +259,7 @@ class InternalContentPlanService
     }
 
     $plan = $validated->normalizedPlan;
+    app(CmsResourcePolicy::class)->authorizePlan($plan);
 
     try {
       $applied = DB::transaction(function () use ($plan): array {

@@ -27,6 +27,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
@@ -184,8 +185,13 @@ class PageController extends Controller
     }
 
     $this->pageIndexState->remember($request, $indexQuery($pages->currentPage()));
+    $acl = app(CmsAuthorization::class);
+    $deletablePageIds = $pages->getCollection()->filter(fn (Page $page) => $acl->allows($request->user(), 'cms.pages.delete', $page->site_id)
+      && ($page->status !== Page::STATUS_PUBLISHED || $acl->allows($request->user(), 'cms.pages.delete-published', $page->site_id)))->modelKeys();
 
     return view('webblocks-cms::admin.pages.index', [
+      'canCreatePage' => $acl->allows($request->user(), 'cms.pages.create', $activeSite?->id),
+      'deletablePageIds' => $deletablePageIds,
       'pages' => $pages,
       'sites' => $sites,
       'importSites' => $sites,
@@ -218,6 +224,7 @@ class PageController extends Controller
   public function create(Request $request): View
   {
     $sites = $this->authorization->scopeSitesForUser(Site::query(), $request->user())
+      ->whereIn('id', app(CmsAuthorization::class)->siteIds($request->user(), 'cms.pages.create'))
       ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
       ->orderByDesc('is_primary')
       ->orderBy('name')
@@ -301,7 +308,7 @@ class PageController extends Controller
 
     $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
     $canViewRevisions = $this->revisionManager->canView(request()->user(), $page);
-    $canDuplicatePage = request()->user()?->canAccessAdmin()
+    $canDuplicatePage = app(CmsAuthorization::class)->allows(request()->user(), 'cms.pages.create')
       && Site::query()
         ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
         ->exists();
@@ -338,8 +345,8 @@ class PageController extends Controller
       'canMoveToAnotherSite' => $canMoveToAnotherSite,
       'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
       'pageOwnedBlockPublishingSummary' => $pageOwnedBlockPublishingSummary,
-      'canPublishPageOwnedBlocks' => request()->user()->isSuperAdmin() || request()->user()->isSiteAdmin(),
-      'canCreateSharedSlots' => ! request()->user()->isEditor(),
+      'canPublishPageOwnedBlocks' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.pages.publish', $page->site_id),
+      'canCreateSharedSlots' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.shared-slots.manage', $page->site_id),
       'canManagePageAssets' => request()->user()->isSuperAdmin(),
       'pageAssetsTab' => $this->pageAssetsTabState($page),
       'layoutSlotComparison' => $layoutSlotComparison,
@@ -700,7 +707,7 @@ class PageController extends Controller
   public function publishPageOwnedBlocks(Request $request, Page $page): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
-    abort_unless($request->user()->isSuperAdmin() || $request->user()->isSiteAdmin(), 403);
+    abort_unless(app(CmsAuthorization::class)->allows($request->user(), 'cms.pages.publish', $page->site_id), 403);
 
     $result = $this->pageOwnedBlockPublisher->publish($page, $request->user());
 

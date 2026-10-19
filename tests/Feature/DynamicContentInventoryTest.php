@@ -116,6 +116,7 @@ class DynamicContentInventoryTest extends TestCase
     $this->register();
     $actor = $this->actor('editor');
     $actor->setRelation('sites', collect([$site]));
+    $this->cmsActor($actor, [$site->id]);
     $inventory = app(DynamicContentInventory::class)->build($actor);
     $this->assertCount(2, $inventory['usages']);
     $this->assertSame([$site->id], $inventory['usages']->pluck('site.id')->unique()->values()->all());
@@ -196,7 +197,7 @@ class DynamicContentInventoryTest extends TestCase
 
   private function actor(string $role): User
   {
-    return (new User)->forceFill(['role' => $role, 'is_active' => true]);
+    return $this->cmsActor((new User)->forceFill(['role' => $role, 'is_active' => true]));
   }
 
   private function source(): ContentSourceDefinition

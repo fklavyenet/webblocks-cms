@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Support\InternalApiTokens\PersonalApiTokenNetworkPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiResponseMetadata;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -128,6 +129,8 @@ class AuthorizePersonalApiDelegation
     if ($siteRequired && $resourceSiteIds->isEmpty() && $payloadSiteIds === []) {
       return $this->denied('Personal API requests that write content must identify an allowed site explicitly.');
     }
+
+    app(CmsResourcePolicy::class)->authorizeRequest($request);
 
     return $next($request);
   }

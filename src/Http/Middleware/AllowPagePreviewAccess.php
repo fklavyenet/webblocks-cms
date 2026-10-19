@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenActivityLogger;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenAuthenticator;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
@@ -30,6 +31,8 @@ class AllowPagePreviewAccess
       if (! method_exists($user, 'canAccessAdmin') || ! $user->canAccessAdmin()) {
         abort(403);
       }
+
+      app(CmsResourcePolicy::class)->authorizeRequest($request);
 
       return $next($request);
     }
@@ -58,6 +61,9 @@ class AllowPagePreviewAccess
     $this->activityLogger->capabilityAllowed($token, $request, CmsApiTokenCapabilities::CONTENT_READ);
     $request->attributes->set('cms_api_token', $token);
     $request->attributes->set('cms_internal_preview', true);
+    if ($token->isPersonal()) {
+      return app(AuthorizePersonalApiDelegation::class)->handle($request, $next);
+    }
 
     return $next($request);
   }

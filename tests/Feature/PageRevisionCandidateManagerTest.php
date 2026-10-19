@@ -134,7 +134,7 @@ class PageRevisionCandidateManagerTest extends TestCase
 
     $userClass = 'App\\Models\\User';
 
-    return [$page, new $userClass];
+    return [$page, $this->cmsActor((new $userClass)->forceFill(['role' => 'super_admin', 'is_active' => true]))];
   }
 }
 

@@ -139,15 +139,25 @@
                                 </div>
 
                                 @php($selectedRole = old('role', $managedUser->normalizedRole()))
+                                @php($selectedSiteIds = array_map('intval', (array) old('site_ids', $assignedSiteIds)))
 
                                 <div class="wb-stack wb-gap-1">
                                     <div>{{ $adminText('assigned_sites') }}</div>
                                     <div class="wb-stack wb-gap-1">
                                         @foreach ($sites as $site)
                                             <label class="wb-nowrap">
-                                                <input type="checkbox" data-wb-user-site @disabled($selectedRole === \App\Models\User::ROLE_SUPER_ADMIN) name="site_ids[]" value="{{ $site->id }}" @checked(in_array($site->id, old('site_ids', $managedUser->exists ? $managedUser->accessibleSiteIds()->all() : []), true))>
+                                                <input type="checkbox" data-wb-user-site @disabled($selectedRole === \App\Models\User::ROLE_SUPER_ADMIN) name="site_ids[]" value="{{ $site->id }}" @checked(in_array($site->id, $selectedSiteIds, true))>
                                                 <span>{{ $site->name }}</span>
                                             </label>
+                                            @if (($cmsRoles ?? collect())->isNotEmpty())
+                                                <label for="site_role_{{ $site->id }}">{{ __('webblocks-cms::acl.site_role') }} {{ $site->name }}</label>
+                                                <select class="wb-select" id="site_role_{{ $site->id }}" name="site_roles[{{ $site->id }}]">
+                                                    <option value="">{{ __('webblocks-cms::acl.default_role') }}</option>
+                                                    @foreach ($cmsRoles as $cmsRole)
+                                                        <option value="{{ $cmsRole->id }}" @selected((string) old('site_roles.'.$site->id, $siteRoles[$site->id] ?? '') === (string) $cmsRole->id)>{{ $cmsRole->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @endif
                                         @endforeach
                                     </div>
                                     <div class="wb-text-sm wb-text-muted" data-wb-user-sites-help data-wb-super-admin-help="{{ $adminText('super_admin_sites_help') }}" data-wb-assigned-sites-help="{{ $adminText('assigned_sites_help') }}" aria-live="polite">{{ $selectedRole === \App\Models\User::ROLE_SUPER_ADMIN ? $adminText('super_admin_sites_help') : $adminText('assigned_sites_help') }}</div>

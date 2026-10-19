@@ -7,6 +7,8 @@ class PluginPermission
   /** @var list<string> */
   private array $roles = ['super_admin'];
 
+  private bool $siteDelegable = false;
+
   private string $label = '';
 
   private ?string $description = null;
@@ -27,6 +29,18 @@ class PluginPermission
   public function name(): string
   {
     return $this->name;
+  }
+
+  public function siteDelegable(bool $enabled = true): self
+  {
+    $this->siteDelegable = $enabled;
+
+    return $this;
+  }
+
+  public function isSiteDelegable(): bool
+  {
+    return $this->siteDelegable;
   }
 
   public function label(string $label): self
@@ -92,6 +106,8 @@ class PluginPermission
       'label' => $this->labelText(),
       'description' => $this->description,
       'roles' => $this->roles,
+      'scope' => $this->siteDelegable ? 'site' : 'system',
+      'delegable' => $this->siteDelegable,
     ];
   }
 }

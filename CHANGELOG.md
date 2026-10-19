@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.105.0
+
+- Add SQL-backed custom roles and per-site assignments with protected built-in compatibility grants and separate Super Admin membership.
+- Share operation permission checks across the panel, delegated API and explicitly site-delegable plugin permissions; preserve existing built-in user access.
+- Add role copying, effective permission inspection, optimistic role updates and relational access history without changing public membership rules.
+- Recheck authority after ACL lock waits during user deletion; preserve role-form site selections and align restricted dashboard/page controls and role deletion modals with current grants.
+- Keep coarse personal API capabilities compatible with narrowly granted operations; creation and archiving do not require unrelated editing or publishing grants.
+
 ## 1.104.3
 
 - Show recorded update steps, total elapsed time and per-step durations with Publisher Client 1.2.0.

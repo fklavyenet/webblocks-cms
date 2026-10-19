@@ -7,12 +7,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\Access\WriteCmsAccess;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteUsersRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UserStoreRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UserUpdateRequest;
+use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Users\UserLifecycleGuard;
 
@@ -60,17 +63,16 @@ class UserController extends Controller
       'formAction' => route('admin.users.store'),
       'formMethod' => 'POST',
       'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+      'cmsRoles' => app(CmsAuthorization::class)->ready() ? CmsRole::query()->orderBy('name')->get() : collect(),
+      'siteRoles' => [],
+      'assignedSiteIds' => [],
     ]);
   }
 
   public function store(UserStoreRequest $request): RedirectResponse
   {
     $validated = $request->validated();
-    $siteIds = $validated['site_ids'] ?? [];
-    unset($validated['site_ids']);
-
-    $user = User::query()->create($validated);
-    $user->sites()->sync($user->isSuperAdmin() ? [] : $siteIds);
+    $user = app(WriteCmsAccess::class)->user($request->user(), new User, $validated);
 
     return redirect()->route('admin.users.edit', $user)->with('status', 'User created successfully.');
   }
@@ -88,6 +90,9 @@ class UserController extends Controller
       'deleteBlockedMessage' => $this->lifecycleGuard->deletionBlocker($user, request()->user()),
       'updateBlockedMessage' => $this->lifecycleGuard->updateBlocker($user, (string) old('role', $user->normalizedRole()), (bool) old('is_active', $user->is_active)),
       'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+      'cmsRoles' => app(CmsAuthorization::class)->ready() ? CmsRole::query()->orderBy('name')->get() : collect(),
+      'siteRoles' => isset($user) ? DB::table('wbcms_site_user')->where('user_id', $user->id)->pluck('role_id', 'site_id')->all() : [],
+      'assignedSiteIds' => $user->sites()->pluck('wbcms_sites.id')->all(),
     ]);
   }
 
@@ -97,7 +102,7 @@ class UserController extends Controller
 
     $validated = $request->validated();
     $siteIds = $validated['site_ids'] ?? [];
-    unset($validated['site_ids']);
+
     $nextRole = (string) $validated['role'];
     $nextIsActive = (bool) $validated['is_active'];
 
@@ -109,8 +114,7 @@ class UserController extends Controller
       unset($validated['password']);
     }
 
-    $user->update(Arr::only($validated, ['name', 'email', 'password', 'role', 'is_active']));
-    $user->sites()->sync($user->isSuperAdmin() ? [] : $siteIds);
+    $user = app(WriteCmsAccess::class)->user($request->user(), $user, $validated);
 
     return redirect()->route('admin.users.edit', $user)->with('status', 'User updated successfully.');
   }
@@ -124,7 +128,7 @@ class UserController extends Controller
       return redirect()->route('admin.users.index')->withErrors(['user_lifecycle' => $message]);
     }
 
-    $user->delete();
+    app(WriteCmsAccess::class)->deleteUser(request()->user(), $user);
 
     return redirect()->route('admin.users.index')->with('status', 'User deleted successfully.');
   }
@@ -154,7 +158,7 @@ class UserController extends Controller
         continue;
       }
 
-      $user->delete();
+      app(WriteCmsAccess::class)->deleteUser(request()->user(), $user);
       $deleted++;
     }
 

@@ -104,9 +104,15 @@
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-end wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    @if ($canCreatePage)
                     <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
+                    @endif
+                    @if ($canCreatePage)
                     <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
+                    @endif
+                    @if ($canCreatePage)
                     <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
+                    @endif
                 </div>
             </div>
 
@@ -122,7 +128,9 @@
                             @if ($hasActiveFilters)
                                 <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.clear_filters') }}</a>
                             @endif
+                            @if ($canCreatePage)
                             <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.create_page') }}</a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -131,16 +139,22 @@
         <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-end wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    @if ($canCreatePage)
                     <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
+                    @endif
+                    @if ($canCreatePage)
                     <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
+                    @endif
+                    @if ($canCreatePage)
                     <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
+                    @endif
                 </div>
             </div>
 
             <div class="wb-card-body">
                 @include('webblocks-cms::admin.partials.listing-bulk-actions', [
                     'label' => $adminText('common.selected'),
-                    'deleteTarget' => '#bulk-delete-pages-modal',
+                    'deleteTarget' => $deletablePageIds !== [] ? '#bulk-delete-pages-modal' : null,
                     'deleteLabel' => $adminText('common.delete_selected'),
                 ])
 
@@ -150,7 +164,7 @@
                             <tr>
                                 <th>
                                     <label class="wb-check" for="select_all_visible_pages">
-                                        <input id="select_all_visible_pages" type="checkbox" data-wb-admin-select-all-visible aria-label="{{ $adminText('pages.select_all_visible') }}">
+                                        <input id="select_all_visible_pages" type="checkbox" @disabled($deletablePageIds === []) data-wb-admin-select-all-visible aria-label="{{ $adminText('pages.select_all_visible') }}">
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
@@ -175,7 +189,7 @@
                                 <tr>
                                     <td>
                                         <label class="wb-check" for="page_select_{{ $page->id }}">
-                                            <input id="page_select_{{ $page->id }}" type="checkbox" value="{{ $page->id }}" data-wb-admin-row-select aria-label="{{ $adminText('pages.select_page', ['title' => $page->title]) }}">
+                                            <input id="page_select_{{ $page->id }}" type="checkbox" @disabled(! in_array($page->id, $deletablePageIds, true)) value="{{ $page->id }}" data-wb-admin-row-select aria-label="{{ $adminText('pages.select_page', ['title' => $page->title]) }}">
                                             <span class="wb-sr-only">{{ $adminText('pages.select_page', ['title' => $page->title]) }}</span>
                                         </label>
                                     </td>
@@ -279,6 +293,7 @@
                                             </a>
 
                                             <a href="{{ route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('pages.edit_page') }}" aria-label="{{ $adminText('pages.edit_page') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            @if (in_array($page->id, $deletablePageIds, true))
                                             <button
                                                 type="button"
                                                 class="wb-action-btn wb-action-btn-delete"
@@ -289,6 +304,7 @@
                                             >
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                             </button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

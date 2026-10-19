@@ -5,6 +5,8 @@ namespace WebBlocks\Cms\Support\Pages;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Policies\CmsResourcePolicy;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 
 class PageWorkflowManager
@@ -28,15 +30,19 @@ class PageWorkflowManager
 
   public function canEditContent(User $user, ?Page $page = null): bool
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+      if ($page?->isSharedSlotSourcePage()) {
+      return $acl->allows($user, 'cms.shared-slots.update-content', $page->site_id);
+      }
+
+      return $acl->allows($user, 'cms.pages.'.($page && $page->status !== Page::STATUS_DRAFT ? 'update-live' : 'update-draft'), $page?->site_id);
+    }
     if ($page === null) {
-      return true;
+    return true;
     }
 
-    if ($user->isSuperAdmin() || $user->isSiteAdmin()) {
-      return true;
-    }
-
-    return $user->isEditor() && $page->status === Page::STATUS_DRAFT;
+    return $user->isSuperAdmin() || $user->isSiteAdmin() || ($user->isEditor() && $page->status === Page::STATUS_DRAFT);
   }
 
   public function workflowActionsFor(User $user, Page $page): array
@@ -67,7 +73,7 @@ class PageWorkflowManager
       ]);
     }
 
-    if (! $this->roleAllowsAction($user, $normalizedAction)) {
+    if (! $this->roleAllowsAction($user, $normalizedAction, $page)) {
       abort(403, 'You do not have permission to perform this workflow action.');
     }
 
@@ -87,7 +93,7 @@ class PageWorkflowManager
 
   public function canRunAction(User $user, Page $page, string $action): bool
   {
-    return $this->roleAllowsAction($user, $action) && $this->statusAllowsAction($page, $action);
+    return $this->roleAllowsAction($user, $action, $page) && $this->statusAllowsAction($page, $action);
   }
 
   private function transition(Page $page, User $user, string $status, string $message): string
@@ -117,10 +123,14 @@ class PageWorkflowManager
     return $message;
   }
 
-  private function roleAllowsAction(User $user, string $action): bool
+  private function roleAllowsAction(User $user, string $action, Page $page): bool
   {
+    $acl = app(CmsAuthorization::class);
+    if ($acl->ready()) {
+      return $acl->allows($user, app(CmsResourcePolicy::class)->workflowPermission($page, $action), $page->site_id);
+    }
     if ($user->isSuperAdmin() || $user->isSiteAdmin()) {
-      return true;
+    return true;
     }
 
     return $user->isEditor() && in_array($action, [

@@ -3,7 +3,8 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Collection;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 
 class PluginAccessResolver
 {
@@ -19,18 +20,46 @@ class PluginAccessResolver
         return true;
       }
 
+      $acl = app(CmsAuthorization::class);
+      if ($acl->ready()) {
+        if (! $user || ! ($user->is_active ?? true)) {
+        return false;
+        }
+        $siteIds = $acl->siteIds($user);
+
+        return $siteIds->contains(function ($siteId) use ($user, $declaredPermission, $acl, $permission) {
+          return ($declaredPermission->isSiteDelegable() && $acl->allows($user, $permission, $siteId))
+            || in_array($acl->legacyRole($user, $siteId), $declaredPermission->roleNames(), true);
+        });
+      }
       $role = $this->normalizedRole($user);
 
       return $role !== null && in_array($role, $declaredPermission->roleNames(), true);
     }
 
-    return Gate::has($permission) && (bool) $user?->can($permission);
+    return false;
+  }
+
+  public function permittedSiteIds($user, string $permission): Collection
+  {
+    $acl = app(CmsAuthorization::class);
+    $definition = $this->declaredPluginPermission($permission);
+    if (! $definition || ! $acl->ready()) {
+    return collect();
+    }
+
+    return $acl->siteIds($user)->filter(fn ($siteId) => $this->isSuperAdmin($user)
+      || ($definition->isSiteDelegable() && $acl->allows($user, $permission, $siteId))
+      || in_array($acl->legacyRole($user, $siteId), $definition->roleNames(), true))->values();
   }
 
   public function isSuperAdmin(?Authenticatable $user): bool
   {
-    if ($user === null) {
-      return false;
+    if ($user === null || ! ($user->is_active ?? true)) {
+    return false;
+    }
+    if (app(CmsAuthorization::class)->ready()) {
+      return app(CmsAuthorization::class)->isSuperAdmin($user);
     }
 
     if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
