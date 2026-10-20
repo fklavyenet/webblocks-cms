@@ -10,6 +10,7 @@ class PagesMobileDensityTest extends TestCase
   {
     $root = dirname(__DIR__, 2);
     $view = (string) file_get_contents($root.'/resources/views/admin/pages/index.blade.php');
+    $view .= (string) file_get_contents($root.'/resources/views/admin/pages/columns/updated.blade.php');
     $css = (string) file_get_contents($root.'/public/cms/css/admin.css');
 
     $this->assertStringContainsString("'title' => \$adminText('pages.title').' · '.\$siteContext", $view);

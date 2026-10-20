@@ -1612,6 +1612,36 @@ The panel reports pending, confirmed or unavailable recovery, then offers Restor
 
 A one-use, one-minute restore intent applies form values only to the authorized editor GET request, without placing them in shared cross-tab session flash. Requests use the existing session/CSRF boundary and private no-store responses. Successful Save clears only the matching form/session in its editorial transaction; failed Save retains recovery. Restored media IDs display current authorized names/previews, including empty selections. Absent dynamic bindings remain literal; incomplete existing bindings are still shown and rejected by the existing validation rules.
 
+## Personal Pages and Media views (1.105.6)
+
+The browser admin supports private named views for Pages and Media only. Each
+owner may retain up to 50 views per listing, with unique names of at most 80
+characters. Relational view headers, allowlisted scalar filter rows and ordered
+column rows persist independently of sessions; no editorial record, revision,
+workflow or publication state is changed by view management. User deletion
+cascades to the owned views. There is no shared or automatic default view.
+
+Pages retain site scope, search, workflow status, sort and direction. Media
+retain folder, search, kind, usage, sort, direction and list/grid mode; its
+existing authorized media union remains the scope, without a new site filter.
+Applying a view starts at the first page and rechecks active account, ownership,
+listing access and any saved site reference. Deleted site/folder references and
+unsupported or removed filter/column definitions block results and require
+explicit correction or a return to Standard view; they are never silently
+dropped to broaden the query. Renaming preserves the saved configuration;
+updating explicitly replaces it from the currently applied configuration.
+
+Page optional columns are ID, public/preview link, total blocks, status and last
+edited. Media optional columns are preview, folder/kind, usage and updated time.
+Each may be hidden or selected once in a chosen order. Selection, row identity
+and permitted actions remain fixed and available. Grid cards retain their
+standard layout. Native query results, counts, pagination and bulk authorization
+remain authoritative. Applied changes show whether they differ from the selected
+view, while unapplied form edits require Apply before a view is saved. Clear
+Filters and Standard view clear the view selection and custom columns; Pages
+retain their existing site-context rules. Pagination, list/grid/folder links,
+details and safe return URLs preserve the current view and column context.
+
 ## SQL roles and operation permissions
 
 The panel supports protected built-in Site Admin and Editor compatibility roles and custom SQL roles. A user has one role per assigned site; Super Admin is a separate protected system membership. Custom roles are managed only by active Super Admins through `/webadmin/access/roles`; `/webadmin/access/inspect` displays effective grants for a selected user/site. Role changes use version checks, assigned roles cannot be deleted, and grant/assignment changes are recorded as relational scalar audit rows. The last active Super Admin is guarded under a shared SQL transaction lock in CMS user mutations.

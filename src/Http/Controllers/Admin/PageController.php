@@ -35,6 +35,7 @@ use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
+use WebBlocks\Cms\Support\ListingViews\ListingViewState;
 use WebBlocks\Cms\Support\Pages\PageBulkDeleter;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
@@ -78,6 +79,8 @@ class PageController extends Controller
       return redirect()->route('admin.pages.index')->throwResponse();
     }
 
+    $listingState = app(ListingViewState::class);
+    $listingColumns = $listingState->columns($request, 'pages');
     $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())->get();
     $storedQuery = $this->pageIndexState->storedQuery($request);
 
@@ -107,6 +110,8 @@ class PageController extends Controller
       $sort = 'created_at';
     }
 
+    $listingView = $listingState->context($request, 'pages', ['site' => $siteFilterValue, 'search' => $search, 'status' => $status, 'sort' => $sort, 'direction' => $direction], $listingColumns);
+
     $siteLocaleCounts = $this->authorization->scopeSitesForUser(Site::query(), $request->user())
       ->withCount(['enabledLocales as locales_count'])
       ->pluck('locales_count', 'id');
@@ -118,6 +123,7 @@ class PageController extends Controller
 
     $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
       ->whereRuntimeSettingNull('revision_restore_candidate')
+      ->when($listingView['blocked'], fn ($query) => $query->whereRaw('1 = 0'))
       ->with([
         'site',
         'translations.locale',
@@ -165,6 +171,7 @@ class PageController extends Controller
       ->withQueryString();
 
     $indexQuery = static fn (?int $pageNumber) => array_filter([
+      ...$listingState->presentationQuery($request),
       'site' => $siteFilterValue,
       'search' => $search,
       'status' => $status,
@@ -191,6 +198,8 @@ class PageController extends Controller
       && ($page->status !== Page::STATUS_PUBLISHED || $acl->allows($request->user(), 'cms.pages.delete-published', $page->site_id)))->modelKeys();
 
     return view('webblocks-cms::admin.pages.index', [
+      'listingView' => $listingView,
+      'listingColumns' => $listingColumns,
       'canCreatePage' => $acl->allows($request->user(), 'cms.pages.create', $activeSite?->id),
       'deletablePageIds' => $deletablePageIds,
       'pages' => $pages,
@@ -905,7 +914,7 @@ class PageController extends Controller
 
   private function hasMeaningfulPageIndexQuery(Request $request): bool
   {
-    return collect(['site', 'site_id', 'search', 'status', 'sort', 'direction', 'page'])
+    return collect(['site', 'site_id', 'search', 'status', 'sort', 'direction', 'page', 'saved_view', 'columns'])
       ->contains(fn (string $key) => $request->query($key) !== null && trim((string) $request->query($key)) !== '');
   }
 

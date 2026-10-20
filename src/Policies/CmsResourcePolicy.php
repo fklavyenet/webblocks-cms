@@ -34,6 +34,11 @@ final class CmsResourcePolicy
     if ($this->acl->isSuperAdmin($user)) {
     return;
     }
+    if (str_starts_with($name, 'listing-views.')) {
+      abort_unless(app(ListingViewPolicy::class)->listing($user, (string) $request->route('listing')), 403);
+
+      return;
+    }
     if ($name === 'dashboard' || $name === 'profile.edit' || in_array($name, ['profile.update', 'profile.password.update', 'profile.locale.update'], true)) {
     return;
     }

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.6
+
+- Save and manage private named views for Pages and Media, including existing filters, sorting, optional table column selection/order and Media list/grid mode.
+- Recheck current listing/site access when applying a view, start at the first page, and block outdated site/folder/filter/column configurations until explicitly corrected.
+- Keep native filters, bulk actions, pagination, standard views and return navigation available; store personal preferences as bounded relational records without changing editorial content.
+
 ## 1.105.5
 
 - Preserve previously granted plugin permissions when saving a role while that plugin is disabled; inspect protected-role plugin access using the same site-scoped decision as plugin routes.

@@ -20,6 +20,8 @@ class PageIndexState
     'sort',
     'direction',
     'page',
+    'saved_view',
+    'columns',
   ];
 
   public function remember(Request $request, array $query): void
@@ -151,7 +153,7 @@ class PageIndexState
 
       $stringValue = trim((string) $value);
 
-      if ($stringValue === '') {
+      if ($stringValue === '' && $key !== 'columns') {
         continue;
       }
 

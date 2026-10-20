@@ -12,6 +12,7 @@
     // really is empty, and "create your first page" is the right thing to say.
     $hasActiveFilters = ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '';
     $detailsBaseQuery = array_filter([
+        ...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()),
         'site' => $filters['site'],
         'search' => $filters['search'] !== '' ? $filters['search'] : null,
         'status' => $filters['status'] !== '' ? $filters['status'] : null,
@@ -34,11 +35,13 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.partials.listing-views')
 
     <div class="wb-card wb-card-muted wb-admin-pages-index-filters">
         <div class="wb-card-body">
             @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.pages.index'),
+                'hidden' => [...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()), ...($listingView['blocked'] ? ['correct_view' => 1] : [])],
                 'search' => [
                     'id' => 'pages_search',
                     'name' => 'search',
@@ -168,12 +171,10 @@
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
-                                <th class="wb-admin-pages-id-cell">{{ $adminText('pages.columns.id') }}</th>
                                 <th>{{ $adminText('pages.columns.page') }}</th>
-                                <th>{{ $adminText('pages.columns.view') }}</th>
-                                <th title="{{ $adminText('pages.total_blocks_help') }}">{{ $adminText('pages.columns.total_blocks') }}</th>
-                                <th>{{ $adminText('common.status') }}</th>
-                                <th>{{ $adminText('pages.last_edited') }}</th>
+                                @foreach ($listingColumns as $listingColumn)
+                                    @include('webblocks-cms::admin.pages.columns.'.$listingColumn, ['columnHeading' => true])
+                                @endforeach
                                 <th>{{ $adminText('common.actions') }}</th>
                             </tr>
                         </thead>
@@ -193,7 +194,6 @@
                                             <span class="wb-sr-only">{{ $adminText('pages.select_page', ['title' => $page->title]) }}</span>
                                         </label>
                                     </td>
-                                    <td class="wb-admin-pages-table-cell wb-admin-pages-id-cell wb-text-sm wb-text-muted">{{ $page->id }}</td>
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-page-cell">
                                         <div class="wb-admin-pages-page-meta">
                                             <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">
@@ -240,45 +240,9 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="wb-admin-pages-table-cell wb-admin-pages-view-cell">
-                                        @if ($page->isPublished() && $defaultPublicUrl)
-                                            <a
-                                                href="{{ $defaultPublicUrl }}"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="wb-action-btn wb-action-btn-view"
-                                                title="{{ $adminText('pages.open_new_tab') }}"
-                                                aria-label="{{ $adminText('pages.open_new_tab') }}"
-                                            >
-                                                <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
-                                            </a>
-                                        @else
-                                            <a
-                                                href="{{ $previewUrl }}"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="wb-action-btn wb-action-btn-view"
-                                                title="{{ $adminText('pages.preview_new_tab') }}"
-                                                aria-label="{{ $adminText('pages.preview_new_tab') }}"
-                                            >
-                                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
-                                            </a>
-                                        @endif
-                                    </td>
-                                    <td class="wb-admin-pages-table-cell wb-admin-pages-count-cell" title="{{ $adminText('pages.includes_nested_blocks') }}">{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
-                                    <td class="wb-admin-pages-table-cell wb-admin-pages-status-cell">
-                                        <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">
-                                            {{ $page->workflowLabel() }}
-                                        </span>
-                                    </td>
-                                    <td class="wb-admin-pages-table-cell wb-admin-pages-last-edited-cell">
-                                        <div class="wb-admin-pages-last-edited wb-text-sm">
-                                            <span>{{ $page->updated_at?->format('Y-m-d H:i') ?? '-' }}</span>
-                                            @if ($page->updatedByUser?->name)
-                                                <span class="wb-text-muted">{{ $page->updatedByUser->name }}</span>
-                                            @endif
-                                        </div>
-                                    </td>
+                                    @foreach ($listingColumns as $listingColumn)
+                                        @include('webblocks-cms::admin.pages.columns.'.$listingColumn, ['columnHeading' => false])
+                                    @endforeach
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-actions-cell">
                                         <div class="wb-action-group">
                                             <a
@@ -307,7 +271,7 @@
                                             @endif
                                         </div>
                                     </td>
-                                </tr>
+</tr>
 
                                 @push('overlays')
                                     @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [

@@ -17,6 +17,7 @@ use WebBlocks\Cms\Http\Requests\Admin\MediaUploadRequest;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\ListingViews\ListingViewState;
 use WebBlocks\Cms\Support\Media\MediaBulkDeleter;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaIndexState;
@@ -58,6 +59,8 @@ class MediaController extends Controller
 
   public function index(): View
   {
+    $listingState = app(ListingViewState::class);
+    $listingColumns = $listingState->columns(request(), 'media');
     $user = request()->user();
     $selectedFolderId = request()->integer('folder_id') ?: null;
     $search = trim((string) request('search'));
@@ -82,9 +85,12 @@ class MediaController extends Controller
       $sort = 'updated_at';
     }
 
+    $listingView = $listingState->context(request(), 'media', ['folder_id' => $selectedFolderId ? (string) $selectedFolderId : '', 'search' => $search, 'kind' => $kind, 'usage' => $usage, 'sort' => $sort, 'direction' => $direction, 'view' => $view], $listingColumns);
+
     $totalMediaCount = $this->authorization->scopeMediaForUser(Media::query(), $user)->count();
 
     $mediaPaginator = $this->mediaListingQuery($user, $selectedFolderId, $search, $kind, $usage, $sort, $direction)
+      ->when($listingView['blocked'], fn ($query) => $query->whereRaw('1 = 0'))
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
@@ -115,6 +121,8 @@ class MediaController extends Controller
     }
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.media.index', [
+      'listingView' => $listingView,
+      'listingColumns' => $listingColumns,
       'folders' => $this->folderOptions(),
       'assets' => $media,
       'media' => $media,

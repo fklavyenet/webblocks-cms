@@ -16,6 +16,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
+use WebBlocks\Cms\Http\Controllers\Admin\ListingViewController;
 use WebBlocks\Cms\Http\Controllers\Admin\LocaleController;
 use WebBlocks\Cms\Http\Controllers\Admin\MaintenanceCleanupController;
 use WebBlocks\Cms\Http\Controllers\Admin\MediaController;
@@ -243,6 +244,13 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
   ->prefix('webadmin')
   ->name('admin.')
   ->group(function () {
+    Route::prefix('listing-views/{listing}')->where(['listing' => 'pages|media'])->group(function () {
+      Route::post('/', [ListingViewController::class, 'store'])->name('listing-views.store');
+      Route::get('/{listingView}/apply', [ListingViewController::class, 'apply'])->whereNumber('listingView')->name('listing-views.apply');
+      Route::put('/{listingView}', [ListingViewController::class, 'update'])->whereNumber('listingView')->name('listing-views.update');
+      Route::delete('/{listingView}', [ListingViewController::class, 'destroy'])->whereNumber('listingView')->name('listing-views.destroy');
+    });
+
     $missingSharedSlot = function (): never {
       if (! app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
         redirect()

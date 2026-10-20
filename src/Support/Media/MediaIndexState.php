@@ -19,6 +19,8 @@ class MediaIndexState
     'direction',
     'view',
     'page',
+    'saved_view',
+    'columns',
   ];
 
   /**
@@ -115,7 +117,7 @@ class MediaIndexState
 
       $stringValue = trim((string) $value);
 
-      if ($stringValue === '') {
+      if ($stringValue === '' && $key !== 'columns') {
         continue;
       }
 

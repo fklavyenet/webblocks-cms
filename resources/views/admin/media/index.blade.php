@@ -12,6 +12,7 @@
     $mediaKindLabel = static fn (string $kind) => $adminTranslator->admin('media_index.kind_names.'.$kind, $adminLocale);
     $mediaUsageCount = static fn (int $count) => $adminTranslator->admin($count === 1 ? 'media_index.used_in_one' : 'media_index.used_in_many', $adminLocale, ['count' => $count]);
     $baseQuery = array_filter([
+        ...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()),
         'folder_id' => $selectedFolderId,
         'search' => $search ?: null,
         'kind' => $kind ?: null,
@@ -36,6 +37,7 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.partials.listing-views')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
@@ -100,6 +102,8 @@
                     ],
                 ],
                 'hidden' => [
+                    ...($listingView['blocked'] ? ['correct_view' => 1] : []),
+                    ...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()),
                     'folder_id' => $selectedFolderId,
                     'view' => $viewMode,
                 ],
@@ -128,9 +132,9 @@
         <div class="wb-card-body wb-stack wb-gap-4">
             <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-items-end">
                 <div class="wb-cluster wb-cluster-2">
-                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">{{ $adminText('all_folders') }} <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
+                    <a href="{{ route('admin.media.index', array_filter([...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()), 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">{{ $adminText('all_folders') }} <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
                     @foreach ($folders as $folder)
-                        <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                        <a href="{{ route('admin.media.index', array_filter([...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()), 'folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                             {{ $folder->name }} <span class="wb-text-sm">{{ $folder->assets_count }}</span>
                         </a>
                     @endforeach
@@ -234,11 +238,10 @@
                                         <span class="wb-sr-only">{{ $adminText('select_all_visible_media') }}</span>
                                     </label>
                                 </th>
-                                <th>{{ $adminText('preview') }}</th>
                                 <th>{{ $adminText('media') }}</th>
-                                <th>{{ $adminText('folder') }}</th>
-                                <th>{{ $adminText('usage') }}</th>
-                                <th>{{ $adminText('updated') }}</th>
+                                @foreach ($listingColumns as $listingColumn)
+                                    @include('webblocks-cms::admin.media.columns.'.$listingColumn, ['columnHeading' => true])
+                                @endforeach
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>
@@ -253,40 +256,15 @@
                                         </label>
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-preview-box wb-no-decoration" title="{{ $adminText('preview_media') }}">
-                                            @if ($asset->canPreview() && $asset->url())
-                                                <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}">
-                                            @else
-                                                <i class="wb-icon {{ $asset->previewIconClass() }} wb-icon-xl" aria-hidden="true"></i>
-                                            @endif
-                                        </a>
-                                    </td>
-                                    <td>
                                         <div class="wb-stack wb-gap-1">
                                             <strong><a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl]) }}">{{ $asset->displayTitle() }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted" title="{{ $asset->original_name }}">{{ $asset->original_name }}</span>
                                             <span class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</span>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="wb-stack wb-gap-1">
-                                            <span>{{ $asset->folder?->name ?? $adminText('no_folder') }}</span>
-                                            <span class="wb-text-sm wb-text-muted">{{ $mediaKindLabel($asset->kind) }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if ($assetUsages->isNotEmpty())
-                                            <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['usage_media' => $asset->id])) }}" class="wb-status-pill wb-status-pending">{{ $mediaUsageCount($assetUsages->count()) }}</a>
-                                        @else
-                                            <span class="wb-status-pill wb-status-info">{{ $adminText('unused_media') }}</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="wb-stack wb-gap-1">
-                                            <span>{{ $asset->updated_at?->format('Y-m-d') }}</span>
-                                            <span class="wb-text-sm wb-text-muted">{{ $asset->updated_at?->format('H:i') }}</span>
-                                        </div>
-                                    </td>
+                                    @foreach ($listingColumns as $listingColumn)
+                                        @include('webblocks-cms::admin.media.columns.'.$listingColumn, ['columnHeading' => false])
+                                    @endforeach
                                     <td>
                                         <div class="wb-action-group">
                                             <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('preview_media') }}" aria-label="{{ $adminText('preview_media') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
@@ -298,7 +276,7 @@
                                             @endif
                                         </div>
                                     </td>
-                                </tr>
+</tr>
                             @endforeach
                         </tbody>
                     </table>
