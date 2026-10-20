@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.105.3
+
+- Translate ACL role management, operation permissions, effective access inspection and access history into German, Spanish, French, Italian and Turkish.
+
 ## 1.105.2
 
 - Align role creation, editing and copying with the API Tokens form layout, using grouped operation permissions and live selection counts.
