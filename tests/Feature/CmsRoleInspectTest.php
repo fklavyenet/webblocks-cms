@@ -199,6 +199,23 @@ class CmsRoleInspectTest extends TestCase
   }
 
   #[Test]
+  public function inspection_matches_site_scoped_plugin_defaults_for_protected_roles(): void
+  {
+    $registry = new PluginRegistry(['appointments' => true]);
+    $registry->register(PluginDefinition::make('appointments')->permissions([PluginPermission::make('appointments.view')->siteDelegable()->roles(['site_admin'])]));
+    $this->app->instance(PluginRegistry::class, $registry);
+    $builtin = CmsRole::where('handle', 'site_admin')->firstOrFail();
+    $this->subject->sites()->updateExistingPivot($this->site->id, ['role_id' => $builtin->id]);
+    $this->assertSame(['appointments.view' => true], $this->rows($this->get($this->url(['q' => 'appointments', 'status' => 'allowed']))->assertOk()));
+    $other = Site::create(['name' => 'Other', 'handle' => 'other']);
+    $this->subject->sites()->attach($other->id, ['role_id' => $this->role->id]);
+    $this->assertSame(['appointments.view' => false], $this->rows($this->get($this->url(['site_id' => $other->id, 'q' => 'appointments', 'status' => 'denied']))->assertOk()));
+    $this->get($this->url(['q' => 'appointments', 'status' => 'denied']))->assertOk()->assertViewHas('filteredCount', 0);
+    $this->subject->forceFill(['is_active' => false])->save();
+    $this->assertSame(['appointments.view' => false], $this->rows($this->get($this->url(['q' => 'appointments']))->assertOk()));
+  }
+
+  #[Test]
   public function filters_are_localized_and_preserve_every_english_key_and_placeholder(): void
   {
     $root = dirname(__DIR__, 2).'/resources/lang';

@@ -50,6 +50,31 @@ final class PermissionCatalog
       || (str_starts_with($permission, 'cms.legacy-api.') && in_array(substr($permission, 15), CmsApiTokenCapabilities::ALL, true));
   }
 
+  /** Retain dormant grants without executing a disabled provider to discover its metadata. */
+  public function dormantPluginGrants(array $grants): array
+  {
+    $dormant = [];
+    if (app()->bound(PluginRegistry::class)) {
+      foreach (app(PluginRegistry::class)->disabledPermissions() as $permissions) {
+        foreach ($permissions as $permission) {
+          if ($permission->isSiteDelegable()) {
+            $dormant[] = $permission->name();
+          }
+        }
+      }
+      // Disabled PHP providers may expose only their manifest's minimal metadata.
+      foreach (app(PluginRegistry::class)->disabled() as $plugin) {
+        foreach ($grants as $grant) {
+          if (! str_starts_with($grant, 'cms.') && str_starts_with($grant, $plugin->handle().'.')) {
+            $dormant[] = $grant;
+          }
+        }
+      }
+    }
+
+    return array_values(array_intersect($grants, $dormant));
+  }
+
   public function defaults(string $role): array
   {
     $all = [];

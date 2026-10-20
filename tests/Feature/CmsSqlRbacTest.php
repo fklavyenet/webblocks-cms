@@ -240,6 +240,40 @@ class CmsSqlRbacTest extends TestCase
   }
 
   #[Test]
+  public function saving_a_role_retains_dormant_plugin_grants_without_granting_or_copying_them(): void
+  {
+    $registry = new PluginRegistry(['appointments' => true]);
+    $definition = PluginDefinition::make('appointments')->permissions([PluginPermission::make('appointments.view')->siteDelegable()]);
+    $registry->register($definition);
+    $this->app->instance(PluginRegistry::class, $registry);
+    $role = $this->role(['appointments.view', 'cms.pages.read']);
+    $user = $this->user();
+    $site = $this->site();
+    $this->assign($user, $site, $role);
+    $disabled = new PluginRegistry(['appointments' => false]);
+    $disabled->register($definition);
+    $this->app->instance(PluginRegistry::class, $disabled);
+    $this->withoutMiddleware([RedirectIfNotInstalled::class]);
+    $this->actingAs($this->user('super_admin'));
+    $this->put('/webadmin/access/roles/'.$role->id, ['name' => 'Renamed', 'version' => $role->version, 'permissions' => ['cms.panel.access']])->assertRedirect();
+    $this->assertDatabaseHas('wbcms_acl_role_permissions', ['role_id' => $role->id, 'permission' => 'appointments.view']);
+    $this->assertDatabaseMissing('wbcms_acl_role_permissions', ['role_id' => $role->id, 'permission' => 'cms.pages.read']);
+    $this->assertDatabaseMissing('wbcms_acl_events', ['role_id' => $role->id, 'action' => 'permission.revoked', 'permission' => 'appointments.view']);
+    $this->assertSame(['cms.panel.access'], app(CmsRoleQuery::class)->permissions($role));
+    $this->assertFalse(app(PluginAccessResolver::class)->canAccessPluginPermission($user, 'appointments.view'));
+    $this->postJson('/webadmin/access/roles', ['name' => 'Forbidden dormant grant', 'permissions' => ['cms.panel.access', 'appointments.view']])->assertUnprocessable()->assertJsonValidationErrors('permissions.1');
+    $minimalMetadata = new PluginRegistry(['appointments' => false]);
+    $minimalMetadata->register(PluginDefinition::make('appointments'));
+    $this->app->instance(PluginRegistry::class, $minimalMetadata);
+    $this->put('/webadmin/access/roles/'.$role->id, ['name' => 'Provider remains disabled', 'version' => $role->fresh()->version, 'permissions' => ['cms.panel.access']])->assertRedirect();
+    $this->assertDatabaseHas('wbcms_acl_role_permissions', ['role_id' => $role->id, 'permission' => 'appointments.view']);
+    $this->app->instance(PluginRegistry::class, $registry);
+    $this->assertTrue(app(PluginAccessResolver::class)->canAccessPluginPermission($user, 'appointments.view'));
+    $this->put('/webadmin/access/roles/'.$role->id, ['name' => 'Explicit removal', 'version' => $role->fresh()->version, 'permissions' => ['cms.panel.access']])->assertRedirect();
+    $this->assertDatabaseMissing('wbcms_acl_role_permissions', ['role_id' => $role->id, 'permission' => 'appointments.view']);
+  }
+
+  #[Test]
   public function composite_plans_check_every_operation_before_writing(): void
   {
     $user = $this->user();

@@ -38,6 +38,7 @@ final class WriteCmsAccess
       abort_unless(isset(app(PermissionCatalog::class)->editable()[$permission]), 422);
       }
       $old = $role ? DB::table('wbcms_acl_role_permissions')->where('role_id', $role->id)->pluck('permission')->all() : [];
+      $permissions = array_values(array_unique([...$permissions, ...app(PermissionCatalog::class)->dormantPluginGrants($old)]));
       $before = $role?->name;
       $role ??= new CmsRole(['handle' => 'custom-'.Str::uuid(), 'is_protected' => false, 'version' => 0]);
       $role->fill(['name' => $data['name'], 'description' => $data['description'] ?? null, 'version' => $role->version + 1])->save();

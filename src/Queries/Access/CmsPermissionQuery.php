@@ -8,6 +8,7 @@ use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
+use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 
 final class CmsPermissionQuery
 {
@@ -20,7 +21,9 @@ final class CmsPermissionQuery
     $needle = $this->searchText($filters['q']);
     if ($user && $site) {
       foreach ($this->catalog->editable() as $key => $definition) {
-        $allowed = $this->acl->allows($user, $key, $site->id);
+        $allowed = $definition['group'] === 'plugins'
+          ? app(PluginAccessResolver::class)->permittedSiteIds($user, $key)->contains((int) $site->id)
+          : $this->acl->allows($user, $key, $site->id);
         $effective[$key] = $allowed;
         if (($filters['status'] === 'allowed' && ! $allowed) || ($filters['status'] === 'denied' && $allowed)) {
           continue;
