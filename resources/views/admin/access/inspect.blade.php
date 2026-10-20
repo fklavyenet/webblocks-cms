@@ -3,6 +3,7 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => __('webblocks-cms::acl.inspect'), 'description' => __('webblocks-cms::acl.inspect_help'),
     ])
+    @include('webblocks-cms::admin.partials.flash')
 
     @php($resetUrl = route('admin.access.inspect', array_filter(['user_id' => $selectedUser?->id, 'site_id' => $selectedSite?->id])))
     <div class="wb-card wb-card-muted">

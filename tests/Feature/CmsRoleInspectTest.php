@@ -226,6 +226,10 @@ class CmsRoleInspectTest extends TestCase
   #[Test]
   public function malformed_filters_are_rejected_and_only_active_super_admins_can_inspect(): void
   {
+    $this->from($this->url())->get($this->url(['q' => str_repeat('x', 161)]))
+      ->assertRedirect($this->url())->assertSessionHasErrors('q');
+    $message = session('errors')->first('q');
+    $this->get($this->url())->assertOk()->assertSee($message)->assertSee('wb-alert-danger', false);
     foreach ([['q' => ['bad']], ['q' => str_repeat('x', 161)], ['status' => 'invalid'], ['user_id' => 0], ['site_id' => ['bad']]] as $filters) {
       $this->getJson($this->url($filters))->assertUnprocessable()->assertJsonValidationErrors(array_key_first($filters));
     }
