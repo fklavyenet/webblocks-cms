@@ -25,6 +25,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -383,7 +384,9 @@ class BlockController extends Controller
     $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $page);
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-    DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $data, $localeCode, $sharedSlot): void {
+    DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $data, $localeCode, $sharedSlot, $existingPage): void {
+      app(EditorRecovery::class)->guardSave(request(), $existingPage, $block);
+      app(EditorRecovery::class)->completeSave(request(), $existingPage, $block);
       $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
       $this->syncColumnItems($block, $columnItems, $localeCode);
       $this->syncFeatureItems($block, $featureItems, $localeCode);

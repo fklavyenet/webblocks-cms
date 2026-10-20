@@ -176,6 +176,7 @@
                 </div>
 
                 <div class="wb-card-body">
+                  @include('webblocks-cms::admin.partials.editor-recovery', ['recoveryPage' => $page, 'recoveryBlock' => null])
                   @include('webblocks-cms::admin.pages._form', ['canEditContent' => $canEditContent])
                 </div>
 

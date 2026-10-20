@@ -17,6 +17,7 @@
         $publicCssPath = public_path('cms/css/public.css');
         $adminJsAssets = [
             'core' => public_path('cms/js/admin/core.js'),
+            'recovery' => public_path('cms/js/admin/editor-recovery.js'),
         ];
     @endphp
 
@@ -437,6 +438,9 @@
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
         @if (is_file($adminJsAssets['core']))
             <script src="{{ asset('cms/js/admin/core.js') }}?v={{ filemtime($adminJsAssets['core']) }}" defer></script>
+        @endif
+        @if (is_file($adminJsAssets['recovery']))
+            <script src="{{ asset('cms/js/admin/editor-recovery.js') }}?v={{ filemtime($adminJsAssets['recovery']) }}" defer></script>
         @endif
         @stack('admin-scripts')
         @stack('scripts')

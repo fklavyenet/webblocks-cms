@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContac
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentAuthoringController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentController;
+use WebBlocks\Cms\Http\Controllers\Admin\EditorRecoveryController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
@@ -78,6 +79,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteNotificationCo
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSystemHealthController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSystemUpdateController;
 use WebBlocks\Cms\Http\Middleware\AllowPagePreviewAccess;
+use WebBlocks\Cms\Http\Middleware\ApplyEditorRecovery;
 use WebBlocks\Cms\Http\Middleware\CoalesceSearchIndexing;
 use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
@@ -237,7 +239,7 @@ Route::middleware(['web', 'install.required', AllowPagePreviewAccess::class])
     Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
   });
 
-Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access', UseAdminLocale::class, CoalesceSearchIndexing::class])
+Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access', UseAdminLocale::class, CoalesceSearchIndexing::class, ApplyEditorRecovery::class])
   ->prefix('webadmin')
   ->name('admin.')
   ->group(function () {
@@ -334,6 +336,11 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('/shared-slots/{shared_slot}/revisions/{revision}', [SharedSlotRevisionController::class, 'show'])->name('shared-slots.revisions.show')->missing($missingSharedSlotRevision);
     Route::post('/shared-slots/{shared_slot}/revisions/{revision}/restore', [SharedSlotRevisionController::class, 'restore'])->name('shared-slots.revisions.restore')->missing($missingSharedSlotRevision);
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->middleware('can:view-visitor-reports')->name('reports.visitors.index');
+    Route::get('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'show'])->whereUuid('editingSession')->name('pages.recovery.show');
+    Route::put('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'store'])->whereUuid('editingSession')->middleware('throttle:60,1')->name('pages.recovery.store');
+    Route::delete('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'destroy'])->whereUuid('editingSession')->name('pages.recovery.destroy');
+    Route::post('/pages/{page}/editor-recovery/{editingSession}/restore', [EditorRecoveryController::class, 'restore'])->whereUuid('editingSession')->name('pages.recovery.restore');
+
     Route::get('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'editSlotBlocks'])->name('pages.slots.blocks');
     Route::post('/pages/{page}/slots/{slot}/blocks/reorder', [PageController::class, 'reorderSlotBlocks'])->name('pages.slots.blocks.reorder');
     Route::delete('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'destroySlotBlocks'])->name('pages.slots.blocks.destroy-all');

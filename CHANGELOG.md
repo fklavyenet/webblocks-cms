@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.5
+
+- Preserve previously granted plugin permissions when saving a role while that plugin is disabled; inspect protected-role plugin access using the same site-scoped decision as plugin routes.
+- Recover unfinished page settings and page-owned block forms on existing draft and staged pages, including localized Rich Text and media selections, with isolated editing sessions, explicit conflict review and seven-day expiry.
+- Keep recovery separate from saved content, revisions and publication; retain failed-save checkpoints and clear the applicable checkpoint atomically after a successful Save or explicit discard.
+- Restore selected-media names and previews accurately, preserve explicitly cleared choices, and keep absent dynamic bindings literal without hiding incomplete existing bindings.
+
 ## 1.105.4
 
 - Filter ACL access history by user, site, role and action, including previous/new site roles and retained references to deleted records; preserve independent role-list filters and pagination.

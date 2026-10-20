@@ -66,6 +66,9 @@
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
 
+                    @if ($isEditMode)
+                        @include('webblocks-cms::admin.partials.editor-recovery', ['recoveryPage' => $page, 'recoveryBlock' => $slotModalBlock, 'recoveryLocale' => $activeLocale->code])
+                    @endif
                     @include('webblocks-cms::admin.blocks._form', [
                         'block' => $slotModalBlock,
                         'selectedBlockType' => $slotModalSelectedBlockType,

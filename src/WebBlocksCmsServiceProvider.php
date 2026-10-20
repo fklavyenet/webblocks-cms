@@ -33,6 +33,7 @@ use WebBlocks\Cms\Console\MediaVariantsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
 use WebBlocks\Cms\Console\PluginMigrateCommand;
 use WebBlocks\Cms\Console\PluginProbeCommand;
+use WebBlocks\Cms\Console\PruneEditorRecoveriesCommand;
 use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
@@ -812,6 +813,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
   public const PACKAGE_CONSOLE_COMMANDS = [
+    PruneEditorRecoveriesCommand::class,
     SchedulerStatusCommand::class,
     DispatchSiteNotificationsCommand::class,
     PluginMigrateCommand::class,
@@ -1051,6 +1053,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->command('webblocks:notifications:dispatch')
         ->everyMinute()
         ->withoutOverlapping(5);
+
+      $this->app->make(Schedule::class)
+        ->command('webblocks:editor-recovery:prune')
+        ->dailyAt('03:15')
+        ->withoutOverlapping();
 
       $this->app->make(Schedule::class)
         ->command('visitors:cleanup')

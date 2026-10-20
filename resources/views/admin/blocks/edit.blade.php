@@ -44,6 +44,7 @@
             @method('PUT')
 
             <div class="wb-card-body">
+                @include('webblocks-cms::admin.partials.editor-recovery', ['recoveryPage' => $block->page, 'recoveryBlock' => $block, 'recoveryLocale' => request('locale')])
                 @include('webblocks-cms::admin.blocks._form', [
                     'assetPickerAssets' => $assetPickerAssets ?? collect(),
                     'assetPickerFolders' => $assetPickerFolders ?? collect(),

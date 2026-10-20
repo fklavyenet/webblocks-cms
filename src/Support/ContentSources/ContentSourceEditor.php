@@ -170,7 +170,7 @@ class ContentSourceEditor
   {
     $binding = $block->setting('content_bindings.'.$target, []);
 
-    if (! is_array($binding)) {
+    if (! is_array($binding) || $binding === []) {
       return '';
     }
 

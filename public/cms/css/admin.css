@@ -1429,3 +1429,8 @@ input.wb-admin-table-grid-input:focus {
 .wb-revision-depth-8 { padding-inline-start: 10rem; }
 
 /* Visitor charts use aggregate values rendered by Blade; no tracking script. */
+
+/* Keep recovery choices readable above the block modal's scrolling tabs. */
+[data-wb-editor-recovery] {
+    flex-shrink: 0;
+}

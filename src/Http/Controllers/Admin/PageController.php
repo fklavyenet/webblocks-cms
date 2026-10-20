@@ -34,6 +34,7 @@ use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
+use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\Pages\PageBulkDeleter;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
@@ -402,6 +403,8 @@ class PageController extends Controller
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
     DB::transaction(function () use ($request, $page): void {
+      app(EditorRecovery::class)->guardSave($request, $page);
+      app(EditorRecovery::class)->completeSave($request, $page);
       $data = $request->validatedData();
       $translation = $data['translation'];
       unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);

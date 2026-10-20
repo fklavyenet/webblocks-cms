@@ -65,6 +65,18 @@ class DynamicContentAuthoringTest extends TestCase
   }
 
   #[Test]
+  public function an_absent_binding_is_literal_but_an_incomplete_existing_binding_stays_visible(): void
+  {
+    $editor = app(ContentSourceEditor::class);
+    $block = new Block;
+    $this->assertSame('', $editor->selectedValue($block, 'title'));
+    $block->settings = ['content_bindings' => ['title' => ['source' => 'authoring::item', 'record' => '42']]];
+    $this->assertSame('authoring::item|42|', $editor->selectedValue($block, 'title'));
+    $block->settings = ['content_bindings' => ['title' => ['source' => 'authoring::items', 'record' => '@item', 'field' => 'title']]];
+    $this->assertSame('authoring::items|@item|title', $editor->selectedValue($block, 'title'));
+  }
+
+  #[Test]
   public function admin_rejects_missing_foreign_or_incompatible_templates_without_losing_settings(): void
   {
     [$page, $grid, $card, $title] = $this->fixture();

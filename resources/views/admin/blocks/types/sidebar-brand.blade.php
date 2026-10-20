@@ -23,7 +23,7 @@
             'name' => 'sidebar-brand-logo',
             'inputId' => 'asset_id',
             'fieldName' => 'asset_id',
-            'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+            'selectedAsset' => session()->hasOldInput('asset_id') ? ($selectedAsset ?? null) : ($selectedAsset ?? $block->asset),
             'buttonLabel' => $adminText('choose_media'),
             'replaceLabel' => $adminText('replace_logo'),
             'clearLabel' => $adminText('remove'),
