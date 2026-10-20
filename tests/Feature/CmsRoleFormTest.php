@@ -6,6 +6,7 @@ use App\Models\User;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models\CmsRole;
@@ -15,6 +16,8 @@ use WebBlocks\Cms\Tests\TestCase;
 
 class CmsRoleFormTest extends TestCase
 {
+  private ?string $temporaryPublicPath = null;
+
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
@@ -29,8 +32,29 @@ class CmsRoleFormTest extends TestCase
   protected function setUp(): void
   {
     parent::setUp();
+
+    $this->temporaryPublicPath = sys_get_temp_dir().'/webblocks-cms-role-form-'.bin2hex(random_bytes(8));
+    File::ensureDirectoryExists($this->temporaryPublicPath);
+    $this->app->usePublicPath($this->temporaryPublicPath);
+
+    // The script partial emits only assets published into the host public path.
+    $script = 'cms/js/admin/api-token-capabilities.js';
+    File::ensureDirectoryExists(dirname(public_path($script)));
+    File::copy(dirname(__DIR__, 2).'/public/'.$script, public_path($script));
+
     $this->withoutMiddleware([RedirectIfNotInstalled::class]);
     $this->actingAs(User::forceCreate(['name' => 'Synthetic administrator', 'email' => 'admin@example.test', 'password' => 'unused', 'role' => 'super_admin', 'is_active' => true]));
+  }
+
+  protected function tearDown(): void
+  {
+    try {
+      if ($this->temporaryPublicPath !== null) {
+        File::deleteDirectory($this->temporaryPublicPath);
+      }
+    } finally {
+      parent::tearDown();
+    }
   }
 
   private function document(string $html): DOMXPath
