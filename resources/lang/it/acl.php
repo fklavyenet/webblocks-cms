@@ -1,6 +1,18 @@
 <?php
 
 return [
+  'permission_search_placeholder' => 'Cerca nomi, identificatori o gruppi di permessi',
+  'permission_status' => 'Stato del permesso',
+  'all_permissions' => 'Tutti i permessi',
+  'granted_filter' => 'Concesso',
+  'denied_filter' => 'Negato',
+  'permissions_matched' => ':shown su :total permessi',
+  'permissions_denied' => ':count negati',
+  'inspect_empty' => 'Nessun permesso corrisponde a questi filtri',
+  'inspect_empty_help' => 'Prova un’altra ricerca o cancella i filtri dei permessi.',
+  'inspect_prompt' => 'Seleziona un utente e un sito per esaminare i permessi',
+  'select_user' => 'Seleziona utente',
+  'select_site' => 'Seleziona sito',
   'role_title' => 'Ruolo: :name', 'copy_title' => 'Copia ruolo: :name', 'delete_title' => 'Elimina ruolo: :name',
   'permissions_selected' => ':selected su :total selezionati', 'permissions_granted' => ':count concessi',
   'permissions_readonly_help' => 'Permessi operativi concessi, raggruppati per area.',

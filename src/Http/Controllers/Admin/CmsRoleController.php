@@ -8,13 +8,14 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Actions\Access\WriteCmsAccess;
 use WebBlocks\Cms\Http\Requests\Admin\CmsRoleIndexRequest;
+use WebBlocks\Cms\Http\Requests\Admin\CmsRoleInspectRequest;
 use WebBlocks\Cms\Http\Requests\Admin\CmsRoleRequest;
 use WebBlocks\Cms\Http\Requests\Admin\DeleteCmsRoleRequest;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\CmsRolePolicy;
+use WebBlocks\Cms\Queries\Access\CmsPermissionQuery;
 use WebBlocks\Cms\Queries\Access\CmsRoleQuery;
-use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 
@@ -78,20 +79,17 @@ class CmsRoleController extends Controller
     return redirect()->route('admin.access.roles.index')->with('status', __('webblocks-cms::acl.deleted'));
   }
 
-  public function inspect(Request $request, CmsAuthorization $acl)
+  public function inspect(CmsRoleInspectRequest $request, CmsPermissionQuery $query)
   {
-    $this->authorize();
     $user = $request->filled('user_id') ? User::query()->findOrFail($request->integer('user_id')) : null;
     $site = $request->filled('site_id') ? Site::query()->findOrFail($request->integer('site_id')) : null;
-    $permissions = app(PermissionCatalog::class)->editable();
-    $effective = [];
-    if ($user && $site) {
-      foreach ($permissions as $key => $definition) {
-      $effective[$key] = $acl->allows($user, $key, $site->id);
-      }
-    }
+    $filters = ['q' => trim((string) $request->validated('q', '')), 'status' => $request->validated('status', '') ?? ''];
 
-    return view('webblocks-cms::admin.access.inspect', ['users' => User::query()->cmsUsers()->orderBy('name')->get(), 'sites' => Site::query()->orderBy('name')->get(), 'selectedUser' => $user, 'selectedSite' => $site, 'permissions' => $permissions, 'effective' => $effective, 'assignedRole' => $user && $site ? CmsRole::query()->find($acl->roleId($user, $site->id)) : null]);
+    return view('webblocks-cms::admin.access.inspect', [
+      ...$query->inspect($user, $site, $filters),
+      'users' => User::query()->cmsUsers()->orderBy('name')->get(), 'sites' => Site::query()->orderBy('name')->get(),
+      'selectedUser' => $user, 'selectedSite' => $site, 'filters' => $filters,
+    ]);
   }
 
   private function authorize(): void

@@ -1,6 +1,18 @@
 <?php
 
 return [
+  'permission_search_placeholder' => 'Berechtigungsnamen, Kennungen oder Gruppen durchsuchen',
+  'permission_status' => 'Berechtigungsstatus',
+  'all_permissions' => 'Alle Berechtigungen',
+  'granted_filter' => 'Erteilt',
+  'denied_filter' => 'Verweigert',
+  'permissions_matched' => ':shown von :total Berechtigungen',
+  'permissions_denied' => ':count verweigert',
+  'inspect_empty' => 'Keine Berechtigungen entsprechen diesen Filtern',
+  'inspect_empty_help' => 'Versuchen Sie eine andere Suche oder setzen Sie die Berechtigungsfilter zurück.',
+  'inspect_prompt' => 'Wählen Sie einen Benutzer und eine Website, um die Berechtigungen zu prüfen',
+  'select_user' => 'Benutzer auswählen',
+  'select_site' => 'Website auswählen',
   'role_title' => 'Rolle: :name', 'copy_title' => 'Rolle kopieren: :name', 'delete_title' => 'Rolle löschen: :name',
   'permissions_selected' => ':selected von :total ausgewählt', 'permissions_granted' => ':count erteilt',
   'permissions_readonly_help' => 'Erteilte Aktionsberechtigungen, nach Bereich gruppiert.',

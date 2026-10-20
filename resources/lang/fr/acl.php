@@ -1,6 +1,18 @@
 <?php
 
 return [
+  'permission_search_placeholder' => 'Rechercher des noms, identifiants ou groupes d’autorisations',
+  'permission_status' => 'Statut de l’autorisation',
+  'all_permissions' => 'Toutes les autorisations',
+  'granted_filter' => 'Accordée',
+  'denied_filter' => 'Refusée',
+  'permissions_matched' => ':shown sur :total autorisations',
+  'permissions_denied' => ':count refusées',
+  'inspect_empty' => 'Aucune autorisation ne correspond à ces filtres',
+  'inspect_empty_help' => 'Essayez une autre recherche ou effacez les filtres d’autorisations.',
+  'inspect_prompt' => 'Sélectionnez un utilisateur et un site pour examiner les autorisations',
+  'select_user' => 'Sélectionner un utilisateur',
+  'select_site' => 'Sélectionner un site',
   'role_title' => 'Rôle : :name', 'copy_title' => 'Copier le rôle : :name', 'delete_title' => 'Supprimer le rôle : :name',
   'permissions_selected' => ':selected sur :total sélectionnées', 'permissions_granted' => ':count accordées',
   'permissions_readonly_help' => 'Autorisations d’action accordées, regroupées par domaine.',

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Group effective ACL permissions by area, with localized search and granted/denied filters that preserve the selected user and site.
+
 ## 1.105.3
 
 - Translate ACL role management, operation permissions, effective access inspection and access history into German, Spanish, French, Italian and Turkish.

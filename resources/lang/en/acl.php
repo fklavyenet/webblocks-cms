@@ -1,6 +1,18 @@
 <?php
 
 return [
+  'permission_search_placeholder' => 'Search permission names, identifiers or groups',
+  'permission_status' => 'Permission status',
+  'all_permissions' => 'All permissions',
+  'granted_filter' => 'Granted',
+  'denied_filter' => 'Denied',
+  'permissions_matched' => ':shown of :total permissions',
+  'permissions_denied' => ':count denied',
+  'inspect_empty' => 'No permissions match these filters',
+  'inspect_empty_help' => 'Try another search or clear the permission filters.',
+  'inspect_prompt' => 'Select a user and site to inspect permissions',
+  'select_user' => 'Select user',
+  'select_site' => 'Select site',
   'role_title' => 'Role: :name', 'copy_title' => 'Copy role: :name', 'delete_title' => 'Delete role: :name',
   'permissions_selected' => ':selected of :total selected', 'permissions_granted' => ':count granted',
   'permissions_readonly_help' => 'Granted operation permissions, grouped by area.',

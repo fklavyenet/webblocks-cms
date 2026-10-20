@@ -1,6 +1,18 @@
 <?php
 
 return [
+  'permission_search_placeholder' => 'İzin adlarında, anahtarlarında veya gruplarında ara',
+  'permission_status' => 'İzin durumu',
+  'all_permissions' => 'Tüm izinler',
+  'granted_filter' => 'Verilen',
+  'denied_filter' => 'Reddedilen',
+  'permissions_matched' => ':total izinden :shown gösteriliyor',
+  'permissions_denied' => ':count izin reddedildi',
+  'inspect_empty' => 'Bu filtrelerle eşleşen izin yok',
+  'inspect_empty_help' => 'Başka bir arama yapın veya izin filtrelerini temizleyin.',
+  'inspect_prompt' => 'İzinleri incelemek için kullanıcı ve site seçin',
+  'select_user' => 'Kullanıcı seçin',
+  'select_site' => 'Site seçin',
   'role_title' => 'Rol: :name', 'copy_title' => 'Rolü kopyala: :name', 'delete_title' => 'Rolü sil: :name',
   'permissions_selected' => ':total izinden :selected seçildi', 'permissions_granted' => ':count izin verildi',
   'permissions_readonly_help' => 'Alana göre gruplandırılmış işlem izinleri.',
