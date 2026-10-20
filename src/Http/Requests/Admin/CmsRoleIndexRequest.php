@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Policies\CmsRolePolicy;
+use WebBlocks\Cms\Queries\Access\CmsRoleQuery;
 
 class CmsRoleIndexRequest extends FormRequest
 {
@@ -20,6 +21,10 @@ class CmsRoleIndexRequest extends FormRequest
       'type' => ['nullable', Rule::in(['protected', 'custom'])],
       'roles_page' => ['nullable', 'integer', 'min:1'],
       'history_page' => ['nullable', 'integer', 'min:1'],
+      'history_user' => ['nullable', 'integer', 'min:1'],
+      'history_site' => ['nullable', 'integer', 'min:1'],
+      'history_role' => ['nullable', 'integer', 'min:1'],
+      'history_action' => ['nullable', Rule::in(CmsRoleQuery::HISTORY_ACTIONS)],
     ];
   }
 }

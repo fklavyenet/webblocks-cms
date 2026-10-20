@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.105.4
+
+- Filter ACL access history by user, site, role and action, including previous/new site roles and retained references to deleted records; preserve independent role-list filters and pagination.
 - Group effective ACL permissions by area, with localized search and granted/denied filters that preserve the selected user and site.
 
 ## 1.105.3

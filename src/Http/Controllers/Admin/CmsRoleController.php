@@ -24,13 +24,16 @@ class CmsRoleController extends Controller
   public function index(CmsRoleIndexRequest $request, CmsRoleQuery $query)
   {
     $filters = ['q' => trim((string) $request->validated('q', '')), 'type' => $request->validated('type', '') ?? ''];
+    $historyFilters = collect(['history_user', 'history_site', 'history_role', 'history_action'])
+      ->mapWithKeys(fn ($key) => [$key => $request->validated($key, '') ?? ''])->all();
     $roles = $query->listing($filters);
-    $history = $query->history();
+    $history = $query->history($historyFilters);
     AdminPagination::redirectOutOfRange($roles, $request, 'roles_page');
     AdminPagination::redirectOutOfRange($history, $request, 'history_page');
 
     return view('webblocks-cms::admin.access.index', [
       'roles' => $roles, 'history' => $history, 'filters' => $filters, 'totalCount' => $query->total(),
+      'historyFilters' => $historyFilters, 'historyOptions' => $query->historyOptions($historyFilters),
       'permissions' => app(PermissionCatalog::class)->editable(),
       'protectedRolePermissions' => $roles->getCollection()->where('is_protected', true)->mapWithKeys(fn (CmsRole $role) => [$role->id => $query->permissions($role)]),
     ]);

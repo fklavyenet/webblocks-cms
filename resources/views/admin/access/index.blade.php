@@ -8,6 +8,12 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @php
+        $roleContext = array_filter([...$filters, 'roles_page' => $roles->currentPage() > 1 ? $roles->currentPage() : null], fn ($value) => $value !== '' && $value !== null);
+        $historyContext = array_filter([...$historyFilters, 'history_page' => $history->currentPage() > 1 ? $history->currentPage() : null], fn ($value) => $value !== '' && $value !== null);
+        $historyFiltered = collect($historyFilters)->contains(fn ($value) => $value !== '');
+    @endphp
+
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
             @include('webblocks-cms::admin.partials.listing-filters', [
@@ -22,7 +28,8 @@
                     'options' => ['protected' => __('webblocks-cms::acl.built_in'), 'custom' => __('webblocks-cms::acl.custom')],
                 ]],
                 'showReset' => $filters['q'] !== '' || $filters['type'] !== '',
-                'resetUrl' => route('admin.access.roles.index'),
+                'hidden' => $historyContext,
+                'resetUrl' => route('admin.access.roles.index', $historyContext),
                 'applyLabel' => __('webblocks-cms::acl.apply'), 'resetLabel' => __('webblocks-cms::acl.reset'),
             ])
         </div>
@@ -44,7 +51,7 @@
                 <div class="wb-empty">
                     <div class="wb-empty-title">{{ __('webblocks-cms::acl.roles_empty') }}</div>
                     <div class="wb-empty-text">{{ __('webblocks-cms::acl.roles_empty_help') }}</div>
-                    <div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ route('admin.access.roles.index') }}">{{ __('webblocks-cms::acl.reset') }}</a></div>
+                    <div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ route('admin.access.roles.index', $historyContext) }}">{{ __('webblocks-cms::acl.reset') }}</a></div>
                 </div>
             @else
                 <div class="wb-table-wrap">
@@ -106,10 +113,26 @@
             <span class="wb-status-pill wb-status-info">{{ $history->total() }}</span>
         </div>
         <div class="wb-card-body">
+            @include('webblocks-cms::admin.partials.listing-filters', [
+                'action' => route('admin.access.roles.index'),
+                'search' => null,
+                'selects' => collect(['user', 'site', 'role', 'action'])->map(fn ($field) => [
+                    'id' => 'acl_history_'.$field, 'name' => 'history_'.$field,
+                    'label' => __('webblocks-cms::acl.'.($field === 'user' ? 'history_user' : $field)),
+                    'selected' => $historyFilters['history_'.$field],
+                    'placeholder' => __('webblocks-cms::acl.history_all_'.$field),
+                    'options' => $historyOptions[$field],
+                ])->all(),
+                'hidden' => $roleContext,
+                'showReset' => $historyFiltered,
+                'resetUrl' => route('admin.access.roles.index', $roleContext),
+                'applyLabel' => __('webblocks-cms::acl.apply'), 'resetLabel' => __('webblocks-cms::acl.reset'),
+            ])
+            <p class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::acl.history_filters_help') }}</p>
             @if ($history->isEmpty())
                 <div class="wb-empty wb-empty-sm">
-                    <div class="wb-empty-title">{{ __('webblocks-cms::acl.history_empty') }}</div>
-                    <div class="wb-empty-text">{{ __('webblocks-cms::acl.history_empty_help') }}</div>
+                    <div class="wb-empty-title">{{ __('webblocks-cms::acl.'.($historyFiltered ? 'history_no_matches' : 'history_empty')) }}</div>
+                    <div class="wb-empty-text">{{ __('webblocks-cms::acl.'.($historyFiltered ? 'history_no_matches_help' : 'history_empty_help')) }}</div>
                 </div>
             @else
                 <div class="wb-table-wrap">
